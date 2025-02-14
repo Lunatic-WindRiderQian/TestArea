@@ -1,5 +1,5 @@
-local Ghostui = loadstring(game:HttpGet("https://raw.githubusercontent.com/FengY4/XINXIWANG/refs/heads/main/FengYulibrary.lua"))()
-local win = ui:new("殺脚本")
+local FengY4ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/FengY4/XINXIWANG/refs/heads/main/FengYulibrary.lua"))()
+local win = FengY4ui:new("殺脚本")
 --
 local UITab1 = win:Tab("『用户信息』",'6031097229')
 
