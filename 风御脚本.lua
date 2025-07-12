@@ -216,7 +216,7 @@ credits:Textbox("重力设置", "Gravity", "输入", function(Gravity)
   spawn(function() while task.wait() do game.Workspace.Gravity = Gravity end end)
 end)
     
-    credits:Slider('修改高度', 'Slider', 2, 2, 9999,false, function(Value)
+    credits:Slider('修改高度', 'Slider', 1, 1, 9999,false, function(Value)
     game.Players.LocalPlayer.Character.Humanoid.HipHeight = Value
 end)
     
@@ -518,75 +518,6 @@ end)
 end)
         end
     )    
-    
-local creds = window:Tab("测试而已",'6031097229')
-
-local credits = creds:section("好的",true)
-
--- 在某个功能区（section）中添加玩家下拉菜单
-local playerSection = mainTab:section("玩家功能", true)
-
--- 初始化玩家列表
-local players = {}
-for _, player in ipairs(game.Players:GetPlayers()) do
-    table.insert(players, player.Name)
-end
-
--- 创建下拉菜单
-local dropdown = playerSection:Dropdown("选择玩家", "SelectedPlayer", players, function(selected)
-    playernamedied = selected -- 存储选中的玩家名称
-    print("选择了玩家:", selected)
-end)
-
--- 动态更新玩家列表
-game.Players.PlayerAdded:Connect(function(player)
-    table.insert(players, player.Name)
-    dropdown:AddOption(player.Name) -- 添加新玩家到下拉菜单
-end)
-
-game.Players.PlayerRemoving:Connect(function(player)
-    for i, name in ipairs(players) do
-        if name == player.Name then
-            table.remove(players, i)
-            dropdown:RemoveOption(player.Name) -- 移除离开的玩家
-            break
-        end
-    end
-end)
-
-credits:Button("传送到玩家旁边", function()
-    local HumRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
-    local tp_player = game.Players:FindFirstChild(playernamedied)
-    if tp_player and tp_player.Character and tp_player.Character.HumanoidRootPart then
-        HumRoot.CFrame = tp_player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
-        Notify("冷", "已经传送到玩家身边", "rbxassetid://", 5)
-    else
-        Notify("冷", "无法传送 玩家已消失", "rbxassetid://", 5)
-    end
-end)
-
-credits:Button("把玩家传送过来", function()
-    local HumRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
-    local tp_player = game.Players:FindFirstChild(playernamedied)
-    if tp_player and tp_player.Character and tp_player.Character.HumanoidRootPart then
-        tp_player.Character.HumanoidRootPart.CFrame = HumRoot.CFrame + Vector3.new(0, 3, 0)
-        Notify("冷", "已传送过来", "rbxassetid://", 5)
-    else
-        Notify("冷", "无法传送 玩家已消失", "rbxassetid://", 5)
-    end
-end)
-
-credits:Toggle("查看玩家", 'Toggleflag', false, function(state)
-    if state then
-        game:GetService('Workspace').CurrentCamera.CameraSubject =
-            game:GetService('Players'):FindFirstChild(playernamedied).Character.Humanoid
-            Notify("冷", "已开启", "rbxassetid://", 5)
-    else
-        Notify("冷", "已关闭", "rbxassetid://", 5)
-        local lp = game.Players.LocalPlayer
-        game:GetService('Workspace').CurrentCamera.CameraSubject = lp.Character.Humanoid
-    end
-end)
     
 local creds = window:Tab("FE『能用』",'7733765398')
 
