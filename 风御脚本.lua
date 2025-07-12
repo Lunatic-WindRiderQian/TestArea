@@ -1,3 +1,117 @@
+local bai = {
+    axedupe = false,
+    soltnumber = "1",
+    waterwalk = false,
+    awaysday = false,
+    awaysdnight = false,
+    nofog = false,
+    axeflying = false,
+    playernamedied = "",
+    tptree = "",
+    moneyaoumt = 1,
+    moneytoplayername = "",
+    donationRecipient = tostring(game.Players.LocalPlayer),
+    autodropae = false,
+    farAxeEquip = nil,
+    cuttreeselect = "Generic",
+    autofarm = false,
+    PlankToBlueprint = nil,
+    plankModel = nil,
+    blueprintModel = nil,
+    saymege = "",
+    autosay = false,
+    saymount = 1,
+    sayfast = false,
+    autofarm1 = false,
+    bringamount = 1,
+    bringtree = false,
+    dxmz = "",
+    color = 0,
+    0,
+    0,
+    zlwjia = "",
+    mtwjia = nil,
+    zix = 1,
+    zlz = 3,
+    axeFling = nil,
+    itemtoopen = "",
+    openItem = nil,
+    car = nil,
+    load = false,
+    autobuyamount = 1,
+    autopick = false,
+    loaddupeaxewaittime = 3.1,
+    walkspeed = 16,
+    JumpPower = 50,
+    pickupaxeamount = 1,
+    whthmose = false,
+    itemset = nil,
+    LoneCaveAxeDetection = nil,
+    cuttree = false,
+    LoneCaveCharacterAddedDetection = nil,
+    LoneCaveDeathDetection = nil,
+    lovecavecutcframe = nil,
+    lovecavepast = nil,
+    zlmt = nil,
+    shuzhe = false,
+    modwood = false,
+    tchonmt = nil,
+    cskais = false,
+    dledetree = false,
+    delereeset = nil,
+    treecutset = nil,
+    autobuyset = nil,
+    wood = 7,
+    cswjia = nil,
+    boxOpenConnection = nil,
+    autobuystop = flase,
+    dropdown = {},
+    autocsdx = nil,
+    kuangxiu = nil,
+    xzemuban = false,
+    daiwp = false,
+    stopcar = false
+}
+
+local dropdown = {}
+local playernamedied = ""
+
+for i, player in pairs(game.Players:GetPlayers()) do
+    dropdown[i] = player.Name
+end
+
+function Notify(top, text, ico, dur)
+  game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = top,
+    Text = text,
+    Icon = ico,
+    Duration = dur,
+  })
+end
+
+getgenv().SheriffAim = false;
+getgenv().GunAccuracy = 25;
+
+local GunHook
+GunHook = hookmetamethod(game, "__namecall", function(self, ...)
+        local method = getnamecallmethod()
+        local args = { ... }
+        if not checkcaller() then
+                if typeof(self) == "Instance" then
+                        if self.Name == "ShootGun" and method == "InvokeServer" then
+                                if getgenv().SheriffAim and getgenv().GunAccuracy then
+                                        if Murderer then
+                                                local Root = Players[tostring(Murder)].Character.PrimaryPart;
+                                                local Veloc = Root.AssemblyLinearVelocity;
+                                                local Pos = Root.Position + (Veloc * Vector3.new(getgenv().GunAccuracy / 200, 0, getgenv().GunAccuracy/ 200));
+                                                args[2] = Pos;
+                                        end;
+                                end;
+                        end;
+                end;
+        end;
+        return GunHook(self, unpack(args));
+end);
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/FengY4/FengY4/refs/heads/main/Fengui.lua", true))()
 ----------------------------------------------------------------------------------------------------------------------------------------
 local window = library:new("汽脚本")--V1
@@ -98,6 +212,58 @@ end)
  
 local credits = creds:section("通用脚本",true)
 
+local Players = credits:Dropdown("选择玩家", 'Dropdown', dropdown, function(v)
+    playernamedied = v
+end)
+
+game.Players.ChildAdded:Connect(function(player)
+    dropdown[player.UserId] = player.Name
+    Players:AddOption(player.Name)
+end)
+
+game.Players.ChildRemoved:Connect(function(player)
+    Players:RemoveOption(player.Name)
+    for k, v in pairs(dropdown) do
+        if v == player.Name then
+            dropdown[k] = nil
+        end
+    end
+end)
+
+credits:Button("传送到玩家旁边", function()
+    local HumRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
+    local tp_player = game.Players:FindFirstChild(playernamedied)
+    if tp_player and tp_player.Character and tp_player.Character.HumanoidRootPart then
+        HumRoot.CFrame = tp_player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+        Notify("冷", "已经传送到玩家身边", "rbxassetid://", 5)
+    else
+        Notify("冷", "无法传送 玩家已消失", "rbxassetid://", 5)
+    end
+end)
+
+credits:Button("把玩家传送过来", function()
+    local HumRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
+    local tp_player = game.Players:FindFirstChild(playernamedied)
+    if tp_player and tp_player.Character and tp_player.Character.HumanoidRootPart then
+        tp_player.Character.HumanoidRootPart.CFrame = HumRoot.CFrame + Vector3.new(0, 3, 0)
+        Notify("冷", "已传送过来", "rbxassetid://", 5)
+    else
+        Notify("冷", "无法传送 玩家已消失", "rbxassetid://", 5)
+    end
+end)
+
+credits:Toggle("查看玩家", 'Toggleflag', false, function(state)
+    if state then
+        game:GetService('Workspace').CurrentCamera.CameraSubject =
+            game:GetService('Players'):FindFirstChild(playernamedied).Character.Humanoid
+            Notify("冷", "已开启", "rbxassetid://", 5)
+    else
+        Notify("冷", "已关闭", "rbxassetid://", 5)
+        local lp = game.Players.LocalPlayer
+        game:GetService('Workspace').CurrentCamera.CameraSubject = lp.Character.Humanoid
+    end
+end)
+    
     credits:Toggle("ESP 显示名字", "AMG", ENABLED, function(enabled)
     if enabled then ENABLED = true for _, player in ipairs(Players:GetPlayers()) do onPlayerAdded(player) end Players.PlayerAdded:Connect(onPlayerAdded) Players.PlayerRemoving:Connect(onPlayerRemoving) local localPlayer = Players.LocalPlayer if localPlayer and localPlayer.Character then for _, player in ipairs(Players:GetPlayers()) do if player.Character then createNameLabel(player) end end end RunService.Heartbeat:Connect(function() if ENABLED then for _, player in ipairs(Players:GetPlayers()) do if player.Character then createNameLabel(player) end end end end) else ENABLED = false for _, player in ipairs(Players:GetPlayers()) do onPlayerRemoving(player) end RunService:UnbindFromRenderStep("move") end
 end)
