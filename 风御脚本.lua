@@ -523,16 +523,22 @@ local creds = window:Tab("测试而已",'6031097229')
 
 local credits = creds:section("好的",true)
 
+-- 初始化dropdown表（如果未定义）
+local dropdown = {}
+
+-- 假设credits是一个UI库的实例（如Rayfield）
 local Players = credits:Dropdown("选择玩家", 'Dropdown', dropdown, function(v)
     playernamedied = v
 end)
 
-game.Players.ChildAdded:Connect(function(player)
+-- 监听玩家加入游戏
+game.Players.PlayerAdded:Connect(function(player)
     dropdown[player.UserId] = player.Name
     Players:AddOption(player.Name)
 end)
 
-game.Players.ChildRemoved:Connect(function(player)
+-- 监听玩家离开游戏
+game.Players.PlayerRemoving:Connect(function(player)
     Players:RemoveOption(player.Name)
     for k, v in pairs(dropdown) do
         if v == player.Name then
@@ -541,37 +547,50 @@ game.Players.ChildRemoved:Connect(function(player)
     end
 end)
 
+-- 传送到玩家
 credits:Button("传送到玩家旁边", function()
-    local HumRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
-    local tp_player = game.Players:FindFirstChild(playernamedied)
-    if tp_player and tp_player.Character and tp_player.Character.HumanoidRootPart then
-        HumRoot.CFrame = tp_player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
-        Notify("冷", "已经传送到玩家身边", "rbxassetid://", 5)
-    else
-        Notify("冷", "无法传送 玩家已消失", "rbxassetid://", 5)
+    local player = game.Players.LocalPlayer
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local target = game.Players:FindFirstChild(playernamedied)
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+            Notify("冷", "已经传送到玩家身边", "rbxassetid://", 5)
+        else
+            Notify("冷", "无法传送 玩家已消失", "rbxassetid://", 5)
+        end
     end
 end)
 
+-- 把玩家传送过来
 credits:Button("把玩家传送过来", function()
-    local HumRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
-    local tp_player = game.Players:FindFirstChild(playernamedied)
-    if tp_player and tp_player.Character and tp_player.Character.HumanoidRootPart then
-        tp_player.Character.HumanoidRootPart.CFrame = HumRoot.CFrame + Vector3.new(0, 3, 0)
-        Notify("冷", "已传送过来", "rbxassetid://", 5)
-    else
-        Notify("冷", "无法传送 玩家已消失", "rbxassetid://", 5)
+    local player = game.Players.LocalPlayer
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local target = game.Players:FindFirstChild(playernamedied)
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            target.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+            Notify("冷", "已传送过来", "rbxassetid://", 5)
+        else
+            Notify("冷", "无法传送 玩家已消失", "rbxassetid://", 5)
+        end
     end
 end)
 
+-- 切换视角
 credits:Toggle("查看玩家", 'Toggleflag', false, function(state)
     if state then
-        game:GetService('Workspace').CurrentCamera.CameraSubject =
-            game:GetService('Players'):FindFirstChild(playernamedied).Character.Humanoid
+        local target = game.Players:FindFirstChild(playernamedied)
+        if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+            game.Workspace.CurrentCamera.CameraSubject = target.Character.Humanoid
             Notify("冷", "已开启", "rbxassetid://", 5)
+        else
+            Notify("冷", "目标玩家不存在", "rbxassetid://", 5)
+        end
     else
-        Notify("冷", "已关闭", "rbxassetid://", 5)
-        local lp = game.Players.LocalPlayer
-        game:GetService('Workspace').CurrentCamera.CameraSubject = lp.Character.Humanoid
+        local player = game.Players.LocalPlayer
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            game.Workspace.CurrentCamera.CameraSubject = player.Character.Humanoid
+            Notify("冷", "已关闭", "rbxassetid://", 5)
+        end
     end
 end)
     
