@@ -1,3 +1,29 @@
+if getgenv().ED_AntiKick then
+	return
+end
+
+getgenv().ED_AntiKick = {
+	Enabled = true, -- Set to false if you want to disable the Anti-Kick.
+	SendNotifications = true, -- Set to true if you want to get notified for every event
+	CheckCaller = true -- Set to true if you want to disable kicking by other executed scripts
+}
+                warn("Anti afk running")
+game:GetService("Players").LocalPlayer.Idled:connect(function()
+warn("Anti afk ran")
+game:GetService("VirtualUser"):CaptureController()
+game:GetService("VirtualUser"):ClickButton2(Vector2.new())
+end)
+local drop
+local function dealerships()
+local tables = {"Dealerships"}
+for i,v in pairs(workspace.Etc.Dealership:GetChildren()) do
+    if v.ClassName == "Model" then
+    table.insert(tables,v.Name)
+end
+end
+return tables
+end
+getfenv().grav = workspace.Gravity
 local bai = {
     axedupe = false,
     soltnumber = "1",
@@ -72,7 +98,7 @@ local bai = {
     daiwp = false,
     stopcar = false
 }
-
+ 
 local dropdown = {}
 local playernamedied = ""
 
@@ -120,10 +146,10 @@ local window = library:new("汽脚本")--V1
 local creds = window:Tab("关于", "6031097229")
     local bin = creds:section("信息", true)
     
-    bin:Label("作者：齐静春")    
+    bin:Label("作者：星河入梦")    
     
     bin:Button("QQ号", function()
-    setclipboard("1599267691")
+    setclipboard("192564182")
 end)
     
 
@@ -211,58 +237,6 @@ end)
 end)
  
 local credits = creds:section("通用脚本",true)
-
-local Players = credits:Dropdown("选择玩家", 'Dropdown', dropdown, function(v)
-    playernamedied = v
-end)
-
-game.Players.ChildAdded:Connect(function(player)
-    dropdown[player.UserId] = player.Name
-    Players:AddOption(player.Name)
-end)
-
-game.Players.ChildRemoved:Connect(function(player)
-    Players:RemoveOption(player.Name)
-    for k, v in pairs(dropdown) do
-        if v == player.Name then
-            dropdown[k] = nil
-        end
-    end
-end)
-
-credits:Button("传送到玩家旁边", function()
-    local HumRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
-    local tp_player = game.Players:FindFirstChild(playernamedied)
-    if tp_player and tp_player.Character and tp_player.Character.HumanoidRootPart then
-        HumRoot.CFrame = tp_player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
-        Notify("冷", "已经传送到玩家身边", "rbxassetid://", 5)
-    else
-        Notify("冷", "无法传送 玩家已消失", "rbxassetid://", 5)
-    end
-end)
-
-credits:Button("把玩家传送过来", function()
-    local HumRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
-    local tp_player = game.Players:FindFirstChild(playernamedied)
-    if tp_player and tp_player.Character and tp_player.Character.HumanoidRootPart then
-        tp_player.Character.HumanoidRootPart.CFrame = HumRoot.CFrame + Vector3.new(0, 3, 0)
-        Notify("冷", "已传送过来", "rbxassetid://", 5)
-    else
-        Notify("冷", "无法传送 玩家已消失", "rbxassetid://", 5)
-    end
-end)
-
-credits:Toggle("查看玩家", 'Toggleflag', false, function(state)
-    if state then
-        game:GetService('Workspace').CurrentCamera.CameraSubject =
-            game:GetService('Players'):FindFirstChild(playernamedied).Character.Humanoid
-            Notify("冷", "已开启", "rbxassetid://", 5)
-    else
-        Notify("冷", "已关闭", "rbxassetid://", 5)
-        local lp = game.Players.LocalPlayer
-        game:GetService('Workspace').CurrentCamera.CameraSubject = lp.Character.Humanoid
-    end
-end)
     
     credits:Toggle("ESP 显示名字", "AMG", ENABLED, function(enabled)
     if enabled then ENABLED = true for _, player in ipairs(Players:GetPlayers()) do onPlayerAdded(player) end Players.PlayerAdded:Connect(onPlayerAdded) Players.PlayerRemoving:Connect(onPlayerRemoving) local localPlayer = Players.LocalPlayer if localPlayer and localPlayer.Character then for _, player in ipairs(Players:GetPlayers()) do if player.Character then createNameLabel(player) end end end RunService.Heartbeat:Connect(function() if ENABLED then for _, player in ipairs(Players:GetPlayers()) do if player.Character then createNameLabel(player) end end end end) else ENABLED = false for _, player in ipairs(Players:GetPlayers()) do onPlayerRemoving(player) end RunService:UnbindFromRenderStep("move") end
@@ -544,8 +518,63 @@ end)
 end)
         end
     )    
+    
+local creds = window:Tab("测试而已",'6031097229')
 
+local credits = creds:section("好的",true)
 
+local Players = credits:Dropdown("选择玩家", 'Dropdown', dropdown, function(v)
+    playernamedied = v
+end)
+
+game.Players.ChildAdded:Connect(function(player)
+    dropdown[player.UserId] = player.Name
+    Players:AddOption(player.Name)
+end)
+
+game.Players.ChildRemoved:Connect(function(player)
+    Players:RemoveOption(player.Name)
+    for k, v in pairs(dropdown) do
+        if v == player.Name then
+            dropdown[k] = nil
+        end
+    end
+end)
+
+credits:Button("传送到玩家旁边", function()
+    local HumRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
+    local tp_player = game.Players:FindFirstChild(playernamedied)
+    if tp_player and tp_player.Character and tp_player.Character.HumanoidRootPart then
+        HumRoot.CFrame = tp_player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+        Notify("冷", "已经传送到玩家身边", "rbxassetid://", 5)
+    else
+        Notify("冷", "无法传送 玩家已消失", "rbxassetid://", 5)
+    end
+end)
+
+credits:Button("把玩家传送过来", function()
+    local HumRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
+    local tp_player = game.Players:FindFirstChild(playernamedied)
+    if tp_player and tp_player.Character and tp_player.Character.HumanoidRootPart then
+        tp_player.Character.HumanoidRootPart.CFrame = HumRoot.CFrame + Vector3.new(0, 3, 0)
+        Notify("冷", "已传送过来", "rbxassetid://", 5)
+    else
+        Notify("冷", "无法传送 玩家已消失", "rbxassetid://", 5)
+    end
+end)
+
+credits:Toggle("查看玩家", 'Toggleflag', false, function(state)
+    if state then
+        game:GetService('Workspace').CurrentCamera.CameraSubject =
+            game:GetService('Players'):FindFirstChild(playernamedied).Character.Humanoid
+            Notify("冷", "已开启", "rbxassetid://", 5)
+    else
+        Notify("冷", "已关闭", "rbxassetid://", 5)
+        local lp = game.Players.LocalPlayer
+        game:GetService('Workspace').CurrentCamera.CameraSubject = lp.Character.Humanoid
+    end
+end)
+    
 local creds = window:Tab("FE『能用』",'7733765398')
 
 local credits = creds:section("功能",true)
