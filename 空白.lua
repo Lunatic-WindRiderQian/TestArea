@@ -1,5 +1,5 @@
 -- 主脚本
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/your-repo/Fengui.lua/main/Fengui.lua"))()
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/FengYu-3/FengYu-ui/refs/heads/main/Fengui.lua"))()
 
 -- 创建 UI
 local window = library.new(library, "传送测试", 'dark')
