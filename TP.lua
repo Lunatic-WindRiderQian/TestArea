@@ -44,7 +44,7 @@ function Notify(top, text, ico, dur)
   })
 end
 
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/roblox-ye/QQ515966991/refs/heads/main/yeui.lua", true))()
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/FengY4/FengY4/refs/heads/main/Fengui.lua", true))()
 ----------------------------------------------------------------------------------------------------------------------------------------
 local window = library:new("殺脚本(测试版)")--V8
 ----------------------------------------------------------------------------------------------------------------------------------------
