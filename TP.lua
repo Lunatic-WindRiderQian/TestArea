@@ -44,7 +44,7 @@ function Notify(top, text, ico, dur)
   })
 end
 
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/FengYu-3/FengYu-ui/refs/heads/main/Fengui.lua", true))()
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/soda-QISHUI/qishui4/refs/heads/main/%E6%B1%BD%E8%84%9A%E6%9C%AC(%E6%B1%BD%EF%BC%89.lua", true))()
 ----------------------------------------------------------------------------------------------------------------------------------------
 local window = library:new("殺脚本(测试版)")--V8
 ----------------------------------------------------------------------------------------------------------------------------------------
