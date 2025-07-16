@@ -116,33 +116,6 @@ local guestaim = false
 
 
 
-local function initialize()
-    local GUI = Rayfield:CreateWindow({
-		Name = "Applesaken",
-		Theme = "Default",
-		LoadingTitle = "Apple Ware",
-		LoadingSubtitle = "can fart hub please collab already",
-		Icon = "apple",
-		Link = "https://github.com/SilkScripts/AppleStuff/get out of here",
-
-		DisableBuildWarnings = true,
-		DisableRayfieldPrompts = true,
-
-		KeySystem = false,
-		KeySettings = {
-			Title = "Appleware Key or sum",
-			Subtitle = "FART HUB PLEASE COLLABBB",
-			Note = "Join Discord Server To Get Key | https://discord.gg/fGFV3r9yKC",
-			FileName = "Applewarething",
-			SaveKey = true,
-			GrabKeyFromSite = false,
-			Key = {"Apple"}, 
-		},
-	})
-    
-
-    
-
     local function button1() -- creds to ivan
 		local visible = true
 		local sausageHolder = game:GetService("CoreGui").TopBarApp.UnibarLeftFrame.UnibarMenu["2"]
