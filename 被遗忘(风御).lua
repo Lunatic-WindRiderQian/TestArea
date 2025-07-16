@@ -1,4 +1,4 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/FengYu-3/FengYu-ui/refs/heads/main/Fengui.lua'))()
 
 
 local isHighlightActive = false
