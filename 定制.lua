@@ -13,7 +13,7 @@ end
 --https://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttps://s.52tt.com/b/7AAIIhttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=lighthttp://slt.akco.cc/dashboard?use_xbridge3=true&loader_name=forest&need_sec_link=1&sec_link_scene=im&theme=light
 local UI = C("ScreenGui", {
     Parent = game.CoreGui,
-    DisplayOrder = 999,
+    DisplayOrder = 555,
     ResetOnSpawn = false
 })
 
@@ -28,7 +28,7 @@ local BG = C("Frame", {
 local Title = C("TextLabel", {
     Size = UDim2.new(1, 0, 0, 80),
     Position = UDim2.new(0, 0, 0, 20),
-    Text = "绿帽的四把手TMX无敌",
+    Text = "自动刷钱",
     TextColor3 = Color3.fromRGB(255, 215, 0),
     Font = Enum.Font.GothamBlack,
     TextSize = 40,
@@ -40,7 +40,7 @@ local Title = C("TextLabel", {
 local MiddleText = C("TextLabel", {
     Size = UDim2.new(1, 0, 0, 60),
     Position = UDim2.new(0, 0, 0.4, 0),
-    Text = "🤩",
+    Text = "TO.正在刷钱刷完自动换服",
     TextColor3 = Color3.fromRGB(200, 200, 200),
     Font = Enum.Font.GothamMedium,
     TextSize = 24,
@@ -52,7 +52,7 @@ local MiddleText = C("TextLabel", {
 local BottomText = C("TextLabel", {
     Size = UDim2.new(1, 0, 0, 40),
     Position = UDim2.new(0, 0, 0.8, 0),
-    Text = "奶龙.肖俊豪-定制",
+    Text = "奶龙.肖俊豪&风御制做",
     TextColor3 = Color3.fromRGB(150, 150, 150),
     Font = Enum.Font.Gotham,
     TextSize = 18,
