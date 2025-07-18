@@ -21,15 +21,17 @@ Frame.BackgroundColor3 = Color3.fromRGB(163, 255, 137)
 Frame.BorderColor3 = Color3.fromRGB(103, 221, 213)
 Frame.Position = UDim2.new(0.100320168, 0, 0.379746825, 0)
 Frame.Size = UDim2.new(0, 190, 0, 57)
+Frame.BackgroundTransparency = 0.5  -- 设置透明度
 
 up.Name = "up"
 up.Parent = Frame
 up.BackgroundColor3 = Color3.fromRGB(79, 255, 152)
 up.Size = UDim2.new(0, 44, 0, 28)
 up.Font = Enum.Font.SourceSans
-up.Text = "上"
+up.Text = "⬆️"
 up.TextColor3 = Color3.fromRGB(0, 0, 0)
 up.TextSize = 14.000
+up.BackgroundTransparency = 0.5  -- 设置透明度
 
 down.Name = "down"
 down.Parent = Frame
@@ -37,9 +39,10 @@ down.BackgroundColor3 = Color3.fromRGB(215, 255, 121)
 down.Position = UDim2.new(0, 0, 0.491228074, 0)
 down.Size = UDim2.new(0, 44, 0, 28)
 down.Font = Enum.Font.SourceSans
-down.Text = "下"
+down.Text = "⬇️"
 down.TextColor3 = Color3.fromRGB(0, 0, 0)
 down.TextSize = 14.000
+down.BackgroundTransparency = 0.5  -- 设置透明度
 
 onof.Name = "onof"
 onof.Parent = Frame
@@ -50,6 +53,7 @@ onof.Font = Enum.Font.SourceSans
 onof.Text = "飞行"
 onof.TextColor3 = Color3.fromRGB(0, 0, 0)
 onof.TextSize = 14.000
+onof.BackgroundTransparency = 0.5  -- 设置透明度
 
 TextLabel.Parent = Frame
 TextLabel.BackgroundColor3 = Color3.fromRGB(242, 60, 255)
@@ -61,6 +65,7 @@ TextLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 TextLabel.TextScaled = true
 TextLabel.TextSize = 14.000
 TextLabel.TextWrapped = true
+TextLabel.BackgroundTransparency = 0.5  -- 设置透明度
 
 plus.Name = "plus"
 plus.Parent = Frame
@@ -73,6 +78,7 @@ plus.TextColor3 = Color3.fromRGB(0, 0, 0)
 plus.TextScaled = true
 plus.TextSize = 14.000
 plus.TextWrapped = true
+plus.BackgroundTransparency = 0.5  -- 设置透明度
 
 speed.Name = "speed"
 speed.Parent = Frame
@@ -85,6 +91,7 @@ speed.TextColor3 = Color3.fromRGB(0, 0, 0)
 speed.TextScaled = true
 speed.TextSize = 14.000
 speed.TextWrapped = true
+speed.BackgroundTransparency = 0.5  -- 设置透明度
 
 mine.Name = "mine"
 mine.Parent = Frame
@@ -97,6 +104,7 @@ mine.TextColor3 = Color3.fromRGB(0, 0, 0)
 mine.TextScaled = true
 mine.TextSize = 14.000
 mine.TextWrapped = true
+mine.BackgroundTransparency = 0.5  -- 设置透明度
 
 closebutton.Name = "Close"
 closebutton.Parent = main.Frame
@@ -106,6 +114,7 @@ closebutton.Size = UDim2.new(0, 45, 0, 28)
 closebutton.Text = "关闭"
 closebutton.TextSize = 30
 closebutton.Position =  UDim2.new(0, 0, -1, 27)
+closebutton.BackgroundTransparency = 0.5  -- 设置透明度
 
 mini.Name = "minimize"
 mini.Parent = main.Frame
@@ -115,6 +124,7 @@ mini.Size = UDim2.new(0, 45, 0, 28)
 mini.Text = "隐藏"
 mini.TextSize = 40
 mini.Position = UDim2.new(0, 44, -1, 27)
+mini.BackgroundTransparency = 0.5  -- 设置透明度
 
 mini2.Name = "minimize2"
 mini2.Parent = main.Frame
@@ -125,6 +135,7 @@ mini2.Text = "+"
 mini2.TextSize = 40
 mini2.Position = UDim2.new(0, 44, -1, 57)
 mini2.Visible = false
+mini2.BackgroundTransparency = 0.5  -- 设置透明度
 
 speeds = 1
 
@@ -136,8 +147,8 @@ local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
 nowe = false
 
 game:GetService("StarterGui"):SetCore("SendNotification", { 
-	Title = "Fly GUI V3";
-	Text = "By me_ozone and Quandale The Dinglish XII#3550";
+	Title = "殺脚本";
+	Text = "已为您开启飞行";
 	Icon = "rbxthumb://type=Asset&id=5107182114&w=150&h=150"})
 Duration = 5;
 
