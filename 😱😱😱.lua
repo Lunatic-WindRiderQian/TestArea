@@ -162,8 +162,6 @@ game:GetService("RunService").Heartbeat:Connect(function()
   end
 end)
 
-local function scripts()	
-
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/FengYu-3/FengYu-ui/refs/heads/main/Fengui.lua", true))()
 ----------------------------------------------------------------------------------------------------------------------------------------
 local window = library:new("殺脚本")--测试版本
@@ -518,7 +516,6 @@ end)
   
 local credits = creds:section("旋转区",false)
 
-credits:Label("只有两个其他没加")
 credits:Textbox("旋转速度", "SpinSpeed", "输入", function(Value)
     local speed = tonumber(Value)
     local plr = game:GetService("Players").LocalPlayer
