@@ -28,7 +28,7 @@ function Ripple(obj)
 		Ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 		Ripple.BackgroundTransparency = 1.000
 		Ripple.ZIndex = 8
-		Ripple.Image = "rbxassetid://84830962019412"
+		Ripple.Image = "rbxassetid://98986762470278"
 		Ripple.ImageTransparency = 0.800
 		Ripple.ScaleType = Enum.ScaleType.Fit
 		Ripple.ImageColor3 = Color3.fromRGB(255, 255, 255)
@@ -119,12 +119,12 @@ function library.new(library, name, theme)
 			v:Destroy()
 		end
 	end
--------------------------FENGYU TEAM------------------------------
+
 	local config = {
 		MainColor = Color3.fromRGB(16, 16, 16),
 		TabColor = Color3.fromRGB(22, 22, 22),
 		Bg_Color = Color3.fromRGB(17, 17, 17),
-		Zy_Color = Color3.fromRGB(17, 17, 17), -- 主要颜色
+		Zy_Color = Color3.fromRGB(17, 17, 17), 
 
 		Button_Color = Color3.fromRGB(22, 22, 22),
 		Textbox_Color = Color3.fromRGB(22, 22, 22),
@@ -139,8 +139,7 @@ function library.new(library, name, theme)
 		Toggle_Off = Color3.fromRGB(34, 34, 34),
 		Toggle_On = Color3.fromRGB(37, 254, 152),
 	}
--------------------------FENGYU TEAM------------------------------
-	local SA = Instance.new("ScreenGui")
+	local KG = Instance.new("ScreenGui")
 	local Main = Instance.new("Frame")
 	local TabMain = Instance.new("Frame")
 	local MainC = Instance.new("UICorner")
@@ -162,8 +161,8 @@ function library.new(library, name, theme)
 	if syn and syn.protect_gui then
 		syn.protect_gui(KG)
 	end
-	SA.Name = "REN"
-	SA.Parent = services.CoreGui
+	KG.Name = "REN"
+	KG.Parent = services.CoreGui
 	function UiDestroy()
 		KG:Destroy()
 	end
@@ -197,7 +196,7 @@ function library.new(library, name, theme)
 	local UICorner = Instance.new("UICorner")
 
 	Open.Name = "Open"
-	Open.Parent = SA
+	Open.Parent = KG
 	Open.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	Open.BackgroundTransparency = 1
 	Open.Position = UDim2.new(0.00829315186, 0, 0.13107837, 0)
@@ -212,9 +211,6 @@ function library.new(library, name, theme)
 
 	UICorner.Parent = Open
 	
-
-
-
 	drag(Main)
 	UICornerMain.Parent = Main
 	UICornerMain.CornerRadius = UDim.new(0, 3)
@@ -321,8 +317,7 @@ function library.new(library, name, theme)
 		TabIco.BackgroundTransparency = 1.000
 		TabIco.BorderSizePixel = 0
 		TabIco.Size = UDim2.new(0, 24, 0, 24)
-		TabIco.Image = "rbxassetid://84830962019412"
-        --TabIco.Image = ("rbxassetid://%s"):format((icon or 128586210657724))
+		TabIco.Image = ("rbxassetid://%s"):format((icon or 4370341699))
 		TabIco.ImageTransparency = 0.2
 		TabText.Name = "TabText"
 		TabText.Parent = TabIco
