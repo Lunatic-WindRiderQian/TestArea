@@ -160,24 +160,24 @@ function library.new(library, name, theme)
 
 
 	if syn and syn.protect_gui then
-		syn.protect_gui(feng)
+		syn.protect_gui(KG)
 	end
 	SA.Name = "REN"
 	SA.Parent = services.CoreGui
 	function UiDestroy()
-		feng:Destroy()
+		KG:Destroy()
 	end
 	function ToggleUILib()
 		if not ToggleUI then
-			feng.Enabled = false
+			KG.Enabled = false
 			ToggleUI = true
 		else
 			ToggleUI = false
-			feng.Enabled = true
+			KG.Enabled = true
 		end
 	end
 	Main.Name = "Main"
-	Main.Parent = feng
+	Main.Parent = KG
 	Main.AnchorPoint = Vector2.new(0.5, 0.5)
 	Main.BackgroundColor3 = config.Bg_Color
 	Main.BorderColor3 = config.MainColor
@@ -504,7 +504,7 @@ function library.new(library, name, theme)
 				local enabled = enabled or false
 				assert(text, "No text provided")
 				assert(flag, "No flag provided")
-				library.flafeng[flag] = enabled
+				library.flaKG[flag] = enabled
 
 				local ToggleModule = Instance.new("Frame")
 				local ToggleBtn = Instance.new("TextButton")
@@ -553,9 +553,9 @@ function library.new(library, name, theme)
 				local funcs = {
 					SetState = function(self, state)
 						if state == nil then
-							state = not library.flafeng[flag]
+							state = not library.flaKG[flag]
 						end
-						if library.flafeng[flag] == state then
+						if library.flaKG[flag] == state then
 							return
 						end
 						services.TweenService
@@ -564,7 +564,7 @@ function library.new(library, name, theme)
 								BackgroundColor3 = (state and config.Toggle_On or config.Toggle_Off),
 							})
 							:Play()
-						library.flafeng[flag] = state
+						library.flaKG[flag] = state
 						callback(state)
 					end,
 					Module = ToggleModule,
@@ -695,7 +695,7 @@ function library.new(library, name, theme)
 				assert(text, "No text provided")
 				assert(flag, "No flag provided")
 				assert(default, "No default text provided")
-				library.flafeng[flag] = default
+				library.flaKG[flag] = default
 				local TextboxModule = Instance.new("Frame")
 				local TextboxBack = Instance.new("TextButton")
 				local TextboxBackC = Instance.new("UICorner")
@@ -760,7 +760,7 @@ function library.new(library, name, theme)
 					if TextBox.Text == "" then
 						TextBox.Text = default
 					end
-					library.flafeng[flag] = TextBox.Text
+					library.flaKG[flag] = TextBox.Text
 					callback(TextBox.Text)
 				end)
 				TextBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
@@ -774,7 +774,7 @@ function library.new(library, name, theme)
 				local max = max or 10
 				local default = default or min
 				local precise = precise or false
-				library.flafeng[flag] = default
+				library.flaKG[flag] = default
 				assert(text, "No text provided")
 				assert(flag, "No flag provided")
 				assert(default, "No default value provided")
@@ -890,19 +890,19 @@ function library.new(library, name, theme)
 						else
 							value = value or math.floor(min + (max - min) * percent)
 						end
-						library.flafeng[flag] = tonumber(value)
+						library.flaKG[flag] = tonumber(value)
 						SliderValue.Text = tostring(value)
 						SliderPart.Size = UDim2.new(percent, 0, 1, 0)
 						callback(tonumber(value))
 					end,
 				}
 				MinSlider.MouseButton1Click:Connect(function()
-					local currentValue = library.flafeng[flag]
+					local currentValue = library.flaKG[flag]
 					currentValue = math.clamp(currentValue - 1, min, max)
 					funcs:SetValue(currentValue)
 				end)
 				AddSlider.MouseButton1Click:Connect(function()
-					local currentValue = library.flafeng[flag]
+					local currentValue = library.flaKG[flag]
 					currentValue = math.clamp(currentValue + 1, min, max)
 					funcs:SetValue(currentValue)
 				end)
@@ -953,10 +953,10 @@ function library.new(library, name, theme)
 					if not boxFocused then
 						return
 					end
-					SliderValue.Text = SliderValue.Text:fengub("%D+", "")
+					SliderValue.Text = SliderValue.Text:KGub("%D+", "")
 					local text = SliderValue.Text
 					if not tonumber(text) then
-						SliderValue.Text = SliderValue.Text:fengub("%D+", "")
+						SliderValue.Text = SliderValue.Text:KGub("%D+", "")
 					elseif not allowed[text] then
 						if tonumber(text) > max then
 							text = max
@@ -972,7 +972,7 @@ function library.new(library, name, theme)
 				local options = options or {}
 				assert(text, "No text provided")
 				assert(flag, "No flag provided")
-				library.flafeng[flag] = nil
+				library.flaKG[flag] = nil
 				local DropdownModule = Instance.new("Frame")
 				local DropdownTop = Instance.new("TextButton")
 				local DropdownTopC = Instance.new("UICorner")
@@ -1111,7 +1111,7 @@ function library.new(library, name, theme)
 						ToggleDropVis()
 						callback(Option.Text)
 						DropdownText.Text = Option.Text
-						library.flafeng[flag] = Option.Text
+						library.flaKG[flag] = Option.Text
 					end)
 				end
 				funcs.RemoveOption = function(self, option)
