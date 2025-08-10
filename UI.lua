@@ -247,89 +247,84 @@ RunService.Heartbeat:Connect(function(deltaTime)
     end
 end)
 
--- ===== 右侧特效（极致美化版）=====
+-- ============= 右侧特效（高级科技感美化版） =============
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(10, 0, 15)  -- 深紫黑背景
+RightEffects.BackgroundColor3 = Color3.fromRGB(10, 10, 15)  -- 深色背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
--- 1. 动态光纹背景
-local LightPattern = Instance.new("ImageLabel")
-LightPattern.Name = "LightPattern"
-LightPattern.Parent = RightEffects
-LightPattern.Image = "rbxassetid://13099879784"
-LightPattern.ImageColor3 = Color3.fromRGB(50, 0, 60)
-LightPattern.ImageTransparency = 0.92
-LightPattern.ScaleType = Enum.ScaleType.Tile
-LightPattern.TileSize = UDim2.new(0, 100, 0, 100)
-LightPattern.Size = UDim2.new(1, 0, 1, 0)
-LightPattern.ZIndex = 1
+-- 1. 网格背景
+local GridPattern = Instance.new("ImageLabel")
+GridPattern.Name = "GridPattern"
+GridPattern.Parent = RightEffects
+GridPattern.Image = "rbxassetid://13099879784"  -- 网格纹理
+GridPattern.ImageColor3 = Color3.fromRGB(20, 20, 30)
+GridPattern.ImageTransparency = 0.9
+GridPattern.ScaleType = Enum.ScaleType.Tile
+GridPattern.TileSize = UDim2.new(0, 100, 0, 100)
+GridPattern.Size = UDim2.new(1, 0, 1, 0)
+GridPattern.ZIndex = 1
 
--- 2. 全息粒子系统（50个粒子）
+-- 2. 动态粒子系统
 local particles = {}
-for i = 1, 50 do  -- 粒子数量拉满
+for i = 1, 30 do
     local p = Instance.new("Frame")
-    p.Name = "GlowParticle_"..i
+    p.Name = "TechParticle_"..i
     p.Parent = RightEffects
-    p.BackgroundColor3 = Color3.fromHSV(i/50, 0.8, 0.9)
-    p.Size = UDim2.new(0, math.random(2,5), 0, math.random(2,5))
+    p.BackgroundColor3 = Color3.fromHSV(i/30, 0.7, 0.8)
+    p.Size = UDim2.new(0, math.random(2,4), 0, math.random(2,4))
     p.Position = UDim2.new(math.random(), 0, math.random(), 0)
     p.ZIndex = 3
     
     table.insert(particles, {
         obj = p,
         speed = Vector2.new(
-            (math.random()-0.5)*0.008,
-            (math.random()-0.5)*0.008
-        ),
-        sizePulse = math.random() > 0.5
+            (math.random()-0.5)*0.005,
+            (math.random()-0.5)*0.005
+        )
     })
 end
 
--- 3. 流光轨迹
-local flowLines = {}
-for i = 1, 8 do  -- 8条流动光带
-    local line = Instance.new("Frame")
-    line.Name = "FlowLine_"..i
-    line.Parent = RightEffects
-    line.BackgroundColor3 = Color3.fromRGB(100, 0, 150)
-    line.BackgroundTransparency = 0.7
-    line.Size = UDim2.new(0.5, 0, 0, 1)
-    line.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    line.ZIndex = 2
-    
-    table.insert(flowLines, {
-        obj = line,
-        speed = math.random(10, 20)/10
-    })
-end
+-- 3. 扫描线效果
+local ScanLine = Instance.new("Frame")
+ScanLine.Name = "ScanLine"
+ScanLine.Parent = RightEffects
+ScanLine.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+ScanLine.BackgroundTransparency = 0.9
+ScanLine.Size = UDim2.new(1, 0, 0, 1)
+ScanLine.ZIndex = 4
 
--- 4. 脉冲核心光效
+-- 4. 中心光晕
 local CoreGlow = Instance.new("Frame")
 CoreGlow.Name = "CoreGlow"
 CoreGlow.Parent = RightEffects
 CoreGlow.AnchorPoint = Vector2.new(0.5,0.5)
-CoreGlow.BackgroundColor3 = Color3.fromRGB(150, 0, 200)
-CoreGlow.BackgroundTransparency = 0.9
-CoreGlow.Size = UDim2.new(0, 200, 0, 200)
+CoreGlow.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+CoreGlow.BackgroundTransparency = 0.95
+CoreGlow.Size = UDim2.new(0, 300, 0, 300)
 CoreGlow.Position = UDim2.new(0.7, 0, 0.5, 0)
 CoreGlow.ZIndex = 0
 
--- 5. 科技感扫描线
-local ScanLine = Instance.new("Frame")
-ScanLine.Name = "ScanLine"
-ScanLine.Parent = RightEffects
-ScanLine.BackgroundColor3 = Color3.fromRGB(100, 50, 255)
-ScanLine.BackgroundTransparency = 0.8
-ScanLine.Size = UDim2.new(1, 0, 0, 1)
-ScanLine.ZIndex = 4
+-- 5. 装饰性文字
+local DecorText = Instance.new("TextLabel")
+DecorText.Name = "DecorText"
+DecorText.Parent = RightEffects
+DecorText.BackgroundTransparency = 1
+DecorText.Position = UDim2.new(0.02, 0, 0.02, 0)
+DecorText.Size = UDim2.new(0.3, 0, 0.05, 0)
+DecorText.Font = Enum.Font.GothamBold
+DecorText.Text = "SYSTEM ACTIVE"
+DecorText.TextColor3 = Color3.fromRGB(100, 150, 255)
+DecorText.TextSize = 14
+DecorText.TextXAlignment = Enum.TextXAlignment.Left
+DecorText.TextTransparency = 0.5
 
--- 统一动画控制器
+-- 动画控制器
 game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
-    -- 粒子系统
+    -- 粒子动画
     for _, p in ipairs(particles) do
         local pos = p.obj.Position
         local newPos = UDim2.new(
@@ -344,45 +339,17 @@ game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
         if newPos.Y.Scale < 0 or newPos.Y.Scale > 1 then p.speed = Vector2.new(p.speed.X, -p.speed.Y) end
         
         p.obj.Position = newPos
-        
-        -- 尺寸脉动
-        if p.sizePulse then
-            local scale = 0.8 + math.abs(math.sin(os.clock()*2))*0.2
-            p.obj.Size = UDim2.new(0, p.obj.Size.X.Offset*scale, 0, p.obj.Size.Y.Offset*scale)
-        end
     end
-    
-    -- 流光轨迹
-    for _, line in ipairs(flowLines) do
-        local x = line.obj.Position.X.Scale + line.speed * deltaTime
-        if x > 1.5 then x = -0.5 end
-        line.obj.Position = UDim2.new(x, 0, line.obj.Position.Y.Scale, 0)
-    end
-    
-    -- 核心脉冲
-    CoreGlow.BackgroundTransparency = 0.85 + math.sin(os.clock())*0.05
-    CoreGlow.Size = UDim2.new(0, 200 + math.sin(os.clock()*2)*20, 0, 200 + math.sin(os.clock()*2)*20)
     
     -- 扫描线动画
-    ScanLine.Position = UDim2.new(0, 0, ScanLine.Position.Y.Scale + 0.005, 0)
+    ScanLine.Position = UDim2.new(0, 0, ScanLine.Position.Y.Scale + 0.003, 0)
     if ScanLine.Position.Y.Scale > 1 then
         ScanLine.Position = UDim2.new(0, 0, 0, 0)
-        ScanLine.BackgroundTransparency = math.random(70, 90)/100
     end
+    
+    -- 核心光晕脉动
+    CoreGlow.BackgroundTransparency = 0.92 + math.sin(os.clock()*2)*0.03
 end)
-
--- 6. 装饰性UI元素
-local DecorText = Instance.new("TextLabel")
-DecorText.Name = "DecorText"
-DecorText.Parent = RightEffects
-DecorText.BackgroundTransparency = 1
-DecorText.Position = UDim2.new(0.02, 0, 0.02, 0)
-DecorText.Size = UDim2.new(0.3, 0, 0.05, 0)
-DecorText.Font = Enum.Font.GothamBold
-DecorText.Text = "SYSTEM ACTIVATED"
-DecorText.TextColor3 = Color3.fromRGB(180, 100, 255)
-DecorText.TextSize = 14
-DecorText.TextXAlignment = Enum.TextXAlignment.Left
 -- ============= 结束 =============
 
     if syn and syn.protect_gui then
