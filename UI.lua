@@ -238,109 +238,113 @@ spawn(function()
     end
 end)
 
--- 右侧黑色特效区域
+-- ============= 修改后的右侧背景 =============
+-- 右侧特效区域 (完全移除白块)
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- 纯黑背景
+RightEffects.BackgroundColor3 = Color3.fromRGB(12, 12, 12) -- 深灰背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
+RightEffects.ClipsDescendants = true
 
--- 黑色网格背景 (移除原来的白色倾斜块)
-local BlackGrid = Instance.new("ImageLabel")
-BlackGrid.Name = "BlackGrid"
-BlackGrid.Parent = RightEffects
-BlackGrid.Image = "rbxassetid://13099879784"
-BlackGrid.ImageColor3 = Color3.fromRGB(20, 20, 20) -- 深灰色网格
-BlackGrid.ImageTransparency = 0.97 -- 几乎透明
-BlackGrid.ScaleType = Enum.ScaleType.Tile
-BlackGrid.TileSize = UDim2.new(0, 150, 0, 150)
-BlackGrid.Size = UDim2.new(1, 0, 1, 0)
-BlackGrid.ZIndex = 1
+-- 添加边缘跳动滑块
+local edgeSliders = {
+    -- 上边缘滑块
+    {name = "TopSlider", position = UDim2.new(0, 0, 0, -2), size = UDim2.new(1, 0, 0, 2), axis = "X"},
+    -- 右边缘滑块
+    {name = "RightSlider", position = UDim2.new(1, 0, 0, 0), size = UDim2.new(0, 2, 1, 0), axis = "Y"},
+    -- 下边缘滑块
+    {name = "BottomSlider", position = UDim2.new(0, 0, 1, 0), size = UDim2.new(1, 0, 0, 2), axis = "X"}
+}
 
--- 红色流动线条 (保留之前的红色特效)
-local redLines = {}
-for i = 1, 5 do
-    local line = Instance.new("Frame")
-    line.Name = "RedLine_"..i
-    line.Parent = RightEffects
-    line.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    line.BackgroundTransparency = 0.7
-    line.BorderSizePixel = 0
-    line.Size = UDim2.new(0, math.random(2, 4), 0, math.random(100, 200))
-    line.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    line.ZIndex = 2
-    line.Rotation = math.random(-15, 15)
+-- 创建滑块
+for _, slider in ipairs(edgeSliders) do
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Name = slider.name
+    sliderFrame.Parent = RightEffects
+    sliderFrame.BackgroundColor3 = Color3.fromRGB(37, 254, 152) -- 绿色
+    sliderFrame.BorderSizePixel = 0
+    sliderFrame.Position = slider.position
+    sliderFrame.Size = slider.size
+    sliderFrame.ZIndex = 5
     
-    table.insert(redLines, {
-        object = line,
-        speedX = math.random(-3, 3)/10,
-        speedY = math.random(-3, 3)/10
-    })
-end
-
--- 黑色数据块效果 (替代原来的白块)
-local dataBlocks = {}
-for i = 1, 8 do
-    local block = Instance.new("Frame")
-    block.Name = "DataBlock_"..i
-    block.Parent = RightEffects
-    block.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- 深灰色块
-    block.BorderSizePixel = 0
-    block.Size = UDim2.new(0, math.random(30, 80), 0, math.random(10, 30))
-    block.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    block.ZIndex = 2
+    -- 滑块光晕效果
+    local glow = Instance.new("Frame")
+    glow.Name = "Glow"
+    glow.Parent = sliderFrame
+    glow.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+    glow.BackgroundTransparency = 0.7
+    glow.BorderSizePixel = 0
+    glow.Size = UDim2.new(1, 0, 1, 0)
+    glow.ZIndex = 4
     
-    -- 添加内部数字
-    local number = Instance.new("TextLabel")
-    number.Name = "Number"
-    number.Parent = block
-    number.BackgroundTransparency = 1
-    number.Size = UDim2.new(1, 0, 1, 0)
-    number.Font = Enum.Font.Code
-    number.Text = tostring(math.random(0, 1)) -- 0或1
-    number.TextColor3 = Color3.fromRGB(100, 100, 100) -- 灰色文字
-    number.TextSize = math.random(10, 14)
-    
-    table.insert(dataBlocks, {
-        object = block,
-        speed = math.random(1, 5)/10
-    })
-end
-
--- 数据块动画
-spawn(function()
-    while wait(0.05) do
-        for _, block in ipairs(dataBlocks) do
-            block.object.Position = block.object.Position + UDim2.new(0, 0, 0, block.speed)
+    -- 滑块动画
+    spawn(function()
+        local moveDistance = (slider.axis == "X") and RightEffects.AbsoluteSize.X or RightEffects.AbsoluteSize.Y
+        local speed = math.random(50, 80)/100
+        local direction = 1
+        
+        while wait(0.02) do
+            if slider.axis == "X" then
+                sliderFrame.Position = sliderFrame.Position + UDim2.new(0, speed * direction, 0, 0)
+                
+                -- 边界检查
+                if direction == 1 and sliderFrame.Position.X.Offset >= moveDistance then
+                    direction = -1
+                elseif direction == -1 and sliderFrame.Position.X.Offset <= 0 then
+                    direction = 1
+                end
+            else
+                sliderFrame.Position = sliderFrame.Position + UDim2.new(0, 0, 0, speed * direction)
+                
+                -- 边界检查
+                if direction == 1 and sliderFrame.Position.Y.Offset >= moveDistance then
+                    direction = -1
+                elseif direction == -1 and sliderFrame.Position.Y.Offset <= 0 then
+                    direction = 1
+                end
+            end
             
-            -- 重置位置到顶部
-            if block.object.Position.Y.Offset > RightEffects.AbsoluteSize.Y then
-                block.object.Position = UDim2.new(math.random(), 0, -0.2, -math.random(20, 100))
-                block.object:FindFirstChild("Number").Text = tostring(math.random(0, 1))
+            -- 随机改变速度
+            if math.random(1, 30) == 1 then
+                speed = math.random(50, 80)/100
             end
         end
-    end
-end)
+    end)
+end
 
--- 流动线条动画 (保持不变)
-spawn(function()
-    while wait(0.03) do
-        for _, line in ipairs(redLines) do
-            line.object.Position = line.object.Position + UDim2.new(0, line.speedX, 0, line.speedY)
+-- 保留的数字雨效果 (左侧保持不变)
+-- 保留的红色粒子效果 (但减少数量)
+for i = 1, 15 do  -- 减少到15个粒子
+    local particle = Instance.new("Frame")
+    particle.Name = "RedParticle_"..i
+    particle.Parent = RightEffects
+    particle.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    particle.BackgroundTransparency = 0.85  -- 更透明
+    particle.Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4))
+    particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    particle.ZIndex = 2
+    
+    -- 粒子动画 (保持不变)
+    spawn(function()
+        local speedX = math.random(-5, 5)/100
+        local speedY = math.random(-5, 5)/100
+        while wait(0.05) do
+            particle.Position = particle.Position + UDim2.new(0, speedX, 0, speedY)
             
-            -- 边界检查并重置位置
-            if line.object.Position.X.Scale > 1.2 or line.object.Position.X.Scale < -0.2 or
-               line.object.Position.Y.Scale > 1.2 or line.object.Position.Y.Scale < -0.2 then
-                line.object.Position = UDim2.new(math.random(), 0, math.random(), 0)
-                line.speedX = math.random(-3, 3)/10
-                line.speedY = math.random(-3, 3)/10
+            -- 边界检查
+            if particle.Position.X.Scale < 0 or particle.Position.X.Scale > 1 then
+                speedX = -speedX
+            end
+            if particle.Position.Y.Scale < 0 or particle.Position.Y.Scale > 1 then
+                speedY = -speedY
             end
         end
-    end
-end)
+    end)
+end
 
--- 右侧装饰性文字 (暗红色)
+-- 右侧装饰性文字
 local DecorText = Instance.new("TextLabel")
 DecorText.Name = "DecorText"
 DecorText.Parent = RightEffects
@@ -348,13 +352,13 @@ DecorText.BackgroundTransparency = 1
 DecorText.Position = UDim2.new(0.8, 0, 0.9, 0)
 DecorText.Size = UDim2.new(0.2, 0, 0.1, 0)
 DecorText.Font = Enum.Font.GothamSemibold
-DecorText.Text = "BETA"
-DecorText.TextColor3 = Color3.fromRGB(80, 0, 0) -- 暗红色文字
+DecorText.Text = "v1.0.0"
+DecorText.TextColor3 = Color3.fromRGB(100, 100, 100)
 DecorText.TextSize = 12
 DecorText.TextTransparency = 0.7
 DecorText.TextXAlignment = Enum.TextXAlignment.Right
 DecorText.ZIndex = 2
--- ============= 修改结束 ============
+-- ============= 修改结束 =============
 
     if syn and syn.protect_gui then
         syn.protect_gui(FengYu)
