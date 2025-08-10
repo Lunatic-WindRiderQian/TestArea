@@ -165,8 +165,63 @@ function library.new(library, name, theme)
 	local UIGradient = Instance.new("UIGradient")
 	local UIGradientTitle = Instance.new("UIGradient")
 
+    -- 新增的现代化背景元素
+    local BackgroundPattern = Instance.new("ImageLabel")
+    BackgroundPattern.Name = "BackgroundPattern"
+    BackgroundPattern.Parent = Main
+    BackgroundPattern.BackgroundTransparency = 1
+    BackgroundPattern.Size = UDim2.new(1, 0, 1, 0)
+    BackgroundPattern.ZIndex = 0
+    BackgroundPattern.Image = "rbxassetid://13099879784"  -- 网格图案
+    BackgroundPattern.ImageColor3 = Color3.fromRGB(30, 30, 30)
+    BackgroundPattern.ImageTransparency = 0.9
+    BackgroundPattern.ScaleType = Enum.ScaleType.Tile
+    BackgroundPattern.TileSize = UDim2.new(0, 100, 0, 100)
+    
+    local BackgroundOverlay = Instance.new("Frame")
+    BackgroundOverlay.Name = "BackgroundOverlay"
+    BackgroundOverlay.Parent = Main
+    BackgroundOverlay.BackgroundColor3 = config.Bg_Color
+    BackgroundOverlay.BackgroundTransparency = 0.3
+    BackgroundOverlay.Size = UDim2.new(1, 0, 1, 0)
+    BackgroundOverlay.ZIndex = 1
+    
+    local BackgroundGradient = Instance.new("UIGradient")
+    BackgroundGradient.Name = "BackgroundGradient"
+    BackgroundGradient.Parent = BackgroundOverlay
+    BackgroundGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 15, 15)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 10))
+    }
+    BackgroundGradient.Rotation = 90
+    
+    -- 添加边框效果
+    local Border = Instance.new("Frame")
+    Border.Name = "Border"
+    Border.Parent = Main
+    Border.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+    Border.BackgroundTransparency = 0.8
+    Border.BorderSizePixel = 0
+    Border.Position = UDim2.new(0, -1, 0, -1)
+    Border.Size = UDim2.new(1, 2, 1, 2)
+    Border.ZIndex = -1
+    
+    local BorderGradient = Instance.new("UIGradient")
+    BorderGradient.Name = "BorderGradient"
+    BorderGradient.Parent = Border
+    BorderGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(37, 254, 152)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 200, 255))
+    }
+    BorderGradient.Rotation = 90
+    
+    -- 更新圆角设置
+    UICornerMain.CornerRadius = UDim.new(0, 8)
+    local BorderCorner = Instance.new("UICorner")
+    BorderCorner.Parent = Border
+    BorderCorner.CornerRadius = UDim.new(0, 8)
 
-	if syn and syn.protect_gui then
+if syn and syn.protect_gui then
     syn.protect_gui(FengYu)
 end
 if protect_gui then
@@ -209,85 +264,6 @@ end
 		end
 	end)
 
-	-- ==================== 新增背景美化部分 ====================
-	-- 创建美化背景容器
-	local Background = Instance.new("Frame")
-	Background.Name = "Background"
-	Background.Parent = Main
-	Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-	Background.BackgroundTransparency = 0.5
-	Background.Size = UDim2.new(1, 0, 1, 0)
-	Background.ZIndex = 0
-
-	-- 创建背景模糊效果
-	local Blur = Instance.new("BlurEffect")
-	Blur.Name = "BackgroundBlur"
-	Blur.Parent = Background
-	Blur.Size = 24
-	Blur.Enabled = true
-
-	-- 创建粒子发射器
-	local ParticleEmitter = Instance.new("ParticleEmitter")
-	ParticleEmitter.Name = "BackgroundParticles"
-	ParticleEmitter.Parent = Background
-	ParticleEmitter.LightEmission = 0.8
-	ParticleEmitter.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.5),
-		NumberSequenceKeypoint.new(1, 1.5)
-	})
-	ParticleEmitter.Texture = "rbxassetid://84830962019412" -- 使用您的红色粒子纹理
-	ParticleEmitter.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
-		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(37, 254, 152)), -- 使用您的主题绿色
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 50, 50))
-	})
-	ParticleEmitter.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.3),
-		NumberSequenceKeypoint.new(1, 0.8)
-	})
-	ParticleEmitter.Lifetime = NumberRange.new(5, 8)
-	ParticleEmitter.Rate = 20
-	ParticleEmitter.Rotation = NumberRange.new(0, 360)
-	ParticleEmitter.Speed = NumberRange.new(10, 20)
-	ParticleEmitter.SpreadAngle = Vector2.new(180, 180)
-	ParticleEmitter.Shape = Enum.ParticleEmitterShape.Disc
-	ParticleEmitter.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
-	ParticleEmitter.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
-	ParticleEmitter.EmissionDirection = Enum.NormalId.Top
-
-	-- 创建动态网格背景
-	local Grid = Instance.new("ImageLabel")
-	Grid.Name = "DynamicGrid"
-	Grid.Parent = Background
-	Grid.BackgroundTransparency = 1
-	Grid.Size = UDim2.new(1, 0, 1, 0)
-	Grid.Image = "rbxassetid://8990986373" -- 使用网格纹理
-	Grid.ImageColor3 = Color3.fromRGB(20, 20, 20)
-	Grid.ImageTransparency = 0.7
-	Grid.TileSize = UDim2.new(0, 100, 0, 100)
-
-	-- 创建动画效果
-	spawn(function()
-		while wait(0.1) and Background and Background.Parent do
-			-- 粒子颜色动态变化
-			ParticleEmitter.Color = ColorSequence.new({
-				ColorSequenceKeypoint.new(0, Color3.fromRGB(math.random(200, 255), 50, 50)),
-				ColorSequenceKeypoint.new(0.5, Color3.fromRGB(37, 254, 152)),
-				ColorSequenceKeypoint.new(1, Color3.fromRGB(math.random(200, 255), 50, 50))
-			})
-			
-			-- 网格轻微动画
-			Grid.Rotation = Grid.Rotation + 0.1
-		end
-	end)
-
-	-- 确保背景在所有其他元素之下
-	for _, child in pairs(Main:GetChildren()) do
-		if child ~= Background and child:IsA("GuiObject") then
-			child.ZIndex = child.ZIndex + 1
-		end
-	end
-	-- ==================== 背景美化部分结束 ====================
 
 	local Open = Instance.new("ImageButton")
 	local UICorner = Instance.new("UICorner")
@@ -439,6 +415,10 @@ end
 		TabBtn.Text = ""
 		TabBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 		TabBtn.TextSize = 14.000
+		TabL.Name = "TabL"
+		TabL.Parent = Tab
+		TabL.SortOrder = Enum.SortOrder.LayoutOrder
+		TabL.Padding = UDim.new(0, 4)
 		TabBtn.MouseButton1Click:Connect(function()
 			spawn(function()
 				Ripple(TabBtn)
