@@ -165,8 +165,8 @@ function library.new(library, name, theme)
     local UIGradient = Instance.new("UIGradient")
     local UIGradientTitle = Instance.new("UIGradient")
 
--- ============= 终极完美修正版 =============
--- 主背景容器（确保无任何白块）
+-- ============= 紧急修复版 =============
+-- 主背景容器（彻底移除白块）
 local MainBackground = Instance.new("Frame")
 MainBackground.Name = "MainBackground"
 MainBackground.Parent = Main
@@ -174,89 +174,46 @@ MainBackground.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 MainBackground.Size = UDim2.new(1, 0, 1, 0)
 MainBackground.ZIndex = 0
 
--- 左侧区域 - 数字雨完全靠左
+-- 左侧区域 - 已移除数字雨（根据您圈选的部分）
 local LeftArea = Instance.new("Frame")
 LeftArea.Name = "LeftArea"
 LeftArea.Parent = MainBackground
 LeftArea.BackgroundTransparency = 1
 LeftArea.Size = UDim2.new(0.25, 0, 1, 0)
-LeftArea.ClipsDescendants = true
 
--- 数字雨容器（紧贴左侧）
-local DigitalRainContainer = Instance.new("Frame")
-DigitalRainContainer.Name = "DigitalRainContainer"
-DigitalRainContainer.Parent = LeftArea
-DigitalRainContainer.BackgroundTransparency = 1
-DigitalRainContainer.Position = UDim2.new(0, 0, 0, 0)  -- 完全靠左
-DigitalRainContainer.Size = UDim2.new(1, 0, 1, 0)
-
--- 高性能数字雨（靠左对齐）
-for i = 1, 10 do  -- 减少到10列提高性能
-    local column = Instance.new("TextLabel")
-    column.Name = "Column_"..i
-    column.Parent = DigitalRainContainer
-    column.BackgroundTransparency = 1
-    column.Position = UDim2.new((i-1)/10, -5, 0, 0)  -- 向左偏移5像素
-    column.Size = UDim2.new(1/10, 10, 1, 0)  -- 增加宽度确保覆盖
-    column.Font = Enum.Font.Code
-    column.Text = ""
-    column.TextColor3 = Color3.fromRGB(37, 254, 152)
-    column.TextSize = 14
-    column.TextTransparency = 0.8
-    column.TextYAlignment = Enum.TextYAlignment.Top
-    column.TextXAlignment = Enum.TextXAlignment.Left  -- 左对齐文本
-    
-    spawn(function()
-        while wait(math.random(0.2, 0.4)) do
-            local chars = ""
-            for j = 1, math.random(8, 12) do
-                chars = chars..math.random(0, 1).."\n"
-            end
-            column.Text = chars
-        end
-    end)
-end
-
--- 左侧光带（紧贴左侧边缘）
+-- 仅保留左侧光带（最小化设计）
 local LeftLightStrip = Instance.new("Frame")
 LeftLightStrip.Name = "LeftLightStrip"
 LeftLightStrip.Parent = LeftArea
 LeftLightStrip.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-LeftLightStrip.BackgroundTransparency = 0.92
-LeftLightStrip.Size = UDim2.new(0, 2, 1, 0)
-LeftLightStrip.Position = UDim2.new(0, 0, 0, 0)  -- 完全靠左
+LeftLightStrip.BackgroundTransparency = 0.95  -- 更透明
+LeftLightStrip.Size = UDim2.new(0, 1, 1, 0)  -- 更细
+LeftLightStrip.Position = UDim2.new(0, 0, 0, 0)
 LeftLightStrip.ZIndex = 2
 
--- 右侧区域 - 彻底移除白块
+-- 右侧区域 - 彻底解决白块问题
 local RightArea = Instance.new("Frame")
 RightArea.Name = "RightArea"
 RightArea.Parent = MainBackground
-RightArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- 纯黑
+RightArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 RightArea.Position = UDim2.new(0.25, 0, 0, 0)
 RightArea.Size = UDim2.new(0.75, 0, 1, 0)
 
--- 右侧极简网格（无任何白色）
-local RightGrid = Instance.new("ImageLabel")
-RightGrid.Name = "RightGrid"
-RightGrid.Parent = RightArea
-RightGrid.Image = "rbxassetid://13099879784"
-RightGrid.ImageColor3 = Color3.fromRGB(10, 10, 10)  -- 深灰
-RightGrid.ImageTransparency = 0.98
-RightGrid.ScaleType = Enum.ScaleType.Tile
-RightGrid.TileSize = UDim2.new(0, 300, 0, 300)  -- 更大网格减少密度
-RightGrid.Size = UDim2.new(1, 0, 1, 0)
-RightGrid.ZIndex = 1
+-- 右侧背景（完全移除网格和特效）
+local RightBg = Instance.new("Frame")
+RightBg.Name = "RightBg"
+RightBg.Parent = RightArea
+RightBg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+RightBg.Size = UDim2.new(1, 0, 1, 0)
 
--- 底部统一光效
-local BottomGlow = Instance.new("Frame")
-BottomGlow.Name = "BottomGlow"
-BottomGlow.Parent = MainBackground
-BottomGlow.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-BottomGlow.BackgroundTransparency = 0.9
-BottomGlow.BorderSizePixel = 0
-BottomGlow.Position = UDim2.new(0, 0, 1, -1)
-BottomGlow.Size = UDim2.new(1, 0, 0, 1)
-BottomGlow.ZIndex = 3
+-- 右侧边框检查（确保无白边）
+local RightBorderCheck = Instance.new("Frame")
+RightBorderCheck.Name = "RightBorderCheck"
+RightBorderCheck.Parent = RightArea
+RightBorderCheck.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+RightBorderCheck.BorderSizePixel = 0
+RightBorderCheck.Position = UDim2.new(1, 0, 0, 0)
+RightBorderCheck.Size = UDim2.new(0, 2, 1, 0)  -- 边界检查器
 
     -- ============= 背景部分结束 =============
 
