@@ -182,7 +182,6 @@ LeftMathRain.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 LeftMathRain.Size = UDim2.new(0.2, 0, 1, 0)
 LeftMathRain.ClipsDescendants = true
 
--- 左侧渐变叠加
 local LeftGradient = Instance.new("UIGradient")
 LeftGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 15, 15)),
@@ -191,33 +190,30 @@ LeftGradient.Color = ColorSequence.new({
 LeftGradient.Rotation = 90
 LeftGradient.Parent = LeftMathRain
 
--- 数字雨效果 (仅0和1)
 local mathRainDrops = {}
-local mathSymbols = {"0", "1"} -- 只使用0和1
+local mathSymbols = {"0", "1"}
 
--- 创建数字雨滴
-for i = 1, 40 do -- 增加雨滴数量
+for i = 1, 40 do
     local drop = Instance.new("TextLabel")
     drop.Name = "BinaryDrop_"..i
     drop.Parent = LeftMathRain
     drop.BackgroundTransparency = 1
     drop.Text = mathSymbols[math.random(1, #mathSymbols)]
-    drop.TextColor3 = Color3.fromRGB(37, 254, 152) -- 保持绿色
+    drop.TextColor3 = Color3.fromRGB(37, 254, 152)
     drop.TextTransparency = math.random(3, 8)/10
     drop.Font = Enum.Font.Code
     drop.TextSize = math.random(14, 22)
     drop.Size = UDim2.new(0, 20, 0, 20)
-    drop.Position = UDim2.new(math.random(), 0, -0.1, -math.random(20, 100)) -- 更分散的起始位置
+    drop.Position = UDim2.new(math.random(), 0, -0.1, -math.random(20, 100))
     drop.ZIndex = 2
     
     table.insert(mathRainDrops, {
         object = drop,
-        speed = math.random(8, 20)/10, -- 更快的速度变化
+        speed = math.random(8, 20)/10,
         resetPos = -math.random(20, 100)
     })
 end
 
--- 数字雨动画
 spawn(function()
     while wait(0.03) do
         for _, drop in ipairs(mathRainDrops) do
@@ -239,94 +235,64 @@ spawn(function()
 end)
 
 -- ============= 修改后的右侧背景 =============
--- 右侧特效区域 (完全移除白块)
+-- ============= 暗红色特效背景 =============
+-- 右侧特效区域
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(12, 12, 12) -- 深灰背景
+RightEffects.BackgroundColor3 = Color3.fromRGB(15, 0, 0) -- 暗红背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
--- 添加边缘跳动滑块
-local edgeSliders = {
-    -- 上边缘滑块
-    {name = "TopSlider", position = UDim2.new(0, 0, 0, -2), size = UDim2.new(1, 0, 0, 2), axis = "X"},
-    -- 右边缘滑块
-    {name = "RightSlider", position = UDim2.new(1, 0, 0, 0), size = UDim2.new(0, 2, 1, 0), axis = "Y"},
-    -- 下边缘滑块
-    {name = "BottomSlider", position = UDim2.new(0, 0, 1, 0), size = UDim2.new(1, 0, 0, 2), axis = "X"}
-}
+-- 暗红色网格背景
+local DarkRedGrid = Instance.new("ImageLabel")
+DarkRedGrid.Name = "DarkRedGrid"
+DarkRedGrid.Parent = RightEffects
+DarkRedGrid.Image = "rbxassetid://13099879784"
+DarkRedGrid.ImageColor3 = Color3.fromRGB(40, 0, 0) -- 更深的红色网格
+DarkRedGrid.ImageTransparency = 0.95
+DarkRedGrid.ScaleType = Enum.ScaleType.Tile
+DarkRedGrid.TileSize = UDim2.new(0, 150, 0, 150)
+DarkRedGrid.Size = UDim2.new(1, 0, 1, 0)
+DarkRedGrid.ZIndex = 1
 
--- 创建滑块
-for _, slider in ipairs(edgeSliders) do
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Name = slider.name
-    sliderFrame.Parent = RightEffects
-    sliderFrame.BackgroundColor3 = Color3.fromRGB(37, 254, 152) -- 绿色
-    sliderFrame.BorderSizePixel = 0
-    sliderFrame.Position = slider.position
-    sliderFrame.Size = slider.size
-    sliderFrame.ZIndex = 5
-    
-    -- 滑块光晕效果
-    local glow = Instance.new("Frame")
-    glow.Name = "Glow"
-    glow.Parent = sliderFrame
-    glow.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-    glow.BackgroundTransparency = 0.7
-    glow.BorderSizePixel = 0
-    glow.Size = UDim2.new(1, 0, 1, 0)
-    glow.ZIndex = 4
-    
-    -- 滑块动画
-    spawn(function()
-        local moveDistance = (slider.axis == "X") and RightEffects.AbsoluteSize.X or RightEffects.AbsoluteSize.Y
-        local speed = math.random(50, 80)/100
-        local direction = 1
-        
-        while wait(0.02) do
-            if slider.axis == "X" then
-                sliderFrame.Position = sliderFrame.Position + UDim2.new(0, speed * direction, 0, 0)
-                
-                -- 边界检查
-                if direction == 1 and sliderFrame.Position.X.Offset >= moveDistance then
-                    direction = -1
-                elseif direction == -1 and sliderFrame.Position.X.Offset <= 0 then
-                    direction = 1
-                end
-            else
-                sliderFrame.Position = sliderFrame.Position + UDim2.new(0, 0, 0, speed * direction)
-                
-                -- 边界检查
-                if direction == 1 and sliderFrame.Position.Y.Offset >= moveDistance then
-                    direction = -1
-                elseif direction == -1 and sliderFrame.Position.Y.Offset <= 0 then
-                    direction = 1
-                end
-            end
-            
-            -- 随机改变速度
-            if math.random(1, 30) == 1 then
-                speed = math.random(50, 80)/100
-            end
+-- 暗红色脉冲光晕
+local PulseGlow = Instance.new("Frame")
+PulseGlow.Name = "PulseGlow"
+PulseGlow.Parent = RightEffects
+PulseGlow.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
+PulseGlow.BackgroundTransparency = 0.9
+PulseGlow.BorderSizePixel = 0
+PulseGlow.Size = UDim2.new(1, 0, 1, 0)
+PulseGlow.ZIndex = 0
+
+-- 脉冲动画
+spawn(function()
+    while wait(1.5) do
+        for i = 0.9, 0.7, -0.05 do
+            PulseGlow.BackgroundTransparency = i
+            wait(0.05)
         end
-    end)
-end
+        for i = 0.7, 0.9, 0.05 do
+            PulseGlow.BackgroundTransparency = i
+            wait(0.05)
+        end
+    end
+end)
 
--- 保留的数字雨效果 (左侧保持不变)
--- 保留的红色粒子效果 (但减少数量)
-for i = 1, 15 do  -- 减少到15个粒子
+-- 暗红色流动粒子
+for i = 1, 20 do
     local particle = Instance.new("Frame")
-    particle.Name = "RedParticle_"..i
+    particle.Name = "DarkRedParticle_"..i
     particle.Parent = RightEffects
-    particle.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    particle.BackgroundTransparency = 0.85  -- 更透明
-    particle.Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4))
+    particle.BackgroundColor3 = Color3.fromRGB(120, 0, 0) -- 暗红色
+    particle.BackgroundTransparency = 0.85
+    particle.Size = UDim2.new(0, math.random(2, 5), 0, math.random(2, 5))
     particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    particle.ZIndex = 2
+    particle.ZIndex = 3
     
-    -- 粒子动画 (保持不变)
+    -- 粒子动画
     spawn(function()
         local speedX = math.random(-5, 5)/100
         local speedY = math.random(-5, 5)/100
@@ -340,11 +306,52 @@ for i = 1, 15 do  -- 减少到15个粒子
             if particle.Position.Y.Scale < 0 or particle.Position.Y.Scale > 1 then
                 speedY = -speedY
             end
+            
+            -- 随机闪烁
+            if math.random(1, 30) == 1 then
+                particle.BackgroundTransparency = math.random(7, 9)/10
+            end
         end
     end)
 end
 
--- 右侧装饰性文字
+-- 暗红色扫描线
+local scanLine = Instance.new("Frame")
+scanLine.Name = "ScanLine"
+scanLine.Parent = RightEffects
+scanLine.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+scanLine.BackgroundTransparency = 0.9
+scanLine.BorderSizePixel = 0
+scanLine.Size = UDim2.new(1, 0, 0, 1)
+scanLine.ZIndex = 2
+
+-- 扫描线动画
+spawn(function()
+    while wait(0.03) do
+        scanLine.Position = UDim2.new(0, 0, 0, -1)
+        scanLine.BackgroundTransparency = 0.7
+        
+        -- 向下扫描
+        for i = 0, 1, 0.01 do
+            scanLine.Position = UDim2.new(0, 0, 0, i)
+            wait(0.01)
+        end
+        
+        scanLine.BackgroundTransparency = 0.9
+        wait(math.random(1, 3))
+    end
+end)
+
+-- 保留边缘滑块 (改为暗红色)
+for _, name in ipairs({"TopSlider", "RightSlider", "BottomSlider"}) do
+    local slider = RightEffects:FindFirstChild(name)
+    if slider then
+        slider.BackgroundColor3 = Color3.fromRGB(80, 0, 0) -- 暗红色滑块
+        slider.Glow.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
+    end
+end
+
+-- 右侧装饰性文字 (暗红色)
 local DecorText = Instance.new("TextLabel")
 DecorText.Name = "DecorText"
 DecorText.Parent = RightEffects
@@ -353,7 +360,7 @@ DecorText.Position = UDim2.new(0.8, 0, 0.9, 0)
 DecorText.Size = UDim2.new(0.2, 0, 0.1, 0)
 DecorText.Font = Enum.Font.GothamSemibold
 DecorText.Text = "v1.0.0"
-DecorText.TextColor3 = Color3.fromRGB(100, 100, 100)
+DecorText.TextColor3 = Color3.fromRGB(80, 0, 0) -- 暗红色文字
 DecorText.TextSize = 12
 DecorText.TextTransparency = 0.7
 DecorText.TextXAlignment = Enum.TextXAlignment.Right
