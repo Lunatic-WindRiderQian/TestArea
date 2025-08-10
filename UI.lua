@@ -247,135 +247,149 @@ RunService.Heartbeat:Connect(function(deltaTime)
     end
 end)
 
--- ============= 终极黑绿科技风格 =============
+-- ============= 终极蓝色科技风格 =============
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- 纯黑背景
+RightEffects.BackgroundColor3 = Color3.fromRGB(5, 5, 15)  -- 深蓝黑背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
--- 1. 左右闪动绿线
-local leftFlashLine = Instance.new("Frame")
-leftFlashLine.Name = "LeftFlashLine"
-leftFlashLine.Parent = RightEffects
-leftFlashLine.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
-leftFlashLine.BorderSizePixel = 0
-leftFlashLine.Size = UDim2.new(0, 1, 1, 0)
-leftFlashLine.Position = UDim2.new(0, 0, 0, 0)
-leftFlashLine.ZIndex = 5
+-- 1. 动态边框线 (蓝色闪烁版)
+local borderLines = {
+    left = Instance.new("Frame"),
+    right = Instance.new("Frame"),
+    top = Instance.new("Frame"),
+    bottom = Instance.new("Frame")
+}
 
-local rightFlashLine = Instance.new("Frame")
-rightFlashLine.Name = "RightFlashLine"
-rightFlashLine.Parent = RightEffects
-rightFlashLine.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
-rightFlashLine.BorderSizePixel = 0
-rightFlashLine.Size = UDim2.new(0, 1, 1, 0)
-rightFlashLine.Position = UDim2.new(1, -1, 0, 0)
-rightFlashLine.ZIndex = 5
-
--- 2. 科技感核心元素
-local CorePulse = Instance.new("Frame")
-CorePulse.Name = "CorePulse"
-CorePulse.Parent = RightEffects
-CorePulse.AnchorPoint = Vector2.new(0.5,0.5)
-CorePulse.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
-CorePulse.BackgroundTransparency = 0.9
-CorePulse.Size = UDim2.new(0, 250, 0, 250)
-CorePulse.Position = UDim2.new(0.7, 0, 0.5, 0)
-CorePulse.ZIndex = 2
-
--- 3. 动态数据流
-local dataStreams = {}
-for i = 1, 5 do
-    local stream = Instance.new("Frame")
-    stream.Name = "DataStream_"..i
-    stream.Parent = RightEffects
-    stream.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-    stream.BackgroundTransparency = 0.8
-    stream.Size = UDim2.new(0.2 + math.random()*0.3, 0, 0, 1)
-    stream.Position = UDim2.new(math.random()*0.6 + 0.2, 0, 0, -math.random(50, 150))
-    stream.ZIndex = 3
+for side, line in pairs(borderLines) do
+    line.Name = "BorderLine_"..side
+    line.Parent = RightEffects
+    line.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    line.BorderSizePixel = 0
+    line.ZIndex = 10  -- 确保在UI控件之上
     
-    table.insert(dataStreams, {
-        obj = stream,
-        speed = math.random(10, 20)/10
+    if side == "left" or side == "right" then
+        line.Size = UDim2.new(0, 2, 1, 0)
+        line.Position = UDim2.new(side == "left" and 0 or 1, -2, 0, 0)
+    else
+        line.Size = UDim2.new(1, 0, 0, 2)
+        line.Position = UDim2.new(0, 0, side == "top" and 0 or 1, -2)
+    end
+end
+
+-- 2. 核心科技元素 (全蓝版本)
+local TechCore = Instance.new("Frame")
+TechCore.Name = "TechCore"
+TechCore.Parent = RightEffects
+TechCore.AnchorPoint = Vector2.new(0.5,0.5)
+TechCore.BackgroundColor3 = Color3.fromRGB(0, 80, 150)
+TechCore.BackgroundTransparency = 0.95
+TechCore.Size = UDim2.new(0, 300, 0, 300)
+TechCore.Position = UDim2.new(0.7, 0, 0.5, 0)
+TechCore.ZIndex = 1
+
+-- 3. 数据矩阵 (蓝色粒子)
+local dataMatrix = {}
+for i = 1, 12 do
+    local particle = Instance.new("Frame")
+    particle.Name = "DataParticle_"..i
+    particle.Parent = RightEffects
+    particle.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+    particle.Size = UDim2.new(0, 2, 0, 10)
+    particle.Position = UDim2.new(math.random()*0.6 + 0.2, 0, math.random(), 0)
+    particle.ZIndex = 3
+    
+    table.insert(dataMatrix, {
+        obj = particle,
+        speed = math.random(5, 15)/10,
+        length = math.random(5, 15)
     })
 end
 
--- 4. 浮动节点
-local techNodes = {}
+-- 4. 连接网络 (蓝色光线)
+local connections = {}
 for i = 1, 8 do
-    local node = Instance.new("Frame")
-    node.Name = "TechNode_"..i
-    node.Parent = RightEffects
-    node.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
-    node.Size = UDim2.new(0, 3, 0, 3)
-    node.Position = UDim2.new(math.random()*0.6 + 0.2, 0, math.random()*0.6 + 0.2, 0)
-    node.ZIndex = 4
+    local line = Instance.new("Frame")
+    line.Name = "Connection_"..i
+    line.Parent = RightEffects
+    line.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+    line.BackgroundTransparency = 0.7
+    line.BorderSizePixel = 0
+    line.Size = UDim2.new(0, 0, 0, 1)
+    line.ZIndex = 2
     
-    table.insert(techNodes, {
-        obj = node,
-        speed = Vector2.new(
-            (math.random()-0.5)*0.002,
-            (math.random()-0.5)*0.002
-        )
-    })
+    table.insert(connections, line)
 end
 
--- 5. 状态指示
-local StatusIndicator = Instance.new("TextLabel")
-StatusIndicator.Name = "StatusIndicator"
-StatusIndicator.Parent = RightEffects
-StatusIndicator.BackgroundTransparency = 1
-StatusIndicator.Position = UDim2.new(0.02, 0, 0.95, 0)
-StatusIndicator.Size = UDim2.new(0.3, 0, 0.05, 0)
-StatusIndicator.Font = Enum.Font.Code
-StatusIndicator.Text = "SYSTEM ACTIVE"
-StatusIndicator.TextColor3 = Color3.fromRGB(0, 255, 100)
-StatusIndicator.TextSize = 12
-StatusIndicator.TextXAlignment = Enum.TextXAlignment.Left
+-- 5. 状态显示器 (蓝色文字)
+local StatusDisplay = Instance.new("TextLabel")
+StatusDisplay.Name = "StatusDisplay"
+StatusDisplay.Parent = RightEffects
+StatusDisplay.BackgroundTransparency = 1
+StatusDisplay.Position = UDim2.new(0.02, 0, 0.02, 0)
+StatusDisplay.Size = UDim2.new(0.3, 0, 0.05, 0)
+StatusDisplay.Font = Enum.Font.Code
+StatusDisplay.Text = "BLUE SYSTEM"
+StatusDisplay.TextColor3 = Color3.fromRGB(0, 200, 255)
+StatusDisplay.TextSize = 14
+StatusDisplay.TextXAlignment = Enum.TextXAlignment.Left
 
 -- 动画控制器
-local flashTimer = 0
+local flashState = 0
 game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
-    -- 闪动绿线
-    flashTimer = flashTimer + deltaTime
-    if flashTimer > 0.5 then
-        flashTimer = 0
-        leftFlashLine.BackgroundTransparency = math.random() > 0.7 and 0.3 or 0.8
-        rightFlashLine.BackgroundTransparency = leftFlashLine.BackgroundTransparency
+    -- 边框闪烁 (更明显的脉冲效果)
+    flashState = flashState + deltaTime
+    if flashState > 1 then flashState = 0 end
+    
+    local blinkTrans = 0.3 + math.abs(math.sin(flashState*math.pi*2))*0.5
+    for _, line in pairs(borderLines) do
+        line.BackgroundTransparency = blinkTrans
     end
     
-    -- 数据流动画
-    for _, stream in ipairs(dataStreams) do
-        local currentY = stream.obj.Position.Y.Offset + stream.speed * 60 * deltaTime
-        if currentY > RightEffects.AbsoluteSize.Y then
-            currentY = -20
-            stream.obj.Size = UDim2.new(0.2 + math.random()*0.3, 0, 0, 1)
-            stream.obj.Position = UDim2.new(math.random()*0.6 + 0.2, 0, 0, -math.random(50, 150))
+    -- 数据矩阵下落
+    for _, particle in ipairs(dataMatrix) do
+        local currentY = particle.obj.Position.Y.Scale + particle.speed * deltaTime
+        if currentY > 1 then
+            currentY = 0
+            particle.obj.Position = UDim2.new(math.random()*0.6 + 0.2, 0, 0, 0)
+            particle.obj.Size = UDim2.new(0, 2, 0, particle.length)
         end
-        stream.obj.Position = UDim2.new(stream.obj.Position.X.Scale, 0, 0, currentY)
+        particle.obj.Position = UDim2.new(particle.obj.Position.X.Scale, 0, currentY, 0)
     end
     
-    -- 节点浮动
-    for _, node in ipairs(techNodes) do
-        local pos = node.obj.Position
-        local newX = pos.X.Scale + node.speed.X
-        local newY = pos.Y.Scale + node.speed.Y
+    -- 动态连接网络
+    for i, line in ipairs(connections) do
+        local startPos = Vector2.new(
+            math.random()*0.6 + 0.2,
+            math.random()*0.8 + 0.1
+        )
+        local endPos = Vector2.new(
+            math.random()*0.6 + 0.2,
+            math.random()*0.8 + 0.1
+        )
         
-        -- 边界检查
-        if newX < 0.2 or newX > 0.8 then node.speed = Vector2.new(-node.speed.X, node.speed.Y) end
-        if newY < 0.2 or newY > 0.8 then node.speed = Vector2.new(node.speed.X, -node.speed.Y) end
+        local center = (startPos + endPos)/2
+        local length = (startPos - endPos).Magnitude
         
-        node.obj.Position = UDim2.new(newX, 0, newY, 0)
+        line.Position = UDim2.new(0, center.X - length/2, 0, center.Y)
+        line.Size = UDim2.new(0, length, 0, 1)
+        line.Rotation = math.deg(math.atan2(endPos.Y - startPos.Y, endPos.X - startPos.X))
     end
     
-    -- 核心脉冲
-    CorePulse.BackgroundTransparency = 0.85 + math.sin(os.clock()*2)*0.05
+    -- 核心脉动
+    TechCore.BackgroundTransparency = 0.9 + math.sin(os.clock()*3)*0.05
+    TechCore.Size = UDim2.new(0, 300 + math.sin(os.clock()*2)*20, 0, 300 + math.sin(os.clock()*2)*20)
 end)
 
+-- 确保UI控件在背景之上
+for _,v in pairs(Main:GetDescendants()) do
+    if v:IsA("Frame") or v:IsA("TextButton") or v:IsA("TextLabel") then
+        v.ZIndex = 20  -- 所有UI控件置顶
+    end
+end
 -- ============= 修改完成 =============
 
     if syn and syn.protect_gui then
