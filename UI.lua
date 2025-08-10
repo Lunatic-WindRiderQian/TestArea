@@ -178,7 +178,9 @@ MainBackground.ZIndex = 0
 local LeftMathRain = Instance.new("Frame")
 LeftMathRain.Name = "LeftMathRain"
 LeftMathRain.Parent = MainBackground
-LeftMathRain.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+LeftMathRain.BackgroundColor3 = Color3.fromRGB(5, 5, 5)  -- 保持与主背景一致
+LeftMathRain.BackgroundTransparency = 1  -- 关键设置：完全透明背景
+LeftMathRain.BorderSizePixel = 0        -- 移除边框
 LeftMathRain.Size = UDim2.new(0.2, 0, 1, 0)
 LeftMathRain.ClipsDescendants = true
 
@@ -187,12 +189,16 @@ local dropCount = 30  -- 数字数量
 local chars = {"0", "1"}  -- 仅显示二进制
 local drops = {}
 
-for i = 1, dropCount do
+-- 数字雨元素（逐个检查属性）
+for i = 1, 30 do
     local drop = Instance.new("TextLabel")
     drop.Name = "Drop_"..i
     drop.Parent = LeftMathRain
-    drop.Text = chars[math.random(1, 2)]
-    drop.TextColor3 = Color3.fromRGB(0, 255, 100)  -- 科技绿
+    -- 关键修复属性：
+    drop.BackgroundTransparency = 1     -- 必须为1（完全透明）
+    drop.BorderSizePixel = 0            -- 无边框
+    drop.Text = math.random(0, 1)       -- 二进制数字
+    drop.TextColor3 = Color3.fromRGB(0, 255, 100)
     drop.TextTransparency = math.random(50, 90)/100
     drop.Font = Enum.Font.Code
     drop.TextSize = math.random(14, 18)
