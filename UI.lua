@@ -473,6 +473,12 @@ game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
     end
 end)
 
+-- 确保UI控件层级最高
+for _,v in pairs(Main:GetDescendants()) do
+    if v:IsA("GuiObject") then
+        v.ZIndex = 20 + (v.ZIndex or 0)
+    end
+end
 -- ============= 修改完成 =============
 
     if syn and syn.protect_gui then
