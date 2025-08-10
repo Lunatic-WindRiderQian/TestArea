@@ -165,124 +165,131 @@ function library.new(library, name, theme)
     local UIGradient = Instance.new("UIGradient")
     local UIGradientTitle = Instance.new("UIGradient")
 
--- ============= 优化后的背景部分 =============
--- 创建主背景容器
+-- ============= 最终优化版背景 =============
+-- 创建主背景容器（确保无白色）
 local MainBackground = Instance.new("Frame")
 MainBackground.Name = "MainBackground"
 MainBackground.Parent = Main
-MainBackground.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+MainBackground.BackgroundColor3 = Color3.fromRGB(10, 10, 10)  -- 纯黑背景
 MainBackground.Size = UDim2.new(1, 0, 1, 0)
 MainBackground.ZIndex = 0
 
--- 左侧区域 - 移除所有白色元素
-local LeftParticleArea = Instance.new("Frame")
-LeftParticleArea.Name = "LeftParticleArea"
-LeftParticleArea.Parent = MainBackground
-LeftParticleArea.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-LeftParticleArea.Size = UDim2.new(0.25, 0, 1, 0)
-LeftParticleArea.ClipsDescendants = true
+-- 左侧区域 - 彻底移除所有白色元素
+local LeftArea = Instance.new("Frame")
+LeftArea.Name = "LeftArea"
+LeftArea.Parent = MainBackground
+LeftArea.BackgroundColor3 = Color3.fromRGB(15, 15, 15)  -- 深灰背景
+LeftArea.Size = UDim2.new(0.22, 0, 1, 0)
 
--- 左侧渐变叠加 - 深色系
-local LeftGradient = Instance.new("UIGradient")
-LeftGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 12, 12))
-})
-LeftGradient.Rotation = 90
-LeftGradient.Parent = LeftParticleArea
+-- 左侧科技感光效
+local LeftEffect = Instance.new("Frame")
+LeftEffect.Name = "LeftEffect"
+LeftEffect.Parent = LeftArea
+LeftEffect.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+LeftEffect.BackgroundTransparency = 0.95
+LeftEffect.Size = UDim2.new(1, 0, 1, 0)
 
--- 左侧动态光效粒子
-local Particle1 = Instance.new("ImageLabel")
-Particle1.Name = "Particle1"
-Particle1.Parent = LeftParticleArea
-Particle1.Image = "rbxassetid://13099879784"
-Particle1.ImageColor3 = Color3.fromRGB(37, 254, 152)
-Particle1.ImageTransparency = 0.92
-Particle1.ScaleType = Enum.ScaleType.Tile
-Particle1.TileSize = UDim2.new(0, 120, 0, 120)
-Particle1.Size = UDim2.new(2, 0, 2, 0)
-Particle1.Position = UDim2.new(-0.5, 0, -0.5, 0)
-Particle1.ZIndex = 1
+-- 左侧流动光带（确保无白色）
+local LightStrip = Instance.new("Frame")
+LightStrip.Name = "LightStrip"
+LightStrip.Parent = LeftArea
+LightStrip.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+LightStrip.BackgroundTransparency = 0.9
+LightStrip.Size = UDim2.new(0, 2, 1, 0)
+LightStrip.Position = UDim2.new(0.3, 0, 0, 0)
 
--- 左侧流动光带
-local Particle2 = Instance.new("Frame")
-Particle2.Name = "Particle2"
-Particle2.Parent = LeftParticleArea
-Particle2.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-Particle2.BackgroundTransparency = 0.85
-Particle2.Size = UDim2.new(0, 3, 1, 0)
-Particle2.Position = UDim2.new(0.3, 0, 0, 0)
-Particle2.ZIndex = 2
-
--- 左侧装饰文字
-local LeftDecorText = Instance.new("TextLabel")
-LeftDecorText.Name = "LeftDecorText"
-LeftDecorText.Parent = LeftParticleArea
-LeftDecorText.BackgroundTransparency = 1
-LeftDecorText.Position = UDim2.new(0.1, 0, 0.92, 0)
-LeftDecorText.Size = UDim2.new(0.8, 0, 0.08, 0)
-LeftDecorText.Font = Enum.Font.GothamSemibold
-LeftDecorText.Text = "BETA v1.0"
-LeftDecorText.TextColor3 = Color3.fromRGB(80, 80, 80)
-LeftDecorText.TextTransparency = 0.7
-LeftDecorText.TextSize = 12
-LeftDecorText.TextXAlignment = Enum.TextXAlignment.Left
-LeftDecorText.ZIndex = 2
-
--- 粒子动画
+-- 左侧光带动画
 spawn(function()
     while wait(0.03) do
-        Particle1.Position = Particle1.Position + UDim2.new(0, 0.4, 0, 0.4)
-        if Particle1.Position.X.Offset > 60 then
-            Particle1.Position = UDim2.new(-0.5, 0, -0.5, 0)
-        end
-        
-        Particle2.Position = Particle2.Position + UDim2.new(0, 1.8, 0, 0)
-        if Particle2.Position.X.Offset > LeftParticleArea.AbsoluteSize.X then
-            Particle2.Position = UDim2.new(0, -30, 0, 0)
+        LightStrip.Position = LightStrip.Position + UDim2.new(0, 1.5, 0, 0)
+        if LightStrip.Position.X.Offset > LeftArea.AbsoluteSize.X then
+            LightStrip.Position = UDim2.new(0, -20, 0, 0)
         end
     end
 end)
 
--- 右侧区域 - 移除倾斜白块
+-- 右侧区域 - 添加全新特效
 local RightArea = Instance.new("Frame")
 RightArea.Name = "RightArea"
 RightArea.Parent = MainBackground
 RightArea.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-RightArea.Position = UDim2.new(0.25, 0, 0, 0)
-RightArea.Size = UDim2.new(0.75, 0, 1, 0)
+RightArea.Position = UDim2.new(0.22, 0, 0, 0)
+RightArea.Size = UDim2.new(0.78, 0, 1, 0)
 
--- 右侧简约渐变
-local RightGradient = Instance.new("UIGradient")
-RightGradient.Name = "RightGradient"
-RightGradient.Parent = RightArea
-RightGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 15, 15)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 10))
-})
-RightGradient.Rotation = 90
+-- 右侧数据流特效
+local DataFlow = Instance.new("ImageLabel")
+DataFlow.Name = "DataFlow"
+DataFlow.Parent = RightArea
+DataFlow.Image = "rbxassetid://13099879784"
+DataFlow.ImageColor3 = Color3.fromRGB(20, 20, 20)
+DataFlow.ImageTransparency = 0.96
+DataFlow.ScaleType = Enum.ScaleType.Tile
+DataFlow.TileSize = UDim2.new(0, 150, 0, 150)
+DataFlow.Size = UDim2.new(1, 0, 1, 0)
+DataFlow.ZIndex = 1
 
--- 右侧极细边框
-local RightBorder = Instance.new("Frame")
-RightBorder.Name = "RightBorder"
-RightBorder.Parent = RightArea
-RightBorder.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-RightBorder.BackgroundTransparency = 0.9
-RightBorder.BorderSizePixel = 0
-RightBorder.Position = UDim2.new(0, -1, 0, 0)
-RightBorder.Size = UDim2.new(0, 1, 1, 0)
-RightBorder.ZIndex = 2
+-- 右侧扫描线特效
+local ScanLines = Instance.new("Frame")
+ScanLines.Name = "ScanLines"
+ScanLines.Parent = RightArea
+ScanLines.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+ScanLines.BackgroundTransparency = 0.98
+ScanLines.Size = UDim2.new(1, 0, 1, 0)
+ScanLines.ClipsDescendants = true
 
--- 右侧底部装饰线
-local BottomLine = Instance.new("Frame")
-BottomLine.Name = "BottomLine"
-BottomLine.Parent = RightArea
-BottomLine.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-BottomLine.BackgroundTransparency = 0.9
-BottomLine.BorderSizePixel = 0
-BottomLine.Position = UDim2.new(0, 0, 1, -1)
-BottomLine.Size = UDim2.new(1, 0, 0, 1)
-BottomLine.ZIndex = 2
+-- 创建扫描线
+for i = 0, 20 do
+    local line = Instance.new("Frame")
+    line.Name = "Line_"..i
+    line.Parent = ScanLines
+    line.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+    line.BackgroundTransparency = 0.9
+    line.Size = UDim2.new(1, 0, 0, 1)
+    line.Position = UDim2.new(0, 0, 0, i * 20)
+end
+
+-- 扫描线动画
+spawn(function()
+    while wait(0.1) do
+        ScanLines.Position = ScanLines.Position - UDim2.new(0, 0, 0, 1)
+        if ScanLines.Position.Y.Offset < -20 then
+            ScanLines.Position = UDim2.new(0, 0, 0, 0)
+        end
+    end
+end)
+
+-- 右侧脉冲光效
+local PulseEffect = Instance.new("Frame")
+PulseEffect.Name = "PulseEffect"
+PulseEffect.Parent = RightArea
+PulseEffect.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+PulseEffect.BackgroundTransparency = 0.95
+PulseEffect.Size = UDim2.new(1, 0, 1, 0)
+
+-- 脉冲动画
+spawn(function()
+    while wait(2) do
+        for i = 0.95, 0.9, -0.01 do
+            PulseEffect.BackgroundTransparency = i
+            wait(0.05)
+        end
+        for i = 0.9, 0.95, 0.01 do
+            PulseEffect.BackgroundTransparency = i
+            wait(0.05)
+        end
+    end
+end)
+
+-- 右侧边框光效
+local RightGlow = Instance.new("Frame")
+RightGlow.Name = "RightGlow"
+RightGlow.Parent = RightArea
+RightGlow.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+RightGlow.BackgroundTransparency = 0.9
+RightGlow.BorderSizePixel = 0
+RightGlow.Position = UDim2.new(0, -1, 0, 0)
+RightGlow.Size = UDim2.new(0, 1, 1, 0)
+RightGlow.ZIndex = 2
 
     -- ============= 背景部分结束 =============
 
