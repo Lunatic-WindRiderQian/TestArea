@@ -235,111 +235,142 @@ spawn(function()
 end)
 
 -- ============= 右侧特效区域 =============
+-- ============= 高级流动特效 =============
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(15, 0, 0) -- 暗红背景
+RightEffects.BackgroundColor3 = Color3.fromRGB(10, 0, 5)  -- 深红紫底色
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
--- 暗红色网格背景
-local DarkRedGrid = Instance.new("ImageLabel")
-DarkRedGrid.Name = "DarkRedGrid"
-DarkRedGrid.Parent = RightEffects
-DarkRedGrid.Image = "rbxassetid://13099879784"
-DarkRedGrid.ImageColor3 = Color3.fromRGB(40, 0, 0) -- 更深的红色网格
-DarkRedGrid.ImageTransparency = 0.95
-DarkRedGrid.ScaleType = Enum.ScaleType.Tile
-DarkRedGrid.TileSize = UDim2.new(0, 150, 0, 150)
-DarkRedGrid.Size = UDim2.new(1, 0, 1, 0)
-DarkRedGrid.ZIndex = 1
+-- 流光背景 (带波纹效果)
+local FlowingLights = Instance.new("Frame")
+FlowingLights.Name = "FlowingLights"
+FlowingLights.Parent = RightEffects
+FlowingLights.BackgroundColor3 = Color3.fromRGB(15, 0, 8)
+FlowingLights.Size = UDim2.new(1, 0, 1, 0)
+FlowingLights.ZIndex = 1
 
--- 暗红色脉冲光晕
-local PulseGlow = Instance.new("Frame")
-PulseGlow.Name = "PulseGlow"
-PulseGlow.Parent = RightEffects
-PulseGlow.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
-PulseGlow.BackgroundTransparency = 0.9
-PulseGlow.BorderSizePixel = 0
-PulseGlow.Size = UDim2.new(1, 0, 1, 0)
-PulseGlow.ZIndex = 0
-
--- 脉冲动画
-spawn(function()
-    while wait(1.5) do
-        for i = 0.9, 0.7, -0.05 do
-            PulseGlow.BackgroundTransparency = i
-            wait(0.05)
-        end
-        for i = 0.7, 0.9, 0.05 do
-            PulseGlow.BackgroundTransparency = i
-            wait(0.05)
-        end
-    end
-end)
-
--- 暗红色流动粒子 (20个)
-for i = 1, 20 do
-    local particle = Instance.new("Frame")
-    particle.Name = "DarkRedParticle_"..i
-    particle.Parent = RightEffects
-    particle.BackgroundColor3 = Color3.fromRGB(120, 0, 0) -- 暗红色
-    particle.BackgroundTransparency = 0.85
-    particle.Size = UDim2.new(0, math.random(2, 5), 0, math.random(2, 5))
-    particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    particle.ZIndex = 3
+-- 水平流动线条 (5条)
+for i = 1, 5 do
+    local line = Instance.new("Frame")
+    line.Name = "FlowLine_"..i
+    line.Parent = FlowingLights
+    line.BackgroundColor3 = Color3.fromRGB(150, 0, 50)
+    line.BackgroundTransparency = 0.7
+    line.BorderSizePixel = 0
+    line.Size = UDim2.new(0.8, 0, 0, 1)
+    line.Position = UDim2.new(0, 0, math.random(), 0)
+    line.ZIndex = 2
     
-    -- 粒子动画
     spawn(function()
-        local speedX = math.random(-5, 5)/100
-        local speedY = math.random(-5, 5)/100
-        while wait(0.05) do
-            particle.Position = particle.Position + UDim2.new(0, speedX, 0, speedY)
-            
-            -- 边界检查
-            if particle.Position.X.Scale < 0 or particle.Position.X.Scale > 1 then
-                speedX = -speedX
+        while true do
+            local speed = math.random(30, 50)/10
+            for x = 0, 1, 0.01 do
+                line.Position = UDim2.new(x, 0, line.Position.Y.Scale, 0)
+                line.BackgroundTransparency = 0.5 + math.abs(math.sin(x*math.pi))/2
+                wait(0.01/speed)
             end
-            if particle.Position.Y.Scale < 0 or particle.Position.Y.Scale > 1 then
-                speedY = -speedY
-            end
-            
-            -- 随机闪烁
-            if math.random(1, 30) == 1 then
-                particle.BackgroundTransparency = math.random(7, 9)/10
-            end
+            line.Position = UDim2.new(0, 0, math.random(), 0)
+            wait(math.random(1,3))
         end
     end)
 end
 
--- 暗红色扫描线
-local scanLine = Instance.new("Frame")
-scanLine.Name = "ScanLine"
-scanLine.Parent = RightEffects
-scanLine.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-scanLine.BackgroundTransparency = 0.9
-scanLine.BorderSizePixel = 0
-scanLine.Size = UDim2.new(1, 0, 0, 1)
-scanLine.ZIndex = 2
-
--- 扫描线动画
-spawn(function()
-    while wait(0.03) do
-        scanLine.Position = UDim2.new(0, 0, 0, -1)
-        scanLine.BackgroundTransparency = 0.7
+-- 光点粒子 (带拖尾效果)
+for i = 1, 15 do
+    local particle = Instance.new("Frame")
+    particle.Name = "LightParticle_"..i
+    particle.Parent = FlowingLights
+    particle.BackgroundColor3 = Color3.fromRGB(255, 50, 100)
+    particle.Size = UDim2.new(0, 3, 0, 3)
+    particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    particle.ZIndex = 3
+    
+    -- 创建拖尾
+    local trail = Instance.new("Frame")
+    trail.Name = "Trail"
+    trail.Parent = particle
+    trail.BackgroundColor3 = particle.BackgroundColor3
+    trail.BackgroundTransparency = 0.8
+    trail.Size = UDim2.new(0, 0, 0, 0)
+    trail.AnchorPoint = Vector2.new(0.5,0.5)
+    
+    spawn(function()
+        local angle = math.random() * math.pi*2
+        local speed = math.random(5,15)/100
+        local life = 0
         
-        -- 向下扫描
-        for i = 0, 1, 0.01 do
-            scanLine.Position = UDim2.new(0, 0, 0, i)
-            wait(0.01)
+        while true do
+            -- 更新位置
+            local x = particle.Position.X.Scale + math.cos(angle)*0.005
+            local y = particle.Position.Y.Scale + math.sin(angle)*0.005
+            
+            -- 边界反弹
+            if x < 0 or x > 1 then angle = math.pi - angle end
+            if y < 0 or y > 1 then angle = -angle end
+            
+            particle.Position = UDim2.new(x, 0, y, 0)
+            
+            -- 更新拖尾
+            trail.Size = UDim2.new(0, life*10, 0, 2)
+            trail.Position = UDim2.new(0, -life*5, 0.5, 0)
+            trail.BackgroundTransparency = 0.7 + life*0.3
+            
+            life = life + 0.02
+            if life > 1 then
+                trail.Size = UDim2.new(0,0,0,0)
+                life = 0
+                -- 随机改变方向
+                if math.random(1,5) == 1 then
+                    angle = math.random() * math.pi*2
+                end
+            end
+            
+            -- 随机闪烁
+            if math.random(1,20) == 1 then
+                particle.BackgroundColor3 = Color3.fromRGB(
+                    math.random(200,255),
+                    math.random(30,100),
+                    math.random(80,150)
+            end
+            
+            wait(0.02)
         end
-        
-        scanLine.BackgroundTransparency = 0.9
-        wait(math.random(1, 3))
+    end)
+end
+
+-- 波动光效 (底部向上)
+local WaveEffect = Instance.new("Frame")
+WaveEffect.Name = "WaveEffect"
+WaveEffect.Parent = RightEffects
+WaveEffect.BackgroundColor3 = Color3.fromRGB(80, 0, 30)
+WaveEffect.BackgroundTransparency = 0.9
+WaveEffect.Size = UDim2.new(1, 0, 0.3, 0)
+WaveEffect.Position = UDim2.new(0, 0, 0.7, 0)
+WaveEffect.ZIndex = 0
+WaveEffect.ClipsDescendants = true
+
+local WaveMask = Instance.new("Frame")
+WaveMask.Name = "WaveMask"
+WaveMask.Parent = WaveEffect
+WaveMask.BackgroundColor3 = Color3.fromRGB(255,0,100)
+WaveMask.BackgroundTransparency = 0.7
+WaveMask.Size = UDim2.new(1, 0, 0, 5)
+WaveMask.Position = UDim2.new(0, 0, 0, 0)
+
+spawn(function()
+    while true do
+        for i = 0, 1, 0.01 do
+            WaveMask.Position = UDim2.new(0, 0, i, 0)
+            WaveMask.BackgroundTransparency = 0.7 + i*0.3
+            wait(0.03)
+        end
+        wait(math.random(1,2))
     end
 end)
--- ============= 修改结束 =============
+-- ============= 结束 =============
 
     if syn and syn.protect_gui then
         syn.protect_gui(FengYu)
