@@ -247,209 +247,142 @@ RunService.Heartbeat:Connect(function(deltaTime)
     end
 end)
 
--- ======== 智能特效容器 ========
+-- ===== 右侧特效（极致美化版）=====
 local RightEffects = Instance.new("Frame")
-RightEffects.Name = "EnhancedFX"
+RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(3, 3, 8)  -- 更暗的基底
+RightEffects.BackgroundColor3 = Color3.fromRGB(10, 0, 15)  -- 深紫黑背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
-RightEffects.ZIndex = 1
 RightEffects.ClipsDescendants = true
 
--- █ 安全区标记（特效会自动避开这些区域）
-local SafeZones = {
-    UDim2.new(0.6, 0, 0.2, 0),  -- 功能区域1
-    UDim2.new(0.4, 0, 0.7, 0)   -- 功能区域2
-}
+-- 1. 动态光纹背景
+local LightPattern = Instance.new("ImageLabel")
+LightPattern.Name = "LightPattern"
+LightPattern.Parent = RightEffects
+LightPattern.Image = "rbxassetid://13099879784"
+LightPattern.ImageColor3 = Color3.fromRGB(50, 0, 60)
+LightPattern.ImageTransparency = 0.92
+LightPattern.ScaleType = Enum.ScaleType.Tile
+LightPattern.TileSize = UDim2.new(0, 100, 0, 100)
+LightPattern.Size = UDim2.new(1, 0, 1, 0)
+LightPattern.ZIndex = 1
 
--- █ 1. 量子网格（动态变形）
-local QuantumGrid = Instance.new("ImageLabel")
-QuantumGrid.Image = "rbxassetid://13099879784"
-QuantumGrid.ImageColor3 = Color3.fromRGB(20, 0, 40)
-QuantumGrid.ImageTransparency = 0.96
-QuantumGrid.ScaleType = Enum.ScaleType.Tile
-QuantumGrid.TileSize = UDim2.new(0, 60, 0, 60)
-QuantumGrid.Size = UDim2.new(2, 0, 2, 0)
-QuantumGrid.ZIndex = 1
-QuantumGrid.Parent = RightEffects
-
--- █ 2. 脉冲星群（200个智能粒子）
-local Stars = {}
-for i = 1, 200 do
-    local star = Instance.new("Frame")
-    star.Size = UDim2.new(0, math.random(1,3), 0, math.random(1,3))
-    star.BackgroundColor3 = Color3.fromHSV(i/200, 0.8, 0.9)
-    star.ZIndex = 3
-    star.Parent = RightEffects
+-- 2. 全息粒子系统（50个粒子）
+local particles = {}
+for i = 1, 50 do  -- 粒子数量拉满
+    local p = Instance.new("Frame")
+    p.Name = "GlowParticle_"..i
+    p.Parent = RightEffects
+    p.BackgroundColor3 = Color3.fromHSV(i/50, 0.8, 0.9)
+    p.Size = UDim2.new(0, math.random(2,5), 0, math.random(2,5))
+    p.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    p.ZIndex = 3
     
-    -- 初始位置避开安全区
-    repeat
-        star.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    until not isInSafeZone(star.Position)
-    
-    Stars[i] = {
-        obj = star,
+    table.insert(particles, {
+        obj = p,
         speed = Vector2.new(
-            (math.random()-0.5)*0.007,
-            (math.random()-0.5)*0.007
+            (math.random()-0.5)*0.008,
+            (math.random()-0.5)*0.008
         ),
-        sizeCycle = math.random()
-    }
+        sizePulse = math.random() > 0.5
+    })
 end
 
--- █ 3. 数据洪流（可交互避让）
-local DataStream = Instance.new("Frame")
-DataStream.Size = UDim2.new(0.3, 0, 1, 0)
-DataStream.Position = UDim2.new(0.7, 0, 0, 0)
-DataStream.BackgroundTransparency = 1
-DataStream.ZIndex = 4
-DataStream.Parent = RightEffects
-
-local streamChars = {"0", "1", "|", "/", "\\", "_"}
-for i = 1, 30 do
-    local stream = Instance.new("TextLabel")
-    stream.Text = streamChars[math.random(1,#streamChars)]
-    stream.TextColor3 = Color3.fromRGB(0, 255, 150)
-    stream.TextTransparency = 0.3
-    stream.Font = Enum.Font.Code
-    stream.TextSize = 14
-    stream.Size = UDim2.new(1/30, -2, 0, 15)
-    stream.Position = UDim2.new((i-1)/30, 1, 0, -math.random(100,500))
-    stream.BackgroundTransparency = 1
-    stream.ZIndex = 4
-    stream.Parent = DataStream
-end
-
--- █ 4. 动态光刃（自动避障）
-local LightBlades = {}
-for i = 1, 8 do
-    local blade = Instance.new("Frame")
-    blade.Size = UDim2.new(0, 80, 0, 2)
-    blade.BackgroundColor3 = Color3.fromRGB(100, 0, 200)
-    blade.BackgroundTransparency = 0.6
-    blade.ZIndex = 2
-    blade.Parent = RightEffects
+-- 3. 流光轨迹
+local flowLines = {}
+for i = 1, 8 do  -- 8条流动光带
+    local line = Instance.new("Frame")
+    line.Name = "FlowLine_"..i
+    line.Parent = RightEffects
+    line.BackgroundColor3 = Color3.fromRGB(100, 0, 150)
+    line.BackgroundTransparency = 0.7
+    line.Size = UDim2.new(0.5, 0, 0, 1)
+    line.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    line.ZIndex = 2
     
-    -- 确保初始位置不在安全区
-    repeat
-        blade.Position = UDim2.new(math.random(), 0, math.random(), 0)
-        blade.Rotation = math.random(0, 360)
-    until not isInSafeZone(blade.Position)
-    
-    LightBlades[i] = {
-        obj = blade,
-        speed = math.random(5,10)/10,
-        angle = math.rad(math.random(0, 360))
-    }
+    table.insert(flowLines, {
+        obj = line,
+        speed = math.random(10, 20)/10
+    })
 end
 
--- █ 5. 全息控制台（非遮挡式UI）
-local HologramHUD = Instance.new("TextLabel")
-HologramHUD.Text = [[
-  SYSTEM STATUS:
-  >>> MEMORY: 84%
-  >>> PROCESS: 32/64
-  >>> BUFFER: ████░░
-]]
-HologramHUD.TextColor3 = Color3.fromRGB(100, 255, 200)
-HologramHUD.TextTransparency = 0.15
-HologramHUD.TextXAlignment = Enum.TextXAlignment.Left
-HologramHUD.Font = Enum.Font.Code
-HologramHUD.TextSize = 12
-HologramHUD.Size = UDim2.new(0.25, 0, 0.3, 0)
-HologramHUD.Position = UDim2.new(0.02, 0, 0.65, 0)
-HologramHUD.BackgroundTransparency = 1
-HologramHUD.ZIndex = 5
-HologramHUD.Parent = RightEffects
+-- 4. 脉冲核心光效
+local CoreGlow = Instance.new("Frame")
+CoreGlow.Name = "CoreGlow"
+CoreGlow.Parent = RightEffects
+CoreGlow.AnchorPoint = Vector2.new(0.5,0.5)
+CoreGlow.BackgroundColor3 = Color3.fromRGB(150, 0, 200)
+CoreGlow.BackgroundTransparency = 0.9
+CoreGlow.Size = UDim2.new(0, 200, 0, 200)
+CoreGlow.Position = UDim2.new(0.7, 0, 0.5, 0)
+CoreGlow.ZIndex = 0
 
--- ======== 智能避让算法 ========
-function isInSafeZone(position)
-    for _, zone in ipairs(SafeZones) do
-        if math.abs(position.X.Scale - zone.X.Scale) < 0.15 and
-           math.abs(position.Y.Scale - zone.Y.Scale) < 0.15 then
-            return true
-        end
-    end
-    return false
-end
+-- 5. 科技感扫描线
+local ScanLine = Instance.new("Frame")
+ScanLine.Name = "ScanLine"
+ScanLine.Parent = RightEffects
+ScanLine.BackgroundColor3 = Color3.fromRGB(100, 50, 255)
+ScanLine.BackgroundTransparency = 0.8
+ScanLine.Size = UDim2.new(1, 0, 0, 1)
+ScanLine.ZIndex = 4
 
-function findNewPosition(oldPos)
-    local attempts = 0
-    local newPos
-    repeat
-        newPos = UDim2.new(
-            math.clamp(oldPos.X.Scale + (math.random()-0.5)*0.2, 0, 1),
-            math.clamp(oldPos.Y.Scale + (math.random()-0.5)*0.2, 0, 1)
-        )
-        attempts = attempts + 1
-    until not isInSafeZone(newPos) or attempts > 10
-    return newPos
-end
-
--- ======== 动画引擎 ========
+-- 统一动画控制器
 game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
-    -- 量子网格视差
-    QuantumGrid.Position = UDim2.new(
-        math.sin(os.clock()*0.2)*0.1 - 0.5,
-        0,
-        math.cos(os.clock()*0.15)*0.1 - 0.5,
-        0
-    )
-    
-    -- 智能粒子系统
-    for i = 1, 200 do
-        local star = Stars[i]
+    -- 粒子系统
+    for _, p in ipairs(particles) do
+        local pos = p.obj.Position
         local newPos = UDim2.new(
-            star.obj.Position.X.Scale + star.speed.X,
+            pos.X.Scale + p.speed.X,
             0,
-            star.obj.Position.Y.Scale + star.speed.Y,
+            pos.Y.Scale + p.speed.Y,
             0
         )
         
-        -- 边界和安全区检测
-        if newPos.X.Scale < 0 or newPos.X.Scale > 1 or 
-           newPos.Y.Scale < 0 or newPos.Y.Scale > 1 or
-           isInSafeZone(newPos) then
-            newPos = findNewPosition(newPos)
-            star.speed = Vector2.new(
-                (math.random()-0.5)*0.007,
-                (math.random()-0.5)*0.007
-            )
-        end
+        -- 边界反弹
+        if newPos.X.Scale < 0 or newPos.X.Scale > 1 then p.speed = Vector2.new(-p.speed.X, p.speed.Y) end
+        if newPos.Y.Scale < 0 or newPos.Y.Scale > 1 then p.speed = Vector2.new(p.speed.X, -p.speed.Y) end
         
-        star.obj.Position = newPos
-        star.obj.BackgroundTransparency = 0.3 + math.abs(math.sin(os.clock() + star.sizeCycle))*0.5
+        p.obj.Position = newPos
+        
+        -- 尺寸脉动
+        if p.sizePulse then
+            local scale = 0.8 + math.abs(math.sin(os.clock()*2))*0.2
+            p.obj.Size = UDim2.new(0, p.obj.Size.X.Offset*scale, 0, p.obj.Size.Y.Offset*scale)
+        end
     end
     
-    -- 数据洪流
-    for _, stream in ipairs(DataStream:GetChildren()) do
-        local newY = stream.Position.Y.Offset + 3
-        if newY > 50 then
-            newY = -math.random(100,500)
-            stream.Text = streamChars[math.random(1,#streamChars)]
-        end
-        stream.Position = UDim2.new(stream.Position.X.Scale, 0, 0, newY)
+    -- 流光轨迹
+    for _, line in ipairs(flowLines) do
+        local x = line.obj.Position.X.Scale + line.speed * deltaTime
+        if x > 1.5 then x = -0.5 end
+        line.obj.Position = UDim2.new(x, 0, line.obj.Position.Y.Scale, 0)
     end
     
-    -- 动态光刃
-    for _, blade in ipairs(LightBlades) do
-        local newPos = UDim2.new(
-            blade.obj.Position.X.Scale + math.cos(blade.angle)*0.01,
-            0,
-            blade.obj.Position.Y.Scale + math.sin(blade.angle)*0.01,
-            0
-        )
-        
-        if isInSafeZone(newPos) then
-            blade.angle = math.rad(math.random(0, 360))
-            newPos = findNewPosition(newPos)
-        end
-        
-        blade.obj.Position = newPos
-        blade.obj.BackgroundTransparency = 0.5 + math.sin(os.clock()*2)*0.2
+    -- 核心脉冲
+    CoreGlow.BackgroundTransparency = 0.85 + math.sin(os.clock())*0.05
+    CoreGlow.Size = UDim2.new(0, 200 + math.sin(os.clock()*2)*20, 0, 200 + math.sin(os.clock()*2)*20)
+    
+    -- 扫描线动画
+    ScanLine.Position = UDim2.new(0, 0, ScanLine.Position.Y.Scale + 0.005, 0)
+    if ScanLine.Position.Y.Scale > 1 then
+        ScanLine.Position = UDim2.new(0, 0, 0, 0)
+        ScanLine.BackgroundTransparency = math.random(70, 90)/100
     end
 end)
+
+-- 6. 装饰性UI元素
+local DecorText = Instance.new("TextLabel")
+DecorText.Name = "DecorText"
+DecorText.Parent = RightEffects
+DecorText.BackgroundTransparency = 1
+DecorText.Position = UDim2.new(0.02, 0, 0.02, 0)
+DecorText.Size = UDim2.new(0.3, 0, 0.05, 0)
+DecorText.Font = Enum.Font.GothamBold
+DecorText.Text = "SYSTEM ACTIVATED"
+DecorText.TextColor3 = Color3.fromRGB(180, 100, 255)
+DecorText.TextSize = 14
+DecorText.TextXAlignment = Enum.TextXAlignment.Left
 -- ============= 结束 =============
 
     if syn and syn.protect_gui then
