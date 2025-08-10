@@ -165,49 +165,49 @@ function library.new(library, name, theme)
     local UIGradient = Instance.new("UIGradient")
     local UIGradientTitle = Instance.new("UIGradient")
 
--- ============= 最终完美版背景 =============
--- 主背景容器（纯黑色）
+-- ============= 终极修复版背景 =============
+-- 主背景容器（确保无黑块）
 local MainBackground = Instance.new("Frame")
 MainBackground.Name = "MainBackground"
 MainBackground.Parent = Main
-MainBackground.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- 纯黑背景
+MainBackground.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 MainBackground.Size = UDim2.new(1, 0, 1, 0)
 MainBackground.ZIndex = 0
 
--- 左侧区域 - 添加全新特效
+-- 左侧区域 - 完全修复黑块问题
 local LeftArea = Instance.new("Frame")
 LeftArea.Name = "LeftArea"
 LeftArea.Parent = MainBackground
-LeftArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- 纯黑背景
+LeftArea.BackgroundTransparency = 1  -- 完全透明背景
 LeftArea.Size = UDim2.new(0.25, 0, 1, 0)
 LeftArea.ClipsDescendants = true
 
--- 左侧数字雨特效
-local DigitalRain = Instance.new("Frame")
-DigitalRain.Name = "DigitalRain"
-DigitalRain.Parent = LeftArea
-DigitalRain.BackgroundTransparency = 1
-DigitalRain.Size = UDim2.new(1, 0, 1, 0)
+-- 左侧数字雨容器（确保不会产生黑块）
+local DigitalRainContainer = Instance.new("Frame")
+DigitalRainContainer.Name = "DigitalRainContainer"
+DigitalRainContainer.Parent = LeftArea
+DigitalRainContainer.BackgroundTransparency = 1
+DigitalRainContainer.Size = UDim2.new(1, 0, 1, 0)
 
--- 创建数字雨列
-for i = 1, 15 do
+-- 高性能数字雨特效
+for i = 1, 12 do  -- 减少列数提高性能
     local column = Instance.new("TextLabel")
     column.Name = "Column_"..i
-    column.Parent = DigitalRain
+    column.Parent = DigitalRainContainer
     column.BackgroundTransparency = 1
-    column.Position = UDim2.new(i/15, 0, 0, 0)
-    column.Size = UDim2.new(0, 15, 1, 0)
+    column.Position = UDim2.new((i-1)/12, 0, 0, 0)
+    column.Size = UDim2.new(1/12, 0, 1, 0)
     column.Font = Enum.Font.Code
     column.Text = ""
     column.TextColor3 = Color3.fromRGB(37, 254, 152)
     column.TextSize = 14
-    column.TextTransparency = 0.7
+    column.TextTransparency = 0.8
     column.TextYAlignment = Enum.TextYAlignment.Top
     
     spawn(function()
-        while wait(math.random(0.1, 0.3)) do
+        while wait(math.random(0.2, 0.4)) do
             local chars = ""
-            for j = 1, math.random(5, 15) do
+            for j = 1, math.random(8, 12) do
                 chars = chars..math.random(0, 1).."\n"
             end
             column.Text = chars
@@ -215,66 +215,67 @@ for i = 1, 15 do
     end)
 end
 
--- 左侧流动光效
-local LeftGlow = Instance.new("Frame")
-LeftGlow.Name = "LeftGlow"
-LeftGlow.Parent = LeftArea
-LeftGlow.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-LeftGlow.BackgroundTransparency = 0.95
-LeftGlow.Size = UDim2.new(0, 2, 1, 0)
-LeftGlow.Position = UDim2.new(0.3, 0, 0, 0)
+-- 左侧光带（修复渲染问题）
+local LeftLightStrip = Instance.new("Frame")
+LeftLightStrip.Name = "LeftLightStrip"
+LeftLightStrip.Parent = LeftArea
+LeftLightStrip.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+LeftLightStrip.BackgroundTransparency = 0.92
+LeftLightStrip.Size = UDim2.new(0, 2, 1, 0)
+LeftLightStrip.Position = UDim2.new(0.3, 0, 0, 0)
+LeftLightStrip.ZIndex = 2
 
--- 左侧光效动画
+-- 光带动画
 spawn(function()
-    while wait(0.03) do
-        LeftGlow.Position = LeftGlow.Position + UDim2.new(0, 1.5, 0, 0)
-        if LeftGlow.Position.X.Offset > LeftArea.AbsoluteSize.X then
-            LeftGlow.Position = UDim2.new(0, -20, 0, 0)
+    while wait(0.04) do
+        LeftLightStrip.Position = LeftLightStrip.Position + UDim2.new(0, 2, 0, 0)
+        if LeftLightStrip.Position.X.Offset > LeftArea.AbsoluteSize.X then
+            LeftLightStrip.Position = UDim2.new(0, -30, 0, 0)
         end
     end
 end)
 
--- 右侧区域 - 纯黑背景+修复顶部
+-- 右侧区域 - 完美修复版
 local RightArea = Instance.new("Frame")
 RightArea.Name = "RightArea"
 RightArea.Parent = MainBackground
-RightArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- 纯黑背景
+RightArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 RightArea.Position = UDim2.new(0.25, 0, 0, 0)
 RightArea.Size = UDim2.new(0.75, 0, 1, 0)
 
--- 右侧网格特效（极简）
+-- 右侧极简网格（修复显示问题）
 local RightGrid = Instance.new("ImageLabel")
 RightGrid.Name = "RightGrid"
 RightGrid.Parent = RightArea
 RightGrid.Image = "rbxassetid://13099879784"
-RightGrid.ImageColor3 = Color3.fromRGB(20, 20, 20)
+RightGrid.ImageColor3 = Color3.fromRGB(15, 15, 15)
 RightGrid.ImageTransparency = 0.98
 RightGrid.ScaleType = Enum.ScaleType.Tile
-RightGrid.TileSize = UDim2.new(0, 200, 0, 200)
+RightGrid.TileSize = UDim2.new(0, 250, 0, 250)
 RightGrid.Size = UDim2.new(1, 0, 1, 0)
 RightGrid.ZIndex = 1
 
--- 右侧边框光效
+-- 右侧边框光效（修复边缘显示）
 local RightBorder = Instance.new("Frame")
 RightBorder.Name = "RightBorder"
 RightBorder.Parent = RightArea
 RightBorder.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-RightBorder.BackgroundTransparency = 0.9
+RightBorder.BackgroundTransparency = 0.88
 RightBorder.BorderSizePixel = 0
 RightBorder.Position = UDim2.new(0, -1, 0, 0)
 RightBorder.Size = UDim2.new(0, 1, 1, 0)
-RightBorder.ZIndex = 2
+RightBorder.ZIndex = 3
 
--- 右侧底部光效
+-- 底部统一光效
 local BottomGlow = Instance.new("Frame")
 BottomGlow.Name = "BottomGlow"
-BottomGlow.Parent = RightArea
+BottomGlow.Parent = MainBackground  -- 改为主容器子项
 BottomGlow.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
 BottomGlow.BackgroundTransparency = 0.9
 BottomGlow.BorderSizePixel = 0
 BottomGlow.Position = UDim2.new(0, 0, 1, -1)
 BottomGlow.Size = UDim2.new(1, 0, 0, 1)
-BottomGlow.ZIndex = 2
+BottomGlow.ZIndex = 3
 
     -- ============= 背景部分结束 =============
 
