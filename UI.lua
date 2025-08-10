@@ -238,7 +238,7 @@ spawn(function()
     end
 end)
 
--- 右侧红色特效区域
+-- 右侧黑色特效区域
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
@@ -246,19 +246,19 @@ RightEffects.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- 纯黑背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 
--- 红色网格背景
-local RedGrid = Instance.new("ImageLabel")
-RedGrid.Name = "RedGrid"
-RedGrid.Parent = RightEffects
-RedGrid.Image = "rbxassetid://13099879784"
-RedGrid.ImageColor3 = Color3.fromRGB(50, 0, 0) -- 暗红色网格
-RedGrid.ImageTransparency = 0.95
-RedGrid.ScaleType = Enum.ScaleType.Tile
-RedGrid.TileSize = UDim2.new(0, 120, 0, 120)
-RedGrid.Size = UDim2.new(1, 0, 1, 0)
-RedGrid.ZIndex = 1
+-- 黑色网格背景 (移除原来的白色倾斜块)
+local BlackGrid = Instance.new("ImageLabel")
+BlackGrid.Name = "BlackGrid"
+BlackGrid.Parent = RightEffects
+BlackGrid.Image = "rbxassetid://13099879784"
+BlackGrid.ImageColor3 = Color3.fromRGB(20, 20, 20) -- 深灰色网格
+BlackGrid.ImageTransparency = 0.97 -- 几乎透明
+BlackGrid.ScaleType = Enum.ScaleType.Tile
+BlackGrid.TileSize = UDim2.new(0, 150, 0, 150)
+BlackGrid.Size = UDim2.new(1, 0, 1, 0)
+BlackGrid.ZIndex = 1
 
--- 红色流动线条
+-- 红色流动线条 (保留之前的红色特效)
 local redLines = {}
 for i = 1, 5 do
     local line = Instance.new("Frame")
@@ -279,77 +279,51 @@ for i = 1, 5 do
     })
 end
 
--- 红色粒子特效
-for i = 1, 25 do
-    local particle = Instance.new("Frame")
-    particle.Name = "RedParticle_"..i
-    particle.Parent = RightEffects
-    particle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    particle.BackgroundTransparency = 0.8
-    particle.Size = UDim2.new(0, math.random(2, 6), 0, math.random(2, 6))
-    particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    particle.ZIndex = 3
+-- 黑色数据块效果 (替代原来的白块)
+local dataBlocks = {}
+for i = 1, 8 do
+    local block = Instance.new("Frame")
+    block.Name = "DataBlock_"..i
+    block.Parent = RightEffects
+    block.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- 深灰色块
+    block.BorderSizePixel = 0
+    block.Size = UDim2.new(0, math.random(30, 80), 0, math.random(10, 30))
+    block.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    block.ZIndex = 2
     
-    -- 粒子闪烁动画
-    spawn(function()
-        while wait(math.random(1, 3)) do
-            for i = 0.8, 0.4, -0.1 do
-                particle.BackgroundTransparency = i
-                wait(0.1)
-            end
-            for i = 0.4, 0.8, 0.1 do
-                particle.BackgroundTransparency = i
-                wait(0.1)
-            end
-        end
-    end)
+    -- 添加内部数字
+    local number = Instance.new("TextLabel")
+    number.Name = "Number"
+    number.Parent = block
+    number.BackgroundTransparency = 1
+    number.Size = UDim2.new(1, 0, 1, 0)
+    number.Font = Enum.Font.Code
+    number.Text = tostring(math.random(0, 1)) -- 0或1
+    number.TextColor3 = Color3.fromRGB(100, 100, 100) -- 灰色文字
+    number.TextSize = math.random(10, 14)
     
-    -- 粒子移动动画
-    spawn(function()
-        local speedX = math.random(-8, 8)/100
-        local speedY = math.random(-8, 8)/100
-        while wait(0.05) do
-            particle.Position = particle.Position + UDim2.new(0, speedX, 0, speedY)
-            
-            -- 边界检查并反弹
-            if particle.Position.X.Scale < 0 or particle.Position.X.Scale > 1 then
-                speedX = -speedX
-            end
-            if particle.Position.Y.Scale < 0 or particle.Position.Y.Scale > 1 then
-                speedY = -speedY
-            end
-        end
-    end)
+    table.insert(dataBlocks, {
+        object = block,
+        speed = math.random(1, 5)/10
+    })
 end
 
--- 红色光晕效果
-local RedGlow = Instance.new("ImageLabel")
-RedGlow.Name = "RedGlow"
-RedGlow.Parent = RightEffects
-RedGlow.Image = "rbxassetid://13099879784"
-RedGlow.ImageColor3 = Color3.fromRGB(255, 0, 0)
-RedGlow.ImageTransparency = 0.9
-RedGlow.ScaleType = Enum.ScaleType.Tile
-RedGlow.TileSize = UDim2.new(0, 200, 0, 200)
-RedGlow.Size = UDim2.new(1, 0, 1, 0)
-RedGlow.ZIndex = 1
-RedGlow.Rotation = 45
-
--- 红色边框动画
+-- 数据块动画
 spawn(function()
-    while wait(0.1) do
-        for i = 0.9, 0.6, -0.05 do
-            RedGlow.ImageTransparency = i
-            wait(0.05)
-        end
-        for i = 0.6, 0.9, 0.05 do
-            RedGlow.ImageTransparency = i
-            wait(0.05)
+    while wait(0.05) do
+        for _, block in ipairs(dataBlocks) do
+            block.object.Position = block.object.Position + UDim2.new(0, 0, 0, block.speed)
+            
+            -- 重置位置到顶部
+            if block.object.Position.Y.Offset > RightEffects.AbsoluteSize.Y then
+                block.object.Position = UDim2.new(math.random(), 0, -0.2, -math.random(20, 100))
+                block.object:FindFirstChild("Number").Text = tostring(math.random(0, 1))
+            end
         end
     end
 end)
 
--- 流动线条动画
+-- 流动线条动画 (保持不变)
 spawn(function()
     while wait(0.03) do
         for _, line in ipairs(redLines) do
@@ -366,7 +340,7 @@ spawn(function()
     end
 end)
 
--- 右侧装饰性文字 (红色)
+-- 右侧装饰性文字 (暗红色)
 local DecorText = Instance.new("TextLabel")
 DecorText.Name = "DecorText"
 DecorText.Parent = RightEffects
@@ -374,13 +348,13 @@ DecorText.BackgroundTransparency = 1
 DecorText.Position = UDim2.new(0.8, 0, 0.9, 0)
 DecorText.Size = UDim2.new(0.2, 0, 0.1, 0)
 DecorText.Font = Enum.Font.GothamSemibold
-DecorText.Text = "v1.0.0"
-DecorText.TextColor3 = Color3.fromRGB(100, 0, 0) -- 暗红色文字
+DecorText.Text = "BETA"
+DecorText.TextColor3 = Color3.fromRGB(80, 0, 0) -- 暗红色文字
 DecorText.TextSize = 12
 DecorText.TextTransparency = 0.7
 DecorText.TextXAlignment = Enum.TextXAlignment.Right
 DecorText.ZIndex = 2
--- ============= 背景部分结束 =============
+-- ============= 修改结束 ============
 
     if syn and syn.protect_gui then
         syn.protect_gui(FengYu)
