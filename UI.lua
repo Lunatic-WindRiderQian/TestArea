@@ -170,7 +170,7 @@ function library.new(library, name, theme)
 local MainBackground = Instance.new("Frame")
 MainBackground.Name = "MainBackground"
 MainBackground.Parent = Main
-MainBackground.BackgroundColor3 = Color3.fromRGB(8, 8, 8)  -- 保持深色背景
+MainBackground.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
 MainBackground.Size = UDim2.new(1, 0, 1, 0)
 MainBackground.ZIndex = 0
 
@@ -247,69 +247,93 @@ RunService.Heartbeat:Connect(function(deltaTime)
     end
 end)
 
--- ============= 修复版终极科技风格 =============
+-- ============= 右侧科技风格 =============
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(5, 5, 15)  -- 深蓝黑背景
+RightEffects.BackgroundColor3 = Color3.fromRGB(10, 10, 15)  -- 深色背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
--- 1. 动态边框线 (简化版)
-local borderLine = Instance.new("Frame")
-borderLine.Name = "BorderLine"
-borderLine.Parent = RightEffects
-borderLine.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-borderLine.BorderSizePixel = 0
-borderLine.Size = UDim2.new(1, 0, 0, 1)
-borderLine.Position = UDim2.new(0, 0, 0, 0)
+-- 1. 左右边框线 (带呼吸效果)
+local leftBorder = Instance.new("Frame")
+leftBorder.Name = "LeftBorder"
+leftBorder.Parent = RightEffects
+leftBorder.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+leftBorder.BorderSizePixel = 0
+leftBorder.Size = UDim2.new(0, 1, 1, 0)
+leftBorder.ZIndex = 2
 
--- 2. 数据矩阵 (简化版)
-local dataParticles = {}
+local rightBorder = Instance.new("Frame")
+rightBorder.Name = "RightBorder"
+rightBorder.Parent = RightEffects
+rightBorder.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+rightBorder.BorderSizePixel = 0
+rightBorder.Size = UDim2.new(0, 1, 1, 0)
+rightBorder.Position = UDim2.new(1, -1, 0, 0)
+rightBorder.ZIndex = 2
+
+-- 2. 核心科技元素
+local techElements = {
+    -- 水平扫描线
+    scanLine = Instance.new("Frame"),
+    -- 浮动粒子
+    particles = {}
+}
+
+-- 初始化扫描线
+techElements.scanLine.Name = "ScanLine"
+techElements.scanLine.Parent = RightEffects
+techElements.scanLine.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+techElements.scanLine.BackgroundTransparency = 0.8
+techElements.scanLine.Size = UDim2.new(1, 0, 0, 1)
+techElements.scanLine.ZIndex = 1
+
+-- 初始化浮动粒子
 for i = 1, 8 do
     local particle = Instance.new("Frame")
-    particle.Name = "DataParticle_"..i
+    particle.Name = "Particle_"..i
     particle.Parent = RightEffects
-    particle.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-    particle.Size = UDim2.new(0, 1, 0, 8)
+    particle.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    particle.Size = UDim2.new(0, 2, 0, 2)
     particle.Position = UDim2.new(math.random()*0.8 + 0.1, 0, math.random(), 0)
+    particle.ZIndex = 3
     
-    table.insert(dataParticles, {
+    table.insert(techElements.particles, {
         obj = particle,
-        speed = math.random(5, 15)/10
+        speed = Vector2.new(
+            (math.random()-0.5)*0.003,
+            (math.random()-0.5)*0.003
+        )
     })
 end
 
--- 3. 状态指示器
-local StatusDisplay = Instance.new("TextLabel")
-StatusDisplay.Name = "StatusDisplay"
-StatusDisplay.Parent = RightEffects
-StatusDisplay.BackgroundTransparency = 1
-StatusDisplay.Position = UDim2.new(0.02, 0, 0.95, 0)
-StatusDisplay.Size = UDim2.new(0.3, 0, 0.05, 0)
-StatusDisplay.Font = Enum.Font.Code
-StatusDisplay.Text = "SYSTEM ONLINE"
-StatusDisplay.TextColor3 = Color3.fromRGB(0, 200, 255)
-StatusDisplay.TextSize = 12
-StatusDisplay.TextXAlignment = Enum.TextXAlignment.Left
-
 -- 动画控制器
 game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
-    -- 边框扫描线动画
-    borderLine.Position = UDim2.new(0, 0, borderLine.Position.Y.Scale + 0.01, 0)
-    if borderLine.Position.Y.Scale > 1 then
-        borderLine.Position = UDim2.new(0, 0, 0, 0)
+    -- 边框呼吸效果
+    local pulse = (math.sin(os.clock() * 2) + 1) / 2  -- 0到1的波动
+    local transparency = 0.3 + pulse * 0.5
+    leftBorder.BackgroundTransparency = transparency
+    rightBorder.BackgroundTransparency = transparency
+    
+    -- 扫描线动画
+    techElements.scanLine.Position = UDim2.new(0, 0, techElements.scanLine.Position.Y.Scale + 0.004, 0)
+    if techElements.scanLine.Position.Y.Scale > 1 then
+        techElements.scanLine.Position = UDim2.new(0, 0, 0, 0)
     end
     
-    -- 数据粒子下落
-    for _, particle in ipairs(dataParticles) do
-        local currentY = particle.obj.Position.Y.Scale + particle.speed * deltaTime
-        if currentY > 1 then
-            currentY = 0
-            particle.obj.Position = UDim2.new(math.random()*0.8 + 0.1, 0, 0, 0)
-        end
-        particle.obj.Position = UDim2.new(particle.obj.Position.X.Scale, 0, currentY, 0)
+    -- 粒子浮动
+    for _, particle in ipairs(techElements.particles) do
+        local pos = particle.obj.Position
+        local newX = pos.X.Scale + particle.speed.X
+        local newY = pos.Y.Scale + particle.speed.Y
+        
+        -- 边界反弹
+        if newX < 0.1 or newX > 0.9 then particle.speed = Vector2.new(-particle.speed.X, particle.speed.Y) end
+        if newY < 0.1 or newY > 0.9 then particle.speed = Vector2.new(particle.speed.X, -particle.speed.Y) end
+        
+        particle.obj.Position = UDim2.new(newX, 0, newY, 0)
     end
 end)
 
