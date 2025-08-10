@@ -247,138 +247,97 @@ RunService.Heartbeat:Connect(function(deltaTime)
     end
 end)
 
--- ============= 右侧黑色科技风格背景 =============
+-- ============= 终极黑色科技背景 =============
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(5, 5, 10)  -- 深黑底色
+RightEffects.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- 纯黑背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
--- 1. 暗色网格基底
-local DarkGrid = Instance.new("ImageLabel")
-DarkGrid.Name = "DarkGrid"
-DarkGrid.Parent = RightEffects
-DarkGrid.Image = "rbxassetid://13099879784"
-DarkGrid.ImageColor3 = Color3.fromRGB(15, 20, 30)
-DarkGrid.ImageTransparency = 0.9
-DarkGrid.ScaleType = Enum.ScaleType.Tile
-DarkGrid.TileSize = UDim2.new(0, 120, 0, 120)
-DarkGrid.Size = UDim2.new(1, 0, 1, 0)
-DarkGrid.ZIndex = 1
+-- 1. 极简网格线
+local GridLines = Instance.new("Frame")
+GridLines.Name = "GridLines"
+GridLines.Parent = RightEffects
+GridLines.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+GridLines.BackgroundTransparency = 0.9
+GridLines.BorderSizePixel = 0
+GridLines.Size = UDim2.new(1, 0, 1, 0)
 
--- 2. 数据节点
-local techNodes = {}
-for i = 1, 16 do
-    local node = Instance.new("Frame")
-    node.Name = "TechNode_"..i
-    node.Parent = RightEffects
-    node.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-    node.BackgroundTransparency = 0.8
-    node.Size = UDim2.new(0, 4, 0, 4)
-    node.Position = UDim2.new(math.random()*0.8 + 0.1, 0, math.random()*0.8 + 0.1, 0)
-    node.ZIndex = 3
+-- 横向网格线
+for i = 1, 8 do
+    local line = Instance.new("Frame")
+    line.Name = "HLine_"..i
+    line.Parent = GridLines
+    line.BackgroundColor3 = Color3.fromRGB(0, 80, 120)
+    line.BackgroundTransparency = 0.9
+    line.BorderSizePixel = 0
+    line.Size = UDim2.new(1, 0, 0, 1)
+    line.Position = UDim2.new(0, 0, (i-1)/7, 0)
+end
+
+-- 纵向网格线
+for i = 1, 12 do
+    local line = Instance.new("Frame")
+    line.Name = "VLine_"..i
+    line.Parent = GridLines
+    line.BackgroundColor3 = Color3.fromRGB(0, 80, 120)
+    line.BackgroundTransparency = 0.9
+    line.BorderSizePixel = 0
+    line.Size = UDim2.new(0, 1, 1, 0)
+    line.Position = UDim2.new((i-1)/11, 0, 0, 0)
+end
+
+-- 2. 简约数据点
+local dataPoints = {}
+for i = 1, 9 do
+    local point = Instance.new("Frame")
+    point.Name = "DataPoint_"..i
+    point.Parent = RightEffects
+    point.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+    point.Size = UDim2.new(0, 2, 0, 2)
+    point.Position = UDim2.new(math.random()*0.7 + 0.15, 0, math.random()*0.7 + 0.15, 0)
+    point.ZIndex = 3
     
-    table.insert(techNodes, {
-        obj = node,
+    table.insert(dataPoints, {
+        obj = point,
         speed = Vector2.new(
-            (math.random()-0.5)*0.003,
-            (math.random()-0.5)*0.003
+            (math.random()-0.5)*0.002,
+            (math.random()-0.5)*0.002
         )
     })
 end
 
--- 3. 水平扫描线
-local ScanLine = Instance.new("Frame")
-ScanLine.Name = "ScanLine"
-ScanLine.Parent = RightEffects
-ScanLine.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-ScanLine.BackgroundTransparency = 0.9
-ScanLine.Size = UDim2.new(1, 0, 0, 1)
-ScanLine.ZIndex = 4
-
--- 4. 脉冲波纹
-local pulseRings = {}
-for i = 1, 3 do
-    local ring = Instance.new("Frame")
-    ring.Name = "PulseRing_"..i
-    ring.Parent = RightEffects
-    ring.AnchorPoint = Vector2.new(0.5,0.5)
-    ring.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-    ring.BackgroundTransparency = 1
-    ring.Size = UDim2.new(0, 0, 0, 0)
-    ring.Position = UDim2.new(0.7, 0, 0.5, 0)
-    ring.ZIndex = 2
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(1,0)
-    corner.Parent = ring
-    
-    table.insert(pulseRings, {
-        obj = ring,
-        progress = i/3,
-        speed = 0.3 + i*0.1
-    })
-end
-
--- 5. 状态指示文字
-local StatusText = Instance.new("TextLabel")
-StatusText.Name = "StatusText"
-StatusText.Parent = RightEffects
-StatusText.BackgroundTransparency = 1
-StatusText.Position = UDim2.new(0.02, 0, 0.02, 0)
-StatusText.Size = UDim2.new(0.3, 0, 0.05, 0)
-StatusText.Font = Enum.Font.Code
-StatusText.Text = "SYSTEM READY"
-StatusText.TextColor3 = Color3.fromRGB(0, 200, 255)
-StatusText.TextSize = 12
-StatusText.TextXAlignment = Enum.TextXAlignment.Left
-StatusText.TextTransparency = 0.5
+-- 3. 状态指示
+local Status = Instance.new("TextLabel")
+Status.Name = "Status"
+Status.Parent = RightEffects
+Status.BackgroundTransparency = 1
+Status.Position = UDim2.new(0.02, 0, 0.95, 0)
+Status.Size = UDim2.new(0.3, 0, 0.05, 0)
+Status.Font = Enum.Font.Code
+Status.Text = "READY"
+Status.TextColor3 = Color3.fromRGB(0, 180, 255)
+Status.TextSize = 12
+Status.TextXAlignment = Enum.TextXAlignment.Left
 
 -- 动画控制器
-local pulseTimer = 0
 game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
-    -- 节点浮动
-    for _, node in ipairs(techNodes) do
-        local pos = node.obj.Position
-        local newX = pos.X.Scale + node.speed.X
-        local newY = pos.Y.Scale + node.speed.Y
+    -- 数据点浮动
+    for _, point in ipairs(dataPoints) do
+        local pos = point.obj.Position
+        local newX = pos.X.Scale + point.speed.X
+        local newY = pos.Y.Scale + point.speed.Y
         
-        -- 边界检查
-        if newX < 0.1 or newX > 0.9 then node.speed = Vector2.new(-node.speed.X, node.speed.Y) end
-        if newY < 0.1 or newY > 0.9 then node.speed = Vector2.new(node.speed.X, -node.speed.Y) end
+        -- 确保不超出边界
+        if newX < 0.15 or newX > 0.85 then point.speed = Vector2.new(-point.speed.X, point.speed.Y) end
+        if newY < 0.15 or newY > 0.85 then point.speed = Vector2.new(point.speed.X, -point.speed.Y) end
         
-        node.obj.Position = UDim2.new(newX, 0, newY, 0)
-    end
-    
-    -- 扫描线动画
-    ScanLine.Position = UDim2.new(0, 0, ScanLine.Position.Y.Scale + 0.002, 0)
-    if ScanLine.Position.Y.Scale > 1 then
-        ScanLine.Position = UDim2.new(0, 0, 0, 0)
-    end
-    
-    -- 脉冲波纹
-    pulseTimer = pulseTimer + deltaTime
-    if pulseTimer > 3 then
-        pulseTimer = 0
-        for _, ring in ipairs(pulseRings) do
-            ring.obj.Size = UDim2.new(0, 10, 0, 10)
-            ring.obj.BackgroundTransparency = 0.7
-        end
-    end
-    
-    for _, ring in ipairs(pulseRings) do
-        if ring.obj.Size.X.Offset > 0 then
-            ring.obj.Size = ring.obj.Size + UDim2.new(0, 2, 0, 2)
-            ring.obj.BackgroundTransparency = ring.obj.BackgroundTransparency + 0.01
-            if ring.obj.Size.X.Offset > 500 then
-                ring.obj.Size = UDim2.new(0, 0, 0, 0)
-            end
-        end
+        point.obj.Position = UDim2.new(newX, 0, newY, 0)
     end
 end)
--- ============= 结束 =============
+-- ============= 修改完成 =============
 
     if syn and syn.protect_gui then
         syn.protect_gui(FengYu)
