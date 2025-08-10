@@ -165,7 +165,7 @@ function library.new(library, name, theme)
     local UIGradient = Instance.new("UIGradient")
     local UIGradientTitle = Instance.new("UIGradient")
 
--- ============= 改进的数学雨背景部分 =============
+-- ============= 数字雨与红色特效背景 =============
 -- 创建主背景容器
 local MainBackground = Instance.new("Frame")
 MainBackground.Name = "MainBackground"
@@ -174,7 +174,7 @@ MainBackground.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
 MainBackground.Size = UDim2.new(1, 0, 1, 0)
 MainBackground.ZIndex = 0
 
--- 左侧数学雨效果区域
+-- 左侧数字雨区域 (0-1)
 local LeftMathRain = Instance.new("Frame")
 LeftMathRain.Name = "LeftMathRain"
 LeftMathRain.Parent = MainBackground
@@ -191,88 +191,113 @@ LeftGradient.Color = ColorSequence.new({
 LeftGradient.Rotation = 90
 LeftGradient.Parent = LeftMathRain
 
--- 数学雨效果
+-- 数字雨效果 (仅0和1)
 local mathRainDrops = {}
-local mathSymbols = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "-", "*", "/", "="}
+local mathSymbols = {"0", "1"} -- 只使用0和1
 
--- 创建数学雨滴
-for i = 1, 30 do
+-- 创建数字雨滴
+for i = 1, 40 do -- 增加雨滴数量
     local drop = Instance.new("TextLabel")
-    drop.Name = "MathDrop_"..i
+    drop.Name = "BinaryDrop_"..i
     drop.Parent = LeftMathRain
     drop.BackgroundTransparency = 1
     drop.Text = mathSymbols[math.random(1, #mathSymbols)]
-    drop.TextColor3 = Color3.fromRGB(37, 254, 152)
-    drop.TextTransparency = math.random(5, 8)/10
+    drop.TextColor3 = Color3.fromRGB(37, 254, 152) -- 保持绿色
+    drop.TextTransparency = math.random(3, 8)/10
     drop.Font = Enum.Font.Code
-    drop.TextSize = math.random(14, 20)
+    drop.TextSize = math.random(14, 22)
     drop.Size = UDim2.new(0, 20, 0, 20)
-    drop.Position = UDim2.new(math.random(), 0, -0.1, -math.random(20, 50))
+    drop.Position = UDim2.new(math.random(), 0, -0.1, -math.random(20, 100)) -- 更分散的起始位置
     drop.ZIndex = 2
     
     table.insert(mathRainDrops, {
         object = drop,
-        speed = math.random(5, 15)/10,
-        resetPos = -math.random(20, 50)
+        speed = math.random(8, 20)/10, -- 更快的速度变化
+        resetPos = -math.random(20, 100)
     })
 end
 
--- 数学雨动画
+-- 数字雨动画
 spawn(function()
     while wait(0.03) do
         for _, drop in ipairs(mathRainDrops) do
             local currentPos = drop.object.Position.Y.Offset
             drop.object.Position = drop.object.Position + UDim2.new(0, 0, 0, drop.speed)
             
+            -- 随机改变透明度创造闪烁效果
+            if math.random(1, 20) == 1 then
+                drop.object.TextTransparency = math.random(3, 8)/10
+            end
+            
             -- 重置位置到顶部
             if currentPos > LeftMathRain.AbsoluteSize.Y then
                 drop.object.Position = UDim2.new(math.random(), 0, -0.1, drop.resetPos)
                 drop.object.Text = mathSymbols[math.random(1, #mathSymbols)]
-                drop.object.TextTransparency = math.random(5, 8)/10
             end
         end
     end
 end)
 
--- 右侧特效区域
+-- 右侧红色特效区域
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+RightEffects.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- 纯黑背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 
--- 右侧网格背景
-local RightGrid = Instance.new("ImageLabel")
-RightGrid.Name = "RightGrid"
-RightGrid.Parent = RightEffects
-RightGrid.Image = "rbxassetid://13099879784"
-RightGrid.ImageColor3 = Color3.fromRGB(25, 25, 25)
-RightGrid.ImageTransparency = 0.95
-RightGrid.ScaleType = Enum.ScaleType.Tile
-RightGrid.TileSize = UDim2.new(0, 100, 0, 100)
-RightGrid.Size = UDim2.new(1, 0, 1, 0)
-RightGrid.ZIndex = 1
+-- 红色网格背景
+local RedGrid = Instance.new("ImageLabel")
+RedGrid.Name = "RedGrid"
+RedGrid.Parent = RightEffects
+RedGrid.Image = "rbxassetid://13099879784"
+RedGrid.ImageColor3 = Color3.fromRGB(50, 0, 0) -- 暗红色网格
+RedGrid.ImageTransparency = 0.95
+RedGrid.ScaleType = Enum.ScaleType.Tile
+RedGrid.TileSize = UDim2.new(0, 120, 0, 120)
+RedGrid.Size = UDim2.new(1, 0, 1, 0)
+RedGrid.ZIndex = 1
 
--- 右侧发光粒子
-for i = 1, 15 do
+-- 红色流动线条
+local redLines = {}
+for i = 1, 5 do
+    local line = Instance.new("Frame")
+    line.Name = "RedLine_"..i
+    line.Parent = RightEffects
+    line.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    line.BackgroundTransparency = 0.7
+    line.BorderSizePixel = 0
+    line.Size = UDim2.new(0, math.random(2, 4), 0, math.random(100, 200))
+    line.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    line.ZIndex = 2
+    line.Rotation = math.random(-15, 15)
+    
+    table.insert(redLines, {
+        object = line,
+        speedX = math.random(-3, 3)/10,
+        speedY = math.random(-3, 3)/10
+    })
+end
+
+-- 红色粒子特效
+for i = 1, 25 do
     local particle = Instance.new("Frame")
-    particle.Name = "Particle_"..i
+    particle.Name = "RedParticle_"..i
     particle.Parent = RightEffects
-    particle.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-    particle.BackgroundTransparency = 0.9
-    particle.Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4))
+    particle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    particle.BackgroundTransparency = 0.8
+    particle.Size = UDim2.new(0, math.random(2, 6), 0, math.random(2, 6))
     particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
     particle.ZIndex = 3
     
     -- 粒子闪烁动画
     spawn(function()
         while wait(math.random(1, 3)) do
-            for i = 0.9, 0.5, -0.1 do
+            for i = 0.8, 0.4, -0.1 do
                 particle.BackgroundTransparency = i
                 wait(0.1)
             end
-            for i = 0.5, 0.9, 0.1 do
+            for i = 0.4, 0.8, 0.1 do
                 particle.BackgroundTransparency = i
                 wait(0.1)
             end
@@ -281,12 +306,12 @@ for i = 1, 15 do
     
     -- 粒子移动动画
     spawn(function()
-        local speedX = math.random(-5, 5)/100
-        local speedY = math.random(-5, 5)/100
+        local speedX = math.random(-8, 8)/100
+        local speedY = math.random(-8, 8)/100
         while wait(0.05) do
             particle.Position = particle.Position + UDim2.new(0, speedX, 0, speedY)
             
-            -- 边界检查
+            -- 边界检查并反弹
             if particle.Position.X.Scale < 0 or particle.Position.X.Scale > 1 then
                 speedX = -speedX
             end
@@ -297,45 +322,51 @@ for i = 1, 15 do
     end)
 end
 
--- 右侧发光边框
-local RightBorder = Instance.new("Frame")
-RightBorder.Name = "RightBorder"
-RightBorder.Parent = RightEffects
-RightBorder.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-RightBorder.BackgroundTransparency = 0.85
-RightBorder.BorderSizePixel = 0
-RightBorder.Position = UDim2.new(0, -2, 0, 0)
-RightBorder.Size = UDim2.new(0, 4, 1, 0)
-RightBorder.ZIndex = 3
+-- 红色光晕效果
+local RedGlow = Instance.new("ImageLabel")
+RedGlow.Name = "RedGlow"
+RedGlow.Parent = RightEffects
+RedGlow.Image = "rbxassetid://13099879784"
+RedGlow.ImageColor3 = Color3.fromRGB(255, 0, 0)
+RedGlow.ImageTransparency = 0.9
+RedGlow.ScaleType = Enum.ScaleType.Tile
+RedGlow.TileSize = UDim2.new(0, 200, 0, 200)
+RedGlow.Size = UDim2.new(1, 0, 1, 0)
+RedGlow.ZIndex = 1
+RedGlow.Rotation = 45
 
--- 右侧底部装饰条
-local BottomBar = Instance.new("Frame")
-BottomBar.Name = "BottomBar"
-BottomBar.Parent = RightEffects
-BottomBar.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-BottomBar.BackgroundTransparency = 0.9
-BottomBar.BorderSizePixel = 0
-BottomBar.Position = UDim2.new(0, 0, 1, -2)
-BottomBar.Size = UDim2.new(1, 0, 0, 2)
-BottomBar.ZIndex = 3
-
--- 右侧边框动画 - 脉冲效果
+-- 红色边框动画
 spawn(function()
     while wait(0.1) do
-        for i = 0.85, 0.6, -0.05 do
-            RightBorder.BackgroundTransparency = i
-            BottomBar.BackgroundTransparency = i
+        for i = 0.9, 0.6, -0.05 do
+            RedGlow.ImageTransparency = i
             wait(0.05)
         end
-        for i = 0.6, 0.85, 0.05 do
-            RightBorder.BackgroundTransparency = i
-            BottomBar.BackgroundTransparency = i
+        for i = 0.6, 0.9, 0.05 do
+            RedGlow.ImageTransparency = i
             wait(0.05)
         end
     end
 end)
 
--- 右侧装饰性文字
+-- 流动线条动画
+spawn(function()
+    while wait(0.03) do
+        for _, line in ipairs(redLines) do
+            line.object.Position = line.object.Position + UDim2.new(0, line.speedX, 0, line.speedY)
+            
+            -- 边界检查并重置位置
+            if line.object.Position.X.Scale > 1.2 or line.object.Position.X.Scale < -0.2 or
+               line.object.Position.Y.Scale > 1.2 or line.object.Position.Y.Scale < -0.2 then
+                line.object.Position = UDim2.new(math.random(), 0, math.random(), 0)
+                line.speedX = math.random(-3, 3)/10
+                line.speedY = math.random(-3, 3)/10
+            end
+        end
+    end
+end)
+
+-- 右侧装饰性文字 (红色)
 local DecorText = Instance.new("TextLabel")
 DecorText.Name = "DecorText"
 DecorText.Parent = RightEffects
@@ -344,7 +375,7 @@ DecorText.Position = UDim2.new(0.8, 0, 0.9, 0)
 DecorText.Size = UDim2.new(0.2, 0, 0.1, 0)
 DecorText.Font = Enum.Font.GothamSemibold
 DecorText.Text = "v1.0.0"
-DecorText.TextColor3 = Color3.fromRGB(80, 80, 80)
+DecorText.TextColor3 = Color3.fromRGB(100, 0, 0) -- 暗红色文字
 DecorText.TextSize = 12
 DecorText.TextTransparency = 0.7
 DecorText.TextXAlignment = Enum.TextXAlignment.Right
