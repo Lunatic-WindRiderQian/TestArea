@@ -256,6 +256,43 @@ RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
+local blueParticles = {}
+for i = 1, 12 do  -- 12个粒子
+    local particle = Instance.new("Frame")
+    particle.Name = "BlueParticle_"..i
+    particle.Parent = RightEffects
+    particle.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    particle.Size = UDim2.new(0, 3, 0, 3)
+    
+    -- 添加发光效果
+    local glow = Instance.new("ImageLabel")
+    glow.Name = "Glow"
+    glow.Parent = particle
+    glow.Image = "rbxassetid://7733765398"  -- 圆形光晕
+    glow.ImageColor3 = particle.BackgroundColor3
+    glow.ImageTransparency = 0.7
+    glow.Size = UDim2.new(3, 0, 3, 0)
+    glow.Position = UDim2.new(-1, 0, -1, 0)
+    glow.BackgroundTransparency = 1
+    glow.ZIndex = particle.ZIndex - 1
+    
+    -- 初始随机位置和速度
+    local startX = math.random() * 0.7 + 0.15  -- 限制在中间区域
+    local startY = math.random() * 0.7 + 0.15
+    
+    particle.Position = UDim2.new(startX, 0, startY, 0)
+    
+    table.insert(blueParticles, {
+        obj = particle,
+        speed = Vector2.new(
+            (math.random() - 0.5) * 0.005,
+            (math.random() - 0.5) * 0.005
+        ),
+        basePos = Vector2.new(startX, startY),
+        floatIntensity = math.random(5, 15) / 1000
+    })
+end
+
 -- 1. 左右发光边框
 local leftBorder = Instance.new("Frame")
 leftBorder.Name = "LeftBorder"
@@ -334,6 +371,35 @@ game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
     local transparency = 0.3 + (math.sin(pulsePhase * 2) + 1) * 0.35
     leftBorder.BackgroundTransparency = transparency
     rightBorder.BackgroundTransparency = transparency
+    
+    -- 蓝色粒子浮动
+    for _, particle in ipairs(blueParticles) do
+        -- 基础浮动运动
+        local pos = particle.obj.Position
+        local newX = pos.X.Scale + particle.speed.X
+        local newY = pos.Y.Scale + particle.speed.Y
+        
+        -- 添加轻微的波动效果
+        newX = particle.basePos.x + math.sin(os.clock() * 0.5) * particle.floatIntensity
+        newY = particle.basePos.y + math.cos(os.clock() * 0.7) * particle.floatIntensity
+        
+        -- 边界检查（限制在中间区域）
+        if newX < 0.1 or newX > 0.9 then
+            particle.speed = Vector2.new(-particle.speed.X, particle.speed.Y)
+            particle.basePos = Vector2.new(math.clamp(newX, 0.15, 0.85), particle.basePos.y)
+        end
+        if newY < 0.1 or newY > 0.9 then
+            particle.speed = Vector2.new(particle.speed.X, -particle.speed.Y)
+            particle.basePos = Vector2.new(particle.basePos.x, math.clamp(newY, 0.15, 0.85))
+        end
+        
+        particle.obj.Position = UDim2.new(newX, 0, newY, 0)
+        
+        -- 脉动发光效果
+        local pulse = (math.sin(os.clock() * 2 + particle.basePos.x * 10) + 1) * 0.5
+        particle.obj.Glow.ImageTransparency = 0.7 - pulse * 0.2
+        particle.obj.BackgroundTransparency = 0.3 - pulse * 0.2
+    end
     
     -- 数据矩阵动画
     for _, column in ipairs(matrixColumns) do
