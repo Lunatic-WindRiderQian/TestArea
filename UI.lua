@@ -274,6 +274,22 @@ rightBorder.Size = UDim2.new(0, 1, 1, 0)
 rightBorder.Position = UDim2.new(1, -1, 0, 0)
 rightBorder.ZIndex = 2
 
+-- 2. 数据矩阵 (简化版)
+local dataParticles = {}
+for i = 1, 8 do
+    local particle = Instance.new("Frame")
+    particle.Name = "DataParticle_"..i
+    particle.Parent = RightEffects
+    particle.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+    particle.Size = UDim2.new(0, 1, 0, 8)
+    particle.Position = UDim2.new(math.random()*0.8 + 0.1, 0, math.random(), 0)
+    
+    table.insert(dataParticles, {
+        obj = particle,
+        speed = math.random(5, 15)/10
+    })
+end
+
 -- 2. 核心科技元素
 local techElements = {
     -- 水平扫描线
@@ -334,6 +350,17 @@ game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
         if newY < 0.1 or newY > 0.9 then particle.speed = Vector2.new(particle.speed.X, -particle.speed.Y) end
         
         particle.obj.Position = UDim2.new(newX, 0, newY, 0)
+    end
+end)
+
+    -- 数据粒子下落
+    for _, particle in ipairs(dataParticles) do
+        local currentY = particle.obj.Position.Y.Scale + particle.speed * deltaTime
+        if currentY > 1 then
+            currentY = 0
+            particle.obj.Position = UDim2.new(math.random()*0.8 + 0.1, 0, 0, 0)
+        end
+        particle.obj.Position = UDim2.new(particle.obj.Position.X.Scale, 0, currentY, 0)
     end
 end)
 
