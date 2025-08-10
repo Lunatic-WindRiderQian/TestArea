@@ -247,7 +247,7 @@ RunService.Heartbeat:Connect(function(deltaTime)
     end
 end)
 
--- ============= 终极蓝色科技风格 =============
+-- ============= 终极科技风格 (无方块版) =============
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
@@ -256,75 +256,116 @@ RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
--- 1. 动态边框线 (蓝色闪烁版)
-local borderLines = {
-    left = Instance.new("Frame"),
-    right = Instance.new("Frame"),
-    top = Instance.new("Frame"),
-    bottom = Instance.new("Frame")
-}
-
-for side, line in pairs(borderLines) do
-    line.Name = "BorderLine_"..side
-    line.Parent = RightEffects
-    line.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-    line.BorderSizePixel = 0
-    line.ZIndex = 10  -- 确保在UI控件之上
+-- 1. 增强型动态边框 (三线脉冲)
+local borderSets = {}
+for i = 1, 3 do  -- 三组边框线
+    borderSets[i] = {
+        left = Instance.new("Frame"),
+        right = Instance.new("Frame"),
+        top = Instance.new("Frame"),
+        bottom = Instance.new("Frame")
+    }
     
-    if side == "left" or side == "right" then
-        line.Size = UDim2.new(0, 2, 1, 0)
-        line.Position = UDim2.new(side == "left" and 0 or 1, -2, 0, 0)
-    else
-        line.Size = UDim2.new(1, 0, 0, 2)
-        line.Position = UDim2.new(0, 0, side == "top" and 0 or 1, -2)
+    for side, line in pairs(borderSets[i]) do
+        line.Name = "BorderLine_"..side.."_"..i
+        line.Parent = RightEffects
+        line.BackgroundColor3 = Color3.fromRGB(0, 150 + i*30, 255)
+        line.BorderSizePixel = 0
+        line.ZIndex = 10 + i  -- 层级递增
+        
+        if side == "left" or side == "right" then
+            line.Size = UDim2.new(0, 1, 1, 0)
+            line.Position = UDim2.new(
+                side == "left" and 0 or 1, 
+                side == "left" and i-1 or -i,
+                0, 0
+            )
+        else
+            line.Size = UDim2.new(1, 0, 0, 1)
+            line.Position = UDim2.new(
+                0, 0,
+                side == "top" and 0 or 1, 
+                side == "top" and i-1 or -i
+            )
+        end
     end
 end
 
--- 2. 核心科技元素 (全蓝版本)
-local TechCore = Instance.new("Frame")
-TechCore.Name = "TechCore"
-TechCore.Parent = RightEffects
-TechCore.AnchorPoint = Vector2.new(0.5,0.5)
-TechCore.BackgroundColor3 = Color3.fromRGB(0, 80, 150)
-TechCore.BackgroundTransparency = 0.95
-TechCore.Size = UDim2.new(0, 300, 0, 300)
-TechCore.Position = UDim2.new(0.7, 0, 0.5, 0)
-TechCore.ZIndex = 1
+-- 2. 全息网格 (六边形蜂巢)
+local Hologrid = Instance.new("ImageLabel")
+Hologrid.Name = "Hologrid"
+Hologrid.Parent = RightEffects
+Hologrid.Image = "rbxassetid://7743860901"  -- 六边形网格
+Hologrid.ImageColor3 = Color3.fromRGB(0, 50, 100)
+Hologrid.ImageTransparency = 0.9
+Hologrid.ScaleType = Enum.ScaleType.Tile
+Hologrid.TileSize = UDim2.new(0, 80, 0, 80)
+Hologrid.Size = UDim2.new(1, 0, 1, 0)
+Hologrid.ZIndex = 1
 
--- 3. 数据矩阵 (蓝色粒子)
-local dataMatrix = {}
-for i = 1, 12 do
-    local particle = Instance.new("Frame")
-    particle.Name = "DataParticle_"..i
-    particle.Parent = RightEffects
-    particle.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-    particle.Size = UDim2.new(0, 2, 0, 10)
-    particle.Position = UDim2.new(math.random()*0.6 + 0.2, 0, math.random(), 0)
-    particle.ZIndex = 3
+-- 3. 量子数据流 (增强版)
+local quantumStreams = {}
+for i = 1, 8 do
+    local stream = Instance.new("Frame")
+    stream.Name = "QuantumStream_"..i
+    stream.Parent = RightEffects
+    stream.BackgroundColor3 = Color3.fromHSV(0.55 + i/24, 0.8, 0.9)
+    stream.Size = UDim2.new(0.1 + math.random()*0.2, 0, 0, 2)
+    stream.Position = UDim2.new(math.random()*0.7 + 0.15, 0, 0, -math.random(100, 300))
+    stream.ZIndex = 3
     
-    table.insert(dataMatrix, {
-        obj = particle,
-        speed = math.random(5, 15)/10,
-        length = math.random(5, 15)
+    -- 添加发光效果
+    local glow = Instance.new("ImageLabel")
+    glow.Name = "StreamGlow"
+    glow.Parent = stream
+    glow.Image = "rbxassetid://7733765398"  -- 圆形光晕
+    glow.ImageColor3 = stream.BackgroundColor3
+    glow.ImageTransparency = 0.7
+    glow.Size = UDim2.new(2, 0, 10, 0)
+    glow.Position = UDim2.new(-0.5, 0, -4.5, 0)
+    glow.AnchorPoint = Vector2.new(0.5,0.5)
+    glow.ZIndex = 2
+    
+    table.insert(quantumStreams, {
+        obj = stream,
+        speed = math.random(15, 30)/10,
+        width = stream.Size.X.Scale
     })
 end
 
--- 4. 连接网络 (蓝色光线)
-local connections = {}
-for i = 1, 8 do
-    local line = Instance.new("Frame")
-    line.Name = "Connection_"..i
-    line.Parent = RightEffects
-    line.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-    line.BackgroundTransparency = 0.7
-    line.BorderSizePixel = 0
-    line.Size = UDim2.new(0, 0, 0, 1)
-    line.ZIndex = 2
+-- 4. 神经网络节点 (动态连接)
+local neuralNodes = {}
+for i = 1, 12 do
+    local node = Instance.new("ImageLabel")
+    node.Name = "NeuralNode_"..i
+    node.Parent = RightEffects
+    node.Image = "rbxassetid://7733960981"  -- 圆形节点
+    node.ImageColor3 = Color3.fromRGB(0, 180, 255)
+    node.ImageTransparency = 0.3
+    node.Size = UDim2.new(0, 8, 0, 8)
+    node.Position = UDim2.new(math.random()*0.6 + 0.2, 0, math.random()*0.6 + 0.2, 0)
+    node.ZIndex = 5
     
-    table.insert(connections, line)
+    -- 节点脉冲光环
+    local pulseRing = Instance.new("ImageLabel")
+    pulseRing.Name = "PulseRing"
+    pulseRing.Parent = node
+    pulseRing.Image = "rbxassetid://7733765398"
+    pulseRing.ImageColor3 = node.ImageColor3
+    pulseRing.ImageTransparency = 0.8
+    pulseRing.Size = UDim2.new(3, 0, 3, 0)
+    pulseRing.Position = UDim2.new(-1, 0, -1, 0)
+    pulseRing.ZIndex = 4
+    
+    table.insert(neuralNodes, {
+        obj = node,
+        basePos = Vector2.new(node.Position.X.Scale, node.Position.Y.Scale),
+        speed = math.random(3, 8)/100,
+        pulseTimer = math.random()
+    })
 end
 
--- 5. 状态显示器 (蓝色文字)
+-- 5. 增强状态显示器
 local StatusDisplay = Instance.new("TextLabel")
 StatusDisplay.Name = "StatusDisplay"
 StatusDisplay.Parent = RightEffects
@@ -332,64 +373,106 @@ StatusDisplay.BackgroundTransparency = 1
 StatusDisplay.Position = UDim2.new(0.02, 0, 0.02, 0)
 StatusDisplay.Size = UDim2.new(0.3, 0, 0.05, 0)
 StatusDisplay.Font = Enum.Font.Code
-StatusDisplay.Text = "BLUE SYSTEM"
-StatusDisplay.TextColor3 = Color3.fromRGB(0, 200, 255)
+StatusDisplay.Text = "NEURAL NETWORK"
+StatusDisplay.TextColor3 = Color3.fromRGB(0, 220, 255)
 StatusDisplay.TextSize = 14
 StatusDisplay.TextXAlignment = Enum.TextXAlignment.Left
 
+-- 动态连接线容器
+local connectionContainer = Instance.new("Frame")
+connectionContainer.Name = "Connections"
+connectionContainer.Parent = RightEffects
+connectionContainer.BackgroundTransparency = 1
+connectionContainer.Size = UDim2.new(1, 0, 1, 0)
+connectionContainer.ZIndex = 2
+
 -- 动画控制器
-local flashState = 0
+local timer = 0
 game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
-    -- 边框闪烁 (更明显的脉冲效果)
-    flashState = flashState + deltaTime
-    if flashState > 1 then flashState = 0 end
+    timer = timer + deltaTime
     
-    local blinkTrans = 0.3 + math.abs(math.sin(flashState*math.pi*2))*0.5
-    for _, line in pairs(borderLines) do
-        line.BackgroundTransparency = blinkTrans
-    end
-    
-    -- 数据矩阵下落
-    for _, particle in ipairs(dataMatrix) do
-        local currentY = particle.obj.Position.Y.Scale + particle.speed * deltaTime
-        if currentY > 1 then
-            currentY = 0
-            particle.obj.Position = UDim2.new(math.random()*0.6 + 0.2, 0, 0, 0)
-            particle.obj.Size = UDim2.new(0, 2, 0, particle.length)
+    -- 三层边框脉冲波
+    for i, set in ipairs(borderSets) do
+        local wave = (math.sin(timer*2 + i) + 1)/2  -- 0-1波动
+        local trans = 0.2 + wave*0.6
+        for _, line in pairs(set) do
+            line.BackgroundTransparency = trans
         end
-        particle.obj.Position = UDim2.new(particle.obj.Position.X.Scale, 0, currentY, 0)
     end
     
-    -- 动态连接网络
-    for i, line in ipairs(connections) do
-        local startPos = Vector2.new(
-            math.random()*0.6 + 0.2,
-            math.random()*0.8 + 0.1
-        )
-        local endPos = Vector2.new(
-            math.random()*0.6 + 0.2,
-            math.random()*0.8 + 0.1
-        )
+    -- 量子数据流
+    for _, stream in ipairs(quantumStreams) do
+        local currentY = stream.obj.Position.Y.Offset + stream.speed * 60 * deltaTime
+        if currentY > RightEffects.AbsoluteSize.Y then
+            currentY = -20
+            stream.obj.Position = UDim2.new(math.random()*0.7 + 0.15, 0, 0, -math.random(100, 300))
+        end
+        stream.obj.Position = UDim2.new(stream.obj.Position.X.Scale, 0, 0, currentY)
         
-        local center = (startPos + endPos)/2
-        local length = (startPos - endPos).Magnitude
-        
-        line.Position = UDim2.new(0, center.X - length/2, 0, center.Y)
-        line.Size = UDim2.new(0, length, 0, 1)
-        line.Rotation = math.deg(math.atan2(endPos.Y - startPos.Y, endPos.X - startPos.X))
+        -- 动态宽度变化
+        stream.obj.Size = UDim2.new(
+            stream.width * (0.8 + math.abs(math.sin(timer*3))*0.2, 
+            0, 
+            0, 
+            2
+        )
     end
     
-    -- 核心脉动
-    TechCore.BackgroundTransparency = 0.9 + math.sin(os.clock()*3)*0.05
-    TechCore.Size = UDim2.new(0, 300 + math.sin(os.clock()*2)*20, 0, 300 + math.sin(os.clock()*2)*20)
+    -- 神经网络节点
+    for _, node in ipairs(neuralNodes) do
+        node.pulseTimer = node.pulseTimer + deltaTime
+        
+        -- 浮动效果
+        node.obj.Position = UDim2.new(
+            node.basePos.x + math.sin(node.pulseTimer * node.speed) * 0.03,
+            0,
+            node.basePos.y + math.cos(node.pulseTimer * node.speed * 0.7) * 0.03,
+            0
+        )
+        
+        -- 脉冲光环
+        if node.pulseTimer > 3 then
+            node.pulseTimer = 0
+            node.obj.PulseRing.Size = UDim2.new(3, 0, 3, 0)
+            node.obj.PulseRing.ImageTransparency = 0.7
+        else
+            node.obj.PulseRing.Size = node.obj.PulseRing.Size + UDim2.new(0.1, 0, 0.1, 0)
+            node.obj.PulseRing.ImageTransparency = math.min(1, 
+                node.obj.PulseRing.ImageTransparency + deltaTime*0.3)
+        end
+    end
+    
+    -- 动态生成连接线 (每0.5秒刷新)
+    if timer % 0.5 < deltaTime then
+        connectionContainer:ClearAllChildren()
+        
+        -- 创建节点间连接线
+        for i = 1, #neuralNodes*2 do
+            local startNode = neuralNodes[math.random(1, #neuralNodes)]
+            local endNode = neuralNodes[math.random(1, #neuralNodes)]
+            
+            if startNode ~= endNode then
+                local line = Instance.new("Frame")
+                line.Name = "NeuralConnection"
+                line.Parent = connectionContainer
+                line.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+                line.BackgroundTransparency = 0.8
+                line.BorderSizePixel = 0
+                line.ZIndex = 2
+                
+                local startPos = startNode.obj.AbsolutePosition + startNode.obj.AbsoluteSize/2
+                local endPos = endNode.obj.AbsolutePosition + endNode.obj.AbsoluteSize/2
+                local center = (startPos + endPos)/2
+                local length = (startPos - endPos).Magnitude
+                
+                line.Position = UDim2.new(0, center.X - length/2, 0, center.Y)
+                line.Size = UDim2.new(0, length, 0, 1)
+                line.Rotation = math.deg(math.atan2(endPos.Y - startPos.Y, endPos.X - startPos.X))
+            end
+        end
+    end
 end)
 
--- 确保UI控件在背景之上
-for _,v in pairs(Main:GetDescendants()) do
-    if v:IsA("Frame") or v:IsA("TextButton") or v:IsA("TextLabel") then
-        v.ZIndex = 20  -- 所有UI控件置顶
-    end
-end
 -- ============= 修改完成 =============
 
     if syn and syn.protect_gui then
