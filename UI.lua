@@ -247,192 +247,208 @@ RunService.Heartbeat:Connect(function(deltaTime)
     end
 end)
 
--- ======== 右侧特效容器 ========
+-- ======== 智能特效容器 ========
 local RightEffects = Instance.new("Frame")
-RightEffects.Name = "CyberFX"
+RightEffects.Name = "EnhancedFX"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(2, 2, 5)  -- 极暗基底
+RightEffects.BackgroundColor3 = Color3.fromRGB(3, 3, 8)  -- 更暗的基底
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ZIndex = 1
 RightEffects.ClipsDescendants = true
 
--- █ 1. 全息网格背景（动态扭曲）
-local Hologrid = Instance.new("ImageLabel")
-Hologrid.Name = "Hologrid"
-Hologrid.Image = "rbxassetid://13099879784"
-Hologrid.ImageColor3 = Color3.fromRGB(15, 0, 30)
-Hologrid.ImageTransparency = 0.94
-Hologrid.ScaleType = Enum.ScaleType.Tile
-Hologrid.TileSize = UDim2.new(0, 80, 0, 80)
-Hologrid.Size = UDim2.new(2, 0, 2, 0)  -- 放大制造视差
-Hologrid.ZIndex = 1
-Hologrid.Parent = RightEffects
+-- █ 安全区标记（特效会自动避开这些区域）
+local SafeZones = {
+    UDim2.new(0.6, 0, 0.2, 0),  -- 功能区域1
+    UDim2.new(0.4, 0, 0.7, 0)   -- 功能区域2
+}
 
--- █ 2. 霓虹光脉（呼吸效果）
-local PulseCore = Instance.new("Frame")
-PulseCore.Name = "PulseCore"
-PulseCore.BackgroundColor3 = Color3.fromRGB(150, 0, 255)
-PulseCore.BackgroundTransparency = 0.95
-PulseCore.Size = UDim2.new(0.6, 0, 0.6, 0)
-PulseCore.Position = UDim2.new(0.2, 0, 0.2, 0)
-PulseCore.ZIndex = 0
-PulseCore.Parent = RightEffects
+-- █ 1. 量子网格（动态变形）
+local QuantumGrid = Instance.new("ImageLabel")
+QuantumGrid.Image = "rbxassetid://13099879784"
+QuantumGrid.ImageColor3 = Color3.fromRGB(20, 0, 40)
+QuantumGrid.ImageTransparency = 0.96
+QuantumGrid.ScaleType = Enum.ScaleType.Tile
+QuantumGrid.TileSize = UDim2.new(0, 60, 0, 60)
+QuantumGrid.Size = UDim2.new(2, 0, 2, 0)
+QuantumGrid.ZIndex = 1
+QuantumGrid.Parent = RightEffects
 
--- █ 3. 数据风暴粒子（100个动态粒子）
-local Particles = {}
-for i = 1, 100 do
-    local p = Instance.new("Frame")
-    p.Name = "Particle_"..i
-    p.Size = UDim2.new(0, math.random(2,4), 0, math.random(2,4))
-    p.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    p.BackgroundColor3 = Color3.fromHSV(i/100, 0.9, 0.9)
-    p.ZIndex = 3
-    p.Parent = RightEffects
+-- █ 2. 脉冲星群（200个智能粒子）
+local Stars = {}
+for i = 1, 200 do
+    local star = Instance.new("Frame")
+    star.Size = UDim2.new(0, math.random(1,3), 0, math.random(1,3))
+    star.BackgroundColor3 = Color3.fromHSV(i/200, 0.8, 0.9)
+    star.ZIndex = 3
+    star.Parent = RightEffects
     
-    Particles[i] = {
-        obj = p,
+    -- 初始位置避开安全区
+    repeat
+        star.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    until not isInSafeZone(star.Position)
+    
+    Stars[i] = {
+        obj = star,
         speed = Vector2.new(
-            (math.random()-0.5)*0.01,
-            (math.random()-0.5)*0.01
+            (math.random()-0.5)*0.007,
+            (math.random()-0.5)*0.007
         ),
-        life = math.random(5, 10)
+        sizeCycle = math.random()
     }
 end
 
--- █ 4. 流光隧道（3D透视效果）
-local FlowTunnel = Instance.new("Frame")
-FlowTunnel.Name = "FlowTunnel"
-FlowTunnel.Size = UDim2.new(1, 0, 1, 0)
-FlowTunnel.BackgroundTransparency = 1
-FlowTunnel.ZIndex = 2
-FlowTunnel.Parent = RightEffects
+-- █ 3. 数据洪流（可交互避让）
+local DataStream = Instance.new("Frame")
+DataStream.Size = UDim2.new(0.3, 0, 1, 0)
+DataStream.Position = UDim2.new(0.7, 0, 0, 0)
+DataStream.BackgroundTransparency = 1
+DataStream.ZIndex = 4
+DataStream.Parent = RightEffects
 
-for i = 1, 15 do
-    local line = Instance.new("Frame")
-    line.Name = "TunnelLine_"..i
-    line.Size = UDim2.new(0, 2, 1, 0)
-    line.Position = UDim2.new(i/15, 0, 0, 0)
-    line.BackgroundColor3 = Color3.fromRGB(100, 0, 150)
-    line.BackgroundTransparency = 0.7
-    line.ZIndex = 2
-    line.Parent = FlowTunnel
+local streamChars = {"0", "1", "|", "/", "\\", "_"}
+for i = 1, 30 do
+    local stream = Instance.new("TextLabel")
+    stream.Text = streamChars[math.random(1,#streamChars)]
+    stream.TextColor3 = Color3.fromRGB(0, 255, 150)
+    stream.TextTransparency = 0.3
+    stream.Font = Enum.Font.Code
+    stream.TextSize = 14
+    stream.Size = UDim2.new(1/30, -2, 0, 15)
+    stream.Position = UDim2.new((i-1)/30, 1, 0, -math.random(100,500))
+    stream.BackgroundTransparency = 1
+    stream.ZIndex = 4
+    stream.Parent = DataStream
 end
 
--- █ 5. 黑客代码雨（右侧专属）
-local CodeRain = Instance.new("Frame")
-CodeRain.Name = "CodeRain"
-CodeRain.Size = UDim2.new(0.3, 0, 1, 0)
-CodeRain.Position = UDim2.new(0.7, 0, 0, 0)
-CodeRain.BackgroundTransparency = 1
-CodeRain.ZIndex = 4
-CodeRain.Parent = RightEffects
-
-local codeChars = {"0", "1", "#", "$", "%", "&", "*", "@"}
-for i = 1, 20 do
-    local col = Instance.new("TextLabel")
-    col.Name = "CodeCol_"..i
-    col.Size = UDim2.new(1/20, 0, 1, 0)
-    col.Position = UDim2.new((i-1)/20, 0, 0, -math.random(100,300))
-    col.Text = codeChars[math.random(1,#codeChars)]
-    col.TextColor3 = Color3.fromRGB(0, 255, 100)
-    col.TextTransparency = 0.5
-    col.Font = Enum.Font.Code
-    col.TextSize = 14
-    col.BackgroundTransparency = 1
-    col.ZIndex = 4
-    col.Parent = CodeRain
+-- █ 4. 动态光刃（自动避障）
+local LightBlades = {}
+for i = 1, 8 do
+    local blade = Instance.new("Frame")
+    blade.Size = UDim2.new(0, 80, 0, 2)
+    blade.BackgroundColor3 = Color3.fromRGB(100, 0, 200)
+    blade.BackgroundTransparency = 0.6
+    blade.ZIndex = 2
+    blade.Parent = RightEffects
+    
+    -- 确保初始位置不在安全区
+    repeat
+        blade.Position = UDim2.new(math.random(), 0, math.random(), 0)
+        blade.Rotation = math.random(0, 360)
+    until not isInSafeZone(blade.Position)
+    
+    LightBlades[i] = {
+        obj = blade,
+        speed = math.random(5,10)/10,
+        angle = math.rad(math.random(0, 360))
+    }
 end
 
--- █ 6. 能量波纹（同心圆扩散）
-local RippleEffect = Instance.new("Frame")
-RippleEffect.Name = "Ripple"
-RippleEffect.AnchorPoint = Vector2.new(0.5,0.5)
-RippleEffect.Size = UDim2.new(0, 300, 0, 300)
-RippleEffect.Position = UDim2.new(0.5, 0, 0.5, 0)
-RippleEffect.BackgroundTransparency = 1
-RippleEffect.ZIndex = 1
-RippleEffect.Parent = RightEffects
+-- █ 5. 全息控制台（非遮挡式UI）
+local HologramHUD = Instance.new("TextLabel")
+HologramHUD.Text = [[
+  SYSTEM STATUS:
+  >>> MEMORY: 84%
+  >>> PROCESS: 32/64
+  >>> BUFFER: ████░░
+]]
+HologramHUD.TextColor3 = Color3.fromRGB(100, 255, 200)
+HologramHUD.TextTransparency = 0.15
+HologramHUD.TextXAlignment = Enum.TextXAlignment.Left
+HologramHUD.Font = Enum.Font.Code
+HologramHUD.TextSize = 12
+HologramHUD.Size = UDim2.new(0.25, 0, 0.3, 0)
+HologramHUD.Position = UDim2.new(0.02, 0, 0.65, 0)
+HologramHUD.BackgroundTransparency = 1
+HologramHUD.ZIndex = 5
+HologramHUD.Parent = RightEffects
 
--- █ 7. 扫描雷达（旋转射线）
-local RadarScan = Instance.new("Frame")
-RadarScan.Name = "Radar"
-RadarScan.Size = UDim2.new(0, 200, 0, 200)
-RadarScan.Position = UDim2.new(0.3, 0, 0.4, 0)
-RadarScan.BackgroundTransparency = 1
-RadarScan.ZIndex = 3
-RadarScan.Parent = RightEffects
+-- ======== 智能避让算法 ========
+function isInSafeZone(position)
+    for _, zone in ipairs(SafeZones) do
+        if math.abs(position.X.Scale - zone.X.Scale) < 0.15 and
+           math.abs(position.Y.Scale - zone.Y.Scale) < 0.15 then
+            return true
+        end
+    end
+    return false
+end
 
--- █ 8. 全息UI装饰（科技感文字）
-local HUDText = Instance.new("TextLabel")
-HUDText.Name = "HUD"
-HUDText.Text = "SYSTEM_ACTIVE:TRUE\nVERSION:2.4.0\nENERGY:██████"
-HUDText.TextColor3 = Color3.fromRGB(100, 255, 200)
-HUDText.TextTransparency = 0.2
-HUDText.TextXAlignment = Enum.TextXAlignment.Left
-HUDText.TextYAlignment = Enum.TextYAlignment.Top
-HUDText.Font = Enum.Font.Code
-HUDText.TextSize = 12
-HUDText.Size = UDim2.new(0.3, 0, 0.2, 0)
-HUDText.Position = UDim2.new(0.02, 0, 0.02, 0)
-HUDText.BackgroundTransparency = 1
-HUDText.ZIndex = 5
-HUDText.Parent = RightEffects
+function findNewPosition(oldPos)
+    local attempts = 0
+    local newPos
+    repeat
+        newPos = UDim2.new(
+            math.clamp(oldPos.X.Scale + (math.random()-0.5)*0.2, 0, 1),
+            math.clamp(oldPos.Y.Scale + (math.random()-0.5)*0.2, 0, 1)
+        )
+        attempts = attempts + 1
+    until not isInSafeZone(newPos) or attempts > 10
+    return newPos
+end
 
--- ======== 动画控制器 ========
-local RunService = game:GetService("RunService")
-RunService.Heartbeat:Connect(function(deltaTime)
-    -- 动态网格视差
-    Hologrid.Position = UDim2.new(
-        math.sin(os.clock()*0.3)*0.1 - 0.5,
+-- ======== 动画引擎 ========
+game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
+    -- 量子网格视差
+    QuantumGrid.Position = UDim2.new(
+        math.sin(os.clock()*0.2)*0.1 - 0.5,
         0,
-        math.cos(os.clock()*0.2)*0.1 - 0.5,
+        math.cos(os.clock()*0.15)*0.1 - 0.5,
         0
     )
     
-    -- 核心脉冲
-    PulseCore.BackgroundTransparency = 0.92 + math.sin(os.clock()*2)*0.03
-    PulseCore.Size = UDim2.new(
-        0.6 + math.sin(os.clock())*0.1,
-        0,
-        0.6 + math.cos(os.clock())*0.1,
-        0
-    )
-    
-    -- 粒子系统
-    for i = 1, 100 do
-        local p = Particles[i]
-        local newX = p.obj.Position.X.Scale + p.speed.X
-        local newY = p.obj.Position.Y.Scale + p.speed.Y
+    -- 智能粒子系统
+    for i = 1, 200 do
+        local star = Stars[i]
+        local newPos = UDim2.new(
+            star.obj.Position.X.Scale + star.speed.X,
+            0,
+            star.obj.Position.Y.Scale + star.speed.Y,
+            0
+        )
         
-        if newX < 0 or newX > 1 then p.speed = Vector2.new(-p.speed.X, p.speed.Y) end
-        if newY < 0 or newY > 1 then p.speed = Vector2.new(p.speed.X, -p.speed.Y) end
+        -- 边界和安全区检测
+        if newPos.X.Scale < 0 or newPos.X.Scale > 1 or 
+           newPos.Y.Scale < 0 or newPos.Y.Scale > 1 or
+           isInSafeZone(newPos) then
+            newPos = findNewPosition(newPos)
+            star.speed = Vector2.new(
+                (math.random()-0.5)*0.007,
+                (math.random()-0.5)*0.007
+            )
+        end
         
-        p.obj.Position = UDim2.new(newX, 0, newY, 0)
-        p.life = p.life - deltaTime
-        if p.life <= 0 then
-            p.obj.BackgroundColor3 = Color3.fromHSV((i%100)/100, 0.9, 0.9)
-            p.life = math.random(5,10)
+        star.obj.Position = newPos
+        star.obj.BackgroundTransparency = 0.3 + math.abs(math.sin(os.clock() + star.sizeCycle))*0.5
+    end
+    
+    -- 数据洪流
+    for _, stream in ipairs(DataStream:GetChildren()) do
+        local newY = stream.Position.Y.Offset + 3
+        if newY > 50 then
+            newY = -math.random(100,500)
+            stream.Text = streamChars[math.random(1,#streamChars)]
         end
+        stream.Position = UDim2.new(stream.Position.X.Scale, 0, 0, newY)
     end
     
-    -- 流光隧道动画
-    for _, line in ipairs(FlowTunnel:GetChildren()) do
-        line.BackgroundTransparency = 0.5 + math.sin(os.clock() + tonumber(line.Name:split("_")[2])/5)*0.3
-    end
-    
-    -- 代码雨下落
-    for _, col in ipairs(CodeRain:GetChildren()) do
-        local newY = col.Position.Y.Offset + 2
-        if newY > 50 then newY = -math.random(100,300) end
-        col.Position = UDim2.new(col.Position.X.Scale, 0, 0, newY)
-        if math.random(1,20) == 1 then
-            col.Text = codeChars[math.random(1,#codeChars)]
+    -- 动态光刃
+    for _, blade in ipairs(LightBlades) do
+        local newPos = UDim2.new(
+            blade.obj.Position.X.Scale + math.cos(blade.angle)*0.01,
+            0,
+            blade.obj.Position.Y.Scale + math.sin(blade.angle)*0.01,
+            0
+        )
+        
+        if isInSafeZone(newPos) then
+            blade.angle = math.rad(math.random(0, 360))
+            newPos = findNewPosition(newPos)
         end
+        
+        blade.obj.Position = newPos
+        blade.obj.BackgroundTransparency = 0.5 + math.sin(os.clock()*2)*0.2
     end
-    
-    -- 雷达扫描旋转
-    RadarScan.Rotation = os.clock() * 30 % 360
 end)
 -- ============= 结束 =============
 
