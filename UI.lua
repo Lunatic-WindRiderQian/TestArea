@@ -165,55 +165,50 @@ function library.new(library, name, theme)
     local UIGradient = Instance.new("UIGradient")
     local UIGradientTitle = Instance.new("UIGradient")
 
--- ============= 紧急修复版 =============
--- 主背景容器（彻底移除白块）
+-- ============= 最终纯净版 =============
+-- 主背景容器（绝对纯净）
 local MainBackground = Instance.new("Frame")
 MainBackground.Name = "MainBackground"
 MainBackground.Parent = Main
-MainBackground.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+MainBackground.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- 纯黑背景
 MainBackground.Size = UDim2.new(1, 0, 1, 0)
 MainBackground.ZIndex = 0
 
--- 左侧区域 - 已移除数字雨（根据您圈选的部分）
+-- 左侧区域 - 完全清除（根据您圈选的部分）
 local LeftArea = Instance.new("Frame")
 LeftArea.Name = "LeftArea"
 LeftArea.Parent = MainBackground
-LeftArea.BackgroundTransparency = 1
+LeftArea.BackgroundTransparency = 1 -- 完全透明
 LeftArea.Size = UDim2.new(0.25, 0, 1, 0)
 
--- 仅保留左侧光带（最小化设计）
-local LeftLightStrip = Instance.new("Frame")
-LeftLightStrip.Name = "LeftLightStrip"
-LeftLightStrip.Parent = LeftArea
-LeftLightStrip.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-LeftLightStrip.BackgroundTransparency = 0.95  -- 更透明
-LeftLightStrip.Size = UDim2.new(0, 1, 1, 0)  -- 更细
-LeftLightStrip.Position = UDim2.new(0, 0, 0, 0)
-LeftLightStrip.ZIndex = 2
-
--- 右侧区域 - 彻底解决白块问题
+-- 右侧区域 - 绝对纯净
 local RightArea = Instance.new("Frame")
 RightArea.Name = "RightArea"
 RightArea.Parent = MainBackground
-RightArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+RightArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- 纯黑背景
 RightArea.Position = UDim2.new(0.25, 0, 0, 0)
 RightArea.Size = UDim2.new(0.75, 0, 1, 0)
 
--- 右侧背景（完全移除网格和特效）
-local RightBg = Instance.new("Frame")
-RightBg.Name = "RightBg"
-RightBg.Parent = RightArea
-RightBg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-RightBg.Size = UDim2.new(1, 0, 1, 0)
+-- 确保无任何残留元素的防护措施
+local function CleanArea(frame)
+    for _, child in ipairs(frame:GetChildren()) do
+        if child:IsA("GuiObject") then
+            child:Destroy()
+        end
+    end
+end
 
--- 右侧边框检查（确保无白边）
-local RightBorderCheck = Instance.new("Frame")
-RightBorderCheck.Name = "RightBorderCheck"
-RightBorderCheck.Parent = RightArea
-RightBorderCheck.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-RightBorderCheck.BorderSizePixel = 0
-RightBorderCheck.Position = UDim2.new(1, 0, 0, 0)
-RightBorderCheck.Size = UDim2.new(0, 2, 1, 0)  -- 边界检查器
+-- 执行彻底清理
+CleanArea(LeftArea)
+CleanArea(RightArea)
+
+-- 添加边界保护（防止意外元素）
+local SafeGuard = Instance.new("Frame")
+SafeGuard.Name = "SafeGuard"
+SafeGuard.Parent = MainBackground
+SafeGuard.BackgroundTransparency = 1
+SafeGuard.Size = UDim2.new(1, 0, 1, 0)
+SafeGuard.ZIndex = 999 -- 最高层级防止覆盖
 
     -- ============= 背景部分结束 =============
 
