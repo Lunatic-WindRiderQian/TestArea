@@ -235,123 +235,137 @@ spawn(function()
 end)
 
 -- ============= 修改后的右侧背景 =============
--- ============= 暗红色特效背景 =============
--- 右侧特效区域
+-- 右侧特效区域 (完全无白块版本)
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(15, 0, 0) -- 暗红背景
+RightEffects.BackgroundColor3 = Color3.fromRGB(10, 10, 10) -- 深色背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
--- 暗红色网格背景
-local DarkRedGrid = Instance.new("ImageLabel")
-DarkRedGrid.Name = "DarkRedGrid"
-DarkRedGrid.Parent = RightEffects
-DarkRedGrid.Image = "rbxassetid://13099879784"
-DarkRedGrid.ImageColor3 = Color3.fromRGB(40, 0, 0) -- 更深的红色网格
-DarkRedGrid.ImageTransparency = 0.95
-DarkRedGrid.ScaleType = Enum.ScaleType.Tile
-DarkRedGrid.TileSize = UDim2.new(0, 150, 0, 150)
-DarkRedGrid.Size = UDim2.new(1, 0, 1, 0)
-DarkRedGrid.ZIndex = 1
+-- 科技感网格背景
+local TechGrid = Instance.new("ImageLabel")
+TechGrid.Name = "TechGrid"
+TechGrid.Parent = RightEffects
+TechGrid.Image = "rbxassetid://13099879784"
+TechGrid.ImageColor3 = Color3.fromRGB(20, 20, 20) -- 深灰色网格
+TechGrid.ImageTransparency = 0.97
+TechGrid.ScaleType = Enum.ScaleType.Tile
+TechGrid.TileSize = UDim2.new(0, 200, 0, 200)
+TechGrid.Size = UDim2.new(1, 0, 1, 0)
+TechGrid.ZIndex = 1
 
--- 暗红色脉冲光晕
-local PulseGlow = Instance.new("Frame")
-PulseGlow.Name = "PulseGlow"
-PulseGlow.Parent = RightEffects
-PulseGlow.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
-PulseGlow.BackgroundTransparency = 0.9
-PulseGlow.BorderSizePixel = 0
-PulseGlow.Size = UDim2.new(1, 0, 1, 0)
-PulseGlow.ZIndex = 0
+-- 动态数据流特效 (绿色)
+local dataStreams = {}
+for i = 1, 5 do
+    local stream = Instance.new("Frame")
+    stream.Name = "DataStream_"..i
+    stream.Parent = RightEffects
+    stream.BackgroundColor3 = Color3.fromRGB(37, 254, 152) -- 绿色
+    stream.BackgroundTransparency = 0.7
+    stream.BorderSizePixel = 0
+    stream.Size = UDim2.new(0, 2, 0, math.random(50, 150))
+    stream.Position = UDim2.new(math.random(), 0, 0, -math.random(50, 200))
+    stream.ZIndex = 3
+    
+    -- 流光效果
+    local glow = Instance.new("Frame")
+    glow.Name = "Glow"
+    glow.Parent = stream
+    glow.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+    glow.BackgroundTransparency = 0.8
+    glow.BorderSizePixel = 0
+    glow.Size = UDim2.new(1, 4, 1, 0)
+    glow.Position = UDim2.new(-0.5, 0, 0, 0)
+    
+    table.insert(dataStreams, {
+        object = stream,
+        speed = math.random(10, 20)/10
+    })
+end
 
--- 脉冲动画
+-- 数据流动画
 spawn(function()
-    while wait(1.5) do
-        for i = 0.9, 0.7, -0.05 do
-            PulseGlow.BackgroundTransparency = i
-            wait(0.05)
-        end
-        for i = 0.7, 0.9, 0.05 do
-            PulseGlow.BackgroundTransparency = i
-            wait(0.05)
+    while wait(0.03) do
+        for _, stream in ipairs(dataStreams) do
+            stream.object.Position = stream.object.Position + UDim2.new(0, 0, 0, stream.speed)
+            
+            -- 重置到顶部
+            if stream.object.Position.Y.Offset > RightEffects.AbsoluteSize.Y then
+                stream.object.Position = UDim2.new(math.random(), 0, 0, -math.random(100, 200))
+                stream.object.Size = UDim2.new(0, 2, 0, math.random(50, 150))
+                stream.speed = math.random(10, 20)/10
+            end
         end
     end
 end)
 
--- 暗红色流动粒子
-for i = 1, 20 do
-    local particle = Instance.new("Frame")
-    particle.Name = "DarkRedParticle_"..i
-    particle.Parent = RightEffects
-    particle.BackgroundColor3 = Color3.fromRGB(120, 0, 0) -- 暗红色
-    particle.BackgroundTransparency = 0.85
-    particle.Size = UDim2.new(0, math.random(2, 5), 0, math.random(2, 5))
-    particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    particle.ZIndex = 3
+-- 数字粒子特效 (0和1)
+for i = 1, 30 do
+    local digit = Instance.new("TextLabel")
+    digit.Name = "Digit_"..i
+    digit.Parent = RightEffects
+    digit.BackgroundTransparency = 1
+    digit.Text = math.random(0, 1) == 1 and "1" or "0"
+    digit.TextColor3 = Color3.fromRGB(50, 200, 50) -- 浅绿色
+    digit.TextTransparency = math.random(5, 9)/10
+    digit.Font = Enum.Font.Code
+    digit.TextSize = math.random(12, 16)
+    digit.Size = UDim2.new(0, 15, 0, 15)
+    digit.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    digit.ZIndex = 2
     
     -- 粒子动画
     spawn(function()
-        local speedX = math.random(-5, 5)/100
-        local speedY = math.random(-5, 5)/100
+        local speedX = math.random(-3, 3)/100
+        local speedY = math.random(5, 15)/100
         while wait(0.05) do
-            particle.Position = particle.Position + UDim2.new(0, speedX, 0, speedY)
+            digit.Position = digit.Position + UDim2.new(0, speedX, 0, speedY)
             
-            -- 边界检查
-            if particle.Position.X.Scale < 0 or particle.Position.X.Scale > 1 then
-                speedX = -speedX
-            end
-            if particle.Position.Y.Scale < 0 or particle.Position.Y.Scale > 1 then
-                speedY = -speedY
-            end
-            
-            -- 随机闪烁
-            if math.random(1, 30) == 1 then
-                particle.BackgroundTransparency = math.random(7, 9)/10
+            -- 重置到顶部
+            if digit.Position.Y.Offset > RightEffects.AbsoluteSize.Y then
+                digit.Position = UDim2.new(math.random(), 0, 0, -math.random(10, 50))
+                digit.TextTransparency = math.random(5, 9)/10
             end
         end
     end)
 end
 
--- 暗红色扫描线
-local scanLine = Instance.new("Frame")
-scanLine.Name = "ScanLine"
-scanLine.Parent = RightEffects
-scanLine.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-scanLine.BackgroundTransparency = 0.9
-scanLine.BorderSizePixel = 0
-scanLine.Size = UDim2.new(1, 0, 0, 1)
-scanLine.ZIndex = 2
+-- 边缘光带 (绿色)
+local edgeLights = {
+    {pos = UDim2.new(0, 0, 0, 0), size = UDim2.new(1, 0, 0, 1)}, -- 上
+    {pos = UDim2.new(1, -1, 0, 0), size = UDim2.new(0, 1, 1, 0)}, -- 右
+    {pos = UDim2.new(0, 0, 1, -1), size = UDim2.new(1, 0, 0, 1)}  -- 下
+}
 
--- 扫描线动画
-spawn(function()
-    while wait(0.03) do
-        scanLine.Position = UDim2.new(0, 0, 0, -1)
-        scanLine.BackgroundTransparency = 0.7
-        
-        -- 向下扫描
-        for i = 0, 1, 0.01 do
-            scanLine.Position = UDim2.new(0, 0, 0, i)
-            wait(0.01)
+for _, light in ipairs(edgeLights) do
+    local frame = Instance.new("Frame")
+    frame.Name = "EdgeLight_".._.pos.Y.Scale
+    frame.Parent = RightEffects
+    frame.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+    frame.BackgroundTransparency = 0.7
+    frame.BorderSizePixel = 0
+    frame.Position = light.pos
+    frame.Size = light.size
+    frame.ZIndex = 4
+    
+    -- 呼吸动画
+    spawn(function()
+        while wait(math.random(1, 3)) do
+            for i = 0.7, 0.3, -0.05 do
+                frame.BackgroundTransparency = i
+                wait(0.1)
+            end
+            for i = 0.3, 0.7, 0.05 do
+                frame.BackgroundTransparency = i
+                wait(0.1)
+            end
         end
-        
-        scanLine.BackgroundTransparency = 0.9
-        wait(math.random(1, 3))
-    end
-end)
-
--- 保留边缘滑块 (改为暗红色)
-for _, name in ipairs({"TopSlider", "RightSlider", "BottomSlider"}) do
-    local slider = RightEffects:FindFirstChild(name)
-    if slider then
-        slider.BackgroundColor3 = Color3.fromRGB(80, 0, 0) -- 暗红色滑块
-        slider.Glow.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
-    end
+    end)
 end
 
--- 右侧装饰性文字 (暗红色)
+-- 右侧装饰文字 (绿色)
 local DecorText = Instance.new("TextLabel")
 DecorText.Name = "DecorText"
 DecorText.Parent = RightEffects
@@ -360,7 +374,7 @@ DecorText.Position = UDim2.new(0.8, 0, 0.9, 0)
 DecorText.Size = UDim2.new(0.2, 0, 0.1, 0)
 DecorText.Font = Enum.Font.GothamSemibold
 DecorText.Text = "v1.0.0"
-DecorText.TextColor3 = Color3.fromRGB(80, 0, 0) -- 暗红色文字
+DecorText.TextColor3 = Color3.fromRGB(50, 200, 50)
 DecorText.TextSize = 12
 DecorText.TextTransparency = 0.7
 DecorText.TextXAlignment = Enum.TextXAlignment.Right
