@@ -165,115 +165,184 @@ function library.new(library, name, theme)
     local UIGradient = Instance.new("UIGradient")
     local UIGradientTitle = Instance.new("UIGradient")
 
-    -- ============= 新增的现代化背景部分 =============
+    -- ============= 改进的现代化背景部分 =============
     -- 创建主背景容器
     local MainBackground = Instance.new("Frame")
     MainBackground.Name = "MainBackground"
     MainBackground.Parent = Main
-    MainBackground.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    MainBackground.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
     MainBackground.Size = UDim2.new(1, 0, 1, 0)
     MainBackground.ZIndex = 0
 
-    -- 左侧粒子效果区域
+    -- 左侧粒子效果区域 - 更明显的视觉效果
     local LeftParticleArea = Instance.new("Frame")
     LeftParticleArea.Name = "LeftParticleArea"
     LeftParticleArea.Parent = MainBackground
-    LeftParticleArea.BackgroundTransparency = 1
+    LeftParticleArea.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
     LeftParticleArea.Size = UDim2.new(0.2, 0, 1, 0)
     LeftParticleArea.ClipsDescendants = true
+    
+    -- 左侧渐变叠加
+    local LeftGradient = Instance.new("UIGradient")
+    LeftGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 15, 15)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 8, 8))
+    })
+    LeftGradient.Rotation = 90
+    LeftGradient.Parent = LeftParticleArea
 
-    -- 粒子效果1 (星光)
+    -- 粒子效果1 (动态网格)
     local Particle1 = Instance.new("ImageLabel")
     Particle1.Name = "Particle1"
     Particle1.Parent = LeftParticleArea
     Particle1.Image = "rbxassetid://13099879784"
     Particle1.ImageColor3 = Color3.fromRGB(37, 254, 152)
-    Particle1.ImageTransparency = 0.7
+    Particle1.ImageTransparency = 0.85
     Particle1.ScaleType = Enum.ScaleType.Tile
-    Particle1.TileSize = UDim2.new(0, 50, 0, 50)
+    Particle1.TileSize = UDim2.new(0, 80, 0, 80)
     Particle1.Size = UDim2.new(2, 0, 2, 0)
     Particle1.Position = UDim2.new(-0.5, 0, -0.5, 0)
     Particle1.ZIndex = 1
 
-    -- 粒子效果2 (流动线条)
+    -- 粒子效果2 (流动光带)
     local Particle2 = Instance.new("Frame")
     Particle2.Name = "Particle2"
     Particle2.Parent = LeftParticleArea
     Particle2.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-    Particle2.BackgroundTransparency = 0.9
-    Particle2.Size = UDim2.new(0, 2, 1, 0)
-    Particle2.Position = UDim2.new(0.5, 0, 0, 0)
+    Particle2.BackgroundTransparency = 0.8
+    Particle2.Size = UDim2.new(0, 3, 1, 0)
+    Particle2.Position = UDim2.new(0.3, 0, 0, 0)
     Particle2.ZIndex = 2
+    
+    -- 粒子效果3 (闪烁点)
+    for i = 1, 5 do
+        local dot = Instance.new("Frame")
+        dot.Name = "Dot_"..i
+        dot.Parent = LeftParticleArea
+        dot.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+        dot.BackgroundTransparency = 0.7
+        dot.Size = UDim2.new(0, 2, 0, 2)
+        dot.Position = UDim2.new(math.random(), 0, math.random(), 0)
+        dot.ZIndex = 3
+        
+        spawn(function()
+            while wait(math.random(0.5, 1.5)) do
+                for i = 0.7, 0.3, -0.05 do
+                    dot.BackgroundTransparency = i
+                    wait(0.1)
+                end
+                for i = 0.3, 0.7, 0.05 do
+                    dot.BackgroundTransparency = i
+                    wait(0.1)
+                end
+            end
+        end)
+    end
 
-    -- 粒子动画
+    -- 粒子动画 - 更流畅的效果
     spawn(function()
-        while wait(0.05) do
-            Particle1.Position = Particle1.Position + UDim2.new(0, 1, 0, 1)
+        while wait(0.03) do
+            Particle1.Position = Particle1.Position + UDim2.new(0, 0.5, 0, 0.5)
             if Particle1.Position.X.Offset > 50 then
                 Particle1.Position = UDim2.new(-0.5, 0, -0.5, 0)
             end
             
-            Particle2.Position = Particle2.Position + UDim2.new(0, 1, 0, 0)
+            Particle2.Position = Particle2.Position + UDim2.new(0, 1.5, 0, 0)
             if Particle2.Position.X.Offset > LeftParticleArea.AbsoluteSize.X then
-                Particle2.Position = UDim2.new(0, -20, 0, 0)
+                Particle2.Position = UDim2.new(0, -30, 0, 0)
             end
         end
     end)
 
-    -- 右侧超级美化区域
+    -- 右侧超级美化区域 - 更明显的视觉效果
     local RightArea = Instance.new("Frame")
     RightArea.Name = "RightArea"
     RightArea.Parent = MainBackground
-    RightArea.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    RightArea.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
     RightArea.Position = UDim2.new(0.2, 0, 0, 0)
     RightArea.Size = UDim2.new(0.8, 0, 1, 0)
 
-    -- 右侧背景图案
+    -- 右侧斜线图案背景
     local RightPattern = Instance.new("ImageLabel")
     RightPattern.Name = "RightPattern"
     RightPattern.Parent = RightArea
     RightPattern.Image = "rbxassetid://13099879784"
-    RightPattern.ImageColor3 = Color3.fromRGB(30, 30, 30)
-    RightPattern.ImageTransparency = 0.95
+    RightPattern.ImageColor3 = Color3.fromRGB(25, 25, 25)
+    RightPattern.ImageTransparency = 0.9
     RightPattern.ScaleType = Enum.ScaleType.Tile
-    RightPattern.TileSize = UDim2.new(0, 150, 0, 150)
+    RightPattern.TileSize = UDim2.new(0, 200, 0, 200)
     RightPattern.Size = UDim2.new(1, 0, 1, 0)
     RightPattern.ZIndex = 1
+    RightPattern.Rotation = 45
 
-    -- 右侧渐变叠加
+    -- 右侧渐变叠加 - 更明显的渐变效果
     local RightGradient = Instance.new("UIGradient")
     RightGradient.Name = "RightGradient"
     RightGradient.Parent = RightArea
     RightGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 15, 15)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 10))
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(12, 12, 12)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 8, 8))
     })
     RightGradient.Rotation = 90
+    RightGradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(1, 0.2)
+    })
 
-    -- 右侧发光边框
+    -- 右侧发光边框 - 更明显的发光效果
     local RightBorder = Instance.new("Frame")
     RightBorder.Name = "RightBorder"
     RightBorder.Parent = RightArea
     RightBorder.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-    RightBorder.BackgroundTransparency = 0.9
+    RightBorder.BackgroundTransparency = 0.85
     RightBorder.BorderSizePixel = 0
-    RightBorder.Position = UDim2.new(0, -1, 0, 0)
-    RightBorder.Size = UDim2.new(0, 2, 1, 0)
+    RightBorder.Position = UDim2.new(0, -2, 0, 0)
+    RightBorder.Size = UDim2.new(0, 4, 1, 0)
     RightBorder.ZIndex = 3
+    
+    -- 右侧底部装饰条
+    local BottomBar = Instance.new("Frame")
+    BottomBar.Name = "BottomBar"
+    BottomBar.Parent = RightArea
+    BottomBar.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+    BottomBar.BackgroundTransparency = 0.9
+    BottomBar.BorderSizePixel = 0
+    BottomBar.Position = UDim2.new(0, 0, 1, -2)
+    BottomBar.Size = UDim2.new(1, 0, 0, 2)
+    BottomBar.ZIndex = 3
 
-    -- 右侧边框动画
+    -- 右侧边框动画 - 更明显的脉冲效果
     spawn(function()
         while wait(0.1) do
-            for i = 0.9, 0.7, -0.05 do
+            for i = 0.85, 0.6, -0.05 do
                 RightBorder.BackgroundTransparency = i
+                BottomBar.BackgroundTransparency = i
                 wait(0.05)
             end
-            for i = 0.7, 0.9, 0.05 do
+            for i = 0.6, 0.85, 0.05 do
                 RightBorder.BackgroundTransparency = i
+                BottomBar.BackgroundTransparency = i
                 wait(0.05)
             end
         end
     end)
+    
+    -- 右侧装饰性文字
+    local DecorText = Instance.new("TextLabel")
+    DecorText.Name = "DecorText"
+    DecorText.Parent = RightArea
+    DecorText.BackgroundTransparency = 1
+    DecorText.Position = UDim2.new(0.8, 0, 0.9, 0)
+    DecorText.Size = UDim2.new(0.2, 0, 0.1, 0)
+    DecorText.Font = Enum.Font.GothamSemibold
+    DecorText.Text = "v1.0.0"
+    DecorText.TextColor3 = Color3.fromRGB(80, 80, 80)
+    DecorText.TextSize = 12
+    DecorText.TextTransparency = 0.7
+    DecorText.TextXAlignment = Enum.TextXAlignment.Right
+    DecorText.ZIndex = 2
+
     -- ============= 背景部分结束 =============
 
     if syn and syn.protect_gui then
