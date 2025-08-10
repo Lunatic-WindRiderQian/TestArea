@@ -175,43 +175,49 @@ MainBackground.Size = UDim2.new(1, 0, 1, 0)
 MainBackground.ZIndex = 0
 
 -- 左侧数字雨区域
--- ============= 优化后的左侧数字雨 =============
 local LeftMathRain = Instance.new("Frame")
 LeftMathRain.Name = "LeftMathRain"
 LeftMathRain.Parent = MainBackground
-LeftMathRain.BackgroundColor3 = Color3.fromRGB(5, 5, 5)  -- 更暗的背景
+LeftMathRain.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
 LeftMathRain.Size = UDim2.new(0.2, 0, 1, 0)
 LeftMathRain.ClipsDescendants = true
 
--- 更流畅的数字雨实现
-local mathRainDrops = {}
-local columns = 8  -- 增加列数
-local rows = 25    -- 增加行数
+-- 数字雨参数
+local dropCount = 30  -- 数字数量
+local chars = {"0", "1"}  -- 仅显示二进制
+local drops = {}
 
--- 预创建所有数字元素
-for col = 1, columns do
-    for row = 1, rows do
-        local char = math.random(0, 1)  -- 只显示0和1
-        local drop = Instance.new("TextLabel")
-        drop.Name = "BinaryDrop_"..col.."_"..row
-        drop.Parent = LeftMathRain
-        drop.BackgroundTransparency = 1
-        drop.Text = tostring(char)
-        drop.TextColor3 = Color3.fromRGB(0, 255, 100)  -- 亮绿色
-        drop.TextTransparency = row/rows  -- 渐变透明
-        drop.Font = Enum.Font.Code
-        drop.TextSize = math.random(14, 18)
-        drop.Size = UDim2.new(1/columns, -2, 1/rows, -1)
-        drop.Position = UDim2.new((col-1)/columns, 0, (row-1)/rows, 0)
-        drop.ZIndex = 2
-        
-        table.insert(mathRainDrops, {
-            object = drop,
-            speed = math.random(5, 15)/10,
-            char = char
-        })
-    end
+for i = 1, dropCount do
+    local drop = Instance.new("TextLabel")
+    drop.Name = "Drop_"..i
+    drop.Parent = LeftMathRain
+    drop.Text = chars[math.random(1, 2)]
+    drop.TextColor3 = Color3.fromRGB(0, 255, 100)  -- 科技绿
+    drop.TextTransparency = math.random(50, 90)/100
+    drop.Font = Enum.Font.Code
+    drop.TextSize = math.random(14, 18)
+    drop.Size = UDim2.new(0, 15, 0, 20)
+    drop.Position = UDim2.new(math.random(), 0, -0.1, -math.random(50, 200))
+    drop.ZIndex = 2
+    
+    table.insert(drops, {
+        obj = drop,
+        speed = math.random(8, 15)/10  -- 自然下落速度
+    })
 end
+
+-- 数字雨动画（自然速度版）
+game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
+    for _, d in ipairs(drops) do
+        local currentY = d.obj.Position.Y.Offset + d.speed * 60 * deltaTime
+        if currentY > LeftMathRain.AbsoluteSize.Y then
+            currentY = -20
+            d.obj.Text = chars[math.random(1, 2)]
+            d.obj.TextTransparency = math.random(50, 90)/100
+        end
+        d.obj.Position = UDim2.new(d.obj.Position.X.Scale, 0, 0, currentY)
+    end
+end)
 
 -- 使用RunService实现流畅动画
 local RunService = game:GetService("RunService")
@@ -236,97 +242,142 @@ RunService.Heartbeat:Connect(function(deltaTime)
     end
 end)
 
--- ============= 美化后的右侧特效 =============
+-- ===== 右侧特效（极致美化版）=====
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(10, 5, 15)  -- 深紫色基调
+RightEffects.BackgroundColor3 = Color3.fromRGB(10, 0, 15)  -- 深紫黑背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
--- 1. 动态网格背景
-local GridPattern = Instance.new("ImageLabel")
-GridPattern.Name = "GridPattern"
-GridPattern.Parent = RightEffects
-GridPattern.Image = "rbxassetid://13099879784"
-GridPattern.ImageColor3 = Color3.fromRGB(30, 0, 40)
-GridPattern.ImageTransparency = 0.93
-GridPattern.ScaleType = Enum.ScaleType.Tile
-GridPattern.TileSize = UDim2.new(0, 120, 0, 120)
-GridPattern.Size = UDim2.new(1, 0, 1, 0)
-GridPattern.ZIndex = 1
+-- 1. 动态光纹背景
+local LightPattern = Instance.new("ImageLabel")
+LightPattern.Name = "LightPattern"
+LightPattern.Parent = RightEffects
+LightPattern.Image = "rbxassetid://13099879784"
+LightPattern.ImageColor3 = Color3.fromRGB(50, 0, 60)
+LightPattern.ImageTransparency = 0.92
+LightPattern.ScaleType = Enum.ScaleType.Tile
+LightPattern.TileSize = UDim2.new(0, 100, 0, 100)
+LightPattern.Size = UDim2.new(1, 0, 1, 0)
+LightPattern.ZIndex = 1
 
--- 2. 流光粒子 (优化版)
+-- 2. 全息粒子系统（50个粒子）
 local particles = {}
-for i = 1, 30 do
+for i = 1, 50 do  -- 粒子数量拉满
     local p = Instance.new("Frame")
-    p.Name = "Particle_"..i
+    p.Name = "GlowParticle_"..i
     p.Parent = RightEffects
-    p.BackgroundColor3 = Color3.fromHSV(math.random(), 0.8, 0.8)
-    p.Size = UDim2.new(0, math.random(2,4), 0, math.random(2,4))
+    p.BackgroundColor3 = Color3.fromHSV(i/50, 0.8, 0.9)
+    p.Size = UDim2.new(0, math.random(2,5), 0, math.random(2,5))
     p.Position = UDim2.new(math.random(), 0, math.random(), 0)
     p.ZIndex = 3
     
     table.insert(particles, {
         obj = p,
         speed = Vector2.new(
-            (math.random() - 0.5) * 0.005,
-            (math.random() - 0.5) * 0.005
+            (math.random()-0.5)*0.008,
+            (math.random()-0.5)*0.008
         ),
-        life = math.random(1, 3)
+        sizePulse = math.random() > 0.5
     })
 end
 
--- 3. 脉冲光晕
-local PulseGlow = Instance.new("Frame")
-PulseGlow.Name = "PulseGlow"
-PulseGlow.Parent = RightEffects
-PulseGlow.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
-PulseGlow.BackgroundTransparency = 0.95
-PulseGlow.Size = UDim2.new(1, 0, 1, 0)
-PulseGlow.ZIndex = 0
+-- 3. 流光轨迹
+local flowLines = {}
+for i = 1, 8 do  -- 8条流动光带
+    local line = Instance.new("Frame")
+    line.Name = "FlowLine_"..i
+    line.Parent = RightEffects
+    line.BackgroundColor3 = Color3.fromRGB(100, 0, 150)
+    line.BackgroundTransparency = 0.7
+    line.Size = UDim2.new(0.5, 0, 0, 1)
+    line.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    line.ZIndex = 2
+    
+    table.insert(flowLines, {
+        obj = line,
+        speed = math.random(10, 20)/10
+    })
+end
 
--- 统一动画更新
-RunService.Heartbeat:Connect(function(deltaTime)
-    -- 粒子更新
+-- 4. 脉冲核心光效
+local CoreGlow = Instance.new("Frame")
+CoreGlow.Name = "CoreGlow"
+CoreGlow.Parent = RightEffects
+CoreGlow.AnchorPoint = Vector2.new(0.5,0.5)
+CoreGlow.BackgroundColor3 = Color3.fromRGB(150, 0, 200)
+CoreGlow.BackgroundTransparency = 0.9
+CoreGlow.Size = UDim2.new(0, 200, 0, 200)
+CoreGlow.Position = UDim2.new(0.7, 0, 0.5, 0)
+CoreGlow.ZIndex = 0
+
+-- 5. 科技感扫描线
+local ScanLine = Instance.new("Frame")
+ScanLine.Name = "ScanLine"
+ScanLine.Parent = RightEffects
+ScanLine.BackgroundColor3 = Color3.fromRGB(100, 50, 255)
+ScanLine.BackgroundTransparency = 0.8
+ScanLine.Size = UDim2.new(1, 0, 0, 1)
+ScanLine.ZIndex = 4
+
+-- 统一动画控制器
+game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
+    -- 粒子系统
     for _, p in ipairs(particles) do
         local pos = p.obj.Position
-        local newX = pos.X.Scale + p.speed.X
-        local newY = pos.Y.Scale + p.speed.Y
+        local newPos = UDim2.new(
+            pos.X.Scale + p.speed.X,
+            0,
+            pos.Y.Scale + p.speed.Y,
+            0
+        )
         
-        -- 边界检查
-        if newX < 0 or newX > 1 then p.speed = Vector2.new(-p.speed.X, p.speed.Y) end
-        if newY < 0 or newY > 1 then p.speed = Vector2.new(p.speed.X, -p.speed.Y) end
+        -- 边界反弹
+        if newPos.X.Scale < 0 or newPos.X.Scale > 1 then p.speed = Vector2.new(-p.speed.X, p.speed.Y) end
+        if newPos.Y.Scale < 0 or newPos.Y.Scale > 1 then p.speed = Vector2.new(p.speed.X, -p.speed.Y) end
         
-        p.obj.Position = UDim2.new(newX, 0, newY, 0)
+        p.obj.Position = newPos
         
-        -- 生命周期
-        p.life = p.life - deltaTime
-        if p.life <= 0 then
-            p.obj.BackgroundColor3 = Color3.fromHSV(math.random(), 0.8, 0.8)
-            p.life = math.random(1, 3)
+        -- 尺寸脉动
+        if p.sizePulse then
+            local scale = 0.8 + math.abs(math.sin(os.clock()*2))*0.2
+            p.obj.Size = UDim2.new(0, p.obj.Size.X.Offset*scale, 0, p.obj.Size.Y.Offset*scale)
         end
     end
     
-    -- 脉冲效果
-    PulseGlow.BackgroundTransparency = 0.92 + math.sin(os.clock() * 0.5) * 0.03
+    -- 流光轨迹
+    for _, line in ipairs(flowLines) do
+        local x = line.obj.Position.X.Scale + line.speed * deltaTime
+        if x > 1.5 then x = -0.5 end
+        line.obj.Position = UDim2.new(x, 0, line.obj.Position.Y.Scale, 0)
+    end
+    
+    -- 核心脉冲
+    CoreGlow.BackgroundTransparency = 0.85 + math.sin(os.clock())*0.05
+    CoreGlow.Size = UDim2.new(0, 200 + math.sin(os.clock()*2)*20, 0, 200 + math.sin(os.clock()*2)*20)
+    
+    -- 扫描线动画
+    ScanLine.Position = UDim2.new(0, 0, ScanLine.Position.Y.Scale + 0.005, 0)
+    if ScanLine.Position.Y.Scale > 1 then
+        ScanLine.Position = UDim2.new(0, 0, 0, 0)
+        ScanLine.BackgroundTransparency = math.random(70, 90)/100
+    end
 end)
 
--- 4. 装饰性文字 (右下角)
+-- 6. 装饰性UI元素
 local DecorText = Instance.new("TextLabel")
 DecorText.Name = "DecorText"
 DecorText.Parent = RightEffects
 DecorText.BackgroundTransparency = 1
-DecorText.Position = UDim2.new(0.8, 0, 0.9, 0)
-DecorText.Size = UDim2.new(0.2, 0, 0.1, 0)
-DecorText.Font = Enum.Font.GothamSemibold
-DecorText.Text = "SYSTEM v1.0"
-DecorText.TextColor3 = Color3.fromRGB(100, 100, 150)
-DecorText.TextSize = 12
-DecorText.TextTransparency = 0.7
-DecorText.TextXAlignment = Enum.TextXAlignment.Right
-DecorText.ZIndex = 2
+DecorText.Position = UDim2.new(0.02, 0, 0.02, 0)
+DecorText.Size = UDim2.new(0.3, 0, 0.05, 0)
+DecorText.Font = Enum.Font.GothamBold
+DecorText.Text = "SYSTEM ACTIVATED"
+DecorText.TextColor3 = Color3.fromRGB(180, 100, 255)
+DecorText.TextSize = 14
+DecorText.TextXAlignment = Enum.TextXAlignment.Left
 -- ============= 结束 =============
 
     if syn and syn.protect_gui then
