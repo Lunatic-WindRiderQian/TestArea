@@ -247,16 +247,16 @@ RunService.Heartbeat:Connect(function(deltaTime)
     end
 end)
 
--- ============= 右侧科技风格 =============
+-- ============= 最终科技风格 =============
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(10, 10, 15)  -- 深色背景
+RightEffects.BackgroundColor3 = Color3.fromRGB(5, 5, 10)  -- 深色背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
--- 1. 左右边框线 (带呼吸效果)
+-- 1. 左右发光边框
 local leftBorder = Instance.new("Frame")
 leftBorder.Name = "LeftBorder"
 leftBorder.Parent = RightEffects
@@ -274,93 +274,101 @@ rightBorder.Size = UDim2.new(0, 1, 1, 0)
 rightBorder.Position = UDim2.new(1, -1, 0, 0)
 rightBorder.ZIndex = 2
 
--- 2. 数据矩阵 (简化版)
-local dataParticles = {}
-for i = 1, 8 do
-    local particle = Instance.new("Frame")
-    particle.Name = "DataParticle_"..i
-    particle.Parent = RightEffects
-    particle.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-    particle.Size = UDim2.new(0, 1, 0, 8)
-    particle.Position = UDim2.new(math.random()*0.8 + 0.1, 0, math.random(), 0)
+-- 2. 数据矩阵效果
+local dataMatrix = Instance.new("Frame")
+dataMatrix.Name = "DataMatrix"
+dataMatrix.Parent = RightEffects
+dataMatrix.BackgroundTransparency = 1
+dataMatrix.Size = UDim2.new(1, 0, 1, 0)
+
+-- 创建矩阵列
+local matrixColumns = {}
+for i = 1, 15 do  -- 15列数据流
+    local column = Instance.new("Frame")
+    column.Name = "MatrixColumn_"..i
+    column.Parent = dataMatrix
+    column.BackgroundTransparency = 1
+    column.Size = UDim2.new(0, 10, 1, 0)
+    column.Position = UDim2.new((i-1)/14, 0, 0, 0)
     
-    table.insert(dataParticles, {
-        obj = particle,
-        speed = math.random(5, 15)/10
+    -- 每列20个字符
+    local chars = {}
+    for j = 1, 20 do
+        local char = Instance.new("TextLabel")
+        char.Name = "MatrixChar_"..j
+        char.Parent = column
+        char.BackgroundTransparency = 1
+        char.Text = string.char(math.random(48, 90))  -- 随机ASCII字符
+        char.TextColor3 = Color3.fromRGB(0, 255, 100)
+        char.TextTransparency = 1  -- 初始全透明
+        char.Font = Enum.Font.Code
+        char.TextSize = 14
+        char.Size = UDim2.new(1, 0, 0, 20)
+        char.Position = UDim2.new(0, 0, (j-1)/20, 0)
+        
+        table.insert(chars, char)
+    end
+    
+    table.insert(matrixColumns, {
+        container = column,
+        chars = chars,
+        speed = math.random(5, 10)/10,
+        headPosition = -math.random(5, 10)
     })
 end
 
--- 2. 核心科技元素
-local techElements = {
-    -- 水平扫描线
-    scanLine = Instance.new("Frame"),
-    -- 浮动粒子
-    particles = {}
-}
-
--- 初始化扫描线
-techElements.scanLine.Name = "ScanLine"
-techElements.scanLine.Parent = RightEffects
-techElements.scanLine.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-techElements.scanLine.BackgroundTransparency = 0.8
-techElements.scanLine.Size = UDim2.new(1, 0, 0, 1)
-techElements.scanLine.ZIndex = 1
-
--- 初始化浮动粒子
-for i = 1, 8 do
-    local particle = Instance.new("Frame")
-    particle.Name = "Particle_"..i
-    particle.Parent = RightEffects
-    particle.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-    particle.Size = UDim2.new(0, 2, 0, 2)
-    particle.Position = UDim2.new(math.random()*0.8 + 0.1, 0, math.random(), 0)
-    particle.ZIndex = 3
-    
-    table.insert(techElements.particles, {
-        obj = particle,
-        speed = Vector2.new(
-            (math.random()-0.5)*0.003,
-            (math.random()-0.5)*0.003
-        )
-    })
-end
+-- 3. 扫描线效果
+local scanLine = Instance.new("Frame")
+scanLine.Name = "ScanLine"
+scanLine.Parent = RightEffects
+scanLine.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+scanLine.BackgroundTransparency = 0.7
+scanLine.Size = UDim2.new(1, 0, 0, 1)
+scanLine.ZIndex = 2
 
 -- 动画控制器
+local pulsePhase = 0
 game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
     -- 边框呼吸效果
-    local pulse = (math.sin(os.clock() * 2) + 1) / 2  -- 0到1的波动
-    local transparency = 0.3 + pulse * 0.5
+    pulsePhase = pulsePhase + deltaTime
+    local transparency = 0.3 + (math.sin(pulsePhase * 2) + 1) * 0.35
     leftBorder.BackgroundTransparency = transparency
     rightBorder.BackgroundTransparency = transparency
     
-    -- 扫描线动画
-    techElements.scanLine.Position = UDim2.new(0, 0, techElements.scanLine.Position.Y.Scale + 0.004, 0)
-    if techElements.scanLine.Position.Y.Scale > 1 then
-        techElements.scanLine.Position = UDim2.new(0, 0, 0, 0)
+    -- 数据矩阵动画
+    for _, column in ipairs(matrixColumns) do
+        column.headPosition = column.headPosition + column.speed * deltaTime * 10
+        
+        -- 更新字符显示
+        for i, char in ipairs(column.chars) do
+            local pos = (i - column.headPosition) / 15
+            if pos >= 0 and pos <= 1 then
+                char.TextTransparency = pos * 0.7 + 0.3
+                char.TextColor3 = Color3.fromRGB(
+                    0, 
+                    255 - pos * 155, 
+                    100 + pos * 100
+                )
+            else
+                char.TextTransparency = 1
+            end
+            
+            -- 随机变化字符
+            if math.random() < 0.05 then
+                char.Text = string.char(math.random(48, 90))
+            end
+        end
+        
+        -- 重置头部位置
+        if column.headPosition > #column.chars + 5 then
+            column.headPosition = -math.random(5, 10)
+        end
     end
     
-    -- 粒子浮动
-    for _, particle in ipairs(techElements.particles) do
-        local pos = particle.obj.Position
-        local newX = pos.X.Scale + particle.speed.X
-        local newY = pos.Y.Scale + particle.speed.Y
-        
-        -- 边界反弹
-        if newX < 0.1 or newX > 0.9 then particle.speed = Vector2.new(-particle.speed.X, particle.speed.Y) end
-        if newY < 0.1 or newY > 0.9 then particle.speed = Vector2.new(particle.speed.X, -particle.speed.Y) end
-        
-        particle.obj.Position = UDim2.new(newX, 0, newY, 0)
-    end
-end)
-
-    -- 数据粒子下落
-    for _, particle in ipairs(dataParticles) do
-        local currentY = particle.obj.Position.Y.Scale + particle.speed * deltaTime
-        if currentY > 1 then
-            currentY = 0
-            particle.obj.Position = UDim2.new(math.random()*0.8 + 0.1, 0, 0, 0)
-        end
-        particle.obj.Position = UDim2.new(particle.obj.Position.X.Scale, 0, currentY, 0)
+    -- 扫描线移动
+    scanLine.Position = UDim2.new(0, 0, scanLine.Position.Y.Scale + 0.003, 0)
+    if scanLine.Position.Y.Scale > 1 then
+        scanLine.Position = UDim2.new(0, 0, 0, 0)
     end
 end)
 
