@@ -247,108 +247,149 @@ RunService.Heartbeat:Connect(function(deltaTime)
     end
 end)
 
--- ============= 右侧特效（高级科技感美化版） =============
+-- ============= 右侧终极科技美化 =============
 local RightEffects = Instance.new("Frame")
 RightEffects.Name = "RightEffects"
 RightEffects.Parent = MainBackground
-RightEffects.BackgroundColor3 = Color3.fromRGB(10, 10, 15)  -- 深色背景
+RightEffects.BackgroundTransparency = 1  -- 完全透明背景
 RightEffects.Position = UDim2.new(0.2, 0, 0, 0)
 RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
--- 1. 网格背景
-local GridPattern = Instance.new("ImageLabel")
-GridPattern.Name = "GridPattern"
-GridPattern.Parent = RightEffects
-GridPattern.Image = "rbxassetid://13099879784"  -- 网格纹理
-GridPattern.ImageColor3 = Color3.fromRGB(20, 20, 30)
-GridPattern.ImageTransparency = 0.9
-GridPattern.ScaleType = Enum.ScaleType.Tile
-GridPattern.TileSize = UDim2.new(0, 100, 0, 100)
-GridPattern.Size = UDim2.new(1, 0, 1, 0)
-GridPattern.ZIndex = 1
+-- 1. 全息网格背景
+local Hologrid = Instance.new("ImageLabel")
+Hologrid.Name = "Hologrid"
+Hologrid.Parent = RightEffects
+Hologrid.Image = "rbxassetid://13099879784"
+Hologrid.ImageColor3 = Color3.fromRGB(0, 150, 255)
+Hologrid.ImageTransparency = 0.95
+Hologrid.ScaleType = Enum.ScaleType.Tile
+Hologrid.TileSize = UDim2.new(0, 150, 0, 150)
+Hologrid.Size = UDim2.new(1, 0, 1, 0)
+Hologrid.ZIndex = 1
 
--- 2. 动态粒子系统
-local particles = {}
-for i = 1, 30 do
-    local p = Instance.new("Frame")
-    p.Name = "TechParticle_"..i
-    p.Parent = RightEffects
-    p.BackgroundColor3 = Color3.fromHSV(i/30, 0.7, 0.8)
-    p.Size = UDim2.new(0, math.random(2,4), 0, math.random(2,4))
-    p.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    p.ZIndex = 3
+-- 2. 动态数据流
+local dataStreams = {}
+for i = 1, 8 do
+    local stream = Instance.new("Frame")
+    stream.Name = "DataStream_"..i
+    stream.Parent = RightEffects
+    stream.BackgroundColor3 = Color3.fromHSV(0.55 + (i/24), 0.8, 0.8)
+    stream.BackgroundTransparency = 0.7
+    stream.Size = UDim2.new(0.3 + math.random()*0.4, 0, 0, 1)
+    stream.Position = UDim2.new(math.random()*0.7, 0, -0.2, -math.random(50, 200))
+    stream.ZIndex = 2
     
-    table.insert(particles, {
-        obj = p,
-        speed = Vector2.new(
-            (math.random()-0.5)*0.005,
-            (math.random()-0.5)*0.005
-        )
+    table.insert(dataStreams, {
+        obj = stream,
+        speed = math.random(15, 25)/10
     })
 end
 
--- 3. 扫描线效果
-local ScanLine = Instance.new("Frame")
-ScanLine.Name = "ScanLine"
-ScanLine.Parent = RightEffects
-ScanLine.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
-ScanLine.BackgroundTransparency = 0.9
-ScanLine.Size = UDim2.new(1, 0, 0, 1)
-ScanLine.ZIndex = 4
+-- 3. 脉冲核心
+local CorePulse = Instance.new("Frame")
+CorePulse.Name = "CorePulse"
+CorePulse.Parent = RightEffects
+CorePulse.AnchorPoint = Vector2.new(0.5,0.5)
+CorePulse.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+CorePulse.BackgroundTransparency = 0.9
+CorePulse.Size = UDim2.new(0, 300, 0, 300)
+CorePulse.Position = UDim2.new(0.7, 0, 0.5, 0)
+CorePulse.ZIndex = 3
 
--- 4. 中心光晕
-local CoreGlow = Instance.new("Frame")
-CoreGlow.Name = "CoreGlow"
-CoreGlow.Parent = RightEffects
-CoreGlow.AnchorPoint = Vector2.new(0.5,0.5)
-CoreGlow.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
-CoreGlow.BackgroundTransparency = 0.95
-CoreGlow.Size = UDim2.new(0, 300, 0, 300)
-CoreGlow.Position = UDim2.new(0.7, 0, 0.5, 0)
-CoreGlow.ZIndex = 0
+-- 4. 浮动节点
+local nodes = {}
+for i = 1, 12 do
+    local node = Instance.new("ImageLabel")
+    node.Name = "TechNode_"..i
+    node.Parent = RightEffects
+    node.Image = "rbxassetid://7733960981"  -- 圆形节点
+    node.ImageColor3 = Color3.fromHSV(0.55 + (i/36), 0.8, 0.9)
+    node.ImageTransparency = 0.3
+    node.Size = UDim2.new(0, 12, 0, 12)
+    node.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    node.ZIndex = 4
+    
+    table.insert(nodes, {
+        obj = node,
+        basePos = Vector2.new(node.Position.X.Scale, node.Position.Y.Scale),
+        speed = math.random(5, 10)/100
+    })
+end
 
--- 5. 装饰性文字
-local DecorText = Instance.new("TextLabel")
-DecorText.Name = "DecorText"
-DecorText.Parent = RightEffects
-DecorText.BackgroundTransparency = 1
-DecorText.Position = UDim2.new(0.02, 0, 0.02, 0)
-DecorText.Size = UDim2.new(0.3, 0, 0.05, 0)
-DecorText.Font = Enum.Font.GothamBold
-DecorText.Text = "SYSTEM ACTIVE"
-DecorText.TextColor3 = Color3.fromRGB(100, 150, 255)
-DecorText.TextSize = 14
-DecorText.TextXAlignment = Enum.TextXAlignment.Left
-DecorText.TextTransparency = 0.5
+-- 5. 连接线
+local connections = {}
+for i = 1, 15 do
+    local line = Instance.new("Frame")
+    line.Name = "Connection_"..i
+    line.Parent = RightEffects
+    line.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    line.BackgroundTransparency = 0.8
+    line.BorderSizePixel = 0
+    line.Size = UDim2.new(0, 0, 0, 1)
+    line.ZIndex = 1
+    
+    table.insert(connections, line)
+end
+
+-- 6. 状态指示器
+local StatusIndicator = Instance.new("TextLabel")
+StatusIndicator.Name = "StatusIndicator"
+StatusIndicator.Parent = RightEffects
+StatusIndicator.BackgroundTransparency = 1
+StatusIndicator.Position = UDim2.new(0.02, 0, 0.02, 0)
+StatusIndicator.Size = UDim2.new(0.3, 0, 0.05, 0)
+StatusIndicator.Font = Enum.Font.Code
+StatusIndicator.Text = "SYSTEM: ONLINE"
+StatusIndicator.TextColor3 = Color3.fromRGB(0, 255, 150)
+StatusIndicator.TextSize = 14
+StatusIndicator.TextXAlignment = Enum.TextXAlignment.Left
+StatusIndicator.TextTransparency = 0.3
 
 -- 动画控制器
 game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
-    -- 粒子动画
-    for _, p in ipairs(particles) do
-        local pos = p.obj.Position
-        local newPos = UDim2.new(
-            pos.X.Scale + p.speed.X,
+    -- 数据流动画
+    for _, stream in ipairs(dataStreams) do
+        local currentY = stream.obj.Position.Y.Offset + stream.speed * 60 * deltaTime
+        if currentY > RightEffects.AbsoluteSize.Y then
+            currentY = -20
+            stream.obj.Size = UDim2.new(0.3 + math.random()*0.4, 0, 0, 1)
+            stream.obj.Position = UDim2.new(math.random()*0.7, 0, -0.2, -math.random(50, 200))
+        end
+        stream.obj.Position = UDim2.new(stream.obj.Position.X.Scale, 0, 0, currentY)
+    end
+    
+    -- 节点浮动动画
+    for _, node in ipairs(nodes) do
+        local pulse = math.sin(os.clock() * node.speed) * 0.1
+        node.obj.Position = UDim2.new(
+            node.basePos.x + math.sin(os.clock() * node.speed * 0.5) * 0.05,
             0,
-            pos.Y.Scale + p.speed.Y,
+            node.basePos.y + math.cos(os.clock() * node.speed * 0.7) * 0.05,
             0
         )
-        
-        -- 边界反弹
-        if newPos.X.Scale < 0 or newPos.X.Scale > 1 then p.speed = Vector2.new(-p.speed.X, p.speed.Y) end
-        if newPos.Y.Scale < 0 or newPos.Y.Scale > 1 then p.speed = Vector2.new(p.speed.X, -p.speed.Y) end
-        
-        p.obj.Position = newPos
+        node.obj.ImageTransparency = 0.3 + pulse * 0.3
     end
     
-    -- 扫描线动画
-    ScanLine.Position = UDim2.new(0, 0, ScanLine.Position.Y.Scale + 0.003, 0)
-    if ScanLine.Position.Y.Scale > 1 then
-        ScanLine.Position = UDim2.new(0, 0, 0, 0)
-    end
+    -- 核心脉冲动画
+    CorePulse.BackgroundTransparency = 0.85 + math.sin(os.clock()*2)*0.05
+    CorePulse.Size = UDim2.new(0, 300 + math.sin(os.clock()*3)*20, 0, 300 + math.sin(os.clock()*3)*20)
     
-    -- 核心光晕脉动
-    CoreGlow.BackgroundTransparency = 0.92 + math.sin(os.clock()*2)*0.03
+    -- 动态连接线
+    for i, line in ipairs(connections) do
+        local node1 = nodes[math.random(1, #nodes)].obj
+        local node2 = nodes[math.random(1, #nodes)].obj
+        
+        local pos1 = node1.AbsolutePosition + node1.AbsoluteSize/2
+        local pos2 = node2.AbsolutePosition + node2.AbsoluteSize/2
+        
+        local center = (pos1 + pos2)/2
+        local length = (pos1 - pos2).Magnitude
+        
+        line.Position = UDim2.new(0, center.X - length/2, 0, center.Y)
+        line.Size = UDim2.new(0, length, 0, 1)
+        line.Rotation = math.deg(math.atan2(pos2.Y - pos1.Y, pos2.X - pos1.X))
+    end
 end)
 -- ============= 结束 =============
 
