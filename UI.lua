@@ -186,17 +186,29 @@ Main.Active = true
 Main.Draggable = true
 
 local Open = Instance.new("ImageButton")
+local UICorner = Instance.new("UICorner")
+
 Open.Name = "Open"
 Open.Parent = FengYu
+Open.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 Open.BackgroundTransparency = 1
-Open.Position = UDim2.new(0.008, 0, 0.131, 0)
+Open.Position = UDim2.new(0.00829315186, 0, 0.13107837, 0)
 Open.Size = UDim2.new(0, 50, 0, 50)
+Open.Active = true
+Open.Draggable = true
 Open.Image = "rbxassetid://84830962019412"
+
 Open.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
 end)
 
-drag(Main, Main)
+UICorner.Parent = Open
+
+services.UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.LeftControl then
+        Main.Visible = not Main.Visible
+    end
+end)
 
 local MainBackground = Instance.new("Frame")
 MainBackground.Name = "MainBackground"
@@ -1381,19 +1393,7 @@ end
 function ToggleUILib()
     ToggleUI = not ToggleUI
     FengYu.Enabled = ToggleUI
-    Main.Visible = ToggleUI
+    Main.Visible = not ToggleUI
 end
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then
-        if input.KeyCode == Enum.KeyCode.RightShift then
-            ToggleUILib()
-        end
-        
-        if input.KeyCode == Enum.KeyCode.F then
-            Main.Visible = not Main.Visible
-        end
-    end
-end)
 
 return library
