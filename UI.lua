@@ -178,11 +178,24 @@ local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
+Main.BackgroundColor3 = config.Bg_Color
 Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 Main.Size = UDim2.new(0, 572, 0, 353)
 Main.ZIndex = 1
 Main.Active = true
+Main.Draggable = true
+
+local Open = Instance.new("ImageButton")
+Open.Name = "Open"
+Open.Parent = FengYu
+Open.BackgroundTransparency = 1
+Open.Position = UDim2.new(0.008, 0, 0.131, 0)
+Open.Size = UDim2.new(0, 50, 0, 50)
+Open.Image = "rbxassetid://84830962019412"
+Open.MouseButton1Click:Connect(function()
+    Main.Visible = not Main.Visible
+end)
+
 drag(Main, Main)
 
 local MainBackground = Instance.new("Frame")
@@ -1368,6 +1381,19 @@ end
 function ToggleUILib()
     ToggleUI = not ToggleUI
     FengYu.Enabled = ToggleUI
+    Main.Visible = ToggleUI
 end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == Enum.KeyCode.RightShift then
+            ToggleUILib()
+        end
+        
+        if input.KeyCode == Enum.KeyCode.F then
+            Main.Visible = not Main.Visible
+        end
+    end
+end)
 
 return library
