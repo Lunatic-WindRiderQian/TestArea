@@ -448,6 +448,26 @@ function library.new(library, name, theme)
         end
     end
 
+for _, v in next, services.CoreGui:GetChildren() do
+    if v.Name == "UniversalUI" then
+        v:Destroy()
+    end
+end
+
+FengYu = Instance.new("ScreenGui")
+FengYu.Name = "UniversalUI"
+FengYu.Parent = services.CoreGui
+protectGUI(FengYu)
+
+Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Parent = FengYu
+Main.Visible = true
+Main.Size = UDim2.new(0, 572, 0, 353)
+Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
+
     local config = {
         MainColor = Color3.fromRGB(16, 16, 16),
         TabColor = Color3.fromRGB(22, 22, 22),
