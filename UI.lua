@@ -41,7 +41,7 @@ local function protectGUI(gui)
 end
 
 local library = {}
-local ToggleUI = false
+local ToggleUI = true
 library.currentTab = nil
 library.flaFengYu = {}
 
@@ -183,6 +183,8 @@ Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 Main.Size = UDim2.new(0, 572, 0, 353)
 Main.ZIndex = 1
 Main.Active = true
+
+drag(Main, Main)
 
 local MainBackground = Instance.new("Frame")
 MainBackground.Name = "MainBackground"
@@ -447,26 +449,6 @@ function library.new(library, name, theme)
             v:Destroy()
         end
     end
-
-for _, v in next, services.CoreGui:GetChildren() do
-    if v.Name == "UniversalUI" then
-        v:Destroy()
-    end
-end
-
-FengYu = Instance.new("ScreenGui")
-FengYu.Name = "UniversalUI"
-FengYu.Parent = services.CoreGui
-protectGUI(FengYu)
-
-Main = Instance.new("Frame")
-Main.Name = "Main"
-Main.Parent = FengYu
-Main.Visible = true
-Main.Size = UDim2.new(0, 572, 0, 353)
-Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
 
     local config = {
         MainColor = Color3.fromRGB(16, 16, 16),
@@ -1386,7 +1368,7 @@ end
 
 function ToggleUILib()
     ToggleUI = not ToggleUI
-    FengYu.Enabled = not ToggleUI
+    FengYu.Enabled = ToggleUI
 end
 
 return library
