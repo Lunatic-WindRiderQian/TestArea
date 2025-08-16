@@ -59,9 +59,9 @@ local RunService = services.RunService
 local config = {
     MainColor = Color3.fromRGB(16, 16, 16),
     TabColor = Color3.fromRGB(22, 22, 22),
-    Bg_Color = Color3.fromRGB(80, 0, 0),
+    Bg_Color = Color3.fromRGB(17, 17, 17),
     Zy_Color = Color3.fromRGB(17, 17, 17), 
-    Button_Color = Color3.fromRGB(100, 20, 20),
+    Button_Color = Color3.fromRGB(22, 22, 22),
     Textbox_Color = Color3.fromRGB(22, 22, 22),
     Dropdown_Color = Color3.fromRGB(22, 22, 22),
     Keybind_Color = Color3.fromRGB(22, 22, 22),
@@ -237,7 +237,8 @@ MainBackground.ZIndex = 0
 local LeftMathRain = Instance.new("Frame")
 LeftMathRain.Name = "LeftMathRain"
 LeftMathRain.Parent = MainBackground
-LeftMathRain.BackgroundTransparency = 1
+LeftMathRain.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+LeftMathRain.BackgroundTransparency = 0.2
 LeftMathRain.BorderSizePixel = 0
 LeftMathRain.Size = UDim2.new(0.2, 0, 1, 0)
 LeftMathRain.ClipsDescendants = true
@@ -261,7 +262,7 @@ for i = 1, dropCount do
     
     drops[i] = {
         obj = drop,
-        speed = math.random(8, 15)/10
+        speed = math.random(15, 25)/10
     }
 end
 
@@ -493,9 +494,7 @@ function library.new(library, name, theme)
 
     if theme then
         for k, v in pairs(theme) do
-            if config[k] ~= nil then
                 config[k] = v
-            end
         end
     end
 
@@ -533,7 +532,7 @@ function library.new(library, name, theme)
         TabText.Size = UDim2.new(0, 76, 0, 24)
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
-        TabText.TextColor3 = Color3.fromRGB(102, 0, 0)
+        TabText.TextColor3 = Color3.fromRGB(255, 255, 255)
         TabText.TextSize = 14
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.TextTransparency = 0.2
@@ -596,7 +595,7 @@ function library.new(library, name, theme)
             SectionText.Size = UDim2.new(0, 401, 0, 36)
             SectionText.Font = Enum.Font.GothamSemibold
             SectionText.Text = name
-            SectionText.TextColor3 = Color3.fromRGB(102, 0, 0)
+            SectionText.TextColor3 = Color3.fromRGB(255, 255, 255)
             SectionText.TextSize = 16
             SectionText.TextXAlignment = Enum.TextXAlignment.Left
             
@@ -676,7 +675,7 @@ function library.new(library, name, theme)
                 Btn.AutoButtonColor = false
                 Btn.Font = Enum.Font.GothamSemibold
                 Btn.Text = "   " .. text
-                Btn.TextColor3 = Color3.fromRGB(102, 0, 0)
+                Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
                 Btn.TextSize = 16
                 Btn.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -706,7 +705,7 @@ function library.new(library, name, theme)
                 TextLabel.Size = UDim2.new(0, 428, 0, 22)
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
-                TextLabel.TextColor3 = Color3.fromRGB(102, 0, 0)
+                TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
                 TextLabel.TextSize = 14
                 
                 LabelC.CornerRadius = UDim.new(0, 6)
@@ -745,7 +744,7 @@ function library.new(library, name, theme)
                 ToggleBtn.AutoButtonColor = false
                 ToggleBtn.Font = Enum.Font.GothamSemibold
                 ToggleBtn.Text = "   " .. text
-                ToggleBtn.TextColor3 = Color3.fromRGB(102, 0, 0)
+                ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
                 ToggleBtn.TextSize = 16
                 ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -850,7 +849,7 @@ function library.new(library, name, theme)
                 KeybindBtn.AutoButtonColor = false
                 KeybindBtn.Font = Enum.Font.GothamSemibold
                 KeybindBtn.Text = "   " .. text
-                KeybindBtn.TextColor3 = Color3.fromRGB(102, 0, 0)
+                KeybindBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
                 KeybindBtn.TextSize = 16
                 KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -867,7 +866,7 @@ function library.new(library, name, theme)
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
                 KeybindValue.Text = keyTxt
-                KeybindValue.TextColor3 = Color3.fromRGB(102, 0, 0)
+                KeybindValue.TextColor3 = Color3.fromRGB(255, 255, 255)
                 KeybindValue.TextSize = 14
                 
                 KeybindValueC.CornerRadius = UDim.new(0, 6)
@@ -950,7 +949,7 @@ function library.new(library, name, theme)
                 TextboxBack.AutoButtonColor = false
                 TextboxBack.Font = Enum.Font.GothamSemibold
                 TextboxBack.Text = "   " .. text
-                TextboxBack.TextColor3 = Color3.fromRGB(102, 0, 0)
+                TextboxBack.TextColor3 = Color3.fromRGB(255, 255, 255)
                 TextboxBack.TextSize = 16
                 TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -978,7 +977,7 @@ function library.new(library, name, theme)
                 TextBox.Size = UDim2.new(1, 0, 1, 0)
                 TextBox.Font = Enum.Font.Gotham
                 TextBox.Text = default
-                TextBox.TextColor3 = Color3.fromRGB(102, 0, 0)
+                TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                 TextBox.TextSize = 14
                 
                 TextboxBackL.Name = "TextboxBackL"
@@ -1046,7 +1045,7 @@ function library.new(library, name, theme)
                 SliderBack.AutoButtonColor = false
                 SliderBack.Font = Enum.Font.GothamSemibold
                 SliderBack.Text = "   " .. text
-                SliderBack.TextColor3 = Color3.fromRGB(102, 0, 0)
+                SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
                 SliderBack.TextSize = 16
                 SliderBack.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -1097,7 +1096,7 @@ function library.new(library, name, theme)
                 SliderValue.Size = UDim2.new(1, 0, 1, 0)
                 SliderValue.Font = Enum.Font.Gotham
                 SliderValue.Text = tostring(default)
-                SliderValue.TextColor3 = Color3.fromRGB(102, 0, 0)
+                SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
                 SliderValue.TextSize = 14
                 
                 MinSlider.Name = "MinSlider"
@@ -1108,7 +1107,7 @@ function library.new(library, name, theme)
                 MinSlider.Size = UDim2.new(0, 20, 0, 20)
                 MinSlider.Font = Enum.Font.Gotham
                 MinSlider.Text = "-"
-                MinSlider.TextColor3 = Color3.fromRGB(102, 0, 0)
+                MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
                 MinSlider.TextSize = 24
                 MinSlider.TextWrapped = true
                 
@@ -1121,7 +1120,7 @@ function library.new(library, name, theme)
                 AddSlider.Size = UDim2.new(0, 20, 0, 20)
                 AddSlider.Font = Enum.Font.Gotham
                 AddSlider.Text = "+"
-                AddSlider.TextColor3 = Color3.fromRGB(102, 0, 0)
+                AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
                 AddSlider.TextSize = 24
                 AddSlider.TextWrapped = true
                 
@@ -1248,7 +1247,7 @@ funcs:SetValue(tonumber(text))
                 DropdownTop.AutoButtonColor = false
                 DropdownTop.Font = Enum.Font.GothamSemibold
                 DropdownTop.Text = ""
-                DropdownTop.TextColor3 = Color3.fromRGB(102, 0, 0)
+                DropdownTop.TextColor3 = Color3.fromRGB(255, 255, 255)
                 DropdownTop.TextSize = 16
                 DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -1265,7 +1264,7 @@ funcs:SetValue(tonumber(text))
                 DropdownOpen.Size = UDim2.new(0, 20, 0, 20)
                 DropdownOpen.Font = Enum.Font.Gotham
                 DropdownOpen.Text = "+"
-                DropdownOpen.TextColor3 = Color3.fromRGB(102, 0, 0)
+                DropdownOpen.TextColor3 = Color3.fromRGB(255, 255, 255)
                 DropdownOpen.TextSize = 24
                 DropdownOpen.TextWrapped = true
                 
@@ -1276,10 +1275,10 @@ funcs:SetValue(tonumber(text))
                 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
                 DropdownText.Size = UDim2.new(0, 184, 0, 38)
                 DropdownText.Font = Enum.Font.GothamSemibold
-                DropdownText.PlaceholderColor3 = Color3.fromRGB(102, 0, 0)
+                DropdownText.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
                 DropdownText.PlaceholderText = text
                 DropdownText.Text = ""
-                DropdownText.TextColor3 = Color3.fromRGB(102, 0, 0)
+                DropdownText.TextColor3 = Color3.fromRGB(255, 255, 255)
                 DropdownText.TextSize = 16
                 DropdownText.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -1346,7 +1345,7 @@ funcs:SetValue(tonumber(text))
                     Option.AutoButtonColor = false
                     Option.Font = Enum.Font.Gotham
                     Option.Text = option
-                    Option.TextColor3 = Color3.fromRGB(102, 0, 0)
+                    Option.TextColor3 = Color3.fromRGB(255, 255, 255)
                     Option.TextSize = 14
                     
                     OptionC.CornerRadius = UDim.new(0, 6)
