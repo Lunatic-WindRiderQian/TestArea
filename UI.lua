@@ -238,7 +238,7 @@ local LeftMathRain = Instance.new("Frame")
 LeftMathRain.Name = "LeftMathRain"
 LeftMathRain.Parent = MainBackground
 LeftMathRain.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-LeftMathRain.BackgroundTransparency = 0.2
+LeftMathRain.BackgroundTransparency = 0
 LeftMathRain.BorderSizePixel = 0
 LeftMathRain.Size = UDim2.new(0.2, 0, 1, 0)
 LeftMathRain.ClipsDescendants = true
@@ -262,7 +262,7 @@ for i = 1, dropCount do
     
     drops[i] = {
         obj = drop,
-        speed = math.random(15, 25)/10
+        speed = math.random(8, 15)/10
     }
 end
 
@@ -494,7 +494,9 @@ function library.new(library, name, theme)
 
     if theme then
         for k, v in pairs(theme) do
+            if config[k] ~= nil then
                 config[k] = v
+            end
         end
     end
 
