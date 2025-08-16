@@ -56,6 +56,23 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
+local config = {
+    MainColor = Color3.fromRGB(16, 16, 16),
+    TabColor = Color3.fromRGB(22, 22, 22),
+    Bg_Color = Color3.fromRGB(17, 17, 17),
+    Zy_Color = Color3.fromRGB(17, 17, 17), 
+    Button_Color = Color3.fromRGB(22, 22, 22),
+    Textbox_Color = Color3.fromRGB(22, 22, 22),
+    Dropdown_Color = Color3.fromRGB(22, 22, 22),
+    Keybind_Color = Color3.fromRGB(22, 22, 22),
+    Label_Color = Color3.fromRGB(22, 22, 22),
+    Slider_Color = Color3.fromRGB(22, 22, 22),
+    SliderBar_Color = Color3.fromRGB(37, 254, 152),
+    Toggle_Color = Color3.fromRGB(22, 22, 22),
+    Toggle_Off = Color3.fromRGB(34, 34, 34),
+    Toggle_On = Color3.fromRGB(37, 254, 152),
+}
+
 function drag(frame, hold)
     if not hold then hold = frame end
     
@@ -474,25 +491,13 @@ function library.new(library, name, theme)
         end
     end
 
-    local config = {
-        MainColor = Color3.fromRGB(16, 16, 16),
-        TabColor = Color3.fromRGB(22, 22, 22),
-        Bg_Color = Color3.fromRGB(17, 17, 17),
-        Zy_Color = Color3.fromRGB(17, 17, 17), 
-
-        Button_Color = Color3.fromRGB(22, 22, 22),
-        Textbox_Color = Color3.fromRGB(22, 22, 22),
-        Dropdown_Color = Color3.fromRGB(22, 22, 22),
-        Keybind_Color = Color3.fromRGB(22, 22, 22),
-        Label_Color = Color3.fromRGB(22, 22, 22),
-
-        Slider_Color = Color3.fromRGB(22, 22, 22),
-        SliderBar_Color = Color3.fromRGB(37, 254, 152),
-
-        Toggle_Color = Color3.fromRGB(22, 22, 22),
-        Toggle_Off = Color3.fromRGB(34, 34, 34),
-        Toggle_On = Color3.fromRGB(37, 254, 152),
-    }
+    if theme then
+        for k, v in pairs(theme) do
+            if config[k] ~= nil then
+                config[k] = v
+            end
+        end
+    end
 
     ScriptTitle.Text = name or "FengUI"
 
