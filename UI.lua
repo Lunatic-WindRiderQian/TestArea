@@ -237,7 +237,6 @@ MainBackground.ZIndex = 0
 local LeftMathRain = Instance.new("Frame")
 LeftMathRain.Name = "LeftMathRain"
 LeftMathRain.Parent = MainBackground
-LeftMathRain.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
 LeftMathRain.BackgroundTransparency = 0
 LeftMathRain.BorderSizePixel = 0
 LeftMathRain.Size = UDim2.new(0.2, 0, 1, 0)
