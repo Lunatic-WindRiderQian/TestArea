@@ -193,20 +193,6 @@ FengYu.Name = "UniversalUI"
 protectGUI(FengYu)
 FengYu.Parent = services.CoreGui
 
--- 创建发光效果
-local GlowEffect = Instance.new("ImageLabel")
-GlowEffect.Name = "GlowEffect"
-GlowEffect.Parent = FengYu
-GlowEffect.BackgroundTransparency = 1
-GlowEffect.Size = UDim2.new(1, 0, 1, 0)
-GlowEffect.Position = UDim2.new(0, 0, 0, 0)
-GlowEffect.Image = "rbxassetid://84830962019412"
-GlowEffect.ImageColor3 = config.GlowColor
-GlowEffect.ImageTransparency = 0.9
-GlowEffect.ScaleType = Enum.ScaleType.Slice
-GlowEffect.SliceScale = 0.05
-GlowEffect.ZIndex = -1
-
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
@@ -259,7 +245,7 @@ services.UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- 创建美观的背景
+-- 创建超级美观的背景
 local MainBackground = Instance.new("Frame")
 MainBackground.Name = "MainBackground"
 MainBackground.Parent = Main
@@ -277,57 +263,55 @@ local BackgroundGradient = Instance.new("UIGradient")
 BackgroundGradient.Parent = MainBackground
 BackgroundGradient.Rotation = 120
 BackgroundGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(10, 10, 15)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 15, 30)),
-    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(10, 10, 15))
-})
-BackgroundGradient.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0.0, 0.3),
-    NumberSequenceKeypoint.new(0.5, 0.1),
-    NumberSequenceKeypoint.new(1.0, 0.3)
+    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(15, 15, 25)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(25, 20, 40)),
+    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(15, 15, 25))
 })
 
--- 添加一些简单的装饰元素
-local Decor1 = Instance.new("Frame")
-Decor1.Parent = MainBackground
-Decor1.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-Decor1.BackgroundTransparency = 0.8
-Decor1.Size = UDim2.new(0, 80, 0, 80)
-Decor1.Position = UDim2.new(0.1, 0, 0.7, 0)
-Decor1.ZIndex = 1
+-- 添加装饰性几何图案
+local DecorPattern = Instance.new("ImageLabel")
+DecorPattern.Name = "DecorPattern"
+DecorPattern.Parent = MainBackground
+DecorPattern.BackgroundTransparency = 1
+DecorPattern.Size = UDim2.new(1, 0, 1, 0)
+DecorPattern.Image = "rbxassetid://8992233754" -- 简约几何图案
+DecorPattern.ImageColor3 = Color3.fromRGB(30, 30, 45)
+DecorPattern.ImageTransparency = 0.9
+DecorPattern.ScaleType = Enum.ScaleType.Tile
+DecorPattern.TileSize = UDim2.new(0, 100, 0, 100)
+DecorPattern.ZIndex = 1
 
-local Decor1Corner = Instance.new("UICorner")
-Decor1Corner.CornerRadius = UDim.new(1, 0)
-Decor1Corner.Parent = Decor1
+-- 添加简约装饰元素
+local DecorCircle1 = Instance.new("Frame")
+DecorCircle1.Parent = MainBackground
+DecorCircle1.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+DecorCircle1.BackgroundTransparency = 0.9
+DecorCircle1.Size = UDim2.new(0, 120, 0, 120)
+DecorCircle1.Position = UDim2.new(0.8, 0, -0.1, 0)
+DecorCircle1.ZIndex = 1
 
-local Decor2 = Instance.new("Frame")
-Decor2.Parent = MainBackground
-Decor2.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-Decor2.BackgroundTransparency = 0.8
-Decor2.Size = UDim2.new(0, 60, 0, 60)
-Decor2.Position = UDim2.new(0.8, 0, 0.2, 0)
-Decor2.ZIndex = 1
+local DecorCircle1Corner = Instance.new("UICorner")
+DecorCircle1Corner.CornerRadius = UDim.new(1, 0)
+DecorCircle1Corner.Parent = DecorCircle1
 
-local Decor2Corner = Instance.new("UICorner")
-Decor2Corner.CornerRadius = UDim.new(1, 0)
-Decor2Corner.Parent = Decor2
+local DecorCircle2 = Instance.new("Frame")
+DecorCircle2.Parent = MainBackground
+DecorCircle2.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+DecorCircle2.BackgroundTransparency = 0.9
+DecorCircle2.Size = UDim2.new(0, 80, 0, 80)
+DecorCircle2.Position = UDim2.new(-0.05, 0, 0.7, 0)
+DecorCircle2.ZIndex = 1
 
--- 添加轻微动画效果
-local lastUpdate = 0
-RunService.Heartbeat:Connect(function(deltaTime)
-    lastUpdate = lastUpdate + deltaTime
-    if lastUpdate < 0.05 then return end
-    lastUpdate = 0
-    
-    -- 简单的装饰元素动画
-    local pulse = (math.sin(os.clock() * 1.5) + 1) * 0.5
-    Decor1.BackgroundTransparency = 0.8 - pulse * 0.1
-    Decor2.BackgroundTransparency = 0.8 - pulse * 0.1
-    
-    -- 轻微移动装饰元素
-    Decor1.Position = UDim2.new(0.1 + math.sin(os.clock() * 0.3) * 0.01, 0, 0.7 + math.cos(os.clock() * 0.4) * 0.01, 0)
-    Decor2.Position = UDim2.new(0.8 + math.sin(os.clock() * 0.5) * 0.01, 0, 0.2 + math.cos(os.clock() * 0.6) * 0.01, 0)
-end)
+local DecorCircle2Corner = Instance.new("UICorner")
+DecorCircle2Corner.CornerRadius = UDim.new(1, 0)
+DecorCircle2Corner.Parent = DecorCircle2
+
+-- 添加简约边框效果
+local InnerStroke = Instance.new("UIStroke")
+InnerStroke.Parent = MainBackground
+InnerStroke.Color = Color3.fromRGB(60, 60, 80)
+InnerStroke.Thickness = 2
+InnerStroke.Transparency = 0.8
 
 local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
@@ -603,7 +587,7 @@ function library.new(library, name, theme)
                 end)
                 
                 Btn.MouseLeave:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+                    services.TweenService:Create(Btn, TweenService.new(0.2), {
                         BackgroundColor3 = config.Button_Color
                     }):Play()
                 end)
@@ -979,7 +963,7 @@ function library.new(library, name, theme)
                 BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 30, 0, 28)
             end
             
-            -- 从kgUI.lua整合的滑块功能
+            -- 修复后的滑块功能 - 现在可以正常滑动
             function section.Slider(section, text, flag, default, min, max, precise, callback)
                 callback = callback or function() end
                 min = min or 1
@@ -1162,20 +1146,21 @@ function library.new(library, name, theme)
                 local dragging, boxFocused = false, false
                 local allowed = { [""] = true, ["-"] = true }
                 
+                -- 修复滑块拖动功能
                 SliderBar.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        funcs:SetValue()
                         dragging = true
+                        funcs:SetValue()
                     end
                 end)
                 
-                UserInputService.InputEnded:Connect(function(input)
-                    if dragging and input.UserInputType == Enum.UserInputType.MouseButton1 then
+                SliderBar.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         dragging = false
                     end
                 end)
                 
-                UserInputService.InputChanged:Connect(function(input)
+                services.UserInputService.InputChanged:Connect(function(input)
                     if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
                         funcs:SetValue()
                     end
@@ -1244,7 +1229,7 @@ function library.new(library, name, theme)
                 DropdownTop.Font = Enum.Font.GothamSemibold
                 DropdownTop.Text = ""
                 DropdownTop.TextColor3 = config.TextColor
-                Top.TextSize = 16
+                DropdownTop.TextSize = 16
                 DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
                 
                 DropdownTopC.CornerRadius = UDim.new(0, 6)
