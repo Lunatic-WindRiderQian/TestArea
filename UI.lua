@@ -74,6 +74,7 @@ local config = {
     AccentColor = Color3.fromRGB(37, 254, 152),
     TextColor = Color3.fromRGB(240, 240, 240),
     SecondaryTextColor = Color3.fromRGB(180, 180, 180),
+    GlowColor = Color3.fromRGB(0, 200, 255),
 }
 
 function drag(frame, hold)
@@ -133,7 +134,7 @@ function Ripple(obj)
         Ripple.Parent = obj
         Ripple.BackgroundTransparency = 1
         Ripple.ZIndex = 8
-        Ripple.Image = "rbxassetid://2708891598"
+        Ripple.Image = "rbxassetid://84830962019412"
         Ripple.ImageTransparency = 0.8
         Ripple.ScaleType = Enum.ScaleType.Fit
         Ripple.ImageColor3 = config.AccentColor
@@ -192,13 +193,27 @@ FengYu.Name = "UniversalUI"
 protectGUI(FengYu)
 FengYu.Parent = services.CoreGui
 
+-- 创建发光效果
+local GlowEffect = Instance.new("ImageLabel")
+GlowEffect.Name = "GlowEffect"
+GlowEffect.Parent = FengYu
+GlowEffect.BackgroundTransparency = 1
+GlowEffect.Size = UDim2.new(1, 0, 1, 0)
+GlowEffect.Position = UDim2.new(0, 0, 0, 0)
+GlowEffect.Image = "rbxassetid://84830962019412"
+GlowEffect.ImageColor3 = config.GlowColor
+GlowEffect.ImageTransparency = 0.9
+GlowEffect.ScaleType = Enum.ScaleType.Slice
+GlowEffect.SliceScale = 0.05
+GlowEffect.ZIndex = -1
+
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.Bg_Color
 Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-Main.Size = UDim2.new(0, 572, 0, 353)
+Main.Size = UDim2.new(0, 600, 0, 380)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -208,6 +223,13 @@ local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 12)
 MainCorner.Parent = Main
 
+-- 添加边框
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Parent = Main
+MainStroke.Color = Color3.fromRGB(50, 50, 50)
+MainStroke.Thickness = 1
+MainStroke.Transparency = 0.5
+
 local Open = Instance.new("ImageButton")
 local UICorner = Instance.new("UICorner")
 
@@ -215,11 +237,11 @@ Open.Name = "Open"
 Open.Parent = FengYu
 Open.BackgroundColor3 = config.AccentColor
 Open.BackgroundTransparency = 1
-Open.Position = UDim2.new(0.00829315186, 0, 0.13107837, 0)
+Open.Position = UDim2.new(0.008, 0, 0.131, 0)
 Open.Size = UDim2.new(0, 50, 0, 50)
 Open.Active = true
 Open.Draggable = true
-Open.Image = "rbxassetid://7072718362"
+Open.Image = "rbxassetid://84830962019412"
 Open.ImageColor3 = config.AccentColor
 
 Open.MouseButton1Click:Connect(function()
@@ -258,7 +280,7 @@ LeftMathRain.BorderSizePixel = 0
 LeftMathRain.Size = UDim2.new(0.2, 0, 1, 0)
 LeftMathRain.ClipsDescendants = true
 
-local dropCount = 20
+local dropCount = 15 -- 减少粒子数量以提高性能
 local drops = {}
 
 for i = 1, dropCount do
@@ -284,7 +306,7 @@ end
 local lastRainUpdate = 0
 RunService.Heartbeat:Connect(function(deltaTime)
     lastRainUpdate = lastRainUpdate + deltaTime
-    if lastRainUpdate < 0.03 then return end
+    if lastRainUpdate < 0.05 then return end -- 降低更新频率以提高性能
     lastRainUpdate = 0
     
     for _, d in ipairs(drops) do
@@ -307,7 +329,7 @@ RightEffects.Size = UDim2.new(0.8, 0, 1, 0)
 RightEffects.ClipsDescendants = true
 
 local blueParticles = {}
-for i = 1, 8 do
+for i = 1, 6 do -- 减少粒子数量以提高性能
     local particle = Instance.new("Frame")
     particle.Name = "BlueParticle_"..i
     particle.Parent = RightEffects
@@ -317,7 +339,7 @@ for i = 1, 8 do
     local glow = Instance.new("ImageLabel")
     glow.Name = "Glow"
     glow.Parent = particle
-    glow.Image = "rbxassetid://7733765398"
+    glow.Image = "rbxassetid://84830962019412"
     glow.ImageColor3 = particle.BackgroundColor3
     glow.ImageTransparency = 0.7
     glow.Size = UDim2.new(3, 0, 3, 0)
@@ -361,16 +383,16 @@ dataMatrix.BackgroundTransparency = 1
 dataMatrix.Size = UDim2.new(1, 0, 1, 0)
 
 local matrixColumns = {}
-for i = 1, 12 do
+for i = 1, 8 do -- 减少列数以提高性能
     local column = Instance.new("Frame")
     column.Name = "MatrixColumn_"..i
     column.Parent = dataMatrix
     column.BackgroundTransparency = 1
     column.Size = UDim2.new(0, 10, 1, 0)
-    column.Position = UDim2.new((i-1)/11, 0, 0, 0)
+    column.Position = UDim2.new((i-1)/7, 0, 0, 0)
     
     local chars = {}
-    for j = 1, 15 do
+    for j = 1, 10 do -- 减少字符数量以提高性能
         local char = Instance.new("TextLabel")
         char.Name = "MatrixChar_"..j
         char.Parent = column
@@ -381,7 +403,7 @@ for i = 1, 12 do
         char.Font = Enum.Font.Code
         char.TextSize = 14
         char.Size = UDim2.new(1, 0, 0, 20)
-        char.Position = UDim2.new(0, 0, (j-1)/14, 0)
+        char.Position = UDim2.new(0, 0, (j-1)/9, 0)
         
         chars[j] = char
     end
@@ -406,7 +428,7 @@ local lastEffectUpdate = 0
 local pulsePhase = 0
 RunService.Heartbeat:Connect(function(deltaTime)
     lastEffectUpdate = lastEffectUpdate + deltaTime
-    if lastEffectUpdate < 0.016 then return end
+    if lastEffectUpdate < 0.03 then return end -- 降低更新频率以提高性能
     lastEffectUpdate = 0
     
     pulsePhase = pulsePhase + deltaTime
@@ -429,7 +451,7 @@ RunService.Heartbeat:Connect(function(deltaTime)
         column.headPosition = column.headPosition + column.speed * deltaTime * 10
         
         for i, char in ipairs(column.chars) do
-            local pos = (i - column.headPosition) / 15
+            local pos = (i - column.headPosition) / 10
             if pos >= 0 and pos <= 1 then
                 char.TextTransparency = pos * 0.7 + 0.3
                 char.TextColor3 = Color3.fromRGB(
@@ -441,7 +463,7 @@ RunService.Heartbeat:Connect(function(deltaTime)
                 char.TextTransparency = 1
             end
            
-            if math.random() < 0.03 then
+            if math.random() < 0.02 then -- 降低更新频率以提高性能
                 char.Text = string.char(math.random(48, 90))
             end
         end
@@ -462,7 +484,7 @@ TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
 TabMain.Position = UDim2.new(0.217, 0, 0, 3)
-TabMain.Size = UDim2.new(0, 448, 0, 350)
+TabMain.Size = UDim2.new(0, 468, 0, 374)
 TabMain.ZIndex = 10
 
 local Side = Instance.new("Frame")
@@ -472,7 +494,7 @@ Side.BackgroundColor3 = config.TabColor
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 0)
-Side.Size = UDim2.new(0, 110, 0, 353)
+Side.Size = UDim2.new(0, 120, 0, 380)
 
 -- 添加圆角
 local SideCorner = Instance.new("UICorner")
@@ -486,7 +508,7 @@ TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0.097, 0)
-TabBtns.Size = UDim2.new(0, 110, 0, 318)
+TabBtns.Size = UDim2.new(0, 120, 0, 340)
 TabBtns.CanvasSize = UDim2.new(0, 0, 1, 0)
 TabBtns.ScrollBarThickness = 0
 
@@ -501,11 +523,11 @@ ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = Side
 ScriptTitle.BackgroundTransparency = 1
 ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
-ScriptTitle.Size = UDim2.new(0, 102, 0, 20)
+ScriptTitle.Size = UDim2.new(0, 110, 0, 20)
 ScriptTitle.Font = Enum.Font.GothamSemibold
-ScriptTitle.Text = "FengUI"
+ScriptTitle.Text = "Delta"
 ScriptTitle.TextColor3 = config.AccentColor
-ScriptTitle.TextSize = 14
+ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = true
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -524,7 +546,7 @@ function library.new(library, name, theme)
         end
     end
 
-    ScriptTitle.Text = name or "FengUI"
+    ScriptTitle.Text = name or "Delta"
 
     local window = {}
     
@@ -548,7 +570,7 @@ function library.new(library, name, theme)
         TabIco.BackgroundTransparency = 1
         TabIco.BorderSizePixel = 0
         TabIco.Size = UDim2.new(0, 24, 0, 24)
-        TabIco.Image = "rbxassetid://7072718362"
+        TabIco.Image = "rbxassetid://84830962019412"
         TabIco.ImageTransparency = 0.5
         TabIco.ImageColor3 = config.AccentColor
         
@@ -556,7 +578,7 @@ function library.new(library, name, theme)
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
         TabText.Position = UDim2.new(1.416, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 76, 0, 24)
+        TabText.Size = UDim2.new(0, 86, 0, 24)
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
@@ -568,7 +590,7 @@ function library.new(library, name, theme)
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 110, 0, 24)
+        TabBtn.Size = UDim2.new(0, 120, 0, 24)
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
@@ -632,7 +654,7 @@ function library.new(library, name, theme)
             SectionOpen.BorderSizePixel = 0
             SectionOpen.Position = UDim2.new(0, -33, 0, 5)
             SectionOpen.Size = UDim2.new(0, 26, 0, 26)
-            SectionOpen.Image = "rbxassetid://7072716644"
+            SectionOpen.Image = "rbxassetid://84830962019412"
             SectionOpen.ImageColor3 = config.SecondaryTextColor
             
             SectionOpened.Name = "SectionOpened"
@@ -640,7 +662,7 @@ function library.new(library, name, theme)
             SectionOpened.BackgroundTransparency = 1
             SectionOpened.BorderSizePixel = 0
             SectionOpened.Size = UDim2.new(0, 26, 0, 26)
-            SectionOpened.Image = "rbxassetid://7072717770"
+            SectionOpened.Image = "rbxassetid://84830962019412"
             SectionOpened.ImageColor3 = config.AccentColor
             SectionOpened.ImageTransparency = 1
             
@@ -702,13 +724,13 @@ function library.new(library, name, theme)
                 BtnModule.Parent = Objs
                 BtnModule.BackgroundTransparency = 1
                 BtnModule.BorderSizePixel = 0
-                BtnModule.Size = UDim2.new(0, 428, 0, 38)
+                BtnModule.Size = UDim2.new(0, 448, 0, 38)
                 
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
                 Btn.BackgroundColor3 = config.Button_Color
                 Btn.BorderSizePixel = 0
-                Btn.Size = UDim2.new(0, 428, 0, 38)
+                Btn.Size = UDim2.new(0, 448, 0, 38)
                 Btn.AutoButtonColor = false
                 Btn.Font = Enum.Font.GothamSemibold
                 Btn.Text = "   " .. text
@@ -751,11 +773,11 @@ function library.new(library, name, theme)
                 LabelModule.Parent = Objs
                 LabelModule.BackgroundTransparency = 1
                 LabelModule.BorderSizePixel = 0
-                LabelModule.Size = UDim2.new(0, 428, 0, 19)
+                LabelModule.Size = UDim2.new(0, 448, 0, 19)
                 
                 TextLabel.Parent = LabelModule
                 TextLabel.BackgroundColor3 = config.Label_Color
-                TextLabel.Size = UDim2.new(0, 428, 0, 22)
+                TextLabel.Size = UDim2.new(0, 448, 0, 22)
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
                 TextLabel.TextColor3 = config.SecondaryTextColor
@@ -787,13 +809,13 @@ function library.new(library, name, theme)
                 ToggleModule.Parent = Objs
                 ToggleModule.BackgroundTransparency = 1
                 ToggleModule.BorderSizePixel = 0
-                ToggleModule.Size = UDim2.new(0, 428, 0, 38)
+                ToggleModule.Size = UDim2.new(0, 448, 0, 38)
                 
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
                 ToggleBtn.BackgroundColor3 = config.Toggle_Color
                 ToggleBtn.BorderSizePixel = 0
-                ToggleBtn.Size = UDim2.new(0, 428, 0, 38)
+                ToggleBtn.Size = UDim2.new(0, 448, 0, 38)
                 ToggleBtn.AutoButtonColor = false
                 ToggleBtn.Font = Enum.Font.GothamSemibold
                 ToggleBtn.Text = "   " .. text
@@ -908,13 +930,13 @@ function library.new(library, name, theme)
                 KeybindModule.Parent = Objs
                 KeybindModule.BackgroundTransparency = 1
                 KeybindModule.BorderSizePixel = 0
-                KeybindModule.Size = UDim2.new(0, 428, 0, 38)
+                KeybindModule.Size = UDim2.new(0, 448, 0, 38)
                 
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
                 KeybindBtn.BackgroundColor3 = config.Keybind_Color
                 KeybindBtn.BorderSizePixel = 0
-                KeybindBtn.Size = UDim2.new(0, 428, 0, 38)
+                KeybindBtn.Size = UDim2.new(0, 448, 0, 38)
                 KeybindBtn.AutoButtonColor = false
                 KeybindBtn.Font = Enum.Font.GothamSemibold
                 KeybindBtn.Text = "   " .. text
@@ -1024,13 +1046,13 @@ function library.new(library, name, theme)
                 TextboxModule.Parent = Objs
                 TextboxModule.BackgroundTransparency = 1
                 TextboxModule.BorderSizePixel = 0
-                TextboxModule.Size = UDim2.new(0, 428, 0, 38)
+                TextboxModule.Size = UDim2.new(0, 448, 0, 38)
                 
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
                 TextboxBack.BackgroundColor3 = config.Textbox_Color
                 TextboxBack.BorderSizePixel = 0
-                TextboxBack.Size = UDim2.new(0, 428, 0, 38)
+                TextboxBack.Size = UDim2.new(0, 448, 0, 38)
                 TextboxBack.AutoButtonColor = false
                 TextboxBack.Font = Enum.Font.GothamSemibold
                 TextboxBack.Text = "   " .. text
@@ -1137,13 +1159,13 @@ function library.new(library, name, theme)
                 SliderModule.Parent = Objs
                 SliderModule.BackgroundTransparency = 1
                 SliderModule.BorderSizePixel = 0
-                SliderModule.Size = UDim2.new(0, 428, 0, 38)
+                SliderModule.Size = UDim2.new(0, 448, 0, 38)
                 
                 SliderBack.Name = "SliderBack"
                 SliderBack.Parent = SliderModule
                 SliderBack.BackgroundColor3 = config.Slider_Color
                 SliderBack.BorderSizePixel = 0
-                SliderBack.Size = UDim2.new(0, 428, 0, 38)
+                SliderBack.Size = UDim2.new(0, 448, 0, 38)
                 SliderBack.AutoButtonColor = false
                 SliderBack.Font = Enum.Font.GothamSemibold
                 SliderBack.Text = "   " .. text
@@ -1360,13 +1382,13 @@ function library.new(library, name, theme)
                 DropdownModule.BackgroundTransparency = 1
                 DropdownModule.BorderSizePixel = 0
                 DropdownModule.ClipsDescendants = true
-                DropdownModule.Size = UDim2.new(0, 428, 0, 38)
+                DropdownModule.Size = UDim2.new(0, 448, 0, 38)
                 
                 DropdownTop.Name = "DropdownTop"
                 DropdownTop.Parent = DropdownModule
                 DropdownTop.BackgroundColor3 = config.Dropdown_Color
                 DropdownTop.BorderSizePixel = 0
-                DropdownTop.Size = UDim2.new(0, 428, 0, 38)
+                DropdownTop.Size = UDim2.new(0, 448, 0, 38)
                 DropdownTop.AutoButtonColor = false
                 DropdownTop.Font = Enum.Font.GothamSemibold
                 DropdownTop.Text = ""
@@ -1453,7 +1475,7 @@ function library.new(library, name, theme)
                     DropdownOpen.Text = open and "-" or "+"
                     
                     services.TweenService:Create(DropdownModule, TweenInfo.new(0.2), {
-                        Size = UDim2.new(0, 428, 0, open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38)
+                        Size = UDim2.new(0, 448, 0, open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38)
                     }):Play()
                 end
                 
@@ -1469,7 +1491,7 @@ function library.new(library, name, theme)
                 
                 DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                     if open then
-                        DropdownModule.Size = UDim2.new(0, 428, 0, DropdownModuleL.AbsoluteContentSize.Y + 4)
+                        DropdownModule.Size = UDim2.new(0, 448, 0, DropdownModuleL.AbsoluteContentSize.Y + 4)
                     end
                 end)
                 
@@ -1483,7 +1505,7 @@ function library.new(library, name, theme)
                     Option.Parent = DropdownModule
                     Option.BackgroundColor3 = config.TabColor
                     Option.BorderSizePixel = 0
-                    Option.Size = UDim2.new(0, 428, 0, 26)
+                    Option.Size = UDim2.new(0, 448, 0, 26)
                     Option.AutoButtonColor = false
                     Option.Font = Enum.Font.Gotham
                     Option.Text = option
