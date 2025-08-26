@@ -965,18 +965,17 @@ function library.new(library, name, theme)
             
             -- 修复后的滑块功能 - 现在可以正常滑动
             function section.Slider(section, text, flag, default, min, max, precise, callback)
-    callback = callback or function() end
-    min = min or 1
-    max = max or 10
-    default = default or min
-    precise = precise or false
+    local callback = callback or function() end
+    local min = min or 1
+    local max = max or 10
+    local default = default or min
+    local precise = precise or false
+    library.flaKG[flag] = default
     
     assert(text, "No text provided")
     assert(flag, "No flag provided")
     assert(default, "No default value provided")
     
-    library.flaFengYu[flag] = default
-
     local SliderModule = Instance.new("Frame")
     local SliderBack = Instance.new("TextButton")
     local SliderBackC = Instance.new("UICorner")
@@ -990,23 +989,27 @@ function library.new(library, name, theme)
     local SliderHandleC = Instance.new("UICorner")
     local SliderValue = Instance.new("TextBox")
     local SliderValueC = Instance.new("UICorner")
+    local MinSlider = Instance.new("TextButton")
+    local AddSlider = Instance.new("TextButton")
     
     SliderModule.Name = "SliderModule"
     SliderModule.Parent = Objs
-    SliderModule.BackgroundTransparency = 1
+    SliderModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    SliderModule.BackgroundTransparency = 1.000
     SliderModule.BorderSizePixel = 0
-    SliderModule.Size = UDim2.new(0, 448, 0, 38)
+    SliderModule.Position = UDim2.new(0, 0, 0, 0)
+    SliderModule.Size = UDim2.new(0, 428, 0, 38)
     
     SliderBack.Name = "SliderBack"
     SliderBack.Parent = SliderModule
     SliderBack.BackgroundColor3 = config.Slider_Color
     SliderBack.BorderSizePixel = 0
-    SliderBack.Size = UDim2.new(0, 448, 0, 38)
+    SliderBack.Size = UDim2.new(0, 428, 0, 38)
     SliderBack.AutoButtonColor = false
     SliderBack.Font = Enum.Font.GothamSemibold
     SliderBack.Text = ""
-    SliderBack.TextColor3 = config.TextColor
-    SliderBack.TextSize = 16
+    SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SliderBack.TextSize = 16.000
     SliderBack.TextXAlignment = Enum.TextXAlignment.Left
     
     SliderBackC.CornerRadius = UDim.new(0, 6)
@@ -1021,7 +1024,7 @@ function library.new(library, name, theme)
     SliderText.Size = UDim2.new(0, 100, 1, 0)
     SliderText.Font = Enum.Font.GothamSemibold
     SliderText.Text = text
-    SliderText.TextColor3 = config.TextColor
+    SliderText.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderText.TextSize = 14
     SliderText.TextXAlignment = Enum.TextXAlignment.Left
     
@@ -1082,7 +1085,7 @@ function library.new(library, name, theme)
     SliderValue.Size = UDim2.new(0, 50, 0, 24)
     SliderValue.Font = Enum.Font.Gotham
     SliderValue.Text = tostring(default)
-    SliderValue.TextColor3 = config.TextColor
+    SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderValue.TextSize = 14
     SliderValue.TextXAlignment = Enum.TextXAlignment.Center
     SliderValue.ClearTextOnFocus = false
@@ -1091,22 +1094,30 @@ function library.new(library, name, theme)
     SliderValueC.Name = "SliderValueC"
     SliderValueC.Parent = SliderValue
     
-    -- 悬停效果
-    SliderBack.MouseEnter:Connect(function()
-        services.TweenService:Create(SliderBack, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(
-                math.floor(config.Slider_Color.R * 255 * 1.1),
-                math.floor(config.Slider_Color.G * 255 * 1.1),
-                math.floor(config.Slider_Color.B * 255 * 1.1)
-            )
-        }):Play()
-    end)
+    -- 加减按钮
+    MinSlider.Name = "MinSlider"
+    MinSlider.Parent = SliderBack
+    MinSlider.BackgroundTransparency = 1
+    MinSlider.BorderSizePixel = 0
+    MinSlider.Position = UDim2.new(0.3, 0, 0.2, 0)
+    MinSlider.Size = UDim2.new(0, 20, 0, 20)
+    MinSlider.Font = Enum.Font.Gotham
+    MinSlider.Text = "-"
+    MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MinSlider.TextSize = 24
+    MinSlider.TextWrapped = true
     
-    SliderBack.MouseLeave:Connect(function()
-        services.TweenService:Create(SliderBack, TweenInfo.new(0.2), {
-            BackgroundColor3 = config.Slider_Color
-        }):Play()
-    end)
+    AddSlider.Name = "AddSlider"
+    AddSlider.Parent = SliderBack
+    AddSlider.BackgroundTransparency = 1
+    AddSlider.BorderSizePixel = 0
+    AddSlider.Position = UDim2.new(0.75, 0, 0.2, 0)
+    AddSlider.Size = UDim2.new(0, 20, 0, 20)
+    AddSlider.Font = Enum.Font.Gotham
+    AddSlider.Text = "+"
+    AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+    AddSlider.TextSize = 24
+    AddSlider.TextWrapped = true
     
     local funcs = {
         SetValue = function(self, value)
@@ -1128,7 +1139,7 @@ function library.new(library, name, theme)
             end
             
             value = math.clamp(value, min, max)
-            library.flaFengYu[flag] = tonumber(value)
+            library.flaKG[flag] = tonumber(value)
             SliderValue.Text = tostring(value)
             
             -- 更新滑块显示
@@ -1146,7 +1157,7 @@ function library.new(library, name, theme)
         end,
         
         GetValue = function(self)
-            return library.flaFengYu[flag]
+            return library.flaKG[flag]
         end
     }
     
@@ -1195,6 +1206,19 @@ function library.new(library, name, theme)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             funcs:SetValue()
         end
+    end)
+    
+    -- 加减按钮功能
+    MinSlider.MouseButton1Click:Connect(function()
+        local currentValue = library.flaKG[flag]
+        currentValue = math.clamp(currentValue - 1, min, max)
+        funcs:SetValue(currentValue)
+    end)
+    
+    AddSlider.MouseButton1Click:Connect(function()
+        local currentValue = library.flaKG[flag]
+        currentValue = math.clamp(currentValue + 1, min, max)
+        funcs:SetValue(currentValue)
     end)
     
     -- 文本框输入功能
