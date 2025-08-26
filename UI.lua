@@ -995,13 +995,13 @@ function library.new(library, name, theme)
     SliderModule.Parent = Objs
     SliderModule.BackgroundTransparency = 1
     SliderModule.BorderSizePixel = 0
-    SliderModule.Size = UDim2.new(0, 448, 0, 48) -- 增加高度避免重叠
+    SliderModule.Size = UDim2.new(0, 448, 0, 42)
     
     SliderBack.Name = "SliderBack"
     SliderBack.Parent = SliderModule
     SliderBack.BackgroundColor3 = config.Slider_Color
     SliderBack.BorderSizePixel = 0
-    SliderBack.Size = UDim2.new(0, 448, 0, 48)
+    SliderBack.Size = UDim2.new(0, 448, 0, 42)
     SliderBack.AutoButtonColor = false
     SliderBack.Font = Enum.Font.GothamSemibold
     SliderBack.Text = ""
@@ -1009,140 +1009,103 @@ function library.new(library, name, theme)
     SliderBack.TextSize = 16
     SliderBack.TextXAlignment = Enum.TextXAlignment.Left
     
-    SliderBackC.CornerRadius = UDim.new(0, 8) -- 更大的圆角
+    SliderBackC.CornerRadius = UDim.new(0, 6)
     SliderBackC.Name = "SliderBackC"
     SliderBackC.Parent = SliderBack
     
-    -- 滑块文本标签 (名称大小与其他功能一致)
+    -- 滑块文本标签
     SliderText.Name = "SliderText"
     SliderText.Parent = SliderBack
     SliderText.BackgroundTransparency = 1
     SliderText.Position = UDim2.new(0.03, 0, 0, 0)
-    SliderText.Size = UDim2.new(0, 120, 0.5, 0) -- 调整大小
+    SliderText.Size = UDim2.new(0, 100, 1, 0)
     SliderText.Font = Enum.Font.GothamSemibold
     SliderText.Text = text
     SliderText.TextColor3 = config.TextColor
-    SliderText.TextSize = 16 -- 与其他功能相同的字体大小
+    SliderText.TextSize = 16
     SliderText.TextXAlignment = Enum.TextXAlignment.Left
     SliderText.TextYAlignment = Enum.TextYAlignment.Center
     
-    -- 滑块容器 (中间)
+    -- 滑块容器 - 更大更宽
     SliderContainer.Name = "SliderContainer"
     SliderContainer.Parent = SliderBack
     SliderContainer.BackgroundTransparency = 1
-    SliderContainer.Position = UDim2.new(0.35, 0, 0.5, 0)
-    SliderContainer.Size = UDim2.new(0.4, 0, 0, 16) -- 调整大小
+    SliderContainer.Position = UDim2.new(0.3, 0, 0.5, 0)
+    SliderContainer.Size = UDim2.new(0.45, 0, 0, 20) -- 更宽的滑块区域
     SliderContainer.AnchorPoint = Vector2.new(0, 0.5)
     
-    -- 滑块条背景 (精美设计)
+    -- 滑块条背景 - 更大更宽，右侧圆角
     SliderBar.Name = "SliderBar"
     SliderBar.Parent = SliderContainer
-    SliderBar.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     SliderBar.BorderSizePixel = 0
     SliderBar.Position = UDim2.new(0, 0, 0.5, 0)
-    SliderBar.Size = UDim2.new(1, 0, 0, 6) -- 更细的滑块条
+    SliderBar.Size = UDim2.new(1, 0, 0, 14) -- 更大的滑块条
     SliderBar.AnchorPoint = Vector2.new(0, 0.5)
     SliderBar.ZIndex = 1
     
-    -- 添加内阴影效果
-    local SliderBarStroke = Instance.new("UIStroke")
-    SliderBarStroke.Parent = SliderBar
-    SliderBarStroke.Color = Color3.fromRGB(30, 30, 40)
-    SliderBarStroke.Thickness = 1
-    SliderBarStroke.Transparency = 0.5
-    
-    SliderBarC.CornerRadius = UDim.new(1, 0) -- 圆形端点
+    SliderBarC.CornerRadius = UDim.new(0, 7) -- 右侧也变圆
     SliderBarC.Name = "SliderBarC"
     SliderBarC.Parent = SliderBar
     
-    -- 滑块填充条 (红色精美设计)
+    -- 滑块填充条 - 红色，右侧圆角
     SliderFill.Name = "SliderFill"
     SliderFill.Parent = SliderBar
-    SliderFill.BackgroundColor3 = Color3.fromRGB(255, 60, 60) -- 鲜艳的红色
+    SliderFill.BackgroundColor3 = Color3.fromRGB(255, 60, 60) -- 红色
     SliderFill.BorderSizePixel = 0
     SliderFill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
     SliderFill.ZIndex = 2
     
-    -- 添加发光效果
-    local SliderFillStroke = Instance.new("UIStroke")
-    SliderFillStroke.Parent = SliderFill
-    SliderFillStroke.Color = Color3.fromRGB(255, 100, 100)
-    SliderFillStroke.Thickness = 1
-    SliderFillStroke.Transparency = 0.3
-    
-    SliderFillC.CornerRadius = UDim.new(1, 0) -- 圆形端点
+    SliderFillC.CornerRadius = UDim.new(0, 7) -- 右侧也变圆
     SliderFillC.Name = "SliderFillC"
     SliderFillC.Parent = SliderFill
     
-    -- 滑块手柄 (可拖动的圆形按钮)
-    local SliderHandle = Instance.new("Frame")
-    SliderHandle.Name = "SliderHandle"
-    SliderHandle.Parent = SliderFill
-    SliderHandle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SliderHandle.BorderSizePixel = 0
-    SliderHandle.Size = UDim2.new(0, 12, 0, 12)
-    SliderHandle.Position = UDim2.new(1, -6, 0.5, -6)
-    SliderHandle.AnchorPoint = Vector2.new(0.5, 0.5)
-    SliderHandle.ZIndex = 3
-    
-    local SliderHandleC = Instance.new("UICorner")
-    SliderHandleC.CornerRadius = UDim.new(1, 0)
-    SliderHandleC.Parent = SliderHandle
-    
-    -- 添加手柄发光效果
-    local SliderHandleStroke = Instance.new("UIStroke")
-    SliderHandleStroke.Parent = SliderHandle
-    SliderHandleStroke.Color = Color3.fromRGB(200, 200, 200)
-    SliderHandleStroke.Thickness = 2
-    
-    -- 数值显示框 (右侧)
+    -- 数值显示框
     SliderValue.Name = "SliderValue"
     SliderValue.Parent = SliderBack
-    SliderValue.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    SliderValue.BackgroundColor3 = config.Bg_Color
     SliderValue.BorderSizePixel = 0
-    SliderValue.Position = UDim2.new(0.8, 0, 0.25, 0)
-    SliderValue.Size = UDim2.new(0, 60, 0, 24)
-    SliderValue.Font = Enum.Font.GothamMedium
+    SliderValue.Position = UDim2.new(0.78, 0, 0.25, 0)
+    SliderValue.Size = UDim2.new(0, 50, 0, 24)
+    SliderValue.Font = Enum.Font.Gotham
     SliderValue.Text = tostring(default)
-    SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SliderValue.TextColor3 = config.TextColor
     SliderValue.TextSize = 14
     SliderValue.TextXAlignment = Enum.TextXAlignment.Center
     SliderValue.ClearTextOnFocus = false
-    SliderValue.PlaceholderText = "值"
-    SliderValue.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
     
-    SliderValueC.CornerRadius = UDim.new(0, 6)
+    SliderValueC.CornerRadius = UDim.new(0, 4)
     SliderValueC.Name = "SliderValueC"
     SliderValueC.Parent = SliderValue
     
-    -- 减号按钮
+    -- 减号按钮 - 变小
     MinButton.Name = "MinButton"
     MinButton.Parent = SliderBack
-    MinButton.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    MinButton.BackgroundColor3 = config.Bg_Color
     MinButton.BorderSizePixel = 0
     MinButton.Position = UDim2.new(0.25, 0, 0.25, 0)
-    MinButton.Size = UDim2.new(0, 28, 0, 24)
+    MinButton.Size = UDim2.new(0, 20, 0, 20) -- 变小
     MinButton.Font = Enum.Font.GothamBold
     MinButton.Text = "-"
-    MinButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-    MinButton.TextSize = 16
+    MinButton.TextColor3 = config.TextColor
+    MinButton.TextSize = 14 -- 字体变小
     MinButton.AutoButtonColor = false
     
     local MinButtonC = Instance.new("UICorner")
     MinButtonC.CornerRadius = UDim.new(0, 4)
     MinButtonC.Parent = MinButton
     
-    -- 加号按钮
+    -- 加号按钮 - 变小
     AddButton.Name = "AddButton"
     AddButton.Parent = SliderBack
-    AddButton.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    AddButton.BackgroundColor3 = config.Bg_Color
     AddButton.BorderSizePixel = 0
     AddButton.Position = UDim2.new(0.7, 0, 0.25, 0)
-    AddButton.Size = UDim2.new(0, 28, 0, 24)
+    AddButton.Size = UDim2.new(0, 20, 0, 20) -- 变小
     AddButton.Font = Enum.Font.GothamBold
     AddButton.Text = "+"
-    AddButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-    AddButton.TextSize = 16
+    AddButton.TextColor3 = config.TextColor
+    AddButton.TextSize = 14 -- 字体变小
     AddButton.AutoButtonColor = false
     
     local AddButtonC = Instance.new("UICorner")
@@ -1159,7 +1122,7 @@ function library.new(library, name, theme)
         
         button.MouseLeave:Connect(function()
             services.TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+                BackgroundColor3 = config.Bg_Color
             }):Play()
         end)
     end
@@ -1190,6 +1153,7 @@ function library.new(library, name, theme)
             if value then
                 percent = (value - min)/(max - min)
             else
+                -- 获取鼠标在滑块条上的位置
                 local mouse = services.Players.LocalPlayer:GetMouse()
                 local barPos = SliderBar.AbsolutePosition.X
                 local barSize = SliderBar.AbsoluteSize.X
@@ -1226,20 +1190,37 @@ function library.new(library, name, theme)
     
     local dragging = false
     
-    -- 滑块条拖动功能
+    -- 滑块条拖动功能 - 长按拖动
     local function startDragging()
         dragging = true
-        funcs:SetValue()
+        
+        -- 拖动时持续更新值
+        local connection
+        connection = services.RunService.RenderStepped:Connect(function()
+            if dragging then
+                funcs:SetValue()
+            else
+                connection:Disconnect()
+            end
+        end)
     end
     
     local function stopDragging()
         dragging = false
     end
     
-    -- 滑块条拖动 (修复滑动功能)
+    -- 滑块条和填充条都可以拖动
     SliderBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             startDragging()
+            funcs:SetValue() -- 立即更新一次
+        end
+    end)
+    
+    SliderFill.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            startDragging()
+            funcs:SetValue() -- 立即更新一次
         end
     end)
     
@@ -1249,21 +1230,9 @@ function library.new(library, name, theme)
         end
     end)
     
-    SliderFill.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            startDragging()
-        end
-    end)
-    
     SliderFill.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             stopDragging()
-        end
-    end)
-    
-    services.UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            funcs:SetValue()
         end
     end)
     
@@ -1313,19 +1282,6 @@ function library.new(library, name, theme)
         
         if text ~= filtered then
             SliderValue.Text = filtered
-        end
-    end)
-    
-    -- 点击数值框也可以拖动
-    SliderValue.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            startDragging()
-        end
-    end)
-    
-    SliderValue.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            stopDragging()
         end
     end)
     
