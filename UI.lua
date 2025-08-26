@@ -975,7 +975,6 @@ function library.new(library, name, theme)
     assert(flag, "No flag provided")
     assert(default, "No default value provided")
     
-    -- 修复：使用正确的flag表名 flaFengYu 而不是 flaKG
     library.flaFengYu[flag] = default
 
     local SliderModule = Instance.new("Frame")
@@ -987,10 +986,10 @@ function library.new(library, name, theme)
     local SliderBarC = Instance.new("UICorner")
     local SliderFill = Instance.new("Frame")
     local SliderFillC = Instance.new("UICorner")
-    local SliderHandle = Instance.new("Frame")
-    local SliderHandleC = Instance.new("UICorner")
     local SliderValue = Instance.new("TextBox")
     local SliderValueC = Instance.new("UICorner")
+    local MinButton = Instance.new("TextButton")
+    local AddButton = Instance.new("TextButton")
     
     SliderModule.Name = "SliderModule"
     SliderModule.Parent = Objs
@@ -1034,21 +1033,21 @@ function library.new(library, name, theme)
     SliderContainer.Size = UDim2.new(0.4, 0, 0, 20)
     SliderContainer.AnchorPoint = Vector2.new(0, 0.5)
     
-    -- 滑块条背景
+    -- 滑块条背景 (变大并圆角)
     SliderBar.Name = "SliderBar"
     SliderBar.Parent = SliderContainer
     SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     SliderBar.BorderSizePixel = 0
     SliderBar.Position = UDim2.new(0, 0, 0.5, 0)
-    SliderBar.Size = UDim2.new(1, 0, 0, 6)
+    SliderBar.Size = UDim2.new(1, 0, 0, 10) -- 变大到10像素高度
     SliderBar.AnchorPoint = Vector2.new(0, 0.5)
     SliderBar.ZIndex = 1
     
-    SliderBarC.CornerRadius = UDim.new(1, 0)
+    SliderBarC.CornerRadius = UDim.new(0, 5) -- 圆角
     SliderBarC.Name = "SliderBarC"
     SliderBarC.Parent = SliderBar
     
-    -- 滑块填充条
+    -- 滑块填充条 (变大并圆角)
     SliderFill.Name = "SliderFill"
     SliderFill.Parent = SliderBar
     SliderFill.BackgroundColor3 = config.SliderBar_Color
@@ -1056,23 +1055,9 @@ function library.new(library, name, theme)
     SliderFill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
     SliderFill.ZIndex = 2
     
-    SliderFillC.CornerRadius = UDim.new(1, 0)
+    SliderFillC.CornerRadius = UDim.new(0, 5) -- 圆角
     SliderFillC.Name = "SliderFillC"
     SliderFillC.Parent = SliderFill
-    
-    -- 滑块手柄
-    SliderHandle.Name = "SliderHandle"
-    SliderHandle.Parent = SliderContainer
-    SliderHandle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SliderHandle.BorderSizePixel = 0
-    SliderHandle.Size = UDim2.new(0, 12, 0, 12)
-    SliderHandle.Position = UDim2.new((default - min)/(max - min), -6, 0.5, -6)
-    SliderHandle.AnchorPoint = Vector2.new(0.5, 0.5)
-    SliderHandle.ZIndex = 3
-    
-    SliderHandleC.CornerRadius = UDim.new(1, 0)
-    SliderHandleC.Name = "SliderHandleC"
-    SliderHandleC.Parent = SliderHandle
     
     -- 数值显示框 (右侧)
     SliderValue.Name = "SliderValue"
@@ -1083,7 +1068,7 @@ function library.new(library, name, theme)
     SliderValue.Size = UDim2.new(0, 50, 0, 24)
     SliderValue.Font = Enum.Font.Gotham
     SliderValue.Text = tostring(default)
-    SliderValue.TextColor3 = config.TextColor
+    SliderValue.TextColor3 = Color3.fromRGB(255, 0, 0) -- 红色文本
     SliderValue.TextSize = 14
     SliderValue.TextXAlignment = Enum.TextXAlignment.Center
     SliderValue.ClearTextOnFocus = false
@@ -1091,6 +1076,38 @@ function library.new(library, name, theme)
     SliderValueC.CornerRadius = UDim.new(0, 4)
     SliderValueC.Name = "SliderValueC"
     SliderValueC.Parent = SliderValue
+    
+    -- 减号按钮
+    MinButton.Name = "MinButton"
+    MinButton.Parent = SliderBack
+    MinButton.BackgroundColor3 = config.Bg_Color
+    MinButton.BorderSizePixel = 0
+    MinButton.Position = UDim2.new(0.3, 0, 0.2, 0)
+    MinButton.Size = UDim2.new(0, 24, 0, 24)
+    MinButton.Font = Enum.Font.GothamBold
+    MinButton.Text = "-"
+    MinButton.TextColor3 = config.TextColor
+    MinButton.TextSize = 16
+    
+    local MinButtonC = Instance.new("UICorner")
+    MinButtonC.CornerRadius = UDim.new(0, 4)
+    MinButtonC.Parent = MinButton
+    
+    -- 加号按钮
+    AddButton.Name = "AddButton"
+    AddButton.Parent = SliderBack
+    AddButton.BackgroundColor3 = config.Bg_Color
+    AddButton.BorderSizePixel = 0
+    AddButton.Position = UDim2.new(0.7, 0, 0.2, 0)
+    AddButton.Size = UDim2.new(0, 24, 0, 24)
+    AddButton.Font = Enum.Font.GothamBold
+    AddButton.Text = "+"
+    AddButton.TextColor3 = config.TextColor
+    AddButton.TextSize = 16
+    
+    local AddButtonC = Instance.new("UICorner")
+    AddButtonC.CornerRadius = UDim.new(0, 4)
+    AddButtonC.Parent = AddButton
     
     SliderBack.MouseEnter:Connect(function()
         services.TweenService:Create(SliderBack, TweenInfo.new(0.2), {
@@ -1128,7 +1145,6 @@ function library.new(library, name, theme)
             end
             
             value = math.clamp(value, min, max)
-            -- 修复：使用正确的flag表名 flaFengYu
             library.flaFengYu[flag] = tonumber(value)
             SliderValue.Text = tostring(value)
             
@@ -1139,15 +1155,10 @@ function library.new(library, name, theme)
                 Size = UDim2.new(newPercent, 0, 1, 0)
             }):Play()
             
-            services.TweenService:Create(SliderHandle, TweenInfo.new(0.1), {
-                Position = UDim2.new(newPercent, -6, 0.5, -6)
-            }):Play()
-            
             callback(tonumber(value))
         end,
         
         GetValue = function(self)
-            -- 修复：使用正确的flag表名 flaFengYu
             return library.flaFengYu[flag]
         end
     }
@@ -1180,23 +1191,23 @@ function library.new(library, name, theme)
         end
     end)
     
-    -- 滑块手柄拖动
-    SliderHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            startDragging()
-        end
-    end)
-    
-    SliderHandle.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            stopDragging()
-        end
-    end)
-    
     services.UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             funcs:SetValue()
         end
+    end)
+    
+    -- 加减按钮功能
+    MinButton.MouseButton1Click:Connect(function()
+        local currentValue = library.flaFengYu[flag]
+        currentValue = math.clamp(currentValue - 1, min, max)
+        funcs:SetValue(currentValue)
+    end)
+    
+    AddButton.MouseButton1Click:Connect(function()
+        local currentValue = library.flaFengYu[flag]
+        currentValue = math.clamp(currentValue + 1, min, max)
+        funcs:SetValue(currentValue)
     end)
     
     -- 文本框输入功能
