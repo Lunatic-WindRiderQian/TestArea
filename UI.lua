@@ -1004,7 +1004,7 @@ function library.new(library, name, theme)
     SliderBack.Size = UDim2.new(0, 448, 0, 38)
     SliderBack.AutoButtonColor = false
     SliderBack.Font = Enum.Font.GothamSemibold
-    SliderBack.Text = "   " .. text
+    SliderBack.Text = ""
     SliderBack.TextColor3 = config.TextColor
     SliderBack.TextSize = 16
     SliderBack.TextXAlignment = Enum.TextXAlignment.Left
@@ -1047,10 +1047,10 @@ function library.new(library, name, theme)
     SliderBarC.Name = "SliderBarC"
     SliderBarC.Parent = SliderBar
     
-    -- 滑块填充条 (变大并圆角)
+    -- 滑块填充条 (变大并圆角) - 改为红色
     SliderFill.Name = "SliderFill"
     SliderFill.Parent = SliderBar
-    SliderFill.BackgroundColor3 = config.SliderBar_Color
+    SliderFill.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- 红色
     SliderFill.BorderSizePixel = 0
     SliderFill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
     SliderFill.ZIndex = 2
@@ -1068,7 +1068,7 @@ function library.new(library, name, theme)
     SliderValue.Size = UDim2.new(0, 50, 0, 24)
     SliderValue.Font = Enum.Font.Gotham
     SliderValue.Text = tostring(default)
-    SliderValue.TextColor3 = Color3.fromRGB(255, 0, 0) -- 红色文本
+    SliderValue.TextColor3 = config.TextColor -- 使用正常文本颜色
     SliderValue.TextSize = 14
     SliderValue.TextXAlignment = Enum.TextXAlignment.Center
     SliderValue.ClearTextOnFocus = false
@@ -1082,7 +1082,7 @@ function library.new(library, name, theme)
     MinButton.Parent = SliderBack
     MinButton.BackgroundColor3 = config.Bg_Color
     MinButton.BorderSizePixel = 0
-    MinButton.Position = UDim2.new(0.3, 0, 0.2, 0)
+    MinButton.Position = UDim2.new(0.25, 0, 0.2, 0) -- 调整位置避免重叠
     MinButton.Size = UDim2.new(0, 24, 0, 24)
     MinButton.Font = Enum.Font.GothamBold
     MinButton.Text = "-"
@@ -1098,7 +1098,7 @@ function library.new(library, name, theme)
     AddButton.Parent = SliderBack
     AddButton.BackgroundColor3 = config.Bg_Color
     AddButton.BorderSizePixel = 0
-    AddButton.Position = UDim2.new(0.7, 0, 0.2, 0)
+    AddButton.Position = UDim2.new(0.7, 0, 0.2, 0) -- 调整位置避免重叠
     AddButton.Size = UDim2.new(0, 24, 0, 24)
     AddButton.Font = Enum.Font.GothamBold
     AddButton.Text = "+"
