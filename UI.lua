@@ -965,18 +965,19 @@ function library.new(library, name, theme)
             
             -- 修复后的滑块功能 - 现在可以正常滑动
             function section.Slider(section, text, flag, default, min, max, precise, callback)
-    local callback = callback or function() end
-    min = min or 0
-    max = max or 100
+    callback = callback or function() end
+    min = min or 1
+    max = max or 10
     default = default or min
     precise = precise or false
     
     assert(text, "No text provided")
     assert(flag, "No flag provided")
+    assert(default, "No default value provided")
     
-    library.flaKG[flag] = default
+    -- 修复：使用正确的flag表名 flaFengYu 而不是 flaKG
+    library.flaFengYu[flag] = default
 
-    -- 创建滑块模块
     local SliderModule = Instance.new("Frame")
     local SliderBack = Instance.new("TextButton")
     local SliderBackC = Instance.new("UICorner")
@@ -990,47 +991,49 @@ function library.new(library, name, theme)
     local SliderHandleC = Instance.new("UICorner")
     local SliderValue = Instance.new("TextBox")
     local SliderValueC = Instance.new("UICorner")
-
-    -- 滑块模块
+    
     SliderModule.Name = "SliderModule"
     SliderModule.Parent = Objs
     SliderModule.BackgroundTransparency = 1
     SliderModule.BorderSizePixel = 0
-    SliderModule.Size = UDim2.new(0, 428, 0, 38)
-
-    -- 滑块背景
+    SliderModule.Size = UDim2.new(0, 448, 0, 38)
+    
     SliderBack.Name = "SliderBack"
     SliderBack.Parent = SliderModule
     SliderBack.BackgroundColor3 = config.Slider_Color
     SliderBack.BorderSizePixel = 0
-    SliderBack.Size = UDim2.new(0, 428, 0, 38)
+    SliderBack.Size = UDim2.new(0, 448, 0, 38)
     SliderBack.AutoButtonColor = false
-    SliderBack.Text = ""
-
+    SliderBack.Font = Enum.Font.GothamSemibold
+    SliderBack.Text = "   " .. text
+    SliderBack.TextColor3 = config.TextColor
+    SliderBack.TextSize = 16
+    SliderBack.TextXAlignment = Enum.TextXAlignment.Left
+    
     SliderBackC.CornerRadius = UDim.new(0, 6)
     SliderBackC.Name = "SliderBackC"
     SliderBackC.Parent = SliderBack
-
-    -- 滑块文本
+    
+    -- 滑块文本标签 (左侧)
     SliderText.Name = "SliderText"
     SliderText.Parent = SliderBack
     SliderText.BackgroundTransparency = 1
     SliderText.Position = UDim2.new(0.03, 0, 0, 0)
-    SliderText.Size = UDim2.new(0, 120, 1, 0)
+    SliderText.Size = UDim2.new(0, 100, 1, 0)
     SliderText.Font = Enum.Font.GothamSemibold
     SliderText.Text = text
-    SliderText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SliderText.TextColor3 = config.TextColor
     SliderText.TextSize = 14
     SliderText.TextXAlignment = Enum.TextXAlignment.Left
-
-    -- 滑块容器
+    
+    -- 滑块容器 (中间)
     SliderContainer.Name = "SliderContainer"
     SliderContainer.Parent = SliderBack
     SliderContainer.BackgroundTransparency = 1
     SliderContainer.Position = UDim2.new(0.35, 0, 0.5, 0)
     SliderContainer.Size = UDim2.new(0.4, 0, 0, 20)
     SliderContainer.AnchorPoint = Vector2.new(0, 0.5)
-
+    
     -- 滑块条背景
     SliderBar.Name = "SliderBar"
     SliderBar.Parent = SliderContainer
@@ -1039,36 +1042,39 @@ function library.new(library, name, theme)
     SliderBar.Position = UDim2.new(0, 0, 0.5, 0)
     SliderBar.Size = UDim2.new(1, 0, 0, 6)
     SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-
+    SliderBar.ZIndex = 1
+    
     SliderBarC.CornerRadius = UDim.new(1, 0)
     SliderBarC.Name = "SliderBarC"
     SliderBarC.Parent = SliderBar
-
-    -- 滑块填充
+    
+    -- 滑块填充条
     SliderFill.Name = "SliderFill"
     SliderFill.Parent = SliderBar
     SliderFill.BackgroundColor3 = config.SliderBar_Color
     SliderFill.BorderSizePixel = 0
-    SliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-
+    SliderFill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+    SliderFill.ZIndex = 2
+    
     SliderFillC.CornerRadius = UDim.new(1, 0)
     SliderFillC.Name = "SliderFillC"
     SliderFillC.Parent = SliderFill
-
+    
     -- 滑块手柄
     SliderHandle.Name = "SliderHandle"
     SliderHandle.Parent = SliderContainer
     SliderHandle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     SliderHandle.BorderSizePixel = 0
     SliderHandle.Size = UDim2.new(0, 12, 0, 12)
-    SliderHandle.Position = UDim2.new((default - min) / (max - min), -6, 0.5, -6)
+    SliderHandle.Position = UDim2.new((default - min)/(max - min), -6, 0.5, -6)
     SliderHandle.AnchorPoint = Vector2.new(0.5, 0.5)
-
+    SliderHandle.ZIndex = 3
+    
     SliderHandleC.CornerRadius = UDim.new(1, 0)
     SliderHandleC.Name = "SliderHandleC"
     SliderHandleC.Parent = SliderHandle
-
-    -- 数值显示
+    
+    -- 数值显示框 (右侧)
     SliderValue.Name = "SliderValue"
     SliderValue.Parent = SliderBack
     SliderValue.BackgroundColor3 = config.Bg_Color
@@ -1077,128 +1083,171 @@ function library.new(library, name, theme)
     SliderValue.Size = UDim2.new(0, 50, 0, 24)
     SliderValue.Font = Enum.Font.Gotham
     SliderValue.Text = tostring(default)
-    SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SliderValue.TextColor3 = config.TextColor
     SliderValue.TextSize = 14
     SliderValue.TextXAlignment = Enum.TextXAlignment.Center
     SliderValue.ClearTextOnFocus = false
-
+    
     SliderValueC.CornerRadius = UDim.new(0, 4)
     SliderValueC.Name = "SliderValueC"
     SliderValueC.Parent = SliderValue
-
-    -- 滑块功能
+    
+    SliderBack.MouseEnter:Connect(function()
+        services.TweenService:Create(SliderBack, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.floor(config.Slider_Color.R * 255 * 1.1),
+                math.floor(config.Slider_Color.G * 255 * 1.1),
+                math.floor(config.Slider_Color.B * 255 * 1.1)
+            )
+        }):Play()
+    end)
+    
+    SliderBack.MouseLeave:Connect(function()
+        services.TweenService:Create(SliderBack, TweenInfo.new(0.2), {
+            BackgroundColor3 = config.Slider_Color
+        }):Play()
+    end)
+    
     local funcs = {
         SetValue = function(self, value)
             local percent
             
             if value then
-                percent = (value - min) / (max - min)
+                percent = (value - min)/(max - min)
             else
-                local mouse = game.Players.LocalPlayer:GetMouse()
+                local mouse = services.Players.LocalPlayer:GetMouse()
                 local barPos = SliderBar.AbsolutePosition.X
                 local barSize = SliderBar.AbsoluteSize.X
                 percent = math.clamp((mouse.X - barPos) / barSize, 0, 1)
             end
             
             if precise then
-                value = min + (max - min) * percent
-                value = tonumber(string.format("%.1f", value))
+                value = value or tonumber(string.format("%.1f", tostring(min + (max - min) * percent)))
             else
-                value = math.floor(min + (max - min) * percent)
+                value = value or math.floor(min + (max - min) * percent)
             end
             
             value = math.clamp(value, min, max)
-            library.flaKG[flag] = value
+            -- 修复：使用正确的flag表名 flaFengYu
+            library.flaFengYu[flag] = tonumber(value)
             SliderValue.Text = tostring(value)
             
             -- 更新滑块显示
-            local newPercent = (value - min) / (max - min)
-            SliderFill.Size = UDim2.new(newPercent, 0, 1, 0)
-            SliderHandle.Position = UDim2.new(newPercent, -6, 0.5, -6)
+            local newPercent = (value - min)/(max - min)
             
-            callback(value)
+            services.TweenService:Create(SliderFill, TweenInfo.new(0.1), {
+                Size = UDim2.new(newPercent, 0, 1, 0)
+            }):Play()
+            
+            services.TweenService:Create(SliderHandle, TweenInfo.new(0.1), {
+                Position = UDim2.new(newPercent, -6, 0.5, -6)
+            }):Play()
+            
+            callback(tonumber(value))
         end,
         
         GetValue = function(self)
-            return library.flaKG[flag]
+            -- 修复：使用正确的flag表名 flaFengYu
+            return library.flaFengYu[flag]
         end
     }
-
+    
     -- 初始化值
     funcs:SetValue(default)
-
+    
     local dragging = false
-
-    -- 拖动功能
+    
+    -- 滑块条拖动功能
     local function startDragging()
         dragging = true
         funcs:SetValue()
     end
-
+    
     local function stopDragging()
         dragging = false
     end
-
-    -- 鼠标事件
+    
+    -- 滑块条拖动
     SliderBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             startDragging()
         end
     end)
-
+    
     SliderBar.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             stopDragging()
         end
     end)
-
+    
+    -- 滑块手柄拖动
     SliderHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             startDragging()
         end
     end)
-
+    
     SliderHandle.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             stopDragging()
         end
     end)
-
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
+    
+    services.UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             funcs:SetValue()
         end
     end)
-
-    -- 文本框输入
+    
+    -- 文本框输入功能
+    local boxFocused = false
+    
+    SliderValue.Focused:Connect(function()
+        boxFocused = true
+    end)
+    
     SliderValue.FocusLost:Connect(function()
-        local text = SliderValue.Text
-        if text == "" then
-            SliderValue.Text = tostring(default)
+        boxFocused = false
+        if SliderValue.Text == "" then
+            funcs:SetValue(default)
             return
         end
         
-        local numValue = tonumber(text)
+        local numValue = tonumber(SliderValue.Text)
         if numValue then
             numValue = math.clamp(numValue, min, max)
             funcs:SetValue(numValue)
         else
-            SliderValue.Text = tostring(library.flaKG[flag])
+            funcs:SetValue(default)
         end
     end)
-
-    -- 输入过滤
+    
+    -- 文本框输入过滤
     SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
-        local text = SliderValue.Text
-        if text == "" then return end
+        if not boxFocused then return end
         
-        -- 只允许数字和小数点
-        local filtered = text:gsub("[^%d.]", "")
+        -- 只允许数字输入
+        local text = SliderValue.Text
+        local filtered = text:gsub("[^%d.]", "") -- 允许数字和小数点
+        
         if text ~= filtered then
             SliderValue.Text = filtered
         end
     end)
-
+    
+    -- 点击数值框也可以拖动
+    SliderValue.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            startDragging()
+        end
+    end)
+    
+    SliderValue.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            stopDragging()
+        end
+    end)
+    
     return funcs
 end
             
