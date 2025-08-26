@@ -1026,7 +1026,7 @@ function library.new(library, name, theme)
     SliderText.TextXAlignment = Enum.TextXAlignment.Left
     SliderText.TextYAlignment = Enum.TextYAlignment.Center
     
-    -- 滑块容器 - 与左右按钮对齐
+    -- 滑块容器
     SliderContainer.Name = "SliderContainer"
     SliderContainer.Parent = SliderBack
     SliderContainer.BackgroundTransparency = 1
@@ -1034,7 +1034,7 @@ function library.new(library, name, theme)
     SliderContainer.Size = UDim2.new(0.45, 0, 0, 20)
     SliderContainer.AnchorPoint = Vector2.new(0, 0.5)
     
-    -- 滑块条背景
+    -- 滑块条背景（不可拖动）
     SliderBar.Name = "SliderBar"
     SliderBar.Parent = SliderContainer
     SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
@@ -1043,24 +1043,26 @@ function library.new(library, name, theme)
     SliderBar.Size = UDim2.new(1, 0, 0, 14)
     SliderBar.AnchorPoint = Vector2.new(0, 0.5)
     SliderBar.ZIndex = 1
+    SliderBar.Active = false -- 不可交互
     
     SliderBarC.CornerRadius = UDim.new(0, 7)
     SliderBarC.Name = "SliderBarC"
     SliderBarC.Parent = SliderBar
     
-    -- 滑块填充条 - 红色
+    -- 滑块填充条（可拖动）
     SliderFill.Name = "SliderFill"
     SliderFill.Parent = SliderBar
     SliderFill.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
     SliderFill.BorderSizePixel = 0
     SliderFill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
     SliderFill.ZIndex = 2
+    SliderFill.Active = true -- 可交互
     
     SliderFillC.CornerRadius = UDim.new(0, 7)
     SliderFillC.Name = "SliderFillC"
     SliderFillC.Parent = SliderFill
     
-    -- 数值显示框 - 变圆
+    -- 数值显示框
     SliderValue.Name = "SliderValue"
     SliderValue.Parent = SliderBack
     SliderValue.BackgroundColor3 = config.Bg_Color
@@ -1073,19 +1075,17 @@ function library.new(library, name, theme)
     SliderValue.TextSize = 14
     SliderValue.TextXAlignment = Enum.TextXAlignment.Center
     SliderValue.ClearTextOnFocus = false
-    SliderValue.PlaceholderText = "值"
-    SliderValue.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
     
-    SliderValueC.CornerRadius = UDim.new(0, 12) -- 更圆的输入框
+    SliderValueC.CornerRadius = UDim.new(0, 12)
     SliderValueC.Name = "SliderValueC"
     SliderValueC.Parent = SliderValue
     
-    -- 减号按钮 - 变圆，与滑块条左端对齐
+    -- 减号按钮
     MinButton.Name = "MinButton"
     MinButton.Parent = SliderBack
     MinButton.BackgroundColor3 = config.Bg_Color
     MinButton.BorderSizePixel = 0
-    MinButton.Position = UDim2.new(0.3, -10, 0.25, 0) -- 与滑块条左端对齐
+    MinButton.Position = UDim2.new(0.3, -10, 0.25, 0)
     MinButton.Size = UDim2.new(0, 20, 0, 20)
     MinButton.Font = Enum.Font.GothamBold
     MinButton.Text = "-"
@@ -1094,15 +1094,15 @@ function library.new(library, name, theme)
     MinButton.AutoButtonColor = false
     
     local MinButtonC = Instance.new("UICorner")
-    MinButtonC.CornerRadius = UDim.new(1, 0) -- 完全圆形
+    MinButtonC.CornerRadius = UDim.new(1, 0)
     MinButtonC.Parent = MinButton
     
-    -- 加号按钮 - 变圆，与滑块条右端对齐
+    -- 加号按钮
     AddButton.Name = "AddButton"
     AddButton.Parent = SliderBack
     AddButton.BackgroundColor3 = config.Bg_Color
     AddButton.BorderSizePixel = 0
-    AddButton.Position = UDim2.new(0.75, -10, 0.25, 0) -- 与滑块条右端对齐
+    AddButton.Position = UDim2.new(0.75, -10, 0.25, 0)
     AddButton.Size = UDim2.new(0, 20, 0, 20)
     AddButton.Font = Enum.Font.GothamBold
     AddButton.Text = "+"
@@ -1111,7 +1111,7 @@ function library.new(library, name, theme)
     AddButton.AutoButtonColor = false
     
     local AddButtonC = Instance.new("UICorner")
-    AddButtonC.CornerRadius = UDim.new(1, 0) -- 完全圆形
+    AddButtonC.CornerRadius = UDim.new(1, 0)
     AddButtonC.Parent = AddButton
     
     -- 按钮悬停效果
@@ -1119,7 +1119,7 @@ function library.new(library, name, theme)
         button.MouseEnter:Connect(function()
             services.TweenService:Create(button, TweenInfo.new(0.2), {
                 BackgroundColor3 = Color3.fromRGB(70, 70, 80),
-                Size = UDim2.new(0, 22, 0, 22) -- 悬停时稍微变大
+                Size = UDim2.new(0, 22, 0, 22)
             }):Play()
         end)
         
@@ -1134,44 +1134,8 @@ function library.new(library, name, theme)
     setupButtonHover(MinButton)
     setupButtonHover(AddButton)
     
-    -- 按钮点击效果
-    local function setupButtonClick(button)
-        button.MouseButton1Down:Connect(function()
-            services.TweenService:Create(button, TweenInfo.new(0.1), {
-                BackgroundColor3 = Color3.fromRGB(90, 90, 100),
-                Size = UDim2.new(0, 18, 0, 18)
-            }):Play()
-        end)
-        
-        button.MouseButton1Up:Connect(function()
-            services.TweenService:Create(button, TweenInfo.new(0.1), {
-                BackgroundColor3 = Color3.fromRGB(70, 70, 80),
-                Size = UDim2.new(0, 22, 0, 22)
-            }):Play()
-        end)
-    end
-    
-    setupButtonClick(MinButton)
-    setupButtonClick(AddButton)
-    
-    SliderBack.MouseEnter:Connect(function()
-        services.TweenService:Create(SliderBack, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(
-                math.floor(config.Slider_Color.R * 255 * 1.1),
-                math.floor(config.Slider_Color.G * 255 * 1.1),
-                math.floor(config.Slider_Color.B * 255 * 1.1)
-            )
-        }):Play()
-    end)
-    
-    SliderBack.MouseLeave:Connect(function()
-        services.TweenService:Create(SliderBack, TweenInfo.new(0.2), {
-            BackgroundColor3 = config.Slider_Color
-        }):Play()
-    end)
-    
     local funcs = {
-        SetValue = function(self, value, fromDrag)
+        SetValue = function(self, value)
             local percent
             
             if value then
@@ -1188,7 +1152,7 @@ function library.new(library, name, theme)
             if precise then
                 value = value or tonumber(string.format("%.2f", min + (max - min) * percent))
             else
-                value = value or math.floor(min + (max - min) * percent + 0.5) -- 四舍五入
+                value = value or math.floor(min + (max - min) * percent + 0.5)
             end
             
             value = math.clamp(value, min, max)
@@ -1202,9 +1166,7 @@ function library.new(library, name, theme)
                 Size = UDim2.new(newPercent, 0, 1, 0)
             }):Play()
             
-            if not fromDrag then
-                callback(tonumber(value))
-            end
+            callback(tonumber(value))
         end,
         
         GetValue = function(self)
@@ -1216,64 +1178,26 @@ function library.new(library, name, theme)
     funcs:SetValue(default)
     
     local dragging = false
-    local lastValue = default
     
-    -- 滑块条拖动功能
-    local function startDragging()
-        dragging = true
-        lastValue = library.flaFengYu[flag]
-    end
-    
-    local function stopDragging()
-        if dragging then
-            dragging = false
-            -- 拖动结束时才触发回调
-            local currentValue = library.flaFengYu[flag]
-            if currentValue ~= lastValue then
-                callback(tonumber(currentValue))
-            end
-        end
-    end
-    
-    -- 精确的拖动处理
-    local function handleDrag(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
-            funcs:SetValue(nil, true) -- fromDrag参数为true
-        end
-    end
-    
-    -- 滑块条和填充条都可以拖动
-    SliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            startDragging()
-            funcs:SetValue(nil, true) -- 立即更新一次
-        end
-    end)
-    
+    -- 填充条拖动功能
     SliderFill.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            startDragging()
-            funcs:SetValue(nil, true) -- 立即更新一次
-        end
-    end)
-    
-    SliderBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            stopDragging()
+            dragging = true
+            -- 立即更新到鼠标位置
+            funcs:SetValue()
         end
     end)
     
     SliderFill.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            stopDragging()
+            dragging = false
         end
     end)
     
-    -- 使用RenderStepped实现平滑拖动
-    local dragConnection
+    -- 实时拖动更新
     services.RunService.RenderStepped:Connect(function()
         if dragging then
-            funcs:SetValue(nil, true)
+            funcs:SetValue() -- 实时更新值和显示
         end
     end)
     
@@ -1291,14 +1215,7 @@ function library.new(library, name, theme)
     end)
     
     -- 文本框输入功能
-    local boxFocused = false
-    
-    SliderValue.Focused:Connect(function()
-        boxFocused = true
-    end)
-    
     SliderValue.FocusLost:Connect(function()
-        boxFocused = false
         if SliderValue.Text == "" then
             funcs:SetValue(default)
             return
@@ -1315,9 +1232,6 @@ function library.new(library, name, theme)
     
     -- 文本框输入过滤
     SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
-        if not boxFocused then return end
-        
-        -- 只允许数字输入
         local text = SliderValue.Text
         local filtered = text:gsub("[^%d.]", "")
         
