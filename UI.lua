@@ -1034,7 +1034,7 @@ function library.new(library, name, theme)
     SliderContainer.Size = UDim2.new(0.45, 0, 0, 20)
     SliderContainer.AnchorPoint = Vector2.new(0, 0.5)
     
-    -- 滑块条背景（不可拖动）
+    -- 滑块条背景
     SliderBar.Name = "SliderBar"
     SliderBar.Parent = SliderContainer
     SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
@@ -1043,13 +1043,12 @@ function library.new(library, name, theme)
     SliderBar.Size = UDim2.new(1, 0, 0, 14)
     SliderBar.AnchorPoint = Vector2.new(0, 0.5)
     SliderBar.ZIndex = 1
-    SliderBar.Active = false
     
     SliderBarC.CornerRadius = UDim.new(0, 7)
     SliderBarC.Name = "SliderBarC"
     SliderBarC.Parent = SliderBar
     
-    -- 滑块填充条（可拖动）- 增强拖动功能
+    -- 滑块填充条 - 支持电脑和手机拖动
     SliderFill.Name = "SliderFill"
     SliderFill.Parent = SliderBar
     SliderFill.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
@@ -1057,21 +1056,6 @@ function library.new(library, name, theme)
     SliderFill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
     SliderFill.ZIndex = 2
     SliderFill.Active = true
-    
-    -- 添加拖动手柄（确保可以点击）
-    local SliderHandle = Instance.new("Frame")
-    SliderHandle.Name = "SliderHandle"
-    SliderHandle.Parent = SliderFill
-    SliderHandle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SliderHandle.BorderSizePixel = 0
-    SliderHandle.Size = UDim2.new(0, 16, 0, 16)
-    SliderHandle.Position = UDim2.new(1, -8, 0.5, -8)
-    SliderHandle.AnchorPoint = Vector2.new(0.5, 0.5)
-    SliderHandle.ZIndex = 3
-    
-    local SliderHandleC = Instance.new("UICorner")
-    SliderHandleC.CornerRadius = UDim.new(1, 0)
-    SliderHandleC.Parent = SliderHandle
     
     SliderFillC.CornerRadius = UDim.new(0, 7)
     SliderFillC.Name = "SliderFillC"
@@ -1156,12 +1140,26 @@ function library.new(library, name, theme)
             if value then
                 percent = (value - min)/(max - min)
             else
-                -- 获取鼠标在滑块条上的精确位置
-                local mouse = services.Players.LocalPlayer:GetMouse()
+                -- 获取输入设备位置（支持电脑和手机）
+                local inputPos
+                if UserInputService.TouchEnabled and UserInputService:GetLastInputType() == Enum.UserInputType.Touch then
+                    -- 手机触摸输入
+                    local touch = UserInputService:GetTouchLocations()[1]
+                    if touch then
+                        inputPos = touch.Position
+                    else
+                        return
+                    end
+                else
+                    -- 电脑鼠标输入
+                    local mouse = services.Players.LocalPlayer:GetMouse()
+                    inputPos = Vector2.new(mouse.X, mouse.Y)
+                end
+                
                 local barPos = SliderBar.AbsolutePosition.X
                 local barSize = SliderBar.AbsoluteSize.X
-                local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
-                percent = (mouseX - barPos) / barSize
+                local inputX = math.clamp(inputPos.X, barPos, barPos + barSize)
+                percent = (inputX - barPos) / barSize
             end
             
             if precise then
@@ -1193,68 +1191,43 @@ function library.new(library, name, theme)
     funcs:SetValue(default)
     
     local dragging = false
-    local dragStartPosition = nil
-    local dragStartPercent = nil
     
-    -- 强化拖动功能
+    -- 通用拖动开始函数（支持电脑和手机）
     local function startDragging(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        local inputType = input.UserInputType
+        if inputType == Enum.UserInputType.MouseButton1 or inputType == Enum.UserInputType.Touch then
             dragging = true
-            -- 记录开始位置
-            local mouse = services.Players.LocalPlayer:GetMouse()
-            local barPos = SliderBar.AbsolutePosition.X
-            local barSize = SliderBar.AbsoluteSize.X
-            dragStartPosition = mouse.X
-            dragStartPercent = (library.flaFengYu[flag] - min) / (max - min)
-            
-            -- 立即更新到鼠标位置
-            funcs:SetValue()
+            funcs:SetValue() -- 立即更新到当前位置
         end
     end
     
+    -- 通用拖动结束函数（支持电脑和手机）
     local function stopDragging(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        local inputType = input.UserInputType
+        if inputType == Enum.UserInputType.MouseButton1 or inputType == Enum.UserInputType.Touch then
             dragging = false
-            dragStartPosition = nil
-            dragStartPercent = nil
         end
     end
     
-    -- 为填充条和手柄都添加拖动事件
+    -- 为填充条添加输入事件（支持电脑和手机）
     SliderFill.InputBegan:Connect(startDragging)
-    SliderHandle.InputBegan:Connect(startDragging)
-    
     SliderFill.InputEnded:Connect(stopDragging)
-    SliderHandle.InputEnded:Connect(stopDragging)
     
-    -- 鼠标移动时也支持拖动（即使不在填充条上开始）
-    SliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            funcs:SetValue()
-        end
-    end)
-    
+    -- 为滑块条也添加输入事件（支持点击任意位置）
+    SliderBar.InputBegan:Connect(startDragging)
     SliderBar.InputEnded:Connect(stopDragging)
     
-    -- 实时拖动更新 - 使用更可靠的鼠标跟踪
-    local dragConnection
-    dragConnection = services.RunService.RenderStepped:Connect(function()
+    -- 实时拖动更新 - 支持电脑和手机
+    services.RunService.RenderStepped:Connect(function()
         if dragging then
-            local mouse = services.Players.LocalPlayer:GetMouse()
-            local barPos = SliderBar.AbsolutePosition.X
-            local barSize = SliderBar.AbsoluteSize.X
-            
-            -- 确保鼠标在滑块范围内
-            if mouse.X >= barPos and mouse.X <= barPos + barSize then
-                funcs:SetValue() -- 实时更新值和显示
-            end
+            funcs:SetValue() -- 实时更新值和显示
         end
     end)
     
-    -- 确保鼠标释放时停止拖动
+    -- 全局输入结束监听（确保拖动正确停止）
     UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        local inputType = input.UserInputType
+        if (inputType == Enum.UserInputType.MouseButton1 or inputType == Enum.UserInputType.Touch) and dragging then
             dragging = false
         end
     end)
@@ -1267,6 +1240,19 @@ function library.new(library, name, theme)
     end)
     
     AddButton.MouseButton1Click:Connect(function()
+        local currentValue = library.flaFengYu[flag]
+        currentValue = math.clamp(currentValue + 1, min, max)
+        funcs:SetValue(currentValue)
+    end)
+    
+    -- 触摸设备按钮支持
+    MinButton.TouchTap:Connect(function()
+        local currentValue = library.flaFengYu[flag]
+        currentValue = math.clamp(currentValue - 1, min, max)
+        funcs:SetValue(currentValue)
+    end)
+    
+    AddButton.TouchTap:Connect(function()
         local currentValue = library.flaFengYu[flag]
         currentValue = math.clamp(currentValue + 1, min, max)
         funcs:SetValue(currentValue)
