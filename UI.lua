@@ -966,7 +966,7 @@ function library.new(library, name, theme)
             -- 修复后的滑块功能 - 现在可以正常滑动
             function section.Slider(section, text, flag, default, min, max, precise, callback)
     callback = callback or function() end
-    min = min or 1
+    min = min or 0  -- 默认从0开始
     max = max or 10
     default = default or min
     precise = precise or false
@@ -1048,7 +1048,7 @@ function library.new(library, name, theme)
     SliderBarC.Name = "SliderBarC"
     SliderBarC.Parent = SliderBar
     
-    -- 滑块填充条 - 支持电脑和手机拖动
+    -- 滑块填充条
     SliderFill.Name = "SliderFill"
     SliderFill.Parent = SliderBar
     SliderFill.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
@@ -1134,16 +1134,25 @@ function library.new(library, name, theme)
     setupButtonHover(AddButton)
     
     local funcs = {
-        SetValue = function(self, value)
-            local percent
-            
+        SetValue = function(self, value, fromButton)
             if value then
-                percent = (value - min)/(max - min)
+                -- 直接设置指定值
+                value = math.clamp(value, min, max)
+                library.flaFengYu[flag] = tonumber(value)
+                SliderValue.Text = tostring(value)
+                
+                -- 更新滑块显示
+                local newPercent = (value - min)/(max - min)
+                
+                services.TweenService:Create(SliderFill, TweenInfo.new(0.1), {
+                    Size = UDim2.new(newPercent, 0, 1, 0)
+                }):Play()
+                
+                callback(tonumber(value))
             else
-                -- 获取输入设备位置（支持电脑和手机）
+                -- 从拖动位置计算值
                 local inputPos
                 if UserInputService.TouchEnabled and UserInputService:GetLastInputType() == Enum.UserInputType.Touch then
-                    -- 手机触摸输入
                     local touch = UserInputService:GetTouchLocations()[1]
                     if touch then
                         inputPos = touch.Position
@@ -1151,7 +1160,6 @@ function library.new(library, name, theme)
                         return
                     end
                 else
-                    -- 电脑鼠标输入
                     local mouse = services.Players.LocalPlayer:GetMouse()
                     inputPos = Vector2.new(mouse.X, mouse.Y)
                 end
@@ -1159,27 +1167,27 @@ function library.new(library, name, theme)
                 local barPos = SliderBar.AbsolutePosition.X
                 local barSize = SliderBar.AbsoluteSize.X
                 local inputX = math.clamp(inputPos.X, barPos, barPos + barSize)
-                percent = (inputX - barPos) / barSize
+                local percent = (inputX - barPos) / barSize
+                
+                if precise then
+                    value = tonumber(string.format("%.2f", min + (max - min) * percent))
+                else
+                    value = math.floor(min + (max - min) * percent + 0.5)
+                end
+                
+                value = math.clamp(value, min, max)
+                library.flaFengYu[flag] = tonumber(value)
+                SliderValue.Text = tostring(value)
+                
+                -- 更新滑块显示
+                local newPercent = (value - min)/(max - min)
+                
+                services.TweenService:Create(SliderFill, TweenInfo.new(0.1), {
+                    Size = UDim2.new(newPercent, 0, 1, 0)
+                }):Play()
+                
+                callback(tonumber(value))
             end
-            
-            if precise then
-                value = value or tonumber(string.format("%.2f", min + (max - min) * percent))
-            else
-                value = value or math.floor(min + (max - min) * percent + 0.5)
-            end
-            
-            value = math.clamp(value, min, max)
-            library.flaFengYu[flag] = tonumber(value)
-            SliderValue.Text = tostring(value)
-            
-            -- 更新滑块显示
-            local newPercent = (value - min)/(max - min)
-            
-            services.TweenService:Create(SliderFill, TweenInfo.new(0.1), {
-                Size = UDim2.new(newPercent, 0, 1, 0)
-            }):Play()
-            
-            callback(tonumber(value))
         end,
         
         GetValue = function(self)
@@ -1192,7 +1200,7 @@ function library.new(library, name, theme)
     
     local dragging = false
     
-    -- 通用拖动开始函数（支持电脑和手机）
+    -- 拖动开始函数
     local function startDragging(input)
         local inputType = input.UserInputType
         if inputType == Enum.UserInputType.MouseButton1 or inputType == Enum.UserInputType.Touch then
@@ -1201,7 +1209,7 @@ function library.new(library, name, theme)
         end
     end
     
-    -- 通用拖动结束函数（支持电脑和手机）
+    -- 拖动结束函数
     local function stopDragging(input)
         local inputType = input.UserInputType
         if inputType == Enum.UserInputType.MouseButton1 or inputType == Enum.UserInputType.Touch then
@@ -1209,22 +1217,22 @@ function library.new(library, name, theme)
         end
     end
     
-    -- 为填充条添加输入事件（支持电脑和手机）
+    -- 为填充条添加输入事件
     SliderFill.InputBegan:Connect(startDragging)
     SliderFill.InputEnded:Connect(stopDragging)
     
-    -- 为滑块条也添加输入事件（支持点击任意位置）
+    -- 为滑块条也添加输入事件
     SliderBar.InputBegan:Connect(startDragging)
     SliderBar.InputEnded:Connect(stopDragging)
     
-    -- 实时拖动更新 - 支持电脑和手机
+    -- 实时拖动更新
     services.RunService.RenderStepped:Connect(function()
         if dragging then
             funcs:SetValue() -- 实时更新值和显示
         end
     end)
     
-    -- 全局输入结束监听（确保拖动正确停止）
+    -- 全局输入结束监听
     UserInputService.InputEnded:Connect(function(input)
         local inputType = input.UserInputType
         if (inputType == Enum.UserInputType.MouseButton1 or inputType == Enum.UserInputType.Touch) and dragging then
@@ -1232,45 +1240,49 @@ function library.new(library, name, theme)
         end
     end)
     
-    -- 加减按钮功能
+    -- 修复加减按钮功能 - 每次只改变1
     MinButton.MouseButton1Click:Connect(function()
-        local currentValue = library.flaFengYu[flag]
-        currentValue = math.clamp(currentValue - 1, min, max)
-        funcs:SetValue(currentValue)
+        local currentValue = library.flaFengYu[flag] or min
+        local newValue = math.clamp(currentValue - 1, min, max)
+        funcs:SetValue(newValue, true)
     end)
     
     AddButton.MouseButton1Click:Connect(function()
-        local currentValue = library.flaFengYu[flag]
-        currentValue = math.clamp(currentValue + 1, min, max)
-        funcs:SetValue(currentValue)
+        local currentValue = library.flaFengYu[flag] or min
+        local newValue = math.clamp(currentValue + 1, min, max)
+        funcs:SetValue(newValue, true)
     end)
     
     -- 触摸设备按钮支持
-    MinButton.TouchTap:Connect(function()
-        local currentValue = library.flaFengYu[flag]
-        currentValue = math.clamp(currentValue - 1, min, max)
-        funcs:SetValue(currentValue)
-    end)
+    local function onMinButtonTouch()
+        local currentValue = library.flaFengYu[flag] or min
+        local newValue = math.clamp(currentValue - 1, min, max)
+        funcs:SetValue(newValue, true)
+    end
     
-    AddButton.TouchTap:Connect(function()
-        local currentValue = library.flaFengYu[flag]
-        currentValue = math.clamp(currentValue + 1, min, max)
-        funcs:SetValue(currentValue)
-    end)
+    local function onAddButtonTouch()
+        local currentValue = library.flaFengYu[flag] or min
+        local newValue = math.clamp(currentValue + 1, min, max)
+        funcs:SetValue(newValue, true)
+    end
+    
+    -- 为触摸设备添加点击事件
+    MinButton.TouchTap:Connect(onMinButtonTouch)
+    AddButton.TouchTap:Connect(onAddButtonTouch)
     
     -- 文本框输入功能
     SliderValue.FocusLost:Connect(function()
         if SliderValue.Text == "" then
-            funcs:SetValue(default)
+            funcs:SetValue(default, true)
             return
         end
         
         local numValue = tonumber(SliderValue.Text)
         if numValue then
             numValue = math.clamp(numValue, min, max)
-            funcs:SetValue(numValue)
+            funcs:SetValue(numValue, true)
         else
-            funcs:SetValue(default)
+            funcs:SetValue(default, true)
         end
     end)
     
