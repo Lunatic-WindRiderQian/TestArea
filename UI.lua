@@ -2,6 +2,7 @@ repeat
     task.wait()
 until game:IsLoaded()
 
+-- 执行器检测
 local isSynapse = syn and syn.protect_gui ~= nil
 local isScriptWare = secure_load ~= nil
 local isKrnl = krnl and krnl.protect_gui ~= nil
@@ -11,6 +12,7 @@ local isComet = comet and comet.protect_gui ~= nil
 local isOxygen = getexecutorname and getexecutorname():lower():find("oxygen") ~= nil
 local isAlus = alus and alus.protect_gui ~= nil
 
+-- GUI保护函数
 local function protectGUI(gui)
     if isSynapse then
         syn.protect_gui(gui)
@@ -40,11 +42,13 @@ local function protectGUI(gui)
     end
 end
 
+-- 库定义
 local library = {}
 local ToggleUI = true
 library.currentTab = nil
 library.flaFengYu = {}
 
+-- 服务引用
 local services = {
     TweenService = game:GetService("TweenService"),
     UserInputService = game:GetService("UserInputService"),
@@ -56,27 +60,29 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
+-- 高级配色方案
 local config = {
-    MainColor = Color3.fromRGB(16, 16, 16),
-    TabColor = Color3.fromRGB(22, 22, 22),
-    Bg_Color = Color3.fromRGB(17, 17, 17),
-    Zy_Color = Color3.fromRGB(17, 17, 17), 
-    Button_Color = Color3.fromRGB(22, 22, 22),
-    Textbox_Color = Color3.fromRGB(22, 22, 22),
-    Dropdown_Color = Color3.fromRGB(22, 22, 22),
-    Keybind_Color = Color3.fromRGB(22, 22, 22),
-    Label_Color = Color3.fromRGB(22, 22, 22),
-    Slider_Color = Color3.fromRGB(22, 22, 22),
-    SliderBar_Color = Color3.fromRGB(37, 254, 152),
-    Toggle_Color = Color3.fromRGB(22, 22, 22),
-    Toggle_Off = Color3.fromRGB(34, 34, 34),
-    Toggle_On = Color3.fromRGB(37, 254, 152),
-    AccentColor = Color3.fromRGB(37, 254, 152),
-    TextColor = Color3.fromRGB(240, 240, 240),
-    SecondaryTextColor = Color3.fromRGB(180, 180, 180),
-    GlowColor = Color3.fromRGB(0, 200, 255),
+    MainColor = Color3.fromRGB(10, 10, 15),
+    TabColor = Color3.fromRGB(20, 20, 30),
+    Bg_Color = Color3.fromRGB(15, 15, 25),
+    Zy_Color = Color3.fromRGB(15, 15, 25), 
+    Button_Color = Color3.fromRGB(30, 30, 45),
+    Textbox_Color = Color3.fromRGB(30, 30, 45),
+    Dropdown_Color = Color3.fromRGB(30, 30, 45),
+    Keybind_Color = Color3.fromRGB(30, 30, 45),
+    Label_Color = Color3.fromRGB(30, 30, 45),
+    Slider_Color = Color3.fromRGB(30, 30, 45),
+    SliderBar_Color = Color3.fromRGB(0, 180, 255),
+    Toggle_Color = Color3.fromRGB(30, 30, 45),
+    Toggle_Off = Color3.fromRGB(40, 40, 60),
+    Toggle_On = Color3.fromRGB(0, 180, 255),
+    AccentColor = Color3.fromRGB(0, 180, 255),
+    TextColor = Color3.fromRGB(240, 240, 255),
+    SecondaryTextColor = Color3.fromRGB(180, 180, 200),
+    GlowColor = Color3.fromRGB(0, 150, 220),
 }
 
+-- 拖动函数
 function drag(frame, hold)
     if not hold then hold = frame end
     
@@ -120,6 +126,7 @@ function drag(frame, hold)
     end)
 end
 
+-- 水波纹效果
 function Ripple(obj)
     if not obj or not obj.Parent then return end
     
@@ -157,6 +164,7 @@ function Ripple(obj)
     end)
 end
 
+-- 标签切换
 local switchingTabs = false
 function switchTab(new)
     if switchingTabs then return end
@@ -188,64 +196,39 @@ function switchTab(new)
     switchingTabs = false
 end
 
+-- 创建高级UI
 local FengYu = Instance.new("ScreenGui")
 FengYu.Name = "UniversalUI"
+FengYu.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 protectGUI(FengYu)
 FengYu.Parent = services.CoreGui
 
+-- 创建高级主窗口
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.BackgroundColor3 = config.Bg_Color
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+Main.BackgroundTransparency = 0.1
 Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-Main.Size = UDim2.new(0, 600, 0, 380)
+Main.Size = UDim2.new(0, 650, 0, 420)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
 
--- 添加圆角
+-- 添加高级圆角
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.CornerRadius = UDim.new(0, 14)
 MainCorner.Parent = Main
 
--- 添加边框
+-- 添加高级边框
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
-MainStroke.Color = Color3.fromRGB(50, 50, 50)
-MainStroke.Thickness = 1
-MainStroke.Transparency = 0.5
+MainStroke.Color = Color3.fromRGB(60, 60, 80)
+MainStroke.Thickness = 2
+MainStroke.Transparency = 0.3
 
-local Open = Instance.new("ImageButton")
-local UICorner = Instance.new("UICorner")
-
-Open.Name = "Open"
-Open.Parent = FengYu
-Open.BackgroundColor3 = config.AccentColor
-Open.BackgroundTransparency = 1
-Open.Position = UDim2.new(0.008, 0, 0.131, 0)
-Open.Size = UDim2.new(0, 50, 0, 50)
-Open.Active = true
-Open.Draggable = true
-Open.Image = "rbxassetid://84830962019412"
-Open.ImageColor3 = config.AccentColor
-
-Open.MouseButton1Click:Connect(function()
-    Main.Visible = not Main.Visible
-    services.TweenService:Create(Open, TweenInfo.new(0.2), {Rotation = Open.Rotation + 180}):Play()
-end)
-
-UICorner.CornerRadius = UDim.new(0, 12)
-UICorner.Parent = Open
-
-services.UserInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.LeftControl then
-        Main.Visible = not Main.Visible
-        services.TweenService:Create(Open, TweenInfo.new(0.2), {Rotation = Open.Rotation + 180}):Play()
-    end
-end)
-
--- 创建超级美观的背景
+-- 创建高级背景效果
 local MainBackground = Instance.new("Frame")
 MainBackground.Name = "MainBackground"
 MainBackground.Parent = Main
@@ -255,39 +238,39 @@ MainBackground.ZIndex = 0
 
 -- 添加圆角
 local MainBgCorner = Instance.new("UICorner")
-MainBgCorner.CornerRadius = UDim.new(0, 12)
+MainBgCorner.CornerRadius = UDim.new(0, 14)
 MainBgCorner.Parent = MainBackground
 
--- 创建渐变背景效果
+-- 创建高级渐变背景效果
 local BackgroundGradient = Instance.new("UIGradient")
 BackgroundGradient.Parent = MainBackground
 BackgroundGradient.Rotation = 120
 BackgroundGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(15, 15, 25)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(25, 20, 40)),
-    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(15, 15, 25))
+    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(12, 12, 20)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 15, 35)),
+    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(12, 12, 20))
 })
 
--- 添加装饰性几何图案
+-- 添加高级装饰性几何图案
 local DecorPattern = Instance.new("ImageLabel")
 DecorPattern.Name = "DecorPattern"
 DecorPattern.Parent = MainBackground
 DecorPattern.BackgroundTransparency = 1
 DecorPattern.Size = UDim2.new(1, 0, 1, 0)
-DecorPattern.Image = "rbxassetid://8992233754" -- 简约几何图案
-DecorPattern.ImageColor3 = Color3.fromRGB(30, 30, 45)
-DecorPattern.ImageTransparency = 0.9
+DecorPattern.Image = "rbxassetid://8992233754"
+DecorPattern.ImageColor3 = Color3.fromRGB(25, 25, 40)
+DecorPattern.ImageTransparency = 0.85
 DecorPattern.ScaleType = Enum.ScaleType.Tile
-DecorPattern.TileSize = UDim2.new(0, 100, 0, 100)
+DecorPattern.TileSize = UDim2.new(0, 120, 0, 120)
 DecorPattern.ZIndex = 1
 
--- 添加简约装饰元素
+-- 添加高级装饰元素
 local DecorCircle1 = Instance.new("Frame")
 DecorCircle1.Parent = MainBackground
-DecorCircle1.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-DecorCircle1.BackgroundTransparency = 0.9
-DecorCircle1.Size = UDim2.new(0, 120, 0, 120)
-DecorCircle1.Position = UDim2.new(0.8, 0, -0.1, 0)
+DecorCircle1.BackgroundColor3 = config.AccentColor
+DecorCircle1.BackgroundTransparency = 0.85
+DecorCircle1.Size = UDim2.new(0, 150, 0, 150)
+DecorCircle1.Position = UDim2.new(0.75, 0, -0.15, 0)
 DecorCircle1.ZIndex = 1
 
 local DecorCircle1Corner = Instance.new("UICorner")
@@ -296,53 +279,71 @@ DecorCircle1Corner.Parent = DecorCircle1
 
 local DecorCircle2 = Instance.new("Frame")
 DecorCircle2.Parent = MainBackground
-DecorCircle2.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-DecorCircle2.BackgroundTransparency = 0.9
-DecorCircle2.Size = UDim2.new(0, 80, 0, 80)
-DecorCircle2.Position = UDim2.new(-0.05, 0, 0.7, 0)
+DecorCircle2.BackgroundColor3 = config.GlowColor
+DecorCircle2.BackgroundTransparency = 0.85
+DecorCircle2.Size = UDim2.new(0, 100, 0, 100)
+DecorCircle2.Position = UDim2.new(-0.08, 0, 0.75, 0)
 DecorCircle2.ZIndex = 1
 
 local DecorCircle2Corner = Instance.new("UICorner")
 DecorCircle2Corner.CornerRadius = UDim.new(1, 0)
 DecorCircle2Corner.Parent = DecorCircle2
 
--- 添加简约边框效果
+-- 添加高级发光效果
+local GlowEffect = Instance.new("ImageLabel")
+GlowEffect.Name = "GlowEffect"
+GlowEffect.Parent = Main
+GlowEffect.BackgroundTransparency = 1
+GlowEffect.Size = UDim2.new(1, 20, 1, 20)
+GlowEffect.Position = UDim2.new(0, -10, 0, -10)
+GlowEffect.Image = "rbxassetid://8992233754"
+GlowEffect.ImageColor3 = config.GlowColor
+GlowEffect.ImageTransparency = 0.9
+GlowEffect.ScaleType = Enum.ScaleType.Slice
+GlowEffect.SliceCenter = Rect.new(100, 100, 100, 100)
+GlowEffect.ZIndex = 0
+
+-- 添加高级内边框效果
 local InnerStroke = Instance.new("UIStroke")
 InnerStroke.Parent = MainBackground
-InnerStroke.Color = Color3.fromRGB(60, 60, 80)
-InnerStroke.Thickness = 2
-InnerStroke.Transparency = 0.8
+InnerStroke.Color = Color3.fromRGB(70, 70, 90)
+InnerStroke.Thickness = 1
+InnerStroke.Transparency = 0.7
 
-local TabMain = Instance.new("Frame")
-TabMain.Name = "TabMain"
-TabMain.Parent = Main
-TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.217, 0, 0, 3)
-TabMain.Size = UDim2.new(0, 468, 0, 374)
-TabMain.ZIndex = 10
-
+-- 创建高级侧边栏
 local Side = Instance.new("Frame")
 Side.Name = "Side"
 Side.Parent = Main
 Side.BackgroundColor3 = config.TabColor
+Side.BackgroundTransparency = 0.1
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 0)
-Side.Size = UDim2.new(0, 120, 0, 380)
+Side.Size = UDim2.new(0, 140, 0, 420)
 
--- 添加圆角
+-- 添加高级圆角
 local SideCorner = Instance.new("UICorner")
-SideCorner.CornerRadius = UDim.new(0, 12)
+SideCorner.CornerRadius = UDim.new(0, 14)
 SideCorner.Parent = Side
 
+-- 添加侧边栏渐变
+local SideGradient = Instance.new("UIGradient")
+SideGradient.Parent = Side
+SideGradient.Rotation = 90
+SideGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(20, 20, 35)),
+    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(25, 25, 40))
+})
+
+-- 创建高级标签按钮容器
 local TabBtns = Instance.new("ScrollingFrame")
 TabBtns.Name = "TabBtns"
 TabBtns.Parent = Side
 TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
-TabBtns.Position = UDim2.new(0, 0, 0.097, 0)
-TabBtns.Size = UDim2.new(0, 120, 0, 340)
+TabBtns.Position = UDim2.new(0, 0, 0.1, 0)
+TabBtns.Size = UDim2.new(0, 140, 0, 370)
 TabBtns.CanvasSize = UDim2.new(0, 0, 1, 0)
 TabBtns.ScrollBarThickness = 0
 
@@ -350,21 +351,92 @@ local TabBtnsL = Instance.new("UIListLayout")
 TabBtnsL.Name = "TabBtnsL"
 TabBtnsL.Parent = TabBtns
 TabBtnsL.SortOrder = Enum.SortOrder.LayoutOrder
-TabBtnsL.Padding = UDim.new(0, 12)
+TabBtnsL.Padding = UDim.new(0, 8)
 
+-- 创建高级标题
 local ScriptTitle = Instance.new("TextLabel")
 ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = Side
 ScriptTitle.BackgroundTransparency = 1
-ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
-ScriptTitle.Size = UDim2.new(0, 110, 0, 20)
-ScriptTitle.Font = Enum.Font.GothamSemibold
+ScriptTitle.Position = UDim2.new(0, 15, 0.02, 0)
+ScriptTitle.Size = UDim2.new(0, 110, 0, 25)
+ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "Delta"
 ScriptTitle.TextColor3 = config.AccentColor
-ScriptTitle.TextSize = 16
-ScriptTitle.TextScaled = true
+ScriptTitle.TextSize = 18
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
 
+-- 添加标题装饰线
+local TitleLine = Instance.new("Frame")
+TitleLine.Parent = Side
+TitleLine.BackgroundColor3 = config.AccentColor
+TitleLine.BackgroundTransparency = 0.7
+TitleLine.BorderSizePixel = 0
+TitleLine.Position = UDim2.new(0, 15, 0.08, 0)
+TitleLine.Size = UDim2.new(0, 50, 0, 2)
+
+-- 创建高级主内容区域
+local TabMain = Instance.new("Frame")
+TabMain.Name = "TabMain"
+TabMain.Parent = Main
+TabMain.BackgroundTransparency = 1
+TabMain.Position = UDim2.new(0.23, 0, 0, 10)
+TabMain.Size = UDim2.new(0, 490, 0, 400)
+TabMain.ZIndex = 10
+
+-- 创建高级悬浮打开按钮
+local Open = Instance.new("ImageButton")
+Open.Name = "Open"
+Open.Parent = FengYu
+Open.BackgroundColor3 = config.AccentColor
+Open.BackgroundTransparency = 0.9
+Open.Position = UDim2.new(0.01, 0, 0.15, 0)
+Open.Size = UDim2.new(0, 50, 0, 50)
+Open.Active = true
+Open.Draggable = true
+Open.Image = "rbxassetid://8992233754"
+Open.ImageColor3 = config.AccentColor
+Open.ImageTransparency = 0.8
+
+-- 添加高级圆角
+local OpenCorner = Instance.new("UICorner")
+OpenCorner.CornerRadius = UDim.new(1, 0)
+OpenCorner.Parent = Open
+
+-- 添加高级发光效果
+local OpenGlow = Instance.new("ImageLabel")
+OpenGlow.Parent = Open
+OpenGlow.BackgroundTransparency = 1
+OpenGlow.Size = UDim2.new(1, 10, 1, 10)
+OpenGlow.Position = UDim2.new(0, -5, 0, -5)
+OpenGlow.Image = "rbxassetid://8992233754"
+OpenGlow.ImageColor3 = config.AccentColor
+OpenGlow.ImageTransparency = 0.9
+OpenGlow.ScaleType = Enum.ScaleType.Slice
+OpenGlow.SliceCenter = Rect.new(100, 100, 100, 100)
+OpenGlow.ZIndex = -1
+
+-- 按钮点击事件
+Open.MouseButton1Click:Connect(function()
+    Main.Visible = not Main.Visible
+    services.TweenService:Create(Open, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Rotation = Open.Rotation + 180,
+        ImageTransparency = Main.Visible and 0.8 or 0.5
+    }):Play()
+end)
+
+-- 快捷键控制
+services.UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.RightControl then
+        Main.Visible = not Main.Visible
+        services.TweenService:Create(Open, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Rotation = Open.Rotation + 180,
+            ImageTransparency = Main.Visible and 0.8 or 0.5
+        }):Play()
+    end
+end)
+
+-- 窗口库函数
 function library.new(library, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
         if v.Name == "REN" then
@@ -396,23 +468,24 @@ function library.new(library, name, theme)
         Tab.Active = true
         Tab.BackgroundTransparency = 1
         Tab.Size = UDim2.new(1, 0, 1, 0)
-        Tab.ScrollBarThickness = 2
+        Tab.ScrollBarThickness = 3
+        Tab.ScrollBarImageColor3 = config.AccentColor
         Tab.Visible = false
         
         TabIco.Name = "TabIco"
         TabIco.Parent = TabBtns
         TabIco.BackgroundTransparency = 1
         TabIco.BorderSizePixel = 0
-        TabIco.Size = UDim2.new(0, 24, 0, 24)
-        TabIco.Image = "rbxassetid://84830962019412"
+        TabIco.Size = UDim2.new(0, 30, 0, 30)
+        TabIco.Image = icon or "rbxassetid://8992233754"
         TabIco.ImageTransparency = 0.5
         TabIco.ImageColor3 = config.AccentColor
         
         TabText.Name = "TabText"
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
-        TabText.Position = UDim2.new(1.416, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 86, 0, 24)
+        TabText.Position = UDim2.new(1.2, 0, 0, 0)
+        TabText.Size = UDim2.new(0, 100, 0, 30)
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
@@ -424,7 +497,7 @@ function library.new(library, name, theme)
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 120, 0, 24)
+        TabBtn.Size = UDim2.new(0, 140, 0, 30)
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
@@ -432,7 +505,7 @@ function library.new(library, name, theme)
         TabL.Name = "TabL"
         TabL.Parent = Tab
         TabL.SortOrder = Enum.SortOrder.LayoutOrder
-        TabL.Padding = UDim.new(0, 4)
+        TabL.Padding = UDim.new(0, 6)
         
         TabBtn.MouseButton1Click:Connect(function()
             Ripple(TabBtn)
@@ -444,7 +517,7 @@ function library.new(library, name, theme)
         end
         
         TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 8)
+            Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 10)
         end)
         
         local tab = {}
@@ -963,304 +1036,303 @@ function library.new(library, name, theme)
                 BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 30, 0, 28)
             end
             
-            -- 修复后的滑块功能 - 现在可以正常滑动
-function section.Slider(section, text, flag, default, min, max, precise, callback)
-    callback = callback or function() end
-    min = min or 1
-    max = max or 10
-    default = default or min
-    precise = precise or false
-    
-    assert(text, "No text provided")
-    assert(flag, "No flag provided")
-    assert(default, "No default value provided")
-    
-    library.flaFengYu[flag] = default
+            function section.Slider(section, text, flag, default, min, max, precise, callback)
+                callback = callback or function() end
+                min = min or 1
+                max = max or 10
+                default = default or min
+                precise = precise or false
+                
+                assert(text, "No text provided")
+                assert(flag, "No flag provided")
+                assert(default, "No default value provided")
+                
+                library.flaFengYu[flag] = default
 
-    local SliderModule = Instance.new("Frame")
-    local SliderBack = Instance.new("TextButton")
-    local SliderBackC = Instance.new("UICorner")
-    local SliderText = Instance.new("TextLabel")
-    local SliderContainer = Instance.new("Frame")
-    local SliderBar = Instance.new("Frame")
-    local SliderBarC = Instance.new("UICorner")
-    local SliderFill = Instance.new("Frame")
-    local SliderFillC = Instance.new("UICorner")
-    local SliderValue = Instance.new("TextBox")
-    local SliderValueC = Instance.new("UICorner")
-    local MinButton = Instance.new("TextButton")
-    local AddButton = Instance.new("TextButton")
-    
-    SliderModule.Name = "SliderModule"
-    SliderModule.Parent = Objs
-    SliderModule.BackgroundTransparency = 1
-    SliderModule.BorderSizePixel = 0
-    SliderModule.Size = UDim2.new(0, 448, 0, 42)
-    
-    SliderBack.Name = "SliderBack"
-    SliderBack.Parent = SliderModule
-    SliderBack.BackgroundColor3 = config.Slider_Color
-    SliderBack.BorderSizePixel = 0
-    SliderBack.Size = UDim2.new(0, 448, 0, 42)
-    SliderBack.AutoButtonColor = false
-    SliderBack.Font = Enum.Font.GothamSemibold
-    SliderBack.Text = ""
-    SliderBack.TextColor3 = config.TextColor
-    SliderBack.TextSize = 16
-    SliderBack.TextXAlignment = Enum.TextXAlignment.Left
-    
-    SliderBackC.CornerRadius = UDim.new(0, 6)
-    SliderBackC.Name = "SliderBackC"
-    SliderBackC.Parent = SliderBack
-    
-    -- 滑块文本标签
-    SliderText.Name = "SliderText"
-    SliderText.Parent = SliderBack
-    SliderText.BackgroundTransparency = 1
-    SliderText.Position = UDim2.new(0.03, 0, 0, 0)
-    SliderText.Size = UDim2.new(0, 100, 1, 0)
-    SliderText.Font = Enum.Font.GothamSemibold
-    SliderText.Text = text
-    SliderText.TextColor3 = config.TextColor
-    SliderText.TextSize = 16
-    SliderText.TextXAlignment = Enum.TextXAlignment.Left
-    SliderText.TextYAlignment = Enum.TextYAlignment.Center
-    
-    -- 滑块容器
-    SliderContainer.Name = "SliderContainer"
-    SliderContainer.Parent = SliderBack
-    SliderContainer.BackgroundTransparency = 1
-    SliderContainer.Position = UDim2.new(0.3, 0, 0.5, 0)
-    SliderContainer.Size = UDim2.new(0.45, 0, 0, 20)
-    SliderContainer.AnchorPoint = Vector2.new(0, 0.5)
-    
-    -- 滑块条背景（不可拖动）
-    SliderBar.Name = "SliderBar"
-    SliderBar.Parent = SliderContainer
-    SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    SliderBar.BorderSizePixel = 0
-    SliderBar.Position = UDim2.new(0, 0, 0.5, 0)
-    SliderBar.Size = UDim2.new(1, 0, 0, 14)
-    SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-    SliderBar.ZIndex = 1
-    SliderBar.Active = false
-    
-    SliderBarC.CornerRadius = UDim.new(0, 7)
-    SliderBarC.Name = "SliderBarC"
-    SliderBarC.Parent = SliderBar
-    
-    -- 滑块填充条（可拖动）- 增强拖动功能
-    SliderFill.Name = "SliderFill"
-    SliderFill.Parent = SliderBar
-    SliderFill.BackgroundColor3 = config.SliderBar_Color
-    SliderFill.BorderSizePixel = 0
-    SliderFill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
-    SliderFill.ZIndex = 2
-    SliderFill.Active = true
-    
-    SliderFillC.CornerRadius = UDim.new(0, 7)
-    SliderFillC.Name = "SliderFillC"
-    SliderFillC.Parent = SliderFill
-    
-    -- 数值显示框
-    SliderValue.Name = "SliderValue"
-    SliderValue.Parent = SliderBack
-    SliderValue.BackgroundColor3 = config.Bg_Color
-    SliderValue.BorderSizePixel = 0
-    SliderValue.Position = UDim2.new(0.78, 0, 0.25, 0)
-    SliderValue.Size = UDim2.new(0, 50, 0, 24)
-    SliderValue.Font = Enum.Font.Gotham
-    SliderValue.Text = tostring(default)
-    SliderValue.TextColor3 = config.TextColor
-    SliderValue.TextSize = 14
-    SliderValue.TextXAlignment = Enum.TextXAlignment.Center
-    SliderValue.ClearTextOnFocus = false
-    
-    SliderValueC.CornerRadius = UDim.new(0, 12)
-    SliderValueC.Name = "SliderValueC"
-    SliderValueC.Parent = SliderValue
-    
-    -- 减号按钮
-    MinButton.Name = "MinButton"
-    MinButton.Parent = SliderBack
-    MinButton.BackgroundColor3 = config.Bg_Color
-    MinButton.BorderSizePixel = 0
-    MinButton.Position = UDim2.new(0.3, -10, 0.25, 0)
-    MinButton.Size = UDim2.new(0, 20, 0, 20)
-    MinButton.Font = Enum.Font.GothamBold
-    MinButton.Text = "-"
-    MinButton.TextColor3 = config.TextColor
-    MinButton.TextSize = 14
-    MinButton.AutoButtonColor = false
-    
-    local MinButtonC = Instance.new("UICorner")
-    MinButtonC.CornerRadius = UDim.new(1, 0)
-    MinButtonC.Parent = MinButton
-    
-    -- 加号按钮
-    AddButton.Name = "AddButton"
-    AddButton.Parent = SliderBack
-    AddButton.BackgroundColor3 = config.Bg_Color
-    AddButton.BorderSizePixel = 0
-    AddButton.Position = UDim2.new(0.75, -10, 0.25, 0)
-    AddButton.Size = UDim2.new(0, 20, 0, 20)
-    AddButton.Font = Enum.Font.GothamBold
-    AddButton.Text = "+"
-    AddButton.TextColor3 = config.TextColor
-    AddButton.TextSize = 14
-    AddButton.AutoButtonColor = false
-    
-    local AddButtonC = Instance.new("UICorner")
-    AddButtonC.CornerRadius = UDim.new(1, 0)
-    AddButtonC.Parent = AddButton
-    
-    -- 按钮悬停效果
-    local function setupButtonHover(button)
-        button.MouseEnter:Connect(function()
-            services.TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundColor3 = Color3.fromRGB(70, 70, 80),
-                Size = UDim2.new(0, 22, 0, 22)
-            }):Play()
-        end)
-        
-        button.MouseLeave:Connect(function()
-            services.TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundColor3 = config.Bg_Color,
-                Size = UDim2.new(0, 20, 0, 20)
-            }):Play()
-        end)
-    end
-    
-    setupButtonHover(MinButton)
-    setupButtonHover(AddButton)
-    
-    local funcs = {
-        SetValue = function(self, value)
-            local percent
-            
-            if value then
-                percent = (value - min)/(max - min)
-            else
-                -- 获取鼠标在滑块条上的精确位置
-                local mouse = services.Players.LocalPlayer:GetMouse()
-                local barPos = SliderBar.AbsolutePosition.X
-                local barSize = SliderBar.AbsoluteSize.X
-                local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
-                percent = (mouseX - barPos) / barSize
+                local SliderModule = Instance.new("Frame")
+                local SliderBack = Instance.new("TextButton")
+                local SliderBackC = Instance.new("UICorner")
+                local SliderText = Instance.new("TextLabel")
+                local SliderContainer = Instance.new("Frame")
+                local SliderBar = Instance.new("Frame")
+                local SliderBarC = Instance.new("UICorner")
+                local SliderFill = Instance.new("Frame")
+                local SliderFillC = Instance.new("UICorner")
+                local SliderValue = Instance.new("TextBox")
+                local SliderValueC = Instance.new("UICorner")
+                local MinButton = Instance.new("TextButton")
+                local AddButton = Instance.new("TextButton")
+                
+                SliderModule.Name = "SliderModule"
+                SliderModule.Parent = Objs
+                SliderModule.BackgroundTransparency = 1
+                SliderModule.BorderSizePixel = 0
+                SliderModule.Size = UDim2.new(0, 448, 0, 42)
+                
+                SliderBack.Name = "SliderBack"
+                SliderBack.Parent = SliderModule
+                SliderBack.BackgroundColor3 = config.Slider_Color
+                SliderBack.BorderSizePixel = 0
+                SliderBack.Size = UDim2.new(0, 448, 0, 42)
+                SliderBack.AutoButtonColor = false
+                SliderBack.Font = Enum.Font.GothamSemibold
+                SliderBack.Text = ""
+                SliderBack.TextColor3 = config.TextColor
+                SliderBack.TextSize = 16
+                SliderBack.TextXAlignment = Enum.TextXAlignment.Left
+                
+                SliderBackC.CornerRadius = UDim.new(0, 6)
+                SliderBackC.Name = "SliderBackC"
+                SliderBackC.Parent = SliderBack
+                
+                -- 滑块文本标签
+                SliderText.Name = "SliderText"
+                SliderText.Parent = SliderBack
+                SliderText.BackgroundTransparency = 1
+                SliderText.Position = UDim2.new(0.03, 0, 0, 0)
+                SliderText.Size = UDim2.new(0, 100, 1, 0)
+                SliderText.Font = Enum.Font.GothamSemibold
+                SliderText.Text = text
+                SliderText.TextColor3 = config.TextColor
+                SliderText.TextSize = 16
+                SliderText.TextXAlignment = Enum.TextXAlignment.Left
+                SliderText.TextYAlignment = Enum.TextYAlignment.Center
+                
+                -- 滑块容器
+                SliderContainer.Name = "SliderContainer"
+                SliderContainer.Parent = SliderBack
+                SliderContainer.BackgroundTransparency = 1
+                SliderContainer.Position = UDim2.new(0.3, 0, 0.5, 0)
+                SliderContainer.Size = UDim2.new(0.45, 0, 0, 20)
+                SliderContainer.AnchorPoint = Vector2.new(0, 0.5)
+                
+                -- 滑块条背景（不可拖动）
+                SliderBar.Name = "SliderBar"
+                SliderBar.Parent = SliderContainer
+                SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                SliderBar.BorderSizePixel = 0
+                SliderBar.Position = UDim2.new(0, 0, 0.5, 0)
+                SliderBar.Size = UDim2.new(1, 0, 0, 14)
+                SliderBar.AnchorPoint = Vector2.new(0, 0.5)
+                SliderBar.ZIndex = 1
+                SliderBar.Active = false
+                
+                SliderBarC.CornerRadius = UDim.new(0, 7)
+                SliderBarC.Name = "SliderBarC"
+                SliderBarC.Parent = SliderBar
+                
+                -- 滑块填充条（可拖动）- 增强拖动功能
+                SliderFill.Name = "SliderFill"
+                SliderFill.Parent = SliderBar
+                SliderFill.BackgroundColor3 = config.SliderBar_Color
+                SliderFill.BorderSizePixel = 0
+                SliderFill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+                SliderFill.ZIndex = 2
+                SliderFill.Active = true
+                
+                SliderFillC.CornerRadius = UDim.new(0, 7)
+                SliderFillC.Name = "SliderFillC"
+                SliderFillC.Parent = SliderFill
+                
+                -- 数值显示框
+                SliderValue.Name = "SliderValue"
+                SliderValue.Parent = SliderBack
+                SliderValue.BackgroundColor3 = config.Bg_Color
+                SliderValue.BorderSizePixel = 0
+                SliderValue.Position = UDim2.new(0.78, 0, 0.25, 0)
+                SliderValue.Size = UDim2.new(0, 50, 0, 24)
+                SliderValue.Font = Enum.Font.Gotham
+                SliderValue.Text = tostring(default)
+                SliderValue.TextColor3 = config.TextColor
+                SliderValue.TextSize = 14
+                SliderValue.TextXAlignment = Enum.TextXAlignment.Center
+                SliderValue.ClearTextOnFocus = false
+                
+                SliderValueC.CornerRadius = UDim.new(0, 12)
+                SliderValueC.Name = "SliderValueC"
+                SliderValueC.Parent = SliderValue
+                
+                -- 减号按钮
+                MinButton.Name = "MinButton"
+                MinButton.Parent = SliderBack
+                MinButton.BackgroundColor3 = config.Bg_Color
+                MinButton.BorderSizePixel = 0
+                MinButton.Position = UDim2.new(0.3, -10, 0.25, 0)
+                MinButton.Size = UDim2.new(0, 20, 0, 20)
+                MinButton.Font = Enum.Font.GothamBold
+                MinButton.Text = "-"
+                MinButton.TextColor3 = config.TextColor
+                MinButton.TextSize = 14
+                MinButton.AutoButtonColor = false
+                
+                local MinButtonC = Instance.new("UICorner")
+                MinButtonC.CornerRadius = UDim.new(1, 0)
+                MinButtonC.Parent = MinButton
+                
+                -- 加号按钮
+                AddButton.Name = "AddButton"
+                AddButton.Parent = SliderBack
+                AddButton.BackgroundColor3 = config.Bg_Color
+                AddButton.BorderSizePixel = 0
+                AddButton.Position = UDim2.new(0.75, -10, 0.25, 0)
+                AddButton.Size = UDim2.new(0, 20, 0, 20)
+                AddButton.Font = Enum.Font.GothamBold
+                AddButton.Text = "+"
+                AddButton.TextColor3 = config.TextColor
+                AddButton.TextSize = 14
+                AddButton.AutoButtonColor = false
+                
+                local AddButtonC = Instance.new("UICorner")
+                AddButtonC.CornerRadius = UDim.new(1, 0)
+                AddButtonC.Parent = AddButton
+                
+                -- 按钮悬停效果
+                local function setupButtonHover(button)
+                    button.MouseEnter:Connect(function()
+                        services.TweenService:Create(button, TweenInfo.new(0.2), {
+                            BackgroundColor3 = Color3.fromRGB(70, 70, 80),
+                            Size = UDim2.new(0, 22, 0, 22)
+                        }):Play()
+                    end)
+                    
+                    button.MouseLeave:Connect(function()
+                        services.TweenService:Create(button, TweenInfo.new(0.2), {
+                            BackgroundColor3 = config.Bg_Color,
+                            Size = UDim2.new(0, 20, 0, 20)
+                        }):Play()
+                    end)
+                end
+                
+                setupButtonHover(MinButton)
+                setupButtonHover(AddButton)
+                
+                local funcs = {
+                    SetValue = function(self, value)
+                        local percent
+                        
+                        if value then
+                            percent = (value - min)/(max - min)
+                        else
+                            -- 获取鼠标在滑块条上的精确位置
+                            local mouse = services.Players.LocalPlayer:GetMouse()
+                            local barPos = SliderBar.AbsolutePosition.X
+                            local barSize = SliderBar.AbsoluteSize.X
+                            local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
+                            percent = (mouseX - barPos) / barSize
+                        end
+                        
+                        if precise then
+                            value = value or tonumber(string.format("%.2f", min + (max - min) * percent))
+                        else
+                            value = value or math.floor(min + (max - min) * percent + 0.5)
+                        end
+                        
+                        value = math.clamp(value, min, max)
+                        library.flaFengYu[flag] = tonumber(value)
+                        SliderValue.Text = tostring(value)
+                        
+                        -- 更新滑块显示
+                        local newPercent = (value - min)/(max - min)
+                        
+                        services.TweenService:Create(SliderFill, TweenInfo.new(0.1), {
+                            Size = UDim2.new(newPercent, 0, 1, 0)
+                        }):Play()
+                        
+                        callback(tonumber(value))
+                    end,
+                    
+                    GetValue = function(self)
+                        return library.flaFengYu[flag]
+                    end
+                }
+                
+                -- 初始化值
+                funcs:SetValue(default)
+                
+                local dragging = false
+                
+                -- 强化拖动功能 - 整个滑块条都可以点击
+                SliderBar.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = true
+                        funcs:SetValue()
+                    end
+                end)
+                
+                SliderFill.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = true
+                    end
+                end)
+                
+                SliderBar.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = false
+                    end
+                end)
+                
+                SliderFill.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = false
+                    end
+                end)
+                
+                -- 实时拖动更新
+                local dragConnection
+                dragConnection = services.RunService.RenderStepped:Connect(function()
+                    if dragging then
+                        funcs:SetValue() -- 实时更新值和显示
+                    end
+                end)
+                
+                -- 确保鼠标释放时停止拖动
+                UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = false
+                    end
+                end)
+                
+                -- 加减按钮功能
+                MinButton.MouseButton1Click:Connect(function()
+                    local currentValue = library.flaFengYu[flag]
+                    currentValue = math.clamp(currentValue - 1, min, max)
+                    funcs:SetValue(currentValue)
+                end)
+                
+                AddButton.MouseButton1Click:Connect(function()
+                    local currentValue = library.flaFengYu[flag]
+                    currentValue = math.clamp(currentValue + 1, min, max)
+                    funcs:SetValue(currentValue)
+                end)
+                
+                -- 文本框输入功能
+                SliderValue.FocusLost:Connect(function()
+                    if SliderValue.Text == "" then
+                        funcs:SetValue(default)
+                        return
+                    end
+                    
+                    local numValue = tonumber(SliderValue.Text)
+                    if numValue then
+                        numValue = math.clamp(numValue, min, max)
+                        funcs:SetValue(numValue)
+                    else
+                        funcs:SetValue(default)
+                    end
+                end)
+                
+                -- 文本框输入过滤
+                SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
+                    local text = SliderValue.Text
+                    local filtered = text:gsub("[^%d.]", "")
+                    
+                    if text ~= filtered then
+                        SliderValue.Text = filtered
+                    end
+                end)
+                
+                return funcs
             end
-            
-            if precise then
-                value = value or tonumber(string.format("%.2f", min + (max - min) * percent))
-            else
-                value = value or math.floor(min + (max - min) * percent + 0.5)
-            end
-            
-            value = math.clamp(value, min, max)
-            library.flaFengYu[flag] = tonumber(value)
-            SliderValue.Text = tostring(value)
-            
-            -- 更新滑块显示
-            local newPercent = (value - min)/(max - min)
-            
-            services.TweenService:Create(SliderFill, TweenInfo.new(0.1), {
-                Size = UDim2.new(newPercent, 0, 1, 0)
-            }):Play()
-            
-            callback(tonumber(value))
-        end,
-        
-        GetValue = function(self)
-            return library.flaFengYu[flag]
-        end
-    }
-    
-    -- 初始化值
-    funcs:SetValue(default)
-    
-    local dragging = false
-    
-    -- 强化拖动功能 - 整个滑块条都可以点击
-    SliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            funcs:SetValue()
-        end
-    end)
-    
-    SliderFill.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-        end
-    end)
-    
-    SliderBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    SliderFill.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    -- 实时拖动更新
-    local dragConnection
-    dragConnection = services.RunService.RenderStepped:Connect(function()
-        if dragging then
-            funcs:SetValue() -- 实时更新值和显示
-        end
-    end)
-    
-    -- 确保鼠标释放时停止拖动
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    -- 加减按钮功能
-    MinButton.MouseButton1Click:Connect(function()
-        local currentValue = library.flaFengYu[flag]
-        currentValue = math.clamp(currentValue - 1, min, max)
-        funcs:SetValue(currentValue)
-    end)
-    
-    AddButton.MouseButton1Click:Connect(function()
-        local currentValue = library.flaFengYu[flag]
-        currentValue = math.clamp(currentValue + 1, min, max)
-        funcs:SetValue(currentValue)
-    end)
-    
-    -- 文本框输入功能
-    SliderValue.FocusLost:Connect(function()
-        if SliderValue.Text == "" then
-            funcs:SetValue(default)
-            return
-        end
-        
-        local numValue = tonumber(SliderValue.Text)
-        if numValue then
-            numValue = math.clamp(numValue, min, max)
-            funcs:SetValue(numValue)
-        else
-            funcs:SetValue(default)
-        end
-    end)
-    
-    -- 文本框输入过滤
-    SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
-        local text = SliderValue.Text
-        local filtered = text:gsub("[^%d.]", "")
-        
-        if text ~= filtered then
-            SliderValue.Text = filtered
-        end
-    end)
-    
-    return funcs
-end
             
             function section.Dropdown(section, text, flag, options, callback)
                 callback = callback or function() end
@@ -1469,12 +1541,14 @@ end
     return window
 end
 
+-- 销毁函数
 function UiDestroy()
     if FengYu then
         FengYu:Destroy()
     end
 end
 
+-- 切换UI函数
 function ToggleUILib()
     ToggleUI = not ToggleUI
     FengYu.Enabled = ToggleUI
