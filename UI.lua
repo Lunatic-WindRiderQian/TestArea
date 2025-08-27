@@ -964,7 +964,7 @@ function library.new(library, name, theme)
             end
             
             -- 修复后的滑块功能 - 现在可以正常滑动
-            function section.Slider(section, text, flag, default, min, max, precise, callback)
+function section.Slider(section, text, flag, default, min, max, precise, callback)
     callback = callback or function() end
     min = min or 1
     max = max or 10
@@ -1052,26 +1052,11 @@ function library.new(library, name, theme)
     -- 滑块填充条（可拖动）- 增强拖动功能
     SliderFill.Name = "SliderFill"
     SliderFill.Parent = SliderBar
-    SliderFill.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+    SliderFill.BackgroundColor3 = config.SliderBar_Color
     SliderFill.BorderSizePixel = 0
     SliderFill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
     SliderFill.ZIndex = 2
     SliderFill.Active = true
-    
-    -- 添加拖动手柄（确保可以点击）
-    local SliderHandle = Instance.new("Frame")
-    SliderHandle.Name = "SliderHandle"
-    SliderHandle.Parent = SliderFill
-    SliderHandle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SliderHandle.BorderSizePixel = 0
-    SliderHandle.Size = UDim2.new(0, 16, 0, 16)
-    SliderHandle.Position = UDim2.new(1, -8, 0.5, -8)
-    SliderHandle.AnchorPoint = Vector2.new(0.5, 0.5)
-    SliderHandle.ZIndex = 3
-    
-    local SliderHandleC = Instance.new("UICorner")
-    SliderHandleC.CornerRadius = UDim.new(1, 0)
-    SliderHandleC.Parent = SliderHandle
     
     SliderFillC.CornerRadius = UDim.new(0, 7)
     SliderFillC.Name = "SliderFillC"
@@ -1193,41 +1178,8 @@ function library.new(library, name, theme)
     funcs:SetValue(default)
     
     local dragging = false
-    local dragStartPosition = nil
-    local dragStartPercent = nil
     
-    -- 强化拖动功能
-    local function startDragging(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            -- 记录开始位置
-            local mouse = services.Players.LocalPlayer:GetMouse()
-            local barPos = SliderBar.AbsolutePosition.X
-            local barSize = SliderBar.AbsoluteSize.X
-            dragStartPosition = mouse.X
-            dragStartPercent = (library.flaFengYu[flag] - min) / (max - min)
-            
-            -- 立即更新到鼠标位置
-            funcs:SetValue()
-        end
-    end
-    
-    local function stopDragging(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-            dragStartPosition = nil
-            dragStartPercent = nil
-        end
-    end
-    
-    -- 为填充条和手柄都添加拖动事件
-    SliderFill.InputBegan:Connect(startDragging)
-    SliderHandle.InputBegan:Connect(startDragging)
-    
-    SliderFill.InputEnded:Connect(stopDragging)
-    SliderHandle.InputEnded:Connect(stopDragging)
-    
-    -- 鼠标移动时也支持拖动（即使不在填充条上开始）
+    -- 强化拖动功能 - 整个滑块条都可以点击
     SliderBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
@@ -1235,20 +1187,29 @@ function library.new(library, name, theme)
         end
     end)
     
-    SliderBar.InputEnded:Connect(stopDragging)
+    SliderFill.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+        end
+    end)
     
-    -- 实时拖动更新 - 使用更可靠的鼠标跟踪
+    SliderBar.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    SliderFill.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    -- 实时拖动更新
     local dragConnection
     dragConnection = services.RunService.RenderStepped:Connect(function()
         if dragging then
-            local mouse = services.Players.LocalPlayer:GetMouse()
-            local barPos = SliderBar.AbsolutePosition.X
-            local barSize = SliderBar.AbsoluteSize.X
-            
-            -- 确保鼠标在滑块范围内
-            if mouse.X >= barPos and mouse.X <= barPos + barSize then
-                funcs:SetValue() -- 实时更新值和显示
-            end
+            funcs:SetValue() -- 实时更新值和显示
         end
     end)
     
