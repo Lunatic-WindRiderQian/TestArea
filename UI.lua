@@ -1088,7 +1088,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     MinButton.Position = UDim2.new(0.3, -10, 0.25, 0)
     MinButton.Size = UDim2.new(0, 20, 0, 20)
     MinButton.Font = Enum.Font.GothamBold
-    MinButton.Text = "关"
+    MinButton.Text = "减"
     MinButton.TextColor3 = config.TextColor
     MinButton.TextSize = 14
     MinButton.AutoButtonColor = false
@@ -1105,7 +1105,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     AddButton.Position = UDim2.new(0.75, -10, 0.25, 0)
     AddButton.Size = UDim2.new(0, 20, 0, 20)
     AddButton.Font = Enum.Font.GothamBold
-    AddButton.Text = "开"
+    AddButton.Text = "加"
     AddButton.TextColor3 = config.TextColor
     AddButton.TextSize = 14
     AddButton.AutoButtonColor = false
