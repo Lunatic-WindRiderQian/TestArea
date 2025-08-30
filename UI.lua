@@ -65,7 +65,7 @@ local config = {
     Textbox_Color = Color3.fromRGB(22, 22, 22),
     Dropdown_Color = Color3.fromRGB(22, 22, 22),
     Keybind_Color = Color3.fromRGB(22, 22, 22),
-    Label_Color = Color3.fromRGB(22, 22, 22),
+    Label_极Color = Color3.fromRGB(22, 22, 22),
     Slider_Color = Color3.fromRGB(22, 22, 22),
     SliderBar_Color = Color3.fromRGB(37, 254, 152),
     Toggle_Color = Color3.fromRGB(22, 22, 22),
@@ -124,7 +124,7 @@ function Ripple(obj)
     if not obj or not obj.Parent then return end
     
     task.spawn(function()
-        if obj.ClipsDescendants ~= true then
+        if obj.极ClipsDescendants ~= true then
             obj.ClipsDescendants = true
         end
         
@@ -143,16 +143,16 @@ function Ripple(obj)
         local y = (mouse.Y - Ripple.AbsolutePosition.Y) / obj.AbsoluteSize.Y
         Ripple.Position = UDim2.new(x, 0, y, 0)
         
-        services.TweenService:Create(Ripple, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        services.TweenService:Create(Ripple, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             Position = UDim2.new(-0.5, 0, -0.5, 0),
             Size = UDim2.new(2, 0, 2, 0)
         }):Play()
         
-        services.TweenService:Create(Ripple, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        services.TweenService:Create(Ripple, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             ImageTransparency = 1
         }):Play()
         
-        task.wait(0.4)
+        task.wait(0.3)
         Ripple:Destroy()
     end)
 end
@@ -165,26 +165,26 @@ function switchTab(new)
     if old == nil then
         new[2].Visible = true
         library.currentTab = new
-        services.TweenService:Create(new[1], TweenInfo.new(0.2), { ImageTransparency = 0 }):Play()
-        services.TweenService:Create(new[1].TabText, TweenInfo.new(0.2), { TextTransparency = 0 }):Play()
+        services.TweenService:Create(new[极1], TweenInfo.new(0.15), { ImageTransparency = 0 }):Play()
+        services.TweenService:Create(new[1].TabText, TweenInfo.new(0.15), { TextTransparency = 0 }):Play()
         return
     end
     
     if old[1] == new[1] then return end
     
     switchingTabs = true
-    library.currentTab = new
+    library.current极Tab = new
     
-    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tweenInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     services.TweenService:Create(old[1], tweenInfo, { ImageTransparency = 0.5 }):Play()
-    services.TweenService:Create(new[1], tweenInfo, { ImageTransparency = 0 }):Play()
+    services.TweenService:Create(new[1], tweenInfo, { ImageTransparency = 极0 }):Play()
     services.TweenService:Create(old[1].TabText, tweenInfo, { TextTransparency = 0.5 }):Play()
     services.TweenService:Create(new[1].TabText, tweenInfo, { TextTransparency = 0 }):Play()
     
     old[2].Visible = false
     new[2].Visible = true
     
-    task.wait(0.2)
+    task.wait(0.15)
     switchingTabs = false
 end
 
@@ -197,7 +197,7 @@ local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.BackgroundColor3 = config.Bg_Color
+Main.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
 Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 Main.Size = UDim2.new(0, 600, 0, 380)
 Main.ZIndex = 1
@@ -209,12 +209,33 @@ local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 12)
 MainCorner.Parent = Main
 
--- 添加边框
+-- 恢复原来的UI背景图外框（灰色边框）
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
-MainStroke.Color = Color3.fromRGB(50, 50, 50)
+MainStroke.Color = Color3.fromRGB(80, 80, 90) -- 原来的灰色边框
 MainStroke.Thickness = 1
-MainStroke.Transparency = 0.5
+MainStroke.Transparency = 0.3
+
+local GlassEffect = Instance.new("Frame")
+GlassEffect.Name = "GlassEffect"
+GlassEffect.Parent = Main
+GlassEffect.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+GlassEffect.BackgroundTransparency = 0.05
+GlassEffect.Size = UDim2.new(1, 0, 1, 0)
+GlassEffect.ZIndex = 0
+
+local GlassCorner = Instance.new("UICorner")
+Glass极Corner.CornerRadius = UDim.new(0, 12)
+GlassCorner.Parent = GlassEffect
+
+local GlassGradient = Instance.new("UIGradient")
+GlassGradient.Parent = GlassEffect
+GlassGradient.Rotation = 120
+GlassGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(70, 70, 80)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(80, 80, 90)),
+    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(70, 70, 80))
+})
 
 local Open = Instance.new("ImageButton")
 local UICorner = Instance.new("UICorner")
@@ -232,7 +253,7 @@ Open.ImageColor3 = config.AccentColor
 
 Open.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
-    services.TweenService:Create(Open, TweenInfo.new(0.2), {Rotation = Open.Rotation + 180}):Play()
+    services.TweenService:Create(Open, TweenInfo.new(0.15), {Rotation = Open.Rotation + 180}):Play()
 end)
 
 UICorner.CornerRadius = UDim.new(0, 12)
@@ -241,99 +262,38 @@ UICorner.Parent = Open
 services.UserInputService.InputEnded:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.LeftControl then
         Main.Visible = not Main.Visible
-        services.TweenService:Create(Open, TweenInfo.new(0.2), {Rotation = Open.Rotation + 180}):Play()
+        services.TweenService:Create(Open, Tween极Info.new(0.15), {Rotation = Open.Rotation + 180}):Play()
     end
 end)
-
--- 创建超级美观的背景
-local MainBackground = Instance.new("Frame")
-MainBackground.Name = "MainBackground"
-MainBackground.Parent = Main
-MainBackground.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
-MainBackground.Size = UDim2.new(1, 0, 1, 0)
-MainBackground.ZIndex = 0
-
--- 添加圆角
-local MainBgCorner = Instance.new("UICorner")
-MainBgCorner.CornerRadius = UDim.new(0, 12)
-MainBgCorner.Parent = MainBackground
-
--- 创建渐变背景效果
-local BackgroundGradient = Instance.new("UIGradient")
-BackgroundGradient.Parent = MainBackground
-BackgroundGradient.Rotation = 120
-BackgroundGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(15, 15, 25)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(25, 20, 40)),
-    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(15, 15, 25))
-})
-
--- 添加装饰性几何图案
-local DecorPattern = Instance.new("ImageLabel")
-DecorPattern.Name = "DecorPattern"
-DecorPattern.Parent = MainBackground
-DecorPattern.BackgroundTransparency = 1
-DecorPattern.Size = UDim2.new(1, 0, 1, 0)
-DecorPattern.Image = "rbxassetid://8992233754" -- 简约几何图案
-DecorPattern.ImageColor3 = Color3.fromRGB(30, 30, 45)
-DecorPattern.ImageTransparency = 0.9
-DecorPattern.ScaleType = Enum.ScaleType.Tile
-DecorPattern.TileSize = UDim2.new(0, 100, 0, 100)
-DecorPattern.ZIndex = 1
-
--- 添加简约装饰元素
-local DecorCircle1 = Instance.new("Frame")
-DecorCircle1.Parent = MainBackground
-DecorCircle1.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
-DecorCircle1.BackgroundTransparency = 0.9
-DecorCircle1.Size = UDim2.new(0, 120, 0, 120)
-DecorCircle1.Position = UDim2.new(0.8, 0, -0.1, 0)
-DecorCircle1.ZIndex = 1
-
-local DecorCircle1Corner = Instance.new("UICorner")
-DecorCircle1Corner.CornerRadius = UDim.new(1, 0)
-DecorCircle1Corner.Parent = DecorCircle1
-
-local DecorCircle2 = Instance.new("Frame")
-DecorCircle2.Parent = MainBackground
-DecorCircle2.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-DecorCircle2.BackgroundTransparency = 0.9
-DecorCircle2.Size = UDim2.new(0, 80, 0, 80)
-DecorCircle2.Position = UDim2.new(-0.05, 0, 0.7, 0)
-DecorCircle2.ZIndex = 1
-
-local DecorCircle2Corner = Instance.new("UICorner")
-DecorCircle2Corner.CornerRadius = UDim.new(1, 0)
-DecorCircle2Corner.Parent = DecorCircle2
-
--- 添加简约边框效果
-local InnerStroke = Instance.new("UIStroke")
-InnerStroke.Parent = MainBackground
-InnerStroke.Color = Color3.fromRGB(60, 60, 80)
-InnerStroke.Thickness = 2
-InnerStroke.Transparency = 0.8
 
 local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
 TabMain.Position = UDim2.new(0.217, 0, 0, 3)
-TabMain.Size = UDim2.new(0, 468, 0, 374)
+TabMain.Size = UDim极2.new(0, 468, 0, 374)
 TabMain.ZIndex = 10
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
 Side.Parent = Main
-Side.BackgroundColor3 = config.TabColor
+Side.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 0)
 Side.Size = UDim2.new(0, 120, 0, 380)
 
--- 添加圆角
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 12)
 SideCorner.Parent = Side
+
+local SideGradient = Instance.new("UIGradient")
+SideGradient.Parent = Side
+SideGradient.Rotation = 90
+SideGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(65, 65, 75)),
+    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(70, 70, 80))
+})
 
 local TabBtns = Instance.new("ScrollingFrame")
 TabBtns.Name = "TabBtns"
@@ -360,10 +320,18 @@ ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
 ScriptTitle.Size = UDim2.new(0, 110, 0, 20)
 ScriptTitle.Font = Enum.Font.GothamSemibold
 ScriptTitle.Text = "Delta"
-ScriptTitle.TextColor3 = config.AccentColor
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = true
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+-- 左上角名字颜色变得更亮（纯白色带轻微发光）
+ScriptTitle.TextColor3 = Color3.fromRGB(255, 255, 255) -- 纯白色
+
+-- 添加发光效果
+local TitleGlow = Instance.new("UIGradient")
+TitleGlow.Parent = ScriptTitle
+TitleGlow.Transparency = NumberSequence.new(0.2)
+TitleGlow.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
 
 function library.new(library, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
@@ -396,8 +364,19 @@ function library.new(library, name, theme)
         Tab.Active = true
         Tab.BackgroundTransparency = 1
         Tab.Size = UDim2.new(1, 0, 1, 0)
-        Tab.ScrollBarThickness = 2
+        Tab.ScrollBarThickness = 8 -- 更厚的滚动条
+        Tab.ScrollBarImageColor3 = Color3.fromRGB(120, 120, 140)
+        Tab.ScrollBarImageTransparency = 0.2
         Tab.Visible = false
+        
+        -- 加强滚动功能：只允许上下滑动
+        Tab.ElasticBehavior = Enum.ElasticBehavior.Always
+        Tab.VerticalScrollBarInset = Enum.ScrollBarInset.Always
+        Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.Never -- 禁用水平滚动
+        
+        -- 添加平滑滚动
+        Tab.ScrollingDirection = Enum.ScrollingDirection.Y
+        Tab.ScrollingEnabled = true
         
         TabIco.Name = "TabIco"
         TabIco.Parent = TabBtns
@@ -409,10 +388,10 @@ function library.new(library, name, theme)
         TabIco.ImageColor3 = config.AccentColor
         
         TabText.Name = "TabText"
-        TabText.Parent = TabIco
+        TabText.Parent = TabI极co
         TabText.BackgroundTransparency = 1
         TabText.Position = UDim2.new(1.416, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 86, 0, 24)
+        TabText.Size = UDim2.new(0, 86, 极0, 24)
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
@@ -432,7 +411,7 @@ function library.new(library, name, theme)
         TabL.Name = "TabL"
         TabL.Parent = Tab
         TabL.SortOrder = Enum.SortOrder.LayoutOrder
-        TabL.Padding = UDim.new(0, 4)
+        TabL.Padding = UDim.new(0, 8)
         
         TabBtn.MouseButton1Click:Connect(function()
             Ripple(TabBtn)
@@ -443,8 +422,22 @@ function library.new(library, name, theme)
             switchTab({ TabIco, Tab })
         end
         
+        -- 加强滚动控制
         TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 8)
+            local contentSize = TabL.AbsoluteContentSize.Y + 30 -- 增加更多空间
+            Tab.CanvasSize = UDim2.new(0, 0, 0, contentSize)
+            
+            -- 防止自动回弹
+            if Tab.CanvasPosition.Y > contentSize - Tab.AbsoluteSize.Y then
+                Tab.CanvasPosition = Vector2.new(0, math.max(0, contentSize - Tab.AbsoluteSize.Y))
+            end
+        end)
+        
+        -- 添加强制垂直滚动限制
+        Tab:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+            if Tab.CanvasPosition.X ~= 0 then
+                Tab.CanvasPosition = Vector2.new(0, Tab.CanvasPosition.Y)
+            end
         end)
         
         local tab = {}
@@ -461,7 +454,7 @@ function library.new(library, name, theme)
             
             Section.Name = "Section"
             Section.Parent = Tab
-            Section.BackgroundColor3 = config.TabColor
+            Section.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
             Section.BackgroundTransparency = 1
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
@@ -497,14 +490,14 @@ function library.new(library, name, theme)
             SectionOpened.BorderSizePixel = 0
             SectionOpened.Size = UDim2.new(0, 26, 0, 26)
             SectionOpened.Image = "rbxassetid://84830962019412"
-            SectionOpened.ImageColor3 = config.AccentColor
             SectionOpened.ImageTransparency = 1
+            SectionOpened.ImageColor3 = config.AccentColor
             
             SectionToggle.Name = "SectionToggle"
             SectionToggle.Parent = SectionOpen
             SectionToggle.BackgroundTransparency = 1
             SectionToggle.BorderSizePixel = 0
-            SectionToggle.Size = UDim2.new(0, 26, 0, 26)
+            SectionToggle.Size = UDim2.new(0, 极26, 0, 26)
             
             Objs.Name = "Objs"
             Objs.Parent = Section
@@ -527,15 +520,15 @@ function library.new(library, name, theme)
             
             SectionToggle.MouseButton1Click:Connect(function()
                 open = not open
-                services.TweenService:Create(Section, TweenInfo.new(0.2), {
+                services.TweenService:Create(Section, TweenInfo.new(0.15), {
                     Size = UDim2.new(0.981, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 8 or 36)
                 }):Play()
                 
-                services.TweenService:Create(SectionOpened, TweenInfo.new(0.2), {
+                services.TweenService:Create(SectionOpened, TweenInfo.new(0.15), {
                     ImageTransparency = open and 0 or 1
                 }):Play()
                 
-                services.TweenService:Create(SectionOpen, TweenInfo.new(0.2), {
+                services.TweenService:Create(SectionOpen, TweenInfo.new(0.15), {
                     ImageTransparency = open and 1 or 0
                 }):Play()
             end)
@@ -562,7 +555,7 @@ function library.new(library, name, theme)
                 
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
-                Btn.BackgroundColor3 = config.Button_Color
+                Btn.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
                 Btn.BorderSizePixel = 0
                 Btn.Size = UDim2.new(0, 448, 0, 38)
                 Btn.AutoButtonColor = false
@@ -577,18 +570,18 @@ function library.new(library, name, theme)
                 BtnC.Parent = Btn
                 
                 Btn.MouseEnter:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+                    services.TweenService:Create(Btn, TweenInfo.new(0.15), {
                         BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.Button_Color.R * 255 * 1.1),
-                            math.floor(config.Button_Color.G * 255 * 1.1),
-                            math.floor(config.Button_Color.B * 255 * 1.1)
+                            math.floor(55 * 1.1),
+                            math.floor(55 * 1.1),
+                            math.floor(65 * 1.1)
                         )
-                    }):Play()
+                   极 }):Play()
                 end)
                 
                 Btn.MouseLeave:Connect(function()
-                    services.TweenService:Create(Btn, TweenService.new(0.2), {
-                        BackgroundColor3 = config.Button_Color
+                    services.TweenService:Create(Btn, TweenInfo.new(0.15), {
+                        BackgroundColor3 = Color3.fromRGB(55, 55, 65)
                     }):Play()
                 end)
                 
@@ -596,137 +589,6 @@ function library.new(library, name, theme)
                     Ripple(Btn)
                     callback()
                 end)
-            end
-            
-            function section:Label(text)
-                local LabelModule = Instance.new("Frame")
-                local TextLabel = Instance.new("TextLabel")
-                local LabelC = Instance.new("UICorner")
-                
-                LabelModule.Name = "LabelModule"
-                LabelModule.Parent = Objs
-                LabelModule.BackgroundTransparency = 1
-                LabelModule.BorderSizePixel = 0
-                LabelModule.Size = UDim2.new(0, 448, 0, 19)
-                
-                TextLabel.Parent = LabelModule
-                TextLabel.BackgroundColor3 = config.Label_Color
-                TextLabel.Size = UDim2.new(0, 448, 0, 22)
-                TextLabel.Font = Enum.Font.GothamSemibold
-                TextLabel.Text = text
-                TextLabel.TextColor3 = config.SecondaryTextColor
-                TextLabel.TextSize = 14
-                
-                LabelC.CornerRadius = UDim.new(0, 6)
-                LabelC.Name = "LabelC"
-                LabelC.Parent = TextLabel
-                
-                return TextLabel
-            end
-            
-            function section.Toggle(section, text, flag, enabled, callback)
-                callback = callback or function() end
-                enabled = enabled or false
-                assert(text, "No text provided")
-                assert(flag, "No flag provided")
-                library.flaFengYu[flag] = enabled
-
-                local ToggleModule = Instance.new("Frame")
-                local ToggleBtn = Instance.new("TextButton")
-                local ToggleBtnC = Instance.new("UICorner")
-                local ToggleDisable = Instance.new("Frame")
-                local ToggleSwitch = Instance.new("Frame")
-                local ToggleSwitchC = Instance.new("UICorner")
-                local ToggleDisableC = Instance.new("UICorner")
-                
-                ToggleModule.Name = "ToggleModule"
-                ToggleModule.Parent = Objs
-                ToggleModule.BackgroundTransparency = 1
-                ToggleModule.BorderSizePixel = 0
-                ToggleModule.Size = UDim2.new(0, 448, 0, 38)
-                
-                ToggleBtn.Name = "ToggleBtn"
-                ToggleBtn.Parent = ToggleModule
-                ToggleBtn.BackgroundColor3 = config.Toggle_Color
-                ToggleBtn.BorderSizePixel = 0
-                ToggleBtn.Size = UDim2.new(0, 448, 0, 38)
-                ToggleBtn.AutoButtonColor = false
-                ToggleBtn.Font = Enum.Font.GothamSemibold
-                ToggleBtn.Text = "   " .. text
-                ToggleBtn.TextColor3 = config.TextColor
-                ToggleBtn.TextSize = 16
-                ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
-                
-                ToggleBtnC.CornerRadius = UDim.new(0, 6)
-                ToggleBtnC.Name = "ToggleBtnC"
-                ToggleBtnC.Parent = ToggleBtn
-                
-                ToggleDisable.Name = "ToggleDisable"
-                ToggleDisable.Parent = ToggleBtn
-                ToggleDisable.BackgroundColor3 = config.Bg_Color
-                ToggleDisable.BorderSizePixel = 0
-                ToggleDisable.Position = UDim2.new(0.901, 0, 0.208, 0)
-                ToggleDisable.Size = UDim2.new(0, 36, 0, 22)
-                
-                ToggleSwitch.Name = "ToggleSwitch"
-                ToggleSwitch.Parent = ToggleDisable
-                ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
-                ToggleSwitch.Size = UDim2.new(0, 24, 0, 22)
-                ToggleSwitch.Position = UDim2.new(0, enabled and 12 or 0, 0, 0)
-                
-                ToggleSwitchC.CornerRadius = UDim.new(0, 6)
-                ToggleSwitchC.Name = "ToggleSwitchC"
-                ToggleSwitchC.Parent = ToggleSwitch
-                
-                ToggleDisableC.CornerRadius = UDim.new(0, 6)
-                ToggleDisableC.Name = "ToggleDisableC"
-                ToggleDisableC.Parent = ToggleDisable
-                
-                ToggleBtn.MouseEnter:Connect(function()
-                    services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {
-                        BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.Toggle_Color.R * 255 * 1.1),
-                            math.floor(config.Toggle_Color.G * 255 * 1.1),
-                            math.floor(config.Toggle_Color.B * 255 * 1.1)
-                        )
-                    }):Play()
-                end)
-                
-                ToggleBtn.MouseLeave:Connect(function()
-                    services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {
-                        BackgroundColor3 = config.Toggle_Color
-                    }):Play()
-                end)
-                
-                local funcs = {
-                    SetState = function(self, state)
-                        if state == nil then
-                            state = not library.flaFengYu[flag]
-                        end
-                        if library.flaFengYu[flag] == state then
-                            return
-                        end
-                        
-                        services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.2), {
-                            Position = UDim2.new(0, state and 12 or 0, 0, 0),
-                            BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
-                        }):Play()
-                        
-                        library.flaFengYu[flag] = state
-                        callback(state)
-                    end,
-                    Module = ToggleModule
-                }
-                
-                if enabled ~= false then
-                    funcs:SetState(true)
-                end
-                
-                ToggleBtn.MouseButton1Click:Connect(function()
-                    funcs:SetState()
-                end)
-                
-                return funcs
             end
             
             function section.Keybind(section, text, default, callback)
