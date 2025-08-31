@@ -1276,7 +1276,7 @@ end
     local DropdownBtnC = Instance.new("UICorner")
     local DropdownText = Instance.new("TextLabel")
     local DropdownToggle = Instance.new("ImageButton")
-    local DropdownContainer = Instance.new("Frame")
+    local DropdownContainer = Instance.new("ScrollingFrame")
     local DropdownContainerL = Instance.new("UIListLayout")
     
     DropdownModule.Name = "DropdownModule"
@@ -1330,14 +1330,22 @@ end
     DropdownToggleCorner.CornerRadius = UDim.new(1, 0)
     DropdownToggleCorner.Parent = DropdownToggle
     
-    -- 选项容器
+    -- 选项容器 - 使用ScrollingFrame确保选项可见
     DropdownContainer.Name = "DropdownContainer"
     DropdownContainer.Parent = DropdownModule
-    DropdownContainer.BackgroundTransparency = 1
+    DropdownContainer.BackgroundColor3 = config.TabColor
     DropdownContainer.BorderSizePixel = 0
     DropdownContainer.Position = UDim2.new(0, 0, 1, 4)
     DropdownContainer.Size = UDim2.new(1, 0, 0, 0)
     DropdownContainer.ClipsDescendants = true
+    DropdownContainer.ScrollBarThickness = 3
+    DropdownContainer.ScrollBarImageColor3 = config.AccentColor
+    DropdownContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+    DropdownContainer.Visible = false
+    
+    local ContainerCorner = Instance.new("UICorner")
+    ContainerCorner.CornerRadius = UDim.new(0, 6)
+    ContainerCorner.Parent = DropdownContainer
     
     DropdownContainerL.Name = "DropdownContainerL"
     DropdownContainerL.Parent = DropdownContainer
@@ -1403,18 +1411,26 @@ end
             Rotation = open and 180 or 0
         }):Play()
         
-        -- 展开/收起容器
-        services.TweenService:Create(DropdownModule, TweenInfo.new(0.2), {
-            Size = UDim2.new(0, 448, 0, open and 38 + DropdownContainerL.AbsoluteContentSize.Y + 4 or 38)
-        }):Play()
-        
         if open then
-            -- 显示所有选项
-            for _, option in next, DropdownContainer:GetChildren() do
-                if option:IsA("TextButton") then
-                    option.Visible = true
-                end
-            end
+            -- 显示下拉容器
+            DropdownContainer.Visible = true
+            local contentHeight = math.min(DropdownContainerL.AbsoluteContentSize.Y, 150) -- 限制最大高度
+            services.TweenService:Create(DropdownModule, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, 448, 0, 38 + contentHeight + 8)
+            }):Play()
+            services.TweenService:Create(DropdownContainer, TweenInfo.new(0.2), {
+                Size = UDim2.new(1, 0, 0, contentHeight)
+            }):Play()
+        else
+            -- 收起下拉容器
+            services.TweenService:Create(DropdownModule, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, 448, 0, 38)
+            }):Play()
+            services.TweenService:Create(DropdownContainer, TweenInfo.new(0.2), {
+                Size = UDim2.new(1, 0, 0, 0)
+            }):Play()
+            task.wait(0.2)
+            DropdownContainer.Visible = false
         end
     end
     
@@ -1427,9 +1443,17 @@ end
         ToggleDropdown()
     end)
     
+    -- 更新容器大小
     DropdownContainerL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        DropdownContainer.CanvasSize = UDim2.new(0, 0, 0, DropdownContainerL.AbsoluteContentSize.Y)
         if open then
-            DropdownModule.Size = UDim2.new(0, 448, 0, 38 + DropdownContainerL.AbsoluteContentSize.Y + 4)
+            local contentHeight = math.min(DropdownContainerL.AbsoluteContentSize.Y, 150)
+            services.TweenService:Create(DropdownModule, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, 448, 0, 38 + contentHeight + 8)
+            }):Play()
+            services.TweenService:Create(DropdownContainer, TweenInfo.new(0.2), {
+                Size = UDim2.new(1, 0, 0, contentHeight)
+            }):Play()
         end
     end)
     
@@ -1441,32 +1465,34 @@ end
         
         Option.Name = "Option_" .. option
         Option.Parent = DropdownContainer
-        Option.BackgroundColor3 = config.TabColor
+        Option.BackgroundColor3 = config.Button_Color
         Option.BorderSizePixel = 0
-        Option.Size = UDim2.new(0, 448, 0, 26)
+        Option.Size = UDim2.new(0, 440, 0, 26)
+        Option.Position = UDim2.new(0.01, 0, 0, 0)
         Option.AutoButtonColor = false
         Option.Font = Enum.Font.Gotham
-        Option.Text = option
+        Option.Text = "   " .. option
         Option.TextColor3 = config.TextColor
         Option.TextSize = 14
+        Option.TextXAlignment = Enum.TextXAlignment.Left
         
-        OptionC.CornerRadius = UDim.new(0, 6)
+        OptionC.CornerRadius = UDim.new(0, 4)
         OptionC.Name = "OptionC"
         OptionC.Parent = Option
         
         Option.MouseEnter:Connect(function()
             services.TweenService:Create(Option, TweenInfo.new(0.2), {
                 BackgroundColor3 = Color3.fromRGB(
-                    math.floor(config.TabColor.R * 255 * 1.1),
-                    math.floor(config.TabColor.G * 255 * 1.1),
-                    math.floor(config.TabColor.B * 255 * 1.1)
+                    math.floor(config.Button_Color.R * 255 * 1.2),
+                    math.floor(config.Button_Color.G * 255 * 1.2),
+                    math.floor(config.Button_Color.B * 255 * 1.2)
                 )
             }):Play()
         end)
         
         Option.MouseLeave:Connect(function()
             services.TweenService:Create(Option, TweenInfo.new(0.2), {
-                BackgroundColor3 = config.TabColor
+                BackgroundColor3 = config.Button_Color
             }):Play()
         end)
         
@@ -1481,8 +1507,8 @@ end
     end
     
     funcs.RemoveOption = function(self, option)
-        local option = DropdownContainer:FindFirstChild("Option_" .. option)
-        if option then option:Destroy() end
+        local optionObj = DropdownContainer:FindFirstChild("Option_" .. option)
+        if optionObj then optionObj:Destroy() end
     end
     
     funcs.SetOptions = function(self, options)
@@ -1505,6 +1531,7 @@ end
             DropdownText.Text = option
             DropdownText.TextColor3 = config.TextColor
             library.flaFengYu[flag] = option
+            callback(option)
         end
     end
     
