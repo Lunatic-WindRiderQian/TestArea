@@ -1284,14 +1284,14 @@ end
     DropdownModule.BackgroundTransparency = 1.000
     DropdownModule.BorderSizePixel = 0
     DropdownModule.ClipsDescendants = true
-    DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-    DropdownModule.Size = UDim2.new(0, 448, 0, 38)
+    DropdownModule.Position = UDim2.new(0, 0, 0, 0) -- 修复：确保从左侧开始
+    DropdownModule.Size = UDim2.new(1, 0, 0, 38) -- 修复：使用100%宽度
     
     DropdownTop.Name = "DropdownTop"
     DropdownTop.Parent = DropdownModule
     DropdownTop.BackgroundColor3 = config.Dropdown_Color
     DropdownTop.BorderSizePixel = 0
-    DropdownTop.Size = UDim2.new(0, 448, 0, 38)
+    DropdownTop.Size = UDim2.new(1, 0, 1, 0) -- 修复：使用100%宽度
     DropdownTop.AutoButtonColor = false
     DropdownTop.Font = Enum.Font.GothamSemibold
     DropdownTop.Text = ""
@@ -1315,10 +1315,10 @@ end
     
     DropdownOpenFrame.Name = "DropdownOpenFrame"
     DropdownOpenFrame.Parent = DropdownTop
-    DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
+    DropdownOpenFrame.AnchorPoint = Vector2.new(1, 0.5) -- 修复：从右侧锚定
     DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
     DropdownOpenFrame.BorderSizePixel = 0
-    DropdownOpenFrame.Position = UDim2.new(0.918, 0, 0.5, 0)
+    DropdownOpenFrame.Position = UDim2.new(0.98, 0, 0.5, 0) -- 修复：靠近右侧
     DropdownOpenFrame.Size = UDim2.new(0, 50, 0, 24)
     DropdownOpenFrame.ZIndex = 2
     
@@ -1344,8 +1344,8 @@ end
     DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DropdownText.BackgroundTransparency = 1.000
     DropdownText.BorderSizePixel = 0
-    DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-    DropdownText.Size = UDim2.new(0, 350, 0, 38)
+    DropdownText.Position = UDim2.new(0.03, 0, 0, 0) -- 修复：从左侧开始
+    DropdownText.Size = UDim2.new(0.7, 0, 1, 0) -- 修复：使用百分比宽度
     DropdownText.Font = Enum.Font.GothamSemibold
     DropdownText.PlaceholderColor3 = config.SecondaryTextColor
     DropdownText.PlaceholderText = text
@@ -1361,7 +1361,7 @@ end
     Separator.Parent = DropdownTop
     Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     Separator.BorderSizePixel = 0
-    Separator.Position = UDim2.new(0.76, 0, 0.2, 0)
+    Separator.Position = UDim2.new(0.75, 0, 0.2, 0) -- 修复：调整位置
     Separator.Size = UDim2.new(0, 1, 0, 24)
     Separator.ZIndex = 1
     
@@ -1369,6 +1369,35 @@ end
     DropdownModuleL.Parent = DropdownModule
     DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
     DropdownModuleL.Padding = UDim.new(0, 4)
+    
+    -- 修复：确保下拉选项的宽度正确
+    local function createOption(optionName)
+        local Option = Instance.new("TextButton")
+        local OptionC = Instance.new("UICorner")
+        Option.Name = "Option_" .. optionName
+        Option.Parent = DropdownModule
+        Option.BackgroundColor3 = config.TabColor
+        Option.BorderSizePixel = 0
+        Option.Position = UDim2.new(0, 0, 0, 0) -- 修复：从左侧开始
+        Option.Size = UDim2.new(1, 0, 0, 26) -- 修复：使用100%宽度
+        Option.AutoButtonColor = false
+        Option.Font = Enum.Font.Gotham
+        Option.Text = optionName
+        Option.TextColor3 = config.TextColor
+        Option.TextSize = 14.000
+        OptionC.CornerRadius = UDim.new(0, 6)
+        OptionC.Name = "OptionC"
+        OptionC.Parent = Option
+        
+        Option.MouseButton1Click:Connect(function()
+            ToggleDropVis()
+            callback(Option.Text)
+            DropdownText.Text = Option.Text
+            library.flaFengYu[flag] = Option.Text
+        end)
+        
+        return Option
+    end
     
     -- 其余代码保持不变...
     local setAllVisible = function()
@@ -1406,7 +1435,7 @@ end
             setAllVisible()
         end
         DropdownOpen.Text = (open and "取消" or "选择")
-        DropdownModule.Size = UDim2.new(0, 448, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38))
+        DropdownModule.Size = UDim2.new(1, 0, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38)) -- 修复：使用100%宽度
     end
     
     DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
@@ -1428,40 +1457,18 @@ end
         if not open then
             return
         end
-        DropdownModule.Size = UDim2.new(0, 448, 0, (DropdownModuleL.AbsoluteContentSize.Y + 4))
+        DropdownModule.Size = UDim2.new(1, 0, 0, (DropdownModuleL.AbsoluteContentSize.Y + 4)) -- 修复：使用100%宽度
     end)
     
     local funcs = {}
     funcs.AddOption = function(self, option)
-        local Option = Instance.new("TextButton")
-        local OptionC = Instance.new("UICorner")
-        Option.Name = "Option_" .. option
-        Option.Parent = DropdownModule
-        Option.BackgroundColor3 = config.TabColor
-        Option.BorderSizePixel = 0
-        Option.Position = UDim2.new(0, 0, 0.328125, 0)
-        Option.Size = UDim2.new(0, 428, 0, 26)
-        Option.AutoButtonColor = false
-        Option.Font = Enum.Font.Gotham
-        Option.Text = option
-        Option.TextColor3 = config.TextColor
-        Option.TextSize = 14.000
-        OptionC.CornerRadius = UDim.new(0, 6)
-        OptionC.Name = "OptionC"
-        OptionC.Parent = Option
-        
-        Option.MouseButton1Click:Connect(function()
-            ToggleDropVis()
-            callback(Option.Text)
-            DropdownText.Text = Option.Text
-            library.flaFengYu[flag] = Option.Text
-        end)
+        createOption(option)
     end
     
     funcs.RemoveOption = function(self, option)
-        local option = DropdownModule:FindFirstChild("Option_" .. option)
-        if option then
-            option:Destroy()
+        local optionObj = DropdownModule:FindFirstChild("Option_" .. option)
+        if optionObj then
+            optionObj:Destroy()
         end
     end
     
