@@ -1272,7 +1272,9 @@ end
     local DropdownModule = Instance.new("Frame")
     local DropdownTop = Instance.new("TextButton")
     local DropdownTopC = Instance.new("UICorner")
-    local DropdownOpen = Instance.new("ImageButton")
+    local DropdownOpenFrame = Instance.new("Frame") -- 新增：外框
+    local DropdownOpenFrameC = Instance.new("UICorner") -- 新增：外框圆角
+    local DropdownOpen = Instance.new("TextButton")
     local DropdownText = Instance.new("TextBox")
     local DropdownModuleL = Instance.new("UIListLayout")
     
@@ -1301,30 +1303,37 @@ end
     DropdownTopC.Name = "DropdownTopC"
     DropdownTopC.Parent = DropdownTop
     
-    -- 替换为圆形按钮
-    DropdownOpen.Name = "DropdownOpen"
-    DropdownOpen.Parent = DropdownTop
-    DropdownOpen.AnchorPoint = Vector2.new(0, 0.5)
-    DropdownOpen.BackgroundColor3 = config.AccentColor
-    DropdownOpen.BackgroundTransparency = 0
-    DropdownOpen.BorderSizePixel = 0
-    DropdownOpen.Position = UDim2.new(0.918383181, 0, 0.5, 0)
-    DropdownOpen.Size = UDim2.new(0, 24, 0, 24)
-    DropdownOpen.AutoButtonColor = false
-    DropdownOpen.Image = "rbxassetid://10709790937" -- 下拉箭头图标
-    DropdownOpen.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    -- 新增：外框容器
+    DropdownOpenFrame.Name = "DropdownOpenFrame"
+    DropdownOpenFrame.Parent = DropdownTop
+    DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
+    DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
+    DropdownOpenFrame.BorderSizePixel = 0
+    DropdownOpenFrame.Position = UDim2.new(0.918, 0, 0.5, 0)
+    DropdownOpenFrame.Size = UDim2.new(0, 24, 0, 24)
     
-    -- 添加圆形角
-    local DropdownOpenCorner = Instance.new("UICorner")
-    DropdownOpenCorner.CornerRadius = UDim.new(1, 0)
-    DropdownOpenCorner.Parent = DropdownOpen
+    DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
+    DropdownOpenFrameC.Name = "DropdownOpenFrameC"
+    DropdownOpenFrameC.Parent = DropdownOpenFrame
+    
+    DropdownOpen.Name = "DropdownOpen"
+    DropdownOpen.Parent = DropdownOpenFrame
+    DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    DropdownOpen.BackgroundTransparency = 1.000
+    DropdownOpen.BorderSizePixel = 0
+    DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
+    DropdownOpen.Font = Enum.Font.GothamBold
+    DropdownOpen.Text = "+"
+    DropdownOpen.TextColor3 = config.TextColor
+    DropdownOpen.TextSize = 16.000
+    DropdownOpen.TextWrapped = true
     
     DropdownText.Name = "DropdownText"
     DropdownText.Parent = DropdownTop
     DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DropdownText.BackgroundTransparency = 1.000
     DropdownText.BorderSizePixel = 0
-    DropdownText.Position = UDim2.new(0.0373831764, 0, 0, 0)
+    DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
     DropdownText.Size = UDim2.new(0, 184, 0, 38)
     DropdownText.Font = Enum.Font.GothamSemibold
     DropdownText.PlaceholderColor3 = config.SecondaryTextColor
@@ -1339,54 +1348,7 @@ end
     DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
     DropdownModuleL.Padding = UDim.new(0, 4)
     
-    -- 添加悬停效果
-    DropdownTop.MouseEnter:Connect(function()
-        services.TweenService:Create(DropdownTop, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(
-                math.floor(config.Dropdown_Color.R * 255 * 1.1),
-                math.floor(config.Dropdown_Color.G * 255 * 1.1),
-                math.floor(config.Dropdown_Color.B * 255 * 1.1)
-            )
-        }):Play()
-        
-        services.TweenService:Create(DropdownOpen, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(
-                math.floor(config.AccentColor.R * 255 * 1.2),
-                math.floor(config.AccentColor.G * 255 * 1.2),
-                math.floor(config.AccentColor.B * 255 * 1.2)
-            )
-        }):Play()
-    end)
-    
-    DropdownTop.MouseLeave:Connect(function()
-        services.TweenService:Create(DropdownTop, TweenInfo.new(0.2), {
-            BackgroundColor3 = config.Dropdown_Color
-        }):Play()
-        
-        services.TweenService:Create(DropdownOpen, TweenInfo.new(0.2), {
-            BackgroundColor3 = config.AccentColor
-        }):Play()
-    end)
-    
-    -- 圆形按钮悬停效果
-    DropdownOpen.MouseEnter:Connect(function()
-        services.TweenService:Create(DropdownOpen, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(
-                math.floor(config.AccentColor.R * 255 * 1.3),
-                math.floor(config.AccentColor.G * 255 * 1.3),
-                math.floor(config.AccentColor.B * 255 * 1.3)
-            ),
-            Size = UDim2.new(0, 26, 0, 26)
-        }):Play()
-    end)
-    
-    DropdownOpen.MouseLeave:Connect(function()
-        services.TweenService:Create(DropdownOpen, TweenInfo.new(0.2), {
-            BackgroundColor3 = config.AccentColor,
-            Size = UDim2.new(0, 24, 0, 24)
-        }):Play()
-    end)
-    
+    -- 其余代码保持不变...
     local setAllVisible = function()
         local options = DropdownModule:GetChildren()
         for i = 1, #options do
@@ -1418,12 +1380,6 @@ end
     local open = false
     local ToggleDropVis = function()
         open = not open
-        
-        -- 添加旋转动画
-        services.TweenService:Create(DropdownOpen, TweenInfo.new(0.2), {
-            Rotation = open and 180 or 0
-        }):Play()
-        
         if open then
             setAllVisible()
         end
@@ -1432,8 +1388,6 @@ end
     end
     
     DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
-    DropdownTop.MouseButton1Click:Connect(ToggleDropVis) -- 点击整个区域也可以展开
-    
     DropdownText.Focused:Connect(function()
         if open then
             return
@@ -1473,23 +1427,6 @@ end
         OptionC.CornerRadius = UDim.new(0, 6)
         OptionC.Name = "OptionC"
         OptionC.Parent = Option
-        
-        -- 选项悬停效果
-        Option.MouseEnter:Connect(function()
-            services.TweenService:Create(Option, TweenInfo.new(0.2), {
-                BackgroundColor3 = Color3.fromRGB(
-                    math.floor(config.TabColor.R * 255 * 1.1),
-                    math.floor(config.TabColor.G * 255 * 1.1),
-                    math.floor(config.TabColor.B * 255 * 1.1)
-                )
-            }):Play()
-        end)
-        
-        Option.MouseLeave:Connect(function()
-            services.TweenService:Create(Option, TweenInfo.new(0.2), {
-                BackgroundColor3 = config.TabColor
-            }):Play()
-        end)
         
         Option.MouseButton1Click:Connect(function()
             ToggleDropVis()
