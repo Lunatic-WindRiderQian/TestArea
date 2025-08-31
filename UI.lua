@@ -380,7 +380,7 @@ function library.new(library, name, theme)
         end
     end
 
-    ScriptTitle.Text = name or "FengYu"
+    ScriptTitle.Text = name or "Delta"
 
     local window = {}
     
