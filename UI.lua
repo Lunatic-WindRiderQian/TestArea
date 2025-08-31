@@ -372,6 +372,16 @@ function library.new(library, name, theme)
         end
     end
 
+    if theme then
+        for k, v in pairs(theme) do
+            if config[k] ~= nil then
+                config[k] = v
+            end
+        end
+    end
+
+    ScriptTitle.Text = name or "FengYu"
+
     local window = {}
     
     function window.Tab(window, name, icon)
