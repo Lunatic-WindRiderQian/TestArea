@@ -352,6 +352,19 @@ TabBtnsL.Parent = TabBtns
 TabBtnsL.SortOrder = Enum.SortOrder.LayoutOrder
 TabBtnsL.Padding = UDim.new(0, 12)
 
+local ScriptTitle = Instance.new("TextLabel")
+ScriptTitle.Name = "ScriptTitle"
+ScriptTitle.Parent = Side
+ScriptTitle.BackgroundTransparency = 1
+ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
+ScriptTitle.Size = UDim2.new(0, 110, 0, 20)
+ScriptTitle.Font = Enum.Font.GothamSemibold
+ScriptTitle.Text = "Delta"
+ScriptTitle.TextColor3 = config.AccentColor
+ScriptTitle.TextSize = 16
+ScriptTitle.TextScaled = true
+ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
+
 function library.new(library, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
         if v.Name == "REN" then
@@ -367,7 +380,8 @@ function library.new(library, name, theme)
         end
     end
 
-
+    ScriptTitle.Text = name or "Delta"
+    
     local window = {}
     
     function window.Tab(window, name, icon)
