@@ -1263,202 +1263,221 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
 end
             
             function section.Dropdown(section, text, flag, options, callback)
-                callback = callback or function() end
-                options = options or {}
-                
-                assert(text, "No text provided")
-                assert(flag, "No flag provided")
-                
-                library.flaFengYu[flag] = nil
-                
-                local DropdownModule = Instance.new("Frame")
-                local DropdownTop = Instance.new("TextButton")
-                local DropdownTopC = Instance.new("UICorner")
-                local DropdownOpen = Instance.new("TextButton")
-                local DropdownText = Instance.new("TextBox")
-                local DropdownModuleL = Instance.new("UIListLayout")
-                
-                DropdownModule.Name = "DropdownModule"
-                DropdownModule.Parent = Objs
-                DropdownModule.BackgroundTransparency = 1
-                DropdownModule.BorderSizePixel = 0
-                DropdownModule.ClipsDescendants = true
-                DropdownModule.Size = UDim2.new(0, 448, 0, 38)
-                
-                DropdownTop.Name = "DropdownTop"
-                DropdownTop.Parent = DropdownModule
-                DropdownTop.BackgroundColor3 = config.Dropdown_Color
-                DropdownTop.BorderSizePixel = 0
-                DropdownTop.Size = UDim2.new(0, 448, 0, 38)
-                DropdownTop.AutoButtonColor = false
-                DropdownTop.Font = Enum.Font.GothamSemibold
-                DropdownTop.Text = ""
-                DropdownTop.TextColor3 = config.TextColor
-                DropdownTop.TextSize = 16
-                DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
-                
-                DropdownTopC.CornerRadius = UDim.new(0, 6)
-                DropdownTopC.Name = "DropdownTopC"
-                DropdownTopC.Parent = DropdownTop
-                
-                DropdownOpen.Name = "DropdownOpen"
-                DropdownOpen.Parent = DropdownTop
-                DropdownOpen.AnchorPoint = Vector2.new(0, 0.5)
-                DropdownOpen.BackgroundTransparency = 1
-                DropdownOpen.BorderSizePixel = 0
-                DropdownOpen.Position = UDim2.new(0.918, 0, 0.5, 0)
-                DropdownOpen.Size = UDim2.new(0, 20, 0, 20)
-                DropdownOpen.Font = Enum.Font.Gotham
-                DropdownOpen.Text = "+"
-                DropdownOpen.TextColor3 = config.TextColor
-                DropdownOpen.TextSize = 24
-                DropdownOpen.TextWrapped = true
-                
-                DropdownText.Name = "DropdownText"
-                DropdownText.Parent = DropdownTop
-                DropdownText.BackgroundTransparency = 1
-                DropdownText.BorderSizePixel = 0
-                DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-                DropdownText.Size = UDim2.new(0, 184, 0, 38)
-                DropdownText.Font = Enum.Font.GothamSemibold
-                DropdownText.PlaceholderColor3 = config.SecondaryTextColor
-                DropdownText.PlaceholderText = text
-                DropdownText.Text = ""
-                DropdownText.TextColor3 = config.TextColor
-                DropdownText.TextSize = 16
-                DropdownText.TextXAlignment = Enum.TextXAlignment.Left
-                
-                DropdownModuleL.Name = "DropdownModuleL"
-                DropdownModuleL.Parent = DropdownModule
-                DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
-                DropdownModuleL.Padding = UDim.new(0, 4)
-                
-                DropdownTop.MouseEnter:Connect(function()
-                    services.TweenService:Create(DropdownTop, TweenInfo.new(0.2), {
-                        BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.Dropdown_Color.R * 255 * 1.1),
-                            math.floor(config.Dropdown_Color.G * 255 * 1.1),
-                            math.floor(config.Dropdown_Color.B * 255 * 1.1)
-                        )
-                    }):Play()
-                end)
-                
-                DropdownTop.MouseLeave:Connect(function()
-                    services.TweenService:Create(DropdownTop, TweenInfo.new(0.2), {
-                        BackgroundColor3 = config.Dropdown_Color
-                    }):Play()
-                end)
-                
-                local setAllVisible = function()
-                    for _, option in next, DropdownModule:GetChildren() do
-                        if option:IsA("TextButton") and option.Name:match("Option_") then
-                            option.Visible = true
-                        end
-                    end
+    callback = callback or function() end
+    options = options or {}
+    
+    assert(text, "No text provided")
+    assert(flag, "No flag provided")
+    
+    library.flaFengYu[flag] = nil
+    
+    local DropdownModule = Instance.new("Frame")
+    local DropdownBtn = Instance.new("TextButton")
+    local DropdownBtnC = Instance.new("UICorner")
+    local DropdownText = Instance.new("TextLabel")
+    local DropdownDisable = Instance.new("Frame")
+    local DropdownSwitch = Instance.new("Frame")
+    local DropdownSwitchC = Instance.new("UICorner")
+    local DropdownDisableC = Instance.new("UICorner")
+    local DropdownContainer = Instance.new("Frame")
+    local DropdownContainerL = Instance.new("UIListLayout")
+    
+    DropdownModule.Name = "DropdownModule"
+    DropdownModule.Parent = Objs
+    DropdownModule.BackgroundTransparency = 1
+    DropdownModule.BorderSizePixel = 0
+    DropdownModule.ClipsDescendants = true
+    DropdownModule.Size = UDim2.new(0, 448, 0, 38)
+    
+    DropdownBtn.Name = "DropdownBtn"
+    DropdownBtn.Parent = DropdownModule
+    DropdownBtn.BackgroundColor3 = config.Dropdown_Color
+    DropdownBtn.BorderSizePixel = 0
+    DropdownBtn.Size = UDim2.new(0, 448, 0, 38)
+    DropdownBtn.AutoButtonColor = false
+    DropdownBtn.Font = Enum.Font.GothamSemibold
+    DropdownBtn.Text = "   " .. text
+    DropdownBtn.TextColor3 = config.TextColor
+    DropdownBtn.TextSize = 16
+    DropdownBtn.TextXAlignment = Enum.TextXAlignment.Left
+    
+    DropdownBtnC.CornerRadius = UDim.new(0, 6)
+    DropdownBtnC.Name = "DropdownBtnC"
+    DropdownBtnC.Parent = DropdownBtn
+    
+    DropdownText.Name = "DropdownText"
+    DropdownText.Parent = DropdownBtn
+    DropdownText.BackgroundTransparency = 1
+    DropdownText.Position = UDim2.new(0.7, 0, 0, 0)
+    DropdownText.Size = UDim2.new(0, 120, 0, 38)
+    DropdownText.Font = Enum.Font.Gotham
+    DropdownText.Text = "选择"
+    DropdownText.TextColor3 = config.SecondaryTextColor
+    DropdownText.TextSize = 14
+    DropdownText.TextXAlignment = Enum.TextXAlignment.Right
+    
+    DropdownDisable.Name = "DropdownDisable"
+    DropdownDisable.Parent = DropdownBtn
+    DropdownDisable.BackgroundColor3 = config.Bg_Color
+    DropdownDisable.BorderSizePixel = 0
+    DropdownDisable.Position = UDim2.new(0.901, 0, 0.208, 0)
+    DropdownDisable.Size = UDim2.new(0, 36, 0, 22)
+    
+    DropdownSwitch.Name = "DropdownSwitch"
+    DropdownSwitch.Parent = DropdownDisable
+    DropdownSwitch.BackgroundColor3 = config.Toggle_Off
+    DropdownSwitch.Size = UDim2.new(0, 24, 0, 22)
+    DropdownSwitch.Position = UDim2.new(0, 0, 0, 0)
+    
+    DropdownSwitchC.CornerRadius = UDim.new(0, 6)
+    DropdownSwitchC.Name = "DropdownSwitchC"
+    DropdownSwitchC.Parent = DropdownSwitch
+    
+    DropdownDisableC.CornerRadius = UDim.new(0, 6)
+    DropdownDisableC.Name = "DropdownDisableC"
+    DropdownDisableC.Parent = DropdownDisable
+    
+    DropdownContainer.Name = "DropdownContainer"
+    DropdownContainer.Parent = DropdownModule
+    DropdownContainer.BackgroundTransparency = 1
+    DropdownContainer.BorderSizePixel = 0
+    DropdownContainer.Position = UDim2.new(0, 0, 1, 4)
+    DropdownContainer.Size = UDim2.new(1, 0, 0, 0)
+    DropdownContainer.ClipsDescendants = true
+    
+    DropdownContainerL.Name = "DropdownContainerL"
+    DropdownContainerL.Parent = DropdownContainer
+    DropdownContainerL.SortOrder = Enum.SortOrder.LayoutOrder
+    DropdownContainerL.Padding = UDim.new(0, 4)
+    
+    DropdownBtn.MouseEnter:Connect(function()
+        services.TweenService:Create(DropdownBtn, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.floor(config.Dropdown_Color.R * 255 * 1.1),
+                math.floor(config.Dropdown_Color.G * 255 * 1.1),
+                math.floor(config.Dropdown_Color.B * 255 * 1.1)
+            )
+        }):Play()
+    end)
+    
+    DropdownBtn.MouseLeave:Connect(function()
+        services.TweenService:Create(DropdownBtn, TweenInfo.new(0.2), {
+            BackgroundColor3 = config.Dropdown_Color
+        }):Play()
+    end)
+    
+    local open = false
+    local selectedOption = nil
+    
+    local ToggleDropdown = function()
+        open = not open
+        
+        services.TweenService:Create(DropdownSwitch, TweenInfo.new(0.2), {
+            Position = UDim2.new(0, open and 12 or 0, 0, 0),
+            BackgroundColor3 = open and config.Toggle_On or config.Toggle_Off
+        }):Play()
+        
+        services.TweenService:Create(DropdownModule, TweenInfo.new(0.2), {
+            Size = UDim2.new(0, 448, 0, open and 38 + DropdownContainerL.AbsoluteContentSize.Y + 4 or 38)
+        }):Play()
+        
+        if open then
+            for _, option in next, DropdownContainer:GetChildren() do
+                if option:IsA("TextButton") then
+                    option.Visible = true
                 end
-                
-                local searchDropdown = function(text)
-                    for _, option in next, DropdownModule:GetChildren() do
-                        if option:IsA("TextButton") and option.Name:match("Option_") then
-                            if text == "" then
-                                option.Visible = true
-                            else
-                                option.Visible = option.Text:lower():match(text:lower()) ~= nil
-                            end
-                        end
-                    end
-                end
-                
-                local open = false
-                local ToggleDropVis = function()
-                    open = not open
-                    if open then setAllVisible() end
-                    DropdownOpen.Text = open and "-" or "+"
-                    
-                    services.TweenService:Create(DropdownModule, TweenInfo.new(0.2), {
-                        Size = UDim2.new(0, 448, 0, open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38)
-                    }):Play()
-                end
-                
-                DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
-                
-                DropdownText.Focused:Connect(function()
-                    if not open then ToggleDropVis() end
-                end)
-                
-                DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
-                    if open then searchDropdown(DropdownText.Text) end
-                end)
-                
-                DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    if open then
-                        DropdownModule.Size = UDim2.new(0, 448, 0, DropdownModuleL.AbsoluteContentSize.Y + 4)
-                    end
-                end)
-                
-                local funcs = {}
-                
-                funcs.AddOption = function(self, option)
-                    local Option = Instance.new("TextButton")
-                    local OptionC = Instance.new("UICorner")
-                    
-                    Option.Name = "Option_" .. option
-                    Option.Parent = DropdownModule
-                    Option.BackgroundColor3 = config.TabColor
-                    Option.BorderSizePixel = 0
-                    Option.Size = UDim2.new(0, 448, 0, 26)
-                    Option.AutoButtonColor = false
-                    Option.Font = Enum.Font.Gotham
-                    Option.Text = option
-                    Option.TextColor3 = config.TextColor
-                    Option.TextSize = 14
-                    
-                    OptionC.CornerRadius = UDim.new(0, 6)
-                    OptionC.Name = "OptionC"
-                    OptionC.Parent = Option
-                    
-                    Option.MouseEnter:Connect(function()
-                        services.TweenService:Create(Option, TweenInfo.new(0.2), {
-                            BackgroundColor3 = Color3.fromRGB(
-                                math.floor(config.TabColor.R * 255 * 1.1),
-                                math.floor(config.TabColor.G * 255 * 1.1),
-                                math.floor(config.TabColor.B * 255 * 1.1)
-                            )
-                        }):Play()
-                    end)
-                    
-                    Option.MouseLeave:Connect(function()
-                        services.TweenService:Create(Option, TweenInfo.new(0.2), {
-                            BackgroundColor3 = config.TabColor
-                        }):Play()
-                    end)
-                    
-                    Option.MouseButton1Click:Connect(function()
-                        ToggleDropVis()
-                        callback(Option.Text)
-                        DropdownText.Text = Option.Text
-                        library.flaFengYu[flag] = Option.Text
-                    end)
-                end
-                
-                funcs.RemoveOption = function(self, option)
-                    local option = DropdownModule:FindFirstChild("Option_" .. option)
-                    if option then option:Destroy() end
-                end
-                
-                funcs.SetOptions = function(self, options)
-                    for _, v in next, DropdownModule:GetChildren() do
-                        if v.Name:match("Option_") then v:Destroy() end
-                    end
-                    
-                    for _, v in next, options do
-                        funcs:AddOption(v)
-                    end
-                end
-                
-                funcs:SetOptions(options)
-                return funcs
             end
+        end
+    end
+    
+    DropdownBtn.MouseButton1Click:Connect(function()
+        ToggleDropdown()
+    end)
+    
+    DropdownContainerL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        if open then
+            DropdownModule.Size = UDim2.new(0, 448, 0, 38 + DropdownContainerL.AbsoluteContentSize.Y + 4)
+        end
+    end)
+    
+    local funcs = {}
+    
+    funcs.AddOption = function(self, option)
+        local Option = Instance.new("TextButton")
+        local OptionC = Instance.new("UICorner")
+        
+        Option.Name = "Option_" .. option
+        Option.Parent = DropdownContainer
+        Option.BackgroundColor3 = config.TabColor
+        Option.BorderSizePixel = 0
+        Option.Size = UDim2.new(0, 448, 0, 26)
+        Option.AutoButtonColor = false
+        Option.Font = Enum.Font.Gotham
+        Option.Text = option
+        Option.TextColor3 = config.TextColor
+        Option.TextSize = 14
+        
+        OptionC.CornerRadius = UDim.new(0, 6)
+        OptionC.Name = "OptionC"
+        OptionC.Parent = Option
+        
+        Option.MouseEnter:Connect(function()
+            services.TweenService:Create(Option, TweenInfo.new(0.2), {
+                BackgroundColor3 = Color3.fromRGB(
+                    math.floor(config.TabColor.R * 255 * 1.1),
+                    math.floor(config.TabColor.G * 255 * 1.1),
+                    math.floor(config.TabColor.B * 255 * 1.1)
+                )
+            }):Play()
+        end)
+        
+        Option.MouseLeave:Connect(function()
+            services.TweenService:Create(Option, TweenInfo.new(0.2), {
+                BackgroundColor3 = config.TabColor
+            }):Play()
+        end)
+        
+        Option.MouseButton1Click:Connect(function()
+            selectedOption = option
+            DropdownText.Text = option
+            DropdownText.TextColor3 = config.TextColor
+            library.flaFengYu[flag] = option
+            callback(option)
+            ToggleDropdown()
+        end)
+    end
+    
+    funcs.RemoveOption = function(self, option)
+        local option = DropdownContainer:FindFirstChild("Option_" .. option)
+        if option then option:Destroy() end
+    end
+    
+    funcs.SetOptions = function(self, options)
+        for _, v in next, DropdownContainer:GetChildren() do
+            if v:IsA("TextButton") then v:Destroy() end
+        end
+        
+        for _, v in next, options do
+            funcs:AddOption(v)
+        end
+    end
+    
+    funcs.GetSelected = function(self)
+        return selectedOption
+    end
+    
+    funcs.SetSelected = function(self, option)
+        if table.find(options, option) then
+            selectedOption = option
+            DropdownText.Text = option
+            DropdownText.TextColor3 = config.TextColor
+            library.flaFengYu[flag] = option
+        end
+    end
+    
+    funcs:SetOptions(options)
+    return funcs
+end
             
             return section
         end
