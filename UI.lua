@@ -1275,10 +1275,7 @@ end
     local DropdownBtn = Instance.new("TextButton")
     local DropdownBtnC = Instance.new("UICorner")
     local DropdownText = Instance.new("TextLabel")
-    local DropdownDisable = Instance.new("Frame")
-    local DropdownSwitch = Instance.new("Frame")
-    local DropdownSwitchC = Instance.new("UICorner")
-    local DropdownDisableC = Instance.new("UICorner")
+    local DropdownToggle = Instance.new("ImageButton")
     local DropdownContainer = Instance.new("Frame")
     local DropdownContainerL = Instance.new("UIListLayout")
     
@@ -1305,6 +1302,7 @@ end
     DropdownBtnC.Name = "DropdownBtnC"
     DropdownBtnC.Parent = DropdownBtn
     
+    -- 显示选中项的文本
     DropdownText.Name = "DropdownText"
     DropdownText.Parent = DropdownBtn
     DropdownText.BackgroundTransparency = 1
@@ -1316,27 +1314,23 @@ end
     DropdownText.TextSize = 14
     DropdownText.TextXAlignment = Enum.TextXAlignment.Right
     
-    DropdownDisable.Name = "DropdownDisable"
-    DropdownDisable.Parent = DropdownBtn
-    DropdownDisable.BackgroundColor3 = config.Bg_Color
-    DropdownDisable.BorderSizePixel = 0
-    DropdownDisable.Position = UDim2.new(0.901, 0, 0.208, 0)
-    DropdownDisable.Size = UDim2.new(0, 36, 0, 22)
+    -- 圆形下拉箭头按钮
+    DropdownToggle.Name = "DropdownToggle"
+    DropdownToggle.Parent = DropdownBtn
+    DropdownToggle.BackgroundColor3 = config.AccentColor
+    DropdownToggle.BackgroundTransparency = 0
+    DropdownToggle.Position = UDim2.new(0.92, 0, 0.5, 0)
+    DropdownToggle.Size = UDim2.new(0, 24, 0, 24)
+    DropdownToggle.AnchorPoint = Vector2.new(0.5, 0.5)
+    DropdownToggle.AutoButtonColor = false
+    DropdownToggle.Image = "rbxassetid://10709790937" -- 下拉箭头图标
+    DropdownToggle.ImageColor3 = Color3.fromRGB(255, 255, 255)
     
-    DropdownSwitch.Name = "DropdownSwitch"
-    DropdownSwitch.Parent = DropdownDisable
-    DropdownSwitch.BackgroundColor3 = config.Toggle_Off
-    DropdownSwitch.Size = UDim2.new(0, 24, 0, 22)
-    DropdownSwitch.Position = UDim2.new(0, 0, 0, 0)
+    local DropdownToggleCorner = Instance.new("UICorner")
+    DropdownToggleCorner.CornerRadius = UDim.new(1, 0)
+    DropdownToggleCorner.Parent = DropdownToggle
     
-    DropdownSwitchC.CornerRadius = UDim.new(0, 6)
-    DropdownSwitchC.Name = "DropdownSwitchC"
-    DropdownSwitchC.Parent = DropdownSwitch
-    
-    DropdownDisableC.CornerRadius = UDim.new(0, 6)
-    DropdownDisableC.Name = "DropdownDisableC"
-    DropdownDisableC.Parent = DropdownDisable
-    
+    -- 选项容器
     DropdownContainer.Name = "DropdownContainer"
     DropdownContainer.Parent = DropdownModule
     DropdownContainer.BackgroundTransparency = 1
@@ -1350,6 +1344,7 @@ end
     DropdownContainerL.SortOrder = Enum.SortOrder.LayoutOrder
     DropdownContainerL.Padding = UDim.new(0, 4)
     
+    -- 悬停效果
     DropdownBtn.MouseEnter:Connect(function()
         services.TweenService:Create(DropdownBtn, TweenInfo.new(0.2), {
             BackgroundColor3 = Color3.fromRGB(
@@ -1358,11 +1353,42 @@ end
                 math.floor(config.Dropdown_Color.B * 255 * 1.1)
             )
         }):Play()
+        
+        services.TweenService:Create(DropdownToggle, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.floor(config.AccentColor.R * 255 * 1.2),
+                math.floor(config.AccentColor.G * 255 * 1.2),
+                math.floor(config.AccentColor.B * 255 * 1.2)
+            )
+        }):Play()
     end)
     
     DropdownBtn.MouseLeave:Connect(function()
         services.TweenService:Create(DropdownBtn, TweenInfo.new(0.2), {
             BackgroundColor3 = config.Dropdown_Color
+        }):Play()
+        
+        services.TweenService:Create(DropdownToggle, TweenInfo.new(0.2), {
+            BackgroundColor3 = config.AccentColor
+        }):Play()
+    end)
+    
+    -- 圆形按钮悬停效果
+    DropdownToggle.MouseEnter:Connect(function()
+        services.TweenService:Create(DropdownToggle, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.floor(config.AccentColor.R * 255 * 1.3),
+                math.floor(config.AccentColor.G * 255 * 1.3),
+                math.floor(config.AccentColor.B * 255 * 1.3)
+            ),
+            Size = UDim2.new(0, 26, 0, 26)
+        }):Play()
+    end)
+    
+    DropdownToggle.MouseLeave:Connect(function()
+        services.TweenService:Create(DropdownToggle, TweenInfo.new(0.2), {
+            BackgroundColor3 = config.AccentColor,
+            Size = UDim2.new(0, 24, 0, 24)
         }):Play()
     end)
     
@@ -1372,16 +1398,18 @@ end
     local ToggleDropdown = function()
         open = not open
         
-        services.TweenService:Create(DropdownSwitch, TweenInfo.new(0.2), {
-            Position = UDim2.new(0, open and 12 or 0, 0, 0),
-            BackgroundColor3 = open and config.Toggle_On or config.Toggle_Off
+        -- 旋转箭头动画
+        services.TweenService:Create(DropdownToggle, TweenInfo.new(0.2), {
+            Rotation = open and 180 or 0
         }):Play()
         
+        -- 展开/收起容器
         services.TweenService:Create(DropdownModule, TweenInfo.new(0.2), {
             Size = UDim2.new(0, 448, 0, open and 38 + DropdownContainerL.AbsoluteContentSize.Y + 4 or 38)
         }):Play()
         
         if open then
+            -- 显示所有选项
             for _, option in next, DropdownContainer:GetChildren() do
                 if option:IsA("TextButton") then
                     option.Visible = true
@@ -1390,7 +1418,12 @@ end
         end
     end
     
+    -- 点击按钮或圆形开关都可以展开
     DropdownBtn.MouseButton1Click:Connect(function()
+        ToggleDropdown()
+    end)
+    
+    DropdownToggle.MouseButton1Click:Connect(function()
         ToggleDropdown()
     end)
     
@@ -1443,7 +1476,7 @@ end
             DropdownText.TextColor3 = config.TextColor
             library.flaFengYu[flag] = option
             callback(option)
-            ToggleDropdown()
+            ToggleDropdown() -- 选择后自动收起
         end)
     end
     
