@@ -380,8 +380,6 @@ function library.new(library, name, theme)
         end
     end
 
-    ScriptTitle.Text = name or "Delta"
-
     local window = {}
     
     function window.Tab(window, name, icon)
