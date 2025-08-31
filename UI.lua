@@ -1310,7 +1310,7 @@ end
     DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
     DropdownOpenFrame.BorderSizePixel = 0
     DropdownOpenFrame.Position = UDim2.new(0.918, 0, 0.5, 0)
-    DropdownOpenFrame.Size = UDim2.new(0, 24, 0, 24)
+    DropdownOpenFrame.Size = UDim2.new(0, 50, 0, 24) -- 调整大小以适应更长的文本
     
     DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
     DropdownOpenFrameC.Name = "DropdownOpenFrameC"
@@ -1322,10 +1322,10 @@ end
     DropdownOpen.BackgroundTransparency = 1.000
     DropdownOpen.BorderSizePixel = 0
     DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
-    DropdownOpen.Font = Enum.Font.GothamBold
-    DropdownOpen.Text = "+"
+    DropdownOpen.Font = Enum.Font.GothamSemibold
+    DropdownOpen.Text = "选择" -- 修改：从"+"改为"选择"
     DropdownOpen.TextColor3 = config.TextColor
-    DropdownOpen.TextSize = 16.000
+    DropdownOpen.TextSize = 12.000 -- 调整字体大小以适应更长的文本
     DropdownOpen.TextWrapped = true
     
     DropdownText.Name = "DropdownText"
@@ -1334,7 +1334,7 @@ end
     DropdownText.BackgroundTransparency = 1.000
     DropdownText.BorderSizePixel = 0
     DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-    DropdownText.Size = UDim2.new(0, 184, 0, 38)
+    DropdownText.Size = UDim2.new(0, 350, 0, 38) -- 调整宽度以适应新的按钮大小
     DropdownText.Font = Enum.Font.GothamSemibold
     DropdownText.PlaceholderColor3 = config.SecondaryTextColor
     DropdownText.PlaceholderText = text
@@ -1348,7 +1348,6 @@ end
     DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
     DropdownModuleL.Padding = UDim.new(0, 4)
     
-    -- 其余代码保持不变...
     local setAllVisible = function()
         local options = DropdownModule:GetChildren()
         for i = 1, #options do
@@ -1383,7 +1382,7 @@ end
         if open then
             setAllVisible()
         end
-        DropdownOpen.Text = (open and "-" or "+")
+        DropdownOpen.Text = (open and "取消" or "选择") -- 修改：从"-"改为"取消"，"+"改为"选择"
         DropdownModule.Size = UDim2.new(0, 428, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38))
     end
     
