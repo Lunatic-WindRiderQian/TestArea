@@ -57,24 +57,24 @@ local UserInputService = services.UserInputService
 local RunService = services.RunService
 
 local config = {
-    MainColor = Color3.fromRGB(16, 16, 16),
-    TabColor = Color3.fromRGB(22, 22, 22),
-    Bg_Color = Color3.fromRGB(17, 17, 17),
-    Zy_Color = Color3.fromRGB(17, 17, 17), 
-    Button_Color = Color3.fromRGB(22, 22, 22),
-    Textbox_Color = Color3.fromRGB(22, 22, 22),
-    Dropdown_Color = Color3.fromRGB(22, 22, 22),
-    Keybind_Color = Color3.fromRGB(22, 22, 22),
-    Label_Color = Color3.fromRGB(22, 22, 22),
-    Slider_Color = Color3.fromRGB(22, 22, 22),
-    SliderBar_Color = Color3.fromRGB(37, 254, 152),
-    Toggle_Color = Color3.fromRGB(22, 22, 22),
-    Toggle_Off = Color3.fromRGB(34, 34, 34),
-    Toggle_On = Color3.fromRGB(37, 254, 152),
-    AccentColor = Color3.fromRGB(37, 254, 152),
-    TextColor = Color3.fromRGB(240, 240, 240),
-    SecondaryTextColor = Color3.fromRGB(180, 180, 180),
-    GlowColor = Color3.fromRGB(0, 200, 255),
+    MainColor = Color3.fromRGB(40, 40, 45),
+    TabColor = Color3.fromRGB(50, 50, 55),
+    Bg_Color = Color3.fromRGB(45, 45, 50),
+    Zy_Color = Color3.fromRGB(45, 45, 50), 
+    Button_Color = Color3.fromRGB(55, 55, 60),
+    Textbox_Color = Color3.fromRGB(55, 55, 60),
+    Dropdown_Color = Color3.fromRGB(55, 55, 60),
+    Keybind_Color = Color3.fromRGB(55, 55, 60),
+    Label_Color = Color3.fromRGB(55, 55, 60),
+    Slider_Color = Color3.fromRGB(55, 55, 60),
+    SliderBar_Color = Color3.fromRGB(100, 200, 255),
+    Toggle_Color = Color3.fromRGB(55, 55, 60),
+    Toggle_Off = Color3.fromRGB(70, 70, 75),
+    Toggle_On = Color3.fromRGB(100, 200, 255),
+    AccentColor = Color3.fromRGB(100, 200, 255),
+    TextColor = Color3.fromRGB(240, 240, 245),
+    SecondaryTextColor = Color3.fromRGB(200, 200, 205),
+    GlowColor = Color3.fromRGB(120, 180, 255),
 }
 
 function drag(frame, hold)
@@ -212,9 +212,9 @@ MainCorner.Parent = Main
 -- 添加边框
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
-MainStroke.Color = Color3.fromRGB(50, 50, 50)
+MainStroke.Color = Color3.fromRGB(70, 70, 75)
 MainStroke.Thickness = 1
-MainStroke.Transparency = 0.5
+MainStroke.Transparency = 0.3
 
 local Open = Instance.new("ImageButton")
 local UICorner = Instance.new("UICorner")
@@ -245,11 +245,11 @@ services.UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- 创建超级美观的背景
+-- 创建高级灰色系背景
 local MainBackground = Instance.new("Frame")
 MainBackground.Name = "MainBackground"
 MainBackground.Parent = Main
-MainBackground.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+MainBackground.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
 MainBackground.Size = UDim2.new(1, 0, 1, 0)
 MainBackground.ZIndex = 0
 
@@ -258,68 +258,97 @@ local MainBgCorner = Instance.new("UICorner")
 MainBgCorner.CornerRadius = UDim.new(0, 12)
 MainBgCorner.Parent = MainBackground
 
--- 创建渐变背景效果
+-- 创建高级灰色渐变背景效果
 local BackgroundGradient = Instance.new("UIGradient")
 BackgroundGradient.Parent = MainBackground
 BackgroundGradient.Rotation = 120
 BackgroundGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(15, 15, 25)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(25, 20, 40)),
-    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(15, 15, 25))
+    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(50, 50, 55)),
+    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(60, 60, 65)),
+    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(55, 55, 60)),
+    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(45, 45, 50))
 })
 
--- 添加装饰性几何图案
+-- 添加高级几何图案
 local DecorPattern = Instance.new("ImageLabel")
 DecorPattern.Name = "DecorPattern"
 DecorPattern.Parent = MainBackground
 DecorPattern.BackgroundTransparency = 1
 DecorPattern.Size = UDim2.new(1, 0, 1, 0)
-DecorPattern.Image = "rbxassetid://8992233754" -- 简约几何图案
-DecorPattern.ImageColor3 = Color3.fromRGB(30, 30, 45)
+DecorPattern.Image = "rbxassetid://8992233754"
+DecorPattern.ImageColor3 = Color3.fromRGB(70, 70, 80)
 DecorPattern.ImageTransparency = 0.9
 DecorPattern.ScaleType = Enum.ScaleType.Tile
-DecorPattern.TileSize = UDim2.new(0, 100, 0, 100)
+DecorPattern.TileSize = UDim2.new(0, 120, 0, 120)
 DecorPattern.ZIndex = 1
 
--- 添加简约装饰元素
+-- 添加简约装饰元素 - 只在左侧
 local DecorCircle1 = Instance.new("Frame")
 DecorCircle1.Parent = MainBackground
-DecorCircle1.BackgroundColor3 = Color3.fromRGB(37, 254, 152)
+DecorCircle1.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
 DecorCircle1.BackgroundTransparency = 0.9
 DecorCircle1.Size = UDim2.new(0, 120, 0, 120)
-DecorCircle1.Position = UDim2.new(0.8, 0, -0.1, 0)
+DecorCircle1.Position = UDim2.new(-0.1, 0, -0.1, 0)
 DecorCircle1.ZIndex = 1
 
 local DecorCircle1Corner = Instance.new("UICorner")
 DecorCircle1Corner.CornerRadius = UDim.new(1, 0)
 DecorCircle1Corner.Parent = DecorCircle1
 
-local DecorCircle2 = Instance.new("Frame")
-DecorCircle2.Parent = MainBackground
-DecorCircle2.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-DecorCircle2.BackgroundTransparency = 0.9
-DecorCircle2.Size = UDim2.new(0, 80, 0, 80)
-DecorCircle2.Position = UDim2.new(-0.05, 0, 0.7, 0)
-DecorCircle2.ZIndex = 1
+-- 添加动画效果
+spawn(function()
+    while wait(2) do
+        services.TweenService:Create(DecorCircle1, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+            BackgroundTransparency = 0.95
+        }):Play()
+        wait(1.5)
+        services.TweenService:Create(DecorCircle1, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+            BackgroundTransparency = 0.9
+        }):Play()
+    end
+end)
 
-local DecorCircle2Corner = Instance.new("UICorner")
-DecorCircle2Corner.CornerRadius = UDim.new(1, 0)
-DecorCircle2Corner.Parent = DecorCircle2
-
--- 添加简约边框效果
+-- 添加高级边框效果
 local InnerStroke = Instance.new("UIStroke")
 InnerStroke.Parent = MainBackground
-InnerStroke.Color = Color3.fromRGB(60, 60, 80)
+InnerStroke.Color = Color3.fromRGB(80, 80, 90)
 InnerStroke.Thickness = 2
-InnerStroke.Transparency = 0.8
+InnerStroke.Transparency = 0.6
 
--- 添加左右渐变遮罩效果
+-- 添加高级发光效果
+local GlowEffect = Instance.new("ImageLabel")
+GlowEffect.Name = "GlowEffect"
+GlowEffect.Parent = MainBackground
+GlowEffect.BackgroundTransparency = 1
+GlowEffect.Size = UDim2.new(1, 20, 1, 20)
+GlowEffect.Position = UDim2.new(-0.01, -10, -0.01, -10)
+GlowEffect.Image = "rbxassetid://8992234011"
+GlowEffect.ImageColor3 = Color3.fromRGB(120, 180, 255)
+GlowEffect.ImageTransparency = 0.92
+GlowEffect.ScaleType = Enum.ScaleType.Slice
+GlowEffect.SliceCenter = Rect.new(100, 100, 100, 100)
+GlowEffect.ZIndex = 0
+
+-- 添加发光动画
+spawn(function()
+    while wait(1.5) do
+        services.TweenService:Create(GlowEffect, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+            ImageTransparency = 0.88
+        }):Play()
+        wait(1.5)
+        services.TweenService:Create(GlowEffect, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+            ImageTransparency = 0.92
+        }):Play()
+    end
+end)
+
+-- 添加左侧渐变遮罩效果
 local LeftGradientMask = Instance.new("Frame")
 LeftGradientMask.Name = "LeftGradientMask"
 LeftGradientMask.Parent = MainBackground
 LeftGradientMask.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-LeftGradientMask.BackgroundTransparency = 0.5
-LeftGradientMask.Size = UDim2.new(0.2, 0, 1, 0)
+LeftGradientMask.BackgroundTransparency = 0.7
+LeftGradientMask.Size = UDim2.new(0.15, 0, 1, 0)
 LeftGradientMask.ZIndex = 2
 
 local LeftGradient = Instance.new("UIGradient")
@@ -330,27 +359,6 @@ LeftGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1.0, Color3.fromRGB(0, 0, 0))
 })
 LeftGradient.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0.0, 0.0),
-    NumberSequenceKeypoint.new(1.0, 1.0)
-})
-
-local RightGradientMask = Instance.new("Frame")
-RightGradientMask.Name = "RightGradientMask"
-RightGradientMask.Parent = MainBackground
-RightGradientMask.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-RightGradientMask.BackgroundTransparency = 0.5
-RightGradientMask.Position = UDim2.new(0.8, 0, 0, 0)
-RightGradientMask.Size = UDim2.new(0.2, 0, 1, 0)
-RightGradientMask.ZIndex = 2
-
-local RightGradient = Instance.new("UIGradient")
-RightGradient.Parent = RightGradientMask
-RightGradient.Rotation = 180
-RightGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(0, 0, 0)),
-    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(0, 0, 0))
-})
-RightGradient.Transparency = NumberSequence.new({
     NumberSequenceKeypoint.new(0.0, 0.0),
     NumberSequenceKeypoint.new(1.0, 1.0)
 })
@@ -369,27 +377,27 @@ local function createParticle()
     particle.Parent = ParticleEmitter
     particle.BackgroundColor3 = config.AccentColor
     particle.Size = UDim2.new(0, 2, 0, 2)
-    particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    particle.Position = UDim2.new(math.random(0, 0.5), 0, math.random(), 0) -- 只在左侧生成粒子
     particle.ZIndex = 1
     
     local particleCorner = Instance.new("UICorner")
     particleCorner.CornerRadius = UDim.new(1, 0)
     particleCorner.Parent = particle
     
-    services.TweenService:Create(particle, TweenInfo.new(math.random(2, 5), Enum.EasingStyle.Linear), {
-        Position = UDim2.new(math.random(), 0, math.random(), 0),
+    services.TweenService:Create(particle, TweenInfo.new(math.random(3, 6), Enum.EasingStyle.Linear), {
+        Position = UDim2.new(math.random(0, 0.5), 0, math.random(), 0),
         BackgroundTransparency = 1
     }):Play()
     
-    delay(5, function()
+    delay(6, function()
         particle:Destroy()
     end)
 end
 
 -- 定期生成粒子
 spawn(function()
-    while wait(0.1) do
-        if #ParticleEmitter:GetChildren() < 20 then
+    while wait(0.2) do
+        if #ParticleEmitter:GetChildren() < 10 then
             createParticle()
         end
     end
@@ -434,35 +442,39 @@ TabBtnsL.Parent = TabBtns
 TabBtnsL.SortOrder = Enum.SortOrder.LayoutOrder
 TabBtnsL.Padding = UDim.new(0, 12)
 
--- 修改脚本标题为彩色渐变效果
+-- 修改脚本标题为亮色
 local ScriptTitle = Instance.new("TextLabel")
 ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = Side
 ScriptTitle.BackgroundTransparency = 1
-ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
+ScriptTitle.Position = UDim2.new(0, 5, 0.009, 0)
 ScriptTitle.Size = UDim2.new(0, 110, 0, 20)
-ScriptTitle.Font = Enum.Font.GothamSemibold
-ScriptTitle.Text = "彩虹UI"
-ScriptTitle.TextSize = 16
-ScriptTitle.TextScaled = true
+ScriptTitle.Font = Enum.Font.GothamBlack
+ScriptTitle.Text = "视频库"
+ScriptTitle.TextSize = 18
+ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
+ScriptTitle.TextColor3 = Color3.fromRGB(255, 255, 255) -- 亮白色
 
--- 添加彩色渐变效果到标题
-local TitleGradient = Instance.new("UIGradient")
-TitleGradient.Parent = ScriptTitle
-TitleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 0, 0)),
-    ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 165, 0)),
-    ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 255, 0)),
-    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 0)),
-    ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
-    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(128, 0, 128))
-})
+-- 添加标题发光效果
+local TitleGlow = Instance.new("UIStroke")
+TitleGlow.Parent = ScriptTitle
+TitleGlow.Color = Color3.fromRGB(200, 230, 255)
+TitleGlow.Thickness = 1.5
+TitleGlow.Transparency = 0.3
 
--- 添加标题动画
+-- 添加标题动画效果
 spawn(function()
-    while wait(0.05) do
-        TitleGradient.Offset = Vector2.new((TitleGradient.Offset.X + 0.01) % 1, 0)
+    while wait(2) do
+        services.TweenService:Create(TitleGlow, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+            Thickness = 2,
+            Transparency = 0.2
+        }):Play()
+        wait(1)
+        services.TweenService:Create(TitleGlow, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+            Thickness = 1.5,
+            Transparency = 0.3
+        }):Play()
     end
 end)
 
@@ -481,10 +493,207 @@ function library.new(library, name, theme)
         end
     end
 
-    -- 设置彩色标题
-    ScriptTitle.Text = name or "彩虹UI"
+    -- 设置标题
+    ScriptTitle.Text = name or "视频库"
     
     local window = {}
+    
+    function window.Tab(window, name, icon)
+        local Tab = Instance.new("ScrollingFrame")
+        local TabIco = Instance.new("ImageLabel")
+        local TabText = Instance.new("TextLabel")
+        local TabBtn = Instance.new("TextButton")
+        local TabL = Instance.new("UIListLayout")
+        
+        Tab.Name = "Tab"
+        Tab.Parent = TabMain
+        Tab.Active = true
+        Tab.BackgroundTransparency = 1
+        Tab.Size = UDim2.new(1, 0, 1, 0)
+        Tab.ScrollBarThickness = 2
+        Tab.Visible = false
+        
+        TabIco.Name = "TabIco"
+        TabIco.Parent = TabBtns
+        TabIco.BackgroundTransparency = 1
+        TabIco.BorderSizePixel = 0
+        TabIco.Size = UDim2.new(0, 24, 0, 24)
+        TabIco.Image = icon or "rbxassetid://84830962019412"
+        TabIco.ImageTransparency = 0.5
+        TabIco.ImageColor3 = config.AccentColor
+        
+        -- 添加图标动画效果
+        spawn(function()
+            while wait(2) do
+                services.TweenService:Create(TabIco, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                    Rotation = 5
+                }):Play()
+                wait(0.5)
+                services.TweenService:Create(TabIco, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                    Rotation = -5
+                }):Play()
+                wait(0.5)
+                services.TweenService:Create(TabIco, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                    Rotation = 0
+                }):Play()
+            end
+        end)
+        
+        TabText.Name = "TabText"
+        TabText.Parent = TabIco
+        TabText.BackgroundTransparency = 1
+        TabText.Position = UDim2.new(1.416, 0, 0, 0)
+        TabText.Size = UDim2.new(0, 86, 0, 24)
+        TabText.Font = Enum.Font.GothamSemibold
+        TabText.Text = name
+        TabText.TextColor3 = config.TextColor
+        TabText.TextSize = 14
+        TabText.TextXAlignment = Enum.TextXAlignment.Left
+        TabText.TextTransparency = 0.5
+        
+        TabBtn.Name = "TabBtn"
+        TabBtn.Parent = TabIco
+        TabBtn.BackgroundTransparency = 1
+        TabBtn.BorderSizePixel = 0
+        TabBtn.Size = UDim2.new(0, 120, 0, 24)
+        TabBtn.AutoButtonColor = false
+        TabBtn.Font = Enum.Font.SourceSans
+        TabBtn.Text = ""
+        
+        TabL.Name = "TabL"
+        TabL.Parent = Tab
+        TabL.SortOrder = Enum.SortOrder.LayoutOrder
+        TabL.Padding = UDim.new(0, 4)
+        
+        TabBtn.MouseButton1Click:Connect(function()
+            Ripple(TabBtn)
+            switchTab({ TabIco, Tab })
+        end)
+        
+        if library.currentTab == nil then
+            switchTab({ TabIco, Tab })
+        end
+        
+        TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 8)
+        end)
+        
+        local tab = {}
+        
+        function tab.section(tab, name, TabVal)
+            local Section = Instance.new("Frame")
+            local SectionC = Instance.new("UICorner")
+            local SectionText = Instance.new("TextLabel")
+            local SectionOpen = Instance.new("ImageLabel")
+            local SectionOpened = Instance.new("ImageLabel")
+            local SectionToggle = Instance.new("ImageButton")
+            local Objs = Instance.new("Frame")
+            local ObjsL = Instance.new("UIListLayout")
+            
+            Section.Name = "Section"
+            Section.Parent = Tab
+            Section.BackgroundColor3 = config.TabColor
+            Section.BackgroundTransparency = 1
+            Section.BorderSizePixel = 0
+            Section.ClipsDescendants = true
+            Section.Size = UDim2.new(0.981, 0, 0, 36)
+            
+            SectionC.CornerRadius = UDim.new(0, 6)
+            SectionC.Name = "SectionC"
+            SectionC.Parent = Section
+            
+            SectionText.Name = "SectionText"
+            SectionText.Parent = Section
+            SectionText.BackgroundTransparency = 1
+            SectionText.Position = UDim2.new(0.088, 0, 0, 0)
+            SectionText.Size = UDim2.new(0, 401, 0, 36)
+            SectionText.Font = Enum.Font.GothamSemibold
+            SectionText.Text = name
+            SectionText.TextColor3 = config.TextColor
+            SectionText.TextSize = 16
+            SectionText.TextXAlignment = Enum.TextXAlignment.Left
+            
+            SectionOpen.Name = "SectionOpen"
+            SectionOpen.Parent = SectionText
+            SectionOpen.BackgroundTransparency = 1
+            SectionOpen.BorderSizePixel = 0
+            SectionOpen.Position = UDim2.new(0, -33, 0, 5)
+            SectionOpen.Size = UDim2.new(0, 26, 0, 26)
+            SectionOpen.Image = "rbxassetid://84830962019412"
+            SectionOpen.ImageColor3 = config.SecondaryTextColor
+            
+            -- 添加图标动画
+            spawn(function()
+                while wait(1.5) do
+                    services.TweenService:Create(SectionOpen, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                        Rotation = 10
+                    }):Play()
+                    wait(0.3)
+                    services.TweenService:Create(SectionOpen, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                        Rotation = -10
+                    }):Play()
+                    wait(0.3)
+                    services.TweenService:Create(SectionOpen, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                        Rotation = 0
+                    }):Play()
+                end
+            end)
+            
+            SectionOpened.Name = "SectionOpened"
+            SectionOpened.Parent = SectionOpen
+            SectionOpened.BackgroundTransparency = 1
+            SectionOpened.BorderSizePixel = 0
+            SectionOpened.Size = UDim2.new(0, 26, 0, 26)
+            SectionOpened.Image = "rbxassetid://84830962019412"
+            SectionOpened.ImageColor3 = config.AccentColor
+            SectionOpened.ImageTransparency = 1
+            
+            SectionToggle.Name = "SectionToggle"
+            SectionToggle.Parent = SectionOpen
+            SectionToggle.BackgroundTransparency = 1
+            SectionToggle.BorderSizePixel = 0
+            SectionToggle.Size = UDim2.new(0, 26, 0, 26)
+            
+            Objs.Name = "Objs"
+            Objs.Parent = Section
+            Objs.BackgroundTransparency = 1
+            Objs.BorderSizePixel = 0
+            Objs.Position = UDim2.new(0, 6, 0, 36)
+            Objs.Size = UDim2.new(0.986, 0, 0, 0)
+            
+            ObjsL.Name = "ObjsL"
+            ObjsL.Parent = Objs
+            ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
+            ObjsL.Padding = UDim.new(0, 8)
+            
+            local open = TabVal ~= false
+            if TabVal ~= false then
+                Section.Size = UDim2.new(0.981, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 8 or 36)
+                SectionOpened.ImageTransparency = open and 0 or 1
+                SectionOpen.ImageTransparency = open and 1 or 0
+            end
+            
+            SectionToggle.MouseButton1Click:Connect(function()
+                open = not open
+                services.TweenService:Create(Section, TweenInfo.new(0.2), {
+                    Size = UDim2.new(0.981, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 8 or 36)
+                }):Play()
+                
+                services.TweenService:Create(SectionOpened, TweenInfo.new(0.2), {
+                    ImageTransparency = open and 0 or 1
+                }):Play()
+                
+                services.TweenService:Create(SectionOpen, TweenInfo.new(0.2), {
+                    ImageTransparency = open and 1 or 0
+                }):Play()
+            end)
+            
+            ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                if not open then return end
+                Section.Size = UDim2.new(0.981, 0, 0, 36 + ObjsL.AbsoluteContentSize.Y + 8)
+            end)
+            
+            local section = {}
     
     function window.Tab(window, name, icon)
         local Tab = Instance.new("ScrollingFrame")
