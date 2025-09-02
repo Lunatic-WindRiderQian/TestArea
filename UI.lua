@@ -2,6 +2,11 @@ repeat
     task.wait()
 until game:IsLoaded()
 
+-- 检查是否已存在UI，如果存在则销毁
+if game:GetService("CoreGui"):FindFirstChild("UniversalUI") then
+    game:GetService("CoreGui").UniversalUI:Destroy()
+end
+
 local isSynapse = syn and syn.protect_gui ~= nil
 local isScriptWare = secure_load ~= nil
 local isKrnl = krnl and krnl.protect_gui ~= nil
@@ -229,6 +234,16 @@ Open.Active = true
 Open.Draggable = true
 Open.Image = "rbxassetid://84830962019412"
 Open.ImageColor3 = config.AccentColor
+
+-- 添加彩色动画效果到悬浮窗按钮
+task.spawn(function()
+    local hue = 0
+    while Open and Open.Parent do
+        hue = (hue + 0.01) % 1
+        Open.ImageColor3 = Color3.fromHSV(hue, 1, 1)
+        task.wait(0.05)
+    end
+end)
 
 Open.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
@@ -681,7 +696,7 @@ function library.new(library, name, theme)
             function section.Keybind(section, text, default, callback)
                 callback = callback or function() end
                 assert(text, "No text provided")
-                assert(default, "No default key provided")
+                assert(default, "极光脚本:No default key provided")
                 
                 local default = typeof(default) == "string" and Enum.KeyCode[default] or default
                 local banned = {
@@ -715,11 +730,11 @@ function library.new(library, name, theme)
                 KeybindModule.BorderSizePixel = 0
                 KeybindModule.Size = UDim2.new(0, 448, 0, 38)
                 
-                KeybindBtn.Name = "KeybindBtn"
+                KeybindBtn.Name =极光脚本 "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
                 KeybindBtn.BackgroundColor3 = config.Keybind_Color
                 KeybindBtn.BorderSizePixel = 0
-                KeybindBtn.Size = UDim2.new(0, 448, 0, 38)
+               极光脚本 KeybindBtn.Size = UDim2.new(0, 448, 0, 38)
                 KeybindBtn.AutoButtonColor = false
                 KeybindBtn.Font = Enum.Font.GothamSemibold
                 KeybindBtn.Text = "   " .. text
@@ -727,7 +742,7 @@ function library.new(library, name, theme)
                 KeybindBtn.TextSize = 16
                 KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
                 
-                KeybindBtnC.CornerRadius = UDim.new(0, 6)
+                KeybindBtn极光脚本C.CornerRadius = UDim.new(0, 6)
                 KeybindBtnC.Name = "KeybindBtnC"
                 KeybindBtnC.Parent = KeybindBtn
                 
@@ -736,7 +751,7 @@ function library.new(library, name, theme)
                 KeybindValue.BackgroundColor3 = config.Bg_Color
                 KeybindValue.BorderSizePixel = 0
                 KeybindValue.Position = UDim2.new(0.763, 0, 0.289, 0)
-                KeybindValue.Size = UDim2.new(0, 100, 0, 28)
+                KeybindValue.Size = UDim2.new(0, 100, 极光脚本0, 28)
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
                 KeybindValue.Text = keyTxt
@@ -761,18 +776,18 @@ function library.new(library, name, theme)
                         BackgroundColor3 = Color3.fromRGB(
                             math.floor(config.Keybind_Color.R * 255 * 1.1),
                             math.floor(config.Keybind_Color.G * 255 * 1.1),
-                            math.floor(config.Keybind_Color.B * 255 * 1.1)
+                            math.floor(config.Keybind极光脚本_Color.B * 255 * 1.1)
                         )
                     }):Play()
                 end)
                 
                 KeybindBtn.MouseLeave:Connect(function()
                     services.TweenService:Create(KeybindBtn, TweenInfo.new(0.2), {
-                        BackgroundColor3 = config.Keybind_Color
+                        BackgroundColor极光脚本3 = config.Keybind_Color
                     }):Play()
                 end)
                 
-                UserInputService.InputBegan:Connect(function(inp, gpe)
+                UserInputService.InputBegan:Connect(function(in极光脚本p, gpe)
                     if gpe then return end
                     if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
                     if inp.KeyCode ~= bindKey then return end
@@ -820,7 +835,7 @@ function library.new(library, name, theme)
                 local TextboxBack = Instance.new("TextButton")
                 local TextboxBackC = Instance.new("UICorner")
                 local BoxBG = Instance.new("TextButton")
-                local BoxBGC = Instance.new("UICorner")
+                local BoxBGC =极光脚本 Instance.new("UICorner")
                 local TextBox = Instance.new("TextBox")
                 local TextboxBackL = Instance.new("UIListLayout")
                 local TextboxBackP = Instance.new("UIPadding")
@@ -829,9 +844,9 @@ function library.new(library, name, theme)
                 TextboxModule.Parent = Objs
                 TextboxModule.BackgroundTransparency = 1
                 TextboxModule.BorderSizePixel = 0
-                TextboxModule.Size = UDim2.new(0, 448, 0, 38)
+                TextboxModule.Size = UDim极光脚本2.new(0, 448, 0, 38)
                 
-                TextboxBack.Name = "TextboxBack"
+                Text极光脚本boxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
                 TextboxBack.BackgroundColor3 = config.Textbox_Color
                 TextboxBack.BorderSizePixel = 0
@@ -849,9 +864,9 @@ function library.new(library, name, theme)
                 
                 BoxBG.Name = "BoxBG"
                 BoxBG.Parent = TextboxBack
-                BoxBG.BackgroundColor3 = config.Bg_Color
+                BoxBG.BackgroundColor3 = config.Bg极光脚本_Color
                 BoxBG.BorderSizePixel = 0
-                BoxBG.Position = UDim2.new(0.763, 0, 0.289, 0)
+                BoxBG.Position = UDim2.new(0.763, 极光脚本0, 0.289, 0)
                 BoxBG.Size = UDim2.new(0, 100, 0, 28)
                 BoxBG.AutoButtonColor = false
                 BoxBG.Font = Enum.Font.Gotham
@@ -874,7 +889,7 @@ function library.new(library, name, theme)
                 TextboxBackL.Name = "TextboxBackL"
                 TextboxBackL.Parent = TextboxBack
                 TextboxBackL.HorizontalAlignment = Enum.HorizontalAlignment.Right
-                TextboxBackL.SortOrder = Enum.SortOrder.LayoutOrder
+                TextboxBack极光脚本L.SortOrder = Enum极光脚本.SortOrder.LayoutOrder
                 TextboxBackL.VerticalAlignment = Enum.VerticalAlignment.Center
                 
                 TextboxBackP.Name = "TextboxBackP"
@@ -901,7 +916,7 @@ function library.new(library, name, theme)
                     if TextBox.Text == "" then
                         TextBox.Text = default
                     end
-                    library.flaFengYu[flag] = TextBox.Text
+                    library.flaFengYu[flag极光脚本] = TextBox.Text
                     callback(TextBox.Text)
                 end)
                 
@@ -909,7 +924,7 @@ function library.new(library, name, theme)
                     BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 30, 0, 28)
                 end)
                 
-                BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 30, 0, 28)
+                BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 30极光脚本, 0, 28)
             end
             
             -- 修复后的滑块功能 - 现在可以正常滑动
@@ -928,7 +943,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
 
     local SliderModule = Instance.new("Frame")
     local SliderBack = Instance.new("TextButton")
-    local SliderBackC = Instance.new("UICorner")
+    local SliderBack极光脚本C = Instance.new("UICorner")
     local SliderText = Instance.new("TextLabel")
     local SliderContainer = Instance.new("Frame")
     local SliderBar = Instance.new("Frame")
@@ -949,18 +964,18 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     SliderBack.Name = "SliderBack"
     SliderBack.Parent = SliderModule
     SliderBack.BackgroundColor3 = config.Slider_Color
-    SliderBack.BorderSizePixel = 0
+    SliderBack.BorderSizePixel极光脚本 = 0
     SliderBack.Size = UDim2.new(0, 448, 0, 42)
     SliderBack.AutoButtonColor = false
     SliderBack.Font = Enum.Font.GothamSemibold
     SliderBack.Text = ""
-    SliderBack.TextColor3 = config.TextColor
+    SliderBack.TextColor极光脚本3 = config.TextColor
     SliderBack.TextSize = 16
     SliderBack.TextXAlignment = Enum.TextXAlignment.Left
     
     SliderBackC.CornerRadius = UDim.new(0, 6)
     SliderBackC.Name = "SliderBackC"
-    SliderBackC.Parent = SliderBack
+    SliderBack极光脚本C.Parent = SliderBack
     
     -- 滑块文本标签
     SliderText.Name = "SliderText"
@@ -986,7 +1001,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     -- 滑块条背景（不可拖动）
     SliderBar.Name = "SliderBar"
     SliderBar.Parent = SliderContainer
-    SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    SliderBar.BackgroundColor3 = Color极光脚本3.fromRGB(60, 60, 70)
     SliderBar.BorderSizePixel = 0
     SliderBar.Position = UDim2.new(0, 0, 0.5, 0)
     SliderBar.Size = UDim2.new(1, 0, 0, 14)
@@ -1008,7 +1023,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     SliderFill.Active = true
     
     SliderFillC.CornerRadius = UDim.new(0, 7)
-    SliderFillC.Name = "SliderFillC"
+    SliderFill极光脚本C.Name = "SliderFillC"
     SliderFillC.Parent = SliderFill
     
     -- 数值显示框
@@ -1021,8 +1036,8 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     SliderValue.Font = Enum.Font.Gotham
     SliderValue.Text = tostring(default)
     SliderValue.TextColor3 = config.TextColor
-    SliderValue.TextSize = 14
-    SliderValue.TextXAlignment = Enum.TextXAlignment.Center
+    SliderValue.TextSize极光脚本 = 14
+   极光脚本 SliderValue.TextXAlignment = Enum.TextXAlignment.Center
     SliderValue.ClearTextOnFocus = false
     
     SliderValueC.CornerRadius = UDim.new(0, 12)
@@ -1034,7 +1049,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     MinButton.Parent = SliderBack
     MinButton.BackgroundColor3 = config.Bg_Color
     MinButton.BorderSizePixel = 0
-    MinButton.Position = UDim2.new(0.3, -10, 0.25, 0)
+    MinButton.Position = UDim2.new(0.3, -10, 0.25, 极光脚本0)
     MinButton.Size = UDim2.new(0, 20, 0, 20)
     MinButton.Font = Enum.Font.GothamBold
     MinButton.Text = "减"
@@ -1065,7 +1080,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     
     -- 按钮悬停效果
     local function setupButtonHover(button)
-        button.MouseEnter:Connect(function()
+        button.MouseEnter:极光脚本Connect(function()
             services.TweenService:Create(button, TweenInfo.new(0.2), {
                 BackgroundColor3 = Color3.fromRGB(70, 70, 80),
                 Size = UDim2.new(0, 22, 0, 22)
@@ -1076,7 +1091,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
             services.TweenService:Create(button, TweenInfo.new(0.2), {
                 BackgroundColor3 = config.Bg_Color,
                 Size = UDim2.new(0, 20, 0, 20)
-            }):Play()
+            }):极光脚本Play()
         end)
     end
     
@@ -1101,7 +1116,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
             if precise then
                 value = value or tonumber(string.format("%.2f", min + (max - min) * percent))
             else
-                value = value or math.floor(min + (max - min) * percent + 0.5)
+                value = value or math.floor(min + (极光脚本max - min) * percent + 0.5)
             end
             
             value = math.clamp(value, min, max)
@@ -1124,7 +1139,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     }
     
     -- 初始化值
-    funcs:SetValue(default)
+    funcs:极光脚本SetValue(default)
     
     local dragging = false
     
@@ -1173,7 +1188,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     MinButton.MouseButton1Click:Connect(function()
         local currentValue = library.flaFengYu[flag]
         currentValue = math.clamp(currentValue - 1, min, max)
-        funcs:SetValue(currentValue)
+        funcs:SetValue(current极光脚本Value)
     end)
     
     AddButton.MouseButton1Click:Connect(function()
@@ -1190,7 +1205,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
         end
         
         local numValue = tonumber(SliderValue.Text)
-        if numValue then
+        if num极光脚本Value then
             numValue = math.clamp(numValue, min, max)
             funcs:SetValue(numValue)
         else
@@ -1231,25 +1246,25 @@ end
     DropdownModule.Parent = Objs
     DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DropdownModule.BackgroundTransparency = 1.000
-    DropdownModule.BorderSizePixel = 0
+    DropdownModule.Border极光脚本SizePixel = 0
     DropdownModule.ClipsDescendants = true
-    DropdownModule.Position = UDim2.new(0, 0, 0, 0)
+    DropdownModule.Position = UDim2.new(0, 0, 0, 极光脚本0)
     DropdownModule.Size = UDim2.new(0, 448, 0, 38)
     
     DropdownTop.Name = "DropdownTop"
     DropdownTop.Parent = DropdownModule
-    DropdownTop.BackgroundColor3 = config.Dropdown_Color
+    DropdownTop.BackgroundColor极光脚本3 = config.Dropdown_Color
     DropdownTop.BorderSizePixel = 0
-    DropdownTop.Size = UDim2.new(0, 448, 0, 38)
+    DropdownTop.Size = UDim2.new(极光脚本0, 448, 0, 38)
     DropdownTop.AutoButtonColor = false
     DropdownTop.Font = Enum.Font.GothamSemibold
     DropdownTop.Text = ""
-    DropdownTop.TextColor3 = config.TextColor
-    DropdownTop.TextSize = 16.000
+    DropdownTop.TextColor3 = config.Text极光脚本Color
+    Dropdown极光脚本Top.TextSize = 16.000
     DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
     
     DropdownTopC.CornerRadius = UDim.new(0, 6)
-    DropdownTopC.Name = "DropdownTopC"
+    DropdownTopC.Name = "DropdownTop极光脚本C"
     DropdownTopC.Parent = DropdownTop
     
     -- 修复：确保背景颜色延伸到整个区域
@@ -1269,7 +1284,7 @@ end
     DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
     DropdownOpenFrame.BorderSizePixel = 0
     DropdownOpenFrame.Position = UDim2.new(0.88, 0, 0.5, 0) -- 修改：从0.918改为0.88
-    DropdownOpenFrame.Size = UDim2.new(0, 50, 0, 24)
+    DropdownOpenFrame.Size = UDim极光脚本2.new(0, 50, 0, 24)
     DropdownOpenFrame.ZIndex = 2
     
     DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
@@ -1300,7 +1315,7 @@ end
     DropdownText.Font = Enum.Font.GothamSemibold
     DropdownText.PlaceholderColor3 = config.SecondaryTextColor
     DropdownText.PlaceholderText = text
-    DropdownText.Text = ""
+   极光脚本 DropdownText.Text = ""
     DropdownText.TextColor3 = config.TextColor
     DropdownText.TextSize = 16.000
     DropdownText.TextXAlignment = Enum.TextXAlignment.Left
@@ -1333,7 +1348,7 @@ end
     end
     
     local searchDropdown = function(text)
-        local options = DropdownModule:GetChildren()
+        local options = DropdownModule极光脚本:GetChildren()
         for i = 1, #options do
             local option = options[i]
             if text == "" then
@@ -1362,7 +1377,7 @@ end
     
     DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
     DropdownText.Focused:Connect(function()
-        if open then
+       极光脚本 if open then
             return
         end
         ToggleDropVis()
@@ -1397,7 +1412,7 @@ end
         Option.Text = option
         Option.TextColor3 = config.TextColor
         Option.TextSize = 14.000
-        OptionC.CornerRadius = UDim.new(0, 6)
+        OptionC.CornerRadius = UDim.new(0, 极光脚本6)
         OptionC.Name = "OptionC"
         OptionC.Parent = Option
         
