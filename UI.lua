@@ -277,6 +277,9 @@ TabBtns.Position = UDim2.new(0, 0, 0.097, 0)
 TabBtns.Size = UDim2.new(0, 120, 0, 340)
 TabBtns.CanvasSize = UDim2.new(0, 0, 1, 0)
 TabBtns.ScrollBarThickness = 0
+-- 修复滚动问题 - 只允许垂直滚动
+TabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
+TabBtns.HorizontalScrollBarVisibility = Enum.ScrollBarVisibility.Never
 
 local TabBtnsL = Instance.new("UIListLayout")
 TabBtnsL.Name = "TabBtnsL"
@@ -284,6 +287,7 @@ TabBtnsL.Parent = TabBtns
 TabBtnsL.SortOrder = Enum.SortOrder.LayoutOrder
 TabBtnsL.Padding = UDim.new(0, 12)
 
+-- 创建彩色标题文本
 local ScriptTitle = Instance.new("TextLabel")
 ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = Side
@@ -292,10 +296,26 @@ ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
 ScriptTitle.Size = UDim2.new(0, 110, 0, 20)
 ScriptTitle.Font = Enum.Font.GothamSemibold
 ScriptTitle.Text = "Delta"
-ScriptTitle.TextColor3 = config.AccentColor
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = true
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+-- 创建彩虹色文本效果
+local function createRainbowText()
+    local hue = 0
+    local saturation = 1
+    local value = 1
+    
+    while true do
+        hue = (hue + 0.01) % 1
+        local color = Color3.fromHSV(hue, saturation, value)
+        ScriptTitle.TextColor3 = color
+        wait(0.05)
+    end
+end
+
+-- 启动彩虹色文本效果
+coroutine.wrap(createRainbowText)()
 
 function library.new(library, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
@@ -330,6 +350,9 @@ function library.new(library, name, theme)
         Tab.Size = UDim2.new(1, 0, 1, 0)
         Tab.ScrollBarThickness = 2
         Tab.Visible = false
+        -- 修复滚动问题 - 只允许垂直滚动
+        Tab.ScrollingDirection = Enum.ScrollingDirection.Y
+        Tab.HorizontalScrollBarVisibility = Enum.ScrollBarVisibility.Never
         
         TabIco.Name = "TabIco"
         TabIco.Parent = TabBtns
@@ -680,9 +703,6 @@ function library.new(library, name, theme)
                     RightBracket = "]", Equals = "=", Minus = "-",
                     RightAlt = "Right Alt", LeftAlt = "Left Alt"
                 }
-                
-                local bindKey = default
-                local keyTxt = default and (shortNames[default.Name] or default.Name) or "None"
                 
                 local KeybindModule = Instance.new("Frame")
                 local KeybindBtn = Instance.new("TextButton")
