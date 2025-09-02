@@ -2,6 +2,11 @@ repeat
     task.wait()
 until game:IsLoaded()
 
+-- 等待游戏完全加载
+while not game:IsLoaded() do
+    task.wait(0.1)
+end
+
 local isSynapse = syn and syn.protect_gui ~= nil
 local isScriptWare = secure_load ~= nil
 local isKrnl = krnl and krnl.protect_gui ~= nil
@@ -76,6 +81,33 @@ local config = {
     SecondaryTextColor = Color3.fromRGB(180, 180, 180),
     GlowColor = Color3.fromRGB(0, 200, 255),
 }
+
+-- 确保UI显示在屏幕中央
+local function ensureUIVisibility()
+    local screenSize = workspace.CurrentCamera.ViewportSize
+    local centerX = screenSize.X / 2
+    local centerY = screenSize.Y / 2
+    
+    if Main then
+        Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+        
+        -- 确保UI不会超出屏幕边界
+        local maxX = screenSize.X - Main.AbsoluteSize.X
+        local maxY = screenSize.Y - Main.AbsoluteSize.Y
+        
+        if Main.AbsolutePosition.X < 0 then
+            Main.Position = UDim2.new(0, 10, 0.5, 0)
+        elseif Main.AbsolutePosition.X > maxX then
+            Main.Position = UDim2.new(0, maxX - 10, 0.5, 0)
+        end
+        
+        if Main.AbsolutePosition.Y < 0 then
+            Main.Position = UDim2.new(0.5, 0, 0, 10)
+        elseif Main.AbsolutePosition.Y > maxY then
+            Main.Position = UDim2.new(0.5, 0, 0, maxY - 10)
+        end
+    end
+end
 
 function drag(frame, hold)
     if not hold then hold = frame end
@@ -188,8 +220,11 @@ function switchTab(new)
     switchingTabs = false
 end
 
+-- 创建UI元素
 local FengYu = Instance.new("ScreenGui")
 FengYu.Name = "UniversalUI"
+FengYu.ResetOnSpawn = false -- 防止重生时重置
+FengYu.ZIndexBehavior = Enum.ZIndexBehavior.Sibling -- 确保正确的层级显示
 protectGUI(FengYu)
 FengYu.Parent = services.CoreGui
 
@@ -203,6 +238,7 @@ Main.Size = UDim2.new(0, 600, 0, 380)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
+Main.Visible = true -- 确保可见
 
 -- 添加圆角
 local MainCorner = Instance.new("UICorner")
@@ -229,6 +265,7 @@ Open.Active = true
 Open.Draggable = true
 Open.Image = "rbxassetid://84830962019412"
 Open.ImageColor3 = config.AccentColor
+Open.Visible = true -- 确保可见
 
 Open.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
@@ -252,6 +289,7 @@ TabMain.BackgroundTransparency = 1
 TabMain.Position = UDim2.new(0.217, 0, 0, 3)
 TabMain.Size = UDim2.new(0, 468, 0, 374)
 TabMain.ZIndex = 10
+TabMain.Visible = true -- 确保可见
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
@@ -261,6 +299,7 @@ Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 0)
 Side.Size = UDim2.new(0, 120, 0, 380)
+Side.Visible = true -- 确保可见
 
 -- 添加圆角
 local SideCorner = Instance.new("UICorner")
@@ -280,6 +319,7 @@ TabBtns.ScrollBarThickness = 0
 -- 修复滚动问题 - 只允许垂直滚动
 TabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
 TabBtns.HorizontalScrollBarVisibility = Enum.ScrollBarVisibility.Never
+TabBtns.Visible = true -- 确保可见
 
 local TabBtnsL = Instance.new("UIListLayout")
 TabBtnsL.Name = "TabBtnsL"
@@ -299,6 +339,7 @@ ScriptTitle.Text = "Delta"
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = true
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
+ScriptTitle.Visible = true -- 确保可见
 
 -- 创建彩虹色文本效果
 local function createRainbowText()
@@ -310,29 +351,23 @@ local function createRainbowText()
         hue = (hue + 0.01) % 1
         local color = Color3.fromHSV(hue, saturation, value)
         ScriptTitle.TextColor3 = color
-        wait(0.05)
+        task.wait(0.05)
     end
 end
 
 -- 启动彩虹色文本效果
 coroutine.wrap(createRainbowText)()
 
-function library.new(library, name, theme)
-    for _, v in next, services.CoreGui:GetChildren() do
-        if v.Name == "REN" then
-            v:Destroy()
-        end
-    end
-
-    if theme then
-        for k, v in pairs(theme) do
-            if config[k] ~= nil then
-                config[k] = v
-            end
-        end
-    end
-
-    ScriptTitle.Text = name or "Delta"
+-- 确保UI可见性
+task.spawn(function()
+    task.wait(1) -- 等待UI完全加载
+    ensureUIVisibility()
+    
+    -- 监听屏幕尺寸变化
+    services.RunService.RenderStepped:Connect(function()
+        ensureUIVisibility()
+    end)
+end)
     
     local window = {}
     
@@ -350,9 +385,6 @@ function library.new(library, name, theme)
         Tab.Size = UDim2.new(1, 0, 1, 0)
         Tab.ScrollBarThickness = 2
         Tab.Visible = false
-        -- 修复滚动问题 - 只允许垂直滚动
-        Tab.ScrollingDirection = Enum.ScrollingDirection.Y
-        Tab.HorizontalScrollBarVisibility = Enum.ScrollBarVisibility.Never
         
         TabIco.Name = "TabIco"
         TabIco.Parent = TabBtns
@@ -703,6 +735,9 @@ function library.new(library, name, theme)
                     RightBracket = "]", Equals = "=", Minus = "-",
                     RightAlt = "Right Alt", LeftAlt = "Left Alt"
                 }
+                
+                local bindKey = default
+                local keyTxt = default and (shortNames[default.Name] or default.Name) or "None"
                 
                 local KeybindModule = Instance.new("Frame")
                 local KeybindBtn = Instance.new("TextButton")
