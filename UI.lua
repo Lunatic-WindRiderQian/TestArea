@@ -182,7 +182,7 @@ function Ripple(obj)
         Ripple.Parent = obj
         Ripple.BackgroundTransparency = 1
         Ripple.ZIndex = 8
-        Ripple.Image = "rbxassetid://2708891598"
+        Ripple.Image = "rbxassetid://84830962019412"
         Ripple.ImageTransparency = 0.6
         Ripple.ScaleType = Enum.ScaleType.Fit
         
@@ -304,7 +304,7 @@ Open.Position = UDim2.new(0.008, 0, 0.131, 0)
 Open.Size = UDim2.new(0, 50, 0, 50)
 Open.Active = true
 Open.Draggable = true
-Open.Image = "rbxassetid://2708891598"
+Open.Image = "rbxassetid://84830962019412"
 
 -- 彩虹色悬浮按钮
 startRainbowEffect(Open, "ImageColor3", 0.01)
@@ -465,7 +465,7 @@ function library.new(library, name, theme)
         TabIco.BackgroundTransparency = 1
         TabIco.BorderSizePixel = 0
         TabIco.Size = UDim2.new(0, 24, 0, 24)
-        TabIco.Image = "rbxassetid://2708891598"
+        TabIco.Image = "rbxassetid://84830962019412"
         TabIco.ImageTransparency = 0.5
         
         -- 标签图标彩虹色效果
@@ -556,7 +556,7 @@ function library.new(library, name, theme)
             SectionOpen.BorderSizePixel = 0
             SectionOpen.Position = UDim2.new(0, -33, 0, 5)
             SectionOpen.Size = UDim2.new(0, 26, 0, 26)
-            SectionOpen.Image = "rbxassetid://2708891598"
+            SectionOpen.Image = "rbxassetid://84830962019412"
             SectionOpen.ImageColor3 = config.SecondaryTextColor
             
             SectionOpened.Name = "SectionOpened"
@@ -564,7 +564,7 @@ function library.new(library, name, theme)
             SectionOpened.BackgroundTransparency = 1
             SectionOpened.BorderSizePixel = 0
             SectionOpened.Size = UDim2.new(0, 26, 0, 26)
-            SectionOpened.Image = "rbxassetid://2708891598"
+            SectionOpened.Image = "rbxassetid://84830962019412"
             SectionOpened.ImageColor3 = config.AccentColor
             SectionOpened.ImageTransparency = 1
             
