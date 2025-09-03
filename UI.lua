@@ -93,8 +93,10 @@ local function startRainbowEffect(object, property, speed)
     return connection
 end
 
--- 极光效果函数
-local function createAuroraEffect(frame)
+-- 极光效果函数 - 优化版本
+local function createAuroraEffect(frame, intensity)
+    intensity = intensity or 1
+    
     local aurora = Instance.new("Frame")
     aurora.Name = "AuroraEffect"
     aurora.BackgroundTransparency = 1
@@ -107,7 +109,7 @@ local function createAuroraEffect(frame)
     gradient.Rotation = 45
     gradient.Transparency = NumberSequence.new({
         NumberSequenceKeypoint.new(0, 0),
-        NumberSequenceKeypoint.new(0.5, 0.2),
+        NumberSequenceKeypoint.new(0.5, 0.2 * intensity),
         NumberSequenceKeypoint.new(1, 0)
     })
     gradient.Parent = aurora
@@ -165,49 +167,7 @@ local function createAuroraEffect(frame)
     return aurora
 end
 
-function drag(frame, hold)
-    if not hold then hold = frame end
-    
-    local dragging = false
-    local dragInput, dragStart, startPos
-    
-    local function update(input)
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(
-            startPos.X.Scale, 
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale, 
-            startPos.Y.Offset + delta.Y
-        )
-    end
-
-    hold.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    frame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            update(input)
-        end
-    end)
-end
-
+-- 高级波纹效果
 function Ripple(obj)
     if not obj or not obj.Parent then return end
     
@@ -222,8 +182,8 @@ function Ripple(obj)
         Ripple.Parent = obj
         Ripple.BackgroundTransparency = 1
         Ripple.ZIndex = 8
-        Ripple.Image = "rbxassetid://84830962019412"
-        Ripple.ImageTransparency = 0.8
+        Ripple.Image = "rbxassetid://2708891598"
+        Ripple.ImageTransparency = 0.6
         Ripple.ScaleType = Enum.ScaleType.Fit
         
         -- 彩虹色波纹效果
@@ -233,19 +193,37 @@ function Ripple(obj)
         local x = (mouse.X - Ripple.AbsolutePosition.X) / obj.AbsoluteSize.X
         local y = (mouse.Y - Ripple.AbsolutePosition.Y) / obj.AbsoluteSize.Y
         Ripple.Position = UDim2.new(x, 0, y, 0)
+        Ripple.Size = UDim2.new(0, 0, 0, 0)
         
-        services.TweenService:Create(Ripple, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        services.TweenService:Create(Ripple, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             Position = UDim2.new(-0.5, 0, -0.5, 0),
             Size = UDim2.new(2, 0, 2, 0)
         }):Play()
         
-        services.TweenService:Create(Ripple, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        services.TweenService:Create(Ripple, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             ImageTransparency = 1
         }):Play()
         
-        task.wait(0.4)
+        task.wait(0.8)
         Ripple:Destroy()
     end)
+end
+
+-- 滚动修复函数 - 确保滚动流畅且不回弹
+local function setupSmoothScrolling(scrollingFrame, layout)
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+        
+        -- 如果内容高度小于可视区域，禁用滚动
+        if layout.AbsoluteContentSize.Y <= scrollingFrame.AbsoluteSize.Y then
+            scrollingFrame.ScrollingEnabled = false
+        else
+            scrollingFrame.ScrollingEnabled = true
+        end
+    end)
+    
+    -- 修复惯性滚动
+    scrollingFrame.ElasticBehavior = Enum.ElasticBehavior.Never
 end
 
 local switchingTabs = false
@@ -326,7 +304,7 @@ Open.Position = UDim2.new(0.008, 0, 0.131, 0)
 Open.Size = UDim2.new(0, 50, 0, 50)
 Open.Active = true
 Open.Draggable = true
-Open.Image = "rbxassetid://84830962019412"
+Open.Image = "rbxassetid://2708891598"
 
 -- 彩虹色悬浮按钮
 startRainbowEffect(Open, "ImageColor3", 0.01)
@@ -376,10 +354,12 @@ TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0.097, 0)
 TabBtns.Size = UDim2.new(0, 120, 0, 340)
-TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0) -- 初始为0，将在下面动态调整
+TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 4
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
-TabBtns.ScrollingDirection = Enum.ScrollingDirection.Y -- 只允许垂直滚动
+TabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
+TabBtns.ScrollBarImageTransparency = 0.5
+TabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 
 local TabBtnsL = Instance.new("UIListLayout")
 TabBtnsL.Name = "TabBtnsL"
@@ -387,11 +367,16 @@ TabBtnsL.Parent = TabBtns
 TabBtnsL.SortOrder = Enum.SortOrder.LayoutOrder
 TabBtnsL.Padding = UDim.new(0, 12)
 
--- 动态调整TabBtns的CanvasSize
+-- 动态调整TabBtns的CanvasSize并设置滚动行为
 TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     TabBtns.CanvasSize = UDim2.new(0, 0, 0, TabBtnsL.AbsoluteContentSize.Y)
+    
+    -- 防止回弹 - 只允许垂直滚动
+    TabBtns.ScrollingEnabled = TabBtnsL.AbsoluteContentSize.Y > TabBtns.AbsoluteSize.Y
+    TabBtns.ElasticBehavior = Enum.ElasticBehavior.Never
 end)
 
+-- 加强脚本名称的彩色效果
 local ScriptTitle = Instance.new("TextLabel")
 ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = Side
@@ -405,12 +390,36 @@ ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = true
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
 
--- 添加彩色动画效果到脚本名称
+-- 添加高级彩色动画效果到脚本名称
 task.spawn(function()
     local hue = 0
+    local glowEffect = Instance.new("UIGradient")
+    glowEffect.Rotation = 90
+    glowEffect.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.5, 0.2),
+        NumberSequenceKeypoint.new(1, 0)
+    })
+    glowEffect.Parent = ScriptTitle
+    
     while ScriptTitle and ScriptTitle.Parent do
-        hue = (hue + 0.01) % 1
+        hue = (hue + 0.02) % 1
+        
+        -- 创建彩虹色效果
         ScriptTitle.TextColor3 = Color3.fromHSV(hue, 1, 1)
+        
+        -- 添加发光效果
+        glowEffect.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.1) % 1, 1, 1)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 1, 1)),
+            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue + 0.1) % 1, 1, 1))
+        })
+        
+        -- 添加轻微缩放动画
+        services.TweenService:Create(ScriptTitle, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            TextSize = 16 + math.sin(tick() * 2) * 1
+        }):Play()
+        
         task.wait(0.05)
     end
 end)
@@ -447,14 +456,16 @@ function library.new(library, name, theme)
         Tab.BackgroundTransparency = 1
         Tab.Size = UDim2.new(1, 0, 1, 0)
         Tab.ScrollBarThickness = 2
+        Tab.ScrollBarImageTransparency = 0.5
         Tab.Visible = false
+        Tab.ElasticBehavior = Enum.ElasticBehavior.Never -- 防止回弹
         
         TabIco.Name = "TabIco"
         TabIco.Parent = TabBtns
         TabIco.BackgroundTransparency = 1
         TabIco.BorderSizePixel = 0
         TabIco.Size = UDim2.new(0, 24, 0, 24)
-        TabIco.Image = "rbxassetid://84830962019412"
+        TabIco.Image = "rbxassetid://2708891598"
         TabIco.ImageTransparency = 0.5
         
         -- 标签图标彩虹色效果
@@ -495,8 +506,13 @@ function library.new(library, name, theme)
             switchTab({ TabIco, Tab })
         end
         
+        -- 修复滚动 - 防止回弹
         TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 8)
+            
+            -- 只允许垂直滚动，防止回弹
+            Tab.ScrollingEnabled = TabL.AbsoluteContentSize.Y > Tab.AbsoluteSize.Y
+            Tab.ElasticBehavior = Enum.ElasticBehavior.Never
         end)
         
         local tab = {}
@@ -540,7 +556,7 @@ function library.new(library, name, theme)
             SectionOpen.BorderSizePixel = 0
             SectionOpen.Position = UDim2.new(0, -33, 0, 5)
             SectionOpen.Size = UDim2.new(0, 26, 0, 26)
-            SectionOpen.Image = "rbxassetid://84830962019412"
+            SectionOpen.Image = "rbxassetid://2708891598"
             SectionOpen.ImageColor3 = config.SecondaryTextColor
             
             SectionOpened.Name = "SectionOpened"
@@ -548,7 +564,7 @@ function library.new(library, name, theme)
             SectionOpened.BackgroundTransparency = 1
             SectionOpened.BorderSizePixel = 0
             SectionOpened.Size = UDim2.new(0, 26, 0, 26)
-            SectionOpened.Image = "rbxassetid://84830962019412"
+            SectionOpened.Image = "rbxassetid://2708891598"
             SectionOpened.ImageColor3 = config.AccentColor
             SectionOpened.ImageTransparency = 1
             
@@ -778,9 +794,10 @@ function library.new(library, name, theme)
                 
                 -- 添加极光效果到开关
                 if enabled then
-                    createAuroraEffect(ToggleSwitch)
+                    createAuroraEffect(ToggleSwitch, 0.8)
                 end
                 
+                -- 添加悬停动画
                 ToggleBtn.MouseEnter:Connect(function()
                     services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {
                         BackgroundColor3 = Color3.fromRGB(
@@ -813,7 +830,7 @@ function library.new(library, name, theme)
                         
                         -- 切换极光效果
                         if state then
-                            createAuroraEffect(ToggleSwitch)
+                            createAuroraEffect(ToggleSwitch, 0.8)
                         else
                             local aurora = ToggleSwitch:FindFirstChild("AuroraEffect")
                             if aurora then
@@ -832,6 +849,7 @@ function library.new(library, name, theme)
                 end
                 
                 ToggleBtn.MouseButton1Click:Connect(function()
+                    Ripple(ToggleBtn)
                     funcs:SetState()
                 end)
                 
@@ -940,6 +958,7 @@ function library.new(library, name, theme)
                 end)
                 
                 KeybindValue.MouseButton1Click:Connect(function()
+                    Ripple(KeybindValue)
                     KeybindValue.Text = "..."
                     task.wait()
                     
@@ -1172,7 +1191,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     SliderFillC.Parent = SliderFill
     
     -- 添加极光效果到滑块
-    createAuroraEffect(SliderFill)
+    createAuroraEffect(SliderFill, 0.6)
     
     -- 数值显示框
     SliderValue.Name = "SliderValue"
@@ -1334,12 +1353,14 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     
     -- 加减按钮功能
     MinButton.MouseButton1Click:Connect(function()
+        Ripple(MinButton)
         local currentValue = library.flaFengYu[flag]
         currentValue = math.clamp(currentValue - 1, min, max)
         funcs:SetValue(currentValue)
     end)
     
     AddButton.MouseButton1Click:Connect(function()
+        Ripple(AddButton)
         local currentValue = library.flaFengYu[flag]
         currentValue = math.clamp(currentValue + 1, min, max)
         funcs:SetValue(currentValue)
@@ -1436,7 +1457,7 @@ end
     DropdownOpenFrame.ZIndex = 2
     
     -- 添加极光效果到下拉框按钮
-    createAuroraEffect(DropdownOpenFrame)
+    createAuroraEffect(DropdownOpenFrame, 0.8)
     
     DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
     DropdownOpenFrameC.Name = "DropdownOpenFrameC"
@@ -1568,6 +1589,7 @@ end
         OptionC.Parent = Option
         
         Option.MouseButton1Click:Connect(function()
+            Ripple(Option)
             ToggleDropVis()
             callback(Option.Text)
             DropdownText.Text = Option.Text
