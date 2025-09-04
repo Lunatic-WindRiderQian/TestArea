@@ -257,6 +257,13 @@ function switchTab(new)
     switchingTabs = false
 end
 
+-- 销毁所有已存在的UniversalUI实例
+for _, gui in ipairs(services.CoreGui:GetChildren()) do
+    if gui.Name == "UniversalUI" and gui:IsA("ScreenGui") then
+        gui:Destroy()
+    end
+end
+
 local FengYu = Instance.new("ScreenGui")
 FengYu.Name = "UniversalUI"
 protectGUI(FengYu)
@@ -357,7 +364,6 @@ TabBtns.Size = UDim2.new(0, 120, 0, 340)
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 4
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
-TabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
 TabBtns.ScrollBarImageTransparency = 0.5
 TabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 
@@ -1311,29 +1317,21 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     local dragging = false
     
     -- 强化拖动功能 - 整个滑块条都可以点击
-    SliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            funcs:SetValue()
-        end
+    SliderBar.InputBegan:Connect(function()
+        dragging = true
+        funcs:SetValue()
     end)
     
-    SliderFill.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-        end
+    SliderFill.InputBegan:Connect(function()
+        dragging = true
     end)
     
-    SliderBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
+    SliderBar.InputEnded:Connect(function()
+        dragging = false
     end)
     
-    SliderFill.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
+    SliderFill.InputEnded:Connect(function()
+        dragging = false
     end)
     
     -- 实时拖动更新
@@ -1402,230 +1400,230 @@ end
     assert(flag, "No flag provided")
     library.flaFengYu[flag] = nil
     
-    local DropdownModule = Instance.new("Frame")
-    local DropdownTop = Instance.new("TextButton")
-    local DropdownTopC = Instance.new("UICorner")
-    local DropdownOpenFrame = Instance.new("Frame")
-    local DropdownOpenFrameC = Instance.new("UICorner")
-    local DropdownOpen = Instance.new("TextButton")
-    local DropdownText = Instance.new("TextBox")
-    local DropdownModuleL = Instance.new("UIListLayout")
-    
-    DropdownModule.Name = "DropdownModule"
-    DropdownModule.Parent = Objs
-    DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    DropdownModule.BackgroundTransparency = 1.000
-    DropdownModule.BorderSizePixel = 0
-    DropdownModule.ClipsDescendants = true
-    DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-    DropdownModule.Size = UDim2.new(0, 448, 0, 38)
-    
-    DropdownTop.Name = "DropdownTop"
-    DropdownTop.Parent = DropdownModule
-    DropdownTop.BackgroundColor3 = config.Dropdown_Color
-    DropdownTop.BorderSizePixel = 0
-    DropdownTop.Size = UDim2.new(0, 448, 0, 38)
-    DropdownTop.AutoButtonColor = false
-    DropdownTop.Font = Enum.Font.GothamSemibold
-    DropdownTop.Text = ""
-    DropdownTop.TextColor3 = config.TextColor
-    DropdownTop.TextSize = 16.000
-    DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
-    
-    DropdownTopC.CornerRadius = UDim.new(0, 6)
-    DropdownTopC.Name = "DropdownTopC"
-    DropdownTopC.Parent = DropdownTop
-    
-    -- 修复：确保背景颜色延伸到整个区域
-    local BackgroundFill = Instance.new("Frame")
-    BackgroundFill.Name = "BackgroundFill"
-    BackgroundFill.Parent = DropdownTop
-    BackgroundFill.BackgroundColor3 = config.Dropdown_Color
-    BackgroundFill.BorderSizePixel = 0
-    BackgroundFill.Position = UDim2.new(0.78, 0, 0, 0)
-    BackgroundFill.Size = UDim2.new(0.22, 0, 1, 0)
-    BackgroundFill.ZIndex = 0
-    
-    -- 只修改按钮位置：从0.918改为0.88，向左移动
-    DropdownOpenFrame.Name = "DropdownOpenFrame"
-    DropdownOpenFrame.Parent = DropdownTop
-    DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
-    DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
-    DropdownOpenFrame.BorderSizePixel = 0
-    DropdownOpenFrame.Position = UDim2.new(0.88, 0, 0.5, 0) -- 修改：从0.918改为0.88
-    DropdownOpenFrame.Size = UDim2.new(0, 50, 0, 24)
-    DropdownOpenFrame.ZIndex = 2
-    
-    -- 添加极光效果到下拉框按钮
-    createAuroraEffect(DropdownOpenFrame, 0.8)
-    
-    DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
-    DropdownOpenFrameC.Name = "DropdownOpenFrameC"
-    DropdownOpenFrameC.Parent = DropdownOpenFrame
-    
-    DropdownOpen.Name = "DropdownOpen"
-    DropdownOpen.Parent = DropdownOpenFrame
-    DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    DropdownOpen.BackgroundTransparency = 1.000
-    DropdownOpen.BorderSizePixel = 0
-    DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
-    DropdownOpen.Font = Enum.Font.GothamSemibold
-    DropdownOpen.Text = "选择"
-    DropdownOpen.TextColor3 = config.TextColor
-    DropdownOpen.TextSize = 12.000
-    DropdownOpen.TextWrapped = true
-    DropdownOpen.ZIndex = 3
-    
-    -- 调整文本框宽度以适应新的按钮位置
-    DropdownText.Name = "DropdownText"
-    DropdownText.Parent = DropdownTop
-    DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    DropdownText.BackgroundTransparency = 1.000
-    DropdownText.BorderSizePixel = 0
-    DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-    DropdownText.Size = UDim2.new(0, 370, 0, 38) -- 修改：从350改为370
-    DropdownText.Font = Enum.Font.GothamSemibold
-    DropdownText.PlaceholderColor3 = config.SecondaryTextColor
-    DropdownText.PlaceholderText = text
-    DropdownText.Text = ""
-    DropdownText.TextColor3 = config.TextColor
-    DropdownText.TextSize = 16.000
-    DropdownText.TextXAlignment = Enum.TextXAlignment.Left
-    DropdownText.ZIndex = 2
-    
-    -- 调整分隔线位置
-    local Separator = Instance.new("Frame")
-    Separator.Name = "Separator"
-    Separator.Parent = DropdownTop
-    Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    Separator.BorderSizePixel = 0
-    Separator.Position = UDim2.new(0.82, 0, 0.2, 0) -- 修改：从0.76改为0.82
-    Separator.Size = UDim2.new(0, 1, 0, 24)
-    Separator.ZIndex = 1
-    
-    DropdownModuleL.Name = "DropdownModuleL"
-    DropdownModuleL.Parent = DropdownModule
-    DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
-    DropdownModuleL.Padding = UDim.new(0, 4)
-    
-    -- 以下所有功能代码保持不变...
-    local setAllVisible = function()
-        local options = DropdownModule:GetChildren()
-        for i = 1, #options do
-            local option = options[i]
-            if option:IsA("TextButton") and option.Name:match("Option_") then
-                option.Visible = true
-            end
+local DropdownModule = Instance.new("Frame")
+local DropdownTop = Instance.new("TextButton")
+local DropdownTopC = Instance.new("UICorner")
+local DropdownOpenFrame = Instance.new("Frame")
+local DropdownOpenFrameC = Instance.new("UICorner")
+local DropdownOpen = Instance.new("TextButton")
+local DropdownText = Instance.new("TextBox")
+local DropdownModuleL = Instance.new("UIListLayout")
+
+DropdownModule.Name = "DropdownModule"
+DropdownModule.Parent = Objs
+DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+DropdownModule.BackgroundTransparency = 1.000
+DropdownModule.BorderSizePixel = 0
+DropdownModule.ClipsDescendants = true
+DropdownModule.Position = UDim2.new(0, 0, 0, 0)
+DropdownModule.Size = UDim2.new(0, 448, 0, 38)
+
+DropdownTop.Name = "DropdownTop"
+DropdownTop.Parent = DropdownModule
+DropdownTop.BackgroundColor3 = config.Dropdown_Color
+DropdownTop.BorderSizePixel = 0
+DropdownTop.Size = UDim2.new(0, 448, 0, 38)
+DropdownTop.AutoButtonColor = false
+DropdownTop.Font = Enum.Font.GothamSemibold
+DropdownTop.Text = ""
+DropdownTop.TextColor3 = config.TextColor
+DropdownTop.TextSize = 16.000
+DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
+
+DropdownTopC.CornerRadius = UDim.new(0, 6)
+DropdownTopC.Name = "DropdownTopC"
+DropdownTopC.Parent = DropdownTop
+
+-- 修复：确保背景颜色延伸到整个区域
+local BackgroundFill = Instance.new("Frame")
+BackgroundFill.Name = "BackgroundFill"
+BackgroundFill.Parent = DropdownTop
+BackgroundFill.BackgroundColor3 = config.Dropdown_Color
+BackgroundFill.BorderSizePixel = 0
+BackgroundFill.Position = UDim2.new(0.78, 0, 0, 0)
+BackgroundFill.Size = UDim2.new(0.22, 0, 1, 0)
+BackgroundFill.ZIndex = 0
+
+-- 只修改按钮位置：从0.918改为0.88，向左移动
+DropdownOpenFrame.Name = "DropdownOpenFrame"
+DropdownOpenFrame.Parent = DropdownTop
+DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
+DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
+DropdownOpenFrame.BorderSizePixel = 0
+DropdownOpenFrame.Position = UDim2.new(0.88, 0, 0.5, 0) -- 修改：从0.918改为0.88
+DropdownOpenFrame.Size = UDim2.new(0, 50, 0, 24)
+DropdownOpenFrame.ZIndex = 2
+
+-- 添加极光效果到下拉框按钮
+createAuroraEffect(DropdownOpenFrame, 0.8)
+
+DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
+DropdownOpenFrameC.Name = "DropdownOpenFrameC"
+DropdownOpenFrameC.Parent = DropdownOpenFrame
+
+DropdownOpen.Name = "DropdownOpen"
+DropdownOpen.Parent = DropdownOpenFrame
+DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+DropdownOpen.BackgroundTransparency = 1.000
+DropdownOpen.BorderSizePixel = 0
+DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
+DropdownOpen.Font = Enum.Font.GothamSemibold
+DropdownOpen.Text = "选择"
+DropdownOpen.TextColor3 = config.TextColor
+DropdownOpen.TextSize = 12.000
+DropdownOpen.TextWrapped = true
+DropdownOpen.ZIndex = 3
+
+-- 调整文本框宽度以适应新的按钮位置
+DropdownText.Name = "DropdownText"
+DropdownText.Parent = DropdownTop
+DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+DropdownText.BackgroundTransparency = 1.000
+DropdownText.BorderSizePixel = 0
+DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
+DropdownText.Size = UDim2.new(0, 370, 0, 38) -- 修改：从350改为370
+DropdownText.Font = Enum.Font.GothamSemibold
+DropdownText.PlaceholderColor3 = config.SecondaryTextColor
+DropdownText.PlaceholderText = text
+DropdownText.Text = ""
+DropdownText.TextColor3 = config.TextColor
+DropdownText.TextSize = 16.000
+DropdownText.TextXAlignment = Enum.TextXAlignment.Left
+DropdownText.ZIndex = 2
+
+-- 调整分隔线位置
+local Separator = Instance.new("Frame")
+Separator.Name = "Separator"
+Separator.Parent = DropdownTop
+Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+Separator.BorderSizePixel = 0
+Separator.Position = UDim2.new(0.82, 0, 0.2, 0) -- 修改：从0.76改为0.82
+Separator.Size = UDim2.new(0, 1, 0, 24)
+Separator.ZIndex = 1
+
+DropdownModuleL.Name = "DropdownModuleL"
+DropdownModuleL.Parent = DropdownModule
+DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
+DropdownModuleL.Padding = UDim.new(0, 4)
+
+-- 以下所有功能代码保持不变...
+local setAllVisible = function()
+    local options = DropdownModule:GetChildren()
+    for i = 1, #options do
+        local option = options[i]
+        if option:IsA("TextButton") and option.Name:match("Option_") then
+            option.Visible = true
         end
     end
-    
-    local searchDropdown = function(text)
-        local options = DropdownModule:GetChildren()
-        for i = 1, #options do
-            local option = options[i]
-            if text == "" then
-                setAllVisible()
-            else
-                if option:IsA("TextButton") and option.Name:match("Option_") then
-                    if option.Text:lower():match(text:lower()) then
-                        option.Visible = true
-                    else
-                        option.Visible = false
-                    end
+end
+
+local searchDropdown = function(text)
+    local options = DropdownModule:GetChildren()
+    for i = 1, #options do
+        local option = options[i]
+        if text == "" then
+            setAllVisible()
+        else
+            if option:IsA("TextButton") and option.Name:match("Option_") then
+                if option.Text:lower():match(text:lower()) then
+                    option.Visible = true
+                else
+                    option.Visible = false
                 end
             end
         end
     end
-    
-    local open = false
-    local ToggleDropVis = function()
-        open = not open
-        if open then
-            setAllVisible()
-        end
-        DropdownOpen.Text = (open and "取消" or "选择")
-        DropdownModule.Size = UDim2.new(0, 448, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38))
-    end
-    
-    DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
-    DropdownText.Focused:Connect(function()
-        if open then
-            return
-        end
-        ToggleDropVis()
-    end)
-    
-    DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
-        if not open then
-            return
-        end
-        searchDropdown(DropdownText.Text)
-    end)
-    
-    DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        if not open then
-            return
-        end
-        DropdownModule.Size = UDim2.new(0, 448, 0, (DropdownModuleL.AbsoluteContentSize.Y + 4))
-    end)
-    
-    local funcs = {}
-    funcs.AddOption = function(self, option)
-        local Option = Instance.new("TextButton")
-        local OptionC = Instance.new("UICorner")
-        Option.Name = "Option_" .. option
-        Option.Parent = DropdownModule
-        Option.BackgroundColor3 = config.TabColor
-        Option.BorderSizePixel = 0
-        Option.Position = UDim2.new(0, 0, 0.328125, 0)
-        Option.Size = UDim2.new(0, 428, 0, 26)
-        Option.AutoButtonColor = false
-        Option.Font = Enum.Font.Gotham
-        Option.Text = option
-        Option.TextColor3 = config.TextColor
-        Option.TextSize = 14.000
-        OptionC.CornerRadius = UDim.new(0, 6)
-        OptionC.Name = "OptionC"
-        OptionC.Parent = Option
-        
-        Option.MouseButton1Click:Connect(function()
-            Ripple(Option)
-            ToggleDropVis()
-            callback(Option.Text)
-            DropdownText.Text = Option.Text
-            library.flaFengYu[flag] = Option.Text
-        end)
-    end
-    
-    funcs.RemoveOption = function(self, option)
-        local option = DropdownModule:FindFirstChild("Option_" .. option)
-        if option then
-            option:Destroy()
-        end
-    end
-    
-    funcs.SetOptions = function(self, options)
-        for _, v in next, DropdownModule:GetChildren() do
-            if v.Name:match("Option_") then
-                v:Destroy()
-            end
-        end
-        for _, v in next, options do
-            funcs:AddOption(v)
-        end
-    end
-    
-    funcs:SetOptions(options)
-    return funcs
 end
-            
-            return section
-        end
-        
-        return tab
+
+local open = false
+local ToggleDropVis = function()
+    open = not open
+    if open then
+        setAllVisible()
     end
+    DropdownOpen.Text = (open and "取消" or "选择")
+    DropdownModule.Size = UDim2.new(0, 448, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38))
+end
+
+DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
+DropdownText.Focused:Connect(function()
+    if open then
+        return
+    end
+    ToggleDropVis()
+end)
+
+DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
+    if not open then
+        return
+    end
+    searchDropdown(DropdownText.Text)
+end)
+
+DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    if not open then
+        return
+    end
+    DropdownModule.Size = UDim2.new(0, 448, 0, (DropdownModuleL.AbsoluteContentSize.Y + 4))
+end)
+
+local funcs = {}
+funcs.AddOption = function(self, option)
+    local Option = Instance.new("TextButton")
+    local OptionC = Instance.new("UICorner")
+    Option.Name = "Option_" .. option
+    Option.Parent = DropdownModule
+    Option.BackgroundColor3 = config.TabColor
+    Option.BorderSizePixel = 0
+    Option.Position = UDim2.new(0, 0, 0.328125, 0)
+    Option.Size = UDim2.new(0, 428, 0, 26)
+    Option.AutoButtonColor = false
+    Option.Font = Enum.Font.Gotham
+    Option.Text = option
+    Option.TextColor3 = config.TextColor
+    Option.TextSize = 14.000
+    OptionC.CornerRadius = UDim.new(0, 6)
+    OptionC.Name = "OptionC"
+    OptionC.Parent = Option
     
-    return window
+    Option.MouseButton1Click:Connect(function()
+        Ripple(Option)
+        ToggleDropVis()
+        callback(Option.Text)
+        DropdownText.Text = Option.Text
+        library.flaFengYu[flag] = Option.Text
+    end)
+end
+
+funcs.RemoveOption = function(self, option)
+    local option = DropdownModule:FindFirstChild("Option_" .. option)
+    if option then
+        option:Destroy()
+    end
+end
+
+funcs.SetOptions = function(self, options)
+    for _, v in next, DropdownModule:GetChildren() do
+        if v.Name:match("Option_") then
+            v:Destroy()
+        end
+    end
+    for _, v in next, options do
+        funcs:AddOption(v)
+    end
+end
+
+funcs:SetOptions(options)
+return funcs
+end
+
+return section
+end
+
+return tab
+end
+
+return window
 end
 
 function UiDestroy()
