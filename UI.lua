@@ -266,7 +266,7 @@ Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.Bg_Color
 Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-Main.Size = UDim2.new(0, 600, 0, 380)
+Main.Size = UDim2.new(0, 572, 0, 353)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -323,7 +323,7 @@ TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
 TabMain.Position = UDim2.new(0.217, 0, 0, 3)
-TabMain.Size = UDim2.new(0, 468, 0, 374)
+TabMain.Size = UDim2.new(0, 448, 0, 350)
 TabMain.ZIndex = 10
 
 local Side = Instance.new("Frame")
@@ -1272,10 +1272,12 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     
     local dragging = false
     
-    SliderBar.InputBegan:Connect(function()
+    SliderBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         funcs:SetValue()
-    end)
+    end
+end)
     
     SliderFill.InputBegan:Connect(function()
         dragging = true
@@ -1297,10 +1299,16 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     end)
     
     UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        funcs:SetValue()
+    end
+end)
     
     MinButton.MouseButton1Click:Connect(function()
         Ripple(MinButton)
