@@ -632,13 +632,13 @@ function library.new(library, name, theme)
 			SectionOpen.BorderSizePixel = 0
 			SectionOpen.Position = UDim2.new(0, -33, 0, 5)
 			SectionOpen.Size = UDim2.new(0, 26, 0, 26)
-			SectionOpen.Image = "http://www.roblox.com/asset/?id=6031302934"
+			SectionOpen.Image = "http://www.roblox.com/asset/?id=84830962019412"
 			SectionOpened.Name = "SectionOpened"
 			SectionOpened.Parent = SectionOpen
 			SectionOpened.BackgroundTransparency = 1.000
 			SectionOpened.BorderSizePixel = 0
 			SectionOpened.Size = UDim2.new(0, 26, 0, 26)
-			SectionOpened.Image = "http://www.roblox.com/asset/?id=6031302932"
+			SectionOpened.Image = "http://www.roblox.com/asset/?id=84830962019412"
 			SectionOpened.ImageTransparency = 1.000
 			SectionToggle.Name = "SectionToggle"
 			SectionToggle.Parent = SectionOpen
