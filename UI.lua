@@ -1522,4 +1522,18 @@ function library.new(library, name, theme)
 	end
 	return window
 end
+
+-- 添加UI.lua中的额外功能
+function UiDestroy()
+    if FengYu then
+        FengYu:Destroy()
+    end
+end
+
+function ToggleUILib()
+    ToggleUI = not ToggleUI
+    FengYu.Enabled = ToggleUI
+    Main.Visible = not ToggleUI
+end
+
 return library
