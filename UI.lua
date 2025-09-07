@@ -508,7 +508,7 @@ function library.new(library, name, theme)
 				TextSize = 14 + math.sin(tick() * 2) * 1
 			}):Play()
 			
-			wait(0.05)
+			task.wait(0.05)
 		end
 	end)
 
@@ -947,7 +947,7 @@ function library.new(library, name, theme)
 				KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
 				KeybindBtnC.CornerRadius = UDim.new(0, 6)
 				KeybindBtnC.Name = "KeybindBtnC"
-				KeybindBtnC.Parent = ToggleBtn
+				KeybindBtnC.Parent = KeybindBtn
 				KeybindValue.Name = "KeybindValue"
 				KeybindValue.Parent = KeybindBtn
 				KeybindValue.BackgroundColor3 = config.Bg_Color
@@ -1338,7 +1338,7 @@ function library.new(library, name, theme)
 				DropdownModule.BackgroundTransparency = 1.000
 				DropdownModule.BorderSizePixel = 0
 				DropdownModule.ClipsDescendants = true
-				DropdownModule.Position = UDim2.new(0, 0, 极光效果已添加, 0)
+				DropdownModule.Position = UDim2.new(0, 0, 0, 0)
 				DropdownModule.Size = UDim2.new(0, 428, 0, 38)
 				DropdownTop.Name = "DropdownTop"
 				DropdownTop.Parent = DropdownModule
@@ -1361,7 +1361,7 @@ function library.new(library, name, theme)
 				DropdownOpen.BackgroundTransparency = 1.000
 				DropdownOpen.BorderSizePixel = 0
 				DropdownOpen.Position = UDim2.new(0.918383181, 0, 0.5, 0)
-				DropdownOpen.Size = UDim2.new(0, 20, 极光效果已添加, 20)
+				DropdownOpen.Size = UDim2.new(0, 20, 0, 20)
 				DropdownOpen.Font = Enum.Font.Gotham
 				DropdownOpen.Text = "+"
 				DropdownOpen.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1369,25 +1369,25 @@ function library.new(library, name, theme)
 				DropdownOpen.TextWrapped = true
 				DropdownText.Name = "DropdownText"
 				DropdownText.Parent = DropdownTop
-				DropdownText.BackgroundColor3 = Color3.fromRGB(极光效果已添加, 255, 255)
+				DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 				DropdownText.BackgroundTransparency = 1.000
 				DropdownText.BorderSizePixel = 0
 				DropdownText.Position = UDim2.new(0.0373831764, 0, 0, 0)
 				DropdownText.Size = UDim2.new(0, 184, 0, 38)
-				DropdownText.Font =极光效果已添加 Enum.Font.GothamSemibold
+				DropdownText.Font = Enum.Font.GothamSemibold
 				DropdownText.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
 				DropdownText.PlaceholderText = text
 				DropdownText.Text = ""
 				DropdownText.TextColor3 = Color3.fromRGB(255, 255, 255)
 				DropdownText.TextSize = 16.000
-			极光效果已添加 DropdownText.TextXAlignment = Enum.TextXAlignment.Left
+				DropdownText.TextXAlignment = Enum.TextXAlignment.Left
 				DropdownModuleL.Name = "DropdownModuleL"
 				DropdownModuleL.Parent = DropdownModule
 				DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
 				DropdownModuleL.Padding = UDim.new(0, 4)
 				local setAllVisible = function()
 					local options = DropdownModule:GetChildren()
-					for i = 1, #极光效果已添加 options do
+					for i = 1, #options do
 						local option = options[i]
 						if option:IsA("TextButton") and option.Name:match("Option_") then
 							option.Visible = true
@@ -1419,7 +1419,7 @@ function library.new(library, name, theme)
 					end
 					DropdownOpen.Text = (open and "-" or "+")
 					DropdownModule.Size =
-						UDim2.new(0, 428, 0, (open and DropdownModule极光效果已添加L.AbsoluteContentSize.Y + 4 or 38))
+						UDim2.new(0, 428, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38))
 				end
 				DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
 				DropdownText.Focused:Connect(function()
@@ -1446,10 +1446,10 @@ function library.new(library, name, theme)
 					local OptionC = Instance.new("UICorner")
 					Option.Name = "Option_" .. option
 					Option.Parent = DropdownModule
-					Option.BackgroundColor极光效果已添加3 = config.TabColor
+					Option.BackgroundColor3 = config.TabColor
 					Option.BorderSizePixel = 0
 					Option.Position = UDim2.new(0, 0, 0.328125, 0)
-					Option.Size = UDim极光效果已添加2.new(0, 428, 0, 26)
+					Option.Size = UDim2.new(0, 428, 0, 26)
 					Option.AutoButtonColor = false
 					Option.Font = Enum.Font.Gotham
 					Option.Text = option
