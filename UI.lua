@@ -1144,6 +1144,7 @@ function library.new(library, name, theme)
     assert(text, "No text provided")
     assert(flag, "No flag provided")
     assert(default, "No default value provided")
+    
     local SliderModule = Instance.new("Frame")
     local SliderBack = Instance.new("TextButton")
     local SliderBackC = Instance.new("UICorner")
@@ -1238,7 +1239,7 @@ function library.new(library, name, theme)
     SliderValue.BorderSizePixel = 0
     SliderValue.Size = UDim2.new(1, 0, 1, 0)
     SliderValue.Font = Enum.Font.Gotham
-    SliderValue.Text = tostring(default)
+    SliderValue.Text = tostring(default)  -- 修复：显示默认值而不是固定值
     SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderValue.TextSize = 12.000 -- 减小字体大小
     
@@ -1288,20 +1289,23 @@ function library.new(library, name, theme)
             if value then
                 percent = (value - min)/(max - min)
             else
+                -- 修复鼠标位置计算
                 local mouse = services.Players.LocalPlayer:GetMouse()
                 local barPos = SliderBar.AbsolutePosition.X
                 local barSize = SliderBar.AbsoluteSize.X
                 local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
                 percent = (mouseX - barPos) / barSize
+                value = min + (max - min) * percent
             end
             
             if precise then
-                value = value or tonumber(string.format("%.2f", min + (max - min) * percent))
+                value = tonumber(string.format("%.2f", value))
             else
-                value = value or math.floor(min + (max - min) * percent + 0.5)
+                value = math.floor(value + 0.5)
             end
             
             value = math.clamp(value, min, max)
+            percent = (value - min)/(max - min)
             library.flaFengYu[flag] = tonumber(value)
             SliderValue.Text = tostring(value)
             
@@ -1331,6 +1335,7 @@ function library.new(library, name, theme)
     SliderPart.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
+            funcs:SetValue()
         end
     end)
     
