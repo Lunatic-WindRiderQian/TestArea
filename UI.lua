@@ -589,177 +589,192 @@ function library.new(library, name, theme)
 		local tab = {}
 		function tab.section(tab, name, TabVal)
 			local Section = Instance.new("Frame")
-			local SectionC = Instance.new("UICorner")
-			local SectionText = Instance.new("TextLabel")
-			local SectionOpen = Instance.new("ImageLabel")
-			local SectionOpened = Instance.new("ImageLabel")
-			local SectionToggle = Instance.new("ImageButton")
-			local Objs = Instance.new("Frame")
-			local ObjsL = Instance.new("UIListLayout")
-			Section.Name = "Section"
-			Section.Parent = Tab
-			Section.BackgroundColor3 = config.TabColor
-			Section.BackgroundTransparency = 1.000
-			Section.BorderSizePixel = 0
-			Section.ClipsDescendants = true
-			Section.Size = UDim2.new(0.981000006, 0, 0, 36)
-			SectionC.CornerRadius = UDim.new(0, 6)
-			SectionC.Name = "SectionC"
-			SectionC.Parent = Section
-			SectionText.Name = "SectionText"
-			SectionText.Parent = Section
-			SectionText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			SectionText.BackgroundTransparency = 1.000
-			SectionText.Position = UDim2.new(0.0887396261, 0, 0, 0)
-			SectionText.Size = UDim2.new(0, 401, 0, 36)
-			SectionText.Font = Enum.Font.GothamSemibold
-			SectionText.Text = name
-			SectionText.TextColor3 = Color3.fromRGB(255, 255, 255)
-			SectionText.TextSize = 16.000
-			SectionText.TextXAlignment = Enum.TextXAlignment.Left
-			SectionOpen.Name = "SectionOpen"
-			SectionOpen.Parent = SectionText
-			SectionOpen.BackgroundTransparency = 1
-			SectionOpen.BorderSizePixel = 0
-			SectionOpen.Position = UDim2.new(0, -33, 0, 5)
-			SectionOpen.Size = UDim2.new(0, 26, 0, 26)
-			SectionOpen.Image = "http://www.roblox.com/asset/?id=6031302934"
-			SectionOpen.ImageColor3 = config.SecondaryTextColor
-			SectionOpened.Name = "SectionOpened"
-			SectionOpened.Parent = SectionOpen
-			SectionOpened.BackgroundTransparency = 1.000
-			SectionOpened.BorderSizePixel = 0
-			SectionOpened.Size = UDim2.new(0, 26, 0, 26)
-			SectionOpened.Image = "http://www.roblox.com/asset/?id=6031302932"
-			SectionOpened.ImageColor3 = config.AccentColor
-			SectionOpened.ImageTransparency = 1.000
-			SectionToggle.Name = "SectionToggle"
-			SectionToggle.Parent = SectionOpen
-			SectionToggle.BackgroundTransparency = 1
-			SectionToggle.BorderSizePixel = 0
-			SectionToggle.Size = UDim2.new(0, 26, 0, 26)
-			Objs.Name = "Objs"
-			Objs.Parent = Section
-			Objs.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			Objs.BackgroundTransparency = 1
-			Objs.BorderSizePixel = 0
-			Objs.Position = UDim2.new(0, 6, 0, 36)
-			Objs.Size = UDim2.new(0.986347735, 0, 0, 0)
-			ObjsL.Name = "ObjsL"
-			ObjsL.Parent = Objs
-			ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
-			ObjsL.Padding = UDim.new(0, 8)
-			local open = TabVal
-			if TabVal ~= false then
-				Section.Size = UDim2.new(0.981000006, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 8 or 36)
-				SectionOpened.ImageTransparency = (open and 0 or 1)
-				SectionOpen.ImageTransparency = (open and 1 or 0)
-			end
-			SectionToggle.MouseButton1Click:Connect(function()
-				open = not open
-				Section.Size = UDim2.new(0.981000006, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 8 or 36)
-				SectionOpened.ImageTransparency = (open and 0 or 1)
-				SectionOpen.ImageTransparency = (open and 1 or 0)
-			end)
-			ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-				if not open then
-					return
-				end
-				Section.Size = UDim2.new(0.981000006, 0, 0, 36 + ObjsL.AbsoluteContentSize.Y + 8)
-			end)
-			local section = {}
-			function section.Button(section, text, callback)
-				local callback = callback or function() end
-				local BtnModule = Instance.new("Frame")
-				local Btn = Instance.new("TextButton")
-				local BtnC = Instance.new("UICorner")
-				BtnModule.Name = "BtnModule"
-				BtnModule.Parent = Objs
-				BtnModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				BtnModule.BackgroundTransparency = 1.000
-				BtnModule.BorderSizePixel = 0
-				BtnModule.Position = UDim2.new(0, 0, 0, 0)
-				BtnModule.Size = UDim2.new(0, 428, 0, 38)
-				Btn.Name = "Btn"
-				Btn.Parent = BtnModule
-				Btn.BackgroundColor3 = config.Button_Color
-				Btn.BorderSizePixel = 0
-				Btn.Size = UDim2.new(0, 428, 0, 38)
-				Btn.AutoButtonColor = false
-				Btn.Font = Enum.Font.GothamSemibold
-				Btn.Text = "   " .. text
-				Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-				Btn.TextSize = 16.000
-				Btn.TextXAlignment = Enum.TextXAlignment.Left
-				BtnC.CornerRadius = UDim.new(0, 6)
-				BtnC.Name = "BtnC"
-				BtnC.Parent = Btn
-				
-				-- 添加按钮发光效果
-				local btnGlow = Instance.new("UIStroke")
-				btnGlow.Parent = Btn
-				btnGlow.Color = config.AccentColor
-				btnGlow.Thickness = 1
-				btnGlow.Transparency = 0.8
-				
-				startRainbowEffect(btnGlow, "Color", 0.01)
-				
-				-- 添加悬停效果
-				Btn.MouseEnter:Connect(function()
-					services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-						BackgroundColor3 = Color3.fromRGB(
-							math.floor(config.Button_Color.R * 255 * 1.1),
-							math.floor(config.Button_Color.G * 255 * 1.1),
-							math.floor(config.Button_Color.B * 255 * 1.1)
-						)
-					}):Play()
-					services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-						Thickness = 2,
-						Transparency = 0.5
-					}):Play()
-				end)
-				
-				Btn.MouseLeave:Connect(function()
-					services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-						BackgroundColor3 = config.Button_Color
-					}):Play()
-					services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-						Thickness = 1,
-						Transparency = 0.8
-					}):Play()
-				end)
-				
-				Btn.MouseButton1Click:Connect(function()
-					spawn(function()
-						Ripple(Btn)
-					end)
-					spawn(callback)
-					
-					-- 添加点击反馈
-					services.TweenService:Create(Btn, TweenInfo.new(0.1), {
-						BackgroundColor3 = Color3.fromRGB(
-							math.floor(config.Button_Color.R * 255 * 0.8),
-							math.floor(config.Button_Color.G * 255 * 0.8),
-							math.floor(config.Button_Color.B * 255 * 0.8)
-						)
-					}):Play()
-					services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
-						Thickness = 3,
-						Transparency = 0.3
-					}):Play()
-					
-					task.wait(0.1)
-					
-					services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-						BackgroundColor3 = config.Button_Color
-					}):Play()
-					services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-						Thickness = 1,
-						Transparency = 0.8
-					}):Play()
-				end)
-			end
-			function section:Label(text)
+            local SectionC = Instance.new("UICorner")
+            local SectionText = Instance.new("TextLabel")
+            local SectionOpen = Instance.new("ImageLabel")
+            local SectionOpened = Instance.new("ImageLabel")
+            local SectionToggle = Instance.new("ImageButton")
+            local Objs = Instance.new("Frame")
+            local ObjsL = Instance.new("UIListLayout")
+            
+            Section.Name = "Section"
+            Section.Parent = Tab
+            Section.BackgroundColor3 = config.TabColor
+            Section.BackgroundTransparency = 1
+            Section.BorderSizePixel = 0
+            Section.ClipsDescendants = true
+            Section.Size = UDim2.new(0.981, 0, 0, 36)
+            
+            SectionC.CornerRadius = UDim.new(0, 6)
+            SectionC.Name = "SectionC"
+            SectionC.Parent = Section
+            
+            SectionText.Name = "SectionText"
+            SectionText.Parent = Section
+            SectionText.BackgroundTransparency = 1
+            SectionText.Position = UDim2.new(0.088, 0, 0, 0)
+            SectionText.Size = UDim2.new(0, 401, 0, 36)
+            SectionText.Font = Enum.Font.GothamSemibold
+            SectionText.Text = name
+            SectionText.TextColor3 = config.TextColor
+            SectionText.TextSize = 16
+            SectionText.TextXAlignment = Enum.TextXAlignment.Left
+            
+            SectionOpen.Name = "SectionOpen"
+            SectionOpen.Parent = SectionText
+            SectionOpen.BackgroundTransparency = 1
+            SectionOpen.BorderSizePixel = 0
+            SectionOpen.Position = UDim2.new(0, -33, 0, 5)
+            SectionOpen.Size = UDim2.new(0, 26, 0, 26)
+            SectionOpen.Image = "rbxassetid://84830962019412"
+            SectionOpen.ImageColor3 = config.SecondaryTextColor
+            
+            SectionOpened.Name = "SectionOpened"
+            SectionOpened.Parent = SectionOpen
+            SectionOpened.BackgroundTransparency = 1
+            SectionOpened.BorderSizePixel = 0
+            SectionOpened.Size = UDim2.new(0, 26, 0, 26)
+            SectionOpened.Image = "rbxassetid://84830962019412"
+            SectionOpened.ImageColor3 = config.AccentColor
+            SectionOpened.ImageTransparency = 1
+            
+            SectionToggle.Name = "SectionToggle"
+            SectionToggle.Parent = SectionOpen
+            SectionToggle.BackgroundTransparency = 1
+            SectionToggle.BorderSizePixel = 0
+            SectionToggle.Size = UDim2.new(0, 26, 0, 26)
+            
+            Objs.Name = "Objs"
+            Objs.Parent = Section
+            Objs.BackgroundTransparency = 1
+            Objs.BorderSizePixel = 0
+            Objs.Position = UDim2.new(0, 6, 0, 36)
+            Objs.Size = UDim2.new(0.986, 0, 0, 0)
+            
+            ObjsL.Name = "ObjsL"
+            ObjsL.Parent = Objs
+            ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
+            ObjsL.Padding = UDim.new(0, 8)
+            
+            local open = TabVal ~= false
+            if TabVal ~= false then
+                Section.Size = UDim2.new(0.981, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 8 or 36)
+                SectionOpened.ImageTransparency = open and 0 or 1
+                SectionOpen.ImageTransparency = open and 1 or 0
+            end
+            
+            SectionToggle.MouseButton1Click:Connect(function()
+                open = not open
+                services.TweenService:Create(Section, TweenInfo.new(0.2), {
+                    Size = UDim2.new(0.981, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 8 or 36)
+                }):Play()
+                
+                services.TweenService:Create(SectionOpened, TweenInfo.new(0.2), {
+                    ImageTransparency = open and 0 or 1
+                }):Play()
+                
+                services.TweenService:Create(SectionOpen, TweenInfo.new(0.2), {
+                    ImageTransparency = open and 1 or 0
+                }):Play()
+            end)
+            
+            ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                if not open then return end
+                Section.Size = UDim2.new(0.981, 0, 0, 36 + ObjsL.AbsoluteContentSize.Y + 8)
+            end)
+            
+            local section = {}
+            
+            function section.Button(section, text, callback)
+                callback = callback or function() end
+                
+                local BtnModule = Instance.new("Frame")
+                local Btn = Instance.new("TextButton")
+                local BtnC = Instance.new("UICorner")
+                
+                BtnModule.Name = "BtnModule"
+                BtnModule.Parent = Objs
+                BtnModule.BackgroundTransparency = 1
+                BtnModule.BorderSizePixel = 0
+                BtnModule.Size = UDim2.new(0, 448, 0, 38)
+                
+                Btn.Name = "Btn"
+                Btn.Parent = BtnModule
+                Btn.BackgroundColor3 = config.Button_Color
+                Btn.BorderSizePixel = 0
+                Btn.Size = UDim2.new(0, 448, 0, 38)
+                Btn.AutoButtonColor = false
+                Btn.Font = Enum.Font.GothamSemibold
+                Btn.Text = "   " .. text
+                Btn.TextColor3 = config.TextColor
+                Btn.TextSize = 16
+                Btn.TextXAlignment = Enum.TextXAlignment.Left
+                
+                BtnC.CornerRadius = UDim.new(0, 6)
+                BtnC.Name = "BtnC"
+                BtnC.Parent = Btn
+                
+                local btnGlow = Instance.new("UIStroke")
+                btnGlow.Parent = Btn
+                btnGlow.Color = config.AccentColor
+                btnGlow.Thickness = 1
+                btnGlow.Transparency = 0.8
+                
+                startRainbowEffect(btnGlow, "Color", 0.01)
+                
+                Btn.MouseEnter:Connect(function()
+                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            math.floor(config.Button_Color.R * 255 * 1.1),
+                            math.floor(config.Button_Color.G * 255 * 1.1),
+                            math.floor(config.Button_Color.B * 255 * 1.1)
+                        )
+                    }):Play()
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                        Thickness = 2,
+                        Transparency = 0.5
+                    }):Play()
+                end)
+                
+                Btn.MouseLeave:Connect(function()
+                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+                        BackgroundColor3 = config.Button_Color
+                    }):Play()
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                        Thickness = 1,
+                        Transparency = 0.8
+                    }):Play()
+                end)
+                
+                Btn.MouseButton1Click:Connect(function()
+                    Ripple(Btn)
+                    callback()
+                    
+                    services.TweenService:Create(Btn, TweenInfo.new(0.1), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            math.floor(config.Button_Color.R * 255 * 0.8),
+                            math.floor(config.Button_Color.G * 255 * 0.8),
+                            math.floor(config.Button_Color.B * 255 * 0.8)
+                        )
+                    }):Play()
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
+                        Thickness = 3,
+                        Transparency = 0.3
+                    }):Play()
+                    
+                    task.wait(0.1)
+                    
+                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+                        BackgroundColor3 = config.Button_Color
+                    }):Play()
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                        Thickness = 1,
+                        Transparency = 0.8
+                    }):Play()
+                end)
+            end
+            
+            function section:Label(text)
 				local LabelModule = Instance.new("Frame")
 				local TextLabel = Instance.new("TextLabel")
 				local LabelC = Instance.new("UICorner")
@@ -1120,498 +1135,370 @@ function library.new(library, name, theme)
 				BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 30, 0, 28)
 			end
 			function section.Slider(section, text, flag, default, min, max, precise, callback)
-    callback = callback or function() end
-    min = min or 1
-    max = max or 10
-    default = default or min
-    precise = precise or false
-    
-    assert(text, "No text provided")
-    assert(flag, "No flag provided")
-    assert(default, "No default value provided")
-    
-    library.flaFengYu[flag] = default
-
-    local SliderModule = Instance.new("Frame")
-    local SliderBack = Instance.new("TextButton")
-    local SliderBackC = Instance.new("UICorner")
-    local SliderText = Instance.new("TextLabel")
-    local SliderContainer = Instance.new("Frame")
-    local SliderBar = Instance.new("Frame")
-    local SliderBarC = Instance.new("UICorner")
-    local SliderFill = Instance.new("Frame")
-    local SliderFillC = Instance.new("UICorner")
-    local SliderValue = Instance.new("TextBox")
-    local SliderValueC = Instance.new("UICorner")
-    local MinButton = Instance.new("TextButton")
-    local AddButton = Instance.new("TextButton")
-    
-    SliderModule.Name = "SliderModule"
-    SliderModule.Parent = Objs
-    SliderModule.BackgroundTransparency = 1
-    SliderModule.BorderSizePixel = 0
-    SliderModule.Size = UDim2.new(0, 428, 0, 38)
-    
-    SliderBack.Name = "SliderBack"
-    SliderBack.Parent = SliderModule
-    SliderBack.BackgroundColor3 = config.Slider_Color
-    SliderBack.BorderSizePixel = 0
-    SliderBack.Size = UDim2.new(0, 428, 0, 42)
-    SliderBack.AutoButtonColor = false
-    SliderBack.Font = Enum.Font.GothamSemibold
-    SliderBack.Text = ""
-    SliderBack.TextColor3 = config.TextColor
-    SliderBack.TextSize = 16
-    SliderBack.TextXAlignment = Enum.TextXAlignment.Left
-    
-    SliderBackC.CornerRadius = UDim.new(0, 6)
-    SliderBackC.Name = "SliderBackC"
-    SliderBackC.Parent = SliderBack
-    
-    SliderText.Name = "SliderText"
-    SliderText.Parent = SliderBack
-    SliderText.BackgroundTransparency = 1
-    SliderText.Position = UDim2.new(0.03, 0, 0, 0)
-    SliderText.Size = UDim2.new(0, 120, 1, 0)
-    SliderText.Font = Enum.Font.GothamSemibold
-    SliderText.Text = text
-    SliderText.TextColor3 = config.TextColor
-    SliderText.TextSize = 14
-    SliderText.TextXAlignment = Enum.TextXAlignment.Left
-    SliderText.TextYAlignment = Enum.TextYAlignment.Center
-    
-    SliderContainer.Name = "SliderContainer"
-    SliderContainer.Parent = SliderBack
-    SliderContainer.BackgroundTransparency = 1
-    SliderContainer.Position = UDim2.new(0.35, 0, 0.5, 0)
-    SliderContainer.Size = UDim2.new(0.4, 0, 0, 16)
-    SliderContainer.AnchorPoint = Vector2.new(0, 0.5)
-    
-    SliderBar.Name = "SliderBar"
-    SliderBar.Parent = SliderContainer
-    SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    SliderBar.BorderSizePixel = 0
-    SliderBar.Position = UDim2.new(0, 0, 0.5, 0)
-    SliderBar.Size = UDim2.new(1, 0, 0, 14)
-    SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-    SliderBar.ZIndex = 1
-    SliderBar.Active = false
-    
-    SliderBarC.CornerRadius = UDim.new(0, 7)
-    SliderBarC.Name = "SliderBarC"
-    SliderBarC.Parent = SliderBar
-    
-    SliderFill.Name = "SliderFill"
-    SliderFill.Parent = SliderBar
-    SliderFill.BackgroundColor3 = config.SliderBar_Color
-    SliderFill.BorderSizePixel = 0
-    SliderFill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
-    SliderFill.ZIndex = 2
-    SliderFill.Active = true
-    
-    SliderFillC.CornerRadius = UDim.new(0, 7)
-    SliderFillC.Name = "SliderFillC"
-    SliderFillC.Parent = SliderFill
-    
-    createAuroraEffect(SliderFill, 0.6)
-    
-    SliderValue.Name = "SliderValue"
-    SliderValue.Parent = SliderBack
-    SliderValue.BackgroundColor3 = config.Bg_Color
-    SliderValue.BorderSizePixel = 0
-    SliderValue.Position = UDim2.new(0.85, 0, 0.25, 0)
-    SliderValue.Size = UDim2.new(0, 40, 0, 20)
-    SliderValue.Font = Enum.Font.Gotham
-    SliderValue.Text = tostring(default)
-    SliderValue.TextColor3 = config.TextColor
-    SliderValue.TextSize = 12
-    SliderValue.TextXAlignment = Enum.TextXAlignment.Center
-    SliderValue.ClearTextOnFocus = false
-    
-    SliderValueC.CornerRadius = UDim.new(0, 12)
-    SliderValueC.Name = "SliderValueC"
-    SliderValueC.Parent = SliderValue
-    
-    MinButton.Name = "MinButton"
-    MinButton.Parent = SliderBack
-    MinButton.BackgroundColor3 = config.Bg_Color
-    MinButton.BorderSizePixel = 0
-    MinButton.Position = UDim2.new(0.3, -10, 0.25, 0)
-    MinButton.Size = UDim2.new(0, 20, 0, 20)
-    MinButton.Font = Enum.Font.GothamBold
-    MinButton.Text = "减"
-    MinButton.TextColor3 = config.TextColor
-    MinButton.TextSize = 14
-    MinButton.AutoButtonColor = false
-    
-    local MinButtonC = Instance.new("UICorner")
-    MinButtonC.CornerRadius = UDim.new(1, 0)
-    MinButtonC.Parent = MinButton
-    
-    AddButton.Name = "AddButton"
-    AddButton.Parent = SliderBack
-    AddButton.BackgroundColor3 = config.Bg_Color
-    AddButton.BorderSizePixel = 0
-    AddButton.Position = UDim2.new(0.75, -10, 0.25, 0)
-    AddButton.Size = UDim2.new(0, 20, 0, 20)
-    AddButton.Font = Enum.Font.GothamBold
-    AddButton.Text = "加"
-    AddButton.TextColor3 = config.TextColor
-    AddButton.TextSize = 14
-    AddButton.AutoButtonColor = false
-    
-    local AddButtonC = Instance.new("UICorner")
-    AddButtonC.CornerRadius = UDim.new(1, 0)
-    AddButtonC.Parent = AddButton
-    
-    local function setupButtonHover(button)
-        button.MouseEnter:Connect(function()
-            services.TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundColor3 = Color3.fromRGB(70, 70, 80),
-                Size = UDim2.new(0, 22, 0, 22)
-            }):Play()
-        end)
-        
-        button.MouseLeave:Connect(function()
-            services.TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundColor3 = config.Bg_Color,
-                Size = UDim2.new(0, 20, 0, 20)
-            }):Play()
-        end)
-    end
-    
-    setupButtonHover(MinButton)
-    setupButtonHover(AddButton)
-    
-    local funcs = {
-        SetValue = function(self, value)
-            local percent
-            
-            if value then
-                percent = (value - min)/(max - min)
-            else
-                local mouse = services.Players.LocalPlayer:GetMouse()
-                local barPos = SliderBar.AbsolutePosition.X
-                local barSize = SliderBar.AbsoluteSize.X
-                local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
-                percent = (mouseX - barPos) / barSize
-            end
-            
-            if precise then
-                value = value or tonumber(string.format("%.2f", min + (max - min) * percent))
-            else
-                value = value or math.floor(min + (max - min) * percent + 0.5)
-            end
-            
-            value = math.clamp(value, min, max)
-            library.flaFengYu[flag] = tonumber(value)
-            SliderValue.Text = tostring(value)
-            
-            local newPercent = (value - min)/(max - min)
-            
-            services.TweenService:Create(SliderFill, TweenInfo.new(0.1), {
-                Size = UDim2.new(newPercent, 0, 1, 0)
-            }):Play()
-            
-            callback(tonumber(value))
-        end,
-        
-        GetValue = function(self)
-            return library.flaFengYu[flag]
-        end
-    }
-    
-    funcs:SetValue(default)
-    
-    local dragging = false
-    
-    SliderBar.InputBegan:Connect(function()
-        dragging = true
-        funcs:SetValue()
-    end)
-    
-    SliderFill.InputBegan:Connect(function()
-        dragging = true
-    end)
-    
-    SliderBar.InputEnded:Connect(function()
-        dragging = false
-    end)
-    
-    SliderFill.InputEnded:Connect(function()
-        dragging = false
-    end)
-    
-    local dragConnection
-    dragConnection = services.RunService.RenderStepped:Connect(function()
-        if dragging then
-            funcs:SetValue()
-        end
-    end)
-    
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    MinButton.MouseButton1Click:Connect(function()
-        Ripple(MinButton)
-        local currentValue = library.flaFengYu[flag]
-        currentValue = math.clamp(currentValue - 1, min, max)
-        funcs:SetValue(currentValue)
-    end)
-    
-    AddButton.MouseButton1Click:Connect(function()
-        Ripple(AddButton)
-        local currentValue = library.flaFengYu[flag]
-        currentValue = math.clamp(currentValue + 1, min, max)
-        funcs:SetValue(currentValue)
-    end)
-    
-    SliderValue.FocusLost:Connect(function()
-        if SliderValue.Text == "" then
-            funcs:SetValue(default)
-            return
-        end
-        
-        local numValue = tonumber(SliderValue.Text)
-        if numValue then
-            numValue = math.clamp(numValue, min, max)
-            funcs:SetValue(numValue)
-        else
-            funcs:SetValue(default)
-        end
-    end)
-    
-    SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
-        local text = SliderValue.Text
-        local filtered = text:gsub("[^%d.]", "")
-        
-        if text ~= filtered then
-            SliderValue.Text = filtered
-        end
-    end)
-    
-    return funcs
-end
+				local callback = callback or function() end
+				local min = min or 1
+				local max = max or 10
+				local default = default or min
+				local precise = precise or false
+				library.flaFengYu[flag] = default
+				assert(text, "No text provided")
+				assert(flag, "No flag provided")
+				assert(default, "No default value provided")
+				local SliderModule = Instance.new("Frame")
+				local SliderBack = Instance.new("TextButton")
+				local SliderBackC = Instance.new("UICorner")
+				local SliderBar = Instance.new("Frame")
+				local SliderBarC = Instance.new("UICorner")
+				local SliderPart = Instance.new("Frame")
+				local SliderPartC = Instance.new("UICorner")
+				local SliderValBG = Instance.new("TextButton")
+				local SliderValBGC = Instance.new("UICorner")
+				local SliderValue = Instance.new("TextBox")
+				local MinSlider = Instance.new("TextButton")
+				local AddSlider = Instance.new("TextButton")
+				SliderModule.Name = "SliderModule"
+				SliderModule.Parent = Objs
+				SliderModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				SliderModule.BackgroundTransparency = 1.000
+				SliderModule.BorderSizePixel = 0
+				SliderModule.Position = UDim2.new(0, 0, 0, 0)
+				SliderModule.Size = UDim2.new(0, 428, 0, 38)
+				SliderBack.Name = "SliderBack"
+				SliderBack.Parent = SliderModule
+				SliderBack.BackgroundColor3 = config.Slider_Color
+				SliderBack.BorderSizePixel = 0
+				SliderBack.Size = UDim2.new(0, 428, 0, 38)
+				SliderBack.AutoButtonColor = false
+				SliderBack.Font = Enum.Font.GothamSemibold
+				SliderBack.Text = "   " .. text
+				SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
+				SliderBack.TextSize = 16.000
+				SliderBack.TextXAlignment = Enum.TextXAlignment.Left
+				SliderBackC.CornerRadius = UDim.new(0, 6)
+				SliderBackC.Name = "SliderBackC"
+				SliderBackC.Parent = SliderBack
+				SliderBar.Name = "SliderBar"
+				SliderBar.Parent = SliderBack
+				SliderBar.AnchorPoint = Vector2.new(0, 0.5)
+				SliderBar.BackgroundColor3 = config.Bg_Color
+				SliderBar.BorderSizePixel = 0
+				SliderBar.Position = UDim2.new(0.369000018, 40, 0.5, 0)
+				SliderBar.Size = UDim2.new(0, 140, 0, 12)
+				SliderBarC.CornerRadius = UDim.new(0, 4)
+				SliderBarC.Name = "SliderBarC"
+				SliderBarC.Parent = SliderBar
+				SliderPart.Name = "SliderPart"
+				SliderPart.Parent = SliderBar
+				SliderPart.BackgroundColor3 = config.SliderBar_Color
+				SliderPart.BorderSizePixel = 0
+				SliderPart.Size = UDim2.new(0, 54, 0, 13)
+				SliderPartC.CornerRadius = UDim.new(0, 4)
+				SliderPartC.Name = "SliderPartC"
+				SliderPartC.Parent = SliderPart
+				SliderValBG.Name = "SliderValBG"
+				SliderValBG.Parent = SliderBack
+				SliderValBG.BackgroundColor3 = config.Bg_Color
+				SliderValBG.BorderSizePixel = 0
+				SliderValBG.Position = UDim2.new(0.883177578, 0, 0.131578952, 0)
+				SliderValBG.Size = UDim2.new(0, 44, 0, 28)
+				SliderValBG.AutoButtonColor = false
+				SliderValBG.Font = Enum.Font.Gotham
+				SliderValBG.Text = ""
+				SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
+				SliderValBG.TextSize = 14.000
+				SliderValBGC.CornerRadius = UDim.new(0, 6)
+				SliderValBGC.Name = "SliderValBGC"
+				SliderValBGC.Parent = SliderValBG
+				SliderValue.Name = "SliderValue"
+				SliderValue.Parent = SliderValBG
+				SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				SliderValue.BackgroundTransparency = 1.000
+				SliderValue.BorderSizePixel = 0
+				SliderValue.Size = UDim2.new(1, 0, 1, 0)
+				SliderValue.Font = Enum.Font.Gotham
+				SliderValue.Text = "1000"
+				SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+				SliderValue.TextSize = 14.000
+				MinSlider.Name = "MinSlider"
+				MinSlider.Parent = SliderModule
+				MinSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				MinSlider.BackgroundTransparency = 1.000
+				MinSlider.BorderSizePixel = 0
+				MinSlider.Position = UDim2.new(0.296728969, 40, 0.236842096, 0)
+				MinSlider.Size = UDim2.new(0, 20, 0, 20)
+				MinSlider.Font = Enum.Font.Gotham
+				MinSlider.Text = "-"
+				MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+				MinSlider.TextSize = 24.000
+				MinSlider.TextWrapped = true
+				AddSlider.Name = "AddSlider"
+				AddSlider.Parent = SliderModule
+				AddSlider.AnchorPoint = Vector2.new(0, 0.5)
+				AddSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				AddSlider.BackgroundTransparency = 1.000
+				AddSlider.BorderSizePixel = 0
+				AddSlider.Position = UDim2.new(0.810906529, 0, 0.5, 0)
+				AddSlider.Size = UDim2.new(0, 20, 0, 20)
+				AddSlider.Font = Enum.Font.Gotham
+				AddSlider.Text = "+"
+				AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+				AddSlider.TextSize = 24.000
+				AddSlider.TextWrapped = true
+				local funcs = {
+					SetValue = function(self, value)
+						local percent = (mouse.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X
+						if value then
+							percent = (value - min) / (max - min)
+						end
+						percent = math.clamp(percent, 0, 1)
+						if precise then
+							value = value or tonumber(string.format("%.1f", tostring(min + (max - min) * percent)))
+						else
+							value = value or math.floor(min + (max - min) * percent)
+						end
+						library.flaFengYu[flag] = tonumber(value)
+						SliderValue.Text = tostring(value)
+						SliderPart.Size = UDim2.new(percent, 0, 1, 0)
+						callback(tonumber(value))
+					end,
+				}
+				MinSlider.MouseButton1Click:Connect(function()
+					local currentValue = library.flaFengYu[flag]
+					currentValue = math.clamp(currentValue - 1, min, max)
+					funcs:SetValue(currentValue)
+				end)
+				AddSlider.MouseButton1Click:Connect(function()
+					local currentValue = library.flaFengYu[flag]
+					currentValue = math.clamp(currentValue + 1, min, max)
+					funcs:SetValue(currentValue)
+				end)
+				funcs:SetValue(default)
+				local dragging, boxFocused, allowed = false, false, { [""] = true, ["-"] = true }
+				SliderBar.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						funcs:SetValue()
+						dragging = true
+					end
+				end)
+				services.UserInputService.InputEnded:Connect(function(input)
+					if dragging and input.UserInputType == Enum.UserInputType.MouseButton1 then
+						dragging = false
+					end
+				end)
+				services.UserInputService.InputChanged:Connect(function(input)
+					if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+						funcs:SetValue()
+					end
+				end)
+				SliderBar.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.Touch then
+						funcs:SetValue()
+						dragging = true
+					end
+				end)
+				services.UserInputService.InputEnded:Connect(function(input)
+					if dragging and input.UserInputType == Enum.UserInputType.Touch then
+						dragging = false
+					end
+				end)
+				services.UserInputService.InputChanged:Connect(function(input)
+					if dragging and input.UserInputType == Enum.UserInputType.Touch then
+						funcs:SetValue()
+					end
+				end)
+				SliderValue.Focused:Connect(function()
+					boxFocused = true
+				end)
+				SliderValue.FocusLost:Connect(function()
+					boxFocused = false
+					if SliderValue.Text == "" then
+						funcs:SetValue(default)
+					end
+				end)
+				SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
+					if not boxFocused then
+						return
+					end
+					SliderValue.Text = SliderValue.Text:FengYuub("%D+", "")
+					local text = SliderValue.Text
+					if not tonumber(text) then
+						SliderValue.Text = SliderValue.Text:FengYuub("%D+", "")
+					elseif not allowed[text] then
+						if tonumber(text) > max then
+							text = max
+							SliderValue.Text = tostring(max)
+						end
+						funcs:SetValue(tonumber(text))
+					end
+				end)
+				return funcs
+			end
 			function section.Dropdown(section, text, flag, options, callback)
-    local callback = callback or function() end
-    local options = options or {}
-    assert(text, "No text provided")
-    assert(flag, "No flag provided")
-    library.flaFengYu[flag] = nil
-    
-local DropdownModule = Instance.new("Frame")
-local DropdownTop = Instance.new("TextButton")
-local DropdownTopC = Instance.new("UICorner")
-local DropdownOpenFrame = Instance.new("Frame")
-local DropdownOpenFrameC = Instance.new("UICorner")
-local DropdownOpen = Instance.new("TextButton")
-local DropdownText = Instance.new("TextBox")
-local DropdownModuleL = Instance.new("UIListLayout")
-
-DropdownModule.Name = "DropdownModule"
-DropdownModule.Parent = Objs
-DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-DropdownModule.BackgroundTransparency = 1.000
-DropdownModule.BorderSizePixel = 0
-DropdownModule.ClipsDescendants = true
-DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-DropdownModule.Size = UDim2.new(0, 428, 0, 38)
-
-DropdownTop.Name = "DropdownTop"
-DropdownTop.Parent = DropdownModule
-DropdownTop.BackgroundColor3 = config.Dropdown_Color
-DropdownTop.BorderSizePixel = 0
-DropdownTop.Size = UDim2.new(0, 428, 0, 38)
-DropdownTop.AutoButtonColor = false
-DropdownTop.Font = Enum.Font.GothamSemibold
-DropdownTop.Text = ""
-DropdownTop.TextColor3 = config.TextColor
-DropdownTop.TextSize = 16.000
-DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
-
-DropdownTopC.CornerRadius = UDim.new(0, 6)
-DropdownTopC.Name = "DropdownTopC"
-DropdownTopC.Parent = DropdownTop
-
-local BackgroundFill = Instance.new("Frame")
-BackgroundFill.Name = "BackgroundFill"
-BackgroundFill.Parent = DropdownTop
-BackgroundFill.BackgroundColor3 = config.Dropdown_Color
-BackgroundFill.BorderSizePixel = 0
-BackgroundFill.Position = UDim2.new(0.78, 0, 0, 0)
-BackgroundFill.Size = UDim2.new(0.22, 0, 1, 0)
-BackgroundFill.ZIndex = 0
-
-DropdownOpenFrame.Name = "DropdownOpenFrame"
-DropdownOpenFrame.Parent = DropdownTop
-DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
-DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
-DropdownOpenFrame.BorderSizePixel = 0
-DropdownOpenFrame.Position = UDim2.new(0.88, 0, 0.5, 0)
-DropdownOpenFrame.Size = UDim2.new(0, 50, 0, 24)
-DropdownOpenFrame.ZIndex = 2
-
-createAuroraEffect(DropdownOpenFrame, 0.8)
-
-DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
-DropdownOpenFrameC.Name = "DropdownOpenFrameC"
-DropdownOpenFrameC.Parent = DropdownOpenFrame
-
-DropdownOpen.Name = "DropdownOpen"
-DropdownOpen.Parent = DropdownOpenFrame
-DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-DropdownOpen.BackgroundTransparency = 1.000
-DropdownOpen.BorderSizePixel = 0
-DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
-DropdownOpen.Font = Enum.Font.GothamSemibold
-DropdownOpen.Text = "选择"
-DropdownOpen.TextColor3 = config.TextColor
-DropdownOpen.TextSize = 12.000
-DropdownOpen.TextWrapped = true
-DropdownOpen.ZIndex = 3
-
-DropdownText.Name = "DropdownText"
-DropdownText.Parent = DropdownTop
-DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-DropdownText.BackgroundTransparency = 1.000
-DropdownText.BorderSizePixel = 0
-DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-DropdownText.Size = UDim2.new(0, 370, 0, 38)
-DropdownText.Font = Enum.Font.GothamSemibold
-DropdownText.PlaceholderColor3 = config.SecondaryTextColor
-DropdownText.PlaceholderText = text
-DropdownText.Text = ""
-DropdownText.TextColor3 = config.TextColor
-DropdownText.TextSize = 16.000
-DropdownText.TextXAlignment = Enum.TextXAlignment.Left
-DropdownText.ZIndex = 2
-
-local Separator = Instance.new("Frame")
-Separator.Name = "Separator"
-Separator.Parent = DropdownTop
-Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-Separator.BorderSizePixel = 0
-Separator.Position = UDim2.new(0.82, 0, 0.2, 0)
-Separator.Size = UDim2.new(0, 1, 0, 24)
-Separator.ZIndex = 1
-
-DropdownModuleL.Name = "DropdownModuleL"
-DropdownModuleL.Parent = DropdownModule
-DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
-DropdownModuleL.Padding = UDim.new(0, 4)
-
-local setAllVisible = function()
-    local options = DropdownModule:GetChildren()
-    for i = 1, #options do
-        local option = options[i]
-        if option:IsA("TextButton") and option.Name:match("Option_") then
-            option.Visible = true
-        end
-    end
-end
-
-local searchDropdown = function(text)
-    local options = DropdownModule:GetChildren()
-    for i = 1, #options do
-        local option = options[i]
-        if text == "" then
-            setAllVisible()
-        else
-            if option:IsA("TextButton") and option.Name:match("Option_") then
-                if option.Text:lower():match(text:lower()) then
-                    option.Visible = true
-                else
-                    option.Visible = false
-                end
-            end
-        end
-    end
-end
-
-local open = false
-local ToggleDropVis = function()
-    open = not open
-    if open then
-        setAllVisible()
-    end
-    DropdownOpen.Text = (open and "取消" or "选择")
-    DropdownModule.Size = UDim2.new(0, 428, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38))
-end
-
-DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
-DropdownText.Focused:Connect(function()
-    if open then
-        return
-    end
-    ToggleDropVis()
-end)
-
-DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
-    if not open then
-        return
-    end
-    searchDropdown(DropdownText.Text)
-end)
-
-DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    if not open then
-        return
-    end
-    DropdownModule.Size = UDim2.new(0, 428, 0, (DropdownModuleL.AbsoluteContentSize.Y + 4))
-end)
-
-local funcs = {}
-funcs.AddOption = function(self, option)
-    local Option = Instance.new("TextButton")
-    local OptionC = Instance.new("UICorner")
-    Option.Name = "Option_" .. option
-    Option.Parent = DropdownModule
-    Option.BackgroundColor3 = config.TabColor
-    Option.BorderSizePixel = 0
-    Option.Position = UDim2.new(0, 0, 0.328125, 0)
-    Option.Size = UDim2.new(0, 428, 0, 26)
-    Option.AutoButtonColor = false
-    Option.Font = Enum.Font.Gotham
-    Option.Text = option
-    Option.TextColor3 = config.TextColor
-    Option.TextSize = 14.000
-    OptionC.CornerRadius = UDim.new(0, 6)
-    OptionC.Name = "OptionC"
-    OptionC.Parent = Option
-    
-    Option.MouseButton1Click:Connect(function()
-        Ripple(Option)
-        ToggleDropVis()
-        callback(Option.Text)
-        DropdownText.Text = Option.Text
-        library.flaFengYu[flag] = Option.Text
-    end)
-end
-
-funcs.RemoveOption = function(self, option)
-    local option = DropdownModule:FindFirstChild("Option_" .. option)
-    if option then
-        option:Destroy()
-    end
-end
-
-funcs.SetOptions = function(self, options)
-    for _, v in next, DropdownModule:GetChildren() do
-        if v.Name:match("Option_") then
-            v:Destroy()
-        end
-    end
-    for _, v in next, options do
-        funcs:AddOption(v)
-    end
-end
-
-funcs:SetOptions(options)
-return funcs
-end
+				local callback = callback or function() end
+				local options = options or {}
+				assert(text, "No text provided")
+				assert(flag, "No flag provided")
+				library.flaFengYu[flag] = nil
+				local DropdownModule = Instance.new("Frame")
+				local DropdownTop = Instance.new("TextButton")
+				local DropdownTopC = Instance.new("UICorner")
+				local DropdownOpen = Instance.new("TextButton")
+				local DropdownText = Instance.new("TextBox")
+				local DropdownModuleL = Instance.new("UIListLayout")
+				local Option = Instance.new("TextButton")
+				local OptionC = Instance.new("UICorner")
+				DropdownModule.Name = "DropdownModule"
+				DropdownModule.Parent = Objs
+				DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				DropdownModule.BackgroundTransparency = 1.000
+				DropdownModule.BorderSizePixel = 0
+				DropdownModule.ClipsDescendants = true
+				DropdownModule.Position = UDim2.new(0, 0, 0, 0)
+				DropdownModule.Size = UDim2.new(0, 428, 0, 38)
+				DropdownTop.Name = "DropdownTop"
+				DropdownTop.Parent = DropdownModule
+				DropdownTop.BackgroundColor3 = config.Dropdown_Color
+				DropdownTop.BorderSizePixel = 0
+				DropdownTop.Size = UDim2.new(0, 428, 0, 38)
+				DropdownTop.AutoButtonColor = false
+				DropdownTop.Font = Enum.Font.GothamSemibold
+				DropdownTop.Text = ""
+				DropdownTop.TextColor3 = Color3.fromRGB(255, 255, 255)
+				DropdownTop.TextSize = 16.000
+				DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
+				DropdownTopC.CornerRadius = UDim.new(0, 6)
+				DropdownTopC.Name = "DropdownTopC"
+				DropdownTopC.Parent = DropdownTop
+				DropdownOpen.Name = "DropdownOpen"
+				DropdownOpen.Parent = DropdownTop
+				DropdownOpen.AnchorPoint = Vector2.new(0, 0.5)
+				DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				DropdownOpen.BackgroundTransparency = 1.000
+				DropdownOpen.BorderSizePixel = 0
+				DropdownOpen.Position = UDim2.new(0.918383181, 0, 0.5, 0)
+				DropdownOpen.Size = UDim2.new(0, 20, 0, 20)
+				DropdownOpen.Font = Enum.Font.Gotham
+				DropdownOpen.Text = "+"
+				DropdownOpen.TextColor3 = Color3.fromRGB(255, 255, 255)
+				DropdownOpen.TextSize = 24.000
+				DropdownOpen.TextWrapped = true
+				DropdownText.Name = "DropdownText"
+				DropdownText.Parent = DropdownTop
+				DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				DropdownText.BackgroundTransparency = 1.000
+				DropdownText.BorderSizePixel = 0
+				DropdownText.Position = UDim2.new(0.0373831764, 0, 0, 0)
+				DropdownText.Size = UDim2.new(0, 184, 0, 38)
+				DropdownText.Font = Enum.Font.GothamSemibold
+				DropdownText.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
+				DropdownText.PlaceholderText = text
+				DropdownText.Text = ""
+				DropdownText.TextColor3 = Color3.fromRGB(255, 255, 255)
+				DropdownText.TextSize = 16.000
+				DropdownText.TextXAlignment = Enum.TextXAlignment.Left
+				DropdownModuleL.Name = "DropdownModuleL"
+				DropdownModuleL.Parent = DropdownModule
+				DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
+				DropdownModuleL.Padding = UDim.new(0, 4)
+				local setAllVisible = function()
+					local options = DropdownModule:GetChildren()
+					for i = 1, #options do
+						local option = options[i]
+						if option:IsA("TextButton") and option.Name:match("Option_") then
+							option.Visible = true
+						end
+					end
+				end
+				local searchDropdown = function(text)
+					local options = DropdownModule:GetChildren()
+					for i = 1, #options do
+						local option = options[i]
+						if text == "" then
+							setAllVisible()
+						else
+							if option:IsA("TextButton") and option.Name:match("Option_") then
+								if option.Text:lower():match(text:lower()) then
+									option.Visible = true
+								else
+									option.Visible = false
+								end
+							end
+						end
+					end
+				end
+				local open = false
+				local ToggleDropVis = function()
+					open = not open
+					if open then
+						setAllVisible()
+					end
+					DropdownOpen.Text = (open and "-" or "+")
+					DropdownModule.Size =
+						UDim2.new(0, 428, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38))
+				end
+				DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
+				DropdownText.Focused:Connect(function()
+					if open then
+						return
+					end
+					ToggleDropVis()
+				end)
+				DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
+					if not open then
+						return
+					end
+					searchDropdown(DropdownText.Text)
+				end)
+				DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+					if not open then
+						return
+					end
+					DropdownModule.Size = UDim2.new(0, 428, 0, (DropdownModuleL.AbsoluteContentSize.Y + 4))
+				end)
+				local funcs = {}
+				funcs.AddOption = function(self, option)
+					local Option = Instance.new("TextButton")
+					local OptionC = Instance.new("UICorner")
+					Option.Name = "Option_" .. option
+					Option.Parent = DropdownModule
+					Option.BackgroundColor3 = config.TabColor
+					Option.BorderSizePixel = 0
+					Option.Position = UDim2.new(0, 0, 0.328125, 0)
+					Option.Size = UDim2.new(0, 428, 0, 26)
+					Option.AutoButtonColor = false
+					Option.Font = Enum.Font.Gotham
+					Option.Text = option
+					Option.TextColor3 = Color3.fromRGB(255, 255, 255)
+					Option.TextSize = 14.000
+					OptionC.CornerRadius = UDim.new(0, 6)
+					OptionC.Name = "OptionC"
+					OptionC.Parent = Option
+					Option.MouseButton1Click:Connect(function()
+						ToggleDropVis()
+						callback(Option.Text)
+						DropdownText.Text = Option.Text
+						library.flaFengYu[flag] = Option.Text
+					end)
+				end
+				funcs.RemoveOption = function(self, option)
+					local option = DropdownModule:FindFirstChild("Option_" .. option)
+					if option then
+						option:Destroy()
+					end
+				end
+				funcs.SetOptions = function(self, options)
+					for _, v in next, DropdownModule:GetChildren() do
+						if v.Name:match("Option_") then
+							v:Destroy()
+						end
+					end
+					for _, v in next, options do
+						funcs:AddOption(v)
+					end
+				end
+				funcs:SetOptions(options)
+				return funcs
+			end
 			return section
 		end
 		return tab
