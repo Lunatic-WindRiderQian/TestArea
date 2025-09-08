@@ -1178,13 +1178,6 @@ function library.new(library, name, theme)
     SliderBack.TextSize = 16.000
     SliderBack.TextXAlignment = Enum.TextXAlignment.Left
     
-    -- 添加外框 (新UI的改进)
-    local SliderStroke = Instance.new("UIStroke")
-    SliderStroke.Parent = SliderBack
-    SliderStroke.Color = Color3.fromRGB(60, 60, 70)
-    SliderStroke.Thickness = 1
-    SliderStroke.Transparency = 0.2
-    
     SliderBackC.CornerRadius = UDim.new(0, 6)
     SliderBackC.Name = "SliderBackC"
     SliderBackC.Parent = SliderBack
@@ -1192,10 +1185,10 @@ function library.new(library, name, theme)
     SliderBar.Name = "SliderBar"
     SliderBar.Parent = SliderBack
     SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-    SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100) -- 改为灰色
+    SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     SliderBar.BorderSizePixel = 0
     SliderBar.Position = UDim2.new(0.369000018, 40, 0.5, 0)
-    SliderBar.Size = UDim2.new(0, 160, 0, 14) -- 增大滑动条尺寸
+    SliderBar.Size = UDim2.new(0, 160, 0, 14)
     SliderBarC.CornerRadius = UDim.new(0, 4)
     SliderBarC.Name = "SliderBarC"
     SliderBarC.Parent = SliderBar
@@ -1204,7 +1197,7 @@ function library.new(library, name, theme)
     SliderPart.Parent = SliderBar
     SliderPart.BackgroundColor3 = config.SliderBar_Color
     SliderPart.BorderSizePixel = 0
-    SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0) -- 修复初始位置
+    SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
     SliderPartC.CornerRadius = UDim.new(0, 4)
     SliderPartC.Name = "SliderPartC"
     SliderPartC.Parent = SliderPart
@@ -1221,13 +1214,6 @@ function library.new(library, name, theme)
     SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderValBG.TextSize = 14.000
     
-    -- 添加外框 (新UI的改进)
-    local ValueStroke = Instance.new("UIStroke")
-    ValueStroke.Parent = SliderValBG
-    ValueStroke.Color = Color3.fromRGB(60, 60, 70)
-    ValueStroke.Thickness = 1
-    ValueStroke.Transparency = 0.2
-    
     SliderValBGC.CornerRadius = UDim.new(0, 6)
     SliderValBGC.Name = "SliderValBGC"
     SliderValBGC.Parent = SliderValBG
@@ -1239,12 +1225,12 @@ function library.new(library, name, theme)
     SliderValue.BorderSizePixel = 0
     SliderValue.Size = UDim2.new(1, 0, 1, 0)
     SliderValue.Font = Enum.Font.Gotham
-    SliderValue.Text = tostring(default)  -- 修复：显示默认值而不是固定值
+    SliderValue.Text = tostring(default)
     SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SliderValue.TextSize = 12.000 -- 减小字体大小
+    SliderValue.TextSize = 12.000
     
     MinSlider.Name = "MinSlider"
-    MinSlider.Parent = SliderBack -- 改为SliderBack的子元素，确保位置正确
+    MinSlider.Parent = SliderBack
     MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     MinSlider.BackgroundTransparency = 0
     MinSlider.BorderSizePixel = 0
@@ -1257,13 +1243,8 @@ function library.new(library, name, theme)
     MinSlider.TextWrapped = true
     MinSlider.ZIndex = 2
     
-    -- 添加圆角
-    local MinSliderC = Instance.new("UICorner")
-    MinSliderC.CornerRadius = UDim.new(0, 4)
-    MinSliderC.Parent = MinSlider
-    
     AddSlider.Name = "AddSlider"
-    AddSlider.Parent = SliderBack -- 改为SliderBack的子元素，确保位置正确
+    AddSlider.Parent = SliderBack
     AddSlider.AnchorPoint = Vector2.new(0, 0.5)
     AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     AddSlider.BackgroundTransparency = 0
@@ -1277,11 +1258,6 @@ function library.new(library, name, theme)
     AddSlider.TextWrapped = true
     AddSlider.ZIndex = 2
     
-    -- 添加圆角
-    local AddSliderC = Instance.new("UICorner")
-    AddSliderC.CornerRadius = UDim.new(0, 4)
-    AddSliderC.Parent = AddSlider
-    
     local funcs = {
         SetValue = function(self, value)
             local percent
@@ -1289,7 +1265,6 @@ function library.new(library, name, theme)
             if value then
                 percent = (value - min)/(max - min)
             else
-                -- 修复鼠标位置计算 (使用之前UI的逻辑)
                 local mouse = services.Players.LocalPlayer:GetMouse()
                 local barPos = SliderBar.AbsolutePosition.X
                 local barSize = SliderBar.AbsoluteSize.X
@@ -1323,7 +1298,6 @@ function library.new(library, name, theme)
     
     funcs:SetValue(default)
     
-    -- 使用之前UI的拖动事件处理逻辑
     local dragging = false
     
     SliderBar.InputBegan:Connect(function(input)
@@ -1352,7 +1326,6 @@ function library.new(library, name, theme)
         end
     end)
     
-    -- 触摸支持
     SliderBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
@@ -1386,7 +1359,6 @@ function library.new(library, name, theme)
         funcs:SetValue(currentValue)
     end)
     
-    -- 文本框输入处理
     local boxFocused = false
     local allowed = { [""] = true, ["-"] = true }
     
@@ -1415,7 +1387,6 @@ function library.new(library, name, theme)
             return
         end
         
-        -- 只允许数字输入
         SliderValue.Text = SliderValue.Text:gsub("%D+", "")
         
         local text = SliderValue.Text
@@ -1485,7 +1456,7 @@ function section.Dropdown(section, text, flag, options, callback)
     DropdownOpen.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     DropdownOpen.BackgroundTransparency = 0
     DropdownOpen.BorderSizePixel = 0
-    DropdownOpen.Position = UDim2.new(0.88, 0, 0.5, 0) -- 调整位置，避免偏向外面
+    DropdownOpen.Position = UDim2.new(0.85, 0, 0.5, 0)
     DropdownOpen.Size = UDim2.new(0, 50, 0, 24)
     DropdownOpen.Font = Enum.Font.Gotham
     DropdownOpen.Text = "选择"
@@ -1503,8 +1474,8 @@ function section.Dropdown(section, text, flag, options, callback)
     DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DropdownText.BackgroundTransparency = 1.000
     DropdownText.BorderSizePixel = 0
-    DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-    DropdownText.Size = UDim2.new(0, 370, 0, 38) -- 调整大小，确保不偏向外面
+    DropdownText.Position = UDim2.new(0.02, 0, 0, 0)
+    DropdownText.Size = UDim2.new(0.75, 0, 1, 0)
     DropdownText.Font = Enum.Font.GothamSemibold
     DropdownText.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
     DropdownText.PlaceholderText = text
