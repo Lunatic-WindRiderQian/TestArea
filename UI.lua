@@ -1178,7 +1178,7 @@ function library.new(library, name, theme)
     SliderBack.TextSize = 16.000
     SliderBack.TextXAlignment = Enum.TextXAlignment.Left
     
-    -- 添加外框
+    -- 添加外框 (新UI的改进)
     local SliderStroke = Instance.new("UIStroke")
     SliderStroke.Parent = SliderBack
     SliderStroke.Color = Color3.fromRGB(60, 60, 70)
@@ -1221,7 +1221,7 @@ function library.new(library, name, theme)
     SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderValBG.TextSize = 14.000
     
-    -- 添加外框
+    -- 添加外框 (新UI的改进)
     local ValueStroke = Instance.new("UIStroke")
     ValueStroke.Parent = SliderValBG
     ValueStroke.Color = Color3.fromRGB(60, 60, 70)
@@ -1289,7 +1289,7 @@ function library.new(library, name, theme)
             if value then
                 percent = (value - min)/(max - min)
             else
-                -- 修复鼠标位置计算
+                -- 修复鼠标位置计算 (使用之前UI的逻辑)
                 local mouse = services.Players.LocalPlayer:GetMouse()
                 local barPos = SliderBar.AbsolutePosition.X
                 local barSize = SliderBar.AbsoluteSize.X
@@ -1323,6 +1323,7 @@ function library.new(library, name, theme)
     
     funcs:SetValue(default)
     
+    -- 使用之前UI的拖动事件处理逻辑
     local dragging = false
     
     SliderBar.InputBegan:Connect(function(input)
@@ -1351,6 +1352,26 @@ function library.new(library, name, theme)
         end
     end)
     
+    -- 触摸支持
+    SliderBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            funcs:SetValue()
+        end
+    end)
+    
+    services.UserInputService.InputEnded:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    
+    services.UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.Touch then
+            funcs:SetValue()
+        end
+    end)
+    
     MinSlider.MouseButton1Click:Connect(function()
         Ripple(MinSlider)
         local currentValue = library.flaFengYu[flag]
@@ -1365,7 +1386,16 @@ function library.new(library, name, theme)
         funcs:SetValue(currentValue)
     end)
     
+    -- 文本框输入处理
+    local boxFocused = false
+    local allowed = { [""] = true, ["-"] = true }
+    
+    SliderValue.Focused:Connect(function()
+        boxFocused = true
+    end)
+    
     SliderValue.FocusLost:Connect(function()
+        boxFocused = false
         if SliderValue.Text == "" then
             funcs:SetValue(default)
             return
@@ -1377,6 +1407,26 @@ function library.new(library, name, theme)
             funcs:SetValue(numValue)
         else
             funcs:SetValue(default)
+        end
+    end)
+    
+    SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
+        if not boxFocused then
+            return
+        end
+        
+        -- 只允许数字输入
+        SliderValue.Text = SliderValue.Text:gsub("%D+", "")
+        
+        local text = SliderValue.Text
+        if not tonumber(text) and not allowed[text] then
+            SliderValue.Text = SliderValue.Text:gsub("%D+", "")
+        elseif not allowed[text] then
+            if tonumber(text) > max then
+                text = max
+                SliderValue.Text = tostring(max)
+            end
+            funcs:SetValue(tonumber(text))
         end
     end)
     
