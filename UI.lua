@@ -1135,274 +1135,204 @@ function library.new(library, name, theme)
 				BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 30, 0, 28)
 			end
 			function section.Slider(section, text, flag, default, min, max, precise, callback)
-    local callback = callback or function() end
-    local min = min or 1
-    local max = max or 10
-    local default = default or min
-    local precise = precise or false
-    library.flaFengYu[flag] = default
-    assert(text, "No text provided")
-    assert(flag, "No flag provided")
-    assert(default, "No default value provided")
-    
-    local SliderModule = Instance.new("Frame")
-    local SliderBack = Instance.new("TextButton")
-    local SliderBackC = Instance.new("UICorner")
-    local SliderBar = Instance.new("Frame")
-    local SliderBarC = Instance.new("UICorner")
-    local SliderPart = Instance.new("Frame")
-    local SliderPartC = Instance.new("UICorner")
-    local SliderValBG = Instance.new("TextButton")
-    local SliderValBGC = Instance.new("UICorner")
-    local SliderValue = Instance.new("TextBox")
-    local MinSlider = Instance.new("TextButton")
-    local AddSlider = Instance.new("TextButton")
-    
-    SliderModule.Name = "SliderModule"
-    SliderModule.Parent = Objs
-    SliderModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SliderModule.BackgroundTransparency = 1.000
-    SliderModule.BorderSizePixel = 0
-    SliderModule.Position = UDim2.new(0, 0, 0, 0)
-    SliderModule.Size = UDim2.new(0, 448, 0, 38)
-    
-    SliderBack.Name = "SliderBack"
-    SliderBack.Parent = SliderModule
-    SliderBack.BackgroundColor3 = config.Slider_Color
-    SliderBack.BorderSizePixel = 0
-    SliderBack.Size = UDim2.new(0, 448, 0, 38)
-    SliderBack.AutoButtonColor = false
-    SliderBack.Font = Enum.Font.GothamSemibold
-    SliderBack.Text = "   " .. text
-    SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SliderBack.TextSize = 16.000
-    SliderBack.TextXAlignment = Enum.TextXAlignment.Left
-    
-    SliderBackC.CornerRadius = UDim.new(0, 6)
-    SliderBackC.Name = "SliderBackC"
-    SliderBackC.Parent = SliderBack
-    
-    SliderBar.Name = "SliderBar"
-    SliderBar.Parent = SliderBack
-    SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-    SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    SliderBar.BorderSizePixel = 0
-    SliderBar.Position = UDim2.new(0.369000018, 40, 0.5, 0)
-    SliderBar.Size = UDim2.new(0, 160, 0, 14)
-    SliderBarC.CornerRadius = UDim.new(0, 4)
-    SliderBarC.Name = "SliderBarC"
-    SliderBarC.Parent = SliderBar
-    
-    SliderPart.Name = "SliderPart"
-    SliderPart.Parent = SliderBar
-    SliderPart.BackgroundColor3 = config.SliderBar_Color
-    SliderPart.BorderSizePixel = 0
-    SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
-    SliderPartC.CornerRadius = UDim.new(0, 4)
-    SliderPartC.Name = "SliderPartC"
-    SliderPartC.Parent = SliderPart
-    
-    SliderValBG.Name = "SliderValBG"
-    SliderValBG.Parent = SliderBack
-    SliderValBG.BackgroundColor3 = config.Bg_Color
-    SliderValBG.BorderSizePixel = 0
-    SliderValBG.Position = UDim2.new(0.883177578, 0, 0.131578952, 0)
-    SliderValBG.Size = UDim2.new(0, 44, 0, 28)
-    SliderValBG.AutoButtonColor = false
-    SliderValBG.Font = Enum.Font.Gotham
-    SliderValBG.Text = ""
-    SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SliderValBG.TextSize = 14.000
-    
-    SliderValBGC.CornerRadius = UDim.new(0, 6)
-    SliderValBGC.Name = "SliderValBGC"
-    SliderValBGC.Parent = SliderValBG
-    
-    SliderValue.Name = "SliderValue"
-    SliderValue.Parent = SliderValBG
-    SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SliderValue.BackgroundTransparency = 1.000
-    SliderValue.BorderSizePixel = 0
-    SliderValue.Size = UDim2.new(1, 0, 1, 0)
-    SliderValue.Font = Enum.Font.Gotham
-    SliderValue.Text = tostring(default)
-    SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SliderValue.TextSize = 12.000
-    
-    MinSlider.Name = "MinSlider"
-    MinSlider.Parent = SliderBack
-    MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    MinSlider.BackgroundTransparency = 0
-    MinSlider.BorderSizePixel = 0
-    MinSlider.Position = UDim2.new(0.296728969, 40, 0.236842096, 0)
-    MinSlider.Size = UDim2.new(0, 20, 0, 20)
-    MinSlider.Font = Enum.Font.Gotham
-    MinSlider.Text = "减"
-    MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MinSlider.TextSize = 14.000
-    MinSlider.TextWrapped = true
-    MinSlider.ZIndex = 2
-    
-    AddSlider.Name = "AddSlider"
-    AddSlider.Parent = SliderBack
-    AddSlider.AnchorPoint = Vector2.new(0, 0.5)
-    AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    AddSlider.BackgroundTransparency = 0
-    AddSlider.BorderSizePixel = 0
-    AddSlider.Position = UDim2.new(0.810906529, 0, 0.5, 0)
-    AddSlider.Size = UDim2.new(0, 20, 0, 20)
-    AddSlider.Font = Enum.Font.Gotham
-    AddSlider.Text = "加"
-    AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-    AddSlider.TextSize = 14.000
-    AddSlider.TextWrapped = true
-    AddSlider.ZIndex = 2
-    
-    local funcs = {
-        SetValue = function(self, value)
-            local percent
-            
-            if value then
-                percent = (value - min)/(max - min)
-            else
-                local mouse = services.Players.LocalPlayer:GetMouse()
-                local barPos = SliderBar.AbsolutePosition.X
-                local barSize = SliderBar.AbsoluteSize.X
-                local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
-                percent = (mouseX - barPos) / barSize
-                value = min + (max - min) * percent
-            end
-            
-            if precise then
-                value = tonumber(string.format("%.2f", value))
-            else
-                value = math.floor(value + 0.5)
-            end
-            
-            value = math.clamp(value, min, max)
-            percent = (value - min)/(max - min)
-            library.flaFengYu[flag] = tonumber(value)
-            SliderValue.Text = tostring(value)
-            
-            services.TweenService:Create(SliderPart, TweenInfo.new(0.1), {
-                Size = UDim2.new(percent, 0, 1, 0)
-            }):Play()
-            
-            callback(tonumber(value))
-        end,
-        
-        GetValue = function(self)
-            return library.flaFengYu[flag]
-        end
-    }
-    
-    funcs:SetValue(default)
-    
-    local dragging = false
-    
-    SliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            funcs:SetValue()
-        end
-    end)
-    
-    SliderPart.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            funcs:SetValue()
-        end
-    end)
-    
-    services.UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    services.UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            funcs:SetValue()
-        end
-    end)
-    
-    SliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            funcs:SetValue()
-        end
-    end)
-    
-    services.UserInputService.InputEnded:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-    
-    services.UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.Touch then
-            funcs:SetValue()
-        end
-    end)
-    
-    MinSlider.MouseButton1Click:Connect(function()
-        Ripple(MinSlider)
-        local currentValue = library.flaFengYu[flag]
-        currentValue = math.clamp(currentValue - 1, min, max)
-        funcs:SetValue(currentValue)
-    end)
-    
-    AddSlider.MouseButton1Click:Connect(function()
-        Ripple(AddSlider)
-        local currentValue = library.flaFengYu[flag]
-        currentValue = math.clamp(currentValue + 1, min, max)
-        funcs:SetValue(currentValue)
-    end)
-    
-    local boxFocused = false
-    local allowed = { [""] = true, ["-"] = true }
-    
-    SliderValue.Focused:Connect(function()
-        boxFocused = true
-    end)
-    
-    SliderValue.FocusLost:Connect(function()
-        boxFocused = false
-        if SliderValue.Text == "" then
-            funcs:SetValue(default)
-            return
-        end
-        
-        local numValue = tonumber(SliderValue.Text)
-        if numValue then
-            numValue = math.clamp(numValue, min, max)
-            funcs:SetValue(numValue)
-        else
-            funcs:SetValue(default)
-        end
-    end)
-    
-    SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
-        if not boxFocused then
-            return
-        end
-        
-        SliderValue.Text = SliderValue.Text:gsub("%D+", "")
-        
-        local text = SliderValue.Text
-        if not tonumber(text) and not allowed[text] then
-            SliderValue.Text = SliderValue.Text:gsub("%D+", "")
-        elseif not allowed[text] then
-            if tonumber(text) > max then
-                text = max
-                SliderValue.Text = tostring(max)
-            end
-            funcs:SetValue(tonumber(text))
-        end
-    end)
-    
-    return funcs
-end
+				local callback = callback or function() end
+				local min = min or 1
+				local max = max or 10
+				local default = default or min
+				local precise = precise or false
+				library.flaFengYu[flag] = default
+				assert(text, "No text provided")
+				assert(flag, "No flag provided")
+				assert(default, "No default value provided")
+				local SliderModule = Instance.new("Frame")
+				local SliderBack = Instance.new("TextButton")
+				local SliderBackC = Instance.new("UICorner")
+				local SliderBar = Instance.new("Frame")
+				local SliderBarC = Instance.new("UICorner")
+				local SliderPart = Instance.new("Frame")
+				local SliderPartC = Instance.new("UICorner")
+				local SliderValBG = Instance.new("TextButton")
+				local SliderValBGC = Instance.new("UICorner")
+				local SliderValue = Instance.new("TextBox")
+				local MinSlider = Instance.new("TextButton")
+				local AddSlider = Instance.new("TextButton")
+				SliderModule.Name = "SliderModule"
+				SliderModule.Parent = Objs
+				SliderModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				SliderModule.BackgroundTransparency = 1.000
+				SliderModule.BorderSizePixel = 0
+				SliderModule.Position = UDim2.new(0, 0, 0, 0)
+				SliderModule.Size = UDim2.new(0, 428, 0, 38)
+				SliderBack.Name = "SliderBack"
+				SliderBack.Parent = SliderModule
+				SliderBack.BackgroundColor3 = config.Slider_Color
+				SliderBack.BorderSizePixel = 0
+				SliderBack.Size = UDim2.new(0, 428, 0, 38)
+				SliderBack.AutoButtonColor = false
+				SliderBack.Font = Enum.Font.GothamSemibold
+				SliderBack.Text = "   " .. text
+				SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
+				SliderBack.TextSize = 16.000
+				SliderBack.TextXAlignment = Enum.TextXAlignment.Left
+				SliderBackC.CornerRadius = UDim.new(0, 6)
+				SliderBackC.Name = "SliderBackC"
+				SliderBackC.Parent = SliderBack
+				SliderBar.Name = "SliderBar"
+				SliderBar.Parent = SliderBack
+				SliderBar.AnchorPoint = Vector2.new(0, 0.5)
+				SliderBar.BackgroundColor3 = config.Bg_Color
+				SliderBar.BorderSizePixel = 0
+				SliderBar.Position = UDim2.new(0.369000018, 40, 0.5, 0)
+				SliderBar.Size = UDim2.new(0, 140, 0, 12)
+				SliderBarC.CornerRadius = UDim.new(0, 4)
+				SliderBarC.Name = "SliderBarC"
+				SliderBarC.Parent = SliderBar
+				SliderPart.Name = "SliderPart"
+				SliderPart.Parent = SliderBar
+				SliderPart.BackgroundColor3 = config.SliderBar_Color
+				SliderPart.BorderSizePixel = 0
+				SliderPart.Size = UDim2.new(0, 54, 0, 13)
+				SliderPartC.CornerRadius = UDim.new(0, 4)
+				SliderPartC.Name = "SliderPartC"
+				SliderPartC.Parent = SliderPart
+				SliderValBG.Name = "SliderValBG"
+				SliderValBG.Parent = SliderBack
+				SliderValBG.BackgroundColor3 = config.Bg_Color
+				SliderValBG.BorderSizePixel = 0
+				SliderValBG.Position = UDim2.new(0.883177578, 0, 0.131578952, 0)
+				SliderValBG.Size = UDim2.new(0, 44, 0, 28)
+				SliderValBG.AutoButtonColor = false
+				SliderValBG.Font = Enum.Font.Gotham
+				SliderValBG.Text = ""
+				SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
+				SliderValBG.TextSize = 14.000
+				SliderValBGC.CornerRadius = UDim.new(0, 6)
+				SliderValBGC.Name = "SliderValBGC"
+				SliderValBGC.Parent = SliderValBG
+				SliderValue.Name = "SliderValue"
+				SliderValue.Parent = SliderValBG
+				SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				SliderValue.BackgroundTransparency = 1.000
+				SliderValue.BorderSizePixel = 0
+				SliderValue.Size = UDim2.new(1, 0, 1, 0)
+				SliderValue.Font = Enum.Font.Gotham
+				SliderValue.Text = "1000"
+				SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+				SliderValue.TextSize = 14.000
+				MinSlider.Name = "MinSlider"
+				MinSlider.Parent = SliderModule
+				MinSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				MinSlider.BackgroundTransparency = 1.000
+				MinSlider.BorderSizePixel = 0
+				MinSlider.Position = UDim2.new(0.296728969, 40, 0.236842096, 0)
+				MinSlider.Size = UDim2.new(0, 20, 0, 20)
+				MinSlider.Font = Enum.Font.Gotham
+				MinSlider.Text = "-"
+				MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+				MinSlider.TextSize = 24.000
+				MinSlider.TextWrapped = true
+				AddSlider.Name = "AddSlider"
+				AddSlider.Parent = SliderModule
+				AddSlider.AnchorPoint = Vector2.new(0, 0.5)
+				AddSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				AddSlider.BackgroundTransparency = 1.000
+				AddSlider.BorderSizePixel = 0
+				AddSlider.Position = UDim2.new(0.810906529, 0, 0.5, 0)
+				AddSlider.Size = UDim2.new(0, 20, 0, 20)
+				AddSlider.Font = Enum.Font.Gotham
+				AddSlider.Text = "+"
+				AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+				AddSlider.TextSize = 24.000
+				AddSlider.TextWrapped = true
+				local funcs = {
+					SetValue = function(self, value)
+						local percent = (mouse.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X
+						if value then
+							percent = (value - min) / (max - min)
+						end
+						percent = math.clamp(percent, 0, 1)
+						if precise then
+							value = value or tonumber(string.format("%.1f", tostring(min + (max - min) * percent)))
+						else
+							value = value or math.floor(min + (max - min) * percent)
+						end
+						library.flaFengYu[flag] = tonumber(value)
+						SliderValue.Text = tostring(value)
+						SliderPart.Size = UDim2.new(percent, 0, 1, 0)
+						callback(tonumber(value))
+					end,
+				}
+				MinSlider.MouseButton1Click:Connect(function()
+					local currentValue = library.flaFengYu[flag]
+					currentValue = math.clamp(currentValue - 1, min, max)
+					funcs:SetValue(currentValue)
+				end)
+				AddSlider.MouseButton1Click:Connect(function()
+					local currentValue = library.flaFengYu[flag]
+					currentValue = math.clamp(currentValue + 1, min, max)
+					funcs:SetValue(currentValue)
+				end)
+				funcs:SetValue(default)
+				local dragging, boxFocused, allowed = false, false, { [""] = true, ["-"] = true }
+				SliderBar.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						funcs:SetValue()
+						dragging = true
+					end
+				end)
+				services.UserInputService.InputEnded:Connect(function(input)
+					if dragging and input.UserInputType == Enum.UserInputType.MouseButton1 then
+						dragging = false
+					end
+				end)
+				services.UserInputService.InputChanged:Connect(function(input)
+					if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+						funcs:SetValue()
+					end
+				end)
+				SliderBar.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.Touch then
+						funcs:SetValue()
+						dragging = true
+					end
+				end)
+				services.UserInputService.InputEnded:Connect(function(input)
+					if dragging and input.UserInputType == Enum.UserInputType.Touch then
+						dragging = false
+					end
+				end)
+				services.UserInputService.InputChanged:Connect(function(input)
+					if dragging and input.UserInputType == Enum.UserInputType.Touch then
+						funcs:SetValue()
+					end
+				end)
+				SliderValue.Focused:Connect(function()
+					boxFocused = true
+				end)
+				SliderValue.FocusLost:Connect(function()
+					boxFocused = false
+					if SliderValue.Text == "" then
+						funcs:SetValue(default)
+					end
+				end)
+				SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
+					if not boxFocused then
+						return
+					end
+					SliderValue.Text = SliderValue.Text:FengYuub("%D+", "")
+					local text = SliderValue.Text
+					if not tonumber(text) then
+						SliderValue.Text = SliderValue.Text:FengYuub("%D+", "")
+					elseif not allowed[text] then
+						if tonumber(text) > max then
+							text = max
+							SliderValue.Text = tostring(max)
+						end
+						funcs:SetValue(tonumber(text))
+					end
+				end)
+				return funcs
+			end
 
 function section.Dropdown(section, text, flag, options, callback)
     local callback = callback or function() end
