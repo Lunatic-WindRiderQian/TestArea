@@ -1194,8 +1194,8 @@ function library.new(library, name, theme)
     SliderBar.AnchorPoint = Vector2.new(0, 0.5)
     SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100) -- 改为灰色
     SliderBar.BorderSizePixel = 0
-    SliderBar.Position = UDim2.new(0.05, 120, 0.5, 0)
-    SliderBar.Size = UDim2.new(0, 200, 0, 8)
+    SliderBar.Position = UDim2.new(0.369000018, 40, 0.5, 0)
+    SliderBar.Size = UDim2.new(0, 160, 0, 14) -- 增大滑动条尺寸
     SliderBarC.CornerRadius = UDim.new(0, 4)
     SliderBarC.Name = "SliderBarC"
     SliderBarC.Parent = SliderBar
@@ -1214,7 +1214,7 @@ function library.new(library, name, theme)
     SliderValBG.BackgroundColor3 = config.Bg_Color
     SliderValBG.BorderSizePixel = 0
     SliderValBG.Position = UDim2.new(0.883177578, 0, 0.131578952, 0)
-    SliderValBG.Position = UDim2.new(0.05, 350, 0.5, 0)
+    SliderValBG.Size = UDim2.new(0, 44, 0, 28)
     SliderValBG.AutoButtonColor = false
     SliderValBG.Font = Enum.Font.Gotham
     SliderValBG.Text = ""
@@ -1248,8 +1248,8 @@ function library.new(library, name, theme)
     MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     MinSlider.BackgroundTransparency = 0
     MinSlider.BorderSizePixel = 0
-    MinSlider.Position = UDim2.new(0.05, 90, 0.5, 0)
-    MinSlider.Size = UDim2.new(0, 24, 0, 24)
+    MinSlider.Position = UDim2.new(0.296728969, 40, 0.236842096, 0)
+    MinSlider.Size = UDim2.new(0, 20, 0, 20)
     MinSlider.Font = Enum.Font.Gotham
     MinSlider.Text = "减"
     MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1268,8 +1268,8 @@ function library.new(library, name, theme)
     AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     AddSlider.BackgroundTransparency = 0
     AddSlider.BorderSizePixel = 0
-    AddSlider.Position = UDim2.new(0.05, 325, 0.5, 0)
-    AddSlider.Size = UDim2.new(0, 24, 0, 24)
+    AddSlider.Position = UDim2.new(0.810906529, 0, 0.5, 0)
+    AddSlider.Size = UDim2.new(0, 20, 0, 20)
     AddSlider.Font = Enum.Font.Gotham
     AddSlider.Text = "加"
     AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1485,7 +1485,7 @@ function section.Dropdown(section, text, flag, options, callback)
     DropdownOpen.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     DropdownOpen.BackgroundTransparency = 0
     DropdownOpen.BorderSizePixel = 0
-    DropdownOpen.Position = UDim2.new(0.85, 0, 0.5, 0)
+    DropdownOpen.Position = UDim2.new(0.88, 0, 0.5, 0) -- 调整位置，避免偏向外面
     DropdownOpen.Size = UDim2.new(0, 50, 0, 24)
     DropdownOpen.Font = Enum.Font.Gotham
     DropdownOpen.Text = "选择"
@@ -1503,8 +1503,8 @@ function section.Dropdown(section, text, flag, options, callback)
     DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DropdownText.BackgroundTransparency = 1.000
     DropdownText.BorderSizePixel = 0
-    DropdownText.Position = UDim2.new(0.02, 0, 0, 0)
-    DropdownText.Size = UDim2.new(0.75, 0, 1, 0)
+    DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
+    DropdownText.Size = UDim2.new(0, 370, 0, 38) -- 调整大小，确保不偏向外面
     DropdownText.Font = Enum.Font.GothamSemibold
     DropdownText.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
     DropdownText.PlaceholderText = text
