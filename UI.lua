@@ -1220,30 +1220,31 @@ function library.new(library, name, theme)
 				SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
 				SliderValue.TextSize = 14.000
 				MinSlider.Name = "MinSlider"
-				MinSlider.Parent = SliderModule
-				MinSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				MinSlider.BackgroundTransparency = 1.000
-				MinSlider.BorderSizePixel = 0
-				MinSlider.Position = UDim2.new(0.296728969, 40, 0.236842096, 0)
-				MinSlider.Size = UDim2.new(0, 20, 0, 20)
-				MinSlider.Font = Enum.Font.Gotham
-				MinSlider.Text = "-"
-				MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-				MinSlider.TextSize = 24.000
-				MinSlider.TextWrapped = true
-				AddSlider.Name = "AddSlider"
-				AddSlider.Parent = SliderModule
-				AddSlider.AnchorPoint = Vector2.new(0, 0.5)
-				AddSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				AddSlider.BackgroundTransparency = 1.000
-				AddSlider.BorderSizePixel = 0
-				AddSlider.Position = UDim2.new(0.810906529, 0, 0.5, 0)
-				AddSlider.Size = UDim2.new(0, 20, 0, 20)
-				AddSlider.Font = Enum.Font.Gotham
-				AddSlider.Text = "+"
-				AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-				AddSlider.TextSize = 24.000
-				AddSlider.TextWrapped = true
+MinSlider.Parent = SliderModule
+MinSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+MinSlider.BackgroundTransparency = 1.000
+MinSlider.BorderSizePixel = 0
+MinSlider.Position = UDim2.new(0.296728969, 40, 0.236842096, 0)
+MinSlider.Size = UDim2.new(0, 20, 0, 20)
+MinSlider.Font = Enum.Font.Gotham
+MinSlider.Text = "减"  -- 修改为中文"减"
+MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinSlider.TextSize = 24.000
+MinSlider.TextWrapped = true
+
+AddSlider.Name = "AddSlider"
+AddSlider.Parent = SliderModule
+AddSlider.AnchorPoint = Vector2.new(0, 0.5)
+AddSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+AddSlider.BackgroundTransparency = 1.000
+AddSlider.BorderSizePixel = 0
+AddSlider.Position = UDim2.new(0.810906529, 0, 0.5, 0)
+AddSlider.Size = UDim2.new(0, 20, 0, 20)
+AddSlider.Font = Enum.Font.Gotham
+AddSlider.Text = "加"  -- 修改为中文"加"
+AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+AddSlider.TextSize = 24.000
+AddSlider.TextWrapped = true
 				local funcs = {
 					SetValue = function(self, value)
 						local percent = (mouse.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X
@@ -1370,18 +1371,18 @@ function library.new(library, name, theme)
 				DropdownTopC.Name = "DropdownTopC"
 				DropdownTopC.Parent = DropdownTop
 				DropdownOpen.Name = "DropdownOpen"
-				DropdownOpen.Parent = DropdownTop
-				DropdownOpen.AnchorPoint = Vector2.new(0, 0.5)
-				DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				DropdownOpen.BackgroundTransparency = 1.000
-				DropdownOpen.BorderSizePixel = 0
-				DropdownOpen.Position = UDim2.new(0.918383181, 0, 0.5, 0)
-				DropdownOpen.Size = UDim2.new(0, 20, 0, 20)
-				DropdownOpen.Font = Enum.Font.Gotham
-				DropdownOpen.Text = "+"
-				DropdownOpen.TextColor3 = Color3.fromRGB(255, 255, 255)
-				DropdownOpen.TextSize = 24.000
-				DropdownOpen.TextWrapped = true
+DropdownOpen.Parent = DropdownTop
+DropdownOpen.AnchorPoint = Vector2.new(0, 0.5)
+DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+DropdownOpen.BackgroundTransparency = 1.000
+DropdownOpen.BorderSizePixel = 0
+DropdownOpen.Position = UDim2.new(0.918383181, 0, 0.5, 0)
+DropdownOpen.Size = UDim2.new(0, 40, 0, 20)
+DropdownOpen.Font = Enum.Font.Gotham
+DropdownOpen.Text = "选择"
+DropdownOpen.TextColor3 = Color3.fromRGB(255, 255, 255)
+DropdownOpen.TextSize = 14.000
+DropdownOpen.TextWrapped = true
 				DropdownText.Name = "DropdownText"
 				DropdownText.Parent = DropdownTop
 				DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1432,7 +1433,7 @@ function library.new(library, name, theme)
 					if open then
 						setAllVisible()
 					end
-					DropdownOpen.Text = (open and "-" or "+")
+					DropdownOpen.Text = (open and "取消" or "选择")
 					DropdownModule.Size =
 						UDim2.new(0, 428, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38))
 				end
