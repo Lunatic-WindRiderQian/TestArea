@@ -1180,14 +1180,14 @@ function library.new(library, name, theme)
     SliderBackC.Name = "SliderBackC"
     SliderBackC.Parent = SliderBack
     
-    -- 修改SliderBar位置和大小，使其更长
+    -- 滑块条位置再往右一点
     SliderBar.Name = "SliderBar"
     SliderBar.Parent = SliderBack
     SliderBar.AnchorPoint = Vector2.new(0, 0.5)
     SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     SliderBar.BorderSizePixel = 0
-    SliderBar.Position = UDim2.new(0.35, 0, 0.5, 0)  -- 向右移动
-    SliderBar.Size = UDim2.new(0, 180, 0, 14)  -- 增加长度
+    SliderBar.Position = UDim2.new(0.4, 0, 0.5, 0)  -- 再往右一点
+    SliderBar.Size = UDim2.new(0, 180, 0, 14)
     SliderBarC.CornerRadius = UDim.new(0, 4)
     SliderBarC.Name = "SliderBarC"
     SliderBarC.Parent = SliderBar
@@ -1201,12 +1201,12 @@ function library.new(library, name, theme)
     SliderPartC.Name = "SliderPartC"
     SliderPartC.Parent = SliderPart
     
-    -- 修改SliderValBG位置，向右移动
+    -- SliderValBG位置
     SliderValBG.Name = "SliderValBG"
     SliderValBG.Parent = SliderBack
     SliderValBG.BackgroundColor3 = config.Bg_Color
     SliderValBG.BorderSizePixel = 0
-    SliderValBG.Position = UDim2.new(0.85, 0, 0.131578952, 0)  -- 向右移动
+    SliderValBG.Position = UDim2.new(0.85, 0, 0.131578952, 0)
     SliderValBG.Size = UDim2.new(0, 44, 0, 28)
     SliderValBG.AutoButtonColor = false
     SliderValBG.Font = Enum.Font.Gotham
@@ -1229,14 +1229,14 @@ function library.new(library, name, theme)
     SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderValue.TextSize = 12.000
     
-    -- 修改减号按钮位置，放在滑块条左边
+    -- 减号按钮，放在滑块条左边，添加圆角
     local MinSlider = Instance.new("TextButton")
     MinSlider.Name = "MinSlider"
     MinSlider.Parent = SliderBack
     MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     MinSlider.BackgroundTransparency = 0
     MinSlider.BorderSizePixel = 0
-    MinSlider.Position = UDim2.new(0.3, 0, 0.236842096, 0)  -- 放在滑块条左边
+    MinSlider.Position = UDim2.new(0.32, 0, 0.236842096, 0)  -- 放在滑块条左边
     MinSlider.Size = UDim2.new(0, 20, 0, 20)
     MinSlider.Font = Enum.Font.Gotham
     MinSlider.Text = "减"
@@ -1245,14 +1245,19 @@ function library.new(library, name, theme)
     MinSlider.TextWrapped = true
     MinSlider.ZIndex = 2
     
-    -- 修改加号按钮位置，放在滑块条右边
+    -- 添加圆角
+    local MinSliderC = Instance.new("UICorner")
+    MinSliderC.CornerRadius = UDim.new(0, 4)
+    MinSliderC.Parent = MinSlider
+    
+    -- 加号按钮，放在滑块条右边，添加圆角
     local AddSlider = Instance.new("TextButton")
     AddSlider.Name = "AddSlider"
     AddSlider.Parent = SliderBack
     AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     AddSlider.BackgroundTransparency = 0
     AddSlider.BorderSizePixel = 0
-    AddSlider.Position = UDim2.new(0.8, 0, 0.236842096, 0)  -- 放在滑块条右边
+    AddSlider.Position = UDim2.new(0.82, 0, 0.236842096, 0)  -- 放在滑块条右边
     AddSlider.Size = UDim2.new(0, 20, 0, 20)
     AddSlider.Font = Enum.Font.Gotham
     AddSlider.Text = "加"
@@ -1260,6 +1265,11 @@ function library.new(library, name, theme)
     AddSlider.TextSize = 14.000
     AddSlider.TextWrapped = true
     AddSlider.ZIndex = 2
+    
+    -- 添加圆角
+    local AddSliderC = Instance.new("UICorner")
+    AddSliderC.CornerRadius = UDim.new(0, 4)
+    AddSliderC.Parent = AddSlider
     
     local funcs = {
         SetValue = function(self, value)
@@ -1407,7 +1417,7 @@ function library.new(library, name, theme)
     return funcs
 end
 
-function section.Dropdown(section, text, flag, options, callback)
+        function section.Dropdown(section, text, flag, options, callback)
     local callback = callback or function() end
     local options = options or {}
     assert(text, "No text provided")
@@ -1448,13 +1458,13 @@ function section.Dropdown(section, text, flag, options, callback)
     DropdownTopC.Name = "DropdownTopC"
     DropdownTopC.Parent = DropdownTop
 
-    -- 修改DropdownOpenFrame位置，向左移动
+    -- Dropdown选择按钮位置向左移动，与Textbox输入位置对齐
     DropdownOpenFrame.Name = "DropdownOpenFrame"
     DropdownOpenFrame.Parent = DropdownTop
     DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
     DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
     DropdownOpenFrame.BorderSizePixel = 0
-    DropdownOpenFrame.Position = UDim2.new(0.78, 0, 0.5, 0)  -- 向左移动
+    DropdownOpenFrame.Position = UDim2.new(0.75, 0, 0.5, 0)  -- 向左移动，与Textbox输入位置对齐
     DropdownOpenFrame.Size = UDim2.new(0, 50, 0, 24)
     DropdownOpenFrame.ZIndex = 2
 
@@ -1477,14 +1487,14 @@ function section.Dropdown(section, text, flag, options, callback)
     DropdownOpen.TextWrapped = true
     DropdownOpen.ZIndex = 3
 
-    -- 修改DropdownText大小，为右侧按钮留出空间
+    -- DropdownText大小调整
     DropdownText.Name = "DropdownText"
     DropdownText.Parent = DropdownTop
     DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DropdownText.BackgroundTransparency = 1.000
     DropdownText.BorderSizePixel = 0
     DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-    DropdownText.Size = UDim2.new(0, 370, 0, 38)  -- 减小宽度，为右侧按钮留出空间
+    DropdownText.Size = UDim2.new(0, 400, 0, 38)  -- 调整宽度
     DropdownText.Font = Enum.Font.GothamSemibold
     DropdownText.PlaceholderColor3 = config.SecondaryTextColor
     DropdownText.PlaceholderText = text
@@ -1494,14 +1504,15 @@ function section.Dropdown(section, text, flag, options, callback)
     DropdownText.TextXAlignment = Enum.TextXAlignment.Left
     DropdownText.ZIndex = 2
 
-local Separator = Instance.new("Frame")
-Separator.Name = "Separator"
-Separator.Parent = DropdownTop
-Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-Separator.BorderSizePixel = 0
-Separator.Position = UDim2.new(0.82, 0, 0.2, 0)
-Separator.Size = UDim2.new(0, 1, 0, 24)
-Separator.ZIndex = 1
+    -- 添加分隔线
+    local Separator = Instance.new("Frame")
+    Separator.Name = "Separator"
+    Separator.Parent = DropdownTop
+    Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    Separator.BorderSizePixel = 0
+    Separator.Position = UDim2.new(0.72, 0, 0.2, 0)  -- 调整位置
+    Separator.Size = UDim2.new(0, 1, 0, 24)
+    Separator.ZIndex = 1
 
 DropdownModuleL.Name = "DropdownModuleL"
 DropdownModuleL.Parent = DropdownModule
