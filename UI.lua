@@ -1145,7 +1145,7 @@ function library.new(library, name, theme)
     assert(flag, "No flag provided")
     assert(default, "No default value provided")
     
-        local SliderModule = Instance.new("Frame")
+    local SliderModule = Instance.new("Frame")
     local SliderBack = Instance.new("TextButton")
     local SliderBackC = Instance.new("UICorner")
     local SliderBar = Instance.new("Frame")
@@ -1155,8 +1155,6 @@ function library.new(library, name, theme)
     local SliderValBG = Instance.new("TextButton")
     local SliderValBGC = Instance.new("UICorner")
     local SliderValue = Instance.new("TextBox")
-    local MinSlider = Instance.new("TextButton")
-    local AddSlider = Instance.new("TextButton")
     
     SliderModule.Name = "SliderModule"
     SliderModule.Parent = Objs
@@ -1182,14 +1180,14 @@ function library.new(library, name, theme)
     SliderBackC.Name = "SliderBackC"
     SliderBackC.Parent = SliderBack
     
-    -- 修改SliderBar位置，向左移动
+    -- 修改SliderBar位置，向右移动
     SliderBar.Name = "SliderBar"
     SliderBar.Parent = SliderBack
     SliderBar.AnchorPoint = Vector2.new(0, 0.5)
     SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     SliderBar.BorderSizePixel = 0
-    SliderBar.Position = UDim2.new(0.02, 40, 0.5, 0)  -- 向左移动
-    SliderBar.Size = UDim2.new(0, 160, 0, 14)
+    SliderBar.Position = UDim2.new(0.5, 0, 0.5, 0)  -- 向右移动
+    SliderBar.Size = UDim2.new(0, 120, 0, 14)
     SliderBarC.CornerRadius = UDim.new(0, 4)
     SliderBarC.Name = "SliderBarC"
     SliderBarC.Parent = SliderBar
@@ -1203,12 +1201,12 @@ function library.new(library, name, theme)
     SliderPartC.Name = "SliderPartC"
     SliderPartC.Parent = SliderPart
     
-    -- 修改SliderValBG位置，向左移动
+    -- 修改SliderValBG位置，向右移动
     SliderValBG.Name = "SliderValBG"
     SliderValBG.Parent = SliderBack
     SliderValBG.BackgroundColor3 = config.Bg_Color
     SliderValBG.BorderSizePixel = 0
-    SliderValBG.Position = UDim2.new(0.75, 0, 0.131578952, 0)  -- 向左移动
+    SliderValBG.Position = UDim2.new(0.85, 0, 0.131578952, 0)  -- 向右移动
     SliderValBG.Size = UDim2.new(0, 44, 0, 28)
     SliderValBG.AutoButtonColor = false
     SliderValBG.Font = Enum.Font.Gotham
@@ -1231,13 +1229,14 @@ function library.new(library, name, theme)
     SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderValue.TextSize = 12.000
     
-    -- 修改MinSlider位置，向左移动
+    -- 添加加减按钮
+    local MinSlider = Instance.new("TextButton")
     MinSlider.Name = "MinSlider"
     MinSlider.Parent = SliderBack
     MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     MinSlider.BackgroundTransparency = 0
     MinSlider.BorderSizePixel = 0
-    MinSlider.Position = UDim2.new(0.296728969, 20, 0.236842096, 0)  -- 向左移动
+    MinSlider.Position = UDim2.new(0.45, 0, 0.236842096, 0)
     MinSlider.Size = UDim2.new(0, 20, 0, 20)
     MinSlider.Font = Enum.Font.Gotham
     MinSlider.Text = "减"
@@ -1246,14 +1245,13 @@ function library.new(library, name, theme)
     MinSlider.TextWrapped = true
     MinSlider.ZIndex = 2
     
-    -- 修改AddSlider位置，向左移动
+    local AddSlider = Instance.new("TextButton")
     AddSlider.Name = "AddSlider"
     AddSlider.Parent = SliderBack
-    AddSlider.AnchorPoint = Vector2.new(0, 0.5)
     AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     AddSlider.BackgroundTransparency = 0
     AddSlider.BorderSizePixel = 0
-    AddSlider.Position = UDim2.new(0.75, 0, 0.5, 0)  -- 向左移动
+    AddSlider.Position = UDim2.new(0.48, 0, 0.236842096, 0)
     AddSlider.Size = UDim2.new(0, 20, 0, 20)
     AddSlider.Font = Enum.Font.Gotham
     AddSlider.Text = "加"
@@ -1415,92 +1413,85 @@ function section.Dropdown(section, text, flag, options, callback)
     assert(flag, "No flag provided")
     library.flaFengYu[flag] = nil
     
-local DropdownModule = Instance.new("Frame")
-local DropdownTop = Instance.new("TextButton")
-local DropdownTopC = Instance.new("UICorner")
-local DropdownOpenFrame = Instance.new("Frame")
-local DropdownOpenFrameC = Instance.new("UICorner")
-local DropdownOpen = Instance.new("TextButton")
-local DropdownText = Instance.new("TextBox")
-local DropdownModuleL = Instance.new("UIListLayout")
+    local DropdownModule = Instance.new("Frame")
+    local DropdownTop = Instance.new("TextButton")
+    local DropdownTopC = Instance.new("UICorner")
+    local DropdownOpenFrame = Instance.new("Frame")
+    local DropdownOpenFrameC = Instance.new("UICorner")
+    local DropdownOpen = Instance.new("TextButton")
+    local DropdownText = Instance.new("TextBox")
+    local DropdownModuleL = Instance.new("UIListLayout")
 
-DropdownModule.Name = "DropdownModule"
-DropdownModule.Parent = Objs
-DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-DropdownModule.BackgroundTransparency = 1.000
-DropdownModule.BorderSizePixel = 0
-DropdownModule.ClipsDescendants = true
-DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-DropdownModule.Size = UDim2.new(0, 448, 0, 38)
+    DropdownModule.Name = "DropdownModule"
+    DropdownModule.Parent = Objs
+    DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    DropdownModule.BackgroundTransparency = 1.000
+    DropdownModule.BorderSizePixel = 0
+    DropdownModule.ClipsDescendants = true
+    DropdownModule.Position = UDim2.new(0, 0, 0, 0)
+    DropdownModule.Size = UDim2.new(0, 448, 0, 38)
 
-DropdownTop.Name = "DropdownTop"
-DropdownTop.Parent = DropdownModule
-DropdownTop.BackgroundColor3 = config.Dropdown_Color
-DropdownTop.BorderSizePixel = 0
-DropdownTop.Size = UDim2.new(0, 448, 0, 38)
-DropdownTop.AutoButtonColor = false
-DropdownTop.Font = Enum.Font.GothamSemibold
-DropdownTop.Text = ""
-DropdownTop.TextColor3 = config.TextColor
-DropdownTop.TextSize = 16.000
-DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
+    DropdownTop.Name = "DropdownTop"
+    DropdownTop.Parent = DropdownModule
+    DropdownTop.BackgroundColor3 = config.Dropdown_Color
+    DropdownTop.BorderSizePixel = 0
+    DropdownTop.Size = UDim2.new(0, 448, 0, 38)
+    DropdownTop.AutoButtonColor = false
+    DropdownTop.Font = Enum.Font.GothamSemibold
+    DropdownTop.Text = ""
+    DropdownTop.TextColor3 = config.TextColor
+    DropdownTop.TextSize = 16.000
+    DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
 
-DropdownTopC.CornerRadius = UDim.new(0, 6)
-DropdownTopC.Name = "DropdownTopC"
-DropdownTopC.Parent = DropdownTop
+    DropdownTopC.CornerRadius = UDim.new(0, 6)
+    DropdownTopC.Name = "DropdownTopC"
+    DropdownTopC.Parent = DropdownTop
 
-local BackgroundFill = Instance.new("Frame")
-BackgroundFill.Name = "BackgroundFill"
-BackgroundFill.Parent = DropdownTop
-BackgroundFill.BackgroundColor3 = config.Dropdown_Color
-BackgroundFill.BorderSizePixel = 0
-BackgroundFill.Position = UDim2.new(0.78, 0, 0, 0)
-BackgroundFill.Size = UDim2.new(0.22, 0, 1, 0)
-BackgroundFill.ZIndex = 0
+    -- 修改DropdownOpenFrame位置，向右移动
+    DropdownOpenFrame.Name = "DropdownOpenFrame"
+    DropdownOpenFrame.Parent = DropdownTop
+    DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
+    DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
+    DropdownOpenFrame.BorderSizePixel = 0
+    DropdownOpenFrame.Position = UDim2.new(0.85, 0, 0.5, 0)  -- 向右移动
+    DropdownOpenFrame.Size = UDim2.new(0, 50, 0, 24)
+    DropdownOpenFrame.ZIndex = 2
 
-DropdownOpenFrame.Name = "DropdownOpenFrame"
-DropdownOpenFrame.Parent = DropdownTop
-DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
-DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
-DropdownOpenFrame.BorderSizePixel = 0
-DropdownOpenFrame.Position = UDim2.new(0.88, 0, 0.5, 0)
-DropdownOpenFrame.Size = UDim2.new(0, 50, 0, 24)
-DropdownOpenFrame.ZIndex = 2
+    createAuroraEffect(DropdownOpenFrame, 0.8)
 
-createAuroraEffect(DropdownOpenFrame, 0.8)
+    DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
+    DropdownOpenFrameC.Name = "DropdownOpenFrameC"
+    DropdownOpenFrameC.Parent = DropdownOpenFrame
 
-DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
-DropdownOpenFrameC.Name = "DropdownOpenFrameC"
-DropdownOpenFrameC.Parent = DropdownOpenFrame
+    DropdownOpen.Name = "DropdownOpen"
+    DropdownOpen.Parent = DropdownOpenFrame
+    DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    DropdownOpen.BackgroundTransparency = 1.000
+    DropdownOpen.BorderSizePixel = 0
+    DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
+    DropdownOpen.Font = Enum.Font.GothamSemibold
+    DropdownOpen.Text = "选择"
+    DropdownOpen.TextColor3 = config.TextColor
+    DropdownOpen.TextSize = 12.000
+    DropdownOpen.TextWrapped = true
+    DropdownOpen.ZIndex = 3
 
-DropdownOpen.Name = "DropdownOpen"
-DropdownOpen.Parent = DropdownOpenFrame
-DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-DropdownOpen.BackgroundTransparency = 1.000
-DropdownOpen.BorderSizePixel = 0
-DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
-DropdownOpen.Font = Enum.Font.GothamSemibold
-DropdownOpen.Text = "选择"
-DropdownOpen.TextColor3 = config.TextColor
-DropdownOpen.TextSize = 12.000
-DropdownOpen.TextWrapped = true
-DropdownOpen.ZIndex = 3
-
-DropdownText.Name = "DropdownText"
-DropdownText.Parent = DropdownTop
-DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-DropdownText.BackgroundTransparency = 1.000
-DropdownText.BorderSizePixel = 0
-DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-DropdownText.Size = UDim2.new(0, 370, 0, 38)
-DropdownText.Font = Enum.Font.GothamSemibold
-DropdownText.PlaceholderColor3 = config.SecondaryTextColor
-DropdownText.PlaceholderText = text
-DropdownText.Text = ""
-DropdownText.TextColor3 = config.TextColor
-DropdownText.TextSize = 16.000
-DropdownText.TextXAlignment = Enum.TextXAlignment.Left
-DropdownText.ZIndex = 2
+    -- 修改DropdownText大小，为右侧按钮留出空间
+    DropdownText.Name = "DropdownText"
+    DropdownText.Parent = DropdownTop
+    DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    DropdownText.BackgroundTransparency = 1.000
+    DropdownText.BorderSizePixel = 0
+    DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
+    DropdownText.Size = UDim2.new(0, 350, 0, 38)  -- 减小宽度，为右侧按钮留出空间
+    DropdownText.Font = Enum.Font.GothamSemibold
+    DropdownText.PlaceholderColor3 = config.SecondaryTextColor
+    DropdownText.PlaceholderText = text
+    DropdownText.Text = ""
+    DropdownText.TextColor3 = config.TextColor
+    DropdownText.TextSize = 16.000
+    DropdownText.TextXAlignment = Enum.TextXAlignment.Left
+    DropdownText.ZIndex = 2
 
 local Separator = Instance.new("Frame")
 Separator.Name = "Separator"
