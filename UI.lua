@@ -1180,13 +1180,13 @@ function library.new(library, name, theme)
     SliderBackC.Name = "SliderBackC"
     SliderBackC.Parent = SliderBack
     
-    -- 滑块条位置再往右一点
+    -- 滑块条位置
     SliderBar.Name = "SliderBar"
     SliderBar.Parent = SliderBack
     SliderBar.AnchorPoint = Vector2.new(0, 0.5)
     SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     SliderBar.BorderSizePixel = 0
-    SliderBar.Position = UDim2.new(0.4, 0, 0.5, 0)  -- 再往右一点
+    SliderBar.Position = UDim2.new(0.4, 0, 0.5, 0)
     SliderBar.Size = UDim2.new(0, 180, 0, 14)
     SliderBarC.CornerRadius = UDim.new(0, 4)
     SliderBarC.Name = "SliderBarC"
@@ -1229,14 +1229,14 @@ function library.new(library, name, theme)
     SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderValue.TextSize = 12.000
     
-    -- 减号按钮，放在滑块条左边，添加圆角
+    -- 减号按钮，放在滑块条左边
     local MinSlider = Instance.new("TextButton")
     MinSlider.Name = "MinSlider"
     MinSlider.Parent = SliderBack
     MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     MinSlider.BackgroundTransparency = 0
     MinSlider.BorderSizePixel = 0
-    MinSlider.Position = UDim2.new(0.32, 0, 0.236842096, 0)  -- 放在滑块条左边
+    MinSlider.Position = UDim2.new(0.32, 0, 0.236842096, 0)
     MinSlider.Size = UDim2.new(0, 20, 0, 20)
     MinSlider.Font = Enum.Font.Gotham
     MinSlider.Text = "减"
@@ -1250,14 +1250,14 @@ function library.new(library, name, theme)
     MinSliderC.CornerRadius = UDim.new(0, 4)
     MinSliderC.Parent = MinSlider
     
-    -- 加号按钮，放在滑块条右边，添加圆角
+    -- 加号按钮，放在滑块条右边，调整位置
     local AddSlider = Instance.new("TextButton")
     AddSlider.Name = "AddSlider"
     AddSlider.Parent = SliderBack
     AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     AddSlider.BackgroundTransparency = 0
     AddSlider.BorderSizePixel = 0
-    AddSlider.Position = UDim2.new(0.82, 0, 0.236842096, 0)  -- 放在滑块条右边
+    AddSlider.Position = UDim2.new(0.78, 0, 0.236842096, 0)  -- 调整加号位置
     AddSlider.Size = UDim2.new(0, 20, 0, 20)
     AddSlider.Font = Enum.Font.Gotham
     AddSlider.Text = "加"
@@ -1458,13 +1458,13 @@ end
     DropdownTopC.Name = "DropdownTopC"
     DropdownTopC.Parent = DropdownTop
 
-    -- Dropdown选择按钮位置向左移动，与Textbox输入位置对齐
+    -- Dropdown选择按钮位置向右移动
     DropdownOpenFrame.Name = "DropdownOpenFrame"
     DropdownOpenFrame.Parent = DropdownTop
     DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
     DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
     DropdownOpenFrame.BorderSizePixel = 0
-    DropdownOpenFrame.Position = UDim2.new(0.75, 0, 0.5, 0)  -- 向左移动，与Textbox输入位置对齐
+    DropdownOpenFrame.Position = UDim2.new(0.82, 0, 0.5, 0)  -- 向右移动
     DropdownOpenFrame.Size = UDim2.new(0, 50, 0, 24)
     DropdownOpenFrame.ZIndex = 2
 
@@ -1494,7 +1494,7 @@ end
     DropdownText.BackgroundTransparency = 1.000
     DropdownText.BorderSizePixel = 0
     DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-    DropdownText.Size = UDim2.new(0, 400, 0, 38)  -- 调整宽度
+    DropdownText.Size = UDim2.new(0, 370, 0, 38)  -- 调整宽度
     DropdownText.Font = Enum.Font.GothamSemibold
     DropdownText.PlaceholderColor3 = config.SecondaryTextColor
     DropdownText.PlaceholderText = text
@@ -1504,13 +1504,13 @@ end
     DropdownText.TextXAlignment = Enum.TextXAlignment.Left
     DropdownText.ZIndex = 2
 
-    -- 添加分隔线
+    -- 分隔线向右移动
     local Separator = Instance.new("Frame")
     Separator.Name = "Separator"
     Separator.Parent = DropdownTop
     Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     Separator.BorderSizePixel = 0
-    Separator.Position = UDim2.new(0.72, 0, 0.2, 0)  -- 调整位置
+    Separator.Position = UDim2.new(0.8, 0, 0.2, 0)  -- 向右移动
     Separator.Size = UDim2.new(0, 1, 0, 24)
     Separator.ZIndex = 1
 
