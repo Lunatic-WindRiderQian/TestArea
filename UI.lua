@@ -366,17 +366,17 @@ TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     TabBtns.ElasticBehavior = Enum.ElasticBehavior.Never
 end)
 
-local ScriptTitle = Instance.new("TextLabel") 
-ScriptTitle.Name = "ScriptTitle" 
-ScriptTitle.Parent = Side 
-ScriptTitle.BackgroundTransparency = 1 
-ScriptTitle.Position = UDim2.new(0.05, 0, 0.009, 0)  -- 调整了X位置
-ScriptTitle.Size = UDim2.new(0, 100, 0, 20)  -- 调整了宽度
-ScriptTitle.Font = Enum.Font.GothamSemibold 
-ScriptTitle.Text = "Feng" 
-ScriptTitle.TextColor3 = config.AccentColor 
-ScriptTitle.TextSize = 16 
-ScriptTitle.TextScaled = false  -- 关闭文本自动缩放
+local ScriptTitle = Instance.new("TextLabel")
+ScriptTitle.Name = "ScriptTitle"
+ScriptTitle.Parent = Side
+ScriptTitle.BackgroundTransparency = 1
+ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
+ScriptTitle.Size = UDim2.new(0, 110, 0, 20)
+ScriptTitle.Font = Enum.Font.GothamSemibold
+ScriptTitle.Text = "Feng"
+ScriptTitle.TextColor3 = config.AccentColor
+ScriptTitle.TextSize = 16
+ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
 
 task.spawn(function()
