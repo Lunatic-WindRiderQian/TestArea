@@ -266,7 +266,7 @@ Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.Bg_Color
 Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-Main.Size = UDim2.new(0, 600, 0, 380)
+Main.Size = UDim2.new(0, 500, 0, 320)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -322,8 +322,8 @@ local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.217, 0, 0, 3)
-TabMain.Size = UDim2.new(0, 468, 0, 374)
+TabMain.Position = UDim2.new(0.22, 0, 0, 3)
+TabMain.Size = UDim2.new(0, 388, 0, 314)
 TabMain.ZIndex = 10
 
 local Side = Instance.new("Frame")
@@ -333,7 +333,7 @@ Side.BackgroundColor3 = config.TabColor
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 0)
-Side.Size = UDim2.new(0, 120, 0, 380)
+Side.Size = UDim2.new(0, 100, 0, 320)
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 12)
@@ -346,7 +346,7 @@ TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0.097, 0)
-TabBtns.Size = UDim2.new(0, 120, 0, 340)
+TabBtns.Size = UDim2.new(0, 100, 0, 285)
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 4
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -371,11 +371,11 @@ ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = Side
 ScriptTitle.BackgroundTransparency = 1
 ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
-ScriptTitle.Size = UDim2.new(0, 110, 0, 20)
+ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
 ScriptTitle.Font = Enum.Font.GothamSemibold
 ScriptTitle.Text = "Feng"
 ScriptTitle.TextColor3 = config.AccentColor
-ScriptTitle.TextSize = 16
+ScriptTitle.TextSize = 18
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -458,8 +458,8 @@ function library.new(library, name, theme)
         TabText.Name = "TabText"
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
-        TabText.Position = UDim2.new(1.416, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 86, 0, 24)
+        TabText.Position = UDim2.new(1.2, 0, 0, 0)
+        TabText.Size = UDim2.new(0, 70, 0, 24)
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
@@ -471,7 +471,7 @@ function library.new(library, name, theme)
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 120, 0, 24)
+        TabBtn.Size = UDim2.new(0, 100, 0, 24)
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
@@ -525,7 +525,7 @@ function library.new(library, name, theme)
             SectionText.Parent = Section
             SectionText.BackgroundTransparency = 1
             SectionText.Position = UDim2.new(0.088, 0, 0, 0)
-            SectionText.Size = UDim2.new(0, 401, 0, 36)
+            SectionText.Size = UDim2.new(0, 330, 0, 36)
             SectionText.Font = Enum.Font.GothamSemibold
             SectionText.Text = name
             SectionText.TextColor3 = config.TextColor
@@ -608,13 +608,13 @@ function library.new(library, name, theme)
                 BtnModule.Parent = Objs
                 BtnModule.BackgroundTransparency = 1
                 BtnModule.BorderSizePixel = 0
-                BtnModule.Size = UDim2.new(0, 448, 0, 38)
+                BtnModule.Size = UDim2.new(0, 378, 0, 38)
                 
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
                 Btn.BackgroundColor3 = config.Button_Color
                 Btn.BorderSizePixel = 0
-                Btn.Size = UDim2.new(0, 448, 0, 38)
+                Btn.Size = UDim2.new(0, 378, 0, 38)
                 Btn.AutoButtonColor = false
                 Btn.Font = Enum.Font.GothamSemibold
                 Btn.Text = "   " .. text
@@ -695,11 +695,11 @@ function library.new(library, name, theme)
                 LabelModule.Parent = Objs
                 LabelModule.BackgroundTransparency = 1
                 LabelModule.BorderSizePixel = 0
-                LabelModule.Size = UDim2.new(0, 448, 0, 19)
+                LabelModule.Size = UDim2.new(0, 378, 0, 19)
                 
                 TextLabel.Parent = LabelModule
                 TextLabel.BackgroundColor3 = config.Label_Color
-                TextLabel.Size = UDim2.new(0, 448, 0, 22)
+                TextLabel.Size = UDim2.new(0, 378, 0, 22)
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
                 TextLabel.TextColor3 = config.SecondaryTextColor
@@ -731,13 +731,13 @@ function library.new(library, name, theme)
                 ToggleModule.Parent = Objs
                 ToggleModule.BackgroundTransparency = 1
                 ToggleModule.BorderSizePixel = 0
-                ToggleModule.Size = UDim2.new(0, 448, 0, 38)
+                ToggleModule.Size = UDim2.new(0, 378, 0, 38)
                 
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
                 ToggleBtn.BackgroundColor3 = config.Toggle_Color
                 ToggleBtn.BorderSizePixel = 0
-                ToggleBtn.Size = UDim2.new(0, 448, 0, 38)
+                ToggleBtn.Size = UDim2.new(0, 378, 0, 38)
                 ToggleBtn.AutoButtonColor = false
                 ToggleBtn.Font = Enum.Font.GothamSemibold
                 ToggleBtn.Text = "   " .. text
@@ -866,13 +866,13 @@ function library.new(library, name, theme)
                 KeybindModule.Parent = Objs
                 KeybindModule.BackgroundTransparency = 1
                 KeybindModule.BorderSizePixel = 0
-                KeybindModule.Size = UDim2.new(0, 448, 0, 38)
+                KeybindModule.Size = UDim2.new(0, 378, 0, 38)
                 
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
                 KeybindBtn.BackgroundColor3 = config.Keybind_Color
                 KeybindBtn.BorderSizePixel = 0
-                KeybindBtn.Size = UDim2.new(0, 448, 0, 38)
+                KeybindBtn.Size = UDim2.new(0, 378, 0, 38)
                 KeybindBtn.AutoButtonColor = false
                 KeybindBtn.Font = Enum.Font.GothamSemibold
                 KeybindBtn.Text = "   " .. text
@@ -889,7 +889,7 @@ function library.new(library, name, theme)
                 KeybindValue.BackgroundColor3 = config.Bg_Color
                 KeybindValue.BorderSizePixel = 0
                 KeybindValue.Position = UDim2.new(0.763, 0, 0.289, 0)
-                KeybindValue.Size = UDim2.new(0, 100, 0, 28)
+                KeybindValue.Size = UDim2.new(0, 80, 0, 28)
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
                 KeybindValue.Text = keyTxt
@@ -956,10 +956,10 @@ function library.new(library, name, theme)
                 end)
                 
                 KeybindValue:GetPropertyChangedSignal("TextBounds"):Connect(function()
-                    KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 30, 0, 28)
+                    KeybindValue.Size = UDim2.new(0, math.max(KeybindValue.TextBounds.X + 20, 80), 0, 28)
                 end)
                 
-                KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 30, 0, 28)
+                KeybindValue.Size = UDim2.new(0, math.max(KeybindValue.TextBounds.X + 20, 80), 0, 28)
             end
             
             function section.Textbox(section, text, flag, default, callback)
@@ -983,13 +983,13 @@ function library.new(library, name, theme)
                 TextboxModule.Parent = Objs
                 TextboxModule.BackgroundTransparency = 1
                 TextboxModule.BorderSizePixel = 0
-                TextboxModule.Size = UDim2.new(0, 448, 0, 38)
+                TextboxModule.Size = UDim2.new(0, 378, 0, 38)
                 
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
                 TextboxBack.BackgroundColor3 = config.Textbox_Color
                 TextboxBack.BorderSizePixel = 0
-                TextboxBack.Size = UDim2.new(0, 448, 0, 38)
+                TextboxBack.Size = UDim2.new(0, 378, 0, 38)
                 TextboxBack.AutoButtonColor = false
                 TextboxBack.Font = Enum.Font.GothamSemibold
                 TextboxBack.Text = "   " .. text
@@ -1006,7 +1006,7 @@ function library.new(library, name, theme)
                 BoxBG.BackgroundColor3 = config.Bg_Color
                 BoxBG.BorderSizePixel = 0
                 BoxBG.Position = UDim2.new(0.763, 0, 0.289, 0)
-                BoxBG.Size = UDim2.new(0, 100, 0, 28)
+                BoxBG.Size = UDim2.new(0, 80, 0, 28)
                 BoxBG.AutoButtonColor = false
                 BoxBG.Font = Enum.Font.Gotham
                 BoxBG.Text = ""
@@ -1060,10 +1060,10 @@ function library.new(library, name, theme)
                 end)
                 
                 TextBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
-                    BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 30, 0, 28)
+                    BoxBG.Size = UDim2.new(0, math.max(TextBox.TextBounds.X + 20, 80), 0, 28)
                 end)
                 
-                BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 30, 0, 28)
+                BoxBG.Size = UDim2.new(0, math.max(TextBox.TextBounds.X + 20, 80), 0, 28)
             end
             
 function section.Slider(section, text, flag, default, min, max, precise, callback)
@@ -1096,13 +1096,13 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     SliderModule.BackgroundTransparency = 1.000
     SliderModule.BorderSizePixel = 0
     SliderModule.Position = UDim2.new(0, 0, 0, 0)
-    SliderModule.Size = UDim2.new(0, 448, 0, 38)
+    SliderModule.Size = UDim2.new(0, 378, 0, 38)
     
     SliderBack.Name = "SliderBack"
     SliderBack.Parent = SliderModule
     SliderBack.BackgroundColor3 = config.Slider_Color
     SliderBack.BorderSizePixel = 0
-    SliderBack.Size = UDim2.new(0, 448, 0, 38)
+    SliderBack.Size = UDim2.new(0, 378, 0, 38)
     SliderBack.AutoButtonColor = false
     SliderBack.Font = Enum.Font.GothamSemibold
     SliderBack.Text = "   " .. text
@@ -1120,7 +1120,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     SliderBar.BorderSizePixel = 0
     SliderBar.Position = UDim2.new(0.4, 0, 0.5, 0)
-    SliderBar.Size = UDim2.new(0, 180, 0, 14)
+    SliderBar.Size = UDim2.new(0, 140, 0, 14)
     SliderBarC.CornerRadius = UDim.new(0, 4)
     SliderBarC.Name = "SliderBarC"
     SliderBarC.Parent = SliderBar
@@ -1368,13 +1368,13 @@ DropdownModule.BackgroundTransparency = 1.000
 DropdownModule.BorderSizePixel = 0
 DropdownModule.ClipsDescendants = true
 DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-DropdownModule.Size = UDim2.new(0, 448, 0, 38)
+DropdownModule.Size = UDim2.new(0, 378, 0, 38)
 
 DropdownTop.Name = "DropdownTop"
 DropdownTop.Parent = DropdownModule
 DropdownTop.BackgroundColor3 = config.Dropdown_Color
 DropdownTop.BorderSizePixel = 0
-DropdownTop.Size = UDim2.new(0, 448, 0, 38)
+DropdownTop.Size = UDim2.new(0, 378, 0, 38)
 DropdownTop.AutoButtonColor = false
 DropdownTop.Font = Enum.Font.GothamSemibold
 DropdownTop.Text = ""
@@ -1429,7 +1429,7 @@ DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 DropdownText.BackgroundTransparency = 1.000
 DropdownText.BorderSizePixel = 0
 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-DropdownText.Size = UDim2.new(0, 370, 0, 38)
+DropdownText.Size = UDim2.new(0, 310, 0, 38)
 DropdownText.Font = Enum.Font.GothamSemibold
 DropdownText.PlaceholderColor3 = config.SecondaryTextColor
 DropdownText.PlaceholderText = text
@@ -1488,7 +1488,7 @@ local ToggleDropVis = function()
         setAllVisible()
     end
     DropdownOpen.Text = (open and "取消" or "选择")
-    DropdownModule.Size = UDim2.new(0, 448, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38))
+    DropdownModule.Size = UDim2.new(0, 378, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 38))
 end
 
 DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
@@ -1510,7 +1510,7 @@ DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function
     if not open then
         return
     end
-    DropdownModule.Size = UDim2.new(0, 448, 0, (DropdownModuleL.AbsoluteContentSize.Y + 4))
+    DropdownModule.Size = UDim2.new(0, 378, 0, (DropdownModuleL.AbsoluteContentSize.Y + 4))
 end)
 
 local funcs = {}
@@ -1522,7 +1522,7 @@ funcs.AddOption = function(self, option)
     Option.BackgroundColor3 = config.TabColor
     Option.BorderSizePixel = 0
     Option.Position = UDim2.new(0, 0, 0.328125, 0)
-    Option.Size = UDim2.new(0, 428, 0, 26)
+    Option.Size = UDim2.new(0, 358, 0, 26)
     Option.AutoButtonColor = false
     Option.Font = Enum.Font.Gotham
     Option.Text = option
