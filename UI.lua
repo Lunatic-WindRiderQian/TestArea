@@ -753,7 +753,7 @@ function library.new(library, name, theme)
                 ToggleDisable.Parent = ToggleBtn
                 ToggleDisable.BackgroundColor3 = config.Bg_Color
                 ToggleDisable.BorderSizePixel = 0
-                ToggleDisable.Position = UDim2.new(0.901, 0, 0.208, 0)
+                ToggleDisable.Position = UDim2.new(0.78, 0, 0.208, 0)  -- 修复位置
                 ToggleDisable.Size = UDim2.new(0, 36, 0, 22)
                 
                 ToggleSwitch.Name = "ToggleSwitch"
@@ -888,7 +888,7 @@ function library.new(library, name, theme)
                 KeybindValue.Parent = KeybindBtn
                 KeybindValue.BackgroundColor3 = config.Bg_Color
                 KeybindValue.BorderSizePixel = 0
-                KeybindValue.Position = UDim2.new(0.763, 0, 0.289, 0)
+                KeybindValue.Position = UDim2.new(0.7, 0, 0.289, 0)  -- 修复位置
                 KeybindValue.Size = UDim2.new(0, 80, 0, 28)
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
@@ -1005,8 +1005,8 @@ function library.new(library, name, theme)
                 BoxBG.Parent = TextboxBack
                 BoxBG.BackgroundColor3 = config.Bg_Color
                 BoxBG.BorderSizePixel = 0
-                BoxBG.Position = UDim2.new(0.763, 0, 0.289, 0)
-                BoxBG.Size = UDim2.new(0, 80, 0, 28)
+                BoxBG.Position = UDim2.new(0.7, 0, 0.289, 0)  -- 修复位置
+                BoxBG.Size = UDim2.new(0, 80, 0, 28)  -- 限制最大宽度
                 BoxBG.AutoButtonColor = false
                 BoxBG.Font = Enum.Font.Gotham
                 BoxBG.Text = ""
@@ -1024,6 +1024,7 @@ function library.new(library, name, theme)
                 TextBox.TextColor3 = config.TextColor
                 TextBox.TextSize = 14
                 TextBox.PlaceholderColor3 = config.SecondaryTextColor
+                TextBox.TextTruncate = Enum.TextTruncate.AtEnd  -- 添加文本截断
                 
                 TextboxBackL.Name = "TextboxBackL"
                 TextboxBackL.Parent = TextboxBack
@@ -1059,11 +1060,14 @@ function library.new(library, name, theme)
                     callback(TextBox.Text)
                 end)
                 
+                -- 限制文本框最大宽度
                 TextBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
-                    BoxBG.Size = UDim2.new(0, math.max(TextBox.TextBounds.X + 20, 80), 0, 28)
+                    local maxWidth = 120  -- 最大宽度
+                    local textWidth = TextBox.TextBounds.X + 20
+                    BoxBG.Size = UDim2.new(0, math.min(textWidth, maxWidth), 0, 28)
                 end)
                 
-                BoxBG.Size = UDim2.new(0, math.max(TextBox.TextBounds.X + 20, 80), 0, 28)
+                BoxBG.Size = UDim2.new(0, math.min(TextBox.TextBounds.X + 20, 80), 0, 28)
             end
             
 function section.Slider(section, text, flag, default, min, max, precise, callback)
@@ -1391,8 +1395,8 @@ BackgroundFill.Name = "BackgroundFill"
 BackgroundFill.Parent = DropdownTop
 BackgroundFill.BackgroundColor3 = config.Dropdown_Color
 BackgroundFill.BorderSizePixel = 0
-BackgroundFill.Position = UDim2.new(0.78, 0, 0, 0)
-BackgroundFill.Size = UDim2.new(0.22, 0, 1, 0)
+BackgroundFill.Position = UDim2.new(0.7, 0, 0, 0)  -- 修复位置
+BackgroundFill.Size = UDim2.new(0.3, 0, 1, 0)
 BackgroundFill.ZIndex = 0
 
 DropdownOpenFrame.Name = "DropdownOpenFrame"
@@ -1400,7 +1404,7 @@ DropdownOpenFrame.Parent = DropdownTop
 DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
 DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
 DropdownOpenFrame.BorderSizePixel = 0
-DropdownOpenFrame.Position = UDim2.new(0.88, 0, 0.5, 0)
+DropdownOpenFrame.Position = UDim2.new(0.8, 0, 0.5, 0)  -- 修复位置
 DropdownOpenFrame.Size = UDim2.new(0, 50, 0, 24)
 DropdownOpenFrame.ZIndex = 2
 
@@ -1429,7 +1433,7 @@ DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 DropdownText.BackgroundTransparency = 1.000
 DropdownText.BorderSizePixel = 0
 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-DropdownText.Size = UDim2.new(0, 310, 0, 38)
+DropdownText.Size = UDim2.new(0, 260, 0, 38)  -- 修复大小
 DropdownText.Font = Enum.Font.GothamSemibold
 DropdownText.PlaceholderColor3 = config.SecondaryTextColor
 DropdownText.PlaceholderText = text
@@ -1444,7 +1448,7 @@ Separator.Name = "Separator"
 Separator.Parent = DropdownTop
 Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
 Separator.BorderSizePixel = 0
-Separator.Position = UDim2.new(0.82, 0, 0.2, 0)
+Separator.Position = UDim2.new(0.75, 0, 0.2, 0)  -- 修复位置
 Separator.Size = UDim2.new(0, 1, 0, 24)
 Separator.ZIndex = 1
 
