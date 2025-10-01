@@ -753,14 +753,14 @@ function library.new(library, name, theme)
                 ToggleDisable.Parent = ToggleBtn
                 ToggleDisable.BackgroundColor3 = config.Bg_Color
                 ToggleDisable.BorderSizePixel = 0
-                ToggleDisable.Position = UDim2.new(0.85, 0, 0.131578952, 0)  -- 与Slider相同位置
-                ToggleDisable.Size = UDim2.new(0, 44, 0, 28)  -- 与Slider相同大小
+                ToggleDisable.Position = UDim2.new(0.85, 0, 0.208, 0)  -- 与Slider相同位置
+                ToggleDisable.Size = UDim2.new(0, 36, 0, 22)  -- 恢复原来大小
                 
                 ToggleSwitch.Name = "ToggleSwitch"
                 ToggleSwitch.Parent = ToggleDisable
                 ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
                 ToggleSwitch.Size = UDim2.new(0, 24, 0, 22)
-                ToggleSwitch.Position = UDim2.new(0, enabled and 20 or 0, 0, 3)  -- 调整位置居中
+                ToggleSwitch.Position = UDim2.new(0, enabled and 12 or 0, 0, 0)  -- 恢复原来位置
                 
                 ToggleSwitchC.CornerRadius = UDim.new(0, 6)
                 ToggleSwitchC.Name = "ToggleSwitchC"
@@ -800,7 +800,7 @@ function library.new(library, name, theme)
                         end
                         
                         services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.2), {
-                            Position = UDim2.new(0, state and 20 or 0, 0, 3),
+                            Position = UDim2.new(0, state and 12 or 0, 0, 0),
                             BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
                         }):Play()
                         
