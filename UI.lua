@@ -753,14 +753,14 @@ function library.new(library, name, theme)
                 ToggleDisable.Parent = ToggleBtn
                 ToggleDisable.BackgroundColor3 = config.Bg_Color
                 ToggleDisable.BorderSizePixel = 0
-                ToggleDisable.Position = UDim2.new(0.85, 0, 0.208, 0)  -- 与Slider相同位置
-                ToggleDisable.Size = UDim2.new(0, 36, 0, 22)  -- 恢复原来大小
+                ToggleDisable.Position = UDim2.new(0.87, 0, 0.208, 0)  -- 向右移动
+                ToggleDisable.Size = UDim2.new(0, 36, 0, 22)
                 
                 ToggleSwitch.Name = "ToggleSwitch"
                 ToggleSwitch.Parent = ToggleDisable
                 ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
                 ToggleSwitch.Size = UDim2.new(0, 24, 0, 22)
-                ToggleSwitch.Position = UDim2.new(0, enabled and 12 or 0, 0, 0)  -- 恢复原来位置
+                ToggleSwitch.Position = UDim2.new(0, enabled and 12 or 0, 0, 0)
                 
                 ToggleSwitchC.CornerRadius = UDim.new(0, 6)
                 ToggleSwitchC.Name = "ToggleSwitchC"
@@ -888,8 +888,8 @@ function library.new(library, name, theme)
                 KeybindValue.Parent = KeybindBtn
                 KeybindValue.BackgroundColor3 = config.Bg_Color
                 KeybindValue.BorderSizePixel = 0
-                KeybindValue.Position = UDim2.new(0.85, 0, 0.131578952, 0)  -- 与Slider相同位置
-                KeybindValue.Size = UDim2.new(0, 44, 0, 28)  -- 与Slider相同大小
+                KeybindValue.Position = UDim2.new(0.85, 0, 0.131578952, 0)
+                KeybindValue.Size = UDim2.new(0, 44, 0, 28)
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
                 KeybindValue.Text = keyTxt
@@ -1025,7 +1025,7 @@ function library.new(library, name, theme)
                 TextBox.TextSize = 14
                 TextBox.PlaceholderColor3 = config.SecondaryTextColor
                 TextBox.TextTruncate = Enum.TextTruncate.AtEnd
-                TextBox.TextXAlignment = Enum.TextXAlignment.Center  -- 居中对齐
+                TextBox.TextXAlignment = Enum.TextXAlignment.Center
                 
                 TextboxBackL.Name = "TextboxBackL"
                 TextboxBackL.Parent = TextboxBack
@@ -1061,9 +1061,8 @@ function library.new(library, name, theme)
                     callback(TextBox.Text)
                 end)
                 
-                -- 限制文本框最大宽度
                 TextBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
-                    local maxWidth = 44  -- 与Slider相同大小
+                    local maxWidth = 44
                     local textWidth = TextBox.TextBounds.X + 20
                     BoxBG.Size = UDim2.new(0, math.min(textWidth, maxWidth), 0, 28)
                 end)
@@ -1165,7 +1164,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     SliderValue.Text = tostring(default)
     SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderValue.TextSize = 12.000
-    SliderValue.TextXAlignment = Enum.TextXAlignment.Center  -- 居中对齐
+    SliderValue.TextXAlignment = Enum.TextXAlignment.Center
     
     local MinSlider = Instance.new("TextButton")
     MinSlider.Name = "MinSlider"
@@ -1397,8 +1396,8 @@ BackgroundFill.Name = "BackgroundFill"
 BackgroundFill.Parent = DropdownTop
 BackgroundFill.BackgroundColor3 = config.Dropdown_Color
 BackgroundFill.BorderSizePixel = 0
-BackgroundFill.Position = UDim2.new(0.85, 0, 0, 0)  -- 与Slider相同位置
-BackgroundFill.Size = UDim2.new(0.15, 0, 1, 0)  -- 调整大小
+BackgroundFill.Position = UDim2.new(0.85, 0, 0, 0)
+BackgroundFill.Size = UDim2.new(0.15, 0, 1, 0)
 BackgroundFill.ZIndex = 0
 
 DropdownOpenFrame.Name = "DropdownOpenFrame"
@@ -1406,8 +1405,8 @@ DropdownOpenFrame.Parent = DropdownTop
 DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
 DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
 DropdownOpenFrame.BorderSizePixel = 0
-DropdownOpenFrame.Position = UDim2.new(0.85, 0, 0.5, 0)  -- 与Slider相同位置
-DropdownOpenFrame.Size = UDim2.new(0, 44, 0, 28)  -- 与Slider相同大小
+DropdownOpenFrame.Position = UDim2.new(0.85, 0, 0.5, 0)
+DropdownOpenFrame.Size = UDim2.new(0, 44, 0, 28)
 DropdownOpenFrame.ZIndex = 2
 
 createAuroraEffect(DropdownOpenFrame, 0.8)
@@ -1435,7 +1434,7 @@ DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 DropdownText.BackgroundTransparency = 1.000
 DropdownText.BorderSizePixel = 0
 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-DropdownText.Size = UDim2.new(0, 290, 0, 38)  -- 调整大小
+DropdownText.Size = UDim2.new(0, 290, 0, 38)
 DropdownText.Font = Enum.Font.GothamSemibold
 DropdownText.PlaceholderColor3 = config.SecondaryTextColor
 DropdownText.PlaceholderText = text
@@ -1450,7 +1449,7 @@ Separator.Name = "Separator"
 Separator.Parent = DropdownTop
 Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
 Separator.BorderSizePixel = 0
-Separator.Position = UDim2.new(0.82, 0, 0.2, 0)  -- 调整位置
+Separator.Position = UDim2.new(0.82, 0, 0.2, 0)
 Separator.Size = UDim2.new(0, 1, 0, 24)
 Separator.ZIndex = 1
 
