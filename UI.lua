@@ -753,7 +753,7 @@ function library.new(library, name, theme)
                 ToggleDisable.Parent = ToggleBtn
                 ToggleDisable.BackgroundColor3 = config.Bg_Color
                 ToggleDisable.BorderSizePixel = 0
-                ToggleDisable.Position = UDim2.new(0.87, 0, 0.208, 0)  -- 向右移动
+                ToggleDisable.Position = UDim2.new(0.87, 0, 0.208, 0)
                 ToggleDisable.Size = UDim2.new(0, 36, 0, 22)
                 
                 ToggleSwitch.Name = "ToggleSwitch"
@@ -1005,8 +1005,9 @@ function library.new(library, name, theme)
                 BoxBG.Parent = TextboxBack
                 BoxBG.BackgroundColor3 = config.Bg_Color
                 BoxBG.BorderSizePixel = 0
-                BoxBG.Position = UDim2.new(0.85, 0, 0.131578952, 0)  -- 与Slider相同位置
-                BoxBG.Size = UDim2.new(0, 44, 0, 28)  -- 与Slider相同大小
+                BoxBG.Position = UDim2.new(0.85, 0, 0.5, 0)  -- 修改为与Dropdown相同的位置
+                BoxBG.AnchorPoint = Vector2.new(0, 0.5)  -- 添加锚点确保垂直居中
+                BoxBG.Size = UDim2.new(0, 44, 0, 28)  -- 与Dropdown相同大小
                 BoxBG.AutoButtonColor = false
                 BoxBG.Font = Enum.Font.Gotham
                 BoxBG.Text = ""
