@@ -265,14 +265,14 @@ local BackgroundBlur = Instance.new("BlurEffect")
 BackgroundBlur.Size = 8
 BackgroundBlur.Parent = game:GetService("Lighting")
 
--- 创建主容器
+-- 创建主容器 - 居中位置
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
-Main.AnchorPoint = Vector2.new(1, 0) -- 右上角锚点
+Main.AnchorPoint = Vector2.new(0.5, 0.5) -- 居中锚点
 Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 Main.BackgroundTransparency = 0.3 -- 半透明背景
-Main.Position = UDim2.new(1, -20, 0, 20) -- 右上角位置
+Main.Position = UDim2.new(0.5, 0, 0.5, 0) -- 屏幕中心
 Main.Size = UDim2.new(0, 500, 0, 320)
 Main.ZIndex = 1
 Main.Active = true
@@ -319,14 +319,13 @@ GlowEffect.ZIndex = 0
 
 startRainbowEffect(GlowEffect, "ImageColor3", 0.005)
 
--- 创建打开按钮
+-- 创建打开按钮 - 左上角位置
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
 Open.Parent = FengYu
-Open.AnchorPoint = Vector2.new(1, 0) -- 右上角锚点
 Open.BackgroundColor3 = config.AccentColor
 Open.BackgroundTransparency = 0.8 -- 半透明背景
-Open.Position = UDim2.new(1, -20, 0, 20) -- 右上角位置
+Open.Position = UDim2.new(0.008, 0, 0.131, 0) -- 左上角位置
 Open.Size = UDim2.new(0, 50, 0, 50)
 Open.Active = true
 Open.Draggable = true
@@ -361,7 +360,7 @@ Open.MouseButton1Click:Connect(function()
 end)
 
 services.UserInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.RightControl then
+    if input.KeyCode == Enum.KeyCode.LeftControl then
         Main.Visible = not Main.Visible
         services.TweenService:Create(Open, TweenInfo.new(0.2), {Rotation = Open.Rotation + 180}):Play()
     end
@@ -991,8 +990,7 @@ function library.new(library, name, theme)
                 KeybindValue.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
                 KeybindValue.BackgroundTransparency = 0.3 -- 半透明
                 KeybindValue.BorderSizePixel = 0
-                KeybindValue.Position = UDim2.new(0.85, 0, 0.5, 0)
-                KeybindValue.AnchorPoint = Vector2.new(0, 0.5)
+                KeybindValue.Position = UDim2.new(0.85, 0, 0.131578952, 0) -- 原来的位置
                 KeybindValue.Size = UDim2.new(0, 44, 0, 28)
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
@@ -1116,8 +1114,7 @@ function library.new(library, name, theme)
                 BoxBG.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
                 BoxBG.BackgroundTransparency = 0.3 -- 半透明
                 BoxBG.BorderSizePixel = 0
-                BoxBG.Position = UDim2.new(0.85, 0, 0.5, 0)
-                BoxBG.AnchorPoint = Vector2.new(0, 0.5)
+                BoxBG.Position = UDim2.new(0.85, 0, 0.131578952, 0) -- 原来的位置
                 BoxBG.Size = UDim2.new(0, 44, 0, 28)
                 BoxBG.AutoButtonColor = false
                 BoxBG.Font = Enum.Font.Gotham
@@ -1262,8 +1259,7 @@ function library.new(library, name, theme)
                 SliderValBG.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
                 SliderValBG.BackgroundTransparency = 0.3 -- 半透明
                 SliderValBG.BorderSizePixel = 0
-                SliderValBG.Position = UDim2.new(0.85, 0, 0.5, 0)
-                SliderValBG.AnchorPoint = Vector2.new(0, 0.5)
+                SliderValBG.Position = UDim2.new(0.85, 0, 0.131578952, 0) -- 原来的位置
                 SliderValBG.Size = UDim2.new(0, 44, 0, 28)
                 SliderValBG.AutoButtonColor = false
                 SliderValBG.Font = Enum.Font.Gotham
