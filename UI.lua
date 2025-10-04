@@ -278,19 +278,6 @@ Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
 
--- 添加玻璃态效果
-local GlassFrame = Instance.new("Frame")
-GlassFrame.Name = "GlassFrame"
-GlassFrame.Parent = Main
-GlassFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-GlassFrame.BackgroundTransparency = 0.95
-GlassFrame.Size = UDim2.new(1, 0, 1, 0)
-GlassFrame.ZIndex = 0
-
-local GlassCorner = Instance.new("UICorner")
-GlassCorner.CornerRadius = UDim.new(0, 12)
-GlassCorner.Parent = GlassFrame
-
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 12)
 MainCorner.Parent = Main
@@ -332,15 +319,6 @@ Open.Draggable = true
 Open.Image = "rbxassetid://84830962019412"
 Open.ImageColor3 = Color3.fromRGB(255, 255, 255)
 Open.ImageTransparency = 0.2
-
--- 按钮玻璃态效果
-local OpenGlass = Instance.new("Frame")
-OpenGlass.Name = "OpenGlass"
-OpenGlass.Parent = Open
-OpenGlass.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-OpenGlass.BackgroundTransparency = 0.9
-OpenGlass.Size = UDim2.new(1, 0, 1, 0)
-OpenGlass.ZIndex = 0
 
 local OpenCorner = Instance.new("UICorner")
 OpenCorner.CornerRadius = UDim.new(0, 12)
@@ -389,15 +367,6 @@ Side.Size = UDim2.new(0, 100, 0, 320)
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 12)
 SideCorner.Parent = Side
-
--- 侧边栏玻璃态效果
-local SideGlass = Instance.new("Frame")
-SideGlass.Name = "SideGlass"
-SideGlass.Parent = Side
-SideGlass.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-SideGlass.BackgroundTransparency = 0.95
-SideGlass.Size = UDim2.new(1, 0, 1, 0)
-SideGlass.ZIndex = 0
 
 -- 创建标签按钮容器
 local TabBtns = Instance.new("ScrollingFrame")
@@ -580,15 +549,6 @@ function library.new(library, name, theme)
             Section.ClipsDescendants = true
             Section.Size = UDim2.new(0.981, 0, 0, 36)
             
-            -- 添加玻璃态效果
-            local SectionGlass = Instance.new("Frame")
-            SectionGlass.Name = "SectionGlass"
-            SectionGlass.Parent = Section
-            SectionGlass.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionGlass.BackgroundTransparency = 0.95
-            SectionGlass.Size = UDim2.new(1, 0, 1, 0)
-            SectionGlass.ZIndex = 0
-            
             SectionC.CornerRadius = UDim.new(0, 6)
             SectionC.Name = "SectionC"
             SectionC.Parent = Section
@@ -695,15 +655,6 @@ function library.new(library, name, theme)
                 Btn.TextSize = 16
                 Btn.TextXAlignment = Enum.TextXAlignment.Left
                 
-                -- 按钮玻璃态效果
-                local BtnGlass = Instance.new("Frame")
-                BtnGlass.Name = "BtnGlass"
-                BtnGlass.Parent = Btn
-                BtnGlass.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                BtnGlass.BackgroundTransparency = 0.95
-                BtnGlass.Size = UDim2.new(1, 0, 1, 0)
-                BtnGlass.ZIndex = 0
-                
                 BtnC.CornerRadius = UDim.new(0, 6)
                 BtnC.Name = "BtnC"
                 BtnC.Parent = Btn
@@ -780,15 +731,6 @@ function library.new(library, name, theme)
                 TextLabel.TextColor3 = config.SecondaryTextColor
                 TextLabel.TextSize = 14
                 
-                -- 标签玻璃态效果
-                local LabelGlass = Instance.new("Frame")
-                LabelGlass.Name = "LabelGlass"
-                LabelGlass.Parent = TextLabel
-                LabelGlass.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                LabelGlass.BackgroundTransparency = 0.95
-                LabelGlass.Size = UDim2.new(1, 0, 1, 0)
-                LabelGlass.ZIndex = 0
-                
                 LabelC.CornerRadius = UDim.new(0, 6)
                 LabelC.Name = "LabelC"
                 LabelC.Parent = TextLabel
@@ -829,15 +771,6 @@ function library.new(library, name, theme)
                 ToggleBtn.TextColor3 = config.TextColor
                 ToggleBtn.TextSize = 16
                 ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
-                
-                -- 开关玻璃态效果
-                local ToggleGlass = Instance.new("Frame")
-                ToggleGlass.Name = "ToggleGlass"
-                ToggleGlass.Parent = ToggleBtn
-                ToggleGlass.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                ToggleGlass.BackgroundTransparency = 0.95
-                ToggleGlass.Size = UDim2.new(1, 0, 1, 0)
-                ToggleGlass.ZIndex = 0
                 
                 ToggleBtnC.CornerRadius = UDim.new(0, 6)
                 ToggleBtnC.Name = "ToggleBtnC"
@@ -972,15 +905,6 @@ function library.new(library, name, theme)
                 KeybindBtn.TextSize = 16
                 KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
                 
-                -- 键位绑定玻璃态效果
-                local KeybindGlass = Instance.new("Frame")
-                KeybindGlass.Name = "KeybindGlass"
-                KeybindGlass.Parent = KeybindBtn
-                KeybindGlass.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                KeybindGlass.BackgroundTransparency = 0.95
-                KeybindGlass.Size = UDim2.new(1, 0, 1, 0)
-                KeybindGlass.ZIndex = 0
-                
                 KeybindBtnC.CornerRadius = UDim.new(0, 6)
                 KeybindBtnC.Name = "KeybindBtnC"
                 KeybindBtnC.Parent = KeybindBtn
@@ -990,7 +914,7 @@ function library.new(library, name, theme)
                 KeybindValue.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
                 KeybindValue.BackgroundTransparency = 0.3 -- 半透明
                 KeybindValue.BorderSizePixel = 0
-                KeybindValue.Position = UDim2.new(0.85, 0, 0.131578952, 0) -- 原来的位置
+                KeybindValue.Position = UDim2.new(0.85, 0, 0.131578952, 0)
                 KeybindValue.Size = UDim2.new(0, 44, 0, 28)
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
@@ -1096,15 +1020,6 @@ function library.new(library, name, theme)
                 TextboxBack.TextSize = 16
                 TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
                 
-                -- 文本框玻璃态效果
-                local TextboxGlass = Instance.new("Frame")
-                TextboxGlass.Name = "TextboxGlass"
-                TextboxGlass.Parent = TextboxBack
-                TextboxGlass.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                TextboxGlass.BackgroundTransparency = 0.95
-                TextboxGlass.Size = UDim2.new(1, 0, 1, 0)
-                TextboxGlass.ZIndex = 0
-                
                 TextboxBackC.CornerRadius = UDim.new(0, 6)
                 TextboxBackC.Name = "TextboxBackC"
                 TextboxBackC.Parent = TextboxBack
@@ -1114,7 +1029,7 @@ function library.new(library, name, theme)
                 BoxBG.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
                 BoxBG.BackgroundTransparency = 0.3 -- 半透明
                 BoxBG.BorderSizePixel = 0
-                BoxBG.Position = UDim2.new(0.85, 0, 0.131578952, 0) -- 原来的位置
+                BoxBG.Position = UDim2.new(0.85, 0, 0.131578952, 0)
                 BoxBG.Size = UDim2.new(0, 44, 0, 28)
                 BoxBG.AutoButtonColor = false
                 BoxBG.Font = Enum.Font.Gotham
@@ -1220,15 +1135,6 @@ function library.new(library, name, theme)
                 SliderBack.TextSize = 16.000
                 SliderBack.TextXAlignment = Enum.TextXAlignment.Left
                 
-                -- 滑块玻璃态效果
-                local SliderGlass = Instance.new("Frame")
-                SliderGlass.Name = "SliderGlass"
-                SliderGlass.Parent = SliderBack
-                SliderGlass.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                SliderGlass.BackgroundTransparency = 0.95
-                SliderGlass.Size = UDim2.new(1, 0, 1, 0)
-                SliderGlass.ZIndex = 0
-                
                 SliderBackC.CornerRadius = UDim.new(0, 6)
                 SliderBackC.Name = "SliderBackC"
                 SliderBackC.Parent = SliderBack
@@ -1259,7 +1165,7 @@ function library.new(library, name, theme)
                 SliderValBG.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
                 SliderValBG.BackgroundTransparency = 0.3 -- 半透明
                 SliderValBG.BorderSizePixel = 0
-                SliderValBG.Position = UDim2.new(0.85, 0, 0.131578952, 0) -- 原来的位置
+                SliderValBG.Position = UDim2.new(0.85, 0, 0.131578952, 0)
                 SliderValBG.Size = UDim2.new(0, 44, 0, 28)
                 SliderValBG.AutoButtonColor = false
                 SliderValBG.Font = Enum.Font.Gotham
@@ -1504,15 +1410,6 @@ function library.new(library, name, theme)
                 DropdownTop.TextColor3 = config.TextColor
                 DropdownTop.TextSize = 16.000
                 DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
-                
-                -- 下拉框玻璃态效果
-                local DropdownGlass = Instance.new("Frame")
-                DropdownGlass.Name = "DropdownGlass"
-                DropdownGlass.Parent = DropdownTop
-                DropdownGlass.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                DropdownGlass.BackgroundTransparency = 0.95
-                DropdownGlass.Size = UDim2.new(1, 0, 1, 0)
-                DropdownGlass.ZIndex = 0
                 
                 DropdownTopC.CornerRadius = UDim.new(0, 6)
                 DropdownTopC.Name = "DropdownTopC"
