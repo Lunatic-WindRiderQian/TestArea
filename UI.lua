@@ -265,10 +265,9 @@ Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.Bg_Color
-Main.BackgroundTransparency = 0.2 -- 半透明背景
--- 修改这里：将整个UI往上移动
-Main.Position = UDim2.new(0.5, 0, 0.4, 0) -- 从0.5改为0.4，往上移动
-Main.Size = UDim2.new(0, 500, 0, 320) -- 缩小尺寸
+Main.BackgroundTransparency = 0.2
+Main.Position = UDim2.new(0.5, 0, 0.4, 0)
+Main.Size = UDim2.new(0, 500, 0, 320)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -295,8 +294,7 @@ Open.Name = "Open"
 Open.Parent = FengYu
 Open.BackgroundColor3 = config.AccentColor
 Open.BackgroundTransparency = 0.85
--- 修改这里：将悬浮窗移动到右上角
-Open.Position = UDim2.new(0.95, 0, 0.02, 0) -- 右上角位置
+Open.Position = UDim2.new(0.95, 0, 0.02, 0)
 Open.Size = UDim2.new(0, 45, 0, 45)
 Open.Active = true
 Open.Draggable = true
@@ -332,8 +330,8 @@ local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.24, 0, 0, 3) -- 调整位置
-TabMain.Size = UDim2.new(0, 368, 0, 314) -- 缩小尺寸
+TabMain.Position = UDim2.new(0.24, 0, 0, 3)
+TabMain.Size = UDim2.new(0, 368, 0, 314)
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
@@ -977,110 +975,110 @@ function FengY3.new(FengY3, name, theme)
             end
             
             function section.Textbox(section, text, flag, default, callback)
-                callback = callback or function() end
-                assert(text, "No text provided")
-                assert(flag, "No flag provided")
-                assert(default, "No default text provided")
-                
-                FengY3.flaFengYu[flag] = default
-                
-                local TextboxModule = Instance.new("Frame")
-                local TextboxBack = Instance.new("TextButton")
-                local TextboxBackC = Instance.new("UICorner")
-                local BoxBG = Instance.new("TextButton")
-                local BoxBGC = Instance.new("UICorner")
-                local TextBox = Instance.new("TextBox")
-                local TextboxBackL = Instance.new("UIListLayout")
-                local TextboxBackP = Instance.new("UIPadding")
-                
-                TextboxModule.Name = "TextboxModule"
-                TextboxModule.Parent = Objs
-                TextboxModule.BackgroundTransparency = 1
-                TextboxModule.BorderSizePixel = 0
-                TextboxModule.Size = UDim2.new(0, 348, 0, 32) -- 缩小尺寸
-                
-                TextboxBack.Name = "TextboxBack"
-                TextboxBack.Parent = TextboxModule
-                TextboxBack.BackgroundColor3 = config.Textbox_Color
-                TextboxBack.BackgroundTransparency = 0.2 -- 半透明
-                TextboxBack.BorderSizePixel = 0
-                TextboxBack.Size = UDim2.new(0, 348, 0, 32) -- 缩小尺寸
-                TextboxBack.AutoButtonColor = false
-                TextboxBack.Font = Enum.Font.GothamSemibold
-                TextboxBack.Text = "   " .. text
-                TextboxBack.TextColor3 = config.TextColor
-                TextboxBack.TextSize = 14 -- 减小字体
-                TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
-                
-                TextboxBackC.CornerRadius = UDim.new(0, 6)
-                TextboxBackC.Name = "TextboxBackC"
-                TextboxBackC.Parent = TextboxBack
-                
-                -- 修改这里：将输入框位置更往左边移动
-                BoxBG.Name = "BoxBG"
-                BoxBG.Parent = TextboxBack
-                BoxBG.BackgroundColor3 = config.Bg_Color
-                BoxBG.BorderSizePixel = 0
-                BoxBG.Position = UDim2.new(0.55, 0, 0.187, 0) -- 调整位置：从0.65改为0.55，更往左
-                BoxBG.Size = UDim2.new(0, 80, 0, 24) -- 缩小尺寸
-                BoxBG.AutoButtonColor = false
-                BoxBG.Font = Enum.Font.Gotham
-                BoxBG.Text = ""
-                
-                BoxBGC.CornerRadius = UDim.new(0, 6)
-                BoxBGC.Name = "BoxBGC"
-                BoxBGC.Parent = BoxBG
-                
-                TextBox.Parent = BoxBG
-                TextBox.BackgroundTransparency = 1
-                TextBox.BorderSizePixel = 0
-                TextBox.Size = UDim2.new(1, 0, 1, 0)
-                TextBox.Font = Enum.Font.Gotham
-                TextBox.Text = default
-                TextBox.TextColor3 = config.TextColor
-                TextBox.TextSize = 12 -- 减小字体
-                TextBox.PlaceholderColor3 = config.SecondaryTextColor
-                
-                TextboxBackL.Name = "TextboxBackL"
-                TextboxBackL.Parent = TextboxBack
-                TextboxBackL.HorizontalAlignment = Enum.HorizontalAlignment.Right
-                TextboxBackL.SortOrder = Enum.SortOrder.LayoutOrder
-                TextboxBackL.VerticalAlignment = Enum.VerticalAlignment.Center
-                
-                TextboxBackP.Name = "TextboxBackP"
-                TextboxBackP.Parent = TextboxBack
-                TextboxBackP.PaddingRight = UDim.new(0, 6)
-                
-                TextboxBack.MouseEnter:Connect(function()
-                    services.TweenService:Create(TextboxBack, TweenInfo.new(0.2), {
-                        BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.Textbox_Color.R * 255 * 1.1),
-                            math.floor(config.Textbox_Color.G * 255 * 1.1),
-                            math.floor(config.Textbox_Color.B * 255 * 1.1)
-                        )
-                    }):Play()
-                end)
-                
-                TextboxBack.MouseLeave:Connect(function()
-                    services.TweenService:Create(TextboxBack, TweenInfo.new(0.2), {
-                        BackgroundColor3 = config.Textbox_Color
-                    }):Play()
-                end)
-                
-                TextBox.FocusLost:Connect(function()
-                    if TextBox.Text == "" then
-                        TextBox.Text = default
-                    end
-                    FengY3.flaFengYu[flag] = TextBox.Text
-                    callback(TextBox.Text)
-                end)
-                
-                TextBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
-                    BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 24) -- 调整尺寸
-                end)
-                
-                BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 24) -- 调整尺寸
-            end
+    callback = callback or function() end
+    assert(text, "No text provided")
+    assert(flag, "No flag provided")
+    assert(default, "No default text provided")
+    
+    FengY3.flaFengYu[flag] = default
+    
+    local TextboxModule = Instance.new("Frame")
+    local TextboxBack = Instance.new("TextButton")
+    local TextboxBackC = Instance.new("UICorner")
+    local BoxBG = Instance.new("TextButton")
+    local BoxBGC = Instance.new("UICorner")
+    local TextBox = Instance.new("TextBox")
+    local TextboxBackL = Instance.new("UIListLayout")
+    local TextboxBackP = Instance.new("UIPadding")
+    
+    TextboxModule.Name = "TextboxModule"
+    TextboxModule.Parent = Objs
+    TextboxModule.BackgroundTransparency = 1
+    TextboxModule.BorderSizePixel = 0
+    TextboxModule.Size = UDim2.new(0, 348, 0, 32) -- 缩小尺寸
+    
+    TextboxBack.Name = "TextboxBack"
+    TextboxBack.Parent = TextboxModule
+    TextboxBack.BackgroundColor3 = config.Textbox_Color
+    TextboxBack.BackgroundTransparency = 0.2 -- 半透明
+    TextboxBack.BorderSizePixel = 0
+    TextboxBack.Size = UDim2.new(0, 348, 0, 32) -- 缩小尺寸
+    TextboxBack.AutoButtonColor = false
+    TextboxBack.Font = Enum.Font.GothamSemibold
+    TextboxBack.Text = "   " .. text
+    TextboxBack.TextColor3 = config.TextColor
+    TextboxBack.TextSize = 14 -- 减小字体
+    TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
+    
+    TextboxBackC.CornerRadius = UDim.new(0, 6)
+    TextboxBackC.Name = "TextboxBackC"
+    TextboxBackC.Parent = TextboxBack
+    
+    -- 修改这里：将输入框位置更往左边移动，确保在UI框内
+    BoxBG.Name = "BoxBG"
+    BoxBG.Parent = TextboxBack
+    BoxBG.BackgroundColor3 = config.Bg_Color
+    BoxBG.BorderSizePixel = 0
+    BoxBG.Position = UDim2.new(0.45, 0, 0.187, 0) -- 调整位置：从0.55改为0.45
+    BoxBG.Size = UDim2.new(0, 80, 0, 24) -- 缩小尺寸
+    BoxBG.AutoButtonColor = false
+    BoxBG.Font = Enum.Font.Gotham
+    BoxBG.Text = ""
+    
+    BoxBGC.CornerRadius = UDim.new(0, 6)
+    BoxBGC.Name = "BoxBGC"
+    BoxBGC.Parent = BoxBG
+    
+    TextBox.Parent = BoxBG
+    TextBox.BackgroundTransparency = 1
+    TextBox.BorderSizePixel = 0
+    TextBox.Size = UDim2.new(1, 0, 1, 0)
+    TextBox.Font = Enum.Font.Gotham
+    TextBox.Text = default
+    TextBox.TextColor3 = config.TextColor
+    TextBox.TextSize = 12 -- 减小字体
+    TextBox.PlaceholderColor3 = config.SecondaryTextColor
+    
+    TextboxBackL.Name = "TextboxBackL"
+    TextboxBackL.Parent = TextboxBack
+    TextboxBackL.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    TextboxBackL.SortOrder = Enum.SortOrder.LayoutOrder
+    TextboxBackL.VerticalAlignment = Enum.VerticalAlignment.Center
+    
+    TextboxBackP.Name = "TextboxBackP"
+    TextboxBackP.Parent = TextboxBack
+    TextboxBackP.PaddingRight = UDim.new(0, 12) -- 增加右边距：从6改为12
+    
+    TextboxBack.MouseEnter:Connect(function()
+        services.TweenService:Create(TextboxBack, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.floor(config.Textbox_Color.R * 255 * 1.1),
+                math.floor(config.Textbox_Color.G * 255 * 1.1),
+                math.floor(config.Textbox_Color.B * 255 * 1.1)
+            )
+        }):Play()
+    end)
+    
+    TextboxBack.MouseLeave:Connect(function()
+        services.TweenService:Create(TextboxBack, TweenInfo.new(0.2), {
+            BackgroundColor3 = config.Textbox_Color
+        }):Play()
+    end)
+    
+    TextBox.FocusLost:Connect(function()
+        if TextBox.Text == "" then
+            TextBox.Text = default
+        end
+        FengY3.flaFengYu[flag] = TextBox.Text
+        callback(TextBox.Text)
+    end)
+    
+    TextBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
+        BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 24) -- 调整尺寸
+    end)
+    
+    BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 24) -- 调整尺寸
+end
             
 function section.Slider(section, text, flag, default, min, max, precise, callback)
     callback = callback or function() end
