@@ -266,7 +266,8 @@ Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.Bg_Color
 Main.BackgroundTransparency = 0.2 -- 半透明背景
-Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+-- 修改这里：将整个UI往上移动
+Main.Position = UDim2.new(0.5, 0, 0.4, 0) -- 从0.5改为0.4，往上移动
 Main.Size = UDim2.new(0, 500, 0, 320) -- 缩小尺寸
 Main.ZIndex = 1
 Main.Active = true
@@ -294,7 +295,8 @@ Open.Name = "Open"
 Open.Parent = FengYu
 Open.BackgroundColor3 = config.AccentColor
 Open.BackgroundTransparency = 0.85
-Open.Position = UDim2.new(0.008, 0, 0.1, 0)
+-- 修改这里：将悬浮窗移动到右上角
+Open.Position = UDim2.new(0.95, 0, 0.02, 0) -- 右上角位置
 Open.Size = UDim2.new(0, 45, 0, 45)
 Open.Active = true
 Open.Draggable = true
@@ -1014,12 +1016,12 @@ function FengY3.new(FengY3, name, theme)
                 TextboxBackC.Name = "TextboxBackC"
                 TextboxBackC.Parent = TextboxBack
                 
-                -- 修改这里：将输入框位置往左边移一点
+                -- 修改这里：将输入框位置更往左边移动
                 BoxBG.Name = "BoxBG"
                 BoxBG.Parent = TextboxBack
                 BoxBG.BackgroundColor3 = config.Bg_Color
                 BoxBG.BorderSizePixel = 0
-                BoxBG.Position = UDim2.new(0.65, 0, 0.187, 0) -- 调整位置：从0.72改为0.65
+                BoxBG.Position = UDim2.new(0.55, 0, 0.187, 0) -- 调整位置：从0.65改为0.55，更往左
                 BoxBG.Size = UDim2.new(0, 80, 0, 24) -- 缩小尺寸
                 BoxBG.AutoButtonColor = false
                 BoxBG.Font = Enum.Font.Gotham
@@ -1182,7 +1184,6 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     MinSlider.BackgroundTransparency = 0
     MinSlider.BorderSizePixel = 0
-    -- 修改这里：将减号按钮位置往下移一点，并将文本改为"减"
     MinSlider.Position = UDim2.new(0.28, 0, 0.25, 0) -- 调整位置：从0.187改为0.25
     MinSlider.Size = UDim2.new(0, 16, 0, 16) -- 缩小尺寸
     MinSlider.Font = Enum.Font.Gotham
@@ -1202,7 +1203,6 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
     AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     AddSlider.BackgroundTransparency = 0
     AddSlider.BorderSizePixel = 0
-    -- 修改这里：将加号按钮位置往下移一点，并将文本改为"加"
     AddSlider.Position = UDim2.new(0.75, 0, 0.25, 0) -- 调整位置：从0.187改为0.25
     AddSlider.Size = UDim2.new(0, 16, 0, 16) -- 缩小尺寸
     AddSlider.Font = Enum.Font.Gotham
