@@ -781,7 +781,7 @@ function library.new(library, name, theme)
                 ToggleDisable.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
                 ToggleDisable.BackgroundTransparency = 0.2
                 ToggleDisable.BorderSizePixel = 0
-                ToggleDisable.Position = UDim2.new(0.72, 0, 0.205, 0) -- 位置更靠左，对齐其他控件
+                ToggleDisable.Position = UDim2.new(0.65, 0, 0.205, 0) -- 位置调整：更靠左
                 ToggleDisable.Size = UDim2.new(0, 32, 0, 20) -- 更小
                 
                 ToggleSwitch.Name = "ToggleSwitch"
@@ -914,7 +914,7 @@ function library.new(library, name, theme)
                 KeybindValue.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
                 KeybindValue.BackgroundTransparency = 0.2
                 KeybindValue.BorderSizePixel = 0
-                KeybindValue.Position = UDim2.new(0.72, 0, 0.147, 0) -- 位置更靠左，对齐其他控件
+                KeybindValue.Position = UDim2.new(0.65, 0, 0.147, 0) -- 位置调整：更靠左
                 KeybindValue.Size = UDim2.new(0, 40, 0, 25) -- 更小
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
@@ -1029,7 +1029,7 @@ function library.new(library, name, theme)
                 BoxBG.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
                 BoxBG.BackgroundTransparency = 0.2
                 BoxBG.BorderSizePixel = 0
-                BoxBG.Position = UDim2.new(0.72, 0, 0.147, 0) -- 位置更靠左，对齐其他控件
+                BoxBG.Position = UDim2.new(0.65, 0, 0.147, 0) -- 位置调整：更靠左
                 BoxBG.Size = UDim2.new(0, 40, 0, 25) -- 更小
                 BoxBG.AutoButtonColor = false
                 BoxBG.Font = Enum.Font.Gotham
@@ -1145,7 +1145,7 @@ function library.new(library, name, theme)
                 SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
                 SliderBar.BackgroundTransparency = 0.5
                 SliderBar.BorderSizePixel = 0
-                SliderBar.Position = UDim2.new(0.35, 0, 0.5, 0) -- 位置调整
+                SliderBar.Position = UDim2.new(0.3, 0, 0.5, 0) -- 位置调整：更靠左
                 SliderBar.Size = UDim2.new(0, 120, 0, 12) -- 更小
                 SliderBarC.CornerRadius = UDim.new(0, 4)
                 SliderBarC.Name = "SliderBarC"
@@ -1165,7 +1165,7 @@ function library.new(library, name, theme)
                 SliderValBG.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
                 SliderValBG.BackgroundTransparency = 0.2
                 SliderValBG.BorderSizePixel = 0
-                SliderValBG.Position = UDim2.new(0.72, 0, 0.147, 0) -- 位置更靠左，对齐其他控件
+                SliderValBG.Position = UDim2.new(0.65, 0, 0.147, 0) -- 位置调整：更靠左
                 SliderValBG.Size = UDim2.new(0, 40, 0, 25) -- 更小
                 SliderValBG.AutoButtonColor = false
                 SliderValBG.Font = Enum.Font.Gotham
@@ -1195,7 +1195,7 @@ function library.new(library, name, theme)
                 MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 MinSlider.BackgroundTransparency = 0.2
                 MinSlider.BorderSizePixel = 0
-                MinSlider.Position = UDim2.new(0.28, 0, 0.235, 0) -- 位置调整
+                MinSlider.Position = UDim2.new(0.23, 0, 0.235, 0) -- 位置调整：与SliderBar对齐
                 MinSlider.Size = UDim2.new(0, 18, 0, 18) -- 更小
                 MinSlider.Font = Enum.Font.Gotham
                 MinSlider.Text = "-"
@@ -1214,7 +1214,7 @@ function library.new(library, name, theme)
                 AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 AddSlider.BackgroundTransparency = 0.2
                 AddSlider.BorderSizePixel = 0
-                AddSlider.Position = UDim2.new(0.7, 0, 0.235, 0) -- 位置调整
+                AddSlider.Position = UDim2.new(0.63, 0, 0.235, 0) -- 位置调整：与SliderBar对齐
                 AddSlider.Size = UDim2.new(0, 18, 0, 18) -- 更小
                 AddSlider.Font = Enum.Font.Gotham
                 AddSlider.Text = "+"
@@ -1421,8 +1421,8 @@ function library.new(library, name, theme)
                 BackgroundFill.BackgroundColor3 = Color3.fromRGB(23, 23, 23)
                 BackgroundFill.BackgroundTransparency = 0.2
                 BackgroundFill.BorderSizePixel = 0
-                BackgroundFill.Position = UDim2.new(0.72, 0, 0, 0) -- 位置调整
-                BackgroundFill.Size = UDim2.new(0.28, 0, 1, 0)
+                BackgroundFill.Position = UDim2.new(0.65, 0, 0, 0) -- 位置调整：更靠左
+                BackgroundFill.Size = UDim2.new(0.35, 0, 1, 0)
                 BackgroundFill.ZIndex = 0
                 
                 DropdownOpenFrame.Name = "DropdownOpenFrame"
@@ -1431,7 +1431,7 @@ function library.new(library, name, theme)
                 DropdownOpenFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
                 DropdownOpenFrame.BackgroundTransparency = 0.2
                 DropdownOpenFrame.BorderSizePixel = 0
-                DropdownOpenFrame.Position = UDim2.new(0.72, 0, 0.5, 0) -- 位置调整
+                DropdownOpenFrame.Position = UDim2.new(0.65, 0, 0.5, 0) -- 位置调整：更靠左
                 DropdownOpenFrame.Size = UDim2.new(0, 40, 0, 25) -- 更小
                 DropdownOpenFrame.ZIndex = 2
                 
@@ -1460,7 +1460,7 @@ function library.new(library, name, theme)
                 DropdownText.BackgroundTransparency = 1.000
                 DropdownText.BorderSizePixel = 0
                 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-                DropdownText.Size = UDim2.new(0, 240, 0, 34) -- 调整尺寸
+                DropdownText.Size = UDim2.new(0, 200, 0, 34) -- 调整尺寸：更窄以适应新位置
                 DropdownText.Font = Enum.Font.GothamSemibold
                 DropdownText.PlaceholderColor3 = config.SecondaryTextColor
                 DropdownText.PlaceholderText = text
@@ -1475,7 +1475,7 @@ function library.new(library, name, theme)
                 Separator.Parent = DropdownTop
                 Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 Separator.BorderSizePixel = 0
-                Separator.Position = UDim2.new(0.71, 0, 0.2, 0) -- 位置调整
+                Separator.Position = UDim2.new(0.64, 0, 0.2, 0) -- 位置调整：更靠左
                 Separator.Size = UDim2.new(0, 1, 0, 20) -- 更小
                 Separator.ZIndex = 1
                 
