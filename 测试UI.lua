@@ -44,8 +44,6 @@ local FengY3 = {}
 local ToggleUI = true
 FengY3.currentTab = nil
 FengY3.flaFengYu = {}
-FengY3.notifications = {} -- windUI风格的通知系统
-FengY3.themes = {} -- 主题系统
 
 local services = {
     TweenService = game:GetService("TweenService"),
@@ -58,240 +56,26 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
--- windUI风格的主题系统
-FengY3.themes = {
-    Default = {
-        MainColor = Color3.fromRGB(16, 16, 16),
-        TabColor = Color3.fromRGB(22, 22, 22),
-        Bg_Color = Color3.fromRGB(17, 17, 17),
-        Zy_Color = Color3.fromRGB(17, 17, 17), 
-        Button_Color = Color3.fromRGB(22, 22, 22),
-        Textbox_Color = Color3.fromRGB(22, 22, 22),
-        Dropdown_Color = Color3.fromRGB(22, 22, 22),
-        Keybind_Color = Color3.fromRGB(22, 22, 22),
-        Label_Color = Color3.fromRGB(22, 22, 22),
-        Slider_Color = Color3.fromRGB(22, 22, 22),
-        SliderBar_Color = Color3.fromRGB(37, 254, 152),
-        Toggle_Color = Color3.fromRGB(22, 22, 22),
-        Toggle_Off = Color3.fromRGB(34, 34, 34),
-        Toggle_On = Color3.fromRGB(37, 254, 152),
-        AccentColor = Color3.fromRGB(37, 254, 152),
-        TextColor = Color3.fromRGB(240, 240, 240),
-        SecondaryTextColor = Color3.fromRGB(180, 180, 180),
-        GlowColor = Color3.fromRGB(0, 200, 255),
-    },
-    Dark = {
-        MainColor = Color3.fromRGB(10, 10, 10),
-        TabColor = Color3.fromRGB(15, 15, 15),
-        Bg_Color = Color3.fromRGB(12, 12, 12),
-        Button_Color = Color3.fromRGB(18, 18, 18),
-        AccentColor = Color3.fromRGB(0, 150, 255),
-        TextColor = Color3.fromRGB(220, 220, 220),
-    },
-    Light = {
-        MainColor = Color3.fromRGB(240, 240, 240),
-        TabColor = Color3.fromRGB(220, 220, 220),
-        Bg_Color = Color3.fromRGB(250, 250, 250),
-        Button_Color = Color3.fromRGB(230, 230, 230),
-        AccentColor = Color3.fromRGB(0, 100, 200),
-        TextColor = Color3.fromRGB(30, 30, 30),
-        SecondaryTextColor = Color3.fromRGB(80, 80, 80),
-    }
+local config = {
+    MainColor = Color3.fromRGB(16, 16, 16),
+    TabColor = Color3.fromRGB(22, 22, 22),
+    Bg_Color = Color3.fromRGB(17, 17, 17),
+    Zy_Color = Color3.fromRGB(17, 17, 17), 
+    Button_Color = Color3.fromRGB(22, 22, 22),
+    Textbox_Color = Color3.fromRGB(22, 22, 22),
+    Dropdown_Color = Color3.fromRGB(22, 22, 22),
+    Keybind_Color = Color3.fromRGB(22, 22, 22),
+    Label_Color = Color3.fromRGB(22, 22, 22),
+    Slider_Color = Color3.fromRGB(22, 22, 22),
+    SliderBar_Color = Color3.fromRGB(37, 254, 152),
+    Toggle_Color = Color3.fromRGB(22, 22, 22),
+    Toggle_Off = Color3.fromRGB(34, 34, 34),
+    Toggle_On = Color3.fromRGB(37, 254, 152),
+    AccentColor = Color3.fromRGB(37, 254, 152),
+    TextColor = Color3.fromRGB(240, 240, 240),
+    SecondaryTextColor = Color3.fromRGB(180, 180, 180),
+    GlowColor = Color3.fromRGB(0, 200, 255),
 }
-
-local config = FengY3.themes.Default
-
--- windUI风格的通知系统
-function FengY3:Notification(title, content, duration, notificationType)
-    duration = duration or 5
-    notificationType = notificationType or "Info"
-    
-    local notificationColors = {
-        Success = Color3.fromRGB(46, 204, 113),
-        Warning = Color3.fromRGB(241, 196, 15),
-        Error = Color3.fromRGB(231, 76, 60),
-        Info = Color3.fromRGB(52, 152, 219)
-    }
-    
-    local NotificationGui = Instance.new("ScreenGui")
-    protectGUI(NotificationGui)
-    NotificationGui.Parent = services.CoreGui
-    NotificationGui.Name = "Notification_" .. tick()
-    
-    local MainFrame = Instance.new("Frame")
-    MainFrame.Name = "MainFrame"
-    MainFrame.Parent = NotificationGui
-    MainFrame.AnchorPoint = Vector2.new(1, 0)
-    MainFrame.BackgroundColor3 = config.MainColor
-    MainFrame.BackgroundTransparency = 0.1
-    MainFrame.Position = UDim2.new(1, -20, 0, 20 + (#self.notifications * 80))
-    MainFrame.Size = UDim2.new(0, 300, 0, 70)
-    MainFrame.ZIndex = 100
-    
-    local MainCorner = Instance.new("UICorner")
-    MainCorner.CornerRadius = UDim.new(0, 8)
-    MainCorner.Parent = MainFrame
-    
-    local MainStroke = Instance.new("UIStroke")
-    MainStroke.Parent = MainFrame
-    MainStroke.Color = notificationColors[notificationType] or config.AccentColor
-    MainStroke.Thickness = 2
-    MainStroke.Transparency = 0.2
-    
-    local Icon = Instance.new("ImageLabel")
-    Icon.Name = "Icon"
-    Icon.Parent = MainFrame
-    Icon.BackgroundTransparency = 1
-    Icon.Position = UDim2.new(0, 10, 0, 10)
-    Icon.Size = UDim2.new(0, 20, 0, 20)
-    Icon.Image = "rbxassetid://84830962019412"
-    Icon.ImageColor3 = notificationColors[notificationType] or config.AccentColor
-    
-    local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Name = "TitleLabel"
-    TitleLabel.Parent = MainFrame
-    TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Position = UDim2.new(0, 40, 0, 10)
-    TitleLabel.Size = UDim2.new(0, 250, 0, 20)
-    TitleLabel.Font = Enum.Font.GothamBold
-    TitleLabel.Text = title
-    TitleLabel.TextColor3 = config.TextColor
-    TitleLabel.TextSize = 14
-    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local ContentLabel = Instance.new("TextLabel")
-    ContentLabel.Name = "ContentLabel"
-    ContentLabel.Parent = MainFrame
-    ContentLabel.BackgroundTransparency = 1
-    ContentLabel.Position = UDim2.new(0, 40, 0, 35)
-    ContentLabel.Size = UDim2.new(0, 250, 0, 25)
-    ContentLabel.Font = Enum.Font.Gotham
-    ContentLabel.Text = content
-    ContentLabel.TextColor3 = config.SecondaryTextColor
-    ContentLabel.TextSize = 12
-    ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
-    ContentLabel.TextWrapped = true
-    
-    local ProgressBar = Instance.new("Frame")
-    ProgressBar.Name = "ProgressBar"
-    ProgressBar.Parent = MainFrame
-    ProgressBar.BackgroundColor3 = notificationColors[notificationType] or config.AccentColor
-    ProgressBar.BorderSizePixel = 0
-    ProgressBar.Position = UDim2.new(0, 0, 1, 0)
-    ProgressBar.Size = UDim2.new(1, 0, 0, 3)
-    
-    local ProgressCorner = Instance.new("UICorner")
-    ProgressCorner.CornerRadius = UDim.new(0, 0)
-    ProgressCorner.Parent = ProgressBar
-    
-    -- 入场动画
-    MainFrame.Position = UDim2.new(1, 320, 0, 20 + (#self.notifications * 80))
-    services.TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(1, -20, 0, 20 + (#self.notifications * 80))
-    }):Play()
-    
-    table.insert(self.notifications, {
-        Gui = NotificationGui,
-        Frame = MainFrame
-    })
-    
-    -- 进度条动画
-    services.TweenService:Create(ProgressBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
-        Size = UDim2.new(0, 0, 0, 3)
-    }):Play()
-    
-    -- 自动关闭
-    delay(duration, function()
-        if NotificationGui and NotificationGui.Parent then
-            services.TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                Position = UDim2.new(1, 320, 0, MainFrame.Position.Y.Offset)
-            }):Play()
-            
-            wait(0.3)
-            NotificationGui:Destroy()
-            
-            -- 从通知列表中移除
-            for i, notification in ipairs(self.notifications) do
-                if notification.Gui == NotificationGui then
-                    table.remove(self.notifications, i)
-                    break
-                end
-            end
-        end
-    end)
-    
-    return {
-        Close = function()
-            if NotificationGui and NotificationGui.Parent then
-                services.TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                    Position = UDim2.new(1, 320, 0, MainFrame.Position.Y.Offset)
-                }):Play()
-                
-                wait(0.3)
-                NotificationGui:Destroy()
-            end
-        end
-    }
-end
-
--- windUI风格的主题切换功能
-function FengY3:SetTheme(themeName)
-    local theme = self.themes[themeName] or self.themes.Default
-    
-    for key, value in pairs(theme) do
-        if config[key] ~= nil then
-            config[key] = value
-        end
-    end
-    
-    -- 通知所有已创建的元素更新颜色（这里需要递归更新所有UI元素）
-    -- 由于代码复杂度，这里只做基础的颜色更新
-    if FengYu and FengYu.Parent then
-        -- 更新主窗口颜色
-        Main.BackgroundColor3 = config.Bg_Color
-        Side.BackgroundColor3 = config.TabColor
-        ScriptTitle.TextColor3 = config.AccentColor
-        
-        -- 这里应该递归更新所有子元素的颜色
-        -- 由于代码长度限制，只更新主要元素
-    end
-    
-    self:Notification("主题切换", "已切换到 " .. themeName .. " 主题", 2, "Success")
-end
-
--- windUI风格的配置保存系统
-function FengY3:SaveConfig(configName)
-    configName = configName or "DefaultConfig"
-    
-    local configData = {
-        Toggles = {},
-        Values = {},
-        Theme = "Default"
-    }
-    
-    -- 保存所有开关状态
-    for flag, value in pairs(self.flaFengYu) do
-        if typeof(value) == "boolean" then
-            configData.Toggles[flag] = value
-        else
-            configData.Values[flag] = value
-        end
-    end
-    
-    -- 这里应该将configData保存到文件或数据存储
-    -- 由于Roblox的限制，可以使用writefile或数据存储服务
-    
-    self:Notification("配置保存", "配置 '" .. configName .. "' 已保存", 2, "Success")
-end
-
-function FengY3:LoadConfig(configName)
-    configName = configName or "DefaultConfig"
-    
-    -- 这里应该从文件或数据存储加载配置
-    -- 由于Roblox的限制，可以使用readfile或数据存储服务
-    
-    self:Notification("配置加载", "配置 '" .. configName .. "' 已加载", 2, "Success")
-end
 
 local function startRainbowEffect(object, property, speed)
     speed = speed or 0.005
@@ -652,53 +436,6 @@ function FengY3.new(FengY3, name, theme)
     
     local window = {}
     
-    -- windUI风格的水印功能
-    function window:AddWatermark(text)
-        local Watermark = Instance.new("ScreenGui")
-        protectGUI(Watermark)
-        Watermark.Name = "Watermark"
-        Watermark.Parent = services.CoreGui
-        
-        local WatermarkFrame = Instance.new("Frame")
-        WatermarkFrame.Name = "WatermarkFrame"
-        WatermarkFrame.Parent = Watermark
-        WatermarkFrame.AnchorPoint = Vector2.new(0, 1)
-        WatermarkFrame.BackgroundColor3 = config.MainColor
-        WatermarkFrame.BackgroundTransparency = 0.1
-        WatermarkFrame.Position = UDim2.new(0, 10, 1, -10)
-        WatermarkFrame.Size = UDim2.new(0, 200, 0, 30)
-        
-        local WatermarkCorner = Instance.new("UICorner")
-        WatermarkCorner.CornerRadius = UDim.new(0, 6)
-        WatermarkCorner.Parent = WatermarkFrame
-        
-        local WatermarkStroke = Instance.new("UIStroke")
-        WatermarkStroke.Parent = WatermarkFrame
-        WatermarkStroke.Color = config.AccentColor
-        WatermarkStroke.Thickness = 1
-        
-        local WatermarkLabel = Instance.new("TextLabel")
-        WatermarkLabel.Name = "WatermarkLabel"
-        WatermarkLabel.Parent = WatermarkFrame
-        WatermarkLabel.BackgroundTransparency = 1
-        WatermarkLabel.Size = UDim2.new(1, 0, 1, 0)
-        WatermarkLabel.Font = Enum.Font.GothamSemibold
-        WatermarkLabel.Text = text
-        WatermarkLabel.TextColor3 = config.TextColor
-        WatermarkLabel.TextSize = 12
-        
-        startRainbowEffect(WatermarkStroke, "Color", 0.01)
-        
-        return {
-            Update = function(newText)
-                WatermarkLabel.Text = newText
-            end,
-            Destroy = function()
-                Watermark:Destroy()
-            end
-        }
-    end
-    
     function window.Tab(window, name, icon)
         local Tab = Instance.new("ScrollingFrame")
         local TabIco = Instance.new("ImageLabel")
@@ -769,59 +506,6 @@ function FengY3.new(FengY3, name, theme)
         end)
         
         local tab = {}
-        
-        -- windUI风格的工具提示功能
-        function tab:AddTooltip(element, text)
-            local Tooltip = Instance.new("ScreenGui")
-            protectGUI(Tooltip)
-            Tooltip.Name = "Tooltip"
-            Tooltip.Parent = services.CoreGui
-            
-            local TooltipFrame = Instance.new("Frame")
-            TooltipFrame.Name = "TooltipFrame"
-            TooltipFrame.Parent = Tooltip
-            TooltipFrame.BackgroundColor3 = config.MainColor
-            TooltipFrame.BackgroundTransparency = 0.1
-            TooltipFrame.Size = UDim2.new(0, 150, 0, 40)
-            TooltipFrame.Visible = false
-            TooltipFrame.ZIndex = 100
-            
-            local TooltipCorner = Instance.new("UICorner")
-            TooltipCorner.CornerRadius = UDim.new(0, 6)
-            TooltipCorner.Parent = TooltipFrame
-            
-            local TooltipStroke = Instance.new("UIStroke")
-            TooltipStroke.Parent = TooltipFrame
-            TooltipStroke.Color = config.AccentColor
-            TooltipStroke.Thickness = 1
-            
-            local TooltipLabel = Instance.new("TextLabel")
-            TooltipLabel.Name = "TooltipLabel"
-            TooltipLabel.Parent = TooltipFrame
-            TooltipLabel.BackgroundTransparency = 1
-            TooltipLabel.Size = UDim2.new(1, -10, 1, -10)
-            TooltipLabel.Position = UDim2.new(0, 5, 0, 5)
-            TooltipLabel.Font = Enum.Font.Gotham
-            TooltipLabel.Text = text
-            TooltipLabel.TextColor3 = config.TextColor
-            TooltipLabel.TextSize = 11
-            TooltipLabel.TextWrapped = true
-            
-            element.MouseEnter:Connect(function()
-                TooltipFrame.Visible = true
-                local mouse = services.Players.LocalPlayer:GetMouse()
-                TooltipFrame.Position = UDim2.new(0, mouse.X + 20, 0, mouse.Y + 20)
-            end)
-            
-            element.MouseMoved:Connect(function()
-                local mouse = services.Players.LocalPlayer:GetMouse()
-                TooltipFrame.Position = UDim2.new(0, mouse.X + 20, 0, mouse.Y + 20)
-            end)
-            
-            element.MouseLeave:Connect(function()
-                TooltipFrame.Visible = false
-            end)
-        end
         
         function tab.section(tab, name, TabVal)
             local Section = Instance.new("Frame")
@@ -921,12 +605,6 @@ function FengY3.new(FengY3, name, theme)
             
             local section = {}
             
-            -- windUI风格的绑定提示功能
-            function section:AddBindingTip(element, keybind, action)
-                local tipText = "按 " .. keybind .. " " .. action
-                tab:AddTooltip(element, tipText)
-            end
-            
             function section.Button(section, text, callback)
                 callback = callback or function() end
                 
@@ -1015,15 +693,6 @@ function FengY3.new(FengY3, name, theme)
                         Transparency = 0.8
                     }):Play()
                 end)
-                
-                return {
-                    UpdateText = function(newText)
-                        Btn.Text = "   " .. newText
-                    end,
-                    SetCallback = function(newCallback)
-                        callback = newCallback
-                    end
-                }
             end
             
             function section:Label(text)
@@ -1673,6 +1342,7 @@ function FengY3.new(FengY3, name, theme)
                         return
                     end
                     
+                    -- 修复：允许数字和小数点
                     local text = SliderValue.Text
                     local newText = ""
                     
@@ -1683,6 +1353,7 @@ function FengY3.new(FengY3, name, theme)
                         end
                     end
                     
+                    -- 确保只有一个小数点
                     local dotCount = 0
                     local finalText = ""
                     for i = 1, #newText do
@@ -1954,11 +1625,5 @@ function ToggleUILib()
     FengYu.Enabled = ToggleUI
     Main.Visible = not ToggleUI
 end
-
--- windUI风格的初始化完成通知
-task.spawn(function()
-    wait(1)
-    FengY3:Notification("FengY3 UI", "UI库加载完成!", 3, "Success")
-end)
 
 return FengY3
