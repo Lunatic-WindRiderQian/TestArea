@@ -336,7 +336,7 @@ FengYu.Name = "UniversalUI"
 protectGUI(FengYu)
 FengYu.Parent = services.CoreGui
 
--- 半透明白色主窗口（更大尺寸）
+-- 半透明白色主窗口（调整尺寸）
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
@@ -344,7 +344,7 @@ Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.MainColor
 Main.BackgroundTransparency = 0.4  -- 半透明
 Main.Position = UDim2.new(0.5, 0, 0.4, 0)
-Main.Size = UDim2.new(0, 450, 0, 350)  -- 更大的尺寸
+Main.Size = UDim2.new(0, 420, 0, 330)  -- 调整后的尺寸
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -401,12 +401,12 @@ TopButtonsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
 TopButtonsLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TopButtonsLayout.Padding = UDim.new(0, 6)
 
--- 最小化按钮 (-) - 修复：点击后隐藏主窗口，显示悬浮窗
+-- 最小化按钮 (-) - 修复：降低透明度
 local MinimizeButton = Instance.new("TextButton")
 MinimizeButton.Name = "MinimizeButton"
 MinimizeButton.Parent = TopButtons
 MinimizeButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-MinimizeButton.BackgroundTransparency = 0.7
+MinimizeButton.BackgroundTransparency = 0.3  -- 降低透明度
 MinimizeButton.Size = UDim2.new(0, 22, 0, 22)
 MinimizeButton.Font = Enum.Font.GothamBold
 MinimizeButton.Text = "-"
@@ -418,12 +418,12 @@ local MinimizeCorner = Instance.new("UICorner")
 MinimizeCorner.CornerRadius = UDim.new(0, 5)
 MinimizeCorner.Parent = MinimizeButton
 
--- 主题按钮
+-- 主题按钮 - 修复：降低透明度
 local ThemeButton = Instance.new("TextButton")
 ThemeButton.Name = "ThemeButton"
 ThemeButton.Parent = TopButtons
 ThemeButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-ThemeButton.BackgroundTransparency = 0.7
+ThemeButton.BackgroundTransparency = 0.3  -- 降低透明度
 ThemeButton.Size = UDim2.new(0, 22, 0, 22)
 ThemeButton.Font = Enum.Font.Gotham
 ThemeButton.Text = "T"
@@ -435,12 +435,12 @@ local ThemeCorner = Instance.new("UICorner")
 ThemeCorner.CornerRadius = UDim.new(0, 5)
 ThemeCorner.Parent = ThemeButton
 
--- 关闭按钮 (X)
+-- 关闭按钮 (X) - 修复：降低透明度
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = TopButtons
 CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-CloseButton.BackgroundTransparency = 0.7
+CloseButton.BackgroundTransparency = 0.3  -- 降低透明度
 CloseButton.Size = UDim2.new(0, 22, 0, 22)
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Text = "X"
@@ -554,11 +554,11 @@ ThemeButton.MouseButton1Click:Connect(function()
     ThemePopup.Visible = not ThemePopup.Visible
 end)
 
--- 最小化按钮功能 - 修复：隐藏主窗口，显示悬浮窗
+-- 最小化按钮功能 - 修复：确保悬浮窗显示
 MinimizeButton.MouseButton1Click:Connect(function()
     Ripple(MinimizeButton)
     Main.Visible = false
-    Open.Visible = true
+    Open.Visible = true  -- 确保悬浮窗显示
 end)
 
 -- 关闭按钮功能
@@ -674,6 +674,7 @@ Open.Draggable = true
 Open.Image = "rbxassetid://84830962019412"
 Open.ImageColor3 = Color3.fromRGB(255, 255, 255)
 Open.ImageTransparency = 0.2
+Open.Visible = false  -- 初始隐藏悬浮窗
 
 local OpenCorner = Instance.new("UICorner")
 OpenCorner.CornerRadius = UDim.new(0, 10)
@@ -709,7 +710,7 @@ TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
 TabMain.Position = UDim2.new(0.25, 0, 0, 35)
-TabMain.Size = UDim2.new(0, 335, 0, 312)
+TabMain.Size = UDim2.new(0, 305, 0, 292)  -- 调整尺寸
 
 -- 侧边栏
 local Side = Instance.new("Frame")
@@ -720,7 +721,7 @@ Side.BackgroundTransparency = 0.3
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 30)
-Side.Size = UDim2.new(0, 100, 0, 320)
+Side.Size = UDim2.new(0, 100, 0, 300)  -- 调整高度
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -734,7 +735,7 @@ TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0.1, 0)
-TabBtns.Size = UDim2.new(0, 100, 0, 285)
+TabBtns.Size = UDim2.new(0, 100, 0, 265)  -- 调整高度
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 4
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(140, 140, 140)
@@ -922,7 +923,7 @@ function FengY3.new(FengY3, name, theme)
             SectionText.Parent = Section
             SectionText.BackgroundTransparency = 1
             SectionText.Position = UDim2.new(0.088, 0, 0, 0)
-            SectionText.Size = UDim2.new(0, 290, 0, 32)
+            SectionText.Size = UDim2.new(0, 270, 0, 32)  -- 调整宽度
             SectionText.Font = Enum.Font.GothamSemibold
             SectionText.Text = name
             SectionText.TextColor3 = config.TextColor
@@ -1006,14 +1007,14 @@ function FengY3.new(FengY3, name, theme)
                 BtnModule.Parent = Objs
                 BtnModule.BackgroundTransparency = 1
                 BtnModule.BorderSizePixel = 0
-                BtnModule.Size = UDim2.new(0, 315, 0, 32)
+                BtnModule.Size = UDim2.new(0, 285, 0, 32)  -- 调整宽度
                 
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
                 Btn.BackgroundColor3 = config.Button_Color
                 Btn.BackgroundTransparency = 0.3
                 Btn.BorderSizePixel = 0
-                Btn.Size = UDim2.new(0, 315, 0, 32)
+                Btn.Size = UDim2.new(0, 285, 0, 32)  -- 调整宽度
                 Btn.AutoButtonColor = false
                 Btn.Font = Enum.Font.GothamSemibold
                 Btn.Text = "   " .. text
@@ -1095,7 +1096,7 @@ function FengY3.new(FengY3, name, theme)
                 ImageModule.Parent = Objs
                 ImageModule.BackgroundTransparency = 1
                 ImageModule.BorderSizePixel = 0
-                ImageModule.Size = UDim2.new(0, 315, 0, sizeY or 120)
+                ImageModule.Size = UDim2.new(0, 285, 0, sizeY or 120)  -- 调整宽度
                 
                 ImageLabel.Parent = ImageModule
                 ImageLabel.BackgroundColor3 = config.Bg_Color
@@ -1129,12 +1130,12 @@ function FengY3.new(FengY3, name, theme)
                 LabelModule.Parent = Objs
                 LabelModule.BackgroundTransparency = 1
                 LabelModule.BorderSizePixel = 0
-                LabelModule.Size = UDim2.new(0, 315, 0, 20)
+                LabelModule.Size = UDim2.new(0, 285, 0, 20)  -- 调整宽度
                 
                 TextLabel.Parent = LabelModule
                 TextLabel.BackgroundColor3 = config.Label_Color
                 TextLabel.BackgroundTransparency = 0.3
-                TextLabel.Size = UDim2.new(0, 315, 0, 22)
+                TextLabel.Size = UDim2.new(0, 285, 0, 22)  -- 调整宽度
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
                 TextLabel.TextColor3 = config.SecondaryTextColor
@@ -1167,14 +1168,14 @@ function FengY3.new(FengY3, name, theme)
                 ToggleModule.Parent = Objs
                 ToggleModule.BackgroundTransparency = 1
                 ToggleModule.BorderSizePixel = 0
-                ToggleModule.Size = UDim2.new(0, 315, 0, 32)
+                ToggleModule.Size = UDim2.new(0, 285, 0, 32)  -- 调整宽度
                 
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
                 ToggleBtn.BackgroundColor3 = config.Toggle_Color
                 ToggleBtn.BackgroundTransparency = 0.3
                 ToggleBtn.BorderSizePixel = 0
-                ToggleBtn.Size = UDim2.new(0, 315, 0, 32)
+                ToggleBtn.Size = UDim2.new(0, 285, 0, 32)  -- 调整宽度
                 ToggleBtn.AutoButtonColor = false
                 ToggleBtn.Font = Enum.Font.GothamSemibold
                 ToggleBtn.Text = "   " .. text
@@ -1304,14 +1305,14 @@ function FengY3.new(FengY3, name, theme)
                 KeybindModule.Parent = Objs
                 KeybindModule.BackgroundTransparency = 1
                 KeybindModule.BorderSizePixel = 0
-                KeybindModule.Size = UDim2.new(0, 315, 0, 32)
+                KeybindModule.Size = UDim2.new(0, 285, 0, 32)  -- 调整宽度
                 
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
                 KeybindBtn.BackgroundColor3 = config.Keybind_Color
                 KeybindBtn.BackgroundTransparency = 0.3
                 KeybindBtn.BorderSizePixel = 0
-                KeybindBtn.Size = UDim2.new(0, 315, 0, 32)
+                KeybindBtn.Size = UDim2.new(0, 285, 0, 32)  -- 调整宽度
                 KeybindBtn.AutoButtonColor = false
                 KeybindBtn.Font = Enum.Font.GothamSemibold
                 KeybindBtn.Text = "   " .. text
@@ -1423,14 +1424,14 @@ function FengY3.new(FengY3, name, theme)
                 TextboxModule.Parent = Objs
                 TextboxModule.BackgroundTransparency = 1
                 TextboxModule.BorderSizePixel = 0
-                TextboxModule.Size = UDim2.new(0, 315, 0, 32)
+                TextboxModule.Size = UDim2.new(0, 285, 0, 32)  -- 调整宽度
                 
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
                 TextboxBack.BackgroundColor3 = config.Textbox_Color
                 TextboxBack.BackgroundTransparency = 0.3
                 TextboxBack.BorderSizePixel = 0
-                TextboxBack.Size = UDim2.new(0, 315, 0, 32)
+                TextboxBack.Size = UDim2.new(0, 285, 0, 32)  -- 调整宽度
                 TextboxBack.AutoButtonColor = false
                 TextboxBack.Font = Enum.Font.GothamSemibold
                 TextboxBack.Text = "   " .. text
@@ -1538,14 +1539,14 @@ function FengY3.new(FengY3, name, theme)
                 SliderModule.BackgroundTransparency = 1.000
                 SliderModule.BorderSizePixel = 0
                 SliderModule.Position = UDim2.new(0, 0, 0, 0)
-                SliderModule.Size = UDim2.new(0, 315, 0, 32)
+                SliderModule.Size = UDim2.new(0, 285, 0, 32)  -- 调整宽度
                 
                 SliderBack.Name = "SliderBack"
                 SliderBack.Parent = SliderModule
                 SliderBack.BackgroundColor3 = config.Slider_Color
                 SliderBack.BackgroundTransparency = 0.3
                 SliderBack.BorderSizePixel = 0
-                SliderBack.Size = UDim2.new(0, 315, 0, 32)
+                SliderBack.Size = UDim2.new(0, 285, 0, 32)  -- 调整宽度
                 SliderBack.AutoButtonColor = false
                 SliderBack.Font = Enum.Font.GothamSemibold
                 SliderBack.Text = "   " .. text
@@ -1838,14 +1839,14 @@ function FengY3.new(FengY3, name, theme)
                 DropdownModule.BorderSizePixel = 0
                 DropdownModule.ClipsDescendants = true
                 DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-                DropdownModule.Size = UDim2.new(0, 315, 0, 32)
+                DropdownModule.Size = UDim2.new(0, 285, 0, 32)  -- 调整宽度
                 
                 DropdownTop.Name = "DropdownTop"
                 DropdownTop.Parent = DropdownModule
                 DropdownTop.BackgroundColor3 = config.Dropdown_Color
                 DropdownTop.BackgroundTransparency = 0.3
                 DropdownTop.BorderSizePixel = 0
-                DropdownTop.Size = UDim2.new(0, 315, 0, 32)
+                DropdownTop.Size = UDim2.new(0, 285, 0, 32)  -- 调整宽度
                 DropdownTop.AutoButtonColor = false
                 DropdownTop.Font = Enum.Font.GothamSemibold
                 DropdownTop.Text = ""
@@ -1900,7 +1901,7 @@ function FengY3.new(FengY3, name, theme)
                 DropdownText.BackgroundTransparency = 1.000
                 DropdownText.BorderSizePixel = 0
                 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-                DropdownText.Size = UDim2.new(0, 230, 0, 32)
+                DropdownText.Size = UDim2.new(0, 200, 0, 32)  -- 调整宽度
                 DropdownText.Font = Enum.Font.GothamSemibold
                 DropdownText.PlaceholderColor3 = config.SecondaryTextColor
                 DropdownText.PlaceholderText = text
@@ -1959,7 +1960,7 @@ function FengY3.new(FengY3, name, theme)
                         setAllVisible()
                     end
                     DropdownOpen.Text = (open and "取消" or "选择")
-                    DropdownModule.Size = UDim2.new(0, 315, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 32))
+                    DropdownModule.Size = UDim2.new(0, 285, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 32))
                 end
                 
                 DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
@@ -1981,7 +1982,7 @@ function FengY3.new(FengY3, name, theme)
                     if not open then
                         return
                     end
-                    DropdownModule.Size = UDim2.new(0, 315, 0, (DropdownModuleL.AbsoluteContentSize.Y + 4))
+                    DropdownModule.Size = UDim2.new(0, 285, 0, (DropdownModuleL.AbsoluteContentSize.Y + 4))
                 end)
                 
                 local funcs = {}
@@ -1994,7 +1995,7 @@ function FengY3.new(FengY3, name, theme)
                     Option.BackgroundTransparency = 0.3
                     Option.BorderSizePixel = 0
                     Option.Position = UDim2.new(0, 0, 0.328125, 0)
-                    Option.Size = UDim2.new(0, 305, 0, 24)
+                    Option.Size = UDim2.new(0, 275, 0, 24)  -- 调整宽度
                     Option.AutoButtonColor = false
                     Option.Font = Enum.Font.Gotham
                     Option.Text = option
