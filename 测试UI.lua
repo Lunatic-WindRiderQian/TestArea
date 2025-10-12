@@ -690,8 +690,8 @@ startRainbowEffect(Open, "BackgroundColor3", 0.012)
 
 -- 悬浮窗点击事件 - 显示主窗口，隐藏悬浮窗
 Open.MouseButton1Click:Connect(function()
-    Main.Visible = not Main.Visible
-    Open.Visible = not Main.Visible
+    Main.Visible = true
+    Open.Visible = false
     services.TweenService:Create(Open, TweenInfo.new(0.2), {Rotation = Open.Rotation + 180}):Play()
 end)
 
