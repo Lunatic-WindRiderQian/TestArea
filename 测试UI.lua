@@ -190,9 +190,10 @@ function Ripple(obj)
         Ripple.Position = UDim2.new(x, 0, y, 0)
         Ripple.Size = UDim2.new(0, 0, 0, 0)
         
+        -- 增大Ripple效果尺寸
         services.TweenService:Create(Ripple, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Position = UDim2.new(-0.5, 0, -0.5, 0),
-            Size = UDim2.new(2, 0, 2, 0)
+            Position = UDim2.new(-0.8, 0, -0.8, 0),
+            Size = UDim2.new(2.6, 0, 2.6, 0)
         }):Play()
         
         services.TweenService:Create(Ripple, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -752,7 +753,7 @@ function FengY3.new(FengY3, name, theme)
                 end)
             end
             
-            -- 图片组件 - 边框透明
+            -- 图片组件 - 修复位置和大小
             function section.Image(section, imageId, sizeX, sizeY)
                 local ImageModule = Instance.new("Frame")
                 local ImageLabel = Instance.new("ImageLabel")
@@ -768,8 +769,9 @@ function FengY3.new(FengY3, name, theme)
                 ImageLabel.BackgroundColor3 = config.Bg_Color
                 ImageLabel.BackgroundTransparency = 0.2
                 ImageLabel.BorderSizePixel = 0
-                ImageLabel.Position = UDim2.new(0.5, -(sizeX or 120)/2, 0, 0)
-                ImageLabel.Size = UDim2.new(0, sizeX or 120, 0, sizeY or 100)
+                ImageLabel.AnchorPoint = Vector2.new(0.5, 0)  -- 居中锚点
+                ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)  -- 居中位置
+                ImageLabel.Size = UDim2.new(0, math.min(sizeX or 120, 260), 0, sizeY or 100)  -- 限制最大宽度
                 ImageLabel.Image = "rbxassetid://" .. tostring(imageId)
                 ImageLabel.ScaleType = Enum.ScaleType.Crop
                 
@@ -1532,8 +1534,8 @@ function FengY3.new(FengY3, name, theme)
                 DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
                 DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
                 DropdownOpenFrame.BorderSizePixel = 0
-                DropdownOpenFrame.Position = UDim2.new(0.85, 0, 0.5, 0)
-                DropdownOpenFrame.Size = UDim2.new(0, 40, 0, 20)
+                DropdownOpenFrame.Position = UDim2.new(0.78, 0, 0.5, 0)  -- 调整位置，避免超出范围
+                DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 20)  -- 减小宽度
                 DropdownOpenFrame.ZIndex = 2
                 
                 createAuroraEffect(DropdownOpenFrame, 0.8)
@@ -1561,7 +1563,7 @@ function FengY3.new(FengY3, name, theme)
                 DropdownText.BackgroundTransparency = 1.000
                 DropdownText.BorderSizePixel = 0
                 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-                DropdownText.Size = UDim2.new(0, 220, 0, 32)  -- 调整宽度
+                DropdownText.Size = UDim2.new(0, 200, 0, 32)  -- 减小宽度，为按钮留出空间
                 DropdownText.Font = Enum.Font.GothamSemibold
                 DropdownText.PlaceholderColor3 = config.SecondaryTextColor
                 DropdownText.PlaceholderText = text
@@ -1576,7 +1578,7 @@ function FengY3.new(FengY3, name, theme)
                 Separator.Parent = DropdownTop
                 Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 Separator.BorderSizePixel = 0
-                Separator.Position = UDim2.new(0.78, 0, 0.2, 0)
+                Separator.Position = UDim2.new(0.72, 0, 0.2, 0)  -- 调整位置
                 Separator.Size = UDim2.new(0, 1, 0, 20)
                 Separator.ZIndex = 1
                 
@@ -1620,7 +1622,7 @@ function FengY3.new(FengY3, name, theme)
                         setAllVisible()
                     end
                     DropdownOpen.Text = (open and "取消" or "选择")
-                    DropdownModule.Size = UDim2.new(0, 270, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 32))  -- 调整宽度
+                    DropdownModule.Size = UDim2.new(0, 270, 0, (open and math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150) or 32))  -- 限制最大高度
                 end
                 
                 DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
@@ -1642,7 +1644,7 @@ function FengY3.new(FengY3, name, theme)
                     if not open then
                         return
                     end
-                    DropdownModule.Size = UDim2.new(0, 270, 0, (DropdownModuleL.AbsoluteContentSize.Y + 4))  -- 调整宽度
+                    DropdownModule.Size = UDim2.new(0, 270, 0, math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150))  -- 限制最大高度
                 end)
                 
                 local funcs = {}
