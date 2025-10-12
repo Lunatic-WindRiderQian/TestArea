@@ -290,6 +290,58 @@ rainbowStroke.Transparency = 0.7
 rainbowStroke.LineJoinMode = Enum.LineJoinMode.Round
 startRainbowEffect(rainbowStroke, "Color", 0.01)
 
+-- 添加关闭按钮
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Parent = Main
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+CloseButton.BackgroundTransparency = 0.2
+CloseButton.BorderSizePixel = 0
+CloseButton.Position = UDim2.new(1, -25, 0, 5)
+CloseButton.Size = UDim2.new(0, 20, 0, 20)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 14
+CloseButton.ZIndex = 10
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 4)
+CloseCorner.Parent = CloseButton
+
+local CloseStroke = Instance.new("UIStroke")
+CloseStroke.Parent = CloseButton
+CloseStroke.Color = Color3.fromRGB(200, 40, 40)
+CloseStroke.Thickness = 1
+CloseStroke.Transparency = 0.2
+
+CloseButton.MouseEnter:Connect(function()
+    services.TweenService:Create(CloseButton, TweenInfo.new(0.2), {
+        BackgroundColor3 = Color3.fromRGB(255, 80, 80),
+        Size = UDim2.new(0, 22, 0, 22),
+        Position = UDim2.new(1, -26, 0, 4)
+    }):Play()
+end)
+
+CloseButton.MouseLeave:Connect(function()
+    services.TweenService:Create(CloseButton, TweenInfo.new(0.2), {
+        BackgroundColor3 = Color3.fromRGB(255, 60, 60),
+        Size = UDim2.new(0, 20, 0, 20),
+        Position = UDim2.new(1, -25, 0, 5)
+    }):Play()
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    Ripple(CloseButton)
+    services.TweenService:Create(CloseButton, TweenInfo.new(0.1), {
+        BackgroundColor3 = Color3.fromRGB(255, 40, 40),
+        Size = UDim2.new(0, 18, 0, 18),
+        Position = UDim2.new(1, -24, 0, 6)
+    }):Play()
+    task.wait(0.1)
+    FengYu:Destroy()
+end)
+
 -- 缩小悬浮窗
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
@@ -345,7 +397,7 @@ Side.BackgroundTransparency = 0.2
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 0)
-Side.Size = UDim2.new(0, 80, 0, 280)  -- 调整侧边栏宽度
+Side.Size = UDim2.new(0, 70, 0, 280)  -- 减小侧边栏宽度从80到70
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -358,7 +410,7 @@ TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0.097, 0)
-TabBtns.Size = UDim2.new(0, 80, 0, 245)  -- 调整尺寸
+TabBtns.Size = UDim2.new(0, 70, 0, 245)  -- 调整尺寸
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -378,19 +430,19 @@ TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     TabBtns.ElasticBehavior = Enum.ElasticBehavior.Never
 end)
 
--- 标题字体放大
+-- 标题字体调整
 local ScriptTitle = Instance.new("TextLabel")
 ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = Side
 ScriptTitle.BackgroundTransparency = 1
 ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
 ScriptTitle.Size = UDim2.new(0, 70, 0, 20)
-ScriptTitle.Font = Enum.Font.GothamBold  -- 改为更粗的字体
+ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "FengY3"
 ScriptTitle.TextColor3 = config.AccentColor
-ScriptTitle.TextSize = 16  -- 放大字体
+ScriptTitle.TextSize = 14  -- 稍微减小字体大小
 ScriptTitle.TextScaled = false
-ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center  -- 居中显示
+ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
 
 task.spawn(function()
     local hue = 0
@@ -415,7 +467,7 @@ task.spawn(function()
         })
         
         services.TweenService:Create(ScriptTitle, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            TextSize = 15 + math.sin(tick() * 2) * 1
+            TextSize = 13 + math.sin(tick() * 2) * 1  -- 调整动画幅度
         }):Play()
         
         task.wait(0.05)
@@ -472,11 +524,11 @@ function FengY3.new(FengY3, name, theme)
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
         TabText.Position = UDim2.new(1.2, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 55, 0, 20)  -- 调整宽度
+        TabText.Size = UDim2.new(0, 45, 0, 20)  -- 减小宽度从55到45
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
-        TabText.TextSize = 12  -- 保持字体大小
+        TabText.TextSize = 11  -- 减小字体大小
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.TextTransparency = 0.5
         
@@ -484,7 +536,7 @@ function FengY3.new(FengY3, name, theme)
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 80, 0, 20)  -- 调整按钮大小
+        TabBtn.Size = UDim2.new(0, 70, 0, 20)  -- 调整按钮大小从80到70
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
