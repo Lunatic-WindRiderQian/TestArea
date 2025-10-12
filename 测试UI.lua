@@ -59,83 +59,83 @@ local RunService = services.RunService
 -- 预定义主题
 local themes = {
     Default = {
-        MainColor = Color3.fromRGB(16, 16, 16),
-        TabColor = Color3.fromRGB(22, 22, 22),
-        Bg_Color = Color3.fromRGB(17, 17, 17),
-        Zy_Color = Color3.fromRGB(17, 17, 17), 
-        Button_Color = Color3.fromRGB(22, 22, 22),
-        Textbox_Color = Color3.fromRGB(22, 22, 22),
-        Dropdown_Color = Color3.fromRGB(22, 22, 22),
-        Keybind_Color = Color3.fromRGB(22, 22, 22),
-        Label_Color = Color3.fromRGB(22, 22, 22),
-        Slider_Color = Color3.fromRGB(22, 22, 22),
+        MainColor = Color3.fromRGB(255, 255, 255),
+        TabColor = Color3.fromRGB(240, 240, 240),
+        Bg_Color = Color3.fromRGB(245, 245, 245),
+        Zy_Color = Color3.fromRGB(245, 245, 245), 
+        Button_Color = Color3.fromRGB(240, 240, 240),
+        Textbox_Color = Color3.fromRGB(240, 240, 240),
+        Dropdown_Color = Color3.fromRGB(240, 240, 240),
+        Keybind_Color = Color3.fromRGB(240, 240, 240),
+        Label_Color = Color3.fromRGB(240, 240, 240),
+        Slider_Color = Color3.fromRGB(240, 240, 240),
         SliderBar_Color = Color3.fromRGB(37, 254, 152),
-        Toggle_Color = Color3.fromRGB(22, 22, 22),
-        Toggle_Off = Color3.fromRGB(34, 34, 34),
+        Toggle_Color = Color3.fromRGB(240, 240, 240),
+        Toggle_Off = Color3.fromRGB(220, 220, 220),
         Toggle_On = Color3.fromRGB(37, 254, 152),
         AccentColor = Color3.fromRGB(37, 254, 152),
-        TextColor = Color3.fromRGB(240, 240, 240),
-        SecondaryTextColor = Color3.fromRGB(180, 180, 180),
+        TextColor = Color3.fromRGB(50, 50, 50),
+        SecondaryTextColor = Color3.fromRGB(120, 120, 120),
         GlowColor = Color3.fromRGB(0, 200, 255),
     },
     DarkBlue = {
-        MainColor = Color3.fromRGB(10, 15, 30),
-        TabColor = Color3.fromRGB(15, 20, 40),
-        Bg_Color = Color3.fromRGB(12, 17, 35),
-        Zy_Color = Color3.fromRGB(12, 17, 35), 
-        Button_Color = Color3.fromRGB(15, 20, 40),
-        Textbox_Color = Color3.fromRGB(15, 20, 40),
-        Dropdown_Color = Color3.fromRGB(15, 20, 40),
-        Keybind_Color = Color3.fromRGB(15, 20, 40),
-        Label_Color = Color3.fromRGB(15, 20, 40),
-        Slider_Color = Color3.fromRGB(15, 20, 40),
+        MainColor = Color3.fromRGB(255, 255, 255),
+        TabColor = Color3.fromRGB(240, 240, 240),
+        Bg_Color = Color3.fromRGB(245, 245, 245),
+        Zy_Color = Color3.fromRGB(245, 245, 245), 
+        Button_Color = Color3.fromRGB(240, 240, 240),
+        Textbox_Color = Color3.fromRGB(240, 240, 240),
+        Dropdown_Color = Color3.fromRGB(240, 240, 240),
+        Keybind_Color = Color3.fromRGB(240, 240, 240),
+        Label_Color = Color3.fromRGB(240, 240, 240),
+        Slider_Color = Color3.fromRGB(240, 240, 240),
         SliderBar_Color = Color3.fromRGB(0, 150, 255),
-        Toggle_Color = Color3.fromRGB(15, 20, 40),
-        Toggle_Off = Color3.fromRGB(25, 30, 50),
+        Toggle_Color = Color3.fromRGB(240, 240, 240),
+        Toggle_Off = Color3.fromRGB(220, 220, 220),
         Toggle_On = Color3.fromRGB(0, 150, 255),
         AccentColor = Color3.fromRGB(0, 150, 255),
-        TextColor = Color3.fromRGB(240, 240, 240),
-        SecondaryTextColor = Color3.fromRGB(180, 180, 180),
+        TextColor = Color3.fromRGB(50, 50, 50),
+        SecondaryTextColor = Color3.fromRGB(120, 120, 120),
         GlowColor = Color3.fromRGB(0, 100, 200),
     },
     Purple = {
-        MainColor = Color3.fromRGB(25, 15, 35),
-        TabColor = Color3.fromRGB(35, 20, 50),
-        Bg_Color = Color3.fromRGB(30, 18, 42),
-        Zy_Color = Color3.fromRGB(30, 18, 42), 
-        Button_Color = Color3.fromRGB(35, 20, 50),
-        Textbox_Color = Color3.fromRGB(35, 20, 50),
-        Dropdown_Color = Color3.fromRGB(35, 20, 50),
-        Keybind_Color = Color3.fromRGB(35, 20, 50),
-        Label_Color = Color3.fromRGB(35, 20, 50),
-        Slider_Color = Color3.fromRGB(35, 20, 50),
+        MainColor = Color3.fromRGB(255, 255, 255),
+        TabColor = Color3.fromRGB(240, 240, 240),
+        Bg_Color = Color3.fromRGB(245, 245, 245),
+        Zy_Color = Color3.fromRGB(245, 245, 245), 
+        Button_Color = Color3.fromRGB(240, 240, 240),
+        Textbox_Color = Color3.fromRGB(240, 240, 240),
+        Dropdown_Color = Color3.fromRGB(240, 240, 240),
+        Keybind_Color = Color3.fromRGB(240, 240, 240),
+        Label_Color = Color3.fromRGB(240, 240, 240),
+        Slider_Color = Color3.fromRGB(240, 240, 240),
         SliderBar_Color = Color3.fromRGB(180, 70, 255),
-        Toggle_Color = Color3.fromRGB(35, 20, 50),
-        Toggle_Off = Color3.fromRGB(45, 30, 60),
+        Toggle_Color = Color3.fromRGB(240, 240, 240),
+        Toggle_Off = Color3.fromRGB(220, 220, 220),
         Toggle_On = Color3.fromRGB(180, 70, 255),
         AccentColor = Color3.fromRGB(180, 70, 255),
-        TextColor = Color3.fromRGB(240, 240, 240),
-        SecondaryTextColor = Color3.fromRGB(180, 180, 180),
+        TextColor = Color3.fromRGB(50, 50, 50),
+        SecondaryTextColor = Color3.fromRGB(120, 120, 120),
         GlowColor = Color3.fromRGB(140, 50, 220),
     },
     Red = {
-        MainColor = Color3.fromRGB(30, 10, 10),
-        TabColor = Color3.fromRGB(45, 15, 15),
-        Bg_Color = Color3.fromRGB(35, 12, 12),
-        Zy_Color = Color3.fromRGB(35, 12, 12), 
-        Button_Color = Color3.fromRGB(45, 15, 15),
-        Textbox_Color = Color3.fromRGB(45, 15, 15),
-        Dropdown_Color = Color3.fromRGB(45, 15, 15),
-        Keybind_Color = Color3.fromRGB(45, 15, 15),
-        Label_Color = Color3.fromRGB(45, 15, 15),
-        Slider_Color = Color3.fromRGB(45, 15, 15),
+        MainColor = Color3.fromRGB(255, 255, 255),
+        TabColor = Color3.fromRGB(240, 240, 240),
+        Bg_Color = Color3.fromRGB(245, 245, 245),
+        Zy_Color = Color3.fromRGB(245, 245, 245), 
+        Button_Color = Color3.fromRGB(240, 240, 240),
+        Textbox_Color = Color3.fromRGB(240, 240, 240),
+        Dropdown_Color = Color3.fromRGB(240, 240, 240),
+        Keybind_Color = Color3.fromRGB(240, 240, 240),
+        Label_Color = Color3.fromRGB(240, 240, 240),
+        Slider_Color = Color3.fromRGB(240, 240, 240),
         SliderBar_Color = Color3.fromRGB(255, 50, 50),
-        Toggle_Color = Color3.fromRGB(45, 15, 15),
-        Toggle_Off = Color3.fromRGB(55, 25, 25),
+        Toggle_Color = Color3.fromRGB(240, 240, 240),
+        Toggle_Off = Color3.fromRGB(220, 220, 220),
         Toggle_On = Color3.fromRGB(255, 50, 50),
         AccentColor = Color3.fromRGB(255, 50, 50),
-        TextColor = Color3.fromRGB(240, 240, 240),
-        SecondaryTextColor = Color3.fromRGB(180, 180, 180),
+        TextColor = Color3.fromRGB(50, 50, 50),
+        SecondaryTextColor = Color3.fromRGB(120, 120, 120),
         GlowColor = Color3.fromRGB(200, 30, 30),
     }
 }
@@ -326,15 +326,15 @@ FengYu.Name = "UniversalUI"
 protectGUI(FengYu)
 FengYu.Parent = services.CoreGui
 
--- WindUI风格主窗口
+-- 半透明白色小窗口
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.MainColor
-Main.BackgroundTransparency = 0.1
+Main.BackgroundTransparency = 0.5  -- 半透明
 Main.Position = UDim2.new(0.5, 0, 0.4, 0)
-Main.Size = UDim2.new(0, 550, 0, 350)
+Main.Size = UDim2.new(0, 350, 0, 250)  -- 更小的尺寸
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -345,8 +345,8 @@ MainCorner.Parent = Main
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
-MainStroke.Color = Color3.fromRGB(60, 60, 60)
-MainStroke.Thickness = 1.5
+MainStroke.Color = Color3.fromRGB(200, 200, 200)
+MainStroke.Thickness = 1
 MainStroke.Transparency = 0.3
 
 -- 顶部栏
@@ -354,9 +354,9 @@ local TopBar = Instance.new("Frame")
 TopBar.Name = "TopBar"
 TopBar.Parent = Main
 TopBar.BackgroundColor3 = config.TabColor
-TopBar.BackgroundTransparency = 0.1
+TopBar.BackgroundTransparency = 0.3
 TopBar.BorderSizePixel = 0
-TopBar.Size = UDim2.new(1, 0, 0, 30)
+TopBar.Size = UDim2.new(1, 0, 0, 25)
 TopBar.ZIndex = 2
 
 local TopBarCorner = Instance.new("UICorner")
@@ -368,48 +368,89 @@ local Title = Instance.new("TextLabel")
 Title.Name = "Title"
 Title.Parent = TopBar
 Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Size = UDim2.new(0, 200, 1, 0)
+Title.Position = UDim2.new(0, 8, 0, 0)
+Title.Size = UDim2.new(0, 150, 1, 0)
 Title.Font = Enum.Font.GothamBold
-Title.Text = "WindUI - FengY3"
+Title.Text = "WindUI"
 Title.TextColor3 = config.AccentColor
-Title.TextSize = 14
+Title.TextSize = 12
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- 主题切换按钮
-local ThemeButton = Instance.new("ImageButton")
+-- 右上角按钮容器
+local TopButtons = Instance.new("Frame")
+TopButtons.Name = "TopButtons"
+TopButtons.Parent = TopBar
+TopButtons.BackgroundTransparency = 1
+TopButtons.Position = UDim2.new(1, -75, 0, 0)
+TopButtons.Size = UDim2.new(0, 75, 1, 0)
+
+local TopButtonsLayout = Instance.new("UIListLayout")
+TopButtonsLayout.Parent = TopButtons
+TopButtonsLayout.FillDirection = Enum.FillDirection.Horizontal
+TopButtonsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+TopButtonsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+TopButtonsLayout.Padding = UDim.new(0, 5)
+
+-- 最小化按钮 (-)
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Name = "MinimizeButton"
+MinimizeButton.Parent = TopButtons
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+MinimizeButton.BackgroundTransparency = 0.7
+MinimizeButton.Size = UDim2.new(0, 20, 0, 20)
+MinimizeButton.Font = Enum.Font.GothamBold
+MinimizeButton.Text = "-"
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.TextSize = 14
+MinimizeButton.AutoButtonColor = false
+
+local MinimizeCorner = Instance.new("UICorner")
+MinimizeCorner.CornerRadius = UDim.new(0, 4)
+MinimizeCorner.Parent = MinimizeButton
+
+-- 主题按钮
+local ThemeButton = Instance.new("TextButton")
 ThemeButton.Name = "ThemeButton"
-ThemeButton.Parent = TopBar
-ThemeButton.BackgroundColor3 = config.Button_Color
-ThemeButton.BackgroundTransparency = 0.2
-ThemeButton.Position = UDim2.new(1, -80, 0.15, 0)
-ThemeButton.Size = UDim2.new(0, 60, 0, 20)
-ThemeButton.Image = "rbxassetid://14897056247" -- 主题图标
+ThemeButton.Parent = TopButtons
+ThemeButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+ThemeButton.BackgroundTransparency = 0.7
+ThemeButton.Size = UDim2.new(0, 20, 0, 20)
+ThemeButton.Font = Enum.Font.Gotham
+ThemeButton.Text = "T"
+ThemeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ThemeButton.TextSize = 10
 ThemeButton.AutoButtonColor = false
 
-local ThemeButtonCorner = Instance.new("UICorner")
-ThemeButtonCorner.CornerRadius = UDim.new(0, 4)
-ThemeButtonCorner.Parent = ThemeButton
+local ThemeCorner = Instance.new("UICorner")
+ThemeCorner.CornerRadius = UDim.new(0, 4)
+ThemeCorner.Parent = ThemeButton
 
-local ThemeButtonText = Instance.new("TextLabel")
-ThemeButtonText.Name = "ThemeButtonText"
-ThemeButtonText.Parent = ThemeButton
-ThemeButtonText.BackgroundTransparency = 1
-ThemeButtonText.Size = UDim2.new(1, 0, 1, 0)
-ThemeButtonText.Font = Enum.Font.Gotham
-ThemeButtonText.Text = "主题"
-ThemeButtonText.TextColor3 = config.TextColor
-ThemeButtonText.TextSize = 12
+-- 关闭按钮 (X)
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Parent = TopButtons
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.BackgroundTransparency = 0.7
+CloseButton.Size = UDim2.new(0, 20, 0, 20)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 12
+CloseButton.AutoButtonColor = false
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 4)
+CloseCorner.Parent = CloseButton
 
 -- 主题选择弹窗
 local ThemePopup = Instance.new("Frame")
 ThemePopup.Name = "ThemePopup"
 ThemePopup.Parent = TopBar
 ThemePopup.BackgroundColor3 = config.MainColor
-ThemePopup.BackgroundTransparency = 0.1
+ThemePopup.BackgroundTransparency = 0.3
 ThemePopup.BorderSizePixel = 0
-ThemePopup.Position = UDim2.new(1, -200, 1, 5)
-ThemePopup.Size = UDim2.new(0, 180, 0, 120)
+ThemePopup.Position = UDim2.new(1, -150, 1, 5)
+ThemePopup.Size = UDim2.new(0, 140, 0, 100)
 ThemePopup.Visible = false
 ThemePopup.ZIndex = 10
 
@@ -419,14 +460,14 @@ ThemePopupCorner.Parent = ThemePopup
 
 local ThemePopupStroke = Instance.new("UIStroke")
 ThemePopupStroke.Parent = ThemePopup
-ThemePopupStroke.Color = Color3.fromRGB(80, 80, 80)
+ThemePopupStroke.Color = Color3.fromRGB(180, 180, 180)
 ThemePopupStroke.Thickness = 1
-ThemePopupStroke.Transparency = 0.2
+ThemePopupStroke.Transparency = 0.3
 
 local ThemeList = Instance.new("UIListLayout")
 ThemeList.Parent = ThemePopup
 ThemeList.SortOrder = Enum.SortOrder.LayoutOrder
-ThemeList.Padding = UDim.new(0, 5)
+ThemeList.Padding = UDim.new(0, 3)
 
 local ThemePadding = Instance.new("UIPadding")
 ThemePadding.Parent = ThemePopup
@@ -441,14 +482,14 @@ local function createThemeOption(themeName, themeData)
     ThemeOption.Name = themeName
     ThemeOption.Parent = ThemePopup
     ThemeOption.BackgroundColor3 = themeData.MainColor
-    ThemeOption.BackgroundTransparency = 0.2
+    ThemeOption.BackgroundTransparency = 0.5
     ThemeOption.BorderSizePixel = 0
-    ThemeOption.Size = UDim2.new(1, 0, 0, 25)
+    ThemeOption.Size = UDim2.new(1, 0, 0, 20)
     ThemeOption.AutoButtonColor = false
     ThemeOption.Font = Enum.Font.Gotham
     ThemeOption.Text = themeName
     ThemeOption.TextColor3 = themeData.TextColor
-    ThemeOption.TextSize = 12
+    ThemeOption.TextSize = 10
     ThemeOption.ZIndex = 11
     
     local ThemeOptionCorner = Instance.new("UICorner")
@@ -457,13 +498,13 @@ local function createThemeOption(themeName, themeData)
     
     ThemeOption.MouseEnter:Connect(function()
         services.TweenService:Create(ThemeOption, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0.1
+            BackgroundTransparency = 0.3
         }):Play()
     end)
     
     ThemeOption.MouseLeave:Connect(function()
         services.TweenService:Create(ThemeOption, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0.2
+            BackgroundTransparency = 0.5
         }):Play()
     end)
     
@@ -486,8 +527,6 @@ local function applyTheme()
     Main.BackgroundColor3 = config.MainColor
     TopBar.BackgroundColor3 = config.TabColor
     Title.TextColor3 = config.AccentColor
-    ThemeButton.BackgroundColor3 = config.Button_Color
-    ThemeButtonText.TextColor3 = config.TextColor
     Side.BackgroundColor3 = config.TabColor
     ScriptTitle.TextColor3 = config.AccentColor
     
@@ -505,6 +544,134 @@ ThemeButton.MouseButton1Click:Connect(function()
     ThemePopup.Visible = not ThemePopup.Visible
 end)
 
+-- 最小化按钮功能
+local minimized = false
+local originalSize = UDim2.new(0, 350, 0, 250)
+local minimizedSize = UDim2.new(0, 150, 0, 30)
+
+MinimizeButton.MouseButton1Click:Connect(function()
+    Ripple(MinimizeButton)
+    minimized = not minimized
+    
+    if minimized then
+        -- 最小化
+        services.TweenService:Create(Main, TweenInfo.new(0.3), {
+            Size = minimizedSize,
+            BackgroundTransparency = 0.8
+        }):Play()
+        
+        -- 隐藏内容
+        for _, child in ipairs(Main:GetChildren()) do
+            if child.Name ~= "TopBar" then
+                child.Visible = false
+            end
+        end
+        
+        -- 更新标题
+        Title.Text = "Minimized"
+    else
+        -- 恢复
+        services.TweenService:Create(Main, TweenInfo.new(0.3), {
+            Size = originalSize,
+            BackgroundTransparency = 0.5
+        }):Play()
+        
+        -- 显示内容
+        for _, child in ipairs(Main:GetChildren()) do
+            child.Visible = true
+        end
+        
+        -- 恢复标题
+        Title.Text = "WindUI"
+    end
+end)
+
+-- 关闭按钮功能
+CloseButton.MouseButton1Click:Connect(function()
+    Ripple(CloseButton)
+    
+    -- 创建确认对话框
+    local ConfirmFrame = Instance.new("Frame")
+    ConfirmFrame.Name = "ConfirmFrame"
+    ConfirmFrame.Parent = Main
+    ConfirmFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ConfirmFrame.BackgroundTransparency = 0.2
+    ConfirmFrame.Size = UDim2.new(0.8, 0, 0.5, 0)
+    ConfirmFrame.Position = UDim2.new(0.1, 0, 0.25, 0)
+    ConfirmFrame.ZIndex = 20
+    
+    local ConfirmCorner = Instance.new("UICorner")
+    ConfirmCorner.CornerRadius = UDim.new(0, 8)
+    ConfirmCorner.Parent = ConfirmFrame
+    
+    local ConfirmStroke = Instance.new("UIStroke")
+    ConfirmStroke.Parent = ConfirmFrame
+    ConfirmStroke.Color = Color3.fromRGB(200, 50, 50)
+    ConfirmStroke.Thickness = 2
+    
+    local ConfirmText = Instance.new("TextLabel")
+    ConfirmText.Name = "ConfirmText"
+    ConfirmText.Parent = ConfirmFrame
+    ConfirmText.BackgroundTransparency = 1
+    ConfirmText.Size = UDim2.new(1, 0, 0.5, 0)
+    ConfirmText.Font = Enum.Font.Gotham
+    ConfirmText.Text = "确定要关闭脚本吗？"
+    ConfirmText.TextColor3 = Color3.fromRGB(50, 50, 50)
+    ConfirmText.TextSize = 12
+    
+    local ButtonContainer = Instance.new("Frame")
+    ButtonContainer.Name = "ButtonContainer"
+    ButtonContainer.Parent = ConfirmFrame
+    ButtonContainer.BackgroundTransparency = 1
+    ButtonContainer.Position = UDim2.new(0, 0, 0.5, 0)
+    ButtonContainer.Size = UDim2.new(1, 0, 0.5, 0)
+    
+    local ButtonLayout = Instance.new("UIListLayout")
+    ButtonLayout.Parent = ButtonContainer
+    ButtonLayout.FillDirection = Enum.FillDirection.Horizontal
+    ButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    ButtonLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    ButtonLayout.Padding = UDim.new(0, 10)
+    
+    local CancelButton = Instance.new("TextButton")
+    CancelButton.Name = "CancelButton"
+    CancelButton.Parent = ButtonContainer
+    CancelButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    CancelButton.BackgroundTransparency = 0.5
+    CancelButton.Size = UDim2.new(0, 60, 0, 25)
+    CancelButton.Font = Enum.Font.Gotham
+    CancelButton.Text = "取消"
+    CancelButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CancelButton.TextSize = 11
+    
+    local CancelCorner = Instance.new("UICorner")
+    CancelCorner.CornerRadius = UDim.new(0, 4)
+    CancelCorner.Parent = CancelButton
+    
+    local ConfirmCloseButton = Instance.new("TextButton")
+    ConfirmCloseButton.Name = "ConfirmCloseButton"
+    ConfirmCloseButton.Parent = ButtonContainer
+    ConfirmCloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    ConfirmCloseButton.BackgroundTransparency = 0.5
+    ConfirmCloseButton.Size = UDim2.new(0, 60, 0, 25)
+    ConfirmCloseButton.Font = Enum.Font.Gotham
+    ConfirmCloseButton.Text = "确定"
+    ConfirmCloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ConfirmCloseButton.TextSize = 11
+    
+    local ConfirmCloseCorner = Instance.new("UICorner")
+    ConfirmCloseCorner.CornerRadius = UDim.new(0, 4)
+    ConfirmCloseCorner.Parent = ConfirmCloseButton
+    
+    CancelButton.MouseButton1Click:Connect(function()
+        ConfirmFrame:Destroy()
+    end)
+    
+    ConfirmCloseButton.MouseButton1Click:Connect(function()
+        FengYu:Destroy()
+    end)
+end)
+
 -- 点击其他地方关闭主题弹窗
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -519,34 +686,27 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
-local rainbowStroke = Instance.new("UIStroke")
-rainbowStroke.Parent = Main
-rainbowStroke.Thickness = 2
-rainbowStroke.Transparency = 0.7
-rainbowStroke.LineJoinMode = Enum.LineJoinMode.Round
-startRainbowEffect(rainbowStroke, "Color", 0.01)
-
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
 Open.Parent = FengYu
 Open.BackgroundColor3 = config.AccentColor
-Open.BackgroundTransparency = 0.85
+Open.BackgroundTransparency = 0.8
 Open.Position = UDim2.new(0.95, 0, 0.02, 0)
-Open.Size = UDim2.new(0, 45, 0, 45)
+Open.Size = UDim2.new(0, 35, 0, 35)  -- 更小的悬浮按钮
 Open.Active = true
 Open.Draggable = true
 Open.Image = "rbxassetid://84830962019412"
 Open.ImageColor3 = Color3.fromRGB(255, 255, 255)
-Open.ImageTransparency = 0.15
+Open.ImageTransparency = 0.2
 
 local OpenCorner = Instance.new("UICorner")
-OpenCorner.CornerRadius = UDim.new(0, 10)
+OpenCorner.CornerRadius = UDim.new(0, 8)
 OpenCorner.Parent = Open
 
 local OpenStroke = Instance.new("UIStroke")
 OpenStroke.Parent = Open
 OpenStroke.Color = Color3.fromRGB(180, 180, 180)
-OpenStroke.Thickness = 1.2
+OpenStroke.Thickness = 1
 OpenStroke.Transparency = 0.4
 
 startRainbowEffect(Open, "BackgroundColor3", 0.012)
@@ -567,18 +727,18 @@ local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.24, 0, 0, 35)
-TabMain.Size = UDim2.new(0, 418, 0, 312)
+TabMain.Position = UDim2.new(0.24, 0, 0, 30)
+TabMain.Size = UDim2.new(0, 268, 0, 217)  -- 调整尺寸
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
 Side.Parent = Main
 Side.BackgroundColor3 = config.TabColor
-Side.BackgroundTransparency = 0.1
+Side.BackgroundTransparency = 0.3
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
-Side.Position = UDim2.new(0, 0, 0, 30)
-Side.Size = UDim2.new(0, 120, 0, 320)
+Side.Position = UDim2.new(0, 0, 0, 25)
+Side.Size = UDim2.new(0, 80, 0, 225)  -- 更窄的侧边栏
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 8)
@@ -590,11 +750,11 @@ TabBtns.Parent = Side
 TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
-TabBtns.Position = UDim2.new(0, 0, 0.097, 0)
-TabBtns.Size = UDim2.new(0, 120, 0, 285)
+TabBtns.Position = UDim2.new(0, 0, 0.1, 0)
+TabBtns.Size = UDim2.new(0, 80, 0, 200)
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
-TabBtns.ScrollBarThickness = 4
-TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+TabBtns.ScrollBarThickness = 3
+TabBtns.ScrollBarImageColor3 = Color3.fromRGB(150, 150, 150)
 TabBtns.ScrollBarImageTransparency = 0.5
 TabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 
@@ -602,7 +762,7 @@ local TabBtnsL = Instance.new("UIListLayout")
 TabBtnsL.Name = "TabBtnsL"
 TabBtnsL.Parent = TabBtns
 TabBtnsL.SortOrder = Enum.SortOrder.LayoutOrder
-TabBtnsL.Padding = UDim.new(0, 8)
+TabBtnsL.Padding = UDim.new(0, 6)
 
 TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     TabBtns.CanvasSize = UDim2.new(0, 0, 0, TabBtnsL.AbsoluteContentSize.Y)
@@ -615,12 +775,12 @@ local ScriptTitle = Instance.new("TextLabel")
 ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = Side
 ScriptTitle.BackgroundTransparency = 1
-ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
-ScriptTitle.Size = UDim2.new(0, 110, 0, 20)
+ScriptTitle.Position = UDim2.new(0, 0, 0.02, 0)
+ScriptTitle.Size = UDim2.new(0, 80, 0, 15)
 ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "WindUI"
 ScriptTitle.TextColor3 = config.AccentColor
-ScriptTitle.TextSize = 16
+ScriptTitle.TextSize = 10
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
 
@@ -647,7 +807,7 @@ task.spawn(function()
         })
         
         services.TweenService:Create(ScriptTitle, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            TextSize = 14 + math.sin(tick() * 2) * 1
+            TextSize = 9 + math.sin(tick() * 2) * 0.5
         }):Play()
         
         task.wait(0.05)
@@ -670,7 +830,7 @@ function FengY3.new(FengY3, name, theme)
     end
 
     ScriptTitle.Text = name or "WindUI"
-    Title.Text = (name or "WindUI") .. " - FengY3"
+    Title.Text = name or "WindUI"
     
     local window = {}
     
@@ -695,7 +855,7 @@ function FengY3.new(FengY3, name, theme)
         TabIco.Parent = TabBtns
         TabIco.BackgroundTransparency = 1
         TabIco.BorderSizePixel = 0
-        TabIco.Size = UDim2.new(0, 24, 0, 24)
+        TabIco.Size = UDim2.new(0, 20, 0, 20)
         TabIco.Image = icon or "rbxassetid://84830962019412"
         TabIco.ImageTransparency = 0.5
         
@@ -705,11 +865,11 @@ function FengY3.new(FengY3, name, theme)
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
         TabText.Position = UDim2.new(1.2, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 80, 0, 24)
+        TabText.Size = UDim2.new(0, 50, 0, 20)
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
-        TabText.TextSize = 12
+        TabText.TextSize = 10
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.TextTransparency = 0.5
         
@@ -717,7 +877,7 @@ function FengY3.new(FengY3, name, theme)
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 120, 0, 24)
+        TabBtn.Size = UDim2.new(0, 80, 0, 20)
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
@@ -725,7 +885,7 @@ function FengY3.new(FengY3, name, theme)
         TabL.Name = "TabL"
         TabL.Parent = Tab
         TabL.SortOrder = Enum.SortOrder.LayoutOrder
-        TabL.Padding = UDim.new(0, 4)
+        TabL.Padding = UDim.new(0, 3)
         
         TabBtn.MouseButton1Click:Connect(function()
             Ripple(TabBtn)
@@ -737,7 +897,7 @@ function FengY3.new(FengY3, name, theme)
         end
         
         TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 8)
+            Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 6)
             
             Tab.ScrollingEnabled = TabL.AbsoluteContentSize.Y > Tab.AbsoluteSize.Y
             Tab.ElasticBehavior = Enum.ElasticBehavior.Never
@@ -758,10 +918,10 @@ function FengY3.new(FengY3, name, theme)
             Section.Name = "Section"
             Section.Parent = Tab
             Section.BackgroundColor3 = config.TabColor
-            Section.BackgroundTransparency = 0.2
+            Section.BackgroundTransparency = 0.3
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
-            Section.Size = UDim2.new(0.95, 0, 0, 32)
+            Section.Size = UDim2.new(0.95, 0, 0, 28)  -- 更小的section
             
             SectionC.CornerRadius = UDim.new(0, 6)
             SectionC.Name = "SectionC"
@@ -771,19 +931,19 @@ function FengY3.new(FengY3, name, theme)
             SectionText.Parent = Section
             SectionText.BackgroundTransparency = 1
             SectionText.Position = UDim2.new(0.088, 0, 0, 0)
-            SectionText.Size = UDim2.new(0, 330, 0, 32)
+            SectionText.Size = UDim2.new(0, 240, 0, 28)
             SectionText.Font = Enum.Font.GothamSemibold
             SectionText.Text = name
             SectionText.TextColor3 = config.TextColor
-            SectionText.TextSize = 14
+            SectionText.TextSize = 12
             SectionText.TextXAlignment = Enum.TextXAlignment.Left
             
             SectionOpen.Name = "SectionOpen"
             SectionOpen.Parent = SectionText
             SectionOpen.BackgroundTransparency = 1
             SectionOpen.BorderSizePixel = 0
-            SectionOpen.Position = UDim2.new(0, -28, 0, 3)
-            SectionOpen.Size = UDim2.new(0, 22, 0, 22)
+            SectionOpen.Position = UDim2.new(0, -22, 0, 3)
+            SectionOpen.Size = UDim2.new(0, 18, 0, 18)
             SectionOpen.Image = "rbxassetid://84830962019412"
             SectionOpen.ImageColor3 = config.SecondaryTextColor
             
@@ -791,7 +951,7 @@ function FengY3.new(FengY3, name, theme)
             SectionOpened.Parent = SectionOpen
             SectionOpened.BackgroundTransparency = 1
             SectionOpened.BorderSizePixel = 0
-            SectionOpened.Size = UDim2.new(0, 22, 0, 22)
+            SectionOpened.Size = UDim2.new(0, 18, 0, 18)
             SectionOpened.Image = "rbxassetid://84830962019412"
             SectionOpened.ImageColor3 = config.AccentColor
             SectionOpened.ImageTransparency = 1
@@ -800,23 +960,23 @@ function FengY3.new(FengY3, name, theme)
             SectionToggle.Parent = SectionOpen
             SectionToggle.BackgroundTransparency = 1
             SectionToggle.BorderSizePixel = 0
-            SectionToggle.Size = UDim2.new(0, 22, 0, 22)
+            SectionToggle.Size = UDim2.new(0, 18, 0, 18)
             
             Objs.Name = "Objs"
             Objs.Parent = Section
             Objs.BackgroundTransparency = 1
             Objs.BorderSizePixel = 0
-            Objs.Position = UDim2.new(0, 6, 0, 32)
+            Objs.Position = UDim2.new(0, 6, 0, 28)
             Objs.Size = UDim2.new(0.98, 0, 0, 0)
             
             ObjsL.Name = "ObjsL"
             ObjsL.Parent = Objs
             ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
-            ObjsL.Padding = UDim.new(0, 6)
+            ObjsL.Padding = UDim.new(0, 4)
             
             local open = TabVal ~= false
             if TabVal ~= false then
-                Section.Size = UDim2.new(0.95, 0, 0, open and 32 + ObjsL.AbsoluteContentSize.Y + 6 or 32)
+                Section.Size = UDim2.new(0.95, 0, 0, open and 28 + ObjsL.AbsoluteContentSize.Y + 4 or 28)
                 SectionOpened.ImageTransparency = open and 0 or 1
                 SectionOpen.ImageTransparency = open and 1 or 0
             end
@@ -824,7 +984,7 @@ function FengY3.new(FengY3, name, theme)
             SectionToggle.MouseButton1Click:Connect(function()
                 open = not open
                 services.TweenService:Create(Section, TweenInfo.new(0.2), {
-                    Size = UDim2.new(0.95, 0, 0, open and 32 + ObjsL.AbsoluteContentSize.Y + 6 or 32)
+                    Size = UDim2.new(0.95, 0, 0, open and 28 + ObjsL.AbsoluteContentSize.Y + 4 or 28)
                 }):Play()
                 
                 services.TweenService:Create(SectionOpened, TweenInfo.new(0.2), {
@@ -838,7 +998,7 @@ function FengY3.new(FengY3, name, theme)
             
             ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                 if not open then return end
-                Section.Size = UDim2.new(0.95, 0, 0, 32 + ObjsL.AbsoluteContentSize.Y + 6)
+                Section.Size = UDim2.new(0.95, 0, 0, 28 + ObjsL.AbsoluteContentSize.Y + 4)
             end)
             
             local section = {}
@@ -854,19 +1014,19 @@ function FengY3.new(FengY3, name, theme)
                 BtnModule.Parent = Objs
                 BtnModule.BackgroundTransparency = 1
                 BtnModule.BorderSizePixel = 0
-                BtnModule.Size = UDim2.new(0, 398, 0, 32)
+                BtnModule.Size = UDim2.new(0, 248, 0, 26)  -- 更小的按钮
                 
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
                 Btn.BackgroundColor3 = config.Button_Color
-                Btn.BackgroundTransparency = 0.2
+                Btn.BackgroundTransparency = 0.3
                 Btn.BorderSizePixel = 0
-                Btn.Size = UDim2.new(0, 398, 0, 32)
+                Btn.Size = UDim2.new(0, 248, 0, 26)
                 Btn.AutoButtonColor = false
                 Btn.Font = Enum.Font.GothamSemibold
                 Btn.Text = "   " .. text
                 Btn.TextColor3 = config.TextColor
-                Btn.TextSize = 14
+                Btn.TextSize = 12  -- 更小的字体
                 Btn.TextXAlignment = Enum.TextXAlignment.Left
                 
                 BtnC.CornerRadius = UDim.new(0, 6)
@@ -933,7 +1093,7 @@ function FengY3.new(FengY3, name, theme)
                 end)
             end
             
-            -- 新增Image组件
+            -- 新增Image组件 - 边框透明
             function section.Image(section, imageId, sizeX, sizeY)
                 local ImageModule = Instance.new("Frame")
                 local ImageLabel = Instance.new("ImageLabel")
@@ -943,25 +1103,26 @@ function FengY3.new(FengY3, name, theme)
                 ImageModule.Parent = Objs
                 ImageModule.BackgroundTransparency = 1
                 ImageModule.BorderSizePixel = 0
-                ImageModule.Size = UDim2.new(0, 398, 0, sizeY or 100)
+                ImageModule.Size = UDim2.new(0, 248, 0, sizeY or 80)  -- 更小的默认尺寸
                 
                 ImageLabel.Parent = ImageModule
                 ImageLabel.BackgroundColor3 = config.Bg_Color
-                ImageLabel.BackgroundTransparency = 0.2
+                ImageLabel.BackgroundTransparency = 0.3
                 ImageLabel.BorderSizePixel = 0
-                ImageLabel.Position = UDim2.new(0.5, -(sizeX or 150)/2, 0, 0)
-                ImageLabel.Size = UDim2.new(0, sizeX or 150, 0, sizeY or 100)
+                ImageLabel.Position = UDim2.new(0.5, -(sizeX or 120)/2, 0, 0)
+                ImageLabel.Size = UDim2.new(0, sizeX or 120, 0, sizeY or 80)
                 ImageLabel.Image = "rbxassetid://" .. tostring(imageId)
                 ImageLabel.ScaleType = Enum.ScaleType.Crop
                 
                 ImageCorner.CornerRadius = UDim.new(0, 6)
                 ImageCorner.Parent = ImageLabel
                 
+                -- 边框透明
                 local imageGlow = Instance.new("UIStroke")
                 imageGlow.Parent = ImageLabel
                 imageGlow.Color = config.AccentColor
                 imageGlow.Thickness = 1
-                imageGlow.Transparency = 0.5
+                imageGlow.Transparency = 1  -- 完全透明边框
                 
                 return ImageLabel
             end
@@ -975,16 +1136,16 @@ function FengY3.new(FengY3, name, theme)
                 LabelModule.Parent = Objs
                 LabelModule.BackgroundTransparency = 1
                 LabelModule.BorderSizePixel = 0
-                LabelModule.Size = UDim2.new(0, 398, 0, 16)
+                LabelModule.Size = UDim2.new(0, 248, 0, 14)
                 
                 TextLabel.Parent = LabelModule
                 TextLabel.BackgroundColor3 = config.Label_Color
-                TextLabel.BackgroundTransparency = 0.2
-                TextLabel.Size = UDim2.new(0, 398, 0, 18)
+                TextLabel.BackgroundTransparency = 0.3
+                TextLabel.Size = UDim2.new(0, 248, 0, 16)
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
                 TextLabel.TextColor3 = config.SecondaryTextColor
-                TextLabel.TextSize = 12
+                TextLabel.TextSize = 10
                 
                 LabelC.CornerRadius = UDim.new(0, 6)
                 LabelC.Name = "LabelC"
@@ -1012,19 +1173,19 @@ function FengY3.new(FengY3, name, theme)
                 ToggleModule.Parent = Objs
                 ToggleModule.BackgroundTransparency = 1
                 ToggleModule.BorderSizePixel = 0
-                ToggleModule.Size = UDim2.new(0, 398, 0, 32)
+                ToggleModule.Size = UDim2.new(0, 248, 0, 26)
                 
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
                 ToggleBtn.BackgroundColor3 = config.Toggle_Color
-                ToggleBtn.BackgroundTransparency = 0.2
+                ToggleBtn.BackgroundTransparency = 0.3
                 ToggleBtn.BorderSizePixel = 0
-                ToggleBtn.Size = UDim2.new(0, 398, 0, 32)
+                ToggleBtn.Size = UDim2.new(0, 248, 0, 26)
                 ToggleBtn.AutoButtonColor = false
                 ToggleBtn.Font = Enum.Font.GothamSemibold
                 ToggleBtn.Text = "   " .. text
                 ToggleBtn.TextColor3 = config.TextColor
-                ToggleBtn.TextSize = 14
+                ToggleBtn.TextSize = 12
                 ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
                 
                 ToggleBtnC.CornerRadius = UDim.new(0, 6)
@@ -1035,20 +1196,20 @@ function FengY3.new(FengY3, name, theme)
                 ToggleDisable.Parent = ToggleBtn
                 ToggleDisable.BackgroundColor3 = config.Bg_Color
                 ToggleDisable.BorderSizePixel = 0
-                ToggleDisable.Position = UDim2.new(0.85, 0, 0.187, 0)
-                ToggleDisable.Size = UDim2.new(0, 32, 0, 18)
+                ToggleDisable.Position = UDim2.new(0.85, 0, 0.192, 0)
+                ToggleDisable.Size = UDim2.new(0, 28, 0, 16)
                 
                 ToggleSwitch.Name = "ToggleSwitch"
                 ToggleSwitch.Parent = ToggleDisable
                 ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
-                ToggleSwitch.Size = UDim2.new(0, 20, 0, 18)
+                ToggleSwitch.Size = UDim2.new(0, 16, 0, 16)
                 ToggleSwitch.Position = UDim2.new(0, enabled and 12 or 0, 0, 0)
                 
-                ToggleSwitchC.CornerRadius = UDim.new(0, 6)
+                ToggleSwitchC.CornerRadius = UDim.new(0, 4)
                 ToggleSwitchC.Name = "ToggleSwitchC"
                 ToggleSwitchC.Parent = ToggleSwitch
                 
-                ToggleDisableC.CornerRadius = UDim.new(0, 6)
+                ToggleDisableC.CornerRadius = UDim.new(0, 4)
                 ToggleDisableC.Name = "ToggleDisableC"
                 ToggleDisableC.Parent = ToggleDisable
                 
@@ -1148,19 +1309,19 @@ function FengY3.new(FengY3, name, theme)
                 KeybindModule.Parent = Objs
                 KeybindModule.BackgroundTransparency = 1
                 KeybindModule.BorderSizePixel = 0
-                KeybindModule.Size = UDim2.new(0, 398, 0, 32)
+                KeybindModule.Size = UDim2.new(0, 248, 0, 26)
                 
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
                 KeybindBtn.BackgroundColor3 = config.Keybind_Color
-                KeybindBtn.BackgroundTransparency = 0.2
+                KeybindBtn.BackgroundTransparency = 0.3
                 KeybindBtn.BorderSizePixel = 0
-                KeybindBtn.Size = UDim2.new(0, 398, 0, 32)
+                KeybindBtn.Size = UDim2.new(0, 248, 0, 26)
                 KeybindBtn.AutoButtonColor = false
                 KeybindBtn.Font = Enum.Font.GothamSemibold
                 KeybindBtn.Text = "   " .. text
                 KeybindBtn.TextColor3 = config.TextColor
-                KeybindBtn.TextSize = 14
+                KeybindBtn.TextSize = 12
                 KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
                 
                 KeybindBtnC.CornerRadius = UDim.new(0, 6)
@@ -1171,15 +1332,15 @@ function FengY3.new(FengY3, name, theme)
                 KeybindValue.Parent = KeybindBtn
                 KeybindValue.BackgroundColor3 = config.Bg_Color
                 KeybindValue.BorderSizePixel = 0
-                KeybindValue.Position = UDim2.new(0.72, 0, 0.187, 0)
-                KeybindValue.Size = UDim2.new(0, 80, 0, 24)
+                KeybindValue.Position = UDim2.new(0.72, 0, 0.192, 0)
+                KeybindValue.Size = UDim2.new(0, 60, 0, 20)
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
                 KeybindValue.Text = keyTxt
                 KeybindValue.TextColor3 = config.TextColor
-                KeybindValue.TextSize = 12
+                KeybindValue.TextSize = 10
                 
-                KeybindValueC.CornerRadius = UDim.new(0, 6)
+                KeybindValueC.CornerRadius = UDim.new(0, 4)
                 KeybindValueC.Name = "KeybindValueC"
                 KeybindValueC.Parent = KeybindValue
                 
@@ -1239,10 +1400,10 @@ function FengY3.new(FengY3, name, theme)
                 end)
                 
                 KeybindValue:GetPropertyChangedSignal("TextBounds"):Connect(function()
-                    KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 20, 0, 24)
+                    KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 15, 0, 20)
                 end)
                 
-                KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 20, 0, 24)
+                KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 15, 0, 20)
             end
             
             function section.Textbox(section, text, flag, default, callback)
@@ -1266,19 +1427,19 @@ function FengY3.new(FengY3, name, theme)
                 TextboxModule.Parent = Objs
                 TextboxModule.BackgroundTransparency = 1
                 TextboxModule.BorderSizePixel = 0
-                TextboxModule.Size = UDim2.new(0, 398, 0, 32)
+                TextboxModule.Size = UDim2.new(0, 248, 0, 26)
                 
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
                 TextboxBack.BackgroundColor3 = config.Textbox_Color
-                TextboxBack.BackgroundTransparency = 0.2
+                TextboxBack.BackgroundTransparency = 0.3
                 TextboxBack.BorderSizePixel = 0
-                TextboxBack.Size = UDim2.new(0, 398, 0, 32)
+                TextboxBack.Size = UDim2.new(0, 248, 0, 26)
                 TextboxBack.AutoButtonColor = false
                 TextboxBack.Font = Enum.Font.GothamSemibold
                 TextboxBack.Text = "   " .. text
                 TextboxBack.TextColor3 = config.TextColor
-                TextboxBack.TextSize = 14
+                TextboxBack.TextSize = 12
                 TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
                 
                 TextboxBackC.CornerRadius = UDim.new(0, 6)
@@ -1289,13 +1450,13 @@ function FengY3.new(FengY3, name, theme)
                 BoxBG.Parent = TextboxBack
                 BoxBG.BackgroundColor3 = config.Bg_Color
                 BoxBG.BorderSizePixel = 0
-                BoxBG.Position = UDim2.new(0.45, 0, 0.187, 0)
-                BoxBG.Size = UDim2.new(0, 80, 0, 24)
+                BoxBG.Position = UDim2.new(0.45, 0, 0.192, 0)
+                BoxBG.Size = UDim2.new(0, 80, 0, 20)
                 BoxBG.AutoButtonColor = false
                 BoxBG.Font = Enum.Font.Gotham
                 BoxBG.Text = ""
                 
-                BoxBGC.CornerRadius = UDim.new(0, 6)
+                BoxBGC.CornerRadius = UDim.new(0, 4)
                 BoxBGC.Name = "BoxBGC"
                 BoxBGC.Parent = BoxBG
                 
@@ -1306,7 +1467,7 @@ function FengY3.new(FengY3, name, theme)
                 TextBox.Font = Enum.Font.Gotham
                 TextBox.Text = default
                 TextBox.TextColor3 = config.TextColor
-                TextBox.TextSize = 12
+                TextBox.TextSize = 10
                 TextBox.PlaceholderColor3 = config.SecondaryTextColor
                 
                 TextboxBackL.Name = "TextboxBackL"
@@ -1317,7 +1478,7 @@ function FengY3.new(FengY3, name, theme)
                 
                 TextboxBackP.Name = "TextboxBackP"
                 TextboxBackP.Parent = TextboxBack
-                TextboxBackP.PaddingRight = UDim.new(0, 12)
+                TextboxBackP.PaddingRight = UDim.new(0, 8)
                 
                 TextboxBack.MouseEnter:Connect(function()
                     services.TweenService:Create(TextboxBack, TweenInfo.new(0.2), {
@@ -1344,10 +1505,10 @@ function FengY3.new(FengY3, name, theme)
                 end)
                 
                 TextBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
-                    BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 24)
+                    BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 15, 0, 20)
                 end)
                 
-                BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 24)
+                BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 15, 0, 20)
             end
             
             function section.Slider(section, text, flag, default, min, max, precise, callback)
@@ -1380,19 +1541,19 @@ function FengY3.new(FengY3, name, theme)
                 SliderModule.BackgroundTransparency = 1.000
                 SliderModule.BorderSizePixel = 0
                 SliderModule.Position = UDim2.new(0, 0, 0, 0)
-                SliderModule.Size = UDim2.new(0, 398, 0, 32)
+                SliderModule.Size = UDim2.new(0, 248, 0, 26)
                 
                 SliderBack.Name = "SliderBack"
                 SliderBack.Parent = SliderModule
                 SliderBack.BackgroundColor3 = config.Slider_Color
-                SliderBack.BackgroundTransparency = 0.2
+                SliderBack.BackgroundTransparency = 0.3
                 SliderBack.BorderSizePixel = 0
-                SliderBack.Size = UDim2.new(0, 398, 0, 32)
+                SliderBack.Size = UDim2.new(0, 248, 0, 26)
                 SliderBack.AutoButtonColor = false
                 SliderBack.Font = Enum.Font.GothamSemibold
                 SliderBack.Text = "   " .. text
                 SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SliderBack.TextSize = 14.000
+                SliderBack.TextSize = 12.000
                 SliderBack.TextXAlignment = Enum.TextXAlignment.Left
                 
                 SliderBackC.CornerRadius = UDim.new(0, 6)
@@ -1405,7 +1566,7 @@ function FengY3.new(FengY3, name, theme)
                 SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
                 SliderBar.BorderSizePixel = 0
                 SliderBar.Position = UDim2.new(0.35, 0, 0.5, 0)
-                SliderBar.Size = UDim2.new(0, 140, 0, 12)
+                SliderBar.Size = UDim2.new(0, 100, 0, 10)
                 SliderBarC.CornerRadius = UDim.new(0, 4)
                 SliderBarC.Name = "SliderBarC"
                 SliderBarC.Parent = SliderBar
@@ -1423,15 +1584,15 @@ function FengY3.new(FengY3, name, theme)
                 SliderValBG.Parent = SliderBack
                 SliderValBG.BackgroundColor3 = config.Bg_Color
                 SliderValBG.BorderSizePixel = 0
-                SliderValBG.Position = UDim2.new(0.82, 0, 0.187, 0)
-                SliderValBG.Size = UDim2.new(0, 36, 0, 24)
+                SliderValBG.Position = UDim2.new(0.82, 0, 0.192, 0)
+                SliderValBG.Size = UDim2.new(0, 30, 0, 20)
                 SliderValBG.AutoButtonColor = false
                 SliderValBG.Font = Enum.Font.Gotham
                 SliderValBG.Text = ""
                 SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SliderValBG.TextSize = 14.000
+                SliderValBG.TextSize = 12.000
                 
-                SliderValBGC.CornerRadius = UDim.new(0, 6)
+                SliderValBGC.CornerRadius = UDim.new(0, 4)
                 SliderValBGC.Name = "SliderValBGC"
                 SliderValBGC.Parent = SliderValBG
                 
@@ -1444,7 +1605,7 @@ function FengY3.new(FengY3, name, theme)
                 SliderValue.Font = Enum.Font.Gotham
                 SliderValue.Text = tostring(default)
                 SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SliderValue.TextSize = 10.000
+                SliderValue.TextSize = 9.000
                 
                 local MinSlider = Instance.new("TextButton")
                 MinSlider.Name = "MinSlider"
@@ -1452,17 +1613,17 @@ function FengY3.new(FengY3, name, theme)
                 MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 MinSlider.BackgroundTransparency = 0
                 MinSlider.BorderSizePixel = 0
-                MinSlider.Position = UDim2.new(0.28, 0, 0.25, 0)
-                MinSlider.Size = UDim2.new(0, 16, 0, 16)
+                MinSlider.Position = UDim2.new(0.28, 0, 0.23, 0)
+                MinSlider.Size = UDim2.new(0, 14, 0, 14)
                 MinSlider.Font = Enum.Font.Gotham
-                MinSlider.Text = "减"
+                MinSlider.Text = "-"
                 MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-                MinSlider.TextSize = 12.000
+                MinSlider.TextSize = 10.000
                 MinSlider.TextWrapped = true
                 MinSlider.ZIndex = 2
                 
                 local MinSliderC = Instance.new("UICorner")
-                MinSliderC.CornerRadius = UDim.new(0, 4)
+                MinSliderC.CornerRadius = UDim.new(0, 3)
                 MinSliderC.Parent = MinSlider
                 
                 local AddSlider = Instance.new("TextButton")
@@ -1471,17 +1632,17 @@ function FengY3.new(FengY3, name, theme)
                 AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 AddSlider.BackgroundTransparency = 0
                 AddSlider.BorderSizePixel = 0
-                AddSlider.Position = UDim2.new(0.75, 0, 0.25, 0)
-                AddSlider.Size = UDim2.new(0, 16, 0, 16)
+                AddSlider.Position = UDim2.new(0.75, 0, 0.23, 0)
+                AddSlider.Size = UDim2.new(0, 14, 0, 14)
                 AddSlider.Font = Enum.Font.Gotham
-                AddSlider.Text = "加"
+                AddSlider.Text = "+"
                 AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-                AddSlider.TextSize = 12.000
+                AddSlider.TextSize = 10.000
                 AddSlider.TextWrapped = true
                 AddSlider.ZIndex = 2
                 
                 local AddSliderC = Instance.new("UICorner")
-                AddSliderC.CornerRadius = UDim.new(0, 4)
+                AddSliderC.CornerRadius = UDim.new(0, 3)
                 AddSliderC.Parent = AddSlider
                 
                 local funcs = {
@@ -1679,19 +1840,19 @@ function FengY3.new(FengY3, name, theme)
                 DropdownModule.BorderSizePixel = 0
                 DropdownModule.ClipsDescendants = true
                 DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-                DropdownModule.Size = UDim2.new(0, 398, 0, 32)
+                DropdownModule.Size = UDim2.new(0, 248, 0, 26)
                 
                 DropdownTop.Name = "DropdownTop"
                 DropdownTop.Parent = DropdownModule
                 DropdownTop.BackgroundColor3 = config.Dropdown_Color
-                DropdownTop.BackgroundTransparency = 0.2
+                DropdownTop.BackgroundTransparency = 0.3
                 DropdownTop.BorderSizePixel = 0
-                DropdownTop.Size = UDim2.new(0, 398, 0, 32)
+                DropdownTop.Size = UDim2.new(0, 248, 0, 26)
                 DropdownTop.AutoButtonColor = false
                 DropdownTop.Font = Enum.Font.GothamSemibold
                 DropdownTop.Text = ""
                 DropdownTop.TextColor3 = config.TextColor
-                DropdownTop.TextSize = 14.000
+                DropdownTop.TextSize = 12.000
                 DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
                 
                 DropdownTopC.CornerRadius = UDim.new(0, 6)
@@ -1713,7 +1874,7 @@ function FengY3.new(FengY3, name, theme)
                 DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
                 DropdownOpenFrame.BorderSizePixel = 0
                 DropdownOpenFrame.Position = UDim2.new(0.85, 0, 0.5, 0)
-                DropdownOpenFrame.Size = UDim2.new(0, 40, 0, 20)
+                DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 18)
                 DropdownOpenFrame.ZIndex = 2
                 
                 createAuroraEffect(DropdownOpenFrame, 0.8)
@@ -1731,7 +1892,7 @@ function FengY3.new(FengY3, name, theme)
                 DropdownOpen.Font = Enum.Font.GothamSemibold
                 DropdownOpen.Text = "选择"
                 DropdownOpen.TextColor3 = config.TextColor
-                DropdownOpen.TextSize = 10.000
+                DropdownOpen.TextSize = 9.000
                 DropdownOpen.TextWrapped = true
                 DropdownOpen.ZIndex = 3
                 
@@ -1741,13 +1902,13 @@ function FengY3.new(FengY3, name, theme)
                 DropdownText.BackgroundTransparency = 1.000
                 DropdownText.BorderSizePixel = 0
                 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-                DropdownText.Size = UDim2.new(0, 280, 0, 32)
+                DropdownText.Size = UDim2.new(0, 200, 0, 26)
                 DropdownText.Font = Enum.Font.GothamSemibold
                 DropdownText.PlaceholderColor3 = config.SecondaryTextColor
                 DropdownText.PlaceholderText = text
                 DropdownText.Text = ""
                 DropdownText.TextColor3 = config.TextColor
-                DropdownText.TextSize = 14.000
+                DropdownText.TextSize = 12.000
                 DropdownText.TextXAlignment = Enum.TextXAlignment.Left
                 DropdownText.ZIndex = 2
                 
@@ -1757,13 +1918,13 @@ function FengY3.new(FengY3, name, theme)
                 Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 Separator.BorderSizePixel = 0
                 Separator.Position = UDim2.new(0.78, 0, 0.2, 0)
-                Separator.Size = UDim2.new(0, 1, 0, 20)
+                Separator.Size = UDim2.new(0, 1, 0, 16)
                 Separator.ZIndex = 1
                 
                 DropdownModuleL.Name = "DropdownModuleL"
                 DropdownModuleL.Parent = DropdownModule
                 DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
-                DropdownModuleL.Padding = UDim.new(0, 4)
+                DropdownModuleL.Padding = UDim.new(0, 3)
                 
                 local setAllVisible = function()
                     local options = DropdownModule:GetChildren()
@@ -1800,7 +1961,7 @@ function FengY3.new(FengY3, name, theme)
                         setAllVisible()
                     end
                     DropdownOpen.Text = (open and "取消" or "选择")
-                    DropdownModule.Size = UDim2.new(0, 398, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 32))
+                    DropdownModule.Size = UDim2.new(0, 248, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 3 or 26))
                 end
                 
                 DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
@@ -1822,7 +1983,7 @@ function FengY3.new(FengY3, name, theme)
                     if not open then
                         return
                     end
-                    DropdownModule.Size = UDim2.new(0, 398, 0, (DropdownModuleL.AbsoluteContentSize.Y + 4))
+                    DropdownModule.Size = UDim2.new(0, 248, 0, (DropdownModuleL.AbsoluteContentSize.Y + 3))
                 end)
                 
                 local funcs = {}
@@ -1832,15 +1993,15 @@ function FengY3.new(FengY3, name, theme)
                     Option.Name = "Option_" .. option
                     Option.Parent = DropdownModule
                     Option.BackgroundColor3 = config.TabColor
-                    Option.BackgroundTransparency = 0.2
+                    Option.BackgroundTransparency = 0.3
                     Option.BorderSizePixel = 0
                     Option.Position = UDim2.new(0, 0, 0.328125, 0)
-                    Option.Size = UDim2.new(0, 378, 0, 22)
+                    Option.Size = UDim2.new(0, 238, 0, 20)
                     Option.AutoButtonColor = false
                     Option.Font = Enum.Font.Gotham
                     Option.Text = option
                     Option.TextColor3 = config.TextColor
-                    Option.TextSize = 12.000
+                    Option.TextSize = 10.000
                     OptionC.CornerRadius = UDim.new(0, 6)
                     OptionC.Name = "OptionC"
                     OptionC.Parent = Option
