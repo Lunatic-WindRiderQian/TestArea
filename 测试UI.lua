@@ -56,77 +56,92 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
--- WindUI风格配置
-local config = {
-    MainColor = Color3.fromRGB(25, 25, 35),
-    TabColor = Color3.fromRGB(35, 35, 45),
-    Bg_Color = Color3.fromRGB(30, 30, 40),
-    Zy_Color = Color3.fromRGB(20, 20, 30), 
-    Button_Color = Color3.fromRGB(45, 45, 55),
-    Textbox_Color = Color3.fromRGB(40, 40, 50),
-    Dropdown_Color = Color3.fromRGB(40, 40, 50),
-    Keybind_Color = Color3.fromRGB(40, 40, 50),
-    Label_Color = Color3.fromRGB(50, 50, 60),
-    Slider_Color = Color3.fromRGB(40, 40, 50),
-    SliderBar_Color = Color3.fromRGB(0, 150, 255),
-    Toggle_Color = Color3.fromRGB(40, 40, 50),
-    Toggle_Off = Color3.fromRGB(60, 60, 70),
-    Toggle_On = Color3.fromRGB(0, 150, 255),
-    AccentColor = Color3.fromRGB(0, 150, 255),
-    TextColor = Color3.fromRGB(240, 240, 240),
-    SecondaryTextColor = Color3.fromRGB(180, 180, 180),
-    GlowColor = Color3.fromRGB(0, 100, 255),
-    BorderColor = Color3.fromRGB(60, 60, 80)
-}
-
--- 预设主题
+-- 预定义主题
 local themes = {
     Default = {
-        MainColor = Color3.fromRGB(25, 25, 35),
-        AccentColor = Color3.fromRGB(0, 150, 255),
+        MainColor = Color3.fromRGB(16, 16, 16),
+        TabColor = Color3.fromRGB(22, 22, 22),
+        Bg_Color = Color3.fromRGB(17, 17, 17),
+        Zy_Color = Color3.fromRGB(17, 17, 17), 
+        Button_Color = Color3.fromRGB(22, 22, 22),
+        Textbox_Color = Color3.fromRGB(22, 22, 22),
+        Dropdown_Color = Color3.fromRGB(22, 22, 22),
+        Keybind_Color = Color3.fromRGB(22, 22, 22),
+        Label_Color = Color3.fromRGB(22, 22, 22),
+        Slider_Color = Color3.fromRGB(22, 22, 22),
+        SliderBar_Color = Color3.fromRGB(37, 254, 152),
+        Toggle_Color = Color3.fromRGB(22, 22, 22),
+        Toggle_Off = Color3.fromRGB(34, 34, 34),
+        Toggle_On = Color3.fromRGB(37, 254, 152),
+        AccentColor = Color3.fromRGB(37, 254, 152),
+        TextColor = Color3.fromRGB(240, 240, 240),
+        SecondaryTextColor = Color3.fromRGB(180, 180, 180),
+        GlowColor = Color3.fromRGB(0, 200, 255),
+    },
+    DarkBlue = {
+        MainColor = Color3.fromRGB(10, 15, 30),
+        TabColor = Color3.fromRGB(15, 20, 40),
+        Bg_Color = Color3.fromRGB(12, 17, 35),
+        Zy_Color = Color3.fromRGB(12, 17, 35), 
+        Button_Color = Color3.fromRGB(15, 20, 40),
+        Textbox_Color = Color3.fromRGB(15, 20, 40),
+        Dropdown_Color = Color3.fromRGB(15, 20, 40),
+        Keybind_Color = Color3.fromRGB(15, 20, 40),
+        Label_Color = Color3.fromRGB(15, 20, 40),
+        Slider_Color = Color3.fromRGB(15, 20, 40),
         SliderBar_Color = Color3.fromRGB(0, 150, 255),
-        Toggle_On = Color3.fromRGB(0, 150, 255)
+        Toggle_Color = Color3.fromRGB(15, 20, 40),
+        Toggle_Off = Color3.fromRGB(25, 30, 50),
+        Toggle_On = Color3.fromRGB(0, 150, 255),
+        AccentColor = Color3.fromRGB(0, 150, 255),
+        TextColor = Color3.fromRGB(240, 240, 240),
+        SecondaryTextColor = Color3.fromRGB(180, 180, 180),
+        GlowColor = Color3.fromRGB(0, 100, 200),
     },
     Purple = {
-        MainColor = Color3.fromRGB(30, 25, 40),
-        AccentColor = Color3.fromRGB(150, 50, 255),
-        SliderBar_Color = Color3.fromRGB(150, 50, 255),
-        Toggle_On = Color3.fromRGB(150, 50, 255)
-    },
-    Green = {
-        MainColor = Color3.fromRGB(25, 35, 30),
-        AccentColor = Color3.fromRGB(50, 200, 100),
-        SliderBar_Color = Color3.fromRGB(50, 200, 100),
-        Toggle_On = Color3.fromRGB(50, 200, 100)
+        MainColor = Color3.fromRGB(25, 15, 35),
+        TabColor = Color3.fromRGB(35, 20, 50),
+        Bg_Color = Color3.fromRGB(30, 18, 42),
+        Zy_Color = Color3.fromRGB(30, 18, 42), 
+        Button_Color = Color3.fromRGB(35, 20, 50),
+        Textbox_Color = Color3.fromRGB(35, 20, 50),
+        Dropdown_Color = Color3.fromRGB(35, 20, 50),
+        Keybind_Color = Color3.fromRGB(35, 20, 50),
+        Label_Color = Color3.fromRGB(35, 20, 50),
+        Slider_Color = Color3.fromRGB(35, 20, 50),
+        SliderBar_Color = Color3.fromRGB(180, 70, 255),
+        Toggle_Color = Color3.fromRGB(35, 20, 50),
+        Toggle_Off = Color3.fromRGB(45, 30, 60),
+        Toggle_On = Color3.fromRGB(180, 70, 255),
+        AccentColor = Color3.fromRGB(180, 70, 255),
+        TextColor = Color3.fromRGB(240, 240, 240),
+        SecondaryTextColor = Color3.fromRGB(180, 180, 180),
+        GlowColor = Color3.fromRGB(140, 50, 220),
     },
     Red = {
-        MainColor = Color3.fromRGB(35, 25, 25),
-        AccentColor = Color3.fromRGB(255, 50, 50),
+        MainColor = Color3.fromRGB(30, 10, 10),
+        TabColor = Color3.fromRGB(45, 15, 15),
+        Bg_Color = Color3.fromRGB(35, 12, 12),
+        Zy_Color = Color3.fromRGB(35, 12, 12), 
+        Button_Color = Color3.fromRGB(45, 15, 15),
+        Textbox_Color = Color3.fromRGB(45, 15, 15),
+        Dropdown_Color = Color3.fromRGB(45, 15, 15),
+        Keybind_Color = Color3.fromRGB(45, 15, 15),
+        Label_Color = Color3.fromRGB(45, 15, 15),
+        Slider_Color = Color3.fromRGB(45, 15, 15),
         SliderBar_Color = Color3.fromRGB(255, 50, 50),
-        Toggle_On = Color3.fromRGB(255, 50, 50)
-    },
-    Orange = {
-        MainColor = Color3.fromRGB(35, 30, 25),
-        AccentColor = Color3.fromRGB(255, 150, 0),
-        SliderBar_Color = Color3.fromRGB(255, 150, 0),
-        Toggle_On = Color3.fromRGB(255, 150, 0)
+        Toggle_Color = Color3.fromRGB(45, 15, 15),
+        Toggle_Off = Color3.fromRGB(55, 25, 25),
+        Toggle_On = Color3.fromRGB(255, 50, 50),
+        AccentColor = Color3.fromRGB(255, 50, 50),
+        TextColor = Color3.fromRGB(240, 240, 240),
+        SecondaryTextColor = Color3.fromRGB(180, 180, 180),
+        GlowColor = Color3.fromRGB(200, 30, 30),
     }
 }
 
+local config = themes.Default
 local currentTheme = "Default"
-
-local function applyTheme(themeName)
-    currentTheme = themeName
-    local theme = themes[themeName]
-    if theme then
-        for k, v in pairs(theme) do
-            if config[k] ~= nil then
-                config[k] = v
-            end
-        end
-    end
-    -- 这里可以添加更多应用主题的逻辑
-end
 
 local function startRainbowEffect(object, property, speed)
     speed = speed or 0.005
@@ -164,7 +179,7 @@ local function createAuroraEffect(frame, intensity)
     gradient.Parent = aurora
     
     local colors = {
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 100, 255)),
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
         ColorSequenceKeypoint.new(0.25, Color3.fromRGB(100, 50, 255)),
         ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 0, 255)),
         ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255, 0, 100)),
@@ -311,7 +326,7 @@ FengYu.Name = "UniversalUI"
 protectGUI(FengYu)
 FengYu.Parent = services.CoreGui
 
--- WindUI风格的主窗口
+-- WindUI风格主窗口
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
@@ -330,19 +345,9 @@ MainCorner.Parent = Main
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
-MainStroke.Color = config.BorderColor
+MainStroke.Color = Color3.fromRGB(60, 60, 60)
 MainStroke.Thickness = 1.5
 MainStroke.Transparency = 0.3
-
--- 背景图片功能
-local BackgroundImage = Instance.new("ImageLabel")
-BackgroundImage.Name = "BackgroundImage"
-BackgroundImage.Parent = Main
-BackgroundImage.BackgroundTransparency = 1
-BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
-BackgroundImage.ZIndex = 0
-BackgroundImage.ScaleType = Enum.ScaleType.Crop
-BackgroundImage.Image = "rbxassetid://0" -- 默认无图片
 
 -- 顶部栏
 local TopBar = Instance.new("Frame")
@@ -358,6 +363,7 @@ local TopBarCorner = Instance.new("UICorner")
 TopBarCorner.CornerRadius = UDim.new(0, 8)
 TopBarCorner.Parent = TopBar
 
+-- 标题
 local Title = Instance.new("TextLabel")
 Title.Name = "Title"
 Title.Parent = TopBar
@@ -365,35 +371,160 @@ Title.BackgroundTransparency = 1
 Title.Position = UDim2.new(0, 10, 0, 0)
 Title.Size = UDim2.new(0, 200, 1, 0)
 Title.Font = Enum.Font.GothamBold
-Title.Text = "WindUI"
-Title.TextColor3 = config.TextColor
+Title.Text = "WindUI - FengY3"
+Title.TextColor3 = config.AccentColor
 Title.TextSize = 14
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- 主题选择按钮
+-- 主题切换按钮
 local ThemeButton = Instance.new("ImageButton")
 ThemeButton.Name = "ThemeButton"
 ThemeButton.Parent = TopBar
-ThemeButton.BackgroundTransparency = 1
-ThemeButton.Position = UDim2.new(1, -30, 0.5, -10)
-ThemeButton.Size = UDim2.new(0, 20, 0, 20)
-ThemeButton.Image = "rbxassetid://84830962019412"
-ThemeButton.ImageColor3 = config.AccentColor
+ThemeButton.BackgroundColor3 = config.Button_Color
+ThemeButton.BackgroundTransparency = 0.2
+ThemeButton.Position = UDim2.new(1, -80, 0.15, 0)
+ThemeButton.Size = UDim2.new(0, 60, 0, 20)
+ThemeButton.Image = "rbxassetid://14897056247" -- 主题图标
+ThemeButton.AutoButtonColor = false
 
+local ThemeButtonCorner = Instance.new("UICorner")
+ThemeButtonCorner.CornerRadius = UDim.new(0, 4)
+ThemeButtonCorner.Parent = ThemeButton
+
+local ThemeButtonText = Instance.new("TextLabel")
+ThemeButtonText.Name = "ThemeButtonText"
+ThemeButtonText.Parent = ThemeButton
+ThemeButtonText.BackgroundTransparency = 1
+ThemeButtonText.Size = UDim2.new(1, 0, 1, 0)
+ThemeButtonText.Font = Enum.Font.Gotham
+ThemeButtonText.Text = "主题"
+ThemeButtonText.TextColor3 = config.TextColor
+ThemeButtonText.TextSize = 12
+
+-- 主题选择弹窗
+local ThemePopup = Instance.new("Frame")
+ThemePopup.Name = "ThemePopup"
+ThemePopup.Parent = TopBar
+ThemePopup.BackgroundColor3 = config.MainColor
+ThemePopup.BackgroundTransparency = 0.1
+ThemePopup.BorderSizePixel = 0
+ThemePopup.Position = UDim2.new(1, -200, 1, 5)
+ThemePopup.Size = UDim2.new(0, 180, 0, 120)
+ThemePopup.Visible = false
+ThemePopup.ZIndex = 10
+
+local ThemePopupCorner = Instance.new("UICorner")
+ThemePopupCorner.CornerRadius = UDim.new(0, 6)
+ThemePopupCorner.Parent = ThemePopup
+
+local ThemePopupStroke = Instance.new("UIStroke")
+ThemePopupStroke.Parent = ThemePopup
+ThemePopupStroke.Color = Color3.fromRGB(80, 80, 80)
+ThemePopupStroke.Thickness = 1
+ThemePopupStroke.Transparency = 0.2
+
+local ThemeList = Instance.new("UIListLayout")
+ThemeList.Parent = ThemePopup
+ThemeList.SortOrder = Enum.SortOrder.LayoutOrder
+ThemeList.Padding = UDim.new(0, 5)
+
+local ThemePadding = Instance.new("UIPadding")
+ThemePadding.Parent = ThemePopup
+ThemePadding.PaddingTop = UDim.new(0, 5)
+ThemePadding.PaddingLeft = UDim.new(0, 5)
+ThemePadding.PaddingRight = UDim.new(0, 5)
+ThemePadding.PaddingBottom = UDim.new(0, 5)
+
+-- 创建主题选项
+local function createThemeOption(themeName, themeData)
+    local ThemeOption = Instance.new("TextButton")
+    ThemeOption.Name = themeName
+    ThemeOption.Parent = ThemePopup
+    ThemeOption.BackgroundColor3 = themeData.MainColor
+    ThemeOption.BackgroundTransparency = 0.2
+    ThemeOption.BorderSizePixel = 0
+    ThemeOption.Size = UDim2.new(1, 0, 0, 25)
+    ThemeOption.AutoButtonColor = false
+    ThemeOption.Font = Enum.Font.Gotham
+    ThemeOption.Text = themeName
+    ThemeOption.TextColor3 = themeData.TextColor
+    ThemeOption.TextSize = 12
+    ThemeOption.ZIndex = 11
+    
+    local ThemeOptionCorner = Instance.new("UICorner")
+    ThemeOptionCorner.CornerRadius = UDim.new(0, 4)
+    ThemeOptionCorner.Parent = ThemeOption
+    
+    ThemeOption.MouseEnter:Connect(function()
+        services.TweenService:Create(ThemeOption, TweenInfo.new(0.2), {
+            BackgroundTransparency = 0.1
+        }):Play()
+    end)
+    
+    ThemeOption.MouseLeave:Connect(function()
+        services.TweenService:Create(ThemeOption, TweenInfo.new(0.2), {
+            BackgroundTransparency = 0.2
+        }):Play()
+    end)
+    
+    ThemeOption.MouseButton1Click:Connect(function()
+        Ripple(ThemeOption)
+        currentTheme = themeName
+        config = themeData
+        ThemePopup.Visible = false
+        
+        -- 应用新主题到所有UI元素
+        applyTheme()
+    end)
+    
+    return ThemeOption
+end
+
+-- 应用主题函数
+local function applyTheme()
+    -- 应用主题到主要UI元素
+    Main.BackgroundColor3 = config.MainColor
+    TopBar.BackgroundColor3 = config.TabColor
+    Title.TextColor3 = config.AccentColor
+    ThemeButton.BackgroundColor3 = config.Button_Color
+    ThemeButtonText.TextColor3 = config.TextColor
+    Side.BackgroundColor3 = config.TabColor
+    ScriptTitle.TextColor3 = config.AccentColor
+    
+    -- 这里可以添加更多应用主题的代码
+end
+
+-- 创建主题选项
+for themeName, themeData in pairs(themes) do
+    createThemeOption(themeName, themeData)
+end
+
+-- 主题按钮点击事件
 ThemeButton.MouseButton1Click:Connect(function()
-    -- 切换主题
-    local themeNames = {"Default", "Purple", "Green", "Red", "Orange"}
-    local currentIndex = 1
-    for i, name in ipairs(themeNames) do
-        if name == currentTheme then
-            currentIndex = i
-            break
+    Ripple(ThemeButton)
+    ThemePopup.Visible = not ThemePopup.Visible
+end)
+
+-- 点击其他地方关闭主题弹窗
+UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        local mousePos = UserInputService:GetMouseLocation()
+        local themePopupAbsPos = ThemePopup.AbsolutePosition
+        local themePopupSize = ThemePopup.AbsoluteSize
+        
+        if not (mousePos.X >= themePopupAbsPos.X and mousePos.X <= themePopupAbsPos.X + themePopupSize.X and
+               mousePos.Y >= themePopupAbsPos.Y and mousePos.Y <= themePopupAbsPos.Y + themePopupSize.Y) then
+            ThemePopup.Visible = false
         end
     end
-    
-    local nextIndex = (currentIndex % #themeNames) + 1
-    applyTheme(themeNames[nextIndex])
 end)
+
+local rainbowStroke = Instance.new("UIStroke")
+rainbowStroke.Parent = Main
+rainbowStroke.Thickness = 2
+rainbowStroke.Transparency = 0.7
+rainbowStroke.LineJoinMode = Enum.LineJoinMode.Round
+startRainbowEffect(rainbowStroke, "Color", 0.01)
 
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
@@ -436,8 +567,8 @@ local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.24, 0, 30, 0)
-TabMain.Size = UDim2.new(0, 418, 0, 320)
+TabMain.Position = UDim2.new(0.24, 0, 0, 35)
+TabMain.Size = UDim2.new(0, 418, 0, 312)
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
@@ -446,7 +577,7 @@ Side.BackgroundColor3 = config.TabColor
 Side.BackgroundTransparency = 0.1
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
-Side.Position = UDim2.new(0, 0, 30, 0)
+Side.Position = UDim2.new(0, 0, 0, 30)
 Side.Size = UDim2.new(0, 120, 0, 320)
 
 local SideCorner = Instance.new("UICorner")
@@ -486,12 +617,12 @@ ScriptTitle.Parent = Side
 ScriptTitle.BackgroundTransparency = 1
 ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
 ScriptTitle.Size = UDim2.new(0, 110, 0, 20)
-ScriptTitle.Font = Enum.Font.GothamSemibold
+ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "WindUI"
 ScriptTitle.TextColor3 = config.AccentColor
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
-ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
+ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
 
 task.spawn(function()
     local hue = 0
@@ -538,24 +669,10 @@ function FengY3.new(FengY3, name, theme)
         end
     end
 
-    Title.Text = name or "WindUI"
     ScriptTitle.Text = name or "WindUI"
+    Title.Text = (name or "WindUI") .. " - FengY3"
     
     local window = {}
-    
-    -- 添加设置背景图片的方法
-    function window:SetBackgroundImage(imageId)
-        if BackgroundImage then
-            BackgroundImage.Image = "rbxassetid://" .. tostring(imageId)
-        end
-    end
-    
-    -- 添加设置背景透明度的功能
-    function window:SetBackgroundTransparency(transparency)
-        if BackgroundImage then
-            BackgroundImage.ImageTransparency = transparency or 0.5
-        end
-    end
     
     function window.Tab(window, name, icon)
         local Tab = Instance.new("ScrollingFrame")
@@ -579,7 +696,7 @@ function FengY3.new(FengY3, name, theme)
         TabIco.BackgroundTransparency = 1
         TabIco.BorderSizePixel = 0
         TabIco.Size = UDim2.new(0, 24, 0, 24)
-        TabIco.Image = "rbxassetid://84830962019412"
+        TabIco.Image = icon or "rbxassetid://84830962019412"
         TabIco.ImageTransparency = 0.5
         
         startRainbowEffect(TabIco, "ImageColor3", 0.005)
@@ -587,7 +704,7 @@ function FengY3.new(FengY3, name, theme)
         TabText.Name = "TabText"
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
-        TabText.Position = UDim2.new(1.5, 0, 0, 0)
+        TabText.Position = UDim2.new(1.2, 0, 0, 0)
         TabText.Size = UDim2.new(0, 80, 0, 24)
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
@@ -641,7 +758,7 @@ function FengY3.new(FengY3, name, theme)
             Section.Name = "Section"
             Section.Parent = Tab
             Section.BackgroundColor3 = config.TabColor
-            Section.BackgroundTransparency = 0.1
+            Section.BackgroundTransparency = 0.2
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
             Section.Size = UDim2.new(0.95, 0, 0, 32)
@@ -742,7 +859,7 @@ function FengY3.new(FengY3, name, theme)
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
                 Btn.BackgroundColor3 = config.Button_Color
-                Btn.BackgroundTransparency = 0.1
+                Btn.BackgroundTransparency = 0.2
                 Btn.BorderSizePixel = 0
                 Btn.Size = UDim2.new(0, 398, 0, 32)
                 Btn.AutoButtonColor = false
@@ -816,6 +933,39 @@ function FengY3.new(FengY3, name, theme)
                 end)
             end
             
+            -- 新增Image组件
+            function section.Image(section, imageId, sizeX, sizeY)
+                local ImageModule = Instance.new("Frame")
+                local ImageLabel = Instance.new("ImageLabel")
+                local ImageCorner = Instance.new("UICorner")
+                
+                ImageModule.Name = "ImageModule"
+                ImageModule.Parent = Objs
+                ImageModule.BackgroundTransparency = 1
+                ImageModule.BorderSizePixel = 0
+                ImageModule.Size = UDim2.new(0, 398, 0, sizeY or 100)
+                
+                ImageLabel.Parent = ImageModule
+                ImageLabel.BackgroundColor3 = config.Bg_Color
+                ImageLabel.BackgroundTransparency = 0.2
+                ImageLabel.BorderSizePixel = 0
+                ImageLabel.Position = UDim2.new(0.5, -(sizeX or 150)/2, 0, 0)
+                ImageLabel.Size = UDim2.new(0, sizeX or 150, 0, sizeY or 100)
+                ImageLabel.Image = "rbxassetid://" .. tostring(imageId)
+                ImageLabel.ScaleType = Enum.ScaleType.Crop
+                
+                ImageCorner.CornerRadius = UDim.new(0, 6)
+                ImageCorner.Parent = ImageLabel
+                
+                local imageGlow = Instance.new("UIStroke")
+                imageGlow.Parent = ImageLabel
+                imageGlow.Color = config.AccentColor
+                imageGlow.Thickness = 1
+                imageGlow.Transparency = 0.5
+                
+                return ImageLabel
+            end
+            
             function section:Label(text)
                 local LabelModule = Instance.new("Frame")
                 local TextLabel = Instance.new("TextLabel")
@@ -829,7 +979,7 @@ function FengY3.new(FengY3, name, theme)
                 
                 TextLabel.Parent = LabelModule
                 TextLabel.BackgroundColor3 = config.Label_Color
-                TextLabel.BackgroundTransparency = 0.1
+                TextLabel.BackgroundTransparency = 0.2
                 TextLabel.Size = UDim2.new(0, 398, 0, 18)
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
@@ -867,7 +1017,7 @@ function FengY3.new(FengY3, name, theme)
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
                 ToggleBtn.BackgroundColor3 = config.Toggle_Color
-                ToggleBtn.BackgroundTransparency = 0.1
+                ToggleBtn.BackgroundTransparency = 0.2
                 ToggleBtn.BorderSizePixel = 0
                 ToggleBtn.Size = UDim2.new(0, 398, 0, 32)
                 ToggleBtn.AutoButtonColor = false
@@ -1003,7 +1153,7 @@ function FengY3.new(FengY3, name, theme)
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
                 KeybindBtn.BackgroundColor3 = config.Keybind_Color
-                KeybindBtn.BackgroundTransparency = 0.1
+                KeybindBtn.BackgroundTransparency = 0.2
                 KeybindBtn.BorderSizePixel = 0
                 KeybindBtn.Size = UDim2.new(0, 398, 0, 32)
                 KeybindBtn.AutoButtonColor = false
@@ -1121,7 +1271,7 @@ function FengY3.new(FengY3, name, theme)
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
                 TextboxBack.BackgroundColor3 = config.Textbox_Color
-                TextboxBack.BackgroundTransparency = 0.1
+                TextboxBack.BackgroundTransparency = 0.2
                 TextboxBack.BorderSizePixel = 0
                 TextboxBack.Size = UDim2.new(0, 398, 0, 32)
                 TextboxBack.AutoButtonColor = false
@@ -1235,7 +1385,7 @@ function FengY3.new(FengY3, name, theme)
                 SliderBack.Name = "SliderBack"
                 SliderBack.Parent = SliderModule
                 SliderBack.BackgroundColor3 = config.Slider_Color
-                SliderBack.BackgroundTransparency = 0.1
+                SliderBack.BackgroundTransparency = 0.2
                 SliderBack.BorderSizePixel = 0
                 SliderBack.Size = UDim2.new(0, 398, 0, 32)
                 SliderBack.AutoButtonColor = false
@@ -1534,7 +1684,7 @@ function FengY3.new(FengY3, name, theme)
                 DropdownTop.Name = "DropdownTop"
                 DropdownTop.Parent = DropdownModule
                 DropdownTop.BackgroundColor3 = config.Dropdown_Color
-                DropdownTop.BackgroundTransparency = 0.1
+                DropdownTop.BackgroundTransparency = 0.2
                 DropdownTop.BorderSizePixel = 0
                 DropdownTop.Size = UDim2.new(0, 398, 0, 32)
                 DropdownTop.AutoButtonColor = false
@@ -1682,7 +1832,7 @@ function FengY3.new(FengY3, name, theme)
                     Option.Name = "Option_" .. option
                     Option.Parent = DropdownModule
                     Option.BackgroundColor3 = config.TabColor
-                    Option.BackgroundTransparency = 0.1
+                    Option.BackgroundTransparency = 0.2
                     Option.BorderSizePixel = 0
                     Option.Position = UDim2.new(0, 0, 0.328125, 0)
                     Option.Size = UDim2.new(0, 378, 0, 22)
@@ -1725,13 +1875,13 @@ function FengY3.new(FengY3, name, theme)
                 funcs:SetOptions(options)
                 return funcs
             end
-            
+
             return section
         end
-        
+
         return tab
     end
-    
+
     return window
 end
 
