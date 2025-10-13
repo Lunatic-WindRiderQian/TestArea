@@ -337,14 +337,14 @@ CloseButton.MouseButton1Click:Connect(function()
     FengYu:Destroy()
 end)
 
--- 调整悬浮窗位置和大小
+-- 调整悬浮窗位置和大小（改小一点）
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
 Open.Parent = FengYu
 Open.BackgroundColor3 = config.AccentColor
 Open.BackgroundTransparency = 0.85
 Open.Position = UDim2.new(0.92, 0, 0.01, 0)  -- 往左和往上移动
-Open.Size = UDim2.new(0, 50, 0, 50)  -- 增大悬浮窗大小从40到50
+Open.Size = UDim2.new(0, 40, 0, 40)  -- 缩小悬浮窗大小从50到40
 Open.Active = true
 Open.Draggable = true
 Open.Image = "rbxassetid://84830962019412"
@@ -509,7 +509,7 @@ function FengY3.new(FengY3, name, theme)
         TabIco.Parent = TabBtns
         TabIco.BackgroundTransparency = 1
         TabIco.BorderSizePixel = 0
-        TabIco.Size = UDim2.new(0, 20, 0, 20)
+        TabIco.Size = UDim2.new(0, 30, 0, 30)  -- 增大图标大小从20到30
         TabIco.Image = "rbxassetid://84830962019412"
         TabIco.ImageTransparency = 0.5
         
@@ -519,11 +519,11 @@ function FengY3.new(FengY3, name, theme)
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
         TabText.Position = UDim2.new(1.2, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 65, 0, 20)  -- 增加宽度从35到65
+        TabText.Size = UDim2.new(0, 65, 0, 30)  -- 增加高度从20到30
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
-        TabText.TextSize = 12  -- 保持字体大小
+        TabText.TextSize = 14  -- 增大字体大小从12到14
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.TextTransparency = 0.5
         
@@ -531,7 +531,7 @@ function FengY3.new(FengY3, name, theme)
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 90, 0, 20)  -- 调整按钮大小从60到90
+        TabBtn.Size = UDim2.new(0, 90, 0, 30)  -- 调整按钮高度从20到30
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
