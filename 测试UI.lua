@@ -658,94 +658,94 @@ function FengY3.new(FengY3, name, theme)
             local section = {}
             
             function section.Button(section, text, callback)
-                callback = callback or function() end
-                
-                local BtnModule = Instance.new("Frame")
-                local Btn = Instance.new("TextButton")
-                local BtnC = Instance.new("UICorner")
-                
-                BtnModule.Name = "BtnModule"
-                BtnModule.Parent = Objs
-                BtnModule.BackgroundTransparency = 1
-                BtnModule.BorderSizePixel = 0
-                BtnModule.Size = UDim2.new(0, 340, 0, 22)  -- 增加宽度从330到340，减小高度从28到22
-                
-                Btn.Name = "Btn"
-                Btn.Parent = BtnModule
-                Btn.BackgroundColor3 = config.Button_Color
-                Btn.BackgroundTransparency = 0.2
-                Btn.BorderSizePixel = 0
-                Btn.Size = UDim2.new(0, 340, 0, 22)  -- 增加宽度从330到340，减小高度从28到22
-                Btn.AutoButtonColor = false
-                Btn.Font = Enum.Font.GothamSemibold
-                Btn.Text = "   " .. text
-                Btn.TextColor3 = config.TextColor
-                Btn.TextSize = 14
-                Btn.TextXAlignment = Enum.TextXAlignment.Left
-                
-                BtnC.CornerRadius = UDim.new(0, 6)
-                BtnC.Name = "BtnC"
-                BtnC.Parent = Btn
-                
-                local btnGlow = Instance.new("UIStroke")
-                btnGlow.Parent = Btn
-                btnGlow.Color = config.AccentColor
-                btnGlow.Thickness = 1
-                btnGlow.Transparency = 0.8
-                
-                startRainbowEffect(btnGlow, "Color", 0.01)
-                
-                Btn.MouseEnter:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-                        BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.Button_Color.R * 255 * 1.1),
-                            math.floor(config.Button_Color.G * 255 * 1.1),
-                            math.floor(config.Button_Color.B * 255 * 1.1)
-                        )
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                        Thickness = 2,
-                        Transparency = 0.5
-                    }):Play()
-                end)
-                
-                Btn.MouseLeave:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-                        BackgroundColor3 = config.Button_Color
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                        Thickness = 1,
-                        Transparency = 0.8
-                    }):Play()
-                end)
-                
-                Btn.MouseButton1Click:Connect(function()
-                    Ripple(Btn)
-                    callback()
-                    
-                    services.TweenService:Create(Btn, TweenInfo.new(0.1), {
-                        BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.Button_Color.R * 255 * 0.8),
-                            math.floor(config.Button_Color.G * 255 * 0.8),
-                            math.floor(config.Button_Color.B * 255 * 0.8)
-                        )
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
-                        Thickness = 3,
-                        Transparency = 0.3
-                    }):Play()
-                    
-                    task.wait(0.1)
-                    
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-                        BackgroundColor3 = config.Button_Color
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                        Thickness = 1,
-                        Transparency = 0.8
-                    }):Play()
-                end)
-            end
+    callback = callback or function() end
+    
+    local BtnModule = Instance.new("Frame")
+    local Btn = Instance.new("TextButton")
+    local BtnC = Instance.new("UICorner")
+    
+    BtnModule.Name = "BtnModule"
+    BtnModule.Parent = Objs
+    BtnModule.BackgroundTransparency = 1
+    BtnModule.BorderSizePixel = 0
+    BtnModule.Size = UDim2.new(0, 340, 0, 22)  -- 修改：宽度从330增加到340，高度从28减小到22
+    
+    Btn.Name = "Btn"
+    Btn.Parent = BtnModule
+    Btn.BackgroundColor3 = config.Button_Color
+    Btn.BackgroundTransparency = 0.2
+    Btn.BorderSizePixel = 0
+    Btn.Size = UDim2.new(0, 340, 0, 22)  -- 修改：宽度从330增加到340，高度从28减小到22
+    Btn.AutoButtonColor = false
+    Btn.Font = Enum.Font.GothamSemibold
+    Btn.Text = "   " .. text
+    Btn.TextColor3 = config.TextColor
+    Btn.TextSize = 14
+    Btn.TextXAlignment = Enum.TextXAlignment.Left
+    
+    BtnC.CornerRadius = UDim.new(0, 6)
+    BtnC.Name = "BtnC"
+    BtnC.Parent = Btn
+    
+    local btnGlow = Instance.new("UIStroke")
+    btnGlow.Parent = Btn
+    btnGlow.Color = config.AccentColor
+    btnGlow.Thickness = 1
+    btnGlow.Transparency = 0.8
+    
+    startRainbowEffect(btnGlow, "Color", 0.01)
+    
+    Btn.MouseEnter:Connect(function()
+        services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.floor(config.Button_Color.R * 255 * 1.1),
+                math.floor(config.Button_Color.G * 255 * 1.1),
+                math.floor(config.Button_Color.B * 255 * 1.1)
+            )
+        }):Play()
+        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+            Thickness = 2,
+            Transparency = 0.5
+        }):Play()
+    end)
+    
+    Btn.MouseLeave:Connect(function()
+        services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+            BackgroundColor3 = config.Button_Color
+        }):Play()
+        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+            Thickness = 1,
+            Transparency = 0.8
+        }):Play()
+    end)
+    
+    Btn.MouseButton1Click:Connect(function()
+        Ripple(Btn)
+        callback()
+        
+        services.TweenService:Create(Btn, TweenInfo.new(0.1), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.floor(config.Button_Color.R * 255 * 0.8),
+                math.floor(config.Button_Color.G * 255 * 0.8),
+                math.floor(config.Button_Color.B * 255 * 0.8)
+            )
+        }):Play()
+        services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
+            Thickness = 3,
+            Transparency = 0.3
+        }):Play()
+        
+        task.wait(0.1)
+        
+        services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+            BackgroundColor3 = config.Button_Color
+        }):Play()
+        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+            Thickness = 1,
+            Transparency = 0.8
+        }):Play()
+    end)
+end
             
             -- 图片组件
             function section.Image(section, imageId, sizeX, sizeY)
