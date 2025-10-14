@@ -668,14 +668,14 @@ function FengY3.new(FengY3, name, theme)
     BtnModule.Parent = Objs
     BtnModule.BackgroundTransparency = 1
     BtnModule.BorderSizePixel = 0
-    BtnModule.Size = UDim2.new(0, 300, 0, 35)  -- 修改：宽度从340减小到300，高度从22增加到35
+    BtnModule.Size = UDim2.new(0, 330, 0, 28)  -- 统一宽度为330，高度28
     
     Btn.Name = "Btn"
     Btn.Parent = BtnModule
     Btn.BackgroundColor3 = config.Button_Color
     Btn.BackgroundTransparency = 0.2
     Btn.BorderSizePixel = 0
-    Btn.Size = UDim2.new(0, 300, 0, 35)  -- 修改：宽度从340减小到300，高度从22增加到35
+    Btn.Size = UDim2.new(0, 330, 0, 28)  -- 统一宽度为330，高度28
     Btn.AutoButtonColor = false
     Btn.Font = Enum.Font.GothamSemibold
     Btn.Text = "   " .. text
