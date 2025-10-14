@@ -658,94 +658,94 @@ function FengY3.new(FengY3, name, theme)
             local section = {}
             
             function section.Button(section, text, callback)
-    callback = callback or function() end
-    
-    local BtnModule = Instance.new("Frame")
-    local Btn = Instance.new("TextButton")
-    local BtnC = Instance.new("UICorner")
-    
-    BtnModule.Name = "BtnModule"
-    BtnModule.Parent = Objs
-    BtnModule.BackgroundTransparency = 1
-    BtnModule.BorderSizePixel = 0
-    BtnModule.Size = UDim2.new(0, 330, 0, 28)  -- 统一宽度为330，高度28
-    
-    Btn.Name = "Btn"
-    Btn.Parent = BtnModule
-    Btn.BackgroundColor3 = config.Button_Color
-    Btn.BackgroundTransparency = 0.2
-    Btn.BorderSizePixel = 0
-    Btn.Size = UDim2.new(0, 330, 0, 28)  -- 统一宽度为330，高度28
-    Btn.AutoButtonColor = false
-    Btn.Font = Enum.Font.GothamSemibold
-    Btn.Text = "   " .. text
-    Btn.TextColor3 = config.TextColor
-    Btn.TextSize = 14
-    Btn.TextXAlignment = Enum.TextXAlignment.Left
-    
-    BtnC.CornerRadius = UDim.new(0, 6)
-    BtnC.Name = "BtnC"
-    BtnC.Parent = Btn
-    
-    local btnGlow = Instance.new("UIStroke")
-    btnGlow.Parent = Btn
-    btnGlow.Color = config.AccentColor
-    btnGlow.Thickness = 1
-    btnGlow.Transparency = 0.8
-    
-    startRainbowEffect(btnGlow, "Color", 0.01)
-    
-    Btn.MouseEnter:Connect(function()
-        services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(
-                math.floor(config.Button_Color.R * 255 * 1.1),
-                math.floor(config.Button_Color.G * 255 * 1.1),
-                math.floor(config.Button_Color.B * 255 * 1.1)
-            )
-        }):Play()
-        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-            Thickness = 2,
-            Transparency = 0.5
-        }):Play()
-    end)
-    
-    Btn.MouseLeave:Connect(function()
-        services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-            BackgroundColor3 = config.Button_Color
-        }):Play()
-        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-            Thickness = 1,
-            Transparency = 0.8
-        }):Play()
-    end)
-    
-    Btn.MouseButton1Click:Connect(function()
-        Ripple(Btn)
-        callback()
-        
-        services.TweenService:Create(Btn, TweenInfo.new(0.1), {
-            BackgroundColor3 = Color3.fromRGB(
-                math.floor(config.Button_Color.R * 255 * 0.8),
-                math.floor(config.Button_Color.G * 255 * 0.8),
-                math.floor(config.Button_Color.B * 255 * 0.8)
-            )
-        }):Play()
-        services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
-            Thickness = 3,
-            Transparency = 0.3
-        }):Play()
-        
-        task.wait(0.1)
-        
-        services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-            BackgroundColor3 = config.Button_Color
-        }):Play()
-        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-            Thickness = 1,
-            Transparency = 0.8
-        }):Play()
-    end)
-end
+                callback = callback or function() end
+                
+                local BtnModule = Instance.new("Frame")
+                local Btn = Instance.new("TextButton")
+                local BtnC = Instance.new("UICorner")
+                
+                BtnModule.Name = "BtnModule"
+                BtnModule.Parent = Objs
+                BtnModule.BackgroundTransparency = 1
+                BtnModule.BorderSizePixel = 0
+                BtnModule.Size = UDim2.new(0, 310, 0, 32)  -- 修改：宽度减小到310，高度增加到32
+                
+                Btn.Name = "Btn"
+                Btn.Parent = BtnModule
+                Btn.BackgroundColor3 = config.Button_Color
+                Btn.BackgroundTransparency = 0.2
+                Btn.BorderSizePixel = 0
+                Btn.Size = UDim2.new(0, 310, 0, 32)  -- 修改：宽度减小到310，高度增加到32
+                Btn.AutoButtonColor = false
+                Btn.Font = Enum.Font.GothamSemibold
+                Btn.Text = "   " .. text
+                Btn.TextColor3 = config.TextColor
+                Btn.TextSize = 14
+                Btn.TextXAlignment = Enum.TextXAlignment.Left
+                
+                BtnC.CornerRadius = UDim.new(0, 6)
+                BtnC.Name = "BtnC"
+                BtnC.Parent = Btn
+                
+                local btnGlow = Instance.new("UIStroke")
+                btnGlow.Parent = Btn
+                btnGlow.Color = config.AccentColor
+                btnGlow.Thickness = 1
+                btnGlow.Transparency = 0.8
+                
+                startRainbowEffect(btnGlow, "Color", 0.01)
+                
+                Btn.MouseEnter:Connect(function()
+                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            math.floor(config.Button_Color.R * 255 * 1.1),
+                            math.floor(config.Button_Color.G * 255 * 1.1),
+                            math.floor(config.Button_Color.B * 255 * 1.1)
+                        )
+                    }):Play()
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                        Thickness = 2,
+                        Transparency = 0.5
+                    }):Play()
+                end)
+                
+                Btn.MouseLeave:Connect(function()
+                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+                        BackgroundColor3 = config.Button_Color
+                    }):Play()
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                        Thickness = 1,
+                        Transparency = 0.8
+                    }):Play()
+                end)
+                
+                Btn.MouseButton1Click:Connect(function()
+                    Ripple(Btn)
+                    callback()
+                    
+                    services.TweenService:Create(Btn, TweenInfo.new(0.1), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            math.floor(config.Button_Color.R * 255 * 0.8),
+                            math.floor(config.Button_Color.G * 255 * 0.8),
+                            math.floor(config.Button_Color.B * 255 * 0.8)
+                        )
+                    }):Play()
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
+                        Thickness = 3,
+                        Transparency = 0.3
+                    }):Play()
+                    
+                    task.wait(0.1)
+                    
+                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+                        BackgroundColor3 = config.Button_Color
+                    }):Play()
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                        Thickness = 1,
+                        Transparency = 0.8
+                    }):Play()
+                end)
+            end
             
             -- 图片组件
             function section.Image(section, imageId, sizeX, sizeY)
@@ -757,7 +757,7 @@ end
                 ImageModule.Parent = Objs
                 ImageModule.BackgroundTransparency = 1
                 ImageModule.BorderSizePixel = 0
-                ImageModule.Size = UDim2.new(0, 330, 0, sizeY or 120)  -- 增加宽度从270到330
+                ImageModule.Size = UDim2.new(0, 310, 0, sizeY or 120)  -- 修改宽度为310
                 
                 ImageLabel.Parent = ImageModule
                 ImageLabel.BackgroundColor3 = config.Bg_Color
@@ -765,7 +765,7 @@ end
                 ImageLabel.BorderSizePixel = 0
                 ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
                 ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
-                ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, 320), 0, sizeY or 120)
+                ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, 300), 0, sizeY or 120)
                 ImageLabel.Image = "rbxassetid://" .. tostring(imageId)
                 ImageLabel.ScaleType = Enum.ScaleType.Crop
                 
@@ -791,12 +791,12 @@ end
                 LabelModule.Parent = Objs
                 LabelModule.BackgroundTransparency = 1
                 LabelModule.BorderSizePixel = 0
-                LabelModule.Size = UDim2.new(0, 330, 0, 20)  -- 增加宽度从270到330
+                LabelModule.Size = UDim2.new(0, 310, 0, 24)  -- 修改宽度为310
                 
                 TextLabel.Parent = LabelModule
                 TextLabel.BackgroundColor3 = config.Label_Color
                 TextLabel.BackgroundTransparency = 0.2
-                TextLabel.Size = UDim2.new(0, 330, 0, 22)  -- 增加宽度从270到330
+                TextLabel.Size = UDim2.new(0, 310, 0, 26)  -- 修改宽度为310，高度增加到26
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
                 TextLabel.TextColor3 = config.SecondaryTextColor
@@ -828,14 +828,14 @@ end
                 ToggleModule.Parent = Objs
                 ToggleModule.BackgroundTransparency = 1
                 ToggleModule.BorderSizePixel = 0
-                ToggleModule.Size = UDim2.new(0, 330, 0, 28)  -- 增加宽度从270到330
+                ToggleModule.Size = UDim2.new(0, 310, 0, 32)  -- 修改：宽度减小到310，高度增加到32
                 
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
                 ToggleBtn.BackgroundColor3 = config.Toggle_Color
                 ToggleBtn.BackgroundTransparency = 0.2
                 ToggleBtn.BorderSizePixel = 0
-                ToggleBtn.Size = UDim2.new(0, 330, 0, 28)  -- 增加宽度从270到330
+                ToggleBtn.Size = UDim2.new(0, 310, 0, 32)  -- 修改：宽度减小到310，高度增加到32
                 ToggleBtn.AutoButtonColor = false
                 ToggleBtn.Font = Enum.Font.GothamSemibold
                 ToggleBtn.Text = "   " .. text
@@ -964,14 +964,14 @@ end
                 KeybindModule.Parent = Objs
                 KeybindModule.BackgroundTransparency = 1
                 KeybindModule.BorderSizePixel = 0
-                KeybindModule.Size = UDim2.new(0, 330, 0, 28)  -- 增加宽度从270到330
+                KeybindModule.Size = UDim2.new(0, 310, 0, 32)  -- 修改：宽度减小到310，高度增加到32
                 
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
                 KeybindBtn.BackgroundColor3 = config.Keybind_Color
                 KeybindBtn.BackgroundTransparency = 0.2
                 KeybindBtn.BorderSizePixel = 0
-                KeybindBtn.Size = UDim2.new(0, 330, 0, 28)  -- 增加宽度从270到330
+                KeybindBtn.Size = UDim2.new(0, 310, 0, 32)  -- 修改：宽度减小到310，高度增加到32
                 KeybindBtn.AutoButtonColor = false
                 KeybindBtn.Font = Enum.Font.GothamSemibold
                 KeybindBtn.Text = "   " .. text
@@ -1082,14 +1082,14 @@ end
                 TextboxModule.Parent = Objs
                 TextboxModule.BackgroundTransparency = 1
                 TextboxModule.BorderSizePixel = 0
-                TextboxModule.Size = UDim2.new(0, 330, 0, 28)  -- 增加宽度从270到330
+                TextboxModule.Size = UDim2.new(0, 310, 0, 32)  -- 修改：宽度减小到310，高度增加到32
                 
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
                 TextboxBack.BackgroundColor3 = config.Textbox_Color
                 TextboxBack.BackgroundTransparency = 0.2
                 TextboxBack.BorderSizePixel = 0
-                TextboxBack.Size = UDim2.new(0, 330, 0, 28)  -- 增加宽度从270到330
+                TextboxBack.Size = UDim2.new(0, 310, 0, 32)  -- 修改：宽度减小到310，高度增加到32
                 TextboxBack.AutoButtonColor = false
                 TextboxBack.Font = Enum.Font.GothamSemibold
                 TextboxBack.Text = "   " .. text
@@ -1196,14 +1196,14 @@ end
                 SliderModule.BackgroundTransparency = 1.000
                 SliderModule.BorderSizePixel = 0
                 SliderModule.Position = UDim2.new(0, 0, 0, 0)
-                SliderModule.Size = UDim2.new(0, 330, 0, 28)  -- 增加宽度从270到330
+                SliderModule.Size = UDim2.new(0, 310, 0, 32)  -- 修改：宽度减小到310，高度增加到32
                 
                 SliderBack.Name = "SliderBack"
                 SliderBack.Parent = SliderModule
                 SliderBack.BackgroundColor3 = config.Slider_Color
                 SliderBack.BackgroundTransparency = 0.2
                 SliderBack.BorderSizePixel = 0
-                SliderBack.Size = UDim2.new(0, 330, 0, 28)  -- 增加宽度从270到330
+                SliderBack.Size = UDim2.new(0, 310, 0, 32)  -- 修改：宽度减小到310，高度增加到32
                 SliderBack.AutoButtonColor = false
                 SliderBack.Font = Enum.Font.GothamSemibold
                 SliderBack.Text = "   " .. text
@@ -1495,14 +1495,14 @@ end
                 DropdownModule.BorderSizePixel = 0
                 DropdownModule.ClipsDescendants = true
                 DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-                DropdownModule.Size = UDim2.new(0, 330, 0, 28)  -- 增加宽度从270到330
+                DropdownModule.Size = UDim2.new(0, 310, 0, 32)  -- 修改：宽度减小到310，高度增加到32
                 
                 DropdownTop.Name = "DropdownTop"
                 DropdownTop.Parent = DropdownModule
                 DropdownTop.BackgroundColor3 = config.Dropdown_Color
                 DropdownTop.BackgroundTransparency = 0.2
                 DropdownTop.BorderSizePixel = 0
-                DropdownTop.Size = UDim2.new(0, 330, 0, 28)  -- 增加宽度从270到330
+                DropdownTop.Size = UDim2.new(0, 310, 0, 32)  -- 修改：宽度减小到310，高度增加到32
                 DropdownTop.AutoButtonColor = false
                 DropdownTop.Font = Enum.Font.GothamSemibold
                 DropdownTop.Text = ""
@@ -1557,7 +1557,7 @@ end
                 DropdownText.BackgroundTransparency = 1.000
                 DropdownText.BorderSizePixel = 0
                 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-                DropdownText.Size = UDim2.new(0, 220, 0, 28)  -- 增加宽度从200到220
+                DropdownText.Size = UDim2.new(0, 220, 0, 32)  -- 修改高度为32
                 DropdownText.Font = Enum.Font.GothamSemibold
                 DropdownText.PlaceholderColor3 = config.SecondaryTextColor
                 DropdownText.PlaceholderText = text
@@ -1616,7 +1616,7 @@ end
                         setAllVisible()
                     end
                     DropdownOpen.Text = (open and "取消" or "选择")
-                    DropdownModule.Size = UDim2.new(0, 330, 0, (open and math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150) or 28))  -- 增加宽度从270到330
+                    DropdownModule.Size = UDim2.new(0, 310, 0, (open and math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150) or 32))  -- 修改宽度为310
                 end
                 
                 DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
@@ -1638,7 +1638,7 @@ end
                     if not open then
                         return
                     end
-                    DropdownModule.Size = UDim2.new(0, 330, 0, math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150))  -- 增加宽度从270到330
+                    DropdownModule.Size = UDim2.new(0, 310, 0, math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150))  -- 修改宽度为310
                 end)
                 
                 local funcs = {}
@@ -1651,7 +1651,7 @@ end
                     Option.BackgroundTransparency = 0.2
                     Option.BorderSizePixel = 0
                     Option.Position = UDim2.new(0, 0, 0.328125, 0)
-                    Option.Size = UDim2.new(0, 310, 0, 24)  -- 增加宽度从250到310
+                    Option.Size = UDim2.new(0, 290, 0, 24)  -- 修改宽度为290
                     Option.AutoButtonColor = false
                     Option.Font = Enum.Font.Gotham
                     Option.Text = option
