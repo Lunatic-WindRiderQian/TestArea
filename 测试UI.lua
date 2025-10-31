@@ -4,43 +4,25 @@ local ToggleUI = false
 X.currentTab = nil
 X.flags = {}
 
-function X.getExploit()
-    if syn and syn.protect_gui then return "Synapse X" end
-    if sentinel then return "Sentinel" end
-    if Krnl then return "Krnl" end
-    if SW then return "ScriptWare" end
-    if ELECTRON then return "Electron" end
-    if getexecutorname then return "Fluxus" end
-    if oxygen then return "Oxygen U" end
-    return "Unknown Executor"
-end
-
-function X.protectGui(gui)
-    if syn and syn.protect_gui then
-        syn.protect_gui(gui)
-    elseif gethui then
-        gui.Parent = gethui()
-    elseif get_hidden_ui then
-        gui.Parent = get_hidden_ui()
-    else
-        gui.Parent = game:GetService("CoreGui")
-    end
-end
-
 local services = setmetatable({}, {
   __index = function(t, k)
-    return game.GetService(game, k)
+    return game:GetService(k)
   end
 })
 
-local mouse = services.Players.LocalPlayer:GetMouse()
+local player = game:GetService("Players").LocalPlayer
+while not player do
+    game:GetService("Players").PlayerAdded:Wait()
+    player = game:GetService("Players").LocalPlayer
+end
+local mouse = player:GetMouse()
 
-function X.Tween(obj, t, data)
+function Tween(obj, t, data)
 	services.TweenService:Create(obj, TweenInfo.new(t[1], Enum.EasingStyle[t[2]], Enum.EasingDirection[t[3]]), data):Play()
 	return true
 end
 
-function X.Ripple(obj)
+function Ripple(obj)
 	spawn(function()
 		if obj.ClipsDescendants ~= true then
 			obj.ClipsDescendants = true
@@ -56,9 +38,9 @@ function X.Ripple(obj)
 		Ripple.ScaleType = Enum.ScaleType.Fit
 		Ripple.ImageColor3 = Color3.fromRGB(255, 255, 255)
 		Ripple.Position = UDim2.new((mouse.X - Ripple.AbsolutePosition.X) / obj.AbsoluteSize.X, 0, (mouse.Y - Ripple.AbsolutePosition.Y) / obj.AbsoluteSize.Y, 0)
-		X.Tween(Ripple, {.3, 'Linear', 'InOut'}, {Position = UDim2.new(-5.5, 0, -5.5, 0), Size = UDim2.new(12, 0, 12, 0)})
+		Tween(Ripple, {.3, 'Linear', 'InOut'}, {Position = UDim2.new(-5.5, 0, -5.5, 0), Size = UDim2.new(12, 0, 12, 0)})
 		wait(0.15)
-		X.Tween(Ripple, {.3, 'Linear', 'InOut'}, {ImageTransparency = 1})
+		Tween(Ripple, {.3, 'Linear', 'InOut'}, {ImageTransparency = 1})
 		wait(.3)
 		Ripple:Destroy()
 	end)
@@ -68,7 +50,7 @@ local toggled = false
 
 -- # Switch Tabs # --
 local switchingTabs = false
-function X.switchTab(new)
+function switchTab(new)
   if switchingTabs then return end
   local old = X.currentTab
   if old == nil then
@@ -97,7 +79,7 @@ function X.switchTab(new)
 end
 
 -- # Drag, Stolen from Kiriot or Wally # --
-function X.drag(frame, hold)
+function drag(frame, hold)
 	if not hold then
 		hold = frame
 	end
@@ -138,13 +120,12 @@ function X.drag(frame, hold)
 	end)
 end
 
-function X.new(name, theme)
+function X.new(library, name,theme)
     for _, v in next, services.CoreGui:GetChildren() do
         if v.Name == "frosty" then
           v:Destroy()
         end
       end
-      
 if theme == 'dark' then
     MainColor = Color3.fromRGB(25, 25, 25)
     Background = Color3.fromRGB(25, 25, 25)
@@ -176,16 +157,19 @@ end
       local UIGradient=Instance.new("UIGradient")
       local UIGradientTitle=Instance.new("UIGradient")
       
-      X.protectGui(dogent)
-      
+      if (syn and syn.protect_gui) or (getexecutorname and protect_gui) then 
+          if syn then syn.protect_gui(dogent) 
+          elseif protect_gui then protect_gui(dogent) end
+      end
+    
       dogent.Name = "frosty"
       dogent.Parent = services.CoreGui
       
-      function X.Destroy()
+      function UiDestroy()
           dogent:Destroy()
       end
       
-      function X.ToggleUI()
+          function ToggleUILib()
             if not ToggleUI then
                 dogent.Enabled = false
                 ToggleUI = true
@@ -213,7 +197,7 @@ end
       end
       end
       end)
-      X.drag(Main)
+      drag(Main)
       
       UICornerMain.Parent = Main
       UICornerMain.CornerRadius = UDim.new(0,3)
@@ -254,7 +238,7 @@ end
             spawn(function()
                 if toggled then wait(0.3) end
             end)
-            X.Tween(Main, {0.3, 'Sine', 'InOut'}, {
+            Tween(Main, {0.3, 'Sine', 'InOut'}, {
                 Size = UDim2.new(0, 609, 0, (toggled and 505 or 0))
             })
         end
@@ -268,7 +252,7 @@ end
       
       MainC.CornerRadius = UDim.new(0, 5.5)
       MainC.Name = "MainC"
-      MainC.Parent = Main
+      MainC.Parent = Frame
       
       SB.Name = "SB"
       SB.Parent = Main
@@ -317,7 +301,7 @@ end
       ScriptTitle.Position = UDim2.new(0, 0, 0.00953488424, 0)
       ScriptTitle.Size = UDim2.new(0, 102, 0, 20)
       ScriptTitle.Font = Enum.Font.GothamSemibold
-      ScriptTitle.Text = name .. " | " .. X.getExploit()
+      ScriptTitle.Text = name
       ScriptTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
       ScriptTitle.TextSize = 14.000
       ScriptTitle.TextScaled = true
@@ -445,7 +429,7 @@ end
       end)
       UIG.Parent = Open
       local window = {}
-      function window:Tab(name, icon)
+      function window.Tab(window, name, icon)
         local Tab = Instance.new("ScrollingFrame")
         local TabIco = Instance.new("ImageLabel")
         local TabText = Instance.new("TextLabel")
@@ -501,19 +485,19 @@ end
     
         TabBtn.MouseButton1Click:Connect(function()
             spawn(function()
-                X.Ripple(TabBtn)
+                Ripple(TabBtn)
             end)
-          X.switchTab({TabIco, Tab})
+          switchTab({TabIco, Tab})
         end)
     
-        if X.currentTab == nil then X.switchTab({TabIco, Tab}) end
+        if X.currentTab == nil then switchTab({TabIco, Tab}) end
     
         TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
           Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 8)
         end)
     
         local tab = {}
-        function tab:Section(name, TabVal)
+        function tab.section(tab, name, TabVal)
           local Section = Instance.new("Frame")
           local SectionC = Instance.new("UICorner")
           local SectionText = Instance.new("TextLabel")
@@ -602,7 +586,7 @@ end
           end)
     
           local section = {}
-          function section:Button(text, callback)
+          function section.Button(section, text, callback)
             local callback = callback or function() end
     
             local BtnModule = Instance.new("Frame")
@@ -635,7 +619,7 @@ end
     
             Btn.MouseButton1Click:Connect(function()
                 spawn(function()
-                    X.Ripple(Btn)
+                    Ripple(Btn)
                 end)
                     spawn(callback)
                 end)
@@ -668,7 +652,7 @@ end
           return TextLabel
         end
     
-          function section:Toggle(text, flag, enabled, callback)
+          function section.Toggle(section, text, flag, enabled, callback)
             local callback = callback or function() end
             local enabled = enabled or false
             assert(text, "No text provided")
@@ -749,7 +733,7 @@ end
             return funcs
           end
     
-          function section:Keybind(text, default, callback)
+          function section.Keybind(section, text, default, callback)
             local callback = callback or function() end
             assert(text, "No text provided")
             assert(default, "No default key provided")
@@ -870,7 +854,7 @@ end
             KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 30, 0, 28)
           end
     
-          function section:Textbox(text, flag, default, callback)
+          function section.Textbox(section, text, flag, default, callback)
             local callback = callback or function() end
             assert(text, "No text provided")
             assert(flag, "No flag provided")
@@ -961,7 +945,7 @@ end
             BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 30, 0, 28)
           end
     
-          function section:Slider(text, flag, default, min, max, precise, callback)
+          function section.Slider(section, text, flag, default, min, max, precise, callback)
             local callback = callback or function() end
             local min = min or 1
             local max = max or 10
@@ -1193,7 +1177,7 @@ end
     
             return funcs
           end
-          function section:Dropdown(text, flag, options, callback)
+          function section.Dropdown(section, text, flag, options, callback)
             local callback = callback or function() end
             local options = options or {}
             assert(text, "No text provided")
@@ -1376,5 +1360,4 @@ end
       end
       return window
     end
-
 return X
