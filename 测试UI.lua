@@ -252,7 +252,7 @@ end
       
       MainC.CornerRadius = UDim.new(0, 5.5)
       MainC.Name = "MainC"
-      MainC.Parent = Frame
+      MainC.Parent = Main
       
       SB.Name = "SB"
       SB.Parent = Main
