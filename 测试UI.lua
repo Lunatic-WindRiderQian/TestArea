@@ -142,7 +142,6 @@ function Ripple(obj)
     end)
 end
 
--- 现代化滑动效果
 local function setupSmoothScrolling(scrollingFrame, layout)
     layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
