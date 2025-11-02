@@ -63,6 +63,161 @@ local config = {
     GlowColor = Color3.fromRGB(0, 200, 255),
 }
 
+-- 新的数字粒子爆炸效果
+function DigitalParticleExplosion(obj)
+    if not obj or not obj.Parent then return end
+    
+    task.spawn(function()
+        if obj.ClipsDescendants ~= true then
+            obj.ClipsDescendants = true
+        end
+        
+        local mouse = services.Players.LocalPlayer:GetMouse()
+        
+        -- 获取点击位置（固定位置，不跟随）
+        local x = (mouse.X - obj.AbsolutePosition.X) / obj.AbsoluteSize.X
+        local y = (mouse.Y - obj.AbsolutePosition.Y) / obj.AbsoluteSize.Y
+        
+        -- 创建爆炸中心
+        local explosionCenter = Instance.new("Frame")
+        explosionCenter.Name = "ExplosionCenter"
+        explosionCenter.Parent = obj
+        explosionCenter.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+        explosionCenter.BackgroundTransparency = 0.3
+        explosionCenter.ZIndex = 8
+        explosionCenter.Size = UDim2.new(0, 20, 0, 20)
+        explosionCenter.AnchorPoint = Vector2.new(0.5, 0.5)
+        explosionCenter.Position = UDim2.new(x, 0, y, 0)
+        
+        local centerCorner = Instance.new("UICorner")
+        centerCorner.CornerRadius = UDim.new(1, 0)
+        centerCorner.Parent = explosionCenter
+        
+        -- 中心发光效果
+        local centerGlow = Instance.new("UIStroke")
+        centerGlow.Parent = explosionCenter
+        centerGlow.Color = Color3.fromRGB(0, 255, 255)
+        centerGlow.Thickness = 3
+        centerGlow.Transparency = 0.2
+        
+        -- 创建数字粒子
+        local particleCount = 12
+        local particles = {}
+        
+        for i = 1, particleCount do
+            local angle = (i / particleCount) * math.pi * 2
+            local distance = math.random(30, 80)
+            
+            local particle = Instance.new("TextLabel")
+            particle.Name = "DigitalParticle_" .. i
+            particle.Parent = obj
+            particle.BackgroundTransparency = 1
+            particle.Text = tostring(math.random(0, 1))
+            particle.TextColor3 = Color3.fromRGB(
+                math.random(150, 255),
+                math.random(150, 255),
+                math.random(200, 255)
+            )
+            particle.TextSize = math.random(10, 14)
+            particle.Font = Enum.Font.Code
+            particle.ZIndex = 9
+            particle.Size = UDim2.new(0, 20, 0, 20)
+            particle.Position = UDim2.new(x, 0, y, 0)
+            particle.AnchorPoint = Vector2.new(0.5, 0.5)
+            
+            table.insert(particles, {
+                instance = particle,
+                angle = angle,
+                distance = distance,
+                speed = math.random(150, 250),
+                rotation = math.random(-180, 180)
+            })
+        end
+        
+        -- 中心爆炸动画
+        services.TweenService:Create(explosionCenter, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 40, 0, 40),
+            BackgroundTransparency = 1
+        }):Play()
+        
+        services.TweenService:Create(centerGlow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Thickness = 8,
+            Transparency = 1
+        }):Play()
+        
+        -- 粒子飞散动画
+        local startTime = tick()
+        local connection
+        connection = RunService.Heartbeat:Connect(function()
+            local elapsed = tick() - startTime
+            
+            if elapsed > 0.8 then
+                connection:Disconnect()
+                explosionCenter:Destroy()
+                for _, particleData in ipairs(particles) do
+                    particleData.instance:Destroy()
+                end
+                return
+            end
+            
+            local progress = elapsed / 0.8
+            
+            for _, particleData in ipairs(particles) do
+                local moveProgress = progress * particleData.speed / 100
+                local currentDistance = particleData.distance * moveProgress
+                
+                local offsetX = math.cos(particleData.angle) * currentDistance
+                local offsetY = math.sin(particleData.angle) * currentDistance
+                
+                particleData.instance.Position = UDim2.new(
+                    x, offsetX,
+                    y, offsetY
+                )
+                
+                -- 旋转和透明度变化
+                particleData.instance.Rotation = particleData.rotation * progress
+                particleData.instance.TextTransparency = progress
+                
+                -- 数字闪烁效果
+                if math.random(1, 3) == 1 then
+                    particleData.instance.Text = tostring(math.random(0, 1))
+                end
+            end
+            
+            -- 中心缩放效果
+            explosionCenter.Size = UDim2.new(0, 40 + progress * 20, 0, 40 + progress * 20)
+        end)
+        
+        -- 创建冲击波环
+        local shockwave = Instance.new("Frame")
+        shockwave.Name = "Shockwave"
+        shockwave.Parent = obj
+        shockwave.BackgroundTransparency = 1
+        shockwave.ZIndex = 7
+        shockwave.Size = UDim2.new(0, 0, 0, 0)
+        shockwave.AnchorPoint = Vector2.new(0.5, 0.5)
+        shockwave.Position = UDim2.new(x, 0, y, 0)
+        
+        local shockwaveStroke = Instance.new("UIStroke")
+        shockwaveStroke.Parent = shockwave
+        shockwaveStroke.Color = Color3.fromRGB(0, 200, 255)
+        shockwaveStroke.Thickness = 3
+        shockwaveStroke.Transparency = 0.3
+        
+        services.TweenService:Create(shockwave, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 120, 0, 120)
+        }):Play()
+        
+        services.TweenService:Create(shockwaveStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Thickness = 1,
+            Transparency = 1
+        }):Play()
+        
+        task.wait(0.6)
+        shockwave:Destroy()
+    end)
+end
+
 -- 新的霓虹流光效果
 local function startNeonFlowEffect(object, property, speed)
     speed = speed or 0.008
@@ -160,60 +315,6 @@ local function createHologramEffect(frame, intensity)
     end)
     
     return hologram
-end
-
--- 新的量子涟漪效果
-function QuantumRipple(obj)
-    if not obj or not obj.Parent then return end
-    
-    task.spawn(function()
-        if obj.ClipsDescendants ~= true then
-            obj.ClipsDescendants = true
-        end
-        
-        local mouse = services.Players.LocalPlayer:GetMouse()
-        local Ripple = Instance.new("Frame")
-        Ripple.Name = "QuantumRipple"
-        Ripple.Parent = obj
-        Ripple.BackgroundColor3 = Color3.new(1, 1, 1)
-        Ripple.BackgroundTransparency = 0.7
-        Ripple.ZIndex = 8
-        Ripple.Size = UDim2.new(0, 0, 0, 0)
-        Ripple.AnchorPoint = Vector2.new(0.5, 0.5)
-        
-        local RippleCorner = Instance.new("UICorner")
-        RippleCorner.CornerRadius = UDim.new(1, 0)
-        RippleCorner.Parent = Ripple
-        
-        -- 随机颜色
-        local hue = math.random()
-        Ripple.BackgroundColor3 = Color3.fromHSV(hue, 0.9, 1)
-        
-        local x = (mouse.X - obj.AbsolutePosition.X) / obj.AbsoluteSize.X
-        local y = (mouse.Y - obj.AbsolutePosition.Y) / obj.AbsoluteSize.Y
-        Ripple.Position = UDim2.new(x, 0, y, 0)
-        
-        -- 多重涟漪效果
-        services.TweenService:Create(Ripple, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(2, 0, 2, 0),
-            BackgroundTransparency = 1
-        }):Play()
-        
-        -- 创建第二个涟漪
-        task.wait(0.1)
-        local Ripple2 = Ripple:Clone()
-        Ripple2.Parent = obj
-        Ripple2.BackgroundColor3 = Color3.fromHSV((hue + 0.3) % 1, 0.9, 1)
-        
-        services.TweenService:Create(Ripple2, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(1.5, 0, 1.5, 0),
-            BackgroundTransparency = 1
-        }):Play()
-        
-        task.wait(0.8)
-        Ripple:Destroy()
-        Ripple2:Destroy()
-    end)
 end
 
 -- 新的脉冲发光效果
@@ -428,7 +529,7 @@ CloseButton.MouseLeave:Connect(function()
 end)
 
 CloseButton.MouseButton1Click:Connect(function()
-    QuantumRipple(CloseButton)
+    DigitalParticleExplosion(CloseButton)
     services.TweenService:Create(CloseButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         TextColor3 = Color3.fromRGB(255, 30, 30),
         TextSize = 14,
@@ -650,7 +751,7 @@ function FengUI.new(FengUI, name, theme)
         TabL.Padding = UDim.new(0, 4)
         
         TabBtn.MouseButton1Click:Connect(function()
-            QuantumRipple(TabBtn)
+            DigitalParticleExplosion(TabBtn)
             switchTab({ TabIco, Tab })
         end)
         
@@ -759,7 +860,7 @@ function FengUI.new(FengUI, name, theme)
                 }):Play()
                 
                 -- 添加点击效果
-                QuantumRipple(SectionToggle)
+                DigitalParticleExplosion(SectionToggle)
             end)
             
             ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -833,7 +934,7 @@ function FengUI.new(FengUI, name, theme)
                 end)
                 
                 Btn.MouseButton1Click:Connect(function()
-                    QuantumRipple(Btn)
+                    DigitalParticleExplosion(Btn)
                     callback()
                     
                     services.TweenService:Create(Btn, TweenInfo.new(0.1), {
@@ -1033,7 +1134,7 @@ function FengUI.new(FengUI, name, theme)
                 end
                 
                 ToggleBtn.MouseButton1Click:Connect(function()
-                    QuantumRipple(ToggleBtn)
+                    DigitalParticleExplosion(ToggleBtn)
                     funcs:SetState()
                 end)
                 
@@ -1143,7 +1244,7 @@ function FengUI.new(FengUI, name, theme)
                 end)
                 
                 KeybindValue.MouseButton1Click:Connect(function()
-                    QuantumRipple(KeybindValue)
+                    DigitalParticleExplosion(KeybindValue)
                     KeybindValue.Text = "..."
                     task.wait()
                     
@@ -1273,7 +1374,7 @@ function FengUI.new(FengUI, name, theme)
                     callback(TextBox.Text)
                     
                     -- 添加输入完成动画
-                    QuantumRipple(BoxBG)
+                    DigitalParticleExplosion(BoxBG)
                 end)
                 
                 TextBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
@@ -1450,7 +1551,7 @@ function FengUI.new(FengUI, name, theme)
                         callback(tonumber(value))
                         
                         -- 添加数值变化粒子效果
-                        QuantumRipple(SliderPart)
+                        DigitalParticleExplosion(SliderPart)
                     end,
                     
                     GetValue = function(self)
@@ -1508,14 +1609,14 @@ function FengUI.new(FengUI, name, theme)
                 end)
                 
                 MinSlider.MouseButton1Click:Connect(function()
-                    QuantumRipple(MinSlider)
+                    DigitalParticleExplosion(MinSlider)
                     local currentValue = FengUI.flags[flag]
                     currentValue = math.clamp(currentValue - 1, min, max)
                     funcs:SetValue(currentValue)
                 end)
                 
                 AddSlider.MouseButton1Click:Connect(function()
-                    QuantumRipple(AddSlider)
+                    DigitalParticleExplosion(AddSlider)
                     local currentValue = FengUI.flags[flag]
                     currentValue = math.clamp(currentValue + 1, min, max)
                     funcs:SetValue(currentValue)
@@ -1783,7 +1884,7 @@ function FengUI.new(FengUI, name, theme)
                     OptionC.Parent = Option
                     
                     Option.MouseButton1Click:Connect(function()
-                        QuantumRipple(Option)
+                        DigitalParticleExplosion(Option)
                         ToggleDropVis()
                         callback(Option.Text)
                         DropdownText.Text = Option.Text
