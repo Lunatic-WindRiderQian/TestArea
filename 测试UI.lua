@@ -42,136 +42,118 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
+-- 修改颜色配置：从灰色主题改为宝蓝色主题
 local config = {
-    MainColor = Color3.fromRGB(16, 16, 16),
-    TabColor = Color3.fromRGB(22, 22, 22),
-    Bg_Color = Color3.fromRGB(17, 17, 17),
-    Zy_Color = Color3.fromRGB(17, 17, 17), 
-    Button_Color = Color3.fromRGB(22, 22, 22),
-    Textbox_Color = Color3.fromRGB(22, 22, 22),
-    Dropdown_Color = Color3.fromRGB(22, 22, 22),
-    Keybind_Color = Color3.fromRGB(22, 22, 22),
-    Label_Color = Color3.fromRGB(22, 22, 22),
-    Slider_Color = Color3.fromRGB(22, 22, 22),
-    SliderBar_Color = Color3.fromRGB(0, 112, 255),
-    Toggle_Color = Color3.fromRGB(22, 22, 22),
-    Toggle_Off = Color3.fromRGB(34, 34, 34),
-    Toggle_On = Color3.fromRGB(0, 112, 255),
-    AccentColor = Color3.fromRGB(0, 112, 255),
-    TextColor = Color3.fromRGB(240, 240, 240),
-    SecondaryTextColor = Color3.fromRGB(180, 180, 180),
-    GlowColor = Color3.fromRGB(0, 82, 204),
+    MainColor = Color3.fromRGB(10, 36, 99),           -- 深宝蓝主色
+    TabColor = Color3.fromRGB(25, 55, 138),          -- 宝蓝标签色
+    Bg_Color = Color3.fromRGB(15, 42, 112),          -- 背景宝蓝色
+    Zy_Color = Color3.fromRGB(15, 42, 112),          -- 宝蓝色
+    Button_Color = Color3.fromRGB(25, 55, 138),      -- 按钮宝蓝色
+    Textbox_Color = Color3.fromRGB(25, 55, 138),     -- 文本框宝蓝色
+    Dropdown_Color = Color3.fromRGB(25, 55, 138),    -- 下拉框宝蓝色
+    Keybind_Color = Color3.fromRGB(25, 55, 138),     -- 键位绑定宝蓝色
+    Label_Color = Color3.fromRGB(25, 55, 138),       -- 标签宝蓝色
+    Slider_Color = Color3.fromRGB(25, 55, 138),      -- 滑块宝蓝色
+    SliderBar_Color = Color3.fromRGB(65, 105, 225),  -- 皇家蓝滑块条
+    Toggle_Color = Color3.fromRGB(25, 55, 138),      -- 切换宝蓝色
+    Toggle_Off = Color3.fromRGB(40, 40, 80),         -- 切换关闭深蓝色
+    Toggle_On = Color3.fromRGB(65, 105, 225),        -- 切换开启皇家蓝
+    AccentColor = Color3.fromRGB(65, 105, 225),      -- 强调色皇家蓝
+    TextColor = Color3.fromRGB(240, 248, 255),       -- 爱丽丝蓝文本
+    SecondaryTextColor = Color3.fromRGB(173, 216, 230), -- 浅蓝色次要文本
+    GlowColor = Color3.fromRGB(100, 149, 237),       -- 矢车菊蓝发光
 }
 
--- 新的粒子效果系统
-local function createParticleEffect(parent, effectType)
-    local particleContainer = Instance.new("Frame")
-    particleContainer.Name = "ParticleContainer"
-    particleContainer.BackgroundTransparency = 1
-    particleContainer.Size = UDim2.new(1, 0, 1, 0)
-    particleContainer.ZIndex = 0
-    particleContainer.Parent = parent
-    particleContainer.ClipsDescendants = true
-    
-    local particles = {}
-    
-    if effectType == "sparkle" then
-        for i = 1, 8 do
-            local sparkle = Instance.new("Frame")
-            sparkle.Name = "Sparkle"
-            sparkle.BackgroundColor3 = Color3.fromRGB(100, 180, 255)
-            sparkle.BorderSizePixel = 0
-            sparkle.Size = UDim2.new(0, 2, 0, 2)
-            sparkle.Position = UDim2.new(math.random(), 0, math.random(), 0)
-            sparkle.ZIndex = 1
-            
-            local corner = Instance.new("UICorner")
-            corner.CornerRadius = UDim.new(1, 0)
-            corner.Parent = sparkle
-            
-            sparkle.Parent = particleContainer
-            table.insert(particles, sparkle)
-            
-            spawn(function()
-                while sparkle and sparkle.Parent do
-                    services.TweenService:Create(sparkle, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-                        BackgroundTransparency = 0,
-                        Size = UDim2.new(0, 4, 0, 4)
-                    }):Play()
-                    task.wait(0.5)
-                    services.TweenService:Create(sparkle, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-                        BackgroundTransparency = 1,
-                        Size = UDim2.new(0, 2, 0, 2)
-                    }):Play()
-                    task.wait(0.5)
-                end
-            end)
+local function startRainbowEffect(object, property, speed)
+    speed = speed or 0.005
+    local hue = 0
+    local connection
+    connection = RunService.Heartbeat:Connect(function()
+        if not object or not object.Parent then
+            connection:Disconnect()
+            return
         end
-    elseif effectType == "wave" then
-        for i = 1, 3 do
-            local wave = Instance.new("Frame")
-            wave.Name = "Wave"
-            wave.BackgroundColor3 = Color3.fromRGB(0, 112, 255)
-            wave.BackgroundTransparency = 0.7
-            wave.BorderSizePixel = 0
-            wave.Size = UDim2.new(0, 0, 0, 2)
-            wave.Position = UDim2.new(0.5, 0, 0.5, 0)
-            wave.AnchorPoint = Vector2.new(0.5, 0.5)
-            wave.ZIndex = 1
-            
-            wave.Parent = particleContainer
-            table.insert(particles, wave)
-            
-            spawn(function()
-                task.wait(i * 0.3)
-                while wave and wave.Parent do
-                    wave.Size = UDim2.new(0, 0, 0, 2)
-                    wave.BackgroundTransparency = 0.7
-                    
-                    services.TweenService:Create(wave, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(1, 0, 0, 2),
-                        BackgroundTransparency = 1
-                    }):Play()
-                    
-                    task.wait(1.5)
-                end
-            end)
-        end
-    elseif effectType == "pulse" then
-        local pulseRing = Instance.new("Frame")
-        pulseRing.Name = "PulseRing"
-        pulseRing.BackgroundColor3 = Color3.fromRGB(0, 112, 255)
-        pulseRing.BackgroundTransparency = 0.8
-        pulseRing.BorderSizePixel = 0
-        pulseRing.Size = UDim2.new(1, 0, 1, 0)
-        pulseRing.ZIndex = 1
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(1, 0)
-        corner.Parent = pulseRing
-        
-        pulseRing.Parent = particleContainer
-        table.insert(particles, pulseRing)
-        
-        spawn(function()
-            while pulseRing and pulseRing.Parent do
-                pulseRing.Size = UDim2.new(1, 0, 1, 0)
-                pulseRing.BackgroundTransparency = 0.8
-                
-                services.TweenService:Create(pulseRing, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    Size = UDim2.new(1.5, 0, 1.5, 0),
-                    BackgroundTransparency = 1
-                }):Play()
-                
-                task.wait(2)
-            end
-        end)
-    end
-    
-    return particleContainer
+        hue = (hue + speed) % 1
+        object[property] = Color3.fromHSV(hue, 0.8, 1)
+    end)
+    return connection
 end
 
--- 新的波纹效果
+local function createAuroraEffect(frame, intensity)
+    intensity = intensity or 1
+    
+    local aurora = Instance.new("Frame")
+    aurora.Name = "AuroraEffect"
+    aurora.BackgroundTransparency = 1
+    aurora.Size = UDim2.new(1, 0, 1, 0)
+    aurora.ZIndex = frame.ZIndex - 1
+    aurora.Parent = frame
+    aurora.ClipsDescendants = true
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Rotation = 45
+    gradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.5, 0.2 * intensity),
+        NumberSequenceKeypoint.new(1, 0)
+    })
+    gradient.Parent = aurora
+    
+    -- 修改极光颜色为蓝色系
+    local colors = {
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 191, 255)),  -- 深天蓝
+        ColorSequenceKeypoint.new(0.25, Color3.fromRGB(30, 144, 255)), -- 道奇蓝
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(65, 105, 225)), -- 皇家蓝
+        ColorSequenceKeypoint.new(0.75, Color3.fromRGB(100, 149, 237)), -- 矢车菊蓝
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(135, 206, 250)) -- 浅天蓝
+    }
+    
+    gradient.Color = ColorSequence.new(colors)
+    
+    local sizeConnection
+    sizeConnection = frame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        aurora.Size = UDim2.new(2, 0, 2, 0)
+    end)
+    
+    local xOffset = 0
+    local yOffset = 0
+    local xDir = 1
+    local yDir = 1
+    local xSpeed = 0.5
+    local ySpeed = 0.3
+    
+    local heartbeatConnection
+    heartbeatConnection = RunService.Heartbeat:Connect(function(delta)
+        if not aurora or not aurora.Parent then
+            heartbeatConnection:Disconnect()
+            sizeConnection:Disconnect()
+            return
+        end
+        
+        xOffset = (xOffset + xSpeed * delta * xDir) % 1
+        yOffset = (yOffset + ySpeed * delta * yDir) % 1
+        
+        if xOffset >= 0.9 or xOffset <= 0.1 then xDir = xDir * -1 end
+        if yOffset >= 0.9 or yOffset <= 0.1 then yDir = yDir * -1 end
+        
+        aurora.Position = UDim2.new(-0.5 + xOffset, 0, -0.5 + yOffset, 0)
+        
+        for i, keypoint in ipairs(colors) do
+            local time = tick() * 0.1 + i * 0.2
+            local h = (time % 1) * 360
+            -- 保持蓝色系，只在蓝色范围内变化
+            local blueHue = 0.6 + (math.sin(time) * 0.1) -- 在0.55-0.65之间变化（蓝色范围）
+            colors[i] = ColorSequenceKeypoint.new(
+                keypoint.Time,
+                Color3.fromHSV(math.clamp(blueHue, 0.55, 0.65), 0.8, 1)
+            )
+        end
+        gradient.Color = ColorSequence.new(colors)
+    end)
+    
+    return aurora
+end
+
 function Ripple(obj)
     if not obj or not obj.Parent then return end
     
@@ -181,143 +163,35 @@ function Ripple(obj)
         end
         
         local mouse = services.Players.LocalPlayer:GetMouse()
-        local Ripple = Instance.new("Frame")
+        local Ripple = Instance.new("ImageLabel")
         Ripple.Name = "Ripple"
         Ripple.Parent = obj
-        Ripple.BackgroundColor3 = Color3.fromRGB(100, 180, 255)
-        Ripple.BackgroundTransparency = 0.7
+        Ripple.BackgroundTransparency = 1
         Ripple.ZIndex = 8
-        Ripple.AnchorPoint = Vector2.new(0.5, 0.5)
+        Ripple.Image = "rbxassetid://84830962019412"
+        Ripple.ImageTransparency = 0.6
+        Ripple.ScaleType = Enum.ScaleType.Fit
         
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(1, 0)
-        corner.Parent = Ripple
+        -- 修改涟漪颜色为蓝色
+        Ripple.ImageColor3 = Color3.fromRGB(100, 149, 237) -- 矢车菊蓝
         
-        local x = (mouse.X - obj.AbsolutePosition.X) / obj.AbsoluteSize.X
-        local y = (mouse.Y - obj.AbsolutePosition.Y) / obj.AbsoluteSize.Y
+        local x = (mouse.X - Ripple.AbsolutePosition.X) / obj.AbsoluteSize.X
+        local y = (mouse.Y - Ripple.AbsolutePosition.Y) / obj.AbsoluteSize.Y
         Ripple.Position = UDim2.new(x, 0, y, 0)
         Ripple.Size = UDim2.new(0, 0, 0, 0)
         
         services.TweenService:Create(Ripple, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(2, 0, 2, 0),
-            BackgroundTransparency = 1
+            Position = UDim2.new(-0.8, 0, -0.8, 0),
+            Size = UDim2.new(2.6, 0, 2.6, 0)
         }):Play()
         
-        task.wait(0.6)
+        services.TweenService:Create(Ripple, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            ImageTransparency = 1
+        }):Play()
+        
+        task.wait(0.8)
         Ripple:Destroy()
     end)
-end
-
--- 新的滑动动画效果
-local function createSlideAnimation(frame, direction)
-    direction = direction or "up"
-    local startPositions = {
-        up = UDim2.new(0, 0, -1, 0),
-        down = UDim2.new(0, 0, 1, 0),
-        left = UDim2.new(-1, 0, 0, 0),
-        right = UDim2.new(1, 0, 0, 0)
-    }
-    
-    local endPosition = UDim2.new(0, 0, 0, 0)
-    frame.Position = startPositions[direction]
-    
-    services.TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Position = endPosition
-    }):Play()
-end
-
--- 新的悬浮动画效果
-local function setupHoverAnimation(button)
-    local originalSize = button.Size
-    local originalPos = button.Position
-    
-    button.MouseEnter:Connect(function()
-        services.TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset + 4, originalSize.Y.Scale, originalSize.Y.Offset + 4),
-            Position = UDim2.new(originalPos.X.Scale, originalPos.X.Offset - 2, originalPos.Y.Scale, originalPos.Y.Offset - 2)
-        }):Play()
-        
-        createParticleEffect(button, "sparkle")
-    end)
-    
-    button.MouseLeave:Connect(function()
-        services.TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = originalSize,
-            Position = originalPos
-        }):Play()
-        
-        local particles = button:FindFirstChild("ParticleContainer")
-        if particles then
-            particles:Destroy()
-        end
-    end)
-end
-
--- 新的切换动画效果
-local function createToggleAnimation(toggleFrame, state)
-    if state then
-        services.TweenService:Create(toggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0, 14, 0, 0)
-        }):Play()
-        
-        createParticleEffect(toggleFrame, "pulse")
-    else
-        services.TweenService:Create(toggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-            Position = UDim2.new(0, 0, 0, 0)
-        }):Play()
-    end
-end
-
--- 新的进度条动画效果
-local function createProgressAnimation(progressBar, targetSize)
-    services.TweenService:Create(progressBar, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = targetSize
-    }):Play()
-    
-    createParticleEffect(progressBar, "wave")
-end
-
--- 新的标题动画效果
-local function createTitleAnimation(titleLabel)
-    spawn(function()
-        while titleLabel and titleLabel.Parent do
-            local hue = 0.6 + math.sin(tick() * 0.5) * 0.1
-            titleLabel.TextColor3 = Color3.fromHSV(hue, 0.8, 1)
-            
-            services.TweenService:Create(titleLabel, TweenInfo.new(1, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                TextSize = 16 + math.sin(tick() * 2) * 2
-            }):Play()
-            
-            task.wait(0.05)
-        end
-    end)
-end
-
--- 新的边框发光效果
-local function createGlowEffect(frame, color)
-    local glow = Instance.new("UIStroke")
-    glow.Name = "GlowEffect"
-    glow.Parent = frame
-    glow.Color = color or config.AccentColor
-    glow.Thickness = 2
-    glow.Transparency = 0.8
-    
-    spawn(function()
-        while glow and glow.Parent do
-            services.TweenService:Create(glow, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-                Thickness = 3,
-                Transparency = 0.5
-            }):Play()
-            task.wait(1)
-            services.TweenService:Create(glow, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-                Thickness = 2,
-                Transparency = 0.8
-            }):Play()
-            task.wait(1)
-        end
-    end)
-    
-    return glow
 end
 
 local function setupSmoothScrolling(scrollingFrame, layout)
@@ -344,8 +218,6 @@ function switchTab(new)
         FengUI.currentTab = new
         services.TweenService:Create(new[1], TweenInfo.new(0.2), { ImageTransparency = 0 }):Play()
         services.TweenService:Create(new[1].TabText, TweenInfo.new(0.2), { TextTransparency = 0 }):Play()
-        
-        createSlideAnimation(new[2], "right")
         return
     end
     
@@ -360,10 +232,8 @@ function switchTab(new)
     services.TweenService:Create(old[1].TabText, tweenInfo, { TextTransparency = 0.5 }):Play()
     services.TweenService:Create(new[1].TabText, tweenInfo, { TextTransparency = 0 }):Play()
     
-    createSlideAnimation(old[2], "left")
     old[2].Visible = false
     new[2].Visible = true
-    createSlideAnimation(new[2], "right")
     
     task.wait(0.2)
     switchingTabs = false
@@ -384,7 +254,7 @@ local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.BackgroundColor3 = config.Bg_Color
+Main.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
 Main.BackgroundTransparency = 0.2
 Main.Position = UDim2.new(0.5, 0, 0.4, 0)
 Main.Size = UDim2.new(0, 450, 0, 280)
@@ -398,12 +268,16 @@ MainCorner.Parent = Main
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
-MainStroke.Color = Color3.fromRGB(50, 50, 50)
+MainStroke.Color = Color3.fromRGB(30, 144, 255)  -- 道奇蓝边框
 MainStroke.Thickness = 1
 MainStroke.Transparency = 0.5
 
-createGlowEffect(Main, config.AccentColor)
-createParticleEffect(Main, "sparkle")
+local rainbowStroke = Instance.new("UIStroke")
+rainbowStroke.Parent = Main
+rainbowStroke.Thickness = 2
+rainbowStroke.Transparency = 0.7
+rainbowStroke.LineJoinMode = Enum.LineJoinMode.Round
+startRainbowEffect(rainbowStroke, "Color", 0.01)
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
@@ -415,7 +289,7 @@ CloseButton.Position = UDim2.new(1, -25, 0, 5)
 CloseButton.Size = UDim2.new(0, 20, 0, 20)
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(255, 60, 60)
+CloseButton.TextColor3 = Color3.fromRGB(255, 99, 71)  -- 番茄红关闭按钮
 CloseButton.TextSize = 16
 CloseButton.ZIndex = 10
 
@@ -423,11 +297,9 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 4)
 CloseCorner.Parent = CloseButton
 
-setupHoverAnimation(CloseButton)
-
 CloseButton.MouseEnter:Connect(function()
     services.TweenService:Create(CloseButton, TweenInfo.new(0.2), {
-        TextColor3 = Color3.fromRGB(255, 100, 100),
+        TextColor3 = Color3.fromRGB(255, 127, 80),  -- 珊瑚色悬停
         TextSize = 18,
         Position = UDim2.new(1, -26, 0, 4)
     }):Play()
@@ -435,7 +307,7 @@ end)
 
 CloseButton.MouseLeave:Connect(function()
     services.TweenService:Create(CloseButton, TweenInfo.new(0.2), {
-        TextColor3 = Color3.fromRGB(255, 60, 60),
+        TextColor3 = Color3.fromRGB(255, 99, 71),  -- 番茄红
         TextSize = 16,
         Position = UDim2.new(1, -25, 0, 5)
     }):Play()
@@ -444,7 +316,7 @@ end)
 CloseButton.MouseButton1Click:Connect(function()
     Ripple(CloseButton)
     services.TweenService:Create(CloseButton, TweenInfo.new(0.1), {
-        TextColor3 = Color3.fromRGB(255, 30, 30),
+        TextColor3 = Color3.fromRGB(220, 20, 60),  -- 深红色点击
         TextSize = 14,
         Position = UDim2.new(1, -24, 0, 6)
     }):Play()
@@ -455,14 +327,14 @@ end)
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
 Open.Parent = FengYu
-Open.BackgroundColor3 = config.AccentColor
+Open.BackgroundColor3 = config.AccentColor  -- 使用皇家蓝
 Open.BackgroundTransparency = 0.85
 Open.Position = UDim2.new(0.92, 0, 0.01, 0)
 Open.Size = UDim2.new(0, 40, 0, 40)
 Open.Active = true
 Open.Draggable = true
 Open.Image = "rbxassetid://84830962019412"
-Open.ImageColor3 = Color3.fromRGB(255, 255, 255)
+Open.ImageColor3 = Color3.fromRGB(240, 248, 255)  -- 爱丽丝蓝
 Open.ImageTransparency = 0.15
 
 local OpenCorner = Instance.new("UICorner")
@@ -471,29 +343,21 @@ OpenCorner.Parent = Open
 
 local OpenStroke = Instance.new("UIStroke")
 OpenStroke.Parent = Open
-OpenStroke.Color = Color3.fromRGB(180, 180, 180)
+OpenStroke.Color = Color3.fromRGB(135, 206, 250)  -- 浅天蓝边框
 OpenStroke.Thickness = 1.2
 OpenStroke.Transparency = 0.4
 
-createParticleEffect(Open, "pulse")
+startRainbowEffect(Open, "BackgroundColor3", 0.012)
 
 Open.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
     services.TweenService:Create(Open, TweenInfo.new(0.2), {Rotation = Open.Rotation + 180}):Play()
-    
-    if Main.Visible then
-        createSlideAnimation(Main, "up")
-    end
 end)
 
 services.UserInputService.InputEnded:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.LeftControl then
         Main.Visible = not Main.Visible
         services.TweenService:Create(Open, TweenInfo.new(0.2), {Rotation = Open.Rotation + 180}):Play()
-        
-        if Main.Visible then
-            createSlideAnimation(Main, "up")
-        end
     end
 end)
 
@@ -507,7 +371,7 @@ TabMain.Size = UDim2.new(0, 360, 0, 274)
 local Side = Instance.new("Frame")
 Side.Name = "Side"
 Side.Parent = Main
-Side.BackgroundColor3 = config.TabColor
+Side.BackgroundColor3 = config.TabColor  -- 使用宝蓝标签色
 Side.BackgroundTransparency = 0.2
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
@@ -528,7 +392,7 @@ TabBtns.Position = UDim2.new(0, 0, 0.097, 0)
 TabBtns.Size = UDim2.new(0, 90, 0, 245)
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
-TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 149, 237)  -- 矢车菊蓝滚动条
 TabBtns.ScrollBarImageTransparency = 0.5
 TabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 TabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
@@ -555,12 +419,42 @@ ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
 ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
 ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "FengUI"
-ScriptTitle.TextColor3 = config.AccentColor
+ScriptTitle.TextColor3 = config.AccentColor  -- 使用皇家蓝
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
 
-createTitleAnimation(ScriptTitle)
+task.spawn(function()
+    local hue = 0.6  -- 从蓝色开始
+    local glowEffect = Instance.new("UIGradient")
+    glowEffect.Rotation = 90
+    glowEffect.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.5, 0.2),
+        NumberSequenceKeypoint.new(1, 0)
+    })
+    glowEffect.Parent = ScriptTitle
+    
+    while ScriptTitle and ScriptTitle.Parent do
+        hue = (hue + 0.02) % 1
+        
+        -- 限制在蓝色范围内 (0.55-0.65)
+        local blueHue = 0.6 + math.sin(tick()) * 0.05
+        ScriptTitle.TextColor3 = Color3.fromHSV(math.clamp(blueHue, 0.55, 0.65), 1, 1)
+        
+        glowEffect.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromHSV(math.clamp(blueHue + 0.05, 0.55, 0.65), 1, 1)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(math.clamp(blueHue, 0.55, 0.65), 1, 1)),
+            ColorSequenceKeypoint.new(1, Color3.fromHSV(math.clamp(blueHue + 0.05, 0.55, 0.65), 1, 1))
+        })
+        
+        services.TweenService:Create(ScriptTitle, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            TextSize = 15 + math.sin(tick() * 2) * 1
+        }):Play()
+        
+        task.wait(0.05)
+    end
+end)
 
 function FengUI.new(FengUI, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
@@ -608,18 +502,7 @@ function FengUI.new(FengUI, name, theme)
         TabIco.Image = "rbxassetid://84830962019412"
         TabIco.ImageTransparency = 0.5
         
-        spawn(function()
-            while TabIco and TabIco.Parent do
-                services.TweenService:Create(TabIco, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-                    Rotation = 5
-                }):Play()
-                task.wait(1)
-                services.TweenService:Create(TabIco, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-                    Rotation = -5
-                }):Play()
-                task.wait(1)
-            end
-        end)
+        startRainbowEffect(TabIco, "ImageColor3", 0.005)
         
         TabText.Name = "TabText"
         TabText.Parent = TabIco
@@ -628,7 +511,7 @@ function FengUI.new(FengUI, name, theme)
         TabText.Size = UDim2.new(0, 65, 0, 22)
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
-        TabText.TextColor3 = config.TextColor
+        TabText.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
         TabText.TextSize = 14
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.TextTransparency = 0.5
@@ -646,8 +529,6 @@ function FengUI.new(FengUI, name, theme)
         TabL.Parent = Tab
         TabL.SortOrder = Enum.SortOrder.LayoutOrder
         TabL.Padding = UDim.new(0, 4)
-        
-        setupHoverAnimation(TabBtn)
         
         TabBtn.MouseButton1Click:Connect(function()
             Ripple(TabBtn)
@@ -679,7 +560,7 @@ function FengUI.new(FengUI, name, theme)
             
             Section.Name = "Section"
             Section.Parent = Tab
-            Section.BackgroundColor3 = config.TabColor
+            Section.BackgroundColor3 = config.TabColor  -- 使用宝蓝标签色
             Section.BackgroundTransparency = 0.2
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
@@ -689,8 +570,6 @@ function FengUI.new(FengUI, name, theme)
             SectionC.Name = "SectionC"
             SectionC.Parent = Section
             
-            createGlowEffect(Section, config.AccentColor)
-            
             SectionText.Name = "SectionText"
             SectionText.Parent = Section
             SectionText.BackgroundTransparency = 1
@@ -698,7 +577,7 @@ function FengUI.new(FengUI, name, theme)
             SectionText.Size = UDim2.new(0, 320, 0, 36)
             SectionText.Font = Enum.Font.GothamSemibold
             SectionText.Text = name
-            SectionText.TextColor3 = config.TextColor
+            SectionText.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
             SectionText.TextSize = 16
             SectionText.TextXAlignment = Enum.TextXAlignment.Left
             
@@ -709,7 +588,7 @@ function FengUI.new(FengUI, name, theme)
             SectionOpen.Position = UDim2.new(0, -26, 0, 6)
             SectionOpen.Size = UDim2.new(0, 22, 0, 22)
             SectionOpen.Image = "rbxassetid://84830962019412"
-            SectionOpen.ImageColor3 = config.SecondaryTextColor
+            SectionOpen.ImageColor3 = config.SecondaryTextColor  -- 使用浅蓝色
             
             SectionOpened.Name = "SectionOpened"
             SectionOpened.Parent = SectionOpen
@@ -717,7 +596,7 @@ function FengUI.new(FengUI, name, theme)
             SectionOpened.BorderSizePixel = 0
             SectionOpened.Size = UDim2.new(0, 22, 0, 22)
             SectionOpened.Image = "rbxassetid://84830962019412"
-            SectionOpened.ImageColor3 = config.AccentColor
+            SectionOpened.ImageColor3 = config.AccentColor  -- 使用皇家蓝
             SectionOpened.ImageTransparency = 1
             
             SectionToggle.Name = "SectionToggle"
@@ -758,10 +637,6 @@ function FengUI.new(FengUI, name, theme)
                 services.TweenService:Create(SectionOpen, TweenInfo.new(0.2), {
                     ImageTransparency = open and 1 or 0
                 }):Play()
-                
-                if open then
-                    createSlideAnimation(Objs, "down")
-                end
             end)
             
             ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -786,14 +661,14 @@ function FengUI.new(FengUI, name, theme)
                 
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
-                Btn.BackgroundColor3 = config.Button_Color
+                Btn.BackgroundColor3 = config.Button_Color  -- 使用宝蓝按钮色
                 Btn.BackgroundTransparency = 0.2
                 Btn.BorderSizePixel = 0
                 Btn.Size = UDim2.new(0, 330, 0, 36)
                 Btn.AutoButtonColor = false
                 Btn.Font = Enum.Font.GothamSemibold
                 Btn.Text = "   " .. text
-                Btn.TextColor3 = config.TextColor
+                Btn.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
                 Btn.TextSize = 14
                 Btn.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -801,8 +676,13 @@ function FengUI.new(FengUI, name, theme)
                 BtnC.Name = "BtnC"
                 BtnC.Parent = Btn
                 
-                createGlowEffect(Btn, config.AccentColor)
-                setupHoverAnimation(Btn)
+                local btnGlow = Instance.new("UIStroke")
+                btnGlow.Parent = Btn
+                btnGlow.Color = config.AccentColor  -- 使用皇家蓝
+                btnGlow.Thickness = 1
+                btnGlow.Transparency = 0.8
+                
+                startRainbowEffect(btnGlow, "Color", 0.01)
                 
                 Btn.MouseEnter:Connect(function()
                     services.TweenService:Create(Btn, TweenInfo.new(0.2), {
@@ -812,11 +692,19 @@ function FengUI.new(FengUI, name, theme)
                             math.floor(config.Button_Color.B * 255 * 1.1)
                         )
                     }):Play()
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                        Thickness = 2,
+                        Transparency = 0.5
+                    }):Play()
                 end)
                 
                 Btn.MouseLeave:Connect(function()
                     services.TweenService:Create(Btn, TweenInfo.new(0.2), {
                         BackgroundColor3 = config.Button_Color
+                    }):Play()
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                        Thickness = 1,
+                        Transparency = 0.8
                     }):Play()
                 end)
                 
@@ -831,11 +719,19 @@ function FengUI.new(FengUI, name, theme)
                             math.floor(config.Button_Color.B * 255 * 0.8)
                         )
                     }):Play()
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
+                        Thickness = 3,
+                        Transparency = 0.3
+                    }):Play()
                     
                     task.wait(0.1)
                     
                     services.TweenService:Create(Btn, TweenInfo.new(0.2), {
                         BackgroundColor3 = config.Button_Color
+                    }):Play()
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                        Thickness = 1,
+                        Transparency = 0.8
                     }):Play()
                 end)
             end
@@ -852,7 +748,7 @@ function FengUI.new(FengUI, name, theme)
                 ImageModule.Size = UDim2.new(0, 330, 0, sizeY or 120)
                 
                 ImageLabel.Parent = ImageModule
-                ImageLabel.BackgroundColor3 = config.Bg_Color
+                ImageLabel.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
                 ImageLabel.BackgroundTransparency = 0.2
                 ImageLabel.BorderSizePixel = 0
                 ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
@@ -864,7 +760,11 @@ function FengUI.new(FengUI, name, theme)
                 ImageCorner.CornerRadius = UDim.new(0, 6)
                 ImageCorner.Parent = ImageLabel
                 
-                setupHoverAnimation(ImageLabel)
+                local imageGlow = Instance.new("UIStroke")
+                imageGlow.Parent = ImageLabel
+                imageGlow.Color = config.AccentColor  -- 使用皇家蓝
+                imageGlow.Thickness = 1
+                imageGlow.Transparency = 1
                 
                 return ImageLabel
             end
@@ -881,12 +781,12 @@ function FengUI.new(FengUI, name, theme)
                 LabelModule.Size = UDim2.new(0, 330, 0, 24)
                 
                 TextLabel.Parent = LabelModule
-                TextLabel.BackgroundColor3 = config.Label_Color
+                TextLabel.BackgroundColor3 = config.Label_Color  -- 使用宝蓝标签色
                 TextLabel.BackgroundTransparency = 0.2
                 TextLabel.Size = UDim2.new(0, 330, 0, 28)
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
-                TextLabel.TextColor3 = config.SecondaryTextColor
+                TextLabel.TextColor3 = config.SecondaryTextColor  -- 使用浅蓝色
                 TextLabel.TextSize = 14
                 
                 LabelC.CornerRadius = UDim.new(0, 6)
@@ -919,14 +819,14 @@ function FengUI.new(FengUI, name, theme)
                 
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
-                ToggleBtn.BackgroundColor3 = config.Toggle_Color
+                ToggleBtn.BackgroundColor3 = config.Toggle_Color  -- 使用宝蓝切换色
                 ToggleBtn.BackgroundTransparency = 0.2
                 ToggleBtn.BorderSizePixel = 0
                 ToggleBtn.Size = UDim2.new(0, 330, 0, 36)
                 ToggleBtn.AutoButtonColor = false
                 ToggleBtn.Font = Enum.Font.GothamSemibold
                 ToggleBtn.Text = "   " .. text
-                ToggleBtn.TextColor3 = config.TextColor
+                ToggleBtn.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
                 ToggleBtn.TextSize = 14
                 ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -934,18 +834,16 @@ function FengUI.new(FengUI, name, theme)
                 ToggleBtnC.Name = "ToggleBtnC"
                 ToggleBtnC.Parent = ToggleBtn
                 
-                setupHoverAnimation(ToggleBtn)
-                
                 ToggleDisable.Name = "ToggleDisable"
                 ToggleDisable.Parent = ToggleBtn
-                ToggleDisable.BackgroundColor3 = config.Bg_Color
+                ToggleDisable.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
                 ToggleDisable.BorderSizePixel = 0
                 ToggleDisable.Position = UDim2.new(0.85, 0, 0.22, 0)
                 ToggleDisable.Size = UDim2.new(0, 34, 0, 18)
                 
                 ToggleSwitch.Name = "ToggleSwitch"
                 ToggleSwitch.Parent = ToggleDisable
-                ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
+                ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off  -- 使用皇家蓝开启/深蓝关闭
                 ToggleSwitch.Size = UDim2.new(0, 20, 0, 18)
                 ToggleSwitch.Position = UDim2.new(0, enabled and 14 or 0, 0, 0)
                 
@@ -958,7 +856,7 @@ function FengUI.new(FengUI, name, theme)
                 ToggleDisableC.Parent = ToggleDisable
                 
                 if enabled then
-                    createParticleEffect(ToggleSwitch, "pulse")
+                    createAuroraEffect(ToggleSwitch, 0.8)
                 end
                 
                 ToggleBtn.MouseEnter:Connect(function()
@@ -986,17 +884,17 @@ function FengUI.new(FengUI, name, theme)
                             return
                         end
                         
-                        createToggleAnimation(ToggleSwitch, state)
                         services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.2), {
+                            Position = UDim2.new(0, state and 14 or 0, 0, 0),
                             BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
                         }):Play()
                         
                         if state then
-                            createParticleEffect(ToggleSwitch, "pulse")
+                            createAuroraEffect(ToggleSwitch, 0.8)
                         else
-                            local particles = ToggleSwitch:FindFirstChild("ParticleContainer")
-                            if particles then
-                                particles:Destroy()
+                            local aurora = ToggleSwitch:FindFirstChild("AuroraEffect")
+                            if aurora then
+                                aurora:Destroy()
                             end
                         end
                         
@@ -1057,14 +955,14 @@ function FengUI.new(FengUI, name, theme)
                 
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
-                KeybindBtn.BackgroundColor3 = config.Keybind_Color
+                KeybindBtn.BackgroundColor3 = config.Keybind_Color  -- 使用宝蓝键位绑定色
                 KeybindBtn.BackgroundTransparency = 0.2
                 KeybindBtn.BorderSizePixel = 0
                 KeybindBtn.Size = UDim2.new(0, 330, 0, 36)
                 KeybindBtn.AutoButtonColor = false
                 KeybindBtn.Font = Enum.Font.GothamSemibold
                 KeybindBtn.Text = "   " .. text
-                KeybindBtn.TextColor3 = config.TextColor
+                KeybindBtn.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
                 KeybindBtn.TextSize = 14
                 KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -1072,18 +970,16 @@ function FengUI.new(FengUI, name, theme)
                 KeybindBtnC.Name = "KeybindBtnC"
                 KeybindBtnC.Parent = KeybindBtn
                 
-                setupHoverAnimation(KeybindBtn)
-                
                 KeybindValue.Name = "KeybindValue"
                 KeybindValue.Parent = KeybindBtn
-                KeybindValue.BackgroundColor3 = config.Bg_Color
+                KeybindValue.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
                 KeybindValue.BorderSizePixel = 0
                 KeybindValue.Position = UDim2.new(0.72, 0, 0.22, 0)
                 KeybindValue.Size = UDim2.new(0, 70, 0, 22)
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
                 KeybindValue.Text = keyTxt
-                KeybindValue.TextColor3 = config.TextColor
+                KeybindValue.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
                 KeybindValue.TextSize = 12
                 
                 KeybindValueC.CornerRadius = UDim.new(0, 6)
@@ -1125,9 +1021,6 @@ function FengUI.new(FengUI, name, theme)
                 KeybindValue.MouseButton1Click:Connect(function()
                     Ripple(KeybindValue)
                     KeybindValue.Text = "..."
-                    
-                    createParticleEffect(KeybindValue, "sparkle")
-                    
                     task.wait()
                     
                     local key = UserInputService.InputEnded:Wait()
@@ -1180,14 +1073,14 @@ function FengUI.new(FengUI, name, theme)
                 
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
-                TextboxBack.BackgroundColor3 = config.Textbox_Color
+                TextboxBack.BackgroundColor3 = config.Textbox_Color  -- 使用宝蓝文本框色
                 TextboxBack.BackgroundTransparency = 0.2
                 TextboxBack.BorderSizePixel = 0
                 TextboxBack.Size = UDim2.new(0, 330, 0, 36)
                 TextboxBack.AutoButtonColor = false
                 TextboxBack.Font = Enum.Font.GothamSemibold
                 TextboxBack.Text = "   " .. text
-                TextboxBack.TextColor3 = config.TextColor
+                TextboxBack.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
                 TextboxBack.TextSize = 14
                 TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -1197,7 +1090,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 BoxBG.Name = "BoxBG"
                 BoxBG.Parent = TextboxBack
-                BoxBG.BackgroundColor3 = config.Bg_Color
+                BoxBG.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
                 BoxBG.BorderSizePixel = 0
                 BoxBG.Position = UDim2.new(0.45, 0, 0.22, 0)
                 BoxBG.Size = UDim2.new(0, 80, 0, 22)
@@ -1215,9 +1108,9 @@ function FengUI.new(FengUI, name, theme)
                 TextBox.Size = UDim2.new(1, 0, 1, 0)
                 TextBox.Font = Enum.Font.Gotham
                 TextBox.Text = default
-                TextBox.TextColor3 = config.TextColor
+                TextBox.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
                 TextBox.TextSize = 12
-                TextBox.PlaceholderColor3 = config.SecondaryTextColor
+                TextBox.PlaceholderColor3 = config.SecondaryTextColor  -- 使用浅蓝色
                 
                 TextboxBackL.Name = "TextboxBackL"
                 TextboxBackL.Parent = TextboxBack
@@ -1228,8 +1121,6 @@ function FengUI.new(FengUI, name, theme)
                 TextboxBackP.Name = "TextboxBackP"
                 TextboxBackP.Parent = TextboxBack
                 TextboxBackP.PaddingRight = UDim.new(0, 12)
-                
-                setupHoverAnimation(TextboxBack)
                 
                 TextboxBack.MouseEnter:Connect(function()
                     services.TweenService:Create(TextboxBack, TweenInfo.new(0.2), {
@@ -1296,7 +1187,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 SliderBack.Name = "SliderBack"
                 SliderBack.Parent = SliderModule
-                SliderBack.BackgroundColor3 = config.Slider_Color
+                SliderBack.BackgroundColor3 = config.Slider_Color  -- 使用宝蓝滑块色
                 SliderBack.BackgroundTransparency = 0.2
                 SliderBack.BorderSizePixel = 0
                 SliderBack.Size = UDim2.new(0, 330, 0, 36)
@@ -1311,12 +1202,10 @@ function FengUI.new(FengUI, name, theme)
                 SliderBackC.Name = "SliderBackC"
                 SliderBackC.Parent = SliderBack
                 
-                setupHoverAnimation(SliderBack)
-                
                 SliderBar.Name = "SliderBar"
                 SliderBar.Parent = SliderBack
                 SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-                SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 100)  -- 深蓝色滑块背景
                 SliderBar.BorderSizePixel = 0
                 SliderBar.Position = UDim2.new(0.35, 0, 0.5, 0)
                 SliderBar.Size = UDim2.new(0, 120, 0, 14)
@@ -1326,7 +1215,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 SliderPart.Name = "SliderPart"
                 SliderPart.Parent = SliderBar
-                SliderPart.BackgroundColor3 = config.SliderBar_Color
+                SliderPart.BackgroundColor3 = config.SliderBar_Color  -- 使用皇家蓝滑块条
                 SliderPart.BorderSizePixel = 0
                 SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
                 SliderPartC.CornerRadius = UDim.new(0, 4)
@@ -1335,7 +1224,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 SliderValBG.Name = "SliderValBG"
                 SliderValBG.Parent = SliderBack
-                SliderValBG.BackgroundColor3 = config.Bg_Color
+                SliderValBG.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
                 SliderValBG.BorderSizePixel = 0
                 SliderValBG.Position = UDim2.new(0.82, 0, 0.22, 0)
                 SliderValBG.Size = UDim2.new(0, 36, 0, 22)
@@ -1363,7 +1252,7 @@ function FengUI.new(FengUI, name, theme)
                 local MinSlider = Instance.new("TextButton")
                 MinSlider.Name = "MinSlider"
                 MinSlider.Parent = SliderBack
-                MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 100)  -- 深蓝色减按钮
                 MinSlider.BackgroundTransparency = 0
                 MinSlider.BorderSizePixel = 0
                 MinSlider.Position = UDim2.new(0.28, 0, 0.25, 0)
@@ -1382,7 +1271,7 @@ function FengUI.new(FengUI, name, theme)
                 local AddSlider = Instance.new("TextButton")
                 AddSlider.Name = "AddSlider"
                 AddSlider.Parent = SliderBack
-                AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 100)  -- 深蓝色加按钮
                 AddSlider.BackgroundTransparency = 0
                 AddSlider.BorderSizePixel = 0
                 AddSlider.Position = UDim2.new(0.75, 0, 0.25, 0)
@@ -1424,7 +1313,9 @@ function FengUI.new(FengUI, name, theme)
                         FengUI.flags[flag] = tonumber(value)
                         SliderValue.Text = tostring(value)
                         
-                        createProgressAnimation(SliderPart, UDim2.new(percent, 0, 1, 0))
+                        services.TweenService:Create(SliderPart, TweenInfo.new(0.1), {
+                            Size = UDim2.new(percent, 0, 1, 0)
+                        }):Play()
                         
                         callback(tonumber(value))
                     end,
@@ -1593,14 +1484,14 @@ function FengUI.new(FengUI, name, theme)
                 
                 DropdownTop.Name = "DropdownTop"
                 DropdownTop.Parent = DropdownModule
-                DropdownTop.BackgroundColor3 = config.Dropdown_Color
+                DropdownTop.BackgroundColor3 = config.Dropdown_Color  -- 使用宝蓝下拉框色
                 DropdownTop.BackgroundTransparency = 0.2
                 DropdownTop.BorderSizePixel = 0
                 DropdownTop.Size = UDim2.new(0, 330, 0, 36)
                 DropdownTop.AutoButtonColor = false
                 DropdownTop.Font = Enum.Font.GothamSemibold
                 DropdownTop.Text = ""
-                DropdownTop.TextColor3 = config.TextColor
+                DropdownTop.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
                 DropdownTop.TextSize = 14.000
                 DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -1608,12 +1499,10 @@ function FengUI.new(FengUI, name, theme)
                 DropdownTopC.Name = "DropdownTopC"
                 DropdownTopC.Parent = DropdownTop
                 
-                setupHoverAnimation(DropdownTop)
-                
                 local BackgroundFill = Instance.new("Frame")
                 BackgroundFill.Name = "BackgroundFill"
                 BackgroundFill.Parent = DropdownTop
-                BackgroundFill.BackgroundColor3 = config.Dropdown_Color
+                BackgroundFill.BackgroundColor3 = config.Dropdown_Color  -- 使用宝蓝下拉框色
                 BackgroundFill.BorderSizePixel = 0
                 BackgroundFill.Position = UDim2.new(0.75, 0, 0, 0)
                 BackgroundFill.Size = UDim2.new(0.25, 0, 1, 0)
@@ -1622,13 +1511,13 @@ function FengUI.new(FengUI, name, theme)
                 DropdownOpenFrame.Name = "DropdownOpenFrame"
                 DropdownOpenFrame.Parent = DropdownTop
                 DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
-                DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
+                DropdownOpenFrame.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
                 DropdownOpenFrame.BorderSizePixel = 0
                 DropdownOpenFrame.Position = UDim2.new(0.80, 0, 0.5, 0)
                 DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 22)
                 DropdownOpenFrame.ZIndex = 2
                 
-                createParticleEffect(DropdownOpenFrame, "pulse")
+                createAuroraEffect(DropdownOpenFrame, 0.8)
                 
                 DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
                 DropdownOpenFrameC.Name = "DropdownOpenFrameC"
@@ -1642,7 +1531,7 @@ function FengUI.new(FengUI, name, theme)
                 DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
                 DropdownOpen.Font = Enum.Font.GothamSemibold
                 DropdownOpen.Text = "选择"
-                DropdownOpen.TextColor3 = config.TextColor
+                DropdownOpen.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
                 DropdownOpen.TextSize = 11.000
                 DropdownOpen.TextWrapped = true
                 DropdownOpen.ZIndex = 3
@@ -1655,10 +1544,10 @@ function FengUI.new(FengUI, name, theme)
                 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
                 DropdownText.Size = UDim2.new(0, 230, 0, 36)
                 DropdownText.Font = Enum.Font.GothamSemibold
-                DropdownText.PlaceholderColor3 = config.SecondaryTextColor
+                DropdownText.PlaceholderColor3 = config.SecondaryTextColor  -- 使用浅蓝色
                 DropdownText.PlaceholderText = text
                 DropdownText.Text = ""
-                DropdownText.TextColor3 = config.TextColor
+                DropdownText.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
                 DropdownText.TextSize = 14.000
                 DropdownText.TextXAlignment = Enum.TextXAlignment.Left
                 DropdownText.ZIndex = 2
@@ -1666,7 +1555,7 @@ function FengUI.new(FengUI, name, theme)
                 local Separator = Instance.new("Frame")
                 Separator.Name = "Separator"
                 Separator.Parent = DropdownTop
-                Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                Separator.BackgroundColor3 = Color3.fromRGB(80, 80, 120)  -- 蓝灰色分隔线
                 Separator.BorderSizePixel = 0
                 Separator.Position = UDim2.new(0.74, 0, 0.2, 0)
                 Separator.Size = UDim2.new(0, 1, 0, 22)
@@ -1713,10 +1602,6 @@ function FengUI.new(FengUI, name, theme)
                     end
                     DropdownOpen.Text = (open and "取消" or "选择")
                     DropdownModule.Size = UDim2.new(0, 330, 0, (open and math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150) or 36))
-                    
-                    if open then
-                        createSlideAnimation(DropdownModule, "down")
-                    end
                 end
                 
                 DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
@@ -1747,7 +1632,7 @@ function FengUI.new(FengUI, name, theme)
                     local OptionC = Instance.new("UICorner")
                     Option.Name = "Option_" .. option
                     Option.Parent = DropdownModule
-                    Option.BackgroundColor3 = config.TabColor
+                    Option.BackgroundColor3 = config.TabColor  -- 使用宝蓝标签色
                     Option.BackgroundTransparency = 0.2
                     Option.BorderSizePixel = 0
                     Option.Position = UDim2.new(0, 0, 0.328125, 0)
@@ -1755,13 +1640,11 @@ function FengUI.new(FengUI, name, theme)
                     Option.AutoButtonColor = false
                     Option.Font = Enum.Font.Gotham
                     Option.Text = option
-                    Option.TextColor3 = config.TextColor
+                    Option.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
                     Option.TextSize = 13.000
                     OptionC.CornerRadius = UDim.new(0, 6)
                     OptionC.Name = "OptionC"
                     OptionC.Parent = Option
-                    
-                    setupHoverAnimation(Option)
                     
                     Option.MouseButton1Click:Connect(function()
                         Ripple(Option)
