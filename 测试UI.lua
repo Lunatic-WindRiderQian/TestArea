@@ -53,111 +53,125 @@ local config = {
     Keybind_Color = Color3.fromRGB(22, 22, 22),
     Label_Color = Color3.fromRGB(22, 22, 22),
     Slider_Color = Color3.fromRGB(22, 22, 22),
-    SliderBar_Color = Color3.fromRGB(0, 112, 255), -- 改为宝蓝色
+    SliderBar_Color = Color3.fromRGB(0, 112, 255),
     Toggle_Color = Color3.fromRGB(22, 22, 22),
     Toggle_Off = Color3.fromRGB(34, 34, 34),
-    Toggle_On = Color3.fromRGB(0, 112, 255), -- 改为宝蓝色
-    AccentColor = Color3.fromRGB(0, 112, 255), -- 改为宝蓝色
+    Toggle_On = Color3.fromRGB(0, 112, 255),
+    AccentColor = Color3.fromRGB(0, 112, 255),
     TextColor = Color3.fromRGB(240, 240, 240),
     SecondaryTextColor = Color3.fromRGB(180, 180, 180),
-    GlowColor = Color3.fromRGB(0, 82, 204), -- 改为深宝蓝色
+    GlowColor = Color3.fromRGB(0, 82, 204),
 }
 
-local function startRainbowEffect(object, property, speed)
-    speed = speed or 0.005
-    local hue = 0.6 -- 固定为蓝色调
-    local connection
-    connection = RunService.Heartbeat:Connect(function()
-        if not object or not object.Parent then
-            connection:Disconnect()
-            return
+-- 新的粒子效果系统
+local function createParticleEffect(parent, effectType)
+    local particleContainer = Instance.new("Frame")
+    particleContainer.Name = "ParticleContainer"
+    particleContainer.BackgroundTransparency = 1
+    particleContainer.Size = UDim2.new(1, 0, 1, 0)
+    particleContainer.ZIndex = 0
+    particleContainer.Parent = parent
+    particleContainer.ClipsDescendants = true
+    
+    local particles = {}
+    
+    if effectType == "sparkle" then
+        for i = 1, 8 do
+            local sparkle = Instance.new("Frame")
+            sparkle.Name = "Sparkle"
+            sparkle.BackgroundColor3 = Color3.fromRGB(100, 180, 255)
+            sparkle.BorderSizePixel = 0
+            sparkle.Size = UDim2.new(0, 2, 0, 2)
+            sparkle.Position = UDim2.new(math.random(), 0, math.random(), 0)
+            sparkle.ZIndex = 1
+            
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(1, 0)
+            corner.Parent = sparkle
+            
+            sparkle.Parent = particleContainer
+            table.insert(particles, sparkle)
+            
+            spawn(function()
+                while sparkle and sparkle.Parent do
+                    services.TweenService:Create(sparkle, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                        BackgroundTransparency = 0,
+                        Size = UDim2.new(0, 4, 0, 4)
+                    }):Play()
+                    task.wait(0.5)
+                    services.TweenService:Create(sparkle, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                        BackgroundTransparency = 1,
+                        Size = UDim2.new(0, 2, 0, 2)
+                    }):Play()
+                    task.wait(0.5)
+                end
+            end)
         end
-        hue = (hue + speed * 0.3) % 1 -- 减慢变化速度，保持在蓝色范围
-        local saturation = 0.8 + math.sin(tick() * 2) * 0.2 -- 饱和度波动
-        local value = 0.9 + math.cos(tick() * 1.5) * 0.1 -- 亮度波动
-        object[property] = Color3.fromHSV(hue, saturation, value)
-    end)
-    return connection
+    elseif effectType == "wave" then
+        for i = 1, 3 do
+            local wave = Instance.new("Frame")
+            wave.Name = "Wave"
+            wave.BackgroundColor3 = Color3.fromRGB(0, 112, 255)
+            wave.BackgroundTransparency = 0.7
+            wave.BorderSizePixel = 0
+            wave.Size = UDim2.new(0, 0, 0, 2)
+            wave.Position = UDim2.new(0.5, 0, 0.5, 0)
+            wave.AnchorPoint = Vector2.new(0.5, 0.5)
+            wave.ZIndex = 1
+            
+            wave.Parent = particleContainer
+            table.insert(particles, wave)
+            
+            spawn(function()
+                task.wait(i * 0.3)
+                while wave and wave.Parent do
+                    wave.Size = UDim2.new(0, 0, 0, 2)
+                    wave.BackgroundTransparency = 0.7
+                    
+                    services.TweenService:Create(wave, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        Size = UDim2.new(1, 0, 0, 2),
+                        BackgroundTransparency = 1
+                    }):Play()
+                    
+                    task.wait(1.5)
+                end
+            end)
+        end
+    elseif effectType == "pulse" then
+        local pulseRing = Instance.new("Frame")
+        pulseRing.Name = "PulseRing"
+        pulseRing.BackgroundColor3 = Color3.fromRGB(0, 112, 255)
+        pulseRing.BackgroundTransparency = 0.8
+        pulseRing.BorderSizePixel = 0
+        pulseRing.Size = UDim2.new(1, 0, 1, 0)
+        pulseRing.ZIndex = 1
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(1, 0)
+        corner.Parent = pulseRing
+        
+        pulseRing.Parent = particleContainer
+        table.insert(particles, pulseRing)
+        
+        spawn(function()
+            while pulseRing and pulseRing.Parent do
+                pulseRing.Size = UDim2.new(1, 0, 1, 0)
+                pulseRing.BackgroundTransparency = 0.8
+                
+                services.TweenService:Create(pulseRing, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Size = UDim2.new(1.5, 0, 1.5, 0),
+                    BackgroundTransparency = 1
+                }):Play()
+                
+                task.wait(2)
+            end
+        end)
+    end
+    
+    return particleContainer
 end
 
-local function createAuroraEffect(frame, intensity)
-    intensity = intensity or 1
-    
-    local aurora = Instance.new("Frame")
-    aurora.Name = "AuroraEffect"
-    aurora.BackgroundTransparency = 1
-    aurora.Size = UDim2.new(1, 0, 1, 0)
-    aurora.ZIndex = frame.ZIndex - 1
-    aurora.Parent = frame
-    aurora.ClipsDescendants = true
-    
-    local gradient = Instance.new("UIGradient")
-    gradient.Rotation = 45
-    gradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0),
-        NumberSequenceKeypoint.new(0.5, 0.2 * intensity),
-        NumberSequenceKeypoint.new(1, 0)
-    })
-    gradient.Parent = aurora
-    
-    -- 改为蓝色系渐变
-    local colors = {
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 82, 204)),
-        ColorSequenceKeypoint.new(0.25, Color3.fromRGB(0, 112, 255)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(65, 105, 225)),
-        ColorSequenceKeypoint.new(0.75, Color3.fromRGB(100, 149, 237)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 82, 204))
-    }
-    
-    gradient.Color = ColorSequence.new(colors)
-    
-    local sizeConnection
-    sizeConnection = frame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-        aurora.Size = UDim2.new(2, 0, 2, 0)
-    end)
-    
-    local xOffset = 0
-    local yOffset = 0
-    local xDir = 1
-    local yDir = 1
-    local xSpeed = 0.5
-    local ySpeed = 0.3
-    
-    local heartbeatConnection
-    heartbeatConnection = RunService.Heartbeat:Connect(function(delta)
-        if not aurora or not aurora.Parent then
-            heartbeatConnection:Disconnect()
-            sizeConnection:Disconnect()
-            return
-        end
-        
-        xOffset = (xOffset + xSpeed * delta * xDir) % 1
-        yOffset = (yOffset + ySpeed * delta * yDir) % 1
-        
-        if xOffset >= 0.9 or xOffset <= 0.1 then xDir = xDir * -1 end
-        if yOffset >= 0.9 or yOffset <= 0.1 then yDir = yDir * -1 end
-        
-        aurora.Position = UDim2.new(-0.5 + xOffset, 0, -0.5 + yOffset, 0)
-        
-        -- 蓝色系的颜色波动
-        for i, keypoint in ipairs(colors) do
-            local time = tick() * 0.05 + i * 0.2
-            local blueValue = 0.6 + math.sin(time) * 0.3
-            colors[i] = ColorSequenceKeypoint.new(
-                keypoint.Time,
-                Color3.fromRGB(
-                    math.floor(30 * blueValue),
-                    math.floor(90 * blueValue),
-                    math.floor(200 * blueValue)
-                )
-            )
-        end
-        gradient.Color = ColorSequence.new(colors)
-    end)
-    
-    return aurora
-end
-
+-- 新的波纹效果
 function Ripple(obj)
     if not obj or not obj.Parent then return end
     
@@ -167,36 +181,143 @@ function Ripple(obj)
         end
         
         local mouse = services.Players.LocalPlayer:GetMouse()
-        local Ripple = Instance.new("ImageLabel")
+        local Ripple = Instance.new("Frame")
         Ripple.Name = "Ripple"
         Ripple.Parent = obj
-        Ripple.BackgroundTransparency = 1
+        Ripple.BackgroundColor3 = Color3.fromRGB(100, 180, 255)
+        Ripple.BackgroundTransparency = 0.7
         Ripple.ZIndex = 8
-        Ripple.Image = "rbxassetid://84830962019412"
-        Ripple.ImageTransparency = 0.6
-        Ripple.ScaleType = Enum.ScaleType.Fit
+        Ripple.AnchorPoint = Vector2.new(0.5, 0.5)
         
-        -- 改为蓝色系
-        local hue = 0.6 + math.sin(tick() * 2) * 0.1
-        Ripple.ImageColor3 = Color3.fromHSV(hue, 0.8, 1)
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(1, 0)
+        corner.Parent = Ripple
         
-        local x = (mouse.X - Ripple.AbsolutePosition.X) / obj.AbsoluteSize.X
-        local y = (mouse.Y - Ripple.AbsolutePosition.Y) / obj.AbsoluteSize.Y
+        local x = (mouse.X - obj.AbsolutePosition.X) / obj.AbsoluteSize.X
+        local y = (mouse.Y - obj.AbsolutePosition.Y) / obj.AbsoluteSize.Y
         Ripple.Position = UDim2.new(x, 0, y, 0)
         Ripple.Size = UDim2.new(0, 0, 0, 0)
         
         services.TweenService:Create(Ripple, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Position = UDim2.new(-0.8, 0, -0.8, 0),
-            Size = UDim2.new(2.6, 0, 2.6, 0)
+            Size = UDim2.new(2, 0, 2, 0),
+            BackgroundTransparency = 1
         }):Play()
         
-        services.TweenService:Create(Ripple, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            ImageTransparency = 1
-        }):Play()
-        
-        task.wait(0.8)
+        task.wait(0.6)
         Ripple:Destroy()
     end)
+end
+
+-- 新的滑动动画效果
+local function createSlideAnimation(frame, direction)
+    direction = direction or "up"
+    local startPositions = {
+        up = UDim2.new(0, 0, -1, 0),
+        down = UDim2.new(0, 0, 1, 0),
+        left = UDim2.new(-1, 0, 0, 0),
+        right = UDim2.new(1, 0, 0, 0)
+    }
+    
+    local endPosition = UDim2.new(0, 0, 0, 0)
+    frame.Position = startPositions[direction]
+    
+    services.TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = endPosition
+    }):Play()
+end
+
+-- 新的悬浮动画效果
+local function setupHoverAnimation(button)
+    local originalSize = button.Size
+    local originalPos = button.Position
+    
+    button.MouseEnter:Connect(function()
+        services.TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset + 4, originalSize.Y.Scale, originalSize.Y.Offset + 4),
+            Position = UDim2.new(originalPos.X.Scale, originalPos.X.Offset - 2, originalPos.Y.Scale, originalPos.Y.Offset - 2)
+        }):Play()
+        
+        createParticleEffect(button, "sparkle")
+    end)
+    
+    button.MouseLeave:Connect(function()
+        services.TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = originalSize,
+            Position = originalPos
+        }):Play()
+        
+        local particles = button:FindFirstChild("ParticleContainer")
+        if particles then
+            particles:Destroy()
+        end
+    end)
+end
+
+-- 新的切换动画效果
+local function createToggleAnimation(toggleFrame, state)
+    if state then
+        services.TweenService:Create(toggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0, 14, 0, 0)
+        }):Play()
+        
+        createParticleEffect(toggleFrame, "pulse")
+    else
+        services.TweenService:Create(toggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Position = UDim2.new(0, 0, 0, 0)
+        }):Play()
+    end
+end
+
+-- 新的进度条动画效果
+local function createProgressAnimation(progressBar, targetSize)
+    services.TweenService:Create(progressBar, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = targetSize
+    }):Play()
+    
+    createParticleEffect(progressBar, "wave")
+end
+
+-- 新的标题动画效果
+local function createTitleAnimation(titleLabel)
+    spawn(function()
+        while titleLabel and titleLabel.Parent do
+            local hue = 0.6 + math.sin(tick() * 0.5) * 0.1
+            titleLabel.TextColor3 = Color3.fromHSV(hue, 0.8, 1)
+            
+            services.TweenService:Create(titleLabel, TweenInfo.new(1, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                TextSize = 16 + math.sin(tick() * 2) * 2
+            }):Play()
+            
+            task.wait(0.05)
+        end
+    end)
+end
+
+-- 新的边框发光效果
+local function createGlowEffect(frame, color)
+    local glow = Instance.new("UIStroke")
+    glow.Name = "GlowEffect"
+    glow.Parent = frame
+    glow.Color = color or config.AccentColor
+    glow.Thickness = 2
+    glow.Transparency = 0.8
+    
+    spawn(function()
+        while glow and glow.Parent do
+            services.TweenService:Create(glow, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                Thickness = 3,
+                Transparency = 0.5
+            }):Play()
+            task.wait(1)
+            services.TweenService:Create(glow, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                Thickness = 2,
+                Transparency = 0.8
+            }):Play()
+            task.wait(1)
+        end
+    end)
+    
+    return glow
 end
 
 local function setupSmoothScrolling(scrollingFrame, layout)
@@ -223,6 +344,8 @@ function switchTab(new)
         FengUI.currentTab = new
         services.TweenService:Create(new[1], TweenInfo.new(0.2), { ImageTransparency = 0 }):Play()
         services.TweenService:Create(new[1].TabText, TweenInfo.new(0.2), { TextTransparency = 0 }):Play()
+        
+        createSlideAnimation(new[2], "right")
         return
     end
     
@@ -237,8 +360,10 @@ function switchTab(new)
     services.TweenService:Create(old[1].TabText, tweenInfo, { TextTransparency = 0.5 }):Play()
     services.TweenService:Create(new[1].TabText, tweenInfo, { TextTransparency = 0 }):Play()
     
+    createSlideAnimation(old[2], "left")
     old[2].Visible = false
     new[2].Visible = true
+    createSlideAnimation(new[2], "right")
     
     task.wait(0.2)
     switchingTabs = false
@@ -277,12 +402,8 @@ MainStroke.Color = Color3.fromRGB(50, 50, 50)
 MainStroke.Thickness = 1
 MainStroke.Transparency = 0.5
 
-local rainbowStroke = Instance.new("UIStroke")
-rainbowStroke.Parent = Main
-rainbowStroke.Thickness = 2
-rainbowStroke.Transparency = 0.7
-rainbowStroke.LineJoinMode = Enum.LineJoinMode.Round
-startRainbowEffect(rainbowStroke, "Color", 0.01)
+createGlowEffect(Main, config.AccentColor)
+createParticleEffect(Main, "sparkle")
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
@@ -301,6 +422,8 @@ CloseButton.ZIndex = 10
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 4)
 CloseCorner.Parent = CloseButton
+
+setupHoverAnimation(CloseButton)
 
 CloseButton.MouseEnter:Connect(function()
     services.TweenService:Create(CloseButton, TweenInfo.new(0.2), {
@@ -352,17 +475,25 @@ OpenStroke.Color = Color3.fromRGB(180, 180, 180)
 OpenStroke.Thickness = 1.2
 OpenStroke.Transparency = 0.4
 
-startRainbowEffect(Open, "BackgroundColor3", 0.012)
+createParticleEffect(Open, "pulse")
 
 Open.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
     services.TweenService:Create(Open, TweenInfo.new(0.2), {Rotation = Open.Rotation + 180}):Play()
+    
+    if Main.Visible then
+        createSlideAnimation(Main, "up")
+    end
 end)
 
 services.UserInputService.InputEnded:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.LeftControl then
         Main.Visible = not Main.Visible
         services.TweenService:Create(Open, TweenInfo.new(0.2), {Rotation = Open.Rotation + 180}):Play()
+        
+        if Main.Visible then
+            createSlideAnimation(Main, "up")
+        end
     end
 end)
 
@@ -429,35 +560,7 @@ ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
 
-task.spawn(function()
-    local hue = 0.6 -- 固定为蓝色调
-    local glowEffect = Instance.new("UIGradient")
-    glowEffect.Rotation = 90
-    glowEffect.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0),
-        NumberSequenceKeypoint.new(0.5, 0.2),
-        NumberSequenceKeypoint.new(1, 0)
-    })
-    glowEffect.Parent = ScriptTitle
-    
-    while ScriptTitle and ScriptTitle.Parent do
-        hue = (hue + 0.01) % 1 -- 减慢变化速度
-        
-        ScriptTitle.TextColor3 = Color3.fromHSV(hue, 1, 1)
-        
-        glowEffect.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.05) % 1, 1, 1)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 1, 1)),
-            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue + 0.05) % 1, 1, 1))
-        })
-        
-        services.TweenService:Create(ScriptTitle, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            TextSize = 15 + math.sin(tick() * 2) * 1
-        }):Play()
-        
-        task.wait(0.05)
-    end
-end)
+createTitleAnimation(ScriptTitle)
 
 function FengUI.new(FengUI, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
@@ -505,7 +608,18 @@ function FengUI.new(FengUI, name, theme)
         TabIco.Image = "rbxassetid://84830962019412"
         TabIco.ImageTransparency = 0.5
         
-        startRainbowEffect(TabIco, "ImageColor3", 0.005)
+        spawn(function()
+            while TabIco and TabIco.Parent do
+                services.TweenService:Create(TabIco, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                    Rotation = 5
+                }):Play()
+                task.wait(1)
+                services.TweenService:Create(TabIco, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                    Rotation = -5
+                }):Play()
+                task.wait(1)
+            end
+        end)
         
         TabText.Name = "TabText"
         TabText.Parent = TabIco
@@ -532,6 +646,8 @@ function FengUI.new(FengUI, name, theme)
         TabL.Parent = Tab
         TabL.SortOrder = Enum.SortOrder.LayoutOrder
         TabL.Padding = UDim.new(0, 4)
+        
+        setupHoverAnimation(TabBtn)
         
         TabBtn.MouseButton1Click:Connect(function()
             Ripple(TabBtn)
@@ -572,6 +688,8 @@ function FengUI.new(FengUI, name, theme)
             SectionC.CornerRadius = UDim.new(0, 6)
             SectionC.Name = "SectionC"
             SectionC.Parent = Section
+            
+            createGlowEffect(Section, config.AccentColor)
             
             SectionText.Name = "SectionText"
             SectionText.Parent = Section
@@ -640,6 +758,10 @@ function FengUI.new(FengUI, name, theme)
                 services.TweenService:Create(SectionOpen, TweenInfo.new(0.2), {
                     ImageTransparency = open and 1 or 0
                 }):Play()
+                
+                if open then
+                    createSlideAnimation(Objs, "down")
+                end
             end)
             
             ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -679,13 +801,8 @@ function FengUI.new(FengUI, name, theme)
                 BtnC.Name = "BtnC"
                 BtnC.Parent = Btn
                 
-                local btnGlow = Instance.new("UIStroke")
-                btnGlow.Parent = Btn
-                btnGlow.Color = config.AccentColor
-                btnGlow.Thickness = 1
-                btnGlow.Transparency = 0.8
-                
-                startRainbowEffect(btnGlow, "Color", 0.01)
+                createGlowEffect(Btn, config.AccentColor)
+                setupHoverAnimation(Btn)
                 
                 Btn.MouseEnter:Connect(function()
                     services.TweenService:Create(Btn, TweenInfo.new(0.2), {
@@ -695,19 +812,11 @@ function FengUI.new(FengUI, name, theme)
                             math.floor(config.Button_Color.B * 255 * 1.1)
                         )
                     }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                        Thickness = 2,
-                        Transparency = 0.5
-                    }):Play()
                 end)
                 
                 Btn.MouseLeave:Connect(function()
                     services.TweenService:Create(Btn, TweenInfo.new(0.2), {
                         BackgroundColor3 = config.Button_Color
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                        Thickness = 1,
-                        Transparency = 0.8
                     }):Play()
                 end)
                 
@@ -722,19 +831,11 @@ function FengUI.new(FengUI, name, theme)
                             math.floor(config.Button_Color.B * 255 * 0.8)
                         )
                     }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
-                        Thickness = 3,
-                        Transparency = 0.3
-                    }):Play()
                     
                     task.wait(0.1)
                     
                     services.TweenService:Create(Btn, TweenInfo.new(0.2), {
                         BackgroundColor3 = config.Button_Color
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                        Thickness = 1,
-                        Transparency = 0.8
                     }):Play()
                 end)
             end
@@ -763,11 +864,7 @@ function FengUI.new(FengUI, name, theme)
                 ImageCorner.CornerRadius = UDim.new(0, 6)
                 ImageCorner.Parent = ImageLabel
                 
-                local imageGlow = Instance.new("UIStroke")
-                imageGlow.Parent = ImageLabel
-                imageGlow.Color = config.AccentColor
-                imageGlow.Thickness = 1
-                imageGlow.Transparency = 1
+                setupHoverAnimation(ImageLabel)
                 
                 return ImageLabel
             end
@@ -837,6 +934,8 @@ function FengUI.new(FengUI, name, theme)
                 ToggleBtnC.Name = "ToggleBtnC"
                 ToggleBtnC.Parent = ToggleBtn
                 
+                setupHoverAnimation(ToggleBtn)
+                
                 ToggleDisable.Name = "ToggleDisable"
                 ToggleDisable.Parent = ToggleBtn
                 ToggleDisable.BackgroundColor3 = config.Bg_Color
@@ -859,7 +958,7 @@ function FengUI.new(FengUI, name, theme)
                 ToggleDisableC.Parent = ToggleDisable
                 
                 if enabled then
-                    createAuroraEffect(ToggleSwitch, 0.8)
+                    createParticleEffect(ToggleSwitch, "pulse")
                 end
                 
                 ToggleBtn.MouseEnter:Connect(function()
@@ -887,17 +986,17 @@ function FengUI.new(FengUI, name, theme)
                             return
                         end
                         
+                        createToggleAnimation(ToggleSwitch, state)
                         services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.2), {
-                            Position = UDim2.new(0, state and 14 or 0, 0, 0),
                             BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
                         }):Play()
                         
                         if state then
-                            createAuroraEffect(ToggleSwitch, 0.8)
+                            createParticleEffect(ToggleSwitch, "pulse")
                         else
-                            local aurora = ToggleSwitch:FindFirstChild("AuroraEffect")
-                            if aurora then
-                                aurora:Destroy()
+                            local particles = ToggleSwitch:FindFirstChild("ParticleContainer")
+                            if particles then
+                                particles:Destroy()
                             end
                         end
                         
@@ -973,6 +1072,8 @@ function FengUI.new(FengUI, name, theme)
                 KeybindBtnC.Name = "KeybindBtnC"
                 KeybindBtnC.Parent = KeybindBtn
                 
+                setupHoverAnimation(KeybindBtn)
+                
                 KeybindValue.Name = "KeybindValue"
                 KeybindValue.Parent = KeybindBtn
                 KeybindValue.BackgroundColor3 = config.Bg_Color
@@ -1024,6 +1125,9 @@ function FengUI.new(FengUI, name, theme)
                 KeybindValue.MouseButton1Click:Connect(function()
                     Ripple(KeybindValue)
                     KeybindValue.Text = "..."
+                    
+                    createParticleEffect(KeybindValue, "sparkle")
+                    
                     task.wait()
                     
                     local key = UserInputService.InputEnded:Wait()
@@ -1125,6 +1229,8 @@ function FengUI.new(FengUI, name, theme)
                 TextboxBackP.Parent = TextboxBack
                 TextboxBackP.PaddingRight = UDim.new(0, 12)
                 
+                setupHoverAnimation(TextboxBack)
+                
                 TextboxBack.MouseEnter:Connect(function()
                     services.TweenService:Create(TextboxBack, TweenInfo.new(0.2), {
                         BackgroundColor3 = Color3.fromRGB(
@@ -1204,6 +1310,8 @@ function FengUI.new(FengUI, name, theme)
                 SliderBackC.CornerRadius = UDim.new(0, 6)
                 SliderBackC.Name = "SliderBackC"
                 SliderBackC.Parent = SliderBack
+                
+                setupHoverAnimation(SliderBack)
                 
                 SliderBar.Name = "SliderBar"
                 SliderBar.Parent = SliderBack
@@ -1316,9 +1424,7 @@ function FengUI.new(FengUI, name, theme)
                         FengUI.flags[flag] = tonumber(value)
                         SliderValue.Text = tostring(value)
                         
-                        services.TweenService:Create(SliderPart, TweenInfo.new(0.1), {
-                            Size = UDim2.new(percent, 0, 1, 0)
-                        }):Play()
+                        createProgressAnimation(SliderPart, UDim2.new(percent, 0, 1, 0))
                         
                         callback(tonumber(value))
                     end,
@@ -1502,6 +1608,8 @@ function FengUI.new(FengUI, name, theme)
                 DropdownTopC.Name = "DropdownTopC"
                 DropdownTopC.Parent = DropdownTop
                 
+                setupHoverAnimation(DropdownTop)
+                
                 local BackgroundFill = Instance.new("Frame")
                 BackgroundFill.Name = "BackgroundFill"
                 BackgroundFill.Parent = DropdownTop
@@ -1520,7 +1628,7 @@ function FengUI.new(FengUI, name, theme)
                 DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 22)
                 DropdownOpenFrame.ZIndex = 2
                 
-                createAuroraEffect(DropdownOpenFrame, 0.8)
+                createParticleEffect(DropdownOpenFrame, "pulse")
                 
                 DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
                 DropdownOpenFrameC.Name = "DropdownOpenFrameC"
@@ -1605,6 +1713,10 @@ function FengUI.new(FengUI, name, theme)
                     end
                     DropdownOpen.Text = (open and "取消" or "选择")
                     DropdownModule.Size = UDim2.new(0, 330, 0, (open and math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150) or 36))
+                    
+                    if open then
+                        createSlideAnimation(DropdownModule, "down")
+                    end
                 end
                 
                 DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
@@ -1648,6 +1760,8 @@ function FengUI.new(FengUI, name, theme)
                     OptionC.CornerRadius = UDim.new(0, 6)
                     OptionC.Name = "OptionC"
                     OptionC.Parent = Option
+                    
+                    setupHoverAnimation(Option)
                     
                     Option.MouseButton1Click:Connect(function()
                         Ripple(Option)
