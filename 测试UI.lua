@@ -42,26 +42,26 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
--- 修改颜色配置：从灰色主题改为宝蓝色主题
+-- 调整颜色配置：减少蓝色强度，增加层次感
 local config = {
-    MainColor = Color3.fromRGB(10, 36, 99),           -- 深宝蓝主色
-    TabColor = Color3.fromRGB(25, 55, 138),          -- 宝蓝标签色
-    Bg_Color = Color3.fromRGB(15, 42, 112),          -- 背景宝蓝色
-    Zy_Color = Color3.fromRGB(15, 42, 112),          -- 宝蓝色
-    Button_Color = Color3.fromRGB(25, 55, 138),      -- 按钮宝蓝色
-    Textbox_Color = Color3.fromRGB(25, 55, 138),     -- 文本框宝蓝色
-    Dropdown_Color = Color3.fromRGB(25, 55, 138),    -- 下拉框宝蓝色
-    Keybind_Color = Color3.fromRGB(25, 55, 138),     -- 键位绑定宝蓝色
-    Label_Color = Color3.fromRGB(25, 55, 138),       -- 标签宝蓝色
-    Slider_Color = Color3.fromRGB(25, 55, 138),      -- 滑块宝蓝色
-    SliderBar_Color = Color3.fromRGB(65, 105, 225),  -- 皇家蓝滑块条
-    Toggle_Color = Color3.fromRGB(25, 55, 138),      -- 切换宝蓝色
-    Toggle_Off = Color3.fromRGB(40, 40, 80),         -- 切换关闭深蓝色
-    Toggle_On = Color3.fromRGB(65, 105, 225),        -- 切换开启皇家蓝
-    AccentColor = Color3.fromRGB(65, 105, 225),      -- 强调色皇家蓝
-    TextColor = Color3.fromRGB(240, 248, 255),       -- 爱丽丝蓝文本
-    SecondaryTextColor = Color3.fromRGB(173, 216, 230), -- 浅蓝色次要文本
-    GlowColor = Color3.fromRGB(100, 149, 237),       -- 矢车菊蓝发光
+    MainColor = Color3.fromRGB(25, 35, 65),           -- 深蓝灰主色
+    TabColor = Color3.fromRGB(35, 45, 85),           -- 蓝灰标签色
+    Bg_Color = Color3.fromRGB(28, 38, 72),           -- 背景蓝灰色
+    Zy_Color = Color3.fromRGB(28, 38, 72),           -- 蓝灰色
+    Button_Color = Color3.fromRGB(40, 50, 95),       -- 按钮蓝灰色
+    Textbox_Color = Color3.fromRGB(40, 50, 95),      -- 文本框蓝灰色
+    Dropdown_Color = Color3.fromRGB(40, 50, 95),     -- 下拉框蓝灰色
+    Keybind_Color = Color3.fromRGB(40, 50, 95),      -- 键位绑定蓝灰色
+    Label_Color = Color3.fromRGB(40, 50, 95),        -- 标签蓝灰色
+    Slider_Color = Color3.fromRGB(40, 50, 95),       -- 滑块蓝灰色
+    SliderBar_Color = Color3.fromRGB(70, 130, 230),  -- 中等蓝色滑块条
+    Toggle_Color = Color3.fromRGB(40, 50, 95),       -- 切换蓝灰色
+    Toggle_Off = Color3.fromRGB(50, 50, 80),         -- 切换关闭深蓝灰
+    Toggle_On = Color3.fromRGB(70, 130, 230),        -- 切换开启中等蓝色
+    AccentColor = Color3.fromRGB(70, 130, 230),      -- 强调色中等蓝色
+    TextColor = Color3.fromRGB(235, 240, 255),       -- 淡蓝色文本
+    SecondaryTextColor = Color3.fromRGB(180, 195, 220), -- 灰蓝色次要文本
+    GlowColor = Color3.fromRGB(80, 140, 240),        -- 浅蓝色发光
 }
 
 local function startRainbowEffect(object, property, speed)
@@ -99,13 +99,13 @@ local function createAuroraEffect(frame, intensity)
     })
     gradient.Parent = aurora
     
-    -- 修改极光颜色为蓝色系
+    -- 调整极光颜色为更柔和的蓝紫色系
     local colors = {
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 191, 255)),  -- 深天蓝
-        ColorSequenceKeypoint.new(0.25, Color3.fromRGB(30, 144, 255)), -- 道奇蓝
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(65, 105, 225)), -- 皇家蓝
-        ColorSequenceKeypoint.new(0.75, Color3.fromRGB(100, 149, 237)), -- 矢车菊蓝
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(135, 206, 250)) -- 浅天蓝
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 80, 180)),   -- 深蓝色
+        ColorSequenceKeypoint.new(0.25, Color3.fromRGB(60, 110, 220)), -- 中等蓝色
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(80, 140, 240)), -- 浅蓝色
+        ColorSequenceKeypoint.new(0.75, Color3.fromRGB(100, 120, 220)), -- 蓝紫色
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(120, 140, 240))  -- 淡蓝紫色
     }
     
     gradient.Color = ColorSequence.new(colors)
@@ -140,12 +140,11 @@ local function createAuroraEffect(frame, intensity)
         
         for i, keypoint in ipairs(colors) do
             local time = tick() * 0.1 + i * 0.2
-            local h = (time % 1) * 360
-            -- 保持蓝色系，只在蓝色范围内变化
-            local blueHue = 0.6 + (math.sin(time) * 0.1) -- 在0.55-0.65之间变化（蓝色范围）
+            -- 在蓝色范围内轻微变化，避免过于鲜艳
+            local blueHue = 0.6 + (math.sin(time + i) * 0.08) -- 在0.52-0.68之间变化
             colors[i] = ColorSequenceKeypoint.new(
                 keypoint.Time,
-                Color3.fromHSV(math.clamp(blueHue, 0.55, 0.65), 0.8, 1)
+                Color3.fromHSV(math.clamp(blueHue, 0.52, 0.68), 0.6, 0.9)
             )
         end
         gradient.Color = ColorSequence.new(colors)
@@ -172,8 +171,8 @@ function Ripple(obj)
         Ripple.ImageTransparency = 0.6
         Ripple.ScaleType = Enum.ScaleType.Fit
         
-        -- 修改涟漪颜色为蓝色
-        Ripple.ImageColor3 = Color3.fromRGB(100, 149, 237) -- 矢车菊蓝
+        -- 调整涟漪颜色为中等蓝色
+        Ripple.ImageColor3 = Color3.fromRGB(80, 140, 240)
         
         local x = (mouse.X - Ripple.AbsolutePosition.X) / obj.AbsoluteSize.X
         local y = (mouse.Y - Ripple.AbsolutePosition.Y) / obj.AbsoluteSize.Y
@@ -254,7 +253,7 @@ local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
+Main.BackgroundColor3 = config.Bg_Color  -- 使用调整后的蓝灰背景色
 Main.BackgroundTransparency = 0.2
 Main.Position = UDim2.new(0.5, 0, 0.4, 0)
 Main.Size = UDim2.new(0, 450, 0, 280)
@@ -268,7 +267,7 @@ MainCorner.Parent = Main
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
-MainStroke.Color = Color3.fromRGB(30, 144, 255)  -- 道奇蓝边框
+MainStroke.Color = Color3.fromRGB(60, 80, 140)  -- 调整边框颜色
 MainStroke.Thickness = 1
 MainStroke.Transparency = 0.5
 
@@ -327,14 +326,14 @@ end)
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
 Open.Parent = FengYu
-Open.BackgroundColor3 = config.AccentColor  -- 使用皇家蓝
+Open.BackgroundColor3 = config.AccentColor  -- 使用中等蓝色
 Open.BackgroundTransparency = 0.85
 Open.Position = UDim2.new(0.92, 0, 0.01, 0)
 Open.Size = UDim2.new(0, 40, 0, 40)
 Open.Active = true
 Open.Draggable = true
 Open.Image = "rbxassetid://84830962019412"
-Open.ImageColor3 = Color3.fromRGB(240, 248, 255)  -- 爱丽丝蓝
+Open.ImageColor3 = Color3.fromRGB(235, 240, 255)  -- 淡蓝色
 Open.ImageTransparency = 0.15
 
 local OpenCorner = Instance.new("UICorner")
@@ -343,7 +342,7 @@ OpenCorner.Parent = Open
 
 local OpenStroke = Instance.new("UIStroke")
 OpenStroke.Parent = Open
-OpenStroke.Color = Color3.fromRGB(135, 206, 250)  -- 浅天蓝边框
+OpenStroke.Color = Color3.fromRGB(120, 150, 220)  -- 调整边框颜色
 OpenStroke.Thickness = 1.2
 OpenStroke.Transparency = 0.4
 
@@ -371,7 +370,7 @@ TabMain.Size = UDim2.new(0, 360, 0, 274)
 local Side = Instance.new("Frame")
 Side.Name = "Side"
 Side.Parent = Main
-Side.BackgroundColor3 = config.TabColor  -- 使用宝蓝标签色
+Side.BackgroundColor3 = config.TabColor  -- 使用调整后的蓝灰标签色
 Side.BackgroundTransparency = 0.2
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
@@ -392,7 +391,7 @@ TabBtns.Position = UDim2.new(0, 0, 0.097, 0)
 TabBtns.Size = UDim2.new(0, 90, 0, 245)
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
-TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 149, 237)  -- 矢车菊蓝滚动条
+TabBtns.ScrollBarImageColor3 = Color3.fromRGB(80, 110, 180)  -- 调整滚动条颜色
 TabBtns.ScrollBarImageTransparency = 0.5
 TabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 TabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
@@ -419,7 +418,7 @@ ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
 ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
 ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "FengUI"
-ScriptTitle.TextColor3 = config.AccentColor  -- 使用皇家蓝
+ScriptTitle.TextColor3 = config.AccentColor  -- 使用中等蓝色
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
@@ -436,23 +435,23 @@ task.spawn(function()
     glowEffect.Parent = ScriptTitle
     
     while ScriptTitle and ScriptTitle.Parent do
-        hue = (hue + 0.02) % 1
+        hue = (hue + 0.01) % 1  -- 减慢颜色变化速度
         
-        -- 限制在蓝色范围内 (0.55-0.65)
-        local blueHue = 0.6 + math.sin(tick()) * 0.05
-        ScriptTitle.TextColor3 = Color3.fromHSV(math.clamp(blueHue, 0.55, 0.65), 1, 1)
+        -- 限制在更窄的蓝色范围内 (0.55-0.65)
+        local blueHue = 0.6 + math.sin(tick() * 0.5) * 0.05
+        ScriptTitle.TextColor3 = Color3.fromHSV(math.clamp(blueHue, 0.55, 0.65), 0.7, 1)  -- 降低饱和度
         
         glowEffect.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromHSV(math.clamp(blueHue + 0.05, 0.55, 0.65), 1, 1)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(math.clamp(blueHue, 0.55, 0.65), 1, 1)),
-            ColorSequenceKeypoint.new(1, Color3.fromHSV(math.clamp(blueHue + 0.05, 0.55, 0.65), 1, 1))
+            ColorSequenceKeypoint.new(0, Color3.fromHSV(math.clamp(blueHue + 0.03, 0.55, 0.65), 0.7, 1)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(math.clamp(blueHue, 0.55, 0.65), 0.7, 1)),
+            ColorSequenceKeypoint.new(1, Color3.fromHSV(math.clamp(blueHue + 0.03, 0.55, 0.65), 0.7, 1))
         })
         
         services.TweenService:Create(ScriptTitle, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            TextSize = 15 + math.sin(tick() * 2) * 1
+            TextSize = 15 + math.sin(tick() * 1.5) * 0.8  -- 减小字体大小变化幅度
         }):Play()
         
-        task.wait(0.05)
+        task.wait(0.08)  -- 减慢更新频率
     end
 end)
 
@@ -511,7 +510,7 @@ function FengUI.new(FengUI, name, theme)
         TabText.Size = UDim2.new(0, 65, 0, 22)
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
-        TabText.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
+        TabText.TextColor3 = config.TextColor  -- 使用淡蓝色文本
         TabText.TextSize = 14
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.TextTransparency = 0.5
@@ -560,7 +559,7 @@ function FengUI.new(FengUI, name, theme)
             
             Section.Name = "Section"
             Section.Parent = Tab
-            Section.BackgroundColor3 = config.TabColor  -- 使用宝蓝标签色
+            Section.BackgroundColor3 = config.TabColor  -- 使用调整后的蓝灰标签色
             Section.BackgroundTransparency = 0.2
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
@@ -577,7 +576,7 @@ function FengUI.new(FengUI, name, theme)
             SectionText.Size = UDim2.new(0, 320, 0, 36)
             SectionText.Font = Enum.Font.GothamSemibold
             SectionText.Text = name
-            SectionText.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
+            SectionText.TextColor3 = config.TextColor  -- 使用淡蓝色文本
             SectionText.TextSize = 16
             SectionText.TextXAlignment = Enum.TextXAlignment.Left
             
@@ -588,7 +587,7 @@ function FengUI.new(FengUI, name, theme)
             SectionOpen.Position = UDim2.new(0, -26, 0, 6)
             SectionOpen.Size = UDim2.new(0, 22, 0, 22)
             SectionOpen.Image = "rbxassetid://84830962019412"
-            SectionOpen.ImageColor3 = config.SecondaryTextColor  -- 使用浅蓝色
+            SectionOpen.ImageColor3 = config.SecondaryTextColor  -- 使用灰蓝色
             
             SectionOpened.Name = "SectionOpened"
             SectionOpened.Parent = SectionOpen
@@ -596,7 +595,7 @@ function FengUI.new(FengUI, name, theme)
             SectionOpened.BorderSizePixel = 0
             SectionOpened.Size = UDim2.new(0, 22, 0, 22)
             SectionOpened.Image = "rbxassetid://84830962019412"
-            SectionOpened.ImageColor3 = config.AccentColor  -- 使用皇家蓝
+            SectionOpened.ImageColor3 = config.AccentColor  -- 使用中等蓝色
             SectionOpened.ImageTransparency = 1
             
             SectionToggle.Name = "SectionToggle"
@@ -661,14 +660,14 @@ function FengUI.new(FengUI, name, theme)
                 
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
-                Btn.BackgroundColor3 = config.Button_Color  -- 使用宝蓝按钮色
+                Btn.BackgroundColor3 = config.Button_Color  -- 使用蓝灰按钮色
                 Btn.BackgroundTransparency = 0.2
                 Btn.BorderSizePixel = 0
                 Btn.Size = UDim2.new(0, 330, 0, 36)
                 Btn.AutoButtonColor = false
                 Btn.Font = Enum.Font.GothamSemibold
                 Btn.Text = "   " .. text
-                Btn.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
+                Btn.TextColor3 = config.TextColor  -- 使用淡蓝色文本
                 Btn.TextSize = 14
                 Btn.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -678,7 +677,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 local btnGlow = Instance.new("UIStroke")
                 btnGlow.Parent = Btn
-                btnGlow.Color = config.AccentColor  -- 使用皇家蓝
+                btnGlow.Color = config.AccentColor  -- 使用中等蓝色
                 btnGlow.Thickness = 1
                 btnGlow.Transparency = 0.8
                 
@@ -748,7 +747,7 @@ function FengUI.new(FengUI, name, theme)
                 ImageModule.Size = UDim2.new(0, 330, 0, sizeY or 120)
                 
                 ImageLabel.Parent = ImageModule
-                ImageLabel.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
+                ImageLabel.BackgroundColor3 = config.Bg_Color  -- 使用蓝灰背景色
                 ImageLabel.BackgroundTransparency = 0.2
                 ImageLabel.BorderSizePixel = 0
                 ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
@@ -762,7 +761,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 local imageGlow = Instance.new("UIStroke")
                 imageGlow.Parent = ImageLabel
-                imageGlow.Color = config.AccentColor  -- 使用皇家蓝
+                imageGlow.Color = config.AccentColor  -- 使用中等蓝色
                 imageGlow.Thickness = 1
                 imageGlow.Transparency = 1
                 
@@ -781,12 +780,12 @@ function FengUI.new(FengUI, name, theme)
                 LabelModule.Size = UDim2.new(0, 330, 0, 24)
                 
                 TextLabel.Parent = LabelModule
-                TextLabel.BackgroundColor3 = config.Label_Color  -- 使用宝蓝标签色
+                TextLabel.BackgroundColor3 = config.Label_Color  -- 使用蓝灰标签色
                 TextLabel.BackgroundTransparency = 0.2
                 TextLabel.Size = UDim2.new(0, 330, 0, 28)
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
-                TextLabel.TextColor3 = config.SecondaryTextColor  -- 使用浅蓝色
+                TextLabel.TextColor3 = config.SecondaryTextColor  -- 使用灰蓝色
                 TextLabel.TextSize = 14
                 
                 LabelC.CornerRadius = UDim.new(0, 6)
@@ -819,14 +818,14 @@ function FengUI.new(FengUI, name, theme)
                 
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
-                ToggleBtn.BackgroundColor3 = config.Toggle_Color  -- 使用宝蓝切换色
+                ToggleBtn.BackgroundColor3 = config.Toggle_Color  -- 使用蓝灰切换色
                 ToggleBtn.BackgroundTransparency = 0.2
                 ToggleBtn.BorderSizePixel = 0
                 ToggleBtn.Size = UDim2.new(0, 330, 0, 36)
                 ToggleBtn.AutoButtonColor = false
                 ToggleBtn.Font = Enum.Font.GothamSemibold
                 ToggleBtn.Text = "   " .. text
-                ToggleBtn.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
+                ToggleBtn.TextColor3 = config.TextColor  -- 使用淡蓝色文本
                 ToggleBtn.TextSize = 14
                 ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -836,14 +835,14 @@ function FengUI.new(FengUI, name, theme)
                 
                 ToggleDisable.Name = "ToggleDisable"
                 ToggleDisable.Parent = ToggleBtn
-                ToggleDisable.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
+                ToggleDisable.BackgroundColor3 = config.Bg_Color  -- 使用蓝灰背景色
                 ToggleDisable.BorderSizePixel = 0
                 ToggleDisable.Position = UDim2.new(0.85, 0, 0.22, 0)
                 ToggleDisable.Size = UDim2.new(0, 34, 0, 18)
                 
                 ToggleSwitch.Name = "ToggleSwitch"
                 ToggleSwitch.Parent = ToggleDisable
-                ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off  -- 使用皇家蓝开启/深蓝关闭
+                ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off  -- 使用中等蓝色开启/深蓝灰关闭
                 ToggleSwitch.Size = UDim2.new(0, 20, 0, 18)
                 ToggleSwitch.Position = UDim2.new(0, enabled and 14 or 0, 0, 0)
                 
@@ -955,14 +954,14 @@ function FengUI.new(FengUI, name, theme)
                 
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
-                KeybindBtn.BackgroundColor3 = config.Keybind_Color  -- 使用宝蓝键位绑定色
+                KeybindBtn.BackgroundColor3 = config.Keybind_Color  -- 使用蓝灰键位绑定色
                 KeybindBtn.BackgroundTransparency = 0.2
                 KeybindBtn.BorderSizePixel = 0
                 KeybindBtn.Size = UDim2.new(0, 330, 0, 36)
                 KeybindBtn.AutoButtonColor = false
                 KeybindBtn.Font = Enum.Font.GothamSemibold
                 KeybindBtn.Text = "   " .. text
-                KeybindBtn.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
+                KeybindBtn.TextColor3 = config.TextColor  -- 使用淡蓝色文本
                 KeybindBtn.TextSize = 14
                 KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -972,14 +971,14 @@ function FengUI.new(FengUI, name, theme)
                 
                 KeybindValue.Name = "KeybindValue"
                 KeybindValue.Parent = KeybindBtn
-                KeybindValue.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
+                KeybindValue.BackgroundColor3 = config.Bg_Color  -- 使用蓝灰背景色
                 KeybindValue.BorderSizePixel = 0
                 KeybindValue.Position = UDim2.new(0.72, 0, 0.22, 0)
                 KeybindValue.Size = UDim2.new(0, 70, 0, 22)
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
                 KeybindValue.Text = keyTxt
-                KeybindValue.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
+                KeybindValue.TextColor3 = config.TextColor  -- 使用淡蓝色文本
                 KeybindValue.TextSize = 12
                 
                 KeybindValueC.CornerRadius = UDim.new(0, 6)
@@ -1073,14 +1072,14 @@ function FengUI.new(FengUI, name, theme)
                 
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
-                TextboxBack.BackgroundColor3 = config.Textbox_Color  -- 使用宝蓝文本框色
+                TextboxBack.BackgroundColor3 = config.Textbox_Color  -- 使用蓝灰文本框色
                 TextboxBack.BackgroundTransparency = 0.2
                 TextboxBack.BorderSizePixel = 0
                 TextboxBack.Size = UDim2.new(0, 330, 0, 36)
                 TextboxBack.AutoButtonColor = false
                 TextboxBack.Font = Enum.Font.GothamSemibold
                 TextboxBack.Text = "   " .. text
-                TextboxBack.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
+                TextboxBack.TextColor3 = config.TextColor  -- 使用淡蓝色文本
                 TextboxBack.TextSize = 14
                 TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -1090,7 +1089,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 BoxBG.Name = "BoxBG"
                 BoxBG.Parent = TextboxBack
-                BoxBG.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
+                BoxBG.BackgroundColor3 = config.Bg_Color  -- 使用蓝灰背景色
                 BoxBG.BorderSizePixel = 0
                 BoxBG.Position = UDim2.new(0.45, 0, 0.22, 0)
                 BoxBG.Size = UDim2.new(0, 80, 0, 22)
@@ -1108,9 +1107,9 @@ function FengUI.new(FengUI, name, theme)
                 TextBox.Size = UDim2.new(1, 0, 1, 0)
                 TextBox.Font = Enum.Font.Gotham
                 TextBox.Text = default
-                TextBox.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
+                TextBox.TextColor3 = config.TextColor  -- 使用淡蓝色文本
                 TextBox.TextSize = 12
-                TextBox.PlaceholderColor3 = config.SecondaryTextColor  -- 使用浅蓝色
+                TextBox.PlaceholderColor3 = config.SecondaryTextColor  -- 使用灰蓝色
                 
                 TextboxBackL.Name = "TextboxBackL"
                 TextboxBackL.Parent = TextboxBack
@@ -1187,7 +1186,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 SliderBack.Name = "SliderBack"
                 SliderBack.Parent = SliderModule
-                SliderBack.BackgroundColor3 = config.Slider_Color  -- 使用宝蓝滑块色
+                SliderBack.BackgroundColor3 = config.Slider_Color  -- 使用蓝灰滑块色
                 SliderBack.BackgroundTransparency = 0.2
                 SliderBack.BorderSizePixel = 0
                 SliderBack.Size = UDim2.new(0, 330, 0, 36)
@@ -1205,7 +1204,7 @@ function FengUI.new(FengUI, name, theme)
                 SliderBar.Name = "SliderBar"
                 SliderBar.Parent = SliderBack
                 SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-                SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 100)  -- 深蓝色滑块背景
+                SliderBar.BackgroundColor3 = Color3.fromRGB(60, 70, 100)  -- 深蓝灰色滑块背景
                 SliderBar.BorderSizePixel = 0
                 SliderBar.Position = UDim2.new(0.35, 0, 0.5, 0)
                 SliderBar.Size = UDim2.new(0, 120, 0, 14)
@@ -1215,7 +1214,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 SliderPart.Name = "SliderPart"
                 SliderPart.Parent = SliderBar
-                SliderPart.BackgroundColor3 = config.SliderBar_Color  -- 使用皇家蓝滑块条
+                SliderPart.BackgroundColor3 = config.SliderBar_Color  -- 使用中等蓝色滑块条
                 SliderPart.BorderSizePixel = 0
                 SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
                 SliderPartC.CornerRadius = UDim.new(0, 4)
@@ -1224,7 +1223,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 SliderValBG.Name = "SliderValBG"
                 SliderValBG.Parent = SliderBack
-                SliderValBG.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
+                SliderValBG.BackgroundColor3 = config.Bg_Color  -- 使用蓝灰背景色
                 SliderValBG.BorderSizePixel = 0
                 SliderValBG.Position = UDim2.new(0.82, 0, 0.22, 0)
                 SliderValBG.Size = UDim2.new(0, 36, 0, 22)
@@ -1252,7 +1251,7 @@ function FengUI.new(FengUI, name, theme)
                 local MinSlider = Instance.new("TextButton")
                 MinSlider.Name = "MinSlider"
                 MinSlider.Parent = SliderBack
-                MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 100)  -- 深蓝色减按钮
+                MinSlider.BackgroundColor3 = Color3.fromRGB(60, 70, 100)  -- 深蓝灰色减按钮
                 MinSlider.BackgroundTransparency = 0
                 MinSlider.BorderSizePixel = 0
                 MinSlider.Position = UDim2.new(0.28, 0, 0.25, 0)
@@ -1271,7 +1270,7 @@ function FengUI.new(FengUI, name, theme)
                 local AddSlider = Instance.new("TextButton")
                 AddSlider.Name = "AddSlider"
                 AddSlider.Parent = SliderBack
-                AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 100)  -- 深蓝色加按钮
+                AddSlider.BackgroundColor3 = Color3.fromRGB(60, 70, 100)  -- 深蓝灰色加按钮
                 AddSlider.BackgroundTransparency = 0
                 AddSlider.BorderSizePixel = 0
                 AddSlider.Position = UDim2.new(0.75, 0, 0.25, 0)
@@ -1484,14 +1483,14 @@ function FengUI.new(FengUI, name, theme)
                 
                 DropdownTop.Name = "DropdownTop"
                 DropdownTop.Parent = DropdownModule
-                DropdownTop.BackgroundColor3 = config.Dropdown_Color  -- 使用宝蓝下拉框色
+                DropdownTop.BackgroundColor3 = config.Dropdown_Color  -- 使用蓝灰下拉框色
                 DropdownTop.BackgroundTransparency = 0.2
                 DropdownTop.BorderSizePixel = 0
                 DropdownTop.Size = UDim2.new(0, 330, 0, 36)
                 DropdownTop.AutoButtonColor = false
                 DropdownTop.Font = Enum.Font.GothamSemibold
                 DropdownTop.Text = ""
-                DropdownTop.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
+                DropdownTop.TextColor3 = config.TextColor  -- 使用淡蓝色文本
                 DropdownTop.TextSize = 14.000
                 DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -1502,7 +1501,7 @@ function FengUI.new(FengUI, name, theme)
                 local BackgroundFill = Instance.new("Frame")
                 BackgroundFill.Name = "BackgroundFill"
                 BackgroundFill.Parent = DropdownTop
-                BackgroundFill.BackgroundColor3 = config.Dropdown_Color  -- 使用宝蓝下拉框色
+                BackgroundFill.BackgroundColor3 = config.Dropdown_Color  -- 使用蓝灰下拉框色
                 BackgroundFill.BorderSizePixel = 0
                 BackgroundFill.Position = UDim2.new(0.75, 0, 0, 0)
                 BackgroundFill.Size = UDim2.new(0.25, 0, 1, 0)
@@ -1511,7 +1510,7 @@ function FengUI.new(FengUI, name, theme)
                 DropdownOpenFrame.Name = "DropdownOpenFrame"
                 DropdownOpenFrame.Parent = DropdownTop
                 DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
-                DropdownOpenFrame.BackgroundColor3 = config.Bg_Color  -- 使用宝蓝背景色
+                DropdownOpenFrame.BackgroundColor3 = config.Bg_Color  -- 使用蓝灰背景色
                 DropdownOpenFrame.BorderSizePixel = 0
                 DropdownOpenFrame.Position = UDim2.new(0.80, 0, 0.5, 0)
                 DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 22)
@@ -1531,7 +1530,7 @@ function FengUI.new(FengUI, name, theme)
                 DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
                 DropdownOpen.Font = Enum.Font.GothamSemibold
                 DropdownOpen.Text = "选择"
-                DropdownOpen.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
+                DropdownOpen.TextColor3 = config.TextColor  -- 使用淡蓝色文本
                 DropdownOpen.TextSize = 11.000
                 DropdownOpen.TextWrapped = true
                 DropdownOpen.ZIndex = 3
@@ -1544,10 +1543,10 @@ function FengUI.new(FengUI, name, theme)
                 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
                 DropdownText.Size = UDim2.new(0, 230, 0, 36)
                 DropdownText.Font = Enum.Font.GothamSemibold
-                DropdownText.PlaceholderColor3 = config.SecondaryTextColor  -- 使用浅蓝色
+                DropdownText.PlaceholderColor3 = config.SecondaryTextColor  -- 使用灰蓝色
                 DropdownText.PlaceholderText = text
                 DropdownText.Text = ""
-                DropdownText.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
+                DropdownText.TextColor3 = config.TextColor  -- 使用淡蓝色文本
                 DropdownText.TextSize = 14.000
                 DropdownText.TextXAlignment = Enum.TextXAlignment.Left
                 DropdownText.ZIndex = 2
@@ -1555,7 +1554,7 @@ function FengUI.new(FengUI, name, theme)
                 local Separator = Instance.new("Frame")
                 Separator.Name = "Separator"
                 Separator.Parent = DropdownTop
-                Separator.BackgroundColor3 = Color3.fromRGB(80, 80, 120)  -- 蓝灰色分隔线
+                Separator.BackgroundColor3 = Color3.fromRGB(80, 90, 120)  -- 蓝灰色分隔线
                 Separator.BorderSizePixel = 0
                 Separator.Position = UDim2.new(0.74, 0, 0.2, 0)
                 Separator.Size = UDim2.new(0, 1, 0, 22)
@@ -1632,7 +1631,7 @@ function FengUI.new(FengUI, name, theme)
                     local OptionC = Instance.new("UICorner")
                     Option.Name = "Option_" .. option
                     Option.Parent = DropdownModule
-                    Option.BackgroundColor3 = config.TabColor  -- 使用宝蓝标签色
+                    Option.BackgroundColor3 = config.TabColor  -- 使用蓝灰标签色
                     Option.BackgroundTransparency = 0.2
                     Option.BorderSizePixel = 0
                     Option.Position = UDim2.new(0, 0, 0.328125, 0)
@@ -1640,7 +1639,7 @@ function FengUI.new(FengUI, name, theme)
                     Option.AutoButtonColor = false
                     Option.Font = Enum.Font.Gotham
                     Option.Text = option
-                    Option.TextColor3 = config.TextColor  -- 使用爱丽丝蓝文本
+                    Option.TextColor3 = config.TextColor  -- 使用淡蓝色文本
                     Option.TextSize = 13.000
                     OptionC.CornerRadius = UDim.new(0, 6)
                     OptionC.Name = "OptionC"
