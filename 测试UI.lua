@@ -513,37 +513,6 @@ Version.TextColor3 = Color3.fromRGB(0, 200, 100)
 Version.TextSize = 14
 Version.TextXAlignment = Enum.TextXAlignment.Left
 
-local StatusInfo = Instance.new("Frame")
-StatusInfo.Name = "StatusInfo"
-StatusInfo.Parent = TopBar
-StatusInfo.BackgroundTransparency = 1
-StatusInfo.Position = UDim2.new(0.6, 0, 0, 0)
-StatusInfo.Size = UDim2.new(0.35, 0, 1, 0)
-
-local PingLabel = Instance.new("TextLabel")
-PingLabel.Name = "PingLabel"
-PingLabel.Parent = StatusInfo
-PingLabel.BackgroundTransparency = 1
-PingLabel.Position = UDim2.new(0, 0, 0.2, 0)
-PingLabel.Size = UDim2.new(0.5, 0, 0.3, 0)
-PingLabel.Font = Enum.Font.Gotham
-PingLabel.Text = "Ping: 157ms"
-PingLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-PingLabel.TextSize = 14
-PingLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-local FPSLabel = Instance.new("TextLabel")
-FPSLabel.Name = "FPSLabel"
-FPSLabel.Parent = StatusInfo
-FPSLabel.BackgroundTransparency = 1
-FPSLabel.Position = UDim2.new(0, 0, 0.6, 0)
-FPSLabel.Size = UDim2.new(0.5, 0, 0.3, 0)
-FPSLabel.Font = Enum.Font.Gotham
-FPSLabel.Text = "FPS: 59"
-FPSLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-FPSLabel.TextSize = 14
-FPSLabel.TextXAlignment = Enum.TextXAlignment.Left
-
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = TopBar
@@ -709,6 +678,8 @@ TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     TabBtns.ElasticBehavior = Enum.ElasticBehavior.Never
 end)
 
+-- 移除原来的ScriptTitle，用新的标题栏替代
+
 function FengUI.new(FengUI, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
         if v.Name == "REN" then
@@ -724,7 +695,6 @@ function FengUI.new(FengUI, name, theme)
         end
     end
 
-    Title.Text = name or "剑客"
     
     local window = {}
     
