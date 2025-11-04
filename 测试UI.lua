@@ -475,78 +475,46 @@ startNeonFlowEffect(neonStroke, "Color", 0.01)
 
 createPulseGlow(neonStroke)
 
--- 顶部标题栏
-local TopBar = Instance.new("Frame")
-TopBar.Name = "TopBar"
-TopBar.Parent = Main
-TopBar.BackgroundColor3 = config.TabColor
-TopBar.BackgroundTransparency = 0.2
-TopBar.BorderSizePixel = 0
-TopBar.Size = UDim2.new(1, 0, 0, 40)
-TopBar.ZIndex = 2
-
-local TopBarCorner = Instance.new("UICorner")
-TopBarCorner.CornerRadius = UDim.new(0, 12)
-TopBarCorner.Parent = TopBar
-
-local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.Parent = TopBar
-Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0.05, 0, 0, 0)
-Title.Size = UDim2.new(0.4, 0, 1, 0)
-Title.Font = Enum.Font.GothamBold
-Title.Text = "剑客"
-Title.TextColor3 = config.AccentColor
-Title.TextSize = 20
-Title.TextXAlignment = Enum.TextXAlignment.Left
-
-local Version = Instance.new("TextLabel")
-Version.Name = "Version"
-Version.Parent = TopBar
-Version.BackgroundTransparency = 1
-Version.Position = UDim2.new(0.05, 0, 0.6, 0)
-Version.Size = UDim2.new(0.4, 0, 0.4, 0)
-Version.Font = Enum.Font.Gotham
-Version.Text = "破解版"
-Version.TextColor3 = Color3.fromRGB(0, 200, 100)
-Version.TextSize = 12
-Version.TextXAlignment = Enum.TextXAlignment.Left
-
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
-CloseButton.Parent = TopBar
-CloseButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-CloseButton.BackgroundTransparency = 0.2
+CloseButton.Parent = Main
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.BackgroundTransparency = 1
 CloseButton.BorderSizePixel = 0
-CloseButton.Position = UDim2.new(0.92, 0, 0.2, 0)
-CloseButton.Size = UDim2.new(0, 60, 0, 25)
+CloseButton.Position = UDim2.new(1, -25, 0, 5)
+CloseButton.Size = UDim2.new(0, 20, 0, 20)
 CloseButton.Font = Enum.Font.GothamBold
-CloseButton.Text = "关闭"
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.TextSize = 14
-CloseButton.ZIndex = 3
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 60, 60)
+CloseButton.TextSize = 16
+CloseButton.ZIndex = 10
 
 local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.CornerRadius = UDim.new(0, 4)
 CloseCorner.Parent = CloseButton
 
 CloseButton.MouseEnter:Connect(function()
     services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-        BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+        TextColor3 = Color3.fromRGB(255, 100, 100),
+        TextSize = 18,
+        Position = UDim2.new(1, -26, 0, 4)
     }):Play()
 end)
 
 CloseButton.MouseLeave:Connect(function()
     services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-        BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+        TextColor3 = Color3.fromRGB(255, 60, 60),
+        TextSize = 16,
+        Position = UDim2.new(1, -25, 0, 5)
     }):Play()
 end)
 
 CloseButton.MouseButton1Click:Connect(function()
     DigitalParticleExplosion(CloseButton)
     services.TweenService:Create(CloseButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundColor3 = Color3.fromRGB(255, 30, 30)
+        TextColor3 = Color3.fromRGB(255, 30, 30),
+        TextSize = 14,
+        Position = UDim2.new(1, -24, 0, 6)
     }):Play()
     task.wait(0.1)
     FengYu:Destroy()
@@ -558,7 +526,7 @@ Open.Parent = FengYu
 Open.BackgroundColor3 = config.AccentColor
 Open.BackgroundTransparency = 0.85
 Open.Position = UDim2.new(0.02, 0, 0.02, 0)
-Open.Size = UDim2.new(0, 50, 0, 50)
+Open.Size = UDim2.new(0, 40, 0, 40)
 Open.Active = true
 Open.Draggable = true
 Open.Image = "rbxassetid://84830962019412"
@@ -678,6 +646,49 @@ TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     TabBtns.ElasticBehavior = Enum.ElasticBehavior.Never
 end)
 
+local ScriptTitle = Instance.new("TextLabel")
+ScriptTitle.Name = "ScriptTitle"
+ScriptTitle.Parent = Side
+ScriptTitle.BackgroundTransparency = 1
+ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
+ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
+ScriptTitle.Font = Enum.Font.GothamBold
+ScriptTitle.Text = "剑客"
+ScriptTitle.TextColor3 = config.AccentColor
+ScriptTitle.TextSize = 16
+ScriptTitle.TextScaled = false
+ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
+
+task.spawn(function()
+    local hue = 0
+    local matrixEffect = Instance.new("UIGradient")
+    matrixEffect.Rotation = 90
+    matrixEffect.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.5, 0.3),
+        NumberSequenceKeypoint.new(1, 0)
+    })
+    matrixEffect.Parent = ScriptTitle
+    
+    while ScriptTitle and ScriptTitle.Parent do
+        hue = (hue + 0.03) % 1
+        
+        ScriptTitle.TextColor3 = Color3.fromHSV(hue, 1, 1)
+        
+        matrixEffect.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 1, 1)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 1, 1)),
+            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 1, 1))
+        })
+        
+        services.TweenService:Create(ScriptTitle, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            TextSize = 15 + math.sin(tick() * 3) * 2
+        }):Play()
+        
+        task.wait(0.05)
+    end
+end)
+
 function FengUI.new(FengUI, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
         if v.Name == "REN" then
@@ -693,7 +704,7 @@ function FengUI.new(FengUI, name, theme)
         end
     end
 
-    Title.Text = name or "剑客"
+    ScriptTitle.Text = name or "剑客"
     
     local window = {}
     
