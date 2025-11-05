@@ -42,7 +42,7 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
--- 优化的配色方案 - 更加现代化和整洁
+-- 优化的配色方案
 local config = {
     MainColor = Color3.fromRGB(20, 20, 25),
     TabColor = Color3.fromRGB(25, 25, 30),
@@ -454,7 +454,7 @@ Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.Bg_Color
 Main.BackgroundTransparency = 0.1
 Main.Position = UDim2.new(0.5, 0, 0.4, 0)
-Main.Size = UDim2.new(0, 450, 0, 280)
+Main.Size = UDim2.new(0, 460, 0, 300) -- 增加宽度和高度以适应新的布局
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -565,8 +565,8 @@ local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.2, 0, 0, 3)
-TabMain.Size = UDim2.new(0, 360, 0, 274)
+TabMain.Position = UDim2.new(0.21, 0, 0, 3) -- 调整位置以适应新的侧边栏宽度
+TabMain.Size = UDim2.new(0, 362, 0, 294) -- 调整大小以适应新的主界面大小
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
@@ -576,7 +576,7 @@ Side.BackgroundTransparency = 0.15
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 0)
-Side.Size = UDim2.new(0, 90, 0, 280)
+Side.Size = UDim2.new(0, 95, 0, 300) -- 增加宽度以适应新的布局
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -584,14 +584,24 @@ SideCorner.Parent = Side
 
 createHologramEffect(Side, 0.3)
 
--- 在标题下方添加一条直线
+-- 添加延伸到UI底部的纵向分隔线
+local VerticalSeparator = Instance.new("Frame")
+VerticalSeparator.Name = "VerticalSeparator"
+VerticalSeparator.Parent = Main
+VerticalSeparator.BackgroundColor3 = config.SeparatorColor
+VerticalSeparator.BorderSizePixel = 0
+VerticalSeparator.Position = UDim2.new(0, 95, 0, 0) -- 位于侧边栏右侧
+VerticalSeparator.Size = UDim2.new(0, 1, 1, 0) -- 延伸到UI底部
+VerticalSeparator.ZIndex = 2
+
+-- 在标题下方添加一条横向直线
 local TitleSeparator = Instance.new("Frame")
 TitleSeparator.Name = "TitleSeparator"
 TitleSeparator.Parent = Side
 TitleSeparator.BackgroundColor3 = config.SeparatorColor
 TitleSeparator.BorderSizePixel = 0
 TitleSeparator.Position = UDim2.new(0, 10, 0, 30)
-TitleSeparator.Size = UDim2.new(0, 70, 0, 1)
+TitleSeparator.Size = UDim2.new(0, 75, 0, 1) -- 调整宽度以适应新的侧边栏宽度
 TitleSeparator.ZIndex = 2
 
 local TabBtns = Instance.new("ScrollingFrame")
@@ -600,8 +610,8 @@ TabBtns.Parent = Side
 TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
-TabBtns.Position = UDim2.new(0, 0, 0.12, 0) -- 调整位置以适应分隔线
-TabBtns.Size = UDim2.new(0, 90, 0, 240) -- 调整大小以适应分隔线
+TabBtns.Position = UDim2.new(0, 0, 0.12, 0)
+TabBtns.Size = UDim2.new(0, 95, 0, 260) -- 调整大小以适应新的侧边栏高度
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -628,7 +638,7 @@ ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = Side
 ScriptTitle.BackgroundTransparency = 1
 ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
-ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
+ScriptTitle.Size = UDim2.new(0, 95, 0, 20) -- 调整宽度以适应新的侧边栏宽度
 ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "FengUI"
 ScriptTitle.TextColor3 = config.AccentColor
@@ -718,7 +728,7 @@ function FengUI.new(FengUI, name, theme)
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
         TabText.Position = UDim2.new(1.2, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 65, 0, 22)
+        TabText.Size = UDim2.new(0, 70, 0, 22) -- 调整宽度以适应新的侧边栏宽度
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
@@ -730,7 +740,7 @@ function FengUI.new(FengUI, name, theme)
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 90, 0, 22)
+        TabBtn.Size = UDim2.new(0, 95, 0, 22) -- 调整宽度以适应新的侧边栏宽度
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
@@ -869,14 +879,14 @@ function FengUI.new(FengUI, name, theme)
                 BtnModule.Parent = Objs
                 BtnModule.BackgroundTransparency = 1
                 BtnModule.BorderSizePixel = 0
-                BtnModule.Size = UDim2.new(0, 330, 0, 36)
+                BtnModule.Size = UDim2.new(0, 340, 0, 36) -- 调整宽度以适应新的布局
                 
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
                 Btn.BackgroundColor3 = config.Button_Color
                 Btn.BackgroundTransparency = 0.15
                 Btn.BorderSizePixel = 0
-                Btn.Size = UDim2.new(0, 330, 0, 36)
+                Btn.Size = UDim2.new(0, 340, 0, 36) -- 调整宽度以适应新的布局
                 Btn.AutoButtonColor = false
                 Btn.Font = Enum.Font.GothamSemibold
                 Btn.Text = "   " .. text
@@ -958,7 +968,7 @@ function FengUI.new(FengUI, name, theme)
                 ImageModule.Parent = Objs
                 ImageModule.BackgroundTransparency = 1
                 ImageModule.BorderSizePixel = 0
-                ImageModule.Size = UDim2.new(0, 330, 0, sizeY or 120)
+                ImageModule.Size = UDim2.new(0, 340, 0, sizeY or 120) -- 调整宽度以适应新的布局
                 
                 ImageLabel.Parent = ImageModule
                 ImageLabel.BackgroundColor3 = config.Bg_Color
@@ -966,7 +976,7 @@ function FengUI.new(FengUI, name, theme)
                 ImageLabel.BorderSizePixel = 0
                 ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
                 ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
-                ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, 320), 0, sizeY or 120)
+                ImageLabel.Size = UDim2.new(0, math.min(sizeX or 150, 330), 0, sizeY or 120) -- 调整最大宽度
                 ImageLabel.Image = "rbxassetid://" .. tostring(imageId)
                 ImageLabel.ScaleType = Enum.ScaleType.Crop
                 
@@ -991,12 +1001,12 @@ function FengUI.new(FengUI, name, theme)
                 LabelModule.Parent = Objs
                 LabelModule.BackgroundTransparency = 1
                 LabelModule.BorderSizePixel = 0
-                LabelModule.Size = UDim2.new(0, 330, 0, 24)
+                LabelModule.Size = UDim2.new(0, 340, 0, 24) -- 调整宽度以适应新的布局
                 
                 TextLabel.Parent = LabelModule
                 TextLabel.BackgroundColor3 = config.Label_Color
                 TextLabel.BackgroundTransparency = 0.15
-                TextLabel.Size = UDim2.new(0, 330, 0, 28)
+                TextLabel.Size = UDim2.new(0, 340, 0, 28) -- 调整宽度以适应新的布局
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
                 TextLabel.TextColor3 = config.SecondaryTextColor
@@ -1028,14 +1038,14 @@ function FengUI.new(FengUI, name, theme)
                 ToggleModule.Parent = Objs
                 ToggleModule.BackgroundTransparency = 1
                 ToggleModule.BorderSizePixel = 0
-                ToggleModule.Size = UDim2.new(0, 330, 0, 36)
+                ToggleModule.Size = UDim2.new(0, 340, 0, 36) -- 调整宽度以适应新的布局
                 
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
                 ToggleBtn.BackgroundColor3 = config.Toggle_Color
                 ToggleBtn.BackgroundTransparency = 0.15
                 ToggleBtn.BorderSizePixel = 0
-                ToggleBtn.Size = UDim2.new(0, 330, 0, 36)
+                ToggleBtn.Size = UDim2.new(0, 340, 0, 36) -- 调整宽度以适应新的布局
                 ToggleBtn.AutoButtonColor = false
                 ToggleBtn.Font = Enum.Font.GothamSemibold
                 ToggleBtn.Text = "   " .. text
@@ -1164,14 +1174,14 @@ function FengUI.new(FengUI, name, theme)
                 KeybindModule.Parent = Objs
                 KeybindModule.BackgroundTransparency = 1
                 KeybindModule.BorderSizePixel = 0
-                KeybindModule.Size = UDim2.new(0, 330, 0, 36)
+                KeybindModule.Size = UDim2.new(0, 340, 0, 36) -- 调整宽度以适应新的布局
                 
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
                 KeybindBtn.BackgroundColor3 = config.Keybind_Color
                 KeybindBtn.BackgroundTransparency = 0.15
                 KeybindBtn.BorderSizePixel = 0
-                KeybindBtn.Size = UDim2.new(0, 330, 0, 36)
+                KeybindBtn.Size = UDim2.new(0, 340, 0, 36) -- 调整宽度以适应新的布局
                 KeybindBtn.AutoButtonColor = false
                 KeybindBtn.Font = Enum.Font.GothamSemibold
                 KeybindBtn.Text = "   " .. text
@@ -1284,14 +1294,14 @@ function FengUI.new(FengUI, name, theme)
                 TextboxModule.Parent = Objs
                 TextboxModule.BackgroundTransparency = 1
                 TextboxModule.BorderSizePixel = 0
-                TextboxModule.Size = UDim2.new(0, 330, 0, 36)
+                TextboxModule.Size = UDim2.new(0, 340, 0, 36) -- 调整宽度以适应新的布局
                 
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
                 TextboxBack.BackgroundColor3 = config.Textbox_Color
                 TextboxBack.BackgroundTransparency = 0.15
                 TextboxBack.BorderSizePixel = 0
-                TextboxBack.Size = UDim2.new(0, 330, 0, 36)
+                TextboxBack.Size = UDim2.new(0, 340, 0, 36) -- 调整宽度以适应新的布局
                 TextboxBack.AutoButtonColor = false
                 TextboxBack.Font = Enum.Font.GothamSemibold
                 TextboxBack.Text = "   " .. text
@@ -1400,14 +1410,14 @@ function FengUI.new(FengUI, name, theme)
                 SliderModule.BackgroundTransparency = 1.000
                 SliderModule.BorderSizePixel = 0
                 SliderModule.Position = UDim2.new(0, 0, 0, 0)
-                SliderModule.Size = UDim2.new(0, 330, 0, 36)
+                SliderModule.Size = UDim2.new(0, 340, 0, 36) -- 调整宽度以适应新的布局
                 
                 SliderBack.Name = "SliderBack"
                 SliderBack.Parent = SliderModule
                 SliderBack.BackgroundColor3 = config.Slider_Color
                 SliderBack.BackgroundTransparency = 0.15
                 SliderBack.BorderSizePixel = 0
-                SliderBack.Size = UDim2.new(0, 330, 0, 36)
+                SliderBack.Size = UDim2.new(0, 340, 0, 36) -- 调整宽度以适应新的布局
                 SliderBack.AutoButtonColor = false
                 SliderBack.Font = Enum.Font.GothamSemibold
                 SliderBack.Text = "   " .. text
@@ -1699,14 +1709,14 @@ function FengUI.new(FengUI, name, theme)
                 DropdownModule.BorderSizePixel = 0
                 DropdownModule.ClipsDescendants = true
                 DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-                DropdownModule.Size = UDim2.new(0, 330, 0, 36)
+                DropdownModule.Size = UDim2.new(0, 340, 0, 36) -- 调整宽度以适应新的布局
                 
                 DropdownTop.Name = "DropdownTop"
                 DropdownTop.Parent = DropdownModule
                 DropdownTop.BackgroundColor3 = config.Dropdown_Color
                 DropdownTop.BackgroundTransparency = 0.15
                 DropdownTop.BorderSizePixel = 0
-                DropdownTop.Size = UDim2.new(0, 330, 0, 36)
+                DropdownTop.Size = UDim2.new(0, 340, 0, 36) -- 调整宽度以适应新的布局
                 DropdownTop.AutoButtonColor = false
                 DropdownTop.Font = Enum.Font.GothamSemibold
                 DropdownTop.Text = ""
@@ -1820,7 +1830,7 @@ function FengUI.new(FengUI, name, theme)
                         setAllVisible()
                     end
                     DropdownOpen.Text = (open and "取消" or "选择")
-                    DropdownModule.Size = UDim2.new(0, 330, 0, (open and math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150) or 36))
+                    DropdownModule.Size = UDim2.new(0, 340, 0, (open and math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150) or 36))
                     
                     create3DFlipAnimation(DropdownOpenFrame, 0.3)
                 end
@@ -1844,7 +1854,7 @@ function FengUI.new(FengUI, name, theme)
                     if not open then
                         return
                     end
-                    DropdownModule.Size = UDim2.new(0, 330, 0, math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150))
+                    DropdownModule.Size = UDim2.new(0, 340, 0, math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150))
                 end)
                 
                 local funcs = {}
@@ -1857,7 +1867,7 @@ function FengUI.new(FengUI, name, theme)
                     Option.BackgroundTransparency = 0.15
                     Option.BorderSizePixel = 0
                     Option.Position = UDim2.new(0, 0, 0.328125, 0)
-                    Option.Size = UDim2.new(0, 310, 0, 24)
+                    Option.Size = UDim2.new(0, 320, 0, 24) -- 调整宽度以适应新的布局
                     Option.AutoButtonColor = false
                     Option.Font = Enum.Font.Gotham
                     Option.Text = option
