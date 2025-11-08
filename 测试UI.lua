@@ -429,7 +429,7 @@ function switchTab(new)
     services.TweenService:Create(old[1].TabText, tweenInfo, { 
         TextTransparency = 0.5,
         TextColor3 = config.TextColor
-        }):Play()
+    }):Play()
     services.TweenService:Create(new[1].TabText, tweenInfo, { 
         TextTransparency = 0,
         TextColor3 = config.AccentColor
@@ -469,7 +469,7 @@ Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.Bg_Color
 Main.BackgroundTransparency = 0.2
 Main.Position = UDim2.new(0.5, 0, 0.4, 0)
-Main.Size = UDim2.new(0, 450, 0, 280) -- 恢复原文件大小
+Main.Size = UDim2.new(0, 450, 0, 280)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -494,18 +494,16 @@ startNeonFlowEffect(neonStroke, "Color", 0.01)
 -- 添加脉冲发光效果
 createPulseGlow(neonStroke)
 
--- 标题栏下方的直线
-local TitleLine = Instance.new("Frame")
-TitleLine.Name = "TitleLine"
-TitleLine.Parent = Main
-TitleLine.BackgroundColor3 = config.AccentColor
-TitleLine.BorderSizePixel = 0
-TitleLine.Position = UDim2.new(0, 90, 0, 30) -- 在侧边栏右侧，标题下方
-TitleLine.Size = UDim2.new(0, 360, 0, 1) -- 从侧边栏延伸到关闭按钮
-TitleLine.ZIndex = 2
-
--- 添加标题栏的霓虹效果
-startNeonFlowEffect(TitleLine, "BackgroundColor3", 0.01)
+-- 添加标题栏分隔线
+local TitleDivider = Instance.new("Frame")
+TitleDivider.Name = "TitleDivider"
+TitleDivider.Parent = Main
+TitleDivider.BackgroundColor3 = config.AccentColor
+TitleDivider.BackgroundTransparency = 0.5
+TitleDivider.BorderSizePixel = 0
+TitleDivider.Position = UDim2.new(0, 0, 0, 25)
+TitleDivider.Size = UDim2.new(1, 0, 0, 1)
+TitleDivider.ZIndex = 2
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
@@ -513,7 +511,7 @@ CloseButton.Parent = Main
 CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.BackgroundTransparency = 1
 CloseButton.BorderSizePixel = 0
-CloseButton.Position = UDim2.new(1, -25, 0, 5) -- 恢复原位置
+CloseButton.Position = UDim2.new(1, -25, 0, 5)
 CloseButton.Size = UDim2.new(0, 20, 0, 20)
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Text = "X"
@@ -591,13 +589,13 @@ services.UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- 恢复原文件布局
+-- 重新布局UI组件
 local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.2, 0, 0, 3) -- 恢复原位置
-TabMain.Size = UDim2.new(0, 360, 0, 274) -- 恢复原大小
+TabMain.Position = UDim2.new(0.2, 0, 0, 30) -- 调整位置，为标题栏分隔线留出空间
+TabMain.Size = UDim2.new(0, 360, 0, 250) -- 调整高度
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
@@ -606,8 +604,8 @@ Side.BackgroundColor3 = config.TabColor
 Side.BackgroundTransparency = 0.2
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
-Side.Position = UDim2.new(0, 0, 0, 0) -- 恢复原位置
-Side.Size = UDim2.new(0, 90, 0, 280) -- 恢复原大小
+Side.Position = UDim2.new(0, 0, 0, 0)
+Side.Size = UDim2.new(0, 90, 0, 280)
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -622,8 +620,8 @@ TabBtns.Parent = Side
 TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
-TabBtns.Position = UDim2.new(0, 0, 0.097, 0) -- 恢复原位置
-TabBtns.Size = UDim2.new(0, 90, 0, 245) -- 恢复原大小
+TabBtns.Position = UDim2.new(0, 0, 0.12, 0) -- 调整位置
+TabBtns.Size = UDim2.new(0, 90, 0, 235) -- 调整高度
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -649,8 +647,8 @@ local ScriptTitle = Instance.new("TextLabel")
 ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = Side
 ScriptTitle.BackgroundTransparency = 1
-ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0) -- 恢复原位置
-ScriptTitle.Size = UDim2.new(0, 90, 0, 20) -- 恢复原大小
+ScriptTitle.Position = UDim2.new(0, 0, 0.015, 0) -- 调整位置
+ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
 ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "FengUI"
 ScriptTitle.TextColor3 = config.AccentColor
@@ -658,7 +656,6 @@ ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
 
--- 恢复原文件的标题特效动画
 task.spawn(function()
     local hue = 0
     local matrixEffect = Instance.new("UIGradient")
