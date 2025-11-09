@@ -539,6 +539,26 @@ CloseButton.MouseButton1Click:Connect(function()
     FengYu:Destroy()
 end)
 
+-- 在标题栏下方添加一条直线，延伸到关闭按钮位置
+local ScriptLine = Instance.new("Frame")
+ScriptLine.Name = "ScriptLine"
+ScriptLine.Parent = Main
+ScriptLine.BackgroundColor3 = config.AccentColor
+ScriptLine.BorderSizePixel = 0
+ScriptLine.Position = UDim2.new(0, 5, 0, 25)
+ScriptLine.Size = UDim2.new(1, -35, 0, 1) -- 延伸到关闭按钮位置
+ScriptLine.ZIndex = 2
+
+-- 添加发光效果到直线
+local ScriptLineGlow = Instance.new("UIStroke")
+ScriptLineGlow.Parent = ScriptLine
+ScriptLineGlow.Color = config.AccentColor
+ScriptLineGlow.Thickness = 1
+ScriptLineGlow.Transparency = 0.3
+
+-- 添加脉冲效果到直线
+createPulseGlow(ScriptLineGlow)
+
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
 Open.Parent = FengYu
@@ -578,12 +598,13 @@ services.UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
+-- 重新调整TabMain位置，为直线留出空间
 local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.2, 0, 0, 3)
-TabMain.Size = UDim2.new(0, 360, 0, 274)
+TabMain.Position = UDim2.new(0.2, 0, 0, 30) -- 调整Y位置为30
+TabMain.Size = UDim2.new(0, 360, 0, 250) -- 减小高度为250
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
@@ -601,26 +622,6 @@ SideCorner.Parent = Side
 
 -- 添加全息投影效果到侧边栏
 createHologramEffect(Side, 0.3)
-
--- 在标题栏下方添加一条直线
-local ScriptLine = Instance.new("Frame")
-ScriptLine.Name = "ScriptLine"
-ScriptLine.Parent = Side
-ScriptLine.BackgroundColor3 = config.AccentColor
-ScriptLine.BorderSizePixel = 0
-ScriptLine.Position = UDim2.new(0, 5, 0, 25)
-ScriptLine.Size = UDim2.new(1, -10, 0, 1)
-ScriptLine.ZIndex = 2
-
--- 添加发光效果到直线
-local ScriptLineGlow = Instance.new("UIStroke")
-ScriptLineGlow.Parent = ScriptLine
-ScriptLineGlow.Color = config.AccentColor
-ScriptLineGlow.Thickness = 1
-ScriptLineGlow.Transparency = 0.3
-
--- 添加脉冲效果到直线
-createPulseGlow(ScriptLineGlow)
 
 local TabBtns = Instance.new("ScrollingFrame")
 TabBtns.Name = "TabBtns"
