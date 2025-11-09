@@ -509,7 +509,7 @@ local TitleBarCorner = Instance.new("UICorner")
 TitleBarCorner.CornerRadius = UDim.new(0, 10)
 TitleBarCorner.Parent = TitleBar
 
--- 从第一个文件中复制的ScriptTitle部分 - 放在标题栏中
+-- 新的标题特效 - 全息投影文字
 local ScriptTitle = Instance.new("TextLabel")
 ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = TitleBar
@@ -523,37 +523,157 @@ ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
 
--- ScriptTitle动画效果（从第一个文件中复制）
+-- 新的标题特效：全息投影 + 流光 + 粒子
 task.spawn(function()
-    local hue = 0
-    local matrixEffect = Instance.new("UIGradient")
-    matrixEffect.Rotation = 90
-    matrixEffect.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0),
-        NumberSequenceKeypoint.new(0.5, 0.3),
-        NumberSequenceKeypoint.new(1, 0)
-    })
-    matrixEffect.Parent = ScriptTitle
+    -- 创建全息投影背景
+    local hologramBg = Instance.new("Frame")
+    hologramBg.Name = "HologramBackground"
+    hologramBg.Parent = ScriptTitle
+    hologramBg.BackgroundTransparency = 1
+    hologramBg.Size = UDim2.new(1, 0, 1, 0)
+    hologramBg.ZIndex = ScriptTitle.ZIndex - 1
     
-    while ScriptTitle and ScriptTitle.Parent do
-        hue = (hue + 0.03) % 1
+    -- 创建扫描线效果
+    local scanLines = Instance.new("Frame")
+    scanLines.Name = "ScanLines"
+    scanLines.Parent = hologramBg
+    scanLines.BackgroundTransparency = 1
+    scanLines.Size = UDim2.new(1, 0, 1, 0)
+    
+    local linePattern = Instance.new("UIGradient")
+    linePattern.Rotation = 0
+    linePattern.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.9),
+        NumberSequenceKeypoint.new(0.1, 0.7),
+        NumberSequenceKeypoint.new(0.2, 0.9),
+        NumberSequenceKeypoint.new(1, 0.9)
+    })
+    linePattern.Parent = scanLines
+    
+    -- 创建光晕效果
+    local glow = Instance.new("UIGradient")
+    glow.Rotation = 45
+    glow.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.8),
+        NumberSequenceKeypoint.new(0.3, 0.2),
+        NumberSequenceKeypoint.new(0.7, 0.2),
+        NumberSequenceKeypoint.new(1, 0.8)
+    })
+    
+    local colors = {
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 0, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 0))
+    }
+    glow.Color = ColorSequence.new(colors)
+    glow.Parent = hologramBg
+    
+    -- 创建文字发光边框
+    local titleGlow = Instance.new("UIStroke")
+    titleGlow.Parent = ScriptTitle
+    titleGlow.Color = config.AccentColor
+    titleGlow.Thickness = 2
+    titleGlow.Transparency = 0.7
+    
+    -- 创建文字阴影
+    local titleShadow = Instance.new("TextLabel")
+    titleShadow.Name = "TitleShadow"
+    titleShadow.Parent = ScriptTitle
+    titleShadow.BackgroundTransparency = 1
+    titleShadow.Position = UDim2.new(0, 2, 0, 2)
+    titleShadow.Size = ScriptTitle.Size
+    titleShadow.Font = ScriptTitle.Font
+    titleShadow.Text = ScriptTitle.Text
+    titleShadow.TextColor3 = Color3.new(0, 0, 0)
+    titleShadow.TextTransparency = 0.7
+    titleShadow.TextSize = ScriptTitle.TextSize
+    titleShadow.TextXAlignment = ScriptTitle.TextXAlignment
+    titleShadow.ZIndex = ScriptTitle.ZIndex - 1
+    
+    -- 扫描线动画
+    local scanConnection
+    scanConnection = RunService.Heartbeat:Connect(function(delta)
+        if not scanLines or not scanLines.Parent then
+            scanConnection:Disconnect()
+            return
+        end
+        linePattern.Offset = Vector2.new(0, (tick() * 0.8) % 1)
+    end)
+    
+    -- 颜色循环动画
+    local colorConnection
+    colorConnection = RunService.Heartbeat:Connect(function(delta)
+        if not ScriptTitle or not ScriptTitle.Parent then
+            colorConnection:Disconnect()
+            return
+        end
         
-        -- 创建数字矩阵效果
-        ScriptTitle.TextColor3 = Color3.fromHSV(hue, 1, 1)
+        local time = tick()
         
-        matrixEffect.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 1, 1)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 1, 1)),
-            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 1, 1))
-        })
+        -- 彩虹色循环
+        local hue = (time * 0.3) % 1
+        local rainbowColor = Color3.fromHSV(hue, 0.8, 1)
         
-        -- 文字动画：弹性跳动
-        services.TweenService:Create(ScriptTitle, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-            TextSize = 15 + math.sin(tick() * 3) * 2
-        }):Play()
+        -- 更新文字颜色
+        ScriptTitle.TextColor3 = rainbowColor
+        titleGlow.Color = rainbowColor
         
-        task.wait(0.05)
-    end
+        -- 更新阴影
+        titleShadow.TextColor3 = Color3.new(rainbowColor.R * 0.3, rainbowColor.G * 0.3, rainbowColor.B * 0.3)
+        
+        -- 更新光晕颜色
+        for i, keypoint in ipairs(colors) do
+            local pointHue = (time * 0.2 + i * 0.3) % 1
+            colors[i] = ColorSequenceKeypoint.new(
+                keypoint.Time,
+                Color3.fromHSV(pointHue, 0.8, 1)
+            )
+        end
+        glow.Color = ColorSequence.new(colors)
+        
+        -- 发光边框脉动效果
+        titleGlow.Transparency = 0.5 + math.sin(time * 4) * 0.2
+        
+        -- 文字轻微缩放效果
+        local scale = 1 + math.sin(time * 2) * 0.05
+        ScriptTitle.TextSize = 16 * scale
+        titleShadow.TextSize = 16 * scale
+    end)
+    
+    -- 随机粒子效果
+    local particleConnection
+    particleConnection = RunService.Heartbeat:Connect(function()
+        if not ScriptTitle or not ScriptTitle.Parent then
+            particleConnection:Disconnect()
+            return
+        end
+        
+        -- 偶尔生成粒子
+        if math.random(1, 20) == 1 then
+            task.spawn(function()
+                local particle = Instance.new("TextLabel")
+                particle.Name = "TitleParticle"
+                particle.Parent = ScriptTitle
+                particle.BackgroundTransparency = 1
+                particle.Text = tostring(math.random(0, 1))
+                particle.TextColor3 = Color3.fromHSV(math.random(), 0.8, 1)
+                particle.TextSize = math.random(8, 12)
+                particle.Font = Enum.Font.Code
+                particle.ZIndex = ScriptTitle.ZIndex + 1
+                particle.Size = UDim2.new(0, 10, 0, 10)
+                particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
+                
+                -- 粒子动画
+                services.TweenService:Create(particle, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Position = UDim2.new(particle.Position.X.Scale, particle.Position.X.Offset, -0.5, 0),
+                    TextTransparency = 1
+                }):Play()
+                
+                task.wait(0.5)
+                particle:Destroy()
+            end)
+        end
+    end)
 end)
 
 -- 创建标题栏下方的直线
