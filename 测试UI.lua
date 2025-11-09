@@ -498,8 +498,8 @@ createPulseGlow(neonStroke)
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = Main
-TitleBar.BackgroundColor3 = config.TabColor
-TitleBar.BackgroundTransparency = 0.1
+TitleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35) -- 调亮背景颜色
+TitleBar.BackgroundTransparency = 0.05 -- 减少透明度，使背景更亮
 TitleBar.BorderSizePixel = 0
 TitleBar.Position = UDim2.new(0, 0, 0, 0)
 TitleBar.Size = UDim2.new(1, 0, 0, 30)
@@ -509,7 +509,7 @@ local TitleBarCorner = Instance.new("UICorner")
 TitleBarCorner.CornerRadius = UDim.new(0, 10)
 TitleBarCorner.Parent = TitleBar
 
--- 新的标题特效 - 全息投影文字
+-- 新的标题特效 - 水晶霓虹文字效果
 local ScriptTitle = Instance.new("TextLabel")
 ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = TitleBar
@@ -518,129 +518,114 @@ ScriptTitle.Position = UDim2.new(0, 10, 0, 0)
 ScriptTitle.Size = UDim2.new(0, 200, 1, 0)
 ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "FengUI"
-ScriptTitle.TextColor3 = config.AccentColor
+ScriptTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
 
--- 新的标题特效：全息投影 + 流光 + 粒子
+-- 新的标题特效：水晶霓虹 + 流光溢彩 + 粒子环绕
 task.spawn(function()
-    -- 创建全息投影背景
-    local hologramBg = Instance.new("Frame")
-    hologramBg.Name = "HologramBackground"
-    hologramBg.Parent = ScriptTitle
-    hologramBg.BackgroundTransparency = 1
-    hologramBg.Size = UDim2.new(1, 0, 1, 0)
-    hologramBg.ZIndex = ScriptTitle.ZIndex - 1
+    -- 创建多层光晕效果
+    local outerGlow = Instance.new("UIStroke")
+    outerGlow.Parent = ScriptTitle
+    outerGlow.Color = Color3.fromRGB(0, 200, 255)
+    outerGlow.Thickness = 3
+    outerGlow.Transparency = 0.7
     
-    -- 创建扫描线效果
-    local scanLines = Instance.new("Frame")
-    scanLines.Name = "ScanLines"
-    scanLines.Parent = hologramBg
-    scanLines.BackgroundTransparency = 1
-    scanLines.Size = UDim2.new(1, 0, 1, 0)
-    
-    local linePattern = Instance.new("UIGradient")
-    linePattern.Rotation = 0
-    linePattern.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.9),
-        NumberSequenceKeypoint.new(0.1, 0.7),
-        NumberSequenceKeypoint.new(0.2, 0.9),
-        NumberSequenceKeypoint.new(1, 0.9)
-    })
-    linePattern.Parent = scanLines
-    
-    -- 创建光晕效果
-    local glow = Instance.new("UIGradient")
-    glow.Rotation = 45
-    glow.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.8),
-        NumberSequenceKeypoint.new(0.3, 0.2),
-        NumberSequenceKeypoint.new(0.7, 0.2),
-        NumberSequenceKeypoint.new(1, 0.8)
-    })
-    
-    local colors = {
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 255)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 0, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 0))
-    }
-    glow.Color = ColorSequence.new(colors)
-    glow.Parent = hologramBg
-    
-    -- 创建文字发光边框
-    local titleGlow = Instance.new("UIStroke")
-    titleGlow.Parent = ScriptTitle
-    titleGlow.Color = config.AccentColor
-    titleGlow.Thickness = 2
-    titleGlow.Transparency = 0.7
+    local innerGlow = Instance.new("UIStroke")
+    innerGlow.Parent = ScriptTitle
+    innerGlow.Color = Color3.fromRGB(255, 255, 255)
+    innerGlow.Thickness = 1
+    innerGlow.Transparency = 0.5
     
     -- 创建文字阴影
-    local titleShadow = Instance.new("TextLabel")
-    titleShadow.Name = "TitleShadow"
-    titleShadow.Parent = ScriptTitle
-    titleShadow.BackgroundTransparency = 1
-    titleShadow.Position = UDim2.new(0, 2, 0, 2)
-    titleShadow.Size = ScriptTitle.Size
-    titleShadow.Font = ScriptTitle.Font
-    titleShadow.Text = ScriptTitle.Text
-    titleShadow.TextColor3 = Color3.new(0, 0, 0)
-    titleShadow.TextTransparency = 0.7
-    titleShadow.TextSize = ScriptTitle.TextSize
-    titleShadow.TextXAlignment = ScriptTitle.TextXAlignment
-    titleShadow.ZIndex = ScriptTitle.ZIndex - 1
+    local textShadow = Instance.new("TextLabel")
+    textShadow.Name = "TextShadow"
+    textShadow.Parent = ScriptTitle
+    textShadow.BackgroundTransparency = 1
+    textShadow.Position = UDim2.new(0, 2, 0, 2)
+    textShadow.Size = ScriptTitle.Size
+    textShadow.Font = ScriptTitle.Font
+    textShadow.Text = ScriptTitle.Text
+    textShadow.TextColor3 = Color3.new(0, 0, 0)
+    textShadow.TextTransparency = 0.6
+    textShadow.TextSize = ScriptTitle.TextSize
+    textShadow.TextXAlignment = ScriptTitle.TextXAlignment
+    textShadow.ZIndex = ScriptTitle.ZIndex - 1
     
-    -- 扫描线动画
-    local scanConnection
-    scanConnection = RunService.Heartbeat:Connect(function(delta)
-        if not scanLines or not scanLines.Parent then
-            scanConnection:Disconnect()
-            return
-        end
-        linePattern.Offset = Vector2.new(0, (tick() * 0.8) % 1)
-    end)
+    -- 创建背景光晕
+    local bgGlow = Instance.new("Frame")
+    bgGlow.Name = "BackgroundGlow"
+    bgGlow.Parent = ScriptTitle
+    bgGlow.BackgroundTransparency = 1
+    bgGlow.Size = UDim2.new(1.2, 0, 1.5, 0)
+    bgGlow.Position = UDim2.new(-0.1, 0, -0.25, 0)
+    bgGlow.ZIndex = ScriptTitle.ZIndex - 1
     
-    -- 颜色循环动画
-    local colorConnection
-    colorConnection = RunService.Heartbeat:Connect(function(delta)
+    local bgGradient = Instance.new("UIGradient")
+    bgGradient.Rotation = 90
+    bgGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 100, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 0, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 100))
+    })
+    bgGradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.8),
+        NumberSequenceKeypoint.new(0.5, 0.6),
+        NumberSequenceKeypoint.new(1, 0.8)
+    })
+    bgGradient.Parent = bgGlow
+    
+    -- 水晶霓虹动画
+    local neonConnection
+    neonConnection = RunService.Heartbeat:Connect(function()
         if not ScriptTitle or not ScriptTitle.Parent then
-            colorConnection:Disconnect()
+            neonConnection:Disconnect()
             return
         end
         
         local time = tick()
         
-        -- 彩虹色循环
-        local hue = (time * 0.3) % 1
-        local rainbowColor = Color3.fromHSV(hue, 0.8, 1)
+        -- 彩虹色循环 - 更明亮的颜色
+        local hue1 = (time * 0.4) % 1
+        local hue2 = (time * 0.4 + 0.3) % 1
+        local hue3 = (time * 0.4 + 0.6) % 1
+        
+        local mainColor = Color3.fromHSV(hue1, 0.9, 1)
+        local glowColor1 = Color3.fromHSV(hue2, 0.8, 1)
+        local glowColor2 = Color3.fromHSV(hue3, 0.7, 1)
         
         -- 更新文字颜色
-        ScriptTitle.TextColor3 = rainbowColor
-        titleGlow.Color = rainbowColor
+        ScriptTitle.TextColor3 = mainColor
         
-        -- 更新阴影
-        titleShadow.TextColor3 = Color3.new(rainbowColor.R * 0.3, rainbowColor.G * 0.3, rainbowColor.B * 0.3)
+        -- 更新外发光
+        outerGlow.Color = glowColor1
+        innerGlow.Color = glowColor2
         
-        -- 更新光晕颜色
-        for i, keypoint in ipairs(colors) do
-            local pointHue = (time * 0.2 + i * 0.3) % 1
-            colors[i] = ColorSequenceKeypoint.new(
-                keypoint.Time,
-                Color3.fromHSV(pointHue, 0.8, 1)
-            )
-        end
-        glow.Color = ColorSequence.new(colors)
+        -- 更新背景光晕
+        bgGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromHSV(hue1, 0.8, 1)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue2, 0.8, 1)),
+            ColorSequenceKeypoint.new(1, Color3.fromHSV(hue3, 0.8, 1))
+        })
         
-        -- 发光边框脉动效果
-        titleGlow.Transparency = 0.5 + math.sin(time * 4) * 0.2
+        -- 脉动效果
+        local pulse = math.sin(time * 3) * 0.2 + 0.8
+        outerGlow.Thickness = 3 * pulse
+        innerGlow.Thickness = 1 * pulse
         
-        -- 文字轻微缩放效果
-        local scale = 1 + math.sin(time * 2) * 0.05
+        -- 文字轻微浮动
+        local float = math.sin(time * 2) * 1
+        ScriptTitle.Position = UDim2.new(0, 10 + float, 0, 0)
+        textShadow.Position = UDim2.new(0, 12 + float, 0, 2)
+        
+        -- 缩放效果
+        local scale = 1 + math.sin(time * 2.5) * 0.05
         ScriptTitle.TextSize = 16 * scale
-        titleShadow.TextSize = 16 * scale
+        textShadow.TextSize = 16 * scale
     end)
     
-    -- 随机粒子效果
+    -- 环绕粒子效果
     local particleConnection
     particleConnection = RunService.Heartbeat:Connect(function()
         if not ScriptTitle or not ScriptTitle.Parent then
@@ -648,29 +633,80 @@ task.spawn(function()
             return
         end
         
-        -- 偶尔生成粒子
-        if math.random(1, 20) == 1 then
+        -- 定期生成环绕粒子
+        if math.random(1, 15) == 1 then
             task.spawn(function()
+                local angle = math.random() * math.pi * 2
+                local distance = math.random(30, 60)
+                local speed = math.random(2, 5)
+                
                 local particle = Instance.new("TextLabel")
-                particle.Name = "TitleParticle"
+                particle.Name = "OrbitingParticle"
                 particle.Parent = ScriptTitle
                 particle.BackgroundTransparency = 1
-                particle.Text = tostring(math.random(0, 1))
+                particle.Text = "✦"
                 particle.TextColor3 = Color3.fromHSV(math.random(), 0.8, 1)
                 particle.TextSize = math.random(8, 12)
-                particle.Font = Enum.Font.Code
+                particle.Font = Enum.Font.GothamBold
                 particle.ZIndex = ScriptTitle.ZIndex + 1
-                particle.Size = UDim2.new(0, 10, 0, 10)
-                particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
+                particle.Size = UDim2.new(0, 15, 0, 15)
                 
-                -- 粒子动画
-                services.TweenService:Create(particle, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    Position = UDim2.new(particle.Position.X.Scale, particle.Position.X.Offset, -0.5, 0),
-                    TextTransparency = 1
+                -- 粒子环绕动画
+                local startTime = tick()
+                local connection
+                connection = RunService.Heartbeat:Connect(function()
+                    local elapsed = tick() - startTime
+                    if elapsed > 3 then
+                        connection:Disconnect()
+                        particle:Destroy()
+                        return
+                    end
+                    
+                    local currentAngle = angle + elapsed * speed
+                    local x = math.cos(currentAngle) * distance
+                    local y = math.sin(currentAngle) * distance
+                    
+                    particle.Position = UDim2.new(0.5, x, 0.5, y)
+                    particle.TextTransparency = elapsed / 3
+                end)
+            end)
+        end
+    end)
+    
+    -- 流光溢彩效果
+    local shineConnection
+    shineConnection = RunService.Heartbeat:Connect(function()
+        if not ScriptTitle or not ScriptTitle.Parent then
+            shineConnection:Disconnect()
+            return
+        end
+        
+        -- 定期生成流光效果
+        if math.random(1, 30) == 1 then
+            task.spawn(function()
+                local shine = Instance.new("Frame")
+                shine.Name = "ShineEffect"
+                shine.Parent = ScriptTitle
+                shine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                shine.BackgroundTransparency = 0.7
+                shine.Size = UDim2.new(0, 0, 1.5, 0)
+                shine.Position = UDim2.new(-0.1, 0, -0.25, 0)
+                shine.ZIndex = ScriptTitle.ZIndex
+                shine.Rotation = 45
+                
+                local shineCorner = Instance.new("UICorner")
+                shineCorner.CornerRadius = UDim.new(1, 0)
+                shineCorner.Parent = shine
+                
+                -- 流光动画
+                services.TweenService:Create(shine, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Position = UDim2.new(1.1, 0, -0.25, 0),
+                    Size = UDim2.new(0, 20, 1.5, 0),
+                    BackgroundTransparency = 1
                 }):Play()
                 
                 task.wait(0.5)
-                particle:Destroy()
+                shine:Destroy()
             end)
         end
     end)
