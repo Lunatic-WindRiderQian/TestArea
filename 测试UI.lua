@@ -518,10 +518,43 @@ ScriptTitle.Position = UDim2.new(0, 10, 0, 0)
 ScriptTitle.Size = UDim2.new(0, 200, 1, 0)
 ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "FengUI"
-ScriptTitle.TextColor3 = config.AccentColor
+ScriptTitle.TextColor3 = config.AccentColor  -- 使用原文件的颜色
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+-- ScriptTitle动画效果（与原文件一致）
+task.spawn(function()
+    local hue = 0
+    local matrixEffect = Instance.new("UIGradient")
+    matrixEffect.Rotation = 90
+    matrixEffect.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.5, 0.3),
+        NumberSequenceKeypoint.new(1, 0)
+    })
+    matrixEffect.Parent = ScriptTitle
+    
+    while ScriptTitle and ScriptTitle.Parent do
+        hue = (hue + 0.03) % 1
+        
+        -- 创建数字矩阵效果（使用原文件的颜色效果）
+        ScriptTitle.TextColor3 = Color3.fromHSV(hue, 1, 1)
+        
+        matrixEffect.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 1, 1)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 1, 1)),
+            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 1, 1))
+        })
+        
+        -- 文字动画：弹性跳动
+        services.TweenService:Create(ScriptTitle, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            TextSize = 15 + math.sin(tick() * 3) * 2
+        }):Play()
+        
+        task.wait(0.05)
+    end
+end)
 
 -- 创建标题栏下方的直线
 local TitleLine = Instance.new("Frame")
