@@ -494,9 +494,46 @@ startNeonFlowEffect(neonStroke, "Color", 0.01)
 -- 添加脉冲发光效果
 createPulseGlow(neonStroke)
 
+-- 添加标题栏和分割线
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Parent = Main
+TitleBar.BackgroundColor3 = config.TabColor
+TitleBar.BackgroundTransparency = 0.2
+TitleBar.BorderSizePixel = 0
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.ZIndex = 2
+
+local TitleBarCorner = Instance.new("UICorner")
+TitleBarCorner.CornerRadius = UDim.new(0, 10)
+TitleBarCorner.Parent = TitleBar
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Name = "TitleText"
+TitleText.Parent = TitleBar
+TitleText.BackgroundTransparency = 1
+TitleText.Position = UDim2.new(0, 10, 0, 0)
+TitleText.Size = UDim2.new(0, 200, 1, 0)
+TitleText.Font = Enum.Font.GothamBold
+TitleText.Text = "FengUI"
+TitleText.TextColor3 = config.AccentColor
+TitleText.TextSize = 16
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+
+-- 添加标题栏下方的分割线
+local Line = Instance.new("Frame")
+Line.Name = "Line"
+Line.Parent = TitleBar
+Line.BackgroundColor3 = config.AccentColor
+Line.BorderSizePixel = 0
+Line.Position = UDim2.new(0, 0, 1, 0)
+Line.Size = UDim2.new(1, 0, 0, 1)
+Line.ZIndex = 2
+
+-- 调整关闭按钮位置到标题栏内
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
-CloseButton.Parent = Main
+CloseButton.Parent = TitleBar
 CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.BackgroundTransparency = 1
 CloseButton.BorderSizePixel = 0
@@ -539,26 +576,6 @@ CloseButton.MouseButton1Click:Connect(function()
     FengYu:Destroy()
 end)
 
--- 在标题栏下方添加一条直线，延伸到关闭按钮位置
-local ScriptLine = Instance.new("Frame")
-ScriptLine.Name = "ScriptLine"
-ScriptLine.Parent = Main
-ScriptLine.BackgroundColor3 = config.AccentColor
-ScriptLine.BorderSizePixel = 0
-ScriptLine.Position = UDim2.new(0, 5, 0, 25)
-ScriptLine.Size = UDim2.new(1, -35, 0, 1) -- 延伸到关闭按钮位置
-ScriptLine.ZIndex = 2
-
--- 添加发光效果到直线
-local ScriptLineGlow = Instance.new("UIStroke")
-ScriptLineGlow.Parent = ScriptLine
-ScriptLineGlow.Color = config.AccentColor
-ScriptLineGlow.Thickness = 1
-ScriptLineGlow.Transparency = 0.3
-
--- 添加脉冲效果到直线
-createPulseGlow(ScriptLineGlow)
-
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
 Open.Parent = FengYu
@@ -598,13 +615,13 @@ services.UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- 重新调整TabMain位置，为直线留出空间
+-- 调整主内容区域位置
 local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.2, 0, 0, 30) -- 调整Y位置为30
-TabMain.Size = UDim2.new(0, 360, 0, 250) -- 减小高度为250
+TabMain.Position = UDim2.new(0.2, 0, 0, 32) -- 调整位置，在标题栏下方
+TabMain.Size = UDim2.new(0, 360, 0, 248) -- 调整高度
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
@@ -613,8 +630,8 @@ Side.BackgroundColor3 = config.TabColor
 Side.BackgroundTransparency = 0.2
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
-Side.Position = UDim2.new(0, 0, 0, 0)
-Side.Size = UDim2.new(0, 90, 0, 280)
+Side.Position = UDim2.new(0, 0, 0, 30) -- 调整位置，在标题栏下方
+Side.Size = UDim2.new(0, 90, 0, 250) -- 调整高度
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -629,9 +646,8 @@ TabBtns.Parent = Side
 TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
--- 调整位置，因为添加了直线
-TabBtns.Position = UDim2.new(0, 0, 0.12, 0)
-TabBtns.Size = UDim2.new(0, 90, 0, 235) -- 减小高度以适应直线
+TabBtns.Position = UDim2.new(0, 0, 0, 5) -- 调整位置
+TabBtns.Size = UDim2.new(0, 90, 0, 240) -- 调整高度
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -653,6 +669,7 @@ TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     TabBtns.ElasticBehavior = Enum.ElasticBehavior.Never
 end)
 
+-- 移除原来的ScriptTitle，因为现在有标题栏了
 local ScriptTitle = Instance.new("TextLabel")
 ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = Side
@@ -665,6 +682,7 @@ ScriptTitle.TextColor3 = config.AccentColor
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
+ScriptTitle.Visible = false -- 隐藏原来的标题
 
 task.spawn(function()
     local hue = 0
@@ -675,13 +693,13 @@ task.spawn(function()
         NumberSequenceKeypoint.new(0.5, 0.3),
         NumberSequenceKeypoint.new(1, 0)
     })
-    matrixEffect.Parent = ScriptTitle
+    matrixEffect.Parent = TitleText
     
-    while ScriptTitle and ScriptTitle.Parent do
+    while TitleText and TitleText.Parent do
         hue = (hue + 0.03) % 1
         
         -- 创建数字矩阵效果
-        ScriptTitle.TextColor3 = Color3.fromHSV(hue, 1, 1)
+        TitleText.TextColor3 = Color3.fromHSV(hue, 1, 1)
         
         matrixEffect.Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 1, 1)),
@@ -690,7 +708,7 @@ task.spawn(function()
         })
         
         -- 新的文字动画：弹性跳动
-        services.TweenService:Create(ScriptTitle, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+        services.TweenService:Create(TitleText, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
             TextSize = 15 + math.sin(tick() * 3) * 2
         }):Play()
         
@@ -713,7 +731,7 @@ function FengUI.new(FengUI, name, theme)
         end
     end
 
-    ScriptTitle.Text = name or "FengUI"
+    TitleText.Text = name or "FengUI"
     
     local window = {}
     
