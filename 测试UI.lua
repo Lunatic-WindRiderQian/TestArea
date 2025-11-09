@@ -433,7 +433,7 @@ function switchTab(new)
     services.TweenService:Create(new[1].TabText, tweenInfo, { 
         TextTransparency = 0,
         TextColor3 = config.AccentColor
-    }):Play()
+        }):Play()
     
     -- 创建切换粒子效果
     if old[1].AbsolutePosition and new[1].AbsolutePosition then
@@ -614,6 +614,17 @@ SideCorner.Parent = Side
 -- 添加全息投影效果到侧边栏
 createHologramEffect(Side, 0.3)
 
+-- 添加侧边栏分隔线
+local SideDivider = Instance.new("Frame")
+SideDivider.Name = "SideDivider"
+SideDivider.Parent = Side
+SideDivider.BackgroundColor3 = config.AccentColor
+SideDivider.BackgroundTransparency = 0.5
+SideDivider.BorderSizePixel = 0
+SideDivider.Position = UDim2.new(1, -1, 0, 0) -- 在侧边栏右侧
+SideDivider.Size = UDim2.new(0, 1, 1, 0)
+SideDivider.ZIndex = 2
+
 local TabBtns = Instance.new("ScrollingFrame")
 TabBtns.Name = "TabBtns"
 TabBtns.Parent = Side
@@ -621,7 +632,7 @@ TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0.12, 0) -- 调整位置
-TabBtns.Size = UDim2.new(0, 90, 0, 235) -- 调整高度
+TabBtns.Size = UDim2.new(0, 89, 0, 235) -- 调整宽度和高度
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -648,7 +659,7 @@ ScriptTitle.Name = "ScriptTitle"
 ScriptTitle.Parent = Side
 ScriptTitle.BackgroundTransparency = 1
 ScriptTitle.Position = UDim2.new(0, 0, 0.015, 0) -- 调整位置
-ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
+ScriptTitle.Size = UDim2.new(0, 89, 0, 20) -- 调整宽度
 ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "FengUI"
 ScriptTitle.TextColor3 = config.AccentColor
@@ -752,7 +763,7 @@ function FengUI.new(FengUI, name, theme)
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 90, 0, 22)
+        TabBtn.Size = UDim2.new(0, 89, 0, 22) -- 调整宽度
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
