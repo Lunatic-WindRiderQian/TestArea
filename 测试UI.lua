@@ -509,20 +509,21 @@ local TitleBarCorner = Instance.new("UICorner")
 TitleBarCorner.CornerRadius = UDim.new(0, 10)
 TitleBarCorner.Parent = TitleBar
 
--- 从第一个文件中复制的ScriptTitle部分
+-- 从第一个文件中复制的ScriptTitle部分 - 放在标题栏中
 local ScriptTitle = Instance.new("TextLabel")
 ScriptTitle.Name = "ScriptTitle"
-ScriptTitle.Parent = Side
+ScriptTitle.Parent = TitleBar
 ScriptTitle.BackgroundTransparency = 1
-ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
-ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
+ScriptTitle.Position = UDim2.new(0, 10, 0, 0)
+ScriptTitle.Size = UDim2.new(0, 200, 1, 0)
 ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "FengUI"
 ScriptTitle.TextColor3 = config.AccentColor
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
-ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
+ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
 
+-- ScriptTitle动画效果（从第一个文件中复制）
 task.spawn(function()
     local hue = 0
     local matrixEffect = Instance.new("UIGradient")
@@ -546,7 +547,7 @@ task.spawn(function()
             ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 1, 1))
         })
         
-        -- 新的文字动画：弹性跳动
+        -- 文字动画：弹性跳动
         services.TweenService:Create(ScriptTitle, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
             TextSize = 15 + math.sin(tick() * 3) * 2
         }):Play()
