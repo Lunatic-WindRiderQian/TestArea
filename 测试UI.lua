@@ -509,20 +509,6 @@ local TitleBarCorner = Instance.new("UICorner")
 TitleBarCorner.CornerRadius = UDim.new(0, 10)
 TitleBarCorner.Parent = TitleBar
 
--- 修复后的脚本名字 - 简单高级特效
-local ScriptTitle = Instance.new("TextLabel")
-ScriptTitle.Name = "ScriptTitle"
-ScriptTitle.Parent = TitleBar
-ScriptTitle.BackgroundTransparency = 1
-ScriptTitle.Position = UDim2.new(0, 10, 0, 0)
-ScriptTitle.Size = UDim2.new(0, 200, 1, 0)
-ScriptTitle.Font = Enum.Font.GothamBold
-ScriptTitle.Text = "FengUI"
-ScriptTitle.TextColor3 = config.AccentColor
-ScriptTitle.TextSize = 16
-ScriptTitle.TextScaled = false
-ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
-
 -- 创建标题栏下方的直线
 local TitleLine = Instance.new("Frame")
 TitleLine.Name = "TitleLine"
@@ -549,6 +535,20 @@ titleLineGradient.Transparency = NumberSequence.new({
 
 -- 添加标题栏脉冲效果
 createPulseGlow(TitleLine)
+
+-- 修复后的脚本名字 - 简单高级特效
+local ScriptTitle = Instance.new("TextLabel")
+ScriptTitle.Name = "ScriptTitle"
+ScriptTitle.Parent = TitleBar
+ScriptTitle.BackgroundTransparency = 1
+ScriptTitle.Position = UDim2.new(0, 10, 0, 0)
+ScriptTitle.Size = UDim2.new(0, 200, 1, 0)
+ScriptTitle.Font = Enum.Font.GothamBold
+ScriptTitle.Text = "FengUI"
+ScriptTitle.TextColor3 = config.AccentColor
+ScriptTitle.TextSize = 16
+ScriptTitle.TextScaled = false
+ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
 
 -- 高级修复：简单但优雅的动画效果
 task.spawn(function()
@@ -744,7 +744,7 @@ TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0.097, 0) -- 恢复为原文件的位置
 TabBtns.Size = UDim2.new(0, 90, 0, 245) -- 恢复为原文件的大小
-TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
+TabBtns.CanCanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
 TabBtns.ScrollBarImageTransparency = 0.5
