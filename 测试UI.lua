@@ -494,143 +494,9 @@ startNeonFlowEffect(neonStroke, "Color", 0.01)
 -- 添加脉冲发光效果
 createPulseGlow(neonStroke)
 
--- 创建标题栏
-local TitleBar = Instance.new("Frame")
-TitleBar.Name = "TitleBar"
-TitleBar.Parent = Main
-TitleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35) -- 调亮背景颜色
-TitleBar.BackgroundTransparency = 0.05 -- 减少透明度，使背景更亮
-TitleBar.BorderSizePixel = 0
-TitleBar.Position = UDim2.new(0, 0, 0, 0)
-TitleBar.Size = UDim2.new(1, 0, 0, 30)
-TitleBar.ZIndex = 2
-
-local TitleBarCorner = Instance.new("UICorner")
-TitleBarCorner.CornerRadius = UDim.new(0, 10)
-TitleBarCorner.Parent = TitleBar
-
--- 创建标题栏下方的直线
-local TitleLine = Instance.new("Frame")
-TitleLine.Name = "TitleLine"
-TitleLine.Parent = TitleBar
-TitleLine.BackgroundColor3 = config.AccentColor
-TitleLine.BorderSizePixel = 0
-TitleLine.Position = UDim2.new(0, 0, 1, 0)
-TitleLine.Size = UDim2.new(1, 0, 0, 1)
-TitleLine.ZIndex = 2
-
--- 添加标题栏直线渐变效果
-local titleLineGradient = Instance.new("UIGradient")
-titleLineGradient.Parent = TitleLine
-titleLineGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, config.AccentColor),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 200, 255)),
-    ColorSequenceKeypoint.new(1, config.AccentColor)
-})
-titleLineGradient.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 0),
-    NumberSequenceKeypoint.new(0.5, 0.2),
-    NumberSequenceKeypoint.new(1, 0)
-})
-
--- 添加标题栏脉冲效果
-createPulseGlow(TitleLine)
-
--- 修复后的脚本名字 - 简单高级特效
-local ScriptTitle = Instance.new("TextLabel")
-ScriptTitle.Name = "ScriptTitle"
-ScriptTitle.Parent = TitleBar
-ScriptTitle.BackgroundTransparency = 1
-ScriptTitle.Position = UDim2.new(0, 10, 0, 0)
-ScriptTitle.Size = UDim2.new(0, 200, 1, 0)
-ScriptTitle.Font = Enum.Font.GothamBold
-ScriptTitle.Text = "FengUI"
-ScriptTitle.TextColor3 = config.AccentColor
-ScriptTitle.TextSize = 16
-ScriptTitle.TextScaled = false
-ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
-
--- 高级修复：简单但优雅的动画效果
-task.spawn(function()
-    -- 创建发光边框
-    local titleGlow = Instance.new("UIStroke")
-    titleGlow.Parent = ScriptTitle
-    titleGlow.Color = config.AccentColor
-    titleGlow.Thickness = 1.5
-    titleGlow.Transparency = 0.7
-    
-    -- 创建文字阴影增强可读性
-    local textShadow = Instance.new("TextLabel")
-    textShadow.Name = "TextShadow"
-    textShadow.Parent = ScriptTitle
-    textShadow.BackgroundTransparency = 1
-    textShadow.Position = UDim2.new(0, 1, 0, 1)
-    textShadow.Size = ScriptTitle.Size
-    textShadow.Font = ScriptTitle.Font
-    textShadow.Text = ScriptTitle.Text
-    textShadow.TextColor3 = Color3.new(0, 0, 0)
-    textShadow.TextTransparency = 0.6
-    textShadow.TextSize = ScriptTitle.TextSize
-    textShadow.TextXAlignment = ScriptTitle.TextXAlignment
-    textShadow.ZIndex = ScriptTitle.ZIndex - 1
-    
-    -- 简单的颜色渐变动画
-    local colorAnimation
-    colorAnimation = RunService.Heartbeat:Connect(function()
-        if not ScriptTitle or not ScriptTitle.Parent then
-            colorAnimation:Disconnect()
-            return
-        end
-        
-        local time = tick()
-        
-        -- 简单的颜色循环 - 使用主色调的变体
-        local hue = (time * 0.5) % 1
-        local baseHue = 0.4 -- 对应青色系
-        
-        -- 创建柔和的颜色变化
-        local currentHue = (baseHue + math.sin(time * 0.8) * 0.1) % 1
-        local accentColor = Color3.fromHSV(currentHue, 0.9, 0.9)
-        
-        -- 更新文字颜色
-        ScriptTitle.TextColor3 = accentColor
-        titleGlow.Color = accentColor
-        
-        -- 简单的脉动效果
-        local pulse = 0.7 + math.sin(time * 2) * 0.3
-        titleGlow.Transparency = pulse
-        
-        -- 轻微的文字缩放
-        local scale = 1 + math.sin(time * 1.5) * 0.02
-        ScriptTitle.TextSize = 16 * scale
-        textShadow.TextSize = 16 * scale
-    end)
-    
-    -- 高级修复：确保文字始终可见
-    local safetyCheck
-    safetyCheck = RunService.Heartbeat:Connect(function()
-        if not ScriptTitle or not ScriptTitle.Parent then
-            safetyCheck:Disconnect()
-            return
-        end
-        
-        -- 确保文字不会变得太小
-        if ScriptTitle.TextSize < 14 then
-            ScriptTitle.TextSize = 14
-            textShadow.TextSize = 14
-        end
-        
-        -- 确保文字不会变得太大
-        if ScriptTitle.TextSize > 18 then
-            ScriptTitle.TextSize = 18
-            textShadow.TextSize = 18
-        end
-    end)
-end)
-
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
-CloseButton.Parent = TitleBar
+CloseButton.Parent = Main
 CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.BackgroundTransparency = 1
 CloseButton.BorderSizePixel = 0
@@ -716,8 +582,8 @@ local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.2, 0, 0, 35) -- 调整位置，为标题栏留出空间
-TabMain.Size = UDim2.new(0, 360, 0, 245) -- 调整大小
+TabMain.Position = UDim2.new(0.2, 0, 0, 3)
+TabMain.Size = UDim2.new(0, 360, 0, 274)
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
@@ -726,8 +592,8 @@ Side.BackgroundColor3 = config.TabColor
 Side.BackgroundTransparency = 0.2
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
-Side.Position = UDim2.new(0, 0, 0, 30) -- 调整位置，从标题栏下方开始
-Side.Size = UDim2.new(0, 90, 0, 250) -- 调整大小
+Side.Position = UDim2.new(0, 0, 0, 0)
+Side.Size = UDim2.new(0, 90, 0, 280)
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -736,15 +602,36 @@ SideCorner.Parent = Side
 -- 添加全息投影效果到侧边栏
 createHologramEffect(Side, 0.3)
 
+-- 在标题栏下方添加一条直线
+local ScriptLine = Instance.new("Frame")
+ScriptLine.Name = "ScriptLine"
+ScriptLine.Parent = Side
+ScriptLine.BackgroundColor3 = config.AccentColor
+ScriptLine.BorderSizePixel = 0
+ScriptLine.Position = UDim2.new(0, 5, 0, 25)
+ScriptLine.Size = UDim2.new(1, -10, 0, 1)
+ScriptLine.ZIndex = 2
+
+-- 添加发光效果到直线
+local ScriptLineGlow = Instance.new("UIStroke")
+ScriptLineGlow.Parent = ScriptLine
+ScriptLineGlow.Color = config.AccentColor
+ScriptLineGlow.Thickness = 1
+ScriptLineGlow.Transparency = 0.3
+
+-- 添加脉冲效果到直线
+createPulseGlow(ScriptLineGlow)
+
 local TabBtns = Instance.new("ScrollingFrame")
 TabBtns.Name = "TabBtns"
 TabBtns.Parent = Side
 TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
-TabBtns.Position = UDim2.new(0, 0, 0.097, 0) -- 恢复为原文件的位置
-TabBtns.Size = UDim2.new(0, 90, 0, 245) -- 恢复为原文件的大小
-TabBtns.CanCanvasSize = UDim2.new(0, 0, 0, 0)
+-- 调整位置，因为添加了直线
+TabBtns.Position = UDim2.new(0, 0, 0.12, 0)
+TabBtns.Size = UDim2.new(0, 90, 0, 235) -- 减小高度以适应直线
+TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
 TabBtns.ScrollBarImageTransparency = 0.5
@@ -765,6 +652,51 @@ TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     TabBtns.ElasticBehavior = Enum.ElasticBehavior.Never
 end)
 
+local ScriptTitle = Instance.new("TextLabel")
+ScriptTitle.Name = "ScriptTitle"
+ScriptTitle.Parent = Side
+ScriptTitle.BackgroundTransparency = 1
+ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
+ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
+ScriptTitle.Font = Enum.Font.GothamBold
+ScriptTitle.Text = "FengUI"
+ScriptTitle.TextColor3 = config.AccentColor
+ScriptTitle.TextSize = 16
+ScriptTitle.TextScaled = false
+ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
+
+task.spawn(function()
+    local hue = 0
+    local matrixEffect = Instance.new("UIGradient")
+    matrixEffect.Rotation = 90
+    matrixEffect.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.5, 0.3),
+        NumberSequenceKeypoint.new(1, 0)
+    })
+    matrixEffect.Parent = ScriptTitle
+    
+    while ScriptTitle and ScriptTitle.Parent do
+        hue = (hue + 0.03) % 1
+        
+        -- 创建数字矩阵效果
+        ScriptTitle.TextColor3 = Color3.fromHSV(hue, 1, 1)
+        
+        matrixEffect.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 1, 1)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 1, 1)),
+            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 1, 1))
+        })
+        
+        -- 新的文字动画：弹性跳动
+        services.TweenService:Create(ScriptTitle, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            TextSize = 15 + math.sin(tick() * 3) * 2
+        }):Play()
+        
+        task.wait(0.05)
+    end
+end)
+
 function FengUI.new(FengUI, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
         if v.Name == "REN" then
@@ -780,14 +712,7 @@ function FengUI.new(FengUI, name, theme)
         end
     end
 
-    -- 高级修复：安全地更新脚本名字
-    if ScriptTitle and ScriptTitle.Parent then
-        ScriptTitle.Text = name or "FengUI"
-        local shadow = ScriptTitle:FindFirstChild("TextShadow")
-        if shadow then
-            shadow.Text = name or "FengUI"
-        end
-    end
+    ScriptTitle.Text = name or "FengUI"
     
     local window = {}
     
