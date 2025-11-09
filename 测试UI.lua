@@ -469,7 +469,7 @@ Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.Bg_Color
 Main.BackgroundTransparency = 0.2
 Main.Position = UDim2.new(0.5, 0, 0.4, 0)
-Main.Size = UDim2.new(0, 450, 0, 280) -- 恢复原文件大小
+Main.Size = UDim2.new(0, 450, 0, 280)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -664,8 +664,8 @@ TabBtns.Parent = Side
 TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
-TabBtns.Position = UDim2.new(0, 0, 0.097, 0)
-TabBtns.Size = UDim2.new(0, 90, 0, 225) -- 调整大小
+TabBtns.Position = UDim2.new(0, 0, 0, 5) -- 调整位置，在直线下方
+TabBtns.Size = UDim2.new(0, 90, 0, 240) -- 调整大小
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -687,7 +687,7 @@ TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     TabBtns.ElasticBehavior = Enum.ElasticBehavior.Never
 end)
 
--- ScriptTitle动画效果
+-- ScriptTitle动画效果（与原文件一致）
 task.spawn(function()
     local hue = 0
     local matrixEffect = Instance.new("UIGradient")
@@ -711,7 +711,7 @@ task.spawn(function()
             ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 1, 1))
         })
         
-        -- 新的文字动画：弹性跳动
+        -- 文字动画：弹性跳动
         services.TweenService:Create(ScriptTitle, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
             TextSize = 15 + math.sin(tick() * 3) * 2
         }):Play()
