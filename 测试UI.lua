@@ -498,8 +498,8 @@ createPulseGlow(neonStroke)
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = Main
-TitleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  -- 更亮的背景色
-TitleBar.BackgroundTransparency = 0.05  -- 降低透明度使其更亮
+TitleBar.BackgroundColor3 = config.TabColor
+TitleBar.BackgroundTransparency = 0.1
 TitleBar.BorderSizePixel = 0
 TitleBar.Position = UDim2.new(0, 0, 0, 0)
 TitleBar.Size = UDim2.new(1, 0, 0, 30)
@@ -518,12 +518,12 @@ ScriptTitle.Position = UDim2.new(0, 10, 0, 0)
 ScriptTitle.Size = UDim2.new(0, 200, 1, 0)
 ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "FengUI"
-ScriptTitle.TextColor3 = Color3.fromRGB(100, 255, 255)  -- 明亮的青色
+ScriptTitle.TextColor3 = config.AccentColor  -- 恢复为原文件的颜色
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
 
--- ScriptTitle动画效果（使用更亮的颜色）
+-- ScriptTitle动画效果（恢复为原文件的效果）
 task.spawn(function()
     local hue = 0
     local matrixEffect = Instance.new("UIGradient")
@@ -538,13 +538,13 @@ task.spawn(function()
     while ScriptTitle and ScriptTitle.Parent do
         hue = (hue + 0.03) % 1
         
-        -- 创建更亮的数字矩阵效果
-        ScriptTitle.TextColor3 = Color3.fromHSV(hue, 0.8, 1)  -- 提高亮度
+        -- 恢复为原文件的颜色效果
+        ScriptTitle.TextColor3 = Color3.fromHSV(hue, 1, 1)
         
         matrixEffect.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 0.8, 1)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 0.8, 1)),
-            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 0.8, 1))
+            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 1, 1)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 1, 1)),
+            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 1, 1))
         })
         
         -- 文字动画：弹性跳动
