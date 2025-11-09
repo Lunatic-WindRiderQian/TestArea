@@ -523,6 +523,33 @@ ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
 
+-- 创建标题栏下方的直线
+local TitleLine = Instance.new("Frame")
+TitleLine.Name = "TitleLine"
+TitleLine.Parent = TitleBar
+TitleLine.BackgroundColor3 = config.AccentColor
+TitleLine.BorderSizePixel = 0
+TitleLine.Position = UDim2.new(0, 0, 1, 0)
+TitleLine.Size = UDim2.new(1, 0, 0, 1)
+TitleLine.ZIndex = 2
+
+-- 添加标题栏直线渐变效果
+local titleLineGradient = Instance.new("UIGradient")
+titleLineGradient.Parent = TitleLine
+titleLineGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, config.AccentColor),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 200, 255)),
+    ColorSequenceKeypoint.new(1, config.AccentColor)
+})
+titleLineGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0),
+    NumberSequenceKeypoint.new(0.5, 0.2),
+    NumberSequenceKeypoint.new(1, 0)
+})
+
+-- 添加标题栏脉冲效果
+createPulseGlow(TitleLine)
+
 -- 高级修复：简单但优雅的动画效果
 task.spawn(function()
     -- 创建发光边框
@@ -600,33 +627,6 @@ task.spawn(function()
         end
     end)
 end)
-
--- 创建标题栏下方的直线
-local TitleLine = Instance.new("Frame")
-TitleLine.Name = "TitleLine"
-TitleLine.Parent = TitleBar
-TitleLine.BackgroundColor3 = config.AccentColor
-TitleLine.BorderSizePixel = 0
-TitleLine.Position = UDim2.new(0, 0, 1, 0)
-TitleLine.Size = UDim2.new(1, 0, 0, 1)
-TitleLine.ZIndex = 2
-
--- 添加标题栏直线渐变效果
-local titleLineGradient = Instance.new("UIGradient")
-titleLineGradient.Parent = TitleLine
-titleLineGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, config.AccentColor),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 200, 255)),
-    ColorSequenceKeypoint.new(1, config.AccentColor)
-})
-titleLineGradient.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 0),
-    NumberSequenceKeypoint.new(0.5, 0.2),
-    NumberSequenceKeypoint.new(1, 0)
-})
-
--- 添加标题栏脉冲效果
-createPulseGlow(TitleLine)
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
