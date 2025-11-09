@@ -682,7 +682,7 @@ ScriptTitle.TextColor3 = config.AccentColor
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
-ScriptTitle.Visible = false -- 隐藏原来的标题
+ScriptTitle.Visible = true -- 隐藏原来的标题
 
 task.spawn(function()
     local hue = 0
