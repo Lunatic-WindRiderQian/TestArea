@@ -469,7 +469,7 @@ Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.Bg_Color
 Main.BackgroundTransparency = 0.2
 Main.Position = UDim2.new(0.5, 0, 0.4, 0)
-Main.Size = UDim2.new(0, 500, 0, 320) -- 增大窗口尺寸
+Main.Size = UDim2.new(0, 450, 0, 280) -- 恢复原文件大小
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -509,18 +509,19 @@ local TitleBarCorner = Instance.new("UICorner")
 TitleBarCorner.CornerRadius = UDim.new(0, 10)
 TitleBarCorner.Parent = TitleBar
 
--- 创建标题文字
-local TitleText = Instance.new("TextLabel")
-TitleText.Name = "TitleText"
-TitleText.Parent = TitleBar
-TitleText.BackgroundTransparency = 1
-TitleText.Position = UDim2.new(0, 10, 0, 0)
-TitleText.Size = UDim2.new(0, 200, 1, 0)
-TitleText.Font = Enum.Font.GothamBold
-TitleText.Text = "FengUI - Advanced Interface"
-TitleText.TextColor3 = config.AccentColor
-TitleText.TextSize = 14
-TitleText.TextXAlignment = Enum.TextXAlignment.Left
+-- 将ScriptTitle移动到标题栏位置
+local ScriptTitle = Instance.new("TextLabel")
+ScriptTitle.Name = "ScriptTitle"
+ScriptTitle.Parent = TitleBar
+ScriptTitle.BackgroundTransparency = 1
+ScriptTitle.Position = UDim2.new(0, 10, 0, 0)
+ScriptTitle.Size = UDim2.new(0, 200, 1, 0)
+ScriptTitle.Font = Enum.Font.GothamBold
+ScriptTitle.Text = "FengUI"
+ScriptTitle.TextColor3 = config.AccentColor
+ScriptTitle.TextSize = 16
+ScriptTitle.TextScaled = false
+ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
 
 -- 创建标题栏下方的直线
 local TitleLine = Instance.new("Frame")
@@ -638,7 +639,7 @@ TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
 TabMain.Position = UDim2.new(0.2, 0, 0, 35) -- 调整位置，为标题栏留出空间
-TabMain.Size = UDim2.new(0, 400, 0, 285) -- 调整大小
+TabMain.Size = UDim2.new(0, 360, 0, 245) -- 调整大小
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
@@ -648,7 +649,7 @@ Side.BackgroundTransparency = 0.2
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 30) -- 调整位置，从标题栏下方开始
-Side.Size = UDim2.new(0, 100, 0, 290) -- 调整大小
+Side.Size = UDim2.new(0, 90, 0, 250) -- 调整大小
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -664,7 +665,7 @@ TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0.097, 0)
-TabBtns.Size = UDim2.new(0, 100, 0, 255) -- 调整大小
+TabBtns.Size = UDim2.new(0, 90, 0, 225) -- 调整大小
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -686,19 +687,7 @@ TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     TabBtns.ElasticBehavior = Enum.ElasticBehavior.Never
 end)
 
-local ScriptTitle = Instance.new("TextLabel")
-ScriptTitle.Name = "ScriptTitle"
-ScriptTitle.Parent = Side
-ScriptTitle.BackgroundTransparency = 1
-ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
-ScriptTitle.Size = UDim2.new(0, 100, 0, 20) -- 调整大小
-ScriptTitle.Font = Enum.Font.GothamBold
-ScriptTitle.Text = "FengUI"
-ScriptTitle.TextColor3 = config.AccentColor
-ScriptTitle.TextSize = 16
-ScriptTitle.TextScaled = false
-ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
-
+-- ScriptTitle动画效果
 task.spawn(function()
     local hue = 0
     local matrixEffect = Instance.new("UIGradient")
@@ -747,7 +736,6 @@ function FengUI.new(FengUI, name, theme)
     end
 
     ScriptTitle.Text = name or "FengUI"
-    TitleText.Text = (name or "FengUI") .. " - Advanced Interface"
     
     local window = {}
     
@@ -784,7 +772,7 @@ function FengUI.new(FengUI, name, theme)
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
         TabText.Position = UDim2.new(1.2, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 75, 0, 22) -- 调整大小
+        TabText.Size = UDim2.new(0, 65, 0, 22)
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
@@ -796,7 +784,7 @@ function FengUI.new(FengUI, name, theme)
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 100, 0, 22) -- 调整大小
+        TabBtn.Size = UDim2.new(0, 90, 0, 22)
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
@@ -850,7 +838,7 @@ function FengUI.new(FengUI, name, theme)
             SectionText.Parent = Section
             SectionText.BackgroundTransparency = 1
             SectionText.Position = UDim2.new(0.088, 0, 0, 0)
-            SectionText.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+            SectionText.Size = UDim2.new(0, 320, 0, 36)
             SectionText.Font = Enum.Font.GothamSemibold
             SectionText.Text = name
             SectionText.TextColor3 = config.TextColor
@@ -937,14 +925,14 @@ function FengUI.new(FengUI, name, theme)
                 BtnModule.Parent = Objs
                 BtnModule.BackgroundTransparency = 1
                 BtnModule.BorderSizePixel = 0
-                BtnModule.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+                BtnModule.Size = UDim2.new(0, 330, 0, 36)
                 
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
                 Btn.BackgroundColor3 = config.Button_Color
                 Btn.BackgroundTransparency = 0.2
                 Btn.BorderSizePixel = 0
-                Btn.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+                Btn.Size = UDim2.new(0, 330, 0, 36)
                 Btn.AutoButtonColor = false
                 Btn.Font = Enum.Font.GothamSemibold
                 Btn.Text = "   " .. text
@@ -1026,7 +1014,7 @@ function FengUI.new(FengUI, name, theme)
                 ImageModule.Parent = Objs
                 ImageModule.BackgroundTransparency = 1
                 ImageModule.BorderSizePixel = 0
-                ImageModule.Size = UDim2.new(0, 350, 0, sizeY or 120) -- 调整大小
+                ImageModule.Size = UDim2.new(0, 330, 0, sizeY or 120)
                 
                 ImageLabel.Parent = ImageModule
                 ImageLabel.BackgroundColor3 = config.Bg_Color
@@ -1034,7 +1022,7 @@ function FengUI.new(FengUI, name, theme)
                 ImageLabel.BorderSizePixel = 0
                 ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
                 ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
-                ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, 340), 0, sizeY or 120) -- 调整大小
+                ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, 320), 0, sizeY or 120)
                 ImageLabel.Image = "rbxassetid://" .. tostring(imageId)
                 ImageLabel.ScaleType = Enum.ScaleType.Crop
                 
@@ -1059,12 +1047,12 @@ function FengUI.new(FengUI, name, theme)
                 LabelModule.Parent = Objs
                 LabelModule.BackgroundTransparency = 1
                 LabelModule.BorderSizePixel = 0
-                LabelModule.Size = UDim2.new(0, 350, 0, 24) -- 调整大小
+                LabelModule.Size = UDim2.new(0, 330, 0, 24)
                 
                 TextLabel.Parent = LabelModule
                 TextLabel.BackgroundColor3 = config.Label_Color
                 TextLabel.BackgroundTransparency = 0.2
-                TextLabel.Size = UDim2.new(0, 350, 0, 28) -- 调整大小
+                TextLabel.Size = UDim2.new(0, 330, 0, 28)
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
                 TextLabel.TextColor3 = config.SecondaryTextColor
@@ -1096,14 +1084,14 @@ function FengUI.new(FengUI, name, theme)
                 ToggleModule.Parent = Objs
                 ToggleModule.BackgroundTransparency = 1
                 ToggleModule.BorderSizePixel = 0
-                ToggleModule.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+                ToggleModule.Size = UDim2.new(0, 330, 0, 36)
                 
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
                 ToggleBtn.BackgroundColor3 = config.Toggle_Color
                 ToggleBtn.BackgroundTransparency = 0.2
                 ToggleBtn.BorderSizePixel = 0
-                ToggleBtn.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+                ToggleBtn.Size = UDim2.new(0, 330, 0, 36)
                 ToggleBtn.AutoButtonColor = false
                 ToggleBtn.Font = Enum.Font.GothamSemibold
                 ToggleBtn.Text = "   " .. text
@@ -1232,14 +1220,14 @@ function FengUI.new(FengUI, name, theme)
                 KeybindModule.Parent = Objs
                 KeybindModule.BackgroundTransparency = 1
                 KeybindModule.BorderSizePixel = 0
-                KeybindModule.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+                KeybindModule.Size = UDim2.new(0, 330, 0, 36)
                 
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
                 KeybindBtn.BackgroundColor3 = config.Keybind_Color
                 KeybindBtn.BackgroundTransparency = 0.2
                 KeybindBtn.BorderSizePixel = 0
-                KeybindBtn.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+                KeybindBtn.Size = UDim2.new(0, 330, 0, 36)
                 KeybindBtn.AutoButtonColor = false
                 KeybindBtn.Font = Enum.Font.GothamSemibold
                 KeybindBtn.Text = "   " .. text
@@ -1353,14 +1341,14 @@ function FengUI.new(FengUI, name, theme)
                 TextboxModule.Parent = Objs
                 TextboxModule.BackgroundTransparency = 1
                 TextboxModule.BorderSizePixel = 0
-                TextboxModule.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+                TextboxModule.Size = UDim2.new(0, 330, 0, 36)
                 
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
                 TextboxBack.BackgroundColor3 = config.Textbox_Color
                 TextboxBack.BackgroundTransparency = 0.2
                 TextboxBack.BorderSizePixel = 0
-                TextboxBack.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+                TextboxBack.Size = UDim2.new(0, 330, 0, 36)
                 TextboxBack.AutoButtonColor = false
                 TextboxBack.Font = Enum.Font.GothamSemibold
                 TextboxBack.Text = "   " .. text
@@ -1470,14 +1458,14 @@ function FengUI.new(FengUI, name, theme)
                 SliderModule.BackgroundTransparency = 1.000
                 SliderModule.BorderSizePixel = 0
                 SliderModule.Position = UDim2.new(0, 0, 0, 0)
-                SliderModule.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+                SliderModule.Size = UDim2.new(0, 330, 0, 36)
                 
                 SliderBack.Name = "SliderBack"
                 SliderBack.Parent = SliderModule
                 SliderBack.BackgroundColor3 = config.Slider_Color
                 SliderBack.BackgroundTransparency = 0.2
                 SliderBack.BorderSizePixel = 0
-                SliderBack.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+                SliderBack.Size = UDim2.new(0, 330, 0, 36)
                 SliderBack.AutoButtonColor = false
                 SliderBack.Font = Enum.Font.GothamSemibold
                 SliderBack.Text = "   " .. text
@@ -1770,14 +1758,14 @@ function FengUI.new(FengUI, name, theme)
                 DropdownModule.BorderSizePixel = 0
                 DropdownModule.ClipsDescendants = true
                 DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-                DropdownModule.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+                DropdownModule.Size = UDim2.new(0, 330, 0, 36)
                 
                 DropdownTop.Name = "DropdownTop"
                 DropdownTop.Parent = DropdownModule
                 DropdownTop.BackgroundColor3 = config.Dropdown_Color
                 DropdownTop.BackgroundTransparency = 0.2
                 DropdownTop.BorderSizePixel = 0
-                DropdownTop.Size = UDim2.new(0, 350, 0, 36) -- 调整大小
+                DropdownTop.Size = UDim2.new(0, 330, 0, 36)
                 DropdownTop.AutoButtonColor = false
                 DropdownTop.Font = Enum.Font.GothamSemibold
                 DropdownTop.Text = ""
@@ -1832,7 +1820,7 @@ function FengUI.new(FengUI, name, theme)
                 DropdownText.BackgroundTransparency = 1.000
                 DropdownText.BorderSizePixel = 0
                 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-                DropdownText.Size = UDim2.new(0, 240, 0, 36) -- 调整大小
+                DropdownText.Size = UDim2.new(0, 230, 0, 36)
                 DropdownText.Font = Enum.Font.GothamSemibold
                 DropdownText.PlaceholderColor3 = config.SecondaryTextColor
                 DropdownText.PlaceholderText = text
@@ -1891,7 +1879,7 @@ function FengUI.new(FengUI, name, theme)
                         setAllVisible()
                     end
                     DropdownOpen.Text = (open and "取消" or "选择")
-                    DropdownModule.Size = UDim2.new(0, 350, 0, (open and math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150) or 36)) -- 调整大小
+                    DropdownModule.Size = UDim2.new(0, 330, 0, (open and math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150) or 36))
                     
                     -- 添加展开/收起动画
                     create3DFlipAnimation(DropdownOpenFrame, 0.3)
@@ -1916,7 +1904,7 @@ function FengUI.new(FengUI, name, theme)
                     if not open then
                         return
                     end
-                    DropdownModule.Size = UDim2.new(0, 350, 0, math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150)) -- 调整大小
+                    DropdownModule.Size = UDim2.new(0, 330, 0, math.min(DropdownModuleL.AbsoluteContentSize.Y + 4, 150))
                 end)
                 
                 local funcs = {}
@@ -1929,7 +1917,7 @@ function FengUI.new(FengUI, name, theme)
                     Option.BackgroundTransparency = 0.2
                     Option.BorderSizePixel = 0
                     Option.Position = UDim2.new(0, 0, 0.328125, 0)
-                    Option.Size = UDim2.new(0, 330, 0, 24) -- 调整大小
+                    Option.Size = UDim2.new(0, 310, 0, 24)
                     Option.AutoButtonColor = false
                     Option.Font = Enum.Font.Gotham
                     Option.Text = option
