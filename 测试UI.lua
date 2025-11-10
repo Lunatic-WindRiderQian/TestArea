@@ -1063,109 +1063,89 @@ function FengUI.new(FengUI, name, theme)
                 return TextLabel
             end
             
--- 在 section 函数中替换 MusicPlayer 组件（放在其他组件函数之后）
+-- 在 section 函数中替换 MusicPlayer 组件
 function section.MusicPlayer(section, title, playlist, autoplay)
     autoplay = autoplay or false
     playlist = playlist or {}
     
     local MusicModule = Instance.new("Frame")
     local MusicPlayerFrame = Instance.new("Frame")
-    local NowPlaying = Instance.new("Frame")
-    local Controls = Instance.new("Frame")
-    local PlaylistFrame = Instance.new("Frame")
     
     -- 主音乐播放器框架
     MusicModule.Name = "MusicModule"
     MusicModule.Parent = Objs
     MusicModule.BackgroundTransparency = 1
     MusicModule.BorderSizePixel = 0
-    MusicModule.Size = UDim2.new(0, 330, 0, 320)
+    MusicModule.Size = UDim2.new(0, 330, 0, 260)
     
-    -- 当前播放区域
-    NowPlaying.Name = "NowPlaying"
-    NowPlaying.Parent = MusicModule
-    NowPlaying.BackgroundColor3 = config.TabColor
-    NowPlaying.BackgroundTransparency = 0.1
-    NowPlaying.BorderSizePixel = 0
-    NowPlaying.Position = UDim2.new(0, 0, 0, 0)
-    NowPlaying.Size = UDim2.new(1, 0, 0, 120)
+    MusicPlayerFrame.Name = "MusicPlayerFrame"
+    MusicPlayerFrame.Parent = MusicModule
+    MusicPlayerFrame.BackgroundColor3 = config.TabColor
+    MusicPlayerFrame.BackgroundTransparency = 0.1
+    MusicPlayerFrame.BorderSizePixel = 0
+    MusicPlayerFrame.Size = UDim2.new(1, 0, 1, 0)
     
-    local NowPlayingCorner = Instance.new("UICorner")
-    NowPlayingCorner.CornerRadius = UDim.new(0, 8)
-    NowPlayingCorner.Parent = NowPlaying
+    local MusicPlayerCorner = Instance.new("UICorner")
+    MusicPlayerCorner.CornerRadius = UDim.new(0, 12)
+    MusicPlayerCorner.Parent = MusicPlayerFrame
     
-    local NowPlayingStroke = Instance.new("UIStroke")
-    NowPlayingStroke.Parent = NowPlaying
-    NowPlayingStroke.Color = config.AccentColor
-    NowPlayingStroke.Thickness = 1
-    NowPlayingStroke.Transparency = 0.3
+    local MusicPlayerStroke = Instance.new("UIStroke")
+    MusicPlayerStroke.Parent = MusicPlayerFrame
+    MusicPlayerStroke.Color = config.AccentColor
+    MusicPlayerStroke.Thickness = 1
+    MusicPlayerStroke.Transparency = 0.3
     
     -- 专辑封面
     local AlbumArt = Instance.new("ImageLabel")
     AlbumArt.Name = "AlbumArt"
-    AlbumArt.Parent = NowPlaying
+    AlbumArt.Parent = MusicPlayerFrame
     AlbumArt.BackgroundColor3 = config.Bg_Color
     AlbumArt.BorderSizePixel = 0
-    AlbumArt.Position = UDim2.new(0.05, 0, 0.15, 0)
-    AlbumArt.Size = UDim2.new(0, 70, 0, 70)
+    AlbumArt.Position = UDim2.new(0.5, -75, 0.1, 0)
+    AlbumArt.Size = UDim2.new(0, 150, 0, 150)
     AlbumArt.Image = "rbxassetid://84830962019412"
     
     local AlbumArtCorner = Instance.new("UICorner")
-    AlbumArtCorner.CornerRadius = UDim.new(0, 6)
+    AlbumArtCorner.CornerRadius = UDim.new(0, 8)
     AlbumArtCorner.Parent = AlbumArt
     
     -- 歌曲信息
     local SongInfo = Instance.new("Frame")
     SongInfo.Name = "SongInfo"
-    SongInfo.Parent = NowPlaying
+    SongInfo.Parent = MusicPlayerFrame
     SongInfo.BackgroundTransparency = 1
-    SongInfo.Position = UDim2.new(0.3, 0, 0.15, 0)
-    SongInfo.Size = UDim2.new(0, 200, 0, 70)
+    SongInfo.Position = UDim2.new(0, 0, 0.65, 0)
+    SongInfo.Size = UDim2.new(1, 0, 0, 40)
     
     local SongTitle = Instance.new("TextLabel")
     SongTitle.Name = "SongTitle"
     SongTitle.Parent = SongInfo
     SongTitle.BackgroundTransparency = 1
-    SongTitle.Size = UDim2.new(1, 0, 0, 25)
+    SongTitle.Size = UDim2.new(1, 0, 0, 20)
     SongTitle.Font = Enum.Font.GothamBold
     SongTitle.Text = "未播放歌曲"
     SongTitle.TextColor3 = config.TextColor
     SongTitle.TextSize = 16
-    SongTitle.TextXAlignment = Enum.TextXAlignment.Left
-    SongTitle.TextTruncate = Enum.TextTruncate.AtEnd
+    SongTitle.TextXAlignment = Enum.TextXAlignment.Center
     
     local ArtistName = Instance.new("TextLabel")
     ArtistName.Name = "ArtistName"
     ArtistName.Parent = SongInfo
     ArtistName.BackgroundTransparency = 1
-    ArtistName.Position = UDim2.new(0, 0, 0.4, 0)
-    ArtistName.Size = UDim2.new(1, 0, 0, 20)
+    ArtistName.Position = UDim2.new(0, 0, 0.5, 0)
+    ArtistName.Size = UDim2.new(1, 0, 0, 18)
     ArtistName.Font = Enum.Font.Gotham
     ArtistName.Text = "未知艺术家"
     ArtistName.TextColor3 = config.SecondaryTextColor
     ArtistName.TextSize = 14
-    ArtistName.TextXAlignment = Enum.TextXAlignment.Left
-    ArtistName.TextTruncate = Enum.TextTruncate.AtEnd
-    
-    -- 控制按钮区域
-    Controls.Name = "Controls"
-    Controls.Parent = MusicModule
-    Controls.BackgroundColor3 = config.TabColor
-    Controls.BackgroundTransparency = 0.1
-    Controls.BorderSizePixel = 0
-    Controls.Position = UDim2.new(0, 0, 0, 125)
-    Controls.Size = UDim2.new(1, 0, 0, 80)
-    
-    local ControlsCorner = Instance.new("UICorner")
-    ControlsCorner.CornerRadius = UDim.new(0, 8)
-    ControlsCorner.Parent = Controls
+    ArtistName.TextXAlignment = Enum.TextXAlignment.Center
     
     -- 进度条
     local ProgressContainer = Instance.new("Frame")
     ProgressContainer.Name = "ProgressContainer"
-    ProgressContainer.Parent = Controls
+    ProgressContainer.Parent = MusicPlayerFrame
     ProgressContainer.BackgroundTransparency = 1
-    ProgressContainer.Position = UDim2.new(0.05, 0, 0.1, 0)
+    ProgressContainer.Position = UDim2.new(0.05, 0, 0.82, 0)
     ProgressContainer.Size = UDim2.new(0.9, 0, 0, 20)
     
     local CurrentTime = Instance.new("TextLabel")
@@ -1214,94 +1194,59 @@ function section.MusicPlayer(section, title, playlist, autoplay)
     ProgressFillCorner.CornerRadius = UDim.new(1, 0)
     ProgressFillCorner.Parent = ProgressFill
     
-    -- 控制按钮
-    local ButtonsContainer = Instance.new("Frame")
-    ButtonsContainer.Name = "ButtonsContainer"
-    ButtonsContainer.Parent = Controls
-    ButtonsContainer.BackgroundTransparency = 1
-    ButtonsContainer.Position = UDim2.new(0, 0, 0.4, 0)
-    ButtonsContainer.Size = UDim2.new(1, 0, 0, 40)
+    -- 控制按钮 - 按照网易云音乐样式
+    local ControlsContainer = Instance.new("Frame")
+    ControlsContainer.Name = "ControlsContainer"
+    ControlsContainer.Parent = MusicPlayerFrame
+    ControlsContainer.BackgroundTransparency = 1
+    ControlsContainer.Position = UDim2.new(0, 0, 0.9, 0)
+    ControlsContainer.Size = UDim2.new(1, 0, 0, 40)
     
-    local function createControlButton(name, position, icon, size)
+    local function createControlButton(name, position, icon, size, isMain)
         local Button = Instance.new("ImageButton")
         Button.Name = name
-        Button.Parent = ButtonsContainer
-        Button.BackgroundColor3 = config.Button_Color
-        Button.BackgroundTransparency = 0.8
+        Button.Parent = ControlsContainer
+        Button.BackgroundColor3 = isMain and config.AccentColor or Color3.fromRGB(255, 255, 255)
+        Button.BackgroundTransparency = isMain and 0.2 or 0.9
         Button.BorderSizePixel = 0
         Button.Position = position
         Button.Size = size or UDim2.new(0, 32, 0, 32)
         Button.Image = "rbxassetid://" .. tostring(icon)
-        Button.ImageColor3 = config.TextColor
+        Button.ImageColor3 = isMain and Color3.fromRGB(255, 255, 255) or config.TextColor
         
         local ButtonCorner = Instance.new("UICorner")
         ButtonCorner.CornerRadius = UDim.new(1, 0)
         ButtonCorner.Parent = Button
         
+        if isMain then
+            local ButtonGlow = Instance.new("UIStroke")
+            ButtonGlow.Parent = Button
+            ButtonGlow.Color = config.AccentColor
+            ButtonGlow.Thickness = 2
+            ButtonGlow.Transparency = 0.5
+        end
+        
         Button.MouseEnter:Connect(function()
             services.TweenService:Create(Button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.6,
-                Size = UDim2.new(0, 34, 0, 34)
+                BackgroundTransparency = isMain and 0.1 or 0.7,
+                Size = UDim2.new(0, size.X.Offset + 4, 0, size.Y.Offset + 4)
             }):Play()
         end)
         
         Button.MouseLeave:Connect(function()
             services.TweenService:Create(Button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.8,
-                Size = UDim2.new(0, 32, 0, 32)
+                BackgroundTransparency = isMain and 0.2 or 0.9,
+                Size = size
             }):Play()
         end)
         
         return Button
     end
     
-    -- 创建控制按钮
-    local PrevButton = createControlButton("PrevButton", UDim2.new(0.25, -16, 0.5, -16), "6031068421")
-    local PlayButton = createControlButton("PlayButton", UDim2.new(0.5, -20, 0.5, -20), "6031068431", UDim2.new(0, 40, 0, 40))
-    local NextButton = createControlButton("NextButton", UDim2.new(0.75, -16, 0.5, -16), "6031068416")
-    
-    -- 播放列表区域
-    PlaylistFrame.Name = "PlaylistFrame"
-    PlaylistFrame.Parent = MusicModule
-    PlaylistFrame.BackgroundColor3 = config.TabColor
-    PlaylistFrame.BackgroundTransparency = 0.1
-    PlaylistFrame.BorderSizePixel = 0
-    PlaylistFrame.Position = UDim2.new(0, 0, 0, 210)
-    PlaylistFrame.Size = UDim2.new(1, 0, 0, 110)
-    
-    local PlaylistCorner = Instance.new("UICorner")
-    PlaylistCorner.CornerRadius = UDim.new(0, 8)
-    PlaylistCorner.Parent = PlaylistFrame
-    
-    local PlaylistTitle = Instance.new("TextLabel")
-    PlaylistTitle.Name = "PlaylistTitle"
-    PlaylistTitle.Parent = PlaylistFrame
-    PlaylistTitle.BackgroundTransparency = 1
-    PlaylistTitle.Position = UDim2.new(0.05, 0, 0, 5)
-    PlaylistTitle.Size = UDim2.new(0.9, 0, 0, 20)
-    PlaylistTitle.Font = Enum.Font.GothamBold
-    PlaylistTitle.Text = "播放列表"
-    PlaylistTitle.TextColor3 = config.AccentColor
-    PlaylistTitle.TextSize = 14
-    PlaylistTitle.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local PlaylistScrolling = Instance.new("ScrollingFrame")
-    PlaylistScrolling.Name = "PlaylistScrolling"
-    PlaylistScrolling.Parent = PlaylistFrame
-    PlaylistScrolling.BackgroundTransparency = 1
-    PlaylistScrolling.BorderSizePixel = 0
-    PlaylistScrolling.Position = UDim2.new(0, 5, 0, 25)
-    PlaylistScrolling.Size = UDim2.new(1, -10, 1, -30)
-    PlaylistScrolling.CanvasSize = UDim2.new(0, 0, 0, 0)
-    PlaylistScrolling.ScrollBarThickness = 3
-    PlaylistScrolling.ScrollBarImageColor3 = config.AccentColor
-    PlaylistScrolling.ScrollBarImageTransparency = 0.5
-    
-    local PlaylistLayout = Instance.new("UIListLayout")
-    PlaylistLayout.Name = "PlaylistLayout"
-    PlaylistLayout.Parent = PlaylistScrolling
-    PlaylistLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    PlaylistLayout.Padding = UDim.new(0, 2)
+    -- 创建控制按钮 - 网易云音乐样式
+    local PrevButton = createControlButton("PrevButton", UDim2.new(0.3, -20, 0.5, -16), "6031068421", UDim2.new(0, 32, 0, 32), false)
+    local PlayButton = createControlButton("PlayButton", UDim2.new(0.5, -20, 0.5, -20), "6031068431", UDim2.new(0, 40, 0, 40), true)
+    local NextButton = createControlButton("NextButton", UDim2.new(0.7, -20, 0.5, -16), "6031068416", UDim2.new(0, 32, 0, 32), false)
     
     -- 音乐播放器状态
     local musicPlayer = {
@@ -1309,10 +1254,11 @@ function section.MusicPlayer(section, title, playlist, autoplay)
         isPlaying = false,
         volume = 0.7,
         progress = 0,
-        totalTime = 0,
+        totalTime = 180, -- 默认3分钟
         currentTime = 0,
         tracks = playlist,
-        soundInstance = nil
+        sound = nil,
+        soundConnection = nil
     }
     
     -- 格式化时间函数
@@ -1326,7 +1272,7 @@ function section.MusicPlayer(section, title, playlist, autoplay)
     local function updatePlayerDisplay()
         if #musicPlayer.tracks > 0 then
             local track = musicPlayer.tracks[musicPlayer.currentTrack]
-            SongTitle.Text = track.title or "未知歌曲"
+            SongTitle.Text = track.title or "未播放歌曲"
             ArtistName.Text = track.artist or "未知艺术家"
             if track.cover then
                 AlbumArt.Image = "rbxassetid://" .. tostring(track.cover)
@@ -1344,6 +1290,44 @@ function section.MusicPlayer(section, title, playlist, autoplay)
         end
     end
     
+    -- 创建并播放音频
+    local function playAudio(audioId)
+        -- 停止之前的音频
+        if musicPlayer.sound then
+            musicPlayer.sound:Stop()
+            if musicPlayer.soundConnection then
+                musicPlayer.soundConnection:Disconnect()
+            end
+        end
+        
+        -- 创建新的音频
+        musicPlayer.sound = Instance.new("Sound")
+        musicPlayer.sound.SoundId = "rbxassetid://" .. tostring(audioId)
+        musicPlayer.sound.Volume = musicPlayer.volume
+        musicPlayer.sound.Parent = workspace
+        
+        -- 连接音频事件
+        musicPlayer.soundConnection = musicPlayer.sound.Ended:Connect(function()
+            -- 音频播放结束，播放下一首
+            nextTrack()
+        end)
+        
+        -- 开始播放
+        musicPlayer.sound:Play()
+        
+        -- 更新进度
+        if musicPlayer.progressConnection then
+            musicPlayer.progressConnection:Disconnect()
+        end
+        
+        musicPlayer.progressConnection = RunService.Heartbeat:Connect(function(delta)
+            if musicPlayer.isPlaying and musicPlayer.sound and musicPlayer.sound.IsPlaying then
+                musicPlayer.currentTime = musicPlayer.sound.TimePosition
+                updateProgress()
+            end
+        end)
+    end
+    
     -- 播放/暂停功能
     local function togglePlayPause()
         musicPlayer.isPlaying = not musicPlayer.isPlaying
@@ -1352,32 +1336,36 @@ function section.MusicPlayer(section, title, playlist, autoplay)
             PlayButton.Image = "rbxassetid://6031068429" -- 暂停图标
             DigitalParticleExplosion(PlayButton)
             
-            -- 模拟播放进度
-            if musicPlayer.totalTime == 0 then
-                musicPlayer.totalTime = 180 -- 默认3分钟
-                updatePlayerDisplay()
-            end
-            
-            -- 创建进度更新循环
-            if musicPlayer.progressConnection then
-                musicPlayer.progressConnection:Disconnect()
-            end
-            
-            musicPlayer.progressConnection = RunService.Heartbeat:Connect(function(delta)
-                if musicPlayer.isPlaying and musicPlayer.currentTime < musicPlayer.totalTime then
-                    musicPlayer.currentTime = musicPlayer.currentTime + delta
-                    updateProgress()
-                elseif musicPlayer.currentTime >= musicPlayer.totalTime then
-                    -- 播放下一首
-                    musicPlayer.currentTrack = (musicPlayer.currentTrack % #musicPlayer.tracks) + 1
+            if #musicPlayer.tracks > 0 then
+                local track = musicPlayer.tracks[musicPlayer.currentTrack]
+                if track.audioId then
+                    playAudio(track.audioId)
+                else
+                    -- 如果没有audioId，使用模拟播放
                     musicPlayer.currentTime = 0
-                    musicPlayer.totalTime = 180 -- 重置为3分钟
+                    musicPlayer.totalTime = 180
                     updatePlayerDisplay()
-                    updateProgress()
+                    
+                    -- 模拟播放进度
+                    if musicPlayer.progressConnection then
+                        musicPlayer.progressConnection:Disconnect()
+                    end
+                    
+                    musicPlayer.progressConnection = RunService.Heartbeat:Connect(function(delta)
+                        if musicPlayer.isPlaying and musicPlayer.currentTime < musicPlayer.totalTime then
+                            musicPlayer.currentTime = musicPlayer.currentTime + delta
+                            updateProgress()
+                        elseif musicPlayer.currentTime >= musicPlayer.totalTime then
+                            nextTrack()
+                        end
+                    end)
                 end
-            end)
+            end
         else
             PlayButton.Image = "rbxassetid://6031068431" -- 播放图标
+            if musicPlayer.sound then
+                musicPlayer.sound:Pause()
+            end
             if musicPlayer.progressConnection then
                 musicPlayer.progressConnection:Disconnect()
             end
@@ -1387,28 +1375,30 @@ function section.MusicPlayer(section, title, playlist, autoplay)
     -- 下一首
     local function nextTrack()
         DigitalParticleExplosion(NextButton)
-        musicPlayer.currentTrack = (musicPlayer.currentTrack % #musicPlayer.tracks) + 1
-        musicPlayer.currentTime = 0
-        musicPlayer.totalTime = 180
-        musicPlayer.isPlaying = true
-        updatePlayerDisplay()
-        updateProgress()
-        togglePlayPause()
+        if #musicPlayer.tracks > 0 then
+            musicPlayer.currentTrack = (musicPlayer.currentTrack % #musicPlayer.tracks) + 1
+            musicPlayer.currentTime = 0
+            musicPlayer.isPlaying = true
+            updatePlayerDisplay()
+            updateProgress()
+            togglePlayPause()
+        end
     end
     
     -- 上一首
     local function prevTrack()
         DigitalParticleExplosion(PrevButton)
-        musicPlayer.currentTrack = musicPlayer.currentTrack - 1
-        if musicPlayer.currentTrack < 1 then
-            musicPlayer.currentTrack = #musicPlayer.tracks
+        if #musicPlayer.tracks > 0 then
+            musicPlayer.currentTrack = musicPlayer.currentTrack - 1
+            if musicPlayer.currentTrack < 1 then
+                musicPlayer.currentTrack = #musicPlayer.tracks
+            end
+            musicPlayer.currentTime = 0
+            musicPlayer.isPlaying = true
+            updatePlayerDisplay()
+            updateProgress()
+            togglePlayPause()
         end
-        musicPlayer.currentTime = 0
-        musicPlayer.totalTime = 180
-        musicPlayer.isPlaying = true
-        updatePlayerDisplay()
-        updateProgress()
-        togglePlayPause()
     end
     
     -- 绑定按钮事件
@@ -1438,88 +1428,12 @@ function section.MusicPlayer(section, title, playlist, autoplay)
             local relativePos = math.clamp((mousePos.X - barPos) / barSize, 0, 1)
             
             musicPlayer.currentTime = musicPlayer.totalTime * relativePos
+            if musicPlayer.sound then
+                musicPlayer.sound.TimePosition = musicPlayer.currentTime
+            end
             updateProgress()
         end
     end)
-    
-    -- 初始化播放列表
-    local function initializePlaylist()
-        for i, track in ipairs(musicPlayer.tracks) do
-            local TrackItem = Instance.new("TextButton")
-            TrackItem.Name = "Track_" .. i
-            TrackItem.Parent = PlaylistScrolling
-            TrackItem.BackgroundColor3 = i == 1 and config.AccentColor or config.Button_Color
-            TrackItem.BackgroundTransparency = i == 1 and 0.8 or 0.9
-            TrackItem.BorderSizePixel = 0
-            TrackItem.Size = UDim2.new(0.95, 0, 0, 25)
-            TrackItem.AutoButtonColor = false
-            TrackItem.Font = Enum.Font.Gotham
-            TrackItem.Text = string.format("%d. %s - %s", i, track.title or "未知", track.artist or "未知")
-            TrackItem.TextColor3 = config.TextColor
-            TrackItem.TextSize = 12
-            TrackItem.TextXAlignment = Enum.TextXAlignment.Left
-            
-            local TrackCorner = Instance.new("UICorner")
-            TrackCorner.CornerRadius = UDim.new(0, 4)
-            TrackCorner.Parent = TrackItem
-            
-            local TrackPadding = Instance.new("UIPadding")
-            TrackPadding.Parent = TrackItem
-            TrackPadding.PaddingLeft = UDim.new(0, 8)
-            
-            TrackItem.MouseEnter:Connect(function()
-                if i ~= musicPlayer.currentTrack then
-                    services.TweenService:Create(TrackItem, TweenInfo.new(0.2), {
-                        BackgroundTransparency = 0.7
-                    }):Play()
-                end
-            end)
-            
-            TrackItem.MouseLeave:Connect(function()
-                if i ~= musicPlayer.currentTrack then
-                    services.TweenService:Create(TrackItem, TweenInfo.new(0.2), {
-                        BackgroundTransparency = 0.9
-                    }):Play()
-                end
-            end)
-            
-            TrackItem.MouseButton1Click:Connect(function()
-                DigitalParticleExplosion(TrackItem)
-                musicPlayer.currentTrack = i
-                musicPlayer.currentTime = 0
-                musicPlayer.totalTime = 180
-                musicPlayer.isPlaying = true
-                updatePlayerDisplay()
-                updateProgress()
-                
-                -- 更新所有曲目高亮
-                for j, item in ipairs(PlaylistScrolling:GetChildren()) do
-                    if item:IsA("TextButton") then
-                        if j == i then
-                            services.TweenService:Create(item, TweenInfo.new(0.3), {
-                                BackgroundColor3 = config.AccentColor,
-                                BackgroundTransparency = 0.8
-                            }):Play()
-                        else
-                            services.TweenService:Create(item, TweenInfo.new(0.3), {
-                                BackgroundColor3 = config.Button_Color,
-                                BackgroundTransparency = 0.9
-                            }):Play()
-                        end
-                    end
-                end
-                
-                if not musicPlayer.isPlaying then
-                    togglePlayPause()
-                end
-            end)
-        end
-        
-        -- 更新播放列表大小
-        PlaylistLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            PlaylistScrolling.CanvasSize = UDim2.new(0, 0, 0, PlaylistLayout.AbsoluteContentSize.Y)
-        end)
-    end
     
     -- 音乐播放器控制函数
     local musicController = {}
@@ -1552,24 +1466,31 @@ function section.MusicPlayer(section, title, playlist, autoplay)
         return musicPlayer.isPlaying
     end
     
-    function musicController:AddTrack(title, artist, cover)
+    function musicController:AddTrack(title, artist, cover, audioId)
         table.insert(musicPlayer.tracks, {
             title = title,
             artist = artist,
-            cover = cover
+            cover = cover,
+            audioId = audioId
         })
-        initializePlaylist()
+        updatePlayerDisplay()
     end
     
     function musicController:RemoveTrack(index)
         if index >= 1 and index <= #musicPlayer.tracks then
             table.remove(musicPlayer.tracks, index)
-            initializePlaylist()
+            updatePlayerDisplay()
+        end
+    end
+    
+    function musicController:SetVolume(volume)
+        musicPlayer.volume = math.clamp(volume, 0, 1)
+        if musicPlayer.sound then
+            musicPlayer.sound.Volume = musicPlayer.volume
         end
     end
     
     -- 初始化
-    initializePlaylist()
     updatePlayerDisplay()
     
     if autoplay and #musicPlayer.tracks > 0 then
