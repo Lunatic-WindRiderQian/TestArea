@@ -1164,9 +1164,8 @@ function FengUI.MusicPlayer(section, title)
         currentTime = 0,
         duration = 0,
         volume = 0.7,
-        currentTrack = 1,
-        playlist = {},
-        sound = nil
+        currentTrack = 0,
+        playlist = {}
     }
     
     -- 格式化时间函数
@@ -1190,43 +1189,25 @@ function FengUI.MusicPlayer(section, title)
     local function updateVolume()
         VolumeFill.Size = UDim2.new(musicPlayer.volume, 0, 1, 0)
         VolumeDot.Position = UDim2.new(musicPlayer.volume, -4, 0.5, -4)
-        if musicPlayer.sound then
-            musicPlayer.sound.Volume = musicPlayer.volume
-        end
     end
     
     -- 播放/暂停切换
     local function togglePlay()
+        if #musicPlayer.playlist == 0 then
+            return
+        end
+        
         musicPlayer.isPlaying = not musicPlayer.isPlaying
         if musicPlayer.isPlaying then
             PlayButton.Image = "rbxassetid://84830962019412" -- 暂停图标
-            -- 这里可以添加实际的播放逻辑
+            if musicPlayer.currentTrack == 0 then
+                musicPlayer.currentTrack = 1
+                loadTrack(1)
+            end
         else
             PlayButton.Image = "rbxassetid://84830962019412" -- 播放图标
-            -- 这里可以添加实际的暂停逻辑
         end
         DigitalParticleExplosion(PlayButton)
-    end
-    
-    -- 下一首
-    local function nextTrack()
-        if #musicPlayer.playlist > 0 then
-            musicPlayer.currentTrack = (musicPlayer.currentTrack % #musicPlayer.playlist) + 1
-            loadTrack(musicPlayer.currentTrack)
-        end
-        DigitalParticleExplosion(NextButton)
-    end
-    
-    -- 上一首
-    local function prevTrack()
-        if #musicPlayer.playlist > 0 then
-            musicPlayer.currentTrack = musicPlayer.currentTrack - 1
-            if musicPlayer.currentTrack < 1 then
-                musicPlayer.currentTrack = #musicPlayer.playlist
-            end
-            loadTrack(musicPlayer.currentTrack)
-        end
-        DigitalParticleExplosion(PrevButton)
     end
     
     -- 加载曲目
@@ -1237,11 +1218,49 @@ function FengUI.MusicPlayer(section, title)
             ArtistName.Text = track.artist or "未知艺术家"
             if track.albumArt then
                 AlbumArt.Image = "rbxassetid://" .. track.albumArt
+            else
+                AlbumArt.Image = "rbxassetid://84830962019412"
             end
             musicPlayer.currentTime = 0
             musicPlayer.duration = track.duration or 0
             updateProgress()
+            updatePlaylistDisplay()
         end
+    end
+    
+    -- 下一首
+    local function nextTrack()
+        if #musicPlayer.playlist > 0 then
+            if musicPlayer.currentTrack == 0 then
+                musicPlayer.currentTrack = 1
+            else
+                musicPlayer.currentTrack = (musicPlayer.currentTrack % #musicPlayer.playlist) + 1
+            end
+            loadTrack(musicPlayer.currentTrack)
+            if musicPlayer.isPlaying then
+                musicPlayer.isPlaying = true
+            end
+        end
+        DigitalParticleExplosion(NextButton)
+    end
+    
+    -- 上一首
+    local function prevTrack()
+        if #musicPlayer.playlist > 0 then
+            if musicPlayer.currentTrack == 0 then
+                musicPlayer.currentTrack = #musicPlayer.playlist
+            else
+                musicPlayer.currentTrack = musicPlayer.currentTrack - 1
+                if musicPlayer.currentTrack < 1 then
+                    musicPlayer.currentTrack = #musicPlayer.playlist
+                end
+            end
+            loadTrack(musicPlayer.currentTrack)
+            if musicPlayer.isPlaying then
+                musicPlayer.isPlaying = true
+            end
+        end
+        DigitalParticleExplosion(PrevButton)
     end
     
     -- 添加歌曲到播放列表
@@ -1253,6 +1272,12 @@ function FengUI.MusicPlayer(section, title)
             albumArt = albumArt
         })
         updatePlaylistDisplay()
+        
+        -- 如果是第一首歌，自动设置为当前曲目
+        if #musicPlayer.playlist == 1 then
+            musicPlayer.currentTrack = 1
+            loadTrack(1)
+        end
     end
     
     -- 更新播放列表显示
@@ -1276,7 +1301,7 @@ function FengUI.MusicPlayer(section, title)
             trackItem.AutoButtonColor = false
             trackItem.Font = Enum.Font.Gotham
             trackItem.Text = i .. ". " .. track.title .. " - " .. track.artist
-            trackItem.TextColor3 = config.TextColor
+            trackItem.TextColor3 = i == musicPlayer.currentTrack and Color3.fromRGB(255, 255, 255) or config.TextColor
             trackItem.TextSize = 11
             trackItem.TextXAlignment = Enum.TextXAlignment.Left
             
@@ -1291,7 +1316,9 @@ function FengUI.MusicPlayer(section, title)
             trackItem.MouseButton1Click:Connect(function()
                 musicPlayer.currentTrack = i
                 loadTrack(i)
-                updatePlaylistDisplay()
+                if musicPlayer.isPlaying then
+                    musicPlayer.isPlaying = true
+                end
                 DigitalParticleExplosion(trackItem)
             end)
         end
@@ -1315,8 +1342,37 @@ function FengUI.MusicPlayer(section, title)
         end
     end
     
+    -- 模拟播放进度更新
+    local progressConnection
+    local function startProgressSimulation()
+        if progressConnection then
+            progressConnection:Disconnect()
+        end
+        
+        progressConnection = RunService.Heartbeat:Connect(function(delta)
+            if musicPlayer.isPlaying and musicPlayer.duration > 0 then
+                musicPlayer.currentTime = math.min(musicPlayer.currentTime + delta, musicPlayer.duration)
+                updateProgress()
+                
+                if musicPlayer.currentTime >= musicPlayer.duration then
+                    nextTrack()
+                end
+            end
+        end)
+    end
+    
     -- 事件绑定
-    PlayButton.MouseButton1Click:Connect(togglePlay)
+    PlayButton.MouseButton1Click:Connect(function()
+        togglePlay()
+        if musicPlayer.isPlaying then
+            startProgressSimulation()
+        else
+            if progressConnection then
+                progressConnection:Disconnect()
+            end
+        end
+    end)
+    
     NextButton.MouseButton1Click:Connect(nextTrack)
     PrevButton.MouseButton1Click:Connect(prevTrack)
     
@@ -1328,7 +1384,7 @@ function FengUI.MusicPlayer(section, title)
         end
     end)
     
-    ProgressBar.InputEnded:Connect(function(input)
+    services.UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             progressDragging = false
         end
@@ -1355,7 +1411,7 @@ function FengUI.MusicPlayer(section, title)
         end
     end)
     
-    VolumeBar.InputEnded:Connect(function(input)
+    services.UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             volumeDragging = false
         end
@@ -1396,8 +1452,11 @@ function FengUI.MusicPlayer(section, title)
     end
     
     function musicPlayerAPI:Play()
+        if #musicPlayer.playlist == 0 then return self end
+        
         if not musicPlayer.isPlaying then
             togglePlay()
+            startProgressSimulation()
         end
         return self
     end
@@ -1405,6 +1464,19 @@ function FengUI.MusicPlayer(section, title)
     function musicPlayerAPI:Pause()
         if musicPlayer.isPlaying then
             togglePlay()
+            if progressConnection then
+                progressConnection:Disconnect()
+            end
+        end
+        return self
+    end
+    
+    function musicPlayerAPI:Stop()
+        musicPlayer.isPlaying = false
+        musicPlayer.currentTime = 0
+        updateProgress()
+        if progressConnection then
+            progressConnection:Disconnect()
         end
         return self
     end
@@ -1425,28 +1497,37 @@ function FengUI.MusicPlayer(section, title)
     
     function musicPlayerAPI:ClearPlaylist()
         musicPlayer.playlist = {}
-        musicPlayer.currentTrack = 1
+        musicPlayer.currentTrack = 0
+        musicPlayer.isPlaying = false
+        musicPlayer.currentTime = 0
         updatePlaylistDisplay()
         SongTitle.Text = "未选择歌曲"
         ArtistName.Text = "未知艺术家"
         AlbumArt.Image = "rbxassetid://84830962019412"
+        updateProgress()
+        
+        if progressConnection then
+            progressConnection:Disconnect()
+        end
         return self
     end
     
-    -- 添加一些示例歌曲
-    addToPlaylist("示例歌曲 1", "艺术家 A", 180, "84830962019412")
-    addToPlaylist("示例歌曲 2", "艺术家 B", 210, "84830962019412")
-    addToPlaylist("示例歌曲 3", "艺术家 C", 195, "84830962019412")
-    loadTrack(1)
-    
+    function musicPlayerAPI:RemoveSong(index)
+        if musicPlayer.playlist[index] then
+            table.remove(musicPlayer.playlist, index)
+            if musicPlayer.currentTrack >= index then
+                musicPlayer.currentTrack = math.max(0, musicPlayer.currentTrack - 1)
+            end
+            updatePlaylistDisplay()
+            
+            if #musicPlayer.playlist == 0 then
+                self:Stop()
+            end
+        end
+        return self
+    end
+
     return musicPlayerAPI
-end
-
--- 在section函数中添加MusicPlayer方法
--- 找到section函数，在section.Button之前添加：
-
-function section.MusicPlayer(section, title)
-    return FengUI.MusicPlayer(section, title)
 end
 
             function section.Button(section, text, callback)
