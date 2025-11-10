@@ -912,6 +912,543 @@ function FengUI.new(FengUI, name, theme)
             
             local section = {}
             
+-- 在文件末尾的 return FengUI 之前添加以下代码
+
+function FengUI.MusicPlayer(section, title)
+    local MusicModule = Instance.new("Frame")
+    local MusicModuleC = Instance.new("UICorner")
+    local MusicTitle = Instance.new("TextLabel")
+    local MusicControls = Instance.new("Frame")
+    local ProgressBar = Instance.new("Frame")
+    local ProgressBarC = Instance.new("UICorner")
+    local ProgressFill = Instance.new("Frame")
+    local ProgressFillC = Instance.new("UICorner")
+    local ProgressDot = Instance.new("Frame")
+    local ProgressDotC = Instance.new("UICorner")
+    local TimeDisplay = Instance.new("TextLabel")
+    local ControlButtons = Instance.new("Frame")
+    local PrevButton = Instance.new("ImageButton")
+    local PlayButton = Instance.new("ImageButton")
+    local NextButton = Instance.new("ImageButton")
+    local VolumeControl = Instance.new("Frame")
+    local VolumeIcon = Instance.new("ImageButton")
+    local VolumeBar = Instance.new("Frame")
+    local VolumeBarC = Instance.new("UICorner")
+    local VolumeFill = Instance.new("Frame")
+    local VolumeFillC = Instance.new("UICorner")
+    local VolumeDot = Instance.new("Frame")
+    local VolumeDotC = Instance.new("UICorner")
+    local SongInfo = Instance.new("Frame")
+    local SongTitle = Instance.new("TextLabel")
+    local ArtistName = Instance.new("TextLabel")
+    local AlbumArt = Instance.new("ImageLabel")
+    local AlbumArtC = Instance.new("UICorner")
+    local Playlist = Instance.new("ScrollingFrame")
+    local PlaylistL = Instance.new("UIListLayout")
+    
+    -- 音乐播放器主框架
+    MusicModule.Name = "MusicModule"
+    MusicModule.Parent = section.Objs
+    MusicModule.BackgroundColor3 = config.TabColor
+    MusicModule.BackgroundTransparency = 0.1
+    MusicModule.BorderSizePixel = 0
+    MusicModule.Size = UDim2.new(0, 330, 0, 200)
+    
+    MusicModuleC.CornerRadius = UDim.new(0, 8)
+    MusicModuleC.Parent = MusicModule
+    
+    -- 标题
+    MusicTitle.Name = "MusicTitle"
+    MusicTitle.Parent = MusicModule
+    MusicTitle.BackgroundTransparency = 1
+    MusicTitle.Position = UDim2.new(0, 10, 0, 8)
+    MusicTitle.Size = UDim2.new(0, 200, 0, 20)
+    MusicTitle.Font = Enum.Font.GothamBold
+    MusicTitle.Text = title or "音乐播放器"
+    MusicTitle.TextColor3 = config.AccentColor
+    MusicTitle.TextSize = 16
+    MusicTitle.TextXAlignment = Enum.TextXAlignment.Left
+    
+    -- 专辑封面
+    AlbumArt.Name = "AlbumArt"
+    AlbumArt.Parent = MusicModule
+    AlbumArt.BackgroundColor3 = config.Bg_Color
+    AlbumArt.Position = UDim2.new(0, 10, 0, 35)
+    AlbumArt.Size = UDim2.new(0, 60, 0, 60)
+    AlbumArt.Image = "rbxassetid://84830962019412" -- 默认专辑封面
+    AlbumArt.ScaleType = Enum.ScaleType.Crop
+    
+    AlbumArtC.CornerRadius = UDim.new(0, 6)
+    AlbumArtC.Parent = AlbumArt
+    
+    -- 歌曲信息
+    SongInfo.Name = "SongInfo"
+    SongInfo.Parent = MusicModule
+    SongInfo.BackgroundTransparency = 1
+    SongInfo.Position = UDim2.new(0, 80, 0, 35)
+    SongInfo.Size = UDim2.new(0, 240, 0, 60)
+    
+    SongTitle.Name = "SongTitle"
+    SongTitle.Parent = SongInfo
+    SongTitle.BackgroundTransparency = 1
+    SongTitle.Position = UDim2.new(0, 10, 0, 5)
+    SongTitle.Size = UDim2.new(0, 220, 0, 20)
+    SongTitle.Font = Enum.Font.GothamSemibold
+    SongTitle.Text = "未选择歌曲"
+    SongTitle.TextColor3 = config.TextColor
+    SongTitle.TextSize = 14
+    SongTitle.TextXAlignment = Enum.TextXAlignment.Left
+    SongTitle.TextTruncate = Enum.TextTruncate.AtEnd
+    
+    ArtistName.Name = "ArtistName"
+    ArtistName.Parent = SongInfo
+    ArtistName.BackgroundTransparency = 1
+    ArtistName.Position = UDim2.new(0, 10, 0, 30)
+    ArtistName.Size = UDim2.new(0, 220, 0, 15)
+    ArtistName.Font = Enum.Font.Gotham
+    ArtistName.Text = "未知艺术家"
+    ArtistName.TextColor3 = config.SecondaryTextColor
+    ArtistName.TextSize = 12
+    ArtistName.TextXAlignment = Enum.TextXAlignment.Left
+    ArtistName.TextTruncate = Enum.TextTruncate.AtEnd
+    
+    -- 进度条
+    ProgressBar.Name = "ProgressBar"
+    ProgressBar.Parent = MusicModule
+    ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    ProgressBar.BorderSizePixel = 0
+    ProgressBar.Position = UDim2.new(0, 10, 0, 105)
+    ProgressBar.Size = UDim2.new(0, 310, 0, 4)
+    
+    ProgressBarC.CornerRadius = UDim.new(1, 0)
+    ProgressBarC.Parent = ProgressBar
+    
+    ProgressFill.Name = "ProgressFill"
+    ProgressFill.Parent = ProgressBar
+    ProgressFill.BackgroundColor3 = config.AccentColor
+    ProgressFill.BorderSizePixel = 0
+    ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+    
+    ProgressFillC.CornerRadius = UDim.new(1, 0)
+    ProgressFillC.Parent = ProgressFill
+    
+    ProgressDot.Name = "ProgressDot"
+    ProgressDot.Parent = ProgressBar
+    ProgressDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ProgressDot.BorderSizePixel = 0
+    ProgressDot.Position = UDim2.new(0, -4, 0.5, -4)
+    ProgressDot.Size = UDim2.new(0, 8, 0, 8)
+    ProgressDot.ZIndex = 2
+    
+    ProgressDotC.CornerRadius = UDim.new(1, 0)
+    ProgressDotC.Parent = ProgressDot
+    
+    -- 时间显示
+    TimeDisplay.Name = "TimeDisplay"
+    TimeDisplay.Parent = MusicModule
+    TimeDisplay.BackgroundTransparency = 1
+    TimeDisplay.Position = UDim2.new(0, 10, 0, 115)
+    TimeDisplay.Size = UDim2.new(0, 310, 0, 15)
+    TimeDisplay.Font = Enum.Font.Gotham
+    TimeDisplay.Text = "0:00 / 0:00"
+    TimeDisplay.TextColor3 = config.SecondaryTextColor
+    TimeDisplay.TextSize = 11
+    TimeDisplay.TextXAlignment = Enum.TextXAlignment.Center
+    
+    -- 控制按钮
+    ControlButtons.Name = "ControlButtons"
+    ControlButtons.Parent = MusicModule
+    ControlButtons.BackgroundTransparency = 1
+    ControlButtons.Position = UDim2.new(0, 0, 0, 135)
+    ControlButtons.Size = UDim2.new(1, 0, 0, 40)
+    
+    PrevButton.Name = "PrevButton"
+    PrevButton.Parent = ControlButtons
+    PrevButton.BackgroundTransparency = 1
+    PrevButton.Position = UDim2.new(0.3, 0, 0.5, -12)
+    PrevButton.Size = UDim2.new(0, 24, 0, 24)
+    PrevButton.Image = "rbxassetid://84830962019412" -- 上一首图标
+    PrevButton.ImageColor3 = config.TextColor
+    
+    PlayButton.Name = "PlayButton"
+    PlayButton.Parent = ControlButtons
+    PlayButton.BackgroundColor3 = config.AccentColor
+    PlayButton.BackgroundTransparency = 0.2
+    PlayButton.Position = UDim2.new(0.5, -16, 0.5, -16)
+    PlayButton.Size = UDim2.new(0, 32, 0, 32)
+    PlayButton.Image = "rbxassetid://84830962019412" -- 播放图标
+    PlayButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    
+    local PlayButtonC = Instance.new("UICorner")
+    PlayButtonC.CornerRadius = UDim.new(1, 0)
+    PlayButtonC.Parent = PlayButton
+    
+    NextButton.Name = "NextButton"
+    NextButton.Parent = ControlButtons
+    NextButton.BackgroundTransparency = 1
+    NextButton.Position = UDim2.new(0.7, 0, 0.5, -12)
+    NextButton.Size = UDim2.new(0, 24, 0, 24)
+    NextButton.Image = "rbxassetid://84830962019412" -- 下一首图标
+    NextButton.ImageColor3 = config.TextColor
+    
+    -- 音量控制
+    VolumeControl.Name = "VolumeControl"
+    VolumeControl.Parent = MusicModule
+    VolumeControl.BackgroundTransparency = 1
+    VolumeControl.Position = UDim2.new(0, 10, 0, 180)
+    VolumeControl.Size = UDim2.new(0, 310, 0, 15)
+    
+    VolumeIcon.Name = "VolumeIcon"
+    VolumeIcon.Parent = VolumeControl
+    VolumeIcon.BackgroundTransparency = 1
+    VolumeIcon.Position = UDim2.new(0, 0, 0, 0)
+    VolumeIcon.Size = UDim2.new(0, 15, 0, 15)
+    VolumeIcon.Image = "rbxassetid://84830962019412" -- 音量图标
+    VolumeIcon.ImageColor3 = config.SecondaryTextColor
+    
+    VolumeBar.Name = "VolumeBar"
+    VolumeBar.Parent = VolumeControl
+    VolumeBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    VolumeBar.BorderSizePixel = 0
+    VolumeBar.Position = UDim2.new(0, 25, 0.5, -2)
+    VolumeBar.Size = UDim2.new(0, 275, 0, 4)
+    
+    VolumeBarC.CornerRadius = UDim.new(1, 0)
+    VolumeBarC.Parent = VolumeBar
+    
+    VolumeFill.Name = "VolumeFill"
+    VolumeFill.Parent = VolumeBar
+    VolumeFill.BackgroundColor3 = config.AccentColor
+    VolumeFill.BorderSizePixel = 0
+    VolumeFill.Size = UDim2.new(0.7, 0, 1, 0)
+    
+    VolumeFillC.CornerRadius = UDim.new(1, 0)
+    VolumeFillC.Parent = VolumeFill
+    
+    VolumeDot.Name = "VolumeDot"
+    VolumeDot.Parent = VolumeBar
+    VolumeDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    VolumeDot.BorderSizePixel = 0
+    VolumeDot.Position = UDim2.new(0.7, -4, 0.5, -4)
+    VolumeDot.Size = UDim2.new(0, 8, 0, 8)
+    VolumeDot.ZIndex = 2
+    
+    VolumeDotC.CornerRadius = UDim.new(1, 0)
+    VolumeDotC.Parent = VolumeDot
+    
+    -- 播放列表
+    Playlist.Name = "Playlist"
+    Playlist.Parent = MusicModule
+    Playlist.Active = true
+    Playlist.BackgroundColor3 = config.Bg_Color
+    Playlist.BackgroundTransparency = 0.1
+    Playlist.BorderSizePixel = 0
+    Playlist.Position = UDim2.new(0, 10, 0, 105)
+    Playlist.Size = UDim2.new(0, 310, 0, 90)
+    Playlist.Visible = false
+    Playlist.ScrollBarThickness = 3
+    Playlist.ScrollBarImageColor3 = config.AccentColor
+    
+    local PlaylistC = Instance.new("UICorner")
+    PlaylistC.CornerRadius = UDim.new(0, 6)
+    PlaylistC.Parent = Playlist
+    
+    PlaylistL.Name = "PlaylistL"
+    PlaylistL.Parent = Playlist
+    PlaylistL.SortOrder = Enum.SortOrder.LayoutOrder
+    PlaylistL.Padding = UDim.new(0, 2)
+    
+    -- 音乐播放器状态
+    local musicPlayer = {
+        isPlaying = false,
+        currentTime = 0,
+        duration = 0,
+        volume = 0.7,
+        currentTrack = 1,
+        playlist = {},
+        sound = nil
+    }
+    
+    -- 格式化时间函数
+    local function formatTime(seconds)
+        local minutes = math.floor(seconds / 60)
+        local secs = math.floor(seconds % 60)
+        return string.format("%d:%02d", minutes, secs)
+    end
+    
+    -- 更新进度条
+    local function updateProgress()
+        if musicPlayer.duration > 0 then
+            local progress = musicPlayer.currentTime / musicPlayer.duration
+            ProgressFill.Size = UDim2.new(progress, 0, 1, 0)
+            ProgressDot.Position = UDim2.new(progress, -4, 0.5, -4)
+            TimeDisplay.Text = formatTime(musicPlayer.currentTime) .. " / " .. formatTime(musicPlayer.duration)
+        end
+    end
+    
+    -- 更新音量显示
+    local function updateVolume()
+        VolumeFill.Size = UDim2.new(musicPlayer.volume, 0, 1, 0)
+        VolumeDot.Position = UDim2.new(musicPlayer.volume, -4, 0.5, -4)
+        if musicPlayer.sound then
+            musicPlayer.sound.Volume = musicPlayer.volume
+        end
+    end
+    
+    -- 播放/暂停切换
+    local function togglePlay()
+        musicPlayer.isPlaying = not musicPlayer.isPlaying
+        if musicPlayer.isPlaying then
+            PlayButton.Image = "rbxassetid://84830962019412" -- 暂停图标
+            -- 这里可以添加实际的播放逻辑
+        else
+            PlayButton.Image = "rbxassetid://84830962019412" -- 播放图标
+            -- 这里可以添加实际的暂停逻辑
+        end
+        DigitalParticleExplosion(PlayButton)
+    end
+    
+    -- 下一首
+    local function nextTrack()
+        if #musicPlayer.playlist > 0 then
+            musicPlayer.currentTrack = (musicPlayer.currentTrack % #musicPlayer.playlist) + 1
+            loadTrack(musicPlayer.currentTrack)
+        end
+        DigitalParticleExplosion(NextButton)
+    end
+    
+    -- 上一首
+    local function prevTrack()
+        if #musicPlayer.playlist > 0 then
+            musicPlayer.currentTrack = musicPlayer.currentTrack - 1
+            if musicPlayer.currentTrack < 1 then
+                musicPlayer.currentTrack = #musicPlayer.playlist
+            end
+            loadTrack(musicPlayer.currentTrack)
+        end
+        DigitalParticleExplosion(PrevButton)
+    end
+    
+    -- 加载曲目
+    local function loadTrack(index)
+        if musicPlayer.playlist[index] then
+            local track = musicPlayer.playlist[index]
+            SongTitle.Text = track.title or "未知歌曲"
+            ArtistName.Text = track.artist or "未知艺术家"
+            if track.albumArt then
+                AlbumArt.Image = "rbxassetid://" .. track.albumArt
+            end
+            musicPlayer.currentTime = 0
+            musicPlayer.duration = track.duration or 0
+            updateProgress()
+        end
+    end
+    
+    -- 添加歌曲到播放列表
+    local function addToPlaylist(title, artist, duration, albumArt)
+        table.insert(musicPlayer.playlist, {
+            title = title,
+            artist = artist,
+            duration = duration or 180,
+            albumArt = albumArt
+        })
+        updatePlaylistDisplay()
+    end
+    
+    -- 更新播放列表显示
+    local function updatePlaylistDisplay()
+        -- 清空现有项目
+        for _, child in ipairs(Playlist:GetChildren()) do
+            if child:IsA("TextButton") then
+                child:Destroy()
+            end
+        end
+        
+        -- 添加新项目
+        for i, track in ipairs(musicPlayer.playlist) do
+            local trackItem = Instance.new("TextButton")
+            trackItem.Name = "Track_" .. i
+            trackItem.Parent = Playlist
+            trackItem.BackgroundColor3 = i == musicPlayer.currentTrack and config.AccentColor or config.TabColor
+            trackItem.BackgroundTransparency = i == musicPlayer.currentTrack and 0.7 or 0.9
+            trackItem.BorderSizePixel = 0
+            trackItem.Size = UDim2.new(0, 300, 0, 25)
+            trackItem.AutoButtonColor = false
+            trackItem.Font = Enum.Font.Gotham
+            trackItem.Text = i .. ". " .. track.title .. " - " .. track.artist
+            trackItem.TextColor3 = config.TextColor
+            trackItem.TextSize = 11
+            trackItem.TextXAlignment = Enum.TextXAlignment.Left
+            
+            local trackItemC = Instance.new("UICorner")
+            trackItemC.CornerRadius = UDim.new(0, 4)
+            trackItemC.Parent = trackItem
+            
+            local trackItemP = Instance.new("UIPadding")
+            trackItemP.Parent = trackItem
+            trackItemP.PaddingLeft = UDim.new(0, 8)
+            
+            trackItem.MouseButton1Click:Connect(function()
+                musicPlayer.currentTrack = i
+                loadTrack(i)
+                updatePlaylistDisplay()
+                DigitalParticleExplosion(trackItem)
+            end)
+        end
+        
+        -- 更新滚动区域
+        Playlist.CanvasSize = UDim2.new(0, 0, 0, PlaylistL.AbsoluteContentSize.Y)
+    end
+    
+    -- 切换播放列表显示
+    local function togglePlaylist()
+        Playlist.Visible = not Playlist.Visible
+        ProgressBar.Visible = not Playlist.Visible
+        TimeDisplay.Visible = not Playlist.Visible
+        ControlButtons.Visible = not Playlist.Visible
+        VolumeControl.Visible = not Playlist.Visible
+        
+        if Playlist.Visible then
+            MusicModule.Size = UDim2.new(0, 330, 0, 200)
+        else
+            MusicModule.Size = UDim2.new(0, 330, 0, 200)
+        end
+    end
+    
+    -- 事件绑定
+    PlayButton.MouseButton1Click:Connect(togglePlay)
+    NextButton.MouseButton1Click:Connect(nextTrack)
+    PrevButton.MouseButton1Click:Connect(prevTrack)
+    
+    -- 进度条拖动
+    local progressDragging = false
+    ProgressBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            progressDragging = true
+        end
+    end)
+    
+    ProgressBar.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            progressDragging = false
+        end
+    end)
+    
+    services.UserInputService.InputChanged:Connect(function(input)
+        if progressDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mousePos = services.Players.LocalPlayer:GetMouse()
+            local barAbsolutePos = ProgressBar.AbsolutePosition
+            local barAbsoluteSize = ProgressBar.AbsoluteSize
+            local relativeX = (mousePos.X - barAbsolutePos.X) / barAbsoluteSize.X
+            relativeX = math.clamp(relativeX, 0, 1)
+            
+            musicPlayer.currentTime = musicPlayer.duration * relativeX
+            updateProgress()
+        end
+    end)
+    
+    -- 音量控制拖动
+    local volumeDragging = false
+    VolumeBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            volumeDragging = true
+        end
+    end)
+    
+    VolumeBar.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            volumeDragging = false
+        end
+    end)
+    
+    services.UserInputService.InputChanged:Connect(function(input)
+        if volumeDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mousePos = services.Players.LocalPlayer:GetMouse()
+            local barAbsolutePos = VolumeBar.AbsolutePosition
+            local barAbsoluteSize = VolumeBar.AbsoluteSize
+            local relativeX = (mousePos.X - barAbsolutePos.X) / barAbsoluteSize.X
+            relativeX = math.clamp(relativeX, 0, 1)
+            
+            musicPlayer.volume = relativeX
+            updateVolume()
+        end
+    end)
+    
+    -- 双击专辑封面切换播放列表
+    local lastClickTime = 0
+    AlbumArt.MouseButton1Click:Connect(function()
+        local currentTime = tick()
+        if currentTime - lastClickTime < 0.3 then
+            togglePlaylist()
+        end
+        lastClickTime = currentTime
+    end)
+    
+    -- 初始化
+    updateVolume()
+    
+    -- 公开的方法
+    local musicPlayerAPI = {}
+    
+    function musicPlayerAPI:AddSong(title, artist, duration, albumArt)
+        addToPlaylist(title, artist, duration, albumArt)
+        return self
+    end
+    
+    function musicPlayerAPI:Play()
+        if not musicPlayer.isPlaying then
+            togglePlay()
+        end
+        return self
+    end
+    
+    function musicPlayerAPI:Pause()
+        if musicPlayer.isPlaying then
+            togglePlay()
+        end
+        return self
+    end
+    
+    function musicPlayerAPI:SetVolume(volume)
+        musicPlayer.volume = math.clamp(volume, 0, 1)
+        updateVolume()
+        return self
+    end
+    
+    function musicPlayerAPI:GetCurrentTrack()
+        return musicPlayer.playlist[musicPlayer.currentTrack]
+    end
+    
+    function musicPlayerAPI:GetPlaylist()
+        return musicPlayer.playlist
+    end
+    
+    function musicPlayerAPI:ClearPlaylist()
+        musicPlayer.playlist = {}
+        musicPlayer.currentTrack = 1
+        updatePlaylistDisplay()
+        SongTitle.Text = "未选择歌曲"
+        ArtistName.Text = "未知艺术家"
+        AlbumArt.Image = "rbxassetid://84830962019412"
+        return self
+    end
+    
+    -- 添加一些示例歌曲
+    addToPlaylist("示例歌曲 1", "艺术家 A", 180, "84830962019412")
+    addToPlaylist("示例歌曲 2", "艺术家 B", 210, "84830962019412")
+    addToPlaylist("示例歌曲 3", "艺术家 C", 195, "84830962019412")
+    loadTrack(1)
+    
+    return musicPlayerAPI
+end
+
+-- 在section函数中添加MusicPlayer方法
+-- 找到section函数，在section.Button之前添加：
+
+function section.MusicPlayer(section, title)
+    return FengUI.MusicPlayer(section, title)
+end
+
             function section.Button(section, text, callback)
                 callback = callback or function() end
                 
@@ -1063,402 +1600,6 @@ function FengUI.new(FengUI, name, theme)
                 return TextLabel
             end
             
-function section.MusicPlayer(section, text, soundId, callback)
-    callback = callback or function() end
-    assert(text, "No text provided")
-    assert(soundId, "No sound ID provided")
-    
-    local MusicModule = Instance.new("Frame")
-    local MusicBack = Instance.new("TextButton")
-    local MusicBackC = Instance.new("UICorner")
-    local MusicControls = Instance.new("Frame")
-    local PlayPauseBtn = Instance.new("TextButton")
-    local PlayPauseC = Instance.new("UICorner")
-    local StopBtn = Instance.new("TextButton")
-    local StopC = Instance.new("UICorner")
-    local ProgressBar = Instance.new("Frame")
-    local ProgressBarC = Instance.new("UICorner")
-    local ProgressFill = Instance.new("Frame")
-    local ProgressFillC = Instance.new("UICorner")
-    local TimeLabel = Instance.new("TextLabel")
-    local VolumeSlider = Instance.new("Frame")
-    local VolumeBar = Instance.new("Frame")
-    local VolumeBarC = Instance.new("UICorner")
-    local VolumeFill = Instance.new("Frame")
-    local VolumeFillC = Instance.new("UICorner")
-    local VolumeIcon = Instance.new("TextLabel")
-    
-    MusicModule.Name = "MusicModule"
-    MusicModule.Parent = Objs
-    MusicModule.BackgroundTransparency = 1
-    MusicModule.BorderSizePixel = 0
-    MusicModule.Size = UDim2.new(0, 330, 0, 80)
-    
-    MusicBack.Name = "MusicBack"
-    MusicBack.Parent = MusicModule
-    MusicBack.BackgroundColor3 = config.Button_Color
-    MusicBack.BackgroundTransparency = 0.2
-    MusicBack.BorderSizePixel = 0
-    MusicBack.Size = UDim2.new(0, 330, 0, 80)
-    MusicBack.AutoButtonColor = false
-    MusicBack.Font = Enum.Font.GothamSemibold
-    MusicBack.Text = "   " .. text
-    MusicBack.TextColor3 = config.TextColor
-    MusicBack.TextSize = 14
-    MusicBack.TextXAlignment = Enum.TextXAlignment.Left
-    
-    MusicBackC.CornerRadius = UDim.new(0, 6)
-    MusicBackC.Name = "MusicBackC"
-    MusicBackC.Parent = MusicBack
-    
-    -- 创建音乐控件框架
-    MusicControls.Name = "MusicControls"
-    MusicControls.Parent = MusicBack
-    MusicControls.BackgroundTransparency = 1
-    MusicControls.Position = UDim2.new(0.05, 0, 0.4, 0)
-    MusicControls.Size = UDim2.new(0.9, 0, 0, 50)
-    
-    -- 播放/暂停按钮
-    PlayPauseBtn.Name = "PlayPauseBtn"
-    PlayPauseBtn.Parent = MusicControls
-    PlayPauseBtn.BackgroundColor3 = config.AccentColor
-    PlayPauseBtn.BackgroundTransparency = 0.2
-    PlayPauseBtn.BorderSizePixel = 0
-    PlayPauseBtn.Position = UDim2.new(0, 0, 0, 0)
-    PlayPauseBtn.Size = UDim2.new(0, 30, 0, 30)
-    PlayPauseBtn.AutoButtonColor = false
-    PlayPauseBtn.Font = Enum.Font.GothamBold
-    PlayPauseBtn.Text = "▶"
-    PlayPauseBtn.TextColor3 = config.TextColor
-    PlayPauseBtn.TextSize = 12
-    
-    PlayPauseC.CornerRadius = UDim.new(0, 4)
-    PlayPauseC.Name = "PlayPauseC"
-    PlayPauseC.Parent = PlayPauseBtn
-    
-    -- 停止按钮
-    StopBtn.Name = "StopBtn"
-    StopBtn.Parent = MusicControls
-    StopBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-    StopBtn.BackgroundTransparency = 0.2
-    StopBtn.BorderSizePixel = 0
-    StopBtn.Position = UDim2.new(0.1, 0, 0, 0)
-    StopBtn.Size = UDim2.new(0, 30, 0, 30)
-    StopBtn.AutoButtonColor = false
-    StopBtn.Font = Enum.Font.GothamBold
-    StopBtn.Text = "■"
-    StopBtn.TextColor3 = config.TextColor
-    StopBtn.TextSize = 12
-    
-    StopC.CornerRadius = UDim.new(0, 4)
-    StopC.Name = "StopC"
-    StopC.Parent = StopBtn
-    
-    -- 进度条
-    ProgressBar.Name = "ProgressBar"
-    ProgressBar.Parent = MusicControls
-    ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    ProgressBar.BorderSizePixel = 0
-    ProgressBar.Position = UDim2.new(0.25, 0, 0.35, 0)
-    ProgressBar.Size = UDim2.new(0.5, 0, 0, 6)
-    
-    ProgressBarC.CornerRadius = UDim.new(0, 3)
-    ProgressBarC.Name = "ProgressBarC"
-    ProgressBarC.Parent = ProgressBar
-    
-    ProgressFill.Name = "ProgressFill"
-    ProgressFill.Parent = ProgressBar
-    ProgressFill.BackgroundColor3 = config.AccentColor
-    ProgressFill.BorderSizePixel = 0
-    ProgressFill.Size = UDim2.new(0, 0, 1, 0)
-    
-    ProgressFillC.CornerRadius = UDim.new(0, 3)
-    ProgressFillC.Name = "ProgressFillC"
-    ProgressFillC.Parent = ProgressFill
-    
-    -- 时间显示
-    TimeLabel.Name = "TimeLabel"
-    TimeLabel.Parent = MusicControls
-    TimeLabel.BackgroundTransparency = 1
-    TimeLabel.Position = UDim2.new(0.25, 0, 0.7, 0)
-    TimeLabel.Size = UDim2.new(0.5, 0, 0, 15)
-    TimeLabel.Font = Enum.Font.Gotham
-    TimeLabel.Text = "0:00 / 0:00"
-    TimeLabel.TextColor3 = config.SecondaryTextColor
-    TimeLabel.TextSize = 10
-    TimeLabel.TextXAlignment = Enum.TextXAlignment.Center
-    
-    -- 音量控制
-    VolumeIcon.Name = "VolumeIcon"
-    VolumeIcon.Parent = MusicControls
-    VolumeIcon.BackgroundTransparency = 1
-    VolumeIcon.Position = UDim2.new(0.8, 0, 0.1, 0)
-    VolumeIcon.Size = UDim2.new(0, 20, 0, 20)
-    VolumeIcon.Font = Enum.Font.GothamBold
-    VolumeIcon.Text = "🔊"
-    VolumeIcon.TextColor3 = config.SecondaryTextColor
-    VolumeIcon.TextSize = 12
-    
-    VolumeSlider.Name = "VolumeSlider"
-    VolumeSlider.Parent = MusicControls
-    VolumeSlider.BackgroundTransparency = 1
-    VolumeSlider.Position = UDim2.new(0.8, 0, 0.35, 0)
-    VolumeSlider.Size = UDim2.new(0, 50, 0, 6)
-    
-    VolumeBar.Name = "VolumeBar"
-    VolumeBar.Parent = VolumeSlider
-    VolumeBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    VolumeBar.BorderSizePixel = 0
-    VolumeBar.Size = UDim2.new(1, 0, 1, 0)
-    
-    VolumeBarC.CornerRadius = UDim.new(0, 3)
-    VolumeBarC.Name = "VolumeBarC"
-    VolumeBarC.Parent = VolumeBar
-    
-    VolumeFill.Name = "VolumeFill"
-    VolumeFill.Parent = VolumeBar
-    VolumeFill.BackgroundColor3 = config.AccentColor
-    VolumeFill.BorderSizePixel = 0
-    VolumeFill.Size = UDim2.new(0.7, 0, 1, 0)
-    
-    VolumeFillC.CornerRadius = UDim.new(0, 3)
-    VolumeFillC.Name = "VolumeFillC"
-    VolumeFillC.Parent = VolumeFill
-    
-    -- 添加发光效果
-    local musicGlow = Instance.new("UIStroke")
-    musicGlow.Parent = MusicBack
-    musicGlow.Color = config.AccentColor
-    musicGlow.Thickness = 1
-    musicGlow.Transparency = 0.8
-    
-    startNeonFlowEffect(musicGlow, "Color", 0.01)
-    createPulseGlow(musicGlow)
-    
-    -- 音乐播放器状态
-    local isPlaying = false
-    local currentSound = nil
-    local volume = 0.7
-    local duration = 0
-    local currentTime = 0
-    
-    -- 格式化时间函数
-    local function formatTime(seconds)
-        local minutes = math.floor(seconds / 60)
-        local secs = math.floor(seconds % 60)
-        return string.format("%d:%02d", minutes, secs)
-    end
-    
-    -- 创建音乐对象
-    local function createSound()
-        if currentSound then
-            currentSound:Destroy()
-        end
-        
-        currentSound = Instance.new("Sound")
-        currentSound.SoundId = "rbxassetid://" .. tostring(soundId)
-        currentSound.Volume = volume
-        currentSound.Looped = true
-        currentSound.Parent = workspace
-        
-        -- 等待音乐加载
-        currentSound.Loaded:Wait()
-        duration = currentSound.TimeLength
-        TimeLabel.Text = formatTime(0) .. " / " .. formatTime(duration)
-    end
-    
-    -- 初始化音乐
-    createSound()
-    
-    -- 播放/暂停功能
-    PlayPauseBtn.MouseButton1Click:Connect(function()
-        DigitalParticleExplosion(PlayPauseBtn)
-        
-        if isPlaying then
-            currentSound:Pause()
-            PlayPauseBtn.Text = "▶"
-            PlayPauseBtn.BackgroundColor3 = config.AccentColor
-        else
-            currentSound:Play()
-            PlayPauseBtn.Text = "⏸"
-            PlayPauseBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
-        end
-        
-        isPlaying = not isPlaying
-        callback(isPlaying and "play" or "pause")
-    end)
-    
-    -- 停止功能
-    StopBtn.MouseButton1Click:Connect(function()
-        DigitalParticleExplosion(StopBtn)
-        
-        if currentSound then
-            currentSound:Stop()
-            isPlaying = false
-            PlayPauseBtn.Text = "▶"
-            PlayPauseBtn.BackgroundColor3 = config.AccentColor
-            ProgressFill.Size = UDim2.new(0, 0, 1, 0)
-            TimeLabel.Text = formatTime(0) .. " / " .. formatTime(duration)
-        end
-        
-        callback("stop")
-    end)
-    
-    -- 进度条点击
-    ProgressBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local mouse = services.Players.LocalPlayer:GetMouse()
-            local barPos = ProgressBar.AbsolutePosition.X
-            local barSize = ProgressBar.AbsoluteSize.X
-            local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
-            local percent = (mouseX - barPos) / barSize
-            
-            if currentSound and duration > 0 then
-                currentSound.TimePosition = percent * duration
-                ProgressFill.Size = UDim2.new(percent, 0, 1, 0)
-            end
-        end
-    end)
-    
-    -- 音量控制
-    VolumeBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local mouse = services.Players.LocalPlayer:GetMouse()
-            local barPos = VolumeBar.AbsolutePosition.X
-            local barSize = VolumeBar.AbsoluteSize.X
-            local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
-            local percent = (mouseX - barPos) / barSize
-            
-            volume = math.clamp(percent, 0, 1)
-            VolumeFill.Size = UDim2.new(volume, 0, 1, 0)
-            
-            if currentSound then
-                currentSound.Volume = volume
-            end
-            
-            -- 更新音量图标
-            if volume == 0 then
-                VolumeIcon.Text = "🔇"
-            elseif volume < 0.3 then
-                VolumeIcon.Text = "🔈"
-            elseif volume < 0.7 then
-                VolumeIcon.Text = "🔉"
-            else
-                VolumeIcon.Text = "🔊"
-            end
-        end
-    end)
-    
-    -- 更新进度
-    local progressConnection
-    progressConnection = RunService.Heartbeat:Connect(function()
-        if currentSound and isPlaying and duration > 0 then
-            currentTime = currentSound.TimePosition
-            local progressPercent = currentTime / duration
-            ProgressFill.Size = UDim2.new(progressPercent, 0, 1, 0)
-            TimeLabel.Text = formatTime(currentTime) .. " / " .. formatTime(duration)
-        end
-    end)
-    
-    -- 鼠标悬停效果
-    MusicBack.MouseEnter:Connect(function()
-        services.TweenService:Create(MusicBack, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-            BackgroundColor3 = Color3.fromRGB(
-                math.floor(config.Button_Color.R * 255 * 1.1),
-                math.floor(config.Button_Color.G * 255 * 1.1),
-                math.floor(config.Button_Color.B * 255 * 1.1)
-            )
-        }):Play()
-        services.TweenService:Create(musicGlow, TweenInfo.new(0.2), {
-            Thickness = 2,
-            Transparency = 0.5
-        }):Play()
-    end)
-    
-    MusicBack.MouseLeave:Connect(function()
-        services.TweenService:Create(MusicBack, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-            BackgroundColor3 = config.Button_Color
-        }):Play()
-        services.TweenService:Create(musicGlow, TweenInfo.new(0.2), {
-            Thickness = 1,
-            Transparency = 0.8
-        }):Play()
-    end)
-    
-    -- 返回控制函数
-    local funcs = {
-        Play = function(self)
-            if currentSound then
-                currentSound:Play()
-                isPlaying = true
-                PlayPauseBtn.Text = "⏸"
-                PlayPauseBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
-            end
-        end,
-        
-        Pause = function(self)
-            if currentSound then
-                currentSound:Pause()
-                isPlaying = false
-                PlayPauseBtn.Text = "▶"
-                PlayPauseBtn.BackgroundColor3 = config.AccentColor
-            end
-        end,
-        
-        Stop = function(self)
-            if currentSound then
-                currentSound:Stop()
-                isPlaying = false
-                PlayPauseBtn.Text = "▶"
-                PlayPauseBtn.BackgroundColor3 = config.AccentColor
-                ProgressFill.Size = UDim2.new(0, 0, 1, 0)
-                TimeLabel.Text = formatTime(0) .. " / " .. formatTime(duration)
-            end
-        end,
-        
-        SetVolume = function(self, vol)
-            volume = math.clamp(vol, 0, 1)
-            VolumeFill.Size = UDim2.new(volume, 0, 1, 0)
-            
-            if currentSound then
-                currentSound.Volume = volume
-            end
-            
-            if volume == 0 then
-                VolumeIcon.Text = "🔇"
-            elseif volume < 0.3 then
-                VolumeIcon.Text = "🔈"
-            elseif volume < 0.7 then
-                VolumeIcon.Text = "🔉"
-            else
-                VolumeIcon.Text = "🔊"
-            end
-        end,
-        
-        ChangeSound = function(self, newSoundId)
-            soundId = newSoundId
-            if currentSound then
-                currentSound:Stop()
-                currentSound:Destroy()
-            end
-            createSound()
-        end,
-        
-        Destroy = function(self)
-            if progressConnection then
-                progressConnection:Disconnect()
-            end
-            if currentSound then
-                currentSound:Stop()
-                currentSound:Destroy()
-            end
-            MusicModule:Destroy()
-        end
-    }
-    
-    return funcs
-end
-
             function section.Toggle(section, text, flag, enabled, callback)
                 callback = callback or function() end
                 enabled = enabled or false
