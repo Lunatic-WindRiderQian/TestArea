@@ -682,7 +682,7 @@ ScriptTitle.TextColor3 = config.AccentColor
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
-ScriptTitle.Visible = true -- 隐藏原来的标题
+ScriptTitle.Visible = false -- 隐藏原来的标题
 
 task.spawn(function()
     local hue = 0
@@ -731,7 +731,9 @@ function FengUI.new(FengUI, name, theme)
         end
     end
 
-    TitleText.Text = name or "FengUI"
+    -- 修复：确保脚本名称正确显示
+    local scriptName = name or "FengUI"
+    TitleText.Text = scriptName
     
     local window = {}
     
