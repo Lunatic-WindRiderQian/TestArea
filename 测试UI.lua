@@ -989,7 +989,7 @@ function FengUI.new(FengUI, name, theme)
     MusicPlayerModule.Parent = Objs
     MusicPlayerModule.BackgroundTransparency = 1
     MusicPlayerModule.BorderSizePixel = 0
-    MusicPlayerModule.Size = UDim2.new(0, 330, 0, 160) -- 调整高度
+    MusicPlayerModule.Size = UDim2.new(0, 330, 0, 160)
     
     -- 音乐播放器主容器
     local PlayerContainer = Instance.new("Frame")
@@ -1019,7 +1019,7 @@ function FengUI.new(FengUI, name, theme)
     TopSection.Name = "TopSection"
     TopSection.Parent = PlayerContainer
     TopSection.BackgroundTransparency = 1
-    TopSection.Size = UDim2.new(1, 0, 0, 80)
+    TopSection.Size = UDim2.new(1, 0, 0, 70) -- 减少上部高度
     
     -- 专辑图片（左侧）
     local AlbumArt = Instance.new("ImageLabel")
@@ -1028,7 +1028,7 @@ function FengUI.new(FengUI, name, theme)
     AlbumArt.BackgroundColor3 = config.Bg_Color
     AlbumArt.BackgroundTransparency = 0.2
     AlbumArt.Position = UDim2.new(0.03, 0, 0.1, 0)
-    AlbumArt.Size = UDim2.new(0, 60, 0, 60) -- 缩小专辑图片
+    AlbumArt.Size = UDim2.new(0, 50, 0, 50) -- 进一步缩小专辑图片
     
     local AlbumCorner = Instance.new("UICorner")
     AlbumCorner.CornerRadius = UDim.new(0, 6)
@@ -1046,8 +1046,8 @@ function FengUI.new(FengUI, name, theme)
     InfoContainer.Name = "InfoContainer"
     InfoContainer.Parent = TopSection
     InfoContainer.BackgroundTransparency = 1
-    InfoContainer.Position = UDim2.new(0.25, 0, 0, 0)
-    InfoContainer.Size = UDim2.new(0.7, 0, 1, 0)
+    InfoContainer.Position = UDim2.new(0.22, 0, 0, 0)
+    InfoContainer.Size = UDim2.new(0.75, 0, 1, 0)
     
     local SongTitle = Instance.new("TextLabel")
     SongTitle.Name = "SongTitle"
@@ -1080,8 +1080,8 @@ function FengUI.new(FengUI, name, theme)
     BottomSection.Name = "BottomSection"
     BottomSection.Parent = PlayerContainer
     BottomSection.BackgroundTransparency = 1
-    BottomSection.Position = UDim2.new(0, 0, 0.5, 0)
-    BottomSection.Size = UDim2.new(1, 0, 0, 80)
+    BottomSection.Position = UDim2.new(0, 0, 0.44, 0) -- 位置上移
+    BottomSection.Size = UDim2.new(1, 0, 0, 90) -- 增加高度以容纳控制按钮
     
     -- 进度条
     local ProgressBar = Instance.new("Frame")
@@ -1089,7 +1089,7 @@ function FengUI.new(FengUI, name, theme)
     ProgressBar.Parent = BottomSection
     ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     ProgressBar.BorderSizePixel = 0
-    ProgressBar.Position = UDim2.new(0.03, 0, 0.1, 0)
+    ProgressBar.Position = UDim2.new(0.03, 0, 0.05, 0) -- 位置上移
     ProgressBar.Size = UDim2.new(0.94, 0, 0, 6)
     
     local ProgressBarCorner = Instance.new("UICorner")
@@ -1112,7 +1112,7 @@ function FengUI.new(FengUI, name, theme)
     TimeLabel.Name = "TimeLabel"
     TimeLabel.Parent = BottomSection
     TimeLabel.BackgroundTransparency = 1
-    TimeLabel.Position = UDim2.new(0.03, 0, 0.25, 0)
+    TimeLabel.Position = UDim2.new(0.03, 0, 0.18, 0) -- 位置上移
     TimeLabel.Size = UDim2.new(0.94, 0, 0, 15)
     TimeLabel.Font = Enum.Font.Gotham
     TimeLabel.Text = "0:00 / 0:00"
@@ -1120,12 +1120,12 @@ function FengUI.new(FengUI, name, theme)
     TimeLabel.TextSize = 10
     TimeLabel.TextXAlignment = Enum.TextXAlignment.Center
     
-    -- 控制按钮容器 - 重新设计布局
+    -- 控制按钮容器 - 位置上移
     local ControlsContainer = Instance.new("Frame")
     ControlsContainer.Name = "ControlsContainer"
     ControlsContainer.Parent = BottomSection
     ControlsContainer.BackgroundTransparency = 1
-    ControlsContainer.Position = UDim2.new(0, 0, 0.5, 0)
+    ControlsContainer.Position = UDim2.new(0, 0, 0.35, 0) -- 位置上移
     ControlsContainer.Size = UDim2.new(1, 0, 0, 40)
     
     -- 创建控制按钮的函数
@@ -1133,14 +1133,15 @@ function FengUI.new(FengUI, name, theme)
         local button = Instance.new("TextButton")
         button.Name = name
         button.Parent = ControlsContainer
-        button.BackgroundColor3 = isMain and config.AccentColor or config.Button_Color
+        -- 修改：只有主按钮（播放/暂停）使用主题色，其他按钮使用灰白色
+        button.BackgroundColor3 = isMain and config.AccentColor or Color3.fromRGB(180, 180, 180)
         button.BackgroundTransparency = 0.1
         button.Position = position
         button.Size = size
         button.AutoButtonColor = false
         button.Font = Enum.Font.GothamBold
         button.Text = text
-        button.TextColor3 = config.TextColor
+        button.TextColor3 = isMain and config.TextColor or Color3.fromRGB(50, 50, 50) -- 修改：非主按钮使用深色文字
         button.TextSize = isMain and 16 or 12
         button.ZIndex = 5
         
@@ -1148,15 +1149,17 @@ function FengUI.new(FengUI, name, theme)
         buttonCorner.CornerRadius = UDim.new(1, 0)
         buttonCorner.Parent = button
         
-        -- 发光效果
+        -- 发光效果 - 修改：非主按钮使用灰色发光
         local buttonGlow = Instance.new("UIStroke")
         buttonGlow.Parent = button
-        buttonGlow.Color = config.AccentColor
+        buttonGlow.Color = isMain and config.AccentColor or Color3.fromRGB(150, 150, 150)
         buttonGlow.Thickness = 1
         buttonGlow.Transparency = 0.6
         buttonGlow.ZIndex = 4
         
-        startNeonFlowEffect(buttonGlow, "Color", 0.01)
+        if isMain then
+            startNeonFlowEffect(buttonGlow, "Color", 0.01)
+        end
         
         -- 悬停效果
         button.MouseEnter:Connect(function()
@@ -1209,7 +1212,7 @@ function FengUI.new(FengUI, name, theme)
         -- 更新循环按钮的视觉状态
         if mode.mode == "single" then
             services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
-                BackgroundColor3 = config.AccentColor
+                BackgroundColor3 = Color3.fromRGB(120, 120, 120) -- 单曲循环时变为深灰色
             }):Play()
             services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
                 Transparency = 0.3,
@@ -1217,7 +1220,7 @@ function FengUI.new(FengUI, name, theme)
             }):Play()
         else
             services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
-                BackgroundColor3 = config.Button_Color
+                BackgroundColor3 = Color3.fromRGB(180, 180, 180) -- 恢复为灰白色
             }):Play()
             services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
                 Transparency = 0.6,
@@ -1271,7 +1274,7 @@ function FengUI.new(FengUI, name, theme)
     end)
     
     -- 按钮点击效果函数
-    local function createButtonClickEffect(button)
+    local function createButtonClickEffect(button, isMain)
         services.TweenService:Create(button, TweenInfo.new(0.1), {
             BackgroundTransparency = 0.3,
             Size = UDim2.new(0, button.Size.X.Offset - 2, 0, button.Size.Y.Offset - 2)
@@ -1288,7 +1291,7 @@ function FengUI.new(FengUI, name, theme)
     -- 按钮事件
     PlayPauseButton.MouseButton1Click:Connect(function()
         DigitalParticleExplosion(PlayPauseButton)
-        createButtonClickEffect(PlayPauseButton)
+        createButtonClickEffect(PlayPauseButton, true)
         
         if MusicPlayer.isPlaying then
             MusicPlayer:Pause()
@@ -1306,7 +1309,7 @@ function FengUI.new(FengUI, name, theme)
     
     PrevButton.MouseButton1Click:Connect(function()
         DigitalParticleExplosion(PrevButton)
-        createButtonClickEffect(PrevButton)
+        createButtonClickEffect(PrevButton, false)
         local track = MusicPlayer:PreviousTrack()
         if track then
             updateUI()
@@ -1315,7 +1318,7 @@ function FengUI.new(FengUI, name, theme)
     
     NextButton.MouseButton1Click:Connect(function()
         DigitalParticleExplosion(NextButton)
-        createButtonClickEffect(NextButton)
+        createButtonClickEffect(NextButton, false)
         local track = MusicPlayer:NextTrack()
         if track then
             updateUI()
@@ -1324,7 +1327,7 @@ function FengUI.new(FengUI, name, theme)
     
     LoopButton.MouseButton1Click:Connect(function()
         DigitalParticleExplosion(LoopButton)
-        createButtonClickEffect(LoopButton)
+        createButtonClickEffect(LoopButton, false)
         
         -- 切换循环模式
         currentLoopMode = currentLoopMode + 1
