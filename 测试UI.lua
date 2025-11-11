@@ -984,763 +984,752 @@ function FengUI.new(FengUI, name, theme)
             
             -- 添加音乐播放器组件
             function section.MusicPlayer(section, title, defaultPlaylist)
-    local MusicPlayerModule = Instance.new("Frame")
-    MusicPlayerModule.Name = "MusicPlayerModule"
-    MusicPlayerModule.Parent = Objs
-    MusicPlayerModule.BackgroundTransparency = 1
-    MusicPlayerModule.BorderSizePixel = 0
-    MusicPlayerModule.Size = UDim2.new(0, 330, 0, 160)
-    
-    -- 音乐播放器主容器
-    local PlayerContainer = Instance.new("Frame")
-    PlayerContainer.Name = "PlayerContainer"
-    PlayerContainer.Parent = MusicPlayerModule
-    PlayerContainer.BackgroundColor3 = config.TabColor
-    PlayerContainer.BackgroundTransparency = 0.2
-    PlayerContainer.Size = UDim2.new(1, 0, 0, 160)
-    
-    local PlayerCorner = Instance.new("UICorner")
-    PlayerCorner.CornerRadius = UDim.new(0, 8)
-    PlayerCorner.Parent = PlayerContainer
-    
-    -- 发光边框
-    local playerGlow = Instance.new("UIStroke")
-    playerGlow.Parent = PlayerContainer
-    playerGlow.Color = config.AccentColor
-    playerGlow.Thickness = 2
-    playerGlow.Transparency = 0.7
-    
-    startNeonFlowEffect(playerGlow, "Color", 0.008)
-    createPulseGlow(playerGlow)
-    
-    -- 添加选择音乐按钮到右上角
-    local SelectMusicButton = Instance.new("TextButton")
-    SelectMusicButton.Name = "SelectMusicButton"
-    SelectMusicButton.Parent = PlayerContainer
-    SelectMusicButton.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
-    SelectMusicButton.BackgroundTransparency = 0.1
-    SelectMusicButton.Position = UDim2.new(0.85, 0, 0.02, 0)
-    SelectMusicButton.Size = UDim2.new(0, 40, 0, 40)
-    SelectMusicButton.AutoButtonColor = false
-    SelectMusicButton.Font = Enum.Font.GothamBold
-    SelectMusicButton.Text = "🎵"
-    SelectMusicButton.TextColor3 = Color3.fromRGB(50, 50, 50)
-    SelectMusicButton.TextSize = 18
-    SelectMusicButton.ZIndex = 5
-    
-    local SelectMusicCorner = Instance.new("UICorner")
-    SelectMusicCorner.CornerRadius = UDim.new(1, 0)
-    SelectMusicCorner.Parent = SelectMusicButton
-    
-    -- 选择按钮发光效果
-    local selectMusicGlow = Instance.new("UIStroke")
-    selectMusicGlow.Parent = SelectMusicButton
-    selectMusicGlow.Color = Color3.fromRGB(150, 150, 150)
-    selectMusicGlow.Thickness = 1
-    selectMusicGlow.Transparency = 0.6
-    selectMusicGlow.ZIndex = 4
-    
-    -- 悬停效果
-    SelectMusicButton.MouseEnter:Connect(function()
-        services.TweenService:Create(SelectMusicButton, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0,
-            Size = UDim2.new(0, 42, 0, 42)
-        }):Play()
-        services.TweenService:Create(selectMusicGlow, TweenInfo.new(0.2), {
-            Thickness = 2,
-            Transparency = 0.3
-        }):Play()
-    end)
-    
-    SelectMusicButton.MouseLeave:Connect(function()
-        services.TweenService:Create(SelectMusicButton, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0.1,
-            Size = UDim2.new(0, 40, 0, 40)
-        }):Play()
-        services.TweenService:Create(selectMusicGlow, TweenInfo.new(0.2), {
-            Thickness = 1,
-            Transparency = 0.6
-        }):Play()
-    end)
-    
-    -- 重新设计布局：上下结构
-    -- 上部：歌曲信息和专辑封面
-    local TopSection = Instance.new("Frame")
-    TopSection.Name = "TopSection"
-    TopSection.Parent = PlayerContainer
-    TopSection.BackgroundTransparency = 1
-    TopSection.Size = UDim2.new(1, 0, 0, 70) -- 减少上部高度
-    
-    -- 专辑图片（左侧）
-    local AlbumArt = Instance.new("ImageLabel")
-    AlbumArt.Name = "AlbumArt"
-    AlbumArt.Parent = TopSection
-    AlbumArt.BackgroundColor3 = config.Bg_Color
-    AlbumArt.BackgroundTransparency = 0.2
-    AlbumArt.Position = UDim2.new(0.03, 0, 0.1, 0)
-    AlbumArt.Size = UDim2.new(0, 50, 0, 50) -- 进一步缩小专辑图片
-    
-    local AlbumCorner = Instance.new("UICorner")
-    AlbumCorner.CornerRadius = UDim.new(0, 6)
-    AlbumCorner.Parent = AlbumArt
-    
-    -- 专辑图片发光效果
-    local albumGlow = Instance.new("UIStroke")
-    albumGlow.Parent = AlbumArt
-    albumGlow.Color = config.AccentColor
-    albumGlow.Thickness = 1
-    albumGlow.Transparency = 0.8
-    
-    -- 歌曲信息（右侧）
-    local InfoContainer = Instance.new("Frame")
-    InfoContainer.Name = "InfoContainer"
-    InfoContainer.Parent = TopSection
-    InfoContainer.BackgroundTransparency = 1
-    InfoContainer.Position = UDim2.new(0.22, 0, 0, 0)
-    InfoContainer.Size = UDim2.new(0.75, 0, 1, 0)
-    
-    local SongTitle = Instance.new("TextLabel")
-    SongTitle.Name = "SongTitle"
-    SongTitle.Parent = InfoContainer
-    SongTitle.BackgroundTransparency = 1
-    SongTitle.Position = UDim2.new(0, 0, 0.15, 0)
-    SongTitle.Size = UDim2.new(1, 0, 0, 25)
-    SongTitle.Font = Enum.Font.GothamBold
-    SongTitle.Text = "没有播放音乐"
-    SongTitle.TextColor3 = config.TextColor
-    SongTitle.TextSize = 14
-    SongTitle.TextXAlignment = Enum.TextXAlignment.Left
-    SongTitle.TextTruncate = Enum.TextTruncate.AtEnd
-    
-    local ArtistName = Instance.new("TextLabel")
-    ArtistName.Name = "ArtistName"
-    ArtistName.Parent = InfoContainer
-    ArtistName.BackgroundTransparency = 1
-    ArtistName.Position = UDim2.new(0, 0, 0.45, 0)
-    ArtistName.Size = UDim2.new(1, 0, 0, 20)
-    ArtistName.Font = Enum.Font.Gotham
-    ArtistName.Text = "未知艺术家"
-    ArtistName.TextColor3 = config.SecondaryTextColor
-    ArtistName.TextSize = 12
-    ArtistName.TextXAlignment = Enum.TextXAlignment.Left
-    ArtistName.TextTruncate = Enum.TextTruncate.AtEnd
-    
-    -- 下部：控制区域
-    local BottomSection = Instance.new("Frame")
-    BottomSection.Name = "BottomSection"
-    BottomSection.Parent = PlayerContainer
-    BottomSection.BackgroundTransparency = 1
-    BottomSection.Position = UDim2.new(0, 0, 0.44, 0) -- 位置上移
-    BottomSection.Size = UDim2.new(1, 0, 0, 90) -- 增加高度以容纳控制按钮
-    
-    -- 进度条
-    local ProgressBar = Instance.new("Frame")
-    ProgressBar.Name = "ProgressBar"
-    ProgressBar.Parent = BottomSection
-    ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    ProgressBar.BorderSizePixel = 0
-    ProgressBar.Position = UDim2.new(0.03, 0, 0.05, 0) -- 位置上移
-    ProgressBar.Size = UDim2.new(0.94, 0, 0, 6)
-    
-    local ProgressBarCorner = Instance.new("UICorner")
-    ProgressBarCorner.CornerRadius = UDim.new(1, 0)
-    ProgressBarCorner.Parent = ProgressBar
-    
-    local ProgressFill = Instance.new("Frame")
-    ProgressFill.Name = "ProgressFill"
-    ProgressFill.Parent = ProgressBar
-    ProgressFill.BackgroundColor3 = config.AccentColor
-    ProgressFill.BorderSizePixel = 0
-    ProgressFill.Size = UDim2.new(0, 0, 1, 0)
-    
-    local ProgressFillCorner = Instance.new("UICorner")
-    ProgressFillCorner.CornerRadius = UDim.new(1, 0)
-    ProgressFillCorner.Parent = ProgressFill
-    
-    -- 时间显示
-    local TimeLabel = Instance.new("TextLabel")
-    TimeLabel.Name = "TimeLabel"
-    TimeLabel.Parent = BottomSection
-    TimeLabel.BackgroundTransparency = 1
-    TimeLabel.Position = UDim2.new(0.03, 0, 0.18, 0) -- 位置上移
-    TimeLabel.Size = UDim2.new(0.94, 0, 0, 15)
-    TimeLabel.Font = Enum.Font.Gotham
-    TimeLabel.Text = "0:00 / 0:00"
-    TimeLabel.TextColor3 = config.SecondaryTextColor
-    TimeLabel.TextSize = 10
-    TimeLabel.TextXAlignment = Enum.TextXAlignment.Center
-    
-    -- 控制按钮容器 - 位置上移
-    local ControlsContainer = Instance.new("Frame")
-    ControlsContainer.Name = "ControlsContainer"
-    ControlsContainer.Parent = BottomSection
-    ControlsContainer.BackgroundTransparency = 1
-    ControlsContainer.Position = UDim2.new(0, 0, 0.35, 0) -- 位置上移
-    ControlsContainer.Size = UDim2.new(1, 0, 0, 40)
-    
-    -- 创建控制按钮的函数
-    local function createControlButton(name, text, position, size, isMain)
-        local button = Instance.new("TextButton")
-        button.Name = name
-        button.Parent = ControlsContainer
-        -- 修改：只有主按钮（播放/暂停）使用主题色，其他按钮使用灰白色
-        button.BackgroundColor3 = isMain and config.AccentColor or Color3.fromRGB(180, 180, 180)
-        button.BackgroundTransparency = 0.1
-        button.Position = position
-        button.Size = size
-        button.AutoButtonColor = false
-        button.Font = Enum.Font.GothamBold
-        button.Text = text
-        button.TextColor3 = isMain and config.TextColor or Color3.fromRGB(50, 50, 50) -- 修改：非主按钮使用深色文字
-        button.TextSize = isMain and 16 or 12
-        button.ZIndex = 5
-        
-        local buttonCorner = Instance.new("UICorner")
-        buttonCorner.CornerRadius = UDim.new(1, 0)
-        buttonCorner.Parent = button
-        
-        -- 发光效果 - 修改：非主按钮使用灰色发光
-        local buttonGlow = Instance.new("UIStroke")
-        buttonGlow.Parent = button
-        buttonGlow.Color = isMain and config.AccentColor or Color3.fromRGB(150, 150, 150)
-        buttonGlow.Thickness = 1
-        buttonGlow.Transparency = 0.6
-        buttonGlow.ZIndex = 4
-        
-        if isMain then
-            startNeonFlowEffect(buttonGlow, "Color", 0.01)
-        end
-        
-        -- 悬停效果
-        button.MouseEnter:Connect(function()
-            services.TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0,
-                Size = UDim2.new(0, size.X.Offset + 2, 0, size.Y.Offset + 2)
-            }):Play()
-            services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
-                Thickness = 2,
-                Transparency = 0.3
-            }):Play()
-        end)
-        
-        button.MouseLeave:Connect(function()
-            services.TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.1,
-                Size = size
-            }):Play()
-            services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
-                Thickness = 1,
-                Transparency = 0.6
-            }):Play()
-        end)
-        
-        return button, buttonGlow
-    end
-    
-    -- 创建控制按钮 - 调整大小和位置以适应界面
-    local PrevButton, prevGlow = createControlButton("PrevButton", "⏮", UDim2.new(0.15, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
-    local PlayPauseButton, playGlow = createControlButton("PlayPauseButton", "▶", UDim2.new(0.42, 0, 0.1, 0), UDim2.new(0, 36, 0, 36), true)
-    local NextButton, nextGlow = createControlButton("NextButton", "⏭", UDim2.new(0.69, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
-    
-    -- 循环模式按钮
-    local LoopButton, loopGlow = createControlButton("LoopButton", "🔁", UDim2.new(0.85, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
-    
-    -- 循环模式状态
-    local loopModes = {
-        {mode = "none", text = "🔁", tooltip = "无循环"},
-        {mode = "single", text = "🔂", tooltip = "单曲循环"},
-        {mode = "all", text = "🔁", tooltip = "列表循环"}
-    }
-    local currentLoopMode = 1
-    
-    -- 更新循环模式显示
-    local function updateLoopMode()
-        local mode = loopModes[currentLoopMode]
-        LoopButton.Text = mode.text
-        MusicPlayer.isLooping = (mode.mode == "single" or mode.mode == "all")
-        
-        -- 更新循环按钮的视觉状态
-        if mode.mode == "single" then
-            services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
-                BackgroundColor3 = Color3.fromRGB(120, 120, 120) -- 单曲循环时变为深灰色
-            }):Play()
-            services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
-                Transparency = 0.3,
-                Thickness = 2
-            }):Play()
-        else
-            services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
-                BackgroundColor3 = Color3.fromRGB(180, 180, 180) -- 恢复为灰白色
-            }):Play()
-            services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
-                Transparency = 0.6,
-                Thickness = 1
-            }):Play()
-        end
-    end
-    
-    -- 更新UI函数
-    local function updateUI()
-        local currentTrack = MusicPlayer:GetCurrentTrack()
-        if currentTrack then
-            SongTitle.Text = currentTrack.title
-            ArtistName.Text = currentTrack.artist
-            AlbumArt.Image = "rbxassetid://" .. currentTrack.imageId
-        else
-            SongTitle.Text = "没有播放音乐"
-            ArtistName.Text = "未知艺术家"
-            AlbumArt.Image = "rbxassetid://84830962019412"
-        end
-        
-        PlayPauseButton.Text = MusicPlayer.isPlaying and "⏸" or "▶"
-        updateLoopMode()
-    end
-    
-    -- 进度条更新循环
-    task.spawn(function()
-        while PlayerContainer and PlayerContainer.Parent do
-            if MusicPlayer.currentSound and MusicPlayer.isPlaying then
-                local currentTime = MusicPlayer.currentSound.TimePosition
-                local totalTime = MusicPlayer.currentSound.TimeLength
+                local MusicPlayerModule = Instance.new("Frame")
+                MusicPlayerModule.Name = "MusicPlayerModule"
+                MusicPlayerModule.Parent = Objs
+                MusicPlayerModule.BackgroundTransparency = 1
+                MusicPlayerModule.BorderSizePixel = 0
+                MusicPlayerModule.Size = UDim2.new(0, 330, 0, 160)
                 
-                if totalTime > 0 then
-                    local progress = currentTime / totalTime
-                    ProgressFill.Size = UDim2.new(progress, 0, 1, 0)
-                    
-                    local currentMinutes = math.floor(currentTime / 60)
-                    local currentSeconds = math.floor(currentTime % 60)
-                    local totalMinutes = math.floor(totalTime / 60)
-                    local totalSeconds = math.floor(totalTime % 60)
-                    
-                    TimeLabel.Text = string.format("%d:%02d / %d:%02d", 
-                        currentMinutes, currentSeconds, totalMinutes, totalSeconds)
-                end
-            else
+                -- 音乐播放器主容器
+                local PlayerContainer = Instance.new("Frame")
+                PlayerContainer.Name = "PlayerContainer"
+                PlayerContainer.Parent = MusicPlayerModule
+                PlayerContainer.BackgroundColor3 = config.TabColor
+                PlayerContainer.BackgroundTransparency = 0.2
+                PlayerContainer.Size = UDim2.new(1, 0, 0, 160)
+                
+                local PlayerCorner = Instance.new("UICorner")
+                PlayerCorner.CornerRadius = UDim.new(0, 8)
+                PlayerCorner.Parent = PlayerContainer
+                
+                -- 专辑图片
+                local AlbumArt = Instance.new("ImageLabel")
+                AlbumArt.Name = "AlbumArt"
+                AlbumArt.Parent = PlayerContainer
+                AlbumArt.BackgroundColor3 = config.Bg_Color
+                AlbumArt.BackgroundTransparency = 0.2
+                AlbumArt.Position = UDim2.new(0.03, 0, 0.1, 0)
+                AlbumArt.Size = UDim2.new(0, 80, 0, 80)
+                AlbumArt.Image = "rbxassetid://84830962019412"
+                
+                local AlbumCorner = Instance.new("UICorner")
+                AlbumCorner.CornerRadius = UDim.new(0, 6)
+                AlbumCorner.Parent = AlbumArt
+                
+                -- 歌曲信息
+                local SongTitle = Instance.new("TextLabel")
+                SongTitle.Name = "SongTitle"
+                SongTitle.Parent = PlayerContainer
+                SongTitle.BackgroundTransparency = 1
+                SongTitle.Position = UDim2.new(0.3, 0, 0.1, 0)
+                SongTitle.Size = UDim2.new(0, 200, 0, 25)
+                SongTitle.Font = Enum.Font.GothamBold
+                SongTitle.Text = "没有播放音乐"
+                SongTitle.TextColor3 = config.TextColor
+                SongTitle.TextSize = 16
+                SongTitle.TextXAlignment = Enum.TextXAlignment.Left
+                
+                local ArtistName = Instance.new("TextLabel")
+                ArtistName.Name = "ArtistName"
+                ArtistName.Parent = PlayerContainer
+                ArtistName.BackgroundTransparency = 1
+                ArtistName.Position = UDim2.new(0.3, 0, 0.25, 0)
+                ArtistName.Size = UDim2.new(0, 200, 0, 20)
+                ArtistName.Font = Enum.Font.Gotham
+                ArtistName.Text = "未知艺术家"
+                ArtistName.TextColor3 = config.SecondaryTextColor
+                ArtistName.TextSize = 14
+                ArtistName.TextXAlignment = Enum.TextXAlignment.Left
+                
+                -- 进度条
+                local ProgressBar = Instance.new("Frame")
+                ProgressBar.Name = "ProgressBar"
+                ProgressBar.Parent = PlayerContainer
+                ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                ProgressBar.BorderSizePixel = 0
+                ProgressBar.Position = UDim2.new(0.03, 0, 0.65, 0)
+                ProgressBar.Size = UDim2.new(0.94, 0, 0, 6)
+                
+                local ProgressBarCorner = Instance.new("UICorner")
+                ProgressBarCorner.CornerRadius = UDim.new(1, 0)
+                ProgressBarCorner.Parent = ProgressBar
+                
+                local ProgressFill = Instance.new("Frame")
+                ProgressFill.Name = "ProgressFill"
+                ProgressFill.Parent = ProgressBar
+                ProgressFill.BackgroundColor3 = config.AccentColor
+                ProgressFill.BorderSizePixel = 0
                 ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+                
+                local ProgressFillCorner = Instance.new("UICorner")
+                ProgressFillCorner.CornerRadius = UDim.new(1, 0)
+                ProgressFillCorner.Parent = ProgressFill
+                
+                -- 时间显示
+                local TimeLabel = Instance.new("TextLabel")
+                TimeLabel.Name = "TimeLabel"
+                TimeLabel.Parent = PlayerContainer
+                TimeLabel.BackgroundTransparency = 1
+                TimeLabel.Position = UDim2.new(0.03, 0, 0.72, 0)
+                TimeLabel.Size = UDim2.new(0.94, 0, 0, 15)
+                TimeLabel.Font = Enum.Font.Gotham
                 TimeLabel.Text = "0:00 / 0:00"
+                TimeLabel.TextColor3 = config.SecondaryTextColor
+                TimeLabel.TextSize = 12
+                TimeLabel.TextXAlignment = Enum.TextXAlignment.Center
+                
+                -- 控制按钮容器
+                local ControlsContainer = Instance.new("Frame")
+                ControlsContainer.Name = "ControlsContainer"
+                ControlsContainer.Parent = PlayerContainer
+                ControlsContainer.BackgroundTransparency = 1
+                ControlsContainer.Position = UDim2.new(0, 0, 0.8, 0)
+                ControlsContainer.Size = UDim2.new(1, 0, 0, 40)
+                
+                -- 上一首按钮
+                local PrevButton = Instance.new("TextButton")
+                PrevButton.Name = "PrevButton"
+                PrevButton.Parent = ControlsContainer
+                PrevButton.BackgroundColor3 = config.Button_Color
+                PrevButton.BackgroundTransparency = 0.2
+                PrevButton.Position = UDim2.new(0.2, 0, 0.2, 0)
+                PrevButton.Size = UDim2.new(0, 30, 0, 30)
+                PrevButton.AutoButtonColor = false
+                PrevButton.Font = Enum.Font.GothamBold
+                PrevButton.Text = "⏮"
+                PrevButton.TextColor3 = config.TextColor
+                PrevButton.TextSize = 16
+                
+                local PrevCorner = Instance.new("UICorner")
+                PrevCorner.CornerRadius = UDim.new(1, 0)
+                PrevCorner.Parent = PrevButton
+                
+                -- 播放/暂停按钮
+                local PlayPauseButton = Instance.new("TextButton")
+                PlayPauseButton.Name = "PlayPauseButton"
+                PlayPauseButton.Parent = ControlsContainer
+                PlayPauseButton.BackgroundColor3 = config.AccentColor
+                PlayPauseButton.BackgroundTransparency = 0.2
+                PlayPauseButton.Position = UDim2.new(0.45, 0, 0.1, 0)
+                PlayPauseButton.Size = UDim2.new(0, 40, 0, 40)
+                PlayPauseButton.AutoButtonColor = false
+                PlayPauseButton.Font = Enum.Font.GothamBold
+                PlayPauseButton.Text = "▶"
+                PlayPauseButton.TextColor3 = config.TextColor
+                PlayPauseButton.TextSize = 18
+                
+                local PlayPauseCorner = Instance.new("UICorner")
+                PlayPauseCorner.CornerRadius = UDim.new(1, 0)
+                PlayPauseCorner.Parent = PlayPauseButton
+                
+                -- 下一首按钮
+                local NextButton = Instance.new("TextButton")
+                NextButton.Name = "NextButton"
+                NextButton.Parent = ControlsContainer
+                NextButton.BackgroundColor3 = config.Button_Color
+                NextButton.BackgroundTransparency = 0.2
+                NextButton.Position = UDim2.new(0.7, 0, 0.2, 0)
+                NextButton.Size = UDim2.new(0, 30, 0, 30)
+                NextButton.AutoButtonColor = false
+                NextButton.Font = Enum.Font.GothamBold
+                NextButton.Text = "⏭"
+                NextButton.TextColor3 = config.TextColor
+                NextButton.TextSize = 16
+                
+                local NextCorner = Instance.new("UICorner")
+                NextCorner.CornerRadius = UDim.new(1, 0)
+                NextCorner.Parent = NextButton
+                
+                -- 循环按钮
+                local LoopButton = Instance.new("TextButton")
+                LoopButton.Name = "LoopButton"
+                LoopButton.Parent = ControlsContainer
+                LoopButton.BackgroundColor3 = config.Button_Color
+                LoopButton.BackgroundTransparency = 0.2
+                LoopButton.Position = UDim2.new(0.85, 0, 0.2, 0)
+                LoopButton.Size = UDim2.new(0, 30, 0, 30)
+                LoopButton.AutoButtonColor = false
+                LoopButton.Font = Enum.Font.GothamBold
+                LoopButton.Text = "🔁"
+                LoopButton.TextColor3 = config.SecondaryTextColor
+                LoopButton.TextSize = 14
+                
+                local LoopCorner = Instance.new("UICorner")
+                LoopCorner.CornerRadius = UDim.new(1, 0)
+                LoopCorner.Parent = LoopButton
+                
+                -- 按钮发光效果
+                local buttons = {PrevButton, PlayPauseButton, NextButton, LoopButton}
+                for _, button in pairs(buttons) do
+                    local btnGlow = Instance.new("UIStroke")
+                    btnGlow.Parent = button
+                    btnGlow.Color = config.AccentColor
+                    btnGlow.Thickness = 1
+                    btnGlow.Transparency = 0.8
+                    
+                    button.MouseEnter:Connect(function()
+                        services.TweenService:Create(button, TweenInfo.new(0.2), {
+                            BackgroundTransparency = 0.1
+                        }):Play()
+                        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                            Thickness = 2,
+                            Transparency = 0.5
+                        }):Play()
+                    end)
+                    
+                    button.MouseLeave:Connect(function()
+                        services.TweenService:Create(button, TweenInfo.new(0.2), {
+                            BackgroundTransparency = 0.2
+                        }):Play()
+                        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                            Thickness = 1,
+                            Transparency = 0.8
+                        }):Play()
+                    end)
+                end
+                
+                -- 更新UI函数
+                local function updateUI()
+                    local currentTrack = MusicPlayer:GetCurrentTrack()
+                    if currentTrack then
+                        SongTitle.Text = currentTrack.title
+                        ArtistName.Text = currentTrack.artist
+                        AlbumArt.Image = "rbxassetid://" .. currentTrack.imageId
+                    else
+                        SongTitle.Text = "没有播放音乐"
+                        ArtistName.Text = "未知艺术家"
+                        AlbumArt.Image = "rbxassetid://84830962019412"
+                    end
+                    
+                    PlayPauseButton.Text = MusicPlayer.isPlaying and "⏸" or "▶"
+                    LoopButton.TextColor3 = MusicPlayer.isLooping and config.AccentColor or config.SecondaryTextColor
+                end
+                
+                -- 进度条更新循环
+                task.spawn(function()
+                    while PlayerContainer and PlayerContainer.Parent do
+                        if MusicPlayer.currentSound and MusicPlayer.isPlaying then
+                            local currentTime = MusicPlayer.currentSound.TimePosition
+                            local totalTime = MusicPlayer.currentSound.TimeLength
+                            
+                            if totalTime > 0 then
+                                local progress = currentTime / totalTime
+                                ProgressFill.Size = UDim2.new(progress, 0, 1, 0)
+                                
+                                local currentMinutes = math.floor(currentTime / 60)
+                                local currentSeconds = math.floor(currentTime % 60)
+                                local totalMinutes = math.floor(totalTime / 60)
+                                local totalSeconds = math.floor(totalTime % 60)
+                                
+                                TimeLabel.Text = string.format("%d:%02d / %d:%02d", 
+                                    currentMinutes, currentSeconds, totalMinutes, totalSeconds)
+                            end
+                        else
+                            ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+                            TimeLabel.Text = "0:00 / 0:00"
+                        end
+                        task.wait(0.1)
+                    end
+                end)
+                
+                -- 按钮事件
+                PlayPauseButton.MouseButton1Click:Connect(function()
+                    DigitalParticleExplosion(PlayPauseButton)
+                    if MusicPlayer.isPlaying then
+                        MusicPlayer:Pause()
+                    else
+                        if #MusicPlayer.playlist > 0 then
+                            if not MusicPlayer.currentSound then
+                                MusicPlayer:PlayTrack(MusicPlayer.playlist[MusicPlayer.currentTrackIndex].id)
+                            else
+                                MusicPlayer:Resume()
+                            end
+                        end
+                    end
+                    updateUI()
+                end)
+                
+                PrevButton.MouseButton1Click:Connect(function()
+                    DigitalParticleExplosion(PrevButton)
+                    local track = MusicPlayer:PreviousTrack()
+                    if track then
+                        updateUI()
+                    end
+                end)
+                
+                NextButton.MouseButton1Click:Connect(function()
+                    DigitalParticleExplosion(NextButton)
+                    local track = MusicPlayer:NextTrack()
+                    if track then
+                        updateUI()
+                    end
+                end)
+                
+                LoopButton.MouseButton1Click:Connect(function()
+                    DigitalParticleExplosion(LoopButton)
+                    MusicPlayer.isLooping = not MusicPlayer.isLooping
+                    updateUI()
+                end)
+                
+                -- 初始化默认播放列表
+                if defaultPlaylist then
+                    for _, track in pairs(defaultPlaylist) do
+                        MusicPlayer:AddToPlaylist(track.id, track.title, track.artist, track.imageId)
+                    end
+                end
+                
+                updateUI()
+                
+                -- 返回控制函数
+                local musicPlayerFuncs = {}
+                
+                function musicPlayerFuncs:AddTrack(trackId, title, artist, imageId)
+                    MusicPlayer:AddToPlaylist(trackId, title, artist, imageId)
+                    updateUI()
+                end
+                
+                function musicPlayerFuncs:PlayTrack(trackId)
+                    for i, track in ipairs(MusicPlayer.playlist) do
+                        if track.id == trackId then
+                            MusicPlayer.currentTrackIndex = i
+                            MusicPlayer:PlayTrack(trackId)
+                            updateUI()
+                            return
+                        end
+                    end
+                end
+                
+                function musicPlayerFuncs:SetVolume(volume)
+                    MusicPlayer:SetVolume(volume)
+                end
+                
+                function musicPlayerFuncs:ClearPlaylist()
+                    MusicPlayer:ClearPlaylist()
+                    updateUI()
+                end
+                
+                return musicPlayerFuncs
             end
-            task.wait(0.1)
+            
+            function section.Button(section, text, callback, options)
+    callback = callback or function() end
+    options = options or {}
+    
+    -- 按钮配置选项
+    local btnConfig = {
+        icon = options.icon or nil,           -- 图标ID
+        iconSize = options.iconSize or 16,    -- 图标大小
+        backgroundColor = options.backgroundColor or config.Button_Color,
+        textColor = options.textColor or config.TextColor,
+        hoverColor = options.hoverColor or Color3.fromRGB(
+            math.floor(config.Button_Color.R * 255 * 1.1),
+            math.floor(config.Button_Color.G * 255 * 1.1),
+            math.floor(config.Button_Color.B * 255 * 1.1)
+        ),
+        clickColor = options.clickColor or Color3.fromRGB(
+            math.floor(config.Button_Color.R * 255 * 0.8),
+            math.floor(config.Button_Color.G * 255 * 0.8),
+            math.floor(config.Button_Color.B * 255 * 0.8)
+        ),
+        glowColor = options.glowColor or config.AccentColor,
+        glowIntensity = options.glowIntensity or 0.8,
+        cornerRadius = options.cornerRadius or 6,
+        textSize = options.textSize or 14,
+        font = options.font or Enum.Font.GothamSemibold,
+        disabled = options.disabled or false,
+        tooltip = options.tooltip or nil,
+        loading = options.loading or false,
+        pulseEffect = options.pulseEffect or false,
+        hologramEffect = options.hologramEffect or false
+    }
+    
+    local BtnModule = Instance.new("Frame")
+    local Btn = Instance.new("TextButton")
+    local BtnC = Instance.new("UICorner")
+    local BtnContent = Instance.new("Frame")
+    local BtnContentL = Instance.new("UIListLayout")
+    local BtnContentP = Instance.new("UIPadding")
+    
+    BtnModule.Name = "BtnModule"
+    BtnModule.Parent = Objs
+    BtnModule.BackgroundTransparency = 1
+    BtnModule.BorderSizePixel = 0
+    BtnModule.Size = UDim2.new(0, 330, 0, 36)
+    
+    Btn.Name = "Btn"
+    Btn.Parent = BtnModule
+    Btn.BackgroundColor3 = btnConfig.backgroundColor
+    Btn.BackgroundTransparency = 0.2
+    Btn.BorderSizePixel = 0
+    Btn.Size = UDim2.new(0, 330, 0, 36)
+    Btn.AutoButtonColor = false
+    Btn.Font = btnConfig.font
+    Btn.Text = ""
+    Btn.TextColor3 = btnConfig.textColor
+    Btn.TextSize = btnConfig.textSize
+    Btn.ZIndex = 2
+    
+    -- 圆角
+    BtnC.CornerRadius = UDim.new(0, btnConfig.cornerRadius)
+    BtnC.Name = "BtnC"
+    BtnC.Parent = Btn
+    
+    -- 按钮内容容器
+    BtnContent.Name = "BtnContent"
+    BtnContent.Parent = Btn
+    BtnContent.BackgroundTransparency = 1
+    BtnContent.Size = UDim2.new(1, 0, 1, 0)
+    BtnContent.ZIndex = 3
+    
+    BtnContentL.Name = "BtnContentL"
+    BtnContentL.Parent = BtnContent
+    BtnContentL.FillDirection = Enum.FillDirection.Horizontal
+    BtnContentL.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    BtnContentL.VerticalAlignment = Enum.VerticalAlignment.Center
+    BtnContentL.SortOrder = Enum.SortOrder.LayoutOrder
+    BtnContentL.Padding = UDim.new(0, 8)
+    
+    BtnContentP.Name = "BtnContentP"
+    BtnContentP.Parent = BtnContent
+    BtnContentP.PaddingLeft = UDim.new(0, 12)
+    BtnContentP.PaddingRight = UDim.new(0, 12)
+    
+    -- 图标
+    local iconLabel
+    if btnConfig.icon then
+        iconLabel = Instance.new("ImageLabel")
+        iconLabel.Name = "Icon"
+        iconLabel.Parent = BtnContent
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Size = UDim2.new(0, btnConfig.iconSize, 0, btnConfig.iconSize)
+        iconLabel.Image = "rbxassetid://" .. btnConfig.icon
+        iconLabel.ImageColor3 = btnConfig.textColor
+        iconLabel.LayoutOrder = 1
+        iconLabel.ZIndex = 3
+    end
+    
+    -- 文字
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Name = "Text"
+    textLabel.Parent = BtnContent
+    textLabel.BackgroundTransparency = 1
+    textLabel.Size = UDim2.new(0, 0, 0, btnConfig.textSize + 4)
+    textLabel.Font = btnConfig.font
+    textLabel.Text = text
+    textLabel.TextColor3 = btnConfig.textColor
+    textLabel.TextSize = btnConfig.textSize
+    textLabel.TextXAlignment = Enum.TextXAlignment.Left
+    textLabel.LayoutOrder = 2
+    textLabel.ZIndex = 3
+    
+    -- 自动调整文字大小
+    textLabel:GetPropertyChangedSignal("TextBounds"):Connect(function()
+        textLabel.Size = UDim2.new(0, textLabel.TextBounds.X, 0, btnConfig.textSize + 4)
+    end)
+    
+    -- 发光效果
+    local btnGlow = Instance.new("UIStroke")
+    btnGlow.Parent = Btn
+    btnGlow.Color = btnConfig.glowColor
+    btnGlow.Thickness = 1
+    btnGlow.Transparency = btnConfig.glowIntensity
+    btnGlow.ZIndex = 1
+    
+    startNeonFlowEffect(btnGlow, "Color", 0.01)
+    createPulseGlow(btnGlow)
+    
+    -- 全息效果
+    if btnConfig.hologramEffect then
+        createHologramEffect(Btn, 0.3)
+    end
+    
+    -- 脉冲效果
+    local pulseConnection
+    if btnConfig.pulseEffect then
+        pulseConnection = createPulseGlow(btnGlow)
+    end
+    
+    -- 加载效果
+    local loadingRing
+    local loadingConnection
+    
+    local function setLoadingState(loading)
+        if loading then
+            -- 创建加载环
+            loadingRing = Instance.new("Frame")
+            loadingRing.Name = "LoadingRing"
+            loadingRing.Parent = Btn
+            loadingRing.BackgroundTransparency = 1
+            loadingRing.Size = UDim2.new(0, 20, 0, 20)
+            loadingRing.Position = UDim2.new(1, -30, 0.5, 0)
+            loadingRing.AnchorPoint = Vector2.new(0, 0.5)
+            loadingRing.ZIndex = 3
+            
+            local ringStroke = Instance.new("UIStroke")
+            ringStroke.Parent = loadingRing
+            ringStroke.Color = btnConfig.textColor
+            ringStroke.Thickness = 2
+            ringStroke.Transparency = 0.3
+            
+            -- 旋转动画
+            loadingConnection = RunService.Heartbeat:Connect(function()
+                if loadingRing and loadingRing.Parent then
+                    loadingRing.Rotation = loadingRing.Rotation + 5
+                else
+                    loadingConnection:Disconnect()
+                end
+            end)
+            
+            -- 禁用按钮
+            Btn.AutoButtonColor = false
+            if iconLabel then
+                iconLabel.ImageTransparency = 0.5
+            end
+            textLabel.TextTransparency = 0.5
+        else
+            -- 移除加载状态
+            if loadingRing then
+                loadingRing:Destroy()
+                loadingRing = nil
+            end
+            if loadingConnection then
+                loadingConnection:Disconnect()
+            end
+            
+            -- 恢复按钮
+            Btn.AutoButtonColor = false
+            if iconLabel then
+                iconLabel.ImageTransparency = 0
+            end
+            textLabel.TextTransparency = 0
+        end
+    end
+    
+    -- 初始加载状态
+    if btnConfig.loading then
+        setLoadingState(true)
+    end
+    
+    -- 禁用状态
+    if btnConfig.disabled then
+        Btn.AutoButtonColor = false
+        Btn.BackgroundTransparency = 0.5
+        if iconLabel then
+            iconLabel.ImageTransparency = 0.5
+        end
+        textLabel.TextTransparency = 0.5
+        btnGlow.Transparency = 0.9
+    end
+    
+    -- 提示文本
+    local tooltipLabel
+    if btnConfig.tooltip then
+        tooltipLabel = Instance.new("TextLabel")
+        tooltipLabel.Name = "Tooltip"
+        tooltipLabel.Parent = Btn
+        tooltipLabel.BackgroundColor3 = config.TabColor
+        tooltipLabel.BackgroundTransparency = 0.1
+        tooltipLabel.BorderSizePixel = 0
+        tooltipLabel.Position = UDim2.new(0, 0, -1.2, 0)
+        tooltipLabel.Size = UDim2.new(0, 0, 0, 24)
+        tooltipLabel.Font = Enum.Font.Gotham
+        tooltipLabel.Text = btnConfig.tooltip
+        tooltipLabel.TextColor3 = config.TextColor
+        tooltipLabel.TextSize = 11
+        tooltipLabel.TextTransparency = 1
+        tooltipLabel.ZIndex = 10
+        tooltipLabel.Visible = false
+        
+        local tooltipCorner = Instance.new("UICorner")
+        tooltipCorner.CornerRadius = UDim.new(0, 4)
+        tooltipCorner.Parent = tooltipLabel
+        
+        local tooltipStroke = Instance.new("UIStroke")
+        tooltipStroke.Parent = tooltipLabel
+        tooltipStroke.Color = config.AccentColor
+        tooltipStroke.Thickness = 1
+        tooltipStroke.Transparency = 0.8
+    end
+    
+    -- 鼠标交互
+    local isHovering = false
+    
+    Btn.MouseEnter:Connect(function()
+        if btnConfig.disabled then return end
+        
+        isHovering = true
+        services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            BackgroundColor3 = btnConfig.hoverColor
+        }):Play()
+        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+            Thickness = 2,
+            Transparency = btnConfig.glowIntensity - 0.3
+        }):Play()
+        
+        -- 显示提示文本
+        if tooltipLabel then
+            tooltipLabel.Visible = true
+            services.TweenService:Create(tooltipLabel, TweenInfo.new(0.3), {
+                TextTransparency = 0
+            }):Play()
+            
+            -- 调整提示文本大小
+            tooltipLabel.Size = UDim2.new(0, tooltipLabel.TextBounds.X + 16, 0, 24)
+            tooltipLabel.Position = UDim2.new(0.5, -tooltipLabel.TextBounds.X/2 - 8, -1.2, 0)
         end
     end)
     
-    -- 按钮点击效果函数
-    local function createButtonClickEffect(button, isMain)
-        services.TweenService:Create(button, TweenInfo.new(0.1), {
-            BackgroundTransparency = 0.3,
-            Size = UDim2.new(0, button.Size.X.Offset - 2, 0, button.Size.Y.Offset - 2)
+    Btn.MouseLeave:Connect(function()
+        isHovering = false
+        services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            BackgroundColor3 = btnConfig.backgroundColor
+        }):Play()
+        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+            Thickness = 1,
+            Transparency = btnConfig.glowIntensity
+        }):Play()
+        
+        -- 隐藏提示文本
+        if tooltipLabel then
+            services.TweenService:Create(tooltipLabel, TweenInfo.new(0.2), {
+                TextTransparency = 1
+            }):Play()
+            delay(0.2, function()
+                if tooltipLabel then
+                    tooltipLabel.Visible = false
+                end
+            end)
+        end
+    end)
+    
+    Btn.MouseButton1Click:Connect(function()
+        if btnConfig.disabled or btnConfig.loading then return end
+        
+        DigitalParticleExplosion(Btn)
+        
+        -- 点击动画
+        services.TweenService:Create(Btn, TweenInfo.new(0.1), {
+            BackgroundColor3 = btnConfig.clickColor,
+            Size = UDim2.new(0, 325, 0, 34)
+        }):Play()
+        services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
+            Thickness = 3,
+            Transparency = btnConfig.glowIntensity - 0.5
         }):Play()
         
         task.wait(0.1)
         
-        services.TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0.1,
-            Size = UDim2.new(0, button.Size.X.Offset + 2, 0, button.Size.Y.Offset + 2)
+        services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+            BackgroundColor3 = isHovering and btnConfig.hoverColor or btnConfig.backgroundColor,
+            Size = UDim2.new(0, 330, 0, 36)
         }):Play()
+        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+            Thickness = isHovering and 2 or 1,
+            Transparency = isHovering and (btnConfig.glowIntensity - 0.3) or btnConfig.glowIntensity
+        }):Play()
+        
+        -- 执行回调
+        local success, err = pcall(callback)
+        if not success then
+            warn("Button callback error: " .. tostring(err))
+        end
+    end)
+    
+    -- 按钮功能函数
+    local buttonFuncs = {}
+    
+    function buttonFuncs:SetText(newText)
+        textLabel.Text = newText
     end
     
-    -- 按钮事件
-    PlayPauseButton.MouseButton1Click:Connect(function()
-        DigitalParticleExplosion(PlayPauseButton)
-        createButtonClickEffect(PlayPauseButton, true)
-        
-        if MusicPlayer.isPlaying then
-            MusicPlayer:Pause()
+    function buttonFuncs:SetIcon(iconId)
+        if not iconLabel then
+            iconLabel = Instance.new("ImageLabel")
+            iconLabel.Name = "Icon"
+            iconLabel.Parent = BtnContent
+            iconLabel.BackgroundTransparency = 1
+            iconLabel.Size = UDim2.new(0, btnConfig.iconSize, 0, btnConfig.iconSize)
+            iconLabel.LayoutOrder = 1
+            iconLabel.ZIndex = 3
+        end
+        iconLabel.Image = "rbxassetid://" .. iconId
+    end
+    
+    function buttonFuncs:SetDisabled(disabled)
+        btnConfig.disabled = disabled
+        if disabled then
+            Btn.AutoButtonColor = false
+            Btn.BackgroundTransparency = 0.5
+            if iconLabel then
+                iconLabel.ImageTransparency = 0.5
+            end
+            textLabel.TextTransparency = 0.5
+            btnGlow.Transparency = 0.9
         else
-            if #MusicPlayer.playlist > 0 then
-                if not MusicPlayer.currentSound then
-                    MusicPlayer:PlayTrack(MusicPlayer.playlist[MusicPlayer.currentTrackIndex].id)
-                else
-                    MusicPlayer:Resume()
-                end
+            Btn.AutoButtonColor = false
+            Btn.BackgroundTransparency = 0.2
+            if iconLabel then
+                iconLabel.ImageTransparency = 0
             end
-        end
-        updateUI()
-    end)
-    
-    PrevButton.MouseButton1Click:Connect(function()
-        DigitalParticleExplosion(PrevButton)
-        createButtonClickEffect(PrevButton, false)
-        local track = MusicPlayer:PreviousTrack()
-        if track then
-            updateUI()
-        end
-    end)
-    
-    NextButton.MouseButton1Click:Connect(function()
-        DigitalParticleExplosion(NextButton)
-        createButtonClickEffect(NextButton, false)
-        local track = MusicPlayer:NextTrack()
-        if track then
-            updateUI()
-        end
-    end)
-    
-    LoopButton.MouseButton1Click:Connect(function()
-        DigitalParticleExplosion(LoopButton)
-        createButtonClickEffect(LoopButton, false)
-        
-        -- 切换循环模式
-        currentLoopMode = currentLoopMode + 1
-        if currentLoopMode > #loopModes then
-            currentLoopMode = 1
-        end
-        
-        updateLoopMode()
-    end)
-    
-    -- 修改音乐播放器的结束事件处理
-    local originalPlayTrack = MusicPlayer.PlayTrack
-    MusicPlayer.PlayTrack = function(self, trackId)
-        originalPlayTrack(self, trackId)
-        
-        if self.currentSound then
-            self.currentSound.Ended:Connect(function()
-                local currentMode = loopModes[currentLoopMode]
-                
-                if currentMode.mode == "single" then
-                    -- 单曲循环：重新播放当前歌曲
-                    self.currentSound:Play()
-                elseif currentMode.mode == "all" then
-                    -- 列表循环：播放下一首
-                    self:NextTrack()
-                    updateUI()
-                else
-                    -- 无循环：停止播放
-                    self.isPlaying = false
-                    updateUI()
-                end
-            end)
+            textLabel.TextTransparency = 0
+            btnGlow.Transparency = btnConfig.glowIntensity
         end
     end
     
-    -- 创建音乐选择弹出窗口
-    local musicSelectPopup = Instance.new("Frame")
-    musicSelectPopup.Name = "MusicSelectPopup"
-    musicSelectPopup.Parent = PlayerContainer
-    musicSelectPopup.BackgroundColor3 = config.TabColor
-    musicSelectPopup.BackgroundTransparency = 0.1
-    musicSelectPopup.Position = UDim2.new(0.05, 0, 0.1, 0)
-    musicSelectPopup.Size = UDim2.new(0.9, 0, 0, 120)
-    musicSelectPopup.Visible = false
-    musicSelectPopup.ZIndex = 10
-    
-    local popupCorner = Instance.new("UICorner")
-    popupCorner.CornerRadius = UDim.new(0, 8)
-    popupCorner.Parent = musicSelectPopup
-    
-    local popupGlow = Instance.new("UIStroke")
-    popupGlow.Parent = musicSelectPopup
-    popupGlow.Color = config.AccentColor
-    popupGlow.Thickness = 2
-    popupGlow.Transparency = 0.7
-    popupGlow.ZIndex = 9
-    
-    -- 弹出窗口标题
-    local popupTitle = Instance.new("TextLabel")
-    popupTitle.Name = "PopupTitle"
-    popupTitle.Parent = musicSelectPopup
-    popupTitle.BackgroundTransparency = 1
-    popupTitle.Position = UDim2.new(0, 0, 0, 5)
-    popupTitle.Size = UDim2.new(1, 0, 0, 20)
-    popupTitle.Font = Enum.Font.GothamBold
-    popupTitle.Text = "选择音乐"
-    popupTitle.TextColor3 = config.TextColor
-    popupTitle.TextSize = 14
-    popupTitle.ZIndex = 11
-    
-    -- 音乐列表容器
-    local musicListContainer = Instance.new("ScrollingFrame")
-    musicListContainer.Name = "MusicListContainer"
-    musicListContainer.Parent = musicSelectPopup
-    musicListContainer.BackgroundTransparency = 1
-    musicListContainer.Position = UDim2.new(0, 5, 0, 30)
-    musicListContainer.Size = UDim2.new(1, -10, 0, 85)
-    musicListContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-    musicListContainer.ScrollBarThickness = 3
-    musicListContainer.ScrollBarImageColor3 = config.AccentColor
-    musicListContainer.ZIndex = 11
-    
-    local musicListLayout = Instance.new("UIListLayout")
-    musicListLayout.Name = "MusicListLayout"
-    musicListLayout.Parent = musicListContainer
-    musicListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    musicListLayout.Padding = UDim.new(0, 5)
-    
-    -- 预设音乐库
-    local musicLibrary = {
-        {
-            id = "1847028739",
-            title = "轻松音乐",
-            artist = "背景音乐",
-            imageId = "84830962019412"
-        },
-        {
-            id = "1847028740", 
-            title = "节奏感",
-            artist = "电子音乐",
-            imageId = "84830962019412"
-        },
-        {
-            id = "1847028741",
-            title = "古典乐",
-            artist = "古典音乐",
-            imageId = "84830962019412"
-        },
-        {
-            id = "1847028742",
-            title = "摇滚乐",
-            artist = "摇滚乐队",
-            imageId = "84830962019412"
-        }
-    }
-    
-    -- 填充音乐列表
-    local function populateMusicList()
-        for _, music in ipairs(musicLibrary) do
-            local musicItem = Instance.new("TextButton")
-            musicItem.Name = "MusicItem_" .. music.id
-            musicItem.Parent = musicListContainer
-            musicItem.BackgroundColor3 = config.Button_Color
-            musicItem.BackgroundTransparency = 0.2
-            musicItem.Size = UDim2.new(1, 0, 0, 30)
-            musicItem.AutoButtonColor = false
-            musicItem.Font = Enum.Font.Gotham
-            musicItem.Text = ""
-            musicItem.TextColor3 = config.TextColor
-            musicItem.TextSize = 12
-            musicItem.ZIndex = 12
-            
-            local itemCorner = Instance.new("UICorner")
-            itemCorner.CornerRadius = UDim.new(0, 6)
-            itemCorner.Parent = musicItem
-            
-            local musicImage = Instance.new("ImageLabel")
-            musicImage.Name = "MusicImage"
-            musicImage.Parent = musicItem
-            musicImage.BackgroundTransparency = 1
-            musicImage.Position = UDim2.new(0, 5, 0, 5)
-            musicImage.Size = UDim2.new(0, 20, 0, 20)
-            musicImage.Image = "rbxassetid://" .. music.imageId
-            musicImage.ZIndex = 13
-            
-            local musicTitle = Instance.new("TextLabel")
-            musicTitle.Name = "MusicTitle"
-            musicTitle.Parent = musicItem
-            musicTitle.BackgroundTransparency = 1
-            musicTitle.Position = UDim2.new(0, 30, 0, 0)
-            musicTitle.Size = UDim2.new(0, 150, 1, 0)
-            musicTitle.Font = Enum.Font.Gotham
-            musicTitle.Text = music.title
-            musicTitle.TextColor3 = config.TextColor
-            musicTitle.TextSize = 12
-            musicTitle.TextXAlignment = Enum.TextXAlignment.Left
-            musicTitle.ZIndex = 13
-            
-            local musicArtist = Instance.new("TextLabel")
-            musicArtist.Name = "MusicArtist"
-            musicArtist.Parent = musicItem
-            musicArtist.BackgroundTransparency = 1
-            musicArtist.Position = UDim2.new(0, 180, 0, 0)
-            musicArtist.Size = UDim2.new(0, 100, 1, 0)
-            musicArtist.Font = Enum.Font.Gotham
-            musicArtist.Text = music.artist
-            musicArtist.TextColor3 = config.SecondaryTextColor
-            musicArtist.TextSize = 10
-            musicArtist.TextXAlignment = Enum.TextXAlignment.Left
-            musicArtist.ZIndex = 13
-            
-            -- 悬停效果
-            musicItem.MouseEnter:Connect(function()
-                services.TweenService:Create(musicItem, TweenInfo.new(0.2), {
-                    BackgroundTransparency = 0.1
-                }):Play()
-            end)
-            
-            musicItem.MouseLeave:Connect(function()
-                services.TweenService:Create(musicItem, TweenInfo.new(0.2), {
-                    BackgroundTransparency = 0.2
-                }):Play()
-            end)
-            
-            -- 点击事件
-            musicItem.MouseButton1Click:Connect(function()
-                DigitalParticleExplosion(musicItem)
-                -- 添加到播放列表并播放
-                musicPlayer:ClearPlaylist()
-                musicPlayer:AddTrack(music.id, music.title, music.artist, music.imageId)
-                musicPlayer:PlayTrack(music.id)
-                updateUI()
-                -- 关闭弹出窗口
-                musicSelectPopup.Visible = false
-            end)
-        end
-        
-        -- 更新滚动区域大小
-        musicListContainer.CanvasSize = UDim2.new(0, 0, 0, #musicLibrary * 35)
+    function buttonFuncs:SetLoading(loading)
+        btnConfig.loading = loading
+        setLoadingState(loading)
     end
     
-    -- 选择音乐按钮点击事件
-    SelectMusicButton.MouseButton1Click:Connect(function()
-        DigitalParticleExplosion(SelectMusicButton)
-        createButtonClickEffect(SelectMusicButton, false)
-        
-        -- 切换弹出窗口显示状态
-        musicSelectPopup.Visible = not musicSelectPopup.Visible
-        
-        -- 如果显示弹出窗口，填充音乐列表
-        if musicSelectPopup.Visible then
-            populateMusicList()
-        end
-    end)
+    function buttonFuncs:SetBackgroundColor(color)
+        btnConfig.backgroundColor = color
+        Btn.BackgroundColor3 = color
+        -- 更新悬停颜色和点击颜色
+        btnConfig.hoverColor = Color3.fromRGB(
+            math.floor(color.R * 255 * 1.1),
+            math.floor(color.G * 255 * 1.1),
+            math.floor(color.B * 255 * 1.1)
+        )
+        btnConfig.clickColor = Color3.fromRGB(
+            math.floor(color.R * 255 * 0.8),
+            math.floor(color.G * 255 * 0.8),
+            math.floor(color.B * 255 * 0.8)
+        )
+    end
     
-    -- 初始化默认播放列表
-    if defaultPlaylist then
-        for _, track in pairs(defaultPlaylist) do
-            MusicPlayer:AddToPlaylist(track.id, track.title, track.artist, track.imageId)
+    function buttonFuncs:SetTextColor(color)
+        btnConfig.textColor = color
+        textLabel.TextColor3 = color
+        if iconLabel then
+            iconLabel.ImageColor3 = color
         end
     end
     
-    updateUI()
-    
-    -- 返回控制函数
-    local musicPlayerFuncs = {}
-    
-    function musicPlayerFuncs:AddTrack(trackId, title, artist, imageId)
-        MusicPlayer:AddToPlaylist(trackId, title, artist, imageId)
-        updateUI()
+    function buttonFuncs:SetGlowColor(color)
+        btnConfig.glowColor = color
+        btnGlow.Color = color
     end
     
-    function musicPlayerFuncs:PlayTrack(trackId)
-        for i, track in ipairs(MusicPlayer.playlist) do
-            if track.id == trackId then
-                MusicPlayer.currentTrackIndex = i
-                MusicPlayer:PlayTrack(trackId)
-                updateUI()
-                return
-            end
+    function buttonFuncs:SetTooltip(tooltipText)
+        btnConfig.tooltip = tooltipText
+        if tooltipLabel then
+            tooltipLabel.Text = tooltipText
         end
     end
     
-    function musicPlayerFuncs:SetVolume(volume)
-        MusicPlayer:SetVolume(volume)
-    end
-    
-    function musicPlayerFuncs:ClearPlaylist()
-        MusicPlayer:ClearPlaylist()
-        updateUI()
-    end
-    
-    function musicPlayerFuncs:GetCurrentTrack()
-        return MusicPlayer:GetCurrentTrack()
-    end
-    
-    function musicPlayerFuncs:GetPlaylist()
-        return MusicPlayer.playlist
-    end
-    
-    function musicPlayerFuncs:SetLoopMode(mode)
-        for i, loopMode in ipairs(loopModes) do
-            if loopMode.mode == mode then
-                currentLoopMode = i
-                updateLoopMode()
-                return
-            end
+    function buttonFuncs:Destroy()
+        BtnModule:Destroy()
+        if pulseConnection then
+            pulseConnection:Disconnect()
+        end
+        if loadingConnection then
+            loadingConnection:Disconnect()
         end
     end
     
-    return musicPlayerFuncs
+    return buttonFuncs
 end
-            
-            function section.Button(section, text, callback)
-                callback = callback or function() end
-                
-                local BtnModule = Instance.new("Frame")
-                local Btn = Instance.new("TextButton")
-                local BtnC = Instance.new("UICorner")
-                
-                BtnModule.Name = "BtnModule"
-                BtnModule.Parent = Objs
-                BtnModule.BackgroundTransparency = 1
-                BtnModule.BorderSizePixel = 0
-                BtnModule.Size = UDim2.new(0, 330, 0, 36)
-                
-                Btn.Name = "Btn"
-                Btn.Parent = BtnModule
-                Btn.BackgroundColor3 = config.Button_Color
-                Btn.BackgroundTransparency = 0.2
-                Btn.BorderSizePixel = 0
-                Btn.Size = UDim2.new(0, 330, 0, 36)
-                Btn.AutoButtonColor = false
-                Btn.Font = Enum.Font.GothamSemibold
-                Btn.Text = "   " .. text
-                Btn.TextColor3 = config.TextColor
-                Btn.TextSize = 14
-                Btn.TextXAlignment = Enum.TextXAlignment.Left
-                
-                BtnC.CornerRadius = UDim.new(0, 6)
-                BtnC.Name = "BtnC"
-                BtnC.Parent = Btn
-                
-                local btnGlow = Instance.new("UIStroke")
-                btnGlow.Parent = Btn
-                btnGlow.Color = config.AccentColor
-                btnGlow.Thickness = 1
-                btnGlow.Transparency = 0.8
-                
-                startNeonFlowEffect(btnGlow, "Color", 0.01)
-                createPulseGlow(btnGlow)
-                
-                Btn.MouseEnter:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                        BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.Button_Color.R * 255 * 1.1),
-                            math.floor(config.Button_Color.G * 255 * 1.1),
-                            math.floor(config.Button_Color.B * 255 * 1.1)
-                        )
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                        Thickness = 2,
-                        Transparency = 0.5
-                    }):Play()
-                end)
-                
-                Btn.MouseLeave:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                        BackgroundColor3 = config.Button_Color
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                        Thickness = 1,
-                        Transparency = 0.8
-                    }):Play()
-                end)
-                
-                Btn.MouseButton1Click:Connect(function()
-                    DigitalParticleExplosion(Btn)
-                    callback()
-                    
-                    services.TweenService:Create(Btn, TweenInfo.new(0.1), {
-                        BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.Button_Color.R * 255 * 0.8),
-                            math.floor(config.Button_Color.G * 255 * 0.8),
-                            math.floor(config.Button_Color.B * 255 * 0.8)
-                        )
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
-                        Thickness = 3,
-                        Transparency = 0.3
-                    }):Play()
-                    
-                    task.wait(0.1)
-                    
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-                        BackgroundColor3 = config.Button_Color
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                        Thickness = 1,
-                        Transparency = 0.8
-                    }):Play()
-                end)
-            end
             
             function section.Image(section, imageId, sizeX, sizeY)
                 local ImageModule = Instance.new("Frame")
@@ -1775,32 +1764,217 @@ end
                 return ImageLabel
             end
             
-            function section:Label(text)
-                local LabelModule = Instance.new("Frame")
-                local TextLabel = Instance.new("TextLabel")
-                local LabelC = Instance.new("UICorner")
-                
-                LabelModule.Name = "LabelModule"
-                LabelModule.Parent = Objs
-                LabelModule.BackgroundTransparency = 1
-                LabelModule.BorderSizePixel = 0
-                LabelModule.Size = UDim2.new(0, 330, 0, 24)
-                
-                TextLabel.Parent = LabelModule
-                TextLabel.BackgroundColor3 = config.Label_Color
-                TextLabel.BackgroundTransparency = 0.2
-                TextLabel.Size = UDim2.new(0, 330, 0, 28)
-                TextLabel.Font = Enum.Font.GothamSemibold
-                TextLabel.Text = text
-                TextLabel.TextColor3 = config.SecondaryTextColor
-                TextLabel.TextSize = 14
-                
-                LabelC.CornerRadius = UDim.new(0, 6)
-                LabelC.Name = "LabelC"
-                LabelC.Parent = TextLabel
-                
-                return TextLabel
+            function section:Label(text, options)
+    options = options or {}
+    
+    -- 标签配置选项
+    local labelConfig = {
+        backgroundColor = options.backgroundColor or config.Label_Color,
+        textColor = options.textColor or config.SecondaryTextColor,
+        backgroundTransparency = options.backgroundTransparency or 0.2,
+        textSize = options.textSize or 14,
+        font = options.font or Enum.Font.GothamSemibold,
+        textXAlignment = options.textXAlignment or Enum.TextXAlignment.Left,
+        textYAlignment = options.textYAlignment or Enum.TextYAlignment.Center,
+        cornerRadius = options.cornerRadius or 6,
+        strokeColor = options.strokeColor or config.AccentColor,
+        strokeThickness = options.strokeThickness or 1,
+        strokeTransparency = options.strokeTransparency or 0.8,
+        strokeEnabled = options.strokeEnabled or false,
+        glowEffect = options.glowEffect or false,
+        pulseEffect = options.pulseEffect or false,
+        hologramEffect = options.hologramEffect or false,
+        clickable = options.clickable or false,
+        onClick = options.onClick or nil,
+        richText = options.richText or false,
+        autoSize = options.autoSize or false,
+        maxWidth = options.maxWidth or 330,
+        padding = options.padding or 12
+    }
+    
+    local LabelModule = Instance.new("Frame")
+    local TextLabel = Instance.new(options.clickable and "TextButton" or "TextLabel")
+    local LabelC = Instance.new("UICorner")
+    
+    LabelModule.Name = "LabelModule"
+    LabelModule.Parent = Objs
+    LabelModule.BackgroundTransparency = 1
+    LabelModule.BorderSizePixel = 0
+    LabelModule.Size = UDim2.new(0, 330, 0, labelConfig.autoSize and 0 or 28)
+    
+    TextLabel.Parent = LabelModule
+    TextLabel.BackgroundColor3 = labelConfig.backgroundColor
+    TextLabel.BackgroundTransparency = labelConfig.backgroundTransparency
+    TextLabel.Size = labelConfig.autoSize and UDim2.new(0, 0, 0, 0) or UDim2.new(0, 330, 0, 28)
+    TextLabel.Font = labelConfig.font
+    TextLabel.Text = text
+    TextLabel.TextColor3 = labelConfig.textColor
+    TextLabel.TextSize = labelConfig.textSize
+    TextLabel.TextXAlignment = labelConfig.textXAlignment
+    TextLabel.TextYAlignment = labelConfig.textYAlignment
+    TextLabel.RichText = labelConfig.richText
+    TextLabel.AutoButtonColor = labelConfig.clickable and false or false
+    TextLabel.Text = ""
+    
+    -- 圆角
+    LabelC.CornerRadius = UDim.new(0, labelConfig.cornerRadius)
+    LabelC.Name = "LabelC"
+    LabelC.Parent = TextLabel
+    
+    -- 内边距
+    local padding = Instance.new("UIPadding")
+    padding.Parent = TextLabel
+    padding.PaddingLeft = UDim.new(0, labelConfig.padding)
+    padding.PaddingRight = UDim.new(0, labelConfig.padding)
+    padding.PaddingTop = UDim.new(0, 4)
+    padding.PaddingBottom = UDim.new(0, 4)
+    
+    -- 边框
+    local labelStroke
+    if labelConfig.strokeEnabled then
+        labelStroke = Instance.new("UIStroke")
+        labelStroke.Parent = TextLabel
+        labelStroke.Color = labelConfig.strokeColor
+        labelStroke.Thickness = labelConfig.strokeThickness
+        labelStroke.Transparency = labelConfig.strokeTransparency
+        
+        if labelConfig.glowEffect then
+            startNeonFlowEffect(labelStroke, "Color", 0.005)
+        end
+    end
+    
+    -- 发光效果
+    if labelConfig.glowEffect and not labelStroke then
+        labelStroke = Instance.new("UIStroke")
+        labelStroke.Parent = TextLabel
+        labelStroke.Color = labelConfig.strokeColor
+        labelStroke.Thickness = 1
+        labelStroke.Transparency = 0.8
+        startNeonFlowEffect(labelStroke, "Color", 0.005)
+    end
+    
+    -- 脉冲效果
+    local pulseConnection
+    if labelConfig.pulseEffect then
+        pulseConnection = createPulseGlow(labelStroke or TextLabel)
+    end
+    
+    -- 全息效果
+    if labelConfig.hologramEffect then
+        createHologramEffect(TextLabel, 0.2)
+    end
+    
+    -- 自动调整大小
+    if labelConfig.autoSize then
+        TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+        
+        TextLabel:GetPropertyChangedSignal("TextBounds"):Connect(function()
+            local textWidth = TextLabel.TextBounds.X + labelConfig.padding * 2
+            if textWidth > labelConfig.maxWidth then
+                TextLabel.Size = UDim2.new(0, labelConfig.maxWidth, 0, 0)
+                TextLabel.AutomaticSize = Enum.AutomaticSize.Y
             end
+        end)
+    end
+    
+    -- 设置文本（支持延迟设置以避免自动大小问题）
+    delay(0, function()
+        TextLabel.Text = text
+    end)
+    
+    -- 点击功能
+    if labelConfig.clickable and labelConfig.onClick then
+        TextLabel.MouseEnter:Connect(function()
+            services.TweenService:Create(TextLabel, TweenInfo.new(0.2), {
+                BackgroundTransparency = labelConfig.backgroundTransparency - 0.1
+            }):Play()
+            if labelStroke then
+                services.TweenService:Create(labelStroke, TweenInfo.new(0.2), {
+                    Thickness = labelConfig.strokeThickness + 1,
+                    Transparency = labelConfig.strokeTransparency - 0.2
+                }):Play()
+            end
+        end)
+        
+        TextLabel.MouseLeave:Connect(function()
+            services.TweenService:Create(TextLabel, TweenInfo.new(0.2), {
+                BackgroundTransparency = labelConfig.backgroundTransparency
+            }):Play()
+            if labelStroke then
+                services.TweenService:Create(labelStroke, TweenInfo.new(0.2), {
+                    Thickness = labelConfig.strokeThickness,
+                    Transparency = labelConfig.strokeTransparency
+                }):Play()
+            end
+        end)
+        
+        TextLabel.MouseButton1Click:Connect(function()
+            DigitalParticleExplosion(TextLabel)
+            services.TweenService:Create(TextLabel, TweenInfo.new(0.1), {
+                BackgroundTransparency = labelConfig.backgroundTransparency - 0.15
+            }):Play()
+            task.wait(0.1)
+            services.TweenService:Create(TextLabel, TweenInfo.new(0.2), {
+                BackgroundTransparency = labelConfig.backgroundTransparency
+            }):Play()
+            
+            local success, err = pcall(labelConfig.onClick)
+            if not success then
+                warn("Label click callback error: " .. tostring(err))
+            end
+        end)
+    end
+    
+    -- 标签功能函数
+    local labelFuncs = {}
+    
+    function labelFuncs:SetText(newText)
+        TextLabel.Text = newText
+    end
+    
+    function labelFuncs:SetTextColor(color)
+        labelConfig.textColor = color
+        TextLabel.TextColor3 = color
+    end
+    
+    function labelFuncs:SetBackgroundColor(color)
+        labelConfig.backgroundColor = color
+        TextLabel.BackgroundColor3 = color
+    end
+    
+    function labelFuncs:SetBackgroundTransparency(transparency)
+        labelConfig.backgroundTransparency = transparency
+        TextLabel.BackgroundTransparency = transparency
+    end
+    
+    function labelFuncs:SetStrokeColor(color)
+        if labelStroke then
+            labelConfig.strokeColor = color
+            labelStroke.Color = color
+        end
+    end
+    
+    function labelFuncs:SetStrokeThickness(thickness)
+        if labelStroke then
+            labelConfig.strokeThickness = thickness
+            labelStroke.Thickness = thickness
+        end
+    end
+    
+    function labelFuncs:SetRichText(enabled)
+        labelConfig.richText = enabled
+        TextLabel.RichText = enabled
+    end
+    
+    function labelFuncs:Destroy()
+        LabelModule:Destroy()
+        if pulseConnection then
+            pulseConnection:Disconnect()
+        end
+    end
+    
+    return labelFuncs
+end
             
             function section.Toggle(section, text, flag, enabled, callback)
                 callback = callback or function() end
