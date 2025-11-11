@@ -1013,6 +1013,56 @@ function FengUI.new(FengUI, name, theme)
     startNeonFlowEffect(playerGlow, "Color", 0.008)
     createPulseGlow(playerGlow)
     
+    -- 添加选择音乐按钮到右上角
+    local SelectMusicButton = Instance.new("TextButton")
+    SelectMusicButton.Name = "SelectMusicButton"
+    SelectMusicButton.Parent = PlayerContainer
+    SelectMusicButton.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+    SelectMusicButton.BackgroundTransparency = 0.1
+    SelectMusicButton.Position = UDim2.new(0.85, 0, 0.02, 0)
+    SelectMusicButton.Size = UDim2.new(0, 40, 0, 40)
+    SelectMusicButton.AutoButtonColor = false
+    SelectMusicButton.Font = Enum.Font.GothamBold
+    SelectMusicButton.Text = "🎵"
+    SelectMusicButton.TextColor3 = Color3.fromRGB(50, 50, 50)
+    SelectMusicButton.TextSize = 18
+    SelectMusicButton.ZIndex = 5
+    
+    local SelectMusicCorner = Instance.new("UICorner")
+    SelectMusicCorner.CornerRadius = UDim.new(1, 0)
+    SelectMusicCorner.Parent = SelectMusicButton
+    
+    -- 选择按钮发光效果
+    local selectMusicGlow = Instance.new("UIStroke")
+    selectMusicGlow.Parent = SelectMusicButton
+    selectMusicGlow.Color = Color3.fromRGB(150, 150, 150)
+    selectMusicGlow.Thickness = 1
+    selectMusicGlow.Transparency = 0.6
+    selectMusicGlow.ZIndex = 4
+    
+    -- 悬停效果
+    SelectMusicButton.MouseEnter:Connect(function()
+        services.TweenService:Create(SelectMusicButton, TweenInfo.new(0.2), {
+            BackgroundTransparency = 0,
+            Size = UDim2.new(0, 42, 0, 42)
+        }):Play()
+        services.TweenService:Create(selectMusicGlow, TweenInfo.new(0.2), {
+            Thickness = 2,
+            Transparency = 0.3
+        }):Play()
+    end)
+    
+    SelectMusicButton.MouseLeave:Connect(function()
+        services.TweenService:Create(SelectMusicButton, TweenInfo.new(0.2), {
+            BackgroundTransparency = 0.1,
+            Size = UDim2.new(0, 40, 0, 40)
+        }):Play()
+        services.TweenService:Create(selectMusicGlow, TweenInfo.new(0.2), {
+            Thickness = 1,
+            Transparency = 0.6
+        }):Play()
+    end)
+    
     -- 重新设计布局：上下结构
     -- 上部：歌曲信息和专辑封面
     local TopSection = Instance.new("Frame")
@@ -1362,6 +1412,186 @@ function FengUI.new(FengUI, name, theme)
             end)
         end
     end
+    
+    -- 创建音乐选择弹出窗口
+    local musicSelectPopup = Instance.new("Frame")
+    musicSelectPopup.Name = "MusicSelectPopup"
+    musicSelectPopup.Parent = PlayerContainer
+    musicSelectPopup.BackgroundColor3 = config.TabColor
+    musicSelectPopup.BackgroundTransparency = 0.1
+    musicSelectPopup.Position = UDim2.new(0.05, 0, 0.1, 0)
+    musicSelectPopup.Size = UDim2.new(0.9, 0, 0, 120)
+    musicSelectPopup.Visible = false
+    musicSelectPopup.ZIndex = 10
+    
+    local popupCorner = Instance.new("UICorner")
+    popupCorner.CornerRadius = UDim.new(0, 8)
+    popupCorner.Parent = musicSelectPopup
+    
+    local popupGlow = Instance.new("UIStroke")
+    popupGlow.Parent = musicSelectPopup
+    popupGlow.Color = config.AccentColor
+    popupGlow.Thickness = 2
+    popupGlow.Transparency = 0.7
+    popupGlow.ZIndex = 9
+    
+    -- 弹出窗口标题
+    local popupTitle = Instance.new("TextLabel")
+    popupTitle.Name = "PopupTitle"
+    popupTitle.Parent = musicSelectPopup
+    popupTitle.BackgroundTransparency = 1
+    popupTitle.Position = UDim2.new(0, 0, 0, 5)
+    popupTitle.Size = UDim2.new(1, 0, 0, 20)
+    popupTitle.Font = Enum.Font.GothamBold
+    popupTitle.Text = "选择音乐"
+    popupTitle.TextColor3 = config.TextColor
+    popupTitle.TextSize = 14
+    popupTitle.ZIndex = 11
+    
+    -- 音乐列表容器
+    local musicListContainer = Instance.new("ScrollingFrame")
+    musicListContainer.Name = "MusicListContainer"
+    musicListContainer.Parent = musicSelectPopup
+    musicListContainer.BackgroundTransparency = 1
+    musicListContainer.Position = UDim2.new(0, 5, 0, 30)
+    musicListContainer.Size = UDim2.new(1, -10, 0, 85)
+    musicListContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+    musicListContainer.ScrollBarThickness = 3
+    musicListContainer.ScrollBarImageColor3 = config.AccentColor
+    musicListContainer.ZIndex = 11
+    
+    local musicListLayout = Instance.new("UIListLayout")
+    musicListLayout.Name = "MusicListLayout"
+    musicListLayout.Parent = musicListContainer
+    musicListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    musicListLayout.Padding = UDim.new(0, 5)
+    
+    -- 预设音乐库
+    local musicLibrary = {
+        {
+            id = "1847028739",
+            title = "轻松音乐",
+            artist = "背景音乐",
+            imageId = "84830962019412"
+        },
+        {
+            id = "1847028740", 
+            title = "节奏感",
+            artist = "电子音乐",
+            imageId = "84830962019412"
+        },
+        {
+            id = "1847028741",
+            title = "古典乐",
+            artist = "古典音乐",
+            imageId = "84830962019412"
+        },
+        {
+            id = "1847028742",
+            title = "摇滚乐",
+            artist = "摇滚乐队",
+            imageId = "84830962019412"
+        }
+    }
+    
+    -- 填充音乐列表
+    local function populateMusicList()
+        for _, music in ipairs(musicLibrary) do
+            local musicItem = Instance.new("TextButton")
+            musicItem.Name = "MusicItem_" .. music.id
+            musicItem.Parent = musicListContainer
+            musicItem.BackgroundColor3 = config.Button_Color
+            musicItem.BackgroundTransparency = 0.2
+            musicItem.Size = UDim2.new(1, 0, 0, 30)
+            musicItem.AutoButtonColor = false
+            musicItem.Font = Enum.Font.Gotham
+            musicItem.Text = ""
+            musicItem.TextColor3 = config.TextColor
+            musicItem.TextSize = 12
+            musicItem.ZIndex = 12
+            
+            local itemCorner = Instance.new("UICorner")
+            itemCorner.CornerRadius = UDim.new(0, 6)
+            itemCorner.Parent = musicItem
+            
+            local musicImage = Instance.new("ImageLabel")
+            musicImage.Name = "MusicImage"
+            musicImage.Parent = musicItem
+            musicImage.BackgroundTransparency = 1
+            musicImage.Position = UDim2.new(0, 5, 0, 5)
+            musicImage.Size = UDim2.new(0, 20, 0, 20)
+            musicImage.Image = "rbxassetid://" .. music.imageId
+            musicImage.ZIndex = 13
+            
+            local musicTitle = Instance.new("TextLabel")
+            musicTitle.Name = "MusicTitle"
+            musicTitle.Parent = musicItem
+            musicTitle.BackgroundTransparency = 1
+            musicTitle.Position = UDim2.new(0, 30, 0, 0)
+            musicTitle.Size = UDim2.new(0, 150, 1, 0)
+            musicTitle.Font = Enum.Font.Gotham
+            musicTitle.Text = music.title
+            musicTitle.TextColor3 = config.TextColor
+            musicTitle.TextSize = 12
+            musicTitle.TextXAlignment = Enum.TextXAlignment.Left
+            musicTitle.ZIndex = 13
+            
+            local musicArtist = Instance.new("TextLabel")
+            musicArtist.Name = "MusicArtist"
+            musicArtist.Parent = musicItem
+            musicArtist.BackgroundTransparency = 1
+            musicArtist.Position = UDim2.new(0, 180, 0, 0)
+            musicArtist.Size = UDim2.new(0, 100, 1, 0)
+            musicArtist.Font = Enum.Font.Gotham
+            musicArtist.Text = music.artist
+            musicArtist.TextColor3 = config.SecondaryTextColor
+            musicArtist.TextSize = 10
+            musicArtist.TextXAlignment = Enum.TextXAlignment.Left
+            musicArtist.ZIndex = 13
+            
+            -- 悬停效果
+            musicItem.MouseEnter:Connect(function()
+                services.TweenService:Create(musicItem, TweenInfo.new(0.2), {
+                    BackgroundTransparency = 0.1
+                }):Play()
+            end)
+            
+            musicItem.MouseLeave:Connect(function()
+                services.TweenService:Create(musicItem, TweenInfo.new(0.2), {
+                    BackgroundTransparency = 0.2
+                }):Play()
+            end)
+            
+            -- 点击事件
+            musicItem.MouseButton1Click:Connect(function()
+                DigitalParticleExplosion(musicItem)
+                -- 添加到播放列表并播放
+                musicPlayer:ClearPlaylist()
+                musicPlayer:AddTrack(music.id, music.title, music.artist, music.imageId)
+                musicPlayer:PlayTrack(music.id)
+                updateUI()
+                -- 关闭弹出窗口
+                musicSelectPopup.Visible = false
+            end)
+        end
+        
+        -- 更新滚动区域大小
+        musicListContainer.CanvasSize = UDim2.new(0, 0, 0, #musicLibrary * 35)
+    end
+    
+    -- 选择音乐按钮点击事件
+    SelectMusicButton.MouseButton1Click:Connect(function()
+        DigitalParticleExplosion(SelectMusicButton)
+        createButtonClickEffect(SelectMusicButton, false)
+        
+        -- 切换弹出窗口显示状态
+        musicSelectPopup.Visible = not musicSelectPopup.Visible
+        
+        -- 如果显示弹出窗口，填充音乐列表
+        if musicSelectPopup.Visible then
+            populateMusicList()
+        end
+    end)
     
     -- 初始化默认播放列表
     if defaultPlaylist then
