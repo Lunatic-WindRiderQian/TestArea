@@ -111,8 +111,6 @@ local function createAdvancedBackground(parent)
     })
     gradient.Parent = gradientOverlay
     
-    -- 删除了四个角落的角点高光
-    
     return backgroundContainer
 end
 
@@ -664,7 +662,7 @@ function switchTab(new)
     services.TweenService:Create(new[1].TabText, tweenInfo, { 
         TextTransparency = 0,
         TextColor3 = config.AccentColor
-        }):Play()
+    }):Play()
     
     if old[1].AbsolutePosition and new[1].AbsolutePosition then
         createParticleTrail(
@@ -697,13 +695,12 @@ Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.Bg_Color
-Main.BackgroundTransparency = 0.2
+Main.BackgroundTransparency = 1 -- 初始完全透明，用于进场特效
 Main.Position = UDim2.new(0.5, 0, 0.4, 0)
 Main.Size = UDim2.new(0, 450, 0, 280)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
-Main.Visible = false
 
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
@@ -798,66 +795,6 @@ CloseButton.MouseButton1Click:Connect(function()
     createExitEffect(Main, function()
         FengYu:Destroy()
     end)
-end)
-
-local Open = Instance.new("ImageButton")
-Open.Name = "Open"
-Open.Parent = FengYu
-Open.BackgroundColor3 = config.AccentColor
-Open.BackgroundTransparency = 0.85
-Open.Position = UDim2.new(0.92, 0, 0.01, 0)
-Open.Size = UDim2.new(0, 40, 0, 40)
-Open.Active = true
-Open.Draggable = true
-Open.Image = "rbxassetid://84830962019412"
-Open.ImageColor3 = Color3.fromRGB(255, 255, 255)
-Open.ImageTransparency = 0.15
-
-local OpenCorner = Instance.new("UICorner")
-OpenCorner.CornerRadius = UDim.new(0, 8)
-OpenCorner.Parent = Open
-
-local OpenStroke = Instance.new("UIStroke")
-OpenStroke.Parent = Open
-OpenStroke.Color = Color3.fromRGB(180, 180, 180)
-OpenStroke.Thickness = 1.2
-OpenStroke.Transparency = 0.4
-
-startNeonFlowEffect(Open, "BackgroundColor3", 0.012)
-createPulseGlow(OpenStroke)
-
-Open.MouseButton1Click:Connect(function()
-    if not Main.Visible then
-        -- 打开时直接显示，没有进场动画
-        Main.Visible = true
-    else
-        -- 关闭时使用出场特效
-        createExitEffect(Main, function()
-            Main.Visible = false
-            -- 重置Main的状态以便下次打开
-            Main.Size = UDim2.new(0, 450, 0, 280)
-            Main.BackgroundTransparency = 0.2
-        end)
-    end
-    create3DFlipAnimation(Open, 0.5)
-end)
-
-services.UserInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.LeftControl then
-        if not Main.Visible then
-            -- 打开时直接显示，没有进场动画
-            Main.Visible = true
-        else
-            -- 关闭时使用出场特效
-            createExitEffect(Main, function()
-                Main.Visible = false
-                -- 重置Main的状态以便下次打开
-                Main.Size = UDim2.new(0, 450, 0, 280)
-                Main.BackgroundTransparency = 0.2
-            end)
-        end
-        create3DFlipAnimation(Open, 0.5)
-    end
 end)
 
 local TabMain = Instance.new("Frame")
@@ -955,6 +892,9 @@ task.spawn(function()
         task.wait(0.05)
     end
 end)
+
+-- 添加进场特效
+createEntranceEffect(Main)
 
 function FengUI.new(FengUI, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
