@@ -64,6 +64,146 @@ local config = {
     GlowColor = Color3.fromRGB(0, 200, 255),
 }
 
+-- 高级背景纹理
+local function createAdvancedBackground(parent)
+    local backgroundContainer = Instance.new("Frame")
+    backgroundContainer.Name = "AdvancedBackground"
+    backgroundContainer.BackgroundTransparency = 1
+    backgroundContainer.Size = UDim2.new(1, 0, 1, 0)
+    backgroundContainer.ZIndex = 0
+    backgroundContainer.Parent = parent
+    
+    -- 网格线效果
+    local gridPattern = Instance.new("Frame")
+    gridPattern.Name = "GridPattern"
+    gridPattern.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    gridPattern.BackgroundTransparency = 0.8
+    gridPattern.Size = UDim2.new(1, 0, 1, 0)
+    gridPattern.ZIndex = 1
+    gridPattern.Parent = backgroundContainer
+    
+    local gridUIStroke = Instance.new("UIStroke")
+    gridUIStroke.Color = Color3.fromRGB(40, 40, 40)
+    gridUIStroke.Thickness = 1
+    gridUIStroke.Transparency = 0.7
+    gridUIStroke.Parent = gridPattern
+    
+    -- 渐变覆盖层
+    local gradientOverlay = Instance.new("Frame")
+    gradientOverlay.Name = "GradientOverlay"
+    gradientOverlay.BackgroundTransparency = 1
+    gradientOverlay.Size = UDim2.new(1, 0, 1, 0)
+    gradientOverlay.ZIndex = 2
+    gradientOverlay.Parent = backgroundContainer
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Rotation = 45
+    gradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.8),
+        NumberSequenceKeypoint.new(0.3, 0.6),
+        NumberSequenceKeypoint.new(0.7, 0.6),
+        NumberSequenceKeypoint.new(1, 0.8)
+    })
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 10, 10)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 20, 20)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 10))
+    })
+    gradient.Parent = gradientOverlay
+    
+    -- 角点高光
+    local cornerGlowTL = Instance.new("Frame")
+    cornerGlowTL.Name = "CornerGlowTL"
+    cornerGlowTL.BackgroundColor3 = config.AccentColor
+    cornerGlowTL.BackgroundTransparency = 0.9
+    cornerGlowTL.Size = UDim2.new(0, 80, 0, 80)
+    cornerGlowTL.Position = UDim2.new(0, -40, 0, -40)
+    cornerGlowTL.ZIndex = 3
+    cornerGlowTL.Parent = backgroundContainer
+    
+    local cornerGlowTR = Instance.new("Frame")
+    cornerGlowTR.Name = "CornerGlowTR"
+    cornerGlowTR.BackgroundColor3 = config.AccentColor
+    cornerGlowTR.BackgroundTransparency = 0.9
+    cornerGlowTR.Size = UDim2.new(0, 80, 0, 80)
+    cornerGlowTR.Position = UDim2.new(1, -40, 0, -40)
+    cornerGlowTR.ZIndex = 3
+    cornerGlowTR.Parent = backgroundContainer
+    
+    local cornerGlowBL = Instance.new("Frame")
+    cornerGlowBL.Name = "CornerGlowBL"
+    cornerGlowBL.BackgroundColor3 = config.AccentColor
+    cornerGlowBL.BackgroundTransparency = 0.9
+    cornerGlowBL.Size = UDim2.new(0, 80, 0, 80)
+    cornerGlowBL.Position = UDim2.new(0, -40, 1, -40)
+    cornerGlowBL.ZIndex = 3
+    cornerGlowBL.Parent = backgroundContainer
+    
+    local cornerGlowBR = Instance.new("Frame")
+    cornerGlowBR.Name = "CornerGlowBR"
+    cornerGlowBR.BackgroundColor3 = config.AccentColor
+    cornerGlowBR.BackgroundTransparency = 0.9
+    cornerGlowBR.Size = UDim2.new(0, 80, 0, 80)
+    cornerGlowBR.Position = UDim2.new(1, -40, 1, -40)
+    cornerGlowBR.ZIndex = 3
+    cornerGlowBR.Parent = backgroundContainer
+    
+    return backgroundContainer
+end
+
+-- 进场特效函数
+local function createEntranceEffect(mainFrame)
+    -- 初始状态：缩小并透明
+    mainFrame.Size = UDim2.new(0, 10, 0, 10)
+    mainFrame.BackgroundTransparency = 1
+    mainFrame.Visible = true
+    
+    -- 第一阶段：快速放大并淡入
+    services.TweenService:Create(mainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 500, 0, 320),
+        BackgroundTransparency = 0.5
+    }):Play()
+    
+    task.wait(0.4)
+    
+    -- 第二阶段：调整到最终大小并完全显示
+    services.TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 450, 0, 280),
+        BackgroundTransparency = 0.2
+    }):Play()
+    
+    -- 添加粒子进场效果
+    task.spawn(function()
+        for i = 1, 8 do
+            local particle = Instance.new("Frame")
+            particle.Name = "EntranceParticle"
+            particle.BackgroundColor3 = config.AccentColor
+            particle.BackgroundTransparency = 0.3
+            particle.Size = UDim2.new(0, 4, 0, 4)
+            particle.Position = UDim2.new(0.5, 0, 0.5, 0)
+            particle.AnchorPoint = Vector2.new(0.5, 0.5)
+            particle.ZIndex = 20
+            particle.Parent = mainFrame
+            
+            local angle = (i / 8) * math.pi * 2
+            local distance = 100
+            
+            services.TweenService:Create(particle, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Position = UDim2.new(
+                    0.5, math.cos(angle) * distance,
+                    0.5, math.sin(angle) * distance
+                ),
+                BackgroundTransparency = 1,
+                Size = UDim2.new(0, 2, 0, 2)
+            }):Play()
+            
+            delay(0.6, function()
+                particle:Destroy()
+            end)
+        end
+    end)
+end
+
 local MusicPlayer = {
     currentSound = nil,
     currentTrackIndex = 1,
@@ -549,12 +689,13 @@ Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.Bg_Color
-Main.BackgroundTransparency = 0.2
+Main.BackgroundTransparency = 1 -- 初始完全透明，用于进场特效
 Main.Position = UDim2.new(0.5, 0, 0.4, 0)
 Main.Size = UDim2.new(0, 450, 0, 280)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
+Main.Visible = false -- 初始隐藏，进场时显示
 
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
@@ -575,13 +716,16 @@ startNeonFlowEffect(neonStroke, "Color", 0.01)
 
 createPulseGlow(neonStroke)
 
+-- 创建高级背景
+createAdvancedBackground(Main)
+
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = Main
 TitleBar.BackgroundColor3 = config.TabColor
 TitleBar.BackgroundTransparency = 0.2
 TitleBar.BorderSizePixel = 0
-TitleBar.Size = UDim2.new(1, 0, 0, 35) -- 标题栏高度从30增加到35
+TitleBar.Size = UDim2.new(1, 0, 0, 45) -- 标题栏高度增加到45
 TitleBar.ZIndex = 2
 
 local TitleBarCorner = Instance.new("UICorner")
@@ -600,23 +744,13 @@ TitleText.TextColor3 = config.AccentColor
 TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 
--- 删除直线部分
--- local Line = Instance.new("Frame")
--- Line.Name = "Line"
--- Line.Parent = TitleBar
--- Line.BackgroundColor3 = config.AccentColor
--- Line.BorderSizePixel = 0
--- Line.Position = UDim2.new(0, 0, 1, 0)
--- Line.Size = UDim2.new(1, 0, 0, 1)
--- Line.ZIndex = 2
-
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = TitleBar
 CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.BackgroundTransparency = 1
 CloseButton.BorderSizePixel = 0
-CloseButton.Position = UDim2.new(1, -25, 0, 7.5) -- 调整位置以适应新高度
+CloseButton.Position = UDim2.new(1, -25, 0, 12.5) -- 调整位置以适应新高度
 CloseButton.Size = UDim2.new(0, 20, 0, 20)
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Text = "X"
@@ -632,7 +766,7 @@ CloseButton.MouseEnter:Connect(function()
     services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         TextColor3 = Color3.fromRGB(255, 100, 100),
         TextSize = 18,
-        Position = UDim2.new(1, -26, 0, 6.5) -- 调整位置以适应新高度
+        Position = UDim2.new(1, -26, 0, 11.5) -- 调整位置以适应新高度
     }):Play()
 end)
 
@@ -640,7 +774,7 @@ CloseButton.MouseLeave:Connect(function()
     services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         TextColor3 = Color3.fromRGB(255, 60, 60),
         TextSize = 16,
-        Position = UDim2.new(1, -25, 0, 7.5) -- 调整位置以适应新高度
+        Position = UDim2.new(1, -25, 0, 12.5) -- 调整位置以适应新高度
     }):Play()
 end)
 
@@ -649,7 +783,7 @@ CloseButton.MouseButton1Click:Connect(function()
     services.TweenService:Create(CloseButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         TextColor3 = Color3.fromRGB(255, 30, 30),
         TextSize = 14,
-        Position = UDim2.new(1, -24, 0, 8.5) -- 调整位置以适应新高度
+        Position = UDim2.new(1, -24, 0, 13.5) -- 调整位置以适应新高度
     }):Play()
     task.wait(0.1)
     FengYu:Destroy()
@@ -682,13 +816,23 @@ startNeonFlowEffect(Open, "BackgroundColor3", 0.012)
 createPulseGlow(OpenStroke)
 
 Open.MouseButton1Click:Connect(function()
-    Main.Visible = not Main.Visible
+    if not Main.Visible then
+        Main.Visible = true
+        createEntranceEffect(Main)
+    else
+        Main.Visible = not Main.Visible
+    end
     create3DFlipAnimation(Open, 0.5)
 end)
 
 services.UserInputService.InputEnded:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.LeftControl then
-        Main.Visible = not Main.Visible
+        if not Main.Visible then
+            Main.Visible = true
+            createEntranceEffect(Main)
+        else
+            Main.Visible = not Main.Visible
+        end
         create3DFlipAnimation(Open, 0.5)
     end
 end)
@@ -697,8 +841,8 @@ local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.2, 0, 0, 37) -- 调整位置以适应新的标题栏高度
-TabMain.Size = UDim2.new(0, 360, 0, 243) -- 调整高度以适应新的标题栏高度
+TabMain.Position = UDim2.new(0.2, 0, 0, 47) -- 调整位置以适应新的标题栏高度
+TabMain.Size = UDim2.new(0, 360, 0, 233) -- 调整高度以适应新的标题栏高度
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
@@ -707,8 +851,8 @@ Side.BackgroundColor3 = config.TabColor
 Side.BackgroundTransparency = 0.2
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
-Side.Position = UDim2.new(0, 0, 0, 35) -- 调整位置以适应新的标题栏高度
-Side.Size = UDim2.new(0, 90, 0, 245) -- 调整高度以适应新的标题栏高度
+Side.Position = UDim2.new(0, 0, 0, 45) -- 调整位置以适应新的标题栏高度
+Side.Size = UDim2.new(0, 90, 0, 235) -- 调整高度以适应新的标题栏高度
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -723,7 +867,7 @@ TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0, 5)
-TabBtns.Size = UDim2.new(0, 90, 0, 235) -- 调整高度以适应新的Side高度
+TabBtns.Size = UDim2.new(0, 90, 0, 225) -- 调整高度以适应新的Side高度
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -788,6 +932,9 @@ task.spawn(function()
         task.wait(0.05)
     end
 end)
+
+-- 添加进场特效
+createEntranceEffect(Main)
 
 function FengUI.new(FengUI, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
