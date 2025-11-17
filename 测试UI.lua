@@ -29,10 +29,8 @@ end
 local FengUI = {}
 local ToggleUI = true
 FengUI.currentTab = nil
+FengUI.currentCard = nil
 FengUI.flags = {}
-FengUI.featureCards = {}
-FengUI.featurePanels = {}
-FengUI.currentFeature = nil
 
 local services = {
     TweenService = game:GetService("TweenService"),
@@ -65,7 +63,34 @@ local config = {
     TextColor = Color3.fromRGB(240, 240, 240),
     SecondaryTextColor = Color3.fromRGB(180, 180, 180),
     GlowColor = Color3.fromRGB(0, 200, 255),
+    CardColor = Color3.fromRGB(25, 25, 25),
+    CardHoverColor = Color3.fromRGB(35, 35, 35),
+    CardSelectedColor = Color3.fromRGB(40, 40, 40)
 }
+
+-- 玩家信息配置
+local PlayerInfo = {
+    name = services.Players.LocalPlayer.Name,
+    displayName = services.Players.LocalPlayer.DisplayName,
+    userId = services.Players.LocalPlayer.UserId,
+    accountAge = services.Players.LocalPlayer.AccountAge,
+    membershipType = services.Players.LocalPlayer.MembershipType.Name
+}
+
+-- 自定义玩家信息函数
+function FengUI:SetPlayerInfo(info)
+    if info.name then PlayerInfo.name = info.name end
+    if info.displayName then PlayerInfo.displayName = info.displayName end
+    if info.userId then PlayerInfo.userId = info.userId end
+    if info.accountAge then PlayerInfo.accountAge = info.accountAge end
+    if info.membershipType then PlayerInfo.membershipType = info.membershipType end
+    if info.extraInfo then PlayerInfo.extraInfo = info.extraInfo end
+    
+    -- 更新UI中的玩家信息显示
+    if FengUI.playerInfoFrame and FengUI.playerInfoFrame.Parent then
+        updatePlayerInfoDisplay()
+    end
+end
 
 local MusicPlayer = {
     currentSound = nil,
@@ -479,102 +504,6 @@ local function setupSmoothScrolling(scrollingFrame, layout)
     scrollingFrame.ElasticBehavior = Enum.ElasticBehavior.Never
 end
 
--- 新增功能：卡片系统
-local function createFeatureCard(name, description, icon, parent)
-    local FeatureCard = Instance.new("TextButton")
-    FeatureCard.Name = name .. "Card"
-    FeatureCard.Parent = parent
-    FeatureCard.BackgroundColor3 = config.TabColor
-    FeatureCard.BackgroundTransparency = 0.2
-    FeatureCard.AutoButtonColor = false
-    FeatureCard.Text = ""
-    FeatureCard.Size = UDim2.new(0, 120, 0, 100)
-    
-    local CardCorner = Instance.new("UICorner")
-    CardCorner.CornerRadius = UDim.new(0, 8)
-    CardCorner.Parent = FeatureCard
-    
-    local CardStroke = Instance.new("UIStroke")
-    CardStroke.Parent = FeatureCard
-    CardStroke.Color = config.AccentColor
-    CardStroke.Thickness = 1
-    CardStroke.Transparency = 0.7
-    
-    local Icon = Instance.new("ImageLabel")
-    Icon.Name = "Icon"
-    Icon.Parent = FeatureCard
-    Icon.BackgroundTransparency = 1
-    Icon.Position = UDim2.new(0.5, -20, 0.2, -20)
-    Icon.Size = UDim2.new(0, 40, 0, 40)
-    Icon.Image = icon or "rbxassetid://84830962019412"
-    Icon.ImageColor3 = config.AccentColor
-    
-    local Title = Instance.new("TextLabel")
-    Title.Name = "Title"
-    Title.Parent = FeatureCard
-    Title.BackgroundTransparency = 1
-    Title.Position = UDim2.new(0, 10, 0.6, -10)
-    Title.Size = UDim2.new(1, -20, 0, 20)
-    Title.Font = Enum.Font.GothamSemibold
-    Title.Text = name
-    Title.TextColor3 = config.TextColor
-    Title.TextSize = 12
-    Title.TextXAlignment = Enum.TextXAlignment.Center
-    
-    local Desc = Instance.new("TextLabel")
-    Desc.Name = "Description"
-    Desc.Parent = FeatureCard
-    Desc.BackgroundTransparency = 1
-    Desc.Position = UDim2.new(0, 5, 0.8, -10)
-    Desc.Size = UDim2.new(1, -10, 0, 15)
-    Desc.Font = Enum.Font.Gotham
-    Desc.Text = description
-    Desc.TextColor3 = config.SecondaryTextColor
-    Desc.TextSize = 10
-    Desc.TextXAlignment = Enum.TextXAlignment.Center
-    Desc.TextWrapped = true
-    
-    -- 悬停效果
-    FeatureCard.MouseEnter:Connect(function()
-        services.TweenService:Create(FeatureCard, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0.1,
-            BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        }):Play()
-        services.TweenService:Create(CardStroke, TweenInfo.new(0.2), {
-            Transparency = 0.3
-        }):Play()
-    end)
-    
-    FeatureCard.MouseLeave:Connect(function()
-        services.TweenService:Create(FeatureCard, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0.2,
-            BackgroundColor3 = config.TabColor
-        }):Play()
-        services.TweenService:Create(CardStroke, TweenInfo.new(0.2), {
-            Transparency = 0.7
-        }):Play()
-    end)
-    
-    return FeatureCard
-end
-
--- 新增功能：卡片面板切换
-local function showFeaturePanel(featureName)
-    if FengUI.currentFeature == featureName then
-        -- 如果点击的是当前已显示的面板，则隐藏
-        for _, panel in pairs(FengUI.featurePanels) do
-            panel.Visible = false
-        end
-        FengUI.currentFeature = nil
-        return
-    end
-    
-    FengUI.currentFeature = featureName
-    for name, panel in pairs(FengUI.featurePanels) do
-        panel.Visible = (name == featureName)
-    end
-end
-
 local switchingTabs = false
 function switchTab(new)
     if switchingTabs then return end
@@ -611,7 +540,7 @@ function switchTab(new)
     services.TweenService:Create(old[1].TabText, tweenInfo, { 
         TextTransparency = 0.5,
         TextColor3 = config.TextColor
-    }):Play()
+        }):Play()
     services.TweenService:Create(new[1].TabText, tweenInfo, { 
         TextTransparency = 0,
         TextColor3 = config.AccentColor
@@ -632,6 +561,68 @@ function switchTab(new)
     switchingTabs = false
 end
 
+-- 卡片切换函数
+local switchingCards = false
+function switchCard(cardData)
+    if switchingCards then return end
+    
+    local old = FengUI.currentCard
+    if old == cardData then return end
+    
+    switchingCards = true
+    
+    -- 隐藏旧的卡片内容
+    if old then
+        services.TweenService:Create(old.cardButton, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            BackgroundColor3 = config.CardColor,
+            Size = UDim2.new(0.9, 0, 0, 80)
+        }):Play()
+        
+        services.TweenService:Create(old.cardButton.CardGlow, TweenInfo.new(0.3), {
+            Transparency = 0.8
+        }):Play()
+        
+        old.tabContainer.Visible = false
+    end
+    
+    -- 显示新的卡片内容
+    FengUI.currentCard = cardData
+    
+    if cardData then
+        services.TweenService:Create(cardData.cardButton, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            BackgroundColor3 = config.CardSelectedColor,
+            Size = UDim2.new(0.95, 0, 0, 85)
+        }):Play()
+        
+        services.TweenService:Create(cardData.cardButton.CardGlow, TweenInfo.new(0.3), {
+            Transparency = 0.3
+        }):Play()
+        
+        cardData.tabContainer.Visible = true
+        
+        -- 显示玩家信息或卡片内容
+        if FengUI.playerInfoFrame then
+            FengUI.playerInfoFrame.Visible = false
+        end
+        if FengUI.cardsContentFrame then
+            FengUI.cardsContentFrame.Visible = true
+        end
+    else
+        -- 显示玩家信息
+        if FengUI.playerInfoFrame then
+            FengUI.playerInfoFrame.Visible = true
+        end
+        if FengUI.cardsContentFrame then
+            FengUI.cardsContentFrame.Visible = false
+        end
+    end
+    
+    DigitalParticleExplosion(cardData and cardData.cardButton or (old and old.cardButton))
+    
+    task.wait(0.3)
+    switchingCards = false
+end
+
 for _, gui in ipairs(services.CoreGui:GetChildren()) do
     if gui.Name == "UniversalUI" and gui:IsA("ScreenGui") then
         gui:Destroy()
@@ -650,7 +641,7 @@ Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.Bg_Color
 Main.BackgroundTransparency = 1
 Main.Position = UDim2.new(0.5, 0, 0.35, 0)
-Main.Size = UDim2.new(0, 450, 0, 280)
+Main.Size = UDim2.new(0, 650, 0, 400) -- 增加宽度以容纳卡片
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -818,53 +809,304 @@ services.UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- 新增：功能卡片容器
-local FeaturesContainer = Instance.new("ScrollingFrame")
-FeaturesContainer.Name = "FeaturesContainer"
-FeaturesContainer.Parent = Main
-FeaturesContainer.BackgroundTransparency = 1
-FeaturesContainer.Position = UDim2.new(0, 100, 0, 40)
-FeaturesContainer.Size = UDim2.new(0, 340, 0, 80)
-FeaturesContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-FeaturesContainer.ScrollBarThickness = 3
-FeaturesContainer.ScrollBarImageColor3 = config.AccentColor
-FeaturesContainer.ScrollBarImageTransparency = 0.5
-FeaturesContainer.Visible = false
+-- 创建卡片容器
+local CardsContainer = Instance.new("Frame")
+CardsContainer.Name = "CardsContainer"
+CardsContainer.Parent = Main
+CardsContainer.BackgroundTransparency = 1
+CardsContainer.Position = UDim2.new(0.7, 0, 0.1, 0)
+CardsContainer.Size = UDim2.new(0.28, 0, 0.8, 0)
+CardsContainer.Visible = false
 
-local FeaturesLayout = Instance.new("UIGridLayout")
-FeaturesLayout.Parent = FeaturesContainer
-FeaturesLayout.CellPadding = UDim2.new(0, 10, 0, 10)
-FeaturesLayout.CellSize = UDim2.new(0, 120, 0, 100)
-FeaturesLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-FeaturesLayout.SortOrder = Enum.SortOrder.LayoutOrder
-FeaturesLayout.StartCorner = Enum.StartCorner.TopLeft
+local CardsListLayout = Instance.new("UIListLayout")
+CardsListLayout.Parent = CardsContainer
+CardsListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+CardsListLayout.Padding = UDim.new(0, 10)
 
--- 新增：功能面板容器
-local FeaturePanelsContainer = Instance.new("Frame")
-FeaturePanelsContainer.Name = "FeaturePanelsContainer"
-FeaturePanelsContainer.Parent = Main
-FeaturePanelsContainer.BackgroundTransparency = 1
-FeaturePanelsContainer.Position = UDim2.new(0, 100, 0, 130)
-FeaturePanelsContainer.Size = UDim2.new(0, 340, 0, 140)
-FeaturePanelsContainer.Visible = false
+-- 创建卡片内容区域
+local CardsContent = Instance.new("Frame")
+CardsContent.Name = "CardsContent"
+CardsContent.Parent = Main
+CardsContent.BackgroundTransparency = 1
+CardsContent.Position = UDim2.new(0, 0, 0, 35)
+CardsContent.Size = UDim2.new(0.7, 0, 0, 365)
+CardsContent.Visible = false
+
+FengUI.cardsContentFrame = CardsContent
+
+-- 创建玩家信息框架
+local PlayerInfoFrame = Instance.new("Frame")
+PlayerInfoFrame.Name = "PlayerInfoFrame"
+PlayerInfoFrame.Parent = Main
+PlayerInfoFrame.BackgroundTransparency = 1
+PlayerInfoFrame.Position = UDim2.new(0, 0, 0, 35)
+PlayerInfoFrame.Size = UDim2.new(0.7, 0, 0, 365)
+
+FengUI.playerInfoFrame = PlayerInfoFrame
+
+-- 更新玩家信息显示函数
+local function updatePlayerInfoDisplay()
+    if not PlayerInfoFrame then return end
+    
+    -- 清除旧内容
+    for _, child in ipairs(PlayerInfoFrame:GetChildren()) do
+        child:Destroy()
+    end
+    
+    -- 创建玩家头像
+    local AvatarFrame = Instance.new("Frame")
+    AvatarFrame.Name = "AvatarFrame"
+    AvatarFrame.Parent = PlayerInfoFrame
+    AvatarFrame.BackgroundColor3 = config.CardColor
+    AvatarFrame.BackgroundTransparency = 0.2
+    AvatarFrame.Position = UDim2.new(0.1, 0, 0.05, 0)
+    AvatarFrame.Size = UDim2.new(0.8, 0, 0, 120)
+    
+    local AvatarCorner = Instance.new("UICorner")
+    AvatarCorner.CornerRadius = UDim.new(0, 8)
+    AvatarCorner.Parent = AvatarFrame
+    
+    local AvatarGlow = Instance.new("UIStroke")
+    AvatarGlow.Parent = AvatarFrame
+    AvatarGlow.Color = config.AccentColor
+    AvatarGlow.Thickness = 2
+    AvatarGlow.Transparency = 0.7
+    
+    startNeonFlowEffect(AvatarGlow, "Color", 0.008)
+    createPulseGlow(AvatarGlow)
+    
+    local AvatarImage = Instance.new("ImageLabel")
+    AvatarImage.Name = "AvatarImage"
+    AvatarImage.Parent = AvatarFrame
+    AvatarImage.BackgroundTransparency = 1
+    AvatarImage.Position = UDim2.new(0.5, -40, 0.1, 0)
+    AvatarImage.Size = UDim2.new(0, 80, 0, 80)
+    AvatarImage.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. PlayerInfo.userId .. "&width=420&height=420&format=png"
+    
+    local AvatarCorner2 = Instance.new("UICorner")
+    AvatarCorner2.CornerRadius = UDim.new(1, 0)
+    AvatarCorner2.Parent = AvatarImage
+    
+    local PlayerName = Instance.new("TextLabel")
+    PlayerName.Name = "PlayerName"
+    PlayerName.Parent = AvatarFrame
+    PlayerName.BackgroundTransparency = 1
+    PlayerName.Position = UDim2.new(0, 0, 0.75, 0)
+    PlayerName.Size = UDim2.new(1, 0, 0, 25)
+    PlayerName.Font = Enum.Font.GothamBold
+    PlayerName.Text = PlayerInfo.displayName
+    PlayerName.TextColor3 = config.TextColor
+    PlayerName.TextSize = 16
+    PlayerName.TextScaled = true
+    
+    -- 创建信息卡片
+    local InfoCard = Instance.new("Frame")
+    InfoCard.Name = "InfoCard"
+    InfoCard.Parent = PlayerInfoFrame
+    InfoCard.BackgroundColor3 = config.CardColor
+    InfoCard.BackgroundTransparency = 0.2
+    InfoCard.Position = UDim2.new(0.1, 0, 0.4, 0)
+    InfoCard.Size = UDim2.new(0.8, 0, 0, 180)
+    
+    local InfoCorner = Instance.new("UICorner")
+    InfoCorner.CornerRadius = UDim.new(0, 8)
+    InfoCorner.Parent = InfoCard
+    
+    local InfoGlow = Instance.new("UIStroke")
+    InfoGlow.Parent = InfoCard
+    InfoGlow.Color = config.AccentColor
+    InfoGlow.Thickness = 2
+    InfoGlow.Transparency = 0.7
+    
+    startNeonFlowEffect(InfoGlow, "Color", 0.008)
+    createPulseGlow(InfoGlow)
+    
+    local InfoLayout = Instance.new("UIListLayout")
+    InfoLayout.Parent = InfoCard
+    InfoLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    InfoLayout.Padding = UDim.new(0, 5)
+    
+    local InfoPadding = Instance.new("UIPadding")
+    InfoPadding.Parent = InfoCard
+    InfoPadding.PaddingTop = UDim.new(0, 10)
+    InfoPadding.PaddingLeft = UDim.new(0, 15)
+    InfoPadding.PaddingRight = UDim.new(0, 15)
+    
+    -- 用户名
+    local UsernameInfo = Instance.new("Frame")
+    UsernameInfo.Name = "UsernameInfo"
+    UsernameInfo.Parent = InfoCard
+    UsernameInfo.BackgroundTransparency = 1
+    UsernameInfo.Size = UDim2.new(1, 0, 0, 25)
+    
+    local UsernameLabel = Instance.new("TextLabel")
+    UsernameLabel.Name = "UsernameLabel"
+    UsernameLabel.Parent = UsernameInfo
+    UsernameLabel.BackgroundTransparency = 1
+    UsernameLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    UsernameLabel.Font = Enum.Font.Gotham
+    UsernameLabel.Text = "用户名:"
+    UsernameLabel.TextColor3 = config.SecondaryTextColor
+    UsernameLabel.TextSize = 14
+    UsernameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local UsernameValue = Instance.new("TextLabel")
+    UsernameValue.Name = "UsernameValue"
+    UsernameValue.Parent = UsernameInfo
+    UsernameValue.BackgroundTransparency = 1
+    UsernameValue.Position = UDim2.new(0.5, 0, 0, 0)
+    UsernameValue.Size = UDim2.new(0.5, 0, 1, 0)
+    UsernameValue.Font = Enum.Font.GothamBold
+    UsernameValue.Text = PlayerInfo.name
+    UsernameValue.TextColor3 = config.TextColor
+    UsernameValue.TextSize = 14
+    UsernameValue.TextXAlignment = Enum.TextXAlignment.Right
+    
+    -- 用户ID
+    local UserIdInfo = Instance.new("Frame")
+    UserIdInfo.Name = "UserIdInfo"
+    UserIdInfo.Parent = InfoCard
+    UserIdInfo.BackgroundTransparency = 1
+    UserIdInfo.Size = UDim2.new(1, 0, 0, 25)
+    
+    local UserIdLabel = Instance.new("TextLabel")
+    UserIdLabel.Name = "UserIdLabel"
+    UserIdLabel.Parent = UserIdInfo
+    UserIdLabel.BackgroundTransparency = 1
+    UserIdLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    UserIdLabel.Font = Enum.Font.Gotham
+    UserIdLabel.Text = "用户ID:"
+    UserIdLabel.TextColor3 = config.SecondaryTextColor
+    UserIdLabel.TextSize = 14
+    UserIdLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local UserIdValue = Instance.new("TextLabel")
+    UserIdValue.Name = "UserIdValue"
+    UserIdValue.Parent = UserIdInfo
+    UserIdValue.BackgroundTransparency = 1
+    UserIdValue.Position = UDim2.new(0.5, 0, 0, 0)
+    UserIdValue.Size = UDim2.new(0.5, 0, 1, 0)
+    UserIdValue.Font = Enum.Font.GothamBold
+    UserIdValue.Text = tostring(PlayerInfo.userId)
+    UserIdValue.TextColor3 = config.TextColor
+    UserIdValue.TextSize = 14
+    UserIdValue.TextXAlignment = Enum.TextXAlignment.Right
+    
+    -- 账户天数
+    local AccountAgeInfo = Instance.new("Frame")
+    AccountAgeInfo.Name = "AccountAgeInfo"
+    AccountAgeInfo.Parent = InfoCard
+    AccountAgeInfo.BackgroundTransparency = 1
+    AccountAgeInfo.Size = UDim2.new(1, 0, 0, 25)
+    
+    local AccountAgeLabel = Instance.new("TextLabel")
+    AccountAgeLabel.Name = "AccountAgeLabel"
+    AccountAgeLabel.Parent = AccountAgeInfo
+    AccountAgeLabel.BackgroundTransparency = 1
+    AccountAgeLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    AccountAgeLabel.Font = Enum.Font.Gotham
+    AccountAgeLabel.Text = "账户天数:"
+    AccountAgeLabel.TextColor3 = config.SecondaryTextColor
+    AccountAgeLabel.TextSize = 14
+    AccountAgeLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local AccountAgeValue = Instance.new("TextLabel")
+    AccountAgeValue.Name = "AccountAgeValue"
+    AccountAgeValue.Parent = AccountAgeInfo
+    AccountAgeValue.BackgroundTransparency = 1
+    AccountAgeValue.Position = UDim2.new(0.5, 0, 0, 0)
+    AccountAgeValue.Size = UDim2.new(0.5, 0, 1, 0)
+    AccountAgeValue.Font = Enum.Font.GothamBold
+    AccountAgeValue.Text = tostring(PlayerInfo.accountAge) .. " 天"
+    AccountAgeValue.TextColor3 = config.TextColor
+    AccountAgeValue.TextSize = 14
+    AccountAgeValue.TextXAlignment = Enum.TextXAlignment.Right
+    
+    -- 会员类型
+    local MembershipInfo = Instance.new("Frame")
+    MembershipInfo.Name = "MembershipInfo"
+    MembershipInfo.Parent = InfoCard
+    MembershipInfo.BackgroundTransparency = 1
+    MembershipInfo.Size = UDim2.new(1, 0, 0, 25)
+    
+    local MembershipLabel = Instance.new("TextLabel")
+    MembershipLabel.Name = "MembershipLabel"
+    MembershipLabel.Parent = MembershipInfo
+    MembershipLabel.BackgroundTransparency = 1
+    MembershipLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    MembershipLabel.Font = Enum.Font.Gotham
+    MembershipLabel.Text = "会员类型:"
+    MembershipLabel.TextColor3 = config.SecondaryTextColor
+    MembershipLabel.TextSize = 14
+    MembershipLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local MembershipValue = Instance.new("TextLabel")
+    MembershipValue.Name = "MembershipValue"
+    MembershipValue.Parent = MembershipInfo
+    MembershipValue.BackgroundTransparency = 1
+    MembershipValue.Position = UDim2.new(0.5, 0, 0, 0)
+    MembershipValue.Size = UDim2.new(0.5, 0, 1, 0)
+    MembershipValue.Font = Enum.Font.GothamBold
+    MembershipValue.Text = PlayerInfo.membershipType
+    MembershipValue.TextColor3 = config.TextColor
+    MembershipValue.TextSize = 14
+    MembershipValue.TextXAlignment = Enum.TextXAlignment.Right
+    
+    -- 额外信息
+    if PlayerInfo.extraInfo then
+        for key, value in pairs(PlayerInfo.extraInfo) do
+            local ExtraInfo = Instance.new("Frame")
+            ExtraInfo.Name = "ExtraInfo"
+            ExtraInfo.Parent = InfoCard
+            ExtraInfo.BackgroundTransparency = 1
+            ExtraInfo.Size = UDim2.new(1, 0, 0, 25)
+            
+            local ExtraLabel = Instance.new("TextLabel")
+            ExtraLabel.Name = "ExtraLabel"
+            ExtraLabel.Parent = ExtraInfo
+            ExtraLabel.BackgroundTransparency = 1
+            ExtraLabel.Size = UDim2.new(0.5, 0, 1, 0)
+            ExtraLabel.Font = Enum.Font.Gotham
+            ExtraLabel.Text = key .. ":"
+            ExtraLabel.TextColor3 = config.SecondaryTextColor
+            ExtraLabel.TextSize = 14
+            ExtraLabel.TextXAlignment = Enum.TextXAlignment.Left
+            
+            local ExtraValue = Instance.new("TextLabel")
+            ExtraValue.Name = "ExtraValue"
+            ExtraValue.Parent = ExtraInfo
+            ExtraValue.BackgroundTransparency = 1
+            ExtraValue.Position = UDim2.new(0.5, 0, 0, 0)
+            ExtraValue.Size = UDim2.new(0.5, 0, 1, 0)
+            ExtraValue.Font = Enum.Font.GothamBold
+            ExtraValue.Text = tostring(value)
+            ExtraValue.TextColor3 = config.TextColor
+            ExtraValue.TextSize = 14
+            ExtraValue.TextXAlignment = Enum.TextXAlignment.Right
+        end
+    end
+end
+
+-- 初始化玩家信息显示
+updatePlayerInfoDisplay()
 
 local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
-TabMain.Parent = Main
+TabMain.Parent = CardsContent
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.2, 0, 0, 37)
-TabMain.Size = UDim2.new(0, 360, 0, 243)
+TabMain.Position = UDim2.new(0.2, 0, 0, 0)
+TabMain.Size = UDim2.new(0, 360, 0, 365)
 TabMain.Visible = false
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
-Side.Parent = Main
+Side.Parent = CardsContent
 Side.BackgroundColor3 = config.TabColor
 Side.BackgroundTransparency = 1
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
-Side.Position = UDim2.new(0, 0, 0, 35)
-Side.Size = UDim2.new(0, 90, 0, 245)
+Side.Position = UDim2.new(0, 0, 0, 0)
+Side.Size = UDim2.new(0, 90, 0, 365)
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -879,7 +1121,7 @@ TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0, 5)
-TabBtns.Size = UDim2.new(0, 90, 0, 235)
+TabBtns.Size = UDim2.new(0, 90, 0, 355)
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -930,13 +1172,14 @@ local function playEntranceAnimation()
     
     TabMain.Visible = false
     TabBtns.Visible = false
-    FeaturesContainer.Visible = false
-    FeaturePanelsContainer.Visible = false
+    CardsContainer.Visible = false
+    CardsContent.Visible = false
+    PlayerInfoFrame.Visible = true
     
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
         BackgroundTransparency = 0.2,
-        Size = UDim2.new(0, 450, 0, 280)
+        Size = UDim2.new(0, 650, 0, 400)
     }):Play()
     
     services.TweenService:Create(MainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -969,10 +1212,20 @@ local function playEntranceAnimation()
     
     task.wait(0.2)
     
-    -- 显示卡片系统
-    FeaturesContainer.Visible = true
-    TabMain.Visible = true
-    TabBtns.Visible = true
+    CardsContainer.Visible = true
+    PlayerInfoFrame.Visible = true
+    
+    -- 卡片入场动画
+    for i, card in ipairs(FengUI.cards or {}) do
+        card.cardButton.Position = UDim2.new(0.5, 0, 0, -100)
+        card.cardButton.Visible = true
+        
+        services.TweenService:Create(card.cardButton, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0.05, 0, 0, (i-1) * 90)
+        }):Play()
+        
+        task.wait(0.1)
+    end
     
     DigitalParticleExplosion(Main)
 end
@@ -1032,223 +1285,294 @@ function FengUI.new(FengUI, name, theme)
     
     local window = {}
     
-    -- 新增：注册功能卡片
-    function window.RegisterFeature(window, name, description, icon, panelBuilder)
-        -- 创建功能卡片
-        local card = createFeatureCard(name, description, icon, FeaturesContainer)
-        
-        -- 创建功能面板
-        local featurePanel = Instance.new("ScrollingFrame")
-        featurePanel.Name = name .. "Panel"
-        featurePanel.Parent = FeaturePanelsContainer
-        featurePanel.BackgroundTransparency = 1
-        featurePanel.Size = UDim2.new(1, 0, 1, 0)
-        featurePanel.ScrollBarThickness = 2
-        featurePanel.ScrollBarImageTransparency = 0.5
-        featurePanel.Visible = false
-        featurePanel.ElasticBehavior = Enum.ElasticBehavior.Never
-        
-        local featureLayout = Instance.new("UIListLayout")
-        featureLayout.Parent = featurePanel
-        featureLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        featureLayout.Padding = UDim.new(0, 4)
-        
-        setupSmoothScrolling(featurePanel, featureLayout)
-        
-        -- 存储面板
-        FengUI.featurePanels[name] = featurePanel
-        
-        -- 绑定点击事件
-        card.MouseButton1Click:Connect(function()
-            DigitalParticleExplosion(card)
-            showFeaturePanel(name)
-        end)
-        
-        -- 调用外部构建器
-        if panelBuilder and type(panelBuilder) == "function" then
-            panelBuilder(featurePanel)
-        end
-        
-        return {
-            Card = card,
-            Panel = featurePanel
-        }
-    end
+    -- 存储卡片的表
+    FengUI.cards = FengUI.cards or {}
     
-    function window.Tab(window, name, icon)
-        local Tab = Instance.new("ScrollingFrame")
-        local TabIco = Instance.new("ImageLabel")
-        local TabText = Instance.new("TextLabel")
-        local TabBtn = Instance.new("TextButton")
-        local TabL = Instance.new("UIListLayout")
+    function window.Card(window, name, icon, cardColor)
+        local cardData = {}
+        cardData.name = name
+        cardData.icon = icon or "84830962019412"
+        cardData.cardColor = cardColor or config.CardColor
         
-        Tab.Name = "Tab"
-        Tab.Parent = TabMain
-        Tab.Active = true
-        Tab.BackgroundTransparency = 1
-        Tab.Size = UDim2.new(1, 0, 1, 0)
-        Tab.ScrollBarThickness = 2
-        Tab.ScrollBarImageTransparency = 0.5
-        Tab.Visible = false
-        Tab.ElasticBehavior = Enum.ElasticBehavior.Never
-        Tab.ScrollingDirection = Enum.ScrollingDirection.Y
-        Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+        -- 创建卡片按钮
+        local CardButton = Instance.new("TextButton")
+        CardButton.Name = "Card_" .. name
+        CardButton.Parent = CardsContainer
+        CardButton.BackgroundColor3 = cardData.cardColor
+        CardButton.BackgroundTransparency = 0.2
+        CardButton.Size = UDim2.new(0.9, 0, 0, 80)
+        CardButton.AutoButtonColor = false
+        CardButton.Text = ""
+        CardButton.Visible = false
+        CardButton.ZIndex = 5
         
-        TabIco.Name = "TabIco"
-        TabIco.Parent = TabBtns
-        TabIco.BackgroundTransparency = 1
-        TabIco.BorderSizePixel = 0
-        TabIco.Size = UDim2.new(0, 22, 0, 22)
-        TabIco.Image = "rbxassetid://84830962019412"
-        TabIco.ImageTransparency = 0.5
+        local CardCorner = Instance.new("UICorner")
+        CardCorner.CornerRadius = UDim.new(0, 8)
+        CardCorner.Parent = CardButton
         
-        startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
+        local CardGlow = Instance.new("UIStroke")
+        CardGlow.Parent = CardButton
+        CardGlow.Color = config.AccentColor
+        CardGlow.Thickness = 2
+        CardGlow.Transparency = 0.8
+        CardGlow.ZIndex = 4
+        CardButton.CardGlow = CardGlow
         
-        TabText.Name = "TabText"
-        TabText.Parent = TabIco
-        TabText.BackgroundTransparency = 1
-        TabText.Position = UDim2.new(1.2, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 65, 0, 22)
-        TabText.Font = Enum.Font.GothamSemibold
-        TabText.Text = name
-        TabText.TextColor3 = config.TextColor
-        TabText.TextSize = 14
-        TabText.TextXAlignment = Enum.TextXAlignment.Left
-        TabText.TextTransparency = 0.5
+        startNeonFlowEffect(CardGlow, "Color", 0.008)
+        createPulseGlow(CardGlow)
         
-        TabBtn.Name = "TabBtn"
-        TabBtn.Parent = TabIco
-        TabBtn.BackgroundTransparency = 1
-        TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 90, 0, 22)
-        TabBtn.AutoButtonColor = false
-        TabBtn.Font = Enum.Font.SourceSans
-        TabBtn.Text = ""
+        -- 卡片图标
+        local CardIcon = Instance.new("ImageLabel")
+        CardIcon.Name = "CardIcon"
+        CardIcon.Parent = CardButton
+        CardIcon.BackgroundTransparency = 1
+        CardIcon.Position = UDim2.new(0.1, 0, 0.2, 0)
+        CardIcon.Size = UDim2.new(0, 40, 0, 40)
+        CardIcon.Image = "rbxassetid://" .. cardData.icon
+        CardIcon.ImageColor3 = config.TextColor
         
-        TabL.Name = "TabL"
-        TabL.Parent = Tab
-        TabL.SortOrder = Enum.SortOrder.LayoutOrder
-        TabL.Padding = UDim.new(0, 4)
+        startNeonFlowEffect(CardIcon, "ImageColor3", 0.005)
         
-        TabBtn.MouseButton1Click:Connect(function()
-            DigitalParticleExplosion(TabBtn)
-            switchTab({ TabIco, Tab })
+        -- 卡片名称
+        local CardName = Instance.new("TextLabel")
+        CardName.Name = "CardName"
+        CardName.Parent = CardButton
+        CardName.BackgroundTransparency = 1
+        CardName.Position = UDim2.new(0.1, 0, 0.6, 0)
+        CardName.Size = UDim2.new(0.8, 0, 0, 20)
+        CardName.Font = Enum.Font.GothamBold
+        CardName.Text = name
+        CardName.TextColor3 = config.TextColor
+        CardName.TextSize = 14
+        CardName.TextXAlignment = Enum.TextXAlignment.Left
+        
+        -- 创建选项卡容器
+        local TabContainer = Instance.new("Frame")
+        TabContainer.Name = "TabContainer_" .. name
+        TabContainer.Parent = CardsContent
+        TabContainer.BackgroundTransparency = 1
+        TabContainer.Size = UDim2.new(1, 0, 1, 0)
+        TabContainer.Visible = false
+        
+        cardData.cardButton = CardButton
+        cardData.tabContainer = TabContainer
+        
+        -- 卡片点击事件
+        CardButton.MouseButton1Click:Connect(function()
+            if FengUI.currentCard == cardData then
+                switchCard(nil)  -- 取消选择
+            else
+                switchCard(cardData)  -- 选择此卡片
+            end
         end)
         
-        if FengUI.currentTab == nil then
-            switchTab({ TabIco, Tab })
-        end
+        -- 卡片悬停效果
+        CardButton.MouseEnter:Connect(function()
+            if FengUI.currentCard ~= cardData then
+                services.TweenService:Create(CardButton, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                    BackgroundColor3 = config.CardHoverColor,
+                    Size = UDim2.new(0.92, 0, 0, 82)
+                }):Play()
+                
+                services.TweenService:Create(CardGlow, TweenInfo.new(0.3), {
+                    Transparency = 0.5
+                }):Play()
+            end
+        end)
         
-        TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 8)
+        CardButton.MouseLeave:Connect(function()
+            if FengUI.currentCard ~= cardData then
+                services.TweenService:Create(CardButton, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                    BackgroundColor3 = cardData.cardColor,
+                    Size = UDim2.new(0.9, 0, 0, 80)
+                }):Play()
+                
+                services.TweenService:Create(CardGlow, TweenInfo.new(0.3), {
+                    Transparency = 0.8
+                }):Play()
+            end
+        end)
+        
+        table.insert(FengUI.cards, cardData)
+        
+        local card = {}
+        
+        function card.Tab(card, name, icon)
+            -- 在卡片容器中创建选项卡
+            local Tab = Instance.new("ScrollingFrame")
+            local TabIco = Instance.new("ImageLabel")
+            local TabText = Instance.new("TextLabel")
+            local TabBtn = Instance.new("TextButton")
+            local TabL = Instance.new("UIListLayout")
             
-            Tab.ScrollingEnabled = TabL.AbsoluteContentSize.Y > Tab.AbsoluteSize.Y
+            Tab.Name = "Tab"
+            Tab.Parent = TabContainer
+            Tab.Active = true
+            Tab.BackgroundTransparency = 1
+            Tab.Size = UDim2.new(1, 0, 1, 0)
+            Tab.ScrollBarThickness = 2
+            Tab.ScrollBarImageTransparency = 0.5
+            Tab.Visible = false
             Tab.ElasticBehavior = Enum.ElasticBehavior.Never
-        end)
-        
-        local tab = {}
-        
-        function tab.section(tab, name, TabVal)
-            local Section = Instance.new("Frame")
-            local SectionC = Instance.new("UICorner")
-            local SectionText = Instance.new("TextLabel")
-            local SectionOpen = Instance.new("ImageLabel")
-            local SectionOpened = Instance.new("ImageLabel")
-            local SectionToggle = Instance.new("ImageButton")
-            local Objs = Instance.new("Frame")
-            local ObjsL = Instance.new("UIListLayout")
+            Tab.ScrollingDirection = Enum.ScrollingDirection.Y
+            Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
             
-            Section.Name = "Section"
-            Section.Parent = Tab
-            Section.BackgroundColor3 = config.TabColor
-            Section.BackgroundTransparency = 0.2
-            Section.BorderSizePixel = 0
-            Section.ClipsDescendants = true
-            Section.Size = UDim2.new(0.95, 0, 0, 36)
+            -- 在侧边栏创建选项卡按钮
+            TabIco.Name = "TabIco"
+            TabIco.Parent = TabBtns
+            TabIco.BackgroundTransparency = 1
+            TabIco.BorderSizePixel = 0
+            TabIco.Size = UDim2.new(0, 22, 0, 22)
+            TabIco.Image = "rbxassetid://" .. (icon or "84830962019412")
+            TabIco.ImageTransparency = 0.5
             
-            SectionC.CornerRadius = UDim.new(0, 6)
-            SectionC.Name = "SectionC"
-            SectionC.Parent = Section
+            startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
             
-            SectionText.Name = "SectionText"
-            SectionText.Parent = Section
-            SectionText.BackgroundTransparency = 1
-            SectionText.Position = UDim2.new(0.088, 0, 0, 0)
-            SectionText.Size = UDim2.new(0, 320, 0, 36)
-            SectionText.Font = Enum.Font.GothamSemibold
-            SectionText.Text = name
-            SectionText.TextColor3 = config.TextColor
-            SectionText.TextSize = 16
-            SectionText.TextXAlignment = Enum.TextXAlignment.Left
+            TabText.Name = "TabText"
+            TabText.Parent = TabIco
+            TabText.BackgroundTransparency = 1
+            TabText.Position = UDim2.new(1.2, 0, 0, 0)
+            TabText.Size = UDim2.new(0, 65, 0, 22)
+            TabText.Font = Enum.Font.GothamSemibold
+            TabText.Text = name
+            TabText.TextColor3 = config.TextColor
+            TabText.TextSize = 14
+            TabText.TextXAlignment = Enum.TextXAlignment.Left
+            TabText.TextTransparency = 0.5
             
-            SectionOpen.Name = "SectionOpen"
-            SectionOpen.Parent = SectionText
-            SectionOpen.BackgroundTransparency = 1
-            SectionOpen.BorderSizePixel = 0
-            SectionOpen.Position = UDim2.new(0, -26, 0, 6)
-            SectionOpen.Size = UDim2.new(0, 22, 0, 22)
-            SectionOpen.Image = "rbxassetid://84830962019412"
-            SectionOpen.ImageColor3 = config.SecondaryTextColor
+            TabBtn.Name = "TabBtn"
+            TabBtn.Parent = TabIco
+            TabBtn.BackgroundTransparency = 1
+            TabBtn.BorderSizePixel = 0
+            TabBtn.Size = UDim2.new(0, 90, 0, 22)
+            TabBtn.AutoButtonColor = false
+            TabBtn.Font = Enum.Font.SourceSans
+            TabBtn.Text = ""
             
-            SectionOpened.Name = "SectionOpened"
-            SectionOpened.Parent = SectionOpen
-            SectionOpened.BackgroundTransparency = 1
-            SectionOpened.BorderSizePixel = 0
-            SectionOpened.Size = UDim2.new(0, 22, 0, 22)
-            SectionOpened.Image = "rbxassetid://84830962019412"
-            SectionOpened.ImageColor3 = config.AccentColor
-            SectionOpened.ImageTransparency = 1
+            TabL.Name = "TabL"
+            TabL.Parent = Tab
+            TabL.SortOrder = Enum.SortOrder.LayoutOrder
+            TabL.Padding = UDim.new(0, 4)
             
-            SectionToggle.Name = "SectionToggle"
-            SectionToggle.Parent = SectionOpen
-            SectionToggle.BackgroundTransparency = 1
-            SectionToggle.BorderSizePixel = 0
-            SectionToggle.Size = UDim2.new(0, 22, 0, 22)
+            TabBtn.MouseButton1Click:Connect(function()
+                DigitalParticleExplosion(TabBtn)
+                switchTab({ TabIco, Tab })
+            end)
             
-            Objs.Name = "Objs"
-            Objs.Parent = Section
-            Objs.BackgroundTransparency = 1
-            Objs.BorderSizePixel = 0
-            Objs.Position = UDim2.new(0, 6, 0, 36)
-            Objs.Size = UDim2.new(0.98, 0, 0, 0)
-            
-            ObjsL.Name = "ObjsL"
-            ObjsL.Parent = Objs
-            ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
-            ObjsL.Padding = UDim.new(0, 6)
-            
-            local open = TabVal ~= false
-            if TabVal ~= false then
-                Section.Size = UDim2.new(0.95, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 6 or 36)
-                SectionOpened.ImageTransparency = open and 0 or 1
-                SectionOpen.ImageTransparency = open and 1 or 0
+            if FengUI.currentTab == nil then
+                switchTab({ TabIco, Tab })
             end
             
-            SectionToggle.MouseButton1Click:Connect(function()
-                open = not open
-                services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                    Size = UDim2.new(0.95, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 6 or 36)
-                }):Play()
+            TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 8)
                 
-                services.TweenService:Create(SectionOpened, TweenInfo.new(0.3), {
-                    ImageTransparency = open and 0 or 1
-                }):Play()
-                
-                services.TweenService:Create(SectionOpen, TweenInfo.new(0.3), {
-                    ImageTransparency = open and 1 or 0
-                }):Play()
-                
-                DigitalParticleExplosion(SectionToggle)
+                Tab.ScrollingEnabled = TabL.AbsoluteContentSize.Y > Tab.AbsoluteSize.Y
+                Tab.ElasticBehavior = Enum.ElasticBehavior.Never
             end)
             
-            ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                if not open then return end
-                Section.Size = UDim2.new(0.95, 0, 0, 36 + ObjsL.AbsoluteContentSize.Y + 6)
-            end)
+            local tab = {}
             
-            local section = {}
-            
-            function section.MusicPlayer(section, title, defaultPlaylist)
+            function tab.section(tab, name, TabVal)
+                local Section = Instance.new("Frame")
+                local SectionC = Instance.new("UICorner")
+                local SectionText = Instance.new("TextLabel")
+                local SectionOpen = Instance.new("ImageLabel")
+                local SectionOpened = Instance.new("ImageLabel")
+                local SectionToggle = Instance.new("ImageButton")
+                local Objs = Instance.new("Frame")
+                local ObjsL = Instance.new("UIListLayout")
+                
+                Section.Name = "Section"
+                Section.Parent = Tab
+                Section.BackgroundColor3 = config.TabColor
+                Section.BackgroundTransparency = 0.2
+                Section.BorderSizePixel = 0
+                Section.ClipsDescendants = true
+                Section.Size = UDim2.new(0.95, 0, 0, 36)
+                
+                SectionC.CornerRadius = UDim.new(0, 6)
+                SectionC.Name = "SectionC"
+                SectionC.Parent = Section
+                
+                SectionText.Name = "SectionText"
+                SectionText.Parent = Section
+                SectionText.BackgroundTransparency = 1
+                SectionText.Position = UDim2.new(0.088, 0, 0, 0)
+                SectionText.Size = UDim2.new(0, 320, 0, 36)
+                SectionText.Font = Enum.Font.GothamSemibold
+                SectionText.Text = name
+                SectionText.TextColor3 = config.TextColor
+                SectionText.TextSize = 16
+                SectionText.TextXAlignment = Enum.TextXAlignment.Left
+                
+                SectionOpen.Name = "SectionOpen"
+                SectionOpen.Parent = SectionText
+                SectionOpen.BackgroundTransparency = 1
+                SectionOpen.BorderSizePixel = 0
+                SectionOpen.Position = UDim2.new(0, -26, 0, 6)
+                SectionOpen.Size = UDim2.new(0, 22, 0, 22)
+                SectionOpen.Image = "rbxassetid://84830962019412"
+                SectionOpen.ImageColor3 = config.SecondaryTextColor
+                
+                SectionOpened.Name = "SectionOpened"
+                SectionOpened.Parent = SectionOpen
+                SectionOpened.BackgroundTransparency = 1
+                SectionOpened.BorderSizePixel = 0
+                SectionOpened.Size = UDim2.new(0, 22, 0, 22)
+                SectionOpened.Image = "rbxassetid://84830962019412"
+                SectionOpened.ImageColor3 = config.AccentColor
+                SectionOpened.ImageTransparency = 1
+                
+                SectionToggle.Name = "SectionToggle"
+                SectionToggle.Parent = SectionOpen
+                SectionToggle.BackgroundTransparency = 1
+                SectionToggle.BorderSizePixel = 0
+                SectionToggle.Size = UDim2.new(0, 22, 0, 22)
+                
+                Objs.Name = "Objs"
+                Objs.Parent = Section
+                Objs.BackgroundTransparency = 1
+                Objs.BorderSizePixel = 0
+                Objs.Position = UDim2.new(0, 6, 0, 36)
+                Objs.Size = UDim2.new(0.98, 0, 0, 0)
+                
+                ObjsL.Name = "ObjsL"
+                ObjsL.Parent = Objs
+                ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
+                ObjsL.Padding = UDim.new(0, 6)
+                
+                local open = TabVal ~= false
+                if TabVal ~= false then
+                    Section.Size = UDim2.new(0.95, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 6 or 36)
+                    SectionOpened.ImageTransparency = open and 0 or 1
+                    SectionOpen.ImageTransparency = open and 1 or 0
+                end
+                
+                SectionToggle.MouseButton1Click:Connect(function()
+                    open = not open
+                    services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                        Size = UDim2.new(0.95, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 6 or 36)
+                    }):Play()
+                    
+                    services.TweenService:Create(SectionOpened, TweenInfo.new(0.3), {
+                        ImageTransparency = open and 0 or 1
+                    }):Play()
+                    
+                    services.TweenService:Create(SectionOpen, TweenInfo.new(0.3), {
+                        ImageTransparency = open and 1 or 0
+                    }):Play()
+                    
+                    DigitalParticleExplosion(SectionToggle)
+                end)
+                
+                ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    if not open then return end
+                    Section.Size = UDim2.new(0.95, 0, 0, 36 + ObjsL.AbsoluteContentSize.Y + 6)
+                end)
+                
+                local section = {}
+                
+                function section.MusicPlayer(section, title, defaultPlaylist)
     local MusicPlayerModule = Instance.new("Frame")
     MusicPlayerModule.Name = "MusicPlayerModule"
     MusicPlayerModule.Parent = Objs
@@ -1261,7 +1585,7 @@ function FengUI.new(FengUI, name, theme)
     PlayerContainer.Parent = MusicPlayerModule
     PlayerContainer.BackgroundColor3 = config.TabColor
     PlayerContainer.BackgroundTransparency = 0.2
-    PlayerContainer.Size = UDim2.new(0, 330, 0, 160)
+    PlayerContainer.Size = UDim2.new(1, 0, 0, 160)
     
     local PlayerCorner = Instance.new("UICorner")
     PlayerCorner.CornerRadius = UDim.new(0, 8)
@@ -1280,7 +1604,7 @@ function FengUI.new(FengUI, name, theme)
     TopSection.Name = "TopSection"
     TopSection.Parent = PlayerContainer
     TopSection.BackgroundTransparency = 1
-    TopSection.Size = UDim2.new(0, 330, 0, 70)
+    TopSection.Size = UDim2.new(1, 0, 0, 70)
     
     local AlbumArt = Instance.new("ImageLabel")
     AlbumArt.Name = "AlbumArt"
@@ -1305,7 +1629,7 @@ function FengUI.new(FengUI, name, theme)
     InfoContainer.Parent = TopSection
     InfoContainer.BackgroundTransparency = 1
     InfoContainer.Position = UDim2.new(0.22, 0, 0, 0)
-    InfoContainer.Size = UDim2.new(0, 250, 0, 70)
+    InfoContainer.Size = UDim2.new(0.75, 0, 1, 0)
     
     local SongTitle = Instance.new("TextLabel")
     SongTitle.Name = "SongTitle"
@@ -1338,7 +1662,7 @@ function FengUI.new(FengUI, name, theme)
     BottomSection.Parent = PlayerContainer
     BottomSection.BackgroundTransparency = 1
     BottomSection.Position = UDim2.new(0, 0, 0.44, 0)
-    BottomSection.Size = UDim2.new(0, 330, 0, 90)
+    BottomSection.Size = UDim2.new(1, 0, 0, 90)
     
     local ProgressBar = Instance.new("Frame")
     ProgressBar.Name = "ProgressBar"
@@ -1346,7 +1670,7 @@ function FengUI.new(FengUI, name, theme)
     ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     ProgressBar.BorderSizePixel = 0
     ProgressBar.Position = UDim2.new(0.03, 0, 0.05, 0)
-    ProgressBar.Size = UDim2.new(0, 300, 0, 6)
+    ProgressBar.Size = UDim2.new(0.94, 0, 0, 6)
     
     local ProgressBarCorner = Instance.new("UICorner")
     ProgressBarCorner.CornerRadius = UDim.new(1, 0)
@@ -1368,7 +1692,7 @@ function FengUI.new(FengUI, name, theme)
     TimeLabel.Parent = BottomSection
     TimeLabel.BackgroundTransparency = 1
     TimeLabel.Position = UDim2.new(0.03, 0, 0.18, 0)
-    TimeLabel.Size = UDim2.new(0, 300, 0, 15)
+    TimeLabel.Size = UDim2.new(0.94, 0, 0, 15)
     TimeLabel.Font = Enum.Font.Gotham
     TimeLabel.Text = "0:00 / 0:00"
     TimeLabel.TextColor3 = config.SecondaryTextColor
@@ -1380,7 +1704,7 @@ function FengUI.new(FengUI, name, theme)
     ControlsContainer.Parent = BottomSection
     ControlsContainer.BackgroundTransparency = 1
     ControlsContainer.Position = UDim2.new(0, 0, 0.35, 0)
-    ControlsContainer.Size = UDim2.new(0, 330, 0, 40)
+    ControlsContainer.Size = UDim2.new(1, 0, 0, 40)
     
     local function createControlButton(name, text, position, size, isMain)
         local button = Instance.new("TextButton")
@@ -2701,6 +3025,18 @@ end
         return tab
     end
 
+    return card
+end
+    
+    -- 保留原有的Tab函数以兼容旧代码
+    function window.Tab(window, name, icon)
+        -- 创建一个默认卡片来容纳旧式选项卡
+        if not FengUI.defaultCard then
+            FengUI.defaultCard = window:Card("功能", "84830962019412", config.CardColor)
+        end
+        return FengUI.defaultCard:Tab(name, icon)
+    end
+
     return window
 end
 
@@ -2715,11 +3051,6 @@ function ToggleUILib()
     FengYu.Enabled = ToggleUI
     Main.Visible = not ToggleUI
 end
-
--- 新增：自动调整卡片容器大小
-FeaturesLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    FeaturesContainer.CanvasSize = UDim2.new(0, 0, 0, FeaturesLayout.AbsoluteContentSize.Y)
-end)
 
 if not getgenv then getgenv = function() return _G end end
 getgenv().FengUI = FengUI
