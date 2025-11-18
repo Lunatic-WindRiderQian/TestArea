@@ -719,74 +719,19 @@ services.UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- 卡片选择界面
-local CardSelection = Instance.new("Frame")
-CardSelection.Name = "CardSelection"
-CardSelection.Parent = Main
-CardSelection.BackgroundTransparency = 1
-CardSelection.Size = UDim2.new(1, 0, 1, 0)
-CardSelection.Visible = true
-
-local CardContainer = Instance.new("ScrollingFrame")
-CardContainer.Name = "CardContainer"
-CardContainer.Parent = CardSelection
-CardContainer.BackgroundTransparency = 1
-CardContainer.BorderSizePixel = 0
-CardContainer.Position = UDim2.new(0, 10, 0, 40)
-CardContainer.Size = UDim2.new(1, -20, 1, -50)
-CardContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-CardContainer.ScrollBarThickness = 3
-CardContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
-CardContainer.ScrollBarImageTransparency = 0.5
-
-local CardLayout = Instance.new("UIListLayout")
-CardLayout.Name = "CardLayout"
-CardLayout.Parent = CardContainer
-CardLayout.SortOrder = Enum.SortOrder.LayoutOrder
-CardLayout.Padding = UDim.new(0, 10)
-CardLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-CardLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    CardContainer.CanvasSize = UDim2.new(0, 0, 0, CardLayout.AbsoluteContentSize.Y + 10)
-end)
-
--- 详细内容界面
 local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Size = UDim2.new(1, 0, 1, 0)
+TabMain.Position = UDim2.new(0.2, 0, 0, 37)
+TabMain.Size = UDim2.new(0, 360, 0, 243)
 TabMain.Visible = false
-
-local BackButton = Instance.new("TextButton")
-BackButton.Name = "BackButton"
-BackButton.Parent = TabMain
-BackButton.BackgroundColor3 = config.TabColor
-BackButton.BackgroundTransparency = 0.2
-BackButton.BorderSizePixel = 0
-BackButton.Position = UDim2.new(0, 10, 0, 40)
-BackButton.Size = UDim2.new(0, 80, 0, 25)
-BackButton.Font = Enum.Font.GothamSemibold
-BackButton.Text = "← 返回"
-BackButton.TextColor3 = config.TextColor
-BackButton.TextSize = 12
-BackButton.ZIndex = 2
-
-local BackCorner = Instance.new("UICorner")
-BackCorner.CornerRadius = UDim.new(0, 6)
-BackCorner.Parent = BackButton
-
-BackButton.MouseButton1Click:Connect(function()
-    DigitalParticleExplosion(BackButton)
-    TabMain.Visible = false
-    CardSelection.Visible = true
-end)
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
-Side.Parent = TabMain
+Side.Parent = Main
 Side.BackgroundColor3 = config.TabColor
-Side.BackgroundTransparency = 0.2
+Side.BackgroundTransparency = 1
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 35)
@@ -813,6 +758,7 @@ TabBtns.ScrollBarImageTransparency = 0.5
 TabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 TabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
 TabBtns.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+TabBtns.Visible = false
 
 local TabBtnsL = Instance.new("UIListLayout")
 TabBtnsL.Name = "TabBtnsL"
@@ -834,11 +780,56 @@ ScriptTitle.BackgroundTransparency = 1
 ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
 ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
 ScriptTitle.Font = Enum.Font.GothamBold
-ScriptTitle.Text = "功能菜单"
+ScriptTitle.Text = "傻逼谁让你破解我的UI了"
 ScriptTitle.TextColor3 = config.AccentColor
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
+ScriptTitle.Visible = false
+
+-- 添加卡片系统
+local CardSystem = Instance.new("Frame")
+CardSystem.Name = "CardSystem"
+CardSystem.Parent = Main
+CardSystem.BackgroundTransparency = 1
+CardSystem.Position = UDim2.new(0.2, 0, 0, 37)
+CardSystem.Size = UDim2.new(0, 360, 0, 243)
+CardSystem.Visible = false
+
+local CardsContainer = Instance.new("ScrollingFrame")
+CardsContainer.Name = "CardsContainer"
+CardsContainer.Parent = CardSystem
+CardsContainer.Active = true
+CardsContainer.BackgroundTransparency = 1
+CardsContainer.BorderSizePixel = 0
+CardsContainer.Size = UDim2.new(1, 0, 1, 0)
+CardsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+CardsContainer.ScrollBarThickness = 3
+CardsContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+CardsContainer.ScrollBarImageTransparency = 0.5
+CardsContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
+CardsContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+CardsContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+
+local CardsLayout = Instance.new("UIListLayout")
+CardsLayout.Name = "CardsLayout"
+CardsLayout.Parent = CardsContainer
+CardsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+CardsLayout.Padding = UDim.new(0, 10)
+
+local CardsPadding = Instance.new("UIPadding")
+CardsPadding.Name = "CardsPadding"
+CardsPadding.Parent = CardsContainer
+CardsPadding.PaddingTop = UDim.new(0, 10)
+CardsPadding.PaddingLeft = UDim.new(0, 10)
+CardsPadding.PaddingRight = UDim.new(0, 10)
+
+CardsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    CardsContainer.CanvasSize = UDim2.new(0, 0, 0, CardsLayout.AbsoluteContentSize.Y + 20)
+    
+    CardsContainer.ScrollingEnabled = CardsLayout.AbsoluteContentSize.Y > CardsContainer.AbsoluteSize.Y
+    CardsContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+end)
 
 local function playEntranceAnimation()
     Main.Position = UDim2.new(0.5, 0, 0.35, 0)
@@ -851,6 +842,10 @@ local function playEntranceAnimation()
     Side.BackgroundTransparency = 1
     MainStroke.Transparency = 1
     neonStroke.Transparency = 1
+    
+    TabMain.Visible = false
+    TabBtns.Visible = false
+    CardSystem.Visible = false
     
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
@@ -887,6 +882,9 @@ local function playEntranceAnimation()
     }):Play()
     
     task.wait(0.2)
+    
+    TabMain.Visible = true
+    TabBtns.Visible = true
     
     DigitalParticleExplosion(Main)
 end
@@ -946,68 +944,254 @@ function FengUI.new(FengUI, name, theme)
     
     local window = {}
     
-    function window.Tab(window, name, icon, description)
-        description = description or "功能描述"
-        
-        -- 创建卡片
-        local Card = Instance.new("TextButton")
-        Card.Name = "Card_" .. name
-        Card.Parent = CardContainer
-        Card.BackgroundColor3 = config.TabColor
-        Card.BackgroundTransparency = 0.2
-        Card.BorderSizePixel = 0
-        Card.Size = UDim2.new(0.9, 0, 0, 80)
-        Card.AutoButtonColor = false
-        Card.Text = ""
-        
+    -- 添加卡片方法
+    function window.card(window, cardId)
+        local CardButton = Instance.new("TextButton")
         local CardCorner = Instance.new("UICorner")
-        CardCorner.CornerRadius = UDim.new(0, 12)
-        CardCorner.Parent = Card
-        
-        local CardGlow = Instance.new("UIStroke")
-        CardGlow.Parent = Card
-        CardGlow.Color = config.AccentColor
-        CardGlow.Thickness = 2
-        CardGlow.Transparency = 0.7
-        
-        startNeonFlowEffect(CardGlow, "Color", 0.008)
-        createPulseGlow(CardGlow)
-        
+        local CardStroke = Instance.new("UIStroke")
         local CardIcon = Instance.new("ImageLabel")
+        local CardTitle = Instance.new("TextLabel")
+        local CardDescription = Instance.new("TextLabel")
+        
+        CardButton.Name = "Card_" .. cardId
+        CardButton.Parent = CardsContainer
+        CardButton.BackgroundColor3 = config.Button_Color
+        CardButton.BackgroundTransparency = 0.2
+        CardButton.BorderSizePixel = 0
+        CardButton.Size = UDim2.new(1, -20, 0, 80)
+        CardButton.AutoButtonColor = false
+        CardButton.Text = ""
+        
+        CardCorner.CornerRadius = UDim.new(0, 8)
+        CardCorner.Parent = CardButton
+        
+        CardStroke.Color = config.AccentColor
+        CardStroke.Thickness = 2
+        CardStroke.Transparency = 0.7
+        CardStroke.Parent = CardButton
+        
+        startNeonFlowEffect(CardStroke, "Color", 0.008)
+        createPulseGlow(CardStroke)
+        
         CardIcon.Name = "CardIcon"
-        CardIcon.Parent = Card
+        CardIcon.Parent = CardButton
         CardIcon.BackgroundTransparency = 1
-        CardIcon.Position = UDim2.new(0.05, 0, 0.2, 0)
+        CardIcon.Position = UDim2.new(0, 15, 0.5, -20)
         CardIcon.Size = UDim2.new(0, 40, 0, 40)
         CardIcon.Image = "rbxassetid://84830962019412"
         CardIcon.ImageColor3 = config.AccentColor
         
-        local CardTitle = Instance.new("TextLabel")
         CardTitle.Name = "CardTitle"
-        CardTitle.Parent = Card
+        CardTitle.Parent = CardButton
         CardTitle.BackgroundTransparency = 1
-        CardTitle.Position = UDim2.new(0.2, 0, 0.2, 0)
-        CardTitle.Size = UDim2.new(0.7, 0, 0, 25)
+        CardTitle.Position = UDim2.new(0, 70, 0, 15)
+        CardTitle.Size = UDim2.new(1, -80, 0, 25)
         CardTitle.Font = Enum.Font.GothamBold
-        CardTitle.Text = name
+        CardTitle.Text = "卡片 " .. cardId
         CardTitle.TextColor3 = config.TextColor
         CardTitle.TextSize = 16
         CardTitle.TextXAlignment = Enum.TextXAlignment.Left
+        CardTitle.TextTruncate = Enum.TextTruncate.AtEnd
         
-        local CardDesc = Instance.new("TextLabel")
-        CardDesc.Name = "CardDesc"
-        CardDesc.Parent = Card
-        CardDesc.BackgroundTransparency = 1
-        CardDesc.Position = UDim2.new(0.2, 0, 0.5, 0)
-        CardDesc.Size = UDim2.new(0.7, 0, 0, 20)
-        CardDesc.Font = Enum.Font.Gotham
-        CardDesc.Text = description
-        CardDesc.TextColor3 = config.SecondaryTextColor
-        CardDesc.TextSize = 12
-        CardDesc.TextXAlignment = Enum.TextXAlignment.Left
-        CardDesc.TextWrapped = true
+        CardDescription.Name = "CardDescription"
+        CardDescription.Parent = CardButton
+        CardDescription.BackgroundTransparency = 1
+        CardDescription.Position = UDim2.new(0, 70, 0, 40)
+        CardDescription.Size = UDim2.new(1, -80, 0, 20)
+        CardDescription.Font = Enum.Font.Gotham
+        CardDescription.Text = "点击查看卡片详情和功能"
+        CardDescription.TextColor3 = config.SecondaryTextColor
+        CardDescription.TextSize = 12
+        CardDescription.TextXAlignment = Enum.TextXAlignment.Left
+        CardDescription.TextTruncate = Enum.TextTruncate.AtEnd
         
-        -- 创建对应的Tab内容
+        -- 卡片点击效果
+        CardButton.MouseEnter:Connect(function()
+            services.TweenService:Create(CardButton, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                BackgroundColor3 = Color3.fromRGB(
+                    math.floor(config.Button_Color.R * 255 * 1.1),
+                    math.floor(config.Button_Color.G * 255 * 1.1),
+                    math.floor(config.Button_Color.B * 255 * 1.1)
+                )
+            }):Play()
+            services.TweenService:Create(CardStroke, TweenInfo.new(0.2), {
+                Thickness = 3,
+                Transparency = 0.4
+            }):Play()
+        end)
+        
+        CardButton.MouseLeave:Connect(function()
+            services.TweenService:Create(CardButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                BackgroundColor3 = config.Button_Color
+            }):Play()
+            services.TweenService:Create(CardStroke, TweenInfo.new(0.2), {
+                Thickness = 2,
+                Transparency = 0.7
+            }):Play()
+        end)
+        
+        CardButton.MouseButton1Click:Connect(function()
+            DigitalParticleExplosion(CardButton)
+            
+            services.TweenService:Create(CardButton, TweenInfo.new(0.1), {
+                BackgroundColor3 = Color3.fromRGB(
+                    math.floor(config.Button_Color.R * 255 * 0.8),
+                    math.floor(config.Button_Color.G * 255 * 0.8),
+                    math.floor(config.Button_Color.B * 255 * 0.8)
+                )
+            }):Play()
+            services.TweenService:Create(CardStroke, TweenInfo.new(0.1), {
+                Thickness = 4,
+                Transparency = 0.2
+            }):Play()
+            
+            task.wait(0.1)
+            
+            services.TweenService:Create(CardButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = config.Button_Color
+            }):Play()
+            services.TweenService:Create(CardStroke, TweenInfo.new(0.2), {
+                Thickness = 2,
+                Transparency = 0.7
+            }):Play()
+            
+            -- 切换到卡片详情页面
+            switchToCardDetail(cardId)
+        end)
+        
+        return CardButton
+    end
+    
+    -- 切换到卡片详情页面的函数
+    local function switchToCardDetail(cardId)
+        -- 隐藏主标签页，显示卡片系统
+        TabMain.Visible = false
+        CardSystem.Visible = true
+        
+        -- 清除卡片容器中的现有内容
+        for _, child in ipairs(CardsContainer:GetChildren()) do
+            if child:IsA("TextButton") and child.Name:match("Card_") then
+                child.Visible = false
+            end
+        end
+        
+        -- 创建卡片详情页面
+        local CardDetail = Instance.new("Frame")
+        CardDetail.Name = "CardDetail_" .. cardId
+        CardDetail.Parent = CardSystem
+        CardDetail.BackgroundTransparency = 1
+        CardDetail.Size = UDim2.new(1, 0, 1, 0)
+        
+        local BackButton = Instance.new("TextButton")
+        BackButton.Name = "BackButton"
+        BackButton.Parent = CardDetail
+        BackButton.BackgroundColor3 = config.Button_Color
+        BackButton.BackgroundTransparency = 0.2
+        BackButton.Position = UDim2.new(0, 10, 0, 10)
+        BackButton.Size = UDim2.new(0, 80, 0, 30)
+        BackButton.AutoButtonColor = false
+        BackButton.Font = Enum.Font.GothamBold
+        BackButton.Text = "← 返回"
+        BackButton.TextColor3 = config.TextColor
+        BackButton.TextSize = 14
+        
+        local BackCorner = Instance.new("UICorner")
+        BackCorner.CornerRadius = UDim.new(0, 6)
+        BackCorner.Parent = BackButton
+        
+        local BackStroke = Instance.new("UIStroke")
+        BackStroke.Color = config.AccentColor
+        BackStroke.Thickness = 1
+        BackStroke.Transparency = 0.7
+        BackStroke.Parent = BackButton
+        
+        local CardDetailContainer = Instance.new("ScrollingFrame")
+        CardDetailContainer.Name = "CardDetailContainer"
+        CardDetailContainer.Parent = CardDetail
+        CardDetailContainer.BackgroundTransparency = 1
+        CardDetailContainer.Position = UDim2.new(0, 0, 0, 50)
+        CardDetailContainer.Size = UDim2.new(1, 0, 1, -50)
+        CardDetailContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+        CardDetailContainer.ScrollBarThickness = 3
+        
+        local CardDetailLayout = Instance.new("UIListLayout")
+        CardDetailLayout.Name = "CardDetailLayout"
+        CardDetailLayout.Parent = CardDetailContainer
+        CardDetailLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        CardDetailLayout.Padding = UDim.new(0, 10)
+        
+        local CardDetailPadding = Instance.new("UIPadding")
+        CardDetailPadding.Name = "CardDetailPadding"
+        CardDetailPadding.Parent = CardDetailContainer
+        CardDetailPadding.PaddingTop = UDim.new(0, 10)
+        CardDetailPadding.PaddingLeft = UDim.new(0, 10)
+        CardDetailPadding.PaddingRight = UDim.new(0, 10)
+        
+        CardDetailLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            CardDetailContainer.CanvasSize = UDim2.new(0, 0, 0, CardDetailLayout.AbsoluteContentSize.Y + 20)
+        end)
+        
+        -- 卡片标题
+        local DetailTitle = Instance.new("TextLabel")
+        DetailTitle.Name = "DetailTitle"
+        DetailTitle.Parent = CardDetailContainer
+        DetailTitle.BackgroundTransparency = 1
+        DetailTitle.Size = UDim2.new(1, -20, 0, 40)
+        DetailTitle.Font = Enum.Font.GothamBold
+        DetailTitle.Text = "卡片 " .. cardId .. " 详情"
+        DetailTitle.TextColor3 = config.AccentColor
+        DetailTitle.TextSize = 20
+        DetailTitle.TextXAlignment = Enum.TextXAlignment.Left
+        
+        -- 卡片描述
+        local DetailDescription = Instance.new("TextLabel")
+        DetailDescription.Name = "DetailDescription"
+        DetailDescription.Parent = CardDetailContainer
+        DetailDescription.BackgroundTransparency = 1
+        DetailDescription.Size = UDim2.new(1, -20, 0, 60)
+        DetailDescription.Font = Enum.Font.Gotham
+        DetailDescription.Text = "这是卡片 " .. cardId .. " 的详细描述。这里可以显示该卡片的所有功能和特性。"
+        DetailDescription.TextColor3 = config.TextColor
+        DetailDescription.TextSize = 14
+        DetailDescription.TextWrapped = true
+        DetailDescription.TextXAlignment = Enum.TextXAlignment.Left
+        
+        -- 这里可以添加卡片特定的功能部分
+        -- 例如：local section = tab:section("卡片功能")
+        
+        -- 返回按钮功能
+        BackButton.MouseButton1Click:Connect(function()
+            DigitalParticleExplosion(BackButton)
+            CardDetail:Destroy()
+            CardSystem.Visible = false
+            TabMain.Visible = true
+            
+            -- 重新显示所有卡片
+            for _, child in ipairs(CardsContainer:GetChildren()) do
+                if child:IsA("TextButton") and child.Name:match("Card_") then
+                    child.Visible = true
+                end
+            end
+        end)
+        
+        BackButton.MouseEnter:Connect(function()
+            services.TweenService:Create(BackButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = Color3.fromRGB(
+                    math.floor(config.Button_Color.R * 255 * 1.1),
+                    math.floor(config.Button_Color.G * 255 * 1.1),
+                    math.floor(config.Button_Color.B * 255 * 1.1)
+                )
+            }):Play()
+        end)
+        
+        BackButton.MouseLeave:Connect(function()
+            services.TweenService:Create(BackButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = config.Button_Color
+            }):Play()
+        end)
+    end
+    
+    function window.Tab(window, name, icon)
         local Tab = Instance.new("ScrollingFrame")
         local TabIco = Instance.new("ImageLabel")
         local TabText = Instance.new("TextLabel")
@@ -1018,8 +1202,7 @@ function FengUI.new(FengUI, name, theme)
         Tab.Parent = TabMain
         Tab.Active = true
         Tab.BackgroundTransparency = 1
-        Tab.Position = UDim2.new(0.2, 0, 0, 35)
-        Tab.Size = UDim2.new(0.8, 0, 1, -35)
+        Tab.Size = UDim2.new(1, 0, 1, 0)
         Tab.ScrollBarThickness = 2
         Tab.ScrollBarImageTransparency = 0.5
         Tab.Visible = false
@@ -1063,74 +1246,13 @@ function FengUI.new(FengUI, name, theme)
         TabL.SortOrder = Enum.SortOrder.LayoutOrder
         TabL.Padding = UDim.new(0, 4)
         
-        -- 卡片点击事件
-        Card.MouseButton1Click:Connect(function()
-            DigitalParticleExplosion(Card)
-            CardSelection.Visible = false
-            TabMain.Visible = true
-            
-            -- 切换到对应的Tab
-            if FengUI.currentTab then
-                FengUI.currentTab[2].Visible = false
-            end
-            Tab.Visible = true
-            FengUI.currentTab = {TabIco, Tab}
-            
-            -- 高亮当前Tab按钮
-            for _, child in ipairs(TabBtns:GetChildren()) do
-                if child:IsA("ImageLabel") and child ~= TabIco then
-                    services.TweenService:Create(child, TweenInfo.new(0.2), {
-                        ImageTransparency = 0.5,
-                        Size = UDim2.new(0, 22, 0, 22)
-                    }):Play()
-                    services.TweenService:Create(child.TabText, TweenInfo.new(0.2), {
-                        TextTransparency = 0.5,
-                        TextColor3 = config.TextColor
-                    }):Play()
-                end
-            end
-            
-            services.TweenService:Create(TabIco, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { 
-                ImageTransparency = 0,
-                Size = UDim2.new(0, 25, 0, 25)
-            }):Play()
-            services.TweenService:Create(TabText, TweenInfo.new(0.3), { 
-                TextTransparency = 0,
-                TextColor3 = config.AccentColor
-            }):Play()
-        end)
-        
-        Card.MouseEnter:Connect(function()
-            services.TweenService:Create(Card, TweenInfo.new(0.2), {
-                BackgroundColor3 = Color3.fromRGB(
-                    math.floor(config.TabColor.R * 255 * 1.1),
-                    math.floor(config.TabColor.G * 255 * 1.1),
-                    math.floor(config.TabColor.B * 255 * 1.1)
-                )
-            }):Play()
-            services.TweenService:Create(CardGlow, TweenInfo.new(0.2), {
-                Thickness = 3,
-                Transparency = 0.4
-            }):Play()
-        end)
-        
-        Card.MouseLeave:Connect(function()
-            services.TweenService:Create(Card, TweenInfo.new(0.2), {
-                BackgroundColor3 = config.TabColor
-            }):Play()
-            services.TweenService:Create(CardGlow, TweenInfo.new(0.2), {
-                Thickness = 2,
-                Transparency = 0.7
-            }):Play()
-        end)
-        
         TabBtn.MouseButton1Click:Connect(function()
             DigitalParticleExplosion(TabBtn)
             switchTab({ TabIco, Tab })
         end)
         
         if FengUI.currentTab == nil then
-            FengUI.currentTab = { TabIco, Tab }
+            switchTab({ TabIco, Tab })
         end
         
         TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
