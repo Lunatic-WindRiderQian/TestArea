@@ -1136,38 +1136,47 @@ function FengUI.new(FengUI, name, theme)
         local cardObj = {}
         
         function cardObj.Tab(cardObj, tabName, tabIcon)
-            -- 创建Tab按钮
-            local TabIco = Instance.new("ImageLabel")
-            local TabText = Instance.new("TextLabel")
-            local TabBtn = Instance.new("TextButton")
+            -- 创建Tab按钮容器
+            local TabContainer = Instance.new("Frame")
+            TabContainer.Name = "TabContainer"
+            TabContainer.Parent = tabBtns
+            TabContainer.BackgroundTransparency = 1
+            TabContainer.Size = UDim2.new(1, 0, 0, 22)
             
+            -- 创建Tab图标
+            local TabIco = Instance.new("ImageLabel")
             TabIco.Name = "TabIco"
-            TabIco.Parent = tabBtns
+            TabIco.Parent = TabContainer
             TabIco.BackgroundTransparency = 1
             TabIco.BorderSizePixel = 0
-            TabIco.Size = UDim2.new(0, 22, 0, 22)
-            TabIco.Image = tabIcon or "rbxassetid://84830962019412"
+            TabIco.Position = UDim2.new(0, 5, 0, 0)
+            TabIco.Size = UDim2.new(0, 18, 0, 18)
+            TabIco.Image = "rbxassetid://" .. tostring(tabIcon or "84830962019412")
             TabIco.ImageTransparency = 0.5
             
             startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
             
+            -- 创建Tab文字
+            local TabText = Instance.new("TextLabel")
             TabText.Name = "TabText"
-            TabText.Parent = TabIco
+            TabText.Parent = TabContainer
             TabText.BackgroundTransparency = 1
-            TabText.Position = UDim2.new(1.2, 0, 0, 0)
-            TabText.Size = UDim2.new(0, 65, 0, 22)
+            TabText.Position = UDim2.new(0, 28, 0, 0)
+            TabText.Size = UDim2.new(0, 57, 0, 22)
             TabText.Font = Enum.Font.GothamSemibold
             TabText.Text = tabName
             TabText.TextColor3 = config.TextColor
-            TabText.TextSize = 14
+            TabText.TextSize = 12
             TabText.TextXAlignment = Enum.TextXAlignment.Left
             TabText.TextTransparency = 0.5
             
+            -- 创建Tab按钮
+            local TabBtn = Instance.new("TextButton")
             TabBtn.Name = "TabBtn"
-            TabBtn.Parent = TabIco
+            TabBtn.Parent = TabContainer
             TabBtn.BackgroundTransparency = 1
             TabBtn.BorderSizePixel = 0
-            TabBtn.Size = UDim2.new(0, 90, 0, 22)
+            TabBtn.Size = UDim2.new(1, 0, 1, 0)
             TabBtn.AutoButtonColor = false
             TabBtn.Font = Enum.Font.SourceSans
             TabBtn.Text = ""
@@ -1196,11 +1205,11 @@ function FengUI.new(FengUI, name, theme)
             
             TabBtn.MouseButton1Click:Connect(function()
                 DigitalParticleExplosion(TabBtn)
-                switchTab({ TabIco, Tab })
+                switchTab({ TabContainer, Tab })
             end)
             
             if FengUI.currentTab == nil then
-                switchTab({ TabIco, Tab })
+                switchTab({ TabContainer, Tab })
             end
             
             -- 返回Tab对象，可以添加section等
@@ -1306,7 +1315,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 local section = {}
                 
-                -- 从第一个文件复制的所有功能组件
+                -- 这里添加所有section方法，与第一个文件完全一致
                 function section.Button(section, text, callback)
                     callback = callback or function() end
                     
