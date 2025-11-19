@@ -489,9 +489,9 @@ function switchTab(new)
         FengUI.currentTab = new
         services.TweenService:Create(new[1], TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { 
             ImageTransparency = 0,
-            Size = UDim2.new(0, 20, 0, 20)
+            Size = UDim2.new(0, 25, 0, 25)
         }):Play()
-        services.TweenService:Create(new[3], TweenInfo.new(0.3), { 
+        services.TweenService:Create(new[1].TabText, TweenInfo.new(0.3), { 
             TextTransparency = 0,
             TextColor3 = config.AccentColor
         }):Play()
@@ -506,17 +506,17 @@ function switchTab(new)
     local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     services.TweenService:Create(old[1], tweenInfo, { 
         ImageTransparency = 0.5,
-        Size = UDim2.new(0, 18, 0, 18)
+        Size = UDim2.new(0, 22, 0, 22)
     }):Play()
     services.TweenService:Create(new[1], tweenInfo, { 
         ImageTransparency = 0,
-        Size = UDim2.new(0, 20, 0, 20)
+        Size = UDim2.new(0, 25, 0, 25)
     }):Play()
-    services.TweenService:Create(old[3], tweenInfo, { 
+    services.TweenService:Create(old[1].TabText, tweenInfo, { 
         TextTransparency = 0.5,
         TextColor3 = config.TextColor
     }):Play()
-    services.TweenService:Create(new[3], tweenInfo, { 
+    services.TweenService:Create(new[1].TabText, tweenInfo, { 
         TextTransparency = 0,
         TextColor3 = config.AccentColor
     }):Play()
@@ -1143,33 +1143,33 @@ function FengUI.new(FengUI, name, theme)
             TabIco.Parent = tabBtns
             TabIco.BackgroundTransparency = 1
             TabIco.BorderSizePixel = 0
-            TabIco.Size = UDim2.new(0, 18, 0, 18)
+            TabIco.Size = UDim2.new(0, 22, 0, 22)
             TabIco.Image = "rbxassetid://" .. tostring(tabIcon or "84830962019412")
             TabIco.ImageTransparency = 0.5
             
             startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
             
-            -- 创建Tab文字
+            -- 创建Tab文字（作为TabIco的子级）
             local TabText = Instance.new("TextLabel")
             TabText.Name = "TabText"
-            TabText.Parent = tabBtns
+            TabText.Parent = TabIco
             TabText.BackgroundTransparency = 1
-            TabText.Position = UDim2.new(0, 25, 0, 0)
-            TabText.Size = UDim2.new(0, 60, 0, 18)
+            TabText.Position = UDim2.new(1.2, 0, 0, 0)
+            TabText.Size = UDim2.new(0, 65, 0, 22)
             TabText.Font = Enum.Font.GothamSemibold
             TabText.Text = tabName
             TabText.TextColor3 = config.TextColor
-            TabText.TextSize = 12
+            TabText.TextSize = 14
             TabText.TextXAlignment = Enum.TextXAlignment.Left
             TabText.TextTransparency = 0.5
             
             -- 创建Tab按钮
             local TabBtn = Instance.new("TextButton")
             TabBtn.Name = "TabBtn"
-            TabBtn.Parent = tabBtns
+            TabBtn.Parent = TabIco
             TabBtn.BackgroundTransparency = 1
             TabBtn.BorderSizePixel = 0
-            TabBtn.Size = UDim2.new(1, 0, 0, 18)
+            TabBtn.Size = UDim2.new(0, 90, 0, 22)
             TabBtn.AutoButtonColor = false
             TabBtn.Font = Enum.Font.SourceSans
             TabBtn.Text = ""
@@ -1198,12 +1198,19 @@ function FengUI.new(FengUI, name, theme)
             
             TabBtn.MouseButton1Click:Connect(function()
                 DigitalParticleExplosion(TabBtn)
-                switchTab({ TabIco, Tab, TabText })
+                switchTab({ TabIco, Tab })
             end)
             
             if FengUI.currentTab == nil then
-                switchTab({ TabIco, Tab, TabText })
+                switchTab({ TabIco, Tab })
             end
+            
+            TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 8)
+                
+                Tab.ScrollingEnabled = TabL.AbsoluteContentSize.Y > Tab.AbsoluteSize.Y
+                Tab.ElasticBehavior = Enum.ElasticBehavior.Never
+            end)
             
             -- 返回Tab对象，可以添加section等
             local tabObj = {}
