@@ -31,6 +31,7 @@ local ToggleUI = true
 FengUI.currentTab = nil
 FengUI.flags = {}
 FengUI.showingCards = true
+FengUI.tabContainers = {} -- 存储不同卡片的Tab容器
 
 local services = {
     TweenService = game:GetService("TweenService"),
@@ -737,74 +738,43 @@ CardsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 CardsLayout.SortOrder = Enum.SortOrder.LayoutOrder
 CardsLayout.StartCorner = Enum.StartCorner.TopLeft
 
-local TabMain = Instance.new("Frame")
-TabMain.Name = "TabMain"
-TabMain.Parent = Main
-TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.2, 0, 0, 37)
-TabMain.Size = UDim2.new(0, 360, 0, 243)
-TabMain.Visible = false
+-- 主Tab容器（用于存放所有卡片的Tab内容）
+local MainTabContainer = Instance.new("Frame")
+MainTabContainer.Name = "MainTabContainer"
+MainTabContainer.Parent = Main
+MainTabContainer.BackgroundTransparency = 1
+MainTabContainer.Position = UDim2.new(0.2, 0, 0, 37)
+MainTabContainer.Size = UDim2.new(0, 360, 0, 243)
+MainTabContainer.Visible = false
 
-local Side = Instance.new("Frame")
-Side.Name = "Side"
-Side.Parent = Main
-Side.BackgroundColor3 = config.TabColor
-Side.BackgroundTransparency = 1
-Side.BorderSizePixel = 0
-Side.ClipsDescendants = true
-Side.Position = UDim2.new(0, 0, 0, 35)
-Side.Size = UDim2.new(0, 90, 0, 245)
-Side.Visible = false
+-- 主侧边栏容器
+local MainSideContainer = Instance.new("Frame")
+MainSideContainer.Name = "MainSideContainer"
+MainSideContainer.Parent = Main
+MainSideContainer.BackgroundTransparency = 1
+MainSideContainer.Position = UDim2.new(0, 0, 0, 35)
+MainSideContainer.Size = UDim2.new(0, 90, 0, 245)
+MainSideContainer.Visible = false
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
-SideCorner.Parent = Side
+SideCorner.Parent = MainSideContainer
 
-createHologramEffect(Side, 0.3)
-
-local TabBtns = Instance.new("ScrollingFrame")
-TabBtns.Name = "TabBtns"
-TabBtns.Parent = Side
-TabBtns.Active = true
-TabBtns.BackgroundTransparency = 1
-TabBtns.BorderSizePixel = 0
-TabBtns.Position = UDim2.new(0, 0, 0, 5)
-TabBtns.Size = UDim2.new(0, 90, 0, 235)
-TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
-TabBtns.ScrollBarThickness = 3
-TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
-TabBtns.ScrollBarImageTransparency = 0.5
-TabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-TabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
-TabBtns.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-TabBtns.Visible = false
-
-local TabBtnsL = Instance.new("UIListLayout")
-TabBtnsL.Name = "TabBtnsL"
-TabBtnsL.Parent = TabBtns
-TabBtnsL.SortOrder = Enum.SortOrder.LayoutOrder
-TabBtnsL.Padding = UDim.new(0, 6)
-
-TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    TabBtns.CanvasSize = UDim2.new(0, 0, 0, TabBtnsL.AbsoluteContentSize.Y)
-    
-    TabBtns.ScrollingEnabled = TabBtnsL.AbsoluteContentSize.Y > TabBtns.AbsoluteSize.Y
-    TabBtns.ElasticBehavior = Enum.ElasticBehavior.Never
-end)
+createHologramEffect(MainSideContainer, 0.3)
 
 local ScriptTitle = Instance.new("TextLabel")
 ScriptTitle.Name = "ScriptTitle"
-ScriptTitle.Parent = Side
+ScriptTitle.Parent = MainSideContainer
 ScriptTitle.BackgroundTransparency = 1
 ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
 ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
 ScriptTitle.Font = Enum.Font.GothamBold
-ScriptTitle.Text = "傻逼谁让你破解我的UI了"
+ScriptTitle.Text = "功能选择"
 ScriptTitle.TextColor3 = config.AccentColor
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
-ScriptTitle.Visible = false
+ScriptTitle.Visible = true
 
 local function playEntranceAnimation()
     Main.Position = UDim2.new(0.5, 0, 0.35, 0)
@@ -814,14 +784,13 @@ local function playEntranceAnimation()
     TitleBar.BackgroundTransparency = 1
     TitleText.TextTransparency = 1
     CloseButton.TextTransparency = 1
-    Side.BackgroundTransparency = 1
+    MainSideContainer.BackgroundTransparency = 1
     CardsContainer.BackgroundTransparency = 1
     MainStroke.Transparency = 1
     neonStroke.Transparency = 1
     
-    TabMain.Visible = false
-    TabBtns.Visible = false
-    Side.Visible = false
+    MainTabContainer.Visible = false
+    MainSideContainer.Visible = false
     
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
@@ -859,7 +828,7 @@ local function playEntranceAnimation()
             BackgroundTransparency = 1
         }):Play()
     else
-        services.TweenService:Create(Side, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        services.TweenService:Create(MainSideContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             BackgroundTransparency = 0.2
         }):Play()
     end
@@ -867,9 +836,8 @@ local function playEntranceAnimation()
     task.wait(0.2)
     
     if not FengUI.showingCards then
-        TabMain.Visible = true
-        TabBtns.Visible = true
-        Side.Visible = true
+        MainTabContainer.Visible = true
+        MainSideContainer.Visible = true
     end
     
     DigitalParticleExplosion(Main)
@@ -878,15 +846,14 @@ end
 local function showCards()
     FengUI.showingCards = true
     CardsContainer.Visible = true
-    Side.Visible = false
-    TabMain.Visible = false
-    TabBtns.Visible = false
+    MainSideContainer.Visible = false
+    MainTabContainer.Visible = false
     
     services.TweenService:Create(CardsContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         BackgroundTransparency = 1
     }):Play()
     
-    services.TweenService:Create(Side, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    services.TweenService:Create(MainSideContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         BackgroundTransparency = 1
     }):Play()
 end
@@ -899,11 +866,10 @@ local function hideCards()
     
     task.wait(0.4)
     CardsContainer.Visible = false
-    Side.Visible = true
-    TabMain.Visible = true
-    TabBtns.Visible = true
+    MainSideContainer.Visible = true
+    MainTabContainer.Visible = true
     
-    services.TweenService:Create(Side, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    services.TweenService:Create(MainSideContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         BackgroundTransparency = 0.2
     }):Play()
 end
@@ -964,6 +930,80 @@ function FengUI.new(FengUI, name, theme)
     local window = {}
     
     function window.Tab(window, name, icon)
+        -- 为每个卡片创建独立的Tab容器和侧边栏
+        local tabContainer = Instance.new("Frame")
+        tabContainer.Name = "TabContainer_" .. name
+        tabContainer.Parent = MainTabContainer
+        tabContainer.BackgroundTransparency = 1
+        tabContainer.Size = UDim2.new(1, 0, 1, 0)
+        tabContainer.Visible = false
+        
+        local sideContainer = Instance.new("Frame")
+        sideContainer.Name = "SideContainer_" .. name
+        sideContainer.Parent = MainSideContainer
+        sideContainer.BackgroundColor3 = config.TabColor
+        sideContainer.BackgroundTransparency = 0.2
+        sideContainer.BorderSizePixel = 0
+        sideContainer.ClipsDescendants = true
+        sideContainer.Size = UDim2.new(1, 0, 1, 0)
+        sideContainer.Visible = false
+        
+        local sideCorner = Instance.new("UICorner")
+        sideCorner.CornerRadius = UDim.new(0, 10)
+        sideCorner.Parent = sideContainer
+        
+        createHologramEffect(sideContainer, 0.3)
+        
+        local tabBtns = Instance.new("ScrollingFrame")
+        tabBtns.Name = "TabBtns"
+        tabBtns.Parent = sideContainer
+        tabBtns.Active = true
+        tabBtns.BackgroundTransparency = 1
+        tabBtns.BorderSizePixel = 0
+        tabBtns.Position = UDim2.new(0, 0, 0, 25)
+        tabBtns.Size = UDim2.new(0, 90, 0, 215)
+        tabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
+        tabBtns.ScrollBarThickness = 3
+        tabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+        tabBtns.ScrollBarImageTransparency = 0.5
+        tabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
+        tabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
+        tabBtns.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+        tabBtns.Visible = true
+        
+        local tabBtnsL = Instance.new("UIListLayout")
+        tabBtnsL.Name = "TabBtnsL"
+        tabBtnsL.Parent = tabBtns
+        tabBtnsL.SortOrder = Enum.SortOrder.LayoutOrder
+        tabBtnsL.Padding = UDim.new(0, 6)
+        
+        tabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            tabBtns.CanvasSize = UDim2.new(0, 0, 0, tabBtnsL.AbsoluteContentSize.Y)
+            
+            tabBtns.ScrollingEnabled = tabBtnsL.AbsoluteContentSize.Y > tabBtns.AbsoluteSize.Y
+            tabBtns.ElasticBehavior = Enum.ElasticBehavior.Never
+        end)
+        
+        local sideTitle = Instance.new("TextLabel")
+        sideTitle.Name = "SideTitle"
+        sideTitle.Parent = sideContainer
+        sideTitle.BackgroundTransparency = 1
+        sideTitle.Position = UDim2.new(0, 0, 0, 0)
+        sideTitle.Size = UDim2.new(0, 90, 0, 20)
+        sideTitle.Font = Enum.Font.GothamBold
+        sideTitle.Text = name
+        sideTitle.TextColor3 = config.AccentColor
+        sideTitle.TextSize = 14
+        sideTitle.TextScaled = false
+        sideTitle.TextXAlignment = Enum.TextXAlignment.Center
+        
+        -- 存储容器引用
+        FengUI.tabContainers[name] = {
+            tabContainer = tabContainer,
+            sideContainer = sideContainer,
+            tabBtns = tabBtns
+        }
+        
         local Tab = Instance.new("ScrollingFrame")
         local TabIco = Instance.new("ImageLabel")
         local TabText = Instance.new("TextLabel")
@@ -971,7 +1011,7 @@ function FengUI.new(FengUI, name, theme)
         local TabL = Instance.new("UIListLayout")
         
         Tab.Name = "Tab"
-        Tab.Parent = TabMain
+        Tab.Parent = tabContainer
         Tab.Active = true
         Tab.BackgroundTransparency = 1
         Tab.Size = UDim2.new(1, 0, 1, 0)
@@ -983,11 +1023,11 @@ function FengUI.new(FengUI, name, theme)
         Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
         
         TabIco.Name = "TabIco"
-        TabIco.Parent = TabBtns
+        TabIco.Parent = tabBtns
         TabIco.BackgroundTransparency = 1
         TabIco.BorderSizePixel = 0
         TabIco.Size = UDim2.new(0, 22, 0, 22)
-        TabIco.Image = "rbxassetid://84830962019412"
+        TabIco.Image = icon or "rbxassetid://84830962019412"
         TabIco.ImageTransparency = 0.5
         
         startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
@@ -1047,7 +1087,7 @@ function FengUI.new(FengUI, name, theme)
         CardIcon.AnchorPoint = Vector2.new(0.5, 0.5)
         CardIcon.Position = UDim2.new(0.5, 0, 0.4, 0)
         CardIcon.Size = UDim2.new(0, 50, 0, 50)
-        CardIcon.Image = "rbxassetid://84830962019412"
+        CardIcon.Image = icon or "rbxassetid://84830962019412"
         CardIcon.ImageColor3 = config.AccentColor
         
         local CardTitle = Instance.new("TextLabel")
@@ -1091,11 +1131,28 @@ function FengUI.new(FengUI, name, theme)
             }):Play()
         end)
         
+        local function showTabContainer()
+            -- 隐藏所有其他容器
+            for _, containerData in pairs(FengUI.tabContainers) do
+                containerData.tabContainer.Visible = false
+                containerData.sideContainer.Visible = false
+            end
+            
+            -- 显示当前卡片的容器
+            tabContainer.Visible = true
+            sideContainer.Visible = true
+            
+            -- 切换到第一个Tab
+            if FengUI.currentTab == nil then
+                switchTab({ TabIco, Tab })
+            end
+        end
+        
         Card.MouseButton1Click:Connect(function()
             DigitalParticleExplosion(Card)
             hideCards()
             task.wait(0.4)
-            switchTab({ TabIco, Tab })
+            showTabContainer()
         end)
         
         TabBtn.MouseButton1Click:Connect(function()
