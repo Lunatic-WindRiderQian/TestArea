@@ -762,7 +762,7 @@ SideCorner.Parent = MainSideContainer
 
 createHologramEffect(MainSideContainer, 0.3)
 
--- 删除原来的ScriptTitle，改为返回按钮
+-- 侧边栏返回按钮
 local ReturnToCardsButton = Instance.new("TextButton")
 ReturnToCardsButton.Name = "ReturnToCardsButton"
 ReturnToCardsButton.Parent = MainSideContainer
@@ -1083,13 +1083,6 @@ function FengUI.new(FengUI, name, theme)
         
         setupSmoothScrolling(tabBtns, tabBtnsL)
         
-        -- 存储容器引用
-        FengUI.tabContainers[name] = {
-            tabContainer = tabContainer,
-            sideContainer = sideContainer,
-            tabBtns = tabBtns
-        }
-        
         -- 在Tab容器中添加左侧图片
         local TabImageContainer = Instance.new("Frame")
         TabImageContainer.Name = "TabImageContainer"
@@ -1121,7 +1114,7 @@ function FengUI.new(FengUI, name, theme)
         startNeonFlowEffect(tabImageGlow, "Color", 0.008)
         createPulseGlow(tabImageGlow)
         
-        -- 在Tab容器中添加功能区域
+        -- 在Tab容器中添加功能区域（恢复原始布局）
         local TabContent = Instance.new("Frame")
         TabContent.Name = "TabContent"
         TabContent.Parent = tabContainer
@@ -1129,62 +1122,12 @@ function FengUI.new(FengUI, name, theme)
         TabContent.Position = UDim2.new(0, 100, 0, 0)
         TabContent.Size = UDim2.new(0, 260, 1, 0)
         
-        -- 在功能区域中添加返回按钮
-        local ReturnButton = Instance.new("TextButton")
-        ReturnButton.Name = "ReturnButton"
-        ReturnButton.Parent = TabContent
-        ReturnButton.BackgroundColor3 = config.Button_Color
-        ReturnButton.BackgroundTransparency = 0.2
-        ReturnButton.BorderSizePixel = 0
-        ReturnButton.Size = UDim2.new(0, 260, 0, 25)
-        ReturnButton.AutoButtonColor = false
-        ReturnButton.Font = Enum.Font.GothamBold
-        ReturnButton.Text = "← 返回卡片选择"
-        ReturnButton.TextColor3 = config.TextColor
-        ReturnButton.TextSize = 12
-        ReturnButton.TextScaled = true
-        
-        local ReturnButtonCorner = Instance.new("UICorner")
-        ReturnButtonCorner.CornerRadius = UDim.new(0, 6)
-        ReturnButtonCorner.Parent = ReturnButton
-        
-        local returnGlow = Instance.new("UIStroke")
-        returnGlow.Parent = ReturnButton
-        returnGlow.Color = config.AccentColor
-        returnGlow.Thickness = 1
-        returnGlow.Transparency = 0.8
-        
-        startNeonFlowEffect(returnGlow, "Color", 0.01)
-        createPulseGlow(returnGlow)
-        
-        ReturnButton.MouseEnter:Connect(function()
-            services.TweenService:Create(ReturnButton, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                BackgroundColor3 = Color3.fromRGB(
-                    math.floor(config.Button_Color.R * 255 * 1.1),
-                    math.floor(config.Button_Color.G * 255 * 1.1),
-                    math.floor(config.Button_Color.B * 255 * 1.1)
-                )
-            }):Play()
-            services.TweenService:Create(returnGlow, TweenInfo.new(0.2), {
-                Thickness = 2,
-                Transparency = 0.5
-            }):Play()
-        end)
-        
-        ReturnButton.MouseLeave:Connect(function()
-            services.TweenService:Create(ReturnButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                BackgroundColor3 = config.Button_Color
-            }):Play()
-            services.TweenService:Create(returnGlow, TweenInfo.new(0.2), {
-                Thickness = 1,
-                Transparency = 0.8
-            }):Play()
-        end)
-        
-        ReturnButton.MouseButton1Click:Connect(function()
-            DigitalParticleExplosion(ReturnButton)
-            showCards()  -- 调用显示卡片的函数
-        end)
+        -- 存储容器引用
+        FengUI.tabContainers[name] = {
+            tabContainer = tabContainer,
+            sideContainer = sideContainer,
+            tabBtns = tabBtns
+        }
         
         Card.MouseEnter:Connect(function()
             services.TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -1273,14 +1216,13 @@ function FengUI.new(FengUI, name, theme)
             TabBtn.Font = Enum.Font.SourceSans
             TabBtn.Text = ""
             
-            -- 创建Tab内容容器
+            -- 创建Tab内容容器（恢复原始布局）
             local Tab = Instance.new("ScrollingFrame")
             Tab.Name = "Tab_" .. tabName
             Tab.Parent = TabContent
             Tab.Active = true
             Tab.BackgroundTransparency = 1
-            Tab.Size = UDim2.new(1, 0, 1, -30)  -- 给返回按钮留出空间
-            Tab.Position = UDim2.new(0, 0, 0, 30)
+            Tab.Size = UDim2.new(1, 0, 1, 0)
             Tab.ScrollBarThickness = 2
             Tab.ScrollBarImageTransparency = 0.5
             Tab.Visible = false
@@ -1334,7 +1276,7 @@ function FengUI.new(FengUI, name, theme)
                 SectionText.Parent = Section
                 SectionText.BackgroundTransparency = 1
                 SectionText.Position = UDim2.new(0.088, 0, 0, 0)
-                SectionText.Size = UDim2.new(0, 240, 0, 36)  -- 调整宽度适应新布局
+                SectionText.Size = UDim2.new(0, 240, 0, 36)
                 SectionText.Font = Enum.Font.GothamSemibold
                 SectionText.Text = name
                 SectionText.TextColor3 = config.TextColor
@@ -1419,7 +1361,7 @@ function FengUI.new(FengUI, name, theme)
                     BtnModule.Parent = Objs
                     BtnModule.BackgroundTransparency = 1
                     BtnModule.BorderSizePixel = 0
-                    BtnModule.Size = UDim2.new(0, 250, 0, 36)  -- 调整宽度适应新布局
+                    BtnModule.Size = UDim2.new(0, 250, 0, 36)
                     
                     Btn.Name = "Btn"
                     Btn.Parent = BtnModule
@@ -1500,7 +1442,6 @@ function FengUI.new(FengUI, name, theme)
                 end
                 
                 -- 其他section方法（Toggle, Slider, Textbox, Dropdown等）可以按照类似方式实现
-                -- 由于代码过长，这里省略具体实现，你可以将原来的section方法复制到这里
                 -- 只需要调整宽度为250以适应新布局
                 
                 return section
@@ -1510,438 +1451,6 @@ function FengUI.new(FengUI, name, theme)
         end
         
         return cardObj
-    end
-    
-    function window.Tab(window, name, icon)
-        -- 为每个卡片创建独立的Tab容器和侧边栏
-        local tabContainer = Instance.new("Frame")
-        tabContainer.Name = "TabContainer_" .. name
-        tabContainer.Parent = MainTabContainer
-        tabContainer.BackgroundTransparency = 1
-        tabContainer.Size = UDim2.new(1, 0, 1, 0)
-        tabContainer.Visible = false
-        
-        local sideContainer = Instance.new("Frame")
-        sideContainer.Name = "SideContainer_" .. name
-        sideContainer.Parent = MainSideContainer
-        sideContainer.BackgroundColor3 = config.TabColor
-        sideContainer.BackgroundTransparency = 0.2
-        sideContainer.BorderSizePixel = 0
-        sideContainer.ClipsDescendants = true
-        sideContainer.Size = UDim2.new(1, 0, 1, 0)
-        sideContainer.Visible = false
-        
-        local sideCorner = Instance.new("UICorner")
-        sideCorner.CornerRadius = UDim.new(0, 10)
-        sideCorner.Parent = sideContainer
-        
-        createHologramEffect(sideContainer, 0.3)
-        
-        local tabBtns = Instance.new("ScrollingFrame")
-        tabBtns.Name = "TabBtns"
-        tabBtns.Parent = sideContainer
-        tabBtns.Active = true
-        tabBtns.BackgroundTransparency = 1
-        tabBtns.BorderSizePixel = 0
-        tabBtns.Position = UDim2.new(0, 0, 0, 25)  -- 给返回按钮留出空间
-        tabBtns.Size = UDim2.new(0, 90, 0, 220)
-        tabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
-        tabBtns.ScrollBarThickness = 3
-        tabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
-        tabBtns.ScrollBarImageTransparency = 0.5
-        tabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-        tabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
-        tabBtns.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-        tabBtns.Visible = true
-        
-        local tabBtnsL = Instance.new("UIListLayout")
-        tabBtnsL.Name = "TabBtnsL"
-        tabBtnsL.Parent = tabBtns
-        tabBtnsL.SortOrder = Enum.SortOrder.LayoutOrder
-        tabBtnsL.Padding = UDim.new(0, 6)
-        
-        setupSmoothScrolling(tabBtns, tabBtnsL)
-        
-        -- 存储容器引用
-        FengUI.tabContainers[name] = {
-            tabContainer = tabContainer,
-            sideContainer = sideContainer,
-            tabBtns = tabBtns
-        }
-        
-        -- 在Tab容器中添加左侧图片
-        local TabImageContainer = Instance.new("Frame")
-        TabImageContainer.Name = "TabImageContainer"
-        TabImageContainer.Parent = tabContainer
-        TabImageContainer.BackgroundTransparency = 1
-        TabImageContainer.Size = UDim2.new(0, 100, 1, 0)
-        
-        local TabImage = Instance.new("ImageLabel")
-        TabImage.Name = "TabImage"
-        TabImage.Parent = TabImageContainer
-        TabImage.BackgroundColor3 = config.Bg_Color
-        TabImage.BackgroundTransparency = 0.2
-        TabImage.AnchorPoint = Vector2.new(0.5, 0.5)
-        TabImage.Position = UDim2.new(0.5, 0, 0.5, 0)
-        TabImage.Size = UDim2.new(0, 80, 0, 80)
-        TabImage.Image = "rbxassetid://" .. tostring(icon or "84830962019412")
-        TabImage.ImageColor3 = config.AccentColor
-        
-        local TabImageCorner = Instance.new("UICorner")
-        TabImageCorner.CornerRadius = UDim.new(0, 12)
-        TabImageCorner.Parent = TabImage
-        
-        local tabImageGlow = Instance.new("UIStroke")
-        tabImageGlow.Parent = TabImage
-        tabImageGlow.Color = config.AccentColor
-        tabImageGlow.Thickness = 2
-        tabImageGlow.Transparency = 0.7
-        
-        startNeonFlowEffect(tabImageGlow, "Color", 0.008)
-        createPulseGlow(tabImageGlow)
-        
-        -- 在Tab容器中添加功能区域
-        local TabContent = Instance.new("Frame")
-        TabContent.Name = "TabContent"
-        TabContent.Parent = tabContainer
-        TabContent.BackgroundTransparency = 1
-        TabContent.Position = UDim2.new(0, 100, 0, 0)
-        TabContent.Size = UDim2.new(0, 260, 1, 0)
-        
-        -- 在功能区域中添加返回按钮
-        local ReturnButton = Instance.new("TextButton")
-        ReturnButton.Name = "ReturnButton"
-        ReturnButton.Parent = TabContent
-        ReturnButton.BackgroundColor3 = config.Button_Color
-        ReturnButton.BackgroundTransparency = 0.2
-        ReturnButton.BorderSizePixel = 0
-        ReturnButton.Size = UDim2.new(0, 260, 0, 25)
-        ReturnButton.AutoButtonColor = false
-        ReturnButton.Font = Enum.Font.GothamBold
-        ReturnButton.Text = "← 返回卡片选择"
-        ReturnButton.TextColor3 = config.TextColor
-        ReturnButton.TextSize = 12
-        ReturnButton.TextScaled = true
-        
-        local ReturnButtonCorner = Instance.new("UICorner")
-        ReturnButtonCorner.CornerRadius = UDim.new(0, 6)
-        ReturnButtonCorner.Parent = ReturnButton
-        
-        local returnGlow = Instance.new("UIStroke")
-        returnGlow.Parent = ReturnButton
-        returnGlow.Color = config.AccentColor
-        returnGlow.Thickness = 1
-        returnGlow.Transparency = 0.8
-        
-        startNeonFlowEffect(returnGlow, "Color", 0.01)
-        createPulseGlow(returnGlow)
-        
-        ReturnButton.MouseEnter:Connect(function()
-            services.TweenService:Create(ReturnButton, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                BackgroundColor3 = Color3.fromRGB(
-                    math.floor(config.Button_Color.R * 255 * 1.1),
-                    math.floor(config.Button_Color.G * 255 * 1.1),
-                    math.floor(config.Button_Color.B * 255 * 1.1)
-                )
-            }):Play()
-            services.TweenService:Create(returnGlow, TweenInfo.new(0.2), {
-                Thickness = 2,
-                Transparency = 0.5
-            }):Play()
-        end)
-        
-        ReturnButton.MouseLeave:Connect(function()
-            services.TweenService:Create(ReturnButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                BackgroundColor3 = config.Button_Color
-            }):Play()
-            services.TweenService:Create(returnGlow, TweenInfo.new(0.2), {
-                Thickness = 1,
-                Transparency = 0.8
-            }):Play()
-        end)
-        
-        ReturnButton.MouseButton1Click:Connect(function()
-            DigitalParticleExplosion(ReturnButton)
-            showCards()  -- 调用显示卡片的函数
-        end)
-        
-        local Tab = Instance.new("ScrollingFrame")
-        local TabIco = Instance.new("ImageLabel")
-        local TabText = Instance.new("TextLabel")
-        local TabBtn = Instance.new("TextButton")
-        local TabL = Instance.new("UIListLayout")
-        
-        Tab.Name = "Tab"
-        Tab.Parent = TabContent
-        Tab.Active = true
-        Tab.BackgroundTransparency = 1
-        Tab.Size = UDim2.new(1, 0, 1, -30)  -- 给返回按钮留出空间
-        Tab.Position = UDim2.new(0, 0, 0, 30)
-        Tab.ScrollBarThickness = 2
-        Tab.ScrollBarImageTransparency = 0.5
-        Tab.Visible = false
-        Tab.ElasticBehavior = Enum.ElasticBehavior.Never
-        Tab.ScrollingDirection = Enum.ScrollingDirection.Y
-        Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-        
-        TabIco.Name = "TabIco"
-        TabIco.Parent = tabBtns
-        TabIco.BackgroundTransparency = 1
-        TabIco.BorderSizePixel = 0
-        TabIco.Size = UDim2.new(0, 22, 0, 22)
-        TabIco.Image = icon or "rbxassetid://84830962019412"
-        TabIco.ImageTransparency = 0.5
-        
-        startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
-        
-        TabText.Name = "TabText"
-        TabText.Parent = TabIco
-        TabText.BackgroundTransparency = 1
-        TabText.Position = UDim2.new(1.2, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 65, 0, 22)
-        TabText.Font = Enum.Font.GothamSemibold
-        TabText.Text = name
-        TabText.TextColor3 = config.TextColor
-        TabText.TextSize = 14
-        TabText.TextXAlignment = Enum.TextXAlignment.Left
-        TabText.TextTransparency = 0.5
-        
-        TabBtn.Name = "TabBtn"
-        TabBtn.Parent = TabIco
-        TabBtn.BackgroundTransparency = 1
-        TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 90, 0, 22)
-        TabBtn.AutoButtonColor = false
-        TabBtn.Font = Enum.Font.SourceSans
-        TabBtn.Text = ""
-        
-        TabL.Name = "TabL"
-        TabL.Parent = Tab
-        TabL.SortOrder = Enum.SortOrder.LayoutOrder
-        TabL.Padding = UDim.new(0, 4)
-        
-        -- 创建卡片
-        local Card = Instance.new("TextButton")
-        Card.Name = "Card_" .. name
-        Card.Parent = CardsContainer
-        Card.BackgroundColor3 = config.TabColor
-        Card.BackgroundTransparency = 0.2
-        Card.AutoButtonColor = false
-        Card.Text = ""
-        
-        local CardCorner = Instance.new("UICorner")
-        CardCorner.CornerRadius = UDim.new(0, 12)
-        CardCorner.Parent = Card
-        
-        local CardGlow = Instance.new("UIStroke")
-        CardGlow.Parent = Card
-        CardGlow.Color = config.AccentColor
-        CardGlow.Thickness = 2
-        CardGlow.Transparency = 0.7
-        
-        startNeonFlowEffect(CardGlow, "Color", 0.008)
-        createPulseGlow(CardGlow)
-        
-        local CardIcon = Instance.new("ImageLabel")
-        CardIcon.Name = "CardIcon"
-        CardIcon.Parent = Card
-        CardIcon.BackgroundTransparency = 1
-        CardIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-        CardIcon.Position = UDim2.new(0.5, 0, 0.4, 0)
-        CardIcon.Size = UDim2.new(0, 50, 0, 50)
-        CardIcon.Image = icon or "rbxassetid://84830962019412"
-        CardIcon.ImageColor3 = config.AccentColor
-        
-        local CardTitle = Instance.new("TextLabel")
-        CardTitle.Name = "CardTitle"
-        CardTitle.Parent = Card
-        CardTitle.BackgroundTransparency = 1
-        CardTitle.AnchorPoint = Vector2.new(0.5, 0.5)
-        CardTitle.Position = UDim2.new(0.5, 0, 0.8, 0)
-        CardTitle.Size = UDim2.new(0.8, 0, 0, 25)
-        CardTitle.Font = Enum.Font.GothamBold
-        CardTitle.Text = name
-        CardTitle.TextColor3 = config.TextColor
-        CardTitle.TextSize = 14
-        CardTitle.TextScaled = true
-        
-        Card.MouseEnter:Connect(function()
-            services.TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                BackgroundTransparency = 0.1,
-                Size = UDim2.new(0, 125, 0, 125)
-            }):Play()
-            services.TweenService:Create(CardGlow, TweenInfo.new(0.3), {
-                Thickness = 3,
-                Transparency = 0.4
-            }):Play()
-            services.TweenService:Create(CardIcon, TweenInfo.new(0.3), {
-                Size = UDim2.new(0, 55, 0, 55)
-            }):Play()
-        end)
-        
-        Card.MouseLeave:Connect(function()
-            services.TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                BackgroundTransparency = 0.2,
-                Size = UDim2.new(0, 120, 0, 120)
-            }):Play()
-            services.TweenService:Create(CardGlow, TweenInfo.new(0.3), {
-                Thickness = 2,
-                Transparency = 0.7
-            }):Play()
-            services.TweenService:Create(CardIcon, TweenInfo.new(0.3), {
-                Size = UDim2.new(0, 50, 0, 50)
-            }):Play()
-        end)
-        
-        local function showTabContainer()
-            -- 隐藏所有其他容器
-            for _, containerData in pairs(FengUI.tabContainers) do
-                containerData.tabContainer.Visible = false
-                containerData.sideContainer.Visible = false
-            end
-            
-            -- 显示当前卡片的容器
-            tabContainer.Visible = true
-            sideContainer.Visible = true
-            
-            -- 切换到第一个Tab
-            if FengUI.currentTab == nil then
-                switchTab({ TabIco, Tab })
-            end
-        end
-        
-        Card.MouseButton1Click:Connect(function()
-            DigitalParticleExplosion(Card)
-            hideCards()
-            task.wait(0.4)
-            showTabContainer()
-        end)
-        
-        TabBtn.MouseButton1Click:Connect(function()
-            DigitalParticleExplosion(TabBtn)
-            switchTab({ TabIco, Tab })
-        end)
-        
-        if FengUI.currentTab == nil then
-            switchTab({ TabIco, Tab })
-        end
-        
-        TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 8)
-            
-            Tab.ScrollingEnabled = TabL.AbsoluteContentSize.Y > Tab.AbsoluteSize.Y
-            Tab.ElasticBehavior = Enum.ElasticBehavior.Never
-        end)
-        
-        local tab = {}
-        
-        function tab.section(tab, name, TabVal)
-            local Section = Instance.new("Frame")
-            local SectionC = Instance.new("UICorner")
-            local SectionText = Instance.new("TextLabel")
-            local SectionOpen = Instance.new("ImageLabel")
-            local SectionOpened = Instance.new("ImageLabel")
-            local SectionToggle = Instance.new("ImageButton")
-            local Objs = Instance.new("Frame")
-            local ObjsL = Instance.new("UIListLayout")
-            
-            Section.Name = "Section"
-            Section.Parent = Tab
-            Section.BackgroundColor3 = config.TabColor
-            Section.BackgroundTransparency = 0.2
-            Section.BorderSizePixel = 0
-            Section.ClipsDescendants = true
-            Section.Size = UDim2.new(0.95, 0, 0, 36)
-            
-            SectionC.CornerRadius = UDim.new(0, 6)
-            SectionC.Name = "SectionC"
-            SectionC.Parent = Section
-            
-            SectionText.Name = "SectionText"
-            SectionText.Parent = Section
-            SectionText.BackgroundTransparency = 1
-            SectionText.Position = UDim2.new(0.088, 0, 0, 0)
-            SectionText.Size = UDim2.new(0, 240, 0, 36)  -- 调整宽度适应新布局
-            SectionText.Font = Enum.Font.GothamSemibold
-            SectionText.Text = name
-            SectionText.TextColor3 = config.TextColor
-            SectionText.TextSize = 16
-            SectionText.TextXAlignment = Enum.TextXAlignment.Left
-            
-            SectionOpen.Name = "SectionOpen"
-            SectionOpen.Parent = SectionText
-            SectionOpen.BackgroundTransparency = 1
-            SectionOpen.BorderSizePixel = 0
-            SectionOpen.Position = UDim2.new(0, -26, 0, 6)
-            SectionOpen.Size = UDim2.new(0, 22, 0, 22)
-            SectionOpen.Image = "rbxassetid://84830962019412"
-            SectionOpen.ImageColor3 = config.SecondaryTextColor
-            
-            SectionOpened.Name = "SectionOpened"
-            SectionOpened.Parent = SectionOpen
-            SectionOpened.BackgroundTransparency = 1
-            SectionOpened.BorderSizePixel = 0
-            SectionOpened.Size = UDim2.new(0, 22, 0, 22)
-            SectionOpened.Image = "rbxassetid://84830962019412"
-            SectionOpened.ImageColor3 = config.AccentColor
-            SectionOpened.ImageTransparency = 1
-            
-            SectionToggle.Name = "SectionToggle"
-            SectionToggle.Parent = SectionOpen
-            SectionToggle.BackgroundTransparency = 1
-            SectionToggle.BorderSizePixel = 0
-            SectionToggle.Size = UDim2.new(0, 22, 0, 22)
-            
-            Objs.Name = "Objs"
-            Objs.Parent = Section
-            Objs.BackgroundTransparency = 1
-            Objs.BorderSizePixel = 0
-            Objs.Position = UDim2.new(0, 6, 0, 36)
-            Objs.Size = UDim2.new(0.98, 0, 0, 0)
-            
-            ObjsL.Name = "ObjsL"
-            ObjsL.Parent = Objs
-            ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
-            ObjsL.Padding = UDim.new(0, 6)
-            
-            local open = TabVal ~= false
-            if TabVal ~= false then
-                Section.Size = UDim2.new(0.95, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 6 or 36)
-                SectionOpened.ImageTransparency = open and 0 or 1
-                SectionOpen.ImageTransparency = open and 1 or 0
-            end
-            
-            SectionToggle.MouseButton1Click:Connect(function()
-                open = not open
-                services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                    Size = UDim2.new(0.95, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 6 or 36)
-                }):Play()
-                
-                services.TweenService:Create(SectionOpened, TweenInfo.new(0.3), {
-                    ImageTransparency = open and 0 or 1
-                }):Play()
-                
-                services.TweenService:Create(SectionOpen, TweenInfo.new(0.3), {
-                    ImageTransparency = open and 1 or 0
-                }):Play()
-                
-                DigitalParticleExplosion(SectionToggle)
-            end)
-            
-            ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                if not open then return end
-                Section.Size = UDim2.new(0.95, 0, 0, 36 + ObjsL.AbsoluteContentSize.Y + 6)
-            end)
-            
-            local section = {}
-            
-            -- 这里省略了section的其他方法（Button, Toggle, Slider等）
-            -- 你需要将这些方法从原来的代码中复制过来，并调整宽度为250以适应新布局
-            
-            return section
-        end
-
-        return tab
     end
 
     return window
