@@ -478,6 +478,7 @@ local function setupSmoothScrolling(scrollingFrame, layout)
     scrollingFrame.ElasticBehavior = Enum.ElasticBehavior.Never
 end
 
+-- 修复后的switchTab函数
 local switchingTabs = false
 function switchTab(new)
     if switchingTabs then return end
@@ -488,9 +489,9 @@ function switchTab(new)
         FengUI.currentTab = new
         services.TweenService:Create(new[1], TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { 
             ImageTransparency = 0,
-            Size = UDim2.new(0, 25, 0, 25)
+            Size = UDim2.new(0, 20, 0, 20)
         }):Play()
-        services.TweenService:Create(new[1].TabText, TweenInfo.new(0.3), { 
+        services.TweenService:Create(new[3], TweenInfo.new(0.3), { 
             TextTransparency = 0,
             TextColor3 = config.AccentColor
         }):Play()
@@ -505,17 +506,17 @@ function switchTab(new)
     local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     services.TweenService:Create(old[1], tweenInfo, { 
         ImageTransparency = 0.5,
-        Size = UDim2.new(0, 22, 0, 22)
+        Size = UDim2.new(0, 18, 0, 18)
     }):Play()
     services.TweenService:Create(new[1], tweenInfo, { 
         ImageTransparency = 0,
-        Size = UDim2.new(0, 25, 0, 25)
+        Size = UDim2.new(0, 20, 0, 20)
     }):Play()
-    services.TweenService:Create(old[1].TabText, tweenInfo, { 
+    services.TweenService:Create(old[3], tweenInfo, { 
         TextTransparency = 0.5,
         TextColor3 = config.TextColor
     }):Play()
-    services.TweenService:Create(new[1].TabText, tweenInfo, { 
+    services.TweenService:Create(new[3], tweenInfo, { 
         TextTransparency = 0,
         TextColor3 = config.AccentColor
     }):Play()
@@ -1136,20 +1137,12 @@ function FengUI.new(FengUI, name, theme)
         local cardObj = {}
         
         function cardObj.Tab(cardObj, tabName, tabIcon)
-            -- 创建Tab按钮容器
-            local TabContainer = Instance.new("Frame")
-            TabContainer.Name = "TabContainer"
-            TabContainer.Parent = tabBtns
-            TabContainer.BackgroundTransparency = 1
-            TabContainer.Size = UDim2.new(1, 0, 0, 22)
-            
             -- 创建Tab图标
             local TabIco = Instance.new("ImageLabel")
             TabIco.Name = "TabIco"
-            TabIco.Parent = TabContainer
+            TabIco.Parent = tabBtns
             TabIco.BackgroundTransparency = 1
             TabIco.BorderSizePixel = 0
-            TabIco.Position = UDim2.new(0, 5, 0, 0)
             TabIco.Size = UDim2.new(0, 18, 0, 18)
             TabIco.Image = "rbxassetid://" .. tostring(tabIcon or "84830962019412")
             TabIco.ImageTransparency = 0.5
@@ -1159,10 +1152,10 @@ function FengUI.new(FengUI, name, theme)
             -- 创建Tab文字
             local TabText = Instance.new("TextLabel")
             TabText.Name = "TabText"
-            TabText.Parent = TabContainer
+            TabText.Parent = tabBtns
             TabText.BackgroundTransparency = 1
-            TabText.Position = UDim2.new(0, 28, 0, 0)
-            TabText.Size = UDim2.new(0, 57, 0, 22)
+            TabText.Position = UDim2.new(0, 25, 0, 0)
+            TabText.Size = UDim2.new(0, 60, 0, 18)
             TabText.Font = Enum.Font.GothamSemibold
             TabText.Text = tabName
             TabText.TextColor3 = config.TextColor
@@ -1173,10 +1166,10 @@ function FengUI.new(FengUI, name, theme)
             -- 创建Tab按钮
             local TabBtn = Instance.new("TextButton")
             TabBtn.Name = "TabBtn"
-            TabBtn.Parent = TabContainer
+            TabBtn.Parent = tabBtns
             TabBtn.BackgroundTransparency = 1
             TabBtn.BorderSizePixel = 0
-            TabBtn.Size = UDim2.new(1, 0, 1, 0)
+            TabBtn.Size = UDim2.new(1, 0, 0, 18)
             TabBtn.AutoButtonColor = false
             TabBtn.Font = Enum.Font.SourceSans
             TabBtn.Text = ""
@@ -1205,11 +1198,11 @@ function FengUI.new(FengUI, name, theme)
             
             TabBtn.MouseButton1Click:Connect(function()
                 DigitalParticleExplosion(TabBtn)
-                switchTab({ TabContainer, Tab })
+                switchTab({ TabIco, Tab, TabText })
             end)
             
             if FengUI.currentTab == nil then
-                switchTab({ TabContainer, Tab })
+                switchTab({ TabIco, Tab, TabText })
             end
             
             -- 返回Tab对象，可以添加section等
