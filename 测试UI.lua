@@ -315,116 +315,6 @@ function DigitalParticleExplosion(obj)
     end)
 end
 
-local function startNeonFlowEffect(object, property, speed)
-    speed = speed or 0.008
-    local hue = 0
-    local connection
-    connection = RunService.Heartbeat:Connect(function()
-        if not object or not object.Parent then
-            connection:Disconnect()
-            return
-        end
-        hue = (hue + speed) % 1
-        local r = math.sin(hue * 6 + 0) * 0.5 + 0.5
-        local g = math.sin(hue * 6 + 2) * 0.5 + 0.5
-        local b = math.sin(hue * 6 + 4) * 0.5 + 0.5
-        object[property] = Color3.new(r, g, b)
-    end)
-    return connection
-end
-
-local function createHologramEffect(frame, intensity)
-    intensity = intensity or 1
-    
-    local hologram = Instance.new("Frame")
-    hologram.Name = "HologramEffect"
-    hologram.BackgroundTransparency = 1
-    hologram.Size = UDim2.new(1, 0, 1, 0)
-    hologram.ZIndex = frame.ZIndex - 1
-    hologram.Parent = frame
-    hologram.ClipsDescendants = true
-    
-    local scanLines = Instance.new("Frame")
-    scanLines.Name = "ScanLines"
-    scanLines.BackgroundTransparency = 1
-    scanLines.Size = UDim2.new(1, 0, 1, 0)
-    scanLines.Parent = hologram
-    
-    local linePattern = Instance.new("UIGradient")
-    linePattern.Rotation = 0
-    linePattern.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.9),
-        NumberSequenceKeypoint.new(0.1, 0.7),
-        NumberSequenceKeypoint.new(0.2, 0.9),
-        NumberSequenceKeypoint.new(1, 0.9)
-    })
-    linePattern.Parent = scanLines
-    
-    local glow = Instance.new("UIGradient")
-    glow.Rotation = 45
-    glow.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.8),
-        NumberSequenceKeypoint.new(0.3, 0.3 * intensity),
-        NumberSequenceKeypoint.new(0.7, 0.3 * intensity),
-        NumberSequenceKeypoint.new(1, 0.8)
-    })
-    
-    local colors = {
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 255)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 0, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 0))
-    }
-    glow.Color = ColorSequence.new(colors)
-    glow.Parent = hologram
-    
-    local scanConnection
-    scanConnection = RunService.Heartbeat:Connect(function(delta)
-        if not scanLines or not scanLines.Parent then
-            scanConnection:Disconnect()
-            return
-        end
-        linePattern.Offset = Vector2.new(0, (tick() * 0.5) % 1)
-    end)
-    
-    local colorConnection
-    colorConnection = RunService.Heartbeat:Connect(function(delta)
-        if not hologram or not hologram.Parent then
-            colorConnection:Disconnect()
-            return
-        end
-        
-        local time = tick()
-        for i, keypoint in ipairs(colors) do
-            local hue = (time * 0.2 + i * 0.3) % 1
-            colors[i] = ColorSequenceKeypoint.new(
-                keypoint.Time,
-                Color3.fromHSV(hue, 0.8, 1)
-            )
-        end
-        glow.Color = ColorSequence.new(colors)
-    end)
-    
-    return hologram
-end
-
-local function createPulseGlow(object)
-    local pulseConnection
-    pulseConnection = RunService.Heartbeat:Connect(function()
-        if not object or not object.Parent then
-            pulseConnection:Disconnect()
-            return
-        end
-        
-        local alpha = 0.5 + math.sin(tick() * 3) * 0.3
-        if object:IsA("UIStroke") then
-            object.Transparency = alpha
-        elseif object:IsA("Frame") or object:IsA("TextButton") then
-            object.BackgroundTransparency = alpha
-        end
-    end)
-    return pulseConnection
-end
-
 local function create3DFlipAnimation(object, duration)
     duration = duration or 0.5
     
@@ -569,15 +459,6 @@ MainStroke.Color = Color3.fromRGB(50, 50, 50)
 MainStroke.Thickness = 1
 MainStroke.Transparency = 1
 
-local neonStroke = Instance.new("UIStroke")
-neonStroke.Parent = Main
-neonStroke.Thickness = 2
-neonStroke.Transparency = 1
-neonStroke.LineJoinMode = Enum.LineJoinMode.Round
-startNeonFlowEffect(neonStroke, "Color", 0.01)
-
-createPulseGlow(neonStroke)
-
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = Main
@@ -658,10 +539,6 @@ CloseButton.MouseButton1Click:Connect(function()
         Transparency = 1
     }):Play()
     
-    services.TweenService:Create(neonStroke, TweenInfo.new(0.4), {
-        Transparency = 1
-    }):Play()
-    
     services.TweenService:Create(TitleBar, TweenInfo.new(0.4), {
         BackgroundTransparency = 1
     }):Play()
@@ -700,9 +577,6 @@ OpenStroke.Parent = Open
 OpenStroke.Color = Color3.fromRGB(180, 180, 180)
 OpenStroke.Thickness = 1.2
 OpenStroke.Transparency = 0.4
-
-startNeonFlowEffect(Open, "BackgroundColor3", 0.012)
-createPulseGlow(OpenStroke)
 
 Open.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
@@ -762,8 +636,6 @@ local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
 SideCorner.Parent = MainSideContainer
 
-createHologramEffect(MainSideContainer, 0.3)
-
 -- 侧边栏返回按钮
 local ReturnToCardsButton = Instance.new("TextButton")
 ReturnToCardsButton.Name = "ReturnToCardsButton"
@@ -784,15 +656,6 @@ local ReturnButtonCorner = Instance.new("UICorner")
 ReturnButtonCorner.CornerRadius = UDim.new(0, 6)
 ReturnButtonCorner.Parent = ReturnToCardsButton
 
-local returnGlow = Instance.new("UIStroke")
-returnGlow.Parent = ReturnToCardsButton
-returnGlow.Color = config.AccentColor
-returnGlow.Thickness = 1
-returnGlow.Transparency = 0.8
-
-startNeonFlowEffect(returnGlow, "Color", 0.01)
-createPulseGlow(returnGlow)
-
 ReturnToCardsButton.MouseEnter:Connect(function()
     services.TweenService:Create(ReturnToCardsButton, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         BackgroundColor3 = Color3.fromRGB(
@@ -801,19 +664,11 @@ ReturnToCardsButton.MouseEnter:Connect(function()
             math.floor(config.Button_Color.B * 255 * 1.1)
         )
     }):Play()
-    services.TweenService:Create(returnGlow, TweenInfo.new(0.2), {
-        Thickness = 2,
-        Transparency = 0.5
-    }):Play()
 end)
 
 ReturnToCardsButton.MouseLeave:Connect(function()
     services.TweenService:Create(ReturnToCardsButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         BackgroundColor3 = config.Button_Color
-    }):Play()
-    services.TweenService:Create(returnGlow, TweenInfo.new(0.2), {
-        Thickness = 1,
-        Transparency = 0.8
     }):Play()
 end)
 
@@ -854,7 +709,6 @@ local function playEntranceAnimation()
     MainSideContainer.BackgroundTransparency = 1
     CardsContainer.BackgroundTransparency = 1
     MainStroke.Transparency = 1
-    neonStroke.Transparency = 1
     
     MainTabContainer.Visible = false
     MainSideContainer.Visible = false
@@ -867,10 +721,6 @@ local function playEntranceAnimation()
     
     services.TweenService:Create(MainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Transparency = 0.5
-    }):Play()
-    
-    services.TweenService:Create(neonStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Transparency = 0.7
     }):Play()
     
     task.wait(0.2)
@@ -980,14 +830,11 @@ function FengUI.new(FengUI, name, theme)
         CardCorner.CornerRadius = UDim.new(0, 12)
         CardCorner.Parent = Card
         
-        local CardGlow = Instance.new("UIStroke")
-        CardGlow.Parent = Card
-        CardGlow.Color = config.AccentColor
-        CardGlow.Thickness = 2
-        CardGlow.Transparency = 0.7
-        
-        startNeonFlowEffect(CardGlow, "Color", 0.008)
-        createPulseGlow(CardGlow)
+        local CardStroke = Instance.new("UIStroke")
+        CardStroke.Parent = Card
+        CardStroke.Color = config.AccentColor
+        CardStroke.Thickness = 1
+        CardStroke.Transparency = 0.5
         
         local CardIcon = Instance.new("ImageLabel")
         CardIcon.Name = "CardIcon"
@@ -1048,8 +895,6 @@ function FengUI.new(FengUI, name, theme)
         sideCorner.CornerRadius = UDim.new(0, 10)
         sideCorner.Parent = sideContainer
         
-        createHologramEffect(sideContainer, 0.3)
-        
         local tabBtns = Instance.new("ScrollingFrame")
         tabBtns.Name = "TabBtns"
         tabBtns.Parent = sideContainer
@@ -1082,31 +927,72 @@ function FengUI.new(FengUI, name, theme)
             tabBtns = tabBtns
         }
         
+        -- 高级化卡片动画
         Card.MouseEnter:Connect(function()
-            services.TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            -- 卡片放大和颜色变化
+            services.TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
                 BackgroundTransparency = 0.1,
-                Size = UDim2.new(0, 105, 0, 105) -- 调整为更小的悬停尺寸
+                Size = UDim2.new(0, 105, 0, 105),
+                BackgroundColor3 = Color3.fromRGB(
+                    math.floor(config.TabColor.R * 255 * 1.15),
+                    math.floor(config.TabColor.G * 255 * 1.15),
+                    math.floor(config.TabColor.B * 255 * 1.15)
+                )
             }):Play()
-            services.TweenService:Create(CardGlow, TweenInfo.new(0.3), {
-                Thickness = 3,
-                Transparency = 0.4
+            
+            -- 边框加粗
+            services.TweenService:Create(CardStroke, TweenInfo.new(0.3), {
+                Thickness = 2,
+                Transparency = 0.2
             }):Play()
-            services.TweenService:Create(CardIcon, TweenInfo.new(0.3), {
-                Size = UDim2.new(0, 45, 0, 45)
+            
+            -- 图标放大和旋转
+            services.TweenService:Create(CardIcon, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 45, 0, 45),
+                Rotation = 5
+            }):Play()
+            
+            -- 标题颜色变化
+            services.TweenService:Create(CardTitle, TweenInfo.new(0.3), {
+                TextColor3 = config.AccentColor,
+                TextSize = 13
+            }):Play()
+            
+            -- 描述文字动画
+            services.TweenService:Create(CardDescription, TweenInfo.new(0.3), {
+                TextColor3 = config.TextColor
             }):Play()
         end)
         
         Card.MouseLeave:Connect(function()
-            services.TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            -- 恢复卡片原始状态
+            services.TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
                 BackgroundTransparency = 0.2,
-                Size = UDim2.new(0, 100, 0, 100)
+                Size = UDim2.new(0, 100, 0, 100),
+                BackgroundColor3 = config.TabColor
             }):Play()
-            services.TweenService:Create(CardGlow, TweenInfo.new(0.3), {
-                Thickness = 2,
-                Transparency = 0.7
+            
+            -- 恢复边框
+            services.TweenService:Create(CardStroke, TweenInfo.new(0.3), {
+                Thickness = 1,
+                Transparency = 0.5
             }):Play()
-            services.TweenService:Create(CardIcon, TweenInfo.new(0.3), {
-                Size = UDim2.new(0, 40, 0, 40)
+            
+            -- 恢复图标
+            services.TweenService:Create(CardIcon, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 40, 0, 40),
+                Rotation = 0
+            }):Play()
+            
+            -- 恢复标题
+            services.TweenService:Create(CardTitle, TweenInfo.new(0.3), {
+                TextColor3 = config.TextColor,
+                TextSize = 12
+            }):Play()
+            
+            -- 恢复描述
+            services.TweenService:Create(CardDescription, TweenInfo.new(0.3), {
+                TextColor3 = config.SecondaryTextColor
             }):Play()
         end)
         
@@ -1129,6 +1015,17 @@ function FengUI.new(FengUI, name, theme)
         end
         
         Card.MouseButton1Click:Connect(function()
+            -- 点击动画：先缩小再放大
+            services.TweenService:Create(Card, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 95, 0, 95)
+            }):Play()
+            
+            task.wait(0.1)
+            
+            services.TweenService:Create(Card, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 105, 0, 105)
+            }):Play()
+            
             DigitalParticleExplosion(Card)
             showTabContainer()
         end)
@@ -1146,8 +1043,6 @@ function FengUI.new(FengUI, name, theme)
             TabIco.Size = UDim2.new(0, 22, 0, 22)
             TabIco.Image = "rbxassetid://" .. tostring(tabIcon or "84830962019412")
             TabIco.ImageTransparency = 0.5
-            
-            startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
             
             -- 创建Tab文字（作为TabIco的子级）
             local TabText = Instance.new("TextLabel")
@@ -1346,15 +1241,6 @@ function FengUI.new(FengUI, name, theme)
                     BtnC.Name = "BtnC"
                     BtnC.Parent = Btn
                     
-                    local btnGlow = Instance.new("UIStroke")
-                    btnGlow.Parent = Btn
-                    btnGlow.Color = config.AccentColor
-                    btnGlow.Thickness = 1
-                    btnGlow.Transparency = 0.8
-                    
-                    startNeonFlowEffect(btnGlow, "Color", 0.01)
-                    createPulseGlow(btnGlow)
-                    
                     Btn.MouseEnter:Connect(function()
                         services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                             BackgroundColor3 = Color3.fromRGB(
@@ -1363,19 +1249,11 @@ function FengUI.new(FengUI, name, theme)
                                 math.floor(config.Button_Color.B * 255 * 1.1)
                             )
                         }):Play()
-                        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                            Thickness = 2,
-                            Transparency = 0.5
-                        }):Play()
                     end)
                     
                     Btn.MouseLeave:Connect(function()
                         services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                             BackgroundColor3 = config.Button_Color
-                        }):Play()
-                        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                            Thickness = 1,
-                            Transparency = 0.8
                         }):Play()
                     end)
                     
@@ -1390,19 +1268,11 @@ function FengUI.new(FengUI, name, theme)
                                 math.floor(config.Button_Color.B * 255 * 0.8)
                             )
                         }):Play()
-                        services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
-                            Thickness = 3,
-                            Transparency = 0.3
-                        }):Play()
                         
                         task.wait(0.1)
                         
                         services.TweenService:Create(Btn, TweenInfo.new(0.2), {
                             BackgroundColor3 = config.Button_Color
-                        }):Play()
-                        services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                            Thickness = 1,
-                            Transparency = 0.8
                         }):Play()
                     end)
                 end
@@ -1430,12 +1300,6 @@ function FengUI.new(FengUI, name, theme)
                     
                     ImageCorner.CornerRadius = UDim.new(0, 6)
                     ImageCorner.Parent = ImageLabel
-                    
-                    local imageGlow = Instance.new("UIStroke")
-                    imageGlow.Parent = ImageLabel
-                    imageGlow.Color = config.AccentColor
-                    imageGlow.Thickness = 1
-                    imageGlow.Transparency = 1
                     
                     return ImageLabel
                 end
@@ -1526,10 +1390,6 @@ function FengUI.new(FengUI, name, theme)
                     ToggleDisableC.Name = "ToggleDisableC"
                     ToggleDisableC.Parent = ToggleDisable
                     
-                    if enabled then
-                        createHologramEffect(ToggleSwitch, 0.8)
-                    end
-                    
                     ToggleBtn.MouseEnter:Connect(function()
                         services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                             BackgroundColor3 = Color3.fromRGB(
@@ -1559,15 +1419,6 @@ function FengUI.new(FengUI, name, theme)
                                 Position = UDim2.new(0, state and 14 or 0, 0, 0),
                                 BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
                             }):Play()
-                            
-                            if state then
-                                createHologramEffect(ToggleSwitch, 0.8)
-                            else
-                                local hologram = ToggleSwitch:FindFirstChild("HologramEffect")
-                                if hologram then
-                                    hologram:Destroy()
-                                end
-                            end
                             
                             FengUI.flags[flag] = state
                             callback(state)
@@ -2194,8 +2045,6 @@ function FengUI.new(FengUI, name, theme)
                     DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 22)
                     DropdownOpenFrame.ZIndex = 2
                     
-                    createHologramEffect(DropdownOpenFrame, 0.8)
-                    
                     DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
                     DropdownOpenFrameC.Name = "DropdownOpenFrameC"
                     DropdownOpenFrameC.Parent = DropdownOpenFrame
@@ -2375,15 +2224,6 @@ function FengUI.new(FengUI, name, theme)
                     PlayerCorner.CornerRadius = UDim.new(0, 8)
                     PlayerCorner.Parent = PlayerContainer
                     
-                    local playerGlow = Instance.new("UIStroke")
-                    playerGlow.Parent = PlayerContainer
-                    playerGlow.Color = config.AccentColor
-                    playerGlow.Thickness = 2
-                    playerGlow.Transparency = 0.7
-                    
-                    startNeonFlowEffect(playerGlow, "Color", 0.008)
-                    createPulseGlow(playerGlow)
-                    
                     local TopSection = Instance.new("Frame")
                     TopSection.Name = "TopSection"
                     TopSection.Parent = PlayerContainer
@@ -2401,12 +2241,6 @@ function FengUI.new(FengUI, name, theme)
                     local AlbumCorner = Instance.new("UICorner")
                     AlbumCorner.CornerRadius = UDim.new(0, 6)
                     AlbumCorner.Parent = AlbumArt
-                    
-                    local albumGlow = Instance.new("UIStroke")
-                    albumGlow.Parent = AlbumArt
-                    albumGlow.Color = config.AccentColor
-                    albumGlow.Thickness = 1
-                    albumGlow.Transparency = 0.8
                     
                     local InfoContainer = Instance.new("Frame")
                     InfoContainer.Name = "InfoContainer"
@@ -2509,25 +2343,10 @@ function FengUI.new(FengUI, name, theme)
                         buttonCorner.CornerRadius = UDim.new(1, 0)
                         buttonCorner.Parent = button
                         
-                        local buttonGlow = Instance.new("UIStroke")
-                        buttonGlow.Parent = button
-                        buttonGlow.Color = isMain and config.AccentColor or Color3.fromRGB(150, 150, 150)
-                        buttonGlow.Thickness = 1
-                        buttonGlow.Transparency = 0.6
-                        buttonGlow.ZIndex = 4
-                        
-                        if isMain then
-                            startNeonFlowEffect(buttonGlow, "Color", 0.01)
-                        end
-                        
                         button.MouseEnter:Connect(function()
                             services.TweenService:Create(button, TweenInfo.new(0.2), {
                                 BackgroundTransparency = 0,
                                 Size = UDim2.new(0, size.X.Offset + 2, 0, size.Y.Offset + 2)
-                            }):Play()
-                            services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
-                                Thickness = 2,
-                                Transparency = 0.3
                             }):Play()
                         end)
                         
@@ -2536,20 +2355,16 @@ function FengUI.new(FengUI, name, theme)
                                 BackgroundTransparency = 0.1,
                                 Size = size
                             }):Play()
-                            services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
-                                Thickness = 1,
-                                Transparency = 0.6
-                            }):Play()
                         end)
                         
-                        return button, buttonGlow
+                        return button
                     end
                     
-                    local PrevButton, prevGlow = createControlButton("PrevButton", "⏮", UDim2.new(0.15, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
-                    local PlayPauseButton, playGlow = createControlButton("PlayPauseButton", "▶", UDim2.new(0.42, 0, 0.1, 0), UDim2.new(0, 36, 0, 36), true)
-                    local NextButton, nextGlow = createControlButton("NextButton", "⏭", UDim2.new(0.69, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
+                    local PrevButton = createControlButton("PrevButton", "⏮", UDim2.new(0.15, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
+                    local PlayPauseButton = createControlButton("PlayPauseButton", "▶", UDim2.new(0.42, 0, 0.1, 0), UDim2.new(0, 36, 0, 36), true)
+                    local NextButton = createControlButton("NextButton", "⏭", UDim2.new(0.69, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
                     
-                    local LoopButton, loopGlow = createControlButton("LoopButton", "🔁", UDim2.new(0.85, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
+                    local LoopButton = createControlButton("LoopButton", "🔁", UDim2.new(0.85, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
                     
                     local loopModes = {
                         {mode = "none", text = "🔁", tooltip = "无循环"},
@@ -2567,17 +2382,9 @@ function FengUI.new(FengUI, name, theme)
                             services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
                                 BackgroundColor3 = Color3.fromRGB(120, 120, 120)
                             }):Play()
-                            services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
-                                Transparency = 0.3,
-                                Thickness = 2
-                            }):Play()
                         else
                             services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
                                 BackgroundColor3 = Color3.fromRGB(180, 180, 180)
-                            }):Play()
-                            services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
-                                Transparency = 0.6,
-                                Thickness = 1
                             }):Play()
                         end
                     end
