@@ -836,6 +836,27 @@ function FengUI.new(FengUI, name, theme)
         CardStroke.Thickness = 1
         CardStroke.Transparency = 0.5
         
+        -- 添加外发光效果
+        local CardGlow = Instance.new("UIStroke")
+        CardGlow.Parent = Card
+        CardGlow.Color = config.AccentColor
+        CardGlow.Thickness = 0
+        CardGlow.Transparency = 0.8
+        
+        -- 添加阴影效果
+        local CardShadow = Instance.new("ImageLabel")
+        CardShadow.Name = "CardShadow"
+        CardShadow.Parent = Card
+        CardShadow.BackgroundTransparency = 1
+        CardShadow.Size = UDim2.new(1, 10, 1, 10)
+        CardShadow.Position = UDim2.new(0, -5, 0, -5)
+        CardShadow.Image = "rbxassetid://84830962019412"
+        CardShadow.ImageColor3 = Color3.new(0, 0, 0)
+        CardShadow.ImageTransparency = 0.8
+        CardShadow.ScaleType = Enum.ScaleType.Slice
+        CardShadow.SliceCenter = Rect.new(10, 10, 118, 118)
+        CardShadow.ZIndex = -1
+        
         local CardIcon = Instance.new("ImageLabel")
         CardIcon.Name = "CardIcon"
         CardIcon.Parent = Card
@@ -937,7 +958,8 @@ function FengUI.new(FengUI, name, theme)
                     math.floor(config.TabColor.R * 255 * 1.15),
                     math.floor(config.TabColor.G * 255 * 1.15),
                     math.floor(config.TabColor.B * 255 * 1.15)
-                )
+                ),
+                Rotation = 2
             }):Play()
             
             -- 边框加粗
@@ -946,22 +968,69 @@ function FengUI.new(FengUI, name, theme)
                 Transparency = 0.2
             }):Play()
             
+            -- 外发光效果
+            services.TweenService:Create(CardGlow, TweenInfo.new(0.3), {
+                Thickness = 3,
+                Transparency = 0.3
+            }):Play()
+            
+            -- 阴影效果
+            services.TweenService:Create(CardShadow, TweenInfo.new(0.3), {
+                ImageTransparency = 0.6,
+                Size = UDim2.new(1, 15, 1, 15),
+                Position = UDim2.new(0, -7.5, 0, -7.5)
+            }):Play()
+            
             -- 图标放大和旋转
             services.TweenService:Create(CardIcon, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
                 Size = UDim2.new(0, 45, 0, 45),
-                Rotation = 5
+                Rotation = 8,
+                ImageColor3 = Color3.fromRGB(255, 255, 255)
             }):Play()
             
-            -- 标题颜色变化
+            -- 标题颜色变化和放大
             services.TweenService:Create(CardTitle, TweenInfo.new(0.3), {
                 TextColor3 = config.AccentColor,
-                TextSize = 13
+                TextSize = 13,
+                Position = UDim2.new(0.5, 0, 0.63, 0)
             }):Play()
             
             -- 描述文字动画
             services.TweenService:Create(CardDescription, TweenInfo.new(0.3), {
-                TextColor3 = config.TextColor
+                TextColor3 = config.TextColor,
+                Position = UDim2.new(0.5, 0, 0.83, 0)
             }):Play()
+            
+            -- 创建悬停粒子效果
+            task.spawn(function()
+                local hoverParticles = {}
+                for i = 1, 6 do
+                    local particle = Instance.new("Frame")
+                    particle.Name = "HoverParticle_" .. i
+                    particle.Parent = Card
+                    particle.BackgroundColor3 = config.AccentColor
+                    particle.BackgroundTransparency = 0.7
+                    particle.Size = UDim2.new(0, 3, 0, 3)
+                    particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
+                    particle.ZIndex = 2
+                    
+                    local particleCorner = Instance.new("UICorner")
+                    particleCorner.CornerRadius = UDim.new(1, 0)
+                    particleCorner.Parent = particle
+                    
+                    table.insert(hoverParticles, particle)
+                    
+                    services.TweenService:Create(particle, TweenInfo.new(0.5), {
+                        BackgroundTransparency = 1,
+                        Size = UDim2.new(0, 6, 0, 6)
+                    }):Play()
+                end
+                
+                task.wait(0.5)
+                for _, particle in ipairs(hoverParticles) do
+                    particle:Destroy()
+                end
+            end)
         end)
         
         Card.MouseLeave:Connect(function()
@@ -969,7 +1038,8 @@ function FengUI.new(FengUI, name, theme)
             services.TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
                 BackgroundTransparency = 0.2,
                 Size = UDim2.new(0, 100, 0, 100),
-                BackgroundColor3 = config.TabColor
+                BackgroundColor3 = config.TabColor,
+                Rotation = 0
             }):Play()
             
             -- 恢复边框
@@ -978,21 +1048,37 @@ function FengUI.new(FengUI, name, theme)
                 Transparency = 0.5
             }):Play()
             
+            -- 恢复外发光
+            services.TweenService:Create(CardGlow, TweenInfo.new(0.3), {
+                Thickness = 0,
+                Transparency = 0.8
+            }):Play()
+            
+            -- 恢复阴影
+            services.TweenService:Create(CardShadow, TweenInfo.new(0.3), {
+                ImageTransparency = 0.8,
+                Size = UDim2.new(1, 10, 1, 10),
+                Position = UDim2.new(0, -5, 0, -5)
+            }):Play()
+            
             -- 恢复图标
             services.TweenService:Create(CardIcon, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
                 Size = UDim2.new(0, 40, 0, 40),
-                Rotation = 0
+                Rotation = 0,
+                ImageColor3 = config.AccentColor
             }):Play()
             
             -- 恢复标题
             services.TweenService:Create(CardTitle, TweenInfo.new(0.3), {
                 TextColor3 = config.TextColor,
-                TextSize = 12
+                TextSize = 12,
+                Position = UDim2.new(0.5, 0, 0.65, 0)
             }):Play()
             
             -- 恢复描述
             services.TweenService:Create(CardDescription, TweenInfo.new(0.3), {
-                TextColor3 = config.SecondaryTextColor
+                TextColor3 = config.SecondaryTextColor,
+                Position = UDim2.new(0.5, 0, 0.85, 0)
             }):Play()
         end)
         
@@ -1015,16 +1101,49 @@ function FengUI.new(FengUI, name, theme)
         end
         
         Card.MouseButton1Click:Connect(function()
-            -- 点击动画：先缩小再放大
+            -- 点击动画：先缩小再放大，带有弹性效果
             services.TweenService:Create(Card, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Size = UDim2.new(0, 95, 0, 95)
+                Size = UDim2.new(0, 95, 0, 95),
+                Rotation = -2
+            }):Play()
+            
+            services.TweenService:Create(CardIcon, TweenInfo.new(0.1), {
+                Rotation = -5
             }):Play()
             
             task.wait(0.1)
             
-            services.TweenService:Create(Card, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                Size = UDim2.new(0, 105, 0, 105)
+            services.TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 105, 0, 105),
+                Rotation = 3
             }):Play()
+            
+            services.TweenService:Create(CardIcon, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                Rotation = 10
+            }):Play()
+            
+            -- 创建点击波纹效果
+            local ripple = Instance.new("Frame")
+            ripple.Name = "RippleEffect"
+            ripple.Parent = Card
+            ripple.BackgroundColor3 = config.AccentColor
+            ripple.BackgroundTransparency = 0.7
+            ripple.Size = UDim2.new(0, 0, 0, 0)
+            ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
+            ripple.AnchorPoint = Vector2.new(0.5, 0.5)
+            ripple.ZIndex = 3
+            
+            local rippleCorner = Instance.new("UICorner")
+            rippleCorner.CornerRadius = UDim.new(1, 0)
+            rippleCorner.Parent = ripple
+            
+            services.TweenService:Create(ripple, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = UDim2.new(1, 0, 1, 0),
+                BackgroundTransparency = 1
+            }):Play()
+            
+            task.wait(0.5)
+            ripple:Destroy()
             
             DigitalParticleExplosion(Card)
             showTabContainer()
