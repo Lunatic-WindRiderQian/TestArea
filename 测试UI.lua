@@ -721,13 +721,14 @@ services.UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- 卡片容器
+-- 卡片容器 - 修复位置问题
 local CardsContainer = Instance.new("Frame")
 CardsContainer.Name = "CardsContainer"
 CardsContainer.Parent = Main
 CardsContainer.BackgroundTransparency = 1
-CardsContainer.Size = UDim2.new(1, 0, 1, 0)
-CardsContainer.Visible = false
+CardsContainer.Position = UDim2.new(0, 0, 0, 35) -- 从标题栏下方开始
+CardsContainer.Size = UDim2.new(1, 0, 1, -35) -- 减去标题栏高度
+CardsContainer.Visible = true
 
 local CardsLayout = Instance.new("UIGridLayout")
 CardsLayout.Parent = CardsContainer
@@ -743,8 +744,8 @@ local MainTabContainer = Instance.new("Frame")
 MainTabContainer.Name = "MainTabContainer"
 MainTabContainer.Parent = Main
 MainTabContainer.BackgroundTransparency = 1
-MainTabContainer.Position = UDim2.new(0.2, 0, 0, 37)
-MainTabContainer.Size = UDim2.new(0, 360, 0, 243)
+MainTabContainer.Position = UDim2.new(0, 0, 0, 35) -- 从标题栏下方开始
+MainTabContainer.Size = UDim2.new(1, 0, 1, -35) -- 减去标题栏高度
 MainTabContainer.Visible = false
 
 -- 主侧边栏容器
@@ -752,8 +753,8 @@ local MainSideContainer = Instance.new("Frame")
 MainSideContainer.Name = "MainSideContainer"
 MainSideContainer.Parent = Main
 MainSideContainer.BackgroundTransparency = 1
-MainSideContainer.Position = UDim2.new(0, 0, 0, 35)
-MainSideContainer.Size = UDim2.new(0, 90, 0, 245)
+MainSideContainer.Position = UDim2.new(0, 0, 0, 35) -- 从标题栏下方开始
+MainSideContainer.Size = UDim2.new(0, 90, 1, -35) -- 减去标题栏高度
 MainSideContainer.Visible = false
 
 local SideCorner = Instance.new("UICorner")
@@ -815,9 +816,30 @@ ReturnToCardsButton.MouseLeave:Connect(function()
     }):Play()
 end)
 
+local function showCards()
+    FengUI.showingCards = true
+    CardsContainer.Visible = true
+    MainSideContainer.Visible = false
+    MainTabContainer.Visible = false
+    
+    -- 重置当前Tab
+    if FengUI.currentTab then
+        FengUI.currentTab[2].Visible = false
+        FengUI.currentTab = nil
+    end
+    
+    services.TweenService:Create(CardsContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        BackgroundTransparency = 1
+    }):Play()
+    
+    services.TweenService:Create(MainSideContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        BackgroundTransparency = 1
+    }):Play()
+end
+
 ReturnToCardsButton.MouseButton1Click:Connect(function()
     DigitalParticleExplosion(ReturnToCardsButton)
-    showCards()  -- 调用显示卡片的函数
+    showCards()
 end)
 
 local function playEntranceAnimation()
@@ -885,37 +907,6 @@ local function playEntranceAnimation()
     end
     
     DigitalParticleExplosion(Main)
-end
-
-local function showCards()
-    FengUI.showingCards = true
-    CardsContainer.Visible = true
-    MainSideContainer.Visible = false
-    MainTabContainer.Visible = false
-    
-    services.TweenService:Create(CardsContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 1
-    }):Play()
-    
-    services.TweenService:Create(MainSideContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 1
-    }):Play()
-end
-
-local function hideCards()
-    FengUI.showingCards = false
-    services.TweenService:Create(CardsContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 1
-    }):Play()
-    
-    task.wait(0.4)
-    CardsContainer.Visible = false
-    MainSideContainer.Visible = true
-    MainTabContainer.Visible = true
-    
-    services.TweenService:Create(MainSideContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0.2
-    }):Play()
 end
 
 task.spawn(function()
@@ -1083,45 +1074,6 @@ function FengUI.new(FengUI, name, theme)
         
         setupSmoothScrolling(tabBtns, tabBtnsL)
         
-        -- 在Tab容器中添加左侧图片
-        local TabImageContainer = Instance.new("Frame")
-        TabImageContainer.Name = "TabImageContainer"
-        TabImageContainer.Parent = tabContainer
-        TabImageContainer.BackgroundTransparency = 1
-        TabImageContainer.Size = UDim2.new(0, 100, 1, 0)
-        
-        local TabImage = Instance.new("ImageLabel")
-        TabImage.Name = "TabImage"
-        TabImage.Parent = TabImageContainer
-        TabImage.BackgroundColor3 = config.Bg_Color
-        TabImage.BackgroundTransparency = 0.2
-        TabImage.AnchorPoint = Vector2.new(0.5, 0.5)
-        TabImage.Position = UDim2.new(0.5, 0, 0.5, 0)
-        TabImage.Size = UDim2.new(0, 80, 0, 80)
-        TabImage.Image = "rbxassetid://" .. tostring(icon or "84830962019412")
-        TabImage.ImageColor3 = config.AccentColor
-        
-        local TabImageCorner = Instance.new("UICorner")
-        TabImageCorner.CornerRadius = UDim.new(0, 12)
-        TabImageCorner.Parent = TabImage
-        
-        local tabImageGlow = Instance.new("UIStroke")
-        tabImageGlow.Parent = TabImage
-        tabImageGlow.Color = config.AccentColor
-        tabImageGlow.Thickness = 2
-        tabImageGlow.Transparency = 0.7
-        
-        startNeonFlowEffect(tabImageGlow, "Color", 0.008)
-        createPulseGlow(tabImageGlow)
-        
-        -- 在Tab容器中添加功能区域（恢复原始布局）
-        local TabContent = Instance.new("Frame")
-        TabContent.Name = "TabContent"
-        TabContent.Parent = tabContainer
-        TabContent.BackgroundTransparency = 1
-        TabContent.Position = UDim2.new(0, 100, 0, 0)
-        TabContent.Size = UDim2.new(0, 260, 1, 0)
-        
         -- 存储容器引用
         FengUI.tabContainers[name] = {
             tabContainer = tabContainer,
@@ -1167,12 +1119,16 @@ function FengUI.new(FengUI, name, theme)
             -- 显示当前卡片的容器
             tabContainer.Visible = true
             sideContainer.Visible = true
+            
+            -- 隐藏卡片容器
+            FengUI.showingCards = false
+            CardsContainer.Visible = false
+            MainTabContainer.Visible = true
+            MainSideContainer.Visible = true
         end
         
         Card.MouseButton1Click:Connect(function()
             DigitalParticleExplosion(Card)
-            hideCards()
-            task.wait(0.4)
             showTabContainer()
         end)
         
@@ -1216,10 +1172,10 @@ function FengUI.new(FengUI, name, theme)
             TabBtn.Font = Enum.Font.SourceSans
             TabBtn.Text = ""
             
-            -- 创建Tab内容容器（恢复原始布局）
+            -- 创建Tab内容容器
             local Tab = Instance.new("ScrollingFrame")
             Tab.Name = "Tab_" .. tabName
-            Tab.Parent = TabContent
+            Tab.Parent = tabContainer
             Tab.Active = true
             Tab.BackgroundTransparency = 1
             Tab.Size = UDim2.new(1, 0, 1, 0)
@@ -1276,7 +1232,7 @@ function FengUI.new(FengUI, name, theme)
                 SectionText.Parent = Section
                 SectionText.BackgroundTransparency = 1
                 SectionText.Position = UDim2.new(0.088, 0, 0, 0)
-                SectionText.Size = UDim2.new(0, 240, 0, 36)
+                SectionText.Size = UDim2.new(0, 320, 0, 36)
                 SectionText.Font = Enum.Font.GothamSemibold
                 SectionText.Text = name
                 SectionText.TextColor3 = config.TextColor
@@ -1356,7 +1312,7 @@ function FengUI.new(FengUI, name, theme)
                     MusicPlayerModule.Parent = Objs
                     MusicPlayerModule.BackgroundTransparency = 1
                     MusicPlayerModule.BorderSizePixel = 0
-                    MusicPlayerModule.Size = UDim2.new(0, 250, 0, 160)
+                    MusicPlayerModule.Size = UDim2.new(0, 330, 0, 160)
                     
                     local PlayerContainer = Instance.new("Frame")
                     PlayerContainer.Name = "PlayerContainer"
@@ -1768,14 +1724,14 @@ function FengUI.new(FengUI, name, theme)
                     BtnModule.Parent = Objs
                     BtnModule.BackgroundTransparency = 1
                     BtnModule.BorderSizePixel = 0
-                    BtnModule.Size = UDim2.new(0, 250, 0, 36)
+                    BtnModule.Size = UDim2.new(0, 330, 0, 36)
                     
                     Btn.Name = "Btn"
                     Btn.Parent = BtnModule
                     Btn.BackgroundColor3 = config.Button_Color
                     Btn.BackgroundTransparency = 0.2
                     Btn.BorderSizePixel = 0
-                    Btn.Size = UDim2.new(0, 250, 0, 36)
+                    Btn.Size = UDim2.new(0, 330, 0, 36)
                     Btn.AutoButtonColor = false
                     Btn.Font = Enum.Font.GothamSemibold
                     Btn.Text = "   " .. text
@@ -1857,7 +1813,7 @@ function FengUI.new(FengUI, name, theme)
                     ImageModule.Parent = Objs
                     ImageModule.BackgroundTransparency = 1
                     ImageModule.BorderSizePixel = 0
-                    ImageModule.Size = UDim2.new(0, 250, 0, sizeY or 120)
+                    ImageModule.Size = UDim2.new(0, 330, 0, sizeY or 120)
                     
                     ImageLabel.Parent = ImageModule
                     ImageLabel.BackgroundColor3 = config.Bg_Color
@@ -1865,7 +1821,7 @@ function FengUI.new(FengUI, name, theme)
                     ImageLabel.BorderSizePixel = 0
                     ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
                     ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
-                    ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, 240), 0, sizeY or 120)
+                    ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, 320), 0, sizeY or 120)
                     ImageLabel.Image = "rbxassetid://" .. tostring(imageId)
                     ImageLabel.ScaleType = Enum.ScaleType.Crop
                     
@@ -1890,12 +1846,12 @@ function FengUI.new(FengUI, name, theme)
                     LabelModule.Parent = Objs
                     LabelModule.BackgroundTransparency = 1
                     LabelModule.BorderSizePixel = 0
-                    LabelModule.Size = UDim2.new(0, 250, 0, 24)
+                    LabelModule.Size = UDim2.new(0, 330, 0, 24)
                     
                     TextLabel.Parent = LabelModule
                     TextLabel.BackgroundColor3 = config.Label_Color
                     TextLabel.BackgroundTransparency = 0.2
-                    TextLabel.Size = UDim2.new(0, 250, 0, 28)
+                    TextLabel.Size = UDim2.new(0, 330, 0, 28)
                     TextLabel.Font = Enum.Font.GothamSemibold
                     TextLabel.Text = text
                     TextLabel.TextColor3 = config.SecondaryTextColor
@@ -1927,14 +1883,14 @@ function FengUI.new(FengUI, name, theme)
                     ToggleModule.Parent = Objs
                     ToggleModule.BackgroundTransparency = 1
                     ToggleModule.BorderSizePixel = 0
-                    ToggleModule.Size = UDim2.new(0, 250, 0, 36)
+                    ToggleModule.Size = UDim2.new(0, 330, 0, 36)
                     
                     ToggleBtn.Name = "ToggleBtn"
                     ToggleBtn.Parent = ToggleModule
                     ToggleBtn.BackgroundColor3 = config.Toggle_Color
                     ToggleBtn.BackgroundTransparency = 0.2
                     ToggleBtn.BorderSizePixel = 0
-                    ToggleBtn.Size = UDim2.new(0, 250, 0, 36)
+                    ToggleBtn.Size = UDim2.new(0, 330, 0, 36)
                     ToggleBtn.AutoButtonColor = false
                     ToggleBtn.Font = Enum.Font.GothamSemibold
                     ToggleBtn.Text = "   " .. text
@@ -2063,14 +2019,14 @@ function FengUI.new(FengUI, name, theme)
                     KeybindModule.Parent = Objs
                     KeybindModule.BackgroundTransparency = 1
                     KeybindModule.BorderSizePixel = 0
-                    KeybindModule.Size = UDim2.new(0, 250, 0, 36)
+                    KeybindModule.Size = UDim2.new(0, 330, 0, 36)
                     
                     KeybindBtn.Name = "KeybindBtn"
                     KeybindBtn.Parent = KeybindModule
                     KeybindBtn.BackgroundColor3 = config.Keybind_Color
                     KeybindBtn.BackgroundTransparency = 0.2
                     KeybindBtn.BorderSizePixel = 0
-                    KeybindBtn.Size = UDim2.new(0, 250, 0, 36)
+                    KeybindBtn.Size = UDim2.new(0, 330, 0, 36)
                     KeybindBtn.AutoButtonColor = false
                     KeybindBtn.Font = Enum.Font.GothamSemibold
                     KeybindBtn.Text = "   " .. text
@@ -2183,14 +2139,14 @@ function FengUI.new(FengUI, name, theme)
                     TextboxModule.Parent = Objs
                     TextboxModule.BackgroundTransparency = 1
                     TextboxModule.BorderSizePixel = 0
-                    TextboxModule.Size = UDim2.new(0, 250, 0, 36)
+                    TextboxModule.Size = UDim2.new(0, 330, 0, 36)
                     
                     TextboxBack.Name = "TextboxBack"
                     TextboxBack.Parent = TextboxModule
                     TextboxBack.BackgroundColor3 = config.Textbox_Color
                     TextboxBack.BackgroundTransparency = 0.2
                     TextboxBack.BorderSizePixel = 0
-                    TextboxBack.Size = UDim2.new(0, 250, 0, 36)
+                    TextboxBack.Size = UDim2.new(0, 330, 0, 36)
                     TextboxBack.AutoButtonColor = false
                     TextboxBack.Font = Enum.Font.GothamSemibold
                     TextboxBack.Text = "   " .. text
@@ -2299,14 +2255,14 @@ function FengUI.new(FengUI, name, theme)
                     SliderModule.BackgroundTransparency = 1.000
                     SliderModule.BorderSizePixel = 0
                     SliderModule.Position = UDim2.new(0, 0, 0, 0)
-                    SliderModule.Size = UDim2.new(0, 250, 0, 36)
+                    SliderModule.Size = UDim2.new(0, 330, 0, 36)
                     
                     SliderBack.Name = "SliderBack"
                     SliderBack.Parent = SliderModule
                     SliderBack.BackgroundColor3 = config.Slider_Color
                     SliderBack.BackgroundTransparency = 0.2
                     SliderBack.BorderSizePixel = 0
-                    SliderBack.Size = UDim2.new(0, 250, 0, 36)
+                    SliderBack.Size = UDim2.new(0, 330, 0, 36)
                     SliderBack.AutoButtonColor = false
                     SliderBack.Font = Enum.Font.GothamSemibold
                     SliderBack.Text = "   " .. text
@@ -2598,14 +2554,14 @@ function FengUI.new(FengUI, name, theme)
                     DropdownModule.BorderSizePixel = 0
                     DropdownModule.ClipsDescendants = true
                     DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-                    DropdownModule.Size = UDim2.new(0, 250, 0, 36)
+                    DropdownModule.Size = UDim2.new(0, 330, 0, 36)
                     
                     DropdownTop.Name = "DropdownTop"
                     DropdownTop.Parent = DropdownModule
                     DropdownTop.BackgroundColor3 = config.Dropdown_Color
                     DropdownTop.BackgroundTransparency = 0.2
                     DropdownTop.BorderSizePixel = 0
-                    DropdownTop.Size = UDim2.new(0, 250, 0, 36)
+                    DropdownTop.Size = UDim2.new(0, 330, 0, 36)
                     DropdownTop.AutoButtonColor = false
                     DropdownTop.Font = Enum.Font.GothamSemibold
                     DropdownTop.Text = ""
@@ -2660,7 +2616,7 @@ function FengUI.new(FengUI, name, theme)
                     DropdownText.BackgroundTransparency = 1.000
                     DropdownText.BorderSizePixel = 0
                     DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-                    DropdownText.Size = UDim2.new(0, 180, 0, 36)
+                    DropdownText.Size = UDim2.new(0, 230, 0, 36)
                     DropdownText.Font = Enum.Font.GothamSemibold
                     DropdownText.PlaceholderColor3 = config.SecondaryTextColor
                     DropdownText.PlaceholderText = text
@@ -2720,7 +2676,7 @@ function FengUI.new(FengUI, name, theme)
                         end
                         DropdownOpen.Text = (open and "取消" or "选择")
                         
-                        DropdownModule.Size = UDim2.new(0, 250, 0, open and (36 + DropdownModuleL.AbsoluteContentSize.Y + 4) or 36)
+                        DropdownModule.Size = UDim2.new(0, 330, 0, open and (36 + DropdownModuleL.AbsoluteContentSize.Y + 4) or 36)
                         
                         create3DFlipAnimation(DropdownOpenFrame, 0.3)
                     end
@@ -2742,7 +2698,7 @@ function FengUI.new(FengUI, name, theme)
                     
                     DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                         if open then
-                            DropdownModule.Size = UDim2.new(0, 250, 0, 36 + DropdownModuleL.AbsoluteContentSize.Y + 4)
+                            DropdownModule.Size = UDim2.new(0, 330, 0, 36 + DropdownModuleL.AbsoluteContentSize.Y + 4)
                         end
                     end)
                     
@@ -2756,7 +2712,7 @@ function FengUI.new(FengUI, name, theme)
                         Option.BackgroundTransparency = 0.2
                         Option.BorderSizePixel = 0
                         Option.Position = UDim2.new(0, 0, 0.328125, 0)
-                        Option.Size = UDim2.new(0, 230, 0, 24)
+                        Option.Size = UDim2.new(0, 310, 0, 24)
                         Option.AutoButtonColor = false
                         Option.Font = Enum.Font.Gotham
                         Option.Text = option
