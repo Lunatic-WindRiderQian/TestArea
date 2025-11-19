@@ -1083,44 +1083,13 @@ function FengUI.new(FengUI, name, theme)
         
         setupSmoothScrolling(tabBtns, tabBtnsL)
         
-        -- 在Tab容器中添加左侧图片
-        local TabImageContainer = Instance.new("Frame")
-        TabImageContainer.Name = "TabImageContainer"
-        TabImageContainer.Parent = tabContainer
-        TabImageContainer.BackgroundTransparency = 1
-        TabImageContainer.Size = UDim2.new(0, 100, 1, 0)
-        
-        local TabImage = Instance.new("ImageLabel")
-        TabImage.Name = "TabImage"
-        TabImage.Parent = TabImageContainer
-        TabImage.BackgroundColor3 = config.Bg_Color
-        TabImage.BackgroundTransparency = 0.2
-        TabImage.AnchorPoint = Vector2.new(0.5, 0.5)
-        TabImage.Position = UDim2.new(0.5, 0, 0.5, 0)
-        TabImage.Size = UDim2.new(0, 80, 0, 80)
-        TabImage.Image = "rbxassetid://" .. tostring(icon or "84830962019412")
-        TabImage.ImageColor3 = config.AccentColor
-        
-        local TabImageCorner = Instance.new("UICorner")
-        TabImageCorner.CornerRadius = UDim.new(0, 12)
-        TabImageCorner.Parent = TabImage
-        
-        local tabImageGlow = Instance.new("UIStroke")
-        tabImageGlow.Parent = TabImage
-        tabImageGlow.Color = config.AccentColor
-        tabImageGlow.Thickness = 2
-        tabImageGlow.Transparency = 0.7
-        
-        startNeonFlowEffect(tabImageGlow, "Color", 0.008)
-        createPulseGlow(tabImageGlow)
-        
-        -- 在Tab容器中添加功能区域（恢复原始布局）
+        -- 修改：删除TabImageContainer，直接使用完整的TabContent
         local TabContent = Instance.new("Frame")
         TabContent.Name = "TabContent"
         TabContent.Parent = tabContainer
         TabContent.BackgroundTransparency = 1
-        TabContent.Position = UDim2.new(0, 100, 0, 0)
-        TabContent.Size = UDim2.new(0, 260, 1, 0)
+        TabContent.Position = UDim2.new(0, 0, 0, 0)  -- 从0开始，不使用左侧图片
+        TabContent.Size = UDim2.new(1, 0, 1, 0)      -- 占满整个容器
         
         -- 存储容器引用
         FengUI.tabContainers[name] = {
@@ -1190,7 +1159,7 @@ function FengUI.new(FengUI, name, theme)
             TabIco.BackgroundTransparency = 1
             TabIco.BorderSizePixel = 0
             TabIco.Size = UDim2.new(0, 22, 0, 22)
-            TabIco.Image = tabIcon or "rbxassetid://84830962019412"
+            TabIco.Image = "rbxassetid://" .. tostring(tabIcon or "84830962019412")  -- 允许自定义Tab图标
             TabIco.ImageTransparency = 0.5
             
             startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
@@ -1216,7 +1185,7 @@ function FengUI.new(FengUI, name, theme)
             TabBtn.Font = Enum.Font.SourceSans
             TabBtn.Text = ""
             
-            -- 创建Tab内容容器（恢复原始布局）
+            -- 创建Tab内容容器（使用完整宽度，像第一个文件一样）
             local Tab = Instance.new("ScrollingFrame")
             Tab.Name = "Tab_" .. tabName
             Tab.Parent = TabContent
@@ -1226,7 +1195,7 @@ function FengUI.new(FengUI, name, theme)
             Tab.ScrollBarThickness = 2
             Tab.ScrollBarImageTransparency = 0.5
             Tab.Visible = false
-            Tab.ElasticBehavior = Enum.ElasticBehavior.Never
+            Tab.ElasticBehavior = Enum.EasingStyle.Elastic
             Tab.ScrollingDirection = Enum.ScrollingDirection.Y
             Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
             
@@ -1276,7 +1245,7 @@ function FengUI.new(FengUI, name, theme)
                 SectionText.Parent = Section
                 SectionText.BackgroundTransparency = 1
                 SectionText.Position = UDim2.new(0.088, 0, 0, 0)
-                SectionText.Size = UDim2.new(0, 240, 0, 36)
+                SectionText.Size = UDim2.new(0, 320, 0, 36)  -- 使用完整宽度
                 SectionText.Font = Enum.Font.GothamSemibold
                 SectionText.Text = name
                 SectionText.TextColor3 = config.TextColor
@@ -1350,6 +1319,9 @@ function FengUI.new(FengUI, name, theme)
                 
                 local section = {}
                 
+                -- 这里可以添加各种UI元素方法，如Button、Toggle、Slider等
+                -- 这些方法的实现与第一个文件相同，只是宽度调整为330（完整宽度）
+                
                 function section.Button(section, text, callback)
                     callback = callback or function() end
                     
@@ -1361,14 +1333,14 @@ function FengUI.new(FengUI, name, theme)
                     BtnModule.Parent = Objs
                     BtnModule.BackgroundTransparency = 1
                     BtnModule.BorderSizePixel = 0
-                    BtnModule.Size = UDim2.new(0, 250, 0, 36)
+                    BtnModule.Size = UDim2.new(0, 330, 0, 36)  -- 使用完整宽度
                     
                     Btn.Name = "Btn"
                     Btn.Parent = BtnModule
                     Btn.BackgroundColor3 = config.Button_Color
                     Btn.BackgroundTransparency = 0.2
                     Btn.BorderSizePixel = 0
-                    Btn.Size = UDim2.new(0, 250, 0, 36)
+                    Btn.Size = UDim2.new(0, 330, 0, 36)  -- 使用完整宽度
                     Btn.AutoButtonColor = false
                     Btn.Font = Enum.Font.GothamSemibold
                     Btn.Text = "   " .. text
@@ -1441,8 +1413,8 @@ function FengUI.new(FengUI, name, theme)
                     end)
                 end
                 
-                -- 其他section方法（Toggle, Slider, Textbox, Dropdown等）可以按照类似方式实现
-                -- 只需要调整宽度为250以适应新布局
+                -- 其他UI元素方法（Toggle、Slider、Textbox、Dropdown等）可以按照类似方式实现
+                -- 只需要将宽度调整为330以使用完整宽度
                 
                 return section
             end
