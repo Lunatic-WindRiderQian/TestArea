@@ -1469,37 +1469,66 @@ function FengUI.new(FengUI, name, theme)
                 end
                 
                 function section.Image(section, imageId, sizeX, sizeY)
-                    local ImageModule = Instance.new("Frame")
-                    local ImageLabel = Instance.new("ImageLabel")
-                    local ImageCorner = Instance.new("UICorner")
-                    
-                    ImageModule.Name = "ImageModule"
-                    ImageModule.Parent = Objs
-                    ImageModule.BackgroundTransparency = 1
-                    ImageModule.BorderSizePixel = 0
-                    ImageModule.Size = UDim2.new(0, 330, 0, sizeY or 120)
-                    
-                    ImageLabel.Parent = ImageModule
-                    -- 修改：移除绿色背景，显示原图
-                    ImageLabel.BackgroundTransparency = 1
-                    ImageLabel.BorderSizePixel = 0
-                    ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
-                    ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
-                    ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, 320), 0, sizeY or 120)
-                    ImageLabel.Image = "rbxassetid://" .. tostring(imageId)
-                    ImageLabel.ScaleType = Enum.ScaleType.Crop
-                    
-                    ImageCorner.CornerRadius = UDim.new(0, 6)
-                    ImageCorner.Parent = ImageLabel
-                    
-                    local imageGlow = Instance.new("UIStroke")
-                    imageGlow.Parent = ImageLabel
-                    imageGlow.Color = config.AccentColor
-                    imageGlow.Thickness = 1
-                    imageGlow.Transparency = 1
-                    
-                    return ImageLabel
-                end
+    local ImageModule = Instance.new("Frame")
+    local ImageLabel = Instance.new("ImageLabel")
+    local ImageCorner = Instance.new("UICorner")
+    
+    ImageModule.Name = "ImageModule"
+    ImageModule.Parent = Objs
+    ImageModule.BackgroundTransparency = 1
+    ImageModule.BorderSizePixel = 0
+    ImageModule.Size = UDim2.new(0, 330, 0, sizeY or 120)
+    
+    ImageLabel.Parent = ImageModule
+    ImageLabel.BackgroundTransparency = 1
+    ImageLabel.BorderSizePixel = 0
+    ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
+    ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
+    ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, 320), 0, sizeY or 120)
+    ImageLabel.ScaleType = Enum.ScaleType.Crop
+    
+    ImageCorner.CornerRadius = UDim.new(0, 6)
+    ImageCorner.Parent = ImageLabel
+    
+    local imageGlow = Instance.new("UIStroke")
+    imageGlow.Parent = ImageLabel
+    imageGlow.Color = config.AccentColor
+    imageGlow.Thickness = 1
+    imageGlow.Transparency = 1
+    
+    -- 新增功能：支持动态图片
+    local imageObj = {}
+    
+    function imageObj:SetImage(newImageId)
+        if type(newImageId) == "function" then
+            -- 如果是函数，执行函数获取图片ID
+            local result = newImageId()
+            if type(result) == "string" then
+                ImageLabel.Image = "rbxassetid://" .. result
+            else
+                ImageLabel.Image = result
+            end
+        else
+            -- 如果是字符串，直接使用
+            ImageLabel.Image = "rbxassetid://" .. tostring(newImageId)
+        end
+    end
+    
+    function imageObj:SetImageDirect(imageUrl)
+        -- 直接设置图片URL（支持非rbxassetid的URL）
+        ImageLabel.Image = imageUrl
+    end
+    
+    function imageObj:SetSize(newSizeX, newSizeY)
+        ImageLabel.Size = UDim2.new(0, math.min(newSizeX or 140, 320), 0, newSizeY or 120)
+        ImageModule.Size = UDim2.new(0, 330, 0, newSizeY or 120)
+    end
+    
+    -- 初始化图片
+    imageObj:SetImage(imageId)
+    
+    return imageObj
+end
                 
                 function section:Label(text)
                     local LabelModule = Instance.new("Frame")
