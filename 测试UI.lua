@@ -1468,7 +1468,7 @@ function FengUI.new(FengUI, name, theme)
                     end)
                 end
                 
-                function section.Image(section, imageId, sizeX, sizeY, imageType)
+                function section.Image(section, imageSource, sizeX, sizeY)
     local ImageModule = Instance.new("Frame")
     local ImageLabel = Instance.new("ImageLabel")
     local ImageCorner = Instance.new("UICorner")
@@ -1494,173 +1494,85 @@ function FengUI.new(FengUI, name, theme)
     imageGlow.Parent = ImageLabel
     imageGlow.Color = config.AccentColor
     imageGlow.Thickness = 1
-    imageGlow.Transparency = 1
+    imageGlow.Transparency = 0.8
     
-    -- 处理不同类型的图片
-    local function setImage(source, imgType)
-        imgType = imgType or imageType or "asset"
-        
-        if imgType == "player" then
-            -- 玩家头像
-            if typeof(source) == "Instance" and source:IsA("Player") then
-                local userId = source.UserId
-                local thumbType = Enum.ThumbnailType.HeadShot
-                local thumbSize = Enum.ThumbnailSize.Size420x420
-                
-                local content, isReady = game:GetService("Players"):GetUserThumbnailAsync(userId, thumbType, thumbSize)
-                ImageLabel.Image = content
-            elseif tonumber(source) then
-                -- 通过用户ID获取头像
-                local userId = tonumber(source)
-                local thumbType = Enum.ThumbnailType.HeadShot
-                local thumbSize = Enum.ThumbnailSize.Size420x420
-                
-                local content, isReady = game:GetService("Players"):GetUserThumbnailAsync(userId, thumbType, thumbSize)
-                ImageLabel.Image = content
-            else
-                -- 通过用户名查找玩家
-                local player = game:GetService("Players"):FindFirstChild(tostring(source))
-                if player then
-                    local userId = player.UserId
-                    local thumbType = Enum.ThumbnailType.HeadShot
-                    local thumbSize = Enum.ThumbnailSize.Size420x420
-                    
-                    local content, isReady = game:GetService("Players"):GetUserThumbnailAsync(userId, thumbType, thumbSize)
-                    ImageLabel.Image = content
-                else
-                    -- 默认图片
-                    ImageLabel.Image = "rbxassetid://84830962019412"
+    -- 处理不同类型的图片源
+    local function setImage(source)
+        if type(source) == "table" then
+            -- 处理玩家头像
+            if source.Type == "Player" then
+                local userId = source.UserId or source.UserId
+                if userId then
+                    task.spawn(function()
+                        local success, result = pcall(function()
+                            return game.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+                        end)
+                        
+                        if success and result then
+                            ImageLabel.Image = result
+                        else
+                            ImageLabel.Image = "rbxassetid://0" -- 默认图片
+                            warn("无法加载玩家头像: " .. tostring(userId))
+                        end
+                    end)
+                end
+            -- 处理服务器头像
+            elseif source.Type == "Game" then
+                local placeId = source.PlaceId or source.PlaceId
+                if placeId then
+                    task.spawn(function()
+                        local success, result = pcall(function()
+                            return game:GetService("ThumbnailService"):GetGameThumbnailAsync(placeId)
+                        end)
+                        
+                        if success and result then
+                            ImageLabel.Image = result
+                        else
+                            ImageLabel.Image = "rbxassetid://0" -- 默认图片
+                            warn("无法加载服务器头像: " .. tostring(placeId))
+                        end
+                    end)
                 end
             end
-            
-        elseif imgType == "server" then
-            -- 服务器图标
-            if game:GetService("MarketplaceService"):GetProductInfo then
-                local success, result = pcall(function()
-                    return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
-                end)
-                
-                if success and result then
-                    ImageLabel.Image = result.IconImageAssetId ~= 0 and "rbxassetid://" .. result.IconImageAssetId or "rbxassetid://84830962019412"
-                else
-                    ImageLabel.Image = "rbxassetid://84830962019412"
-                end
-            else
-                ImageLabel.Image = "rbxassetid://84830962019412"
-            end
-            
-        elseif imgType == "asset" then
-            -- 普通资源图片
-            if tonumber(source) then
-                ImageLabel.Image = "rbxassetid://" .. tostring(source)
-            else
-                ImageLabel.Image = tostring(source)
-            end
-            
         else
-            -- 默认处理
-            if tonumber(source) then
-                ImageLabel.Image = "rbxassetid://" .. tostring(source)
-            else
-                ImageLabel.Image = tostring(source)
-            end
+            -- 原有的图片ID功能
+            ImageLabel.Image = "rbxassetid://" .. tostring(imageSource)
         end
     end
     
-    -- 设置图片
-    setImage(imageId, imageType)
+    -- 调用设置图片函数
+    setImage(imageSource)
     
-    -- 添加图片加载状态指示
-    local loadingIndicator = Instance.new("Frame")
-    loadingIndicator.Name = "LoadingIndicator"
-    loadingIndicator.Parent = ImageLabel
-    loadingIndicator.BackgroundColor3 = config.Bg_Color
-    loadingIndicator.BackgroundTransparency = 0.3
-    loadingIndicator.Size = UDim2.new(1, 0, 1, 0)
-    loadingIndicator.ZIndex = ImageLabel.ZIndex + 1
+    -- 创建控制对象
+    local imageController = {}
     
-    local loadingCorner = Instance.new("UICorner")
-    loadingCorner.CornerRadius = UDim.new(0, 6)
-    loadingCorner.Parent = loadingIndicator
-    
-    local loadingText = Instance.new("TextLabel")
-    loadingText.Name = "LoadingText"
-    loadingText.Parent = loadingIndicator
-    loadingText.BackgroundTransparency = 1
-    loadingText.Size = UDim2.new(1, 0, 1, 0)
-    loadingText.Font = Enum.Font.Gotham
-    loadingText.Text = "加载中..."
-    loadingText.TextColor3 = config.TextColor
-    loadingText.TextSize = 12
-    loadingText.ZIndex = loadingIndicator.ZIndex + 1
-    
-    -- 监听图片加载
-    local connection
-    connection = ImageLabel:GetPropertyChangedSignal("Image"):Connect(function()
-        if ImageLabel.Image ~= "" and ImageLabel.Image ~= "rbxassetid://0" then
-            loadingIndicator.Visible = false
-            imageGlow.Transparency = 0.8
-            
-            -- 添加加载成功效果
-            services.TweenService:Create(ImageLabel, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Size = UDim2.new(0, math.min(sizeX or 140, 320) + 10, 0, (sizeY or 120) + 10)
-            }):Play()
-            
-            task.wait(0.15)
-            
-            services.TweenService:Create(ImageLabel, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Size = UDim2.new(0, math.min(sizeX or 140, 320), 0, sizeY or 120)
-            }):Play()
-            
-            DigitalParticleExplosion(ImageLabel)
-            
-            if connection then
-                connection:Disconnect()
-            end
-        end
-    end)
-    
-    -- 如果图片加载失败，显示默认图片
-    task.delay(3, function()
-        if loadingIndicator.Visible and ImageLabel.Parent then
-            loadingText.Text = "加载失败"
-            task.wait(1)
-            if loadingIndicator.Visible then
-                ImageLabel.Image = "rbxassetid://84830962019412"
-            end
-        end
-    end)
-    
-    -- 添加刷新功能（右键点击）
-    ImageLabel.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton2 then
-            DigitalParticleExplosion(ImageLabel)
-            loadingIndicator.Visible = true
-            loadingText.Text = "刷新中..."
-            setImage(imageId, imageType)
-        end
-    end)
-    
-    local imageFuncs = {}
-    
-    function imageFuncs:SetImage(newImageId, newImageType)
-        imageId = newImageId or imageId
-        imageType = newImageType or imageType
-        loadingIndicator.Visible = true
-        loadingText.Text = "加载中..."
-        setImage(imageId, imageType)
+    function imageController:SetImage(newSource)
+        setImage(newSource)
     end
     
-    function imageFuncs:SetSize(newSizeX, newSizeY)
-        ImageLabel.Size = UDim2.new(0, math.min(newSizeX or 140, 320), 0, newSizeY or 120)
-        ImageModule.Size = UDim2.new(0, 330, 0, newSizeY or 120)
+    function imageController:SetPlayerAvatar(userId)
+        setImage({Type = "Player", UserId = userId})
     end
     
-    function imageFuncs:GetImage()
-        return imageId, imageType
+    function imageController:SetGameIcon(placeId)
+        setImage({Type = "Game", PlaceId = placeId})
     end
     
-    return imageFuncs
+    function imageController:SetLocalPlayerAvatar()
+        local localPlayer = game.Players.LocalPlayer
+        if localPlayer then
+            setImage({Type = "Player", UserId = localPlayer.UserId})
+        end
+    end
+    
+    function imageController:Destroy()
+        ImageModule:Destroy()
+    end
+    
+    imageController.Instance = ImageLabel
+    imageController.Module = ImageModule
+    
+    return imageController
 end
                 
                 function section:Label(text)
