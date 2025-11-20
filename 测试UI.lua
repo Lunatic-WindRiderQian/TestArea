@@ -1515,20 +1515,35 @@ function FengUI.new(FengUI, name, theme)
                         end
                     end)
                 end
-            -- 处理服务器头像
+            -- 处理服务器头像 - 修复后的方法
             elseif source.Type == "Game" then
                 local placeId = source.PlaceId
                 if placeId then
                     task.spawn(function()
-                        local success, result = pcall(function()
-                            return game:GetService("ThumbnailService"):GetGameThumbnailAsync(placeId)
+                        -- 方法1: 尝试使用 MarketplaceService 获取游戏图标
+                        local success1, gameInfo = pcall(function()
+                            local MarketplaceService = game:GetService("MarketplaceService")
+                            return MarketplaceService:GetProductInfo(placeId, Enum.InfoType.Asset)
                         end)
                         
-                        if success and result then
-                            ImageLabel.Image = result
-                        else
-                            ImageLabel.Image = "rbxassetid://0"
+                        if success1 and gameInfo and gameInfo.IconImageAssetId then
+                            ImageLabel.Image = "rbxassetid://" .. gameInfo.IconImageAssetId
+                            return
                         end
+                        
+                        -- 方法2: 尝试使用 ThumbnailService
+                        local success2, thumbnailUrl = pcall(function()
+                            local ThumbnailService = game:GetService("ThumbnailService")
+                            return ThumbnailService:GetGameThumbnailAsync(placeId)
+                        end)
+                        
+                        if success2 and thumbnailUrl then
+                            ImageLabel.Image = thumbnailUrl
+                            return
+                        end
+                        
+                        -- 方法3: 使用默认的游戏图标URL格式
+                        ImageLabel.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=" .. placeId
                     end)
                 end
             end
