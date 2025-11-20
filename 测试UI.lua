@@ -1501,7 +1501,7 @@ function FengUI.new(FengUI, name, theme)
         if type(source) == "table" then
             -- 处理玩家头像
             if source.Type == "Player" then
-                local userId = source.UserId or source.UserId
+                local userId = source.UserId
                 if userId then
                     task.spawn(function()
                         local success, result = pcall(function()
@@ -1511,14 +1511,13 @@ function FengUI.new(FengUI, name, theme)
                         if success and result then
                             ImageLabel.Image = result
                         else
-                            ImageLabel.Image = "rbxassetid://0" -- 默认图片
-                            warn("无法加载玩家头像: " .. tostring(userId))
+                            ImageLabel.Image = "rbxassetid://0"
                         end
                     end)
                 end
             -- 处理服务器头像
             elseif source.Type == "Game" then
-                local placeId = source.PlaceId or source.PlaceId
+                local placeId = source.PlaceId
                 if placeId then
                     task.spawn(function()
                         local success, result = pcall(function()
@@ -1528,15 +1527,14 @@ function FengUI.new(FengUI, name, theme)
                         if success and result then
                             ImageLabel.Image = result
                         else
-                            ImageLabel.Image = "rbxassetid://0" -- 默认图片
-                            warn("无法加载服务器头像: " .. tostring(placeId))
+                            ImageLabel.Image = "rbxassetid://0"
                         end
                     end)
                 end
             end
         else
             -- 原有的图片ID功能
-            ImageLabel.Image = "rbxassetid://" .. tostring(imageSource)
+            ImageLabel.Image = "rbxassetid://" .. tostring(source)
         end
     end
     
