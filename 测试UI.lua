@@ -66,6 +66,99 @@ local config = {
     GlowColor = Color3.fromRGB(0, 150, 255),         -- 发光效果颜色
 }
 
+FengUI.themes = {
+    Default = {
+        MainColor = Color3.fromRGB(16, 16, 16),
+        TabColor = Color3.fromRGB(22, 22, 22),
+        Bg_Color = Color3.fromRGB(17, 17, 17),
+        Zy_Color = Color3.fromRGB(17, 17, 17), 
+        Button_Color = Color3.fromRGB(22, 22, 22),
+        Textbox_Color = Color3.fromRGB(22, 22, 22),
+        Dropdown_Color = Color3.fromRGB(22, 22, 22),
+        Keybind_Color = Color3.fromRGB(22, 22, 22),
+        Label_Color = Color3.fromRGB(22, 22, 22),
+        Slider_Color = Color3.fromRGB(22, 22, 22),
+        SliderBar_Color = Color3.fromRGB(37, 254, 152),
+        Toggle_Color = Color3.fromRGB(22, 22, 22),
+        Toggle_Off = Color3.fromRGB(34, 34, 34),
+        Toggle_On = Color3.fromRGB(37, 254, 152),
+        AccentColor = Color3.fromRGB(37, 254, 152),
+        TextColor = Color3.fromRGB(240, 240, 240),
+        SecondaryTextColor = Color3.fromRGB(180, 180, 180),
+        GlowColor = Color3.fromRGB(0, 200, 255),
+    },
+    Dark = {
+        MainColor = Color3.fromRGB(10, 10, 10),
+        TabColor = Color3.fromRGB(15, 15, 15),
+        Bg_Color = Color3.fromRGB(12, 12, 12),
+        Zy_Color = Color3.fromRGB(12, 12, 12), 
+        Button_Color = Color3.fromRGB(15, 15, 15),
+        Textbox_Color = Color3.fromRGB(15, 15, 15),
+        Dropdown_Color = Color3.fromRGB(15, 15, 15),
+        Keybind_Color = Color3.fromRGB(15, 15, 15),
+        Label_Color = Color3.fromRGB(15, 15, 15),
+        Slider_Color = Color3.fromRGB(15, 15, 15),
+        SliderBar_Color = Color3.fromRGB(0, 150, 255),
+        Toggle_Color = Color3.fromRGB(15, 15, 15),
+        Toggle_Off = Color3.fromRGB(25, 25, 25),
+        Toggle_On = Color3.fromRGB(0, 150, 255),
+        AccentColor = Color3.fromRGB(0, 150, 255),
+        TextColor = Color3.fromRGB(220, 220, 220),
+        SecondaryTextColor = Color3.fromRGB(150, 150, 150),
+        GlowColor = Color3.fromRGB(0, 100, 200),
+    },
+    Light = {
+        MainColor = Color3.fromRGB(240, 240, 240),
+        TabColor = Color3.fromRGB(220, 220, 220),
+        Bg_Color = Color3.fromRGB(230, 230, 230),
+        Zy_Color = Color3.fromRGB(230, 230, 230), 
+        Button_Color = Color3.fromRGB(220, 220, 220),
+        Textbox_Color = Color3.fromRGB(220, 220, 220),
+        Dropdown_Color = Color3.fromRGB(220, 220, 220),
+        Keybind_Color = Color3.fromRGB(220, 220, 220),
+        Label_Color = Color3.fromRGB(220, 220, 220),
+        Slider_Color = Color3.fromRGB(220, 220, 220),
+        SliderBar_Color = Color3.fromRGB(0, 100, 200),
+        Toggle_Color = Color3.fromRGB(220, 220, 220),
+        Toggle_Off = Color3.fromRGB(200, 200, 200),
+        Toggle_On = Color3.fromRGB(0, 100, 200),
+        AccentColor = Color3.fromRGB(0, 100, 200),
+        TextColor = Color3.fromRGB(30, 30, 30),
+        SecondaryTextColor = Color3.fromRGB(80, 80, 80),
+        GlowColor = Color3.fromRGB(0, 80, 160),
+    },
+    Neon = {
+        MainColor = Color3.fromRGB(0, 0, 0),
+        TabColor = Color3.fromRGB(10, 10, 20),
+        Bg_Color = Color3.fromRGB(5, 5, 10),
+        Zy_Color = Color3.fromRGB(5, 5, 10), 
+        Button_Color = Color3.fromRGB(10, 10, 20),
+        Textbox_Color = Color3.fromRGB(10, 10, 20),
+        Dropdown_Color = Color3.fromRGB(10, 10, 20),
+        Keybind_Color = Color3.fromRGB(10, 10, 20),
+        Label_Color = Color3.fromRGB(10, 10, 20),
+        Slider_Color = Color3.fromRGB(10, 10, 20),
+        SliderBar_Color = Color3.fromRGB(0, 255, 255),
+        Toggle_Color = Color3.fromRGB(10, 10, 20),
+        Toggle_Off = Color3.fromRGB(20, 20, 30),
+        Toggle_On = Color3.fromRGB(0, 255, 255),
+        AccentColor = Color3.fromRGB(0, 255, 255),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        SecondaryTextColor = Color3.fromRGB(200, 200, 200),
+        GlowColor = Color3.fromRGB(0, 200, 255),
+    }
+}
+
+function FengUI:SetTheme(themeName)
+    local theme = self.themes[themeName] or self.themes.Default
+    for k, v in pairs(theme) do
+        if config[k] ~= nil then
+            config[k] = v
+        end
+    end
+    return self
+end
+
 local MusicPlayer = {
     currentSound = nil,
     currentTrackIndex = 1,
@@ -838,27 +931,27 @@ ReturnToCardsButton.MouseButton1Click:Connect(function()
 end)
 
 local function playEntranceAnimation()
-    Main.Position = UDim2.new(0.5, 0, 0.35, 0)
+    -- 重置所有透明度
     Main.BackgroundTransparency = 1
-    Main.Size = UDim2.new(0, 10, 0, 10)
-    
     TitleBar.BackgroundTransparency = 1
     TitleText.TextTransparency = 1
     CloseButton.TextTransparency = 1
-    MainSideContainer.BackgroundTransparency = 1
-    CardsContainer.BackgroundTransparency = 1
     MainStroke.Transparency = 1
     neonStroke.Transparency = 1
     
+    -- 确保所有内容在动画开始前不可见
+    CardsContainer.Visible = false
     MainTabContainer.Visible = false
     MainSideContainer.Visible = false
     
+    -- 主窗口动画
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
         BackgroundTransparency = 0.2,
         Size = UDim2.new(0, 450, 0, 280)
     }):Play()
     
+    -- 边框动画
     services.TweenService:Create(MainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Transparency = 0.5
     }):Play()
@@ -869,6 +962,7 @@ local function playEntranceAnimation()
     
     task.wait(0.2)
     
+    -- 标题栏动画
     services.TweenService:Create(TitleBar, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         BackgroundTransparency = 0.2
     }):Play()
@@ -883,22 +977,18 @@ local function playEntranceAnimation()
     
     task.wait(0.2)
     
+    -- 根据当前状态显示正确的内容
     if FengUI.showingCards then
         CardsContainer.Visible = true
         services.TweenService:Create(CardsContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             BackgroundTransparency = 1
         }):Play()
     else
+        MainSideContainer.Visible = true
+        MainTabContainer.Visible = true
         services.TweenService:Create(MainSideContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             BackgroundTransparency = 0.2
         }):Play()
-    end
-    
-    task.wait(0.2)
-    
-    if not FengUI.showingCards then
-        MainTabContainer.Visible = true
-        MainSideContainer.Visible = true
     end
     
     DigitalParticleExplosion(Main)
@@ -2484,6 +2574,196 @@ end
                     return funcs
                 end
 
+-- 在 section.Dropdown 函数之后，section.MusicPlayer 函数之前添加：
+
+function section.ColorPicker(section, text, flag, default, callback)
+    callback = callback or function() end
+    assert(text, "No text provided")
+    assert(flag, "No flag provided")
+    FengUI.flags[flag] = default or Color3.new(1, 1, 1)
+
+    local ColorPickerModule = Instance.new("Frame")
+    ColorPickerModule.Name = "ColorPickerModule"
+    ColorPickerModule.Parent = Objs
+    ColorPickerModule.BackgroundTransparency = 1
+    ColorPickerModule.BorderSizePixel = 0
+    ColorPickerModule.Size = UDim2.new(0, 330, 0, 36)
+
+    local ColorPickerBtn = Instance.new("TextButton")
+    ColorPickerBtn.Name = "ColorPickerBtn"
+    ColorPickerBtn.Parent = ColorPickerModule
+    ColorPickerBtn.BackgroundColor3 = config.Button_Color
+    ColorPickerBtn.BackgroundTransparency = 0.2
+    ColorPickerBtn.BorderSizePixel = 0
+    ColorPickerBtn.Size = UDim2.new(0, 330, 0, 36)
+    ColorPickerBtn.AutoButtonColor = false
+    ColorPickerBtn.Font = Enum.Font.GothamSemibold
+    ColorPickerBtn.Text = "   " .. text
+    ColorPickerBtn.TextColor3 = config.TextColor
+    ColorPickerBtn.TextSize = 14
+    ColorPickerBtn.TextXAlignment = Enum.TextXAlignment.Left
+
+    local ColorPickerBtnC = Instance.new("UICorner")
+    ColorPickerBtnC.CornerRadius = UDim.new(0, 6)
+    ColorPickerBtnC.Name = "ColorPickerBtnC"
+    ColorPickerBtnC.Parent = ColorPickerBtn
+
+    local ColorPreview = Instance.new("Frame")
+    ColorPreview.Name = "ColorPreview"
+    ColorPreview.Parent = ColorPickerBtn
+    ColorPreview.BackgroundColor3 = FengUI.flags[flag]
+    ColorPreview.BorderSizePixel = 0
+    ColorPreview.Position = UDim2.new(0.85, 0, 0.22, 0)
+    ColorPreview.Size = UDim2.new(0, 22, 0, 22)
+
+    local ColorPreviewC = Instance.new("UICorner")
+    ColorPreviewC.CornerRadius = UDim.new(0, 4)
+    ColorPreviewC.Parent = ColorPreview
+
+    local ColorPickerFrame = Instance.new("Frame")
+    ColorPickerFrame.Name = "ColorPickerFrame"
+    ColorPickerFrame.Parent = ColorPickerModule
+    ColorPickerFrame.BackgroundColor3 = config.TabColor
+    ColorPickerFrame.BackgroundTransparency = 0.2
+    ColorPickerFrame.BorderSizePixel = 0
+    ColorPickerFrame.Position = UDim2.new(0, 0, 0, 36)
+    ColorPickerFrame.Size = UDim2.new(0, 330, 0, 0)
+    ColorPickerFrame.ClipsDescendants = true
+
+    local ColorPickerFrameC = Instance.new("UICorner")
+    ColorPickerFrameC.CornerRadius = UDim.new(0, 6)
+    ColorPickerFrameC.Parent = ColorPickerFrame
+
+    local SlidersContainer = Instance.new("Frame")
+    SlidersContainer.Name = "SlidersContainer"
+    SlidersContainer.Parent = ColorPickerFrame
+    SlidersContainer.BackgroundTransparency = 1
+    SlidersContainer.Position = UDim2.new(0, 10, 0, 10)
+    SlidersContainer.Size = UDim2.new(0, 310, 0, 80)
+
+    local SlidersLayout = Instance.new("UIListLayout")
+    SlidersLayout.Parent = SlidersContainer
+    SlidersLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    SlidersLayout.Padding = UDim.new(0, 8)
+
+    local function createColorSlider(name, value, updateFunc)
+        local sliderModule = Instance.new("Frame")
+        sliderModule.Name = name .. "Slider"
+        sliderModule.BackgroundTransparency = 1
+        sliderModule.Size = UDim2.new(0, 310, 0, 20)
+        sliderModule.Parent = SlidersContainer
+
+        local sliderText = Instance.new("TextLabel")
+        sliderText.Name = "SliderText"
+        sliderText.Parent = sliderModule
+        sliderText.BackgroundTransparency = 1
+        sliderText.Size = UDim2.new(0, 50, 0, 20)
+        sliderText.Font = Enum.Font.Gotham
+        sliderText.Text = name .. ": " .. math.floor(value * 255)
+        sliderText.TextColor3 = config.TextColor
+        sliderText.TextSize = 12
+        sliderText.TextXAlignment = Enum.TextXAlignment.Left
+
+        local sliderBar = Instance.new("Frame")
+        sliderBar.Name = "SliderBar"
+        sliderBar.Parent = sliderModule
+        sliderBar.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+        sliderBar.BorderSizePixel = 0
+        sliderBar.Position = UDim2.new(0, 60, 0, 9)
+        sliderBar.Size = UDim2.new(0, 200, 0, 4)
+
+        local sliderBarC = Instance.new("UICorner")
+        sliderBarC.CornerRadius = UDim.new(1, 0)
+        sliderBarC.Parent = sliderBar
+
+        local sliderFill = Instance.new("Frame")
+        sliderFill.Name = "SliderFill"
+        sliderFill.Parent = sliderBar
+        sliderFill.BackgroundColor3 = Color3.new(1, 1, 1)
+        sliderFill.BorderSizePixel = 0
+        sliderFill.Size = UDim2.new(value, 0, 1, 0)
+
+        local sliderFillC = Instance.new("UICorner")
+        sliderFillC.CornerRadius = UDim.new(1, 0)
+        sliderFillC.Parent = sliderFill
+
+        local sliderButton = Instance.new("TextButton")
+        sliderButton.Name = "SliderButton"
+        sliderButton.Parent = sliderBar
+        sliderButton.BackgroundTransparency = 1
+        sliderButton.BorderSizePixel = 0
+        sliderButton.Size = UDim2.new(1, 0, 1, 0)
+        sliderButton.Text = ""
+
+        local function updateSlider(value)
+            value = math.clamp(value, 0, 1)
+            sliderFill.Size = UDim2.new(value, 0, 1, 0)
+            sliderText.Text = name .. ": " .. math.floor(value * 255)
+            updateFunc(value)
+        end
+
+        sliderButton.MouseButton1Down:Connect(function()
+            local connection
+            connection = services.UserInputService.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement then
+                    local pos = (input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X
+                    updateSlider(pos)
+                end
+            end)
+            services.UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    connection:Disconnect()
+                end
+            end)
+        end)
+
+        return sliderModule, updateSlider
+    end
+
+    local r, g, b = FengUI.flags[flag]:ToRGB()
+    local rSlider, updateR = createColorSlider("R", r, function(value)
+        r = value
+        updateColor()
+    end)
+    local gSlider, updateG = createColorSlider("G", g, function(value)
+        g = value
+        updateColor()
+    end)
+    local bSlider, updateB = createColorSlider("B", b, function(value)
+        b = value
+        updateColor()
+    end)
+
+    local function updateColor()
+        local color = Color3.new(r, g, b)
+        FengUI.flags[flag] = color
+        ColorPreview.BackgroundColor3 = color
+        callback(color)
+    end
+
+    local isExpanded = false
+    ColorPickerBtn.MouseButton1Click:Connect(function()
+        isExpanded = not isExpanded
+        if isExpanded then
+            ColorPickerFrame.Size = UDim2.new(0, 330, 0, 100)
+        else
+            ColorPickerFrame.Size = UDim2.new(0, 330, 0, 0)
+        end
+    end)
+
+    return {
+        SetColor = function(self, color)
+            r, g, b = color:ToRGB()
+            updateR(r)
+            updateG(g)
+            updateB(b)
+            updateColor()
+        end,
+        GetColor = function(self)
+            return FengUI.flags[flag]
+        end
+    }
+end
                 function section.MusicPlayer(section, title, defaultPlaylist)
                     local MusicPlayerModule = Instance.new("Frame")
                     MusicPlayerModule.Name = "MusicPlayerModule"
