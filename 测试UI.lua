@@ -46,24 +46,24 @@ local UserInputService = services.UserInputService
 local RunService = services.RunService
 
 local config = {
-    MainColor = Color3.fromRGB(16, 16, 16),
-    TabColor = Color3.fromRGB(22, 22, 22),
-    Bg_Color = Color3.fromRGB(17, 17, 17),
-    Zy_Color = Color3.fromRGB(17, 17, 17), 
-    Button_Color = Color3.fromRGB(22, 22, 22),
-    Textbox_Color = Color3.fromRGB(22, 22, 22),
-    Dropdown_Color = Color3.fromRGB(22, 22, 22),
-    Keybind_Color = Color3.fromRGB(22, 22, 22),
-    Label_Color = Color3.fromRGB(22, 22, 22),
-    Slider_Color = Color3.fromRGB(22, 22, 22),
-    SliderBar_Color = Color3.fromRGB(37, 254, 152),
-    Toggle_Color = Color3.fromRGB(22, 22, 22),
-    Toggle_Off = Color3.fromRGB(34, 34, 34),
-    Toggle_On = Color3.fromRGB(37, 254, 152),
-    AccentColor = Color3.fromRGB(37, 254, 152),
-    TextColor = Color3.fromRGB(240, 240, 240),
-    SecondaryTextColor = Color3.fromRGB(180, 180, 180),
-    GlowColor = Color3.fromRGB(0, 200, 255),
+    MainColor = Color3.fromRGB(18, 18, 30),           -- 深蓝黑色背景
+    TabColor = Color3.fromRGB(25, 25, 40),           -- 标签深蓝色
+    Bg_Color = Color3.fromRGB(20, 20, 35),           -- 主背景深蓝
+    Zy_Color = Color3.fromRGB(20, 20, 35),           -- 次要背景
+    Button_Color = Color3.fromRGB(30, 30, 50),       -- 按钮深蓝
+    Textbox_Color = Color3.fromRGB(30, 30, 50),      -- 文本框深蓝
+    Dropdown_Color = Color3.fromRGB(30, 30, 50),     -- 下拉框深蓝
+    Keybind_Color = Color3.fromRGB(30, 30, 50),      -- 键位绑定深蓝
+    Label_Color = Color3.fromRGB(30, 30, 50),        -- 标签深蓝
+    Slider_Color = Color3.fromRGB(30, 30, 50),       -- 滑动条背景
+    SliderBar_Color = Color3.fromRGB(0, 200, 255),   -- 霓虹青色滑动条
+    Toggle_Color = Color3.fromRGB(30, 30, 50),       -- 开关背景
+    Toggle_Off = Color3.fromRGB(50, 50, 70),         -- 开关关闭状态
+    Toggle_On = Color3.fromRGB(0, 230, 230),         -- 霓虹青色开启
+    AccentColor = Color3.fromRGB(0, 200, 255),       -- 主强调色 - 霓虹青色
+    TextColor = Color3.fromRGB(240, 245, 255),       -- 亮白色文字
+    SecondaryTextColor = Color3.fromRGB(180, 190, 210), -- 淡蓝灰色次要文字
+    GlowColor = Color3.fromRGB(0, 150, 255),         -- 发光效果颜色
 }
 
 local MusicPlayer = {
@@ -770,7 +770,7 @@ ReturnToCardsButton.Position = UDim2.new(0, 0, 0, 0)
 ReturnToCardsButton.Size = UDim2.new(1, 0, 0, 25)
 ReturnToCardsButton.AutoButtonColor = false
 ReturnToCardsButton.Font = Enum.Font.GothamBold
-ReturnToCardsButton.Text = "← 返回卡片"
+ReturnToCardsButton.Text = "← 返回页面"
 ReturnToCardsButton.TextColor3 = config.TextColor
 ReturnToCardsButton.TextSize = 12
 ReturnToCardsButton.TextScaled = true
@@ -989,7 +989,6 @@ function FengUI.new(FengUI, name, theme)
         CardIcon.Position = UDim2.new(0.5, 0, 0.3, 0)
         CardIcon.Size = UDim2.new(0, 40, 0, 40)
         CardIcon.Image = "rbxassetid://" .. tostring(icon or "84830962019412")
-        -- 修改：移除绿色着色，显示原图颜色
         CardIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
         
         local CardTitle = Instance.new("TextLabel")
@@ -1019,7 +1018,6 @@ function FengUI.new(FengUI, name, theme)
         CardDescription.TextScaled = false
         CardDescription.TextWrapped = true
         
-        -- 添加卡片阴影效果
         local CardShadow = Instance.new("ImageLabel")
         CardShadow.Name = "CardShadow"
         CardShadow.Parent = Card
@@ -1087,9 +1085,7 @@ function FengUI.new(FengUI, name, theme)
             tabBtns = tabBtns
         }
         
-        -- 增强卡片动画效果
         Card.MouseEnter:Connect(function()
-            -- 多重动画组合
             services.TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                 BackgroundTransparency = 0.1,
                 Size = UDim2.new(0, 105, 0, 105)
@@ -1108,12 +1104,10 @@ function FengUI.new(FengUI, name, theme)
                 Position = UDim2.new(0, -7, 0, -7)
             }):Play()
             
-            -- 添加悬浮效果
             services.TweenService:Create(Card, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
                 Position = UDim2.new(0, Card.Position.X.Offset, 0, Card.Position.Y.Offset - 3)
             }):Play()
             
-            -- 图标脉冲效果
             local pulseConnection
             pulseConnection = RunService.Heartbeat:Connect(function()
                 if not CardIcon or not CardIcon.Parent then
@@ -1123,12 +1117,10 @@ function FengUI.new(FengUI, name, theme)
                 CardIcon.ImageTransparency = 0.1 + math.sin(tick() * 8) * 0.1
             end)
             
-            -- 存储连接以便清理
             Card:SetAttribute("PulseConnection", pulseConnection)
         end)
         
         Card.MouseLeave:Connect(function()
-            -- 恢复所有动画
             services.TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                 BackgroundTransparency = 0.2,
                 Size = UDim2.new(0, 100, 0, 100)
@@ -1148,12 +1140,10 @@ function FengUI.new(FengUI, name, theme)
                 Position = UDim2.new(0, -5, 0, -5)
             }):Play()
             
-            -- 恢复位置
             services.TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                 Position = UDim2.new(0, 0, 0, 0)
             }):Play()
             
-            -- 清理脉冲效果
             local pulseConnection = Card:GetAttribute("PulseConnection")
             if pulseConnection then
                 pulseConnection:Disconnect()
@@ -1176,7 +1166,6 @@ function FengUI.new(FengUI, name, theme)
         end
         
         Card.MouseButton1Click:Connect(function()
-            -- 增强点击动画
             services.TweenService:Create(Card, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                 Size = UDim2.new(0, 95, 0, 95),
                 BackgroundTransparency = 0.3
@@ -1496,10 +1485,8 @@ function FengUI.new(FengUI, name, theme)
     imageGlow.Thickness = 1
     imageGlow.Transparency = 0.8
     
-    -- 处理不同类型的图片源
     local function setImage(source)
         if type(source) == "table" then
-            -- 处理玩家头像
             if source.Type == "Player" then
                 local userId = source.UserId
                 if userId then
@@ -1515,12 +1502,10 @@ function FengUI.new(FengUI, name, theme)
                         end
                     end)
                 end
-            -- 处理服务器头像 - 修复后的方法
             elseif source.Type == "Game" then
                 local placeId = source.PlaceId
                 if placeId then
                     task.spawn(function()
-                        -- 方法1: 尝试使用 MarketplaceService 获取游戏图标
                         local success1, gameInfo = pcall(function()
                             local MarketplaceService = game:GetService("MarketplaceService")
                             return MarketplaceService:GetProductInfo(placeId, Enum.InfoType.Asset)
@@ -1531,7 +1516,6 @@ function FengUI.new(FengUI, name, theme)
                             return
                         end
                         
-                        -- 方法2: 尝试使用 ThumbnailService
                         local success2, thumbnailUrl = pcall(function()
                             local ThumbnailService = game:GetService("ThumbnailService")
                             return ThumbnailService:GetGameThumbnailAsync(placeId)
@@ -1542,21 +1526,17 @@ function FengUI.new(FengUI, name, theme)
                             return
                         end
                         
-                        -- 方法3: 使用默认的游戏图标URL格式
                         ImageLabel.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=" .. placeId
                     end)
                 end
             end
         else
-            -- 原有的图片ID功能
             ImageLabel.Image = "rbxassetid://" .. tostring(source)
         end
     end
     
-    -- 调用设置图片函数
     setImage(imageSource)
     
-    -- 创建控制对象
     local imageController = {}
     
     function imageController:SetImage(newSource)
