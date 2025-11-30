@@ -159,6 +159,92 @@ function FengUI:SetTheme(themeName)
     return self
 end
 
+-- 主题应用函数
+function FengUI:ApplyTheme()
+    -- 更新主窗口颜色
+    if Main then
+        Main.BackgroundColor3 = config.MainColor
+        TitleBar.BackgroundColor3 = config.TabColor
+        TitleText.TextColor3 = config.AccentColor
+        MainStroke.Color = config.AccentColor
+    end
+    
+    -- 更新卡片颜色
+    for _, card in pairs(CardsContainer:GetChildren()) do
+        if card:IsA("TextButton") and card.Name:match("Card_") then
+            card.BackgroundColor3 = config.TabColor
+            if card:FindFirstChild("CardTitle") then
+                card.CardTitle.TextColor3 = config.TextColor
+            end
+            if card:FindFirstChild("CardDescription") then
+                card.CardDescription.TextColor3 = config.SecondaryTextColor
+            end
+            if card:FindFirstChild("CardGlow") then
+                card.CardGlow.Color = config.AccentColor
+            end
+        end
+    end
+    
+    -- 更新侧边栏颜色
+    if MainSideContainer then
+        MainSideContainer.BackgroundColor3 = config.TabColor
+    end
+    
+    -- 更新返回按钮颜色
+    if ReturnToCardsButton then
+        ReturnToCardsButton.BackgroundColor3 = config.Button_Color
+        ReturnToCardsButton.TextColor3 = config.TextColor
+        if ReturnToCardsButton:FindFirstChild("UIStroke") then
+            ReturnToCardsButton.UIStroke.Color = config.AccentColor
+        end
+    end
+    
+    -- 更新标签颜色
+    for _, containerData in pairs(FengUI.tabContainers or {}) do
+        if containerData.sideContainer then
+            containerData.sideContainer.BackgroundColor3 = config.TabColor
+        end
+    end
+    
+    -- 更新所有UI元素的颜色
+    updateAllUIElements()
+end
+
+-- 更新所有UI元素的函数
+local function updateAllUIElements()
+    -- 这里可以添加更多UI元素的颜色更新逻辑
+    -- 例如按钮、文本框、滑块等
+    
+    -- 更新霓虹效果的颜色
+    if neonStroke then
+        startNeonFlowEffect(neonStroke, "Color", 0.01)
+    end
+end
+
+-- 修改SetTheme函数，添加主题应用
+function FengUI:SetTheme(themeName)
+    local theme = self.themes[themeName] or self.themes.Default
+    for k, v in pairs(theme) do
+        if config[k] ~= nil then
+            config[k] = v
+        end
+    end
+    -- 应用新主题
+    self:ApplyTheme()
+    return self
+end
+
+-- 添加获取当前主题的函数
+function FengUI:GetCurrentTheme()
+    return config
+end
+
+-- 添加自定义主题函数
+function FengUI:CreateCustomTheme(themeName, themeData)
+    self.themes[themeName] = themeData
+    return self
+end
+
 local MusicPlayer = {
     currentSound = nil,
     currentTrackIndex = 1,
