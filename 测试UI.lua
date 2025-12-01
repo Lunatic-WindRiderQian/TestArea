@@ -66,185 +66,6 @@ local config = {
     GlowColor = Color3.fromRGB(0, 150, 255),         -- 发光效果颜色
 }
 
-FengUI.themes = {
-    Default = {
-        MainColor = Color3.fromRGB(16, 16, 16),
-        TabColor = Color3.fromRGB(22, 22, 22),
-        Bg_Color = Color3.fromRGB(17, 17, 17),
-        Zy_Color = Color3.fromRGB(17, 17, 17), 
-        Button_Color = Color3.fromRGB(22, 22, 22),
-        Textbox_Color = Color3.fromRGB(22, 22, 22),
-        Dropdown_Color = Color3.fromRGB(22, 22, 22),
-        Keybind_Color = Color3.fromRGB(22, 22, 22),
-        Label_Color = Color3.fromRGB(22, 22, 22),
-        Slider_Color = Color3.fromRGB(22, 22, 22),
-        SliderBar_Color = Color3.fromRGB(37, 254, 152),
-        Toggle_Color = Color3.fromRGB(22, 22, 22),
-        Toggle_Off = Color3.fromRGB(34, 34, 34),
-        Toggle_On = Color3.fromRGB(37, 254, 152),
-        AccentColor = Color3.fromRGB(37, 254, 152),
-        TextColor = Color3.fromRGB(240, 240, 240),
-        SecondaryTextColor = Color3.fromRGB(180, 180, 180),
-        GlowColor = Color3.fromRGB(0, 200, 255),
-    },
-    Dark = {
-        MainColor = Color3.fromRGB(10, 10, 10),
-        TabColor = Color3.fromRGB(15, 15, 15),
-        Bg_Color = Color3.fromRGB(12, 12, 12),
-        Zy_Color = Color3.fromRGB(12, 12, 12), 
-        Button_Color = Color3.fromRGB(15, 15, 15),
-        Textbox_Color = Color3.fromRGB(15, 15, 15),
-        Dropdown_Color = Color3.fromRGB(15, 15, 15),
-        Keybind_Color = Color3.fromRGB(15, 15, 15),
-        Label_Color = Color3.fromRGB(15, 15, 15),
-        Slider_Color = Color3.fromRGB(15, 15, 15),
-        SliderBar_Color = Color3.fromRGB(0, 150, 255),
-        Toggle_Color = Color3.fromRGB(15, 15, 15),
-        Toggle_Off = Color3.fromRGB(25, 25, 25),
-        Toggle_On = Color3.fromRGB(0, 150, 255),
-        AccentColor = Color3.fromRGB(0, 150, 255),
-        TextColor = Color3.fromRGB(220, 220, 220),
-        SecondaryTextColor = Color3.fromRGB(150, 150, 150),
-        GlowColor = Color3.fromRGB(0, 100, 200),
-    },
-    Light = {
-        MainColor = Color3.fromRGB(240, 240, 240),
-        TabColor = Color3.fromRGB(220, 220, 220),
-        Bg_Color = Color3.fromRGB(230, 230, 230),
-        Zy_Color = Color3.fromRGB(230, 230, 230), 
-        Button_Color = Color3.fromRGB(220, 220, 220),
-        Textbox_Color = Color3.fromRGB(220, 220, 220),
-        Dropdown_Color = Color3.fromRGB(220, 220, 220),
-        Keybind_Color = Color3.fromRGB(220, 220, 220),
-        Label_Color = Color3.fromRGB(220, 220, 220),
-        Slider_Color = Color3.fromRGB(220, 220, 220),
-        SliderBar_Color = Color3.fromRGB(0, 100, 200),
-        Toggle_Color = Color3.fromRGB(220, 220, 220),
-        Toggle_Off = Color3.fromRGB(200, 200, 200),
-        Toggle_On = Color3.fromRGB(0, 100, 200),
-        AccentColor = Color3.fromRGB(0, 100, 200),
-        TextColor = Color3.fromRGB(30, 30, 30),
-        SecondaryTextColor = Color3.fromRGB(80, 80, 80),
-        GlowColor = Color3.fromRGB(0, 80, 160),
-    },
-    Neon = {
-        MainColor = Color3.fromRGB(0, 0, 0),
-        TabColor = Color3.fromRGB(10, 10, 20),
-        Bg_Color = Color3.fromRGB(5, 5, 10),
-        Zy_Color = Color3.fromRGB(5, 5, 10), 
-        Button_Color = Color3.fromRGB(10, 10, 20),
-        Textbox_Color = Color3.fromRGB(10, 10, 20),
-        Dropdown_Color = Color3.fromRGB(10, 10, 20),
-        Keybind_Color = Color3.fromRGB(10, 10, 20),
-        Label_Color = Color3.fromRGB(10, 10, 20),
-        Slider_Color = Color3.fromRGB(10, 10, 20),
-        SliderBar_Color = Color3.fromRGB(0, 255, 255),
-        Toggle_Color = Color3.fromRGB(10, 10, 20),
-        Toggle_Off = Color3.fromRGB(20, 20, 30),
-        Toggle_On = Color3.fromRGB(0, 255, 255),
-        AccentColor = Color3.fromRGB(0, 255, 255),
-        TextColor = Color3.fromRGB(255, 255, 255),
-        SecondaryTextColor = Color3.fromRGB(200, 200, 200),
-        GlowColor = Color3.fromRGB(0, 200, 255),
-    }
-}
-
-function FengUI:SetTheme(themeName)
-    local theme = self.themes[themeName] or self.themes.Default
-    for k, v in pairs(theme) do
-        if config[k] ~= nil then
-            config[k] = v
-        end
-    end
-    return self
-end
-
--- 主题应用函数
-function FengUI:ApplyTheme()
-    -- 更新主窗口颜色
-    if Main then
-        Main.BackgroundColor3 = config.MainColor
-        TitleBar.BackgroundColor3 = config.TabColor
-        TitleText.TextColor3 = config.AccentColor
-        MainStroke.Color = config.AccentColor
-    end
-    
-    -- 更新卡片颜色
-    for _, card in pairs(CardsContainer:GetChildren()) do
-        if card:IsA("TextButton") and card.Name:match("Card_") then
-            card.BackgroundColor3 = config.TabColor
-            if card:FindFirstChild("CardTitle") then
-                card.CardTitle.TextColor3 = config.TextColor
-            end
-            if card:FindFirstChild("CardDescription") then
-                card.CardDescription.TextColor3 = config.SecondaryTextColor
-            end
-            if card:FindFirstChild("CardGlow") then
-                card.CardGlow.Color = config.AccentColor
-            end
-        end
-    end
-    
-    -- 更新侧边栏颜色
-    if MainSideContainer then
-        MainSideContainer.BackgroundColor3 = config.TabColor
-    end
-    
-    -- 更新返回按钮颜色
-    if ReturnToCardsButton then
-        ReturnToCardsButton.BackgroundColor3 = config.Button_Color
-        ReturnToCardsButton.TextColor3 = config.TextColor
-        if ReturnToCardsButton:FindFirstChild("UIStroke") then
-            ReturnToCardsButton.UIStroke.Color = config.AccentColor
-        end
-    end
-    
-    -- 更新标签颜色
-    for _, containerData in pairs(FengUI.tabContainers or {}) do
-        if containerData.sideContainer then
-            containerData.sideContainer.BackgroundColor3 = config.TabColor
-        end
-    end
-    
-    -- 更新所有UI元素的颜色
-    updateAllUIElements()
-end
-
--- 更新所有UI元素的函数
-local function updateAllUIElements()
-    -- 这里可以添加更多UI元素的颜色更新逻辑
-    -- 例如按钮、文本框、滑块等
-    
-    -- 更新霓虹效果的颜色
-    if neonStroke then
-        startNeonFlowEffect(neonStroke, "Color", 0.01)
-    end
-end
-
--- 修改SetTheme函数，添加主题应用
-function FengUI:SetTheme(themeName)
-    local theme = self.themes[themeName] or self.themes.Default
-    for k, v in pairs(theme) do
-        if config[k] ~= nil then
-            config[k] = v
-        end
-    end
-    -- 应用新主题
-    self:ApplyTheme()
-    return self
-end
-
--- 添加获取当前主题的函数
-function FengUI:GetCurrentTheme()
-    return config
-end
-
--- 添加自定义主题函数
-function FengUI:CreateCustomTheme(themeName, themeData)
-    self.themes[themeName] = themeData
-    return self
-end
-
 local MusicPlayer = {
     currentSound = nil,
     currentTrackIndex = 1,
@@ -1017,27 +838,27 @@ ReturnToCardsButton.MouseButton1Click:Connect(function()
 end)
 
 local function playEntranceAnimation()
-    -- 重置所有透明度
+    Main.Position = UDim2.new(0.5, 0, 0.35, 0)
     Main.BackgroundTransparency = 1
+    Main.Size = UDim2.new(0, 10, 0, 10)
+    
     TitleBar.BackgroundTransparency = 1
     TitleText.TextTransparency = 1
     CloseButton.TextTransparency = 1
+    MainSideContainer.BackgroundTransparency = 1
+    CardsContainer.BackgroundTransparency = 1
     MainStroke.Transparency = 1
     neonStroke.Transparency = 1
     
-    -- 确保所有内容在动画开始前不可见
-    CardsContainer.Visible = false
     MainTabContainer.Visible = false
     MainSideContainer.Visible = false
     
-    -- 主窗口动画
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
         BackgroundTransparency = 0.2,
         Size = UDim2.new(0, 450, 0, 280)
     }):Play()
     
-    -- 边框动画
     services.TweenService:Create(MainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Transparency = 0.5
     }):Play()
@@ -1048,7 +869,6 @@ local function playEntranceAnimation()
     
     task.wait(0.2)
     
-    -- 标题栏动画
     services.TweenService:Create(TitleBar, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         BackgroundTransparency = 0.2
     }):Play()
@@ -1063,18 +883,22 @@ local function playEntranceAnimation()
     
     task.wait(0.2)
     
-    -- 根据当前状态显示正确的内容
     if FengUI.showingCards then
         CardsContainer.Visible = true
         services.TweenService:Create(CardsContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             BackgroundTransparency = 1
         }):Play()
     else
-        MainSideContainer.Visible = true
-        MainTabContainer.Visible = true
         services.TweenService:Create(MainSideContainer, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             BackgroundTransparency = 0.2
         }):Play()
+    end
+    
+    task.wait(0.2)
+    
+    if not FengUI.showingCards then
+        MainTabContainer.Visible = true
+        MainSideContainer.Visible = true
     end
     
     DigitalParticleExplosion(Main)
@@ -1771,6 +1595,544 @@ end
                     return TextLabel
                 end
                 
+                -- 在原Label组件之后添加这些函数（在section.Label函数之后）
+
+-- 高级Label组件（类似WindUI风格）
+function section.AdvancedLabel(section, text, icon, copyable)
+    local AdvancedLabelModule = Instance.new("Frame")
+    AdvancedLabelModule.Name = "AdvancedLabelModule"
+    AdvancedLabelModule.Parent = Objs
+    AdvancedLabelModule.BackgroundTransparency = 1
+    AdvancedLabelModule.BorderSizePixel = 0
+    AdvancedLabelModule.Size = UDim2.new(0, 330, 0, 36)
+    
+    local LabelContainer = Instance.new("Frame")
+    LabelContainer.Name = "LabelContainer"
+    LabelContainer.Parent = AdvancedLabelModule
+    LabelContainer.BackgroundColor3 = config.Label_Color
+    LabelContainer.BackgroundTransparency = 0.1
+    LabelContainer.Size = UDim2.new(1, 0, 1, 0)
+    
+    local LabelCorner = Instance.new("UICorner")
+    LabelCorner.CornerRadius = UDim.new(0, 8)
+    LabelCorner.Parent = LabelContainer
+    
+    -- 渐变背景效果
+    local gradient = Instance.new("UIGradient")
+    gradient.Rotation = 90
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 60)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 50))
+    })
+    gradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.3),
+        NumberSequenceKeypoint.new(1, 0.5)
+    })
+    gradient.Parent = LabelContainer
+    
+    -- 发光边框
+    local labelGlow = Instance.new("UIStroke")
+    labelGlow.Parent = LabelContainer
+    labelGlow.Color = config.AccentColor
+    labelGlow.Thickness = 1.5
+    labelGlow.Transparency = 0.7
+    
+    startNeonFlowEffect(labelGlow, "Color", 0.005)
+    
+    -- 图标容器（左侧）
+    local IconContainer = Instance.new("Frame")
+    IconContainer.Name = "IconContainer"
+    IconContainer.Parent = LabelContainer
+    IconContainer.BackgroundTransparency = 1
+    IconContainer.Size = UDim2.new(0, 40, 1, 0)
+    
+    local IconLabel = Instance.new("ImageLabel")
+    IconLabel.Name = "IconLabel"
+    IconLabel.Parent = IconContainer
+    IconLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+    IconLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+    IconLabel.Size = UDim2.new(0, 20, 0, 20)
+    IconLabel.BackgroundTransparency = 1
+    IconLabel.Image = "rbxassetid://" .. tostring(icon or "84830962019412")
+    IconLabel.ImageColor3 = config.AccentColor
+    
+    -- 图标发光效果
+    local iconGlow = Instance.new("UIStroke")
+    iconGlow.Parent = IconLabel
+    iconGlow.Color = config.AccentColor
+    iconGlow.Thickness = 1
+    iconGlow.Transparency = 0.5
+    
+    startNeonFlowEffect(iconGlow, "Color", 0.01)
+    
+    -- 文本容器（中间）
+    local TextContainer = Instance.new("Frame")
+    TextContainer.Name = "TextContainer"
+    TextContainer.Parent = LabelContainer
+    TextContainer.BackgroundTransparency = 1
+    TextContainer.Position = UDim2.new(0, 40, 0, 0)
+    TextContainer.Size = UDim2.new(0, copyable and 230 or 270, 1, 0)
+    
+    local LabelText = Instance.new("TextLabel")
+    LabelText.Name = "LabelText"
+    LabelText.Parent = TextContainer
+    LabelText.AnchorPoint = Vector2.new(0, 0.5)
+    LabelText.Position = UDim2.new(0, 10, 0.5, 0)
+    LabelText.Size = UDim2.new(1, -10, 0.8, 0)
+    LabelText.BackgroundTransparency = 1
+    LabelText.Font = Enum.Font.GothamSemibold
+    LabelText.Text = text
+    LabelText.TextColor3 = config.TextColor
+    LabelText.TextSize = 14
+    LabelText.TextXAlignment = Enum.TextXAlignment.Left
+    LabelText.TextYAlignment = Enum.TextYAlignment.Center
+    LabelText.TextTruncate = Enum.TextTruncate.AtEnd
+    
+    -- 文本渐变效果
+    local textGradient = Instance.new("UIGradient")
+    textGradient.Rotation = 90
+    textGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, config.TextColor),
+        ColorSequenceKeypoint.new(1, config.SecondaryTextColor)
+    })
+    textGradient.Parent = LabelText
+    
+    -- 复制按钮容器（右侧，仅在copyable为true时显示）
+    local CopyButtonContainer
+    local CopyButton
+    
+    if copyable then
+        CopyButtonContainer = Instance.new("Frame")
+        CopyButtonContainer.Name = "CopyButtonContainer"
+        CopyButtonContainer.Parent = LabelContainer
+        CopyButtonContainer.BackgroundTransparency = 1
+        CopyButtonContainer.Position = UDim2.new(1, -40, 0, 0)
+        CopyButtonContainer.Size = UDim2.new(0, 40, 1, 0)
+        
+        CopyButton = Instance.new("ImageButton")
+        CopyButton.Name = "CopyButton"
+        CopyButton.Parent = CopyButtonContainer
+        CopyButton.AnchorPoint = Vector2.new(0.5, 0.5)
+        CopyButton.Position = UDim2.new(0.5, 0, 0.5, 0)
+        CopyButton.Size = UDim2.new(0, 24, 0, 24)
+        CopyButton.BackgroundTransparency = 1
+        CopyButton.Image = "rbxassetid://8681183345" -- 复制图标
+        CopyButton.ImageColor3 = config.SecondaryTextColor
+        
+        local copyGlow = Instance.new("UIStroke")
+        copyGlow.Parent = CopyButton
+        copyGlow.Color = config.AccentColor
+        copyGlow.Thickness = 1
+        copyGlow.Transparency = 0.7
+        
+        -- 悬停效果
+        CopyButton.MouseEnter:Connect(function()
+            services.TweenService:Create(CopyButton, TweenInfo.new(0.2), {
+                ImageColor3 = config.AccentColor,
+                Size = UDim2.new(0, 26, 0, 26)
+            }):Play()
+            services.TweenService:Create(copyGlow, TweenInfo.new(0.2), {
+                Thickness = 2,
+                Transparency = 0.3
+            }):Play()
+        end)
+        
+        CopyButton.MouseLeave:Connect(function()
+            services.TweenService:Create(CopyButton, TweenInfo.new(0.2), {
+                ImageColor3 = config.SecondaryTextColor,
+                Size = UDim2.new(0, 24, 0, 24)
+            }):Play()
+            services.TweenService:Create(copyGlow, TweenInfo.new(0.2), {
+                Thickness = 1,
+                Transparency = 0.7
+            }):Play()
+        end)
+        
+        -- 点击复制功能
+        CopyButton.MouseButton1Click:Connect(function()
+            DigitalParticleExplosion(CopyButton)
+            
+            -- 创建临时文本框来复制文本
+            local textBox = Instance.new("TextBox")
+            textBox.Text = text
+            textBox.Parent = services.CoreGui
+            textBox:CaptureFocus()
+            textBox:SelectAll()
+            
+            -- 尝试使用ClipboardService（如果可用）
+            local success, clipboardService = pcall(function()
+                return game:GetService("ClipboardService")
+            end)
+            
+            if success and clipboardService then
+                pcall(function()
+                    clipboardService:SetString(text)
+                end)
+            end
+            
+            textBox:Destroy()
+            
+            -- 显示复制成功提示
+            CopyButton.Image = "rbxassetid://8681183571" -- 对勾图标
+            
+            task.wait(0.5)
+            
+            services.TweenService:Create(CopyButton, TweenInfo.new(0.2), {
+                Image = "rbxassetid://8681183345"
+            }):Play()
+        end)
+    end
+    
+    -- 悬停动画效果
+    local hoverAnimation
+    LabelContainer.MouseEnter:Connect(function()
+        hoverAnimation = services.TweenService:Create(LabelContainer, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundTransparency = 0,
+            Position = UDim2.new(0, -2, 0, -1)
+        })
+        hoverAnimation:Play()
+        
+        services.TweenService:Create(labelGlow, TweenInfo.new(0.3), {
+            Thickness = 2,
+            Transparency = 0.4
+        }):Play()
+        
+        -- 图标呼吸动画
+        task.spawn(function()
+            while LabelContainer:IsMouseOver() do
+                services.TweenService:Create(IconLabel, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+                    Size = UDim2.new(0, 22, 0, 22)
+                }):Play()
+                task.wait(0.8)
+                services.TweenService:Create(IconLabel, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+                    Size = UDim2.new(0, 20, 0, 20)
+                }):Play()
+                task.wait(0.8)
+            end
+        end)
+    end)
+    
+    LabelContainer.MouseLeave:Connect(function()
+        if hoverAnimation then
+            hoverAnimation:Cancel()
+        end
+        services.TweenService:Create(LabelContainer, TweenInfo.new(0.3), {
+            BackgroundTransparency = 0.1,
+            Position = UDim2.new(0, 0, 0, 0)
+        }):Play()
+        
+        services.TweenService:Create(labelGlow, TweenInfo.new(0.3), {
+            Thickness = 1.5,
+            Transparency = 0.7
+        }):Play()
+    end)
+    
+    -- 高级Label的功能方法
+    local advancedLabelFuncs = {}
+    
+    function advancedLabelFuncs:SetText(newText)
+        LabelText.Text = newText
+        return self
+    end
+    
+    function advancedLabelFuncs:SetIcon(iconId)
+        IconLabel.Image = "rbxassetid://" .. tostring(iconId)
+        return self
+    end
+    
+    function advancedLabelFuncs:SetTextColor(color)
+        LabelText.TextColor3 = color
+        return self
+    end
+    
+    function advancedLabelFuncs:SetBackgroundColor(color)
+        LabelContainer.BackgroundColor3 = color
+        return self
+    end
+    
+    function advancedLabelFuncs:SetGradientColors(color1, color2)
+        if gradient then
+            gradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, color1 or Color3.fromRGB(40, 40, 60)),
+                ColorSequenceKeypoint.new(1, color2 or Color3.fromRGB(30, 30, 50))
+            })
+        end
+        return self
+    end
+    
+    function advancedLabelFuncs:SetVisible(visible)
+        AdvancedLabelModule.Visible = visible
+        return self
+    end
+    
+    function advancedLabelFuncs:Destroy()
+        AdvancedLabelModule:Destroy()
+    end
+    
+    advancedLabelFuncs.Instance = LabelContainer
+    advancedLabelFuncs.TextLabel = LabelText
+    advancedLabelFuncs.IconLabel = IconLabel
+    
+    return advancedLabelFuncs
+end
+
+-- 增强版Label组件（保持向后兼容，但添加更多功能）
+function section.Label(section, text, options)
+    options = options or {}
+    
+    -- 如果是简单用法，保持向后兼容
+    if type(text) == "string" and not options.text then
+        options.text = text
+    elseif type(text) == "table" then
+        options = text
+    end
+    
+    local text = options.text or "Label"
+    local icon = options.icon
+    local copyable = options.copyable or false
+    local backgroundColor = options.backgroundColor or config.Label_Color
+    local textColor = options.textColor or config.TextColor
+    local size = options.size or UDim2.new(0, 330, 0, 28)
+    
+    local LabelModule = Instance.new("Frame")
+    LabelModule.Name = "LabelModule"
+    LabelModule.Parent = Objs
+    LabelModule.BackgroundTransparency = 1
+    LabelModule.BorderSizePixel = 0
+    LabelModule.Size = size
+    
+    local TextLabel = Instance.new("TextLabel")
+    TextLabel.Parent = LabelModule
+    TextLabel.BackgroundColor3 = backgroundColor
+    TextLabel.BackgroundTransparency = 0.2
+    TextLabel.Size = size
+    TextLabel.Font = Enum.Font.GothamSemibold
+    TextLabel.Text = text
+    TextLabel.TextColor3 = textColor
+    TextLabel.TextSize = 14
+    
+    local LabelC = Instance.new("UICorner")
+    LabelC.CornerRadius = UDim.new(0, 6)
+    LabelC.Name = "LabelC"
+    LabelC.Parent = TextLabel
+    
+    -- 添加发光边框（可选）
+    if options.glow then
+        local labelGlow = Instance.new("UIStroke")
+        labelGlow.Parent = TextLabel
+        labelGlow.Color = options.glowColor or config.AccentColor
+        labelGlow.Thickness = 1
+        labelGlow.Transparency = 0.8
+        
+        if options.neonEffect then
+            startNeonFlowEffect(labelGlow, "Color", 0.005)
+        end
+    end
+    
+    -- 添加图标（可选）
+    if icon then
+        local iconSize = options.iconSize or 20
+        local IconLabel = Instance.new("ImageLabel")
+        IconLabel.Parent = TextLabel
+        IconLabel.BackgroundTransparency = 1
+        IconLabel.Position = UDim2.new(0, 8, 0.5, -iconSize/2)
+        IconLabel.Size = UDim2.new(0, iconSize, 0, iconSize)
+        IconLabel.Image = "rbxassetid://" .. tostring(icon)
+        IconLabel.ImageColor3 = options.iconColor or config.TextColor
+        
+        -- 调整文本位置
+        TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+        TextLabel.PaddingLeft = UDim.new(0, iconSize + 15)
+    end
+    
+    -- 添加复制按钮（可选）
+    if copyable then
+        local CopyButton = Instance.new("ImageButton")
+        CopyButton.Parent = TextLabel
+        CopyButton.AnchorPoint = Vector2.new(1, 0.5)
+        CopyButton.Position = UDim2.new(1, -8, 0.5, 0)
+        CopyButton.Size = UDim2.new(0, 20, 0, 20)
+        CopyButton.BackgroundTransparency = 1
+        CopyButton.Image = "rbxassetid://8681183345"
+        CopyButton.ImageColor3 = config.SecondaryTextColor
+        
+        CopyButton.MouseButton1Click:Connect(function()
+            DigitalParticleExplosion(CopyButton)
+            
+            local textBox = Instance.new("TextBox")
+            textBox.Text = text
+            textBox.Parent = services.CoreGui
+            textBox:CaptureFocus()
+            textBox:SelectAll()
+            
+            task.wait(0.1)
+            textBox:Destroy()
+            
+            CopyButton.Image = "rbxassetid://8681183571"
+            task.wait(0.5)
+            CopyButton.Image = "rbxassetid://8681183345"
+        end)
+        
+        -- 调整文本区域
+        TextLabel.PaddingRight = UDim.new(0, 30)
+    end
+    
+    -- 添加悬停效果（可选）
+    if options.hoverEffect then
+        TextLabel.MouseEnter:Connect(function()
+            services.TweenService:Create(TextLabel, TweenInfo.new(0.2), {
+                BackgroundTransparency = 0.1
+            }):Play()
+        end)
+        
+        TextLabel.MouseLeave:Connect(function()
+            services.TweenService:Create(TextLabel, TweenInfo.new(0.2), {
+                BackgroundTransparency = 0.2
+            }):Play()
+        end)
+    end
+    
+    -- 添加功能方法
+    local labelFuncs = {}
+    
+    function labelFuncs:SetText(newText)
+        TextLabel.Text = newText
+        return self
+    end
+    
+    function labelFuncs:SetColor(color)
+        TextLabel.TextColor3 = color
+        return self
+    end
+    
+    function labelFuncs:SetBackgroundColor(color)
+        TextLabel.BackgroundColor3 = color
+        return self
+    end
+    
+    function labelFuncs:SetVisible(visible)
+        LabelModule.Visible = visible
+        return self
+    end
+    
+    function labelFuncs:Destroy()
+        LabelModule:Destroy()
+    end
+    
+    labelFuncs.Instance = TextLabel
+    
+    return labelFuncs
+end
+
+-- 特殊效果Label（带粒子效果、动画等）
+function section.EffectLabel(section, text, effectType)
+    local EffectLabelModule = Instance.new("Frame")
+    EffectLabelModule.Name = "EffectLabelModule"
+    EffectLabelModule.Parent = Objs
+    EffectLabelModule.BackgroundTransparency = 1
+    EffectLabelModule.BorderSizePixel = 0
+    EffectLabelModule.Size = UDim2.new(0, 330, 0, 40)
+    
+    local TextLabel = Instance.new("TextLabel")
+    TextLabel.Parent = EffectLabelModule
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.Size = UDim2.new(1, 0, 1, 0)
+    TextLabel.Font = Enum.Font.GothamBold
+    TextLabel.Text = text
+    TextLabel.TextColor3 = config.TextColor
+    TextLabel.TextSize = 16
+    TextLabel.TextStrokeTransparency = 0.8
+    TextLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+    
+    -- 根据效果类型应用不同效果
+    if effectType == "rainbow" then
+        -- 彩虹文字效果
+        task.spawn(function()
+            local hue = 0
+            while TextLabel and TextLabel.Parent do
+                hue = (hue + 0.01) % 1
+                TextLabel.TextColor3 = Color3.fromHSV(hue, 1, 1)
+                task.wait(0.05)
+            end
+        end)
+    elseif effectType == "pulse" then
+        -- 脉动效果
+        task.spawn(function()
+            while TextLabel and TextLabel.Parent do
+                local alpha = 0.5 + math.sin(tick() * 2) * 0.5
+                TextLabel.TextTransparency = alpha
+                TextLabel.TextStrokeTransparency = alpha + 0.3
+                task.wait()
+            end
+        end)
+    elseif effectType == "glitch" then
+        -- 故障效果
+        task.spawn(function()
+            local originalText = text
+            while TextLabel and TextLabel.Parent do
+                if math.random(1, 10) == 1 then
+                    local glitchText = ""
+                    for i = 1, #originalText do
+                        if math.random(1, 3) == 1 then
+                            glitchText = glitchText .. string.char(math.random(33, 126))
+                        else
+                            glitchText = glitchText .. originalText:sub(i, i)
+                        end
+                    end
+                    TextLabel.Text = glitchText
+                    TextLabel.TextColor3 = Color3.fromRGB(
+                        math.random(150, 255),
+                        math.random(100, 200),
+                        math.random(200, 255)
+                    )
+                    task.wait(0.1)
+                    TextLabel.Text = originalText
+                    TextLabel.TextColor3 = config.TextColor
+                end
+                task.wait(0.3)
+            end
+        end)
+    elseif effectType == "typewriter" then
+        -- 打字机效果
+        task.spawn(function()
+            TextLabel.Text = ""
+            for i = 1, #text do
+                TextLabel.Text = text:sub(1, i)
+                task.wait(0.05)
+            end
+        end)
+    end
+    
+    -- 添加背景闪烁效果
+    local background = Instance.new("Frame")
+    background.Name = "Background"
+    background.Parent = EffectLabelModule
+    background.BackgroundColor3 = config.AccentColor
+    background.BackgroundTransparency = 0.9
+    background.Size = UDim2.new(1, 0, 1, 0)
+    background.ZIndex = -1
+    
+    local bgCorner = Instance.new("UICorner")
+    bgCorner.CornerRadius = UDim.new(0, 6)
+    bgCorner.Parent = background
+    
+    -- 背景脉动效果
+    task.spawn(function()
+        while background and background.Parent do
+            services.TweenService:Create(background, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+                BackgroundTransparency = 0.7
+            }):Play()
+            task.wait(1)
+            services.TweenService:Create(background, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+                BackgroundTransparency = 0.9
+            }):Play()
+            task.wait(1)
+        end
+    end)
+    
+    return TextLabel
+end
+
                 function section.Toggle(section, text, flag, enabled, callback)
                     callback = callback or function() end
                     enabled = enabled or false
@@ -2660,196 +3022,6 @@ end
                     return funcs
                 end
 
--- 在 section.Dropdown 函数之后，section.MusicPlayer 函数之前添加：
-
-function section.ColorPicker(section, text, flag, default, callback)
-    callback = callback or function() end
-    assert(text, "No text provided")
-    assert(flag, "No flag provided")
-    FengUI.flags[flag] = default or Color3.new(1, 1, 1)
-
-    local ColorPickerModule = Instance.new("Frame")
-    ColorPickerModule.Name = "ColorPickerModule"
-    ColorPickerModule.Parent = Objs
-    ColorPickerModule.BackgroundTransparency = 1
-    ColorPickerModule.BorderSizePixel = 0
-    ColorPickerModule.Size = UDim2.new(0, 330, 0, 36)
-
-    local ColorPickerBtn = Instance.new("TextButton")
-    ColorPickerBtn.Name = "ColorPickerBtn"
-    ColorPickerBtn.Parent = ColorPickerModule
-    ColorPickerBtn.BackgroundColor3 = config.Button_Color
-    ColorPickerBtn.BackgroundTransparency = 0.2
-    ColorPickerBtn.BorderSizePixel = 0
-    ColorPickerBtn.Size = UDim2.new(0, 330, 0, 36)
-    ColorPickerBtn.AutoButtonColor = false
-    ColorPickerBtn.Font = Enum.Font.GothamSemibold
-    ColorPickerBtn.Text = "   " .. text
-    ColorPickerBtn.TextColor3 = config.TextColor
-    ColorPickerBtn.TextSize = 14
-    ColorPickerBtn.TextXAlignment = Enum.TextXAlignment.Left
-
-    local ColorPickerBtnC = Instance.new("UICorner")
-    ColorPickerBtnC.CornerRadius = UDim.new(0, 6)
-    ColorPickerBtnC.Name = "ColorPickerBtnC"
-    ColorPickerBtnC.Parent = ColorPickerBtn
-
-    local ColorPreview = Instance.new("Frame")
-    ColorPreview.Name = "ColorPreview"
-    ColorPreview.Parent = ColorPickerBtn
-    ColorPreview.BackgroundColor3 = FengUI.flags[flag]
-    ColorPreview.BorderSizePixel = 0
-    ColorPreview.Position = UDim2.new(0.85, 0, 0.22, 0)
-    ColorPreview.Size = UDim2.new(0, 22, 0, 22)
-
-    local ColorPreviewC = Instance.new("UICorner")
-    ColorPreviewC.CornerRadius = UDim.new(0, 4)
-    ColorPreviewC.Parent = ColorPreview
-
-    local ColorPickerFrame = Instance.new("Frame")
-    ColorPickerFrame.Name = "ColorPickerFrame"
-    ColorPickerFrame.Parent = ColorPickerModule
-    ColorPickerFrame.BackgroundColor3 = config.TabColor
-    ColorPickerFrame.BackgroundTransparency = 0.2
-    ColorPickerFrame.BorderSizePixel = 0
-    ColorPickerFrame.Position = UDim2.new(0, 0, 0, 36)
-    ColorPickerFrame.Size = UDim2.new(0, 330, 0, 0)
-    ColorPickerFrame.ClipsDescendants = true
-
-    local ColorPickerFrameC = Instance.new("UICorner")
-    ColorPickerFrameC.CornerRadius = UDim.new(0, 6)
-    ColorPickerFrameC.Parent = ColorPickerFrame
-
-    local SlidersContainer = Instance.new("Frame")
-    SlidersContainer.Name = "SlidersContainer"
-    SlidersContainer.Parent = ColorPickerFrame
-    SlidersContainer.BackgroundTransparency = 1
-    SlidersContainer.Position = UDim2.new(0, 10, 0, 10)
-    SlidersContainer.Size = UDim2.new(0, 310, 0, 80)
-
-    local SlidersLayout = Instance.new("UIListLayout")
-    SlidersLayout.Parent = SlidersContainer
-    SlidersLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    SlidersLayout.Padding = UDim.new(0, 8)
-
-    local function createColorSlider(name, value, updateFunc)
-        local sliderModule = Instance.new("Frame")
-        sliderModule.Name = name .. "Slider"
-        sliderModule.BackgroundTransparency = 1
-        sliderModule.Size = UDim2.new(0, 310, 0, 20)
-        sliderModule.Parent = SlidersContainer
-
-        local sliderText = Instance.new("TextLabel")
-        sliderText.Name = "SliderText"
-        sliderText.Parent = sliderModule
-        sliderText.BackgroundTransparency = 1
-        sliderText.Size = UDim2.new(0, 50, 0, 20)
-        sliderText.Font = Enum.Font.Gotham
-        sliderText.Text = name .. ": " .. math.floor(value * 255)
-        sliderText.TextColor3 = config.TextColor
-        sliderText.TextSize = 12
-        sliderText.TextXAlignment = Enum.TextXAlignment.Left
-
-        local sliderBar = Instance.new("Frame")
-        sliderBar.Name = "SliderBar"
-        sliderBar.Parent = sliderModule
-        sliderBar.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
-        sliderBar.BorderSizePixel = 0
-        sliderBar.Position = UDim2.new(0, 60, 0, 9)
-        sliderBar.Size = UDim2.new(0, 200, 0, 4)
-
-        local sliderBarC = Instance.new("UICorner")
-        sliderBarC.CornerRadius = UDim.new(1, 0)
-        sliderBarC.Parent = sliderBar
-
-        local sliderFill = Instance.new("Frame")
-        sliderFill.Name = "SliderFill"
-        sliderFill.Parent = sliderBar
-        sliderFill.BackgroundColor3 = Color3.new(1, 1, 1)
-        sliderFill.BorderSizePixel = 0
-        sliderFill.Size = UDim2.new(value, 0, 1, 0)
-
-        local sliderFillC = Instance.new("UICorner")
-        sliderFillC.CornerRadius = UDim.new(1, 0)
-        sliderFillC.Parent = sliderFill
-
-        local sliderButton = Instance.new("TextButton")
-        sliderButton.Name = "SliderButton"
-        sliderButton.Parent = sliderBar
-        sliderButton.BackgroundTransparency = 1
-        sliderButton.BorderSizePixel = 0
-        sliderButton.Size = UDim2.new(1, 0, 1, 0)
-        sliderButton.Text = ""
-
-        local function updateSlider(value)
-            value = math.clamp(value, 0, 1)
-            sliderFill.Size = UDim2.new(value, 0, 1, 0)
-            sliderText.Text = name .. ": " .. math.floor(value * 255)
-            updateFunc(value)
-        end
-
-        sliderButton.MouseButton1Down:Connect(function()
-            local connection
-            connection = services.UserInputService.InputChanged:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseMovement then
-                    local pos = (input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X
-                    updateSlider(pos)
-                end
-            end)
-            services.UserInputService.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    connection:Disconnect()
-                end
-            end)
-        end)
-
-        return sliderModule, updateSlider
-    end
-
-    local r, g, b = FengUI.flags[flag]:ToRGB()
-    local rSlider, updateR = createColorSlider("R", r, function(value)
-        r = value
-        updateColor()
-    end)
-    local gSlider, updateG = createColorSlider("G", g, function(value)
-        g = value
-        updateColor()
-    end)
-    local bSlider, updateB = createColorSlider("B", b, function(value)
-        b = value
-        updateColor()
-    end)
-
-    local function updateColor()
-        local color = Color3.new(r, g, b)
-        FengUI.flags[flag] = color
-        ColorPreview.BackgroundColor3 = color
-        callback(color)
-    end
-
-    local isExpanded = false
-    ColorPickerBtn.MouseButton1Click:Connect(function()
-        isExpanded = not isExpanded
-        if isExpanded then
-            ColorPickerFrame.Size = UDim2.new(0, 330, 0, 100)
-        else
-            ColorPickerFrame.Size = UDim2.new(0, 330, 0, 0)
-        end
-    end)
-
-    return {
-        SetColor = function(self, color)
-            r, g, b = color:ToRGB()
-            updateR(r)
-            updateG(g)
-            updateB(b)
-            updateColor()
-        end,
-        GetColor = function(self)
-            return FengUI.flags[flag]
-        end
-    }
-end
                 function section.MusicPlayer(section, title, defaultPlaylist)
                     local MusicPlayerModule = Instance.new("Frame")
                     MusicPlayerModule.Name = "MusicPlayerModule"
