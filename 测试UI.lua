@@ -1,14 +1,18 @@
+[file name]: ModernUI.lua
+[file content begin]
 repeat
     task.wait()
 until game:IsLoaded()
 
 if not getgenv then getgenv = function() return _G end end
-getgenv().FengUI = {}
+getgenv().ModernUI = {}
 
+-- 性能优化
 settings().Rendering.QualityLevel = 1
 settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level01
 settings().Rendering.EagerBulkExecution = true
 
+-- 保护GUI函数
 local function protectGUI(gui)
     if syn and syn.protect_gui then
         syn.protect_gui(gui)
@@ -26,11 +30,14 @@ local function protectGUI(gui)
     end
 end
 
-local FengUI = {}
-local ToggleUI = true
-FengUI.currentTab = nil
-FengUI.flags = {}
+-- ModernUI主表
+local ModernUI = {}
+ModernUI.currentTab = nil
+ModernUI.flags = {}
+ModernUI.open = true
+ModernUI.minimized = false
 
+-- 服务
 local services = {
     TweenService = game:GetService("TweenService"),
     UserInputService = game:GetService("UserInputService"),
@@ -40,655 +47,111 @@ local services = {
     SoundService = game:GetService("SoundService")
 }
 
-local UserInputService = services.UserInputService
-local RunService = services.RunService
-
 -- 高级配色方案
 local config = {
-    -- 主色调 - 深色玻璃质感
-    MainColor = Color3.fromRGB(15, 15, 25),
-    TabColor = Color3.fromRGB(20, 20, 30),
-    Bg_Color = Color3.fromRGB(10, 10, 18),
-    Zy_Color = Color3.fromRGB(12, 12, 20),
-    Button_Color = Color3.fromRGB(25, 25, 40),
-    Textbox_Color = Color3.fromRGB(25, 25, 40),
-    Dropdown_Color = Color3.fromRGB(25, 25, 40),
-    Keybind_Color = Color3.fromRGB(25, 25, 40),
-    Label_Color = Color3.fromRGB(25, 25, 40),
-    Slider_Color = Color3.fromRGB(25, 25, 40),
-    SliderBar_Color = Color3.fromRGB(45, 130, 255),
-    Toggle_Color = Color3.fromRGB(25, 25, 40),
-    Toggle_Off = Color3.fromRGB(40, 40, 60),
-    Toggle_On = Color3.fromRGB(45, 130, 255),
+    -- 主色调
+    Primary = Color3.fromRGB(10, 132, 255),      -- 苹果蓝
+    PrimaryDark = Color3.fromRGB(0, 122, 255),   -- 深蓝
+    PrimaryLight = Color3.fromRGB(90, 200, 255), -- 浅蓝
     
-    -- 强调色 - 霓虹蓝渐变
-    AccentColor = Color3.fromRGB(45, 130, 255),
-    AccentColor2 = Color3.fromRGB(0, 200, 255),
-    AccentColor3 = Color3.fromRGB(100, 200, 255),
+    -- 背景色
+    Background = Color3.fromRGB(18, 18, 24),
+    BackgroundLight = Color3.fromRGB(28, 28, 34),
+    BackgroundDark = Color3.fromRGB(8, 8, 12),
     
-    -- 文字颜色
-    TextColor = Color3.fromRGB(240, 240, 255),
-    SecondaryTextColor = Color3.fromRGB(180, 190, 220),
+    -- 表面色
+    Surface = Color3.fromRGB(28, 28, 34),
+    SurfaceHover = Color3.fromRGB(38, 38, 44),
     
-    -- 特效颜色
-    GlowColor = Color3.fromRGB(45, 130, 255),
-    NeonColor = Color3.fromRGB(0, 200, 255),
+    -- 文字色
+    TextPrimary = Color3.fromRGB(242, 242, 247),
+    TextSecondary = Color3.fromRGB(142, 142, 147),
+    TextDisabled = Color3.fromRGB(99, 99, 102),
     
-    -- 渐变颜色
-    GradientColors = {
-        Color3.fromRGB(45, 130, 255),
-        Color3.fromRGB(0, 200, 255),
-        Color3.fromRGB(100, 200, 255)
-    }
+    -- 功能色
+    Success = Color3.fromRGB(52, 199, 89),
+    Warning = Color3.fromRGB(255, 149, 0),
+    Danger = Color3.fromRGB(255, 59, 48),
+    Info = Color3.fromRGB(0, 199, 190),
+    
+    -- 透明度
+    Transparency = 0.15,
+    HighTransparency = 0.3,
+    FullTransparency = 0.95,
+    
+    -- 边框
+    Border = Color3.fromRGB(44, 44, 56),
+    BorderLight = Color3.fromRGB(64, 64, 76),
+    
+    -- 特殊效果
+    Glow = Color3.fromRGB(0, 200, 255),
+    Hologram = Color3.fromRGB(100, 210, 255),
 }
 
-local MusicPlayer = {
-    currentSound = nil,
-    currentTrackIndex = 1,
-    isPlaying = false,
-    isLooping = false,
-    playlist = {},
-    volume = 0.5
-}
-
-function MusicPlayer:PlayTrack(trackId)
-    if self.currentSound then
-        self.currentSound:Stop()
-        self.currentSound:Destroy()
-    end
-    
-    self.currentSound = Instance.new("Sound")
-    self.currentSound.SoundId = "rbxassetid://" .. trackId
-    self.currentSound.Volume = self.volume
-    self.currentSound.Looped = false
-    self.currentSound.Parent = services.SoundService
-    
-    self.currentSound.Ended:Connect(function()
-        if self.isLooping then
-            self.currentSound:Play()
-        else
-            self:NextTrack()
-        end
-    end)
-    
-    self.currentSound:Play()
-    self.isPlaying = true
-end
-
-function MusicPlayer:Pause()
-    if self.currentSound and self.isPlaying then
-        self.currentSound:Pause()
-        self.isPlaying = false
-    end
-end
-
-function MusicPlayer:Resume()
-    if self.currentSound and not self.isPlaying then
-        self.currentSound:Play()
-        self.isPlaying = true
-    end
-end
-
-function MusicPlayer:Stop()
-    if self.currentSound then
-        self.currentSound:Stop()
-        self.isPlaying = false
-    end
-end
-
-function MusicPlayer:NextTrack()
-    if #self.playlist == 0 then return end
-    
-    self.currentTrackIndex = self.currentTrackIndex + 1
-    if self.currentTrackIndex > #self.playlist then
-        self.currentTrackIndex = 1
-    end
-    
-    self:PlayTrack(self.playlist[self.currentTrackIndex].id)
-    return self.playlist[self.currentTrackIndex]
-end
-
-function MusicPlayer:PreviousTrack()
-    if #self.playlist == 0 then return end
-    
-    self.currentTrackIndex = self.currentTrackIndex - 1
-    if self.currentTrackIndex < 1 then
-        self.currentTrackIndex = #self.playlist
-    end
-    
-    self:PlayTrack(self.playlist[self.currentTrackIndex].id)
-    return self.playlist[self.currentTrackIndex]
-end
-
-function MusicPlayer:SetVolume(volume)
-    self.volume = volume
-    if self.currentSound then
-        self.currentSound.Volume = volume
-    end
-end
-
-function MusicPlayer:AddToPlaylist(trackId, title, artist, imageId)
-    table.insert(self.playlist, {
-        id = trackId,
-        title = title or "未知曲目",
-        artist = artist or "未知艺术家",
-        imageId = imageId or "84830962019412"
-    })
-end
-
-function MusicPlayer:ClearPlaylist()
-    self.playlist = {}
-    self.currentTrackIndex = 1
-    self:Stop()
-end
-
-function MusicPlayer:GetCurrentTrack()
-    if #self.playlist == 0 then return nil end
-    return self.playlist[self.currentTrackIndex]
-end
-
--- 高级粒子特效
-function DigitalParticleExplosion(obj)
-    if not obj or not obj.Parent then return end
-    
-    task.spawn(function()
-        if obj.ClipsDescendants ~= true then
-            obj.ClipsDescendants = true
-        end
-        
-        local mouse = services.Players.LocalPlayer:GetMouse()
-        
-        local x = (mouse.X - obj.AbsolutePosition.X) / obj.AbsoluteSize.X
-        local y = (mouse.Y - obj.AbsolutePosition.Y) / obj.AbsoluteSize.Y
-        
-        -- 创建中心爆炸效果
-        local explosionCenter = Instance.new("Frame")
-        explosionCenter.Name = "ExplosionCenter"
-        explosionCenter.Parent = obj
-        explosionCenter.BackgroundColor3 = config.NeonColor
-        explosionCenter.BackgroundTransparency = 0.2
-        explosionCenter.ZIndex = 8
-        explosionCenter.Size = UDim2.new(0, 0, 0, 0)
-        explosionCenter.AnchorPoint = Vector2.new(0.5, 0.5)
-        explosionCenter.Position = UDim2.new(x, 0, y, 0)
-        
-        local centerCorner = Instance.new("UICorner")
-        centerCorner.CornerRadius = UDim.new(1, 0)
-        centerCorner.Parent = explosionCenter
-        
-        local centerGlow = Instance.new("UIStroke")
-        centerGlow.Parent = explosionCenter
-        centerGlow.Color = config.NeonColor
-        centerGlow.Thickness = 4
-        centerGlow.Transparency = 0
-        
-        -- 创建外圈光环
-        local halo = Instance.new("Frame")
-        halo.Name = "Halo"
-        halo.Parent = explosionCenter
-        halo.BackgroundTransparency = 1
-        halo.Size = UDim2.new(1.5, 0, 1.5, 0)
-        halo.AnchorPoint = Vector2.new(0.5, 0.5)
-        halo.Position = UDim2.new(0.5, 0, 0.5, 0)
-        
-        local haloStroke = Instance.new("UIStroke")
-        haloStroke.Parent = halo
-        haloStroke.Color = config.AccentColor
-        haloStroke.Thickness = 2
-        haloStroke.Transparency = 0.3
-        
-        -- 高级数字粒子
-        local particleCount = 16
-        local particles = {}
-        
-        for i = 1, particleCount do
-            local angle = (i / particleCount) * math.pi * 2
-            local distance = math.random(40, 100)
-            local size = math.random(12, 20)
-            
-            local particle = Instance.new("TextLabel")
-            particle.Name = "DigitalParticle_" .. i
-            particle.Parent = obj
-            particle.BackgroundTransparency = 1
-            particle.Text = tostring(math.random(0, 1))
-            particle.TextColor3 = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, config.AccentColor),
-                ColorSequenceKeypoint.new(1, config.AccentColor2)
-            }):GetColorAt(0.5)
-            particle.TextSize = size
-            particle.Font = Enum.Font.Code
-            particle.ZIndex = 9
-            particle.Size = UDim2.new(0, size, 0, size)
-            particle.Position = UDim2.new(x, 0, y, 0)
-            particle.AnchorPoint = Vector2.new(0.5, 0.5)
-            
-            local particleGlow = Instance.new("UIStroke")
-            particleGlow.Parent = particle
-            particleGlow.Color = config.NeonColor
-            particleGlow.Thickness = 1
-            particleGlow.Transparency = 0.5
-            
-            table.insert(particles, {
-                instance = particle,
-                angle = angle,
-                distance = distance,
-                speed = math.random(180, 300),
-                rotation = math.random(-360, 360),
-                size = size,
-                glow = particleGlow
-            })
-        end
-        
-        -- 爆炸动画
-        services.TweenService:Create(explosionCenter, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 50, 0, 50),
-            BackgroundTransparency = 1
-        }):Play()
-        
-        services.TweenService:Create(centerGlow, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Thickness = 10,
-            Transparency = 1
-        }):Play()
-        
-        services.TweenService:Create(haloStroke, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Thickness = 4,
-            Transparency = 1
-        }):Play()
-        
-        -- 粒子运动
-        local startTime = tick()
-        local connection
-        connection = RunService.Heartbeat:Connect(function()
-            local elapsed = tick() - startTime
-            
-            if elapsed > 1.2 then
-                connection:Disconnect()
-                explosionCenter:Destroy()
-                for _, particleData in ipairs(particles) do
-                    particleData.instance:Destroy()
-                end
-                return
-            end
-            
-            local progress = elapsed / 1.2
-            local easeProgress = 1 - (1 - progress) ^ 2
-            
-            for _, particleData in ipairs(particles) do
-                local moveProgress = easeProgress * particleData.speed / 100
-                local currentDistance = particleData.distance * moveProgress
-                
-                local offsetX = math.cos(particleData.angle) * currentDistance
-                local offsetY = math.sin(particleData.angle) * currentDistance
-                
-                particleData.instance.Position = UDim2.new(
-                    x, offsetX,
-                    y, offsetY
-                )
-                
-                particleData.instance.Rotation = particleData.rotation * progress
-                particleData.instance.TextTransparency = progress
-                particleData.glow.Transparency = 0.5 + progress * 0.5
-                
-                if math.random(1, 2) == 1 then
-                    particleData.instance.Text = tostring(math.random(0, 1))
-                    particleData.instance.TextColor3 = ColorSequence.new({
-                        ColorSequenceKeypoint.new(0, config.AccentColor),
-                        ColorSequenceKeypoint.new(1, config.AccentColor2)
-                    }):GetColorAt(math.random())
-                end
-            end
-            
-            explosionCenter.Size = UDim2.new(0, 50 + progress * 30, 0, 50 + progress * 30)
-            halo.Size = UDim2.new(1.5 + progress * 1, 0, 1.5 + progress * 1, 0)
-        end)
-        
-        -- 冲击波效果
-        local shockwave = Instance.new("Frame")
-        shockwave.Name = "Shockwave"
-        shockwave.Parent = obj
-        shockwave.BackgroundTransparency = 1
-        shockwave.ZIndex = 7
-        shockwave.Size = UDim2.new(0, 0, 0, 0)
-        shockwave.AnchorPoint = Vector2.new(0.5, 0.5)
-        shockwave.Position = UDim2.new(x, 0, y, 0)
-        
-        local shockwaveStroke = Instance.new("UIStroke")
-        shockwaveStroke.Parent = shockwave
-        shockwaveStroke.Color = config.AccentColor
-        shockwaveStroke.Thickness = 4
-        shockwaveStroke.Transparency = 0.2
-        
-        services.TweenService:Create(shockwave, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 200, 0, 200)
-        }):Play()
-        
-        services.TweenService:Create(shockwaveStroke, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Thickness = 0,
-            Transparency = 1
-        }):Play()
-        
-        task.wait(0.8)
-        shockwave:Destroy()
-    end)
-end
-
--- 霓虹流光效果
-local function startNeonFlowEffect(object, property, speed)
-    speed = speed or 0.006
-    local hue = 0
-    local connection
-    connection = RunService.Heartbeat:Connect(function()
-        if not object or not object.Parent then
-            connection:Disconnect()
-            return
-        end
-        hue = (hue + speed) % 1
-        local color = Color3.fromHSV(hue, 0.8, 1)
-        object[property] = color
-    end)
-    return connection
-end
-
--- 高级渐变流光效果
-local function startGradientFlowEffect(object, property, speed)
-    speed = speed or 0.005
-    local progress = 0
-    local colors = config.GradientColors
-    local connection
-    connection = RunService.Heartbeat:Connect(function()
-        if not object or not object.Parent then
-            connection:Disconnect()
-            return
-        end
-        progress = (progress + speed) % 1
-        local index1 = math.floor(progress * (#colors - 1)) + 1
-        local index2 = index1 + 1
-        if index2 > #colors then index2 = 1 end
-        local t = (progress * (#colors - 1)) % 1
-        local color = colors[index1]:Lerp(colors[index2], t)
-        object[property] = color
-    end)
-    return connection
-end
-
--- 全息效果
-local function createHologramEffect(frame, intensity)
-    intensity = intensity or 0.5
-    
-    local hologram = Instance.new("Frame")
-    hologram.Name = "HologramEffect"
-    hologram.BackgroundTransparency = 1
-    hologram.Size = UDim2.new(1, 0, 1, 0)
-    hologram.ZIndex = frame.ZIndex - 1
-    hologram.Parent = frame
-    hologram.ClipsDescendants = true
-    
-    -- 扫描线
-    local scanLines = Instance.new("Frame")
-    scanLines.Name = "ScanLines"
-    scanLines.BackgroundTransparency = 1
-    scanLines.Size = UDim2.new(1, 0, 1, 0)
-    scanLines.Parent = hologram
-    
-    local linePattern = Instance.new("UIGradient")
-    linePattern.Rotation = 0
-    linePattern.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.9),
-        NumberSequenceKeypoint.new(0.05, 0.6),
-        NumberSequenceKeypoint.new(0.1, 0.9),
-        NumberSequenceKeypoint.new(1, 0.9)
-    })
-    linePattern.Parent = scanLines
-    
-    -- 渐变发光
-    local glow = Instance.new("UIGradient")
-    glow.Rotation = 45
-    glow.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.8),
-        NumberSequenceKeypoint.new(0.3, 0.2 * intensity),
-        NumberSequenceKeypoint.new(0.7, 0.2 * intensity),
-        NumberSequenceKeypoint.new(1, 0.8)
-    })
-    
-    local colors = {
-        ColorSequenceKeypoint.new(0, config.AccentColor),
-        ColorSequenceKeypoint.new(0.5, config.AccentColor2),
-        ColorSequenceKeypoint.new(1, config.AccentColor3)
-    }
-    glow.Color = ColorSequence.new(colors)
-    glow.Parent = hologram
-    
-    -- 扫描线动画
-    local scanConnection
-    scanConnection = RunService.Heartbeat:Connect(function()
-        if not scanLines or not scanLines.Parent then
-            scanConnection:Disconnect()
-            return
-        end
-        linePattern.Offset = Vector2.new(0, (tick() * 0.3) % 1)
-    end)
-    
-    -- 颜色变化动画
-    local colorConnection
-    colorConnection = RunService.Heartbeat:Connect(function()
-        if not hologram or not hologram.Parent then
-            colorConnection:Disconnect()
-            return
-        end
-        
-        local time = tick()
-        for i, keypoint in ipairs(colors) do
-            local hue = (time * 0.1 + i * 0.2) % 1
-            colors[i] = ColorSequenceKeypoint.new(
-                keypoint.Time,
-                Color3.fromHSV(hue, 0.7, 1)
-            )
-        end
-        glow.Color = ColorSequence.new(colors)
-    end)
-    
-    return hologram
-end
-
--- 脉动发光效果
-local function createPulseGlow(object)
-    local pulseConnection
-    pulseConnection = RunService.Heartbeat:Connect(function()
-        if not object or not object.Parent then
-            pulseConnection:Disconnect()
-            return
-        end
-        
-        local alpha = 0.6 + math.sin(tick() * 2.5) * 0.2
-        if object:IsA("UIStroke") then
-            object.Transparency = alpha
-        end
-    end)
-    return pulseConnection
-end
-
--- 3D翻转动画
-local function create3DFlipAnimation(object, duration)
-    duration = duration or 0.6
-    
-    services.TweenService:Create(object, TweenInfo.new(duration/3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Rotation = 20
-    }):Play()
-    
-    task.wait(duration/3)
-    
-    services.TweenService:Create(object, TweenInfo.new(duration/3, Enum.EasingStyle.Back, Enum.EasingDirection.InOut), {
-        Rotation = -10
-    }):Play()
-    
-    task.wait(duration/3)
-    
-    services.TweenService:Create(object, TweenInfo.new(duration/3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-        Rotation = 0
-    }):Play()
-end
-
--- 粒子轨迹
-local function createParticleTrail(startPos, endPos, parent)
-    local trail = Instance.new("Frame")
-    trail.Name = "ParticleTrail"
-    trail.BackgroundColor3 = config.NeonColor
-    trail.BackgroundTransparency = 0.2
-    trail.Size = UDim2.new(0, 6, 0, 6)
-    trail.Position = startPos
-    trail.Parent = parent
-    trail.ZIndex = 10
-    
-    local trailCorner = Instance.new("UICorner")
-    trailCorner.CornerRadius = UDim.new(1, 0)
-    trailCorner.Parent = trail
-    
-    local trailGlow = Instance.new("UIStroke")
-    trailGlow.Parent = trail
-    trailGlow.Color = config.AccentColor
-    trailGlow.Thickness = 2
-    trailGlow.Transparency = 0.3
-    
-    services.TweenService:Create(trail, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Position = endPos,
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0, 3, 0, 3)
-    }):Play()
-    
-    services.TweenService:Create(trailGlow, TweenInfo.new(0.4), {
-        Transparency = 1
-    }):Play()
-    
-    delay(0.4, function()
-        trail:Destroy()
-    end)
-end
-
--- 标签切换
-local switchingTabs = false
-function switchTab(new)
-    if switchingTabs then return end
-    
-    local old = FengUI.currentTab
-    if old == nil then
-        new[2].Visible = true
-        FengUI.currentTab = new
-        services.TweenService:Create(new[1], TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { 
-            ImageTransparency = 0,
-            Size = UDim2.new(0, 28, 0, 28)
-        }):Play()
-        services.TweenService:Create(new[1].TabText, TweenInfo.new(0.3), { 
-            TextTransparency = 0,
-            TextColor3 = config.AccentColor
-        }):Play()
-        return
-    end
-    
-    if old[1] == new[1] then return end
-    
-    switchingTabs = true
-    FengUI.currentTab = new
-    
-    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    services.TweenService:Create(old[1], tweenInfo, { 
-        ImageTransparency = 0.6,
-        Size = UDim2.new(0, 24, 0, 24)
-    }):Play()
-    services.TweenService:Create(new[1], tweenInfo, { 
-        ImageTransparency = 0,
-        Size = UDim2.new(0, 28, 0, 28)
-    }):Play()
-    services.TweenService:Create(old[1].TabText, tweenInfo, { 
-        TextTransparency = 0.6,
-        TextColor3 = config.SecondaryTextColor
-    }):Play()
-    services.TweenService:Create(new[1].TabText, tweenInfo, { 
-        TextTransparency = 0,
-        TextColor3 = config.AccentColor
-    }):Play()
-    
-    if old[1].AbsolutePosition and new[1].AbsolutePosition then
-        createParticleTrail(
-            UDim2.new(0, old[1].AbsolutePosition.X, 0, old[1].AbsolutePosition.Y),
-            UDim2.new(0, new[1].AbsolutePosition.X, 0, new[1].AbsolutePosition.Y),
-            old[1].Parent
-        )
-    end
-    
-    old[2].Visible = false
-    new[2].Visible = true
-    
-    task.wait(0.3)
-    switchingTabs = false
-end
-
--- 清理旧的UI
+-- 清除旧UI
 for _, gui in ipairs(services.CoreGui:GetChildren()) do
-    if gui.Name == "UniversalUI" and gui:IsA("ScreenGui") then
+    if gui.Name == "ModernUI" and gui:IsA("ScreenGui") then
         gui:Destroy()
     end
 end
 
--- 创建主UI
-local FengYu = Instance.new("ScreenGui")
-FengYu.Name = "UniversalUI"
-protectGUI(FengYu)
-FengYu.Parent = services.CoreGui
+-- 创建主GUI
+local ModernUIGui = Instance.new("ScreenGui")
+ModernUIGui.Name = "ModernUI"
+ModernUIGui.DisplayOrder = 999
+protectGUI(ModernUIGui)
+ModernUIGui.Parent = services.CoreGui
 
--- 背景模糊效果
-local BlurEffect = Instance.new("BlurEffect")
-BlurEffect.Name = "UIBlur"
-BlurEffect.Size = 0
-BlurEffect.Parent = game:GetService("Lighting")
+-- 主容器（悬浮侧边栏）
+local MainContainer = Instance.new("Frame")
+MainContainer.Name = "MainContainer"
+MainContainer.Parent = ModernUIGui
+MainContainer.AnchorPoint = Vector2.new(0, 0.5)
+MainContainer.BackgroundColor3 = config.Background
+MainContainer.BackgroundTransparency = config.Transparency
+MainContainer.Position = UDim2.new(0, 10, 0.5, 0)
+MainContainer.Size = UDim2.new(0, 50, 0, 400)
+MainContainer.ZIndex = 100
+MainContainer.Visible = true
 
--- 主窗口
-local Main = Instance.new("Frame")
-Main.Name = "Main"
-Main.Parent = FengYu
-Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.BackgroundColor3 = config.MainColor
-Main.BackgroundTransparency = 0.95
-Main.Position = UDim2.new(0.5, 0, 0.35, 0)
-Main.Size = UDim2.new(0, 450, 0, 280)
-Main.ZIndex = 1
-Main.Active = true
-Main.Draggable = true
+-- 毛玻璃效果
+local blurEffect = Instance.new("BlurEffect")
+blurEffect.Parent = MainContainer
+blurEffect.Size = 12
+blurEffect.Enabled = true
 
--- 高级圆角
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 14)
-MainCorner.Parent = Main
+-- 圆角
+local containerCorner = Instance.new("UICorner")
+containerCorner.CornerRadius = UDim.new(0, 16)
+containerCorner.Parent = MainContainer
 
--- 高级边框
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Parent = Main
-MainStroke.Color = config.AccentColor
-MainStroke.Thickness = 2
-MainStroke.Transparency = 0.8
-MainStroke.LineJoinMode = Enum.LineJoinMode.Round
+-- 边框
+local containerStroke = Instance.new("UIStroke")
+containerStroke.Parent = MainContainer
+containerStroke.Color = config.Border
+containerStroke.Thickness = 1
+containerStroke.Transparency = 0.3
 
--- 霓虹发光边框
-local neonStroke = Instance.new("UIStroke")
-neonStroke.Parent = Main
-neonStroke.Thickness = 3
-neonStroke.Transparency = 0.7
-neonStroke.LineJoinMode = Enum.LineJoinMode.Round
-startGradientFlowEffect(neonStroke, "Color", 0.008)
-createPulseGlow(neonStroke)
+-- 阴影效果
+local shadow = Instance.new("ImageLabel")
+shadow.Name = "Shadow"
+shadow.Parent = MainContainer
+shadow.BackgroundTransparency = 1
+shadow.Image = "rbxassetid://5554236805"
+shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+shadow.ImageTransparency = 0.8
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+shadow.Size = UDim2.new(1, 20, 1, 20)
+shadow.Position = UDim2.new(0, -10, 0, -10)
+shadow.ZIndex = -1
 
 -- 标题栏
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
-TitleBar.Parent = Main
-TitleBar.BackgroundColor3 = config.TabColor
-TitleBar.BackgroundTransparency = 0.9
-TitleBar.BorderSizePixel = 0
-TitleBar.Size = UDim2.new(1, 0, 0, 40)
-TitleBar.ZIndex = 2
-
-local TitleBarCorner = Instance.new("UICorner")
-TitleBarCorner.CornerRadius = UDim.new(0, 14)
-TitleBarCorner.Parent = TitleBar
+TitleBar.Parent = MainContainer
+TitleBar.BackgroundTransparency = 1
+TitleBar.Size = UDim2.new(1, 0, 0, 50)
 
 -- 标题文字
 local TitleText = Instance.new("TextLabel")
@@ -696,322 +159,238 @@ TitleText.Name = "TitleText"
 TitleText.Parent = TitleBar
 TitleText.BackgroundTransparency = 1
 TitleText.Position = UDim2.new(0, 15, 0, 0)
-TitleText.Size = UDim2.new(0, 200, 1, 0)
+TitleText.Size = UDim2.new(1, -15, 1, 0)
 TitleText.Font = Enum.Font.GothamBold
-TitleText.Text = "FengUI Premium"
-TitleText.TextColor3 = config.TextColor
-TitleText.TextSize = 18
+TitleText.Text = "Modern UI"
+TitleText.TextColor3 = config.TextPrimary
+TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
-TitleText.TextTransparency = 1
+TitleText.TextTransparency = 0
+TitleText.Rotation = -90
+TitleText.AnchorPoint = Vector2.new(0, 1)
+TitleText.Position = UDim2.new(0, 15, 0, 350)
 
--- 标题渐变效果
-local titleGradient = Instance.new("UIGradient")
-titleGradient.Rotation = 90
-titleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, config.AccentColor),
-    ColorSequenceKeypoint.new(1, config.AccentColor2)
-})
-titleGradient.Transparency = NumberSequence.new(0.5)
-titleGradient.Parent = TitleText
+-- 切换按钮
+local ToggleButton = Instance.new("ImageButton")
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = MainContainer
+ToggleButton.BackgroundColor3 = config.Primary
+ToggleButton.BackgroundTransparency = 0.1
+ToggleButton.Position = UDim2.new(0.5, 0, 1, -30)
+ToggleButton.AnchorPoint = Vector2.new(0.5, 0)
+ToggleButton.Size = UDim2.new(0, 30, 0, 30)
+ToggleButton.AutoButtonColor = false
 
--- 关闭按钮
-local CloseButton = Instance.new("TextButton")
-CloseButton.Name = "CloseButton"
-CloseButton.Parent = TitleBar
-CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.BackgroundTransparency = 1
-CloseButton.BorderSizePixel = 0
-CloseButton.Position = UDim2.new(1, -35, 0, 8)
-CloseButton.Size = UDim2.new(0, 24, 0, 24)
-CloseButton.Font = Enum.Font.GothamBold
-CloseButton.Text = "✕"
-CloseButton.TextColor3 = Color3.fromRGB(255, 80, 80)
-CloseButton.TextSize = 18
-CloseButton.ZIndex = 10
-CloseButton.TextTransparency = 1
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(1, 0)
+toggleCorner.Parent = ToggleButton
 
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 6)
-CloseCorner.Parent = CloseButton
-
-CloseButton.MouseEnter:Connect(function()
-    services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-        TextColor3 = Color3.fromRGB(255, 120, 120),
-        TextSize = 20,
-        Position = UDim2.new(1, -36, 0, 7)
-    }):Play()
-end)
-
-CloseButton.MouseLeave:Connect(function()
-    services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-        TextColor3 = Color3.fromRGB(255, 80, 80),
-        TextSize = 18,
-        Position = UDim2.new(1, -35, 0, 8)
-    }):Play()
-end)
-
-CloseButton.MouseButton1Click:Connect(function()
-    DigitalParticleExplosion(CloseButton)
-    
-    services.TweenService:Create(CloseButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        TextColor3 = Color3.fromRGB(255, 40, 40),
-        TextSize = 16,
-        Position = UDim2.new(1, -34, 0, 9)
-    }):Play()
-    
-    services.TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-        Position = UDim2.new(0.5, 0, 0.3, 0),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0, 10, 0, 10)
-    }):Play()
-    
-    services.TweenService:Create(MainStroke, TweenInfo.new(0.4), {
-        Transparency = 1
-    }):Play()
-    
-    services.TweenService:Create(neonStroke, TweenInfo.new(0.4), {
-        Transparency = 1
-    }):Play()
-    
-    services.TweenService:Create(TitleBar, TweenInfo.new(0.4), {
-        BackgroundTransparency = 1
-    }):Play()
-    
-    services.TweenService:Create(TitleText, TweenInfo.new(0.4), {
-        TextTransparency = 1
-    }):Play()
-    
-    services.TweenService:Create(CloseButton, TweenInfo.new(0.4), {
-        TextTransparency = 1
-    }):Play()
-    
-    task.wait(0.4)
-    FengYu:Destroy()
-    BlurEffect:Destroy()
-end)
-
--- 打开按钮
-local Open = Instance.new("ImageButton")
-Open.Name = "Open"
-Open.Parent = FengYu
-Open.BackgroundColor3 = config.AccentColor
-Open.BackgroundTransparency = 0.8
-Open.Position = UDim2.new(0.95, 0, 0.02, 0)
-Open.Size = UDim2.new(0, 45, 0, 45)
-Open.Active = true
-Open.Draggable = true
-Open.Image = "rbxassetid://84830962019412"
-Open.ImageColor3 = Color3.fromRGB(255, 255, 255)
-Open.ImageTransparency = 0.1
-
-local OpenCorner = Instance.new("UICorner")
-OpenCorner.CornerRadius = UDim.new(0, 10)
-OpenCorner.Parent = Open
-
-local OpenStroke = Instance.new("UIStroke")
-OpenStroke.Parent = Open
-OpenStroke.Color = config.AccentColor
-OpenStroke.Thickness = 1.5
-OpenStroke.Transparency = 0.3
-
-startGradientFlowEffect(Open, "BackgroundColor3", 0.01)
-createPulseGlow(OpenStroke)
-
--- 打开/关闭动画
-local function playEntranceAnimation()
-    Main.Position = UDim2.new(0.5, 0, 0.35, 0)
-    Main.BackgroundTransparency = 1
-    Main.Size = UDim2.new(0, 10, 0, 10)
-    
-    TitleBar.BackgroundTransparency = 1
-    TitleText.TextTransparency = 1
-    CloseButton.TextTransparency = 1
-    Side.BackgroundTransparency = 1
-    MainStroke.Transparency = 1
-    neonStroke.Transparency = 1
-    
-    TabMain.Visible = false
-    TabBtns.Visible = false
-    
-    -- 背景模糊动画
-    services.TweenService:Create(BlurEffect, TweenInfo.new(0.6), {
-        Size = 8
-    }):Play()
-    
-    services.TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0.5, 0, 0.4, 0),
-        BackgroundTransparency = 0.95,
-        Size = UDim2.new(0, 450, 0, 280)
-    }):Play()
-    
-    services.TweenService:Create(MainStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Transparency = 0.8
-    }):Play()
-    
-    services.TweenService:Create(neonStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Transparency = 0.7
-    }):Play()
-    
-    task.wait(0.2)
-    
-    services.TweenService:Create(TitleBar, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0.9
-    }):Play()
-    
-    services.TweenService:Create(TitleText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        TextTransparency = 0
-    }):Play()
-    
-    services.TweenService:Create(CloseButton, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        TextTransparency = 0
-    }):Play()
-    
-    task.wait(0.2)
-    
-    services.TweenService:Create(Side, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0.9
-    }):Play()
-    
-    task.wait(0.2)
-    
-    TabMain.Visible = true
-    TabBtns.Visible = true
-    
-    DigitalParticleExplosion(Main)
-end
-
-local function playExitAnimation()
-    services.TweenService:Create(BlurEffect, TweenInfo.new(0.4), {
-        Size = 0
-    }):Play()
-end
-
-Open.MouseButton1Click:Connect(function()
-    if Main.Visible then
-        playExitAnimation()
-    end
-    Main.Visible = not Main.Visible
-    if Main.Visible then
-        playEntranceAnimation()
-    end
-    create3DFlipAnimation(Open, 0.5)
-end)
-
-services.UserInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.RightControl then
-        if Main.Visible then
-            playExitAnimation()
-        end
-        Main.Visible = not Main.Visible
-        if Main.Visible then
-            playEntranceAnimation()
-        end
-        create3DFlipAnimation(Open, 0.5)
-    end
-end)
-
--- 标签页容器
-local TabMain = Instance.new("Frame")
-TabMain.Name = "TabMain"
-TabMain.Parent = Main
-TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.2, 0, 0, 45)
-TabMain.Size = UDim2.new(0, 360, 0, 235)
-TabMain.Visible = false
-
--- 侧边栏
-local Side = Instance.new("Frame")
-Side.Name = "Side"
-Side.Parent = Main
-Side.BackgroundColor3 = config.TabColor
-Side.BackgroundTransparency = 0.9
-Side.BorderSizePixel = 0
-Side.ClipsDescendants = true
-Side.Position = UDim2.new(0, 0, 0, 40)
-Side.Size = UDim2.new(0, 90, 0, 240)
-
-local SideCorner = Instance.new("UICorner")
-SideCorner.CornerRadius = UDim.new(0, 14)
-SideCorner.Parent = Side
-
-createHologramEffect(Side, 0.4)
+local toggleIcon = Instance.new("ImageLabel")
+toggleIcon.Name = "Icon"
+toggleIcon.Parent = ToggleButton
+toggleIcon.BackgroundTransparency = 1
+toggleIcon.Size = UDim2.new(0.6, 0, 0.6, 0)
+toggleIcon.Position = UDim2.new(0.2, 0, 0.2, 0)
+toggleIcon.Image = "rbxassetid://3926305904"
+toggleIcon.ImageRectOffset = Vector2.new(964, 324)
+toggleIcon.ImageRectSize = Vector2.new(36, 36)
+toggleIcon.ImageColor3 = config.TextPrimary
 
 -- 标签按钮容器
-local TabBtns = Instance.new("ScrollingFrame")
-TabBtns.Name = "TabBtns"
-TabBtns.Parent = Side
-TabBtns.Active = true
-TabBtns.BackgroundTransparency = 1
-TabBtns.BorderSizePixel = 0
-TabBtns.Position = UDim2.new(0, 0, 0, 10)
-TabBtns.Size = UDim2.new(0, 90, 0, 220)
-TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
-TabBtns.ScrollBarThickness = 2
-TabBtns.ScrollBarImageColor3 = config.AccentColor
-TabBtns.ScrollBarImageTransparency = 0.7
-TabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-TabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
-TabBtns.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-TabBtns.Visible = false
+local TabButtons = Instance.new("Frame")
+TabButtons.Name = "TabButtons"
+TabButtons.Parent = MainContainer
+TabButtons.BackgroundTransparency = 1
+TabButtons.Position = UDim2.new(0, 0, 0, 50)
+TabButtons.Size = UDim2.new(1, 0, 1, -80)
 
-local TabBtnsL = Instance.new("UIListLayout")
-TabBtnsL.Name = "TabBtnsL"
-TabBtnsL.Parent = TabBtns
-TabBtnsL.SortOrder = Enum.SortOrder.LayoutOrder
-TabBtnsL.Padding = UDim.new(0, 8)
+local TabListLayout = Instance.new("UIListLayout")
+TabListLayout.Parent = TabButtons
+TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+TabListLayout.Padding = UDim.new(0, 8)
 
-TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    TabBtns.CanvasSize = UDim2.new(0, 0, 0, TabBtnsL.AbsoluteContentSize.Y)
-    
-    TabBtns.ScrollingEnabled = TabBtnsL.AbsoluteContentSize.Y > TabBtns.AbsoluteSize.Y
-    TabBtns.ElasticBehavior = Enum.ElasticBehavior.Never
+-- 内容容器（展开时显示）
+local ContentContainer = Instance.new("Frame")
+ContentContainer.Name = "ContentContainer"
+ContentContainer.Parent = ModernUIGui
+ContentContainer.AnchorPoint = Vector2.new(0, 0.5)
+ContentContainer.BackgroundColor3 = config.Background
+ContentContainer.BackgroundTransparency = config.Transparency
+ContentContainer.Position = UDim2.new(0, 70, 0.5, 0)
+ContentContainer.Size = UDim2.new(0, 320, 0, 400)
+ContentContainer.Visible = false
+ContentContainer.ZIndex = 99
+
+local contentCorner = Instance.new("UICorner")
+contentCorner.CornerRadius = UDim.new(0, 16)
+contentCorner.Parent = ContentContainer
+
+local contentStroke = Instance.new("UIStroke")
+contentStroke.Parent = ContentContainer
+contentStroke.Color = config.Border
+contentStroke.Thickness = 1
+contentStroke.Transparency = 0.3
+
+local contentShadow = Instance.new("ImageLabel")
+contentShadow.Name = "Shadow"
+contentShadow.Parent = ContentContainer
+contentShadow.BackgroundTransparency = 1
+contentShadow.Image = "rbxassetid://5554236805"
+contentShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+contentShadow.ImageTransparency = 0.8
+contentShadow.ScaleType = Enum.ScaleType.Slice
+contentShadow.SliceCenter = Rect.new(10, 10, 118, 118)
+contentShadow.Size = UDim2.new(1, 20, 1, 20)
+contentShadow.Position = UDim2.new(0, -10, 0, -10)
+contentShadow.ZIndex = -1
+
+-- 内容滚动框
+local ContentScroller = Instance.new("ScrollingFrame")
+ContentScroller.Name = "ContentScroller"
+ContentScroller.Parent = ContentContainer
+ContentScroller.BackgroundTransparency = 1
+ContentScroller.BorderSizePixel = 0
+ContentScroller.Size = UDim2.new(1, -20, 1, -20)
+ContentScroller.Position = UDim2.new(0, 10, 0, 10)
+ContentScroller.ScrollBarThickness = 4
+ContentScroller.ScrollBarImageColor3 = config.TextSecondary
+ContentScroller.ScrollBarImageTransparency = 0.5
+ContentScroller.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local ContentLayout = Instance.new("UIListLayout")
+ContentLayout.Parent = ContentScroller
+ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ContentLayout.Padding = UDim.new(0, 12)
+
+-- 自动调整滚动框大小
+ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ContentScroller.CanvasSize = UDim2.new(0, 0, 0, ContentLayout.AbsoluteContentSize.Y + 20)
 end)
 
--- 自动播放入场动画
-task.spawn(function()
-    task.wait(0.5)
-    playEntranceAnimation()
-end)
+-- 悬浮提示系统
+local TooltipSystem = Instance.new("Frame")
+TooltipSystem.Name = "TooltipSystem"
+TooltipSystem.Parent = ModernUIGui
+TooltipSystem.BackgroundColor3 = config.BackgroundDark
+TooltipSystem.BackgroundTransparency = 0.1
+TooltipSystem.Size = UDim2.new(0, 200, 0, 60)
+TooltipSystem.Position = UDim2.new(0, 100, 0, 100)
+TooltipSystem.Visible = false
+TooltipSystem.ZIndex = 1000
 
--- 标题动画
-task.spawn(function()
-    local hue = 0
-    local matrixEffect = Instance.new("UIGradient")
-    matrixEffect.Rotation = 90
-    matrixEffect.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0),
-        NumberSequenceKeypoint.new(0.5, 0.3),
-        NumberSequenceKeypoint.new(1, 0)
-    })
-    matrixEffect.Parent = TitleText
+local tooltipCorner = Instance.new("UICorner")
+tooltipCorner.CornerRadius = UDim.new(0, 8)
+tooltipCorner.Parent = TooltipSystem
+
+local tooltipTitle = Instance.new("TextLabel")
+tooltipTitle.Name = "Title"
+tooltipTitle.Parent = TooltipSystem
+tooltipTitle.BackgroundTransparency = 1
+tooltipTitle.Position = UDim2.new(0, 10, 0, 8)
+tooltipTitle.Size = UDim2.new(1, -20, 0, 20)
+tooltipTitle.Font = Enum.Font.GothamBold
+tooltipTitle.Text = "提示"
+tooltipTitle.TextColor3 = config.TextPrimary
+tooltipTitle.TextSize = 14
+tooltipTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+local tooltipDesc = Instance.new("TextLabel")
+tooltipDesc.Name = "Description"
+tooltipDesc.Parent = TooltipSystem
+tooltipDesc.BackgroundTransparency = 1
+tooltipDesc.Position = UDim2.new(0, 10, 0, 30)
+tooltipDesc.Size = UDim2.new(1, -20, 0, 20)
+tooltipDesc.Font = Enum.Font.Gotham
+tooltipDesc.Text = "描述信息"
+tooltipDesc.TextColor3 = config.TextSecondary
+tooltipDesc.TextSize = 12
+tooltipDesc.TextXAlignment = Enum.TextXAlignment.Left
+tooltipDesc.TextWrapped = true
+
+-- 显示提示函数
+local function showTooltip(title, description, position)
+    if not title then
+        TooltipSystem.Visible = false
+        return
+    end
     
-    while TitleText and TitleText.Parent do
-        hue = (hue + 0.02) % 1
-        
-        TitleText.TextColor3 = Color3.fromHSV(hue, 0.8, 1)
-        
-        matrixEffect.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.3) % 1, 1, 1)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 1, 1)),
-            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.3) % 1, 1, 1))
-        })
-        
-        services.TweenService:Create(TitleText, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-            TextSize = 18 + math.sin(tick() * 2) * 1
+    tooltipTitle.Text = title
+    tooltipDesc.Text = description
+    
+    -- 计算大小
+    local textSize = game:GetService("TextService"):GetTextSize(
+        description,
+        12,
+        Enum.Font.Gotham,
+        Vector2.new(180, 1000)
+    )
+    
+    TooltipSystem.Size = UDim2.new(0, 200, 0, math.max(60, textSize.Y + 40))
+    TooltipSystem.Position = UDim2.new(0, position.X, 0, position.Y + 20)
+    TooltipSystem.Visible = true
+end
+
+-- 动画切换UI状态
+local function toggleUI()
+    ModernUI.minimized = not ModernUI.minimized
+    
+    if ModernUI.minimized then
+        -- 最小化：只显示侧边栏
+        services.TweenService:Create(MainContainer, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 50, 0, 400)
         }):Play()
         
-        task.wait(0.05)
+        services.TweenService:Create(TitleText, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            TextTransparency = 0
+        }):Play()
+        
+        ContentContainer.Visible = false
+        toggleIcon.ImageRectOffset = Vector2.new(4, 484) -- 右箭头
+    else
+        -- 展开：显示内容区域
+        services.TweenService:Create(MainContainer, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 70, 0, 400)
+        }):Play()
+        
+        services.TweenService:Create(TitleText, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            TextTransparency = 1
+        }):Play()
+        
+        ContentContainer.Visible = true
+        toggleIcon.ImageRectOffset = Vector2.new(964, 324) -- 左箭头
+    end
+end
+
+-- 切换按钮事件
+ToggleButton.MouseButton1Click:Connect(function()
+    toggleUI()
+end)
+
+ToggleButton.MouseEnter:Connect(function()
+    services.TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
+        BackgroundTransparency = 0
+    }):Play()
+end)
+
+ToggleButton.MouseLeave:Connect(function()
+    services.TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
+        BackgroundTransparency = 0.1
+    }):Play()
+end)
+
+-- 全局快捷键：Ctrl+Shift+P
+services.UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.P and 
+       services.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) and
+       services.UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+        toggleUI()
     end
 end)
 
--- FengUI 构造函数
-function FengUI.new(FengUI, name, theme)
-    for _, v in next, services.CoreGui:GetChildren() do
-        if v.Name == "REN" then
-            v:Destroy()
-        end
-    end
-
+-- 创建标签按钮的函数
+function ModernUI.new(windowName, theme)
     if theme then
         for k, v in pairs(theme) do
             if config[k] ~= nil then
@@ -1019,1781 +398,920 @@ function FengUI.new(FengUI, name, theme)
             end
         end
     end
-
-    local scriptName = name or "FengUI Premium"
-    TitleText.Text = scriptName
     
     local window = {}
+    local tabs = {}
     
-    function window.Tab(window, name, icon)
-        local Tab = Instance.new("ScrollingFrame")
-        local TabIco = Instance.new("ImageLabel")
-        local TabText = Instance.new("TextLabel")
-        local TabBtn = Instance.new("TextButton")
-        local TabL = Instance.new("UIListLayout")
+    function window:Tab(tabName, tabIcon)
+        local tabData = {}
+        tabData.name = tabName
+        tabData.icon = tabIcon or "rbxassetid://3926305904"
+        tabData.sections = {}
         
-        Tab.Name = "Tab"
-        Tab.Parent = TabMain
-        Tab.Active = true
-        Tab.BackgroundTransparency = 1
-        Tab.Size = UDim2.new(1, 0, 1, 0)
-        Tab.ScrollBarThickness = 2
-        Tab.ScrollBarImageColor3 = config.AccentColor
-        Tab.ScrollBarImageTransparency = 0.7
-        Tab.Visible = false
-        Tab.ElasticBehavior = Enum.ElasticBehavior.Never
-        Tab.ScrollingDirection = Enum.ScrollingDirection.Y
-        Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+        -- 创建标签按钮
+        local TabButton = Instance.new("ImageButton")
+        TabButton.Name = "TabButton_" .. tabName
+        TabButton.Parent = TabButtons
+        TabButton.BackgroundColor3 = config.Surface
+        TabButton.BackgroundTransparency = 0.8
+        TabButton.Size = UDim2.new(0, 40, 0, 40)
+        TabButton.AutoButtonColor = false
         
-        TabIco.Name = "TabIco"
-        TabIco.Parent = TabBtns
-        TabIco.BackgroundTransparency = 1
-        TabIco.BorderSizePixel = 0
-        TabIco.Size = UDim2.new(0, 24, 0, 24)
-        TabIco.Image = "rbxassetid://84830962019412"
-        TabIco.ImageTransparency = 0.6
+        local tabCorner = Instance.new("UICorner")
+        tabCorner.CornerRadius = UDim.new(0, 10)
+        tabCorner.Parent = TabButton
         
-        startGradientFlowEffect(TabIco, "ImageColor3", 0.004)
+        local tabIconLabel = Instance.new("ImageLabel")
+        tabIconLabel.Name = "Icon"
+        tabIconLabel.Parent = TabButton
+        tabIconLabel.BackgroundTransparency = 1
+        tabIconLabel.Size = UDim2.new(0.6, 0, 0.6, 0)
+        tabIconLabel.Position = UDim2.new(0.2, 0, 0.2, 0)
+        tabIconLabel.Image = tabData.icon
+        tabIconLabel.ImageColor3 = config.TextSecondary
         
-        TabText.Name = "TabText"
-        TabText.Parent = TabIco
-        TabText.BackgroundTransparency = 1
-        TabText.Position = UDim2.new(1.2, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 65, 0, 24)
-        TabText.Font = Enum.Font.GothamSemibold
-        TabText.Text = name
-        TabText.TextColor3 = config.SecondaryTextColor
-        TabText.TextSize = 13
-        TabText.TextXAlignment = Enum.TextXAlignment.Left
-        TabText.TextTransparency = 0.6
+        -- 标签内容容器
+        local TabContent = Instance.new("Frame")
+        TabContent.Name = "TabContent_" .. tabName
+        TabContent.Parent = ContentScroller
+        TabContent.BackgroundTransparency = 1
+        TabContent.Size = UDim2.new(1, 0, 0, 0)
+        TabContent.Visible = false
         
-        TabBtn.Name = "TabBtn"
-        TabBtn.Parent = TabIco
-        TabBtn.BackgroundTransparency = 1
-        TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 90, 0, 24)
-        TabBtn.AutoButtonColor = false
-        TabBtn.Font = Enum.Font.SourceSans
-        TabBtn.Text = ""
-        
-        TabL.Name = "TabL"
-        TabL.Parent = Tab
-        TabL.SortOrder = Enum.SortOrder.LayoutOrder
-        TabL.Padding = UDim.new(0, 6)
-        
-        TabBtn.MouseButton1Click:Connect(function()
-            DigitalParticleExplosion(TabBtn)
-            switchTab({ TabIco, Tab })
+        -- 鼠标交互效果
+        TabButton.MouseEnter:Connect(function()
+            if ModernUI.currentTab ~= tabData then
+                services.TweenService:Create(TabButton, TweenInfo.new(0.2), {
+                    BackgroundTransparency = 0.6,
+                    Size = UDim2.new(0, 42, 0, 42)
+                }):Play()
+                
+                services.TweenService:Create(tabIconLabel, TweenInfo.new(0.2), {
+                    ImageColor3 = config.TextPrimary
+                }):Play()
+                
+                showTooltip(tabName, "点击打开此标签", TabButton.AbsolutePosition)
+            end
         end)
         
-        if FengUI.currentTab == nil then
-            switchTab({ TabIco, Tab })
-        end
+        TabButton.MouseLeave:Connect(function()
+            if ModernUI.currentTab ~= tabData then
+                services.TweenService:Create(TabButton, TweenInfo.new(0.2), {
+                    BackgroundTransparency = 0.8,
+                    Size = UDim2.new(0, 40, 0, 40)
+                }):Play()
+                
+                services.TweenService:Create(tabIconLabel, TweenInfo.new(0.2), {
+                    ImageColor3 = config.TextSecondary
+                }):Play()
+                
+                showTooltip()
+            end
+        end)
         
-        TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 10)
+        -- 切换标签
+        TabButton.MouseButton1Click:Connect(function()
+            if ModernUI.currentTab == tabData then return end
             
-            Tab.ScrollingEnabled = TabL.AbsoluteContentSize.Y > Tab.AbsoluteSize.Y
-            Tab.ElasticBehavior = Enum.ElasticBehavior.Never
+            -- 更新当前标签
+            if ModernUI.currentTab then
+                -- 隐藏旧标签内容
+                ModernUI.currentTab.content.Visible = false
+                
+                -- 重置旧标签按钮样式
+                local oldButton = TabButtons:FindFirstChild("TabButton_" .. ModernUI.currentTab.name)
+                if oldButton then
+                    services.TweenService:Create(oldButton, TweenInfo.new(0.2), {
+                        BackgroundColor3 = config.Surface,
+                        BackgroundTransparency = 0.8,
+                        Size = UDim2.new(0, 40, 0, 40)
+                    }):Play()
+                    
+                    local oldIcon = oldButton:FindFirstChild("Icon")
+                    if oldIcon then
+                        services.TweenService:Create(oldIcon, TweenInfo.new(0.2), {
+                            ImageColor3 = config.TextSecondary
+                        }):Play()
+                    end
+                end
+            end
+            
+            -- 设置新标签
+            ModernUI.currentTab = tabData
+            TabContent.Visible = true
+            
+            -- 更新标签按钮样式
+            services.TweenService:Create(TabButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = config.Primary,
+                BackgroundTransparency = 0.2,
+                Size = UDim2.new(0, 44, 0, 44)
+            }):Play()
+            
+            services.TweenService:Create(tabIconLabel, TweenInfo.new(0.2), {
+                ImageColor3 = config.TextPrimary
+            }):Play()
+            
+            showTooltip()
         end)
+        
+        -- 存储标签数据
+        tabData.button = TabButton
+        tabData.content = TabContent
+        tabData.sectionContainer = TabContent
+        tabs[tabName] = tabData
+        
+        -- 如果是第一个标签，自动选中
+        if not ModernUI.currentTab then
+            TabButton.MouseButton1Click:Fire()
+        end
         
         local tab = {}
         
-        function tab.section(tab, name, TabVal)
-            local Section = Instance.new("Frame")
-            local SectionC = Instance.new("UICorner")
-            local SectionText = Instance.new("TextLabel")
-            local SectionOpen = Instance.new("ImageLabel")
-            local SectionOpened = Instance.new("ImageLabel")
-            local SectionToggle = Instance.new("ImageButton")
-            local Objs = Instance.new("Frame")
-            local ObjsL = Instance.new("UIListLayout")
+        function tab:Section(sectionName)
+            local sectionData = {}
             
-            Section.Name = "Section"
-            Section.Parent = Tab
-            Section.BackgroundColor3 = config.TabColor
-            Section.BackgroundTransparency = 0.9
-            Section.BorderSizePixel = 0
-            Section.ClipsDescendants = true
-            Section.Size = UDim2.new(0.95, 0, 0, 40)
+            -- 创建分区
+            local SectionFrame = Instance.new("Frame")
+            SectionFrame.Name = "Section_" .. sectionName
+            SectionFrame.Parent = TabContent
+            SectionFrame.BackgroundColor3 = config.Surface
+            SectionFrame.BackgroundTransparency = 0.2
+            SectionFrame.Size = UDim2.new(1, 0, 0, 40)
             
-            SectionC.CornerRadius = UDim.new(0, 8)
-            SectionC.Name = "SectionC"
-            SectionC.Parent = Section
+            local sectionCorner = Instance.new("UICorner")
+            sectionCorner.CornerRadius = UDim.new(0, 12)
+            sectionCorner.Parent = SectionFrame
             
-            -- 标题栏
-            SectionText.Name = "SectionText"
-            SectionText.Parent = Section
-            SectionText.BackgroundTransparency = 1
-            SectionText.Position = UDim2.new(0.1, 0, 0, 0)
-            SectionText.Size = UDim2.new(0, 320, 0, 40)
-            SectionText.Font = Enum.Font.GothamSemibold
-            SectionText.Text = name
-            SectionText.TextColor3 = config.TextColor
-            SectionText.TextSize = 15
-            SectionText.TextXAlignment = Enum.TextXAlignment.Left
+            local sectionStroke = Instance.new("UIStroke")
+            sectionStroke.Parent = SectionFrame
+            sectionStroke.Color = config.BorderLight
+            sectionStroke.Thickness = 1
+            sectionStroke.Transparency = 0.5
             
-            -- 图标
-            SectionOpen.Name = "SectionOpen"
-            SectionOpen.Parent = SectionText
-            SectionOpen.BackgroundTransparency = 1
-            SectionOpen.BorderSizePixel = 0
-            SectionOpen.Position = UDim2.new(0, -30, 0, 8)
-            SectionOpen.Size = UDim2.new(0, 24, 0, 24)
-            SectionOpen.Image = "rbxassetid://84830962019412"
-            SectionOpen.ImageColor3 = config.SecondaryTextColor
+            -- 分区标题
+            local SectionTitle = Instance.new("TextLabel")
+            SectionTitle.Name = "Title"
+            SectionTitle.Parent = SectionFrame
+            SectionTitle.BackgroundTransparency = 1
+            SectionTitle.Position = UDim2.new(0, 15, 0, 0)
+            SectionTitle.Size = UDim2.new(1, -30, 0, 40)
+            SectionTitle.Font = Enum.Font.GothamBold
+            SectionTitle.Text = sectionName
+            SectionTitle.TextColor3 = config.TextPrimary
+            SectionTitle.TextSize = 14
+            SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
             
-            SectionOpened.Name = "SectionOpened"
-            SectionOpened.Parent = SectionOpen
-            SectionOpened.BackgroundTransparency = 1
-            SectionOpened.BorderSizePixel = 0
-            SectionOpened.Size = UDim2.new(0, 24, 0, 24)
-            SectionOpened.Image = "rbxassetid://84830962019412"
-            SectionOpened.ImageColor3 = config.AccentColor
-            SectionOpened.ImageTransparency = 1
+            -- 控件容器
+            local ControlsContainer = Instance.new("Frame")
+            ControlsContainer.Name = "Controls"
+            ControlsContainer.Parent = SectionFrame
+            ControlsContainer.BackgroundTransparency = 1
+            ControlsContainer.Position = UDim2.new(0, 0, 0, 45)
+            ControlsContainer.Size = UDim2.new(1, 0, 0, 0)
+            ControlsContainer.Visible = true
             
-            SectionToggle.Name = "SectionToggle"
-            SectionToggle.Parent = SectionOpen
-            SectionToggle.BackgroundTransparency = 1
-            SectionToggle.BorderSizePixel = 0
-            SectionToggle.Size = UDim2.new(0, 24, 0, 24)
+            local controlsLayout = Instance.new("UIListLayout")
+            controlsLayout.Parent = ControlsContainer
+            controlsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            controlsLayout.Padding = UDim.new(0, 8)
             
-            -- 内容容器
-            Objs.Name = "Objs"
-            Objs.Parent = Section
-            Objs.BackgroundTransparency = 1
-            Objs.BorderSizePixel = 0
-            Objs.Position = UDim2.new(0, 8, 0, 40)
-            Objs.Size = UDim2.new(0.98, 0, 0, 0)
-            
-            ObjsL.Name = "ObjsL"
-            ObjsL.Parent = Objs
-            ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
-            ObjsL.Padding = UDim.new(0, 8)
-            
-            local open = TabVal ~= false
-            if TabVal ~= false then
-                Section.Size = UDim2.new(0.95, 0, 0, open and 40 + ObjsL.AbsoluteContentSize.Y + 8 or 40)
-                SectionOpened.ImageTransparency = open and 0 or 1
-                SectionOpen.ImageTransparency = open and 1 or 0
-            end
-            
-            SectionToggle.MouseButton1Click:Connect(function()
-                open = not open
-                services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                    Size = UDim2.new(0.95, 0, 0, open and 40 + ObjsL.AbsoluteContentSize.Y + 8 or 40)
-                }):Play()
-                
-                services.TweenService:Create(SectionOpened, TweenInfo.new(0.3), {
-                    ImageTransparency = open and 0 or 1
-                }):Play()
-                
-                services.TweenService:Create(SectionOpen, TweenInfo.new(0.3), {
-                    ImageTransparency = open and 1 or 0
-                }):Play()
-                
-                DigitalParticleExplosion(SectionToggle)
-            end)
-            
-            ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                if not open then return end
-                Section.Size = UDim2.new(0.95, 0, 0, 40 + ObjsL.AbsoluteContentSize.Y + 8)
+            -- 自动调整分区大小
+            controlsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                local contentHeight = controlsLayout.AbsoluteContentSize.Y
+                ControlsContainer.Size = UDim2.new(1, 0, 0, contentHeight)
+                SectionFrame.Size = UDim2.new(1, 0, 0, 45 + contentHeight + 10)
             end)
             
             local section = {}
             
-            function section.MusicPlayer(section, title, defaultPlaylist)
-                local MusicPlayerModule = Instance.new("Frame")
-                MusicPlayerModule.Name = "MusicPlayerModule"
-                MusicPlayerModule.Parent = Objs
-                MusicPlayerModule.BackgroundTransparency = 1
-                MusicPlayerModule.BorderSizePixel = 0
-                MusicPlayerModule.Size = UDim2.new(0, 330, 0, 180)
+            -- 创建按钮控件
+            function section:Button(buttonText, callback, tooltip)
+                local ButtonFrame = Instance.new("Frame")
+                ButtonFrame.Name = "Button_" .. buttonText
+                ButtonFrame.Parent = ControlsContainer
+                ButtonFrame.BackgroundTransparency = 1
+                ButtonFrame.Size = UDim2.new(1, 0, 0, 36)
                 
-                local PlayerContainer = Instance.new("Frame")
-                PlayerContainer.Name = "PlayerContainer"
-                PlayerContainer.Parent = MusicPlayerModule
-                PlayerContainer.BackgroundColor3 = config.TabColor
-                PlayerContainer.BackgroundTransparency = 0.9
-                PlayerContainer.Size = UDim2.new(1, 0, 0, 180)
+                local Button = Instance.new("TextButton")
+                Button.Name = "Button"
+                Button.Parent = ButtonFrame
+                Button.BackgroundColor3 = config.Primary
+                Button.BackgroundTransparency = 0.1
+                Button.Size = UDim2.new(1, 0, 1, 0)
+                Button.AutoButtonColor = false
+                Button.Font = Enum.Font.GothamBold
+                Button.Text = buttonText
+                Button.TextColor3 = config.TextPrimary
+                Button.TextSize = 14
                 
-                local PlayerCorner = Instance.new("UICorner")
-                PlayerCorner.CornerRadius = UDim.new(0, 10)
-                PlayerCorner.Parent = PlayerContainer
+                local buttonCorner = Instance.new("UICorner")
+                buttonCorner.CornerRadius = UDim.new(0, 8)
+                buttonCorner.Parent = Button
                 
-                local playerGlow = Instance.new("UIStroke")
-                playerGlow.Parent = PlayerContainer
-                playerGlow.Color = config.AccentColor
-                playerGlow.Thickness = 2
-                playerGlow.Transparency = 0.6
-                
-                startGradientFlowEffect(playerGlow, "Color", 0.01)
-                createPulseGlow(playerGlow)
-                
-                -- 高级音乐播放器界面
-                local TopSection = Instance.new("Frame")
-                TopSection.Name = "TopSection"
-                TopSection.Parent = PlayerContainer
-                TopSection.BackgroundTransparency = 1
-                TopSection.Size = UDim2.new(1, 0, 0, 80)
-                
-                local AlbumArt = Instance.new("ImageLabel")
-                AlbumArt.Name = "AlbumArt"
-                AlbumArt.Parent = TopSection
-                AlbumArt.BackgroundColor3 = config.Bg_Color
-                AlbumArt.BackgroundTransparency = 0.8
-                AlbumArt.Position = UDim2.new(0.04, 0, 0.15, 0)
-                AlbumArt.Size = UDim2.new(0, 60, 0, 60)
-                AlbumArt.Image = "rbxassetid://84830962019412"
-                
-                local AlbumCorner = Instance.new("UICorner")
-                AlbumCorner.CornerRadius = UDim.new(0, 8)
-                AlbumCorner.Parent = AlbumArt
-                
-                local albumGlow = Instance.new("UIStroke")
-                albumGlow.Parent = AlbumArt
-                albumGlow.Color = config.AccentColor
-                albumGlow.Thickness = 1.5
-                albumGlow.Transparency = 0.7
-                
-                createHologramEffect(AlbumArt, 0.3)
-                
-                local InfoContainer = Instance.new("Frame")
-                InfoContainer.Name = "InfoContainer"
-                InfoContainer.Parent = TopSection
-                InfoContainer.BackgroundTransparency = 1
-                InfoContainer.Position = UDim2.new(0.25, 0, 0, 0)
-                InfoContainer.Size = UDim2.new(0.7, 0, 1, 0)
-                
-                local SongTitle = Instance.new("TextLabel")
-                SongTitle.Name = "SongTitle"
-                SongTitle.Parent = InfoContainer
-                SongTitle.BackgroundTransparency = 1
-                SongTitle.Position = UDim2.new(0, 0, 0.15, 0)
-                SongTitle.Size = UDim2.new(1, 0, 0, 25)
-                SongTitle.Font = Enum.Font.GothamBold
-                SongTitle.Text = "点击播放音乐"
-                SongTitle.TextColor3 = config.TextColor
-                SongTitle.TextSize = 16
-                SongTitle.TextXAlignment = Enum.TextXAlignment.Left
-                SongTitle.TextTruncate = Enum.TextTruncate.AtEnd
-                
-                local ArtistName = Instance.new("TextLabel")
-                ArtistName.Name = "ArtistName"
-                ArtistName.Parent = InfoContainer
-                ArtistName.BackgroundTransparency = 1
-                ArtistName.Position = UDim2.new(0, 0, 0.5, 0)
-                ArtistName.Size = UDim2.new(1, 0, 0, 20)
-                ArtistName.Font = Enum.Font.Gotham
-                ArtistName.Text = "FengUI Premium"
-                ArtistName.TextColor3 = config.SecondaryTextColor
-                ArtistName.TextSize = 13
-                ArtistName.TextXAlignment = Enum.TextXAlignment.Left
-                ArtistName.TextTruncate = Enum.TextTruncate.AtEnd
-                
-                local BottomSection = Instance.new("Frame")
-                BottomSection.Name = "BottomSection"
-                BottomSection.Parent = PlayerContainer
-                BottomSection.BackgroundTransparency = 1
-                BottomSection.Position = UDim2.new(0, 0, 0.44, 0)
-                BottomSection.Size = UDim2.new(1, 0, 0, 100)
-                
-                local ProgressBar = Instance.new("Frame")
-                ProgressBar.Name = "ProgressBar"
-                ProgressBar.Parent = BottomSection
-                ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-                ProgressBar.BorderSizePixel = 0
-                ProgressBar.Position = UDim2.new(0.04, 0, 0.05, 0)
-                ProgressBar.Size = UDim2.new(0.92, 0, 0, 8)
-                
-                local ProgressBarCorner = Instance.new("UICorner")
-                ProgressBarCorner.CornerRadius = UDim.new(1, 0)
-                ProgressBarCorner.Parent = ProgressBar
-                
-                local ProgressFill = Instance.new("Frame")
-                ProgressFill.Name = "ProgressFill"
-                ProgressFill.Parent = ProgressBar
-                ProgressFill.BackgroundColor3 = config.AccentColor
-                ProgressFill.BorderSizePixel = 0
-                ProgressFill.Size = UDim2.new(0, 0, 1, 0)
-                
-                local ProgressFillCorner = Instance.new("UICorner")
-                ProgressFillCorner.CornerRadius = UDim.new(1, 0)
-                ProgressFillCorner.Parent = ProgressFill
-                
-                local TimeLabel = Instance.new("TextLabel")
-                TimeLabel.Name = "TimeLabel"
-                TimeLabel.Parent = BottomSection
-                TimeLabel.BackgroundTransparency = 1
-                TimeLabel.Position = UDim2.new(0.04, 0, 0.25, 0)
-                TimeLabel.Size = UDim2.new(0.92, 0, 0, 15)
-                TimeLabel.Font = Enum.Font.Gotham
-                TimeLabel.Text = "0:00 / 0:00"
-                TimeLabel.TextColor3 = config.SecondaryTextColor
-                TimeLabel.TextSize = 11
-                TimeLabel.TextXAlignment = Enum.TextXAlignment.Center
-                
-                local ControlsContainer = Instance.new("Frame")
-                ControlsContainer.Name = "ControlsContainer"
-                ControlsContainer.Parent = BottomSection
-                ControlsContainer.BackgroundTransparency = 1
-                ControlsContainer.Position = UDim2.new(0, 0, 0.45, 0)
-                ControlsContainer.Size = UDim2.new(1, 0, 0, 40)
-                
-                local function createControlButton(name, text, position, size, isMain)
-                    local button = Instance.new("TextButton")
-                    button.Name = name
-                    button.Parent = ControlsContainer
-                    button.BackgroundColor3 = isMain and config.AccentColor or Color3.fromRGB(180, 180, 190)
-                    button.BackgroundTransparency = isMain and 0.2 or 0.3
-                    button.Position = position
-                    button.Size = size
-                    button.AutoButtonColor = false
-                    button.Font = Enum.Font.GothamBold
-                    button.Text = text
-                    button.TextColor3 = isMain and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(60, 60, 70)
-                    button.TextSize = isMain and 18 or 14
-                    button.ZIndex = 5
+                -- 悬停效果
+                Button.MouseEnter:Connect(function()
+                    services.TweenService:Create(Button, TweenInfo.new(0.2), {
+                        BackgroundTransparency = 0,
+                        Size = UDim2.new(1, 2, 1, 2),
+                        Position = UDim2.new(0, -1, 0, -1)
+                    }):Play()
                     
-                    local buttonCorner = Instance.new("UICorner")
-                    buttonCorner.CornerRadius = UDim.new(1, 0)
-                    buttonCorner.Parent = button
-                    
-                    local buttonGlow = Instance.new("UIStroke")
-                    buttonGlow.Parent = button
-                    buttonGlow.Color = isMain and config.AccentColor or Color3.fromRGB(150, 150, 160)
-                    buttonGlow.Thickness = 1.5
-                    buttonGlow.Transparency = 0.5
-                    buttonGlow.ZIndex = 4
-                    
-                    if isMain then
-                        startGradientFlowEffect(buttonGlow, "Color", 0.01)
-                        createPulseGlow(buttonGlow)
-                    end
-                    
-                    button.MouseEnter:Connect(function()
-                        services.TweenService:Create(button, TweenInfo.new(0.2), {
-                            BackgroundTransparency = isMain and 0.1 or 0.2,
-                            Size = UDim2.new(0, size.X.Offset + 3, 0, size.Y.Offset + 3)
-                        }):Play()
-                        services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
-                            Thickness = 2,
-                            Transparency = 0.3
-                        }):Play()
-                    end)
-                    
-                    button.MouseLeave:Connect(function()
-                        services.TweenService:Create(button, TweenInfo.new(0.2), {
-                            BackgroundTransparency = isMain and 0.2 or 0.3,
-                            Size = size
-                        }):Play()
-                        services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
-                            Thickness = 1.5,
-                            Transparency = 0.5
-                        }):Play()
-                    end)
-                    
-                    return button, buttonGlow
-                end
-                
-                local PrevButton, prevGlow = createControlButton("PrevButton", "⏮", UDim2.new(0.15, 0, 0.2, 0), UDim2.new(0, 35, 0, 35), false)
-                local PlayPauseButton, playGlow = createControlButton("PlayPauseButton", "▶", UDim2.new(0.42, 0, 0.1, 0), UDim2.new(0, 40, 0, 40), true)
-                local NextButton, nextGlow = createControlButton("NextButton", "⏭", UDim2.new(0.69, 0, 0.2, 0), UDim2.new(0, 35, 0, 35), false)
-                
-                local LoopButton, loopGlow = createControlButton("LoopButton", "🔁", UDim2.new(0.85, 0, 0.2, 0), UDim2.new(0, 35, 0, 35), false)
-                
-                local loopModes = {
-                    {mode = "none", text = "🔁", tooltip = "无循环"},
-                    {mode = "single", text = "🔂", tooltip = "单曲循环"},
-                    {mode = "all", text = "🔁", tooltip = "列表循环"}
-                }
-                local currentLoopMode = 1
-                
-                local function updateLoopMode()
-                    local mode = loopModes[currentLoopMode]
-                    LoopButton.Text = mode.text
-                    MusicPlayer.isLooping = (mode.mode == "single" or mode.mode == "all")
-                    
-                    if mode.mode == "single" then
-                        services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
-                            BackgroundColor3 = config.AccentColor
-                        }):Play()
-                        services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
-                            Transparency = 0.3,
-                            Thickness = 2
-                        }):Play()
-                    else
-                        services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
-                            BackgroundColor3 = Color3.fromRGB(180, 180, 190)
-                        }):Play()
-                        services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
-                            Transparency = 0.5,
-                            Thickness = 1.5
-                        }):Play()
-                    end
-                end
-                
-                local function updateUI()
-                    local currentTrack = MusicPlayer:GetCurrentTrack()
-                    if currentTrack then
-                        SongTitle.Text = currentTrack.title
-                        ArtistName.Text = currentTrack.artist
-                        AlbumArt.Image = "rbxassetid://" .. currentTrack.imageId
-                    else
-                        SongTitle.Text = "点击播放音乐"
-                        ArtistName.Text = "FengUI Premium"
-                        AlbumArt.Image = "rbxassetid://84830962019412"
-                    end
-                    
-                    PlayPauseButton.Text = MusicPlayer.isPlaying and "⏸" or "▶"
-                    updateLoopMode()
-                end
-                
-                task.spawn(function()
-                    while PlayerContainer and PlayerContainer.Parent do
-                        if MusicPlayer.currentSound and MusicPlayer.isPlaying then
-                            local currentTime = MusicPlayer.currentSound.TimePosition
-                            local totalTime = MusicPlayer.currentSound.TimeLength
-                            
-                            if totalTime > 0 then
-                                local progress = currentTime / totalTime
-                                ProgressFill.Size = UDim2.new(progress, 0, 1, 0)
-                                
-                                local currentMinutes = math.floor(currentTime / 60)
-                                local currentSeconds = math.floor(currentTime % 60)
-                                local totalMinutes = math.floor(totalTime / 60)
-                                local totalSeconds = math.floor(totalTime % 60)
-                                
-                                TimeLabel.Text = string.format("%d:%02d / %d:%02d", 
-                                    currentMinutes, currentSeconds, totalMinutes, totalSeconds)
-                            end
-                        else
-                            ProgressFill.Size = UDim2.new(0, 0, 1, 0)
-                            TimeLabel.Text = "0:00 / 0:00"
-                        end
-                        task.wait(0.1)
+                    if tooltip then
+                        showTooltip(buttonText, tooltip, Button.AbsolutePosition)
                     end
                 end)
                 
-                local function createButtonClickEffect(button, isMain)
-                    services.TweenService:Create(button, TweenInfo.new(0.1), {
-                        BackgroundTransparency = isMain and 0.3 or 0.4,
-                        Size = UDim2.new(0, button.Size.X.Offset - 3, 0, button.Size.Y.Offset - 3)
+                Button.MouseLeave:Connect(function()
+                    services.TweenService:Create(Button, TweenInfo.new(0.2), {
+                        BackgroundTransparency = 0.1,
+                        Size = UDim2.new(1, 0, 1, 0),
+                        Position = UDim2.new(0, 0, 0, 0)
+                    }):Play()
+                    
+                    showTooltip()
+                end)
+                
+                -- 点击效果
+                Button.MouseButton1Click:Connect(function()
+                    -- 点击动画
+                    services.TweenService:Create(Button, TweenInfo.new(0.1), {
+                        BackgroundTransparency = 0.3,
+                        Size = UDim2.new(1, -4, 1, -4),
+                        Position = UDim2.new(0, 2, 0, 2)
                     }):Play()
                     
                     task.wait(0.1)
                     
-                    services.TweenService:Create(button, TweenInfo.new(0.2), {
-                        BackgroundTransparency = isMain and 0.2 or 0.3,
-                        Size = UDim2.new(0, button.Size.X.Offset + 3, 0, button.Size.Y.Offset + 3)
-                    }):Play()
-                end
-                
-                PlayPauseButton.MouseButton1Click:Connect(function()
-                    DigitalParticleExplosion(PlayPauseButton)
-                    createButtonClickEffect(PlayPauseButton, true)
-                    
-                    if MusicPlayer.isPlaying then
-                        MusicPlayer:Pause()
-                    else
-                        if #MusicPlayer.playlist > 0 then
-                            if not MusicPlayer.currentSound then
-                                MusicPlayer:PlayTrack(MusicPlayer.playlist[MusicPlayer.currentTrackIndex].id)
-                            else
-                                MusicPlayer:Resume()
-                            end
-                        end
-                    end
-                    updateUI()
-                end)
-                
-                PrevButton.MouseButton1Click:Connect(function()
-                    DigitalParticleExplosion(PrevButton)
-                    createButtonClickEffect(PrevButton, false)
-                    local track = MusicPlayer:PreviousTrack()
-                    if track then
-                        updateUI()
-                    end
-                end)
-                
-                NextButton.MouseButton1Click:Connect(function()
-                    DigitalParticleExplosion(NextButton)
-                    createButtonClickEffect(NextButton, false)
-                    local track = MusicPlayer:NextTrack()
-                    if track then
-                        updateUI()
-                    end
-                end)
-                
-                LoopButton.MouseButton1Click:Connect(function()
-                    DigitalParticleExplosion(LoopButton)
-                    createButtonClickEffect(LoopButton, false)
-                    
-                    currentLoopMode = currentLoopMode + 1
-                    if currentLoopMode > #loopModes then
-                        currentLoopMode = 1
-                    end
-                    
-                    updateLoopMode()
-                end)
-                
-                local originalPlayTrack = MusicPlayer.PlayTrack
-                MusicPlayer.PlayTrack = function(self, trackId)
-                    originalPlayTrack(self, trackId)
-                    
-                    if self.currentSound then
-                        self.currentSound.Ended:Connect(function()
-                            local currentMode = loopModes[currentLoopMode]
-                            
-                            if currentMode.mode == "single" then
-                                self.currentSound:Play()
-                            elseif currentMode.mode == "all" then
-                                self:NextTrack()
-                                updateUI()
-                            else
-                                self.isPlaying = false
-                                updateUI()
-                            end
-                        end)
-                    end
-                end
-                
-                if defaultPlaylist then
-                    for _, track in pairs(defaultPlaylist) do
-                        MusicPlayer:AddToPlaylist(track.id, track.title, track.artist, track.imageId)
-                    end
-                end
-                
-                updateUI()
-                
-                local musicPlayerFuncs = {}
-                
-                function musicPlayerFuncs:AddTrack(trackId, title, artist, imageId)
-                    MusicPlayer:AddToPlaylist(trackId, title, artist, imageId)
-                    updateUI()
-                end
-                
-                function musicPlayerFuncs:PlayTrack(trackId)
-                    for i, track in ipairs(MusicPlayer.playlist) do
-                        if track.id == trackId then
-                            MusicPlayer.currentTrackIndex = i
-                            MusicPlayer:PlayTrack(trackId)
-                            updateUI()
-                            return
-                        end
-                    end
-                end
-                
-                function musicPlayerFuncs:SetVolume(volume)
-                    MusicPlayer:SetVolume(volume)
-                end
-                
-                function musicPlayerFuncs:ClearPlaylist()
-                    MusicPlayer:ClearPlaylist()
-                    updateUI()
-                end
-                
-                function musicPlayerFuncs:GetCurrentTrack()
-                    return MusicPlayer:GetCurrentTrack()
-                end
-                
-                function musicPlayerFuncs:GetPlaylist()
-                    return MusicPlayer.playlist
-                end
-                
-                function musicPlayerFuncs:SetLoopMode(mode)
-                    for i, loopMode in ipairs(loopModes) do
-                        if loopMode.mode == mode then
-                            currentLoopMode = i
-                            updateLoopMode()
-                            return
-                        end
-                    end
-                end
-                
-                return musicPlayerFuncs
-            end
-            
-            function section.Button(section, text, callback)
-                callback = callback or function() end
-                
-                local BtnModule = Instance.new("Frame")
-                local Btn = Instance.new("TextButton")
-                local BtnC = Instance.new("UICorner")
-                
-                BtnModule.Name = "BtnModule"
-                BtnModule.Parent = Objs
-                BtnModule.BackgroundTransparency = 1
-                BtnModule.BorderSizePixel = 0
-                BtnModule.Size = UDim2.new(0, 330, 0, 40)
-                
-                Btn.Name = "Btn"
-                Btn.Parent = BtnModule
-                Btn.BackgroundColor3 = config.Button_Color
-                Btn.BackgroundTransparency = 0.9
-                Btn.BorderSizePixel = 0
-                Btn.Size = UDim2.new(0, 330, 0, 40)
-                Btn.AutoButtonColor = false
-                Btn.Font = Enum.Font.GothamSemibold
-                Btn.Text = "   " .. text
-                Btn.TextColor3 = config.TextColor
-                Btn.TextSize = 15
-                Btn.TextXAlignment = Enum.TextXAlignment.Left
-                
-                BtnC.CornerRadius = UDim.new(0, 8)
-                BtnC.Name = "BtnC"
-                BtnC.Parent = Btn
-                
-                local btnGlow = Instance.new("UIStroke")
-                btnGlow.Parent = Btn
-                btnGlow.Color = config.AccentColor
-                btnGlow.Thickness = 1.5
-                btnGlow.Transparency = 0.7
-                
-                startGradientFlowEffect(btnGlow, "Color", 0.008)
-                createPulseGlow(btnGlow)
-                
-                Btn.MouseEnter:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.7
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                        Thickness = 2.5,
-                        Transparency = 0.4
-                    }):Play()
-                end)
-                
-                Btn.MouseLeave:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                        BackgroundTransparency = 0.9
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                        Thickness = 1.5,
-                        Transparency = 0.7
-                    }):Play()
-                end)
-                
-                Btn.MouseButton1Click:Connect(function()
-                    DigitalParticleExplosion(Btn)
-                    callback()
-                    
-                    services.TweenService:Create(Btn, TweenInfo.new(0.1), {
-                        BackgroundTransparency = 0.6
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
-                        Thickness = 3,
-                        Transparency = 0.2
+                    services.TweenService:Create(Button, TweenInfo.new(0.2), {
+                        BackgroundTransparency = 0,
+                        Size = UDim2.new(1, 0, 1, 0),
+                        Position = UDim2.new(0, 0, 0, 0)
                     }):Play()
                     
-                    task.wait(0.1)
-                    
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-                        BackgroundTransparency = 0.9
-                    }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
-                        Thickness = 1.5,
-                        Transparency = 0.7
-                    }):Play()
+                    -- 执行回调
+                    if callback then
+                        callback()
+                    end
                 end)
             end
             
-            function section.Image(section, imageSource, sizeX, sizeY)
-                local ImageModule = Instance.new("Frame")
-                local ImageLabel = Instance.new("ImageLabel")
-                local ImageCorner = Instance.new("UICorner")
+            -- 创建开关控件
+            function section:Toggle(toggleText, defaultValue, callback, tooltip)
+                local toggleFlag = toggleText:gsub("%s+", "_")
+                ModernUI.flags[toggleFlag] = defaultValue or false
                 
-                ImageModule.Name = "ImageModule"
-                ImageModule.Parent = Objs
-                ImageModule.BackgroundTransparency = 1
-                ImageModule.BorderSizePixel = 0
-                ImageModule.Size = UDim2.new(0, 330, 0, sizeY or 140)
+                local ToggleFrame = Instance.new("Frame")
+                ToggleFrame.Name = "Toggle_" .. toggleText
+                ToggleFrame.Parent = ControlsContainer
+                ToggleFrame.BackgroundTransparency = 1
+                ToggleFrame.Size = UDim2.new(1, 0, 0, 36)
                 
-                ImageLabel.Parent = ImageModule
-                ImageLabel.BackgroundTransparency = 1
-                ImageLabel.BorderSizePixel = 0
-                ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
-                ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
-                ImageLabel.Size = UDim2.new(0, math.min(sizeX or 150, 320), 0, sizeY or 140)
-                ImageLabel.ScaleType = Enum.ScaleType.Crop
+                local ToggleButton = Instance.new("TextButton")
+                ToggleButton.Name = "ToggleButton"
+                ToggleButton.Parent = ToggleFrame
+                ToggleButton.BackgroundColor3 = config.SurfaceHover
+                ToggleButton.BackgroundTransparency = 0.2
+                ToggleButton.Size = UDim2.new(1, 0, 1, 0)
+                ToggleButton.AutoButtonColor = false
+                ToggleButton.Font = Enum.Font.Gotham
+                ToggleButton.Text = "   " .. toggleText
+                ToggleButton.TextColor3 = config.TextPrimary
+                ToggleButton.TextSize = 14
+                ToggleButton.TextXAlignment = Enum.TextXAlignment.Left
                 
-                ImageCorner.CornerRadius = UDim.new(0, 8)
-                ImageCorner.Parent = ImageLabel
+                local toggleCorner = Instance.new("UICorner")
+                toggleCorner.CornerRadius = UDim.new(0, 8)
+                toggleCorner.Parent = ToggleButton
                 
-                local imageGlow = Instance.new("UIStroke")
-                imageGlow.Parent = ImageLabel
-                imageGlow.Color = config.AccentColor
-                imageGlow.Thickness = 1.5
-                imageGlow.Transparency = 0.6
+                -- 开关指示器
+                local ToggleIndicator = Instance.new("Frame")
+                ToggleIndicator.Name = "Indicator"
+                ToggleIndicator.Parent = ToggleButton
+                ToggleIndicator.AnchorPoint = Vector2.new(1, 0.5)
+                ToggleIndicator.BackgroundColor3 = defaultValue and config.Success or config.TextDisabled
+                ToggleIndicator.Position = UDim2.new(1, -15, 0.5, 0)
+                ToggleIndicator.Size = UDim2.new(0, 24, 0, 14)
                 
-                local function setImage(source)
-                    if type(source) == "table" then
-                        if source.Type == "Player" then
-                            local userId = source.UserId
-                            if userId then
-                                task.spawn(function()
-                                    local success, result = pcall(function()
-                                        return game.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-                                    end)
-                                    
-                                    if success and result then
-                                        ImageLabel.Image = result
-                                    else
-                                        ImageLabel.Image = "rbxassetid://0"
-                                    end
-                                end)
-                            end
-                        elseif source.Type == "Game" then
-                            local placeId = source.PlaceId
-                            if placeId then
-                                task.spawn(function()
-                                    local success1, gameInfo = pcall(function()
-                                        local MarketplaceService = game:GetService("MarketplaceService")
-                                        return MarketplaceService:GetProductInfo(placeId, Enum.InfoType.Asset)
-                                    end)
-                                    
-                                    if success1 and gameInfo and gameInfo.IconImageAssetId then
-                                        ImageLabel.Image = "rbxassetid://" .. gameInfo.IconImageAssetId
-                                        return
-                                    end
-                                    
-                                    local success2, thumbnailUrl = pcall(function()
-                                        local ThumbnailService = game:GetService("ThumbnailService")
-                                        return ThumbnailService:GetGameThumbnailAsync(placeId)
-                                    end)
-                                    
-                                    if success2 and thumbnailUrl then
-                                        ImageLabel.Image = thumbnailUrl
-                                        return
-                                    end
-                                    
-                                    ImageLabel.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=" .. placeId
-                                end)
-                            end
-                        end
-                    else
-                        ImageLabel.Image = "rbxassetid://" .. tostring(source)
-                    end
-                end
+                local indicatorCorner = Instance.new("UICorner")
+                indicatorCorner.CornerRadius = UDim.new(1, 0)
+                indicatorCorner.Parent = ToggleIndicator
                 
-                setImage(imageSource)
+                local ToggleKnob = Instance.new("Frame")
+                ToggleKnob.Name = "Knob"
+                ToggleKnob.Parent = ToggleIndicator
+                ToggleKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+                ToggleKnob.BackgroundColor3 = config.TextPrimary
+                ToggleKnob.Position = UDim2.new(defaultValue and 0.75 or 0.25, 0, 0.5, 0)
+                ToggleKnob.Size = UDim2.new(0, 10, 0, 10)
                 
-                local imageController = {}
+                local knobCorner = Instance.new("UICorner")
+                knobCorner.CornerRadius = UDim.new(1, 0)
+                knobCorner.Parent = ToggleKnob
                 
-                function imageController:SetImage(newSource)
-                    setImage(newSource)
-                end
-                
-                function imageController:SetPlayerAvatar(userId)
-                    setImage({Type = "Player", UserId = userId})
-                end
-                
-                function imageController:SetGameIcon(placeId)
-                    setImage({Type = "Game", PlaceId = placeId})
-                end
-                
-                function imageController:SetLocalPlayerAvatar()
-                    local localPlayer = game.Players.LocalPlayer
-                    if localPlayer then
-                        setImage({Type = "Player", UserId = localPlayer.UserId})
-                    end
-                end
-                
-                function imageController:Destroy()
-                    ImageModule:Destroy()
-                end
-                
-                imageController.Instance = ImageLabel
-                imageController.Module = ImageModule
-                
-                return imageController
-            end
-            
-            function section:Label(text)
-                local LabelModule = Instance.new("Frame")
-                local TextLabel = Instance.new("TextLabel")
-                local LabelC = Instance.new("UICorner")
-                
-                LabelModule.Name = "LabelModule"
-                LabelModule.Parent = Objs
-                LabelModule.BackgroundTransparency = 1
-                LabelModule.BorderSizePixel = 0
-                LabelModule.Size = UDim2.new(0, 330, 0, 30)
-                
-                TextLabel.Parent = LabelModule
-                TextLabel.BackgroundColor3 = config.Label_Color
-                TextLabel.BackgroundTransparency = 0.9
-                TextLabel.Size = UDim2.new(0, 330, 0, 30)
-                TextLabel.Font = Enum.Font.GothamSemibold
-                TextLabel.Text = text
-                TextLabel.TextColor3 = config.SecondaryTextColor
-                TextLabel.TextSize = 14
-                
-                LabelC.CornerRadius = UDim.new(0, 8)
-                LabelC.Name = "LabelC"
-                LabelC.Parent = TextLabel
-                
-                return TextLabel
-            end
-            
-            function section.Toggle(section, text, flag, enabled, callback)
-                callback = callback or function() end
-                enabled = enabled or false
-                assert(text, "No text provided")
-                assert(flag, "No flag provided")
-                FengUI.flags[flag] = enabled
-
-                local ToggleModule = Instance.new("Frame")
-                local ToggleBtn = Instance.new("TextButton")
-                local ToggleBtnC = Instance.new("UICorner")
-                local ToggleDisable = Instance.new("Frame")
-                local ToggleSwitch = Instance.new("Frame")
-                local ToggleSwitchC = Instance.new("UICorner")
-                local ToggleDisableC = Instance.new("UICorner")
-                
-                ToggleModule.Name = "ToggleModule"
-                ToggleModule.Parent = Objs
-                ToggleModule.BackgroundTransparency = 1
-                ToggleModule.BorderSizePixel = 0
-                ToggleModule.Size = UDim2.new(0, 330, 0, 40)
-                
-                ToggleBtn.Name = "ToggleBtn"
-                ToggleBtn.Parent = ToggleModule
-                ToggleBtn.BackgroundColor3 = config.Toggle_Color
-                ToggleBtn.BackgroundTransparency = 0.9
-                ToggleBtn.BorderSizePixel = 0
-                ToggleBtn.Size = UDim2.new(0, 330, 0, 40)
-                ToggleBtn.AutoButtonColor = false
-                ToggleBtn.Font = Enum.Font.GothamSemibold
-                ToggleBtn.Text = "   " .. text
-                ToggleBtn.TextColor3 = config.TextColor
-                ToggleBtn.TextSize = 15
-                ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
-                
-                ToggleBtnC.CornerRadius = UDim.new(0, 8)
-                ToggleBtnC.Name = "ToggleBtnC"
-                ToggleBtnC.Parent = ToggleBtn
-                
-                ToggleDisable.Name = "ToggleDisable"
-                ToggleDisable.Parent = ToggleBtn
-                ToggleDisable.BackgroundColor3 = config.Bg_Color
-                ToggleDisable.BackgroundTransparency = 0.8
-                ToggleDisable.BorderSizePixel = 0
-                ToggleDisable.Position = UDim2.new(0.85, 0, 0.25, 0)
-                ToggleDisable.Size = UDim2.new(0, 40, 0, 20)
-                
-                ToggleSwitch.Name = "ToggleSwitch"
-                ToggleSwitch.Parent = ToggleDisable
-                ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
-                ToggleSwitch.Size = UDim2.new(0, 22, 0, 20)
-                ToggleSwitch.Position = UDim2.new(0, enabled and 18 or 0, 0, 0)
-                
-                ToggleSwitchC.CornerRadius = UDim.new(0, 6)
-                ToggleSwitchC.Name = "ToggleSwitchC"
-                ToggleSwitchC.Parent = ToggleSwitch
-                
-                ToggleDisableC.CornerRadius = UDim.new(0, 6)
-                ToggleDisableC.Name = "ToggleDisableC"
-                ToggleDisableC.Parent = ToggleDisable
-                
-                if enabled then
-                    createHologramEffect(ToggleSwitch, 0.6)
-                end
-                
-                local toggleGlow = Instance.new("UIStroke")
-                toggleGlow.Parent = ToggleBtn
-                toggleGlow.Color = config.AccentColor
-                toggleGlow.Thickness = 1.5
-                toggleGlow.Transparency = 0.7
-                
-                startGradientFlowEffect(toggleGlow, "Color", 0.008)
-                createPulseGlow(toggleGlow)
-                
-                ToggleBtn.MouseEnter:Connect(function()
-                    services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.7
+                -- 悬停效果
+                ToggleButton.MouseEnter:Connect(function()
+                    services.TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
+                        BackgroundTransparency = 0.1
                     }):Play()
+                    
+                    if tooltip then
+                        showTooltip(toggleText, tooltip, ToggleButton.AbsolutePosition)
+                    end
                 end)
                 
-                ToggleBtn.MouseLeave:Connect(function()
-                    services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                        BackgroundTransparency = 0.9
+                ToggleButton.MouseLeave:Connect(function()
+                    services.TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
+                        BackgroundTransparency = 0.2
                     }):Play()
+                    
+                    showTooltip()
                 end)
                 
-                local funcs = {
-                    SetState = function(self, state)
-                        if state == nil then
-                            state = not FengUI.flags[flag]
-                        end
-                        if FengUI.flags[flag] == state then
-                            return
-                        end
-                        
-                        services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                            Position = UDim2.new(0, state and 18 or 0, 0, 0),
-                            BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
-                        }):Play()
-                        
-                        if state then
-                            createHologramEffect(ToggleSwitch, 0.6)
-                        else
-                            local hologram = ToggleSwitch:FindFirstChild("HologramEffect")
-                            if hologram then
-                                hologram:Destroy()
-                            end
-                        end
-                        
-                        FengUI.flags[flag] = state
+                -- 切换状态函数
+                local function setState(newState)
+                    local state = newState or not ModernUI.flags[toggleFlag]
+                    ModernUI.flags[toggleFlag] = state
+                    
+                    services.TweenService:Create(ToggleIndicator, TweenInfo.new(0.2), {
+                        BackgroundColor3 = state and config.Success or config.TextDisabled
+                    }):Play()
+                    
+                    services.TweenService:Create(ToggleKnob, TweenInfo.new(0.2), {
+                        Position = UDim2.new(state and 0.75 or 0.25, 0, 0.5, 0)
+                    }):Play()
+                    
+                    if callback then
                         callback(state)
-                    end,
-                    Module = ToggleModule
-                }
-                
-                if enabled ~= false then
-                    funcs:SetState(true)
+                    end
                 end
                 
-                ToggleBtn.MouseButton1Click:Connect(function()
-                    DigitalParticleExplosion(ToggleBtn)
-                    funcs:SetState()
+                -- 点击切换
+                ToggleButton.MouseButton1Click:Connect(function()
+                    setState()
                 end)
                 
-                return funcs
+                -- 返回控制函数
+                local toggleControl = {}
+                
+                function toggleControl:Set(state)
+                    setState(state)
+                end
+                
+                function toggleControl:Get()
+                    return ModernUI.flags[toggleFlag]
+                end
+                
+                function toggleControl:Toggle()
+                    setState()
+                end
+                
+                return toggleControl
             end
             
-            function section.Keybind(section, text, default, callback)
-                callback = callback or function() end
-                assert(text, "No text provided")
-                assert(default, "No default key provided")
+            -- 创建滑块控件
+            function section:Slider(sliderText, minValue, maxValue, defaultValue, callback, tooltip)
+                local sliderFlag = sliderText:gsub("%s+", "_")
+                local value = defaultValue or minValue
+                ModernUI.flags[sliderFlag] = value
                 
-                local default = typeof(default) == "string" and Enum.KeyCode[default] or default
-                local banned = {
-                    Return = true, Space = true, Tab = true,
-                    Backquote = true, CapsLock = true, Escape = true,
-                    Unknown = true
-                }
+                local SliderFrame = Instance.new("Frame")
+                SliderFrame.Name = "Slider_" .. sliderText
+                SliderFrame.Parent = ControlsContainer
+                SliderFrame.BackgroundTransparency = 1
+                SliderFrame.Size = UDim2.new(1, 0, 0, 60)
                 
-                local shortNames = {
-                    RightControl = "RCtrl", LeftControl = "LCtrl",
-                    LeftShift = "LShift", RightShift = "RShift",
-                    Semicolon = ";", Quote = '"', LeftBracket = "[",
-                    RightBracket = "]", Equals = "=", Minus = "-",
-                    RightAlt = "RAlt", LeftAlt = "LAlt"
-                }
+                -- 标题
+                local SliderTitle = Instance.new("TextLabel")
+                SliderTitle.Name = "Title"
+                SliderTitle.Parent = SliderFrame
+                SliderTitle.BackgroundTransparency = 1
+                SliderTitle.Position = UDim2.new(0, 0, 0, 0)
+                SliderTitle.Size = UDim2.new(1, 0, 0, 20)
+                SliderTitle.Font = Enum.Font.Gotham
+                SliderTitle.Text = sliderText .. ": " .. value
+                SliderTitle.TextColor3 = config.TextPrimary
+                SliderTitle.TextSize = 14
+                SliderTitle.TextXAlignment = Enum.TextXAlignment.Left
                 
-                local bindKey = default
-                local keyTxt = default and (shortNames[default.Name] or default.Name) or "None"
+                -- 滑块背景
+                local SliderBackground = Instance.new("Frame")
+                SliderBackground.Name = "Background"
+                SliderBackground.Parent = SliderFrame
+                SliderBackground.BackgroundColor3 = config.SurfaceHover
+                SliderBackground.BackgroundTransparency = 0.3
+                SliderBackground.Position = UDim2.new(0, 0, 0, 25)
+                SliderBackground.Size = UDim2.new(1, 0, 0, 8)
                 
-                local KeybindModule = Instance.new("Frame")
-                local KeybindBtn = Instance.new("TextButton")
-                local KeybindBtnC = Instance.new("UICorner")
-                local KeybindValue = Instance.new("TextButton")
-                local KeybindValueC = Instance.new("UICorner")
-                local KeybindL = Instance.new("UIListLayout")
-                local UIPadding = Instance.new("UIPadding")
+                local bgCorner = Instance.new("UICorner")
+                bgCorner.CornerRadius = UDim.new(1, 0)
+                bgCorner.Parent = SliderBackground
                 
-                KeybindModule.Name = "KeybindModule"
-                KeybindModule.Parent = Objs
-                KeybindModule.BackgroundTransparency = 1
-                KeybindModule.BorderSizePixel = 0
-                KeybindModule.Size = UDim2.new(0, 330, 0, 40)
+                -- 滑块填充
+                local SliderFill = Instance.new("Frame")
+                SliderFill.Name = "Fill"
+                SliderFill.Parent = SliderBackground
+                SliderFill.BackgroundColor3 = config.Primary
+                SliderFill.Size = UDim2.new((value - minValue) / (maxValue - minValue), 0, 1, 0)
                 
-                KeybindBtn.Name = "KeybindBtn"
-                KeybindBtn.Parent = KeybindModule
-                KeybindBtn.BackgroundColor3 = config.Keybind_Color
-                KeybindBtn.BackgroundTransparency = 0.9
-                KeybindBtn.BorderSizePixel = 0
-                KeybindBtn.Size = UDim2.new(0, 330, 0, 40)
-                KeybindBtn.AutoButtonColor = false
-                KeybindBtn.Font = Enum.Font.GothamSemibold
-                KeybindBtn.Text = "   " .. text
-                KeybindBtn.TextColor3 = config.TextColor
-                KeybindBtn.TextSize = 15
-                KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
+                local fillCorner = Instance.new("UICorner")
+                fillCorner.CornerRadius = UDim.new(1, 0)
+                fillCorner.Parent = SliderFill
                 
-                KeybindBtnC.CornerRadius = UDim.new(0, 8)
-                KeybindBtnC.Name = "KeybindBtnC"
-                KeybindBtnC.Parent = KeybindBtn
+                -- 滑块手柄
+                local SliderHandle = Instance.new("Frame")
+                SliderHandle.Name = "Handle"
+                SliderHandle.Parent = SliderBackground
+                SliderHandle.AnchorPoint = Vector2.new(0.5, 0.5)
+                SliderHandle.BackgroundColor3 = config.TextPrimary
+                SliderHandle.Position = UDim2.new((value - minValue) / (maxValue - minValue), 0, 0.5, 0)
+                SliderHandle.Size = UDim2.new(0, 16, 0, 16)
                 
-                KeybindValue.Name = "KeybindValue"
-                KeybindValue.Parent = KeybindBtn
-                KeybindValue.BackgroundColor3 = config.Bg_Color
-                KeybindValue.BackgroundTransparency = 0.8
-                KeybindValue.BorderSizePixel = 0
-                KeybindValue.Position = UDim2.new(0.72, 0, 0.25, 0)
-                KeybindValue.Size = UDim2.new(0, 70, 0, 22)
-                KeybindValue.AutoButtonColor = false
-                KeybindValue.Font = Enum.Font.Gotham
-                KeybindValue.Text = keyTxt
-                KeybindValue.TextColor3 = config.TextColor
-                KeybindValue.TextSize = 12
-                
-                KeybindValueC.CornerRadius = UDim.new(0, 6)
-                KeybindValueC.Name = "KeybindValueC"
-                KeybindValueC.Parent = KeybindValue
-                
-                KeybindL.Name = "KeybindL"
-                KeybindL.Parent = KeybindBtn
-                KeybindL.HorizontalAlignment = Enum.HorizontalAlignment.Right
-                KeybindL.SortOrder = Enum.SortOrder.LayoutOrder
-                KeybindL.VerticalAlignment = Enum.VerticalAlignment.Center
-                
-                UIPadding.Parent = KeybindBtn
-                UIPadding.PaddingRight = UDim.new(0, 8)
-                
-                local keybindGlow = Instance.new("UIStroke")
-                keybindGlow.Parent = KeybindBtn
-                keybindGlow.Color = config.AccentColor
-                keybindGlow.Thickness = 1.5
-                keybindGlow.Transparency = 0.7
-                
-                startGradientFlowEffect(keybindGlow, "Color", 0.008)
-                createPulseGlow(keybindGlow)
-                
-                KeybindBtn.MouseEnter:Connect(function()
-                    services.TweenService:Create(KeybindBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.7
-                    }):Play()
-                end)
-                
-                KeybindBtn.MouseLeave:Connect(function()
-                    services.TweenService:Create(KeybindBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                        BackgroundTransparency = 0.9
-                    }):Play()
-                end)
-                
-                UserInputService.InputBegan:Connect(function(inp, gpe)
-                    if gpe then return end
-                    if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
-                    if inp.KeyCode ~= bindKey then return end
-                    callback(bindKey.Name)
-                end)
-                
-                KeybindValue.MouseButton1Click:Connect(function()
-                    DigitalParticleExplosion(KeybindValue)
-                    KeybindValue.Text = "..."
-                    task.wait()
-                    
-                    local key = UserInputService.InputEnded:Wait()
-                    local keyName = tostring(key.KeyCode.Name)
-                    
-                    if key.UserInputType ~= Enum.UserInputType.Keyboard then
-                        KeybindValue.Text = keyTxt
-                        return
-                    end
-                    
-                    if banned[keyName] then
-                        KeybindValue.Text = keyTxt
-                        return
-                    end
-                    
-                    task.wait()
-                    bindKey = Enum.KeyCode[keyName]
-                    KeybindValue.Text = shortNames[keyName] or keyName
-                    
-                    create3DFlipAnimation(KeybindValue, 0.3)
-                end)
-                
-                KeybindValue:GetPropertyChangedSignal("TextBounds"):Connect(function()
-                    KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 24, 0, 22)
-                end)
-                
-                KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 24, 0, 22)
-            end
-            
-            function section.Textbox(section, text, flag, default, callback)
-                callback = callback or function() end
-                assert(text, "No text provided")
-                assert(flag, "No flag provided")
-                assert(default, "No default text provided")
-                
-                FengUI.flags[flag] = default
-                
-                local TextboxModule = Instance.new("Frame")
-                local TextboxBack = Instance.new("TextButton")
-                local TextboxBackC = Instance.new("UICorner")
-                local BoxBG = Instance.new("TextButton")
-                local BoxBGC = Instance.new("UICorner")
-                local TextBox = Instance.new("TextBox")
-                local TextboxBackL = Instance.new("UIListLayout")
-                local TextboxBackP = Instance.new("UIPadding")
-                
-                TextboxModule.Name = "TextboxModule"
-                TextboxModule.Parent = Objs
-                TextboxModule.BackgroundTransparency = 1
-                TextboxModule.BorderSizePixel = 0
-                TextboxModule.Size = UDim2.new(0, 330, 0, 40)
-                
-                TextboxBack.Name = "TextboxBack"
-                TextboxBack.Parent = TextboxModule
-                TextboxBack.BackgroundColor3 = config.Textbox_Color
-                TextboxBack.BackgroundTransparency = 0.9
-                TextboxBack.BorderSizePixel = 0
-                TextboxBack.Size = UDim2.new(0, 330, 0, 40)
-                TextboxBack.AutoButtonColor = false
-                TextboxBack.Font = Enum.Font.GothamSemibold
-                TextboxBack.Text = "   " .. text
-                TextboxBack.TextColor3 = config.TextColor
-                TextboxBack.TextSize = 15
-                TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
-                
-                TextboxBackC.CornerRadius = UDim.new(0, 8)
-                TextboxBackC.Name = "TextboxBackC"
-                TextboxBackC.Parent = TextboxBack
-                
-                BoxBG.Name = "BoxBG"
-                BoxBG.Parent = TextboxBack
-                BoxBG.BackgroundColor3 = config.Bg_Color
-                BoxBG.BackgroundTransparency = 0.8
-                BoxBG.BorderSizePixel = 0
-                BoxBG.Position = UDim2.new(0.45, 0, 0.25, 0)
-                BoxBG.Size = UDim2.new(0, 80, 0, 22)
-                BoxBG.AutoButtonColor = false
-                BoxBG.Font = Enum.Font.Gotham
-                BoxBG.Text = ""
-                
-                BoxBGC.CornerRadius = UDim.new(0, 6)
-                BoxBGC.Name = "BoxBGC"
-                BoxBGC.Parent = BoxBG
-                
-                TextBox.Parent = BoxBG
-                TextBox.BackgroundTransparency = 1
-                TextBox.BorderSizePixel = 0
-                TextBox.Size = UDim2.new(1, 0, 1, 0)
-                TextBox.Font = Enum.Font.Gotham
-                TextBox.Text = default
-                TextBox.TextColor3 = config.TextColor
-                TextBox.TextSize = 13
-                TextBox.PlaceholderColor3 = config.SecondaryTextColor
-                
-                TextboxBackL.Name = "TextboxBackL"
-                TextboxBackL.Parent = TextboxBack
-                TextboxBackL.HorizontalAlignment = Enum.HorizontalAlignment.Right
-                TextboxBackL.SortOrder = Enum.SortOrder.LayoutOrder
-                TextboxBackL.VerticalAlignment = Enum.VerticalAlignment.Center
-                
-                TextboxBackP.Name = "TextboxBackP"
-                TextboxBackP.Parent = TextboxBack
-                TextboxBackP.PaddingRight = UDim.new(0, 12)
-                
-                local textboxGlow = Instance.new("UIStroke")
-                textboxGlow.Parent = TextboxBack
-                textboxGlow.Color = config.AccentColor
-                textboxGlow.Thickness = 1.5
-                textboxGlow.Transparency = 0.7
-                
-                startGradientFlowEffect(textboxGlow, "Color", 0.008)
-                createPulseGlow(textboxGlow)
-                
-                TextboxBack.MouseEnter:Connect(function()
-                    services.TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.7
-                    }):Play()
-                end)
-                
-                TextboxBack.MouseLeave:Connect(function()
-                    services.TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                        BackgroundTransparency = 0.9
-                    }):Play()
-                end)
-                
-                TextBox.FocusLost:Connect(function()
-                    if TextBox.Text == "" then
-                        TextBox.Text = default
-                    end
-                    FengUI.flags[flag] = TextBox.Text
-                    callback(TextBox.Text)
-                    
-                    DigitalParticleExplosion(BoxBG)
-                end)
-                
-                TextBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
-                    BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 24, 0, 22)
-                end)
-                
-                BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 24, 0, 22)
-            end
-            
-            function section.Slider(section, text, flag, default, min, max, precise, callback)
-                callback = callback or function() end
-                min = min or 0
-                max = max or 10
-                default = default or min
-                precise = precise or false
-                
-                assert(text, "No text provided")
-                assert(flag, "No flag provided")
-                assert(default, "No default value provided")
-                
-                FengUI.flags[flag] = default
-
-                local SliderModule = Instance.new("Frame")
-                local SliderBack = Instance.new("TextButton")
-                local SliderBackC = Instance.new("UICorner")
-                local SliderBar = Instance.new("Frame")
-                local SliderBarC = Instance.new("UICorner")
-                local SliderPart = Instance.new("Frame")
-                local SliderPartC = Instance.new("UICorner")
-                local SliderValBG = Instance.new("TextButton")
-                local SliderValBGC = Instance.new("UICorner")
-                local SliderValue = Instance.new("TextBox")
-                
-                SliderModule.Name = "SliderModule"
-                SliderModule.Parent = Objs
-                SliderModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                SliderModule.BackgroundTransparency = 1.000
-                SliderModule.BorderSizePixel = 0
-                SliderModule.Position = UDim2.new(0, 0, 0, 0)
-                SliderModule.Size = UDim2.new(0, 330, 0, 40)
-                
-                SliderBack.Name = "SliderBack"
-                SliderBack.Parent = SliderModule
-                SliderBack.BackgroundColor3 = config.Slider_Color
-                SliderBack.BackgroundTransparency = 0.9
-                SliderBack.BorderSizePixel = 0
-                SliderBack.Size = UDim2.new(0, 330, 0, 40)
-                SliderBack.AutoButtonColor = false
-                SliderBack.Font = Enum.Font.GothamSemibold
-                SliderBack.Text = "   " .. text
-                SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SliderBack.TextSize = 15.000
-                SliderBack.TextXAlignment = Enum.TextXAlignment.Left
-                
-                SliderBackC.CornerRadius = UDim.new(0, 8)
-                SliderBackC.Name = "SliderBackC"
-                SliderBackC.Parent = SliderBack
-                
-                SliderBar.Name = "SliderBar"
-                SliderBar.Parent = SliderBack
-                SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-                SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-                SliderBar.BackgroundTransparency = 0.8
-                SliderBar.BorderSizePixel = 0
-                SliderBar.Position = UDim2.new(0.35, 0, 0.5, 0)
-                SliderBar.Size = UDim2.new(0, 140, 0, 16)
-                SliderBarC.CornerRadius = UDim.new(0, 8)
-                SliderBarC.Name = "SliderBarC"
-                SliderBarC.Parent = SliderBar
-                
-                SliderPart.Name = "SliderPart"
-                SliderPart.Parent = SliderBar
-                SliderPart.BackgroundColor3 = config.SliderBar_Color
-                SliderPart.BorderSizePixel = 0
-                SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
-                SliderPartC.CornerRadius = UDim.new(0, 8)
-                SliderPartC.Name = "SliderPartC"
-                SliderPartC.Parent = SliderPart
-                
-                createHologramEffect(SliderPart, 0.5)
-                
-                SliderValBG.Name = "SliderValBG"
-                SliderValBG.Parent = SliderBack
-                SliderValBG.BackgroundColor3 = config.Bg_Color
-                SliderValBG.BackgroundTransparency = 0.8
-                SliderValBG.BorderSizePixel = 0
-                SliderValBG.Position = UDim2.new(0.82, 0, 0.25, 0)
-                SliderValBG.Size = UDim2.new(0, 40, 0, 22)
-                SliderValBG.AutoButtonColor = false
-                SliderValBG.Font = Enum.Font.Gotham
-                SliderValBG.Text = ""
-                SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SliderValBG.TextSize = 14.000
-                
-                SliderValBGC.CornerRadius = UDim.new(0, 6)
-                SliderValBGC.Name = "SliderValBGC"
-                SliderValBGC.Parent = SliderValBG
-                
-                SliderValue.Name = "SliderValue"
-                SliderValue.Parent = SliderValBG
-                SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                SliderValue.BackgroundTransparency = 1.000
-                SliderValue.BorderSizePixel = 0
-                SliderValue.Size = UDim2.new(1, 0, 1, 0)
-                SliderValue.Font = Enum.Font.Gotham
-                SliderValue.Text = tostring(default)
-                SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SliderValue.TextSize = 12.000
-                
-                local MinSlider = Instance.new("TextButton")
-                MinSlider.Name = "MinSlider"
-                MinSlider.Parent = SliderBack
-                MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-                MinSlider.BackgroundTransparency = 0.8
-                MinSlider.BorderSizePixel = 0
-                MinSlider.Position = UDim2.new(0.28, 0, 0.25, 0)
-                MinSlider.Size = UDim2.new(0, 20, 0, 20)
-                MinSlider.Font = Enum.Font.Gotham
-                MinSlider.Text = "-"
-                MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-                MinSlider.TextSize = 14.000
-                MinSlider.TextWrapped = true
-                MinSlider.ZIndex = 2
-                
-                local MinSliderC = Instance.new("UICorner")
-                MinSliderC.CornerRadius = UDim.new(0, 6)
-                MinSliderC.Parent = MinSlider
-                
-                local AddSlider = Instance.new("TextButton")
-                AddSlider.Name = "AddSlider"
-                AddSlider.Parent = SliderBack
-                AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-                AddSlider.BackgroundTransparency = 0.8
-                AddSlider.BorderSizePixel = 0
-                AddSlider.Position = UDim2.new(0.75, 0, 0.25, 0)
-                AddSlider.Size = UDim2.new(0, 20, 0, 20)
-                AddSlider.Font = Enum.Font.Gotham
-                AddSlider.Text = "+"
-                AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-                AddSlider.TextSize = 14.000
-                AddSlider.TextWrapped = true
-                AddSlider.ZIndex = 2
-                
-                local AddSliderC = Instance.new("UICorner")
-                AddSliderC.CornerRadius = UDim.new(0, 6)
-                AddSliderC.Parent = AddSlider
-                
-                local sliderGlow = Instance.new("UIStroke")
-                sliderGlow.Parent = SliderBack
-                sliderGlow.Color = config.AccentColor
-                sliderGlow.Thickness = 1.5
-                sliderGlow.Transparency = 0.7
-                
-                startGradientFlowEffect(sliderGlow, "Color", 0.008)
-                createPulseGlow(sliderGlow)
-                
-                local funcs = {
-                    SetValue = function(self, value)
-                        local percent
-                        
-                        if value then
-                            percent = (value - min)/(max - min)
-                        else
-                            local mouse = services.Players.LocalPlayer:GetMouse()
-                            local barPos = SliderBar.AbsolutePosition.X
-                            local barSize = SliderBar.AbsoluteSize.X
-                            local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
-                            percent = (mouseX - barPos) / barSize
-                            value = min + (max - min) * percent
-                        end
-                        
-                        if precise then
-                            value = tonumber(string.format("%.2f", value))
-                        else
-                            value = math.floor(value + 0.5)
-                        end
-                        
-                        value = math.clamp(value, min, max)
-                        percent = (value - min)/(max - min)
-                        FengUI.flags[flag] = tonumber(value)
-                        SliderValue.Text = tostring(value)
-                        
-                        services.TweenService:Create(SliderPart, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                            Size = UDim2.new(percent, 0, 1, 0)
-                        }):Play()
-                        
-                        callback(tonumber(value))
-                        
-                        DigitalParticleExplosion(SliderPart)
-                    end,
-                    
-                    GetValue = function(self)
-                        return FengUI.flags[flag]
-                    end
-                }
-                
-                funcs:SetValue(default)
+                local handleCorner = Instance.new("UICorner")
+                handleCorner.CornerRadius = UDim.new(1, 0)
+                handleCorner.Parent = SliderHandle
                 
                 local dragging = false
                 
-                SliderBar.InputBegan:Connect(function(input)
+                -- 更新值函数
+                local function updateValue(newValue)
+                    newValue = math.clamp(newValue, minValue, maxValue)
+                    value = newValue
+                    ModernUI.flags[sliderFlag] = value
+                    
+                    local percent = (value - minValue) / (maxValue - minValue)
+                    
+                    services.TweenService:Create(SliderFill, TweenInfo.new(0.1), {
+                        Size = UDim2.new(percent, 0, 1, 0)
+                    }):Play()
+                    
+                    services.TweenService:Create(SliderHandle, TweenInfo.new(0.1), {
+                        Position = UDim2.new(percent, 0, 0.5, 0)
+                    }):Play()
+                    
+                    SliderTitle.Text = sliderText .. ": " .. value
+                    
+                    if callback then
+                        callback(value)
+                    end
+                end
+                
+                -- 鼠标拖动
+                local function onInputChanged(input)
+                    if dragging then
+                        local mousePos = input.Position
+                        local sliderPos = SliderBackground.AbsolutePosition
+                        local sliderSize = SliderBackground.AbsoluteSize
+                        
+                        local relativeX = (mousePos.X - sliderPos.X) / sliderSize.X
+                        relativeX = math.clamp(relativeX, 0, 1)
+                        
+                        local newValue = minValue + (maxValue - minValue) * relativeX
+                        updateValue(newValue)
+                    end
+                end
+                
+                -- 开始拖动
+                SliderBackground.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         dragging = true
-                        funcs:SetValue()
+                        onInputChanged(input)
                     end
                 end)
                 
-                SliderPart.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        dragging = true
-                        funcs:SetValue()
-                    end
-                end)
-                
+                -- 结束拖动
                 services.UserInputService.InputEnded:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         dragging = false
                     end
                 end)
                 
+                -- 拖动中
                 services.UserInputService.InputChanged:Connect(function(input)
-                    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        funcs:SetValue()
+                    if input.UserInputType == Enum.UserInputType.MouseMovement then
+                        onInputChanged(input)
                     end
                 end)
                 
-                SliderBar.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = true
-                        funcs:SetValue()
+                -- 悬停提示
+                SliderBackground.MouseEnter:Connect(function()
+                    if tooltip then
+                        showTooltip(sliderText, tooltip, SliderBackground.AbsolutePosition)
                     end
                 end)
                 
-                services.UserInputService.InputEnded:Connect(function(input)
-                    if dragging and input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = false
-                    end
+                SliderBackground.MouseLeave:Connect(function()
+                    showTooltip()
                 end)
                 
-                services.UserInputService.InputChanged:Connect(function(input)
-                    if dragging and input.UserInputType == Enum.UserInputType.Touch then
-                        funcs:SetValue()
-                    end
-                end)
+                -- 控制函数
+                local sliderControl = {}
                 
-                MinSlider.MouseButton1Click:Connect(function()
-                    DigitalParticleExplosion(MinSlider)
-                    local currentValue = FengUI.flags[flag]
-                    currentValue = math.clamp(currentValue - 1, min, max)
-                    funcs:SetValue(currentValue)
-                end)
+                function sliderControl:Set(newValue)
+                    updateValue(newValue)
+                end
                 
-                AddSlider.MouseButton1Click:Connect(function()
-                    DigitalParticleExplosion(AddSlider)
-                    local currentValue = FengUI.flags[flag]
-                    currentValue = math.clamp(currentValue + 1, min, max)
-                    funcs:SetValue(currentValue)
-                end)
+                function sliderControl:Get()
+                    return value
+                end
                 
-                local boxFocused = false
-                local allowed = { [""] = true, ["-"] = true }
-                
-                SliderValue.Focused:Connect(function()
-                    boxFocused = true
-                end)
-                
-                SliderValue.FocusLost:Connect(function()
-                    boxFocused = false
-                    if SliderValue.Text == "" then
-                        funcs:SetValue(default)
-                        return
-                    end
-                    
-                    local numValue = tonumber(SliderValue.Text)
-                    if numValue then
-                        numValue = math.clamp(numValue, min, max)
-                        funcs:SetValue(numValue)
-                    else
-                        funcs:SetValue(default)
-                    end
-                end)
-                
-                SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
-                    if not boxFocused then
-                        return
-                    end
-                    
-                    local text = SliderValue.Text
-                    local newText = ""
-                    
-                    for i = 1, #text do
-                        local char = text:sub(i, i)
-                        if char:match("%d") or (char == "." and precise) then
-                            newText = newText .. char
-                        end
-                    end
-                    
-                    local dotCount = 0
-                    local finalText = ""
-                    for i = 1, #newText do
-                        local char = newText:sub(i, i)
-                        if char == "." then
-                            dotCount = dotCount + 1
-                            if dotCount <= 1 then
-                                finalText = finalText .. char
-                            end
-                        else
-                            finalText = finalText .. char
-                        end
-                    end
-                    
-                    SliderValue.Text = finalText
-                    
-                    local text = SliderValue.Text
-                    if not tonumber(text) and not allowed[text] then
-                        SliderValue.Text = SliderValue.Text:gsub("%D+", "")
-                    elseif not allowed[text] then
-                        if tonumber(text) > max then
-                            text = max
-                            SliderValue.Text = tostring(max)
-                        end
-                        funcs:SetValue(tonumber(text))
-                    end
-                end)
-                
-                return funcs
+                return sliderControl
             end
             
-            function section.Dropdown(section, text, flag, options, callback)
-                local callback = callback or function() end
-                local options = options or {}
-                assert(text, "No text provided")
-                assert(flag, "No flag provided")
-                FengUI.flags[flag] = nil
+            -- 创建下拉框
+            function section:Dropdown(dropdownText, options, defaultIndex, callback, tooltip)
+                local dropdownFlag = dropdownText:gsub("%s+", "_")
+                local selectedIndex = defaultIndex or 1
+                local selectedValue = options[selectedIndex]
+                ModernUI.flags[dropdownFlag] = selectedValue
                 
-                local DropdownModule = Instance.new("Frame")
-                local DropdownTop = Instance.new("TextButton")
-                local DropdownTopC = Instance.new("UICorner")
-                local DropdownOpenFrame = Instance.new("Frame")
-                local DropdownOpenFrameC = Instance.new("UICorner")
-                local DropdownOpen = Instance.new("TextButton")
-                local DropdownText = Instance.new("TextBox")
-                local DropdownModuleL = Instance.new("UIListLayout")
+                local DropdownFrame = Instance.new("Frame")
+                DropdownFrame.Name = "Dropdown_" .. dropdownText
+                DropdownFrame.Parent = ControlsContainer
+                DropdownFrame.BackgroundTransparency = 1
+                DropdownFrame.Size = UDim2.new(1, 0, 0, 36)
                 
-                DropdownModule.Name = "DropdownModule"
-                DropdownModule.Parent = Objs
-                DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                DropdownModule.BackgroundTransparency = 1.000
-                DropdownModule.BorderSizePixel = 0
-                DropdownModule.ClipsDescendants = true
-                DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-                DropdownModule.Size = UDim2.new(0, 330, 0, 40)
+                local DropdownButton = Instance.new("TextButton")
+                DropdownButton.Name = "DropdownButton"
+                DropdownButton.Parent = DropdownFrame
+                DropdownButton.BackgroundColor3 = config.SurfaceHover
+                DropdownButton.BackgroundTransparency = 0.2
+                DropdownButton.Size = UDim2.new(1, 0, 1, 0)
+                DropdownButton.AutoButtonColor = false
+                DropdownButton.Font = Enum.Font.Gotham
+                DropdownButton.Text = dropdownText .. ": " .. selectedValue
+                DropdownButton.TextColor3 = config.TextPrimary
+                DropdownButton.TextSize = 14
+                DropdownButton.TextXAlignment = Enum.TextXAlignment.Left
                 
-                DropdownTop.Name = "DropdownTop"
-                DropdownTop.Parent = DropdownModule
-                DropdownTop.BackgroundColor3 = config.Dropdown_Color
-                DropdownTop.BackgroundTransparency = 0.9
-                DropdownTop.BorderSizePixel = 0
-                DropdownTop.Size = UDim2.new(0, 330, 0, 40)
-                DropdownTop.AutoButtonColor = false
-                DropdownTop.Font = Enum.Font.GothamSemibold
-                DropdownTop.Text = ""
-                DropdownTop.TextColor3 = config.TextColor
-                DropdownTop.TextSize = 15.000
-                DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
+                local dropdownCorner = Instance.new("UICorner")
+                dropdownCorner.CornerRadius = UDim.new(0, 8)
+                dropdownCorner.Parent = DropdownButton
                 
-                DropdownTopC.CornerRadius = UDim.new(0, 8)
-                DropdownTopC.Name = "DropdownTopC"
-                DropdownTopC.Parent = DropdownTop
+                local DropdownIcon = Instance.new("ImageLabel")
+                DropdownIcon.Name = "Icon"
+                DropdownIcon.Parent = DropdownButton
+                DropdownIcon.AnchorPoint = Vector2.new(1, 0.5)
+                DropdownIcon.BackgroundTransparency = 1
+                DropdownIcon.Position = UDim2.new(1, -15, 0.5, 0)
+                DropdownIcon.Size = UDim2.new(0, 16, 0, 16)
+                DropdownIcon.Image = "rbxassetid://3926305904"
+                DropdownIcon.ImageRectOffset = Vector2.new(284, 364)
+                DropdownIcon.ImageRectSize = Vector2.new(24, 24)
+                DropdownIcon.ImageColor3 = config.TextSecondary
                 
-                local BackgroundFill = Instance.new("Frame")
-                BackgroundFill.Name = "BackgroundFill"
-                BackgroundFill.Parent = DropdownTop
-                BackgroundFill.BackgroundColor3 = config.Dropdown_Color
-                BackgroundFill.BackgroundTransparency = 0.9
-                BackgroundFill.BorderSizePixel = 0
-                BackgroundFill.Position = UDim2.new(0.75, 0, 0, 0)
-                BackgroundFill.Size = UDim2.new(0.25, 0, 1, 0)
-                BackgroundFill.ZIndex = 0
+                -- 下拉选项容器
+                local OptionsContainer = Instance.new("Frame")
+                OptionsContainer.Name = "Options"
+                OptionsContainer.Parent = ModernUIGui
+                OptionsContainer.BackgroundColor3 = config.BackgroundDark
+                OptionsContainer.BackgroundTransparency = 0.1
+                OptionsContainer.Size = UDim2.new(0, 200, 0, 0)
+                OptionsContainer.Position = UDim2.new(0, 0, 0, 0)
+                OptionsContainer.Visible = false
+                OptionsContainer.ZIndex = 1001
                 
-                DropdownOpenFrame.Name = "DropdownOpenFrame"
-                DropdownOpenFrame.Parent = DropdownTop
-                DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
-                DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
-                DropdownOpenFrame.BackgroundTransparency = 0.8
-                DropdownOpenFrame.BorderSizePixel = 0
-                DropdownOpenFrame.Position = UDim2.new(0.80, 0, 0.5, 0)
-                DropdownOpenFrame.Size = UDim2.new(0, 40, 0, 22)
-                DropdownOpenFrame.ZIndex = 2
+                local optionsCorner = Instance.new("UICorner")
+                optionsCorner.CornerRadius = UDim.new(0, 8)
+                optionsCorner.Parent = OptionsContainer
                 
-                createHologramEffect(DropdownOpenFrame, 0.6)
-                
-                DropdownOpenFrameC.CornerRadius = UDim.new(0, 6)
-                DropdownOpenFrameC.Name = "DropdownOpenFrameC"
-                DropdownOpenFrameC.Parent = DropdownOpenFrame
-                
-                DropdownOpen.Name = "DropdownOpen"
-                DropdownOpen.Parent = DropdownOpenFrame
-                DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                DropdownOpen.BackgroundTransparency = 1.000
-                DropdownOpen.BorderSizePixel = 0
-                DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
-                DropdownOpen.Font = Enum.Font.GothamSemibold
-                DropdownOpen.Text = "选择"
-                DropdownOpen.TextColor3 = config.TextColor
-                DropdownOpen.TextSize = 12.000
-                DropdownOpen.TextWrapped = true
-                DropdownOpen.ZIndex = 3
-                
-                DropdownText.Name = "DropdownText"
-                DropdownText.Parent = DropdownTop
-                DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                DropdownText.BackgroundTransparency = 1.000
-                DropdownText.BorderSizePixel = 0
-                DropdownText.Position = UDim2.new(0.04, 0, 0, 0)
-                DropdownText.Size = UDim2.new(0, 230, 0, 40)
-                DropdownText.Font = Enum.Font.GothamSemibold
-                DropdownText.PlaceholderColor3 = config.SecondaryTextColor
-                DropdownText.PlaceholderText = text
-                DropdownText.Text = ""
-                DropdownText.TextColor3 = config.TextColor
-                DropdownText.TextSize = 15.000
-                DropdownText.TextXAlignment = Enum.TextXAlignment.Left
-                DropdownText.ZIndex = 2
-                
-                local Separator = Instance.new("Frame")
-                Separator.Name = "Separator"
-                Separator.Parent = DropdownTop
-                Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-                Separator.BorderSizePixel = 0
-                Separator.Position = UDim2.new(0.74, 0, 0.2, 0)
-                Separator.Size = UDim2.new(0, 1, 0, 24)
-                Separator.ZIndex = 1
-                
-                DropdownModuleL.Name = "DropdownModuleL"
-                DropdownModuleL.Parent = DropdownModule
-                DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
-                DropdownModuleL.Padding = UDim.new(0, 4)
-                
-                local dropdownGlow = Instance.new("UIStroke")
-                dropdownGlow.Parent = DropdownTop
-                dropdownGlow.Color = config.AccentColor
-                dropdownGlow.Thickness = 1.5
-                dropdownGlow.Transparency = 0.7
-                
-                startGradientFlowEffect(dropdownGlow, "Color", 0.008)
-                createPulseGlow(dropdownGlow)
-                
-                local setAllVisible = function()
-                    local options = DropdownModule:GetChildren()
-                    for i = 1, #options do
-                        local option = options[i]
-                        if option:IsA("TextButton") and option.Name:match("Option_") then
-                            option.Visible = true
-                        end
-                    end
-                end
-                
-                local searchDropdown = function(text)
-                    local options = DropdownModule:GetChildren()
-                    for i = 1, #options do
-                        local option = options[i]
-                        if text == "" then
-                            setAllVisible()
-                        else
-                            if option:IsA("TextButton") and option.Name:match("Option_") then
-                                if option.Text:lower():match(text:lower()) then
-                                    option.Visible = true
-                                else
-                                    option.Visible = false
-                                end
-                            end
-                        end
-                    end
-                end
+                local optionsLayout = Instance.new("UIListLayout")
+                optionsLayout.Parent = OptionsContainer
+                optionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 
                 local open = false
-                local ToggleDropVis = function()
+                
+                -- 显示/隐藏选项
+                local function toggleOptions()
                     open = not open
+                    
                     if open then
-                        setAllVisible()
+                        -- 创建选项按钮
+                        for i, option in ipairs(options) do
+                            local OptionButton = Instance.new("TextButton")
+                            OptionButton.Name = "Option_" .. i
+                            OptionButton.Parent = OptionsContainer
+                            OptionButton.BackgroundColor3 = i == selectedIndex and config.Primary or config.Surface
+                            OptionButton.BackgroundTransparency = i == selectedIndex and 0.2 or 0.5
+                            OptionButton.Size = UDim2.new(1, 0, 0, 32)
+                            OptionButton.AutoButtonColor = false
+                            OptionButton.Font = Enum.Font.Gotham
+                            OptionButton.Text = option
+                            OptionButton.TextColor3 = config.TextPrimary
+                            OptionButton.TextSize = 14
+                            
+                            local optionCorner = Instance.new("UICorner")
+                            optionCorner.CornerRadius = UDim.new(0, 6)
+                            optionCorner.Parent = OptionButton
+                            
+                            -- 选择选项
+                            OptionButton.MouseButton1Click:Connect(function()
+                                selectedIndex = i
+                                selectedValue = option
+                                ModernUI.flags[dropdownFlag] = selectedValue
+                                DropdownButton.Text = dropdownText .. ": " .. selectedValue
+                                
+                                if callback then
+                                    callback(selectedValue, i)
+                                end
+                                
+                                toggleOptions()
+                            end)
+                            
+                            -- 悬停效果
+                            OptionButton.MouseEnter:Connect(function()
+                                if i ~= selectedIndex then
+                                    services.TweenService:Create(OptionButton, TweenInfo.new(0.2), {
+                                        BackgroundTransparency = 0.3
+                                    }):Play()
+                                end
+                            end)
+                            
+                            OptionButton.MouseLeave:Connect(function()
+                                if i ~= selectedIndex then
+                                    services.TweenService:Create(OptionButton, TweenInfo.new(0.2), {
+                                        BackgroundTransparency = 0.5
+                                    }):Play()
+                                end
+                            end)
+                        end
+                        
+                        -- 更新容器大小和位置
+                        OptionsContainer.Size = UDim2.new(0, 200, 0, #options * 32 + 10)
+                        OptionsContainer.Position = UDim2.new(
+                            0, DropdownButton.AbsolutePosition.X,
+                            0, DropdownButton.AbsolutePosition.Y + DropdownButton.AbsoluteSize.Y + 5
+                        )
+                        
+                        OptionsContainer.Visible = true
+                        
+                        -- 旋转图标
+                        services.TweenService:Create(DropdownIcon, TweenInfo.new(0.2), {
+                            Rotation = 180
+                        }):Play()
+                    else
+                        OptionsContainer.Visible = false
+                        OptionsContainer:ClearAllChildren()
+                        
+                        services.TweenService:Create(DropdownIcon, TweenInfo.new(0.2), {
+                            Rotation = 0
+                        }):Play()
                     end
-                    DropdownOpen.Text = (open and "关闭" or "选择")
-                    
-                    DropdownModule.Size = UDim2.new(0, 330, 0, open and (40 + DropdownModuleL.AbsoluteContentSize.Y + 8) or 40)
-                    
-                    create3DFlipAnimation(DropdownOpenFrame, 0.3)
                 end
                 
-                DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
-                DropdownText.Focused:Connect(function()
-                    if open then
-                        return
-                    end
-                    ToggleDropVis()
+                -- 点击打开下拉
+                DropdownButton.MouseButton1Click:Connect(function()
+                    toggleOptions()
                 end)
                 
-                DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
-                    if not open then
-                        return
-                    end
-                    searchDropdown(DropdownText.Text)
-                end)
-                
-                DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    if open then
-                        DropdownModule.Size = UDim2.new(0, 330, 0, 40 + DropdownModuleL.AbsoluteContentSize.Y + 8)
-                    end
-                end)
-                
-                local funcs = {}
-                funcs.AddOption = function(self, option)
-                    local Option = Instance.new("TextButton")
-                    local OptionC = Instance.new("UICorner")
-                    Option.Name = "Option_" .. option
-                    Option.Parent = DropdownModule
-                    Option.BackgroundColor3 = config.TabColor
-                    Option.BackgroundTransparency = 0.9
-                    Option.BorderSizePixel = 0
-                    Option.Position = UDim2.new(0, 0, 0.328125, 0)
-                    Option.Size = UDim2.new(0, 310, 0, 26)
-                    Option.AutoButtonColor = false
-                    Option.Font = Enum.Font.Gotham
-                    Option.Text = option
-                    Option.TextColor3 = config.TextColor
-                    Option.TextSize = 13.000
-                    OptionC.CornerRadius = UDim.new(0, 6)
-                    OptionC.Name = "OptionC"
-                    OptionC.Parent = Option
+                -- 悬停效果
+                DropdownButton.MouseEnter:Connect(function()
+                    services.TweenService:Create(DropdownButton, TweenInfo.new(0.2), {
+                        BackgroundTransparency = 0.1
+                    }):Play()
                     
-                    Option.MouseButton1Click:Connect(function()
-                        DigitalParticleExplosion(Option)
-                        ToggleDropVis()
-                        callback(Option.Text)
-                        DropdownText.Text = Option.Text
-                        FengUI.flags[flag] = Option.Text
-                    end)
-                end
-                
-                funcs.RemoveOption = function(self, option)
-                    local option = DropdownModule:FindFirstChild("Option_" .. option)
-                    if option then
-                        option:Destroy()
+                    if tooltip then
+                        showTooltip(dropdownText, tooltip, DropdownButton.AbsolutePosition)
                     end
-                end
+                end)
                 
-                funcs.SetOptions = function(self, options)
-                    for _, v in next, DropdownModule:GetChildren() do
-                        if v.Name:match("Option_") then
-                            v:Destroy()
+                DropdownButton.MouseLeave:Connect(function()
+                    services.TweenService:Create(DropdownButton, TweenInfo.new(0.2), {
+                        BackgroundTransparency = 0.2
+                    }):Play()
+                    
+                    showTooltip()
+                end)
+                
+                -- 点击其他地方关闭下拉
+                services.UserInputService.InputBegan:Connect(function(input)
+                    if open and input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        local mousePos = input.Position
+                        local dropdownPos = DropdownButton.AbsolutePosition
+                        local dropdownSize = DropdownButton.AbsoluteSize
+                        
+                        -- 检查是否点击了下拉按钮之外的地方
+                        if mousePos.X < dropdownPos.X or 
+                           mousePos.X > dropdownPos.X + dropdownSize.X or
+                           mousePos.Y < dropdownPos.Y or 
+                           mousePos.Y > dropdownPos.Y + dropdownSize.Y + OptionsContainer.AbsoluteSize.Y then
+                            toggleOptions()
                         end
                     end
-                    for _, v in next, options do
-                        funcs:AddOption(v)
+                end)
+                
+                -- 控制函数
+                local dropdownControl = {}
+                
+                function dropdownControl:Select(index)
+                    if index >= 1 and index <= #options then
+                        selectedIndex = index
+                        selectedValue = options[index]
+                        ModernUI.flags[dropdownFlag] = selectedValue
+                        DropdownButton.Text = dropdownText .. ": " .. selectedValue
+                        
+                        if callback then
+                            callback(selectedValue, index)
+                        end
                     end
                 end
                 
-                funcs:SetOptions(options)
-                return funcs
+                function dropdownControl:Get()
+                    return selectedValue, selectedIndex
+                end
+                
+                function dropdownControl:UpdateOptions(newOptions)
+                    options = newOptions
+                    if selectedIndex > #options then
+                        dropdownControl:Select(1)
+                    end
+                end
+                
+                return dropdownControl
             end
-
+            
+            -- 创建文本框
+            function section:Textbox(textboxText, placeholder, defaultValue, callback, tooltip)
+                local textboxFlag = textboxText:gsub("%s+", "_")
+                local value = defaultValue or ""
+                ModernUI.flags[textboxFlag] = value
+                
+                local TextboxFrame = Instance.new("Frame")
+                TextboxFrame.Name = "Textbox_" .. textboxText
+                TextboxFrame.Parent = ControlsContainer
+                TextboxFrame.BackgroundTransparency = 1
+                TextboxFrame.Size = UDim2.new(1, 0, 0, 50)
+                
+                -- 标题
+                local TextboxTitle = Instance.new("TextLabel")
+                TextboxTitle.Name = "Title"
+                TextboxTitle.Parent = TextboxFrame
+                TextboxTitle.BackgroundTransparency = 1
+                TextboxTitle.Position = UDim2.new(0, 0, 0, 0)
+                TextboxTitle.Size = UDim2.new(1, 0, 0, 20)
+                TextboxTitle.Font = Enum.Font.Gotham
+                TextboxTitle.Text = textboxText
+                TextboxTitle.TextColor3 = config.TextPrimary
+                TextboxTitle.TextSize = 14
+                TextboxTitle.TextXAlignment = Enum.TextXAlignment.Left
+                
+                -- 输入框
+                local TextboxInput = Instance.new("TextBox")
+                TextboxInput.Name = "Input"
+                TextboxInput.Parent = TextboxFrame
+                TextboxInput.BackgroundColor3 = config.SurfaceHover
+                TextboxInput.BackgroundTransparency = 0.2
+                TextboxInput.Position = UDim2.new(0, 0, 0, 25)
+                TextboxInput.Size = UDim2.new(1, 0, 0, 25)
+                TextboxInput.Font = Enum.Font.Gotham
+                TextboxInput.Text = value
+                TextboxInput.PlaceholderText = placeholder or "输入文本..."
+                TextboxInput.TextColor3 = config.TextPrimary
+                TextboxInput.PlaceholderColor3 = config.TextSecondary
+                TextboxInput.TextSize = 14
+                TextboxInput.ClearTextOnFocus = false
+                
+                local inputCorner = Instance.new("UICorner")
+                inputCorner.CornerRadius = UDim.new(0, 8)
+                inputCorner.Parent = TextboxInput
+                
+                -- 悬停效果
+                TextboxInput.MouseEnter:Connect(function()
+                    services.TweenService:Create(TextboxInput, TweenInfo.new(0.2), {
+                        BackgroundTransparency = 0.1
+                    }):Play()
+                    
+                    if tooltip then
+                        showTooltip(textboxText, tooltip, TextboxInput.AbsolutePosition)
+                    end
+                end)
+                
+                TextboxInput.MouseLeave:Connect(function()
+                    services.TweenService:Create(TextboxInput, TweenInfo.new(0.2), {
+                        BackgroundTransparency = 0.2
+                    }):Play()
+                    
+                    showTooltip()
+                end)
+                
+                -- 聚焦效果
+                TextboxInput.Focused:Connect(function()
+                    services.TweenService:Create(TextboxInput, TweenInfo.new(0.2), {
+                        BackgroundColor3 = config.Primary,
+                        BackgroundTransparency = 0.3
+                    }):Play()
+                end)
+                
+                TextboxInput.FocusLost:Connect(function()
+                    services.TweenService:Create(TextboxInput, TweenInfo.new(0.2), {
+                        BackgroundColor3 = config.SurfaceHover,
+                        BackgroundTransparency = 0.2
+                    }):Play()
+                    
+                    value = TextboxInput.Text
+                    ModernUI.flags[textboxFlag] = value
+                    
+                    if callback then
+                        callback(value)
+                    end
+                end)
+                
+                -- 控制函数
+                local textboxControl = {}
+                
+                function textboxControl:Set(newValue)
+                    TextboxInput.Text = newValue
+                    value = newValue
+                    ModernUI.flags[textboxFlag] = value
+                end
+                
+                function textboxControl:Get()
+                    return value
+                end
+                
+                function textboxControl:Clear()
+                    textboxControl:Set("")
+                end
+                
+                return textboxControl
+            end
+            
+            -- 创建标签
+            function section:Label(labelText, description)
+                local LabelFrame = Instance.new("Frame")
+                LabelFrame.Name = "Label_" .. labelText
+                LabelFrame.Parent = ControlsContainer
+                LabelFrame.BackgroundTransparency = 1
+                LabelFrame.Size = UDim2.new(1, 0, 0, description and 40 or 25)
+                
+                -- 主标签
+                local MainLabel = Instance.new("TextLabel")
+                MainLabel.Name = "MainLabel"
+                MainLabel.Parent = LabelFrame
+                MainLabel.BackgroundTransparency = 1
+                MainLabel.Position = UDim2.new(0, 0, 0, 0)
+                MainLabel.Size = UDim2.new(1, 0, 0, 20)
+                MainLabel.Font = Enum.Font.GothamBold
+                MainLabel.Text = labelText
+                MainLabel.TextColor3 = config.TextPrimary
+                MainLabel.TextSize = 14
+                MainLabel.TextXAlignment = Enum.TextXAlignment.Left
+                
+                -- 描述文本
+                if description then
+                    local DescLabel = Instance.new("TextLabel")
+                    DescLabel.Name = "Description"
+                    DescLabel.Parent = LabelFrame
+                    DescLabel.BackgroundTransparency = 1
+                    DescLabel.Position = UDim2.new(0, 0, 0, 20)
+                    DescLabel.Size = UDim2.new(1, 0, 0, 20)
+                    DescLabel.Font = Enum.Font.Gotham
+                    DescLabel.Text = description
+                    DescLabel.TextColor3 = config.TextSecondary
+                    DescLabel.TextSize = 12
+                    DescLabel.TextXAlignment = Enum.TextXAlignment.Left
+                    DescLabel.TextWrapped = true
+                end
+            end
+            
             return section
         end
-
+        
         return tab
     end
-
+    
+    -- 销毁UI
+    function window:Destroy()
+        ModernUIGui:Destroy()
+    end
+    
+    -- 显示/隐藏UI
+    function window:Toggle(visible)
+        if visible == nil then
+            ModernUI.open = not ModernUI.open
+        else
+            ModernUI.open = visible
+        end
+        
+        MainContainer.Visible = ModernUI.open
+        ContentContainer.Visible = ModernUI.open and not ModernUI.minimized
+    end
+    
+    -- 获取标志值
+    function window:GetFlag(flag)
+        return ModernUI.flags[flag]
+    end
+    
+    -- 设置标志值
+    function window:SetFlag(flag, value)
+        ModernUI.flags[flag] = value
+    end
+    
     return window
-end
-
--- 销毁UI
-function UiDestroy()
-    if FengYu then
-        FengYu:Destroy()
-    end
-    if BlurEffect then
-        BlurEffect:Destroy()
-    end
-end
-
--- 切换UI显示
-function ToggleUILib()
-    ToggleUI = not ToggleUI
-    FengYu.Enabled = ToggleUI
-    Main.Visible = not ToggleUI
 end
 
 -- 全局访问
 if not getgenv then getgenv = function() return _G end end
-getgenv().FengUI = FengUI
+getgenv().ModernUI = ModernUI
 
-return FengUI
+return ModernUI
+[file content end]
