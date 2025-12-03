@@ -1,5 +1,3 @@
-[file name]: ModernUI.lua
-[file content begin]
 repeat
     task.wait()
 until game:IsLoaded()
@@ -1314,4 +1312,3 @@ if not getgenv then getgenv = function() return _G end end
 getgenv().ModernUI = ModernUI
 
 return ModernUI
-[file content end]
