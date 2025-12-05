@@ -37,9 +37,7 @@ local services = {
     CoreGui = game:GetService("CoreGui"),
     Players = game:GetService("Players"),
     RunService = game:GetService("RunService"),
-    SoundService = game:GetService("SoundService"),
-    MarketplaceService = game:GetService("MarketplaceService"),
-    TextService = game:GetService("TextService")
+    SoundService = game:GetService("SoundService")
 }
 
 local UserInputService = services.UserInputService
@@ -47,23 +45,23 @@ local RunService = services.RunService
 
 local config = {
     MainColor = Color3.fromRGB(18, 18, 30),
-    TabColor = Color3.fromRGB(22, 22, 22),
-    Bg_Color = Color3.fromRGB(17, 17, 17),
-    Zy_Color = Color3.fromRGB(17, 17, 17), 
-    Button_Color = Color3.fromRGB(22, 22, 22),
-    Textbox_Color = Color3.fromRGB(22, 22, 22),
-    Dropdown_Color = Color3.fromRGB(22, 22, 22),
-    Keybind_Color = Color3.fromRGB(22, 22, 22),
-    Label_Color = Color3.fromRGB(22, 22, 22),
-    Slider_Color = Color3.fromRGB(22, 22, 22),
-    SliderBar_Color = Color3.fromRGB(37, 254, 152),
-    Toggle_Color = Color3.fromRGB(22, 22, 22),
-    Toggle_Off = Color3.fromRGB(34, 34, 34),
-    Toggle_On = Color3.fromRGB(37, 254, 152),
-    AccentColor = Color3.fromRGB(37, 254, 152),
-    TextColor = Color3.fromRGB(240, 240, 240),
-    SecondaryTextColor = Color3.fromRGB(180, 180, 180),
-    GlowColor = Color3.fromRGB(0, 200, 255),
+    TabColor = Color3.fromRGB(25, 25, 40),
+    Bg_Color = Color3.fromRGB(20, 20, 35),
+    Zy_Color = Color3.fromRGB(20, 20, 35),
+    Button_Color = Color3.fromRGB(40, 40, 60),
+    Textbox_Color = Color3.fromRGB(35, 35, 55),
+    Dropdown_Color = Color3.fromRGB(35, 35, 55),
+    Keybind_Color = Color3.fromRGB(35, 35, 55),
+    Label_Color = Color3.fromRGB(40, 40, 60),
+    Slider_Color = Color3.fromRGB(35, 35, 55),
+    SliderBar_Color = Color3.fromRGB(80, 100, 255),
+    Toggle_Color = Color3.fromRGB(35, 35, 55),
+    Toggle_Off = Color3.fromRGB(60, 60, 80),
+    Toggle_On = Color3.fromRGB(80, 180, 80),
+    AccentColor = Color3.fromRGB(80, 100, 255),
+    TextColor = Color3.fromRGB(240, 245, 255),
+    SecondaryTextColor = Color3.fromRGB(180, 190, 210),
+    GlowColor = Color3.fromRGB(80, 100, 255),
 }
 
 local MusicPlayer = {
@@ -187,7 +185,7 @@ function DigitalParticleExplosion(obj)
         local explosionCenter = Instance.new("Frame")
         explosionCenter.Name = "ExplosionCenter"
         explosionCenter.Parent = obj
-        explosionCenter.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+        explosionCenter.BackgroundColor3 = Color3.fromRGB(80, 100, 255)
         explosionCenter.BackgroundTransparency = 0.3
         explosionCenter.ZIndex = 8
         explosionCenter.Size = UDim2.new(0, 20, 0, 20)
@@ -200,7 +198,7 @@ function DigitalParticleExplosion(obj)
         
         local centerGlow = Instance.new("UIStroke")
         centerGlow.Parent = explosionCenter
-        centerGlow.Color = Color3.fromRGB(0, 255, 255)
+        centerGlow.Color = Color3.fromRGB(80, 100, 255)
         centerGlow.Thickness = 3
         centerGlow.Transparency = 0.2
         
@@ -217,8 +215,8 @@ function DigitalParticleExplosion(obj)
             particle.BackgroundTransparency = 1
             particle.Text = tostring(math.random(0, 1))
             particle.TextColor3 = Color3.fromRGB(
-                math.random(150, 255),
-                math.random(150, 255),
+                math.random(150, 200),
+                math.random(150, 220),
                 math.random(200, 255)
             )
             particle.TextSize = math.random(10, 14)
@@ -297,7 +295,7 @@ function DigitalParticleExplosion(obj)
         
         local shockwaveStroke = Instance.new("UIStroke")
         shockwaveStroke.Parent = shockwave
-        shockwaveStroke.Color = Color3.fromRGB(0, 200, 255)
+        shockwaveStroke.Color = Color3.fromRGB(80, 100, 255)
         shockwaveStroke.Thickness = 3
         shockwaveStroke.Transparency = 0.3
         
@@ -325,86 +323,12 @@ local function startNeonFlowEffect(object, property, speed)
             return
         end
         hue = (hue + speed) % 1
-        local r = math.sin(hue * 6 + 0) * 0.5 + 0.5
-        local g = math.sin(hue * 6 + 2) * 0.5 + 0.5
-        local b = math.sin(hue * 6 + 4) * 0.5 + 0.5
+        local r = 0.3 + math.sin(hue * 6 + 0) * 0.2
+        local g = 0.4 + math.sin(hue * 6 + 2) * 0.2
+        local b = 1 + math.sin(hue * 6 + 4) * 0.2
         object[property] = Color3.new(r, g, b)
     end)
     return connection
-end
-
-local function createHologramEffect(frame, intensity)
-    intensity = intensity or 1
-    
-    local hologram = Instance.new("Frame")
-    hologram.Name = "HologramEffect"
-    hologram.BackgroundTransparency = 1
-    hologram.Size = UDim2.new(1, 0, 1, 0)
-    hologram.ZIndex = frame.ZIndex - 1
-    hologram.Parent = frame
-    hologram.ClipsDescendants = true
-    
-    local scanLines = Instance.new("Frame")
-    scanLines.Name = "ScanLines"
-    scanLines.BackgroundTransparency = 1
-    scanLines.Size = UDim2.new(1, 0, 1, 0)
-    scanLines.Parent = hologram
-    
-    local linePattern = Instance.new("UIGradient")
-    linePattern.Rotation = 0
-    linePattern.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.9),
-        NumberSequenceKeypoint.new(0.1, 0.7),
-        NumberSequenceKeypoint.new(0.2, 0.9),
-        NumberSequenceKeypoint.new(1, 0.9)
-    })
-    linePattern.Parent = scanLines
-    
-    local glow = Instance.new("UIGradient")
-    glow.Rotation = 45
-    glow.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.8),
-        NumberSequenceKeypoint.new(0.3, 0.3 * intensity),
-        NumberSequenceKeypoint.new(0.7, 0.3 * intensity),
-        NumberSequenceKeypoint.new(1, 0.8)
-    })
-    
-    local colors = {
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 255)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 0, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 0))
-    }
-    glow.Color = ColorSequence.new(colors)
-    glow.Parent = hologram
-    
-    local scanConnection
-    scanConnection = RunService.Heartbeat:Connect(function(delta)
-        if not scanLines or not scanLines.Parent then
-            scanConnection:Disconnect()
-            return
-        end
-        linePattern.Offset = Vector2.new(0, (tick() * 0.5) % 1)
-    end)
-    
-    local colorConnection
-    colorConnection = RunService.Heartbeat:Connect(function(delta)
-        if not hologram or not hologram.Parent then
-            colorConnection:Disconnect()
-            return
-        end
-        
-        local time = tick()
-        for i, keypoint in ipairs(colors) do
-            local hue = (time * 0.2 + i * 0.3) % 1
-            colors[i] = ColorSequenceKeypoint.new(
-                keypoint.Time,
-                Color3.fromHSV(hue, 0.8, 1)
-            )
-        end
-        glow.Color = ColorSequence.new(colors)
-    end)
-    
-    return hologram
 end
 
 local function createPulseGlow(object)
@@ -462,20 +386,6 @@ local function createParticleTrail(startPos, endPos, parent)
     delay(0.3, function()
         trail:Destroy()
     end)
-end
-
-local function setupSmoothScrolling(scrollingFrame, layout)
-    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
-        
-        if layout.AbsoluteContentSize.Y <= scrollingFrame.AbsoluteSize.Y then
-            scrollingFrame.ScrollingEnabled = false
-        else
-            scrollingFrame.ScrollingEnabled = true
-        end
-    end)
-    
-    scrollingFrame.ElasticBehavior = Enum.ElasticBehavior.Never
 end
 
 local switchingTabs = false
@@ -550,7 +460,7 @@ local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.BackgroundColor3 = config.Bg_Color
+Main.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 Main.BackgroundTransparency = 1
 Main.Position = UDim2.new(0.5, 0, 0.35, 0)
 Main.Size = UDim2.new(0, 450, 0, 280)
@@ -564,26 +474,17 @@ MainCorner.Parent = Main
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
-MainStroke.Color = Color3.fromRGB(50, 50, 50)
-MainStroke.Thickness = 1
+MainStroke.Color = Color3.fromRGB(80, 100, 255)
+MainStroke.Thickness = 2
 MainStroke.Transparency = 1
-
-local neonStroke = Instance.new("UIStroke")
-neonStroke.Parent = Main
-neonStroke.Thickness = 2
-neonStroke.Transparency = 1
-neonStroke.LineJoinMode = Enum.LineJoinMode.Round
-startNeonFlowEffect(neonStroke, "Color", 0.01)
-
-createPulseGlow(neonStroke)
 
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = Main
-TitleBar.BackgroundColor3 = config.TabColor
+TitleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
 TitleBar.BackgroundTransparency = 1
 TitleBar.BorderSizePixel = 0
-TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
 TitleBar.ZIndex = 2
 
 local TitleBarCorner = Instance.new("UICorner")
@@ -594,28 +495,14 @@ local TitleText = Instance.new("TextLabel")
 TitleText.Name = "TitleText"
 TitleText.Parent = TitleBar
 TitleText.BackgroundTransparency = 1
-TitleText.Position = UDim2.new(0, 10, 0, 5)
-TitleText.Size = UDim2.new(0, 200, 0, 20)
+TitleText.Position = UDim2.new(0, 10, 0, 0)
+TitleText.Size = UDim2.new(0, 200, 1, 0)
 TitleText.Font = Enum.Font.GothamBold
-TitleText.Text = "FengUI"
-TitleText.TextColor3 = config.AccentColor
-TitleText.TextSize = 18
+TitleText.Text = "殺脚本"
+TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.TextTransparency = 1
-
--- 添加脚本信息标签
-local ScriptInfo = Instance.new("TextLabel")
-ScriptInfo.Name = "ScriptInfo"
-ScriptInfo.Parent = TitleBar
-ScriptInfo.BackgroundTransparency = 1
-ScriptInfo.Position = UDim2.new(0, 10, 0, 25)
-ScriptInfo.Size = UDim2.new(0, 200, 0, 12)
-ScriptInfo.Font = Enum.Font.Gotham
-ScriptInfo.Text = "高级UI框架 | v1.0.0 | 已加载"
-ScriptInfo.TextColor3 = config.SecondaryTextColor
-ScriptInfo.TextSize = 11
-ScriptInfo.TextXAlignment = Enum.TextXAlignment.Left
-ScriptInfo.TextTransparency = 1
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
@@ -623,7 +510,7 @@ CloseButton.Parent = TitleBar
 CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.BackgroundTransparency = 1
 CloseButton.BorderSizePixel = 0
-CloseButton.Position = UDim2.new(1, -25, 0, 10)
+CloseButton.Position = UDim2.new(1, -25, 0, 7)
 CloseButton.Size = UDim2.new(0, 20, 0, 20)
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Text = "X"
@@ -640,7 +527,7 @@ CloseButton.MouseEnter:Connect(function()
     services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         TextColor3 = Color3.fromRGB(255, 100, 100),
         TextSize = 18,
-        Position = UDim2.new(1, -26, 0, 9)
+        Position = UDim2.new(1, -26, 0, 6)
     }):Play()
 end)
 
@@ -648,7 +535,7 @@ CloseButton.MouseLeave:Connect(function()
     services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         TextColor3 = Color3.fromRGB(255, 60, 60),
         TextSize = 16,
-        Position = UDim2.new(1, -25, 0, 10)
+        Position = UDim2.new(1, -25, 0, 7)
     }):Play()
 end)
 
@@ -658,7 +545,7 @@ CloseButton.MouseButton1Click:Connect(function()
     services.TweenService:Create(CloseButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         TextColor3 = Color3.fromRGB(255, 30, 30),
         TextSize = 14,
-        Position = UDim2.new(1, -24, 0, 11)
+        Position = UDim2.new(1, -24, 0, 8)
     }):Play()
     
     services.TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
@@ -671,19 +558,11 @@ CloseButton.MouseButton1Click:Connect(function()
         Transparency = 1
     }):Play()
     
-    services.TweenService:Create(neonStroke, TweenInfo.new(0.4), {
-        Transparency = 1
-    }):Play()
-    
     services.TweenService:Create(TitleBar, TweenInfo.new(0.4), {
         BackgroundTransparency = 1
     }):Play()
     
     services.TweenService:Create(TitleText, TweenInfo.new(0.4), {
-        TextTransparency = 1
-    }):Play()
-    
-    services.TweenService:Create(ScriptInfo, TweenInfo.new(0.4), {
         TextTransparency = 1
     }):Play()
     
@@ -704,7 +583,7 @@ Open.Position = UDim2.new(0.92, 0, 0.01, 0)
 Open.Size = UDim2.new(0, 40, 0, 40)
 Open.Active = true
 Open.Draggable = true
-Open.Image = "rbxassetid://84830962019412"
+Open.Image = "rbxassetid://81887109171998"
 Open.ImageColor3 = Color3.fromRGB(255, 255, 255)
 Open.ImageTransparency = 0.15
 
@@ -714,41 +593,9 @@ OpenCorner.Parent = Open
 
 local OpenStroke = Instance.new("UIStroke")
 OpenStroke.Parent = Open
-OpenStroke.Color = Color3.fromRGB(180, 180, 180)
+OpenStroke.Color = config.AccentColor
 OpenStroke.Thickness = 1.2
 OpenStroke.Transparency = 0.4
-
-startNeonFlowEffect(Open, "BackgroundColor3", 0.012)
-createPulseGlow(OpenStroke)
-
--- 添加快捷键提示
-local ShortcutHint = Instance.new("TextLabel")
-ShortcutHint.Name = "ShortcutHint"
-ShortcutHint.Parent = Open
-ShortcutHint.BackgroundTransparency = 1
-ShortcutHint.Position = UDim2.new(1, 5, 0, 0)
-ShortcutHint.Size = UDim2.new(0, 80, 1, 0)
-ShortcutHint.Font = Enum.Font.Gotham
-ShortcutHint.Text = "Ctrl 显示/隐藏"
-ShortcutHint.TextColor3 = config.SecondaryTextColor
-ShortcutHint.TextSize = 9
-ShortcutHint.TextXAlignment = Enum.TextXAlignment.Left
-ShortcutHint.Visible = false
-
-Open.MouseEnter:Connect(function()
-    ShortcutHint.Visible = true
-    services.TweenService:Create(ShortcutHint, TweenInfo.new(0.3), {
-        TextTransparency = 0
-    }):Play()
-end)
-
-Open.MouseLeave:Connect(function()
-    services.TweenService:Create(ShortcutHint, TweenInfo.new(0.3), {
-        TextTransparency = 1
-    }):Play()
-    task.wait(0.3)
-    ShortcutHint.Visible = false
-end)
 
 Open.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
@@ -772,54 +619,23 @@ local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0.2, 0, 0, 45)
-TabMain.Size = UDim2.new(0, 360, 0, 235)
+TabMain.Position = UDim2.new(0, 0, 0, 37)
+TabMain.Size = UDim2.new(1, 0, 1, -37)
 TabMain.Visible = false
 
 local Side = Instance.new("Frame")
 Side.Name = "Side"
 Side.Parent = Main
-Side.BackgroundColor3 = config.TabColor
+Side.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
 Side.BackgroundTransparency = 1
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
-Side.Position = UDim2.new(0, 0, 0, 40)
-Side.Size = UDim2.new(0, 90, 0, 240)
+Side.Position = UDim2.new(0, 0, 0, 35)
+Side.Size = UDim2.new(0, 90, 0, 245)
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
 SideCorner.Parent = Side
-
-createHologramEffect(Side, 0.3)
-
-local ScriptTitle = Instance.new("TextLabel")
-ScriptTitle.Name = "ScriptTitle"
-ScriptTitle.Parent = Side
-ScriptTitle.BackgroundTransparency = 1
-ScriptTitle.Position = UDim2.new(0, 0, 0.02, 0)
-ScriptTitle.Size = UDim2.new(0, 90, 0, 35)
-ScriptTitle.Font = Enum.Font.GothamBold
-ScriptTitle.Text = "高级功能面板"
-ScriptTitle.TextColor3 = config.AccentColor
-ScriptTitle.TextSize = 14
-ScriptTitle.TextScaled = false
-ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
-ScriptTitle.TextWrapped = true
-ScriptTitle.Visible = true
-
-local SubTitle = Instance.new("TextLabel")
-SubTitle.Name = "SubTitle"
-SubTitle.Parent = Side
-SubTitle.BackgroundTransparency = 1
-SubTitle.Position = UDim2.new(0, 0, 0.15, 0)
-SubTitle.Size = UDim2.new(0, 90, 0, 30)
-SubTitle.Font = Enum.Font.Gotham
-SubTitle.Text = "选择功能分类"
-SubTitle.TextColor3 = config.SecondaryTextColor
-SubTitle.TextSize = 11
-SubTitle.TextXAlignment = Enum.TextXAlignment.Center
-SubTitle.TextWrapped = true
-SubTitle.Visible = true
 
 local TabBtns = Instance.new("ScrollingFrame")
 TabBtns.Name = "TabBtns"
@@ -827,11 +643,11 @@ TabBtns.Parent = Side
 TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
-TabBtns.Position = UDim2.new(0, 0, 0.3, 0)
-TabBtns.Size = UDim2.new(0, 90, 0, 160)
+TabBtns.Position = UDim2.new(0, 0, 0, 5)
+TabBtns.Size = UDim2.new(0, 90, 0, 235)
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
-TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+TabBtns.ScrollBarImageColor3 = Color3.fromRGB(80, 100, 255)
 TabBtns.ScrollBarImageTransparency = 0.5
 TabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 TabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
@@ -858,42 +674,30 @@ local function playEntranceAnimation()
     
     TitleBar.BackgroundTransparency = 1
     TitleText.TextTransparency = 1
-    ScriptInfo.TextTransparency = 1
     CloseButton.TextTransparency = 1
     Side.BackgroundTransparency = 1
     MainStroke.Transparency = 1
-    neonStroke.Transparency = 1
     
     TabMain.Visible = false
     TabBtns.Visible = false
-    ScriptTitle.TextTransparency = 1
-    SubTitle.TextTransparency = 1
     
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
-        BackgroundTransparency = 0.2,
+        BackgroundTransparency = 0,
         Size = UDim2.new(0, 450, 0, 280)
     }):Play()
     
     services.TweenService:Create(MainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Transparency = 0.5
-    }):Play()
-    
-    services.TweenService:Create(neonStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Transparency = 0.7
+        Transparency = 0
     }):Play()
     
     task.wait(0.2)
     
     services.TweenService:Create(TitleBar, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0.2
+        BackgroundTransparency = 0
     }):Play()
     
     services.TweenService:Create(TitleText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        TextTransparency = 0
-    }):Play()
-    
-    services.TweenService:Create(ScriptInfo, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         TextTransparency = 0
     }):Play()
     
@@ -904,15 +708,7 @@ local function playEntranceAnimation()
     task.wait(0.2)
     
     services.TweenService:Create(Side, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0.2
-    }):Play()
-    
-    services.TweenService:Create(ScriptTitle, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        TextTransparency = 0
-    }):Play()
-    
-    services.TweenService:Create(SubTitle, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        TextTransparency = 0
+        BackgroundTransparency = 0
     }):Play()
     
     task.wait(0.2)
@@ -928,37 +724,7 @@ task.spawn(function()
     playEntranceAnimation()
 end)
 
-task.spawn(function()
-    local hue = 0
-    local matrixEffect = Instance.new("UIGradient")
-    matrixEffect.Rotation = 90
-    matrixEffect.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0),
-        NumberSequenceKeypoint.new(0.5, 0.3),
-        NumberSequenceKeypoint.new(1, 0)
-    })
-    matrixEffect.Parent = TitleText
-    
-    while TitleText and TitleText.Parent do
-        hue = (hue + 0.03) % 1
-        
-        TitleText.TextColor3 = Color3.fromHSV(hue, 1, 1)
-        
-        matrixEffect.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 1, 1)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 1, 1)),
-            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 1, 1))
-        })
-        
-        services.TweenService:Create(TitleText, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-            TextSize = 15 + math.sin(tick() * 3) * 2
-        }):Play()
-        
-        task.wait(0.05)
-    end
-end)
-
-function FengUI.new(FengUI, name, theme, version, author, description)
+function FengUI.new(FengUI, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
         if v.Name == "REN" then
             v:Destroy()
@@ -973,20 +739,8 @@ function FengUI.new(FengUI, name, theme, version, author, description)
         end
     end
 
-    local scriptName = name or "FengUI"
+    local scriptName = name or "殺脚本"
     TitleText.Text = scriptName
-    
-    -- 设置脚本信息
-    local infoText = ""
-    if version then
-        infoText = infoText .. "v" .. version .. " | "
-    end
-    if author then
-        infoText = infoText .. "作者: " .. author .. " | "
-    end
-    infoText = infoText .. (description or "高级UI框架")
-    
-    ScriptInfo.Text = infoText
     
     local window = {}
     
@@ -1003,6 +757,7 @@ function FengUI.new(FengUI, name, theme, version, author, description)
         Tab.BackgroundTransparency = 1
         Tab.Size = UDim2.new(1, 0, 1, 0)
         Tab.ScrollBarThickness = 2
+        Tab.ScrollBarImageColor3 = config.AccentColor
         Tab.ScrollBarImageTransparency = 0.5
         Tab.Visible = false
         Tab.ElasticBehavior = Enum.ElasticBehavior.Never
@@ -1014,10 +769,11 @@ function FengUI.new(FengUI, name, theme, version, author, description)
         TabIco.BackgroundTransparency = 1
         TabIco.BorderSizePixel = 0
         TabIco.Size = UDim2.new(0, 22, 0, 22)
-        TabIco.Image = icon or "rbxassetid://84830962019412"
+        TabIco.Image = "rbxassetid://3926305904"
+        TabIco.ImageRectOffset = Vector2.new(312, 4)
+        TabIco.ImageRectSize = Vector2.new(24, 24)
+        TabIco.ImageColor3 = config.SecondaryTextColor
         TabIco.ImageTransparency = 0.5
-        
-        startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
         
         TabText.Name = "TabText"
         TabText.Parent = TabIco
@@ -1075,8 +831,8 @@ function FengUI.new(FengUI, name, theme, version, author, description)
             
             Section.Name = "Section"
             Section.Parent = Tab
-            Section.BackgroundColor3 = config.TabColor
-            Section.BackgroundTransparency = 0.2
+            Section.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+            Section.BackgroundTransparency = 0.1
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
             Section.Size = UDim2.new(0.95, 0, 0, 36)
@@ -1084,6 +840,12 @@ function FengUI.new(FengUI, name, theme, version, author, description)
             SectionC.CornerRadius = UDim.new(0, 6)
             SectionC.Name = "SectionC"
             SectionC.Parent = Section
+            
+            local sectionStroke = Instance.new("UIStroke")
+            sectionStroke.Parent = Section
+            sectionStroke.Color = config.AccentColor
+            sectionStroke.Thickness = 1
+            sectionStroke.Transparency = 0.7
             
             SectionText.Name = "SectionText"
             SectionText.Parent = Section
@@ -1102,7 +864,9 @@ function FengUI.new(FengUI, name, theme, version, author, description)
             SectionOpen.BorderSizePixel = 0
             SectionOpen.Position = UDim2.new(0, -26, 0, 6)
             SectionOpen.Size = UDim2.new(0, 22, 0, 22)
-            SectionOpen.Image = "rbxassetid://84830962019412"
+            SectionOpen.Image = "rbxassetid://3926305904"
+            SectionOpen.ImageRectOffset = Vector2.new(284, 4)
+            SectionOpen.ImageRectSize = Vector2.new(24, 24)
             SectionOpen.ImageColor3 = config.SecondaryTextColor
             
             SectionOpened.Name = "SectionOpened"
@@ -1110,7 +874,9 @@ function FengUI.new(FengUI, name, theme, version, author, description)
             SectionOpened.BackgroundTransparency = 1
             SectionOpened.BorderSizePixel = 0
             SectionOpened.Size = UDim2.new(0, 22, 0, 22)
-            SectionOpened.Image = "rbxassetid://84830962019412"
+            SectionOpened.Image = "rbxassetid://3926305904"
+            SectionOpened.ImageRectOffset = Vector2.new(324, 524)
+            SectionOpened.ImageRectSize = Vector2.new(36, 36)
             SectionOpened.ImageColor3 = config.AccentColor
             SectionOpened.ImageTransparency = 1
             
@@ -1174,22 +940,19 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 local PlayerContainer = Instance.new("Frame")
                 PlayerContainer.Name = "PlayerContainer"
                 PlayerContainer.Parent = MusicPlayerModule
-                PlayerContainer.BackgroundColor3 = config.TabColor
-                PlayerContainer.BackgroundTransparency = 0.2
+                PlayerContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+                PlayerContainer.BackgroundTransparency = 0.1
                 PlayerContainer.Size = UDim2.new(1, 0, 0, 160)
                 
                 local PlayerCorner = Instance.new("UICorner")
                 PlayerCorner.CornerRadius = UDim.new(0, 8)
                 PlayerCorner.Parent = PlayerContainer
                 
-                local playerGlow = Instance.new("UIStroke")
-                playerGlow.Parent = PlayerContainer
-                playerGlow.Color = config.AccentColor
-                playerGlow.Thickness = 2
-                playerGlow.Transparency = 0.7
-                
-                startNeonFlowEffect(playerGlow, "Color", 0.008)
-                createPulseGlow(playerGlow)
+                local playerStroke = Instance.new("UIStroke")
+                playerStroke.Parent = PlayerContainer
+                playerStroke.Color = config.AccentColor
+                playerStroke.Thickness = 1
+                playerStroke.Transparency = 0.5
                 
                 local TopSection = Instance.new("Frame")
                 TopSection.Name = "TopSection"
@@ -1200,7 +963,7 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 local AlbumArt = Instance.new("ImageLabel")
                 AlbumArt.Name = "AlbumArt"
                 AlbumArt.Parent = TopSection
-                AlbumArt.BackgroundColor3 = config.Bg_Color
+                AlbumArt.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
                 AlbumArt.BackgroundTransparency = 0.2
                 AlbumArt.Position = UDim2.new(0.03, 0, 0.1, 0)
                 AlbumArt.Size = UDim2.new(0, 50, 0, 50)
@@ -1209,11 +972,11 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 AlbumCorner.CornerRadius = UDim.new(0, 6)
                 AlbumCorner.Parent = AlbumArt
                 
-                local albumGlow = Instance.new("UIStroke")
-                albumGlow.Parent = AlbumArt
-                albumGlow.Color = config.AccentColor
-                albumGlow.Thickness = 1
-                albumGlow.Transparency = 0.8
+                local albumStroke = Instance.new("UIStroke")
+                albumStroke.Parent = AlbumArt
+                albumStroke.Color = config.AccentColor
+                albumStroke.Thickness = 1
+                albumStroke.Transparency = 0.5
                 
                 local InfoContainer = Instance.new("Frame")
                 InfoContainer.Name = "InfoContainer"
@@ -1258,7 +1021,7 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 local ProgressBar = Instance.new("Frame")
                 ProgressBar.Name = "ProgressBar"
                 ProgressBar.Parent = BottomSection
-                ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
                 ProgressBar.BorderSizePixel = 0
                 ProgressBar.Position = UDim2.new(0.03, 0, 0.05, 0)
                 ProgressBar.Size = UDim2.new(0.94, 0, 0, 6)
@@ -1301,14 +1064,14 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                     local button = Instance.new("TextButton")
                     button.Name = name
                     button.Parent = ControlsContainer
-                    button.BackgroundColor3 = isMain and config.AccentColor or Color3.fromRGB(180, 180, 180)
+                    button.BackgroundColor3 = isMain and config.AccentColor or Color3.fromRGB(60, 60, 80)
                     button.BackgroundTransparency = 0.1
                     button.Position = position
                     button.Size = size
                     button.AutoButtonColor = false
                     button.Font = Enum.Font.GothamBold
                     button.Text = text
-                    button.TextColor3 = isMain and config.TextColor or Color3.fromRGB(50, 50, 50)
+                    button.TextColor3 = isMain and Color3.fromRGB(255, 255, 255) or config.SecondaryTextColor
                     button.TextSize = isMain and 16 or 12
                     button.ZIndex = 5
                     
@@ -1316,23 +1079,19 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                     buttonCorner.CornerRadius = UDim.new(1, 0)
                     buttonCorner.Parent = button
                     
-                    local buttonGlow = Instance.new("UIStroke")
-                    buttonGlow.Parent = button
-                    buttonGlow.Color = isMain and config.AccentColor or Color3.fromRGB(150, 150, 150)
-                    buttonGlow.Thickness = 1
-                    buttonGlow.Transparency = 0.6
-                    buttonGlow.ZIndex = 4
-                    
-                    if isMain then
-                        startNeonFlowEffect(buttonGlow, "Color", 0.01)
-                    end
+                    local buttonStroke = Instance.new("UIStroke")
+                    buttonStroke.Parent = button
+                    buttonStroke.Color = isMain and config.AccentColor or Color3.fromRGB(80, 80, 100)
+                    buttonStroke.Thickness = 1
+                    buttonStroke.Transparency = 0.6
+                    buttonStroke.ZIndex = 4
                     
                     button.MouseEnter:Connect(function()
                         services.TweenService:Create(button, TweenInfo.new(0.2), {
                             BackgroundTransparency = 0,
                             Size = UDim2.new(0, size.X.Offset + 2, 0, size.Y.Offset + 2)
                         }):Play()
-                        services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
+                        services.TweenService:Create(buttonStroke, TweenInfo.new(0.2), {
                             Thickness = 2,
                             Transparency = 0.3
                         }):Play()
@@ -1343,20 +1102,20 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                             BackgroundTransparency = 0.1,
                             Size = size
                         }):Play()
-                        services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
+                        services.TweenService:Create(buttonStroke, TweenInfo.new(0.2), {
                             Thickness = 1,
                             Transparency = 0.6
                         }):Play()
                     end)
                     
-                    return button, buttonGlow
+                    return button, buttonStroke
                 end
                 
-                local PrevButton, prevGlow = createControlButton("PrevButton", "⏮", UDim2.new(0.15, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
-                local PlayPauseButton, playGlow = createControlButton("PlayPauseButton", "▶", UDim2.new(0.42, 0, 0.1, 0), UDim2.new(0, 36, 0, 36), true)
-                local NextButton, nextGlow = createControlButton("NextButton", "⏭", UDim2.new(0.69, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
+                local PrevButton, prevStroke = createControlButton("PrevButton", "⏮", UDim2.new(0.15, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
+                local PlayPauseButton, playStroke = createControlButton("PlayPauseButton", "▶", UDim2.new(0.42, 0, 0.1, 0), UDim2.new(0, 36, 0, 36), true)
+                local NextButton, nextStroke = createControlButton("NextButton", "⏭", UDim2.new(0.69, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
                 
-                local LoopButton, loopGlow = createControlButton("LoopButton", "🔁", UDim2.new(0.85, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
+                local LoopButton, loopStroke = createControlButton("LoopButton", "🔁", UDim2.new(0.85, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
                 
                 local loopModes = {
                     {mode = "none", text = "🔁", tooltip = "无循环"},
@@ -1372,17 +1131,17 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                     
                     if mode.mode == "single" then
                         services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
-                            BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+                            BackgroundColor3 = config.AccentColor
                         }):Play()
-                        services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
+                        services.TweenService:Create(loopStroke, TweenInfo.new(0.3), {
                             Transparency = 0.3,
                             Thickness = 2
                         }):Play()
                     else
                         services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
-                            BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+                            BackgroundColor3 = Color3.fromRGB(60, 60, 80)
                         }):Play()
-                        services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
+                        services.TweenService:Create(loopStroke, TweenInfo.new(0.3), {
                             Transparency = 0.6,
                             Thickness = 1
                         }):Play()
@@ -1586,7 +1345,7 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
                 Btn.BackgroundColor3 = config.Button_Color
-                Btn.BackgroundTransparency = 0.2
+                Btn.BackgroundTransparency = 0.1
                 Btn.BorderSizePixel = 0
                 Btn.Size = UDim2.new(0, 330, 0, 36)
                 Btn.AutoButtonColor = false
@@ -1600,14 +1359,11 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 BtnC.Name = "BtnC"
                 BtnC.Parent = Btn
                 
-                local btnGlow = Instance.new("UIStroke")
-                btnGlow.Parent = Btn
-                btnGlow.Color = config.AccentColor
-                btnGlow.Thickness = 1
-                btnGlow.Transparency = 0.8
-                
-                startNeonFlowEffect(btnGlow, "Color", 0.01)
-                createPulseGlow(btnGlow)
+                local btnStroke = Instance.new("UIStroke")
+                btnStroke.Parent = Btn
+                btnStroke.Color = config.AccentColor
+                btnStroke.Thickness = 1
+                btnStroke.Transparency = 0.6
                 
                 Btn.MouseEnter:Connect(function()
                     services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
@@ -1617,9 +1373,9 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                             math.floor(config.Button_Color.B * 255 * 1.1)
                         )
                     }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                    services.TweenService:Create(btnStroke, TweenInfo.new(0.2), {
                         Thickness = 2,
-                        Transparency = 0.5
+                        Transparency = 0.3
                     }):Play()
                 end)
                 
@@ -1627,9 +1383,9 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                     services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundColor3 = config.Button_Color
                     }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                    services.TweenService:Create(btnStroke, TweenInfo.new(0.2), {
                         Thickness = 1,
-                        Transparency = 0.8
+                        Transparency = 0.6
                     }):Play()
                 end)
                 
@@ -1644,7 +1400,7 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                             math.floor(config.Button_Color.B * 255 * 0.8)
                         )
                     }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
+                    services.TweenService:Create(btnStroke, TweenInfo.new(0.1), {
                         Thickness = 3,
                         Transparency = 0.3
                     }):Play()
@@ -1654,9 +1410,9 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                     services.TweenService:Create(Btn, TweenInfo.new(0.2), {
                         BackgroundColor3 = config.Button_Color
                     }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                    services.TweenService:Create(btnStroke, TweenInfo.new(0.2), {
                         Thickness = 1,
-                        Transparency = 0.8
+                        Transparency = 0.6
                     }):Play()
                 end)
             end
@@ -1683,11 +1439,11 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 ImageCorner.CornerRadius = UDim.new(0, 6)
                 ImageCorner.Parent = ImageLabel
                 
-                local imageGlow = Instance.new("UIStroke")
-                imageGlow.Parent = ImageLabel
-                imageGlow.Color = config.AccentColor
-                imageGlow.Thickness = 1
-                imageGlow.Transparency = 0.8
+                local imageStroke = Instance.new("UIStroke")
+                imageStroke.Parent = ImageLabel
+                imageStroke.Color = config.AccentColor
+                imageStroke.Thickness = 1
+                imageStroke.Transparency = 0.6
                 
                 local function setImage(source)
                     if type(source) == "table" then
@@ -1785,7 +1541,7 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 
                 TextLabel.Parent = LabelModule
                 TextLabel.BackgroundColor3 = config.Label_Color
-                TextLabel.BackgroundTransparency = 0.2
+                TextLabel.BackgroundTransparency = 0.1
                 TextLabel.Size = UDim2.new(0, 330, 0, 28)
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
@@ -1795,6 +1551,12 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 LabelC.CornerRadius = UDim.new(0, 6)
                 LabelC.Name = "LabelC"
                 LabelC.Parent = TextLabel
+                
+                local labelStroke = Instance.new("UIStroke")
+                labelStroke.Parent = TextLabel
+                labelStroke.Color = config.AccentColor
+                labelStroke.Thickness = 1
+                labelStroke.Transparency = 0.6
                 
                 return TextLabel
             end
@@ -1823,7 +1585,7 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
                 ToggleBtn.BackgroundColor3 = config.Toggle_Color
-                ToggleBtn.BackgroundTransparency = 0.2
+                ToggleBtn.BackgroundTransparency = 0.1
                 ToggleBtn.BorderSizePixel = 0
                 ToggleBtn.Size = UDim2.new(0, 330, 0, 36)
                 ToggleBtn.AutoButtonColor = false
@@ -1837,9 +1599,15 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 ToggleBtnC.Name = "ToggleBtnC"
                 ToggleBtnC.Parent = ToggleBtn
                 
+                local toggleStroke = Instance.new("UIStroke")
+                toggleStroke.Parent = ToggleBtn
+                toggleStroke.Color = config.AccentColor
+                toggleStroke.Thickness = 1
+                toggleStroke.Transparency = 0.6
+                
                 ToggleDisable.Name = "ToggleDisable"
                 ToggleDisable.Parent = ToggleBtn
-                ToggleDisable.BackgroundColor3 = config.Bg_Color
+                ToggleDisable.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
                 ToggleDisable.BorderSizePixel = 0
                 ToggleDisable.Position = UDim2.new(0.85, 0, 0.22, 0)
                 ToggleDisable.Size = UDim2.new(0, 34, 0, 18)
@@ -1858,10 +1626,6 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 ToggleDisableC.Name = "ToggleDisableC"
                 ToggleDisableC.Parent = ToggleDisable
                 
-                if enabled then
-                    createHologramEffect(ToggleSwitch, 0.8)
-                end
-                
                 ToggleBtn.MouseEnter:Connect(function()
                     services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                         BackgroundColor3 = Color3.fromRGB(
@@ -1870,11 +1634,19 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                             math.floor(config.Toggle_Color.B * 255 * 1.1)
                         )
                     }):Play()
+                    services.TweenService:Create(toggleStroke, TweenInfo.new(0.2), {
+                        Thickness = 2,
+                        Transparency = 0.3
+                    }):Play()
                 end)
                 
                 ToggleBtn.MouseLeave:Connect(function()
                     services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundColor3 = config.Toggle_Color
+                    }):Play()
+                    services.TweenService:Create(toggleStroke, TweenInfo.new(0.2), {
+                        Thickness = 1,
+                        Transparency = 0.6
                     }):Play()
                 end)
                 
@@ -1891,15 +1663,6 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                             Position = UDim2.new(0, state and 14 or 0, 0, 0),
                             BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
                         }):Play()
-                        
-                        if state then
-                            createHologramEffect(ToggleSwitch, 0.8)
-                        else
-                            local hologram = ToggleSwitch:FindFirstChild("HologramEffect")
-                            if hologram then
-                                hologram:Destroy()
-                            end
-                        end
                         
                         FengUI.flags[flag] = state
                         callback(state)
@@ -1959,7 +1722,7 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
                 KeybindBtn.BackgroundColor3 = config.Keybind_Color
-                KeybindBtn.BackgroundTransparency = 0.2
+                KeybindBtn.BackgroundTransparency = 0.1
                 KeybindBtn.BorderSizePixel = 0
                 KeybindBtn.Size = UDim2.new(0, 330, 0, 36)
                 KeybindBtn.AutoButtonColor = false
@@ -1973,9 +1736,15 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 KeybindBtnC.Name = "KeybindBtnC"
                 KeybindBtnC.Parent = KeybindBtn
                 
+                local keybindStroke = Instance.new("UIStroke")
+                keybindStroke.Parent = KeybindBtn
+                keybindStroke.Color = config.AccentColor
+                keybindStroke.Thickness = 1
+                keybindStroke.Transparency = 0.6
+                
                 KeybindValue.Name = "KeybindValue"
                 KeybindValue.Parent = KeybindBtn
-                KeybindValue.BackgroundColor3 = config.Bg_Color
+                KeybindValue.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
                 KeybindValue.BorderSizePixel = 0
                 KeybindValue.Position = UDim2.new(0.72, 0, 0.22, 0)
                 KeybindValue.Size = UDim2.new(0, 70, 0, 22)
@@ -1988,6 +1757,12 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 KeybindValueC.CornerRadius = UDim.new(0, 6)
                 KeybindValueC.Name = "KeybindValueC"
                 KeybindValueC.Parent = KeybindValue
+                
+                local valueStroke = Instance.new("UIStroke")
+                valueStroke.Parent = KeybindValue
+                valueStroke.Color = config.AccentColor
+                valueStroke.Thickness = 1
+                valueStroke.Transparency = 0.6
                 
                 KeybindL.Name = "KeybindL"
                 KeybindL.Parent = KeybindBtn
@@ -2006,11 +1781,19 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                             math.floor(config.Keybind_Color.B * 255 * 1.1)
                         )
                     }):Play()
+                    services.TweenService:Create(keybindStroke, TweenInfo.new(0.2), {
+                        Thickness = 2,
+                        Transparency = 0.3
+                    }):Play()
                 end)
                 
                 KeybindBtn.MouseLeave:Connect(function()
                     services.TweenService:Create(KeybindBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundColor3 = config.Keybind_Color
+                    }):Play()
+                    services.TweenService:Create(keybindStroke, TweenInfo.new(0.2), {
+                        Thickness = 1,
+                        Transparency = 0.6
                     }):Play()
                 end)
                 
@@ -2079,7 +1862,7 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
                 TextboxBack.BackgroundColor3 = config.Textbox_Color
-                TextboxBack.BackgroundTransparency = 0.2
+                TextboxBack.BackgroundTransparency = 0.1
                 TextboxBack.BorderSizePixel = 0
                 TextboxBack.Size = UDim2.new(0, 330, 0, 36)
                 TextboxBack.AutoButtonColor = false
@@ -2093,9 +1876,15 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 TextboxBackC.Name = "TextboxBackC"
                 TextboxBackC.Parent = TextboxBack
                 
+                local textboxStroke = Instance.new("UIStroke")
+                textboxStroke.Parent = TextboxBack
+                textboxStroke.Color = config.AccentColor
+                textboxStroke.Thickness = 1
+                textboxStroke.Transparency = 0.6
+                
                 BoxBG.Name = "BoxBG"
                 BoxBG.Parent = TextboxBack
-                BoxBG.BackgroundColor3 = config.Bg_Color
+                BoxBG.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
                 BoxBG.BorderSizePixel = 0
                 BoxBG.Position = UDim2.new(0.45, 0, 0.22, 0)
                 BoxBG.Size = UDim2.new(0, 80, 0, 22)
@@ -2106,6 +1895,12 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 BoxBGC.CornerRadius = UDim.new(0, 6)
                 BoxBGC.Name = "BoxBGC"
                 BoxBGC.Parent = BoxBG
+                
+                local boxStroke = Instance.new("UIStroke")
+                boxStroke.Parent = BoxBG
+                boxStroke.Color = config.AccentColor
+                boxStroke.Thickness = 1
+                boxStroke.Transparency = 0.6
                 
                 TextBox.Parent = BoxBG
                 TextBox.BackgroundTransparency = 1
@@ -2135,11 +1930,19 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                             math.floor(config.Textbox_Color.B * 255 * 1.1)
                         )
                     }):Play()
+                    services.TweenService:Create(textboxStroke, TweenInfo.new(0.2), {
+                        Thickness = 2,
+                        Transparency = 0.3
+                    }):Play()
                 end)
                 
                 TextboxBack.MouseLeave:Connect(function()
                     services.TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundColor3 = config.Textbox_Color
+                    }):Play()
+                    services.TweenService:Create(textboxStroke, TweenInfo.new(0.2), {
+                        Thickness = 1,
+                        Transparency = 0.6
                     }):Play()
                 end)
                 
@@ -2186,22 +1989,20 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 
                 SliderModule.Name = "SliderModule"
                 SliderModule.Parent = Objs
-                SliderModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                SliderModule.BackgroundTransparency = 1.000
+                SliderModule.BackgroundTransparency = 1
                 SliderModule.BorderSizePixel = 0
-                SliderModule.Position = UDim2.new(0, 0, 0, 0)
                 SliderModule.Size = UDim2.new(0, 330, 0, 36)
                 
                 SliderBack.Name = "SliderBack"
                 SliderBack.Parent = SliderModule
                 SliderBack.BackgroundColor3 = config.Slider_Color
-                SliderBack.BackgroundTransparency = 0.2
+                SliderBack.BackgroundTransparency = 0.1
                 SliderBack.BorderSizePixel = 0
                 SliderBack.Size = UDim2.new(0, 330, 0, 36)
                 SliderBack.AutoButtonColor = false
                 SliderBack.Font = Enum.Font.GothamSemibold
                 SliderBack.Text = "   " .. text
-                SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
+                SliderBack.TextColor3 = config.TextColor
                 SliderBack.TextSize = 14.000
                 SliderBack.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -2209,10 +2010,16 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 SliderBackC.Name = "SliderBackC"
                 SliderBackC.Parent = SliderBack
                 
+                local sliderStroke = Instance.new("UIStroke")
+                sliderStroke.Parent = SliderBack
+                sliderStroke.Color = config.AccentColor
+                sliderStroke.Thickness = 1
+                sliderStroke.Transparency = 0.6
+                
                 SliderBar.Name = "SliderBar"
                 SliderBar.Parent = SliderBack
                 SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-                SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
                 SliderBar.BorderSizePixel = 0
                 SliderBar.Position = UDim2.new(0.35, 0, 0.5, 0)
                 SliderBar.Size = UDim2.new(0, 120, 0, 14)
@@ -2231,14 +2038,14 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 
                 SliderValBG.Name = "SliderValBG"
                 SliderValBG.Parent = SliderBack
-                SliderValBG.BackgroundColor3 = config.Bg_Color
+                SliderValBG.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
                 SliderValBG.BorderSizePixel = 0
                 SliderValBG.Position = UDim2.new(0.82, 0, 0.22, 0)
                 SliderValBG.Size = UDim2.new(0, 36, 0, 22)
                 SliderValBG.AutoButtonColor = false
                 SliderValBG.Font = Enum.Font.Gotham
                 SliderValBG.Text = ""
-                SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
+                SliderValBG.TextColor3 = config.TextColor
                 SliderValBG.TextSize = 14.000
                 
                 SliderValBGC.CornerRadius = UDim.new(0, 6)
@@ -2247,26 +2054,31 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 
                 SliderValue.Name = "SliderValue"
                 SliderValue.Parent = SliderValBG
-                SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 SliderValue.BackgroundTransparency = 1.000
                 SliderValue.BorderSizePixel = 0
                 SliderValue.Size = UDim2.new(1, 0, 1, 0)
                 SliderValue.Font = Enum.Font.Gotham
                 SliderValue.Text = tostring(default)
-                SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+                SliderValue.TextColor3 = config.TextColor
                 SliderValue.TextSize = 11.000
+                
+                local valueStroke = Instance.new("UIStroke")
+                valueStroke.Parent = SliderValBG
+                valueStroke.Color = config.AccentColor
+                valueStroke.Thickness = 1
+                valueStroke.Transparency = 0.6
                 
                 local MinSlider = Instance.new("TextButton")
                 MinSlider.Name = "MinSlider"
                 MinSlider.Parent = SliderBack
-                MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
                 MinSlider.BackgroundTransparency = 0
                 MinSlider.BorderSizePixel = 0
                 MinSlider.Position = UDim2.new(0.28, 0, 0.25, 0)
                 MinSlider.Size = UDim2.new(0, 18, 0, 18)
                 MinSlider.Font = Enum.Font.Gotham
-                MinSlider.Text = "减"
-                MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+                MinSlider.Text = "-"
+                MinSlider.TextColor3 = config.TextColor
                 MinSlider.TextSize = 13.000
                 MinSlider.TextWrapped = true
                 MinSlider.ZIndex = 2
@@ -2278,14 +2090,14 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 local AddSlider = Instance.new("TextButton")
                 AddSlider.Name = "AddSlider"
                 AddSlider.Parent = SliderBack
-                AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
                 AddSlider.BackgroundTransparency = 0
                 AddSlider.BorderSizePixel = 0
                 AddSlider.Position = UDim2.new(0.75, 0, 0.25, 0)
                 AddSlider.Size = UDim2.new(0, 18, 0, 18)
                 AddSlider.Font = Enum.Font.Gotham
-                AddSlider.Text = "加"
-                AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+                AddSlider.Text = "+"
+                AddSlider.TextColor3 = config.TextColor
                 AddSlider.TextSize = 13.000
                 AddSlider.TextWrapped = true
                 AddSlider.ZIndex = 2
@@ -2360,25 +2172,6 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 
                 services.UserInputService.InputChanged:Connect(function(input)
                     if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        funcs:SetValue()
-                    end
-                end)
-                
-                SliderBar.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = true
-                        funcs:SetValue()
-                    end
-                end)
-                
-                services.UserInputService.InputEnded:Connect(function(input)
-                    if dragging and input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = false
-                    end
-                end)
-                
-                services.UserInputService.InputChanged:Connect(function(input)
-                    if dragging and input.UserInputType == Enum.UserInputType.Touch then
                         funcs:SetValue()
                     end
                 end)
@@ -2484,17 +2277,15 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 
                 DropdownModule.Name = "DropdownModule"
                 DropdownModule.Parent = Objs
-                DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                DropdownModule.BackgroundTransparency = 1.000
+                DropdownModule.BackgroundTransparency = 1
                 DropdownModule.BorderSizePixel = 0
                 DropdownModule.ClipsDescendants = true
-                DropdownModule.Position = UDim2.new(0, 0, 0, 0)
                 DropdownModule.Size = UDim2.new(0, 330, 0, 36)
                 
                 DropdownTop.Name = "DropdownTop"
                 DropdownTop.Parent = DropdownModule
                 DropdownTop.BackgroundColor3 = config.Dropdown_Color
-                DropdownTop.BackgroundTransparency = 0.2
+                DropdownTop.BackgroundTransparency = 0.1
                 DropdownTop.BorderSizePixel = 0
                 DropdownTop.Size = UDim2.new(0, 330, 0, 36)
                 DropdownTop.AutoButtonColor = false
@@ -2508,33 +2299,33 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 DropdownTopC.Name = "DropdownTopC"
                 DropdownTopC.Parent = DropdownTop
                 
-                local BackgroundFill = Instance.new("Frame")
-                BackgroundFill.Name = "BackgroundFill"
-                BackgroundFill.Parent = DropdownTop
-                BackgroundFill.BackgroundColor3 = config.Dropdown_Color
-                BackgroundFill.BorderSizePixel = 0
-                BackgroundFill.Position = UDim2.new(0.75, 0, 0, 0)
-                BackgroundFill.Size = UDim2.new(0.25, 0, 1, 0)
-                BackgroundFill.ZIndex = 0
+                local dropdownStroke = Instance.new("UIStroke")
+                dropdownStroke.Parent = DropdownTop
+                dropdownStroke.Color = config.AccentColor
+                dropdownStroke.Thickness = 1
+                dropdownStroke.Transparency = 0.6
                 
                 DropdownOpenFrame.Name = "DropdownOpenFrame"
                 DropdownOpenFrame.Parent = DropdownTop
                 DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
-                DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
+                DropdownOpenFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
                 DropdownOpenFrame.BorderSizePixel = 0
                 DropdownOpenFrame.Position = UDim2.new(0.80, 0, 0.5, 0)
                 DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 22)
                 DropdownOpenFrame.ZIndex = 2
                 
-                createHologramEffect(DropdownOpenFrame, 0.8)
-                
                 DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
                 DropdownOpenFrameC.Name = "DropdownOpenFrameC"
                 DropdownOpenFrameC.Parent = DropdownOpenFrame
                 
+                local openStroke = Instance.new("UIStroke")
+                openStroke.Parent = DropdownOpenFrame
+                openStroke.Color = config.AccentColor
+                openStroke.Thickness = 1
+                openStroke.Transparency = 0.6
+                
                 DropdownOpen.Name = "DropdownOpen"
                 DropdownOpen.Parent = DropdownOpenFrame
-                DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 DropdownOpen.BackgroundTransparency = 1.000
                 DropdownOpen.BorderSizePixel = 0
                 DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
@@ -2547,7 +2338,6 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 
                 DropdownText.Name = "DropdownText"
                 DropdownText.Parent = DropdownTop
-                DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 DropdownText.BackgroundTransparency = 1.000
                 DropdownText.BorderSizePixel = 0
                 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
@@ -2564,7 +2354,7 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                 local Separator = Instance.new("Frame")
                 Separator.Name = "Separator"
                 Separator.Parent = DropdownTop
-                Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
                 Separator.BorderSizePixel = 0
                 Separator.Position = UDim2.new(0.74, 0, 0.2, 0)
                 Separator.Size = UDim2.new(0, 1, 0, 22)
@@ -2643,8 +2433,8 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                     local OptionC = Instance.new("UICorner")
                     Option.Name = "Option_" .. option
                     Option.Parent = DropdownModule
-                    Option.BackgroundColor3 = config.TabColor
-                    Option.BackgroundTransparency = 0.2
+                    Option.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+                    Option.BackgroundTransparency = 0.1
                     Option.BorderSizePixel = 0
                     Option.Position = UDim2.new(0, 0, 0.328125, 0)
                     Option.Size = UDim2.new(0, 310, 0, 24)
@@ -2656,6 +2446,12 @@ function FengUI.new(FengUI, name, theme, version, author, description)
                     OptionC.CornerRadius = UDim.new(0, 6)
                     OptionC.Name = "OptionC"
                     OptionC.Parent = Option
+                    
+                    local optionStroke = Instance.new("UIStroke")
+                    optionStroke.Parent = Option
+                    optionStroke.Color = config.AccentColor
+                    optionStroke.Thickness = 1
+                    optionStroke.Transparency = 0.6
                     
                     Option.MouseButton1Click:Connect(function()
                         DigitalParticleExplosion(Option)
@@ -2693,49 +2489,6 @@ function FengUI.new(FengUI, name, theme, version, author, description)
 
         return tab
     end
-    
-    function window.UpdateInfo(window, infoType, value)
-        local currentText = ScriptInfo.Text
-        
-        if infoType == "version" then
-            local pattern = "v%d+%.%d+%.%d+"
-            local newText = "v" .. value
-            local newInfo = currentText:gsub(pattern, newText)
-            ScriptInfo.Text = newInfo
-            
-            -- 如果版本号不存在，则添加
-            if not currentText:match(pattern) then
-                ScriptInfo.Text = "v" .. value .. " | " .. currentText
-            end
-        elseif infoType == "status" then
-            local parts = {}
-            for part in currentText:gmatch("[^|]+") do
-                table.insert(parts, part:trim())
-            end
-            
-            if #parts >= 3 then
-                parts[#parts] = value
-                ScriptInfo.Text = table.concat(parts, " | ")
-            else
-                ScriptInfo.Text = currentText .. " | " .. value
-            end
-        elseif infoType == "author" then
-            local pattern = "作者:[^|]+"
-            local newText = "作者: " .. value
-            ScriptInfo.Text = currentText:gsub(pattern, newText)
-        end
-        
-        -- 添加闪烁效果提示更新
-        services.TweenService:Create(ScriptInfo, TweenInfo.new(0.2), {
-            TextColor3 = config.AccentColor
-        }):Play()
-        
-        task.wait(0.2)
-        
-        services.TweenService:Create(ScriptInfo, TweenInfo.new(0.2), {
-            TextColor3 = config.SecondaryTextColor
-        }):Play()
-    end
 
     return window
 end
@@ -2754,17 +2507,5 @@ end
 
 if not getgenv then getgenv = function() return _G end end
 getgenv().FengUI = FengUI
-
--- 添加性能监控
-task.spawn(function()
-    while task.wait(10) do
-        if Main and Main.Parent then
-            local memUsage = collectgarbage("count") / 1024
-            if memUsage > 100 then
-                warn("[FengUI] 内存使用: " .. string.format("%.2f", memUsage) .. " MB")
-            end
-        end
-    end
-end)
 
 return FengUI
