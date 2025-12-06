@@ -43,28 +43,24 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
--- 更新配色方案：黑蓝主题
+-- 高级黑蓝配色方案
 local config = {
-    MainColor = Color3.fromRGB(8, 12, 24),
-    TabColor = Color3.fromRGB(15, 20, 40),
+    MainColor = Color3.fromRGB(5, 8, 18),
+    TabColor = Color3.fromRGB(10, 15, 30),
     Bg_Color = Color3.fromRGB(8, 12, 24),
-    Zy_Color = Color3.fromRGB(8, 12, 24),
-    Button_Color = Color3.fromRGB(25, 30, 60),
-    Textbox_Color = Color3.fromRGB(25, 30, 60),
-    Dropdown_Color = Color3.fromRGB(25, 30, 60),
-    Keybind_Color = Color3.fromRGB(25, 30, 60),
-    Label_Color = Color3.fromRGB(25, 30, 60),
-    Slider_Color = Color3.fromRGB(25, 30, 60),
-    SliderBar_Color = Color3.fromRGB(0, 180, 255),
-    Toggle_Color = Color3.fromRGB(25, 30, 60),
-    Toggle_Off = Color3.fromRGB(40, 45, 80),
-    Toggle_On = Color3.fromRGB(0, 200, 230),
-    AccentColor = Color3.fromRGB(0, 180, 255),
+    Button_Color = Color3.fromRGB(20, 30, 60),
+    Textbox_Color = Color3.fromRGB(20, 30, 60),
+    Dropdown_Color = Color3.fromRGB(20, 30, 60),
+    Keybind_Color = Color3.fromRGB(20, 30, 60),
+    Label_Color = Color3.fromRGB(20, 30, 60),
+    Slider_Color = Color3.fromRGB(20, 30, 60),
+    SliderBar_Color = Color3.fromRGB(0, 160, 255),
+    Toggle_Color = Color3.fromRGB(20, 30, 60),
+    Toggle_Off = Color3.fromRGB(35, 45, 75),
+    Toggle_On = Color3.fromRGB(0, 180, 220),
+    AccentColor = Color3.fromRGB(0, 160, 255),  -- 强调色
     TextColor = Color3.fromRGB(240, 245, 255),
     SecondaryTextColor = Color3.fromRGB(180, 200, 230),
-    GlowColor = Color3.fromRGB(0, 120, 255),
-    HighlightColor = Color3.fromRGB(20, 100, 220),
-    GlassEffect = Color3.fromRGB(255, 255, 255),
 }
 
 local MusicPlayer = {
@@ -511,22 +507,155 @@ FengYu.Name = "UniversalUI"
 protectGUI(FengYu)
 FengYu.Parent = services.CoreGui
 
--- 创建主背景
+-- 主窗口
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.BackgroundColor3 = config.MainColor
-Main.BackgroundTransparency = 0.95  -- 增加透明度
+Main.BackgroundColor3 = Color3.fromRGB(5, 8, 18)
+Main.BackgroundTransparency = 1
 Main.Position = UDim2.new(0.5, 0, 0.35, 0)
-Main.Size = UDim2.new(0, 500, 0, 320)  -- 稍微加大尺寸
+Main.Size = UDim2.new(0, 520, 0, 340)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.CornerRadius = UDim.new(0, 14)
 MainCorner.Parent = Main
+
+-- 添加深空星空背景
+local spaceBackground = Instance.new("Frame")
+spaceBackground.Name = "SpaceBackground"
+spaceBackground.BackgroundColor3 = Color3.fromRGB(5, 8, 18)
+spaceBackground.BackgroundTransparency = 0
+spaceBackground.Size = UDim2.new(1, 0, 1, 0)
+spaceBackground.ZIndex = 0  -- 确保背景在最底层
+spaceBackground.Parent = Main
+
+-- 添加渐变层
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(5, 8, 18)),
+    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(10, 15, 35)),
+    ColorSequenceKeypoint.new(0.7, Color3.fromRGB(8, 12, 28)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 8, 18))
+})
+gradient.Rotation = 45
+gradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.1),
+    NumberSequenceKeypoint.new(0.5, 0.2),
+    NumberSequenceKeypoint.new(1, 0.1)
+})
+gradient.Parent = spaceBackground
+
+-- 创建星空效果
+task.spawn(function()
+    local stars = Instance.new("Frame")
+    stars.Name = "Stars"
+    stars.BackgroundTransparency = 1
+    stars.Size = UDim2.new(1, 0, 1, 0)
+    stars.ZIndex = 1
+    stars.Parent = spaceBackground
+    
+    -- 创建星星
+    local function createStar()
+        local star = Instance.new("Frame")
+        star.Name = "Star"
+        star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        star.BackgroundTransparency = 0.7 + math.random() * 0.3
+        star.BorderSizePixel = 0
+        star.Size = UDim2.new(0, math.random(1, 2), 0, math.random(1, 2))
+        star.Position = UDim2.new(0, math.random(0, 500), 0, math.random(0, 330))
+        star.ZIndex = 1
+        star.Parent = stars
+        
+        -- 让星星闪烁
+        task.spawn(function()
+            while star and star.Parent do
+                local alpha = 0.3 + math.sin(tick() * math.random(1, 3)) * 0.4
+                star.BackgroundTransparency = alpha
+                task.wait(0.05)
+            end
+        end)
+    end
+    
+    -- 创建多颗星星
+    for i = 1, 25 do
+        createStar()
+    end
+    
+    -- 动态移动星星（模拟星空移动效果）
+    local connection
+    connection = RunService.Heartbeat:Connect(function(delta)
+        if not stars or not stars.Parent then
+            connection:Disconnect()
+            return
+        end
+        
+        for _, star in ipairs(stars:GetChildren()) do
+            if star:IsA("Frame") then
+                local currentX = star.Position.X.Offset
+                local newX = currentX - 0.5  -- 缓慢向左移动
+                
+                if newX < -5 then  -- 如果移出边界，重置到右侧
+                    newX = 515
+                    star.Position = UDim2.new(0, newX, 0, math.random(0, 330))
+                else
+                    star.Position = UDim2.new(0, newX, star.Position.Y.Offset, 0)
+                end
+            end
+        end
+    end)
+    
+    -- 添加一些蓝色光点
+    for i = 1, 5 do
+        local glowPoint = Instance.new("Frame")
+        glowPoint.Name = "GlowPoint"
+        glowPoint.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+        glowPoint.BackgroundTransparency = 0.8
+        glowPoint.Size = UDim2.new(0, math.random(3, 6), 0, math.random(3, 6))
+        glowPoint.Position = UDim2.new(0, math.random(50, 450), 0, math.random(50, 280))
+        glowPoint.ZIndex = 2
+        
+        local glowCorner = Instance.new("UICorner")
+        glowCorner.CornerRadius = UDim.new(1, 0)
+        glowCorner.Parent = glowPoint
+        
+        glowPoint.Parent = spaceBackground
+        
+        -- 光点闪烁效果
+        task.spawn(function()
+            while glowPoint and glowPoint.Parent do
+                local alpha = 0.7 + math.sin(tick() * 1.5) * 0.2
+                glowPoint.BackgroundTransparency = alpha
+                task.wait(0.1)
+            end
+        end)
+    end
+end)
+
+-- 添加玻璃磨砂效果
+local glassEffect = Instance.new("Frame")
+glassEffect.Name = "GlassEffect"
+glassEffect.BackgroundTransparency = 1
+glassEffect.Size = UDim2.new(1, 0, 1, 0)
+glassEffect.ZIndex = 3
+glassEffect.Parent = Main
+
+local glassGradient = Instance.new("UIGradient")
+glassGradient.Rotation = 90
+glassGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.8),
+    NumberSequenceKeypoint.new(0.5, 0.5),
+    NumberSequenceKeypoint.new(1, 0.8)
+})
+glassGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+glassGradient.Parent = glassEffect
 
 -- 添加玻璃效果
 createGlassEffect(Main, 0.1)
@@ -708,16 +837,15 @@ TabMain.Position = UDim2.new(0, 100, 0, 45)  -- 调整位置，给侧边栏留�
 TabMain.Size = UDim2.new(0, 390, 0, 265)
 TabMain.Visible = false
 
--- 侧边栏（透明背景）
+-- 侧边栏（完全透明，无背景无边框）
 local Side = Instance.new("Frame")
 Side.Name = "Side"
 Side.Parent = Main
-Side.BackgroundColor3 = config.TabColor
 Side.BackgroundTransparency = 1  -- 完全透明
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 40)
-Side.Size = UDim2.new(0, 100, 0, 280)
+Side.Size = UDim2.new(0, 110, 0, 300)
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 12)
@@ -956,13 +1084,13 @@ function FengUI.new(FengUI, name, theme)
             local Objs = Instance.new("Frame")
             local ObjsL = Instance.new("UIListLayout")
             
-            Section.Name = "Section"
-            Section.Parent = Tab
-            Section.BackgroundColor3 = config.TabColor
-            Section.BackgroundTransparency = 1  -- 完全透明
-            Section.BorderSizePixel = 0
-            Section.ClipsDescendants = true
-            Section.Size = UDim2.new(0.95, 0, 0, 40)
+            -- Section完全透明，无背景无边框
+Section.Name = "Section"
+Section.Parent = Tab
+Section.BackgroundTransparency = 1  -- 完全透明
+Section.BorderSizePixel = 0
+Section.ClipsDescendants = true
+Section.Size = UDim2.new(0.95, 0, 0, 40)
             
             SectionC.CornerRadius = UDim.new(0, 8)
             SectionC.Name = "SectionC"
