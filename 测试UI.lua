@@ -43,26 +43,26 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
--- 黑蓝紫高级动态配色方案
+-- 黑蓝紫高级动态配色方案 - 只更改背景颜色
 local config = {
-    MainColor = Color3.fromRGB(10, 10, 15),
-    TabColor = Color3.fromRGB(15, 15, 25),
-    Bg_Color = Color3.fromRGB(20, 15, 30),
-    Zy_Color = Color3.fromRGB(20, 15, 30),
-    Button_Color = Color3.fromRGB(25, 20, 40),
-    Textbox_Color = Color3.fromRGB(25, 20, 40),
-    Dropdown_Color = Color3.fromRGB(25, 20, 40),
-    Keybind_Color = Color3.fromRGB(25, 20, 40),
-    Label_Color = Color3.fromRGB(25, 20, 40),
-    Slider_Color = Color3.fromRGB(25, 20, 40),
-    SliderBar_Color = Color3.fromRGB(120, 80, 220),
-    Toggle_Color = Color3.fromRGB(25, 20, 40),
-    Toggle_Off = Color3.fromRGB(40, 30, 60),
-    Toggle_On = Color3.fromRGB(100, 70, 200),
-    AccentColor = Color3.fromRGB(140, 100, 255),
-    TextColor = Color3.fromRGB(230, 220, 255),
-    SecondaryTextColor = Color3.fromRGB(180, 170, 220),
-    GlowColor = Color3.fromRGB(150, 100, 255),
+    MainColor = Color3.fromRGB(5, 5, 12),           -- 深黑蓝背景
+    TabColor = Color3.fromRGB(10, 8, 20),          -- 深紫蓝背景
+    Bg_Color = Color3.fromRGB(15, 10, 28),         -- 蓝紫渐变背景
+    Zy_Color = Color3.fromRGB(15, 10, 28),         -- 蓝紫渐变背景
+    Button_Color = Color3.fromRGB(20, 15, 38),     -- 深紫蓝按钮背景
+    Textbox_Color = Color3.fromRGB(20, 15, 38),    -- 深紫蓝输入框背景
+    Dropdown_Color = Color3.fromRGB(20, 15, 38),   -- 深紫蓝下拉框背景
+    Keybind_Color = Color3.fromRGB(20, 15, 38),    -- 深紫蓝按键绑定背景
+    Label_Color = Color3.fromRGB(20, 15, 38),      -- 深紫蓝标签背景
+    Slider_Color = Color3.fromRGB(20, 15, 38),     -- 深紫蓝滑块背景
+    SliderBar_Color = Color3.fromRGB(0, 200, 255), -- 保持原样 - 青色进度条
+    Toggle_Color = Color3.fromRGB(20, 15, 38),     -- 深紫蓝开关背景
+    Toggle_Off = Color3.fromRGB(35, 25, 55),       -- 深紫关闭状态
+    Toggle_On = Color3.fromRGB(0, 230, 230),       -- 保持原样 - 青色开启状态
+    AccentColor = Color3.fromRGB(120, 80, 220),    -- 紫色强调色（仅用于霓虹效果）
+    TextColor = Color3.fromRGB(240, 245, 255),     -- 保持原样 - 白色文字
+    SecondaryTextColor = Color3.fromRGB(180, 190, 210), -- 保持原样 - 浅灰色文字
+    GlowColor = Color3.fromRGB(100, 60, 200),      -- 紫色发光效果
 }
 
 local MusicPlayer = {
@@ -186,7 +186,7 @@ function DigitalParticleExplosion(obj)
         local explosionCenter = Instance.new("Frame")
         explosionCenter.Name = "ExplosionCenter"
         explosionCenter.Parent = obj
-        explosionCenter.BackgroundColor3 = Color3.fromRGB(140, 100, 255)
+        explosionCenter.BackgroundColor3 = Color3.fromRGB(100, 60, 200) -- 紫色粒子
         explosionCenter.BackgroundTransparency = 0.3
         explosionCenter.ZIndex = 8
         explosionCenter.Size = UDim2.new(0, 20, 0, 20)
@@ -199,7 +199,7 @@ function DigitalParticleExplosion(obj)
         
         local centerGlow = Instance.new("UIStroke")
         centerGlow.Parent = explosionCenter
-        centerGlow.Color = Color3.fromRGB(140, 100, 255)
+        centerGlow.Color = Color3.fromRGB(100, 60, 200) -- 紫色发光
         centerGlow.Thickness = 3
         centerGlow.Transparency = 0.2
         
@@ -219,7 +219,7 @@ function DigitalParticleExplosion(obj)
                 math.random(120, 180),
                 math.random(80, 140),
                 math.random(200, 255)
-            )
+            ) -- 蓝紫色数字
             particle.TextSize = math.random(10, 14)
             particle.Font = Enum.Font.Code
             particle.ZIndex = 9
@@ -296,7 +296,7 @@ function DigitalParticleExplosion(obj)
         
         local shockwaveStroke = Instance.new("UIStroke")
         shockwaveStroke.Parent = shockwave
-        shockwaveStroke.Color = Color3.fromRGB(140, 100, 255)
+        shockwaveStroke.Color = Color3.fromRGB(100, 60, 200) -- 紫色冲击波
         shockwaveStroke.Thickness = 3
         shockwaveStroke.Transparency = 0.3
         
@@ -368,7 +368,7 @@ end
 local function createParticleTrail(startPos, endPos, parent)
     local trail = Instance.new("Frame")
     trail.Name = "ParticleTrail"
-    trail.BackgroundColor3 = Color3.fromRGB(140, 100, 255)
+    trail.BackgroundColor3 = Color3.fromRGB(120, 80, 220) -- 紫色粒子轨迹
     trail.BackgroundTransparency = 0.3
     trail.Size = UDim2.new(0, 4, 0, 4)
     trail.Position = startPos
@@ -490,7 +490,7 @@ MainCorner.Parent = Main
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
-MainStroke.Color = Color3.fromRGB(40, 30, 60)
+MainStroke.Color = Color3.fromRGB(50, 50, 50) -- 保持原样 - 灰色边框
 MainStroke.Thickness = 1
 MainStroke.Transparency = 1
 
@@ -524,7 +524,7 @@ TitleText.Position = UDim2.new(0, 10, 0, 0)
 TitleText.Size = UDim2.new(0, 200, 1, 0)
 TitleText.Font = Enum.Font.GothamBold
 TitleText.Text = "FengUI"
-TitleText.TextColor3 = config.AccentColor
+TitleText.TextColor3 = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色文字
 TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.TextTransparency = 1
@@ -539,7 +539,7 @@ CloseButton.Position = UDim2.new(1, -25, 0, 7)
 CloseButton.Size = UDim2.new(0, 20, 0, 20)
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(255, 60, 60)
+CloseButton.TextColor3 = Color3.fromRGB(255, 60, 60) -- 保持原样 - 红色文字
 CloseButton.TextSize = 16
 CloseButton.ZIndex = 10
 CloseButton.TextTransparency = 1
@@ -606,7 +606,7 @@ end)
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
 Open.Parent = FengYu
-Open.BackgroundColor3 = config.AccentColor
+Open.BackgroundColor3 = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色按钮
 Open.BackgroundTransparency = 0.85
 Open.Position = UDim2.new(0.92, 0, 0.01, 0)
 Open.Size = UDim2.new(0, 40, 0, 40)
@@ -622,7 +622,7 @@ OpenCorner.Parent = Open
 
 local OpenStroke = Instance.new("UIStroke")
 OpenStroke.Parent = Open
-OpenStroke.Color = Color3.fromRGB(180, 180, 180)
+OpenStroke.Color = Color3.fromRGB(180, 180, 180) -- 保持原样 - 灰色边框
 OpenStroke.Thickness = 1.2
 OpenStroke.Transparency = 0.4
 
@@ -706,7 +706,7 @@ ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
 ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
 ScriptTitle.Font = Enum.Font.GothamBold
 ScriptTitle.Text = "FengUI 黑蓝紫主题"
-ScriptTitle.TextColor3 = config.AccentColor
+ScriptTitle.TextColor3 = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色文字
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
@@ -775,7 +775,7 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-    local hue = 0.7 -- 起始紫色调
+    local hue = 0
     local matrixEffect = Instance.new("UIGradient")
     matrixEffect.Rotation = 90
     matrixEffect.Transparency = NumberSequence.new({
@@ -788,16 +788,12 @@ task.spawn(function()
     while TitleText and TitleText.Parent do
         hue = (hue + 0.03) % 1
         
-        -- 在蓝色和紫色之间过渡
-        local r = 0.5 + math.sin(hue * 6) * 0.2
-        local g = 0.3 + math.sin(hue * 6 + 2) * 0.2
-        local b = 0.8 + math.sin(hue * 6 + 4) * 0.2
-        TitleText.TextColor3 = Color3.new(r, g, b)
+        TitleText.TextColor3 = Color3.fromHSV(hue, 1, 1)
         
         matrixEffect.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 0.8, 1)),
+            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 1, 1)),
             ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 1, 1)),
-            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 0.8, 1))
+            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 1, 1))
         })
         
         services.TweenService:Create(TitleText, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
@@ -948,7 +944,7 @@ function FengUI.new(FengUI, name, theme)
             SectionOpened.BorderSizePixel = 0
             SectionOpened.Size = UDim2.new(0, 22, 0, 22)
             SectionOpened.Image = "rbxassetid://84830962019412"
-            SectionOpened.ImageColor3 = config.AccentColor
+            SectionOpened.ImageColor3 = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色图标
             SectionOpened.ImageTransparency = 1
             
             SectionToggle.Name = "SectionToggle"
@@ -1021,7 +1017,7 @@ function FengUI.new(FengUI, name, theme)
     
     local playerGlow = Instance.new("UIStroke")
     playerGlow.Parent = PlayerContainer
-    playerGlow.Color = config.AccentColor
+    playerGlow.Color = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色边框
     playerGlow.Thickness = 2
     playerGlow.Transparency = 0.7
     
@@ -1048,7 +1044,7 @@ function FengUI.new(FengUI, name, theme)
     
     local albumGlow = Instance.new("UIStroke")
     albumGlow.Parent = AlbumArt
-    albumGlow.Color = config.AccentColor
+    albumGlow.Color = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色边框
     albumGlow.Thickness = 1
     albumGlow.Transparency = 0.8
     
@@ -1095,7 +1091,7 @@ function FengUI.new(FengUI, name, theme)
     local ProgressBar = Instance.new("Frame")
     ProgressBar.Name = "ProgressBar"
     ProgressBar.Parent = BottomSection
-    ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+    ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60) -- 保持原样 - 灰色进度条背景
     ProgressBar.BorderSizePixel = 0
     ProgressBar.Position = UDim2.new(0.03, 0, 0.05, 0)
     ProgressBar.Size = UDim2.new(0.94, 0, 0, 6)
@@ -1107,7 +1103,7 @@ function FengUI.new(FengUI, name, theme)
     local ProgressFill = Instance.new("Frame")
     ProgressFill.Name = "ProgressFill"
     ProgressFill.Parent = ProgressBar
-    ProgressFill.BackgroundColor3 = config.AccentColor
+    ProgressFill.BackgroundColor3 = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色进度条
     ProgressFill.BorderSizePixel = 0
     ProgressFill.Size = UDim2.new(0, 0, 1, 0)
     
@@ -1138,14 +1134,14 @@ function FengUI.new(FengUI, name, theme)
         local button = Instance.new("TextButton")
         button.Name = name
         button.Parent = ControlsContainer
-        button.BackgroundColor3 = isMain and config.AccentColor or Color3.fromRGB(80, 60, 120)
+        button.BackgroundColor3 = isMain and Color3.fromRGB(0, 200, 255) or Color3.fromRGB(180, 180, 180) -- 保持原样
         button.BackgroundTransparency = 0.1
         button.Position = position
         button.Size = size
         button.AutoButtonColor = false
         button.Font = Enum.Font.GothamBold
         button.Text = text
-        button.TextColor3 = isMain and config.TextColor or Color3.fromRGB(200, 190, 230)
+        button.TextColor3 = isMain and config.TextColor or Color3.fromRGB(50, 50, 50) -- 保持原样
         button.TextSize = isMain and 16 or 12
         button.ZIndex = 5
         
@@ -1155,7 +1151,7 @@ function FengUI.new(FengUI, name, theme)
         
         local buttonGlow = Instance.new("UIStroke")
         buttonGlow.Parent = button
-        buttonGlow.Color = isMain and config.AccentColor or Color3.fromRGB(120, 90, 180)
+        buttonGlow.Color = isMain and Color3.fromRGB(0, 200, 255) or Color3.fromRGB(150, 150, 150) -- 保持原样
         buttonGlow.Thickness = 1
         buttonGlow.Transparency = 0.6
         buttonGlow.ZIndex = 4
@@ -1209,7 +1205,7 @@ function FengUI.new(FengUI, name, theme)
         
         if mode.mode == "single" then
             services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
-                BackgroundColor3 = Color3.fromRGB(100, 70, 150)
+                BackgroundColor3 = Color3.fromRGB(120, 120, 120)
             }):Play()
             services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
                 Transparency = 0.3,
@@ -1217,7 +1213,7 @@ function FengUI.new(FengUI, name, theme)
             }):Play()
         else
             services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
-                BackgroundColor3 = Color3.fromRGB(80, 60, 120)
+                BackgroundColor3 = Color3.fromRGB(180, 180, 180)
             }):Play()
             services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
                 Transparency = 0.6,
@@ -1439,7 +1435,7 @@ end
                 
                 local btnGlow = Instance.new("UIStroke")
                 btnGlow.Parent = Btn
-                btnGlow.Color = config.AccentColor
+                btnGlow.Color = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色边框
                 btnGlow.Thickness = 1
                 btnGlow.Transparency = 0.8
                 
@@ -1522,7 +1518,7 @@ end
     
     local imageGlow = Instance.new("UIStroke")
     imageGlow.Parent = ImageLabel
-    imageGlow.Color = config.AccentColor
+    imageGlow.Color = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色边框
     imageGlow.Thickness = 1
     imageGlow.Transparency = 0.8
     
@@ -2036,7 +2032,7 @@ end
                 SliderBar.Name = "SliderBar"
                 SliderBar.Parent = SliderBack
                 SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-                SliderBar.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+                SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100) -- 保持原样 - 灰色滑块背景
                 SliderBar.BorderSizePixel = 0
                 SliderBar.Position = UDim2.new(0.35, 0, 0.5, 0)
                 SliderBar.Size = UDim2.new(0, 120, 0, 14)
@@ -2083,7 +2079,7 @@ end
                 local MinSlider = Instance.new("TextButton")
                 MinSlider.Name = "MinSlider"
                 MinSlider.Parent = SliderBack
-                MinSlider.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+                MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70) -- 保持原样 - 灰色按钮
                 MinSlider.BackgroundTransparency = 0
                 MinSlider.BorderSizePixel = 0
                 MinSlider.Position = UDim2.new(0.28, 0, 0.25, 0)
@@ -2102,7 +2098,7 @@ end
                 local AddSlider = Instance.new("TextButton")
                 AddSlider.Name = "AddSlider"
                 AddSlider.Parent = SliderBack
-                AddSlider.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+                AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70) -- 保持原样 - 灰色按钮
                 AddSlider.BackgroundTransparency = 0
                 AddSlider.BorderSizePixel = 0
                 AddSlider.Position = UDim2.new(0.75, 0, 0.25, 0)
@@ -2386,7 +2382,7 @@ end
     local Separator = Instance.new("Frame")
     Separator.Name = "Separator"
     Separator.Parent = DropdownTop
-    Separator.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+    Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70) -- 保持原样 - 灰色分隔线
     Separator.BorderSizePixel = 0
     Separator.Position = UDim2.new(0.74, 0, 0.2, 0)
     Separator.Size = UDim2.new(0, 1, 0, 22)
