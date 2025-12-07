@@ -43,40 +43,26 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
--- 超级高级配色方案 - 星空黑+霓虹蓝紫全息反射
+-- 基础配色方案 - 黑蓝紫高级配色
 local config = {
-    -- 主色调 - 深邃星空黑带蓝紫微光
-    MainColor = Color3.fromRGB(5, 5, 15),
-    TabColor = Color3.fromRGB(10, 10, 25),
-    Bg_Color = Color3.fromRGB(15, 15, 35),
-    Zy_Color = Color3.fromRGB(20, 15, 40),
-    
-    -- 元素颜色 - 镭射蓝紫渐变
-    Button_Color = Color3.fromRGB(30, 25, 60),
-    Textbox_Color = Color3.fromRGB(35, 25, 65),
-    Dropdown_Color = Color3.fromRGB(40, 25, 70),
-    Keybind_Color = Color3.fromRGB(45, 20, 75),
-    Label_Color = Color3.fromRGB(50, 20, 80),
-    Slider_Color = Color3.fromRGB(55, 15, 85),
-    
-    -- 动态效果色 - 霓虹蓝紫渐变
-    SliderBar_Color = Color3.fromRGB(160, 70, 255),
-    Toggle_Color = Color3.fromRGB(60, 10, 90),
-    Toggle_Off = Color3.fromRGB(80, 20, 100),
-    Toggle_On = Color3.fromRGB(180, 80, 255),
-    
-    -- 强调色 - 全息蓝紫反射
-    AccentColor = Color3.fromRGB(180, 80, 255),
-    TextColor = Color3.fromRGB(255, 255, 255),
-    SecondaryTextColor = Color3.fromRGB(200, 210, 255),
-    GlowColor = Color3.fromRGB(150, 60, 240),
-    
-    -- 新增高级效果颜色
-    GradientColor1 = Color3.fromRGB(40, 0, 80),     -- 渐变起始色
-    GradientColor2 = Color3.fromRGB(100, 30, 180),  -- 渐变中间色
-    GradientColor3 = Color3.fromRGB(180, 80, 255),  -- 渐变结束色
-    HologramColor = Color3.fromRGB(120, 50, 220),   -- 全息效果色
-    ShimmerColor = Color3.fromRGB(200, 150, 255),   -- 闪烁效果色
+    MainColor = Color3.fromRGB(10, 12, 28),           -- 主窗口颜色 - 深黑蓝
+    TabColor = Color3.fromRGB(15, 18, 40),           -- 标签栏颜色 - 深蓝紫
+    Bg_Color = Color3.fromRGB(20, 22, 45),           -- 背景颜色 - 暗蓝紫
+    Zy_Color = Color3.fromRGB(20, 22, 45),           -- 备用颜色
+    Button_Color = Color3.fromRGB(35, 38, 70),       -- 按钮颜色 - 中蓝紫
+    Textbox_Color = Color3.fromRGB(35, 38, 70),      -- 文本框颜色 - 中蓝紫
+    Dropdown_Color = Color3.fromRGB(35, 38, 70),     -- 下拉框颜色 - 中蓝紫
+    Keybind_Color = Color3.fromRGB(35, 38, 70),      -- 键绑颜色 - 中蓝紫
+    Label_Color = Color3.fromRGB(35, 38, 70),        -- 标签颜色 - 中蓝紫
+    Slider_Color = Color3.fromRGB(35, 38, 70),       -- 滑块颜色 - 中蓝紫
+    SliderBar_Color = Color3.fromRGB(120, 100, 220), -- 滑动条颜色 - 蓝紫色
+    Toggle_Color = Color3.fromRGB(35, 38, 70),       -- 开关颜色 - 中蓝紫
+    Toggle_Off = Color3.fromRGB(55, 58, 90),         -- 开关关闭 - 浅蓝紫
+    Toggle_On = Color3.fromRGB(120, 100, 220),       -- 开关开启 - 蓝紫色
+    AccentColor = Color3.fromRGB(120, 100, 220),     -- 强调色 - 蓝紫色
+    TextColor = Color3.fromRGB(240, 245, 255),       -- 文本颜色 - 亮白蓝
+    SecondaryTextColor = Color3.fromRGB(180, 190, 210), -- 次要文本颜色 - 灰蓝
+    GlowColor = Color3.fromRGB(100, 80, 200),        -- 发光颜色 - 蓝紫色
 }
 
 local MusicPlayer = {
@@ -200,7 +186,7 @@ function DigitalParticleExplosion(obj)
         local explosionCenter = Instance.new("Frame")
         explosionCenter.Name = "ExplosionCenter"
         explosionCenter.Parent = obj
-        explosionCenter.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+        explosionCenter.BackgroundColor3 = Color3.fromRGB(120, 100, 220)
         explosionCenter.BackgroundTransparency = 0.3
         explosionCenter.ZIndex = 8
         explosionCenter.Size = UDim2.new(0, 20, 0, 20)
@@ -213,7 +199,7 @@ function DigitalParticleExplosion(obj)
         
         local centerGlow = Instance.new("UIStroke")
         centerGlow.Parent = explosionCenter
-        centerGlow.Color = Color3.fromRGB(0, 255, 255)
+        centerGlow.Color = Color3.fromRGB(120, 100, 220)
         centerGlow.Thickness = 3
         centerGlow.Transparency = 0.2
         
@@ -230,9 +216,9 @@ function DigitalParticleExplosion(obj)
             particle.BackgroundTransparency = 1
             particle.Text = tostring(math.random(0, 1))
             particle.TextColor3 = Color3.fromRGB(
-                math.random(150, 255),
-                math.random(150, 255),
-                math.random(200, 255)
+                math.random(150, 180),
+                math.random(150, 180),
+                math.random(200, 240)
             )
             particle.TextSize = math.random(10, 14)
             particle.Font = Enum.Font.Code
@@ -310,7 +296,7 @@ function DigitalParticleExplosion(obj)
         
         local shockwaveStroke = Instance.new("UIStroke")
         shockwaveStroke.Parent = shockwave
-        shockwaveStroke.Color = Color3.fromRGB(0, 200, 255)
+        shockwaveStroke.Color = Color3.fromRGB(100, 80, 200)
         shockwaveStroke.Thickness = 3
         shockwaveStroke.Transparency = 0.3
         
@@ -328,126 +314,8 @@ function DigitalParticleExplosion(obj)
     end)
 end
 
+-- 黑蓝紫流光效果
 local function startNeonFlowEffect(object, property, speed)
-    speed = speed or 0.006
-    local hue = 0
-    local connection
-    connection = RunService.Heartbeat:Connect(function()
-        if not object or not object.Parent then
-            connection:Disconnect()
-            return
-        end
-        hue = (hue + speed) % 1
-        -- 在蓝紫色之间优雅渐变
-        local bluePurpleHue = 0.75  -- 蓝紫色调
-        local variation = 0.15      -- 变化幅度
-        
-        -- 创建蓝紫色渐变效果
-        local baseR, baseG, baseB = 0.47, 0.27, 0.78  -- 基础蓝紫色
-        
-        -- 添加动态变化
-        local r = baseR + variation * math.sin(hue * math.pi * 2)
-        local g = baseG + variation * math.sin(hue * math.pi * 2 + math.pi/3)
-        local b = baseB + variation * math.sin(hue * math.pi * 2 + 2*math.pi/3)
-        
-        object[property] = Color3.new(
-            math.clamp(r, 0.3, 0.8),
-            math.clamp(g, 0.2, 0.6),
-            math.clamp(b, 0.6, 1.0)
-        )
-    end)
-    return connection
-end
-
--- 创建星空背景效果
-local function createStarfieldBackground(parent)
-    local starfield = Instance.new("Frame")
-    starfield.Name = "StarfieldBackground"
-    starfield.Parent = parent
-    starfield.BackgroundColor3 = Color3.fromRGB(0, 0, 5)
-    starfield.BackgroundTransparency = 0.7
-    starfield.Size = UDim2.new(1, 0, 1, 0)
-    starfield.ZIndex = 0
-    
-    local gradient = Instance.new("UIGradient")
-    gradient.Rotation = 90
-    gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 10)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(5, 0, 20)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 0, 30))
-    })
-    gradient.Parent = starfield
-    
-    -- 创建星星
-    for i = 1, 30 do
-        local star = Instance.new("Frame")
-        star.Name = "Star_" .. i
-        star.Parent = starfield
-        star.BackgroundColor3 = Color3.new(1, 1, 1)
-        star.BackgroundTransparency = 0.8
-        star.BorderSizePixel = 0
-        star.Size = UDim2.new(0, math.random(1, 3), 0, math.random(1, 3))
-        star.Position = UDim2.new(
-            math.random(0, 100) / 100,
-            0,
-            math.random(0, 100) / 100,
-            0
-        )
-        star.ZIndex = 1
-        
-        -- 星星闪烁动画
-        coroutine.wrap(function()
-            while star and star.Parent do
-                local alpha = 0.5 + math.sin(tick() * 2 + i) * 0.3
-                star.BackgroundTransparency = 0.7 + alpha * 0.3
-                task.wait(0.1)
-            end
-        end)()
-    end
-    
-    return starfield
-end
-
--- 创建全息反射层
-local function createHologramReflection(parent)
-    local hologram = Instance.new("Frame")
-    hologram.Name = "HologramReflection"
-    hologram.Parent = parent
-    hologram.BackgroundTransparency = 1
-    hologram.Size = UDim2.new(1, 0, 1, 0)
-    hologram.ZIndex = 100
-    
-    local noise = Instance.new("ImageLabel")
-    noise.Name = "HologramNoise"
-    noise.Parent = hologram
-    noise.BackgroundTransparency = 1
-    noise.Size = UDim2.new(1, 0, 1, 0)
-    noise.Image = "rbxassetid://8881037035"  -- 噪点纹理
-    noise.ImageTransparency = 0.95
-    noise.ImageColor3 = config.HologramColor
-    noise.ScaleType = Enum.ScaleType.Tile
-    noise.TileSize = UDim2.new(0, 50, 0, 50)
-    
-    -- 全息扫描线
-    local scanline = Instance.new("Frame")
-    scanline.Name = "Scanline"
-    scanline.Parent = hologram
-    scanline.BackgroundColor3 = config.ShimmerColor
-    scanline.BackgroundTransparency = 0.9
-    scanline.BorderSizePixel = 0
-    scanline.Size = UDim2.new(1, 0, 0, 1)
-    scanline.Position = UDim2.new(0, 0, 0, 0)
-    
-    -- 扫描线动画
-    services.TweenService:Create(scanline, TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true), {
-        Position = UDim2.new(0, 0, 1, 0)
-    }):Play()
-    
-    return hologram
-end
-
--- 增强版霓虹流光效果
-local function startAdvancedNeonFlow(object, property, speed)
     speed = speed or 0.004
     local hue = 0
     local connection
@@ -456,66 +324,24 @@ local function startAdvancedNeonFlow(object, property, speed)
             connection:Disconnect()
             return
         end
-        
         hue = (hue + speed) % 1
         
-        -- 创建复杂的蓝紫霓虹渐变
-        local time = tick() * 0.5
-        local wave1 = 0.5 + 0.5 * math.sin(time + hue * math.pi * 2)
-        local wave2 = 0.5 + 0.5 * math.sin(time * 1.3 + hue * math.pi * 2 + 1)
-        local wave3 = 0.5 + 0.5 * math.sin(time * 1.7 + hue * math.pi * 2 + 2)
+        -- 黑蓝紫渐变效果
+        local baseR, baseG, baseB = 0.15, 0.12, 0.4  -- 基础黑蓝紫色
         
-        -- 混合多个波形创建复杂色彩
-        local r = config.GradientColor1.R * wave1 + config.GradientColor2.R * wave2 + config.GradientColor3.R * wave3
-        local g = config.GradientColor1.G * wave1 + config.GradientColor2.G * wave2 + config.GradientColor3.G * wave3
-        local b = config.GradientColor1.B * wave1 + config.GradientColor2.B * wave2 + config.GradientColor3.B * wave3
-        
-        -- 归一化并增强对比度
-        local total = r + g + b
-        if total > 0 then
-            r = r / total * 1.5
-            g = g / total * 1.5
-            b = b / total * 1.5
-        end
+        -- 创建平滑渐变
+        local variation = 0.1
+        local r = baseR + variation * math.sin(hue * math.pi * 2)
+        local g = baseG + variation * math.sin(hue * math.pi * 2 + math.pi/3) * 0.5
+        local b = baseB + variation * math.sin(hue * math.pi * 2 + 2*math.pi/3)
         
         object[property] = Color3.new(
-            math.clamp(r, 0.1, 0.9),
-            math.clamp(g, 0.05, 0.8),
-            math.clamp(b, 0.2, 1.0)
+            math.clamp(r, 0.1, 0.25),
+            math.clamp(g, 0.08, 0.2),
+            math.clamp(b, 0.3, 0.6)
         )
     end)
     return connection
-end
-
--- 创建高级渐变边框
-local function createPremiumBorder(parent)
-    local border = Instance.new("Frame")
-    border.Name = "PremiumBorder"
-    border.Parent = parent
-    border.BackgroundTransparency = 1
-    border.Size = UDim2.new(1, 2, 1, 2)
-    border.Position = UDim2.new(0, -1, 0, -1)
-    border.ZIndex = 99
-    
-    local innerGlow = Instance.new("UIStroke")
-    innerGlow.Parent = border
-    innerGlow.Color = config.AccentColor
-    innerGlow.Thickness = 2
-    innerGlow.Transparency = 0.7
-    innerGlow.LineJoinMode = Enum.LineJoinMode.Round
-    
-    local outerGlow = Instance.new("UIStroke")
-    outerGlow.Parent = border
-    outerGlow.Color = config.HologramColor
-    outerGlow.Thickness = 4
-    outerGlow.Transparency = 0.9
-    outerGlow.LineJoinMode = Enum.LineJoinMode.Round
-    
-    -- 创建双色渐变光环
-    startAdvancedNeonFlow(innerGlow, "Color", 0.005)
-    startAdvancedNeonFlow(outerGlow, "Color", 0.003)
-    
-    return border
 end
 
 local function createPulseGlow(object)
@@ -553,7 +379,7 @@ end
 local function createParticleTrail(startPos, endPos, parent)
     local trail = Instance.new("Frame")
     trail.Name = "ParticleTrail"
-    trail.BackgroundColor3 = Color3.new(1, 1, 1)
+    trail.BackgroundColor3 = Color3.new(0.6, 0.4, 1)
     trail.BackgroundTransparency = 0.3
     trail.Size = UDim2.new(0, 4, 0, 4)
     trail.Position = startPos
@@ -657,80 +483,80 @@ FengYu.Name = "UniversalUI"
 protectGUI(FengYu)
 FengYu.Parent = services.CoreGui
 
+-- 简约渐变背景效果
+local function createGradientBackground(parent)
+    local gradientFrame = Instance.new("Frame")
+    gradientFrame.Name = "GradientBackground"
+    gradientFrame.Parent = parent
+    gradientFrame.BackgroundTransparency = 0.2
+    gradientFrame.Size = UDim2.new(1, 0, 1, 0)
+    gradientFrame.ZIndex = 0
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Rotation = 120
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(5, 8, 25)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(10, 15, 40)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 8, 25))
+    })
+    gradient.Parent = gradientFrame
+    
+    return gradientFrame
+end
+
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.MainColor
-Main.BackgroundTransparency = 0.1  -- 轻微透明显示背景效果
+Main.BackgroundTransparency = 0.2  -- 轻微透明
 Main.Position = UDim2.new(0.5, 0, 0.35, 0)
 Main.Size = UDim2.new(0, 450, 0, 280)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
 
--- 添加星空背景
-createStarfieldBackground(Main)
-
--- 添加全息反射层
-createHologramReflection(Main)
-
--- 添加高级边框
-createPremiumBorder(Main)
-
--- 添加主窗口渐变
-local mainGradient = Instance.new("UIGradient")
-mainGradient.Rotation = 45
-mainGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 5, 25)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 10, 40)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 5, 15))
-})
-mainGradient.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 0.3),
-    NumberSequenceKeypoint.new(1, 0.7)
-})
-mainGradient.Parent = Main
+-- 添加渐变背景
+createGradientBackground(Main)
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 12)  -- 更大的圆角更高级
+MainCorner.CornerRadius = UDim.new(0, 12)  -- 圆角
 MainCorner.Parent = Main
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
-MainStroke.Color = Color3.fromRGB(50, 50, 50)
+MainStroke.Color = Color3.fromRGB(40, 45, 80)
 MainStroke.Thickness = 1
-MainStroke.Transparency = 1
+MainStroke.Transparency = 0.6
+MainStroke.LineJoinMode = Enum.LineJoinMode.Round
 
-local neonStroke = Instance.new("UIStroke")
-neonStroke.Parent = Main
-neonStroke.Thickness = 2
-neonStroke.Transparency = 1
-neonStroke.LineJoinMode = Enum.LineJoinMode.Round
-startNeonFlowEffect(neonStroke, "Color", 0.01)
+-- 添加高级边框效果
+local premiumGlow = Instance.new("UIStroke")
+premiumGlow.Parent = Main
+premiumGlow.Thickness = 2
+premiumGlow.Transparency = 0.8
+premiumGlow.LineJoinMode = Enum.LineJoinMode.Round
 
-createPulseGlow(neonStroke)
+-- 使用黑蓝紫流光效果
+startNeonFlowEffect(premiumGlow, "Color", 0.003)
+createPulseGlow(premiumGlow)
 
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = Main
 TitleBar.BackgroundColor3 = config.TabColor
-TitleBar.BackgroundTransparency = 0.4  -- 更透明
+TitleBar.BackgroundTransparency = 0.3  -- 透明
 TitleBar.BorderSizePixel = 0
-TitleBar.Size = UDim2.new(1, 0, 0, 40)  -- 更高的标题栏
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
 TitleBar.ZIndex = 2
 
--- 标题栏渐变
+-- 添加标题栏渐变
 local titleGradient = Instance.new("UIGradient")
 titleGradient.Rotation = 90
 titleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 10, 40)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(40, 20, 80)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 10, 40))
-})
-titleGradient.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 0.4),
-    NumberSequenceKeypoint.new(1, 0.6)
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 25, 50)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(30, 35, 70)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 25, 50))
 })
 titleGradient.Parent = TitleBar
 
@@ -805,7 +631,7 @@ CloseButton.MouseButton1Click:Connect(function()
         Transparency = 1
     }):Play()
     
-    services.TweenService:Create(neonStroke, TweenInfo.new(0.4), {
+    services.TweenService:Create(premiumGlow, TweenInfo.new(0.4), {
         Transparency = 1
     }):Play()
     
@@ -880,7 +706,8 @@ TabMain.Visible = false
 local Side = Instance.new("Frame")
 Side.Name = "Side"
 Side.Parent = Main
-Side.BackgroundTransparency = 1  -- 完全透明
+Side.BackgroundColor3 = Color3.fromRGB(15, 18, 40)  -- 深蓝紫背景
+Side.BackgroundTransparency = 0.3  -- 半透明
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 35)
@@ -944,29 +771,29 @@ local function playEntranceAnimation()
     CloseButton.TextTransparency = 1
     Side.BackgroundTransparency = 1
     MainStroke.Transparency = 1
-    neonStroke.Transparency = 1
+    premiumGlow.Transparency = 1
     
     TabMain.Visible = false
     TabBtns.Visible = false
     
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
-        BackgroundTransparency = 0,
+        BackgroundTransparency = 0.2,
         Size = UDim2.new(0, 450, 0, 280)
     }):Play()
     
     services.TweenService:Create(MainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Transparency = 0.5
+        Transparency = 0.6
     }):Play()
     
-    services.TweenService:Create(neonStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Transparency = 0.7
+    services.TweenService:Create(premiumGlow, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Transparency = 0.8
     }):Play()
     
     task.wait(0.2)
     
     services.TweenService:Create(TitleBar, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0
+        BackgroundTransparency = 0.3
     }):Play()
     
     services.TweenService:Create(TitleText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -980,7 +807,7 @@ local function playEntranceAnimation()
     task.wait(0.2)
     
     services.TweenService:Create(Side, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 1
+        BackgroundTransparency = 0.3
     }):Play()
     
     task.wait(0.2)
@@ -1230,7 +1057,7 @@ function FengUI.new(FengUI, name, theme)
     PlayerContainer.Name = "PlayerContainer"
     PlayerContainer.Parent = MusicPlayerModule
     PlayerContainer.BackgroundColor3 = config.TabColor
-    PlayerContainer.BackgroundTransparency = 0.2
+    PlayerContainer.BackgroundTransparency = 0.4  -- 更透明的效果
     PlayerContainer.Size = UDim2.new(1, 0, 0, 160)
     
     local PlayerCorner = Instance.new("UICorner")
@@ -1665,45 +1492,22 @@ end
                 createPulseGlow(btnGlow)
                 
                 Btn.MouseEnter:Connect(function()
-    -- 悬停时增强渐变和发光
-    services.TweenService:Create(Btn, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-        BackgroundColor3 = Color3.fromRGB(
-            math.floor(config.Button_Color.R * 255 * 1.3),
-            math.floor(config.Button_Color.G * 255 * 1.3),
-            math.floor(config.Button_Color.B * 255 * 1.3)
-        ),
-        BackgroundTransparency = 0,
-        Size = UDim2.new(0, 335, 0, 40)  -- 轻微放大
-    }):Play()
-    
-    services.TweenService:Create(btnGlow, TweenInfo.new(0.3), {
-        Thickness = 3,
-        Transparency = 0.2,
-        Color = config.ShimmerColor
-    }):Play()
-    
-    -- 添加脉冲光环
-    local pulseRing = Instance.new("Frame")
-    pulseRing.Parent = Btn
-    pulseRing.BackgroundTransparency = 1
-    pulseRing.Size = UDim2.new(1, 0, 1, 0)
-    pulseRing.ZIndex = -1
-    
-    local ringStroke = Instance.new("UIStroke")
-    ringStroke.Parent = pulseRing
-    ringStroke.Color = config.HologramColor
-    ringStroke.Thickness = 2
-    ringStroke.Transparency = 0.5
-    
-    services.TweenService:Create(ringStroke, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Thickness = 10,
-        Transparency = 1
-    }):Play()
-    
-    delay(0.8, function()
-        pulseRing:Destroy()
-    end)
-end)
+                    -- 简约高级悬停效果
+                    services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            math.floor(config.Button_Color.R * 255 * 1.15),
+                            math.floor(config.Button_Color.G * 255 * 1.15),
+                            math.floor(config.Button_Color.B * 255 * 1.15)
+                        ),
+                        BackgroundTransparency = 0.1
+                    }):Play()
+                    
+                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                        Thickness = 2,
+                        Transparency = 0.6,
+                        Color = Color3.fromRGB(180, 160, 255)
+                    }):Play()
+                end)
                 
                 Btn.MouseLeave:Connect(function()
                     services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
