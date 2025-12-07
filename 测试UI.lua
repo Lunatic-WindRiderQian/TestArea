@@ -43,26 +43,26 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
--- 基础配色方案
+-- 基础配色方案 - 黑蓝紫高级配色
 local config = {
-    MainColor = Color3.fromRGB(18, 18, 30),
-    TabColor = Color3.fromRGB(25, 25, 40),
-    Bg_Color = Color3.fromRGB(20, 20, 35),
-    Zy_Color = Color3.fromRGB(20, 20, 35),
-    Button_Color = Color3.fromRGB(30, 30, 50),
-    Textbox_Color = Color3.fromRGB(30, 30, 50),
-    Dropdown_Color = Color3.fromRGB(30, 30, 50),
-    Keybind_Color = Color3.fromRGB(30, 30, 50),
-    Label_Color = Color3.fromRGB(30, 30, 50),
-    Slider_Color = Color3.fromRGB(30, 30, 50),
-    SliderBar_Color = Color3.fromRGB(0, 200, 255),
-    Toggle_Color = Color3.fromRGB(30, 30, 50),
-    Toggle_Off = Color3.fromRGB(50, 50, 70),
-    Toggle_On = Color3.fromRGB(0, 230, 230),
-    AccentColor = Color3.fromRGB(0, 200, 255),
-    TextColor = Color3.fromRGB(240, 245, 255),
-    SecondaryTextColor = Color3.fromRGB(180, 190, 210),
-    GlowColor = Color3.fromRGB(0, 150, 255),
+    MainColor = Color3.fromRGB(10, 10, 20),          -- 主窗口颜色 - 深黑蓝
+    TabColor = Color3.fromRGB(15, 15, 30),          -- 标签栏颜色 - 深蓝紫
+    Bg_Color = Color3.fromRGB(20, 20, 35),          -- 背景颜色 - 暗蓝紫
+    Zy_Color = Color3.fromRGB(20, 20, 35),          -- 备用颜色
+    Button_Color = Color3.fromRGB(40, 40, 70),      -- 按钮颜色 - 中蓝紫
+    Textbox_Color = Color3.fromRGB(40, 40, 70),     -- 文本框颜色 - 中蓝紫
+    Dropdown_Color = Color3.fromRGB(40, 40, 70),    -- 下拉框颜色 - 中蓝紫
+    Keybind_Color = Color3.fromRGB(40, 40, 70),     -- 键绑颜色 - 中蓝紫
+    Label_Color = Color3.fromRGB(40, 40, 70),       -- 标签颜色 - 中蓝紫
+    Slider_Color = Color3.fromRGB(40, 40, 70),      -- 滑块颜色 - 中蓝紫
+    SliderBar_Color = Color3.fromRGB(138, 43, 226), -- 滑动条颜色 - 蓝紫色
+    Toggle_Color = Color3.fromRGB(40, 40, 70),      -- 开关颜色 - 中蓝紫
+    Toggle_Off = Color3.fromRGB(60, 60, 90),        -- 开关关闭 - 浅蓝紫
+    Toggle_On = Color3.fromRGB(138, 43, 226),       -- 开关开启 - 蓝紫色
+    AccentColor = Color3.fromRGB(138, 43, 226),     -- 强调色 - 蓝紫色
+    TextColor = Color3.fromRGB(240, 245, 255),      -- 文本颜色 - 亮白蓝
+    SecondaryTextColor = Color3.fromRGB(180, 190, 210), -- 次要文本颜色 - 灰蓝
+    GlowColor = Color3.fromRGB(138, 43, 226),       -- 发光颜色 - 蓝紫色
 }
 
 local MusicPlayer = {
@@ -315,7 +315,7 @@ function DigitalParticleExplosion(obj)
 end
 
 local function startNeonFlowEffect(object, property, speed)
-    speed = speed or 0.008
+    speed = speed or 0.005
     local hue = 0
     local connection
     connection = RunService.Heartbeat:Connect(function()
@@ -324,14 +324,14 @@ local function startNeonFlowEffect(object, property, speed)
             return
         end
         hue = (hue + speed) % 1
-        local r = math.sin(hue * 6 + 0) * 0.5 + 0.5
-        local g = math.sin(hue * 6 + 2) * 0.5 + 0.5
-        local b = math.sin(hue * 6 + 4) * 0.5 + 0.5
+        -- 在蓝紫色之间渐变
+        local r = 0.54 + 0.1 * math.sin(hue * math.pi * 2)
+        local g = 0.17 + 0.1 * math.sin(hue * math.pi * 2 + math.pi/3)
+        local b = 0.89 + 0.1 * math.sin(hue * math.pi * 2 + 2*math.pi/3)
         object[property] = Color3.new(r, g, b)
     end)
     return connection
 end
-
 local function createPulseGlow(object)
     local pulseConnection
     pulseConnection = RunService.Heartbeat:Connect(function()
