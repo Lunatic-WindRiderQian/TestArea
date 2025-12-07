@@ -43,26 +43,26 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
--- 黑蓝紫高级动态配色方案 - 只更改背景颜色
+-- 半透明黑蓝紫高级配色方案
 local config = {
-    MainColor = Color3.fromRGB(5, 5, 12),           -- 深黑蓝背景
-    TabColor = Color3.fromRGB(10, 8, 20),          -- 深紫蓝背景
-    Bg_Color = Color3.fromRGB(15, 10, 28),         -- 蓝紫渐变背景
-    Zy_Color = Color3.fromRGB(15, 10, 28),         -- 蓝紫渐变背景
-    Button_Color = Color3.fromRGB(20, 15, 38),     -- 深紫蓝按钮背景
-    Textbox_Color = Color3.fromRGB(20, 15, 38),    -- 深紫蓝输入框背景
-    Dropdown_Color = Color3.fromRGB(20, 15, 38),   -- 深紫蓝下拉框背景
-    Keybind_Color = Color3.fromRGB(20, 15, 38),    -- 深紫蓝按键绑定背景
-    Label_Color = Color3.fromRGB(20, 15, 38),      -- 深紫蓝标签背景
-    Slider_Color = Color3.fromRGB(20, 15, 38),     -- 深紫蓝滑块背景
-    SliderBar_Color = Color3.fromRGB(0, 200, 255), -- 保持原样 - 青色进度条
-    Toggle_Color = Color3.fromRGB(20, 15, 38),     -- 深紫蓝开关背景
-    Toggle_Off = Color3.fromRGB(35, 25, 55),       -- 深紫关闭状态
-    Toggle_On = Color3.fromRGB(0, 230, 230),       -- 保持原样 - 青色开启状态
-    AccentColor = Color3.fromRGB(120, 80, 220),    -- 紫色强调色（仅用于霓虹效果）
-    TextColor = Color3.fromRGB(240, 245, 255),     -- 保持原样 - 白色文字
+    MainColor = Color3.fromRGB(8, 6, 20),           -- 深蓝紫半透明背景
+    TabColor = Color3.fromRGB(12, 10, 30),          -- 半透明紫蓝背景
+    Bg_Color = Color3.fromRGB(15, 12, 35),          -- 半透明蓝紫背景
+    Zy_Color = Color3.fromRGB(15, 12, 35),          -- 半透明蓝紫背景
+    Button_Color = Color3.fromRGB(25, 20, 45),      -- 半透明深紫蓝按钮背景
+    Textbox_Color = Color3.fromRGB(25, 20, 45),     -- 半透明深紫蓝输入框背景
+    Dropdown_Color = Color3.fromRGB(25, 20, 45),    -- 半透明深紫蓝下拉框背景
+    Keybind_Color = Color3.fromRGB(25, 20, 45),     -- 半透明深紫蓝按键绑定背景
+    Label_Color = Color3.fromRGB(25, 20, 45),       -- 半透明深紫蓝标签背景
+    Slider_Color = Color3.fromRGB(25, 20, 45),      -- 半透明深紫蓝滑块背景
+    SliderBar_Color = Color3.fromRGB(0, 200, 255),  -- 保持原样 - 青色进度条
+    Toggle_Color = Color3.fromRGB(25, 20, 45),      -- 半透明深紫蓝开关背景
+    Toggle_Off = Color3.fromRGB(40, 30, 60),        -- 深紫半透明关闭状态
+    Toggle_On = Color3.fromRGB(0, 230, 230),        -- 保持原样 - 青色开启状态
+    AccentColor = Color3.fromRGB(140, 100, 255),    -- 紫色强调色（仅用于霓虹效果）
+    TextColor = Color3.fromRGB(240, 245, 255),      -- 保持原样 - 白色文字
     SecondaryTextColor = Color3.fromRGB(180, 190, 210), -- 保持原样 - 浅灰色文字
-    GlowColor = Color3.fromRGB(100, 60, 200),      -- 紫色发光效果
+    GlowColor = Color3.fromRGB(100, 60, 200),       -- 紫色发光效果
 }
 
 local MusicPlayer = {
@@ -186,7 +186,7 @@ function DigitalParticleExplosion(obj)
         local explosionCenter = Instance.new("Frame")
         explosionCenter.Name = "ExplosionCenter"
         explosionCenter.Parent = obj
-        explosionCenter.BackgroundColor3 = Color3.fromRGB(100, 60, 200) -- 紫色粒子
+        explosionCenter.BackgroundColor3 = Color3.fromRGB(140, 100, 255)
         explosionCenter.BackgroundTransparency = 0.3
         explosionCenter.ZIndex = 8
         explosionCenter.Size = UDim2.new(0, 20, 0, 20)
@@ -199,7 +199,7 @@ function DigitalParticleExplosion(obj)
         
         local centerGlow = Instance.new("UIStroke")
         centerGlow.Parent = explosionCenter
-        centerGlow.Color = Color3.fromRGB(100, 60, 200) -- 紫色发光
+        centerGlow.Color = Color3.fromRGB(140, 100, 255)
         centerGlow.Thickness = 3
         centerGlow.Transparency = 0.2
         
@@ -219,7 +219,7 @@ function DigitalParticleExplosion(obj)
                 math.random(120, 180),
                 math.random(80, 140),
                 math.random(200, 255)
-            ) -- 蓝紫色数字
+            )
             particle.TextSize = math.random(10, 14)
             particle.Font = Enum.Font.Code
             particle.ZIndex = 9
@@ -296,7 +296,7 @@ function DigitalParticleExplosion(obj)
         
         local shockwaveStroke = Instance.new("UIStroke")
         shockwaveStroke.Parent = shockwave
-        shockwaveStroke.Color = Color3.fromRGB(100, 60, 200) -- 紫色冲击波
+        shockwaveStroke.Color = Color3.fromRGB(140, 100, 255)
         shockwaveStroke.Thickness = 3
         shockwaveStroke.Transparency = 0.3
         
@@ -368,7 +368,7 @@ end
 local function createParticleTrail(startPos, endPos, parent)
     local trail = Instance.new("Frame")
     trail.Name = "ParticleTrail"
-    trail.BackgroundColor3 = Color3.fromRGB(120, 80, 220) -- 紫色粒子轨迹
+    trail.BackgroundColor3 = Color3.fromRGB(140, 100, 255)
     trail.BackgroundTransparency = 0.3
     trail.Size = UDim2.new(0, 4, 0, 4)
     trail.Position = startPos
@@ -418,7 +418,7 @@ function switchTab(new)
         }):Play()
         services.TweenService:Create(new[1].TabText, TweenInfo.new(0.3), { 
             TextTransparency = 0,
-            TextColor3 = config.AccentColor
+            TextColor3 = Color3.fromRGB(0, 200, 255)
         }):Play()
         return
     end
@@ -443,7 +443,7 @@ function switchTab(new)
     }):Play()
     services.TweenService:Create(new[1].TabText, tweenInfo, { 
         TextTransparency = 0,
-        TextColor3 = config.AccentColor
+        TextColor3 = Color3.fromRGB(0, 200, 255)
     }):Play()
     
     if old[1].AbsolutePosition and new[1].AbsolutePosition then
@@ -477,7 +477,7 @@ Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = config.MainColor
-Main.BackgroundTransparency = 0
+Main.BackgroundTransparency = 0.7  -- 半透明背景
 Main.Position = UDim2.new(0.5, 0, 0.35, 0)
 Main.Size = UDim2.new(0, 450, 0, 280)
 Main.ZIndex = 1
@@ -490,14 +490,14 @@ MainCorner.Parent = Main
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
-MainStroke.Color = Color3.fromRGB(50, 50, 50) -- 保持原样 - 灰色边框
+MainStroke.Color = Color3.fromRGB(50, 50, 50)
 MainStroke.Thickness = 1
-MainStroke.Transparency = 1
+MainStroke.Transparency = 0.5
 
 local neonStroke = Instance.new("UIStroke")
 neonStroke.Parent = Main
 neonStroke.Thickness = 2
-neonStroke.Transparency = 1
+neonStroke.Transparency = 0.3
 neonStroke.LineJoinMode = Enum.LineJoinMode.Round
 startNeonFlowEffect(neonStroke, "Color", 0.01)
 
@@ -507,7 +507,7 @@ local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = Main
 TitleBar.BackgroundColor3 = config.TabColor
-TitleBar.BackgroundTransparency = 0
+TitleBar.BackgroundTransparency = 0.6  -- 半透明标题栏
 TitleBar.BorderSizePixel = 0
 TitleBar.Size = UDim2.new(1, 0, 0, 35)
 TitleBar.ZIndex = 2
@@ -524,10 +524,10 @@ TitleText.Position = UDim2.new(0, 10, 0, 0)
 TitleText.Size = UDim2.new(0, 200, 1, 0)
 TitleText.Font = Enum.Font.GothamBold
 TitleText.Text = "FengUI"
-TitleText.TextColor3 = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色文字
+TitleText.TextColor3 = Color3.fromRGB(0, 200, 255)
 TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
-TitleText.TextTransparency = 1
+TitleText.TextTransparency = 0
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
@@ -539,10 +539,10 @@ CloseButton.Position = UDim2.new(1, -25, 0, 7)
 CloseButton.Size = UDim2.new(0, 20, 0, 20)
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(255, 60, 60) -- 保持原样 - 红色文字
+CloseButton.TextColor3 = Color3.fromRGB(255, 60, 60)
 CloseButton.TextSize = 16
 CloseButton.ZIndex = 10
-CloseButton.TextTransparency = 1
+CloseButton.TextTransparency = 0
 
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 4)
@@ -606,7 +606,7 @@ end)
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
 Open.Parent = FengYu
-Open.BackgroundColor3 = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色按钮
+Open.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
 Open.BackgroundTransparency = 0.85
 Open.Position = UDim2.new(0.92, 0, 0.01, 0)
 Open.Size = UDim2.new(0, 40, 0, 40)
@@ -622,7 +622,7 @@ OpenCorner.Parent = Open
 
 local OpenStroke = Instance.new("UIStroke")
 OpenStroke.Parent = Open
-OpenStroke.Color = Color3.fromRGB(180, 180, 180) -- 保持原样 - 灰色边框
+OpenStroke.Color = Color3.fromRGB(180, 180, 180)
 OpenStroke.Thickness = 1.2
 OpenStroke.Transparency = 0.4
 
@@ -705,8 +705,8 @@ ScriptTitle.BackgroundTransparency = 1
 ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
 ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
 ScriptTitle.Font = Enum.Font.GothamBold
-ScriptTitle.Text = "FengUI 黑蓝紫主题"
-ScriptTitle.TextColor3 = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色文字
+ScriptTitle.Text = "FengUI 半透明主题"
+ScriptTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
 ScriptTitle.TextXAlignment = Enum.TextXAlignment.Center
@@ -729,7 +729,7 @@ local function playEntranceAnimation()
     
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
-        BackgroundTransparency = 0,
+        BackgroundTransparency = 0.7,  -- 半透明
         Size = UDim2.new(0, 450, 0, 280)
     }):Play()
     
@@ -738,13 +738,13 @@ local function playEntranceAnimation()
     }):Play()
     
     services.TweenService:Create(neonStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Transparency = 0.7
+        Transparency = 0.3
     }):Play()
     
     task.wait(0.2)
     
     services.TweenService:Create(TitleBar, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0
+        BackgroundTransparency = 0.6  -- 半透明标题栏
     }):Play()
     
     services.TweenService:Create(TitleText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -775,7 +775,7 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-    local hue = 0
+    local hue = 0.7 -- 起始紫色调
     local matrixEffect = Instance.new("UIGradient")
     matrixEffect.Rotation = 90
     matrixEffect.Transparency = NumberSequence.new({
@@ -788,12 +788,16 @@ task.spawn(function()
     while TitleText and TitleText.Parent do
         hue = (hue + 0.03) % 1
         
-        TitleText.TextColor3 = Color3.fromHSV(hue, 1, 1)
+        -- 在蓝色和紫色之间过渡
+        local r = 0.5 + math.sin(hue * 6) * 0.2
+        local g = 0.3 + math.sin(hue * 6 + 2) * 0.2
+        local b = 0.8 + math.sin(hue * 6 + 4) * 0.2
+        TitleText.TextColor3 = Color3.new(r, g, b)
         
         matrixEffect.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 1, 1)),
+            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 0.8, 1)),
             ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 1, 1)),
-            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 1, 1))
+            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 0.8, 1))
         })
         
         services.TweenService:Create(TitleText, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
@@ -944,7 +948,7 @@ function FengUI.new(FengUI, name, theme)
             SectionOpened.BorderSizePixel = 0
             SectionOpened.Size = UDim2.new(0, 22, 0, 22)
             SectionOpened.Image = "rbxassetid://84830962019412"
-            SectionOpened.ImageColor3 = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色图标
+            SectionOpened.ImageColor3 = Color3.fromRGB(0, 200, 255)
             SectionOpened.ImageTransparency = 1
             
             SectionToggle.Name = "SectionToggle"
@@ -1008,7 +1012,7 @@ function FengUI.new(FengUI, name, theme)
     PlayerContainer.Name = "PlayerContainer"
     PlayerContainer.Parent = MusicPlayerModule
     PlayerContainer.BackgroundColor3 = config.TabColor
-    PlayerContainer.BackgroundTransparency = 0.2
+    PlayerContainer.BackgroundTransparency = 0.6  -- 半透明背景
     PlayerContainer.Size = UDim2.new(1, 0, 0, 160)
     
     local PlayerCorner = Instance.new("UICorner")
@@ -1017,7 +1021,7 @@ function FengUI.new(FengUI, name, theme)
     
     local playerGlow = Instance.new("UIStroke")
     playerGlow.Parent = PlayerContainer
-    playerGlow.Color = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色边框
+    playerGlow.Color = Color3.fromRGB(0, 200, 255)
     playerGlow.Thickness = 2
     playerGlow.Transparency = 0.7
     
@@ -1034,7 +1038,7 @@ function FengUI.new(FengUI, name, theme)
     AlbumArt.Name = "AlbumArt"
     AlbumArt.Parent = TopSection
     AlbumArt.BackgroundColor3 = config.Bg_Color
-    AlbumArt.BackgroundTransparency = 0.2
+    AlbumArt.BackgroundTransparency = 0.6  -- 半透明背景
     AlbumArt.Position = UDim2.new(0.03, 0, 0.1, 0)
     AlbumArt.Size = UDim2.new(0, 50, 0, 50)
     
@@ -1044,7 +1048,7 @@ function FengUI.new(FengUI, name, theme)
     
     local albumGlow = Instance.new("UIStroke")
     albumGlow.Parent = AlbumArt
-    albumGlow.Color = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色边框
+    albumGlow.Color = Color3.fromRGB(0, 200, 255)
     albumGlow.Thickness = 1
     albumGlow.Transparency = 0.8
     
@@ -1091,7 +1095,8 @@ function FengUI.new(FengUI, name, theme)
     local ProgressBar = Instance.new("Frame")
     ProgressBar.Name = "ProgressBar"
     ProgressBar.Parent = BottomSection
-    ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60) -- 保持原样 - 灰色进度条背景
+    ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    ProgressBar.BackgroundTransparency = 0.4  -- 半透明
     ProgressBar.BorderSizePixel = 0
     ProgressBar.Position = UDim2.new(0.03, 0, 0.05, 0)
     ProgressBar.Size = UDim2.new(0.94, 0, 0, 6)
@@ -1103,7 +1108,8 @@ function FengUI.new(FengUI, name, theme)
     local ProgressFill = Instance.new("Frame")
     ProgressFill.Name = "ProgressFill"
     ProgressFill.Parent = ProgressBar
-    ProgressFill.BackgroundColor3 = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色进度条
+    ProgressFill.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+    ProgressFill.BackgroundTransparency = 0.3  -- 半透明
     ProgressFill.BorderSizePixel = 0
     ProgressFill.Size = UDim2.new(0, 0, 1, 0)
     
@@ -1134,14 +1140,14 @@ function FengUI.new(FengUI, name, theme)
         local button = Instance.new("TextButton")
         button.Name = name
         button.Parent = ControlsContainer
-        button.BackgroundColor3 = isMain and Color3.fromRGB(0, 200, 255) or Color3.fromRGB(180, 180, 180) -- 保持原样
-        button.BackgroundTransparency = 0.1
+        button.BackgroundColor3 = isMain and Color3.fromRGB(0, 200, 255) or Color3.fromRGB(180, 180, 180)
+        button.BackgroundTransparency = 0.4  -- 半透明按钮
         button.Position = position
         button.Size = size
         button.AutoButtonColor = false
         button.Font = Enum.Font.GothamBold
         button.Text = text
-        button.TextColor3 = isMain and config.TextColor or Color3.fromRGB(50, 50, 50) -- 保持原样
+        button.TextColor3 = isMain and config.TextColor or Color3.fromRGB(50, 50, 50)
         button.TextSize = isMain and 16 or 12
         button.ZIndex = 5
         
@@ -1151,7 +1157,7 @@ function FengUI.new(FengUI, name, theme)
         
         local buttonGlow = Instance.new("UIStroke")
         buttonGlow.Parent = button
-        buttonGlow.Color = isMain and Color3.fromRGB(0, 200, 255) or Color3.fromRGB(150, 150, 150) -- 保持原样
+        buttonGlow.Color = isMain and Color3.fromRGB(0, 200, 255) or Color3.fromRGB(150, 150, 150)
         buttonGlow.Thickness = 1
         buttonGlow.Transparency = 0.6
         buttonGlow.ZIndex = 4
@@ -1162,7 +1168,7 @@ function FengUI.new(FengUI, name, theme)
         
         button.MouseEnter:Connect(function()
             services.TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0,
+                BackgroundTransparency = 0.2,
                 Size = UDim2.new(0, size.X.Offset + 2, 0, size.Y.Offset + 2)
             }):Play()
             services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
@@ -1173,7 +1179,7 @@ function FengUI.new(FengUI, name, theme)
         
         button.MouseLeave:Connect(function()
             services.TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.1,
+                BackgroundTransparency = 0.4,
                 Size = size
             }):Play()
             services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
@@ -1266,14 +1272,14 @@ function FengUI.new(FengUI, name, theme)
     
     local function createButtonClickEffect(button, isMain)
         services.TweenService:Create(button, TweenInfo.new(0.1), {
-            BackgroundTransparency = 0.3,
+            BackgroundTransparency = 0.2,
             Size = UDim2.new(0, button.Size.X.Offset - 2, 0, button.Size.Y.Offset - 2)
         }):Play()
         
         task.wait(0.1)
         
         services.TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0.1,
+            BackgroundTransparency = 0.4,
             Size = UDim2.new(0, button.Size.X.Offset + 2, 0, button.Size.Y.Offset + 2)
         }):Play()
     end
@@ -1419,7 +1425,7 @@ end
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
                 Btn.BackgroundColor3 = config.Button_Color
-                Btn.BackgroundTransparency = 0.2
+                Btn.BackgroundTransparency = 0.6  -- 半透明按钮
                 Btn.BorderSizePixel = 0
                 Btn.Size = UDim2.new(0, 330, 0, 36)
                 Btn.AutoButtonColor = false
@@ -1435,7 +1441,7 @@ end
                 
                 local btnGlow = Instance.new("UIStroke")
                 btnGlow.Parent = Btn
-                btnGlow.Color = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色边框
+                btnGlow.Color = Color3.fromRGB(0, 200, 255)
                 btnGlow.Thickness = 1
                 btnGlow.Transparency = 0.8
                 
@@ -1448,7 +1454,8 @@ end
                             math.floor(config.Button_Color.R * 255 * 1.1),
                             math.floor(config.Button_Color.G * 255 * 1.1),
                             math.floor(config.Button_Color.B * 255 * 1.1)
-                        )
+                        ),
+                        BackgroundTransparency = 0.4
                     }):Play()
                     services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
                         Thickness = 2,
@@ -1458,7 +1465,8 @@ end
                 
                 Btn.MouseLeave:Connect(function()
                     services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                        BackgroundColor3 = config.Button_Color
+                        BackgroundColor3 = config.Button_Color,
+                        BackgroundTransparency = 0.6
                     }):Play()
                     services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
                         Thickness = 1,
@@ -1475,7 +1483,8 @@ end
                             math.floor(config.Button_Color.R * 255 * 0.8),
                             math.floor(config.Button_Color.G * 255 * 0.8),
                             math.floor(config.Button_Color.B * 255 * 0.8)
-                        )
+                        ),
+                        BackgroundTransparency = 0.3
                     }):Play()
                     services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
                         Thickness = 3,
@@ -1485,7 +1494,8 @@ end
                     task.wait(0.1)
                     
                     services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-                        BackgroundColor3 = config.Button_Color
+                        BackgroundColor3 = config.Button_Color,
+                        BackgroundTransparency = 0.6
                     }):Play()
                     services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
                         Thickness = 1,
@@ -1506,7 +1516,7 @@ end
     ImageModule.Size = UDim2.new(0, 330, 0, sizeY or 120)
     
     ImageLabel.Parent = ImageModule
-    ImageLabel.BackgroundTransparency = 1
+    ImageLabel.BackgroundTransparency = 0.6  -- 半透明背景
     ImageLabel.BorderSizePixel = 0
     ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
     ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
@@ -1518,7 +1528,7 @@ end
     
     local imageGlow = Instance.new("UIStroke")
     imageGlow.Parent = ImageLabel
-    imageGlow.Color = Color3.fromRGB(0, 200, 255) -- 保持原样 - 青色边框
+    imageGlow.Color = Color3.fromRGB(0, 200, 255)
     imageGlow.Thickness = 1
     imageGlow.Transparency = 0.8
     
@@ -1618,7 +1628,7 @@ end
                 
                 TextLabel.Parent = LabelModule
                 TextLabel.BackgroundColor3 = config.Label_Color
-                TextLabel.BackgroundTransparency = 0.2
+                TextLabel.BackgroundTransparency = 0.6  -- 半透明背景
                 TextLabel.Size = UDim2.new(0, 330, 0, 28)
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
@@ -1656,7 +1666,7 @@ end
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
                 ToggleBtn.BackgroundColor3 = config.Toggle_Color
-                ToggleBtn.BackgroundTransparency = 0.2
+                ToggleBtn.BackgroundTransparency = 0.6  -- 半透明背景
                 ToggleBtn.BorderSizePixel = 0
                 ToggleBtn.Size = UDim2.new(0, 330, 0, 36)
                 ToggleBtn.AutoButtonColor = false
@@ -1673,6 +1683,7 @@ end
                 ToggleDisable.Name = "ToggleDisable"
                 ToggleDisable.Parent = ToggleBtn
                 ToggleDisable.BackgroundColor3 = config.Bg_Color
+                ToggleDisable.BackgroundTransparency = 0.6  -- 半透明背景
                 ToggleDisable.BorderSizePixel = 0
                 ToggleDisable.Position = UDim2.new(0.85, 0, 0.22, 0)
                 ToggleDisable.Size = UDim2.new(0, 34, 0, 18)
@@ -1680,6 +1691,7 @@ end
                 ToggleSwitch.Name = "ToggleSwitch"
                 ToggleSwitch.Parent = ToggleDisable
                 ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
+                ToggleSwitch.BackgroundTransparency = 0.3  -- 半透明
                 ToggleSwitch.Size = UDim2.new(0, 20, 0, 18)
                 ToggleSwitch.Position = UDim2.new(0, enabled and 14 or 0, 0, 0)
                 
@@ -1697,13 +1709,15 @@ end
                             math.floor(config.Toggle_Color.R * 255 * 1.1),
                             math.floor(config.Toggle_Color.G * 255 * 1.1),
                             math.floor(config.Toggle_Color.B * 255 * 1.1)
-                        )
+                        ),
+                        BackgroundTransparency = 0.4
                     }):Play()
                 end)
                 
                 ToggleBtn.MouseLeave:Connect(function()
                     services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                        BackgroundColor3 = config.Toggle_Color
+                        BackgroundColor3 = config.Toggle_Color,
+                        BackgroundTransparency = 0.6
                     }):Play()
                 end)
                 
@@ -1779,7 +1793,7 @@ end
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
                 KeybindBtn.BackgroundColor3 = config.Keybind_Color
-                KeybindBtn.BackgroundTransparency = 0.2
+                KeybindBtn.BackgroundTransparency = 0.6  -- 半透明背景
                 KeybindBtn.BorderSizePixel = 0
                 KeybindBtn.Size = UDim2.new(0, 330, 0, 36)
                 KeybindBtn.AutoButtonColor = false
@@ -1796,6 +1810,7 @@ end
                 KeybindValue.Name = "KeybindValue"
                 KeybindValue.Parent = KeybindBtn
                 KeybindValue.BackgroundColor3 = config.Bg_Color
+                KeybindValue.BackgroundTransparency = 0.6  -- 半透明背景
                 KeybindValue.BorderSizePixel = 0
                 KeybindValue.Position = UDim2.new(0.72, 0, 0.22, 0)
                 KeybindValue.Size = UDim2.new(0, 70, 0, 22)
@@ -1824,13 +1839,15 @@ end
                             math.floor(config.Keybind_Color.R * 255 * 1.1),
                             math.floor(config.Keybind_Color.G * 255 * 1.1),
                             math.floor(config.Keybind_Color.B * 255 * 1.1)
-                        )
+                        ),
+                        BackgroundTransparency = 0.4
                     }):Play()
                 end)
                 
                 KeybindBtn.MouseLeave:Connect(function()
                     services.TweenService:Create(KeybindBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                        BackgroundColor3 = config.Keybind_Color
+                        BackgroundColor3 = config.Keybind_Color,
+                        BackgroundTransparency = 0.6
                     }):Play()
                 end)
                 
@@ -1899,7 +1916,7 @@ end
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
                 TextboxBack.BackgroundColor3 = config.Textbox_Color
-                TextboxBack.BackgroundTransparency = 0.2
+                TextboxBack.BackgroundTransparency = 0.6  -- 半透明背景
                 TextboxBack.BorderSizePixel = 0
                 TextboxBack.Size = UDim2.new(0, 330, 0, 36)
                 TextboxBack.AutoButtonColor = false
@@ -1916,6 +1933,7 @@ end
                 BoxBG.Name = "BoxBG"
                 BoxBG.Parent = TextboxBack
                 BoxBG.BackgroundColor3 = config.Bg_Color
+                BoxBG.BackgroundTransparency = 0.6  -- 半透明背景
                 BoxBG.BorderSizePixel = 0
                 BoxBG.Position = UDim2.new(0.45, 0, 0.22, 0)
                 BoxBG.Size = UDim2.new(0, 80, 0, 22)
@@ -1953,13 +1971,15 @@ end
                             math.floor(config.Textbox_Color.R * 255 * 1.1),
                             math.floor(config.Textbox_Color.G * 255 * 1.1),
                             math.floor(config.Textbox_Color.B * 255 * 1.1)
-                        )
+                        ),
+                        BackgroundTransparency = 0.4
                     }):Play()
                 end)
                 
                 TextboxBack.MouseLeave:Connect(function()
                     services.TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                        BackgroundColor3 = config.Textbox_Color
+                        BackgroundColor3 = config.Textbox_Color,
+                        BackgroundTransparency = 0.6
                     }):Play()
                 end)
                 
@@ -2015,7 +2035,7 @@ end
                 SliderBack.Name = "SliderBack"
                 SliderBack.Parent = SliderModule
                 SliderBack.BackgroundColor3 = config.Slider_Color
-                SliderBack.BackgroundTransparency = 0.2
+                SliderBack.BackgroundTransparency = 0.6  -- 半透明背景
                 SliderBack.BorderSizePixel = 0
                 SliderBack.Size = UDim2.new(0, 330, 0, 36)
                 SliderBack.AutoButtonColor = false
@@ -2032,7 +2052,8 @@ end
                 SliderBar.Name = "SliderBar"
                 SliderBar.Parent = SliderBack
                 SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-                SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100) -- 保持原样 - 灰色滑块背景
+                SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                SliderBar.BackgroundTransparency = 0.4  -- 半透明
                 SliderBar.BorderSizePixel = 0
                 SliderBar.Position = UDim2.new(0.35, 0, 0.5, 0)
                 SliderBar.Size = UDim2.new(0, 120, 0, 14)
@@ -2043,6 +2064,7 @@ end
                 SliderPart.Name = "SliderPart"
                 SliderPart.Parent = SliderBar
                 SliderPart.BackgroundColor3 = config.SliderBar_Color
+                SliderPart.BackgroundTransparency = 0.3  -- 半透明
                 SliderPart.BorderSizePixel = 0
                 SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
                 SliderPartC.CornerRadius = UDim.new(0, 4)
@@ -2052,6 +2074,7 @@ end
                 SliderValBG.Name = "SliderValBG"
                 SliderValBG.Parent = SliderBack
                 SliderValBG.BackgroundColor3 = config.Bg_Color
+                SliderValBG.BackgroundTransparency = 0.6  -- 半透明背景
                 SliderValBG.BorderSizePixel = 0
                 SliderValBG.Position = UDim2.new(0.82, 0, 0.22, 0)
                 SliderValBG.Size = UDim2.new(0, 36, 0, 22)
@@ -2079,8 +2102,8 @@ end
                 local MinSlider = Instance.new("TextButton")
                 MinSlider.Name = "MinSlider"
                 MinSlider.Parent = SliderBack
-                MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70) -- 保持原样 - 灰色按钮
-                MinSlider.BackgroundTransparency = 0
+                MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                MinSlider.BackgroundTransparency = 0.4  -- 半透明
                 MinSlider.BorderSizePixel = 0
                 MinSlider.Position = UDim2.new(0.28, 0, 0.25, 0)
                 MinSlider.Size = UDim2.new(0, 18, 0, 18)
@@ -2098,8 +2121,8 @@ end
                 local AddSlider = Instance.new("TextButton")
                 AddSlider.Name = "AddSlider"
                 AddSlider.Parent = SliderBack
-                AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70) -- 保持原样 - 灰色按钮
-                AddSlider.BackgroundTransparency = 0
+                AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                AddSlider.BackgroundTransparency = 0.4  -- 半透明
                 AddSlider.BorderSizePixel = 0
                 AddSlider.Position = UDim2.new(0.75, 0, 0.25, 0)
                 AddSlider.Size = UDim2.new(0, 18, 0, 18)
@@ -2314,7 +2337,7 @@ end
     DropdownTop.Name = "DropdownTop"
     DropdownTop.Parent = DropdownModule
     DropdownTop.BackgroundColor3 = config.Dropdown_Color
-    DropdownTop.BackgroundTransparency = 0.2
+    DropdownTop.BackgroundTransparency = 0.6  -- 半透明背景
     DropdownTop.BorderSizePixel = 0
     DropdownTop.Size = UDim2.new(0, 330, 0, 36)
     DropdownTop.AutoButtonColor = false
@@ -2332,6 +2355,7 @@ end
     BackgroundFill.Name = "BackgroundFill"
     BackgroundFill.Parent = DropdownTop
     BackgroundFill.BackgroundColor3 = config.Dropdown_Color
+    BackgroundFill.BackgroundTransparency = 0.6  -- 半透明背景
     BackgroundFill.BorderSizePixel = 0
     BackgroundFill.Position = UDim2.new(0.75, 0, 0, 0)
     BackgroundFill.Size = UDim2.new(0.25, 0, 1, 0)
@@ -2341,6 +2365,7 @@ end
     DropdownOpenFrame.Parent = DropdownTop
     DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
     DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
+    DropdownOpenFrame.BackgroundTransparency = 0.6  -- 半透明背景
     DropdownOpenFrame.BorderSizePixel = 0
     DropdownOpenFrame.Position = UDim2.new(0.80, 0, 0.5, 0)
     DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 22)
@@ -2382,7 +2407,8 @@ end
     local Separator = Instance.new("Frame")
     Separator.Name = "Separator"
     Separator.Parent = DropdownTop
-    Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70) -- 保持原样 - 灰色分隔线
+    Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    Separator.BackgroundTransparency = 0.4  -- 半透明
     Separator.BorderSizePixel = 0
     Separator.Position = UDim2.new(0.74, 0, 0.2, 0)
     Separator.Size = UDim2.new(0, 1, 0, 22)
@@ -2462,7 +2488,7 @@ end
         Option.Name = "Option_" .. option
         Option.Parent = DropdownModule
         Option.BackgroundColor3 = config.TabColor
-        Option.BackgroundTransparency = 0.2
+        Option.BackgroundTransparency = 0.6  -- 半透明背景
         Option.BorderSizePixel = 0
         Option.Position = UDim2.new(0, 0, 0.328125, 0)
         Option.Size = UDim2.new(0, 310, 0, 24)
