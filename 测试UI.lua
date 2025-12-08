@@ -359,24 +359,21 @@ local function createPulseGlow(object)
     return pulseConnection
 end
 
--- ... [前面的代码保持不变] ...
+-- ... [后面的代码保持不变] ...
 
--- 星空背景（没有星星，只有渐变）
+-- 修改星空背景函数，移除圆角设置，让它依赖主窗口的裁剪
 local function createSpaceBackground(parent)
     local background = Instance.new("Frame")
     background.Name = "SpaceBackground"
     background.BackgroundColor3 = config.DeepSpaceColor
     background.BackgroundTransparency = 0
-    background.Size = UDim2.new(1, 0, 1, 0)  -- 修改为正好填充主窗口
-    background.Position = UDim2.new(0, 0, 0, 0)  -- 从左上角开始
-    background.ZIndex = -100  -- 确保在背景层
-    
-    -- 添加圆角到星空背景
-    local backgroundCorner = Instance.new("UICorner")
-    backgroundCorner.CornerRadius = UDim.new(0, 12)  -- 与主窗口相同的圆角
-    backgroundCorner.Parent = background
-    
+    background.Size = UDim2.new(1, 0, 1, 0)
+    background.Position = UDim2.new(0, 0, 0, 0)
+    background.ZIndex = -100
     background.Parent = parent
+    
+    -- 移除背景自身的圆角设置，让它依赖父容器的裁剪
+    -- 不再添加 UICorner 到这里
     
     -- 多层渐变叠加
     local gradient1 = Instance.new("UIGradient")
@@ -406,13 +403,10 @@ local function createSpaceBackground(parent)
     })
     gradient2.Parent = background
     
-    -- 删除脉冲光晕部分
-    -- 只保留渐变背景
+    -- 移除脉冲光晕部分
     
     return background
 end
-
--- ... [后续的代码保持不变，但需要删除对createPulseGlow的调用] ...
 
 local function createHologramEffect(frame, intensity)
     intensity = intensity or 1
@@ -604,10 +598,7 @@ for _, gui in ipairs(services.CoreGui:GetChildren()) do
     end
 end
 
-local FengYu = Instance.new("ScreenGui")
-FengYu.Name = "UniversalUI"
-protectGUI(FengYu)
-FengYu.Parent = services.CoreGui
+-- ... [前面的代码保持不变] ...
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
@@ -620,23 +611,26 @@ Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
 
--- 添加星空背景（超过边框外）
+-- 添加星空背景（现在它会被裁剪到主窗口的圆角）
 createSpaceBackground(Main)
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.CornerRadius = UDim.new(0, 12)  -- 增加圆角半径
 MainCorner.Parent = Main
+
+-- 设置主窗口裁剪其子元素，这样星空背景也会被圆角裁剪
+Main.ClipsDescendants = true
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
 MainStroke.Color = Color3.fromRGB(50, 50, 50)
 MainStroke.Thickness = 1
-MainStroke.Transparency = 1
+MainStroke.Transparency = 0.5
 
 local neonStroke = Instance.new("UIStroke")
 neonStroke.Parent = Main
 neonStroke.Thickness = 2
-neonStroke.Transparency = 1
+neonStroke.Transparency = 0.3
 neonStroke.LineJoinMode = Enum.LineJoinMode.Round
 startNeonFlowEffect(neonStroke, "Color", 0.01)
 
