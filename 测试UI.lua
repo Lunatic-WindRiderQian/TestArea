@@ -340,17 +340,37 @@ local function startNeonFlowEffect(object, property, speed)
     return connection
 end
 
--- 静态深空背景效果（简化版）
-local function createStaticSpaceBackground(parent)
+-- 脉冲光晕效果（从第一个文件移植）
+local function createPulseGlow(object)
+    local pulseConnection
+    pulseConnection = RunService.Heartbeat:Connect(function()
+        if not object or not object.Parent then
+            pulseConnection:Disconnect()
+            return
+        end
+        
+        local alpha = 0.5 + math.sin(tick() * 3) * 0.3
+        if object:IsA("UIStroke") then
+            object.Transparency = alpha
+        elseif object:IsA("Frame") or object:IsA("TextButton") then
+            object.BackgroundTransparency = alpha
+        end
+    end)
+    return pulseConnection
+end
+
+-- 星空背景（没有星星，只有渐变和脉冲光晕）
+local function createSpaceBackground(parent)
     local background = Instance.new("Frame")
-    background.Name = "StaticSpaceBackground"
+    background.Name = "SpaceBackground"
     background.BackgroundColor3 = config.DeepSpaceColor
     background.BackgroundTransparency = 0
-    background.Size = UDim2.new(1, 0, 1, 0)
-    background.ZIndex = -10  -- 确保在背景层
+    background.Size = UDim2.new(1.5, 0, 1.5, 0)  -- 背景超过边框外
+    background.Position = UDim2.new(-0.25, 0, -0.25, 0)  -- 居中显示
+    background.ZIndex = -100  -- 确保在背景层
     background.Parent = parent
     
-    -- 静态渐变叠加
+    -- 多层渐变叠加
     local gradient1 = Instance.new("UIGradient")
     gradient1.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, config.DeepSpaceColor),
@@ -378,46 +398,64 @@ local function createStaticSpaceBackground(parent)
     })
     gradient2.Parent = background
     
-    -- 静态星空
-    local starsContainer = Instance.new("Frame")
-    starsContainer.Name = "StarsContainer"
-    starsContainer.BackgroundTransparency = 1
-    starsContainer.Size = UDim2.new(1, 0, 1, 0)
-    starsContainer.Parent = background
-    starsContainer.ZIndex = -9
+    -- 脉冲光晕
+    local pulseContainer = Instance.new("Frame")
+    pulseContainer.Name = "PulseContainer"
+    pulseContainer.BackgroundTransparency = 1
+    pulseContainer.Size = UDim2.new(1, 0, 1, 0)
+    pulseContainer.ZIndex = -99
+    pulseContainer.Parent = background
     
-    -- 创建静态星光
-    local function createStaticStars(count, sizeRange, brightnessRange)
-        for i = 1, count do
-            local size = math.random(sizeRange[1], sizeRange[2])
-            local brightness = math.random(brightnessRange[1] * 100, brightnessRange[2] * 100) / 100
-            
-            local star = Instance.new("Frame")
-            star.Name = "StaticStar"
-            star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            star.BackgroundTransparency = 1 - brightness
-            star.Size = UDim2.new(0, size, 0, size)
-            star.Position = UDim2.new(0, math.random(0, parent.AbsoluteSize.X), 0, math.random(0, parent.AbsoluteSize.Y))
-            star.ZIndex = -8
-            
-            local starCorner = Instance.new("UICorner")
-            starCorner.CornerRadius = UDim.new(1, 0)
-            starCorner.Parent = star
-            
-            star.Parent = starsContainer
-        end
+    local function createPulse(position, color)
+        local pulse = Instance.new("Frame")
+        pulse.Name = "PulseGlow"
+        pulse.BackgroundColor3 = color
+        pulse.BackgroundTransparency = 0.9
+        pulse.Size = UDim2.new(0, 0, 0, 0)
+        pulse.Position = position
+        pulse.AnchorPoint = Vector2.new(0.5, 0.5)
+        
+        local pulseCorner = Instance.new("UICorner")
+        pulseCorner.CornerRadius = UDim.new(1, 0)
+        pulseCorner.Parent = pulse
+        
+        local pulseStroke = Instance.new("UIStroke")
+        pulseStroke.Parent = pulse
+        pulseStroke.Color = color
+        pulseStroke.Thickness = 3
+        pulseStroke.Transparency = 0.7
+        
+        pulse.Parent = pulseContainer
+        
+        -- 脉冲动画
+        task.spawn(function()
+            while pulse and pulse.Parent do
+                services.TweenService:Create(pulse, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Size = UDim2.new(0, 100, 0, 100),
+                    BackgroundTransparency = 1
+                }):Play()
+                
+                services.TweenService:Create(pulseStroke, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Thickness = 1,
+                    Transparency = 1
+                }):Play()
+                
+                task.wait(1.5)
+                
+                pulse.Size = UDim2.new(0, 0, 0, 0)
+                pulse.BackgroundTransparency = 0.9
+                pulseStroke.Thickness = 3
+                pulseStroke.Transparency = 0.7
+                
+                task.wait(math.random(2, 5))
+            end
+        end)
     end
     
-    -- 等待主窗口加载完成后创建星星
-    task.spawn(function()
-        repeat task.wait(0.1) until parent.AbsoluteSize.X > 0
-        if parent.AbsoluteSize.X > 0 and parent.AbsoluteSize.Y > 0 then
-            -- 创建不同大小的静态星星
-            createStaticStars(100, {1, 1}, {0.3, 0.6})  -- 小星星
-            createStaticStars(60, {2, 3}, {0.5, 0.8})   -- 中等星星
-            createStaticStars(30, {3, 4}, {0.7, 1.0})   -- 大星星
-        end
-    end)
+    -- 创建多个脉冲光晕
+    createPulse(UDim2.new(0.3, 0, 0.4, 0), config.AccentGlow)
+    createPulse(UDim2.new(0.7, 0, 0.6, 0), Color3.fromRGB(100, 200, 255))
+    createPulse(UDim2.new(0.2, 0, 0.8, 0), Color3.fromRGB(50, 150, 255))
     
     return background
 end
@@ -494,24 +532,6 @@ local function createHologramEffect(frame, intensity)
     end)
     
     return hologram
-end
-
-local function createPulseGlow(object)
-    local pulseConnection
-    pulseConnection = RunService.Heartbeat:Connect(function()
-        if not object or not object.Parent then
-            pulseConnection:Disconnect()
-            return
-        end
-        
-        local alpha = 0.5 + math.sin(tick() * 3) * 0.3
-        if object:IsA("UIStroke") then
-            object.Transparency = alpha
-        elseif object:IsA("Frame") or object:IsA("TextButton") then
-            object.BackgroundTransparency = alpha
-        end
-    end)
-    return pulseConnection
 end
 
 local function create3DFlipAnimation(object, duration)
@@ -646,8 +666,8 @@ Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
 
--- 添加静态深空背景
-createStaticSpaceBackground(Main)
+-- 添加星空背景（超过边框外）
+createSpaceBackground(Main)
 
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
@@ -671,8 +691,7 @@ createPulseGlow(neonStroke)
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = Main
-TitleBar.BackgroundColor3 = config.TabColor
-TitleBar.BackgroundTransparency = 1
+TitleBar.BackgroundTransparency = 1  -- 完全透明
 TitleBar.BorderSizePixel = 0
 TitleBar.Size = UDim2.new(1, 0, 0, 35)
 TitleBar.ZIndex = 2
@@ -697,8 +716,7 @@ TitleText.TextTransparency = 1
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = TitleBar
-CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.BackgroundTransparency = 1
+CloseButton.BackgroundTransparency = 1  -- 完全透明背景
 CloseButton.BorderSizePixel = 0
 CloseButton.Position = UDim2.new(1, -25, 0, 7)
 CloseButton.Size = UDim2.new(0, 20, 0, 20)
@@ -823,24 +841,17 @@ TabMain.Visible = false
 local Side = Instance.new("Frame")
 Side.Name = "Side"
 Side.Parent = Main
-Side.BackgroundColor3 = config.TabColor
-Side.BackgroundTransparency = 1
+Side.BackgroundTransparency = 1  -- 完全透明
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 35)
 Side.Size = UDim2.new(0, 90, 0, 245)
 
-local SideCorner = Instance.new("UICorner")
-SideCorner.CornerRadius = UDim.new(0, 10)
-SideCorner.Parent = Side
-
-createHologramEffect(Side, 0.3)
-
 local TabBtns = Instance.new("ScrollingFrame")
 TabBtns.Name = "TabBtns"
 TabBtns.Parent = Side
 TabBtns.Active = true
-TabBtns.BackgroundTransparency = 1
+TabBtns.BackgroundTransparency = 1  -- 完全透明
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0, 5)
 TabBtns.Size = UDim2.new(0, 90, 0, 235)
@@ -873,7 +884,7 @@ ScriptTitle.BackgroundTransparency = 1
 ScriptTitle.Position = UDim2.new(0, 0, 0.009, 0)
 ScriptTitle.Size = UDim2.new(0, 90, 0, 20)
 ScriptTitle.Font = Enum.Font.GothamBold
-ScriptTitle.Text = "傻逼谁让你破解我的UI了"
+ScriptTitle.Text = "FengUI"
 ScriptTitle.TextColor3 = config.AccentColor
 ScriptTitle.TextSize = 16
 ScriptTitle.TextScaled = false
@@ -912,7 +923,7 @@ local function playEntranceAnimation()
     task.wait(0.2)
     
     services.TweenService:Create(TitleBar, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0.2
+        BackgroundTransparency = 1
     }):Play()
     
     services.TweenService:Create(TitleText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -926,7 +937,7 @@ local function playEntranceAnimation()
     task.wait(0.2)
     
     services.TweenService:Create(Side, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0.2
+        BackgroundTransparency = 1
     }):Play()
     
     task.wait(0.2)
@@ -1067,7 +1078,6 @@ function FengUI.new(FengUI, name, theme)
         
         function tab.section(tab, name, TabVal)
             local Section = Instance.new("Frame")
-            local SectionC = Instance.new("UICorner")
             local SectionText = Instance.new("TextLabel")
             local SectionOpen = Instance.new("ImageLabel")
             local SectionOpened = Instance.new("ImageLabel")
@@ -1075,34 +1085,30 @@ function FengUI.new(FengUI, name, theme)
             local Objs = Instance.new("Frame")
             local ObjsL = Instance.new("UIListLayout")
             
+            -- Section完全透明，无背景无边框
             Section.Name = "Section"
             Section.Parent = Tab
-            Section.BackgroundColor3 = config.TabColor
-            Section.BackgroundTransparency = 0.2
+            Section.BackgroundTransparency = 1  -- 完全透明
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
-            Section.Size = UDim2.new(0.95, 0, 0, 36)
-            
-            SectionC.CornerRadius = UDim.new(0, 6)
-            SectionC.Name = "SectionC"
-            SectionC.Parent = Section
+            Section.Size = UDim2.new(1, 0, 0, 36)
             
             SectionText.Name = "SectionText"
             SectionText.Parent = Section
             SectionText.BackgroundTransparency = 1
-            SectionText.Position = UDim2.new(0.088, 0, 0, 0)
-            SectionText.Size = UDim2.new(0, 320, 0, 36)
+            SectionText.Position = UDim2.new(0, 35, 0, 0)
+            SectionText.Size = UDim2.new(1, -35, 0, 36)
             SectionText.Font = Enum.Font.GothamSemibold
             SectionText.Text = name
-            SectionText.TextColor3 = config.TextColor
+            SectionText.TextColor3 = config.AccentColor
             SectionText.TextSize = 16
             SectionText.TextXAlignment = Enum.TextXAlignment.Left
             
             SectionOpen.Name = "SectionOpen"
-            SectionOpen.Parent = SectionText
+            SectionOpen.Parent = Section
             SectionOpen.BackgroundTransparency = 1
             SectionOpen.BorderSizePixel = 0
-            SectionOpen.Position = UDim2.new(0, -26, 0, 6)
+            SectionOpen.Position = UDim2.new(0, 5, 0, 5)
             SectionOpen.Size = UDim2.new(0, 22, 0, 22)
             SectionOpen.Image = "rbxassetid://84830962019412"
             SectionOpen.ImageColor3 = config.SecondaryTextColor
@@ -1111,7 +1117,7 @@ function FengUI.new(FengUI, name, theme)
             SectionOpened.Parent = SectionOpen
             SectionOpened.BackgroundTransparency = 1
             SectionOpened.BorderSizePixel = 0
-            SectionOpened.Size = UDim2.new(0, 22, 0, 22)
+            SectionOpened.Size = UDim2.new(1, 0, 1, 0)
             SectionOpened.Image = "rbxassetid://84830962019412"
             SectionOpened.ImageColor3 = config.AccentColor
             SectionOpened.ImageTransparency = 1
@@ -1120,23 +1126,23 @@ function FengUI.new(FengUI, name, theme)
             SectionToggle.Parent = SectionOpen
             SectionToggle.BackgroundTransparency = 1
             SectionToggle.BorderSizePixel = 0
-            SectionToggle.Size = UDim2.new(0, 22, 0, 22)
+            SectionToggle.Size = UDim2.new(1, 0, 1, 0)
             
             Objs.Name = "Objs"
             Objs.Parent = Section
             Objs.BackgroundTransparency = 1
             Objs.BorderSizePixel = 0
-            Objs.Position = UDim2.new(0, 6, 0, 36)
-            Objs.Size = UDim2.new(0.98, 0, 0, 0)
+            Objs.Position = UDim2.new(0, 0, 0, 36)
+            Objs.Size = UDim2.new(1, 0, 0, 0)
             
             ObjsL.Name = "ObjsL"
             ObjsL.Parent = Objs
             ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
-            ObjsL.Padding = UDim.new(0, 6)
+            ObjsL.Padding = UDim.new(0, 8)
             
             local open = TabVal ~= false
             if TabVal ~= false then
-                Section.Size = UDim2.new(0.95, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 6 or 36)
+                Section.Size = UDim2.new(1, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 8 or 36)
                 SectionOpened.ImageTransparency = open and 0 or 1
                 SectionOpen.ImageTransparency = open and 1 or 0
             end
@@ -1144,7 +1150,7 @@ function FengUI.new(FengUI, name, theme)
             SectionToggle.MouseButton1Click:Connect(function()
                 open = not open
                 services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                    Size = UDim2.new(0.95, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 6 or 36)
+                    Size = UDim2.new(1, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 8 or 36)
                 }):Play()
                 
                 services.TweenService:Create(SectionOpened, TweenInfo.new(0.3), {
@@ -1160,7 +1166,7 @@ function FengUI.new(FengUI, name, theme)
             
             ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                 if not open then return end
-                Section.Size = UDim2.new(0.95, 0, 0, 36 + ObjsL.AbsoluteContentSize.Y + 6)
+                Section.Size = UDim2.new(1, 0, 0, 36 + ObjsL.AbsoluteContentSize.Y + 8)
             end)
             
             local section = {}
@@ -1587,8 +1593,8 @@ end
                 
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
-                Btn.BackgroundColor3 = config.Button_Color
-                Btn.BackgroundTransparency = 0.2
+                Btn.BackgroundColor3 = config.ElementColor
+                Btn.BackgroundTransparency = config.ElementTransparency
                 Btn.BorderSizePixel = 0
                 Btn.Size = UDim2.new(0, 330, 0, 36)
                 Btn.AutoButtonColor = false
@@ -1613,10 +1619,11 @@ end
                 
                 Btn.MouseEnter:Connect(function()
                     services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                        BackgroundTransparency = config.ElementTransparency - 0.2,
                         BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.Button_Color.R * 255 * 1.1),
-                            math.floor(config.Button_Color.G * 255 * 1.1),
-                            math.floor(config.Button_Color.B * 255 * 1.1)
+                            math.floor(config.ElementColor.R * 255 * 1.1),
+                            math.floor(config.ElementColor.G * 255 * 1.1),
+                            math.floor(config.ElementColor.B * 255 * 1.1)
                         )
                     }):Play()
                     services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
@@ -1627,7 +1634,8 @@ end
                 
                 Btn.MouseLeave:Connect(function()
                     services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                        BackgroundColor3 = config.Button_Color
+                        BackgroundTransparency = config.ElementTransparency,
+                        BackgroundColor3 = config.ElementColor
                     }):Play()
                     services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
                         Thickness = 1,
@@ -1640,10 +1648,11 @@ end
                     callback()
                     
                     services.TweenService:Create(Btn, TweenInfo.new(0.1), {
+                        BackgroundTransparency = config.ElementTransparency - 0.3,
                         BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.Button_Color.R * 255 * 0.8),
-                            math.floor(config.Button_Color.G * 255 * 0.8),
-                            math.floor(config.Button_Color.B * 255 * 0.8)
+                            math.floor(config.ElementColor.R * 255 * 0.8),
+                            math.floor(config.ElementColor.G * 255 * 0.8),
+                            math.floor(config.ElementColor.B * 255 * 0.8)
                         )
                     }):Play()
                     services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
@@ -1654,7 +1663,8 @@ end
                     task.wait(0.1)
                     
                     services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-                        BackgroundColor3 = config.Button_Color
+                        BackgroundTransparency = config.ElementTransparency,
+                        BackgroundColor3 = config.ElementColor
                     }):Play()
                     services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
                         Thickness = 1,
@@ -1841,31 +1851,29 @@ end
                 
                 ToggleDisable.Name = "ToggleDisable"
                 ToggleDisable.Parent = ToggleBtn
-                ToggleDisable.BackgroundColor3 = config.Bg_Color
+                ToggleDisable.BackgroundColor3 = Color3.fromRGB(10, 20, 40)
+                ToggleDisable.BackgroundTransparency = 0.8
                 ToggleDisable.BorderSizePixel = 0
-                ToggleDisable.Position = UDim2.new(0.85, 0, 0.22, 0)
-                ToggleDisable.Size = UDim2.new(0, 34, 0, 18)
+                ToggleDisable.Position = UDim2.new(0.85, 0, 0.25, 0)
+                ToggleDisable.Size = UDim2.new(0, 44, 0, 24)
                 
                 ToggleSwitch.Name = "ToggleSwitch"
                 ToggleSwitch.Parent = ToggleDisable
-                ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
-                ToggleSwitch.Size = UDim2.new(0, 20, 0, 18)
-                ToggleSwitch.Position = UDim2.new(0, enabled and 14 or 0, 0, 0)
+                ToggleSwitch.BackgroundColor3 = enabled and config.AccentColor or Color3.fromRGB(50, 60, 90)
+                ToggleSwitch.Size = UDim2.new(0, 24, 0, 24)
+                ToggleSwitch.Position = UDim2.new(0, enabled and 20 or 0, 0, 0)
                 
                 ToggleSwitchC.CornerRadius = UDim.new(0, 6)
                 ToggleSwitchC.Name = "ToggleSwitchC"
                 ToggleSwitchC.Parent = ToggleSwitch
                 
-                ToggleDisableC.CornerRadius = UDim.new(0, 6)
+                ToggleDisableC.CornerRadius = UDim.new(0, 12)
                 ToggleDisableC.Name = "ToggleDisableC"
                 ToggleDisableC.Parent = ToggleDisable
                 
-                if enabled then
-                    createHologramEffect(ToggleSwitch, 0.8)
-                end
-                
                 ToggleBtn.MouseEnter:Connect(function()
                     services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                        BackgroundTransparency = 0.1,
                         BackgroundColor3 = Color3.fromRGB(
                             math.floor(config.Toggle_Color.R * 255 * 1.1),
                             math.floor(config.Toggle_Color.G * 255 * 1.1),
@@ -1876,6 +1884,7 @@ end
                 
                 ToggleBtn.MouseLeave:Connect(function()
                     services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                        BackgroundTransparency = 0.2,
                         BackgroundColor3 = config.Toggle_Color
                     }):Play()
                 end)
@@ -1890,18 +1899,9 @@ end
                         end
                         
                         services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                            Position = UDim2.new(0, state and 14 or 0, 0, 0),
-                            BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
+                            Position = UDim2.new(0, state and 20 or 0, 0, 0),
+                            BackgroundColor3 = state and config.AccentColor or Color3.fromRGB(50, 60, 90)
                         }):Play()
-                        
-                        if state then
-                            createHologramEffect(ToggleSwitch, 0.8)
-                        else
-                            local hologram = ToggleSwitch:FindFirstChild("HologramEffect")
-                            if hologram then
-                                hologram:Destroy()
-                            end
-                        end
                         
                         FengUI.flags[flag] = state
                         callback(state)
