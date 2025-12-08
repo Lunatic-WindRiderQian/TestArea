@@ -361,14 +361,14 @@ end
 
 -- ... [前面的代码保持不变] ...
 
--- 星空背景（没有星星，只有渐变和脉冲光晕）
+-- 星空背景（没有星星，只有渐变）
 local function createSpaceBackground(parent)
     local background = Instance.new("Frame")
     background.Name = "SpaceBackground"
     background.BackgroundColor3 = config.DeepSpaceColor
     background.BackgroundTransparency = 0
-    background.Size = UDim2.new(1.5, 0, 1.5, 0)  -- 背景超过边框外
-    background.Position = UDim2.new(-0.25, 0, -0.25, 0)  -- 居中显示
+    background.Size = UDim2.new(1, 0, 1, 0)  -- 修改为正好填充主窗口
+    background.Position = UDim2.new(0, 0, 0, 0)  -- 从左上角开始
     background.ZIndex = -100  -- 确保在背景层
     
     -- 添加圆角到星空背景
@@ -406,69 +406,13 @@ local function createSpaceBackground(parent)
     })
     gradient2.Parent = background
     
-    -- 脉冲光晕
-    local pulseContainer = Instance.new("Frame")
-    pulseContainer.Name = "PulseContainer"
-    pulseContainer.BackgroundTransparency = 1
-    pulseContainer.Size = UDim2.new(1, 0, 1, 0)
-    pulseContainer.ZIndex = -99
-    pulseContainer.Parent = background
-    
-    local function createPulse(position, color)
-        local pulse = Instance.new("Frame")
-        pulse.Name = "PulseGlow"
-        pulse.BackgroundColor3 = color
-        pulse.BackgroundTransparency = 0.9
-        pulse.Size = UDim2.new(0, 0, 0, 0)
-        pulse.Position = position
-        pulse.AnchorPoint = Vector2.new(0.5, 0.5)
-        
-        local pulseCorner = Instance.new("UICorner")
-        pulseCorner.CornerRadius = UDim.new(1, 0)
-        pulseCorner.Parent = pulse
-        
-        local pulseStroke = Instance.new("UIStroke")
-        pulseStroke.Parent = pulse
-        pulseStroke.Color = color
-        pulseStroke.Thickness = 3
-        pulseStroke.Transparency = 0.7
-        
-        pulse.Parent = pulseContainer
-        
-        -- 脉冲动画
-        task.spawn(function()
-            while pulse and pulse.Parent do
-                services.TweenService:Create(pulse, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    Size = UDim2.new(0, 100, 0, 100),
-                    BackgroundTransparency = 1
-                }):Play()
-                
-                services.TweenService:Create(pulseStroke, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    Thickness = 1,
-                    Transparency = 1
-                }):Play()
-                
-                task.wait(1.5)
-                
-                pulse.Size = UDim2.new(0, 0, 0, 0)
-                pulse.BackgroundTransparency = 0.9
-                pulseStroke.Thickness = 3
-                pulseStroke.Transparency = 0.7
-                
-                task.wait(math.random(2, 5))
-            end
-        end)
-    end
-    
-    -- 创建多个脉冲光晕
-    createPulse(UDim2.new(0.3, 0, 0.4, 0), config.AccentGlow)
-    createPulse(UDim2.new(0.7, 0, 0.6, 0), Color3.fromRGB(100, 200, 255))
-    createPulse(UDim2.new(0.2, 0, 0.8, 0), Color3.fromRGB(50, 150, 255))
+    -- 删除脉冲光晕部分
+    -- 只保留渐变背景
     
     return background
 end
 
--- ... [后续的代码保持不变] ...
+-- ... [后续的代码保持不变，但需要删除对createPulseGlow的调用] ...
 
 local function createHologramEffect(frame, intensity)
     intensity = intensity or 1
