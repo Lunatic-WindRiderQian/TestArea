@@ -63,13 +63,13 @@ local config = {
     SecondaryTextColor = Color3.fromRGB(180, 190, 210),
     GlowColor = Color3.fromRGB(0, 150, 255),
     
-    -- 从第一个文件添加的深空背景颜色
+    -- 深空背景颜色
     DeepSpaceColor = Color3.fromRGB(1, 2, 10),
     NebulaColor1 = Color3.fromRGB(0, 40, 80),
     NebulaColor2 = Color3.fromRGB(20, 60, 120),
     AccentGlow = Color3.fromRGB(0, 220, 255),
-    ElementColor = Color3.fromRGB(15, 25, 45),
-    ElementTransparency = 0.9,
+    ElementColor = Color3.fromRGB(30, 30, 50), -- 修复：改为不透明颜色
+    ElementTransparency = 0.2, -- 降低透明度
     GlassEffect = Color3.fromRGB(255, 255, 255),
 }
 
@@ -196,19 +196,19 @@ local function startNeonFlowEffect(object, property, speed)
     return connection
 end
 
--- 星空背景（从第一个文件移植）
+-- 星空背景（修复圆角对齐问题）
 local function createSpaceBackground(parent)
     local background = Instance.new("Frame")
     background.Name = "SpaceBackground"
     background.BackgroundColor3 = config.DeepSpaceColor
     background.BackgroundTransparency = 0
-    background.Size = UDim2.new(1, 0, 1, 0)  -- 修改为正好填充主窗口
-    background.Position = UDim2.new(0, 0, 0, 0)  -- 从左上角开始
-    background.ZIndex = -100  -- 确保在背景层
+    background.Size = UDim2.new(1, 0, 1, 0)
+    background.Position = UDim2.new(0, 0, 0, 0)
+    background.ZIndex = -100
     
-    -- 添加圆角到星空背景
+    -- 修复：圆角改为10，与主窗口一致
     local backgroundCorner = Instance.new("UICorner")
-    backgroundCorner.CornerRadius = UDim.new(0, 12)  -- 与主窗口相同的圆角
+    backgroundCorner.CornerRadius = UDim.new(0, 10)  -- 修复：从12改为10
     backgroundCorner.Parent = background
     
     background.Parent = parent
@@ -244,7 +244,7 @@ local function createSpaceBackground(parent)
     return background
 end
 
--- 脉冲光晕效果（从第一个文件移植）
+-- 脉冲光晕效果
 local function createPulseGlow(object)
     local pulseConnection
     pulseConnection = RunService.Heartbeat:Connect(function()
@@ -430,7 +430,7 @@ function switchTab(new)
     services.TweenService:Create(new[1].TabText, tweenInfo, { 
         TextTransparency = 0,
         TextColor3 = config.AccentColor
-    }):Play()
+        }):Play()
     
     old[2].Visible = false
     new[2].Visible = true
@@ -454,7 +454,7 @@ local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.BackgroundTransparency = 1  -- 完全透明主窗口，让深空背景显示
+Main.BackgroundTransparency = 1
 Main.Position = UDim2.new(0.5, 0, 0.35, 0)
 Main.Size = UDim2.new(0, 450, 0, 280)
 Main.ZIndex = 1
@@ -487,7 +487,7 @@ local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = Main
 TitleBar.BackgroundColor3 = config.TabColor
-TitleBar.BackgroundTransparency = 1  -- 完全透明
+TitleBar.BackgroundTransparency = 1
 TitleBar.BorderSizePixel = 0
 TitleBar.Size = UDim2.new(1, 0, 0, 35)
 TitleBar.ZIndex = 2
@@ -637,7 +637,7 @@ local Side = Instance.new("Frame")
 Side.Name = "Side"
 Side.Parent = Main
 Side.BackgroundColor3 = config.TabColor
-Side.BackgroundTransparency = 1  -- 完全透明
+Side.BackgroundTransparency = 1
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 35)
@@ -708,7 +708,7 @@ local function playEntranceAnimation()
     
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
-        BackgroundTransparency = 1,  -- 保持透明，让深空背景显示
+        BackgroundTransparency = 1,
         Size = UDim2.new(0, 450, 0, 280)
     }):Play()
     
@@ -882,10 +882,9 @@ function FengUI.new(FengUI, name, theme)
             local Objs = Instance.new("Frame")
             local ObjsL = Instance.new("UIListLayout")
             
-            -- Section完全透明，无背景无边框
             Section.Name = "Section"
             Section.Parent = Tab
-            Section.BackgroundTransparency = 1  -- 完全透明
+            Section.BackgroundTransparency = 1
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
             Section.Size = UDim2.new(1, 0, 0, 36)
@@ -1384,8 +1383,8 @@ end
                 
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
-                Btn.BackgroundColor3 = config.ElementColor
-                Btn.BackgroundTransparency = config.ElementTransparency
+                Btn.BackgroundColor3 = config.Button_Color  -- 修复：使用标准的Button_Color
+                Btn.BackgroundTransparency = 0.2  -- 修复：降低透明度
                 Btn.BorderSizePixel = 0
                 Btn.Size = UDim2.new(0, 330, 0, 36)
                 Btn.AutoButtonColor = false
@@ -1410,11 +1409,10 @@ end
                 
                 Btn.MouseEnter:Connect(function()
                     services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = config.ElementTransparency - 0.2,
                         BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.ElementColor.R * 255 * 1.1),
-                            math.floor(config.ElementColor.G * 255 * 1.1),
-                            math.floor(config.ElementColor.B * 255 * 1.1)
+                            math.floor(config.Button_Color.R * 255 * 1.1),
+                            math.floor(config.Button_Color.G * 255 * 1.1),
+                            math.floor(config.Button_Color.B * 255 * 1.1)
                         )
                     }):Play()
                     services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
@@ -1425,8 +1423,7 @@ end
                 
                 Btn.MouseLeave:Connect(function()
                     services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                        BackgroundTransparency = config.ElementTransparency,
-                        BackgroundColor3 = config.ElementColor
+                        BackgroundColor3 = config.Button_Color
                     }):Play()
                     services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
                         Thickness = 1,
@@ -1438,11 +1435,10 @@ end
                     callback()
                     
                     services.TweenService:Create(Btn, TweenInfo.new(0.1), {
-                        BackgroundTransparency = config.ElementTransparency - 0.3,
                         BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.ElementColor.R * 255 * 0.8),
-                            math.floor(config.ElementColor.G * 255 * 0.8),
-                            math.floor(config.ElementColor.B * 255 * 0.8)
+                            math.floor(config.Button_Color.R * 255 * 0.8),
+                            math.floor(config.Button_Color.G * 255 * 0.8),
+                            math.floor(config.Button_Color.B * 255 * 0.8)
                         )
                     }):Play()
                     services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
@@ -1453,8 +1449,7 @@ end
                     task.wait(0.1)
                     
                     services.TweenService:Create(Btn, TweenInfo.new(0.2), {
-                        BackgroundTransparency = config.ElementTransparency,
-                        BackgroundColor3 = config.ElementColor
+                        BackgroundColor3 = config.Button_Color
                     }):Play()
                     services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
                         Thickness = 1,
@@ -1644,20 +1639,20 @@ end
                 ToggleDisable.BackgroundColor3 = Color3.fromRGB(10, 20, 40)
                 ToggleDisable.BackgroundTransparency = 0.8
                 ToggleDisable.BorderSizePixel = 0
-                ToggleDisable.Position = UDim2.new(0.85, 0, 0.25, 0)
-                ToggleDisable.Size = UDim2.new(0, 44, 0, 24)
+                ToggleDisable.Position = UDim2.new(0.85, 0, 0.22, 0)  -- 修复：调整垂直位置
+                ToggleDisable.Size = UDim2.new(0, 34, 0, 18)  -- 修复：调整为原始尺寸
                 
                 ToggleSwitch.Name = "ToggleSwitch"
                 ToggleSwitch.Parent = ToggleDisable
-                ToggleSwitch.BackgroundColor3 = enabled and config.AccentColor or Color3.fromRGB(50, 60, 90)
-                ToggleSwitch.Size = UDim2.new(0, 24, 0, 24)
-                ToggleSwitch.Position = UDim2.new(0, enabled and 20 or 0, 0, 0)
+                ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
+                ToggleSwitch.Size = UDim2.new(0, 20, 0, 18)  -- 修复：调整为原始尺寸
+                ToggleSwitch.Position = UDim2.new(0, enabled and 14 or 0, 0, 0)  -- 修复：调整位置计算
                 
                 ToggleSwitchC.CornerRadius = UDim.new(0, 6)
                 ToggleSwitchC.Name = "ToggleSwitchC"
                 ToggleSwitchC.Parent = ToggleSwitch
                 
-                ToggleDisableC.CornerRadius = UDim.new(0, 12)
+                ToggleDisableC.CornerRadius = UDim.new(0, 9)  -- 修复：调整为半高圆角
                 ToggleDisableC.Name = "ToggleDisableC"
                 ToggleDisableC.Parent = ToggleDisable
                 
@@ -1689,8 +1684,8 @@ end
                         end
                         
                         services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                            Position = UDim2.new(0, state and 20 or 0, 0, 0),
-                            BackgroundColor3 = state and config.AccentColor or Color3.fromRGB(50, 60, 90)
+                            Position = UDim2.new(0, state and 14 or 0, 0, 0),
+                            BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
                         }):Play()
                         
                         FengUI.flags[flag] = state
