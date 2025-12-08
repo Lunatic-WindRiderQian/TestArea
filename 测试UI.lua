@@ -359,55 +359,6 @@ local function createPulseGlow(object)
     return pulseConnection
 end
 
--- ... [后面的代码保持不变] ...
-
--- 修改星空背景函数，移除圆角设置，让它依赖主窗口的裁剪
-local function createSpaceBackground(parent)
-    local background = Instance.new("Frame")
-    background.Name = "SpaceBackground"
-    background.BackgroundColor3 = config.DeepSpaceColor
-    background.BackgroundTransparency = 0
-    background.Size = UDim2.new(1, 0, 1, 0)
-    background.Position = UDim2.new(0, 0, 0, 0)
-    background.ZIndex = -100
-    background.Parent = parent
-    
-    -- 移除背景自身的圆角设置，让它依赖父容器的裁剪
-    -- 不再添加 UICorner 到这里
-    
-    -- 多层渐变叠加
-    local gradient1 = Instance.new("UIGradient")
-    gradient1.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, config.DeepSpaceColor),
-        ColorSequenceKeypoint.new(0.3, config.NebulaColor1),
-        ColorSequenceKeypoint.new(0.7, config.NebulaColor2),
-        ColorSequenceKeypoint.new(1, config.DeepSpaceColor)
-    })
-    gradient1.Rotation = 45
-    gradient1.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.1),
-        NumberSequenceKeypoint.new(0.5, 0.3),
-        NumberSequenceKeypoint.new(1, 0.1)
-    })
-    gradient1.Parent = background
-    
-    local gradient2 = Instance.new("UIGradient")
-    gradient2.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 50, 100)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 80, 150))
-    })
-    gradient2.Rotation = 135
-    gradient2.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.4),
-        NumberSequenceKeypoint.new(1, 0.6)
-    })
-    gradient2.Parent = background
-    
-    -- 移除脉冲光晕部分
-    
-    return background
-end
-
 local function createHologramEffect(frame, intensity)
     intensity = intensity or 1
     
@@ -598,28 +549,56 @@ for _, gui in ipairs(services.CoreGui:GetChildren()) do
     end
 end
 
+local FengYu = Instance.new("ScreenGui")
+FengYu.Name = "UniversalUI"
+protectGUI(FengYu)
+FengYu.Parent = services.CoreGui
+
 -- ... [前面的代码保持不变] ...
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.BackgroundTransparency = 1  -- 完全透明主窗口
+Main.BackgroundColor3 = config.DeepSpaceColor  -- 设置主窗口背景为深空颜色
+Main.BackgroundTransparency = 0.1  -- 稍微透明
 Main.Position = UDim2.new(0.5, 0, 0.35, 0)
 Main.Size = UDim2.new(0, 450, 0, 280)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
 
--- 添加星空背景（现在它会被裁剪到主窗口的圆角）
-createSpaceBackground(Main)
+-- 将星空渐变直接应用在主窗口上，而不是创建一个单独的背景
+local gradient1 = Instance.new("UIGradient")
+gradient1.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, config.DeepSpaceColor),
+    ColorSequenceKeypoint.new(0.3, config.NebulaColor1),
+    ColorSequenceKeypoint.new(0.7, config.NebulaColor2),
+    ColorSequenceKeypoint.new(1, config.DeepSpaceColor)
+})
+gradient1.Rotation = 45
+gradient1.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.1),
+    NumberSequenceKeypoint.new(0.5, 0.3),
+    NumberSequenceKeypoint.new(1, 0.1)
+})
+gradient1.Parent = Main
+
+local gradient2 = Instance.new("UIGradient")
+gradient2.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 50, 100)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 80, 150))
+})
+gradient2.Rotation = 135
+gradient2.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.4),
+    NumberSequenceKeypoint.new(1, 0.6)
+})
+gradient2.Parent = Main
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 12)  -- 增加圆角半径
+MainCorner.CornerRadius = UDim.new(0, 12)
 MainCorner.Parent = Main
-
--- 设置主窗口裁剪其子元素，这样星空背景也会被圆角裁剪
-Main.ClipsDescendants = true
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
@@ -633,6 +612,14 @@ neonStroke.Thickness = 2
 neonStroke.Transparency = 0.3
 neonStroke.LineJoinMode = Enum.LineJoinMode.Round
 startNeonFlowEffect(neonStroke, "Color", 0.01)
+
+-- 移除 createSpaceBackground 调用
+-- createSpaceBackground(Main)
+
+-- ... [后面的代码保持不变] ...
+
+-- 删除或注释掉 createSpaceBackground 函数的定义
+-- 因为我们不再需要单独的背景Frame
 
 createPulseGlow(neonStroke)
 
