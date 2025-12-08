@@ -62,6 +62,12 @@ local config = {
     TextColor = Color3.fromRGB(240, 245, 255),
     SecondaryTextColor = Color3.fromRGB(180, 190, 210),
     GlowColor = Color3.fromRGB(0, 150, 255),
+    
+    -- 从第一个文件添加的深空背景颜色
+    DeepSpaceColor = Color3.fromRGB(1, 2, 10),
+    NebulaColor1 = Color3.fromRGB(0, 40, 80),
+    NebulaColor2 = Color3.fromRGB(20, 60, 120),
+    AccentGlow = Color3.fromRGB(0, 220, 255),
     ElementColor = Color3.fromRGB(15, 25, 45),
     ElementTransparency = 0.9,
     GlassEffect = Color3.fromRGB(255, 255, 255),
@@ -334,7 +340,135 @@ local function startNeonFlowEffect(object, property, speed)
     return connection
 end
 
--- 移除脉冲光晕效果
+-- 脉冲光晕效果（从第一个文件移植）
+local function createPulseGlow(object)
+    local pulseConnection
+    pulseConnection = RunService.Heartbeat:Connect(function()
+        if not object or not object.Parent then
+            pulseConnection:Disconnect()
+            return
+        end
+        
+        local alpha = 0.5 + math.sin(tick() * 3) * 0.3
+        if object:IsA("UIStroke") then
+            object.Transparency = alpha
+        elseif object:IsA("Frame") or object:IsA("TextButton") then
+            object.BackgroundTransparency = alpha
+        end
+    end)
+    return pulseConnection
+end
+
+-- ... [前面的代码保持不变] ...
+
+-- 星空背景（没有星星，只有渐变和脉冲光晕）
+local function createSpaceBackground(parent)
+    local background = Instance.new("Frame")
+    background.Name = "SpaceBackground"
+    background.BackgroundColor3 = config.DeepSpaceColor
+    background.BackgroundTransparency = 0
+    background.Size = UDim2.new(1.5, 0, 1.5, 0)  -- 背景超过边框外
+    background.Position = UDim2.new(-0.25, 0, -0.25, 0)  -- 居中显示
+    background.ZIndex = -100  -- 确保在背景层
+    
+    -- 添加圆角到星空背景
+    local backgroundCorner = Instance.new("UICorner")
+    backgroundCorner.CornerRadius = UDim.new(0, 12)  -- 与主窗口相同的圆角
+    backgroundCorner.Parent = background
+    
+    background.Parent = parent
+    
+    -- 多层渐变叠加
+    local gradient1 = Instance.new("UIGradient")
+    gradient1.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, config.DeepSpaceColor),
+        ColorSequenceKeypoint.new(0.3, config.NebulaColor1),
+        ColorSequenceKeypoint.new(0.7, config.NebulaColor2),
+        ColorSequenceKeypoint.new(1, config.DeepSpaceColor)
+    })
+    gradient1.Rotation = 45
+    gradient1.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.1),
+        NumberSequenceKeypoint.new(0.5, 0.3),
+        NumberSequenceKeypoint.new(1, 0.1)
+    })
+    gradient1.Parent = background
+    
+    local gradient2 = Instance.new("UIGradient")
+    gradient2.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 50, 100)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 80, 150))
+    })
+    gradient2.Rotation = 135
+    gradient2.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.4),
+        NumberSequenceKeypoint.new(1, 0.6)
+    })
+    gradient2.Parent = background
+    
+    -- 脉冲光晕
+    local pulseContainer = Instance.new("Frame")
+    pulseContainer.Name = "PulseContainer"
+    pulseContainer.BackgroundTransparency = 1
+    pulseContainer.Size = UDim2.new(1, 0, 1, 0)
+    pulseContainer.ZIndex = -99
+    pulseContainer.Parent = background
+    
+    local function createPulse(position, color)
+        local pulse = Instance.new("Frame")
+        pulse.Name = "PulseGlow"
+        pulse.BackgroundColor3 = color
+        pulse.BackgroundTransparency = 0.9
+        pulse.Size = UDim2.new(0, 0, 0, 0)
+        pulse.Position = position
+        pulse.AnchorPoint = Vector2.new(0.5, 0.5)
+        
+        local pulseCorner = Instance.new("UICorner")
+        pulseCorner.CornerRadius = UDim.new(1, 0)
+        pulseCorner.Parent = pulse
+        
+        local pulseStroke = Instance.new("UIStroke")
+        pulseStroke.Parent = pulse
+        pulseStroke.Color = color
+        pulseStroke.Thickness = 3
+        pulseStroke.Transparency = 0.7
+        
+        pulse.Parent = pulseContainer
+        
+        -- 脉冲动画
+        task.spawn(function()
+            while pulse and pulse.Parent do
+                services.TweenService:Create(pulse, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Size = UDim2.new(0, 100, 0, 100),
+                    BackgroundTransparency = 1
+                }):Play()
+                
+                services.TweenService:Create(pulseStroke, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Thickness = 1,
+                    Transparency = 1
+                }):Play()
+                
+                task.wait(1.5)
+                
+                pulse.Size = UDim2.new(0, 0, 0, 0)
+                pulse.BackgroundTransparency = 0.9
+                pulseStroke.Thickness = 3
+                pulseStroke.Transparency = 0.7
+                
+                task.wait(math.random(2, 5))
+            end
+        end)
+    end
+    
+    -- 创建多个脉冲光晕
+    createPulse(UDim2.new(0.3, 0, 0.4, 0), config.AccentGlow)
+    createPulse(UDim2.new(0.7, 0, 0.6, 0), Color3.fromRGB(100, 200, 255))
+    createPulse(UDim2.new(0.2, 0, 0.8, 0), Color3.fromRGB(50, 150, 255))
+    
+    return background
+end
+
+-- ... [后续的代码保持不变] ...
 
 local function createHologramEffect(frame, intensity)
     intensity = intensity or 1
@@ -535,46 +669,45 @@ local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.BackgroundColor3 = config.MainColor
-Main.BackgroundTransparency = 0.1
+Main.BackgroundTransparency = 1  -- 完全透明主窗口
 Main.Position = UDim2.new(0.5, 0, 0.35, 0)
 Main.Size = UDim2.new(0, 450, 0, 280)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
 
--- 移除星空背景，使用简单背景色
-Main.BackgroundColor3 = config.MainColor
-Main.BackgroundTransparency = 0.1
+-- 添加星空背景（超过边框外）
+createSpaceBackground(Main)
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = Main
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Parent = Main
 MainStroke.Color = Color3.fromRGB(50, 50, 50)
 MainStroke.Thickness = 1
-MainStroke.Transparency = 0.5
+MainStroke.Transparency = 1
 
 local neonStroke = Instance.new("UIStroke")
 neonStroke.Parent = Main
-neonStroke.Color = config.AccentColor
 neonStroke.Thickness = 2
-neonStroke.Transparency = 0.3
+neonStroke.Transparency = 1
 neonStroke.LineJoinMode = Enum.LineJoinMode.Round
+startNeonFlowEffect(neonStroke, "Color", 0.01)
+
+createPulseGlow(neonStroke)
 
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = Main
-TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
-TitleBar.BackgroundTransparency = 0.2
+TitleBar.BackgroundTransparency = 1  -- 完全透明
 TitleBar.BorderSizePixel = 0
 TitleBar.Size = UDim2.new(1, 0, 0, 35)
 TitleBar.ZIndex = 2
 
 local TitleBarCorner = Instance.new("UICorner")
-TitleBarCorner.CornerRadius = UDim.new(0, 12)
+TitleBarCorner.CornerRadius = UDim.new(0, 10)
 TitleBarCorner.Parent = TitleBar
 
 local TitleText = Instance.new("TextLabel")
@@ -588,13 +721,12 @@ TitleText.Text = "FengUI"
 TitleText.TextColor3 = config.AccentColor
 TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
-TitleText.TextTransparency = 0
+TitleText.TextTransparency = 1
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = TitleBar
-CloseButton.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-CloseButton.BackgroundTransparency = 0.3
+CloseButton.BackgroundTransparency = 1  -- 完全透明背景
 CloseButton.BorderSizePixel = 0
 CloseButton.Position = UDim2.new(1, -25, 0, 7)
 CloseButton.Size = UDim2.new(0, 20, 0, 20)
@@ -603,7 +735,7 @@ CloseButton.Text = "X"
 CloseButton.TextColor3 = Color3.fromRGB(255, 60, 60)
 CloseButton.TextSize = 16
 CloseButton.ZIndex = 10
-CloseButton.TextTransparency = 0
+CloseButton.TextTransparency = 1
 
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 4)
@@ -687,6 +819,9 @@ OpenStroke.Color = Color3.fromRGB(180, 180, 180)
 OpenStroke.Thickness = 1.2
 OpenStroke.Transparency = 0.4
 
+startNeonFlowEffect(Open, "BackgroundColor3", 0.012)
+createPulseGlow(OpenStroke)
+
 Open.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
     if Main.Visible then
@@ -716,22 +851,17 @@ TabMain.Visible = false
 local Side = Instance.new("Frame")
 Side.Name = "Side"
 Side.Parent = Main
-Side.BackgroundColor3 = config.TabColor
-Side.BackgroundTransparency = 0.1
+Side.BackgroundTransparency = 1  -- 完全透明
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 35)
 Side.Size = UDim2.new(0, 90, 0, 245)
 
-local SideCorner = Instance.new("UICorner")
-SideCorner.CornerRadius = UDim.new(0, 12)
-SideCorner.Parent = Side
-
 local TabBtns = Instance.new("ScrollingFrame")
 TabBtns.Name = "TabBtns"
 TabBtns.Parent = Side
 TabBtns.Active = true
-TabBtns.BackgroundTransparency = 1
+TabBtns.BackgroundTransparency = 1  -- 完全透明
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0, 5)
 TabBtns.Size = UDim2.new(0, 90, 0, 235)
@@ -788,7 +918,7 @@ local function playEntranceAnimation()
     
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
-        BackgroundTransparency = 0.1,
+        BackgroundTransparency = 1,
         Size = UDim2.new(0, 450, 0, 280)
     }):Play()
     
@@ -797,13 +927,13 @@ local function playEntranceAnimation()
     }):Play()
     
     services.TweenService:Create(neonStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Transparency = 0.3
+        Transparency = 0.7
     }):Play()
     
     task.wait(0.2)
     
     services.TweenService:Create(TitleBar, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0.2
+        BackgroundTransparency = 1
     }):Play()
     
     services.TweenService:Create(TitleText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -817,7 +947,7 @@ local function playEntranceAnimation()
     task.wait(0.2)
     
     services.TweenService:Create(Side, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0.1
+        BackgroundTransparency = 1
     }):Play()
     
     task.wait(0.2)
@@ -965,9 +1095,10 @@ function FengUI.new(FengUI, name, theme)
             local Objs = Instance.new("Frame")
             local ObjsL = Instance.new("UIListLayout")
             
+            -- Section完全透明，无背景无边框
             Section.Name = "Section"
             Section.Parent = Tab
-            Section.BackgroundTransparency = 1
+            Section.BackgroundTransparency = 1  -- 完全透明
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
             Section.Size = UDim2.new(1, 0, 0, 36)
@@ -1074,6 +1205,9 @@ function FengUI.new(FengUI, name, theme)
     playerGlow.Color = config.AccentColor
     playerGlow.Thickness = 2
     playerGlow.Transparency = 0.7
+    
+    startNeonFlowEffect(playerGlow, "Color", 0.008)
+    createPulseGlow(playerGlow)
     
     local TopSection = Instance.new("Frame")
     TopSection.Name = "TopSection"
@@ -1206,6 +1340,10 @@ function FengUI.new(FengUI, name, theme)
         buttonGlow.Thickness = 1
         buttonGlow.Transparency = 0.6
         buttonGlow.ZIndex = 4
+        
+        if isMain then
+            startNeonFlowEffect(buttonGlow, "Color", 0.01)
+        end
         
         button.MouseEnter:Connect(function()
             services.TweenService:Create(button, TweenInfo.new(0.2), {
@@ -1485,6 +1623,9 @@ end
                 btnGlow.Color = config.AccentColor
                 btnGlow.Thickness = 1
                 btnGlow.Transparency = 0.8
+                
+                startNeonFlowEffect(btnGlow, "Color", 0.01)
+                createPulseGlow(btnGlow)
                 
                 Btn.MouseEnter:Connect(function()
                     services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
