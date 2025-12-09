@@ -451,7 +451,7 @@ Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundTransparency = 1
 Main.Position = UDim2.new(0.5, 0, 0.35, 0)
-Main.Size = UDim2.new(0, 480, 0, 330) -- 调整：宽度缩小，高度增加
+Main.Size = UDim2.new(0, 450, 0, 280) -- 恢复为UI.lua的大小
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -624,7 +624,7 @@ TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
 TabMain.Position = UDim2.new(0.2, 0, 0, 37)
-TabMain.Size = UDim2.new(0, 385, 0, 293) -- 调整以适应新大小
+TabMain.Size = UDim2.new(0, 360, 0, 243) -- 恢复为UI.lua的大小
 TabMain.Visible = false
 
 local Side = Instance.new("Frame")
@@ -635,7 +635,7 @@ Side.BackgroundTransparency = 1
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 35)
-Side.Size = UDim2.new(0, 85, 0, 295) -- 调整侧边栏高度
+Side.Size = UDim2.new(0, 90, 0, 245) -- 恢复为UI.lua的大小
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -648,7 +648,7 @@ TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0, 5)
-TabBtns.Size = UDim2.new(0, 85, 0, 285)
+TabBtns.Size = UDim2.new(0, 90, 0, 235)
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -689,7 +689,7 @@ local function playEntranceAnimation()
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
         BackgroundTransparency = 1,
-        Size = UDim2.new(0, 480, 0, 330)
+        Size = UDim2.new(0, 450, 0, 280)
     }):Play()
     
     services.TweenService:Create(MainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -809,14 +809,14 @@ function FengUI.new(FengUI, name, theme)
         TabContainer.Size = UDim2.new(1, 0, 1, 0)
         
         if windowCount == 2 then
-            -- 双窗口布局 - 左窗口稍微变小，右窗口稍微变大
+            -- 双窗口布局 - 平衡调整窗口大小
             TabContainer.Size = UDim2.new(1, 0, 0, 0)
             
             local LeftContainer = Instance.new("ScrollingFrame")
             LeftContainer.Name = "LeftContainer"
             LeftContainer.Parent = TabContainer
             LeftContainer.BackgroundTransparency = 1
-            LeftContainer.Size = UDim2.new(0.47, -5, 1, 0) -- 左窗口47% (稍微变小)
+            LeftContainer.Size = UDim2.new(0.49, -2, 1, 0) -- 左窗口49%，略微增大
             LeftContainer.Position = UDim2.new(0, 2, 0, 0)
             LeftContainer.ScrollBarThickness = 2
             LeftContainer.ScrollBarImageTransparency = 0.5
@@ -834,8 +834,8 @@ function FengUI.new(FengUI, name, theme)
             RightContainer.Name = "RightContainer"
             RightContainer.Parent = TabContainer
             RightContainer.BackgroundTransparency = 1
-            RightContainer.Size = UDim2.new(0.51, -5, 1, 0) -- 右窗口51% (稍微变大)
-            RightContainer.Position = UDim2.new(0.49, 3, 0, 0) -- 调整位置
+            RightContainer.Size = UDim2.new(0.49, -2, 1, 0) -- 右窗口49%，与左窗口平衡
+            RightContainer.Position = UDim2.new(0.51, 2, 0, 0) -- 调整位置
             RightContainer.ScrollBarThickness = 2
             RightContainer.ScrollBarImageTransparency = 0.5
             RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
@@ -851,16 +851,16 @@ function FengUI.new(FengUI, name, theme)
             setupSmoothScrolling(LeftContainer, LeftLayout)
             setupSmoothScrolling(RightContainer, RightLayout)
             
-            -- 分隔线
-            local Separator = Instance.new("Frame")
-            Separator.Name = "Separator"
-            Separator.Parent = TabContainer
-            Separator.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-            Separator.BackgroundTransparency = 0.7
-            Separator.BorderSizePixel = 0
-            Separator.Size = UDim2.new(0, 1, 1, -10)
-            Separator.Position = UDim2.new(0.48, -0.5, 0, 5) -- 调整分隔线位置
-            Separator.ZIndex = 5
+            -- 注释掉分隔线，去掉中间的线
+            -- local Separator = Instance.new("Frame")
+            -- Separator.Name = "Separator"
+            -- Separator.Parent = TabContainer
+            -- Separator.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+            -- Separator.BackgroundTransparency = 0.7
+            -- Separator.BorderSizePixel = 0
+            -- Separator.Size = UDim2.new(0, 1, 1, -10)
+            -- Separator.Position = UDim2.new(0.48, -0.5, 0, 5) -- 调整分隔线位置
+            -- Separator.ZIndex = 5
         end
         
         TabIco.Name = "TabIco"
@@ -877,7 +877,7 @@ function FengUI.new(FengUI, name, theme)
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
         TabText.Position = UDim2.new(1.2, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 60, 0, 22)
+        TabText.Size = UDim2.new(0, 65, 0, 22)
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
@@ -889,7 +889,7 @@ function FengUI.new(FengUI, name, theme)
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 85, 0, 22)
+        TabBtn.Size = UDim2.new(0, 90, 0, 22)
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
@@ -967,12 +967,12 @@ function FengUI.new(FengUI, name, theme)
             Section.Size = UDim2.new(1, 0, 0, 36)
             
             -- 根据窗口类型调整宽度
-            local elementWidth = 370 -- 单窗口宽度
+            local elementWidth = 330 -- 单窗口宽度，与UI.lua保持一致
             if windowCount == 2 then
                 if windowPosition:lower() == "left" then
-                    elementWidth = 165  -- 左窗口宽度 (稍微变小)
+                    elementWidth = 170  -- 左窗口宽度，略微增大
                 else
-                    elementWidth = 175  -- 右窗口宽度 (稍微变大)
+                    elementWidth = 170  -- 右窗口宽度，与左窗口平衡
                 end
             end
             
@@ -1722,9 +1722,9 @@ end
                 ToggleBtnC.Parent = ToggleBtn
                 
                 -- 根据窗口类型调整Toggle开关位置
-                local togglePosition = 0.78
+                local togglePosition = 0.85
                 if windowCount == 2 then
-                    togglePosition = 0.68 -- 双窗口时调整位置
+                    togglePosition = 0.78 -- 双窗口时调整位置，与UI.lua保持一致
                 end
                 
                 ToggleDisable.Name = "ToggleDisable"
@@ -1853,9 +1853,9 @@ end
                 KeybindBtnC.Parent = KeybindBtn
                 
                 -- 根据窗口类型调整Keybind位置
-                local keybindPosition = 0.64
+                local keybindPosition = 0.72
                 if windowCount == 2 then
-                    keybindPosition = 0.54 -- 双窗口时调整位置
+                    keybindPosition = 0.64 -- 双窗口时调整位置，与UI.lua保持一致
                 end
                 
                 KeybindValue.Name = "KeybindValue"
@@ -1978,9 +1978,9 @@ end
                 TextboxBackC.Parent = TextboxBack
                 
                 -- 根据窗口类型调整Textbox位置
-                local textboxPosition = 0.36
+                local textboxPosition = 0.45
                 if windowCount == 2 then
-                    textboxPosition = 0.26 -- 双窗口时调整位置
+                    textboxPosition = 0.36 -- 双窗口时调整位置，与UI.lua保持一致
                 end
                 
                 BoxBG.Name = "BoxBG"
@@ -2098,18 +2098,18 @@ end
                 SliderBackC.Parent = SliderBack
                 
                 -- 根据窗口类型调整Slider位置和大小
-                local sliderBarPosition = 0.26
+                local sliderBarPosition = 0.35
                 local sliderBarWidth = 120
-                local sliderValuePosition = 0.74
-                local minSliderPosition = 0.19
-                local addSliderPosition = 0.66
+                local sliderValuePosition = 0.82
+                local minSliderPosition = 0.28
+                local addSliderPosition = 0.75
                 
                 if windowCount == 2 then
-                    sliderBarPosition = 0.21
+                    sliderBarPosition = 0.26
                     sliderBarWidth = 90 -- 减小滑块条宽度
-                    sliderValuePosition = 0.66
-                    minSliderPosition = 0.14
-                    addSliderPosition = 0.61
+                    sliderValuePosition = 0.74
+                    minSliderPosition = 0.19
+                    addSliderPosition = 0.66
                 end
                 
                 SliderBar.Name = "SliderBar"
@@ -2417,11 +2417,11 @@ end
     BackgroundFill.ZIndex = 0
     
     -- 根据窗口类型调整Dropdown位置
-    local dropdownFramePosition = 0.71
-    local separatorPosition = 0.65
+    local dropdownFramePosition = 0.80
+    local separatorPosition = 0.74
     if windowCount == 2 then
-        dropdownFramePosition = 0.64
-        separatorPosition = 0.58
+        dropdownFramePosition = 0.71
+        separatorPosition = 0.65
     end
     
     DropdownOpenFrame.Name = "DropdownOpenFrame"
