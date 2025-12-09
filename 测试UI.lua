@@ -766,7 +766,10 @@ task.spawn(function()
     end
 end)
 
-function FengUI.new(FengUI, name, theme)
+-- 修改库的接口以支持您想要的调用方式
+local library = {}
+
+function library:new(name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
         if v.Name == "REN" then
             v:Destroy()
@@ -913,6 +916,7 @@ function FengUI.new(FengUI, name, theme)
         
         startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
         
+        local TabText = Instance.new("TextLabel")
         TabText.Name = "TabText"
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
@@ -925,6 +929,7 @@ function FengUI.new(FengUI, name, theme)
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.TextTransparency = 0.5
         
+        local TabBtn = Instance.new("TextButton")
         TabBtn.Name = "TabBtn"
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
@@ -934,11 +939,6 @@ function FengUI.new(FengUI, name, theme)
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
         
-        TabL.Name = "TabL"
-        TabL.Parent = Tab
-        TabL.SortOrder = Enum.SortOrder.LayoutOrder
-        TabL.Padding = UDim.new(0, 4)
-        
         TabBtn.MouseButton1Click:Connect(function()
             switchTab({ TabIco, Tab })
         end)
@@ -947,17 +947,19 @@ function FengUI.new(FengUI, name, theme)
             switchTab({ TabIco, Tab })
         end
         
-        TabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Tab.CanvasSize = UDim2.new(0, 0, 0, TabL.AbsoluteContentSize.Y + 8)
-            
-            Tab.ScrollingEnabled = TabL.AbsoluteContentSize.Y > Tab.AbsoluteSize.Y
-            Tab.ElasticBehavior = Enum.ElasticBehavior.Never
-        end)
-        
         local tab = {}
         
         function tab.section(tab, name, windowPosition, TabVal)
-            local windowPosition = windowPosition or "Left"
+            -- 参数处理：支持两种调用方式
+            -- 方式1: section("文字", true) - 单窗口，TabVal为true
+            -- 方式2: section("文字", "Left", true) - 双窗口，指定位置
+            if type(windowPosition) == "boolean" then
+                TabVal = windowPosition
+                windowPosition = "Left"  -- 默认左窗口
+            else
+                windowPosition = windowPosition or "Left"
+                TabVal = TabVal or true
+            end
             
             -- 确定使用哪个窗口
             local targetWindow
@@ -2585,16 +2587,21 @@ function FengUI.new(FengUI, name, theme)
 
             return section
         end
-        
-        -- 添加一个便捷方法，用于创建双窗口Tab
-        function tab.DualTab(tab, name, icon)
-            return window:Tab(name, icon, 2)
-        end
 
         return tab
     end
+    
+    -- 添加DualTab方法到window对象
+    function window:DualTab(name, icon)
+        return window:Tab(name, icon, 2)
+    end
 
     return window
+end
+
+-- 修改库的接口
+function library.new(name, theme)
+    return library:new(name, theme)
 end
 
 function UiDestroy()
@@ -2612,4 +2619,5 @@ end
 if not getgenv then getgenv = function() return _G end end
 getgenv().FengUI = FengUI
 
-return FengUI
+-- 返回库对象
+return library
