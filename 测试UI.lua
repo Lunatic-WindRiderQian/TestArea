@@ -451,7 +451,7 @@ Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundTransparency = 1
 Main.Position = UDim2.new(0.5, 0, 0.35, 0)
-Main.Size = UDim2.new(0, 450, 0, 350) -- 增加高度
+Main.Size = UDim2.new(0, 500, 0, 350) -- 增加宽度
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -624,7 +624,7 @@ TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
 TabMain.Position = UDim2.new(0.2, 0, 0, 37)
-TabMain.Size = UDim2.new(0, 360, 0, 313) -- 增加高度
+TabMain.Size = UDim2.new(0, 410, 0, 313) -- 增加宽度
 TabMain.Visible = false
 
 local Side = Instance.new("Frame")
@@ -635,7 +635,7 @@ Side.BackgroundTransparency = 1
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 35)
-Side.Size = UDim2.new(0, 90, 0, 315) -- 增加高度
+Side.Size = UDim2.new(0, 100, 0, 315) -- 增加宽度
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -648,7 +648,7 @@ TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0, 5)
-TabBtns.Size = UDim2.new(0, 90, 0, 305) -- 增加高度
+TabBtns.Size = UDim2.new(0, 100, 0, 305) -- 增加宽度
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -689,7 +689,7 @@ local function playEntranceAnimation()
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
         BackgroundTransparency = 1,
-        Size = UDim2.new(0, 450, 0, 350) -- 增加高度
+        Size = UDim2.new(0, 500, 0, 350) -- 增加宽度
     }):Play()
     
     services.TweenService:Create(MainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -809,15 +809,15 @@ function FengUI.new(FengUI, name, theme)
         TabContainer.Size = UDim2.new(1, 0, 1, 0)
         
         if windowCount == 2 then
-            -- 双窗口布局 - 修复位置问题
+            -- 双窗口布局 - 平衡左右窗口
             TabContainer.Size = UDim2.new(1, 0, 0, 0)
             
             local LeftContainer = Instance.new("ScrollingFrame")
             LeftContainer.Name = "LeftContainer"
             LeftContainer.Parent = TabContainer
             LeftContainer.BackgroundTransparency = 1
-            LeftContainer.Size = UDim2.new(0.48, -5, 1, 0) -- 调整宽度比例
-            LeftContainer.Position = UDim2.new(0.02, 0, 0, 0) -- 添加左边距
+            LeftContainer.Size = UDim2.new(0.48, -8, 1, 0) -- 平衡宽度
+            LeftContainer.Position = UDim2.new(0, 5, 0, 0) -- 左边距
             LeftContainer.ScrollBarThickness = 2
             LeftContainer.ScrollBarImageTransparency = 0.5
             LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
@@ -834,8 +834,8 @@ function FengUI.new(FengUI, name, theme)
             RightContainer.Name = "RightContainer"
             RightContainer.Parent = TabContainer
             RightContainer.BackgroundTransparency = 1
-            RightContainer.Size = UDim2.new(0.48, -5, 1, 0) -- 调整宽度比例
-            RightContainer.Position = UDim2.new(0.52, 5, 0, 0) -- 调整位置
+            RightContainer.Size = UDim2.new(0.48, -8, 1, 0) -- 平衡宽度
+            RightContainer.Position = UDim2.new(0.52, 3, 0, 0) -- 调整位置，保持间距
             RightContainer.ScrollBarThickness = 2
             RightContainer.ScrollBarImageTransparency = 0.5
             RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
@@ -851,7 +851,7 @@ function FengUI.new(FengUI, name, theme)
             setupSmoothScrolling(LeftContainer, LeftLayout)
             setupSmoothScrolling(RightContainer, RightLayout)
             
-            -- 分隔线 - 调整位置
+            -- 分隔线
             local Separator = Instance.new("Frame")
             Separator.Name = "Separator"
             Separator.Parent = TabContainer
@@ -877,7 +877,7 @@ function FengUI.new(FengUI, name, theme)
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
         TabText.Position = UDim2.new(1.2, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 65, 0, 22)
+        TabText.Size = UDim2.new(0, 75, 0, 22) -- 增加宽度
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
@@ -889,7 +889,7 @@ function FengUI.new(FengUI, name, theme)
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 90, 0, 22)
+        TabBtn.Size = UDim2.new(0, 100, 0, 22) -- 增加宽度
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
@@ -966,10 +966,10 @@ function FengUI.new(FengUI, name, theme)
             Section.ClipsDescendants = true
             Section.Size = UDim2.new(1, 0, 0, 36)
             
-            -- 根据窗口类型调整宽度
-            local elementWidth = 330
+            -- 根据窗口类型调整宽度 - 平衡双窗口宽度
+            local elementWidth = 380 -- 单窗口宽度增加
             if windowCount == 2 then
-                elementWidth = 160
+                elementWidth = 185  -- 双窗口时宽度增加
             end
             
             SectionText.Name = "SectionText"
@@ -1718,9 +1718,9 @@ end
                 ToggleBtnC.Parent = ToggleBtn
                 
                 -- 根据窗口类型调整Toggle开关位置
-                local togglePosition = 0.85
+                local togglePosition = 0.82
                 if windowCount == 2 then
-                    togglePosition = 0.78 -- 双窗口时调整位置
+                    togglePosition = 0.72 -- 双窗口时调整位置
                 end
                 
                 ToggleDisable.Name = "ToggleDisable"
@@ -1728,7 +1728,7 @@ end
                 ToggleDisable.BackgroundColor3 = Color3.fromRGB(10, 20, 40)
                 ToggleDisable.BackgroundTransparency = 0.8
                 ToggleDisable.BorderSizePixel = 0
-                ToggleDisable.Position = UDim2.new(togglePosition, 0, 0.22, 0) -- 修复位置
+                ToggleDisable.Position = UDim2.new(togglePosition, 0, 0.22, 0)
                 ToggleDisable.Size = UDim2.new(0, 34, 0, 18)
                 
                 ToggleSwitch.Name = "ToggleSwitch"
@@ -1849,16 +1849,16 @@ end
                 KeybindBtnC.Parent = KeybindBtn
                 
                 -- 根据窗口类型调整Keybind位置
-                local keybindPosition = 0.72
+                local keybindPosition = 0.68
                 if windowCount == 2 then
-                    keybindPosition = 0.65 -- 双窗口时调整位置
+                    keybindPosition = 0.58 -- 双窗口时调整位置
                 end
                 
                 KeybindValue.Name = "KeybindValue"
                 KeybindValue.Parent = KeybindBtn
                 KeybindValue.BackgroundColor3 = config.Bg_Color
                 KeybindValue.BorderSizePixel = 0
-                KeybindValue.Position = UDim2.new(keybindPosition, 0, 0.22, 0) -- 修复位置
+                KeybindValue.Position = UDim2.new(keybindPosition, 0, 0.22, 0)
                 KeybindValue.Size = UDim2.new(0, 70, 0, 22)
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
@@ -1974,16 +1974,16 @@ end
                 TextboxBackC.Parent = TextboxBack
                 
                 -- 根据窗口类型调整Textbox位置
-                local textboxPosition = 0.45
+                local textboxPosition = 0.40
                 if windowCount == 2 then
-                    textboxPosition = 0.38 -- 双窗口时调整位置
+                    textboxPosition = 0.30 -- 双窗口时调整位置
                 end
                 
                 BoxBG.Name = "BoxBG"
                 BoxBG.Parent = TextboxBack
                 BoxBG.BackgroundColor3 = config.Bg_Color
                 BoxBG.BorderSizePixel = 0
-                BoxBG.Position = UDim2.new(textboxPosition, 0, 0.22, 0) -- 修复位置
+                BoxBG.Position = UDim2.new(textboxPosition, 0, 0.22, 0)
                 BoxBG.Size = UDim2.new(0, 80, 0, 22)
                 BoxBG.AutoButtonColor = false
                 BoxBG.Font = Enum.Font.Gotham
@@ -2093,17 +2093,19 @@ end
                 SliderBackC.Name = "SliderBackC"
                 SliderBackC.Parent = SliderBack
                 
-                -- 根据窗口类型调整Slider位置
-                local sliderBarPosition = 0.35
-                local sliderValuePosition = 0.82
-                local minSliderPosition = 0.28
-                local addSliderPosition = 0.75
+                -- 根据窗口类型调整Slider位置和大小
+                local sliderBarPosition = 0.30
+                local sliderBarWidth = 140
+                local sliderValuePosition = 0.78
+                local minSliderPosition = 0.23
+                local addSliderPosition = 0.70
                 
                 if windowCount == 2 then
-                    sliderBarPosition = 0.30
-                    sliderValuePosition = 0.75
-                    minSliderPosition = 0.23
-                    addSliderPosition = 0.70
+                    sliderBarPosition = 0.25
+                    sliderBarWidth = 110 -- 减小滑块条宽度
+                    sliderValuePosition = 0.70
+                    minSliderPosition = 0.18
+                    addSliderPosition = 0.65
                 end
                 
                 SliderBar.Name = "SliderBar"
@@ -2111,8 +2113,8 @@ end
                 SliderBar.AnchorPoint = Vector2.new(0, 0.5)
                 SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
                 SliderBar.BorderSizePixel = 0
-                SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.5, 0) -- 修复位置
-                SliderBar.Size = UDim2.new(0, 120, 0, 14)
+                SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.5, 0)
+                SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, 14) -- 调整宽度
                 SliderBarC.CornerRadius = UDim.new(0, 4)
                 SliderBarC.Name = "SliderBarC"
                 SliderBarC.Parent = SliderBar
@@ -2130,7 +2132,7 @@ end
                 SliderValBG.Parent = SliderBack
                 SliderValBG.BackgroundColor3 = config.Bg_Color
                 SliderValBG.BorderSizePixel = 0
-                SliderValBG.Position = UDim2.new(sliderValuePosition, 0, 0.22, 0) -- 修复位置
+                SliderValBG.Position = UDim2.new(sliderValuePosition, 0, 0.22, 0)
                 SliderValBG.Size = UDim2.new(0, 36, 0, 22)
                 SliderValBG.AutoButtonColor = false
                 SliderValBG.Font = Enum.Font.Gotham
@@ -2159,7 +2161,7 @@ end
                 MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 MinSlider.BackgroundTransparency = 0
                 MinSlider.BorderSizePixel = 0
-                MinSlider.Position = UDim2.new(minSliderPosition, 0, 0.25, 0) -- 修复位置
+                MinSlider.Position = UDim2.new(minSliderPosition, 0, 0.25, 0)
                 MinSlider.Size = UDim2.new(0, 18, 0, 18)
                 MinSlider.Font = Enum.Font.Gotham
                 MinSlider.Text = "减"
@@ -2178,7 +2180,7 @@ end
                 AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 AddSlider.BackgroundTransparency = 0
                 AddSlider.BorderSizePixel = 0
-                AddSlider.Position = UDim2.new(addSliderPosition, 0, 0.25, 0) -- 修复位置
+                AddSlider.Position = UDim2.new(addSliderPosition, 0, 0.25, 0)
                 AddSlider.Size = UDim2.new(0, 18, 0, 18)
                 AddSlider.Font = Enum.Font.Gotham
                 AddSlider.Text = "加"
@@ -2411,11 +2413,11 @@ end
     BackgroundFill.ZIndex = 0
     
     -- 根据窗口类型调整Dropdown位置
-    local dropdownFramePosition = 0.80
-    local separatorPosition = 0.74
+    local dropdownFramePosition = 0.75
+    local separatorPosition = 0.69
     if windowCount == 2 then
-        dropdownFramePosition = 0.73
-        separatorPosition = 0.67
+        dropdownFramePosition = 0.68
+        separatorPosition = 0.62
     end
     
     DropdownOpenFrame.Name = "DropdownOpenFrame"
@@ -2423,7 +2425,7 @@ end
     DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
     DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
     DropdownOpenFrame.BorderSizePixel = 0
-    DropdownOpenFrame.Position = UDim2.new(dropdownFramePosition, 0, 0.5, 0) -- 修复位置
+    DropdownOpenFrame.Position = UDim2.new(dropdownFramePosition, 0, 0.5, 0)
     DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 22)
     DropdownOpenFrame.ZIndex = 2
     
@@ -2465,7 +2467,7 @@ end
     Separator.Parent = DropdownTop
     Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
     Separator.BorderSizePixel = 0
-    Separator.Position = UDim2.new(separatorPosition, 0, 0.2, 0) -- 修复位置
+    Separator.Position = UDim2.new(separatorPosition, 0, 0.2, 0)
     Separator.Size = UDim2.new(0, 1, 0, 22)
     Separator.ZIndex = 1
     
