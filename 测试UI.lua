@@ -809,59 +809,59 @@ function FengUI.new(FengUI, name, theme)
         TabContainer.Size = UDim2.new(1, 0, 1, 0)
         
         if windowCount == 2 then
-            -- 双窗口布局 - 平衡调整窗口大小
-            TabContainer.Size = UDim2.new(1, 0, 0, 0)
-            
-            local LeftContainer = Instance.new("ScrollingFrame")
-            LeftContainer.Name = "LeftContainer"
-            LeftContainer.Parent = TabContainer
-            LeftContainer.BackgroundTransparency = 1
-            LeftContainer.Size = UDim2.new(0.49, -2, 1, 0) -- 左窗口49%，略微增大
-            LeftContainer.Position = UDim2.new(0, 2, 0, 0)
-            LeftContainer.ScrollBarThickness = 2
-            LeftContainer.ScrollBarImageTransparency = 0.5
-            LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-            LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-            LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-            
-            local LeftLayout = Instance.new("UIListLayout")
-            LeftLayout.Name = "LeftLayout"
-            LeftLayout.Parent = LeftContainer
-            LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            LeftLayout.Padding = UDim.new(0, 4)
-            
-            local RightContainer = Instance.new("ScrollingFrame")
-            RightContainer.Name = "RightContainer"
-            RightContainer.Parent = TabContainer
-            RightContainer.BackgroundTransparency = 1
-            RightContainer.Size = UDim2.new(0.49, -2, 1, 0) -- 右窗口49%，与左窗口平衡
-            RightContainer.Position = UDim2.new(0.51, 2, 0, 0) -- 调整位置
-            RightContainer.ScrollBarThickness = 2
-            RightContainer.ScrollBarImageTransparency = 0.5
-            RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-            RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-            RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-            
-            local RightLayout = Instance.new("UIListLayout")
-            RightLayout.Name = "RightLayout"
-            RightLayout.Parent = RightContainer
-            RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            RightLayout.Padding = UDim.new(0, 4)
-            
-            setupSmoothScrolling(LeftContainer, LeftLayout)
-            setupSmoothScrolling(RightContainer, RightLayout)
-            
-            -- 注释掉分隔线，去掉中间的线
-            -- local Separator = Instance.new("Frame")
-            -- Separator.Name = "Separator"
-            -- Separator.Parent = TabContainer
-            -- Separator.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-            -- Separator.BackgroundTransparency = 0.7
-            -- Separator.BorderSizePixel = 0
-            -- Separator.Size = UDim2.new(0, 1, 1, -10)
-            -- Separator.Position = UDim2.new(0.48, -0.5, 0, 5) -- 调整分隔线位置
-            -- Separator.ZIndex = 5
-        end
+    -- 双窗口布局 - 平衡调整窗口大小，右窗口往左移动
+    TabContainer.Size = UDim2.new(1, 0, 0, 0)
+    
+    local LeftContainer = Instance.new("ScrollingFrame")
+    LeftContainer.Name = "LeftContainer"
+    LeftContainer.Parent = TabContainer
+    LeftContainer.BackgroundTransparency = 1
+    LeftContainer.Size = UDim2.new(0.49, -2, 1, 0) -- 左窗口49%
+    LeftContainer.Position = UDim2.new(0, 2, 0, 0)
+    LeftContainer.ScrollBarThickness = 2
+    LeftContainer.ScrollBarImageTransparency = 0.5
+    LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+    LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+    LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+    
+    local LeftLayout = Instance.new("UIListLayout")
+    LeftLayout.Name = "LeftLayout"
+    LeftLayout.Parent = LeftContainer
+    LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    LeftLayout.Padding = UDim.new(0, 4)
+    
+    local RightContainer = Instance.new("ScrollingFrame")
+    RightContainer.Name = "RightContainer"
+    RightContainer.Parent = TabContainer
+    RightContainer.BackgroundTransparency = 1
+    RightContainer.Size = UDim2.new(0.49, -2, 1, 0) -- 右窗口49%
+    RightContainer.Position = UDim2.new(0.495, 0, 0, 0) -- 右窗口往左移动，从0.50改为0.495
+    RightContainer.ScrollBarThickness = 2
+    RightContainer.ScrollBarImageTransparency = 0.5
+    RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+    RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+    RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+    
+    local RightLayout = Instance.new("UIListLayout")
+    RightLayout.Name = "RightLayout"
+    RightLayout.Parent = RightContainer
+    RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    RightLayout.Padding = UDim.new(0, 4)
+    
+    setupSmoothScrolling(LeftContainer, LeftLayout)
+    setupSmoothScrolling(RightContainer, RightLayout)
+    
+    -- 注释掉分隔线，去掉中间的线
+    -- local Separator = Instance.new("Frame")
+    -- Separator.Name = "Separator"
+    -- Separator.Parent = TabContainer
+    -- Separator.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    -- Separator.BackgroundTransparency = 0.7
+    -- Separator.BorderSizePixel = 0
+    -- Separator.Size = UDim2.new(0, 1, 1, -10)
+    -- Separator.Position = UDim2.new(0.48, -0.5, 0, 5)
+    -- Separator.ZIndex = 5
+end
         
         TabIco.Name = "TabIco"
         TabIco.Parent = TabBtns
