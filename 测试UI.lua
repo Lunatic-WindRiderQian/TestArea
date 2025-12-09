@@ -809,14 +809,14 @@ function FengUI.new(FengUI, name, theme)
         TabContainer.Size = UDim2.new(1, 0, 1, 0)
         
         if windowCount == 2 then
-            -- 双窗口布局 - 左右窗口相同大小
+            -- 双窗口布局 - 左窗口稍微变小，右窗口稍微变大
             TabContainer.Size = UDim2.new(1, 0, 0, 0)
             
             local LeftContainer = Instance.new("ScrollingFrame")
             LeftContainer.Name = "LeftContainer"
             LeftContainer.Parent = TabContainer
             LeftContainer.BackgroundTransparency = 1
-            LeftContainer.Size = UDim2.new(0.49, -5, 1, 0) -- 左窗口49%
+            LeftContainer.Size = UDim2.new(0.47, -5, 1, 0) -- 左窗口47% (稍微变小)
             LeftContainer.Position = UDim2.new(0, 2, 0, 0)
             LeftContainer.ScrollBarThickness = 2
             LeftContainer.ScrollBarImageTransparency = 0.5
@@ -834,8 +834,8 @@ function FengUI.new(FengUI, name, theme)
             RightContainer.Name = "RightContainer"
             RightContainer.Parent = TabContainer
             RightContainer.BackgroundTransparency = 1
-            RightContainer.Size = UDim2.new(0.49, -5, 1, 0) -- 右窗口49% (相同大小)
-            RightContainer.Position = UDim2.new(0.51, 3, 0, 0)
+            RightContainer.Size = UDim2.new(0.51, -5, 1, 0) -- 右窗口51% (稍微变大)
+            RightContainer.Position = UDim2.new(0.49, 3, 0, 0) -- 调整位置
             RightContainer.ScrollBarThickness = 2
             RightContainer.ScrollBarImageTransparency = 0.5
             RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
@@ -859,7 +859,7 @@ function FengUI.new(FengUI, name, theme)
             Separator.BackgroundTransparency = 0.7
             Separator.BorderSizePixel = 0
             Separator.Size = UDim2.new(0, 1, 1, -10)
-            Separator.Position = UDim2.new(0.5, -0.5, 0, 5)
+            Separator.Position = UDim2.new(0.48, -0.5, 0, 5) -- 调整分隔线位置
             Separator.ZIndex = 5
         end
         
@@ -969,7 +969,11 @@ function FengUI.new(FengUI, name, theme)
             -- 根据窗口类型调整宽度
             local elementWidth = 370 -- 单窗口宽度
             if windowCount == 2 then
-                elementWidth = 170  -- 双窗口宽度 (左右相同)
+                if windowPosition:lower() == "left" then
+                    elementWidth = 165  -- 左窗口宽度 (稍微变小)
+                else
+                    elementWidth = 175  -- 右窗口宽度 (稍微变大)
+                end
             end
             
             SectionText.Name = "SectionText"
@@ -1156,7 +1160,7 @@ function FengUI.new(FengUI, name, theme)
     ProgressFill.Name = "ProgressFill"
     ProgressFill.Parent = ProgressBar
     ProgressFill.BackgroundColor3 = config.AccentColor
-    ProgressFill.BorderSizePixel = 0
+    ProgressFill.BackgroundTransparency = 0
     ProgressFill.Size = UDim2.new(0, 0, 1, 0)
     
     local ProgressFillCorner = Instance.new("UICorner")
