@@ -809,14 +809,14 @@ function FengUI.new(FengUI, name, theme)
         TabContainer.Size = UDim2.new(1, 0, 1, 0)
         
         if windowCount == 2 then
-    -- 双窗口布局 - 平衡调整窗口大小，右窗口往左移动
+    -- 双窗口布局 - 左窗口小一点，右窗口往左移动一点
     TabContainer.Size = UDim2.new(1, 0, 0, 0)
     
     local LeftContainer = Instance.new("ScrollingFrame")
     LeftContainer.Name = "LeftContainer"
     LeftContainer.Parent = TabContainer
     LeftContainer.BackgroundTransparency = 1
-    LeftContainer.Size = UDim2.new(0.49, -2, 1, 0) -- 左窗口49%
+    LeftContainer.Size = UDim2.new(0.48, -2, 1, 0) -- 左窗口48%，稍微小一点
     LeftContainer.Position = UDim2.new(0, 2, 0, 0)
     LeftContainer.ScrollBarThickness = 2
     LeftContainer.ScrollBarImageTransparency = 0.5
@@ -834,8 +834,8 @@ function FengUI.new(FengUI, name, theme)
     RightContainer.Name = "RightContainer"
     RightContainer.Parent = TabContainer
     RightContainer.BackgroundTransparency = 1
-    RightContainer.Size = UDim2.new(0.49, -2, 1, 0) -- 右窗口49%
-    RightContainer.Position = UDim2.new(0.495, 0, 0, 0) -- 右窗口往左移动，从0.50改为0.495
+    RightContainer.Size = UDim2.new(0.50, -2, 1, 0) -- 右窗口50%，稍微大一点
+    RightContainer.Position = UDim2.new(0.48, 0, 0, 0) -- 右窗口往左移动一点（从0.495改为0.48）
     RightContainer.ScrollBarThickness = 2
     RightContainer.ScrollBarImageTransparency = 0.5
     RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
@@ -850,17 +850,6 @@ function FengUI.new(FengUI, name, theme)
     
     setupSmoothScrolling(LeftContainer, LeftLayout)
     setupSmoothScrolling(RightContainer, RightLayout)
-    
-    -- 注释掉分隔线，去掉中间的线
-    -- local Separator = Instance.new("Frame")
-    -- Separator.Name = "Separator"
-    -- Separator.Parent = TabContainer
-    -- Separator.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-    -- Separator.BackgroundTransparency = 0.7
-    -- Separator.BorderSizePixel = 0
-    -- Separator.Size = UDim2.new(0, 1, 1, -10)
-    -- Separator.Position = UDim2.new(0.48, -0.5, 0, 5)
-    -- Separator.ZIndex = 5
 end
         
         TabIco.Name = "TabIco"
@@ -970,9 +959,9 @@ end
             local elementWidth = 330 -- 单窗口宽度，与UI.lua保持一致
             if windowCount == 2 then
                 if windowPosition:lower() == "left" then
-                    elementWidth = 170  -- 左窗口宽度，略微增大
+                    elementWidth = 162  -- 左窗口宽度，略微增大
                 else
-                    elementWidth = 170  -- 右窗口宽度，与左窗口平衡
+                    elementWidth = 168  -- 右窗口宽度，与左窗口平衡
                 end
             end
             
