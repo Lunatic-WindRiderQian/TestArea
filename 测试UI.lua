@@ -2053,7 +2053,6 @@ end
     local SliderModule = Instance.new("Frame")
     local SliderBack = Instance.new("TextButton")
     local SliderBackC = Instance.new("UICorner")
-    local SliderText = Instance.new("TextLabel")
     local SliderBar = Instance.new("Frame")
     local SliderBarC = Instance.new("UICorner")
     local SliderPart = Instance.new("Frame")
@@ -2068,45 +2067,40 @@ end
     SliderModule.BackgroundTransparency = 1.000
     SliderModule.BorderSizePixel = 0
     SliderModule.Position = UDim2.new(0, 0, 0, 0)
-    SliderModule.Size = UDim2.new(0, elementWidth, 0, 60) -- 增加高度以容纳文字和滑块
+    
+    -- 根据窗口类型设置不同的高度
+    if windowCount == 2 then
+        SliderModule.Size = UDim2.new(0, elementWidth, 0, 48) -- 双窗口高度调整为48
+    else
+        SliderModule.Size = UDim2.new(0, elementWidth, 0, 36) -- 单窗口高度保持36
+    end
     
     SliderBack.Name = "SliderBack"
     SliderBack.Parent = SliderModule
     SliderBack.BackgroundColor3 = config.Slider_Color
     SliderBack.BackgroundTransparency = 0.2
     SliderBack.BorderSizePixel = 0
-    SliderBack.Size = UDim2.new(1, 0, 0, 60) -- 增加高度
+    SliderBack.Size = UDim2.new(1, 0, 1, 0)
     SliderBack.AutoButtonColor = false
     SliderBack.Font = Enum.Font.GothamSemibold
-    SliderBack.Text = ""
+    SliderBack.Text = "   " .. text
     SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderBack.TextSize = 14.000
+    SliderBack.TextXAlignment = Enum.TextXAlignment.Left
     
     SliderBackC.CornerRadius = UDim.new(0, 6)
     SliderBackC.Name = "SliderBackC"
     SliderBackC.Parent = SliderBack
     
-    -- 添加文字标签
-    SliderText.Name = "SliderText"
-    SliderText.Parent = SliderBack
-    SliderText.BackgroundTransparency = 1
-    SliderText.Position = UDim2.new(0.03, 0, 0.05, 0)
-    SliderText.Size = UDim2.new(0.65, 0, 0, 20)
-    SliderText.Font = Enum.Font.GothamSemibold
-    SliderText.Text = text
-    SliderText.TextColor3 = config.TextColor
-    SliderText.TextSize = 14
-    SliderText.TextXAlignment = Enum.TextXAlignment.Left
-    
     if windowCount == 2 then
-        -- 双窗口布局：文字在上面，滑块在下面
+        -- 双窗口布局：文字在上方，滑块条在下方
         SliderBar.Name = "SliderBar"
         SliderBar.Parent = SliderBack
         SliderBar.AnchorPoint = Vector2.new(0, 0.5)
         SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
         SliderBar.BorderSizePixel = 0
-        SliderBar.Position = UDim2.new(0.03, 0, 0.8, 0) -- 文字在0.05，滑块在0.8
-        SliderBar.Size = UDim2.new(0.8, 0, 0, 14) -- 调整宽度为80%
+        SliderBar.Position = UDim2.new(0.03, 0, 0.7, 0) -- 滑块条在下方
+        SliderBar.Size = UDim2.new(0.72, 0, 0, 10) -- 减小滑块条宽度为72%，高度为10
         SliderBarC.CornerRadius = UDim.new(0, 4)
         SliderBarC.Name = "SliderBarC"
         SliderBarC.Parent = SliderBar
@@ -2125,8 +2119,8 @@ end
         SliderValBG.Parent = SliderBack
         SliderValBG.BackgroundColor3 = config.Bg_Color
         SliderValBG.BorderSizePixel = 0
-        SliderValBG.Position = UDim2.new(0.85, 0, 0.7, 0) -- 调整位置到滑块上方
-        SliderValBG.Size = UDim2.new(0, 36, 0, 22)
+        SliderValBG.Position = UDim2.new(0.77, 0, 0.58, 0) -- 调整数值框位置，与滑块条对齐
+        SliderValBG.Size = UDim2.new(0, 36, 0, 18) -- 减小数值框大小
         SliderValBG.AutoButtonColor = false
         SliderValBG.Font = Enum.Font.Gotham
         SliderValBG.Text = ""
@@ -2136,11 +2130,16 @@ end
         SliderValBGC.CornerRadius = UDim.new(0, 6)
         SliderValBGC.Name = "SliderValBGC"
         SliderValBGC.Parent = SliderValBG
+        
+        -- 隐藏文字，因为双窗口下文字显示在按钮文本中
+        SliderBack.Text = "   " .. text
     else
         -- 单窗口布局：保持原样
         local sliderBarPosition = 0.35
         local sliderBarWidth = 120
         local sliderValuePosition = 0.82
+        local minSliderPosition = 0.28
+        local addSliderPosition = 0.75
         
         SliderBar.Name = "SliderBar"
         SliderBar.Parent = SliderBack
@@ -2177,21 +2176,7 @@ end
         SliderValBGC.CornerRadius = UDim.new(0, 6)
         SliderValBGC.Name = "SliderValBGC"
         SliderValBGC.Parent = SliderValBG
-    end
-    
-    SliderValue.Name = "SliderValue"
-    SliderValue.Parent = SliderValBG
-    SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SliderValue.BackgroundTransparency = 1.000
-    SliderValue.BorderSizePixel = 0
-    SliderValue.Size = UDim2.new(1, 0, 1, 0)
-    SliderValue.Font = Enum.Font.Gotham
-    SliderValue.Text = tostring(default)
-    SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SliderValue.TextSize = 11.000
-    
-    -- 双窗口下不创建+和-按钮
-    if windowCount ~= 2 then
+        
         -- 单窗口下的+和-按钮
         local MinSlider = Instance.new("TextButton")
         MinSlider.Name = "MinSlider"
@@ -2199,7 +2184,7 @@ end
         MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
         MinSlider.BackgroundTransparency = 0
         MinSlider.BorderSizePixel = 0
-        MinSlider.Position = UDim2.new(0.28, 0, 0.25, 0)
+        MinSlider.Position = UDim2.new(minSliderPosition, 0, 0.25, 0)
         MinSlider.Size = UDim2.new(0, 18, 0, 18)
         MinSlider.Font = Enum.Font.Gotham
         MinSlider.Text = "减"
@@ -2218,7 +2203,7 @@ end
         AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
         AddSlider.BackgroundTransparency = 0
         AddSlider.BorderSizePixel = 0
-        AddSlider.Position = UDim2.new(0.75, 0, 0.25, 0)
+        AddSlider.Position = UDim2.new(addSliderPosition, 0, 0.25, 0)
         AddSlider.Size = UDim2.new(0, 18, 0, 18)
         AddSlider.Font = Enum.Font.Gotham
         AddSlider.Text = "加"
@@ -2244,6 +2229,17 @@ end
             funcs:SetValue(currentValue)
         end)
     end
+    
+    SliderValue.Name = "SliderValue"
+    SliderValue.Parent = SliderValBG
+    SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    SliderValue.BackgroundTransparency = 1.000
+    SliderValue.BorderSizePixel = 0
+    SliderValue.Size = UDim2.new(1, 0, 1, 0)
+    SliderValue.Font = Enum.Font.Gotham
+    SliderValue.Text = tostring(default)
+    SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SliderValue.TextSize = 11.000
     
     local funcs = {
         SetValue = function(self, value)
