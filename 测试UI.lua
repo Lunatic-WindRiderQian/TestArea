@@ -2110,12 +2110,12 @@ end
         MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
         MinSlider.BackgroundTransparency = 0
         MinSlider.BorderSizePixel = 0
-        MinSlider.Position = UDim2.new(0.03, 0, 0.60, 0)  -- 调整Y位置到滑块条同一行
+        MinSlider.Position = UDim2.new(0.03, 0, 0.60, 0)
         MinSlider.Size = UDim2.new(0, 18, 0, 18)
         MinSlider.Font = Enum.Font.Gotham
         MinSlider.Text = "-"
         MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-        MinSlider.TextSize = 13.000
+        MinSlider.TextSize = 13
         MinSlider.TextWrapped = true
         MinSlider.ZIndex = 2
         
@@ -2130,12 +2130,12 @@ end
         AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
         AddSlider.BackgroundTransparency = 0
         AddSlider.BorderSizePixel = 0
-        AddSlider.Position = UDim2.new(0.75, 0, 0.60, 0)  -- 调整Y位置到滑块条同一行
+        AddSlider.Position = UDim2.new(0.80, 0, 0.60, 0)  -- 从0.75改为0.80，往右移动一点
         AddSlider.Size = UDim2.new(0, 18, 0, 18)
         AddSlider.Font = Enum.Font.Gotham
         AddSlider.Text = "+"
         AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-        AddSlider.TextSize = 13.000
+        AddSlider.TextSize = 13
         AddSlider.TextWrapped = true
         AddSlider.ZIndex = 2
         
@@ -2143,16 +2143,16 @@ end
         AddSliderC.CornerRadius = UDim.new(0, 4)
         AddSliderC.Parent = AddSlider
         
-        -- 滑块条（在减号和加号之间，调整位置到同一行）
-        local sliderBarWidth = elementWidth * 0.58  -- 使用58%的宽度，更长
-        local sliderBarPosition = 0.15  -- 从15%的位置开始
+        -- 滑块条（在减号和加号之间，调整位置并缩小一截）
+        local sliderBarWidth = elementWidth * 0.50  -- 从0.58改为0.50，缩小一截
+        local sliderBarPosition = 0.20  -- 从0.15改为0.20，往右移动一点
         
         SliderBar.Name = "SliderBar"
         SliderBar.Parent = SliderBack
         SliderBar.AnchorPoint = Vector2.new(0, 0.5)
         SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
         SliderBar.BorderSizePixel = 0
-        SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.60, 0)  -- 调整Y位置
+        SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.60, 0)
         SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, 14)
         SliderBarC.CornerRadius = UDim.new(0, 4)
         SliderBarC.Name = "SliderBarC"
@@ -2167,18 +2167,18 @@ end
         SliderPartC.Name = "SliderPartC"
         SliderPartC.Parent = SliderPart
         
-        -- 数值框（调整位置，确保不超出）
+        -- 数值框（往左移动一点）
         SliderValBG.Name = "SliderValBG"
         SliderValBG.Parent = SliderBack
         SliderValBG.BackgroundColor3 = config.Bg_Color
         SliderValBG.BorderSizePixel = 0
-        SliderValBG.Position = UDim2.new(0.82, 0, 0.60, 0)  -- 调整Y位置到同一行
+        SliderValBG.Position = UDim2.new(0.85, 0, 0.60, 0)  -- 从0.82改为0.85，往左移动一点
         SliderValBG.Size = UDim2.new(0, 36, 0, 22)
         SliderValBG.AutoButtonColor = false
         SliderValBG.Font = Enum.Font.Gotham
         SliderValBG.Text = ""
         SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
-        SliderValBG.TextSize = 14.000
+        SliderValBG.TextSize = 14
         
         SliderValBGC.CornerRadius = UDim.new(0, 6)
         SliderValBGC.Name = "SliderValBGC"
@@ -2187,13 +2187,13 @@ end
         SliderValue.Name = "SliderValue"
         SliderValue.Parent = SliderValBG
         SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        SliderValue.BackgroundTransparency = 1.000
+        SliderValue.BackgroundTransparency = 1
         SliderValue.BorderSizePixel = 0
         SliderValue.Size = UDim2.new(1, 0, 1, 0)
         SliderValue.Font = Enum.Font.Gotham
         SliderValue.Text = tostring(default)
         SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-        SliderValue.TextSize = 11.000
+        SliderValue.TextSize = 11
     else
         -- 单窗口：保持原有布局，只显示一个文字
         SliderModule.Size = UDim2.new(0, elementWidth, 0, 36)
@@ -2239,7 +2239,7 @@ end
         SliderValBG.Font = Enum.Font.Gotham
         SliderValBG.Text = ""
         SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
-        SliderValBG.TextSize = 14.000
+        SliderValBG.TextSize = 14
         
         SliderValBGC.CornerRadius = UDim.new(0, 6)
         SliderValBGC.Name = "SliderValBGC"
@@ -2248,13 +2248,13 @@ end
         SliderValue.Name = "SliderValue"
         SliderValue.Parent = SliderValBG
         SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        SliderValue.BackgroundTransparency = 1.000
+        SliderValue.BackgroundTransparency = 1
         SliderValue.BorderSizePixel = 0
         SliderValue.Size = UDim2.new(1, 0, 1, 0)
         SliderValue.Font = Enum.Font.Gotham
         SliderValue.Text = tostring(default)
         SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-        SliderValue.TextSize = 11.000
+        SliderValue.TextSize = 11
         
         local MinSlider = Instance.new("TextButton")
         MinSlider.Name = "MinSlider"
@@ -2267,7 +2267,7 @@ end
         MinSlider.Font = Enum.Font.Gotham
         MinSlider.Text = "减"
         MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-        MinSlider.TextSize = 13.000
+        MinSlider.TextSize = 13
         MinSlider.TextWrapped = true
         MinSlider.ZIndex = 2
         
@@ -2286,7 +2286,7 @@ end
         AddSlider.Font = Enum.Font.Gotham
         AddSlider.Text = "加"
         AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-        AddSlider.TextSize = 13.000
+        AddSlider.TextSize = 13
         AddSlider.TextWrapped = true
         AddSlider.ZIndex = 2
         
