@@ -2038,321 +2038,383 @@ end
             end
             
             function section.Slider(section, text, flag, default, min, max, precise, callback)
-                callback = callback or function() end
-                min = min or 0
-                max = max or 10
-                default = default or min
-                precise = precise or false
-                
-                assert(text, "No text provided")
-                assert(flag, "No flag provided")
-                assert(default, "No default value provided")
-                
-                FengUI.flags[flag] = default
+    callback = callback or function() end
+    min = min or 0
+    max = max or 10
+    default = default or min
+    precise = precise or false
+    
+    assert(text, "No text provided")
+    assert(flag, "No flag provided")
+    assert(default, "No default value provided")
+    
+    FengUI.flags[flag] = default
 
-                local SliderModule = Instance.new("Frame")
-                local SliderBack = Instance.new("TextButton")
-                local SliderBackC = Instance.new("UICorner")
-                local SliderBar = Instance.new("Frame")
-                local SliderBarC = Instance.new("UICorner")
-                local SliderPart = Instance.new("Frame")
-                local SliderPartC = Instance.new("UICorner")
-                local SliderValBG = Instance.new("TextButton")
-                local SliderValBGC = Instance.new("UICorner")
-                local SliderValue = Instance.new("TextBox")
-                
-                SliderModule.Name = "SliderModule"
-                SliderModule.Parent = Objs
-                SliderModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                SliderModule.BackgroundTransparency = 1.000
-                SliderModule.BorderSizePixel = 0
-                SliderModule.Position = UDim2.new(0, 0, 0, 0)
-                SliderModule.Size = UDim2.new(0, elementWidth, 0, 36)
-                
-                SliderBack.Name = "SliderBack"
-                SliderBack.Parent = SliderModule
-                SliderBack.BackgroundColor3 = config.Slider_Color
-                SliderBack.BackgroundTransparency = 0.2
-                SliderBack.BorderSizePixel = 0
-                SliderBack.Size = UDim2.new(0, elementWidth, 0, 36)
-                SliderBack.AutoButtonColor = false
-                SliderBack.Font = Enum.Font.GothamSemibold
-                SliderBack.Text = "   " .. text
-                SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SliderBack.TextSize = 14.000
-                SliderBack.TextXAlignment = Enum.TextXAlignment.Left
-                
-                SliderBackC.CornerRadius = UDim.new(0, 6)
-                SliderBackC.Name = "SliderBackC"
-                SliderBackC.Parent = SliderBack
-                
-                -- 根据窗口类型调整Slider位置和大小
-                local sliderBarPosition = 0.35
-                local sliderBarWidth = 120
-                local sliderValuePosition = 0.82
-                local minSliderPosition = 0.28
-                local addSliderPosition = 0.75
-                
-                if windowCount == 2 then
-                    sliderBarPosition = 0.26
-                    sliderBarWidth = 90 -- 减小滑块条宽度
-                    sliderValuePosition = 0.74
-                    minSliderPosition = 0.19
-                    addSliderPosition = 0.66
-                end
-                
-                SliderBar.Name = "SliderBar"
-                SliderBar.Parent = SliderBack
-                SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-                SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-                SliderBar.BorderSizePixel = 0
-                SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.5, 0)
-                SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, 14) -- 调整宽度
-                SliderBarC.CornerRadius = UDim.new(0, 4)
-                SliderBarC.Name = "SliderBarC"
-                SliderBarC.Parent = SliderBar
-                
-                SliderPart.Name = "SliderPart"
-                SliderPart.Parent = SliderBar
-                SliderPart.BackgroundColor3 = config.SliderBar_Color
-                SliderPart.BorderSizePixel = 0
-                SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
-                SliderPartC.CornerRadius = UDim.new(0, 4)
-                SliderPartC.Name = "SliderPartC"
-                SliderPartC.Parent = SliderPart
-                
-                SliderValBG.Name = "SliderValBG"
-                SliderValBG.Parent = SliderBack
-                SliderValBG.BackgroundColor3 = config.Bg_Color
-                SliderValBG.BorderSizePixel = 0
-                SliderValBG.Position = UDim2.new(sliderValuePosition, 0, 0.22, 0)
-                SliderValBG.Size = UDim2.new(0, 36, 0, 22)
-                SliderValBG.AutoButtonColor = false
-                SliderValBG.Font = Enum.Font.Gotham
-                SliderValBG.Text = ""
-                SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SliderValBG.TextSize = 14.000
-                
-                SliderValBGC.CornerRadius = UDim.new(0, 6)
-                SliderValBGC.Name = "SliderValBGC"
-                SliderValBGC.Parent = SliderValBG
-                
-                SliderValue.Name = "SliderValue"
-                SliderValue.Parent = SliderValBG
-                SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                SliderValue.BackgroundTransparency = 1.000
-                SliderValue.BorderSizePixel = 0
-                SliderValue.Size = UDim2.new(1, 0, 1, 0)
-                SliderValue.Font = Enum.Font.Gotham
-                SliderValue.Text = tostring(default)
-                SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SliderValue.TextSize = 11.000
-                
-                local MinSlider = Instance.new("TextButton")
-                MinSlider.Name = "MinSlider"
-                MinSlider.Parent = SliderBack
-                MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-                MinSlider.BackgroundTransparency = 0
-                MinSlider.BorderSizePixel = 0
-                MinSlider.Position = UDim2.new(minSliderPosition, 0, 0.25, 0)
-                MinSlider.Size = UDim2.new(0, 18, 0, 18)
-                MinSlider.Font = Enum.Font.Gotham
-                MinSlider.Text = "减"
-                MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-                MinSlider.TextSize = 13.000
-                MinSlider.TextWrapped = true
-                MinSlider.ZIndex = 2
-                
-                local MinSliderC = Instance.new("UICorner")
-                MinSliderC.CornerRadius = UDim.new(0, 4)
-                MinSliderC.Parent = MinSlider
-                
-                local AddSlider = Instance.new("TextButton")
-                AddSlider.Name = "AddSlider"
-                AddSlider.Parent = SliderBack
-                AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-                AddSlider.BackgroundTransparency = 0
-                AddSlider.BorderSizePixel = 0
-                AddSlider.Position = UDim2.new(addSliderPosition, 0, 0.25, 0)
-                AddSlider.Size = UDim2.new(0, 18, 0, 18)
-                AddSlider.Font = Enum.Font.Gotham
-                AddSlider.Text = "加"
-                AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-                AddSlider.TextSize = 13.000
-                AddSlider.TextWrapped = true
-                AddSlider.ZIndex = 2
-                
-                local AddSliderC = Instance.new("UICorner")
-                AddSliderC.CornerRadius = UDim.new(0, 4)
-                AddSliderC.Parent = AddSlider
-                
-                local funcs = {
-                    SetValue = function(self, value)
-                        local percent
-                        
-                        if value then
-                            percent = (value - min)/(max - min)
-                        else
-                            local mouse = services.Players.LocalPlayer:GetMouse()
-                            local barPos = SliderBar.AbsolutePosition.X
-                            local barSize = SliderBar.AbsoluteSize.X
-                            local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
-                            percent = (mouseX - barPos) / barSize
-                            value = min + (max - min) * percent
-                        end
-                        
-                        if precise then
-                            value = tonumber(string.format("%.2f", value))
-                        else
-                            value = math.floor(value + 0.5)
-                        end
-                        
-                        value = math.clamp(value, min, max)
-                        percent = (value - min)/(max - min)
-                        FengUI.flags[flag] = tonumber(value)
-                        SliderValue.Text = tostring(value)
-                        
-                        services.TweenService:Create(SliderPart, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                            Size = UDim2.new(percent, 0, 1, 0)
-                        }):Play()
-                        
-                        callback(tonumber(value))
-                    end,
-                    
-                    GetValue = function(self)
-                        return FengUI.flags[flag]
-                    end
-                }
-                
-                funcs:SetValue(default)
-                
-                local dragging = false
-                
-                SliderBar.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        dragging = true
-                        funcs:SetValue()
-                    end
-                end)
-                
-                SliderPart.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        dragging = true
-                        funcs:SetValue()
-                    end
-                end)
-                
-                services.UserInputService.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        dragging = false
-                    end
-                end)
-                
-                services.UserInputService.InputChanged:Connect(function(input)
-                    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        funcs:SetValue()
-                    end
-                end)
-                
-                SliderBar.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = true
-                        funcs:SetValue()
-                    end
-                end)
-                
-                services.UserInputService.InputEnded:Connect(function(input)
-                    if dragging and input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = false
-                    end
-                end)
-                
-                services.UserInputService.InputChanged:Connect(function(input)
-                    if dragging and input.UserInputType == Enum.UserInputType.Touch then
-                        funcs:SetValue()
-                    end
-                end)
-                
-                MinSlider.MouseButton1Click:Connect(function()
-                    local currentValue = FengUI.flags[flag]
-                    currentValue = math.clamp(currentValue - 1, min, max)
-                    funcs:SetValue(currentValue)
-                end)
-                
-                AddSlider.MouseButton1Click:Connect(function()
-                    local currentValue = FengUI.flags[flag]
-                    currentValue = math.clamp(currentValue + 1, min, max)
-                    funcs:SetValue(currentValue)
-                end)
-                
-                local boxFocused = false
-                local allowed = { [""] = true, ["-"] = true }
-                
-                SliderValue.Focused:Connect(function()
-                    boxFocused = true
-                end)
-                
-                SliderValue.FocusLost:Connect(function()
-                    boxFocused = false
-                    if SliderValue.Text == "" then
-                        funcs:SetValue(default)
-                        return
-                    end
-                    
-                    local numValue = tonumber(SliderValue.Text)
-                    if numValue then
-                        numValue = math.clamp(numValue, min, max)
-                        funcs:SetValue(numValue)
-                    else
-                        funcs:SetValue(default)
-                    end
-                end)
-                
-                SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
-                    if not boxFocused then
-                        return
-                    end
-                    
-                    local text = SliderValue.Text
-                    local newText = ""
-                    
-                    for i = 1, #text do
-                        local char = text:sub(i, i)
-                        if char:match("%d") or (char == "." and precise) then
-                            newText = newText .. char
-                        end
-                    end
-                    
-                    local dotCount = 0
-                    local finalText = ""
-                    for i = 1, #newText do
-                        local char = newText:sub(i, i)
-                        if char == "." then
-                            dotCount = dotCount + 1
-                            if dotCount <= 1 then
-                                finalText = finalText .. char
-                            end
-                        else
-                            finalText = finalText .. char
-                        end
-                    end
-                    
-                    SliderValue.Text = finalText
-                    
-                    local text = SliderValue.Text
-                    if not tonumber(text) and not allowed[text] then
-                        SliderValue.Text = SliderValue.Text:gsub("%D+", "")
-                    elseif not allowed[text] then
-                        if tonumber(text) > max then
-                            text = max
-                            SliderValue.Text = tostring(max)
-                        end
-                        funcs:SetValue(tonumber(text))
-                    end
-                end)
-                
-                return funcs
+    local SliderModule = Instance.new("Frame")
+    local SliderBack = Instance.new("TextButton")
+    local SliderBackC = Instance.new("UICorner")
+    local SliderTextContainer = Instance.new("Frame")
+    local SliderTextLabel = Instance.new("TextLabel")
+    local SliderControls = Instance.new("Frame")
+    local SliderBar = Instance.new("Frame")
+    local SliderBarC = Instance.new("UICorner")
+    local SliderPart = Instance.new("Frame")
+    local SliderPartC = Instance.new("UICorner")
+    local SliderValBG = Instance.new("TextButton")
+    local SliderValBGC = Instance.new("UICorner")
+    local SliderValue = Instance.new("TextBox")
+    local MinSlider = Instance.new("TextButton")
+    local MinSliderC = Instance.new("UICorner")
+    local AddSlider = Instance.new("TextButton")
+    local AddSliderC = Instance.new("UICorner")
+    
+    SliderModule.Name = "SliderModule"
+    SliderModule.Parent = Objs
+    SliderModule.BackgroundTransparency = 1
+    SliderModule.BorderSizePixel = 0
+    SliderModule.Size = UDim2.new(0, elementWidth, 0, 60) -- 增加高度以容纳上下布局
+    
+    SliderBack.Name = "SliderBack"
+    SliderBack.Parent = SliderModule
+    SliderBack.BackgroundColor3 = config.Slider_Color
+    SliderBack.BackgroundTransparency = 0.2
+    SliderBack.BorderSizePixel = 0
+    SliderBack.Size = UDim2.new(0, elementWidth, 0, 60)
+    SliderBack.AutoButtonColor = false
+    SliderBack.Text = ""
+    
+    SliderBackC.CornerRadius = UDim.new(0, 6)
+    SliderBackC.Name = "SliderBackC"
+    SliderBackC.Parent = SliderBack
+    
+    -- 文字容器（上方）
+    SliderTextContainer.Name = "SliderTextContainer"
+    SliderTextContainer.Parent = SliderBack
+    SliderTextContainer.BackgroundTransparency = 1
+    SliderTextContainer.Size = UDim2.new(1, 0, 0, 28)
+    SliderTextContainer.Position = UDim2.new(0, 0, 0, 0)
+    
+    SliderTextLabel.Name = "SliderTextLabel"
+    SliderTextLabel.Parent = SliderTextContainer
+    SliderTextLabel.BackgroundTransparency = 1
+    SliderTextLabel.Size = UDim2.new(1, -10, 1, 0)
+    SliderTextLabel.Position = UDim2.new(0, 10, 0, 0)
+    SliderTextLabel.Font = Enum.Font.GothamSemibold
+    SliderTextLabel.Text = "   " .. text
+    SliderTextLabel.TextColor3 = config.TextColor
+    SliderTextLabel.TextSize = 14
+    SliderTextLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    -- 控制容器（下方）
+    SliderControls.Name = "SliderControls"
+    SliderControls.Parent = SliderBack
+    SliderControls.BackgroundTransparency = 1
+    SliderControls.Size = UDim2.new(1, -20, 0, 32)
+    SliderControls.Position = UDim2.new(0, 10, 0, 28)
+    
+    -- 根据窗口类型调整布局
+    local sliderBarPosition = 0
+    local sliderBarWidth = 120
+    local sliderValuePosition = 0.82
+    
+    if windowCount == 2 then
+        sliderBarPosition = 0
+        sliderBarWidth = elementWidth * 0.6  -- 双窗口滑块条宽度
+        sliderValuePosition = 0.65
+    end
+    
+    -- 滑块条
+    SliderBar.Name = "SliderBar"
+    SliderBar.Parent = SliderControls
+    SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    SliderBar.BorderSizePixel = 0
+    SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.5, 0)
+    SliderBar.AnchorPoint = Vector2.new(0, 0.5)
+    SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, 6) -- 减薄滑块条高度
+    
+    SliderBarC.CornerRadius = UDim.new(1, 0)
+    SliderBarC.Name = "SliderBarC"
+    SliderBarC.Parent = SliderBar
+    
+    -- 滑块填充部分
+    SliderPart.Name = "SliderPart"
+    SliderPart.Parent = SliderBar
+    SliderPart.BackgroundColor3 = config.SliderBar_Color
+    SliderPart.BorderSizePixel = 0
+    SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+    SliderPartC.CornerRadius = UDim.new(1, 0)
+    SliderPartC.Name = "SliderPartC"
+    SliderPartC.Parent = SliderPart
+    
+    -- 滑块值显示框
+    SliderValBG.Name = "SliderValBG"
+    SliderValBG.Parent = SliderControls
+    SliderValBG.BackgroundColor3 = config.Bg_Color
+    SliderValBG.BorderSizePixel = 0
+    SliderValBG.Position = UDim2.new(sliderValuePosition, 0, 0, 0)
+    SliderValBG.Size = UDim2.new(0, 36, 0, 24)
+    SliderValBG.AutoButtonColor = false
+    SliderValBG.Text = ""
+    
+    SliderValBGC.CornerRadius = UDim.new(0, 4)
+    SliderValBGC.Name = "SliderValBGC"
+    SliderValBGC.Parent = SliderValBG
+    
+    -- 滑块值文本框
+    SliderValue.Name = "SliderValue"
+    SliderValue.Parent = SliderValBG
+    SliderValue.BackgroundTransparency = 1
+    SliderValue.BorderSizePixel = 0
+    SliderValue.Size = UDim2.new(1, 0, 1, 0)
+    SliderValue.Font = Enum.Font.Gotham
+    SliderValue.Text = tostring(default)
+    SliderValue.TextColor3 = config.TextColor
+    SliderValue.TextSize = 11
+    
+    -- 减按钮
+    MinSlider.Name = "MinSlider"
+    MinSlider.Parent = SliderControls
+    MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    MinSlider.BackgroundTransparency = 0
+    MinSlider.BorderSizePixel = 0
+    MinSlider.Position = UDim2.new(sliderValuePosition - 0.12, 0, 0, 0)
+    MinSlider.Size = UDim2.new(0, 22, 0, 22)
+    MinSlider.Font = Enum.Font.Gotham
+    MinSlider.Text = "-"
+    MinSlider.TextColor3 = config.TextColor
+    MinSlider.TextSize = 14
+    
+    MinSliderC.CornerRadius = UDim.new(0, 4)
+    MinSliderC.Parent = MinSlider
+    
+    -- 加按钮
+    AddSlider.Name = "AddSlider"
+    AddSlider.Parent = SliderControls
+    AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    AddSlider.BackgroundTransparency = 0
+    AddSlider.BorderSizePixel = 0
+    AddSlider.Position = UDim2.new(sliderValuePosition - 0.06, 0, 0, 0)
+    AddSlider.Size = UDim2.new(0, 22, 0, 22)
+    AddSlider.Font = Enum.Font.Gotham
+    AddSlider.Text = "+"
+    AddSlider.TextColor3 = config.TextColor
+    AddSlider.TextSize = 14
+    
+    AddSliderC.CornerRadius = UDim.new(0, 4)
+    AddSliderC.Parent = AddSlider
+    
+    -- 添加滑块发光效果
+    local sliderGlow = Instance.new("UIStroke")
+    sliderGlow.Parent = SliderPart
+    sliderGlow.Color = config.AccentColor
+    sliderGlow.Thickness = 2
+    sliderGlow.Transparency = 0.8
+    
+    local valueGlow = Instance.new("UIStroke")
+    valueGlow.Parent = SliderValBG
+    valueGlow.Color = config.AccentColor
+    valueGlow.Thickness = 1
+    valueGlow.Transparency = 0.8
+    
+    startNeonFlowEffect(sliderGlow, "Color", 0.01)
+    createPulseGlow(sliderGlow)
+    
+    local funcs = {
+        SetValue = function(self, value)
+            local percent
+            
+            if value then
+                percent = (value - min)/(max - min)
+            else
+                local mouse = services.Players.LocalPlayer:GetMouse()
+                local barPos = SliderBar.AbsolutePosition.X
+                local barSize = SliderBar.AbsoluteSize.X
+                local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
+                percent = (mouseX - barPos) / barSize
+                value = min + (max - min) * percent
             end
+            
+            if precise then
+                value = tonumber(string.format("%.2f", value))
+            else
+                value = math.floor(value + 0.5)
+            end
+            
+            value = math.clamp(value, min, max)
+            percent = (value - min)/(max - min)
+            FengUI.flags[flag] = tonumber(value)
+            SliderValue.Text = tostring(value)
+            
+            services.TweenService:Create(SliderPart, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                Size = UDim2.new(percent, 0, 1, 0)
+            }):Play()
+            
+            callback(tonumber(value))
+        end,
+        
+        GetValue = function(self)
+            return FengUI.flags[flag]
+        end
+    }
+    
+    funcs:SetValue(default)
+    
+    local dragging = false
+    
+    -- 鼠标交互
+    SliderBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            funcs:SetValue()
+        end
+    end)
+    
+    SliderPart.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            funcs:SetValue()
+        end
+    end)
+    
+    services.UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    services.UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            funcs:SetValue()
+        end
+    end)
+    
+    -- 触摸交互
+    SliderBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            funcs:SetValue()
+        end
+    end)
+    
+    services.UserInputService.InputEnded:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    
+    services.UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.Touch then
+            funcs:SetValue()
+        end
+    end)
+    
+    -- 加减按钮点击事件
+    MinSlider.MouseButton1Click:Connect(function()
+        local currentValue = FengUI.flags[flag]
+        currentValue = math.clamp(currentValue - 1, min, max)
+        funcs:SetValue(currentValue)
+    end)
+    
+    AddSlider.MouseButton1Click:Connect(function()
+        local currentValue = FengUI.flags[flag]
+        currentValue = math.clamp(currentValue + 1, min, max)
+        funcs:SetValue(currentValue)
+    end)
+    
+    -- 按钮悬停效果
+    MinSlider.MouseEnter:Connect(function()
+        services.TweenService:Create(MinSlider, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(80, 80, 90)
+        }):Play()
+    end)
+    
+    MinSlider.MouseLeave:Connect(function()
+        services.TweenService:Create(MinSlider, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+        }):Play()
+    end)
+    
+    AddSlider.MouseEnter:Connect(function()
+        services.TweenService:Create(AddSlider, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(80, 80, 90)
+        }):Play()
+    end)
+    
+    AddSlider.MouseLeave:Connect(function()
+        services.TweenService:Create(AddSlider, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+        }):Play()
+    end)
+    
+    -- 文本框输入处理
+    local boxFocused = false
+    local allowed = { [""] = true, ["-"] = true }
+    
+    SliderValue.Focused:Connect(function()
+        boxFocused = true
+    end)
+    
+    SliderValue.FocusLost:Connect(function()
+        boxFocused = false
+        if SliderValue.Text == "" then
+            funcs:SetValue(default)
+            return
+        end
+        
+        local numValue = tonumber(SliderValue.Text)
+        if numValue then
+            numValue = math.clamp(numValue, min, max)
+            funcs:SetValue(numValue)
+        else
+            funcs:SetValue(default)
+        end
+    end)
+    
+    SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
+        if not boxFocused then
+            return
+        end
+        
+        local text = SliderValue.Text
+        local newText = ""
+        
+        for i = 1, #text do
+            local char = text:sub(i, i)
+            if char:match("%d") or (char == "." and precise) then
+                newText = newText .. char
+            end
+        end
+        
+        local dotCount = 0
+        local finalText = ""
+        for i = 1, #newText do
+            local char = newText:sub(i, i)
+            if char == "." then
+                dotCount = dotCount + 1
+                if dotCount <= 1 then
+                    finalText = finalText .. char
+                end
+            else
+                finalText = finalText .. char
+            end
+        end
+        
+        SliderValue.Text = finalText
+        
+        local text = SliderValue.Text
+        if not tonumber(text) and not allowed[text] then
+            SliderValue.Text = SliderValue.Text:gsub("%D+", "")
+        elseif not allowed[text] then
+            if tonumber(text) > max then
+                text = max
+                SliderValue.Text = tostring(max)
+            end
+            funcs:SetValue(tonumber(text))
+        end
+    end)
+    
+    return funcs
+end
             
             function section.Dropdown(section, text, flag, options, callback)
     local callback = callback or function() end
