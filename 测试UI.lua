@@ -2053,7 +2053,7 @@ end
     local SliderModule = Instance.new("Frame")
     local SliderBack = Instance.new("TextButton")
     local SliderBackC = Instance.new("UICorner")
-    local SliderTextLabel = Instance.new("TextLabel") -- 新增：专门显示文字的标签
+    local SliderText = Instance.new("TextLabel")
     local SliderBar = Instance.new("Frame")
     local SliderBarC = Instance.new("UICorner")
     local SliderPart = Instance.new("Frame")
@@ -2068,90 +2068,116 @@ end
     SliderModule.BackgroundTransparency = 1.000
     SliderModule.BorderSizePixel = 0
     SliderModule.Position = UDim2.new(0, 0, 0, 0)
-    SliderModule.Size = UDim2.new(0, elementWidth, 0, 56) -- 增加高度以容纳两行布局
+    SliderModule.Size = UDim2.new(0, elementWidth, 0, 60) -- 增加高度以容纳文字和滑块
     
     SliderBack.Name = "SliderBack"
     SliderBack.Parent = SliderModule
     SliderBack.BackgroundColor3 = config.Slider_Color
     SliderBack.BackgroundTransparency = 0.2
     SliderBack.BorderSizePixel = 0
-    SliderBack.Size = UDim2.new(0, elementWidth, 0, 56) -- 增加高度
+    SliderBack.Size = UDim2.new(1, 0, 0, 60) -- 增加高度
     SliderBack.AutoButtonColor = false
     SliderBack.Font = Enum.Font.GothamSemibold
     SliderBack.Text = ""
     SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderBack.TextSize = 14.000
-    SliderBack.TextXAlignment = Enum.TextXAlignment.Left
     
     SliderBackC.CornerRadius = UDim.new(0, 6)
     SliderBackC.Name = "SliderBackC"
     SliderBackC.Parent = SliderBack
     
-    -- 新增：专门显示文字的标签，放在上面
-    SliderTextLabel.Name = "SliderTextLabel"
-    SliderTextLabel.Parent = SliderBack
-    SliderTextLabel.BackgroundTransparency = 1
-    SliderTextLabel.Position = UDim2.new(0, 8, 0, 6)
-    SliderTextLabel.Size = UDim2.new(0.7, -8, 0, 20)
-    SliderTextLabel.Font = Enum.Font.GothamSemibold
-    SliderTextLabel.Text = "   " .. text
-    SliderTextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SliderTextLabel.TextSize = 14.000
-    SliderTextLabel.TextXAlignment = Enum.TextXAlignment.Left
-    SliderTextLabel.TextYAlignment = Enum.TextYAlignment.Top
-    
-    -- 根据窗口类型调整Slider位置和大小
-    local sliderBarPositionY = 0.5
-    local sliderBarWidth = 120
-    local sliderValuePositionX = 0.82
-    local minSliderPositionX = 0.28
-    local addSliderPositionX = 0.75
+    -- 添加文字标签
+    SliderText.Name = "SliderText"
+    SliderText.Parent = SliderBack
+    SliderText.BackgroundTransparency = 1
+    SliderText.Position = UDim2.new(0.03, 0, 0.05, 0)
+    SliderText.Size = UDim2.new(0.65, 0, 0, 20)
+    SliderText.Font = Enum.Font.GothamSemibold
+    SliderText.Text = text
+    SliderText.TextColor3 = config.TextColor
+    SliderText.TextSize = 14
+    SliderText.TextXAlignment = Enum.TextXAlignment.Left
     
     if windowCount == 2 then
-        sliderBarPositionY = 0.7  -- 双窗口时滑块条更靠下
-        sliderBarWidth = 90 -- 减小滑块条宽度
-        sliderValuePositionX = 0.74
-        minSliderPositionX = 0.19
-        addSliderPositionX = 0.66
+        -- 双窗口布局：文字在上面，滑块在下面
+        SliderBar.Name = "SliderBar"
+        SliderBar.Parent = SliderBack
+        SliderBar.AnchorPoint = Vector2.new(0, 0.5)
+        SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        SliderBar.BorderSizePixel = 0
+        SliderBar.Position = UDim2.new(0.03, 0, 0.8, 0) -- 文字在0.05，滑块在0.8
+        SliderBar.Size = UDim2.new(0.8, 0, 0, 14) -- 调整宽度为80%
+        SliderBarC.CornerRadius = UDim.new(0, 4)
+        SliderBarC.Name = "SliderBarC"
+        SliderBarC.Parent = SliderBar
+        
+        SliderPart.Name = "SliderPart"
+        SliderPart.Parent = SliderBar
+        SliderPart.BackgroundColor3 = config.SliderBar_Color
+        SliderPart.BorderSizePixel = 0
+        SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+        SliderPartC.CornerRadius = UDim.new(0, 4)
+        SliderPartC.Name = "SliderPartC"
+        SliderPartC.Parent = SliderPart
+        
+        -- 双窗口下的数值显示框
+        SliderValBG.Name = "SliderValBG"
+        SliderValBG.Parent = SliderBack
+        SliderValBG.BackgroundColor3 = config.Bg_Color
+        SliderValBG.BorderSizePixel = 0
+        SliderValBG.Position = UDim2.new(0.85, 0, 0.7, 0) -- 调整位置到滑块上方
+        SliderValBG.Size = UDim2.new(0, 36, 0, 22)
+        SliderValBG.AutoButtonColor = false
+        SliderValBG.Font = Enum.Font.Gotham
+        SliderValBG.Text = ""
+        SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
+        SliderValBG.TextSize = 14.000
+        
+        SliderValBGC.CornerRadius = UDim.new(0, 6)
+        SliderValBGC.Name = "SliderValBGC"
+        SliderValBGC.Parent = SliderValBG
+    else
+        -- 单窗口布局：保持原样
+        local sliderBarPosition = 0.35
+        local sliderBarWidth = 120
+        local sliderValuePosition = 0.82
+        
+        SliderBar.Name = "SliderBar"
+        SliderBar.Parent = SliderBack
+        SliderBar.AnchorPoint = Vector2.new(0, 0.5)
+        SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        SliderBar.BorderSizePixel = 0
+        SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.5, 0)
+        SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, 14)
+        SliderBarC.CornerRadius = UDim.new(0, 4)
+        SliderBarC.Name = "SliderBarC"
+        SliderBarC.Parent = SliderBar
+        
+        SliderPart.Name = "SliderPart"
+        SliderPart.Parent = SliderBar
+        SliderPart.BackgroundColor3 = config.SliderBar_Color
+        SliderPart.BorderSizePixel = 0
+        SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+        SliderPartC.CornerRadius = UDim.new(0, 4)
+        SliderPartC.Name = "SliderPartC"
+        SliderPartC.Parent = SliderPart
+        
+        SliderValBG.Name = "SliderValBG"
+        SliderValBG.Parent = SliderBack
+        SliderValBG.BackgroundColor3 = config.Bg_Color
+        SliderValBG.BorderSizePixel = 0
+        SliderValBG.Position = UDim2.new(sliderValuePosition, 0, 0.22, 0)
+        SliderValBG.Size = UDim2.new(0, 36, 0, 22)
+        SliderValBG.AutoButtonColor = false
+        SliderValBG.Font = Enum.Font.Gotham
+        SliderValBG.Text = ""
+        SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
+        SliderValBG.TextSize = 14.000
+        
+        SliderValBGC.CornerRadius = UDim.new(0, 6)
+        SliderValBGC.Name = "SliderValBGC"
+        SliderValBGC.Parent = SliderValBG
     end
-    
-    -- 滑块条放在下面
-    SliderBar.Name = "SliderBar"
-    SliderBar.Parent = SliderBack
-    SliderBar.AnchorPoint = Vector2.new(0, 0)
-    SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    SliderBar.BorderSizePixel = 0
-    SliderBar.Position = UDim2.new(0.08, 0, 0.6, 0) -- Y位置从0.6开始（更靠下）
-    SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, 14) -- 调整宽度
-    SliderBarC.CornerRadius = UDim.new(0, 4)
-    SliderBarC.Name = "SliderBarC"
-    SliderBarC.Parent = SliderBar
-    
-    SliderPart.Name = "SliderPart"
-    SliderPart.Parent = SliderBar
-    SliderPart.BackgroundColor3 = config.SliderBar_Color
-    SliderPart.BorderSizePixel = 0
-    SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
-    SliderPartC.CornerRadius = UDim.new(0, 4)
-    SliderPartC.Name = "SliderPartC"
-    SliderPartC.Parent = SliderPart
-    
-    -- 数值显示框放在滑块条右侧
-    SliderValBG.Name = "SliderValBG"
-    SliderValBG.Parent = SliderBack
-    SliderValBG.BackgroundColor3 = config.Bg_Color
-    SliderValBG.BorderSizePixel = 0
-    SliderValBG.Position = UDim2.new(0.08 + sliderBarWidth/elementWidth + 0.05, 0, 0.57, 0) -- 调整Y位置与滑块条对齐
-    SliderValBG.Size = UDim2.new(0, 36, 0, 22)
-    SliderValBG.AutoButtonColor = false
-    SliderValBG.Font = Enum.Font.Gotham
-    SliderValBG.Text = ""
-    SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SliderValBG.TextSize = 14.000
-    
-    SliderValBGC.CornerRadius = UDim.new(0, 6)
-    SliderValBGC.Name = "SliderValBGC"
-    SliderValBGC.Parent = SliderValBG
     
     SliderValue.Name = "SliderValue"
     SliderValue.Parent = SliderValBG
@@ -2164,44 +2190,60 @@ end
     SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderValue.TextSize = 11.000
     
-    -- 加减按钮放在滑块条左侧
-    local MinSlider = Instance.new("TextButton")
-    MinSlider.Name = "MinSlider"
-    MinSlider.Parent = SliderBack
-    MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    MinSlider.BackgroundTransparency = 0
-    MinSlider.BorderSizePixel = 0
-    MinSlider.Position = UDim2.new(0.03, 0, 0.57, 0) -- 调整Y位置与滑块条对齐
-    MinSlider.Size = UDim2.new(0, 18, 0, 18)
-    MinSlider.Font = Enum.Font.Gotham
-    MinSlider.Text = "减"
-    MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MinSlider.TextSize = 13.000
-    MinSlider.TextWrapped = true
-    MinSlider.ZIndex = 2
-    
-    local MinSliderC = Instance.new("UICorner")
-    MinSliderC.CornerRadius = UDim.new(0, 4)
-    MinSliderC.Parent = MinSlider
-    
-    local AddSlider = Instance.new("TextButton")
-    AddSlider.Name = "AddSlider"
-    AddSlider.Parent = SliderBack
-    AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    AddSlider.BackgroundTransparency = 0
-    AddSlider.BorderSizePixel = 0
-    AddSlider.Position = UDim2.new(0.08 + sliderBarWidth/elementWidth - 0.03, 0, 0.57, 0) -- 调整X位置在滑块条右侧
-    AddSlider.Size = UDim2.new(0, 18, 0, 18)
-    AddSlider.Font = Enum.Font.Gotham
-    AddSlider.Text = "加"
-    AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-    AddSlider.TextSize = 13.000
-    AddSlider.TextWrapped = true
-    AddSlider.ZIndex = 2
-    
-    local AddSliderC = Instance.new("UICorner")
-    AddSliderC.CornerRadius = UDim.new(0, 4)
-    AddSliderC.Parent = AddSlider
+    -- 双窗口下不创建+和-按钮
+    if windowCount ~= 2 then
+        -- 单窗口下的+和-按钮
+        local MinSlider = Instance.new("TextButton")
+        MinSlider.Name = "MinSlider"
+        MinSlider.Parent = SliderBack
+        MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+        MinSlider.BackgroundTransparency = 0
+        MinSlider.BorderSizePixel = 0
+        MinSlider.Position = UDim2.new(0.28, 0, 0.25, 0)
+        MinSlider.Size = UDim2.new(0, 18, 0, 18)
+        MinSlider.Font = Enum.Font.Gotham
+        MinSlider.Text = "减"
+        MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+        MinSlider.TextSize = 13.000
+        MinSlider.TextWrapped = true
+        MinSlider.ZIndex = 2
+        
+        local MinSliderC = Instance.new("UICorner")
+        MinSliderC.CornerRadius = UDim.new(0, 4)
+        MinSliderC.Parent = MinSlider
+        
+        local AddSlider = Instance.new("TextButton")
+        AddSlider.Name = "AddSlider"
+        AddSlider.Parent = SliderBack
+        AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+        AddSlider.BackgroundTransparency = 0
+        AddSlider.BorderSizePixel = 0
+        AddSlider.Position = UDim2.new(0.75, 0, 0.25, 0)
+        AddSlider.Size = UDim2.new(0, 18, 0, 18)
+        AddSlider.Font = Enum.Font.Gotham
+        AddSlider.Text = "加"
+        AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+        AddSlider.TextSize = 13.000
+        AddSlider.TextWrapped = true
+        AddSlider.ZIndex = 2
+        
+        local AddSliderC = Instance.new("UICorner")
+        AddSliderC.CornerRadius = UDim.new(0, 4)
+        AddSliderC.Parent = AddSlider
+        
+        -- 单窗口下的按钮点击事件
+        MinSlider.MouseButton1Click:Connect(function()
+            local currentValue = FengUI.flags[flag]
+            currentValue = math.clamp(currentValue - 1, min, max)
+            funcs:SetValue(currentValue)
+        end)
+        
+        AddSlider.MouseButton1Click:Connect(function()
+            local currentValue = FengUI.flags[flag]
+            currentValue = math.clamp(currentValue + 1, min, max)
+            funcs:SetValue(currentValue)
+        end)
+    end
     
     local funcs = {
         SetValue = function(self, value)
@@ -2271,6 +2313,7 @@ end
         end
     end)
     
+    -- 触摸支持
     SliderBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
@@ -2290,18 +2333,7 @@ end
         end
     end)
     
-    MinSlider.MouseButton1Click:Connect(function()
-        local currentValue = FengUI.flags[flag]
-        currentValue = math.clamp(currentValue - 1, min, max)
-        funcs:SetValue(currentValue)
-    end)
-    
-    AddSlider.MouseButton1Click:Connect(function()
-        local currentValue = FengUI.flags[flag]
-        currentValue = math.clamp(currentValue + 1, min, max)
-        funcs:SetValue(currentValue)
-    end)
-    
+    -- 文本框输入
     local boxFocused = false
     local allowed = { [""] = true, ["-"] = true }
     
