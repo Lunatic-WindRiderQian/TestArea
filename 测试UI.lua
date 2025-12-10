@@ -2103,14 +2103,14 @@ end
         SliderText.TextSize = 14
         SliderText.TextXAlignment = Enum.TextXAlignment.Left
         
-        -- 减号按钮（左边，靠近滑块条）
+        -- 减号按钮（左边）
         local MinSlider = Instance.new("TextButton")
         MinSlider.Name = "MinSlider"
         MinSlider.Parent = SliderBack
         MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
         MinSlider.BackgroundTransparency = 0
         MinSlider.BorderSizePixel = 0
-        MinSlider.Position = UDim2.new(0.10, 0, 0.72, 0)  -- 左边，稍微向右移动
+        MinSlider.Position = UDim2.new(0.03, 0, 0.60, 0)  -- 调整Y位置到滑块条同一行
         MinSlider.Size = UDim2.new(0, 18, 0, 18)
         MinSlider.Font = Enum.Font.Gotham
         MinSlider.Text = "-"
@@ -2123,14 +2123,14 @@ end
         MinSliderC.CornerRadius = UDim.new(0, 4)
         MinSliderC.Parent = MinSlider
         
-        -- 加号按钮（右边，靠近滑块条）
+        -- 加号按钮（右边）
         local AddSlider = Instance.new("TextButton")
         AddSlider.Name = "AddSlider"
         AddSlider.Parent = SliderBack
         AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
         AddSlider.BackgroundTransparency = 0
         AddSlider.BorderSizePixel = 0
-        AddSlider.Position = UDim2.new(0.70, 0, 0.72, 0)  -- 右边，稍微向左移动
+        AddSlider.Position = UDim2.new(0.75, 0, 0.60, 0)  -- 调整Y位置到滑块条同一行
         AddSlider.Size = UDim2.new(0, 18, 0, 18)
         AddSlider.Font = Enum.Font.Gotham
         AddSlider.Text = "+"
@@ -2143,16 +2143,16 @@ end
         AddSliderC.CornerRadius = UDim.new(0, 4)
         AddSliderC.Parent = AddSlider
         
-        -- 滑块条（在减号和加号之间，更长）
-        local sliderBarWidth = elementWidth * 0.5  -- 使用50%的宽度，更长
-        local sliderBarPosition = 0.20  -- 从20%的位置开始
+        -- 滑块条（在减号和加号之间，调整位置到同一行）
+        local sliderBarWidth = elementWidth * 0.58  -- 使用58%的宽度，更长
+        local sliderBarPosition = 0.15  -- 从15%的位置开始
         
         SliderBar.Name = "SliderBar"
         SliderBar.Parent = SliderBack
         SliderBar.AnchorPoint = Vector2.new(0, 0.5)
         SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
         SliderBar.BorderSizePixel = 0
-        SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.72, 0)
+        SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.60, 0)  -- 调整Y位置
         SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, 14)
         SliderBarC.CornerRadius = UDim.new(0, 4)
         SliderBarC.Name = "SliderBarC"
@@ -2167,12 +2167,12 @@ end
         SliderPartC.Name = "SliderPartC"
         SliderPartC.Parent = SliderPart
         
-        -- 数值框（最右边，修正位置）
+        -- 数值框（调整位置，确保不超出）
         SliderValBG.Name = "SliderValBG"
         SliderValBG.Parent = SliderBack
         SliderValBG.BackgroundColor3 = config.Bg_Color
         SliderValBG.BorderSizePixel = 0
-        SliderValBG.Position = UDim2.new(0.80, 0, 0.72, 0)  -- 修正位置
+        SliderValBG.Position = UDim2.new(0.82, 0, 0.60, 0)  -- 调整Y位置到同一行
         SliderValBG.Size = UDim2.new(0, 36, 0, 22)
         SliderValBG.AutoButtonColor = false
         SliderValBG.Font = Enum.Font.Gotham
