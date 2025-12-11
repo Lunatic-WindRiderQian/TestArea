@@ -2099,8 +2099,8 @@ end
         SliderBar.AnchorPoint = Vector2.new(0, 0.5)
         SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
         SliderBar.BorderSizePixel = 0
-        SliderBar.Position = UDim2.new(0.03, 0, 0.65, 0) -- 滑块条在下方
-        SliderBar.Size = UDim2.new(0.78, 0, 0, 14) -- 滑块条宽度78%，高度14
+        SliderBar.Position = UDim2.new(0.03, 0, 0.7, 0) -- 滑块条在下方
+        SliderBar.Size = UDim2.new(0.72, 0, 0, 10) -- 减小滑块条宽度为72%，高度为10
         SliderBarC.CornerRadius = UDim.new(0, 4)
         SliderBarC.Name = "SliderBarC"
         SliderBarC.Parent = SliderBar
@@ -2119,8 +2119,8 @@ end
         SliderValBG.Parent = SliderBack
         SliderValBG.BackgroundColor3 = config.Bg_Color
         SliderValBG.BorderSizePixel = 0
-        SliderValBG.Position = UDim2.new(0.83, 0, 0.55, 0) -- 调整数值框位置
-        SliderValBG.Size = UDim2.new(0, 36, 0, 22) -- 数值框大小36x22
+        SliderValBG.Position = UDim2.new(0.77, 0, 0.58, 0) -- 调整数值框位置，与滑块条对齐
+        SliderValBG.Size = UDim2.new(0, 36, 0, 18) -- 减小数值框大小
         SliderValBG.AutoButtonColor = false
         SliderValBG.Font = Enum.Font.Gotham
         SliderValBG.Text = ""
@@ -2130,6 +2130,9 @@ end
         SliderValBGC.CornerRadius = UDim.new(0, 6)
         SliderValBGC.Name = "SliderValBGC"
         SliderValBGC.Parent = SliderValBG
+        
+        -- 隐藏文字，因为双窗口下文字显示在按钮文本中
+        SliderBack.Text = "   " .. text
     else
         -- 单窗口布局：保持原样
         local sliderBarPosition = 0.35
