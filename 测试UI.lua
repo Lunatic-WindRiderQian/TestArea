@@ -848,8 +848,30 @@ function FengUI.new(FengUI, name, theme)
     RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
     RightLayout.Padding = UDim.new(0, 4)
     
-    setupSmoothScrolling(LeftContainer, LeftLayout)
-    setupSmoothScrolling(RightContainer, RightLayout)
+    -- 修复：分别设置滚动监听，避免相互干扰
+    local function setupIndividualScrolling(scrollingFrame, layout)
+        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+            
+            if layout.AbsoluteContentSize.Y <= scrollingFrame.AbsoluteSize.Y then
+                scrollingFrame.ScrollingEnabled = false
+            else
+                scrollingFrame.ScrollingEnabled = true
+            end
+        end)
+        
+        scrollingFrame.ElasticBehavior = Enum.ElasticBehavior.Never
+        
+        -- 防止滚动事件冒泡到父容器
+        scrollingFrame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseWheel then
+                input.Used = true
+            end
+        end)
+    end
+    
+    setupIndividualScrolling(LeftContainer, LeftLayout)
+    setupIndividualScrolling(RightContainer, RightLayout)
 end
         
         TabIco.Name = "TabIco"
@@ -1758,20 +1780,19 @@ end
                 
                 local funcs = {
                     SetState = function(self, state)
+                        -- 修复：移除状态检查，直接设置新状态
+                        local newState = state
                         if state == nil then
-                            state = not FengUI.flags[flag]
-                        end
-                        if FengUI.flags[flag] == state then
-                            return
+                            newState = not FengUI.flags[flag]
                         end
                         
                         services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                            Position = UDim2.new(0, state and 14 or 0, 0, 0),
-                            BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
+                            Position = UDim2.new(0, newState and 14 or 0, 0, 0),
+                            BackgroundColor3 = newState and config.Toggle_On or config.Toggle_Off
                         }):Play()
                         
-                        FengUI.flags[flag] = state
-                        callback(state)
+                        FengUI.flags[flag] = newState
+                        callback(newState)
                     end,
                     Module = ToggleModule
                 }
