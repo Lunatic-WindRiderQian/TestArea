@@ -37,11 +37,17 @@ local services = {
     CoreGui = game:GetService("CoreGui"),
     Players = game:GetService("Players"),
     RunService = game:GetService("RunService"),
-    SoundService = game:GetService("SoundService")
+    SoundService = game:GetService("SoundService"),
+    GuiService = game:GetService("GuiService")
 }
 
 local UserInputService = services.UserInputService
 local RunService = services.RunService
+local GuiService = services.GuiService
+
+-- 检测是否为移动设备
+local isMobile = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
+local isTablet = isMobile and UserInputService.TouchPanelSize.X > 1200
 
 local config = {
     MainColor = Color3.fromRGB(18, 18, 30),
@@ -71,6 +77,18 @@ local config = {
     ElementTransparency = 0.2,
     GlassEffect = Color3.fromRGB(255, 255, 255),
 }
+
+-- 根据设备类型调整UI大小
+local function getUIScale()
+    if isMobile then
+        local screenSize = workspace.CurrentCamera.ViewportSize
+        local baseSize = Vector2.new(1920, 1080)
+        return math.min(screenSize.X / baseSize.X, screenSize.Y / baseSize.Y) * 0.8
+    end
+    return 1
+end
+
+local uiScale = getUIScale()
 
 local MusicPlayer = {
     currentSound = nil,
@@ -386,6 +404,49 @@ local function setupSmoothScrolling(scrollingFrame, layout)
 end
 
 local switchingTabs = false
+
+-- 启用标签页控件的辅助函数
+local function enableTabControls(tabFrame)
+    if not tabFrame then return end
+    
+    -- 查找并启用所有按钮
+    local function enableElements(parent)
+        for _, child in ipairs(parent:GetDescendants()) do
+            if child:IsA("TextButton") or child:IsA("TextBox") then
+                child.Active = true
+                child.Selectable = true
+                
+                -- 特别处理Toggle按钮
+                if child.Name == "ToggleBtn" then
+                    child.AutoButtonColor = false
+                    -- 确保Toggle按钮可以点击
+                    child.ZIndex = 10
+                end
+            end
+        end
+    end
+    
+    enableElements(tabFrame)
+end
+
+-- 禁用标签页控件的辅助函数
+local function disableTabControls(tabFrame)
+    if not tabFrame then return end
+    
+    -- 查找并禁用所有按钮（除了当前正在交互的）
+    local function disableElements(parent)
+        for _, child in ipairs(parent:GetDescendants()) do
+            if child:IsA("TextButton") or child:IsA("TextBox") then
+                -- 保持可见但禁用交互
+                child.Active = false
+                child.Selectable = false
+            end
+        end
+    end
+    
+    disableElements(tabFrame)
+end
+
 function switchTab(new)
     if switchingTabs then return end
     
@@ -393,6 +454,13 @@ function switchTab(new)
     if old == nil then
         new[2].Visible = true
         FengUI.currentTab = new
+        
+        -- 确保新标签页的所有按钮可点击
+        task.spawn(function()
+            task.wait(0.05)
+            enableTabControls(new[2])
+        end)
+        
         services.TweenService:Create(new[1], TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { 
             ImageTransparency = 0,
             Size = UDim2.new(0, 25, 0, 25)
@@ -408,6 +476,9 @@ function switchTab(new)
     
     switchingTabs = true
     FengUI.currentTab = new
+    
+    -- 禁用旧标签页的交互
+    disableTabControls(old[2])
     
     local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     services.TweenService:Create(old[1], tweenInfo, { 
@@ -425,10 +496,16 @@ function switchTab(new)
     services.TweenService:Create(new[1].TabText, tweenInfo, { 
         TextTransparency = 0,
         TextColor3 = config.AccentColor
-        }):Play()
+    }):Play()
     
     old[2].Visible = false
     new[2].Visible = true
+    
+    -- 启用新标签页的交互
+    task.spawn(function()
+        task.wait(0.05)
+        enableTabControls(new[2])
+    end)
     
     task.wait(0.3)
     switchingTabs = false
@@ -445,16 +522,52 @@ FengYu.Name = "UniversalUI"
 protectGUI(FengYu)
 FengYu.Parent = services.CoreGui
 
+-- 根据设备类型调整UI大小
+local mainWidth = isMobile and 400 or 450
+local mainHeight = isMobile and 320 or 280
+
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundTransparency = 1
 Main.Position = UDim2.new(0.5, 0, 0.35, 0)
-Main.Size = UDim2.new(0, 450, 0, 280) -- 恢复为UI.lua的大小
+Main.Size = UDim2.new(0, mainWidth, 0, mainHeight)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
+
+-- 移动设备上禁用拖动或调整拖动灵敏度
+if isMobile then
+    Main.Draggable = false
+    -- 添加触摸拖动功能
+    local dragging = false
+    local dragInput, dragStart, startPos
+    
+    Main.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = Main.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    Main.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch and dragging then
+            local delta = input.Position - dragStart
+            Main.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
 
 createSpaceBackground(Main)
 
@@ -496,10 +609,10 @@ TitleText.Parent = TitleBar
 TitleText.BackgroundTransparency = 1
 TitleText.Position = UDim2.new(0, 10, 0, 0)
 TitleText.Size = UDim2.new(0, 200, 1, 0)
-TitleText.Font = Enum.Font.GothamBold
+TitleText.Font = isMobile and Enum.Font.Gotham or Enum.Font.GothamBold
 TitleText.Text = "FengUI"
 TitleText.TextColor3 = config.AccentColor
-TitleText.TextSize = 16
+TitleText.TextSize = isMobile and 14 or 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.TextTransparency = 1
 
@@ -518,11 +631,19 @@ CloseButton.TextSize = 16
 CloseButton.ZIndex = 10
 CloseButton.TextTransparency = 1
 
+-- 移动设备上增大关闭按钮
+if isMobile then
+    CloseButton.Size = UDim2.new(0, 30, 0, 30)
+    CloseButton.Position = UDim2.new(1, -35, 0, 5)
+    CloseButton.TextSize = 18
+end
+
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 4)
 CloseCorner.Parent = CloseButton
 
 CloseButton.MouseEnter:Connect(function()
+    if isMobile then return end
     services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         TextColor3 = Color3.fromRGB(255, 100, 100),
         TextSize = 18,
@@ -531,6 +652,7 @@ CloseButton.MouseEnter:Connect(function()
 end)
 
 CloseButton.MouseLeave:Connect(function()
+    if isMobile then return end
     services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         TextColor3 = Color3.fromRGB(255, 60, 60),
         TextSize = 16,
@@ -539,11 +661,19 @@ CloseButton.MouseLeave:Connect(function()
 end)
 
 CloseButton.MouseButton1Click:Connect(function()
-    services.TweenService:Create(CloseButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        TextColor3 = Color3.fromRGB(255, 30, 30),
-        TextSize = 14,
-        Position = UDim2.new(1, -24, 0, 8)
-    }):Play()
+    if isMobile then
+        services.TweenService:Create(CloseButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            TextColor3 = Color3.fromRGB(255, 30, 30),
+            TextSize = 16,
+            Position = UDim2.new(1, -36, 0, 6)
+        }):Play()
+    else
+        services.TweenService:Create(CloseButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            TextColor3 = Color3.fromRGB(255, 30, 30),
+            TextSize = 14,
+            Position = UDim2.new(1, -24, 0, 8)
+        }):Play()
+    end
     
     services.TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         Position = UDim2.new(0.5, 0, 0.3, 0),
@@ -575,6 +705,11 @@ CloseButton.MouseButton1Click:Connect(function()
     FengYu:Destroy()
 end)
 
+-- 触摸点击事件
+CloseButton.TouchTap:Connect(function()
+    CloseButton.MouseButton1Click:Fire()
+end)
+
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
 Open.Parent = FengYu
@@ -583,10 +718,16 @@ Open.BackgroundTransparency = 0.85
 Open.Position = UDim2.new(0.92, 0, 0.01, 0)
 Open.Size = UDim2.new(0, 40, 0, 40)
 Open.Active = true
-Open.Draggable = true
+Open.Draggable = not isMobile
 Open.Image = "rbxassetid://84830962019412"
 Open.ImageColor3 = Color3.fromRGB(255, 255, 255)
 Open.ImageTransparency = 0.15
+
+-- 移动设备上调整打开按钮大小和位置
+if isMobile then
+    Open.Size = UDim2.new(0, 50, 0, 50)
+    Open.Position = UDim2.new(0.85, 0, 0.01, 0)
+end
 
 local OpenCorner = Instance.new("UICorner")
 OpenCorner.CornerRadius = UDim.new(0, 8)
@@ -609,7 +750,40 @@ Open.MouseButton1Click:Connect(function()
     create3DFlipAnimation(Open, 0.5)
 end)
 
+-- 触摸点击事件
+Open.TouchTap:Connect(function()
+    Open.MouseButton1Click:Fire()
+end)
+
+-- 移动设备上添加虚拟按键支持
+if isMobile then
+    local virtualKey = Instance.new("TextButton")
+    virtualKey.Name = "VirtualKey"
+    virtualKey.Parent = FengYu
+    virtualKey.BackgroundColor3 = config.AccentColor
+    virtualKey.BackgroundTransparency = 0.7
+    virtualKey.Position = UDim2.new(0.01, 0, 0.01, 0)
+    virtualKey.Size = UDim2.new(0, 50, 0, 30)
+    virtualKey.Font = Enum.Font.GothamBold
+    virtualKey.Text = "FengUI"
+    virtualKey.TextColor3 = config.TextColor
+    virtualKey.TextSize = 12
+    virtualKey.Visible = false
+    
+    local keyCorner = Instance.new("UICorner")
+    keyCorner.CornerRadius = UDim.new(0, 6)
+    keyCorner.Parent = virtualKey
+    
+    virtualKey.MouseButton1Click:Connect(function()
+        Main.Visible = not Main.Visible
+        if Main.Visible then
+            playEntranceAnimation()
+        end
+    end)
+end
+
 services.UserInputService.InputEnded:Connect(function(input)
+    if isMobile then return end
     if input.KeyCode == Enum.KeyCode.LeftControl then
         Main.Visible = not Main.Visible
         if Main.Visible then
@@ -624,7 +798,7 @@ TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
 TabMain.Position = UDim2.new(0.2, 0, 0, 37)
-TabMain.Size = UDim2.new(0, 360, 0, 243) -- 恢复为UI.lua的大小
+TabMain.Size = UDim2.new(0, mainWidth - 90, 0, mainHeight - 37)
 TabMain.Visible = false
 
 local Side = Instance.new("Frame")
@@ -635,7 +809,7 @@ Side.BackgroundTransparency = 1
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 35)
-Side.Size = UDim2.new(0, 90, 0, 245) -- 恢复为UI.lua的大小
+Side.Size = UDim2.new(0, 90, 0, mainHeight - 35)
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -648,9 +822,9 @@ TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0, 5)
-TabBtns.Size = UDim2.new(0, 90, 0, 235)
+TabBtns.Size = UDim2.new(0, 90, 0, mainHeight - 40)
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
-TabBtns.ScrollBarThickness = 3
+TabBtns.ScrollBarThickness = isMobile and 5 or 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
 TabBtns.ScrollBarImageTransparency = 0.5
 TabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
@@ -689,7 +863,7 @@ local function playEntranceAnimation()
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
         BackgroundTransparency = 1,
-        Size = UDim2.new(0, 450, 0, 280)
+        Size = UDim2.new(0, mainWidth, 0, mainHeight)
     }):Play()
     
     services.TweenService:Create(MainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -754,7 +928,7 @@ task.spawn(function()
         })
         
         services.TweenService:Create(TitleText, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-            TextSize = 15 + math.sin(tick() * 3) * 2
+            TextSize = (isMobile and 14 or 15) + math.sin(tick() * 3) * 2
         }):Play()
         
         task.wait(0.05)
@@ -784,6 +958,11 @@ function FengUI.new(FengUI, name, theme)
     function window.Tab(window, name, icon, windowCount)
         local windowCount = windowCount or 1
         
+        -- 移动设备上强制使用单窗口
+        if isMobile then
+            windowCount = 1
+        end
+        
         local Tab = Instance.new("ScrollingFrame")
         local TabIco = Instance.new("ImageLabel")
         local TabText = Instance.new("TextLabel")
@@ -796,7 +975,7 @@ function FengUI.new(FengUI, name, theme)
         Tab.Active = true
         Tab.BackgroundTransparency = 1
         Tab.Size = UDim2.new(1, 0, 1, 0)
-        Tab.ScrollBarThickness = 2
+        Tab.ScrollBarThickness = isMobile and 4 or 2
         Tab.ScrollBarImageTransparency = 0.5
         Tab.Visible = false
         Tab.ElasticBehavior = Enum.ElasticBehavior.Never
@@ -809,81 +988,144 @@ function FengUI.new(FengUI, name, theme)
         TabContainer.Size = UDim2.new(1, 0, 1, 0)
         
         if windowCount == 2 then
-    -- 双窗口布局 - 左窗口小一点，右窗口往左移动一点
-    TabContainer.Size = UDim2.new(1, 0, 0, 0)
-    
-    local LeftContainer = Instance.new("ScrollingFrame")
-    LeftContainer.Name = "LeftContainer"
-    LeftContainer.Parent = TabContainer
-    LeftContainer.BackgroundTransparency = 1
-    LeftContainer.Size = UDim2.new(0.48, -2, 1, 0) -- 左窗口48%，稍微小一点
-    LeftContainer.Position = UDim2.new(0, 2, 0, 0)
-    LeftContainer.ScrollBarThickness = 2
-    LeftContainer.ScrollBarImageTransparency = 0.5
-    LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-    LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-    LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-    LeftContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-    
-    local LeftLayout = Instance.new("UIListLayout")
-    LeftLayout.Name = "LeftLayout"
-    LeftLayout.Parent = LeftContainer
-    LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    LeftLayout.Padding = UDim.new(0, 4)
-    
-    local RightContainer = Instance.new("ScrollingFrame")
-    RightContainer.Name = "RightContainer"
-    RightContainer.Parent = TabContainer
-    RightContainer.BackgroundTransparency = 1
-    RightContainer.Size = UDim2.new(0.50, -2, 1, 0) -- 右窗口50%，稍微大一点
-    RightContainer.Position = UDim2.new(0.48, 0, 0, 0) -- 右窗口往左移动一点（从0.495改为0.48）
-    RightContainer.ScrollBarThickness = 2
-    RightContainer.ScrollBarImageTransparency = 0.5
-    RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-    RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-    RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-    RightContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-    
-    local RightLayout = Instance.new("UIListLayout")
-    RightLayout.Name = "RightLayout"
-    RightLayout.Parent = RightContainer
-    RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    RightLayout.Padding = UDim.new(0, 4)
-    
-    -- 分别设置滚动监听，避免相互干扰
-    LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        LeftContainer.CanvasSize = UDim2.new(0, 0, 0, LeftLayout.AbsoluteContentSize.Y + 20)
-        
-        if LeftLayout.AbsoluteContentSize.Y <= LeftContainer.AbsoluteSize.Y then
-            LeftContainer.ScrollingEnabled = false
-        else
-            LeftContainer.ScrollingEnabled = true
-        end
-    end)
-    
-    RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        RightContainer.CanvasSize = UDim2.new(0, 0, 0, RightLayout.AbsoluteContentSize.Y + 20)
-        
-        if RightLayout.AbsoluteContentSize.Y <= RightContainer.AbsoluteSize.Y then
-            RightContainer.ScrollingEnabled = false
-        else
-            RightContainer.ScrollingEnabled = true
-        end
-    end)
-    
-    -- 防止滚动事件冒泡到父容器
-    local function preventScrollBubble(scrollingFrame)
-        scrollingFrame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseWheel then
-                -- 标记事件已处理，防止冒泡到父容器
-                input.Used = true
+            -- 双窗口布局 - 左窗口小一点，右窗口往左移动一点
+            TabContainer.Size = UDim2.new(1, 0, 0, 0)
+            
+            local LeftContainer = Instance.new("ScrollingFrame")
+            LeftContainer.Name = "LeftContainer"
+            LeftContainer.Parent = TabContainer
+            LeftContainer.BackgroundTransparency = 1
+            LeftContainer.Size = UDim2.new(0.48, -2, 1, 0) -- 左窗口48%，稍微小一点
+            LeftContainer.Position = UDim2.new(0, 2, 0, 0)
+            LeftContainer.ScrollBarThickness = 2
+            LeftContainer.ScrollBarImageTransparency = 0.5
+            LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+            LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+            LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+            
+            local RightContainer = Instance.new("ScrollingFrame")
+            RightContainer.Name = "RightContainer"
+            RightContainer.Parent = TabContainer
+            RightContainer.BackgroundTransparency = 1
+            RightContainer.Size = UDim2.new(0.50, -2, 1, 0) -- 右窗口50%，稍微大一点
+            RightContainer.Position = UDim2.new(0.48, 0, 0, 0) -- 右窗口往左移动一点
+            RightContainer.ScrollBarThickness = 2
+            RightContainer.ScrollBarImageTransparency = 0.5
+            RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+            RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+            RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+            
+            -- 添加鼠标悬停检测来控制滚动
+            local activeScrollFrame = nil
+            
+            local function setActiveScrollFrame(frame)
+                if activeScrollFrame and activeScrollFrame ~= frame then
+                    activeScrollFrame.ScrollingEnabled = false
+                end
+                
+                activeScrollFrame = frame
+                if frame then
+                    frame.ScrollingEnabled = true
+                end
             end
-        end)
-    end
-    
-    preventScrollBubble(LeftContainer)
-    preventScrollBubble(RightContainer)
-end
+            
+            -- 鼠标进入左窗口时，只允许左窗口滚动
+            LeftContainer.MouseEnter:Connect(function()
+                if isMobile then return end
+                setActiveScrollFrame(LeftContainer)
+                -- 启用左窗口滚动，禁用右窗口滚动
+                LeftContainer.ScrollingEnabled = true
+                RightContainer.ScrollingEnabled = false
+            end)
+            
+            -- 鼠标进入右窗口时，只允许右窗口滚动
+            RightContainer.MouseEnter:Connect(function()
+                if isMobile then return end
+                setActiveScrollFrame(RightContainer)
+                -- 启用右窗口滚动，禁用左窗口滚动
+                RightContainer.ScrollingEnabled = true
+                LeftContainer.ScrollingEnabled = false
+            end)
+            
+            -- 触摸设备处理
+            if isMobile then
+                -- 移动设备上自动启用两个窗口的滚动
+                LeftContainer.ScrollingEnabled = true
+                RightContainer.ScrollingEnabled = true
+            else
+                -- 鼠标离开窗口时，恢复默认状态
+                LeftContainer.MouseLeave:Connect(function()
+                    local mousePos = services.UserInputService:GetMouseLocation()
+                    local leftAbsPos = LeftContainer.AbsolutePosition
+                    local leftAbsSize = LeftContainer.AbsoluteSize
+                    local rightAbsPos = RightContainer.AbsolutePosition
+                    local rightAbsSize = RightContainer.AbsoluteSize
+                    
+                    -- 检查鼠标是否在右窗口
+                    local isInRight = mousePos.X >= rightAbsPos.X and mousePos.X <= rightAbsPos.X + rightAbsSize.X
+                        and mousePos.Y >= rightAbsPos.Y and mousePos.Y <= rightAbsPos.Y + rightAbsSize.Y
+                    
+                    if not isInRight then
+                        -- 鼠标不在任何窗口，恢复两个窗口的滚动状态
+                        local leftLayout = LeftContainer:FindFirstChild("LeftLayout")
+                        local rightLayout = RightContainer:FindFirstChild("RightLayout")
+                        
+                        if leftLayout then
+                            LeftContainer.ScrollingEnabled = leftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y
+                        end
+                        
+                        if rightLayout then
+                            RightContainer.ScrollingEnabled = rightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y
+                        end
+                        
+                        activeScrollFrame = nil
+                    end
+                end)
+                
+                RightContainer.MouseLeave:Connect(function()
+                    local mousePos = services.UserInputService:GetMouseLocation()
+                    local leftAbsPos = LeftContainer.AbsolutePosition
+                    local leftAbsSize = LeftContainer.AbsoluteSize
+                    local rightAbsPos = RightContainer.AbsolutePosition
+                    local rightAbsSize = RightContainer.AbsoluteSize
+                    
+                    -- 检查鼠标是否在左窗口
+                    local isInLeft = mousePos.X >= leftAbsPos.X and mousePos.X <= leftAbsPos.X + leftAbsSize.X
+                        and mousePos.Y >= leftAbsPos.Y and mousePos.Y <= leftAbsPos.Y + leftAbsSize.Y
+                    
+                    if not isInLeft then
+                        -- 鼠标不在任何窗口，恢复两个窗口的滚动状态
+                        local leftLayout = LeftContainer:FindFirstChild("LeftLayout")
+                        local rightLayout = RightContainer:FindFirstChild("RightLayout")
+                        
+                        if leftLayout then
+                            LeftContainer.ScrollingEnabled = leftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y
+                        end
+                        
+                        if rightLayout then
+                            RightContainer.ScrollingEnabled = rightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y
+                        end
+                        
+                        activeScrollFrame = nil
+                    end
+                end)
+            end
+            
+            local LeftLayout = Instance.new("UIListLayout")
+            LeftLayout.Name = "LeftLayout"
+            LeftLayout.Parent = LeftContainer
+            LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            LeftLayout.Padding = UDim.new(0, 4)
+            
+            local RightLayout = Instance.new("UIListLayout")
+            RightLayout.Name = "RightLayout"
+            RightLayout.Parent = RightContainer
+            RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            RightLayout.Padding = UDim.new(0, 4)
+            
+            setupSmoothScrolling(LeftContainer, LeftLayout)
+            setupSmoothScrolling(RightContainer, RightLayout)
+        end
         
         TabIco.Name = "TabIco"
         TabIco.Parent = TabBtns
@@ -900,10 +1142,10 @@ end
         TabText.BackgroundTransparency = 1
         TabText.Position = UDim2.new(1.2, 0, 0, 0)
         TabText.Size = UDim2.new(0, 65, 0, 22)
-        TabText.Font = Enum.Font.GothamSemibold
+        TabText.Font = isMobile and Enum.Font.Gotham or Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
-        TabText.TextSize = 14
+        TabText.TextSize = isMobile and 12 or 14
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.TextTransparency = 0.5
         
@@ -911,10 +1153,17 @@ end
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 90, 0, 22)
+        TabBtn.Size = UDim2.new(0, 90, 0, isMobile and 28 or 22)
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
+        
+        -- 移动设备上增大标签按钮
+        if isMobile then
+            TabIco.Size = UDim2.new(0, 26, 0, 26)
+            TabText.Size = UDim2.new(0, 70, 0, 26)
+            TabBtn.Size = UDim2.new(0, 100, 0, 28)
+        end
         
         TabL.Name = "TabL"
         TabL.Parent = TabContainer
@@ -928,6 +1177,11 @@ end
         end
         
         TabBtn.MouseButton1Click:Connect(function()
+            switchTab({ TabIco, Tab })
+        end)
+        
+        -- 触摸点击事件
+        TabBtn.TouchTap:Connect(function()
             switchTab({ TabIco, Tab })
         end)
         
@@ -986,15 +1240,15 @@ end
             Section.BackgroundTransparency = 1
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
-            Section.Size = UDim2.new(1, 0, 0, 36)
+            Section.Size = UDim2.new(1, 0, 0, isMobile and 42 or 36)
             
             -- 根据窗口类型调整宽度
-            local elementWidth = 330 -- 单窗口宽度，与UI.lua保持一致
+            local elementWidth = isMobile and (mainWidth - 110) or 330 -- 单窗口宽度
             if windowCount == 2 then
                 if windowPosition:lower() == "left" then
-                    elementWidth = 162  -- 左窗口宽度，略微增大
+                    elementWidth = isMobile and 150 or 162  -- 左窗口宽度
                 else
-                    elementWidth = 168  -- 右窗口宽度，与左窗口平衡
+                    elementWidth = isMobile and 154 or 168  -- 右窗口宽度
                 end
             end
             
@@ -1002,19 +1256,19 @@ end
             SectionText.Parent = Section
             SectionText.BackgroundTransparency = 1
             SectionText.Position = UDim2.new(0, 35, 0, 0)
-            SectionText.Size = UDim2.new(1, -35, 0, 36)
-            SectionText.Font = Enum.Font.GothamSemibold
+            SectionText.Size = UDim2.new(1, -35, 0, isMobile and 42 or 36)
+            SectionText.Font = isMobile and Enum.Font.Gotham or Enum.Font.GothamSemibold
             SectionText.Text = name
             SectionText.TextColor3 = config.AccentColor
-            SectionText.TextSize = 16
+            SectionText.TextSize = isMobile and 14 or 16
             SectionText.TextXAlignment = Enum.TextXAlignment.Left
             
             SectionOpen.Name = "SectionOpen"
             SectionOpen.Parent = Section
             SectionOpen.BackgroundTransparency = 1
             SectionOpen.BorderSizePixel = 0
-            SectionOpen.Position = UDim2.new(0, 5, 0, 5)
-            SectionOpen.Size = UDim2.new(0, 22, 0, 22)
+            SectionOpen.Position = UDim2.new(0, 5, 0, isMobile and 8 or 5)
+            SectionOpen.Size = UDim2.new(0, isMobile and 26 or 22, 0, isMobile and 26 or 22)
             SectionOpen.Image = "rbxassetid://84830962019412"
             SectionOpen.ImageColor3 = config.SecondaryTextColor
             
@@ -1033,11 +1287,30 @@ end
             SectionToggle.BorderSizePixel = 0
             SectionToggle.Size = UDim2.new(1, 0, 1, 0)
             
+            -- 移动设备上增大触摸区域
+            if isMobile then
+                local touchArea = Instance.new("TextButton")
+                touchArea.Name = "TouchArea"
+                touchArea.Parent = Section
+                touchArea.BackgroundTransparency = 1
+                touchArea.Size = UDim2.new(1, 0, 0, 42)
+                touchArea.Text = ""
+                touchArea.ZIndex = 5
+                
+                touchArea.MouseButton1Click:Connect(function()
+                    SectionToggle.MouseButton1Click:Fire()
+                end)
+                
+                touchArea.TouchTap:Connect(function()
+                    SectionToggle.MouseButton1Click:Fire()
+                end)
+            end
+            
             Objs.Name = "Objs"
             Objs.Parent = Section
             Objs.BackgroundTransparency = 1
             Objs.BorderSizePixel = 0
-            Objs.Position = UDim2.new(0, 0, 0, 36)
+            Objs.Position = UDim2.new(0, 0, 0, isMobile and 42 or 36)
             Objs.Size = UDim2.new(1, 0, 0, 0)
             
             ObjsL.Name = "ObjsL"
@@ -1047,7 +1320,7 @@ end
             
             local open = TabVal ~= false
             if TabVal ~= false then
-                Section.Size = UDim2.new(1, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 8 or 36)
+                Section.Size = UDim2.new(1, 0, 0, open and (isMobile and 42 or 36) + ObjsL.AbsoluteContentSize.Y + 8 or (isMobile and 42 or 36))
                 SectionOpened.ImageTransparency = open and 0 or 1
                 SectionOpen.ImageTransparency = open and 1 or 0
             end
@@ -1055,7 +1328,7 @@ end
             SectionToggle.MouseButton1Click:Connect(function()
                 open = not open
                 services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                    Size = UDim2.new(1, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 8 or 36)
+                    Size = UDim2.new(1, 0, 0, open and (isMobile and 42 or 36) + ObjsL.AbsoluteContentSize.Y + 8 or (isMobile and 42 or 36))
                 }):Play()
                 
                 services.TweenService:Create(SectionOpened, TweenInfo.new(0.3), {
@@ -1067,415 +1340,440 @@ end
                 }):Play()
             end)
             
+            -- 触摸点击事件
+            SectionToggle.TouchTap:Connect(function()
+                SectionToggle.MouseButton1Click:Fire()
+            end)
+            
             ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                 if not open then return end
-                Section.Size = UDim2.new(1, 0, 0, 36 + ObjsL.AbsoluteContentSize.Y + 8)
+                Section.Size = UDim2.new(1, 0, 0, (isMobile and 42 or 36) + ObjsL.AbsoluteContentSize.Y + 8)
             end)
             
             local section = {}
             
             function section.MusicPlayer(section, title, defaultPlaylist)
-    local MusicPlayerModule = Instance.new("Frame")
-    MusicPlayerModule.Name = "MusicPlayerModule"
-    MusicPlayerModule.Parent = Objs
-    MusicPlayerModule.BackgroundTransparency = 1
-    MusicPlayerModule.BorderSizePixel = 0
-    MusicPlayerModule.Size = UDim2.new(0, elementWidth, 0, 160)
-    
-    local PlayerContainer = Instance.new("Frame")
-    PlayerContainer.Name = "PlayerContainer"
-    PlayerContainer.Parent = MusicPlayerModule
-    PlayerContainer.BackgroundColor3 = config.TabColor
-    PlayerContainer.BackgroundTransparency = 0.2
-    PlayerContainer.Size = UDim2.new(1, 0, 0, 160)
-    
-    local PlayerCorner = Instance.new("UICorner")
-    PlayerCorner.CornerRadius = UDim.new(0, 8)
-    PlayerCorner.Parent = PlayerContainer
-    
-    local playerGlow = Instance.new("UIStroke")
-    playerGlow.Parent = PlayerContainer
-    playerGlow.Color = config.AccentColor
-    playerGlow.Thickness = 2
-    playerGlow.Transparency = 0.7
-    
-    startNeonFlowEffect(playerGlow, "Color", 0.008)
-    createPulseGlow(playerGlow)
-    
-    local TopSection = Instance.new("Frame")
-    TopSection.Name = "TopSection"
-    TopSection.Parent = PlayerContainer
-    TopSection.BackgroundTransparency = 1
-    TopSection.Size = UDim2.new(1, 0, 0, 70)
-    
-    local AlbumArt = Instance.new("ImageLabel")
-    AlbumArt.Name = "AlbumArt"
-    AlbumArt.Parent = TopSection
-    AlbumArt.BackgroundColor3 = config.Bg_Color
-    AlbumArt.BackgroundTransparency = 0.2
-    AlbumArt.Position = UDim2.new(0.03, 0, 0.1, 0)
-    AlbumArt.Size = UDim2.new(0, 50, 0, 50)
-    
-    local AlbumCorner = Instance.new("UICorner")
-    AlbumCorner.CornerRadius = UDim.new(0, 6)
-    AlbumCorner.Parent = AlbumArt
-    
-    local albumGlow = Instance.new("UIStroke")
-    albumGlow.Parent = AlbumArt
-    albumGlow.Color = config.AccentColor
-    albumGlow.Thickness = 1
-    albumGlow.Transparency = 0.8
-    
-    local InfoContainer = Instance.new("Frame")
-    InfoContainer.Name = "InfoContainer"
-    InfoContainer.Parent = TopSection
-    InfoContainer.BackgroundTransparency = 1
-    InfoContainer.Position = UDim2.new(0.22, 0, 0, 0)
-    InfoContainer.Size = UDim2.new(0.75, 0, 1, 0)
-    
-    local SongTitle = Instance.new("TextLabel")
-    SongTitle.Name = "SongTitle"
-    SongTitle.Parent = InfoContainer
-    SongTitle.BackgroundTransparency = 1
-    SongTitle.Position = UDim2.new(0, 0, 0.15, 0)
-    SongTitle.Size = UDim2.new(1, 0, 0, 25)
-    SongTitle.Font = Enum.Font.GothamBold
-    SongTitle.Text = "没有播放音乐"
-    SongTitle.TextColor3 = config.TextColor
-    SongTitle.TextSize = 14
-    SongTitle.TextXAlignment = Enum.TextXAlignment.Left
-    SongTitle.TextTruncate = Enum.TextTruncate.AtEnd
-    
-    local ArtistName = Instance.new("TextLabel")
-    ArtistName.Name = "ArtistName"
-    ArtistName.Parent = InfoContainer
-    ArtistName.BackgroundTransparency = 1
-    ArtistName.Position = UDim2.new(0, 0, 0.45, 0)
-    ArtistName.Size = UDim2.new(1, 0, 0, 20)
-    ArtistName.Font = Enum.Font.Gotham
-    ArtistName.Text = "未知艺术家"
-    ArtistName.TextColor3 = config.SecondaryTextColor
-    ArtistName.TextSize = 12
-    ArtistName.TextXAlignment = Enum.TextXAlignment.Left
-    ArtistName.TextTruncate = Enum.TextTruncate.AtEnd
-    
-    local BottomSection = Instance.new("Frame")
-    BottomSection.Name = "BottomSection"
-    BottomSection.Parent = PlayerContainer
-    BottomSection.BackgroundTransparency = 1
-    BottomSection.Position = UDim2.new(0, 0, 0.44, 0)
-    BottomSection.Size = UDim2.new(1, 0, 0, 90)
-    
-    local ProgressBar = Instance.new("Frame")
-    ProgressBar.Name = "ProgressBar"
-    ProgressBar.Parent = BottomSection
-    ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    ProgressBar.BorderSizePixel = 0
-    ProgressBar.Position = UDim2.new(0.03, 0, 0.05, 0)
-    ProgressBar.Size = UDim2.new(0.94, 0, 0, 6)
-    
-    local ProgressBarCorner = Instance.new("UICorner")
-    ProgressBarCorner.CornerRadius = UDim.new(1, 0)
-    ProgressBarCorner.Parent = ProgressBar
-    
-    local ProgressFill = Instance.new("Frame")
-    ProgressFill.Name = "ProgressFill"
-    ProgressFill.Parent = ProgressBar
-    ProgressFill.BackgroundColor3 = config.AccentColor
-    ProgressFill.BackgroundTransparency = 0
-    ProgressFill.Size = UDim2.new(0, 0, 1, 0)
-    
-    local ProgressFillCorner = Instance.new("UICorner")
-    ProgressFillCorner.CornerRadius = UDim.new(1, 0)
-    ProgressFillCorner.Parent = ProgressFill
-    
-    local TimeLabel = Instance.new("TextLabel")
-    TimeLabel.Name = "TimeLabel"
-    TimeLabel.Parent = BottomSection
-    TimeLabel.BackgroundTransparency = 1
-    TimeLabel.Position = UDim2.new(0.03, 0, 0.18, 0)
-    TimeLabel.Size = UDim2.new(0.94, 0, 0, 15)
-    TimeLabel.Font = Enum.Font.Gotham
-    TimeLabel.Text = "0:00 / 0:00"
-    TimeLabel.TextColor3 = config.SecondaryTextColor
-    TimeLabel.TextSize = 10
-    TimeLabel.TextXAlignment = Enum.TextXAlignment.Center
-    
-    local ControlsContainer = Instance.new("Frame")
-    ControlsContainer.Name = "ControlsContainer"
-    ControlsContainer.Parent = BottomSection
-    ControlsContainer.BackgroundTransparency = 1
-    ControlsContainer.Position = UDim2.new(0, 0, 0.35, 0)
-    ControlsContainer.Size = UDim2.new(1, 0, 0, 40)
-    
-    local function createControlButton(name, text, position, size, isMain)
-        local button = Instance.new("TextButton")
-        button.Name = name
-        button.Parent = ControlsContainer
-        button.BackgroundColor3 = isMain and config.AccentColor or Color3.fromRGB(180, 180, 180)
-        button.BackgroundTransparency = 0.1
-        button.Position = position
-        button.Size = size
-        button.AutoButtonColor = false
-        button.Font = Enum.Font.GothamBold
-        button.Text = text
-        button.TextColor3 = isMain and config.TextColor or Color3.fromRGB(50, 50, 50)
-        button.TextSize = isMain and 16 or 12
-        button.ZIndex = 5
-        
-        local buttonCorner = Instance.new("UICorner")
-        buttonCorner.CornerRadius = UDim.new(1, 0)
-        buttonCorner.Parent = button
-        
-        local buttonGlow = Instance.new("UIStroke")
-        buttonGlow.Parent = button
-        buttonGlow.Color = isMain and config.AccentColor or Color3.fromRGB(150, 150, 150)
-        buttonGlow.Thickness = 1
-        buttonGlow.Transparency = 0.6
-        buttonGlow.ZIndex = 4
-        
-        if isMain then
-            startNeonFlowEffect(buttonGlow, "Color", 0.01)
-        end
-        
-        button.MouseEnter:Connect(function()
-            services.TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0,
-                Size = UDim2.new(0, size.X.Offset + 2, 0, size.Y.Offset + 2)
-            }):Play()
-            services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
-                Thickness = 2,
-                Transparency = 0.3
-            }):Play()
-        end)
-        
-        button.MouseLeave:Connect(function()
-            services.TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.1,
-                Size = size
-            }):Play()
-            services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
-                Thickness = 1,
-                Transparency = 0.6
-            }):Play()
-        end)
-        
-        return button, buttonGlow
-    end
-    
-    local PrevButton, prevGlow = createControlButton("PrevButton", "⏮", UDim2.new(0.15, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
-    local PlayPauseButton, playGlow = createControlButton("PlayPauseButton", "▶", UDim2.new(0.42, 0, 0.1, 0), UDim2.new(0, 36, 0, 36), true)
-    local NextButton, nextGlow = createControlButton("NextButton", "⏭", UDim2.new(0.69, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
-    
-    local LoopButton, loopGlow = createControlButton("LoopButton", "🔁", UDim2.new(0.85, 0, 0.2, 0), UDim2.new(0, 32, 0, 32), false)
-    
-    local loopModes = {
-        {mode = "none", text = "🔁", tooltip = "无循环"},
-        {mode = "single", text = "🔂", tooltip = "单曲循环"},
-        {mode = "all", text = "🔁", tooltip = "列表循环"}
-    }
-    local currentLoopMode = 1
-    
-    local function updateLoopMode()
-        local mode = loopModes[currentLoopMode]
-        LoopButton.Text = mode.text
-        MusicPlayer.isLooping = (mode.mode == "single" or mode.mode == "all")
-        
-        if mode.mode == "single" then
-            services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
-                BackgroundColor3 = Color3.fromRGB(120, 120, 120)
-            }):Play()
-            services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
-                Transparency = 0.3,
-                Thickness = 2
-            }):Play()
-        else
-            services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
-                BackgroundColor3 = Color3.fromRGB(180, 180, 180)
-            }):Play()
-            services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
-                Transparency = 0.6,
-                Thickness = 1
-            }):Play()
-        end
-    end
-    
-    local function updateUI()
-        local currentTrack = MusicPlayer:GetCurrentTrack()
-        if currentTrack then
-            SongTitle.Text = currentTrack.title
-            ArtistName.Text = currentTrack.artist
-            AlbumArt.Image = "rbxassetid://" .. currentTrack.imageId
-        else
-            SongTitle.Text = "没有播放音乐"
-            ArtistName.Text = "未知艺术家"
-            AlbumArt.Image = "rbxassetid://84830962019412"
-        end
-        
-        PlayPauseButton.Text = MusicPlayer.isPlaying and "⏸" or "▶"
-        updateLoopMode()
-    end
-    
-    task.spawn(function()
-        while PlayerContainer and PlayerContainer.Parent do
-            if MusicPlayer.currentSound and MusicPlayer.isPlaying then
-                local currentTime = MusicPlayer.currentSound.TimePosition
-                local totalTime = MusicPlayer.currentSound.TimeLength
+                local MusicPlayerModule = Instance.new("Frame")
+                MusicPlayerModule.Name = "MusicPlayerModule"
+                MusicPlayerModule.Parent = Objs
+                MusicPlayerModule.BackgroundTransparency = 1
+                MusicPlayerModule.BorderSizePixel = 0
+                MusicPlayerModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 180 : 160)
                 
-                if totalTime > 0 then
-                    local progress = currentTime / totalTime
-                    ProgressFill.Size = UDim2.new(progress, 0, 1, 0)
-                    
-                    local currentMinutes = math.floor(currentTime / 60)
-                    local currentSeconds = math.floor(currentTime % 60)
-                    local totalMinutes = math.floor(totalTime / 60)
-                    local totalSeconds = math.floor(totalTime % 60)
-                    
-                    TimeLabel.Text = string.format("%d:%02d / %d:%02d", 
-                        currentMinutes, currentSeconds, totalMinutes, totalSeconds)
-                end
-            else
+                local PlayerContainer = Instance.new("Frame")
+                PlayerContainer.Name = "PlayerContainer"
+                PlayerContainer.Parent = MusicPlayerModule
+                PlayerContainer.BackgroundColor3 = config.TabColor
+                PlayerContainer.BackgroundTransparency = 0.2
+                PlayerContainer.Size = UDim2.new(1, 0, 0, isMobile and 180 : 160)
+                
+                local PlayerCorner = Instance.new("UICorner")
+                PlayerCorner.CornerRadius = UDim.new(0, 8)
+                PlayerCorner.Parent = PlayerContainer
+                
+                local playerGlow = Instance.new("UIStroke")
+                playerGlow.Parent = PlayerContainer
+                playerGlow.Color = config.AccentColor
+                playerGlow.Thickness = 2
+                playerGlow.Transparency = 0.7
+                
+                startNeonFlowEffect(playerGlow, "Color", 0.008)
+                createPulseGlow(playerGlow)
+                
+                local TopSection = Instance.new("Frame")
+                TopSection.Name = "TopSection"
+                TopSection.Parent = PlayerContainer
+                TopSection.BackgroundTransparency = 1
+                TopSection.Size = UDim2.new(1, 0, 0, 70)
+                
+                local AlbumArt = Instance.new("ImageLabel")
+                AlbumArt.Name = "AlbumArt"
+                AlbumArt.Parent = TopSection
+                AlbumArt.BackgroundColor3 = config.Bg_Color
+                AlbumArt.BackgroundTransparency = 0.2
+                AlbumArt.Position = UDim2.new(0.03, 0, 0.1, 0)
+                AlbumArt.Size = UDim2.new(0, 50, 0, 50)
+                
+                local AlbumCorner = Instance.new("UICorner")
+                AlbumCorner.CornerRadius = UDim.new(0, 6)
+                AlbumCorner.Parent = AlbumArt
+                
+                local albumGlow = Instance.new("UIStroke")
+                albumGlow.Parent = AlbumArt
+                albumGlow.Color = config.AccentColor
+                albumGlow.Thickness = 1
+                albumGlow.Transparency = 0.8
+                
+                local InfoContainer = Instance.new("Frame")
+                InfoContainer.Name = "InfoContainer"
+                InfoContainer.Parent = TopSection
+                InfoContainer.BackgroundTransparency = 1
+                InfoContainer.Position = UDim2.new(0.22, 0, 0, 0)
+                InfoContainer.Size = UDim2.new(0.75, 0, 1, 0)
+                
+                local SongTitle = Instance.new("TextLabel")
+                SongTitle.Name = "SongTitle"
+                SongTitle.Parent = InfoContainer
+                SongTitle.BackgroundTransparency = 1
+                SongTitle.Position = UDim2.new(0, 0, 0.15, 0)
+                SongTitle.Size = UDim2.new(1, 0, 0, 25)
+                SongTitle.Font = isMobile and Enum.Font.Gotham or Enum.Font.GothamBold
+                SongTitle.Text = "没有播放音乐"
+                SongTitle.TextColor3 = config.TextColor
+                SongTitle.TextSize = isMobile and 12 or 14
+                SongTitle.TextXAlignment = Enum.TextXAlignment.Left
+                SongTitle.TextTruncate = Enum.TextTruncate.AtEnd
+                
+                local ArtistName = Instance.new("TextLabel")
+                ArtistName.Name = "ArtistName"
+                ArtistName.Parent = InfoContainer
+                ArtistName.BackgroundTransparency = 1
+                ArtistName.Position = UDim2.new(0, 0, 0.45, 0)
+                ArtistName.Size = UDim2.new(1, 0, 0, 20)
+                ArtistName.Font = Enum.Font.Gotham
+                ArtistName.Text = "未知艺术家"
+                ArtistName.TextColor3 = config.SecondaryTextColor
+                ArtistName.TextSize = isMobile and 10 or 12
+                ArtistName.TextXAlignment = Enum.TextXAlignment.Left
+                ArtistName.TextTruncate = Enum.TextTruncate.AtEnd
+                
+                local BottomSection = Instance.new("Frame")
+                BottomSection.Name = "BottomSection"
+                BottomSection.Parent = PlayerContainer
+                BottomSection.BackgroundTransparency = 1
+                BottomSection.Position = UDim2.new(0, 0, 0.44, 0)
+                BottomSection.Size = UDim2.new(1, 0, 0, 90)
+                
+                local ProgressBar = Instance.new("Frame")
+                ProgressBar.Name = "ProgressBar"
+                ProgressBar.Parent = BottomSection
+                ProgressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                ProgressBar.BorderSizePixel = 0
+                ProgressBar.Position = UDim2.new(0.03, 0, 0.05, 0)
+                ProgressBar.Size = UDim2.new(0.94, 0, 0, isMobile and 8 or 6)
+                
+                local ProgressBarCorner = Instance.new("UICorner")
+                ProgressBarCorner.CornerRadius = UDim.new(1, 0)
+                ProgressBarCorner.Parent = ProgressBar
+                
+                local ProgressFill = Instance.new("Frame")
+                ProgressFill.Name = "ProgressFill"
+                ProgressFill.Parent = ProgressBar
+                ProgressFill.BackgroundColor3 = config.AccentColor
+                ProgressFill.BackgroundTransparency = 0
                 ProgressFill.Size = UDim2.new(0, 0, 1, 0)
-                TimeLabel.Text = "0:00 / 0:00"
-            end
-            task.wait(0.1)
-        end
-    end)
-    
-    local function createButtonClickEffect(button, isMain)
-        services.TweenService:Create(button, TweenInfo.new(0.1), {
-            BackgroundTransparency = 0.3,
-            Size = UDim2.new(0, button.Size.X.Offset - 2, 0, button.Size.Y.Offset - 2)
-        }):Play()
-        
-        task.wait(0.1)
-        
-        services.TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0.1,
-            Size = UDim2.new(0, button.Size.X.Offset + 2, 0, button.Size.Y.Offset + 2)
-        }):Play()
-    end
-    
-    PlayPauseButton.MouseButton1Click:Connect(function()
-        createButtonClickEffect(PlayPauseButton, true)
-        
-        if MusicPlayer.isPlaying then
-            MusicPlayer:Pause()
-        else
-            if #MusicPlayer.playlist > 0 then
-                if not MusicPlayer.currentSound then
-                    MusicPlayer:PlayTrack(MusicPlayer.playlist[MusicPlayer.currentTrackIndex].id)
-                else
-                    MusicPlayer:Resume()
-                end
-            end
-        end
-        updateUI()
-    end)
-    
-    PrevButton.MouseButton1Click:Connect(function()
-        createButtonClickEffect(PrevButton, false)
-        local track = MusicPlayer:PreviousTrack()
-        if track then
-            updateUI()
-        end
-    end)
-    
-    NextButton.MouseButton1Click:Connect(function()
-        createButtonClickEffect(NextButton, false)
-        local track = MusicPlayer:NextTrack()
-        if track then
-            updateUI()
-        end
-    end)
-    
-    LoopButton.MouseButton1Click:Connect(function()
-        createButtonClickEffect(LoopButton, false)
-        
-        currentLoopMode = currentLoopMode + 1
-        if currentLoopMode > #loopModes then
-            currentLoopMode = 1
-        end
-        
-        updateLoopMode()
-    end)
-    
-    local originalPlayTrack = MusicPlayer.PlayTrack
-    MusicPlayer.PlayTrack = function(self, trackId)
-        originalPlayTrack(self, trackId)
-        
-        if self.currentSound then
-            self.currentSound.Ended:Connect(function()
-                local currentMode = loopModes[currentLoopMode]
                 
-                if currentMode.mode == "single" then
-                    self.currentSound:Play()
-                elseif currentMode.mode == "all" then
-                    self:NextTrack()
+                local ProgressFillCorner = Instance.new("UICorner")
+                ProgressFillCorner.CornerRadius = UDim.new(1, 0)
+                ProgressFillCorner.Parent = ProgressFill
+                
+                local TimeLabel = Instance.new("TextLabel")
+                TimeLabel.Name = "TimeLabel"
+                TimeLabel.Parent = BottomSection
+                TimeLabel.BackgroundTransparency = 1
+                TimeLabel.Position = UDim2.new(0.03, 0, 0.18, 0)
+                TimeLabel.Size = UDim2.new(0.94, 0, 0, 15)
+                TimeLabel.Font = Enum.Font.Gotham
+                TimeLabel.Text = "0:00 / 0:00"
+                TimeLabel.TextColor3 = config.SecondaryTextColor
+                TimeLabel.TextSize = isMobile and 9 or 10
+                TimeLabel.TextXAlignment = Enum.TextXAlignment.Center
+                
+                local ControlsContainer = Instance.new("Frame")
+                ControlsContainer.Name = "ControlsContainer"
+                ControlsContainer.Parent = BottomSection
+                ControlsContainer.BackgroundTransparency = 1
+                ControlsContainer.Position = UDim2.new(0, 0, 0.35, 0)
+                ControlsContainer.Size = UDim2.new(1, 0, 0, 40)
+                
+                local function createControlButton(name, text, position, size, isMain)
+                    local button = Instance.new("TextButton")
+                    button.Name = name
+                    button.Parent = ControlsContainer
+                    button.BackgroundColor3 = isMain and config.AccentColor or Color3.fromRGB(180, 180, 180)
+                    button.BackgroundTransparency = 0.1
+                    button.Position = position
+                    button.Size = size
+                    button.AutoButtonColor = false
+                    button.Font = Enum.Font.GothamBold
+                    button.Text = text
+                    button.TextColor3 = isMain and config.TextColor or Color3.fromRGB(50, 50, 50)
+                    button.TextSize = isMain and (isMobile and 14 or 16) or (isMobile and 10 or 12)
+                    button.ZIndex = 5
+                    
+                    local buttonCorner = Instance.new("UICorner")
+                    buttonCorner.CornerRadius = UDim.new(1, 0)
+                    buttonCorner.Parent = button
+                    
+                    local buttonGlow = Instance.new("UIStroke")
+                    buttonGlow.Parent = button
+                    buttonGlow.Color = isMain and config.AccentColor or Color3.fromRGB(150, 150, 150)
+                    buttonGlow.Thickness = 1
+                    buttonGlow.Transparency = 0.6
+                    buttonGlow.ZIndex = 4
+                    
+                    if isMain then
+                        startNeonFlowEffect(buttonGlow, "Color", 0.01)
+                    end
+                    
+                    button.MouseEnter:Connect(function()
+                        if isMobile then return end
+                        services.TweenService:Create(button, TweenInfo.new(0.2), {
+                            BackgroundTransparency = 0,
+                            Size = UDim2.new(0, size.X.Offset + 2, 0, size.Y.Offset + 2)
+                        }):Play()
+                        services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
+                            Thickness = 2,
+                            Transparency = 0.3
+                        }):Play()
+                    end)
+                    
+                    button.MouseLeave:Connect(function()
+                        if isMobile then return end
+                        services.TweenService:Create(button, TweenInfo.new(0.2), {
+                            BackgroundTransparency = 0.1,
+                            Size = size
+                        }):Play()
+                        services.TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
+                            Thickness = 1,
+                            Transparency = 0.6
+                        }):Play()
+                    end)
+                    
+                    -- 触摸点击反馈
+                    button.TouchTap:Connect(function()
+                        services.TweenService:Create(button, TweenInfo.new(0.1), {
+                            BackgroundTransparency = 0.3,
+                            Size = UDim2.new(0, size.X.Offset - 2, 0, size.Y.Offset - 2)
+                        }):Play()
+                        
+                        task.wait(0.1)
+                        
+                        services.TweenService:Create(button, TweenInfo.new(0.2), {
+                            BackgroundTransparency = 0.1,
+                            Size = size
+                        }):Play()
+                    end)
+                    
+                    return button, buttonGlow
+                end
+                
+                local buttonSize = isMobile and 36 or 32
+                local mainButtonSize = isMobile and 40 or 36
+                
+                local PrevButton, prevGlow = createControlButton("PrevButton", "⏮", UDim2.new(0.15, 0, 0.2, 0), UDim2.new(0, buttonSize, 0, buttonSize), false)
+                local PlayPauseButton, playGlow = createControlButton("PlayPauseButton", "▶", UDim2.new(0.42, 0, 0.1, 0), UDim2.new(0, mainButtonSize, 0, mainButtonSize), true)
+                local NextButton, nextGlow = createControlButton("NextButton", "⏭", UDim2.new(0.69, 0, 0.2, 0), UDim2.new(0, buttonSize, 0, buttonSize), false)
+                
+                local LoopButton, loopGlow = createControlButton("LoopButton", "🔁", UDim2.new(0.85, 0, 0.2, 0), UDim2.new(0, buttonSize, 0, buttonSize), false)
+                
+                local loopModes = {
+                    {mode = "none", text = "🔁", tooltip = "无循环"},
+                    {mode = "single", text = "🔂", tooltip = "单曲循环"},
+                    {mode = "all", text = "🔁", tooltip = "列表循环"}
+                }
+                local currentLoopMode = 1
+                
+                local function updateLoopMode()
+                    local mode = loopModes[currentLoopMode]
+                    LoopButton.Text = mode.text
+                    MusicPlayer.isLooping = (mode.mode == "single" or mode.mode == "all")
+                    
+                    if mode.mode == "single" then
+                        services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
+                            BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+                        }):Play()
+                        services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
+                            Transparency = 0.3,
+                            Thickness = 2
+                        }):Play()
+                    else
+                        services.TweenService:Create(LoopButton, TweenInfo.new(0.3), {
+                            BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+                        }):Play()
+                        services.TweenService:Create(loopGlow, TweenInfo.new(0.3), {
+                            Transparency = 0.6,
+                            Thickness = 1
+                        }):Play()
+                    end
+                end
+                
+                local function updateUI()
+                    local currentTrack = MusicPlayer:GetCurrentTrack()
+                    if currentTrack then
+                        SongTitle.Text = currentTrack.title
+                        ArtistName.Text = currentTrack.artist
+                        AlbumArt.Image = "rbxassetid://" .. currentTrack.imageId
+                    else
+                        SongTitle.Text = "没有播放音乐"
+                        ArtistName.Text = "未知艺术家"
+                        AlbumArt.Image = "rbxassetid://84830962019412"
+                    end
+                    
+                    PlayPauseButton.Text = MusicPlayer.isPlaying and "⏸" or "▶"
+                    updateLoopMode()
+                end
+                
+                task.spawn(function()
+                    while PlayerContainer and PlayerContainer.Parent do
+                        if MusicPlayer.currentSound and MusicPlayer.isPlaying then
+                            local currentTime = MusicPlayer.currentSound.TimePosition
+                            local totalTime = MusicPlayer.currentSound.TimeLength
+                            
+                            if totalTime > 0 then
+                                local progress = currentTime / totalTime
+                                ProgressFill.Size = UDim2.new(progress, 0, 1, 0)
+                                
+                                local currentMinutes = math.floor(currentTime / 60)
+                                local currentSeconds = math.floor(currentTime % 60)
+                                local totalMinutes = math.floor(totalTime / 60)
+                                local totalSeconds = math.floor(totalTime % 60)
+                                
+                                TimeLabel.Text = string.format("%d:%02d / %d:%02d", 
+                                    currentMinutes, currentSeconds, totalMinutes, totalSeconds)
+                            end
+                        else
+                            ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+                            TimeLabel.Text = "0:00 / 0:00"
+                        end
+                        task.wait(0.1)
+                    end
+                end)
+                
+                local function createButtonClickEffect(button, isMain)
+                    services.TweenService:Create(button, TweenInfo.new(0.1), {
+                        BackgroundTransparency = 0.3,
+                        Size = UDim2.new(0, button.Size.X.Offset - 2, 0, button.Size.Y.Offset - 2)
+                    }):Play()
+                    
+                    task.wait(0.1)
+                    
+                    services.TweenService:Create(button, TweenInfo.new(0.2), {
+                        BackgroundTransparency = 0.1,
+                        Size = button.Size
+                    }):Play()
+                end
+                
+                PlayPauseButton.MouseButton1Click:Connect(function()
+                    createButtonClickEffect(PlayPauseButton, true)
+                    
+                    if MusicPlayer.isPlaying then
+                        MusicPlayer:Pause()
+                    else
+                        if #MusicPlayer.playlist > 0 then
+                            if not MusicPlayer.currentSound then
+                                MusicPlayer:PlayTrack(MusicPlayer.playlist[MusicPlayer.currentTrackIndex].id)
+                            else
+                                MusicPlayer:Resume()
+                            end
+                        end
+                    end
                     updateUI()
-                else
-                    self.isPlaying = false
+                end)
+                
+                PrevButton.MouseButton1Click:Connect(function()
+                    createButtonClickEffect(PrevButton, false)
+                    local track = MusicPlayer:PreviousTrack()
+                    if track then
+                        updateUI()
+                    end
+                end)
+                
+                NextButton.MouseButton1Click:Connect(function()
+                    createButtonClickEffect(NextButton, false)
+                    local track = MusicPlayer:NextTrack()
+                    if track then
+                        updateUI()
+                    end
+                end)
+                
+                LoopButton.MouseButton1Click:Connect(function()
+                    createButtonClickEffect(LoopButton, false)
+                    
+                    currentLoopMode = currentLoopMode + 1
+                    if currentLoopMode > #loopModes then
+                        currentLoopMode = 1
+                    end
+                    
+                    updateLoopMode()
+                end)
+                
+                local originalPlayTrack = MusicPlayer.PlayTrack
+                MusicPlayer.PlayTrack = function(self, trackId)
+                    originalPlayTrack(self, trackId)
+                    
+                    if self.currentSound then
+                        self.currentSound.Ended:Connect(function()
+                            local currentMode = loopModes[currentLoopMode]
+                            
+                            if currentMode.mode == "single" then
+                                self.currentSound:Play()
+                            elseif currentMode.mode == "all" then
+                                self:NextTrack()
+                                updateUI()
+                            else
+                                self.isPlaying = false
+                                updateUI()
+                            end
+                        end)
+                    end
+                end
+                
+                if defaultPlaylist then
+                    for _, track in pairs(defaultPlaylist) do
+                        MusicPlayer:AddToPlaylist(track.id, track.title, track.artist, track.imageId)
+                    end
+                end
+                
+                updateUI()
+                
+                local musicPlayerFuncs = {}
+                
+                function musicPlayerFuncs:AddTrack(trackId, title, artist, imageId)
+                    MusicPlayer:AddToPlaylist(trackId, title, artist, imageId)
                     updateUI()
                 end
-            end)
-        end
-    end
-    
-    if defaultPlaylist then
-        for _, track in pairs(defaultPlaylist) do
-            MusicPlayer:AddToPlaylist(track.id, track.title, track.artist, track.imageId)
-        end
-    end
-    
-    updateUI()
-    
-    local musicPlayerFuncs = {}
-    
-    function musicPlayerFuncs:AddTrack(trackId, title, artist, imageId)
-        MusicPlayer:AddToPlaylist(trackId, title, artist, imageId)
-        updateUI()
-    end
-    
-    function musicPlayerFuncs:PlayTrack(trackId)
-        for i, track in ipairs(MusicPlayer.playlist) do
-            if track.id == trackId then
-                MusicPlayer.currentTrackIndex = i
-                MusicPlayer:PlayTrack(trackId)
-                updateUI()
-                return
+                
+                function musicPlayerFuncs:PlayTrack(trackId)
+                    for i, track in ipairs(MusicPlayer.playlist) do
+                        if track.id == trackId then
+                            MusicPlayer.currentTrackIndex = i
+                            MusicPlayer:PlayTrack(trackId)
+                            updateUI()
+                            return
+                        end
+                    end
+                end
+                
+                function musicPlayerFuncs:SetVolume(volume)
+                    MusicPlayer:SetVolume(volume)
+                end
+                
+                function musicPlayerFuncs:ClearPlaylist()
+                    MusicPlayer:ClearPlaylist()
+                    updateUI()
+                end
+                
+                function musicPlayerFuncs:GetCurrentTrack()
+                    return MusicPlayer:GetCurrentTrack()
+                end
+                
+                function musicPlayerFuncs:GetPlaylist()
+                    return MusicPlayer.playlist
+                end
+                
+                function musicPlayerFuncs:SetLoopMode(mode)
+                    for i, loopMode in ipairs(loopModes) do
+                        if loopMode.mode == mode then
+                            currentLoopMode = i
+                            updateLoopMode()
+                            return
+                        end
+                    end
+                end
+                
+                return musicPlayerFuncs
             end
-        end
-    end
-    
-    function musicPlayerFuncs:SetVolume(volume)
-        MusicPlayer:SetVolume(volume)
-    end
-    
-    function musicPlayerFuncs:ClearPlaylist()
-        MusicPlayer:ClearPlaylist()
-        updateUI()
-    end
-    
-    function musicPlayerFuncs:GetCurrentTrack()
-        return MusicPlayer:GetCurrentTrack()
-    end
-    
-    function musicPlayerFuncs:GetPlaylist()
-        return MusicPlayer.playlist
-    end
-    
-    function musicPlayerFuncs:SetLoopMode(mode)
-        for i, loopMode in ipairs(loopModes) do
-            if loopMode.mode == mode then
-                currentLoopMode = i
-                updateLoopMode()
-                return
-            end
-        end
-    end
-    
-    return musicPlayerFuncs
-end
             
             function section.Button(section, text, callback)
                 callback = callback or function() end
@@ -1488,20 +1786,21 @@ end
                 BtnModule.Parent = Objs
                 BtnModule.BackgroundTransparency = 1
                 BtnModule.BorderSizePixel = 0
-                BtnModule.Size = UDim2.new(0, elementWidth, 0, 36)
+                BtnModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 42 or 36)
                 
                 Btn.Name = "Btn"
                 Btn.Parent = BtnModule
                 Btn.BackgroundColor3 = config.Button_Color
                 Btn.BackgroundTransparency = 0.2
                 Btn.BorderSizePixel = 0
-                Btn.Size = UDim2.new(0, elementWidth, 0, 36)
+                Btn.Size = UDim2.new(0, elementWidth, 0, isMobile and 42 or 36)
                 Btn.AutoButtonColor = false
-                Btn.Font = Enum.Font.GothamSemibold
+                Btn.Font = isMobile and Enum.Font.Gotham or Enum.Font.GothamSemibold
                 Btn.Text = "   " .. text
                 Btn.TextColor3 = config.TextColor
-                Btn.TextSize = 14
+                Btn.TextSize = isMobile and 12 or 14
                 Btn.TextXAlignment = Enum.TextXAlignment.Left
+                Btn.ZIndex = 10  -- 提高ZIndex确保按钮在最上层
                 
                 BtnC.CornerRadius = UDim.new(0, 6)
                 BtnC.Name = "BtnC"
@@ -1512,11 +1811,13 @@ end
                 btnGlow.Color = config.AccentColor
                 btnGlow.Thickness = 1
                 btnGlow.Transparency = 0.8
+                btnGlow.ZIndex = 9
                 
                 startNeonFlowEffect(btnGlow, "Color", 0.01)
                 createPulseGlow(btnGlow)
                 
                 Btn.MouseEnter:Connect(function()
+                    if isMobile then return end
                     services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                         BackgroundColor3 = Color3.fromRGB(
                             math.floor(config.Button_Color.R * 255 * 1.1),
@@ -1531,6 +1832,7 @@ end
                 end)
                 
                 Btn.MouseLeave:Connect(function()
+                    if isMobile then return end
                     services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundColor3 = config.Button_Color
                     }):Play()
@@ -1540,7 +1842,7 @@ end
                     }):Play()
                 end)
                 
-                Btn.MouseButton1Click:Connect(function()
+                local function performClick()
                     callback()
                     
                     services.TweenService:Create(Btn, TweenInfo.new(0.1), {
@@ -1564,119 +1866,126 @@ end
                         Thickness = 1,
                         Transparency = 0.8
                     }):Play()
-                end)
+                end
+                
+                Btn.MouseButton1Click:Connect(performClick)
+                
+                -- 触摸点击事件
+                Btn.TouchTap:Connect(performClick)
+                
+                return Btn
             end
             
             function section.Image(section, imageSource, sizeX, sizeY)
-    local ImageModule = Instance.new("Frame")
-    local ImageLabel = Instance.new("ImageLabel")
-    local ImageCorner = Instance.new("UICorner")
-    
-    ImageModule.Name = "ImageModule"
-    ImageModule.Parent = Objs
-    ImageModule.BackgroundTransparency = 1
-    ImageModule.BorderSizePixel = 0
-    ImageModule.Size = UDim2.new(0, elementWidth, 0, sizeY or 120)
-    
-    ImageLabel.Parent = ImageModule
-    ImageLabel.BackgroundTransparency = 1
-    ImageLabel.BorderSizePixel = 0
-    ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
-    ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
-    ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, elementWidth), 0, sizeY or 120)
-    ImageLabel.ScaleType = Enum.ScaleType.Crop
-    
-    ImageCorner.CornerRadius = UDim.new(0, 6)
-    ImageCorner.Parent = ImageLabel
-    
-    local imageGlow = Instance.new("UIStroke")
-    imageGlow.Parent = ImageLabel
-    imageGlow.Color = config.AccentColor
-    imageGlow.Thickness = 1
-    imageGlow.Transparency = 0.8
-    
-    local function setImage(source)
-        if type(source) == "table" then
-            if source.Type == "Player" then
-                local userId = source.UserId
-                if userId then
-                    task.spawn(function()
-                        local success, result = pcall(function()
-                            return game.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-                        end)
-                        
-                        if success and result then
-                            ImageLabel.Image = result
-                        else
-                            ImageLabel.Image = "rbxassetid://0"
+                local ImageModule = Instance.new("Frame")
+                local ImageLabel = Instance.new("ImageLabel")
+                local ImageCorner = Instance.new("UICorner")
+                
+                ImageModule.Name = "ImageModule"
+                ImageModule.Parent = Objs
+                ImageModule.BackgroundTransparency = 1
+                ImageModule.BorderSizePixel = 0
+                ImageModule.Size = UDim2.new(0, elementWidth, 0, sizeY or 120)
+                
+                ImageLabel.Parent = ImageModule
+                ImageLabel.BackgroundTransparency = 1
+                ImageLabel.BorderSizePixel = 0
+                ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
+                ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
+                ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, elementWidth), 0, sizeY or 120)
+                ImageLabel.ScaleType = Enum.ScaleType.Crop
+                
+                ImageCorner.CornerRadius = UDim.new(0, 6)
+                ImageCorner.Parent = ImageLabel
+                
+                local imageGlow = Instance.new("UIStroke")
+                imageGlow.Parent = ImageLabel
+                imageGlow.Color = config.AccentColor
+                imageGlow.Thickness = 1
+                imageGlow.Transparency = 0.8
+                
+                local function setImage(source)
+                    if type(source) == "table" then
+                        if source.Type == "Player" then
+                            local userId = source.UserId
+                            if userId then
+                                task.spawn(function()
+                                    local success, result = pcall(function()
+                                        return game.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+                                    end)
+                                    
+                                    if success and result then
+                                        ImageLabel.Image = result
+                                    else
+                                        ImageLabel.Image = "rbxassetid://0"
+                                    end
+                                end)
+                            end
+                        elseif source.Type == "Game" then
+                            local placeId = source.PlaceId
+                            if placeId then
+                                task.spawn(function()
+                                    local success1, gameInfo = pcall(function()
+                                        local MarketplaceService = game:GetService("MarketplaceService")
+                                        return MarketplaceService:GetProductInfo(placeId, Enum.InfoType.Asset)
+                                    end)
+                                    
+                                    if success1 and gameInfo and gameInfo.IconImageAssetId then
+                                        ImageLabel.Image = "rbxassetid://" .. gameInfo.IconImageAssetId
+                                        return
+                                    end
+                                    
+                                    local success2, thumbnailUrl = pcall(function()
+                                        local ThumbnailService = game:GetService("ThumbnailService")
+                                        return ThumbnailService:GetGameThumbnailAsync(placeId)
+                                    end)
+                                    
+                                    if success2 and thumbnailUrl then
+                                        ImageLabel.Image = thumbnailUrl
+                                        return
+                                    end
+                                    
+                                    ImageLabel.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=" .. placeId
+                                end)
+                            end
                         end
-                    end)
+                    else
+                        ImageLabel.Image = "rbxassetid://" .. tostring(source)
+                    end
                 end
-            elseif source.Type == "Game" then
-                local placeId = source.PlaceId
-                if placeId then
-                    task.spawn(function()
-                        local success1, gameInfo = pcall(function()
-                            local MarketplaceService = game:GetService("MarketplaceService")
-                            return MarketplaceService:GetProductInfo(placeId, Enum.InfoType.Asset)
-                        end)
-                        
-                        if success1 and gameInfo and gameInfo.IconImageAssetId then
-                            ImageLabel.Image = "rbxassetid://" .. gameInfo.IconImageAssetId
-                            return
-                        end
-                        
-                        local success2, thumbnailUrl = pcall(function()
-                            local ThumbnailService = game:GetService("ThumbnailService")
-                            return ThumbnailService:GetGameThumbnailAsync(placeId)
-                        end)
-                        
-                        if success2 and thumbnailUrl then
-                            ImageLabel.Image = thumbnailUrl
-                            return
-                        end
-                        
-                        ImageLabel.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=" .. placeId
-                    end)
+                
+                setImage(imageSource)
+                
+                local imageController = {}
+                
+                function imageController:SetImage(newSource)
+                    setImage(newSource)
                 end
+                
+                function imageController:SetPlayerAvatar(userId)
+                    setImage({Type = "Player", UserId = userId})
+                end
+                
+                function imageController:SetGameIcon(placeId)
+                    setImage({Type = "Game", PlaceId = placeId})
+                end
+                
+                function imageController:SetLocalPlayerAvatar()
+                    local localPlayer = game.Players.LocalPlayer
+                    if localPlayer then
+                        setImage({Type = "Player", UserId = localPlayer.UserId})
+                    end
+                end
+                
+                function imageController:Destroy()
+                    ImageModule:Destroy()
+                end
+                
+                imageController.Instance = ImageLabel
+                imageController.Module = ImageModule
+                
+                return imageController
             end
-        else
-            ImageLabel.Image = "rbxassetid://" .. tostring(source)
-        end
-    end
-    
-    setImage(imageSource)
-    
-    local imageController = {}
-    
-    function imageController:SetImage(newSource)
-        setImage(newSource)
-    end
-    
-    function imageController:SetPlayerAvatar(userId)
-        setImage({Type = "Player", UserId = userId})
-    end
-    
-    function imageController:SetGameIcon(placeId)
-        setImage({Type = "Game", PlaceId = placeId})
-    end
-    
-    function imageController:SetLocalPlayerAvatar()
-        local localPlayer = game.Players.LocalPlayer
-        if localPlayer then
-            setImage({Type = "Player", UserId = localPlayer.UserId})
-        end
-    end
-    
-    function imageController:Destroy()
-        ImageModule:Destroy()
-    end
-    
-    imageController.Instance = ImageLabel
-    imageController.Module = ImageModule
-    
-    return imageController
-end
             
             function section:Label(text)
                 local LabelModule = Instance.new("Frame")
@@ -1687,16 +1996,16 @@ end
                 LabelModule.Parent = Objs
                 LabelModule.BackgroundTransparency = 1
                 LabelModule.BorderSizePixel = 0
-                LabelModule.Size = UDim2.new(0, elementWidth, 0, 24)
+                LabelModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 30 or 24)
                 
                 TextLabel.Parent = LabelModule
                 TextLabel.BackgroundColor3 = config.Label_Color
                 TextLabel.BackgroundTransparency = 0.2
-                TextLabel.Size = UDim2.new(0, elementWidth, 0, 28)
-                TextLabel.Font = Enum.Font.GothamSemibold
+                TextLabel.Size = UDim2.new(0, elementWidth, 0, isMobile and 30 or 28)
+                TextLabel.Font = isMobile and Enum.Font.Gotham or Enum.Font.GothamSemibold
                 TextLabel.Text = text
                 TextLabel.TextColor3 = config.SecondaryTextColor
-                TextLabel.TextSize = 14
+                TextLabel.TextSize = isMobile and 12 or 14
                 
                 LabelC.CornerRadius = UDim.new(0, 6)
                 LabelC.Name = "LabelC"
@@ -1724,20 +2033,40 @@ end
                 ToggleModule.Parent = Objs
                 ToggleModule.BackgroundTransparency = 1
                 ToggleModule.BorderSizePixel = 0
-                ToggleModule.Size = UDim2.new(0, elementWidth, 0, 36)
+                ToggleModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 42 or 36)
                 
                 ToggleBtn.Name = "ToggleBtn"
                 ToggleBtn.Parent = ToggleModule
                 ToggleBtn.BackgroundColor3 = config.Toggle_Color
                 ToggleBtn.BackgroundTransparency = 0.2
                 ToggleBtn.BorderSizePixel = 0
-                ToggleBtn.Size = UDim2.new(0, elementWidth, 0, 36)
+                ToggleBtn.Size = UDim2.new(0, elementWidth, 0, isMobile and 42 or 36)
                 ToggleBtn.AutoButtonColor = false
-                ToggleBtn.Font = Enum.Font.GothamSemibold
+                ToggleBtn.Font = isMobile and Enum.Font.Gotham or Enum.Font.GothamSemibold
                 ToggleBtn.Text = "   " .. text
                 ToggleBtn.TextColor3 = config.TextColor
-                ToggleBtn.TextSize = 14
+                ToggleBtn.TextSize = isMobile and 12 or 14
                 ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
+                ToggleBtn.ZIndex = 10  -- 提高ZIndex确保按钮在最上层
+                
+                -- 移动设备上增大触摸区域
+                if isMobile then
+                    local touchArea = Instance.new("TextButton")
+                    touchArea.Name = "ToggleTouchArea"
+                    touchArea.Parent = ToggleBtn
+                    touchArea.BackgroundTransparency = 1
+                    touchArea.Size = UDim2.new(1, 0, 1, 0)
+                    touchArea.Text = ""
+                    touchArea.ZIndex = 15
+                    
+                    touchArea.MouseButton1Click:Connect(function()
+                        ToggleBtn.MouseButton1Click:Fire()
+                    end)
+                    
+                    touchArea.TouchTap:Connect(function()
+                        ToggleBtn.MouseButton1Click:Fire()
+                    end)
+                end
                 
                 ToggleBtnC.CornerRadius = UDim.new(0, 6)
                 ToggleBtnC.Name = "ToggleBtnC"
@@ -1746,7 +2075,10 @@ end
                 -- 根据窗口类型调整Toggle开关位置
                 local togglePosition = 0.85
                 if windowCount == 2 then
-                    togglePosition = 0.78 -- 双窗口时调整位置，与UI.lua保持一致
+                    togglePosition = 0.78 -- 双窗口时调整位置
+                end
+                if isMobile then
+                    togglePosition = 0.80 -- 移动设备上调整位置
                 end
                 
                 ToggleDisable.Name = "ToggleDisable"
@@ -1755,13 +2087,15 @@ end
                 ToggleDisable.BackgroundTransparency = 0.8
                 ToggleDisable.BorderSizePixel = 0
                 ToggleDisable.Position = UDim2.new(togglePosition, 0, 0.22, 0)
-                ToggleDisable.Size = UDim2.new(0, 34, 0, 18)
+                ToggleDisable.Size = UDim2.new(0, isMobile and 38 or 34, 0, isMobile and 22 or 18)
+                ToggleDisable.ZIndex = 12
                 
                 ToggleSwitch.Name = "ToggleSwitch"
                 ToggleSwitch.Parent = ToggleDisable
                 ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
-                ToggleSwitch.Size = UDim2.new(0, 20, 0, 18)
-                ToggleSwitch.Position = UDim2.new(0, enabled and 14 or 0, 0, 0)
+                ToggleSwitch.Size = UDim2.new(0, isMobile and 24 or 20, 0, isMobile and 22 or 18)
+                ToggleSwitch.Position = UDim2.new(0, enabled and (isMobile and 14 or 14) or 0, 0, 0)
+                ToggleSwitch.ZIndex = 13
                 
                 ToggleSwitchC.CornerRadius = UDim.new(0, 6)
                 ToggleSwitchC.Name = "ToggleSwitchC"
@@ -1772,6 +2106,7 @@ end
                 ToggleDisableC.Parent = ToggleDisable
                 
                 ToggleBtn.MouseEnter:Connect(function()
+                    if isMobile then return end
                     services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                         BackgroundTransparency = 0.1,
                         BackgroundColor3 = Color3.fromRGB(
@@ -1783,6 +2118,7 @@ end
                 end)
                 
                 ToggleBtn.MouseLeave:Connect(function()
+                    if isMobile then return end
                     services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundTransparency = 0.2,
                         BackgroundColor3 = config.Toggle_Color
@@ -1791,19 +2127,20 @@ end
                 
                 local funcs = {
                     SetState = function(self, state)
-                        local newState = state
                         if state == nil then
-                            newState = not (FengUI.flags[flag] or false)
+                            state = not FengUI.flags[flag]
+                        end
+                        if FengUI.flags[flag] == state then
+                            return
                         end
                         
-                        FengUI.flags[flag] = newState
-                        
                         services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                            Position = UDim2.new(0, newState and 14 or 0, 0, 0),
-                            BackgroundColor3 = newState and config.Toggle_On or config.Toggle_Off
+                            Position = UDim2.new(0, state and (isMobile and 14 or 14) or 0, 0, 0),
+                            BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
                         }):Play()
                         
-                        callback(newState)
+                        FengUI.flags[flag] = state
+                        callback(state)
                     end,
                     Module = ToggleModule
                 }
@@ -1812,27 +2149,23 @@ end
                     funcs:SetState(true)
                 end
                 
-                -- 修复：直接处理点击事件，避免状态检查问题
-                local isProcessing = false
+                local lastClickTime = 0
                 ToggleBtn.MouseButton1Click:Connect(function()
-                    if isProcessing then return end
-                    isProcessing = true
-                    
-                    -- 短暂延迟防止快速点击
-                    task.wait(0.01)
-                    
-                    local currentState = FengUI.flags[flag] or false
-                    local newState = not currentState
-                    
-                    services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                        Position = UDim2.new(0, newState and 14 or 0, 0, 0),
-                        BackgroundColor3 = newState and config.Toggle_On or config.Toggle_Off
-                    }):Play()
-                    
-                    FengUI.flags[flag] = newState
-                    callback(newState)
-                    
-                    isProcessing = false
+                    -- 防抖机制，防止多次点击
+                    local now = tick()
+                    if now - lastClickTime > 0.3 then
+                        lastClickTime = now
+                        funcs:SetState()
+                    end
+                end)
+                
+                -- 触摸点击事件
+                ToggleBtn.TouchTap:Connect(function()
+                    local now = tick()
+                    if now - lastClickTime > 0.3 then
+                        lastClickTime = now
+                        funcs:SetState()
+                    end
                 end)
                 
                 return funcs
@@ -1873,19 +2206,19 @@ end
                 KeybindModule.Parent = Objs
                 KeybindModule.BackgroundTransparency = 1
                 KeybindModule.BorderSizePixel = 0
-                KeybindModule.Size = UDim2.new(0, elementWidth, 0, 36)
+                KeybindModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 42 or 36)
                 
                 KeybindBtn.Name = "KeybindBtn"
                 KeybindBtn.Parent = KeybindModule
                 KeybindBtn.BackgroundColor3 = config.Keybind_Color
                 KeybindBtn.BackgroundTransparency = 0.2
                 KeybindBtn.BorderSizePixel = 0
-                KeybindBtn.Size = UDim2.new(0, elementWidth, 0, 36)
+                KeybindBtn.Size = UDim2.new(0, elementWidth, 0, isMobile and 42 or 36)
                 KeybindBtn.AutoButtonColor = false
-                KeybindBtn.Font = Enum.Font.GothamSemibold
+                KeybindBtn.Font = isMobile and Enum.Font.Gotham or Enum.Font.GothamSemibold
                 KeybindBtn.Text = "   " .. text
                 KeybindBtn.TextColor3 = config.TextColor
-                KeybindBtn.TextSize = 14
+                KeybindBtn.TextSize = isMobile and 12 or 14
                 KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
                 
                 KeybindBtnC.CornerRadius = UDim.new(0, 6)
@@ -1895,7 +2228,10 @@ end
                 -- 根据窗口类型调整Keybind位置
                 local keybindPosition = 0.72
                 if windowCount == 2 then
-                    keybindPosition = 0.64 -- 双窗口时调整位置，与UI.lua保持一致
+                    keybindPosition = 0.64 -- 双窗口时调整位置
+                end
+                if isMobile then
+                    keybindPosition = 0.68 -- 移动设备上调整位置
                 end
                 
                 KeybindValue.Name = "KeybindValue"
@@ -1903,12 +2239,12 @@ end
                 KeybindValue.BackgroundColor3 = config.Bg_Color
                 KeybindValue.BorderSizePixel = 0
                 KeybindValue.Position = UDim2.new(keybindPosition, 0, 0.22, 0)
-                KeybindValue.Size = UDim2.new(0, 70, 0, 22)
+                KeybindValue.Size = UDim2.new(0, isMobile and 80 or 70, 0, isMobile and 26 or 22)
                 KeybindValue.AutoButtonColor = false
                 KeybindValue.Font = Enum.Font.Gotham
                 KeybindValue.Text = keyTxt
                 KeybindValue.TextColor3 = config.TextColor
-                KeybindValue.TextSize = 12
+                KeybindValue.TextSize = isMobile and 11 or 12
                 
                 KeybindValueC.CornerRadius = UDim.new(0, 6)
                 KeybindValueC.Name = "KeybindValueC"
@@ -1924,6 +2260,7 @@ end
                 UIPadding.PaddingRight = UDim.new(0, 6)
                 
                 KeybindBtn.MouseEnter:Connect(function()
+                    if isMobile then return end
                     services.TweenService:Create(KeybindBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                         BackgroundColor3 = Color3.fromRGB(
                             math.floor(config.Keybind_Color.R * 255 * 1.1),
@@ -1934,19 +2271,24 @@ end
                 end)
                 
                 KeybindBtn.MouseLeave:Connect(function()
+                    if isMobile then return end
                     services.TweenService:Create(KeybindBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundColor3 = config.Keybind_Color
                     }):Play()
                 end)
                 
-                UserInputService.InputBegan:Connect(function(inp, gpe)
-                    if gpe then return end
-                    if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
-                    if inp.KeyCode ~= bindKey then return end
-                    callback(bindKey.Name)
-                end)
+                -- 移动设备上禁用键盘绑定
+                if not isMobile then
+                    UserInputService.InputBegan:Connect(function(inp, gpe)
+                        if gpe then return end
+                        if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
+                        if inp.KeyCode ~= bindKey then return end
+                        callback(bindKey.Name)
+                    end)
+                end
                 
                 KeybindValue.MouseButton1Click:Connect(function()
+                    if isMobile then return end
                     KeybindValue.Text = "..."
                     task.wait()
                     
@@ -1971,10 +2313,10 @@ end
                 end)
                 
                 KeybindValue:GetPropertyChangedSignal("TextBounds"):Connect(function()
-                    KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 20, 0, 22)
+                    KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 20, 0, isMobile and 26 or 22)
                 end)
                 
-                KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 20, 0, 22)
+                KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 20, 0, isMobile and 26 or 22)
             end
             
             function section.Textbox(section, text, flag, default, callback)
@@ -1998,19 +2340,19 @@ end
                 TextboxModule.Parent = Objs
                 TextboxModule.BackgroundTransparency = 1
                 TextboxModule.BorderSizePixel = 0
-                TextboxModule.Size = UDim2.new(0, elementWidth, 0, 36)
+                TextboxModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 42 or 36)
                 
                 TextboxBack.Name = "TextboxBack"
                 TextboxBack.Parent = TextboxModule
                 TextboxBack.BackgroundColor3 = config.Textbox_Color
                 TextboxBack.BackgroundTransparency = 0.2
                 TextboxBack.BorderSizePixel = 0
-                TextboxBack.Size = UDim2.new(0, elementWidth, 0, 36)
+                TextboxBack.Size = UDim2.new(0, elementWidth, 0, isMobile and 42 or 36)
                 TextboxBack.AutoButtonColor = false
-                TextboxBack.Font = Enum.Font.GothamSemibold
+                TextboxBack.Font = isMobile and Enum.Font.Gotham or Enum.Font.GothamSemibold
                 TextboxBack.Text = "   " .. text
                 TextboxBack.TextColor3 = config.TextColor
-                TextboxBack.TextSize = 14
+                TextboxBack.TextSize = isMobile and 12 or 14
                 TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
                 
                 TextboxBackC.CornerRadius = UDim.new(0, 6)
@@ -2020,7 +2362,10 @@ end
                 -- 根据窗口类型调整Textbox位置
                 local textboxPosition = 0.45
                 if windowCount == 2 then
-                    textboxPosition = 0.36 -- 双窗口时调整位置，与UI.lua保持一致
+                    textboxPosition = 0.36 -- 双窗口时调整位置
+                end
+                if isMobile then
+                    textboxPosition = 0.40 -- 移动设备上调整位置
                 end
                 
                 BoxBG.Name = "BoxBG"
@@ -2028,7 +2373,7 @@ end
                 BoxBG.BackgroundColor3 = config.Bg_Color
                 BoxBG.BorderSizePixel = 0
                 BoxBG.Position = UDim2.new(textboxPosition, 0, 0.22, 0)
-                BoxBG.Size = UDim2.new(0, 80, 0, 22)
+                BoxBG.Size = UDim2.new(0, isMobile and 90 or 80, 0, isMobile and 26 or 22)
                 BoxBG.AutoButtonColor = false
                 BoxBG.Font = Enum.Font.Gotham
                 BoxBG.Text = ""
@@ -2044,8 +2389,13 @@ end
                 TextBox.Font = Enum.Font.Gotham
                 TextBox.Text = default
                 TextBox.TextColor3 = config.TextColor
-                TextBox.TextSize = 12
+                TextBox.TextSize = isMobile and 11 or 12
                 TextBox.PlaceholderColor3 = config.SecondaryTextColor
+                
+                -- 移动设备上显示虚拟键盘
+                if isMobile then
+                    TextBox.TextInputType = Enum.TextInputType.Default
+                end
                 
                 TextboxBackL.Name = "TextboxBackL"
                 TextboxBackL.Parent = TextboxBack
@@ -2058,6 +2408,7 @@ end
                 TextboxBackP.PaddingRight = UDim.new(0, 12)
                 
                 TextboxBack.MouseEnter:Connect(function()
+                    if isMobile then return end
                     services.TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                         BackgroundColor3 = Color3.fromRGB(
                             math.floor(config.Textbox_Color.R * 255 * 1.1),
@@ -2068,6 +2419,7 @@ end
                 end)
                 
                 TextboxBack.MouseLeave:Connect(function()
+                    if isMobile then return end
                     services.TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundColor3 = config.Textbox_Color
                     }):Play()
@@ -2082,614 +2434,634 @@ end
                 end)
                 
                 TextBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
-                    BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 22)
+                    BoxBG.Size = UDim2.new(0, math.max(TextBox.TextBounds.X + 20, isMobile and 90 or 80), 0, isMobile and 26 or 22)
                 end)
                 
-                BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 22)
+                BoxBG.Size = UDim2.new(0, math.max(TextBox.TextBounds.X + 20, isMobile and 90 or 80), 0, isMobile and 26 or 22)
             end
             
             function section.Slider(section, text, flag, default, min, max, precise, callback)
-    callback = callback or function() end
-    min = min or 0
-    max = max or 10
-    default = default or min
-    precise = precise or false
-    
-    assert(text, "No text provided")
-    assert(flag, "No flag provided")
-    assert(default, "No default value provided")
-    
-    FengUI.flags[flag] = default
+                callback = callback or function() end
+                min = min or 0
+                max = max or 10
+                default = default or min
+                precise = precise or false
+                
+                assert(text, "No text provided")
+                assert(flag, "No flag provided")
+                assert(default, "No default value provided")
+                
+                FengUI.flags[flag] = default
 
-    local SliderModule = Instance.new("Frame")
-    local SliderBack = Instance.new("TextButton")
-    local SliderBackC = Instance.new("UICorner")
-    local SliderBar = Instance.new("Frame")
-    local SliderBarC = Instance.new("UICorner")
-    local SliderPart = Instance.new("Frame")
-    local SliderPartC = Instance.new("UICorner")
-    local SliderValBG = Instance.new("TextButton")
-    local SliderValBGC = Instance.new("UICorner")
-    local SliderValue = Instance.new("TextBox")
-    
-    SliderModule.Name = "SliderModule"
-    SliderModule.Parent = Objs
-    SliderModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SliderModule.BackgroundTransparency = 1.000
-    SliderModule.BorderSizePixel = 0
-    SliderModule.Position = UDim2.new(0, 0, 0, 0)
-    
-    -- 根据窗口类型设置不同的高度
-    if windowCount == 2 then
-        SliderModule.Size = UDim2.new(0, elementWidth, 0, 52) -- 双窗口高度调整为52
-    else
-        SliderModule.Size = UDim2.new(0, elementWidth, 0, 36) -- 单窗口高度保持36
-    end
-    
-    SliderBack.Name = "SliderBack"
-    SliderBack.Parent = SliderModule
-    SliderBack.BackgroundColor3 = config.Slider_Color
-    SliderBack.BackgroundTransparency = 0.2
-    SliderBack.BorderSizePixel = 0
-    SliderBack.Size = UDim2.new(1, 0, 1, 0)
-    SliderBack.AutoButtonColor = false
-    SliderBack.Font = Enum.Font.GothamSemibold
-    SliderBack.Text = "   " .. text
-    SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SliderBack.TextSize = 14.000
-    SliderBack.TextXAlignment = Enum.TextXAlignment.Left
-    
-    -- 双窗口时调整文字垂直对齐
-    if windowCount == 2 then
-        SliderBack.TextYAlignment = Enum.TextYAlignment.Top
-        local padding = Instance.new("UIPadding")
-        padding.Parent = SliderBack
-        padding.PaddingTop = UDim.new(0, 4) -- 文字上移
-    end
-    
-    SliderBackC.CornerRadius = UDim.new(0, 6)
-    SliderBackC.Name = "SliderBackC"
-    SliderBackC.Parent = SliderBack
-    
-    if windowCount == 2 then
-        -- 双窗口布局：文字在上方，滑块条在下方
-        SliderBar.Name = "SliderBar"
-        SliderBar.Parent = SliderBack
-        SliderBar.AnchorPoint = Vector2.new(0, 0)
-        SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-        SliderBar.BorderSizePixel = 0
-        SliderBar.Position = UDim2.new(0.03, 0, 0.45, 0) -- 向下移动到0.45位置
-        SliderBar.Size = UDim2.new(0.65, 0, 0, 14) -- 宽度减小为65%，高度增加到14
-        SliderBarC.CornerRadius = UDim.new(0, 4)
-        SliderBarC.Name = "SliderBarC"
-        SliderBarC.Parent = SliderBar
-        
-        SliderPart.Name = "SliderPart"
-        SliderPart.Parent = SliderBar
-        SliderPart.BackgroundColor3 = config.SliderBar_Color
-        SliderPart.BorderSizePixel = 0
-        SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
-        SliderPartC.CornerRadius = UDim.new(0, 4)
-        SliderPartC.Name = "SliderPartC"
-        SliderPartC.Parent = SliderPart
-        
-        -- 双窗口下的数值显示框 - 调整大小和位置（缩短长度）
-        SliderValBG.Name = "SliderValBG"
-        SliderValBG.Parent = SliderBack
-        SliderValBG.BackgroundColor3 = config.Bg_Color
-        SliderValBG.BorderSizePixel = 0
-        SliderValBG.Position = UDim2.new(0.72, 0, 0.42, 0) -- 向右移动到0.72
-        SliderValBG.Size = UDim2.new(0, 36, 0, 22) -- 缩短为36宽度（原为50）
-        SliderValBG.AutoButtonColor = false
-        SliderValBG.Font = Enum.Font.Gotham
-        SliderValBG.Text = ""
-        SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
-        SliderValBG.TextSize = 14.000
-        
-        SliderValBGC.CornerRadius = UDim.new(0, 6)
-        SliderValBGC.Name = "SliderValBGC"
-        SliderValBGC.Parent = SliderValBG
-        
-        -- 隐藏文字，因为双窗口下文字显示在按钮文本中
-        SliderBack.Text = "   " .. text
-    else
-        -- 单窗口布局：保持原样
-        local sliderBarPosition = 0.35
-        local sliderBarWidth = 120
-        local sliderValuePosition = 0.82
-        local minSliderPosition = 0.28
-        local addSliderPosition = 0.75
-        
-        SliderBar.Name = "SliderBar"
-        SliderBar.Parent = SliderBack
-        SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-        SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-        SliderBar.BorderSizePixel = 0
-        SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.5, 0)
-        SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, 14)
-        SliderBarC.CornerRadius = UDim.new(0, 4)
-        SliderBarC.Name = "SliderBarC"
-        SliderBarC.Parent = SliderBar
-        
-        SliderPart.Name = "SliderPart"
-        SliderPart.Parent = SliderBar
-        SliderPart.BackgroundColor3 = config.SliderBar_Color
-        SliderPart.BorderSizePixel = 0
-        SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
-        SliderPartC.CornerRadius = UDim.new(0, 4)
-        SliderPartC.Name = "SliderPartC"
-        SliderPartC.Parent = SliderPart
-        
-        SliderValBG.Name = "SliderValBG"
-        SliderValBG.Parent = SliderBack
-        SliderValBG.BackgroundColor3 = config.Bg_Color
-        SliderValBG.BorderSizePixel = 0
-        SliderValBG.Position = UDim2.new(sliderValuePosition, 0, 0.22, 0)
-        SliderValBG.Size = UDim2.new(0, 36, 0, 22)
-        SliderValBG.AutoButtonColor = false
-        SliderValBG.Font = Enum.Font.Gotham
-        SliderValBG.Text = ""
-        SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
-        SliderValBG.TextSize = 14.000
-        
-        SliderValBGC.CornerRadius = UDim.new(0, 6)
-        SliderValBGC.Name = "SliderValBGC"
-        SliderValBGC.Parent = SliderValBG
-        
-        -- 单窗口下的+和-按钮
-        local MinSlider = Instance.new("TextButton")
-        MinSlider.Name = "MinSlider"
-        MinSlider.Parent = SliderBack
-        MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-        MinSlider.BackgroundTransparency = 0
-        MinSlider.BorderSizePixel = 0
-        MinSlider.Position = UDim2.new(minSliderPosition, 0, 0.25, 0)
-        MinSlider.Size = UDim2.new(0, 18, 0, 18)
-        MinSlider.Font = Enum.Font.Gotham
-        MinSlider.Text = "减"
-        MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-        MinSlider.TextSize = 13.000
-        MinSlider.TextWrapped = true
-        MinSlider.ZIndex = 2
-        
-        local MinSliderC = Instance.new("UICorner")
-        MinSliderC.CornerRadius = UDim.new(0, 4)
-        MinSliderC.Parent = MinSlider
-        
-        local AddSlider = Instance.new("TextButton")
-        AddSlider.Name = "AddSlider"
-        AddSlider.Parent = SliderBack
-        AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-        AddSlider.BackgroundTransparency = 0
-        AddSlider.BorderSizePixel = 0
-        AddSlider.Position = UDim2.new(addSliderPosition, 0, 0.25, 0)
-        AddSlider.Size = UDim2.new(0, 18, 0, 18)
-        AddSlider.Font = Enum.Font.Gotham
-        AddSlider.Text = "加"
-        AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-        AddSlider.TextSize = 13.000
-        AddSlider.TextWrapped = true
-        AddSlider.ZIndex = 2
-        
-        local AddSliderC = Instance.new("UICorner")
-        AddSliderC.CornerRadius = UDim.new(0, 4)
-        AddSliderC.Parent = AddSlider
-        
-        -- 单窗口下的按钮点击事件
-        MinSlider.MouseButton1Click:Connect(function()
-            local currentValue = FengUI.flags[flag]
-            currentValue = math.clamp(currentValue - 1, min, max)
-            funcs:SetValue(currentValue)
-        end)
-        
-        AddSlider.MouseButton1Click:Connect(function()
-            local currentValue = FengUI.flags[flag]
-            currentValue = math.clamp(currentValue + 1, min, max)
-            funcs:SetValue(currentValue)
-        end)
-    end
-    
-    SliderValue.Name = "SliderValue"
-    SliderValue.Parent = SliderValBG
-    SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SliderValue.BackgroundTransparency = 1.000
-    SliderValue.BorderSizePixel = 0
-    SliderValue.Size = UDim2.new(1, 0, 1, 0)
-    SliderValue.Font = Enum.Font.Gotham
-    SliderValue.Text = tostring(default)
-    SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SliderValue.TextSize = 11.000
-    
-    -- 双窗口时调整文本框内的文字大小
-    if windowCount == 2 then
-        SliderValue.TextSize = 12
-        SliderValue.Font = Enum.Font.Gotham
-    end
-    
-    local funcs = {
-        SetValue = function(self, value)
-            local percent
-            
-            if value then
-                percent = (value - min)/(max - min)
-            else
-                local mouse = services.Players.LocalPlayer:GetMouse()
-                local barPos = SliderBar.AbsolutePosition.X
-                local barSize = SliderBar.AbsoluteSize.X
-                local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
-                percent = (mouseX - barPos) / barSize
-                value = min + (max - min) * percent
-            end
-            
-            if precise then
-                value = tonumber(string.format("%.2f", value))
-            else
-                value = math.floor(value + 0.5)
-            end
-            
-            value = math.clamp(value, min, max)
-            percent = (value - min)/(max - min)
-            FengUI.flags[flag] = tonumber(value)
-            SliderValue.Text = tostring(value)
-            
-            services.TweenService:Create(SliderPart, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                Size = UDim2.new(percent, 0, 1, 0)
-            }):Play()
-            
-            callback(tonumber(value))
-        end,
-        
-        GetValue = function(self)
-            return FengUI.flags[flag]
-        end
-    }
-    
-    funcs:SetValue(default)
-    
-    local dragging = false
-    
-    SliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            funcs:SetValue()
-        end
-    end)
-    
-    SliderPart.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            funcs:SetValue()
-        end
-    end)
-    
-    services.UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    services.UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            funcs:SetValue()
-        end
-    end)
-    
-    -- 触摸支持
-    SliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            funcs:SetValue()
-        end
-    end)
-    
-    services.UserInputService.InputEnded:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-    
-    services.UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.Touch then
-            funcs:SetValue()
-        end
-    end)
-    
-    -- 文本框输入
-    local boxFocused = false
-    local allowed = { [""] = true, ["-"] = true }
-    
-    SliderValue.Focused:Connect(function()
-        boxFocused = true
-    end)
-    
-    SliderValue.FocusLost:Connect(function()
-        boxFocused = false
-        if SliderValue.Text == "" then
-            funcs:SetValue(default)
-            return
-        end
-        
-        local numValue = tonumber(SliderValue.Text)
-        if numValue then
-            numValue = math.clamp(numValue, min, max)
-            funcs:SetValue(numValue)
-        else
-            funcs:SetValue(default)
-        end
-    end)
-    
-    SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
-        if not boxFocused then
-            return
-        end
-        
-        local text = SliderValue.Text
-        local newText = ""
-        
-        for i = 1, #text do
-            local char = text:sub(i, i)
-            if char:match("%d") or (char == "." and precise) then
-                newText = newText .. char
-            end
-        end
-        
-        local dotCount = 0
-        local finalText = ""
-        for i = 1, #newText do
-            local char = newText:sub(i, i)
-            if char == "." then
-                dotCount = dotCount + 1
-                if dotCount <= 1 then
-                    finalText = finalText .. char
+                local SliderModule = Instance.new("Frame")
+                local SliderBack = Instance.new("TextButton")
+                local SliderBackC = Instance.new("UICorner")
+                local SliderBar = Instance.new("Frame")
+                local SliderBarC = Instance.new("UICorner")
+                local SliderPart = Instance.new("Frame")
+                local SliderPartC = Instance.new("UICorner")
+                local SliderValBG = Instance.new("TextButton")
+                local SliderValBGC = Instance.new("UICorner")
+                local SliderValue = Instance.new("TextBox")
+                
+                SliderModule.Name = "SliderModule"
+                SliderModule.Parent = Objs
+                SliderModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                SliderModule.BackgroundTransparency = 1.000
+                SliderModule.BorderSizePixel = 0
+                SliderModule.Position = UDim2.new(0, 0, 0, 0)
+                
+                -- 根据窗口类型设置不同的高度
+                if windowCount == 2 then
+                    SliderModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 60 : 52) -- 双窗口高度
+                else
+                    SliderModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 48 : 36) -- 单窗口高度
                 end
-            else
-                finalText = finalText .. char
-            end
-        end
-        
-        SliderValue.Text = finalText
-        
-        local text = SliderValue.Text
-        if not tonumber(text) and not allowed[text] then
-            SliderValue.Text = SliderValue.Text:gsub("%D+", "")
-        elseif not allowed[text] then
-            if tonumber(text) > max then
-                text = max
-                SliderValue.Text = tostring(max)
-            end
-            funcs:SetValue(tonumber(text))
-        end
-    end)
-    
-    return funcs
-end
-            
-            function section.Dropdown(section, text, flag, options, callback)
-    local callback = callback or function() end
-    local options = options or {}
-    assert(text, "No text provided")
-    assert(flag, "No flag provided")
-    FengUI.flags[flag] = nil
-    
-    local DropdownModule = Instance.new("Frame")
-    local DropdownTop = Instance.new("TextButton")
-    local DropdownTopC = Instance.new("UICorner")
-    local DropdownOpenFrame = Instance.new("Frame")
-    local DropdownOpenFrameC = Instance.new("UICorner")
-    local DropdownOpen = Instance.new("TextButton")
-    local DropdownText = Instance.new("TextBox")
-    local DropdownModuleL = Instance.new("UIListLayout")
-    
-    DropdownModule.Name = "DropdownModule"
-    DropdownModule.Parent = Objs
-    DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    DropdownModule.BackgroundTransparency = 1.000
-    DropdownModule.BorderSizePixel = 0
-    DropdownModule.ClipsDescendants = true
-    DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-    DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
-    
-    DropdownTop.Name = "DropdownTop"
-    DropdownTop.Parent = DropdownModule
-    DropdownTop.BackgroundColor3 = config.Dropdown_Color
-    DropdownTop.BackgroundTransparency = 0.2
-    DropdownTop.BorderSizePixel = 0
-    DropdownTop.Size = UDim2.new(0, elementWidth, 0, 36)
-    DropdownTop.AutoButtonColor = false
-    DropdownTop.Font = Enum.Font.GothamSemibold
-    DropdownTop.Text = ""
-    DropdownTop.TextColor3 = config.TextColor
-    DropdownTop.TextSize = 14.000
-    DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
-    
-    DropdownTopC.CornerRadius = UDim.new(0, 6)
-    DropdownTopC.Name = "DropdownTopC"
-    DropdownTopC.Parent = DropdownTop
-    
-    local BackgroundFill = Instance.new("Frame")
-    BackgroundFill.Name = "BackgroundFill"
-    BackgroundFill.Parent = DropdownTop
-    BackgroundFill.BackgroundColor3 = config.Dropdown_Color
-    BackgroundFill.BorderSizePixel = 0
-    BackgroundFill.Position = UDim2.new(0.75, 0, 0, 0)
-    BackgroundFill.Size = UDim2.new(0.25, 0, 1, 0)
-    BackgroundFill.ZIndex = 0
-    
-    -- 根据窗口类型调整Dropdown位置
-    local dropdownFramePosition = 0.80
-    local separatorPosition = 0.74
-    if windowCount == 2 then
-        dropdownFramePosition = 0.71
-        separatorPosition = 0.65
-    end
-    
-    DropdownOpenFrame.Name = "DropdownOpenFrame"
-    DropdownOpenFrame.Parent = DropdownTop
-    DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
-    DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
-    DropdownOpenFrame.BorderSizePixel = 0
-    DropdownOpenFrame.Position = UDim2.new(dropdownFramePosition, 0, 0.5, 0)
-    DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 22)
-    DropdownOpenFrame.ZIndex = 2
-    
-    DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
-    DropdownOpenFrameC.Name = "DropdownOpenFrameC"
-    DropdownOpenFrameC.Parent = DropdownOpenFrame
-    
-    DropdownOpen.Name = "DropdownOpen"
-    DropdownOpen.Parent = DropdownOpenFrame
-    DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    DropdownOpen.BackgroundTransparency = 1.000
-    DropdownOpen.BorderSizePixel = 0
-    DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
-    DropdownOpen.Font = Enum.Font.GothamSemibold
-    DropdownOpen.Text = "选择"
-    DropdownOpen.TextColor3 = config.TextColor
-    DropdownOpen.TextSize = 11.000
-    DropdownOpen.TextWrapped = true
-    DropdownOpen.ZIndex = 3
-    
-    DropdownText.Name = "DropdownText"
-    DropdownText.Parent = DropdownTop
-    DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    DropdownText.BackgroundTransparency = 1.000
-    DropdownText.BorderSizePixel = 0
-    DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-    DropdownText.Size = UDim2.new(0, 230, 0, 36)
-    DropdownText.Font = Enum.Font.GothamSemibold
-    DropdownText.PlaceholderColor3 = config.SecondaryTextColor
-    DropdownText.PlaceholderText = text
-    DropdownText.Text = ""
-    DropdownText.TextColor3 = config.TextColor
-    DropdownText.TextSize = 14.000
-    DropdownText.TextXAlignment = Enum.TextXAlignment.Left
-    DropdownText.ZIndex = 2
-    
-    local Separator = Instance.new("Frame")
-    Separator.Name = "Separator"
-    Separator.Parent = DropdownTop
-    Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    Separator.BorderSizePixel = 0
-    Separator.Position = UDim2.new(separatorPosition, 0, 0.2, 0)
-    Separator.Size = UDim2.new(0, 1, 0, 22)
-    Separator.ZIndex = 1
-    
-    DropdownModuleL.Name = "DropdownModuleL"
-    DropdownModuleL.Parent = DropdownModule
-    DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
-    DropdownModuleL.Padding = UDim.new(0, 4)
-    
-    local setAllVisible = function()
-        local options = DropdownModule:GetChildren()
-        for i = 1, #options do
-            local option = options[i]
-            if option:IsA("TextButton") and option.Name:match("Option_") then
-                option.Visible = true
-            end
-        end
-    end
-    
-    local searchDropdown = function(text)
-        local options = DropdownModule:GetChildren()
-        for i = 1, #options do
-            local option = options[i]
-            if text == "" then
-                setAllVisible()
-            else
-                if option:IsA("TextButton") and option.Name:match("Option_") then
-                    if option.Text:lower():match(text:lower()) then
-                        option.Visible = true
-                    else
-                        option.Visible = false
+                
+                SliderBack.Name = "SliderBack"
+                SliderBack.Parent = SliderModule
+                SliderBack.BackgroundColor3 = config.Slider_Color
+                SliderBack.BackgroundTransparency = 0.2
+                SliderBack.BorderSizePixel = 0
+                SliderBack.Size = UDim2.new(1, 0, 1, 0)
+                SliderBack.AutoButtonColor = false
+                SliderBack.Font = isMobile and Enum.Font.Gotham : Enum.Font.GothamSemibold
+                SliderBack.Text = "   " .. text
+                SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
+                SliderBack.TextSize = isMobile and 12 : 14.000
+                SliderBack.TextXAlignment = Enum.TextXAlignment.Left
+                
+                -- 双窗口时调整文字垂直对齐
+                if windowCount == 2 then
+                    SliderBack.TextYAlignment = Enum.TextYAlignment.Top
+                    local padding = Instance.new("UIPadding")
+                    padding.Parent = SliderBack
+                    padding.PaddingTop = UDim.new(0, 4) -- 文字上移
+                end
+                
+                SliderBackC.CornerRadius = UDim.new(0, 6)
+                SliderBackC.Name = "SliderBackC"
+                SliderBackC.Parent = SliderBack
+                
+                if windowCount == 2 then
+                    -- 双窗口布局：文字在上方，滑块条在下方
+                    SliderBar.Name = "SliderBar"
+                    SliderBar.Parent = SliderBack
+                    SliderBar.AnchorPoint = Vector2.new(0, 0)
+                    SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                    SliderBar.BorderSizePixel = 0
+                    SliderBar.Position = UDim2.new(0.03, 0, 0.45, 0) -- 向下移动到0.45位置
+                    SliderBar.Size = UDim2.new(0.65, 0, 0, isMobile and 16 : 14) -- 宽度减小为65%
+                    SliderBarC.CornerRadius = UDim.new(0, 4)
+                    SliderBarC.Name = "SliderBarC"
+                    SliderBarC.Parent = SliderBar
+                    
+                    SliderPart.Name = "SliderPart"
+                    SliderPart.Parent = SliderBar
+                    SliderPart.BackgroundColor3 = config.SliderBar_Color
+                    SliderPart.BorderSizePixel = 0
+                    SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+                    SliderPartC.CornerRadius = UDim.new(0, 4)
+                    SliderPartC.Name = "SliderPartC"
+                    SliderPartC.Parent = SliderPart
+                    
+                    -- 双窗口下的数值显示框 - 调整大小和位置
+                    SliderValBG.Name = "SliderValBG"
+                    SliderValBG.Parent = SliderBack
+                    SliderValBG.BackgroundColor3 = config.Bg_Color
+                    SliderValBG.BorderSizePixel = 0
+                    SliderValBG.Position = UDim2.new(0.72, 0, 0.42, 0) -- 向右移动到0.72
+                    SliderValBG.Size = UDim2.new(0, isMobile and 44 : 36, 0, isMobile and 26 : 22) -- 调整大小
+                    SliderValBG.AutoButtonColor = false
+                    SliderValBG.Font = Enum.Font.Gotham
+                    SliderValBG.Text = ""
+                    SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    SliderValBG.TextSize = 14.000
+                    
+                    SliderValBGC.CornerRadius = UDim.new(0, 6)
+                    SliderValBGC.Name = "SliderValBGC"
+                    SliderValBGC.Parent = SliderValBG
+                    
+                    -- 隐藏文字，因为双窗口下文字显示在按钮文本中
+                    SliderBack.Text = "   " .. text
+                else
+                    -- 单窗口布局：保持原样
+                    local sliderBarPosition = 0.35
+                    local sliderBarWidth = isMobile and 140 : 120
+                    local sliderValuePosition = 0.82
+                    local minSliderPosition = 0.28
+                    local addSliderPosition = 0.75
+                    
+                    if isMobile then
+                        sliderBarPosition = 0.30
+                        sliderBarWidth = 130
+                        sliderValuePosition = 0.78
+                        minSliderPosition = 0.25
+                        addSliderPosition = 0.72
+                    end
+                    
+                    SliderBar.Name = "SliderBar"
+                    SliderBar.Parent = SliderBack
+                    SliderBar.AnchorPoint = Vector2.new(0, 0.5)
+                    SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                    SliderBar.BorderSizePixel = 0
+                    SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.5, 0)
+                    SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, isMobile and 16 : 14)
+                    SliderBarC.CornerRadius = UDim.new(0, 4)
+                    SliderBarC.Name = "SliderBarC"
+                    SliderBarC.Parent = SliderBar
+                    
+                    SliderPart.Name = "SliderPart"
+                    SliderPart.Parent = SliderBar
+                    SliderPart.BackgroundColor3 = config.SliderBar_Color
+                    SliderPart.BorderSizePixel = 0
+                    SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+                    SliderPartC.CornerRadius = UDim.new(0, 4)
+                    SliderPartC.Name = "SliderPartC"
+                    SliderPartC.Parent = SliderPart
+                    
+                    SliderValBG.Name = "SliderValBG"
+                    SliderValBG.Parent = SliderBack
+                    SliderValBG.BackgroundColor3 = config.Bg_Color
+                    SliderValBG.BorderSizePixel = 0
+                    SliderValBG.Position = UDim2.new(sliderValuePosition, 0, 0.22, 0)
+                    SliderValBG.Size = UDim2.new(0, isMobile and 44 : 36, 0, isMobile and 26 : 22)
+                    SliderValBG.AutoButtonColor = false
+                    SliderValBG.Font = Enum.Font.Gotham
+                    SliderValBG.Text = ""
+                    SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    SliderValBG.TextSize = 14.000
+                    
+                    SliderValBGC.CornerRadius = UDim.new(0, 6)
+                    SliderValBGC.Name = "SliderValBGC"
+                    SliderValBGC.Parent = SliderValBG
+                    
+                    -- 单窗口下的+和-按钮
+                    local MinSlider = Instance.new("TextButton")
+                    MinSlider.Name = "MinSlider"
+                    MinSlider.Parent = SliderBack
+                    MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                    MinSlider.BackgroundTransparency = 0
+                    MinSlider.BorderSizePixel = 0
+                    MinSlider.Position = UDim2.new(minSliderPosition, 0, 0.25, 0)
+                    MinSlider.Size = UDim2.new(0, isMobile and 24 : 18, 0, isMobile and 24 : 18)
+                    MinSlider.Font = Enum.Font.Gotham
+                    MinSlider.Text = isMobile and "−" : "减"
+                    MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    MinSlider.TextSize = isMobile and 16 : 13.000
+                    MinSlider.TextWrapped = true
+                    MinSlider.ZIndex = 2
+                    
+                    local MinSliderC = Instance.new("UICorner")
+                    MinSliderC.CornerRadius = UDim.new(0, 4)
+                    MinSliderC.Parent = MinSlider
+                    
+                    local AddSlider = Instance.new("TextButton")
+                    AddSlider.Name = "AddSlider"
+                    AddSlider.Parent = SliderBack
+                    AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                    AddSlider.BackgroundTransparency = 0
+                    AddSlider.BorderSizePixel = 0
+                    AddSlider.Position = UDim2.new(addSliderPosition, 0, 0.25, 0)
+                    AddSlider.Size = UDim2.new(0, isMobile and 24 : 18, 0, isMobile and 24 : 18)
+                    AddSlider.Font = Enum.Font.Gotham
+                    AddSlider.Text = isMobile and "+" : "加"
+                    AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    AddSlider.TextSize = isMobile and 16 : 13.000
+                    AddSlider.TextWrapped = true
+                    AddSlider.ZIndex = 2
+                    
+                    local AddSliderC = Instance.new("UICorner")
+                    AddSliderC.CornerRadius = UDim.new(0, 4)
+                    AddSliderC.Parent = AddSlider
+                    
+                    -- 单窗口下的按钮点击事件
+                    local function handleMinClick()
+                        local currentValue = FengUI.flags[flag]
+                        currentValue = math.clamp(currentValue - 1, min, max)
+                        funcs:SetValue(currentValue)
+                    end
+                    
+                    local function handleAddClick()
+                        local currentValue = FengUI.flags[flag]
+                        currentValue = math.clamp(currentValue + 1, min, max)
+                        funcs:SetValue(currentValue)
+                    end
+                    
+                    MinSlider.MouseButton1Click:Connect(handleMinClick)
+                    AddSlider.MouseButton1Click:Connect(handleAddClick)
+                    
+                    -- 触摸点击事件
+                    MinSlider.TouchTap:Connect(handleMinClick)
+                    AddSlider.TouchTap:Connect(handleAddClick)
+                end
+                
+                SliderValue.Name = "SliderValue"
+                SliderValue.Parent = SliderValBG
+                SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                SliderValue.BackgroundTransparency = 1.000
+                SliderValue.BorderSizePixel = 0
+                SliderValue.Size = UDim2.new(1, 0, 1, 0)
+                SliderValue.Font = Enum.Font.Gotham
+                SliderValue.Text = tostring(default)
+                SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+                SliderValue.TextSize = isMobile and 12 : 11.000
+                
+                -- 移动设备上显示数字键盘
+                if isMobile then
+                    SliderValue.TextInputType = Enum.TextInputType.Number
+                end
+                
+                local funcs = {
+                    SetValue = function(self, value)
+                        local percent
+                        
+                        if value then
+                            percent = (value - min)/(max - min)
+                        else
+                            local mouse = services.Players.LocalPlayer:GetMouse()
+                            local barPos = SliderBar.AbsolutePosition.X
+                            local barSize = SliderBar.AbsoluteSize.X
+                            local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
+                            percent = (mouseX - barPos) / barSize
+                            value = min + (max - min) * percent
+                        end
+                        
+                        if precise then
+                            value = tonumber(string.format("%.2f", value))
+                        else
+                            value = math.floor(value + 0.5)
+                        end
+                        
+                        value = math.clamp(value, min, max)
+                        percent = (value - min)/(max - min)
+                        FengUI.flags[flag] = tonumber(value)
+                        SliderValue.Text = tostring(value)
+                        
+                        services.TweenService:Create(SliderPart, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                            Size = UDim2.new(percent, 0, 1, 0)
+                        }):Play()
+                        
+                        callback(tonumber(value))
+                    end,
+                    
+                    GetValue = function(self)
+                        return FengUI.flags[flag]
+                    end
+                }
+                
+                funcs:SetValue(default)
+                
+                local dragging = false
+                
+                local function startDragging()
+                    dragging = true
+                    funcs:SetValue()
+                end
+                
+                local function stopDragging()
+                    dragging = false
+                end
+                
+                local function updateDragging()
+                    if dragging then
+                        funcs:SetValue()
                     end
                 end
+                
+                SliderBar.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        startDragging()
+                    end
+                end)
+                
+                SliderPart.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        startDragging()
+                    end
+                end)
+                
+                services.UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        stopDragging()
+                    end
+                end)
+                
+                services.UserInputService.InputChanged:Connect(function(input)
+                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                        updateDragging()
+                    end
+                end)
+                
+                -- 文本框输入
+                local boxFocused = false
+                local allowed = { [""] = true, ["-"] = true }
+                
+                SliderValue.Focused:Connect(function()
+                    boxFocused = true
+                end)
+                
+                SliderValue.FocusLost:Connect(function()
+                    boxFocused = false
+                    if SliderValue.Text == "" then
+                        funcs:SetValue(default)
+                        return
+                    end
+                    
+                    local numValue = tonumber(SliderValue.Text)
+                    if numValue then
+                        numValue = math.clamp(numValue, min, max)
+                        funcs:SetValue(numValue)
+                    else
+                        funcs:SetValue(default)
+                    end
+                end)
+                
+                SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
+                    if not boxFocused then
+                        return
+                    end
+                    
+                    local text = SliderValue.Text
+                    local newText = ""
+                    
+                    for i = 1, #text do
+                        local char = text:sub(i, i)
+                        if char:match("%d") or (char == "." and precise) then
+                            newText = newText .. char
+                        end
+                    end
+                    
+                    local dotCount = 0
+                    local finalText = ""
+                    for i = 1, #newText do
+                        local char = newText:sub(i, i)
+                        if char == "." then
+                            dotCount = dotCount + 1
+                            if dotCount <= 1 then
+                                finalText = finalText .. char
+                            end
+                        else
+                            finalText = finalText .. char
+                        end
+                    end
+                    
+                    SliderValue.Text = finalText
+                    
+                    local text = SliderValue.Text
+                    if not tonumber(text) and not allowed[text] then
+                        SliderValue.Text = SliderValue.Text:gsub("%D+", "")
+                    elseif not allowed[text] then
+                        if tonumber(text) > max then
+                            text = max
+                            SliderValue.Text = tostring(max)
+                        end
+                        funcs:SetValue(tonumber(text))
+                    end
+                end)
+                
+                return funcs
             end
-        end
-    end
-    
-    local open = false
-    local ToggleDropVis = function()
-        open = not open
-        if open then
-            setAllVisible()
-        end
-        DropdownOpen.Text = (open and "取消" or "选择")
-        
-        DropdownModule.Size = UDim2.new(0, elementWidth, 0, open and (36 + DropdownModuleL.AbsoluteContentSize.Y + 4) or 36)
-        
-        create3DFlipAnimation(DropdownOpenFrame, 0.3)
-    end
-    
-    DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
-    DropdownText.Focused:Connect(function()
-        if open then
-            return
-        end
-        ToggleDropVis()
-    end)
-    
-    DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
-        if not open then
-            return
-        end
-        searchDropdown(DropdownText.Text)
-    end)
-    
-    DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        if open then
-            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36 + DropdownModuleL.AbsoluteContentSize.Y + 4)
-        end
-    end)
-    
-    local funcs = {}
-    funcs.AddOption = function(self, option)
-        local Option = Instance.new("TextButton")
-        local OptionC = Instance.new("UICorner")
-        Option.Name = "Option_" .. option
-        Option.Parent = DropdownModule
-        Option.BackgroundColor3 = config.TabColor
-        Option.BackgroundTransparency = 0.2
-        Option.BorderSizePixel = 0
-        Option.Position = UDim2.new(0, 0, 0.328125, 0)
-        Option.Size = UDim2.new(0, elementWidth - 20, 0, 24)
-        Option.AutoButtonColor = false
-        Option.Font = Enum.Font.Gotham
-        Option.Text = option
-        Option.TextColor3 = config.TextColor
-        Option.TextSize = 13.000
-        OptionC.CornerRadius = UDim.new(0, 6)
-        OptionC.Name = "OptionC"
-        OptionC.Parent = Option
-        
-        Option.MouseButton1Click:Connect(function()
-            ToggleDropVis()
-            callback(Option.Text)
-            DropdownText.Text = Option.Text
-            FengUI.flags[flag] = Option.Text
-        end)
-    end
-    
-    funcs.RemoveOption = function(self, option)
-        local option = DropdownModule:FindFirstChild("Option_" .. option)
-        if option then
-            option:Destroy()
-        end
-    end
-    
-    funcs.SetOptions = function(self, options)
-        for _, v in next, DropdownModule:GetChildren() do
-            if v.Name:match("Option_") then
-                v:Destroy()
+            
+            function section.Dropdown(section, text, flag, options, callback)
+                local callback = callback or function() end
+                local options = options or {}
+                assert(text, "No text provided")
+                assert(flag, "No flag provided")
+                FengUI.flags[flag] = nil
+                
+                local DropdownModule = Instance.new("Frame")
+                local DropdownTop = Instance.new("TextButton")
+                local DropdownTopC = Instance.new("UICorner")
+                local DropdownOpenFrame = Instance.new("Frame")
+                local DropdownOpenFrameC = Instance.new("UICorner")
+                local DropdownOpen = Instance.new("TextButton")
+                local DropdownText = Instance.new("TextBox")
+                local DropdownModuleL = Instance.new("UIListLayout")
+                
+                DropdownModule.Name = "DropdownModule"
+                DropdownModule.Parent = Objs
+                DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                DropdownModule.BackgroundTransparency = 1.000
+                DropdownModule.BorderSizePixel = 0
+                DropdownModule.ClipsDescendants = true
+                DropdownModule.Position = UDim2.new(0, 0, 0, 0)
+                DropdownModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 42 or 36)
+                
+                DropdownTop.Name = "DropdownTop"
+                DropdownTop.Parent = DropdownModule
+                DropdownTop.BackgroundColor3 = config.Dropdown_Color
+                DropdownTop.BackgroundTransparency = 0.2
+                DropdownTop.BorderSizePixel = 0
+                DropdownTop.Size = UDim2.new(0, elementWidth, 0, isMobile and 42 or 36)
+                DropdownTop.AutoButtonColor = false
+                DropdownTop.Font = isMobile and Enum.Font.Gotham : Enum.Font.GothamSemibold
+                DropdownTop.Text = ""
+                DropdownTop.TextColor3 = config.TextColor
+                DropdownTop.TextSize = isMobile and 12 : 14.000
+                DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
+                
+                DropdownTopC.CornerRadius = UDim.new(0, 6)
+                DropdownTopC.Name = "DropdownTopC"
+                DropdownTopC.Parent = DropdownTop
+                
+                local BackgroundFill = Instance.new("Frame")
+                BackgroundFill.Name = "BackgroundFill"
+                BackgroundFill.Parent = DropdownTop
+                BackgroundFill.BackgroundColor3 = config.Dropdown_Color
+                BackgroundFill.BorderSizePixel = 0
+                BackgroundFill.Position = UDim2.new(0.75, 0, 0, 0)
+                BackgroundFill.Size = UDim2.new(0.25, 0, 1, 0)
+                BackgroundFill.ZIndex = 0
+                
+                -- 根据窗口类型调整Dropdown位置
+                local dropdownFramePosition = 0.80
+                local separatorPosition = 0.74
+                if windowCount == 2 then
+                    dropdownFramePosition = 0.71
+                    separatorPosition = 0.65
+                end
+                if isMobile then
+                    dropdownFramePosition = 0.75
+                    separatorPosition = 0.69
+                end
+                
+                DropdownOpenFrame.Name = "DropdownOpenFrame"
+                DropdownOpenFrame.Parent = DropdownTop
+                DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
+                DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
+                DropdownOpenFrame.BorderSizePixel = 0
+                DropdownOpenFrame.Position = UDim2.new(dropdownFramePosition, 0, 0.5, 0)
+                DropdownOpenFrame.Size = UDim2.new(0, isMobile and 45 : 35, 0, isMobile and 28 : 22)
+                DropdownOpenFrame.ZIndex = 2
+                
+                DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
+                DropdownOpenFrameC.Name = "DropdownOpenFrameC"
+                DropdownOpenFrameC.Parent = DropdownOpenFrame
+                
+                DropdownOpen.Name = "DropdownOpen"
+                DropdownOpen.Parent = DropdownOpenFrame
+                DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                DropdownOpen.BackgroundTransparency = 1.000
+                DropdownOpen.BorderSizePixel = 0
+                DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
+                DropdownOpen.Font = Enum.Font.GothamSemibold
+                DropdownOpen.Text = "选择"
+                DropdownOpen.TextColor3 = config.TextColor
+                DropdownOpen.TextSize = isMobile and 12 : 11.000
+                DropdownOpen.TextWrapped = true
+                DropdownOpen.ZIndex = 3
+                
+                DropdownText.Name = "DropdownText"
+                DropdownText.Parent = DropdownTop
+                DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                DropdownText.BackgroundTransparency = 1.000
+                DropdownText.BorderSizePixel = 0
+                DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
+                DropdownText.Size = UDim2.new(0, 230, 0, isMobile and 42 or 36)
+                DropdownText.Font = isMobile and Enum.Font.Gotham : Enum.Font.GothamSemibold
+                DropdownText.PlaceholderColor3 = config.SecondaryTextColor
+                DropdownText.PlaceholderText = text
+                DropdownText.Text = ""
+                DropdownText.TextColor3 = config.TextColor
+                DropdownText.TextSize = isMobile and 12 : 14.000
+                DropdownText.TextXAlignment = Enum.TextXAlignment.Left
+                DropdownText.ZIndex = 2
+                
+                local Separator = Instance.new("Frame")
+                Separator.Name = "Separator"
+                Separator.Parent = DropdownTop
+                Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                Separator.BorderSizePixel = 0
+                Separator.Position = UDim2.new(separatorPosition, 0, 0.2, 0)
+                Separator.Size = UDim2.new(0, 1, 0, isMobile and 28 : 22)
+                Separator.ZIndex = 1
+                
+                DropdownModuleL.Name = "DropdownModuleL"
+                DropdownModuleL.Parent = DropdownModule
+                DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
+                DropdownModuleL.Padding = UDim.new(0, 4)
+                
+                local setAllVisible = function()
+                    local options = DropdownModule:GetChildren()
+                    for i = 1, #options do
+                        local option = options[i]
+                        if option:IsA("TextButton") and option.Name:match("Option_") then
+                            option.Visible = true
+                        end
+                    end
+                end
+                
+                local searchDropdown = function(text)
+                    local options = DropdownModule:GetChildren()
+                    for i = 1, #options do
+                        local option = options[i]
+                        if text == "" then
+                            setAllVisible()
+                        else
+                            if option:IsA("TextButton") and option.Name:match("Option_") then
+                                if option.Text:lower():match(text:lower()) then
+                                    option.Visible = true
+                                else
+                                    option.Visible = false
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                local open = false
+                local ToggleDropVis = function()
+                    open = not open
+                    if open then
+                        setAllVisible()
+                    end
+                    DropdownOpen.Text = (open and "取消" or "选择")
+                    
+                    DropdownModule.Size = UDim2.new(0, elementWidth, 0, open and ((isMobile and 42 or 36) + DropdownModuleL.AbsoluteContentSize.Y + 4) or (isMobile and 42 or 36))
+                    
+                    create3DFlipAnimation(DropdownOpenFrame, 0.3)
+                end
+                
+                DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
+                
+                -- 触摸点击事件
+                DropdownOpen.TouchTap:Connect(ToggleDropVis)
+                
+                DropdownText.Focused:Connect(function()
+                    if open then
+                        return
+                    end
+                    ToggleDropVis()
+                end)
+                
+                DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
+                    if not open then
+                        return
+                    end
+                    searchDropdown(DropdownText.Text)
+                end)
+                
+                DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    if open then
+                        DropdownModule.Size = UDim2.new(0, elementWidth, 0, (isMobile and 42 or 36) + DropdownModuleL.AbsoluteContentSize.Y + 4)
+                    end
+                end)
+                
+                local funcs = {}
+                funcs.AddOption = function(self, option)
+                    local Option = Instance.new("TextButton")
+                    local OptionC = Instance.new("UICorner")
+                    Option.Name = "Option_" .. option
+                    Option.Parent = DropdownModule
+                    Option.BackgroundColor3 = config.TabColor
+                    Option.BackgroundTransparency = 0.2
+                    Option.BorderSizePixel = 0
+                    Option.Position = UDim2.new(0, 0, 0.328125, 0)
+                    Option.Size = UDim2.new(0, elementWidth - 20, 0, isMobile and 28 : 24)
+                    Option.AutoButtonColor = false
+                    Option.Font = Enum.Font.Gotham
+                    Option.Text = option
+                    Option.TextColor3 = config.TextColor
+                    Option.TextSize = isMobile and 12 : 13.000
+                    OptionC.CornerRadius = UDim.new(0, 6)
+                    OptionC.Name = "OptionC"
+                    OptionC.Parent = Option
+                    
+                    local function selectOption()
+                        ToggleDropVis()
+                        callback(Option.Text)
+                        DropdownText.Text = Option.Text
+                        FengUI.flags[flag] = Option.Text
+                    end
+                    
+                    Option.MouseButton1Click:Connect(selectOption)
+                    
+                    -- 触摸点击事件
+                    Option.TouchTap:Connect(selectOption)
+                end
+                
+                funcs.RemoveOption = function(self, option)
+                    local option = DropdownModule:FindFirstChild("Option_" .. option)
+                    if option then
+                        option:Destroy()
+                    end
+                end
+                
+                funcs.SetOptions = function(self, options)
+                    for _, v in next, DropdownModule:GetChildren() do
+                        if v.Name:match("Option_") then
+                            v:Destroy()
+                        end
+                    end
+                    for _, v in next, options do
+                        funcs:AddOption(v)
+                    end
+                end
+                
+                funcs:SetOptions(options)
+                return funcs
             end
-        end
-        for _, v in next, options do
-            funcs:AddOption(v)
-        end
-    end
-    
-    funcs:SetOptions(options)
-    return funcs
-end
 
             return section
         end
@@ -2699,6 +3071,10 @@ end
     
     -- 添加DualTab方法
     function window:DualTab(name, icon)
+        if isMobile then
+            warn("移动设备不支持双窗口模式，已自动切换到单窗口")
+            return window:Tab(name, icon, 1)
+        end
         return window:Tab(name, icon, 2)
     end
 
