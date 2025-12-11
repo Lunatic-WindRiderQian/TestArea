@@ -823,6 +823,7 @@ function FengUI.new(FengUI, name, theme)
     LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
     LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+    LeftContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
     
     local LeftLayout = Instance.new("UIListLayout")
     LeftLayout.Name = "LeftLayout"
@@ -841,6 +842,7 @@ function FengUI.new(FengUI, name, theme)
     RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
     RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+    RightContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
     
     local RightLayout = Instance.new("UIListLayout")
     RightLayout.Name = "RightLayout"
@@ -848,30 +850,39 @@ function FengUI.new(FengUI, name, theme)
     RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
     RightLayout.Padding = UDim.new(0, 4)
     
-    -- 修复：分别设置滚动监听，避免相互干扰
-    local function setupIndividualScrolling(scrollingFrame, layout)
-        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
-            
-            if layout.AbsoluteContentSize.Y <= scrollingFrame.AbsoluteSize.Y then
-                scrollingFrame.ScrollingEnabled = false
-            else
-                scrollingFrame.ScrollingEnabled = true
-            end
-        end)
+    -- 分别设置滚动监听，避免相互干扰
+    LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        LeftContainer.CanvasSize = UDim2.new(0, 0, 0, LeftLayout.AbsoluteContentSize.Y + 20)
         
-        scrollingFrame.ElasticBehavior = Enum.ElasticBehavior.Never
+        if LeftLayout.AbsoluteContentSize.Y <= LeftContainer.AbsoluteSize.Y then
+            LeftContainer.ScrollingEnabled = false
+        else
+            LeftContainer.ScrollingEnabled = true
+        end
+    end)
+    
+    RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        RightContainer.CanvasSize = UDim2.new(0, 0, 0, RightLayout.AbsoluteContentSize.Y + 20)
         
-        -- 防止滚动事件冒泡到父容器
+        if RightLayout.AbsoluteContentSize.Y <= RightContainer.AbsoluteSize.Y then
+            RightContainer.ScrollingEnabled = false
+        else
+            RightContainer.ScrollingEnabled = true
+        end
+    end)
+    
+    -- 防止滚动事件冒泡到父容器
+    local function preventScrollBubble(scrollingFrame)
         scrollingFrame.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseWheel then
+                -- 标记事件已处理，防止冒泡到父容器
                 input.Used = true
             end
         end)
     end
     
-    setupIndividualScrolling(LeftContainer, LeftLayout)
-    setupIndividualScrolling(RightContainer, RightLayout)
+    preventScrollBubble(LeftContainer)
+    preventScrollBubble(RightContainer)
 end
         
         TabIco.Name = "TabIco"
@@ -1780,18 +1791,18 @@ end
                 
                 local funcs = {
                     SetState = function(self, state)
-                        -- 修复：移除状态检查，直接设置新状态
                         local newState = state
                         if state == nil then
-                            newState = not FengUI.flags[flag]
+                            newState = not (FengUI.flags[flag] or false)
                         end
+                        
+                        FengUI.flags[flag] = newState
                         
                         services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                             Position = UDim2.new(0, newState and 14 or 0, 0, 0),
                             BackgroundColor3 = newState and config.Toggle_On or config.Toggle_Off
                         }):Play()
                         
-                        FengUI.flags[flag] = newState
                         callback(newState)
                     end,
                     Module = ToggleModule
@@ -1801,8 +1812,27 @@ end
                     funcs:SetState(true)
                 end
                 
+                -- 修复：直接处理点击事件，避免状态检查问题
+                local isProcessing = false
                 ToggleBtn.MouseButton1Click:Connect(function()
-                    funcs:SetState()
+                    if isProcessing then return end
+                    isProcessing = true
+                    
+                    -- 短暂延迟防止快速点击
+                    task.wait(0.01)
+                    
+                    local currentState = FengUI.flags[flag] or false
+                    local newState = not currentState
+                    
+                    services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                        Position = UDim2.new(0, newState and 14 or 0, 0, 0),
+                        BackgroundColor3 = newState and config.Toggle_On or config.Toggle_Off
+                    }):Play()
+                    
+                    FengUI.flags[flag] = newState
+                    callback(newState)
+                    
+                    isProcessing = false
                 end)
                 
                 return funcs
