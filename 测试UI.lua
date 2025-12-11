@@ -2070,7 +2070,7 @@ end
     
     -- 根据窗口类型设置不同的高度
     if windowCount == 2 then
-        SliderModule.Size = UDim2.new(0, elementWidth, 0, 48) -- 双窗口高度调整为48
+        SliderModule.Size = UDim2.new(0, elementWidth, 0, 52) -- 双窗口高度调整为52
     else
         SliderModule.Size = UDim2.new(0, elementWidth, 0, 36) -- 单窗口高度保持36
     end
@@ -2088,6 +2088,14 @@ end
     SliderBack.TextSize = 14.000
     SliderBack.TextXAlignment = Enum.TextXAlignment.Left
     
+    -- 双窗口时调整文字垂直对齐
+    if windowCount == 2 then
+        SliderBack.TextYAlignment = Enum.TextYAlignment.Top
+        local padding = Instance.new("UIPadding")
+        padding.Parent = SliderBack
+        padding.PaddingTop = UDim.new(0, 4) -- 文字上移
+    end
+    
     SliderBackC.CornerRadius = UDim.new(0, 6)
     SliderBackC.Name = "SliderBackC"
     SliderBackC.Parent = SliderBack
@@ -2096,11 +2104,11 @@ end
         -- 双窗口布局：文字在上方，滑块条在下方
         SliderBar.Name = "SliderBar"
         SliderBar.Parent = SliderBack
-        SliderBar.AnchorPoint = Vector2.new(0, 0.5)
+        SliderBar.AnchorPoint = Vector2.new(0, 0)
         SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
         SliderBar.BorderSizePixel = 0
-        SliderBar.Position = UDim2.new(0.03, 0, 0.7, 0) -- 滑块条在下方
-        SliderBar.Size = UDim2.new(0.72, 0, 0, 10) -- 减小滑块条宽度为72%，高度为10
+        SliderBar.Position = UDim2.new(0.03, 0, 0.45, 0) -- 向下移动到0.45位置
+        SliderBar.Size = UDim2.new(0.65, 0, 0, 14) -- 宽度减小为65%，高度增加到14
         SliderBarC.CornerRadius = UDim.new(0, 4)
         SliderBarC.Name = "SliderBarC"
         SliderBarC.Parent = SliderBar
@@ -2114,13 +2122,13 @@ end
         SliderPartC.Name = "SliderPartC"
         SliderPartC.Parent = SliderPart
         
-        -- 双窗口下的数值显示框
+        -- 双窗口下的数值显示框 - 调整大小和位置
         SliderValBG.Name = "SliderValBG"
         SliderValBG.Parent = SliderBack
         SliderValBG.BackgroundColor3 = config.Bg_Color
         SliderValBG.BorderSizePixel = 0
-        SliderValBG.Position = UDim2.new(0.77, 0, 0.58, 0) -- 调整数值框位置，与滑块条对齐
-        SliderValBG.Size = UDim2.new(0, 36, 0, 18) -- 减小数值框大小
+        SliderValBG.Position = UDim2.new(0.70, 0, 0.42, 0) -- 与滑块条垂直对齐，调整为0.70和0.42
+        SliderValBG.Size = UDim2.new(0, 50, 0, 22) -- 调整为和Textbox一样的大小
         SliderValBG.AutoButtonColor = false
         SliderValBG.Font = Enum.Font.Gotham
         SliderValBG.Text = ""
@@ -2240,6 +2248,12 @@ end
     SliderValue.Text = tostring(default)
     SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
     SliderValue.TextSize = 11.000
+    
+    -- 双窗口时调整文本框内的文字大小
+    if windowCount == 2 then
+        SliderValue.TextSize = 12
+        SliderValue.Font = Enum.Font.Gotham
+    end
     
     local funcs = {
         SetValue = function(self, value)
