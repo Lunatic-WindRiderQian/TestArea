@@ -2122,13 +2122,13 @@ end
         SliderPartC.Name = "SliderPartC"
         SliderPartC.Parent = SliderPart
         
-        -- 双窗口下的数值显示框 - 调整大小和位置
+        -- 双窗口下的数值显示框 - 调整大小和位置（缩短长度）
         SliderValBG.Name = "SliderValBG"
         SliderValBG.Parent = SliderBack
         SliderValBG.BackgroundColor3 = config.Bg_Color
         SliderValBG.BorderSizePixel = 0
-        SliderValBG.Position = UDim2.new(0.70, 0, 0.42, 0) -- 与滑块条垂直对齐，调整为0.70和0.42
-        SliderValBG.Size = UDim2.new(0, 50, 0, 22) -- 调整为和Textbox一样的大小
+        SliderValBG.Position = UDim2.new(0.72, 0, 0.42, 0) -- 向右移动到0.72
+        SliderValBG.Size = UDim2.new(0, 36, 0, 22) -- 缩短为36宽度（原为50）
         SliderValBG.AutoButtonColor = false
         SliderValBG.Font = Enum.Font.Gotham
         SliderValBG.Text = ""
