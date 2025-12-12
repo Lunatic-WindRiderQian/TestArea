@@ -810,7 +810,7 @@ function FengUI.new(FengUI, name, theme)
         
         if windowCount == 2 then
             -- 双窗口布局 - 左窗口小一点，右窗口往左移动一点
-            TabContainer.Size = UDim2.new(1, 0, 0, 0)
+            TabContainer.Size = UDim2.new(1, 0, 1, 0)  -- 修改为固定高度
             
             local LeftContainer = Instance.new("ScrollingFrame")
             LeftContainer.Name = "LeftContainer"
@@ -823,8 +823,6 @@ function FengUI.new(FengUI, name, theme)
             LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
             LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
             LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-            LeftContainer.ScrollingEnabled = true -- 确保滚动启用
-            LeftContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always -- 确保滚动条显示
             
             local LeftLayout = Instance.new("UIListLayout")
             LeftLayout.Name = "LeftLayout"
@@ -843,8 +841,6 @@ function FengUI.new(FengUI, name, theme)
             RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
             RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
             RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-            RightContainer.ScrollingEnabled = true -- 确保滚动启用
-            RightContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always -- 确保滚动条显示
             
             local RightLayout = Instance.new("UIListLayout")
             RightLayout.Name = "RightLayout"
@@ -852,56 +848,36 @@ function FengUI.new(FengUI, name, theme)
             RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
             RightLayout.Padding = UDim.new(0, 4)
             
-            -- 设置左窗口的独立滚动
-            LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                local contentHeight = LeftLayout.AbsoluteContentSize.Y
-                LeftContainer.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
-                
-                -- 只有当内容高度超过容器高度时才启用滚动
-                if contentHeight > LeftContainer.AbsoluteSize.Y then
-                    LeftContainer.ScrollingEnabled = true
-                else
-                    LeftContainer.ScrollingEnabled = false
-                end
-            end)
+            -- 为左右容器分别设置独立滚动
+            setupSmoothScrolling(LeftContainer, LeftLayout)
+            setupSmoothScrolling(RightContainer, RightLayout)
             
-            -- 设置右窗口的独立滚动
-            RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                local contentHeight = RightLayout.AbsoluteContentSize.Y
-                RightContainer.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
-                
-                -- 只有当内容高度超过容器高度时才启用滚动
-                if contentHeight > RightContainer.AbsoluteSize.Y then
-                    RightContainer.ScrollingEnabled = true
-                else
-                    RightContainer.ScrollingEnabled = false
-                end
-            end)
+            -- 删除原来的updateContainerHeight函数和相关连接
+            -- 改为让Tab容器本身可以滚动
+            Tab.CanvasSize = UDim2.new(0, 0, 0, 0)
+            Tab.ScrollingEnabled = true
             
-            -- 分别更新容器的高度
-            LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            -- 设置Tab容器的滚动（用于整体布局）
+            local function updateTabHeight()
                 local leftHeight = LeftLayout.AbsoluteContentSize.Y
                 local rightHeight = RightLayout.AbsoluteContentSize.Y
-                local maxHeight = math.max(leftHeight, rightHeight)
+                local maxHeight = math.max(leftHeight, rightHeight) + 20
                 
-                -- 确保容器至少有一定的最小高度
-                local finalHeight = math.max(maxHeight, 100)
+                -- 设置左右容器内部的大小
+                LeftContainer.CanvasSize = UDim2.new(0, 0, 0, leftHeight + 10)
+                RightContainer.CanvasSize = UDim2.new(0, 0, 0, rightHeight + 10)
                 
-                TabContainer.Size = UDim2.new(1, 0, 0, finalHeight)
-                Tab.CanvasSize = UDim2.new(0, 0, 0, finalHeight)
-            end)
+                -- 设置Tab容器的总高度
+                Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
+                TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
+            end
             
-            RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                local leftHeight = LeftLayout.AbsoluteContentSize.Y
-                local rightHeight = RightLayout.AbsoluteContentSize.Y
-                local maxHeight = math.max(leftHeight, rightHeight)
-                
-                -- 确保容器至少有一定的最小高度
-                local finalHeight = math.max(maxHeight, 100)
-                
-                TabContainer.Size = UDim2.new(1, 0, 0, finalHeight)
-                Tab.CanvasSize = UDim2.new(0, 0, 0, finalHeight)
-            end)
+            -- 监听左右布局变化
+            LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabHeight)
+            RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabHeight)
+            
+            -- 初始设置
+            updateTabHeight()
         end
         
         TabIco.Name = "TabIco"
