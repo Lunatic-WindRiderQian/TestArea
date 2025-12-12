@@ -958,11 +958,6 @@ function FengUI.new(FengUI, name, theme)
     function window.Tab(window, name, icon, windowCount)
         local windowCount = windowCount or 1
         
-        -- 移动设备上强制使用单窗口
-        if isMobile then
-            windowCount = 1
-        end
-        
         local Tab = Instance.new("ScrollingFrame")
         local TabIco = Instance.new("ImageLabel")
         local TabText = Instance.new("TextLabel")
@@ -1015,98 +1010,170 @@ function FengUI.new(FengUI, name, theme)
             RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
             RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
             
-            -- 添加鼠标悬停检测来控制滚动
-            local activeScrollFrame = nil
+            -- 双窗口滚动控制
+            local activeContainer = nil
             
-            local function setActiveScrollFrame(frame)
-                if activeScrollFrame and activeScrollFrame ~= frame then
-                    activeScrollFrame.ScrollingEnabled = false
-                end
+            local function updateScrollEnabled()
+                -- 获取布局
+                local leftLayout = LeftContainer:FindFirstChild("LeftLayout")
+                local rightLayout = RightContainer:FindFirstChild("RightLayout")
                 
-                activeScrollFrame = frame
-                if frame then
-                    frame.ScrollingEnabled = true
+                if leftLayout and rightLayout then
+                    -- 只有当内容超过容器高度时才启用滚动
+                    local leftCanScroll = leftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y
+                    local rightCanScroll = rightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y
+                    
+                    if activeContainer == "left" then
+                        LeftContainer.ScrollingEnabled = leftCanScroll
+                        RightContainer.ScrollingEnabled = false
+                    elseif activeContainer == "right" then
+                        LeftContainer.ScrollingEnabled = false
+                        RightContainer.ScrollingEnabled = rightCanScroll
+                    else
+                        -- 默认状态：两个都可以滚动
+                        LeftContainer.ScrollingEnabled = leftCanScroll
+                        RightContainer.ScrollingEnabled = rightCanScroll
+                    end
                 end
             end
             
-            -- 鼠标进入左窗口时，只允许左窗口滚动
-            LeftContainer.MouseEnter:Connect(function()
-                if isMobile then return end
-                setActiveScrollFrame(LeftContainer)
-                -- 启用左窗口滚动，禁用右窗口滚动
-                LeftContainer.ScrollingEnabled = true
-                RightContainer.ScrollingEnabled = false
-            end)
+            -- 鼠标/触摸事件处理
+            local function setActiveContainer(container, containerName)
+                activeContainer = containerName
+                updateScrollEnabled()
+                
+                -- 添加视觉反馈
+                if containerName == "left" then
+                    services.TweenService:Create(LeftContainer, TweenInfo.new(0.2), {
+                        ScrollBarImageTransparency = 0.3
+                    }):Play()
+                    services.TweenService:Create(RightContainer, TweenInfo.new(0.2), {
+                        ScrollBarImageTransparency = 0.7
+                    }):Play()
+                elseif containerName == "right" then
+                    services.TweenService:Create(LeftContainer, TweenInfo.new(0.2), {
+                        ScrollBarImageTransparency = 0.7
+                    }):Play()
+                    services.TweenService:Create(RightContainer, TweenInfo.new(0.2), {
+                        ScrollBarImageTransparency = 0.3
+                    }):Play()
+                end
+            end
             
-            -- 鼠标进入右窗口时，只允许右窗口滚动
-            RightContainer.MouseEnter:Connect(function()
-                if isMobile then return end
-                setActiveScrollFrame(RightContainer)
-                -- 启用右窗口滚动，禁用左窗口滚动
-                RightContainer.ScrollingEnabled = true
-                LeftContainer.ScrollingEnabled = false
-            end)
-            
-            -- 触摸设备处理
-            if isMobile then
-                -- 移动设备上自动启用两个窗口的滚动
-                LeftContainer.ScrollingEnabled = true
-                RightContainer.ScrollingEnabled = true
-            else
-                -- 鼠标离开窗口时，恢复默认状态
+            -- 鼠标进入事件
+            if not isMobile then
+                LeftContainer.MouseEnter:Connect(function()
+                    setActiveContainer(LeftContainer, "left")
+                end)
+                
+                RightContainer.MouseEnter:Connect(function()
+                    setActiveContainer(RightContainer, "right")
+                end)
+                
+                -- 鼠标离开事件
                 LeftContainer.MouseLeave:Connect(function()
-                    local mousePos = services.UserInputService:GetMouseLocation()
+                    local mouse = services.Players.LocalPlayer:GetMouse()
                     local leftAbsPos = LeftContainer.AbsolutePosition
                     local leftAbsSize = LeftContainer.AbsoluteSize
                     local rightAbsPos = RightContainer.AbsolutePosition
                     local rightAbsSize = RightContainer.AbsoluteSize
                     
                     -- 检查鼠标是否在右窗口
-                    local isInRight = mousePos.X >= rightAbsPos.X and mousePos.X <= rightAbsPos.X + rightAbsSize.X
-                        and mousePos.Y >= rightAbsPos.Y and mousePos.Y <= rightAbsPos.Y + rightAbsSize.Y
+                    local isInRight = mouse.X >= rightAbsPos.X and mouse.X <= rightAbsPos.X + rightAbsSize.X and
+                                     mouse.Y >= rightAbsPos.Y and mouse.Y <= rightAbsPos.Y + rightAbsSize.Y
                     
                     if not isInRight then
-                        -- 鼠标不在任何窗口，恢复两个窗口的滚动状态
-                        local leftLayout = LeftContainer:FindFirstChild("LeftLayout")
-                        local rightLayout = RightContainer:FindFirstChild("RightLayout")
-                        
-                        if leftLayout then
-                            LeftContainer.ScrollingEnabled = leftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y
-                        end
-                        
-                        if rightLayout then
-                            RightContainer.ScrollingEnabled = rightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y
-                        end
-                        
-                        activeScrollFrame = nil
+                        activeContainer = nil
+                        updateScrollEnabled()
+                        services.TweenService:Create(LeftContainer, TweenInfo.new(0.2), {
+                            ScrollBarImageTransparency = 0.5
+                        }):Play()
+                        services.TweenService:Create(RightContainer, TweenInfo.new(0.2), {
+                            ScrollBarImageTransparency = 0.5
+                        }):Play()
                     end
                 end)
                 
                 RightContainer.MouseLeave:Connect(function()
-                    local mousePos = services.UserInputService:GetMouseLocation()
+                    local mouse = services.Players.LocalPlayer:GetMouse()
                     local leftAbsPos = LeftContainer.AbsolutePosition
                     local leftAbsSize = LeftContainer.AbsoluteSize
                     local rightAbsPos = RightContainer.AbsolutePosition
                     local rightAbsSize = RightContainer.AbsoluteSize
                     
                     -- 检查鼠标是否在左窗口
-                    local isInLeft = mousePos.X >= leftAbsPos.X and mousePos.X <= leftAbsPos.X + leftAbsSize.X
-                        and mousePos.Y >= leftAbsPos.Y and mousePos.Y <= leftAbsPos.Y + leftAbsSize.Y
+                    local isInLeft = mouse.X >= leftAbsPos.X and mouse.X <= leftAbsPos.X + leftAbsSize.X and
+                                    mouse.Y >= leftAbsPos.Y and mouse.Y <= leftAbsPos.Y + leftAbsSize.Y
                     
                     if not isInLeft then
-                        -- 鼠标不在任何窗口，恢复两个窗口的滚动状态
-                        local leftLayout = LeftContainer:FindFirstChild("LeftLayout")
-                        local rightLayout = RightContainer:FindFirstChild("RightLayout")
-                        
-                        if leftLayout then
-                            LeftContainer.ScrollingEnabled = leftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y
-                        end
-                        
-                        if rightLayout then
-                            RightContainer.ScrollingEnabled = rightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y
-                        end
-                        
-                        activeScrollFrame = nil
+                        activeContainer = nil
+                        updateScrollEnabled()
+                        services.TweenService:Create(LeftContainer, TweenInfo.new(0.2), {
+                            ScrollBarImageTransparency = 0.5
+                        }):Play()
+                        services.TweenService:Create(RightContainer, TweenInfo.new(0.2), {
+                            ScrollBarImageTransparency = 0.5
+                        }):Play()
+                    end
+                end)
+            end
+            
+            -- 触摸事件处理（移动设备）
+            if isMobile then
+                local touchStartTime = 0
+                local touchStartPos = Vector2.new(0, 0)
+                local touchThreshold = 10 -- 移动阈值
+                
+                LeftContainer.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.Touch then
+                        touchStartTime = tick()
+                        touchStartPos = Vector2.new(input.Position.X, input.Position.Y)
+                        setActiveContainer(LeftContainer, "left")
+                    end
+                end)
+                
+                RightContainer.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.Touch then
+                        touchStartTime = tick()
+                        touchStartPos = Vector2.new(input.Position.X, input.Position.Y)
+                        setActiveContainer(RightContainer, "right")
+                    end
+                end)
+                
+                -- 触摸结束事件
+                LeftContainer.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.Touch then
+                        -- 短暂延迟后重置活动容器
+                        task.delay(0.5, function()
+                            if activeContainer == "left" then
+                                activeContainer = nil
+                                updateScrollEnabled()
+                                services.TweenService:Create(LeftContainer, TweenInfo.new(0.2), {
+                                    ScrollBarImageTransparency = 0.5
+                                }):Play()
+                                services.TweenService:Create(RightContainer, TweenInfo.new(0.2), {
+                                    ScrollBarImageTransparency = 0.5
+                                }):Play()
+                            end
+                        end)
+                    end
+                end)
+                
+                RightContainer.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.Touch then
+                        -- 短暂延迟后重置活动容器
+                        task.delay(0.5, function()
+                            if activeContainer == "right" then
+                                activeContainer = nil
+                                updateScrollEnabled()
+                                services.TweenService:Create(LeftContainer, TweenInfo.new(0.2), {
+                                    ScrollBarImageTransparency = 0.5
+                                }):Play()
+                                services.TweenService:Create(RightContainer, TweenInfo.new(0.2), {
+                                    ScrollBarImageTransparency = 0.5
+                                }):Play()
+                            end
+                        end)
                     end
                 end)
             end
@@ -1123,8 +1190,18 @@ function FengUI.new(FengUI, name, theme)
             RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
             RightLayout.Padding = UDim.new(0, 4)
             
+            -- 监听布局变化
+            LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateScrollEnabled)
+            RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateScrollEnabled)
+            
             setupSmoothScrolling(LeftContainer, LeftLayout)
             setupSmoothScrolling(RightContainer, RightLayout)
+            
+            -- 初始化滚动状态
+            task.spawn(function()
+                task.wait(0.1)
+                updateScrollEnabled()
+            end)
         end
         
         TabIco.Name = "TabIco"
@@ -1201,6 +1278,12 @@ function FengUI.new(FengUI, name, theme)
             
             TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
             TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
+            
+            -- 初始化高度
+            task.spawn(function()
+                task.wait(0.1)
+                updateContainerHeight()
+            end)
         end
         
         local tab = {}
@@ -1358,14 +1441,14 @@ function FengUI.new(FengUI, name, theme)
                 MusicPlayerModule.Parent = Objs
                 MusicPlayerModule.BackgroundTransparency = 1
                 MusicPlayerModule.BorderSizePixel = 0
-                MusicPlayerModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 180 : 160)
+                MusicPlayerModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 180 or 160)
                 
                 local PlayerContainer = Instance.new("Frame")
                 PlayerContainer.Name = "PlayerContainer"
                 PlayerContainer.Parent = MusicPlayerModule
                 PlayerContainer.BackgroundColor3 = config.TabColor
                 PlayerContainer.BackgroundTransparency = 0.2
-                PlayerContainer.Size = UDim2.new(1, 0, 0, isMobile and 180 : 160)
+                PlayerContainer.Size = UDim2.new(1, 0, 0, isMobile and 180 or 160)
                 
                 local PlayerCorner = Instance.new("UICorner")
                 PlayerCorner.CornerRadius = UDim.new(0, 8)
@@ -2473,9 +2556,9 @@ function FengUI.new(FengUI, name, theme)
                 
                 -- 根据窗口类型设置不同的高度
                 if windowCount == 2 then
-                    SliderModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 60 : 52) -- 双窗口高度
+                    SliderModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 60 or 52) -- 双窗口高度
                 else
-                    SliderModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 48 : 36) -- 单窗口高度
+                    SliderModule.Size = UDim2.new(0, elementWidth, 0, isMobile and 48 or 36) -- 单窗口高度
                 end
                 
                 SliderBack.Name = "SliderBack"
@@ -2485,10 +2568,10 @@ function FengUI.new(FengUI, name, theme)
                 SliderBack.BorderSizePixel = 0
                 SliderBack.Size = UDim2.new(1, 0, 1, 0)
                 SliderBack.AutoButtonColor = false
-                SliderBack.Font = isMobile and Enum.Font.Gotham : Enum.Font.GothamSemibold
+                SliderBack.Font = isMobile and Enum.Font.Gotham or Enum.Font.GothamSemibold
                 SliderBack.Text = "   " .. text
                 SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SliderBack.TextSize = isMobile and 12 : 14.000
+                SliderBack.TextSize = isMobile and 12 or 14.000
                 SliderBack.TextXAlignment = Enum.TextXAlignment.Left
                 
                 -- 双窗口时调整文字垂直对齐
@@ -2511,7 +2594,7 @@ function FengUI.new(FengUI, name, theme)
                     SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
                     SliderBar.BorderSizePixel = 0
                     SliderBar.Position = UDim2.new(0.03, 0, 0.45, 0) -- 向下移动到0.45位置
-                    SliderBar.Size = UDim2.new(0.65, 0, 0, isMobile and 16 : 14) -- 宽度减小为65%
+                    SliderBar.Size = UDim2.new(0.65, 0, 0, isMobile and 16 or 14) -- 宽度减小为65%
                     SliderBarC.CornerRadius = UDim.new(0, 4)
                     SliderBarC.Name = "SliderBarC"
                     SliderBarC.Parent = SliderBar
@@ -2531,7 +2614,7 @@ function FengUI.new(FengUI, name, theme)
                     SliderValBG.BackgroundColor3 = config.Bg_Color
                     SliderValBG.BorderSizePixel = 0
                     SliderValBG.Position = UDim2.new(0.72, 0, 0.42, 0) -- 向右移动到0.72
-                    SliderValBG.Size = UDim2.new(0, isMobile and 44 : 36, 0, isMobile and 26 : 22) -- 调整大小
+                    SliderValBG.Size = UDim2.new(0, isMobile and 44 or 36, 0, isMobile and 26 or 22) -- 调整大小
                     SliderValBG.AutoButtonColor = false
                     SliderValBG.Font = Enum.Font.Gotham
                     SliderValBG.Text = ""
@@ -2547,7 +2630,7 @@ function FengUI.new(FengUI, name, theme)
                 else
                     -- 单窗口布局：保持原样
                     local sliderBarPosition = 0.35
-                    local sliderBarWidth = isMobile and 140 : 120
+                    local sliderBarWidth = isMobile and 140 or 120
                     local sliderValuePosition = 0.82
                     local minSliderPosition = 0.28
                     local addSliderPosition = 0.75
@@ -2566,7 +2649,7 @@ function FengUI.new(FengUI, name, theme)
                     SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
                     SliderBar.BorderSizePixel = 0
                     SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.5, 0)
-                    SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, isMobile and 16 : 14)
+                    SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, isMobile and 16 or 14)
                     SliderBarC.CornerRadius = UDim.new(0, 4)
                     SliderBarC.Name = "SliderBarC"
                     SliderBarC.Parent = SliderBar
@@ -2585,7 +2668,7 @@ function FengUI.new(FengUI, name, theme)
                     SliderValBG.BackgroundColor3 = config.Bg_Color
                     SliderValBG.BorderSizePixel = 0
                     SliderValBG.Position = UDim2.new(sliderValuePosition, 0, 0.22, 0)
-                    SliderValBG.Size = UDim2.new(0, isMobile and 44 : 36, 0, isMobile and 26 : 22)
+                    SliderValBG.Size = UDim2.new(0, isMobile and 44 or 36, 0, isMobile and 26 or 22)
                     SliderValBG.AutoButtonColor = false
                     SliderValBG.Font = Enum.Font.Gotham
                     SliderValBG.Text = ""
@@ -2604,11 +2687,11 @@ function FengUI.new(FengUI, name, theme)
                     MinSlider.BackgroundTransparency = 0
                     MinSlider.BorderSizePixel = 0
                     MinSlider.Position = UDim2.new(minSliderPosition, 0, 0.25, 0)
-                    MinSlider.Size = UDim2.new(0, isMobile and 24 : 18, 0, isMobile and 24 : 18)
+                    MinSlider.Size = UDim2.new(0, isMobile and 24 or 18, 0, isMobile and 24 or 18)
                     MinSlider.Font = Enum.Font.Gotham
-                    MinSlider.Text = isMobile and "−" : "减"
+                    MinSlider.Text = isMobile and "−" or "减"
                     MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    MinSlider.TextSize = isMobile and 16 : 13.000
+                    MinSlider.TextSize = isMobile and 16 or 13.000
                     MinSlider.TextWrapped = true
                     MinSlider.ZIndex = 2
                     
@@ -2623,11 +2706,11 @@ function FengUI.new(FengUI, name, theme)
                     AddSlider.BackgroundTransparency = 0
                     AddSlider.BorderSizePixel = 0
                     AddSlider.Position = UDim2.new(addSliderPosition, 0, 0.25, 0)
-                    AddSlider.Size = UDim2.new(0, isMobile and 24 : 18, 0, isMobile and 24 : 18)
+                    AddSlider.Size = UDim2.new(0, isMobile and 24 or 18, 0, isMobile and 24 or 18)
                     AddSlider.Font = Enum.Font.Gotham
-                    AddSlider.Text = isMobile and "+" : "加"
+                    AddSlider.Text = isMobile and "+" or "加"
                     AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    AddSlider.TextSize = isMobile and 16 : 13.000
+                    AddSlider.TextSize = isMobile and 16 or 13.000
                     AddSlider.TextWrapped = true
                     AddSlider.ZIndex = 2
                     
@@ -2665,7 +2748,7 @@ function FengUI.new(FengUI, name, theme)
                 SliderValue.Font = Enum.Font.Gotham
                 SliderValue.Text = tostring(default)
                 SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SliderValue.TextSize = isMobile and 12 : 11.000
+                SliderValue.TextSize = isMobile and 12 or 11.000
                 
                 -- 移动设备上显示数字键盘
                 if isMobile then
@@ -2855,10 +2938,10 @@ function FengUI.new(FengUI, name, theme)
                 DropdownTop.BorderSizePixel = 0
                 DropdownTop.Size = UDim2.new(0, elementWidth, 0, isMobile and 42 or 36)
                 DropdownTop.AutoButtonColor = false
-                DropdownTop.Font = isMobile and Enum.Font.Gotham : Enum.Font.GothamSemibold
+                DropdownTop.Font = isMobile and Enum.Font.Gotham or Enum.Font.GothamSemibold
                 DropdownTop.Text = ""
                 DropdownTop.TextColor3 = config.TextColor
-                DropdownTop.TextSize = isMobile and 12 : 14.000
+                DropdownTop.TextSize = isMobile and 12 or 14.000
                 DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
                 
                 DropdownTopC.CornerRadius = UDim.new(0, 6)
@@ -2892,7 +2975,7 @@ function FengUI.new(FengUI, name, theme)
                 DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
                 DropdownOpenFrame.BorderSizePixel = 0
                 DropdownOpenFrame.Position = UDim2.new(dropdownFramePosition, 0, 0.5, 0)
-                DropdownOpenFrame.Size = UDim2.new(0, isMobile and 45 : 35, 0, isMobile and 28 : 22)
+                DropdownOpenFrame.Size = UDim2.new(0, isMobile and 45 or 35, 0, isMobile and 28 or 22)
                 DropdownOpenFrame.ZIndex = 2
                 
                 DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
@@ -2908,7 +2991,7 @@ function FengUI.new(FengUI, name, theme)
                 DropdownOpen.Font = Enum.Font.GothamSemibold
                 DropdownOpen.Text = "选择"
                 DropdownOpen.TextColor3 = config.TextColor
-                DropdownOpen.TextSize = isMobile and 12 : 11.000
+                DropdownOpen.TextSize = isMobile and 12 or 11.000
                 DropdownOpen.TextWrapped = true
                 DropdownOpen.ZIndex = 3
                 
@@ -2919,12 +3002,12 @@ function FengUI.new(FengUI, name, theme)
                 DropdownText.BorderSizePixel = 0
                 DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
                 DropdownText.Size = UDim2.new(0, 230, 0, isMobile and 42 or 36)
-                DropdownText.Font = isMobile and Enum.Font.Gotham : Enum.Font.GothamSemibold
+                DropdownText.Font = isMobile and Enum.Font.Gotham or Enum.Font.GothamSemibold
                 DropdownText.PlaceholderColor3 = config.SecondaryTextColor
                 DropdownText.PlaceholderText = text
                 DropdownText.Text = ""
                 DropdownText.TextColor3 = config.TextColor
-                DropdownText.TextSize = isMobile and 12 : 14.000
+                DropdownText.TextSize = isMobile and 12 or 14.000
                 DropdownText.TextXAlignment = Enum.TextXAlignment.Left
                 DropdownText.ZIndex = 2
                 
@@ -2934,7 +3017,7 @@ function FengUI.new(FengUI, name, theme)
                 Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 Separator.BorderSizePixel = 0
                 Separator.Position = UDim2.new(separatorPosition, 0, 0.2, 0)
-                Separator.Size = UDim2.new(0, 1, 0, isMobile and 28 : 22)
+                Separator.Size = UDim2.new(0, 1, 0, isMobile and 28 or 22)
                 Separator.ZIndex = 1
                 
                 DropdownModuleL.Name = "DropdownModuleL"
@@ -3018,12 +3101,12 @@ function FengUI.new(FengUI, name, theme)
                     Option.BackgroundTransparency = 0.2
                     Option.BorderSizePixel = 0
                     Option.Position = UDim2.new(0, 0, 0.328125, 0)
-                    Option.Size = UDim2.new(0, elementWidth - 20, 0, isMobile and 28 : 24)
+                    Option.Size = UDim2.new(0, elementWidth - 20, 0, isMobile and 28 or 24)
                     Option.AutoButtonColor = false
                     Option.Font = Enum.Font.Gotham
                     Option.Text = option
                     Option.TextColor3 = config.TextColor
-                    Option.TextSize = isMobile and 12 : 13.000
+                    Option.TextSize = isMobile and 12 or 13.000
                     OptionC.CornerRadius = UDim.new(0, 6)
                     OptionC.Name = "OptionC"
                     OptionC.Parent = Option
@@ -3071,10 +3154,6 @@ function FengUI.new(FengUI, name, theme)
     
     -- 添加DualTab方法
     function window:DualTab(name, icon)
-        if isMobile then
-            warn("移动设备不支持双窗口模式，已自动切换到单窗口")
-            return window:Tab(name, icon, 1)
-        end
         return window:Tab(name, icon, 2)
     end
 
