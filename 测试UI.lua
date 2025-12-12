@@ -451,7 +451,7 @@ Main.Parent = FengYu
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundTransparency = 1
 Main.Position = UDim2.new(0.5, 0, 0.35, 0)
-Main.Size = UDim2.new(0, 450, 0, 280) -- 恢复为UI.lua的大小
+Main.Size = UDim2.new(0, 450, 0, 280)
 Main.ZIndex = 1
 Main.Active = true
 Main.Draggable = true
@@ -624,7 +624,7 @@ TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
 TabMain.Position = UDim2.new(0.2, 0, 0, 37)
-TabMain.Size = UDim2.new(0, 360, 0, 243) -- 恢复为UI.lua的大小
+TabMain.Size = UDim2.new(0, 360, 0, 243)
 TabMain.Visible = false
 
 local Side = Instance.new("Frame")
@@ -635,7 +635,7 @@ Side.BackgroundTransparency = 1
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 35)
-Side.Size = UDim2.new(0, 90, 0, 245) -- 恢复为UI.lua的大小
+Side.Size = UDim2.new(0, 90, 0, 245)
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -806,11 +806,11 @@ function FengUI.new(FengUI, name, theme)
         TabContainer.Name = "TabContainer"
         TabContainer.Parent = Tab
         TabContainer.BackgroundTransparency = 1
-        TabContainer.Size = UDim2.new(1, 0, 1, 0)
+        TabContainer.Size = UDim2.new(1, 0, 0, 0)
         
         if windowCount == 2 then
             -- 双窗口布局 - 左窗口小一点，右窗口往左移动一点
-            TabContainer.Size = UDim2.new(1, 0, 1, 0)  -- 修改为固定高度
+            TabContainer.Size = UDim2.new(1, 0, 0, 0)
             
             local LeftContainer = Instance.new("ScrollingFrame")
             LeftContainer.Name = "LeftContainer"
@@ -848,36 +848,43 @@ function FengUI.new(FengUI, name, theme)
             RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
             RightLayout.Padding = UDim.new(0, 4)
             
-            -- 为左右容器分别设置独立滚动
-            setupSmoothScrolling(LeftContainer, LeftLayout)
-            setupSmoothScrolling(RightContainer, RightLayout)
-            
-            -- 删除原来的updateContainerHeight函数和相关连接
-            -- 改为让Tab容器本身可以滚动
-            Tab.CanvasSize = UDim2.new(0, 0, 0, 0)
-            Tab.ScrollingEnabled = true
-            
-            -- 设置Tab容器的滚动（用于整体布局）
-            local function updateTabHeight()
-                local leftHeight = LeftLayout.AbsoluteContentSize.Y
-                local rightHeight = RightLayout.AbsoluteContentSize.Y
-                local maxHeight = math.max(leftHeight, rightHeight) + 20
-                
-                -- 设置左右容器内部的大小
-                LeftContainer.CanvasSize = UDim2.new(0, 0, 0, leftHeight + 10)
-                RightContainer.CanvasSize = UDim2.new(0, 0, 0, rightHeight + 10)
-                
-                -- 设置Tab容器的总高度
-                Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
-                TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
+            -- 设置左右容器的独立滚动
+            local function setupLeftScrolling()
+                LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    LeftContainer.CanvasSize = UDim2.new(0, 0, 0, LeftLayout.AbsoluteContentSize.Y + 10)
+                    
+                    if LeftLayout.AbsoluteContentSize.Y <= LeftContainer.AbsoluteSize.Y then
+                        LeftContainer.ScrollingEnabled = false
+                    else
+                        LeftContainer.ScrollingEnabled = true
+                    end
+                    
+                    -- 更新整个Tab容器的高度
+                    local maxHeight = math.max(LeftLayout.AbsoluteContentSize.Y, RightLayout.AbsoluteContentSize.Y) + 20
+                    TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
+                    Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
+                end)
             end
             
-            -- 监听左右布局变化
-            LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabHeight)
-            RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabHeight)
+            local function setupRightScrolling()
+                RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    RightContainer.CanvasSize = UDim2.new(0, 0, 0, RightLayout.AbsoluteContentSize.Y + 10)
+                    
+                    if RightLayout.AbsoluteContentSize.Y <= RightContainer.AbsoluteSize.Y then
+                        RightContainer.ScrollingEnabled = false
+                    else
+                        RightContainer.ScrollingEnabled = true
+                    end
+                    
+                    -- 更新整个Tab容器的高度
+                    local maxHeight = math.max(LeftLayout.AbsoluteContentSize.Y, RightLayout.AbsoluteContentSize.Y) + 20
+                    TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
+                    Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
+                end)
+            end
             
-            -- 初始设置
-            updateTabHeight()
+            setupLeftScrolling()
+            setupRightScrolling()
         end
         
         TabIco.Name = "TabIco"
@@ -970,12 +977,12 @@ function FengUI.new(FengUI, name, theme)
             Section.Size = UDim2.new(1, 0, 0, 36)
             
             -- 根据窗口类型调整宽度
-            local elementWidth = 330 -- 单窗口宽度，与UI.lua保持一致
+            local elementWidth = 330 -- 单窗口宽度
             if windowCount == 2 then
                 if windowPosition:lower() == "left" then
-                    elementWidth = 162  -- 左窗口宽度，略微增大
+                    elementWidth = 162  -- 左窗口宽度
                 else
-                    elementWidth = 168  -- 右窗口宽度，与左窗口平衡
+                    elementWidth = 168  -- 右窗口宽度
                 end
             end
             
@@ -1727,7 +1734,7 @@ end
                 -- 根据窗口类型调整Toggle开关位置
                 local togglePosition = 0.85
                 if windowCount == 2 then
-                    togglePosition = 0.78 -- 双窗口时调整位置，与UI.lua保持一致
+                    togglePosition = 0.78 -- 双窗口时调整位置
                 end
                 
                 ToggleDisable.Name = "ToggleDisable"
@@ -1858,7 +1865,7 @@ end
                 -- 根据窗口类型调整Keybind位置
                 local keybindPosition = 0.72
                 if windowCount == 2 then
-                    keybindPosition = 0.64 -- 双窗口时调整位置，与UI.lua保持一致
+                    keybindPosition = 0.64 -- 双窗口时调整位置
                 end
                 
                 KeybindValue.Name = "KeybindValue"
@@ -1983,7 +1990,7 @@ end
                 -- 根据窗口类型调整Textbox位置
                 local textboxPosition = 0.45
                 if windowCount == 2 then
-                    textboxPosition = 0.36 -- 双窗口时调整位置，与UI.lua保持一致
+                    textboxPosition = 0.36 -- 双窗口时调整位置
                 end
                 
                 BoxBG.Name = "BoxBG"
