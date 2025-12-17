@@ -2446,7 +2446,6 @@ function section.ColorPicker(section, text, flag, default, callback)
     local ColorPickerPreview = Instance.new("Frame")
     local ColorPickerPreviewC = Instance.new("UICorner")
     local ColorPickerButton = Instance.new("TextButton")
-    local ColorPickerButtonC = Instance.new("UICorner")
     local ColorPickerText = Instance.new("TextLabel")
     
     ColorPickerModule.Name = "ColorPickerModule"
@@ -2517,11 +2516,10 @@ function section.ColorPicker(section, text, flag, default, callback)
     -- 颜色选择器窗口（初始隐藏）
     local ColorPickerWindow = Instance.new("Frame")
     ColorPickerWindow.Name = "ColorPickerWindow"
-    ColorPickerWindow.Parent = FengYu
-    ColorPickerWindow.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+    ColorPickerWindow.Parent = Main  -- 设置为Main的子对象，会跟随移动
+    ColorPickerWindow.BackgroundColor3 = Color3.fromRGB(40, 40, 65)
     ColorPickerWindow.BackgroundTransparency = 0.05
     ColorPickerWindow.BorderSizePixel = 0
-    ColorPickerWindow.Position = UDim2.new(0.5, -150, 0.5, -100)
     ColorPickerWindow.Size = UDim2.new(0, 300, 0, 220)
     ColorPickerWindow.Visible = false
     ColorPickerWindow.ZIndex = 100
@@ -2542,7 +2540,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     local TitleBar = Instance.new("Frame")
     TitleBar.Name = "TitleBar"
     TitleBar.Parent = ColorPickerWindow
-    TitleBar.BackgroundColor3 = Color3.fromRGB(50, 50, 75)
+    TitleBar.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
     TitleBar.BackgroundTransparency = 0.1
     TitleBar.BorderSizePixel = 0
     TitleBar.Size = UDim2.new(1, 0, 0, 30)
@@ -2700,7 +2698,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     local RInput = Instance.new("TextBox")
     RInput.Name = "RInput"
     RInput.Parent = ColorPickerWindow
-    RInput.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    RInput.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
     RInput.BackgroundTransparency = 0.2
     RInput.BorderSizePixel = 0
     RInput.Position = UDim2.new(0, 220, 0, 90)
@@ -2719,7 +2717,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     local GInput = Instance.new("TextBox")
     GInput.Name = "GInput"
     GInput.Parent = ColorPickerWindow
-    GInput.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    GInput.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
     GInput.BackgroundTransparency = 0.2
     GInput.BorderSizePixel = 0
     GInput.Position = UDim2.new(0, 220, 0, 117)
@@ -2738,7 +2736,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     local BInput = Instance.new("TextBox")
     BInput.Name = "BInput"
     BInput.Parent = ColorPickerWindow
-    BInput.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    BInput.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
     BInput.BackgroundTransparency = 0.2
     BInput.BorderSizePixel = 0
     BInput.Position = UDim2.new(0, 220, 0, 144)
@@ -2758,11 +2756,11 @@ function section.ColorPicker(section, text, flag, default, callback)
     local HexInput = Instance.new("TextBox")
     HexInput.Name = "HexInput"
     HexInput.Parent = ColorPickerWindow
-    HexInput.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    HexInput.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
     HexInput.BackgroundTransparency = 0.2
     HexInput.BorderSizePixel = 0
     HexInput.Position = UDim2.new(0, 10, 0, 170)
-    HexInput.Size = UDim2.new(0, 180, 0, 22)
+    HexInput.Size = UDim2.new(0, 135, 0, 22)
     HexInput.Font = Enum.Font.Gotham
     HexInput.Text = string.format("#%02X%02X%02X", 
         math.floor(default.R * 255), 
@@ -2781,11 +2779,11 @@ function section.ColorPicker(section, text, flag, default, callback)
     local ConfirmButton = Instance.new("TextButton")
     ConfirmButton.Name = "ConfirmButton"
     ConfirmButton.Parent = ColorPickerWindow
-    ConfirmButton.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+    ConfirmButton.BackgroundColor3 = Color3.fromRGB(70, 120, 200)
     ConfirmButton.BackgroundTransparency = 0.2
     ConfirmButton.BorderSizePixel = 0
-    ConfirmButton.Position = UDim2.new(0, 220, 0, 170)
-    ConfirmButton.Size = UDim2.new(0, 70, 0, 22)
+    ConfirmButton.Position = UDim2.new(0, 155, 0, 170)
+    ConfirmButton.Size = UDim2.new(0, 60, 0, 22)
     ConfirmButton.Font = Enum.Font.GothamSemibold
     ConfirmButton.Text = "应用"
     ConfirmButton.TextColor3 = Color3.new(1, 1, 1)
@@ -2795,6 +2793,25 @@ function section.ColorPicker(section, text, flag, default, callback)
     local ConfirmCorner = Instance.new("UICorner")
     ConfirmCorner.CornerRadius = UDim.new(0, 4)
     ConfirmCorner.Parent = ConfirmButton
+    
+    -- 取消按钮
+    local CancelButton = Instance.new("TextButton")
+    CancelButton.Name = "CancelButton"
+    CancelButton.Parent = ColorPickerWindow
+    CancelButton.BackgroundColor3 = Color3.fromRGB(200, 70, 70)
+    CancelButton.BackgroundTransparency = 0.2
+    CancelButton.BorderSizePixel = 0
+    CancelButton.Position = UDim2.new(0, 220, 0, 170)
+    CancelButton.Size = UDim2.new(0, 70, 0, 22)
+    CancelButton.Font = Enum.Font.GothamSemibold
+    CancelButton.Text = "取消"
+    CancelButton.TextColor3 = Color3.new(1, 1, 1)
+    CancelButton.TextSize = 12
+    CancelButton.ZIndex = 102
+    
+    local CancelCorner = Instance.new("UICorner")
+    CancelCorner.CornerRadius = UDim.new(0, 4)
+    CancelCorner.Parent = CancelButton
     
     -- 初始选择器位置
     local currentHue, currentSaturation, currentValue = default:ToHSV()
@@ -2854,9 +2871,11 @@ function section.ColorPicker(section, text, flag, default, callback)
         return nil
     end
     
-    -- 颜色画布交互
+    -- 颜色画布点击交互（不拖动）
+    local colorSelecting = false
     ColorCanvas.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            colorSelecting = true
             local mousePos = services.UserInputService:GetMouseLocation()
             local canvasPos = ColorCanvas.AbsolutePosition
             local canvasSize = ColorCanvas.AbsoluteSize
@@ -2871,7 +2890,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     end)
     
     ColorCanvas.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and services.UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+        if input.UserInputType == Enum.UserInputType.MouseMovement and colorSelecting then
             local mousePos = services.UserInputService:GetMouseLocation()
             local canvasPos = ColorCanvas.AbsolutePosition
             local canvasSize = ColorCanvas.AbsoluteSize
@@ -2885,9 +2904,17 @@ function section.ColorPicker(section, text, flag, default, callback)
         end
     end)
     
-    -- 色相滑块交互
+    ColorCanvas.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            colorSelecting = false
+        end
+    end)
+    
+    -- 色相滑块点击交互（不拖动）
+    local hueSelecting = false
     HueSlider.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            hueSelecting = true
             local mousePos = services.UserInputService:GetMouseLocation()
             local sliderPos = HueSlider.AbsolutePosition
             local sliderSize = HueSlider.AbsoluteSize
@@ -2903,7 +2930,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     end)
     
     HueSlider.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and services.UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+        if input.UserInputType == Enum.UserInputType.MouseMovement and hueSelecting then
             local mousePos = services.UserInputService:GetMouseLocation()
             local sliderPos = HueSlider.AbsolutePosition
             local sliderSize = HueSlider.AbsoluteSize
@@ -2915,6 +2942,12 @@ function section.ColorPicker(section, text, flag, default, callback)
             local s = Selector.Position.X.Scale
             local v = 1 - Selector.Position.Y.Scale
             local color = updateColorFromHSV(h, s, v)
+        end
+    end)
+    
+    HueSlider.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            hueSelecting = false
         end
     end)
     
@@ -2956,15 +2989,34 @@ function section.ColorPicker(section, text, flag, default, callback)
             -- 将窗口置于最前
             ColorPickerWindow.ZIndex = 100
             
-            -- 设置窗口位置（在按钮附近）
+            -- 计算位置：确保在Main内部且不会超出
+            local mainPos = Main.AbsolutePosition
+            local mainSize = Main.AbsoluteSize
+            local windowSize = ColorPickerWindow.AbsoluteSize
+            
+            -- 尝试将窗口放在颜色预览按钮附近
             local buttonPos = ColorPickerButton.AbsolutePosition
             local buttonSize = ColorPickerButton.AbsoluteSize
-            local screenSize = services.CoreGui.AbsoluteSize
             
-            local x = math.clamp(buttonPos.X - 100, 10, screenSize.X - 310)
-            local y = math.clamp(buttonPos.Y + buttonSize.Y + 5, 10, screenSize.Y - 230)
+            -- 计算窗口位置
+            local xOffset = buttonPos.X - mainPos.X + buttonSize.X + 5
+            local yOffset = buttonPos.Y - mainPos.Y
             
-            ColorPickerWindow.Position = UDim2.new(0, x, 0, y)
+            -- 如果窗口会超出Main右侧，则放在左侧
+            if xOffset + windowSize.X > mainSize.X then
+                xOffset = buttonPos.X - mainPos.X - windowSize.X - 5
+            end
+            
+            -- 如果窗口会超出Main底部，则向上调整
+            if yOffset + windowSize.Y > mainSize.Y then
+                yOffset = mainSize.Y - windowSize.Y - 10
+            end
+            
+            -- 确保至少有一部分在Main内部
+            xOffset = math.max(10, math.min(xOffset, mainSize.X - windowSize.X - 10))
+            yOffset = math.max(35, math.min(yOffset, mainSize.Y - windowSize.Y - 10))
+            
+            ColorPickerWindow.Position = UDim2.new(0, xOffset, 0, yOffset)
         end
     end)
     
@@ -2975,6 +3027,12 @@ function section.ColorPicker(section, text, flag, default, callback)
         ColorPickerWindow.Visible = false
         windowOpen = false
         DigitalParticleExplosion(ConfirmButton)
+    end)
+    
+    CancelButton.MouseButton1Click:Connect(function()
+        ColorPickerWindow.Visible = false
+        windowOpen = false
+        DigitalParticleExplosion(CancelButton)
     end)
     
     -- 点击外部关闭窗口
@@ -3017,6 +3075,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     
     return funcs
 end
+
                 return section
             end
             
