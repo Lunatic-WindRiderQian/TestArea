@@ -2572,6 +2572,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     ColorCanvas.Position = UDim2.new(0, 10, 0, 40)
     ColorCanvas.Size = UDim2.new(0, 180, 0, 120)
     ColorCanvas.ZIndex = 102
+    ColorCanvas.Active = true  -- 确保触摸输入
     
     local ColorCanvasCorner = Instance.new("UICorner")
     ColorCanvasCorner.CornerRadius = UDim.new(0, 4)
@@ -2636,6 +2637,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     HueSlider.Position = UDim2.new(0, 195, 0, 40)
     HueSlider.Size = UDim2.new(0, 15, 0, 120)
     HueSlider.ZIndex = 102
+    HueSlider.Active = true  -- 确保触摸输入
     
     local HueSliderCorner = Instance.new("UICorner")
     HueSliderCorner.CornerRadius = UDim.new(0, 4)
@@ -2871,10 +2873,11 @@ function section.ColorPicker(section, text, flag, default, callback)
         return nil
     end
     
-    -- 颜色画布点击交互（不拖动）
+    -- 颜色画布交互（支持手机和电脑）
     local colorSelecting = false
     ColorCanvas.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
             colorSelecting = true
             local mousePos = services.UserInputService:GetMouseLocation()
             local canvasPos = ColorCanvas.AbsolutePosition
@@ -2890,7 +2893,8 @@ function section.ColorPicker(section, text, flag, default, callback)
     end)
     
     ColorCanvas.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and colorSelecting then
+        if (input.UserInputType == Enum.UserInputType.MouseMovement or 
+            input.UserInputType == Enum.UserInputType.Touch) and colorSelecting then
             local mousePos = services.UserInputService:GetMouseLocation()
             local canvasPos = ColorCanvas.AbsolutePosition
             local canvasSize = ColorCanvas.AbsoluteSize
@@ -2905,15 +2909,17 @@ function section.ColorPicker(section, text, flag, default, callback)
     end)
     
     ColorCanvas.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
             colorSelecting = false
         end
     end)
     
-    -- 色相滑块点击交互（不拖动）
+    -- 色相滑块交互（支持手机和电脑）
     local hueSelecting = false
     HueSlider.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
             hueSelecting = true
             local mousePos = services.UserInputService:GetMouseLocation()
             local sliderPos = HueSlider.AbsolutePosition
@@ -2930,7 +2936,8 @@ function section.ColorPicker(section, text, flag, default, callback)
     end)
     
     HueSlider.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and hueSelecting then
+        if (input.UserInputType == Enum.UserInputType.MouseMovement or 
+            input.UserInputType == Enum.UserInputType.Touch) and hueSelecting then
             local mousePos = services.UserInputService:GetMouseLocation()
             local sliderPos = HueSlider.AbsolutePosition
             local sliderSize = HueSlider.AbsoluteSize
@@ -2946,7 +2953,8 @@ function section.ColorPicker(section, text, flag, default, callback)
     end)
     
     HueSlider.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
             hueSelecting = false
         end
     end)
@@ -3048,11 +3056,20 @@ function section.ColorPicker(section, text, flag, default, callback)
     end
     
     services.UserInputService.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and windowOpen then
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or 
+            input.UserInputType == Enum.UserInputType.Touch) and windowOpen then
             if not isMouseOverWindow() then
                 ColorPickerWindow.Visible = false
                 windowOpen = false
             end
+        end
+    end)
+    
+    -- 触摸结束事件
+    services.UserInputService.TouchEnded:Connect(function(input, processed)
+        if windowOpen and not isMouseOverWindow() then
+            ColorPickerWindow.Visible = false
+            windowOpen = false
         end
     end)
     
