@@ -1,3 +1,4 @@
+-- 测试UI.lua - 完整高级UI库
 repeat
     task.wait()
 until game:IsLoaded()
@@ -32,19 +33,6 @@ FengUI.currentTab = nil
 FengUI.flags = {}
 FengUI.showingCards = true
 FengUI.tabContainers = {}
-FengUI.uiScale = 1.0 -- 添加UI缩放变量
-
--- 添加table.clone函数
-local function tableClone(original)
-    local copy = {}
-    for k, v in pairs(original) do
-        if type(v) == "table" then
-            v = tableClone(v)
-        end
-        copy[k] = v
-    end
-    return copy
-end
 
 local services = {
     TweenService = game:GetService("TweenService"),
@@ -87,42 +75,237 @@ local config = {
     GlassEffect = Color3.fromRGB(255, 255, 255),
 }
 
--- 主题预设
-FengUI.themes = {
-    Default = tableClone(config),
-    Dark = {
-        MainColor = Color3.fromRGB(10, 10, 20),
-        TabColor = Color3.fromRGB(20, 20, 30),
-        Bg_Color = Color3.fromRGB(15, 15, 25),
-        Button_Color = Color3.fromRGB(25, 25, 40),
-        AccentColor = Color3.fromRGB(0, 150, 255),
-        TextColor = Color3.fromRGB(240, 245, 255),
-        SecondaryTextColor = Color3.fromRGB(180, 190, 210),
+-- 全局颜色管理器
+FengUI.ColorManager = {
+    themes = {
+        default = {
+            MainColor = Color3.fromRGB(18, 18, 30),
+            TabColor = Color3.fromRGB(25, 25, 40),
+            Bg_Color = Color3.fromRGB(20, 20, 35),
+            AccentColor = Color3.fromRGB(0, 200, 255),
+            TextColor = Color3.fromRGB(240, 245, 255),
+            SecondaryTextColor = Color3.fromRGB(180, 190, 210),
+            Button_Color = Color3.fromRGB(30, 30, 50),
+            Toggle_On = Color3.fromRGB(0, 230, 230),
+            SliderBar_Color = Color3.fromRGB(0, 200, 255),
+        },
+        light = {
+            MainColor = Color3.fromRGB(240, 240, 245),
+            TabColor = Color3.fromRGB(250, 250, 255),
+            Bg_Color = Color3.fromRGB(245, 245, 250),
+            AccentColor = Color3.fromRGB(0, 150, 255),
+            TextColor = Color3.fromRGB(30, 30, 40),
+            SecondaryTextColor = Color3.fromRGB(80, 90, 110),
+            Button_Color = Color3.fromRGB(220, 220, 230),
+            Toggle_On = Color3.fromRGB(0, 180, 255),
+            SliderBar_Color = Color3.fromRGB(0, 150, 255),
+        },
+        neon = {
+            MainColor = Color3.fromRGB(10, 10, 20),
+            TabColor = Color3.fromRGB(20, 20, 40),
+            Bg_Color = Color3.fromRGB(15, 15, 30),
+            AccentColor = Color3.fromRGB(0, 255, 255),
+            TextColor = Color3.fromRGB(255, 255, 255),
+            SecondaryTextColor = Color3.fromRGB(200, 200, 255),
+            Button_Color = Color3.fromRGB(40, 40, 80),
+            Toggle_On = Color3.fromRGB(0, 255, 255),
+            SliderBar_Color = Color3.fromRGB(0, 255, 255),
+        },
+        ocean = {
+            MainColor = Color3.fromRGB(10, 20, 40),
+            TabColor = Color3.fromRGB(20, 40, 70),
+            Bg_Color = Color3.fromRGB(15, 30, 55),
+            AccentColor = Color3.fromRGB(0, 180, 255),
+            TextColor = Color3.fromRGB(230, 240, 255),
+            SecondaryTextColor = Color3.fromRGB(160, 200, 230),
+            Button_Color = Color3.fromRGB(30, 60, 100),
+            Toggle_On = Color3.fromRGB(0, 200, 255),
+            SliderBar_Color = Color3.fromRGB(0, 180, 255),
+        }
     },
-    Light = {
-        MainColor = Color3.fromRGB(240, 240, 245),
-        TabColor = Color3.fromRGB(220, 220, 230),
-        Bg_Color = Color3.fromRGB(230, 230, 240),
-        Button_Color = Color3.fromRGB(210, 210, 220),
-        AccentColor = Color3.fromRGB(0, 100, 200),
-        TextColor = Color3.fromRGB(30, 30, 40),
-        SecondaryTextColor = Color3.fromRGB(80, 80, 100),
-    },
-    Cyberpunk = {
-        MainColor = Color3.fromRGB(20, 5, 30),
-        TabColor = Color3.fromRGB(40, 10, 60),
-        Bg_Color = Color3.fromRGB(30, 10, 50),
-        Button_Color = Color3.fromRGB(60, 20, 80),
-        AccentColor = Color3.fromRGB(255, 0, 200),
-        TextColor = Color3.fromRGB(255, 200, 255),
-        SecondaryTextColor = Color3.fromRGB(220, 180, 220),
-        SliderBar_Color = Color3.fromRGB(255, 0, 200),
-        Toggle_On = Color3.fromRGB(255, 0, 200),
-    }
+    
+    components = {},     -- 存储已注册的UI组件
+    callbacks = {},      -- 颜色变化回调函数
+    currentTheme = "default",
+    
+    -- 注册UI组件
+    RegisterComponent = function(self, componentId, componentType, instance, properties)
+        if not self.components[componentId] then
+            self.components[componentId] = {}
+        end
+        
+        local comp = {
+            type = componentType,
+            instance = instance,
+            properties = properties or {},  -- 例如: {{property="BackgroundColor3", themeKey="Button_Color"}}
+            originalColors = {},
+            colorBindings = {}  -- 颜色绑定: {themeKey = property}
+        }
+        
+        -- 保存原始颜色
+        for _, prop in ipairs(properties or {}) do
+            if instance[prop.property] then
+                comp.originalColors[prop.property] = instance[prop.property]
+            end
+        end
+        
+        table.insert(self.components[componentId], comp)
+        return comp
+    end,
+    
+    -- 绑定颜色到主题键
+    BindColor = function(self, componentId, themeKey, property)
+        local comps = self.components[componentId]
+        if not comps then return end
+        
+        for _, comp in ipairs(comps) do
+            comp.colorBindings[themeKey] = property
+            -- 立即应用当前主题颜色
+            if self.themes[self.currentTheme][themeKey] then
+                comp.instance[property] = self.themes[self.currentTheme][themeKey]
+            end
+        end
+    end,
+    
+    -- 应用主题
+    ApplyTheme = function(self, themeName)
+        if not self.themes[themeName] then
+            warn("主题不存在: " .. themeName)
+            return false
+        end
+        
+        self.currentTheme = themeName
+        local theme = self.themes[themeName]
+        
+        -- 更新全局config
+        for key, color in pairs(theme) do
+            if config[key] ~= nil then
+                config[key] = color
+            end
+        end
+        
+        -- 更新所有已注册组件
+        for _, compList in pairs(self.components) do
+            for _, comp in ipairs(compList) do
+                for themeKey, property in pairs(comp.colorBindings) do
+                    if theme[themeKey] and comp.instance[property] then
+                        services.TweenService:Create(comp.instance, TweenInfo.new(0.3), {
+                            [property] = theme[themeKey]
+                        }):Play()
+                    end
+                end
+            end
+        end
+        
+        -- 执行回调
+        for _, callback in pairs(self.callbacks) do
+            pcall(callback, themeName, theme)
+        end
+        
+        return true
+    end,
+    
+    -- 自定义颜色
+    SetCustomColor = function(self, themeKey, color)
+        if not self.themes[self.currentTheme][themeKey] then
+            -- 如果主题中不存在此键，则添加到当前主题
+            self.themes[self.currentTheme][themeKey] = color
+        else
+            self.themes[self.currentTheme][themeKey] = color
+        end
+        
+        -- 更新配置
+        config[themeKey] = color
+        
+        -- 更新绑定此颜色的组件
+        for _, compList in pairs(self.components) do
+            for _, comp in ipairs(compList) do
+                if comp.colorBindings[themeKey] then
+                    local property = comp.colorBindings[themeKey]
+                    services.TweenService:Create(comp.instance, TweenInfo.new(0.3), {
+                        [property] = color
+                    }):Play()
+                end
+            end
+        end
+        
+        return color
+    end,
+    
+    -- 创建新主题
+    CreateTheme = function(self, themeName, baseTheme)
+        if self.themes[themeName] then
+            warn("主题已存在: " .. themeName)
+            return false
+        end
+        
+        self.themes[themeName] = {}
+        local newTheme = self.themes[themeName]
+        local base = self.themes[baseTheme or "default"]
+        
+        -- 复制基础主题
+        for key, color in pairs(base) do
+            newTheme[key] = color
+        end
+        
+        return true
+    end,
+    
+    -- 添加颜色变化回调
+    AddCallback = function(self, id, callback)
+        self.callbacks[id] = callback
+    end,
+    
+    -- 移除回调
+    RemoveCallback = function(self, id)
+        self.callbacks[id] = nil
+    end,
+    
+    -- 获取当前颜色
+    GetColor = function(self, themeKey)
+        return self.themes[self.currentTheme][themeKey] or config[themeKey]
+    end,
+    
+    -- 导出主题
+    ExportTheme = function(self, themeName)
+        if not self.themes[themeName] then return nil end
+        
+        local export = {}
+        for key, color in pairs(self.themes[themeName]) do
+            export[key] = {
+                R = math.floor(color.R * 255),
+                G = math.floor(color.G * 255),
+                B = math.floor(color.B * 255)
+            }
+        end
+        
+        return export
+    end,
+    
+    -- 导入主题
+    ImportTheme = function(self, themeName, themeData)
+        self.themes[themeName] = {}
+        
+        for key, colorData in pairs(themeData) do
+            self.themes[themeName][key] = Color3.fromRGB(
+                colorData.R or 0,
+                colorData.G or 0,
+                colorData.B or 0
+            )
+        end
+        
+        return true
+    end,
+    
+    -- 获取所有主题
+    GetThemes = function(self)
+        local themes = {}
+        for name, _ in pairs(self.themes) do
+            table.insert(themes, name)
+        end
+        return themes
+    end
 }
-
--- 保存当前主题名称
-FengUI.currentTheme = "Default"
 
 function DigitalParticleExplosion(obj)
     if not obj or not obj.Parent then return end
@@ -855,7 +1038,7 @@ local function playEntranceAnimation()
     services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
         BackgroundTransparency = 1,
-        Size = UDim2.new(0, 450 * FengUI.uiScale, 0, 280 * FengUI.uiScale)
+        Size = UDim2.new(0, 450, 0, 280)
     }):Play()
     
     services.TweenService:Create(MainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -938,252 +1121,6 @@ task.spawn(function()
     end
 end)
 
--- 颜色选择器函数
-function FengUI.ColorPicker(section, text, defaultColor, callback)
-    local ColorModule = Instance.new("Frame")
-    local ColorBtn = Instance.new("TextButton")
-    local ColorBtnC = Instance.new("UICorner")
-    local ColorPreview = Instance.new("Frame")
-    local ColorPreviewC = Instance.new("UICorner")
-    
-    ColorModule.Name = "ColorModule"
-    ColorModule.Parent = section.Objs
-    ColorModule.BackgroundTransparency = 1
-    ColorModule.Size = UDim2.new(0, 330, 0, 36)
-    
-    ColorBtn.Name = "ColorBtn"
-    ColorBtn.Parent = ColorModule
-    ColorBtn.BackgroundColor3 = config.Button_Color
-    ColorBtn.BackgroundTransparency = 0.2
-    ColorBtn.Size = UDim2.new(0, 330, 0, 36)
-    ColorBtn.AutoButtonColor = false
-    ColorBtn.Font = Enum.Font.GothamSemibold
-    ColorBtn.Text = "   " .. text
-    ColorBtn.TextColor3 = config.TextColor
-    ColorBtn.TextSize = 14
-    ColorBtn.TextXAlignment = Enum.TextXAlignment.Left
-    
-    ColorBtnC.CornerRadius = UDim.new(0, 6)
-    ColorBtnC.Parent = ColorBtn
-    
-    ColorPreview.Name = "ColorPreview"
-    ColorPreview.Parent = ColorBtn
-    ColorPreview.BackgroundColor3 = defaultColor or Color3.new(1, 1, 1)
-    ColorPreview.BorderSizePixel = 0
-    ColorPreview.Position = UDim2.new(0.85, 0, 0.22, 0)
-    ColorPreview.Size = UDim2.new(0, 24, 0, 24)
-    
-    ColorPreviewC.CornerRadius = UDim.new(0, 4)
-    ColorPreviewC.Parent = ColorPreview
-    
-    local colorPickerFrame = nil
-    
-    local function showColorPicker()
-        if colorPickerFrame then
-            colorPickerFrame:Destroy()
-            colorPickerFrame = nil
-            return
-        end
-        
-        colorPickerFrame = Instance.new("Frame")
-        colorPickerFrame.Name = "ColorPicker"
-        colorPickerFrame.Parent = services.CoreGui
-        colorPickerFrame.BackgroundColor3 = config.MainColor
-        colorPickerFrame.BorderSizePixel = 0
-        colorPickerFrame.Size = UDim2.new(0, 200, 0, 240)
-        colorPickerFrame.Position = UDim2.new(0, ColorPreview.AbsolutePosition.X, 0, ColorPreview.AbsolutePosition.Y + 30)
-        colorPickerFrame.ZIndex = 100
-        
-        local colorPickerCorner = Instance.new("UICorner")
-        colorPickerCorner.CornerRadius = UDim.new(0, 8)
-        colorPickerCorner.Parent = colorPickerFrame
-        
-        local colorPickerStroke = Instance.new("UIStroke")
-        colorPickerStroke.Parent = colorPickerFrame
-        colorPickerStroke.Color = config.AccentColor
-        colorPickerStroke.Thickness = 2
-        
-        -- 颜色选择区域
-        local colorWheel = Instance.new("ImageLabel")
-        colorWheel.Parent = colorPickerFrame
-        colorWheel.BackgroundTransparency = 1
-        colorWheel.Image = "rbxassetid://6521530178"
-        colorWheel.Size = UDim2.new(0, 180, 0, 180)
-        colorWheel.Position = UDim2.new(0.5, -90, 0, 10)
-        
-        -- 亮度滑块
-        local brightnessSlider = Instance.new("Frame")
-        brightnessSlider.Parent = colorPickerFrame
-        brightnessSlider.BackgroundColor3 = Color3.new(0, 0, 0)
-        brightnessSlider.BorderSizePixel = 0
-        brightnessSlider.Size = UDim2.new(0, 20, 0, 180)
-        brightnessSlider.Position = UDim2.new(0.9, -10, 0, 10)
-        
-        local brightnessGradient = Instance.new("UIGradient")
-        brightnessGradient.Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-            ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
-        }
-        brightnessGradient.Parent = brightnessSlider
-        
-        -- 当前颜色预览
-        local currentColor = Instance.new("Frame")
-        currentColor.Parent = colorPickerFrame
-        currentColor.BackgroundColor3 = ColorPreview.BackgroundColor3
-        currentColor.BorderSizePixel = 0
-        currentColor.Size = UDim2.new(0, 40, 0, 40)
-        currentColor.Position = UDim2.new(0.05, 0, 0.83, 0)
-        
-        local currentColorCorner = Instance.new("UICorner")
-        currentColorCorner.CornerRadius = UDim.new(0, 4)
-        currentColorCorner.Parent = currentColor
-        
-        local function updateColor(hue, saturation, brightness)
-            local color = Color3.fromHSV(hue, saturation, brightness)
-            currentColor.BackgroundColor3 = color
-            ColorPreview.BackgroundColor3 = color
-            
-            if callback then
-                callback(color)
-            end
-        end
-        
-        -- 颜色选择逻辑
-        local selectingColor = false
-        local selectingBrightness = false
-        
-        colorWheel.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                selectingColor = true
-            end
-        end)
-        
-        colorWheel.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                selectingColor = false
-            end
-        end)
-        
-        brightnessSlider.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                selectingBrightness = true
-            end
-        end)
-        
-        brightnessSlider.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                selectingBrightness = false
-            end
-        end)
-        
-        services.UserInputService.InputChanged:Connect(function(input)
-            if selectingColor then
-                local mousePos = services.UserInputService:GetMouseLocation()
-                local wheelPos = colorWheel.AbsolutePosition
-                local wheelSize = colorWheel.AbsoluteSize
-                
-                local x = (mousePos.X - wheelPos.X) / wheelSize.X
-                local y = (mousePos.Y - wheelPos.Y) / wheelSize.Y
-                
-                x = math.clamp(x, 0, 1)
-                y = math.clamp(y, 0, 1)
-                
-                local hue = math.atan2(y - 0.5, x - 0.5) / (2 * math.pi)
-                if hue < 0 then hue = hue + 1 end
-                local saturation = math.sqrt((x - 0.5)^2 + (y - 0.5)^2) * 2
-                saturation = math.clamp(saturation, 0, 1)
-                
-                updateColor(hue, saturation, 1)
-            end
-            
-            if selectingBrightness then
-                local mousePos = services.UserInputService:GetMouseLocation()
-                local sliderPos = brightnessSlider.AbsolutePosition
-                local sliderSize = brightnessSlider.AbsoluteSize
-                
-                local brightness = 1 - ((mousePos.Y - sliderPos.Y) / sliderSize.Y)
-                brightness = math.clamp(brightness, 0, 1)
-                
-                updateColor(0.5, 0.5, brightness)
-            end
-        end)
-        
-        -- 关闭按钮
-        local closeBtn = Instance.new("TextButton")
-        closeBtn.Parent = colorPickerFrame
-        closeBtn.BackgroundColor3 = config.AccentColor
-        closeBtn.TextColor3 = Color3.new(1, 1, 1)
-        closeBtn.Text = "确认"
-        closeBtn.Size = UDim2.new(0, 60, 0, 30)
-        closeBtn.Position = UDim2.new(0.7, 0, 0.83, 0)
-        
-        local closeCorner = Instance.new("UICorner")
-        closeCorner.CornerRadius = UDim.new(0, 4)
-        closeCorner.Parent = closeBtn
-        
-        closeBtn.MouseButton1Click:Connect(function()
-            colorPickerFrame:Destroy()
-            colorPickerFrame = nil
-        end)
-    end
-    
-    ColorBtn.MouseButton1Click:Connect(showColorPicker)
-    
-    return {
-        SetColor = function(self, color)
-            ColorPreview.BackgroundColor3 = color
-            if callback then
-                callback(color)
-            end
-        end,
-        GetColor = function(self)
-            return ColorPreview.BackgroundColor3
-        end
-    }
-end
-
--- 添加UI缩放功能
-function FengUI:SetUIScale(scale)
-    scale = math.clamp(scale, 0.5, 2.0)
-    FengUI.uiScale = scale
-    
-    if Main and Main.Parent then
-        Main.Size = UDim2.new(0, 450 * scale, 0, 280 * scale)
-        
-        -- 调整卡片大小
-        if CardsContainer then
-            CardsLayout.CellSize = UDim2.new(0, 100 * scale, 0, 100 * scale)
-        end
-    end
-    
-    return FengUI
-end
-
--- 添加主题切换功能
-function FengUI:SetTheme(themeName)
-    if FengUI.themes[themeName] then
-        FengUI.currentTheme = themeName
-        local theme = FengUI.themes[themeName]
-        
-        -- 应用主题到配置
-        for k, v in pairs(theme) do
-            if config[k] ~= nil then
-                config[k] = v
-            end
-        end
-        
-        -- 重新应用配置到UI元素
-        -- 这里可以添加更多UI更新逻辑
-        if Main then
-            Main.BackgroundColor3 = config.MainColor
-            TitleBar.BackgroundColor3 = config.TabColor
-            TitleText.TextColor3 = config.AccentColor
-        end
-    end
-    
-    return FengUI
-end
-
 function FengUI.new(FengUI, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
         if v.Name == "REN" then
@@ -1191,22 +1128,10 @@ function FengUI.new(FengUI, name, theme)
         end
     end
 
-    -- 应用主题
     if theme then
-        if FengUI.themes[theme] then
-            -- 应用预设主题
-            FengUI.currentTheme = theme
-            for k, v in pairs(FengUI.themes[theme]) do
-                if config[k] ~= nil then
-                    config[k] = v
-                end
-            end
-        else
-            -- 应用自定义主题
-            for k, v in pairs(theme) do
-                if config[k] ~= nil then
-                    config[k] = v
-                end
+        for k, v in pairs(theme) do
+            if config[k] ~= nil then
+                config[k] = v
             end
         end
     end
@@ -1850,10 +1775,6 @@ end
                     LabelC.Parent = TextLabel
                     
                     return TextLabel
-                end
-                
-                function section.ColorPicker(section, text, defaultColor, callback)
-                    return FengUI.ColorPicker(section, text, defaultColor, callback)
                 end
                 
                 function section.Toggle(section, text, flag, enabled, callback)
@@ -2743,6 +2664,620 @@ end
                     
                     funcs:SetOptions(options)
                     return funcs
+                end
+                
+                -- 高级调色板组件
+                function section.ColorPicker(section, text, flag, default, callback, options)
+                    callback = callback or function() end
+                    options = options or {}
+                    
+                    assert(text, "No text provided")
+                    assert(flag, "No flag provided")
+                    default = default or config.AccentColor
+                    
+                    FengUI.flags[flag] = default
+                    
+                    local ColorPickerModule = Instance.new("Frame")
+                    local ColorPickerBtn = Instance.new("TextButton")
+                    local ColorPickerBtnC = Instance.new("UICorner")
+                    local ColorPreview = Instance.new("Frame")
+                    local ColorPreviewC = Instance.new("UICorner")
+                    local ColorPreviewStroke = Instance.new("UIStroke")
+                    local ColorValue = Instance.new("TextButton")
+                    local ColorValueC = Instance.new("UICorner")
+                    local ColorPickerL = Instance.new("UIListLayout")
+                    local UIPadding = Instance.new("UIPadding")
+                    
+                    ColorPickerModule.Name = "ColorPickerModule"
+                    ColorPickerModule.Parent = Objs
+                    ColorPickerModule.BackgroundTransparency = 1
+                    ColorPickerModule.BorderSizePixel = 0
+                    ColorPickerModule.Size = UDim2.new(0, 330, 0, 36)
+                    
+                    ColorPickerBtn.Name = "ColorPickerBtn"
+                    ColorPickerBtn.Parent = ColorPickerModule
+                    ColorPickerBtn.BackgroundColor3 = config.Button_Color
+                    ColorPickerBtn.BackgroundTransparency = 0.2
+                    ColorPickerBtn.BorderSizePixel = 0
+                    ColorPickerBtn.Size = UDim2.new(0, 330, 0, 36)
+                    ColorPickerBtn.AutoButtonColor = false
+                    ColorPickerBtn.Font = Enum.Font.GothamSemibold
+                    ColorPickerBtn.Text = "   " .. text
+                    ColorPickerBtn.TextColor3 = config.TextColor
+                    ColorPickerBtn.TextSize = 14
+                    ColorPickerBtn.TextXAlignment = Enum.TextXAlignment.Left
+                    
+                    ColorPickerBtnC.CornerRadius = UDim.new(0, 6)
+                    ColorPickerBtnC.Name = "ColorPickerBtnC"
+                    ColorPickerBtnC.Parent = ColorPickerBtn
+                    
+                    ColorPreview.Name = "ColorPreview"
+                    ColorPreview.Parent = ColorPickerBtn
+                    ColorPreview.BackgroundColor3 = default
+                    ColorPreview.BorderSizePixel = 0
+                    ColorPreview.Position = UDim2.new(0.72, 0, 0.22, 0)
+                    ColorPreview.Size = UDim2.new(0, 70, 0, 22)
+                    
+                    ColorPreviewC.CornerRadius = UDim.new(0, 6)
+                    ColorPreviewC.Name = "ColorPreviewC"
+                    ColorPreviewC.Parent = ColorPreview
+                    
+                    ColorPreviewStroke.Parent = ColorPreview
+                    ColorPreviewStroke.Color = config.TextColor
+                    ColorPreviewStroke.Thickness = 1
+                    ColorPreviewStroke.Transparency = 0.3
+                    
+                    ColorValue.Name = "ColorValue"
+                    ColorValue.Parent = ColorPreview
+                    ColorValue.BackgroundTransparency = 1
+                    ColorValue.BorderSizePixel = 0
+                    ColorValue.Size = UDim2.new(1, 0, 1, 0)
+                    ColorValue.AutoButtonColor = false
+                    ColorValue.Font = Enum.Font.Gotham
+                    ColorValue.Text = string.format("#%02X%02X%02X", 
+                        math.floor(default.R * 255),
+                        math.floor(default.G * 255),
+                        math.floor(default.B * 255)
+                    )
+                    ColorValue.TextColor3 = Color3.fromRGB(
+                        default.R * 255 > 127 and 0 or 255,
+                        default.G * 255 > 127 and 0 or 255,
+                        default.B * 255 > 127 and 0 or 255
+                    )
+                    ColorValue.TextSize = 12
+                    
+                    ColorValueC.CornerRadius = UDim.new(0, 6)
+                    ColorValueC.Name = "ColorValueC"
+                    ColorValueC.Parent = ColorValue
+                    
+                    ColorPickerL.Name = "ColorPickerL"
+                    ColorPickerL.Parent = ColorPickerBtn
+                    ColorPickerL.HorizontalAlignment = Enum.HorizontalAlignment.Right
+                    ColorPickerL.SortOrder = Enum.SortOrder.LayoutOrder
+                    ColorPickerL.VerticalAlignment = Enum.VerticalAlignment.Center
+                    
+                    UIPadding.Parent = ColorPickerBtn
+                    UIPadding.PaddingRight = UDim.new(0, 6)
+                    
+                    -- 交互效果
+                    ColorPickerBtn.MouseEnter:Connect(function()
+                        services.TweenService:Create(ColorPickerBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                            BackgroundColor3 = Color3.fromRGB(
+                                math.floor(config.Button_Color.R * 255 * 1.1),
+                                math.floor(config.Button_Color.G * 255 * 1.1),
+                                math.floor(config.Button_Color.B * 255 * 1.1)
+                            )
+                        }):Play()
+                        services.TweenService:Create(ColorPreviewStroke, TweenInfo.new(0.2), {
+                            Thickness = 2,
+                            Transparency = 0
+                        }):Play()
+                    end)
+                    
+                    ColorPickerBtn.MouseLeave:Connect(function()
+                        services.TweenService:Create(ColorPickerBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                            BackgroundColor3 = config.Button_Color
+                        }):Play()
+                        services.TweenService:Create(ColorPreviewStroke, TweenInfo.new(0.2), {
+                            Thickness = 1,
+                            Transparency = 0.3
+                        }):Play()
+                    end)
+                    
+                    -- 高级调色板窗口
+                    local colorPickerWindow = nil
+                    local function createColorPickerWindow()
+                        if colorPickerWindow and colorPickerWindow.Parent then
+                            colorPickerWindow:Destroy()
+                            colorPickerWindow = nil
+                            return
+                        end
+                        
+                        -- 创建调色板窗口
+                        colorPickerWindow = Instance.new("Frame")
+                        colorPickerWindow.Name = "ColorPickerWindow"
+                        colorPickerWindow.Parent = ColorPickerBtn
+                        colorPickerWindow.BackgroundColor3 = config.MainColor
+                        colorPickerWindow.BackgroundTransparency = 0.1
+                        colorPickerWindow.BorderSizePixel = 0
+                        colorPickerWindow.Position = UDim2.new(0, 0, 1, 5)
+                        colorPickerWindow.Size = UDim2.new(0, 250, 0, 320)
+                        colorPickerWindow.ZIndex = 100
+                        colorPickerWindow.Visible = false
+                        
+                        local windowCorner = Instance.new("UICorner")
+                        windowCorner.CornerRadius = UDim.new(0, 8)
+                        windowCorner.Parent = colorPickerWindow
+                        
+                        local windowStroke = Instance.new("UIStroke")
+                        windowStroke.Parent = colorPickerWindow
+                        windowStroke.Color = config.AccentColor
+                        windowStroke.Thickness = 1
+                        windowStroke.Transparency = 0.3
+                        
+                        -- 颜色预览区域
+                        local previewFrame = Instance.new("Frame")
+                        previewFrame.Name = "PreviewFrame"
+                        previewFrame.Parent = colorPickerWindow
+                        previewFrame.BackgroundColor3 = default
+                        previewFrame.BackgroundTransparency = 0
+                        previewFrame.Position = UDim2.new(0, 10, 0, 10)
+                        previewFrame.Size = UDim2.new(1, -20, 0, 40)
+                        
+                        local previewCorner = Instance.new("UICorner")
+                        previewCorner.CornerRadius = UDim.new(0, 6)
+                        previewCorner.Parent = previewFrame
+                        
+                        local previewStroke = Instance.new("UIStroke")
+                        previewStroke.Parent = previewFrame
+                        previewStroke.Color = Color3.new(0, 0, 0)
+                        previewStroke.Thickness = 1
+                        
+                        -- 颜色区域（色调和饱和度）
+                        local colorArea = Instance.new("ImageButton")
+                        colorArea.Name = "ColorArea"
+                        colorArea.Parent = colorPickerWindow
+                        colorArea.BackgroundColor3 = Color3.new(1, 1, 1)
+                        colorArea.BorderSizePixel = 0
+                        colorArea.Position = UDim2.new(0, 10, 0, 60)
+                        colorArea.Size = UDim2.new(1, -20, 0, 120)
+                        colorArea.AutoButtonColor = false
+                        
+                        local colorAreaCorner = Instance.new("UICorner")
+                        colorAreaCorner.CornerRadius = UDim.new(0, 6)
+                        colorAreaCorner.Parent = colorArea
+                        
+                        -- 创建颜色渐变
+                        local hueGradient = Instance.new("UIGradient")
+                        hueGradient.Color = ColorSequence.new{
+                            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+                            ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+                            ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+                            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+                            ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+                            ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+                            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+                        }
+                        hueGradient.Rotation = 0
+                        hueGradient.Parent = colorArea
+                        
+                        -- 色调滑块
+                        local hueSlider = Instance.new("Frame")
+                        hueSlider.Name = "HueSlider"
+                        hueSlider.Parent = colorPickerWindow
+                        hueSlider.BackgroundColor3 = Color3.new(1, 1, 1)
+                        hueSlider.BorderSizePixel = 0
+                        hueSlider.Position = UDim2.new(0, 10, 0, 190)
+                        hueSlider.Size = UDim2.new(1, -20, 0, 20)
+                        
+                        local hueSliderCorner = Instance.new("UICorner")
+                        hueSliderCorner.CornerRadius = UDim.new(0, 4)
+                        hueSliderCorner.Parent = hueSlider
+                        
+                        local hueGradient2 = Instance.new("UIGradient")
+                        hueGradient2.Color = ColorSequence.new{
+                            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+                            ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+                            ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+                            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+                            ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+                            ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+                            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+                        }
+                        hueGradient2.Parent = hueSlider
+                        
+                        -- RGB输入
+                        local rgbFrame = Instance.new("Frame")
+                        rgbFrame.Name = "RGBFrame"
+                        rgbFrame.Parent = colorPickerWindow
+                        rgbFrame.BackgroundTransparency = 1
+                        rgbFrame.Position = UDim2.new(0, 10, 0, 220)
+                        rgbFrame.Size = UDim2.new(1, -20, 0, 80)
+                        
+                        local rgbLayout = Instance.new("UIGridLayout")
+                        rgbLayout.Parent = rgbFrame
+                        rgbLayout.CellSize = UDim2.new(0.32, 0, 0, 30)
+                        rgbLayout.CellPadding = UDim2.new(0, 5, 0, 5)
+                        
+                        local r, g, b = math.floor(default.R * 255), math.floor(default.G * 255), math.floor(default.B * 255)
+                        
+                        local function createRGBInput(label, value, color)
+                            local frame = Instance.new("Frame")
+                            frame.BackgroundTransparency = 1
+                            frame.Size = UDim2.new(1, 0, 0, 30)
+                            
+                            local labelText = Instance.new("TextLabel")
+                            labelText.Text = label
+                            labelText.TextColor3 = config.TextColor
+                            labelText.TextSize = 12
+                            labelText.BackgroundTransparency = 1
+                            labelText.Size = UDim2.new(0, 15, 1, 0)
+                            labelText.Parent = frame
+                            
+                            local textBox = Instance.new("TextBox")
+                            textBox.Text = tostring(value)
+                            textBox.TextColor3 = config.TextColor
+                            textBox.BackgroundColor3 = config.Textbox_Color
+                            textBox.BackgroundTransparency = 0.2
+                            textBox.Size = UDim2.new(1, -20, 1, 0)
+                            textBox.Position = UDim2.new(0, 15, 0, 0)
+                            textBox.Parent = frame
+                            
+                            local corner = Instance.new("UICorner")
+                            corner.CornerRadius = UDim.new(0, 4)
+                            corner.Parent = textBox
+                            
+                            textBox.FocusLost:Connect(function()
+                                local num = tonumber(textBox.Text)
+                                if num then
+                                    num = math.clamp(num, 0, 255)
+                                    textBox.Text = tostring(num)
+                                    -- 更新颜色
+                                    local currentColor = previewFrame.BackgroundColor3
+                                    if label == "R" then
+                                        previewFrame.BackgroundColor3 = Color3.fromRGB(num, currentColor.G * 255, currentColor.B * 255)
+                                    elseif label == "G" then
+                                        previewFrame.BackgroundColor3 = Color3.fromRGB(currentColor.R * 255, num, currentColor.B * 255)
+                                    elseif label == "B" then
+                                        previewFrame.BackgroundColor3 = Color3.fromRGB(currentColor.R * 255, currentColor.G * 255, num)
+                                    end
+                                end
+                            end)
+                            
+                            return frame, textBox
+                        end
+                        
+                        local rFrame, rBox = createRGBInput("R", r, Color3.fromRGB(255, 50, 50))
+                        local gFrame, gBox = createRGBInput("G", g, Color3.fromRGB(50, 255, 50))
+                        local bFrame, bBox = createRGBInput("B", b, Color3.fromRGB(50, 50, 255))
+                        
+                        rFrame.Parent = rgbFrame
+                        gFrame.Parent = rgbFrame
+                        bFrame.Parent = rgbFrame
+                        
+                        -- 按钮区域
+                        local buttonFrame = Instance.new("Frame")
+                        buttonFrame.Name = "ButtonFrame"
+                        buttonFrame.Parent = colorPickerWindow
+                        buttonFrame.BackgroundTransparency = 1
+                        buttonFrame.Position = UDim2.new(0, 10, 0, 300)
+                        buttonFrame.Size = UDim2.new(1, -20, 0, 30)
+                        
+                        local applyBtn = Instance.new("TextButton")
+                        applyBtn.Name = "ApplyBtn"
+                        applyBtn.Parent = buttonFrame
+                        applyBtn.BackgroundColor3 = config.Button_Color
+                        applyBtn.BackgroundTransparency = 0.2
+                        applyBtn.Size = UDim2.new(0.48, 0, 1, 0)
+                        applyBtn.Text = "应用"
+                        applyBtn.TextColor3 = config.TextColor
+                        applyBtn.Font = Enum.Font.GothamSemibold
+                        applyBtn.TextSize = 14
+                        
+                        local applyCorner = Instance.new("UICorner")
+                        applyCorner.CornerRadius = UDim.new(0, 6)
+                        applyCorner.Parent = applyBtn
+                        
+                        local cancelBtn = Instance.new("TextButton")
+                        cancelBtn.Name = "CancelBtn"
+                        cancelBtn.Parent = buttonFrame
+                        cancelBtn.BackgroundColor3 = config.Button_Color
+                        cancelBtn.BackgroundTransparency = 0.2
+                        cancelBtn.Size = UDim2.new(0.48, 0, 1, 0)
+                        cancelBtn.Position = UDim2.new(0.52, 0, 0, 0)
+                        cancelBtn.Text = "取消"
+                        cancelBtn.TextColor3 = config.TextColor
+                        cancelBtn.Font = Enum.Font.GothamSemibold
+                        cancelBtn.TextSize = 14
+                        
+                        local cancelCorner = Instance.new("UICorner")
+                        cancelCorner.CornerRadius = UDim.new(0, 6)
+                        cancelCorner.Parent = cancelBtn
+                        
+                        -- 按钮交互
+                        applyBtn.MouseButton1Click:Connect(function()
+                            local color = previewFrame.BackgroundColor3
+                            ColorPreview.BackgroundColor3 = color
+                            ColorValue.Text = string.format("#%02X%02X%02X", 
+                                math.floor(color.R * 255),
+                                math.floor(color.G * 255),
+                                math.floor(color.B * 255)
+                            )
+                            ColorValue.TextColor3 = Color3.fromRGB(
+                                color.R * 255 > 127 and 0 or 255,
+                                color.G * 255 > 127 and 0 or 255,
+                                color.B * 255 > 127 and 0 or 255
+                            )
+                            
+                            FengUI.flags[flag] = color
+                            callback(color)
+                            
+                            -- 如果设置了主题键，更新主题
+                            if options.themeKey then
+                                FengUI.ColorManager:SetCustomColor(options.themeKey, color)
+                            end
+                            
+                            colorPickerWindow:Destroy()
+                            colorPickerWindow = nil
+                        end)
+                        
+                        cancelBtn.MouseButton1Click:Connect(function()
+                            colorPickerWindow:Destroy()
+                            colorPickerWindow = nil
+                        end)
+                        
+                        -- 初始显示
+                        colorPickerWindow.Visible = true
+                        services.TweenService:Create(colorPickerWindow, TweenInfo.new(0.3), {
+                            Size = UDim2.new(0, 250, 0, 320),
+                            BackgroundTransparency = 0
+                        }):Play()
+                    end
+                    
+                    ColorPickerBtn.MouseButton1Click:Connect(function()
+                        DigitalParticleExplosion(ColorPickerBtn)
+                        createColorPickerWindow()
+                    end)
+                    
+                    -- 返回对象
+                    local colorPickerObj = {}
+                    
+                    function colorPickerObj:SetColor(color)
+                        ColorPreview.BackgroundColor3 = color
+                        ColorValue.Text = string.format("#%02X%02X%02X", 
+                            math.floor(color.R * 255),
+                            math.floor(color.G * 255),
+                            math.floor(color.B * 255)
+                        )
+                        ColorValue.TextColor3 = Color3.fromRGB(
+                            color.R * 255 > 127 and 0 or 255,
+                            color.G * 255 > 127 and 0 or 255,
+                            color.B * 255 > 127 and 0 or 255
+                        )
+                        
+                        FengUI.flags[flag] = color
+                        callback(color)
+                    end
+                    
+                    function colorPickerObj:GetColor()
+                        return FengUI.flags[flag] or default
+                    end
+                    
+                    function colorPickerObj:Destroy()
+                        ColorPickerModule:Destroy()
+                    end
+                    
+                    return colorPickerObj
+                end
+                
+                -- 主题切换器组件
+                function section.ThemeSwitcher(section, text, includeCustom)
+                    local ThemeModule = Instance.new("Frame")
+                    local ThemeBtn = Instance.new("TextButton")
+                    local ThemeBtnC = Instance.new("UICorner")
+                    local ThemeValue = Instance.new("TextButton")
+                    local ThemeValueC = Instance.new("UICorner")
+                    
+                    ThemeModule.Name = "ThemeModule"
+                    ThemeModule.Parent = Objs
+                    ThemeModule.BackgroundTransparency = 1
+                    ThemeModule.BorderSizePixel = 0
+                    ThemeModule.Size = UDim2.new(0, 330, 0, 36)
+                    
+                    ThemeBtn.Name = "ThemeBtn"
+                    ThemeBtn.Parent = ThemeModule
+                    ThemeBtn.BackgroundColor3 = config.Button_Color
+                    ThemeBtn.BackgroundTransparency = 0.2
+                    ThemeBtn.BorderSizePixel = 0
+                    ThemeBtn.Size = UDim2.new(0, 330, 0, 36)
+                    ThemeBtn.AutoButtonColor = false
+                    ThemeBtn.Font = Enum.Font.GothamSemibold
+                    ThemeBtn.Text = "   " .. text
+                    ThemeBtn.TextColor3 = config.TextColor
+                    ThemeBtn.TextSize = 14
+                    ThemeBtn.TextXAlignment = Enum.TextXAlignment.Left
+                    
+                    ThemeBtnC.CornerRadius = UDim.new(0, 6)
+                    ThemeBtnC.Name = "ThemeBtnC"
+                    ThemeBtnC.Parent = ThemeBtn
+                    
+                    ThemeValue.Name = "ThemeValue"
+                    ThemeValue.Parent = ThemeBtn
+                    ThemeValue.BackgroundColor3 = config.Bg_Color
+                    ThemeValue.BorderSizePixel = 0
+                    ThemeValue.Position = UDim2.new(0.72, 0, 0.22, 0)
+                    ThemeValue.Size = UDim2.new(0, 70, 0, 22)
+                    ThemeValue.AutoButtonColor = false
+                    ThemeValue.Font = Enum.Font.Gotham
+                    ThemeValue.Text = FengUI.ColorManager.currentTheme
+                    ThemeValue.TextColor3 = config.TextColor
+                    ThemeValue.TextSize = 12
+                    
+                    ThemeValueC.CornerRadius = UDim.new(0, 6)
+                    ThemeValueC.Name = "ThemeValueC"
+                    ThemeValueC.Parent = ThemeValue
+                    
+                    -- 主题下拉菜单
+                    local themeDropdown = nil
+                    local function toggleThemeDropdown()
+                        if themeDropdown and themeDropdown.Parent then
+                            themeDropdown:Destroy()
+                            themeDropdown = nil
+                            return
+                        end
+                        
+                        themeDropdown = Instance.new("Frame")
+                        themeDropdown.Name = "ThemeDropdown"
+                        themeDropdown.Parent = ThemeBtn
+                        themeDropdown.BackgroundColor3 = config.MainColor
+                        themeDropdown.BackgroundTransparency = 0.1
+                        themeDropdown.BorderSizePixel = 0
+                        themeDropdown.Position = UDim2.new(0.72, 0, 1, 5)
+                        themeDropdown.Size = UDim2.new(0, 120, 0, 30)
+                        themeDropdown.ZIndex = 100
+                        themeDropdown.ClipsDescendants = true
+                        
+                        local dropdownCorner = Instance.new("UICorner")
+                        dropdownCorner.CornerRadius = UDim.new(0, 6)
+                        dropdownCorner.Parent = themeDropdown
+                        
+                        local dropdownStroke = Instance.new("UIStroke")
+                        dropdownStroke.Parent = themeDropdown
+                        dropdownStroke.Color = config.AccentColor
+                        dropdownStroke.Thickness = 1
+                        
+                        local themesList = Instance.new("ScrollingFrame")
+                        themesList.Name = "ThemesList"
+                        themesList.Parent = themeDropdown
+                        themesList.BackgroundTransparency = 1
+                        themesList.Size = UDim2.new(1, 0, 1, 0)
+                        themesList.CanvasSize = UDim2.new(0, 0, 0, 0)
+                        themesList.ScrollBarThickness = 2
+                        
+                        local listLayout = Instance.new("UIListLayout")
+                        listLayout.Parent = themesList
+                        listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                        
+                        -- 获取所有主题
+                        local themes = FengUI.ColorManager:GetThemes()
+                        local totalHeight = 0
+                        
+                        for _, themeName in ipairs(themes) do
+                            if includeCustom or themeName ~= "custom" then
+                                local themeBtn = Instance.new("TextButton")
+                                themeBtn.Name = "Theme_" .. themeName
+                                themeBtn.Parent = themesList
+                                themeBtn.BackgroundColor3 = config.Button_Color
+                                themeBtn.BackgroundTransparency = 0.2
+                                themeBtn.Size = UDim2.new(1, -10, 0, 28)
+                                themeBtn.Position = UDim2.new(0, 5, 0, totalHeight)
+                                themeBtn.Text = themeName
+                                themeBtn.TextColor3 = config.TextColor
+                                themeBtn.Font = Enum.Font.Gotham
+                                themeBtn.TextSize = 12
+                                
+                                local btnCorner = Instance.new("UICorner")
+                                btnCorner.CornerRadius = UDim.new(0, 4)
+                                btnCorner.Parent = themeBtn
+                                
+                                themeBtn.MouseButton1Click:Connect(function()
+                                    FengUI.ColorManager:ApplyTheme(themeName)
+                                    ThemeValue.Text = themeName
+                                    themeDropdown:Destroy()
+                                    themeDropdown = nil
+                                    DigitalParticleExplosion(themeBtn)
+                                end)
+                                
+                                totalHeight = totalHeight + 30
+                            end
+                        end
+                        
+                        themesList.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+                        themeDropdown.Size = UDim2.new(0, 120, 0, math.min(totalHeight + 10, 150))
+                        
+                        -- 点击外部关闭
+                        local connection
+                        connection = services.UserInputService.InputBegan:Connect(function(input)
+                            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                local mousePos = services.UserInputService:GetMouseLocation()
+                                local dropdownPos = themeDropdown.AbsolutePosition
+                                local dropdownSize = themeDropdown.AbsoluteSize
+                                
+                                if not (mousePos.X >= dropdownPos.X and mousePos.X <= dropdownPos.X + dropdownSize.X and
+                                       mousePos.Y >= dropdownPos.Y and mousePos.Y <= dropdownPos.Y + dropdownSize.Y) then
+                                    themeDropdown:Destroy()
+                                    themeDropdown = nil
+                                    connection:Disconnect()
+                                end
+                            end
+                        end)
+                    end
+                    
+                    ThemeValue.MouseButton1Click:Connect(function()
+                        DigitalParticleExplosion(ThemeValue)
+                        toggleThemeDropdown()
+                    end)
+                    
+                    -- 监听主题变化
+                    FengUI.ColorManager:AddCallback("ThemeSwitcher_" .. text, function(themeName)
+                        ThemeValue.Text = themeName
+                    end)
+                    
+                    return {
+                        SetTheme = function(self, themeName)
+                            FengUI.ColorManager:ApplyTheme(themeName)
+                        end,
+                        
+                        GetCurrentTheme = function(self)
+                            return FengUI.ColorManager.currentTheme
+                        end,
+                        
+                        AddTheme = function(self, themeName, baseTheme)
+                            return FengUI.ColorManager:CreateTheme(themeName, baseTheme)
+                        end,
+                        
+                        Destroy = function(self)
+                            ThemeModule:Destroy()
+                            FengUI.ColorManager:RemoveCallback("ThemeSwitcher_" .. text)
+                        end
+                    }
+                end
+                
+                -- UI组件颜色绑定助手函数
+                function section.BindToTheme(section, uiComponent, componentId, themeBindings)
+                    -- uiComponent: UI元素实例
+                    -- componentId: 组件标识符
+                    -- themeBindings: {{property="BackgroundColor3", themeKey="Button_Color"}, ...}
+                    
+                    local properties = {}
+                    for _, binding in ipairs(themeBindings) do
+                        table.insert(properties, {
+                            property = binding.property,
+                            themeKey = binding.themeKey
+                        })
+                    end
+                    
+                    -- 注册到颜色管理器
+                    local comp = FengUI.ColorManager:RegisterComponent(componentId, "UIElement", uiComponent, properties)
+                    
+                    -- 绑定颜色
+                    for _, binding in ipairs(themeBindings) do
+                        FengUI.ColorManager:BindColor(componentId, binding.themeKey, binding.property)
+                    end
+                    
+                    return {
+                        UpdateBinding = function(self, newBindings)
+                            -- 更新绑定
+                            for _, binding in ipairs(newBindings) do
+                                FengUI.ColorManager:BindColor(componentId, binding.themeKey, binding.property)
+                            end
+                        end,
+                        
+                        RemoveBinding = function(self)
+                            -- 移除绑定（简化实现）
+                            FengUI.ColorManager.components[componentId] = nil
+                        end
+                    }
                 end
                 
                 return section
