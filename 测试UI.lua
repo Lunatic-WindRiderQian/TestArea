@@ -2523,7 +2523,6 @@ function section.ColorPicker(section, text, flag, default, callback)
     ColorPickerWindow.Size = UDim2.new(0, 300, 0, 220)
     ColorPickerWindow.Visible = false
     ColorPickerWindow.ZIndex = 100
-    ColorPickerWindow.Active = true
     
     local WindowCorner = Instance.new("UICorner")
     WindowCorner.CornerRadius = UDim.new(0, 8)
@@ -2571,7 +2570,6 @@ function section.ColorPicker(section, text, flag, default, callback)
     ColorCanvas.Position = UDim2.new(0, 10, 0, 40)
     ColorCanvas.Size = UDim2.new(0, 180, 0, 120)
     ColorCanvas.ZIndex = 102
-    ColorCanvas.Active = true
     
     local ColorCanvasCorner = Instance.new("UICorner")
     ColorCanvasCorner.CornerRadius = UDim.new(0, 4)
@@ -2636,7 +2634,6 @@ function section.ColorPicker(section, text, flag, default, callback)
     HueSlider.Position = UDim2.new(0, 195, 0, 40)
     HueSlider.Size = UDim2.new(0, 15, 0, 120)
     HueSlider.ZIndex = 102
-    HueSlider.Active = true
     
     local HueSliderCorner = Instance.new("UICorner")
     HueSliderCorner.CornerRadius = UDim.new(0, 4)
@@ -2872,135 +2869,126 @@ function section.ColorPicker(section, text, flag, default, callback)
         return nil
     end
     
-    -- 颜色画布点击交互 - 支持手机触摸
-    local colorSelecting = false
-    ColorCanvas.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            colorSelecting = true
-            
-            -- 捕获触摸输入
-            if input.UserInputType == Enum.UserInputType.Touch then
-                input:Capture()
-            end
-            
-            local canvasPos = ColorCanvas.AbsolutePosition
-            local canvasSize = ColorCanvas.AbsoluteSize
-            
-            -- 获取输入位置（兼容鼠标和触摸）
-            local inputPos
-            if input.UserInputType == Enum.UserInputType.Touch then
-                inputPos = input.Position
-            else
-                inputPos = Vector2.new(input.Position.X, input.Position.Y)
-            end
-            
-            local x = math.clamp((inputPos.X - canvasPos.X) / canvasSize.X, 0, 1)
-            local y = math.clamp((inputPos.Y - canvasPos.Y) / canvasSize.Y, 0, 1)
-            
-            Selector.Position = UDim2.new(x, 0, y, 0)
-            local h = HueSelector.Position.Y.Scale
-            local color = updateColorFromHSV(h, x, 1 - y)
-        end
-    end)
+    -- === 全新的触摸交互逻辑 ===
     
-    ColorCanvas.InputChanged:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and colorSelecting then
-            -- 继续捕获触摸输入
-            if input.UserInputType == Enum.UserInputType.Touch then
-                input:Capture()
-            end
-            
-            local canvasPos = ColorCanvas.AbsolutePosition
-            local canvasSize = ColorCanvas.AbsoluteSize
-            
-            -- 获取输入位置（兼容鼠标和触摸）
-            local inputPos
-            if input.UserInputType == Enum.UserInputType.Touch then
-                inputPos = input.Position
-            else
-                inputPos = Vector2.new(input.Position.X, input.Position.Y)
-            end
-            
-            local x = math.clamp((inputPos.X - canvasPos.X) / canvasSize.X, 0, 1)
-            local y = math.clamp((inputPos.Y - canvasPos.Y) / canvasSize.Y, 0, 1)
-            
-            Selector.Position = UDim2.new(x, 0, y, 0)
-            local h = HueSelector.Position.Y.Scale
-            local color = updateColorFromHSV(h, x, 1 - y)
-        end
-    end)
+    -- 创建透明的触摸区域覆盖整个颜色选择区域
+    local TouchArea = Instance.new("TextButton")
+    TouchArea.Name = "TouchArea"
+    TouchArea.Parent = ColorCanvas
+    TouchArea.BackgroundTransparency = 1
+    TouchArea.BorderSizePixel = 0
+    TouchArea.Size = UDim2.new(1, 0, 1, 0)
+    TouchArea.Text = ""
+    TouchArea.ZIndex = 104  -- 最高层级
     
-    ColorCanvas.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            colorSelecting = false
-        end
-    end)
+    -- 创建透明的触摸区域覆盖色相滑块
+    local HueTouchArea = Instance.new("TextButton")
+    HueTouchArea.Name = "HueTouchArea"
+    HueTouchArea.Parent = HueSlider
+    HueTouchArea.BackgroundTransparency = 1
+    HueTouchArea.BorderSizePixel = 0
+    HueTouchArea.Size = UDim2.new(1, 0, 1, 0)
+    HueTouchArea.Text = ""
+    HueTouchArea.ZIndex = 104
     
-    -- 色相滑块点击交互 - 支持手机触摸
-    local hueSelecting = false
-    HueSlider.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            hueSelecting = true
-            
-            -- 捕获触摸输入
-            if input.UserInputType == Enum.UserInputType.Touch then
-                input:Capture()
-            end
-            
-            local sliderPos = HueSlider.AbsolutePosition
-            local sliderSize = HueSlider.AbsoluteSize
-            
-            -- 获取输入位置（兼容鼠标和触摸）
-            local inputPos
-            if input.UserInputType == Enum.UserInputType.Touch then
-                inputPos = input.Position
-            else
-                inputPos = Vector2.new(input.Position.X, input.Position.Y)
-            end
-            
-            local y = math.clamp((inputPos.Y - sliderPos.Y) / sliderSize.Y, 0, 1)
-            HueSelector.Position = UDim2.new(0.5, 0, y, 0)
-            
-            local h = y
-            local s = Selector.Position.X.Scale
-            local v = 1 - Selector.Position.Y.Scale
-            local color = updateColorFromHSV(h, s, v)
-        end
-    end)
+    -- 颜色选择交互函数
+    local function updateColorFromTouch(position)
+        local canvasSize = ColorCanvas.AbsoluteSize
+        local canvasPos = ColorCanvas.AbsolutePosition
+        
+        -- 计算相对位置
+        local x = math.clamp((position.X - canvasPos.X) / canvasSize.X, 0, 1)
+        local y = math.clamp((position.Y - canvasPos.Y) / canvasSize.Y, 0, 1)
+        
+        -- 更新选择器位置
+        Selector.Position = UDim2.new(x, 0, y, 0)
+        
+        -- 获取当前色相
+        local h = HueSelector.Position.Y.Scale
+        
+        -- 计算颜色
+        local color = updateColorFromHSV(h, x, 1 - y)
+        return color
+    end
     
-    HueSlider.InputChanged:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and hueSelecting then
-            -- 继续捕获触摸输入
-            if input.UserInputType == Enum.UserInputType.Touch then
-                input:Capture()
-            end
-            
-            local sliderPos = HueSlider.AbsolutePosition
-            local sliderSize = HueSlider.AbsoluteSize
-            
-            -- 获取输入位置（兼容鼠标和触摸）
-            local inputPos
-            if input.UserInputType == Enum.UserInputType.Touch then
-                inputPos = input.Position
-            else
-                inputPos = Vector2.new(input.Position.X, input.Position.Y)
-            end
-            
-            local y = math.clamp((inputPos.Y - sliderPos.Y) / sliderSize.Y, 0, 1)
-            HueSelector.Position = UDim2.new(0.5, 0, y, 0)
-            
-            local h = y
-            local s = Selector.Position.X.Scale
-            local v = 1 - Selector.Position.Y.Scale
-            local color = updateColorFromHSV(h, s, v)
-        end
-    end)
+    -- 色相选择交互函数
+    local function updateHueFromTouch(position)
+        local sliderSize = HueSlider.AbsoluteSize
+        local sliderPos = HueSlider.AbsolutePosition
+        
+        -- 计算相对位置
+        local y = math.clamp((position.Y - sliderPos.Y) / sliderSize.Y, 0, 1)
+        
+        -- 更新选择器位置
+        HueSelector.Position = UDim2.new(0.5, 0, y, 0)
+        
+        -- 获取当前饱和度和亮度
+        local s = Selector.Position.X.Scale
+        local v = 1 - Selector.Position.Y.Scale
+        
+        -- 计算颜色
+        local color = updateColorFromHSV(y, s, v)
+        return color
+    end
     
-    HueSlider.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            hueSelecting = false
-        end
-    end)
+    -- 鼠标/触摸交互处理
+    local function setupTouchInteraction()
+        local isDragging = false
+        local isHueDragging = false
+        
+        -- 颜色区域触摸开始
+        TouchArea.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+               input.UserInputType == Enum.UserInputType.Touch then
+                isDragging = true
+                local color = updateColorFromTouch(input.Position)
+            end
+        end)
+        
+        -- 颜色区域触摸移动
+        TouchArea.InputChanged:Connect(function(input)
+            if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+                               input.UserInputType == Enum.UserInputType.Touch) then
+                local color = updateColorFromTouch(input.Position)
+            end
+        end)
+        
+        -- 颜色区域触摸结束
+        TouchArea.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+               input.UserInputType == Enum.UserInputType.Touch then
+                isDragging = false
+            end
+        end)
+        
+        -- 色相区域触摸开始
+        HueTouchArea.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+               input.UserInputType == Enum.UserInputType.Touch then
+                isHueDragging = true
+                local color = updateHueFromTouch(input.Position)
+            end
+        end)
+        
+        -- 色相区域触摸移动
+        HueTouchArea.InputChanged:Connect(function(input)
+            if isHueDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+                                  input.UserInputType == Enum.UserInputType.Touch) then
+                local color = updateHueFromTouch(input.Position)
+            end
+        end)
+        
+        -- 色相区域触摸结束
+        HueTouchArea.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+               input.UserInputType == Enum.UserInputType.Touch then
+                isHueDragging = false
+            end
+        end)
+    end
+    
+    -- 初始化触摸交互
+    setupTouchInteraction()
     
     -- RGB输入框事件
     RInput.FocusLost:Connect(function(enterPressed)
@@ -3086,7 +3074,7 @@ function section.ColorPicker(section, text, flag, default, callback)
         DigitalParticleExplosion(CancelButton)
     end)
     
-    -- 点击外部关闭窗口 - 支持手机触摸
+    -- 点击外部关闭窗口
     local function isInputOverWindow(inputPosition)
         if not ColorPickerWindow.Visible then return false end
         
@@ -3100,15 +3088,14 @@ function section.ColorPicker(section, text, flag, default, callback)
     services.UserInputService.InputBegan:Connect(function(input)
         if (input.UserInputType == Enum.UserInputType.MouseButton1 or 
             input.UserInputType == Enum.UserInputType.Touch) and windowOpen then
-            local inputPos
-            if input.UserInputType == Enum.UserInputType.Touch then
-                inputPos = input.Position
-            else
-                inputPos = Vector2.new(input.Position.X, input.Position.Y)
-            end
+            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
             
-            -- 检查是否点击在窗口内
-            local isOverColorButton = isInputOverWindow(Vector2.new(ColorPickerButton.AbsolutePosition.X, ColorPickerButton.AbsolutePosition.Y))
+            -- 检查是否点击在窗口内或颜色预览按钮上
+            local isOverColorButton = isInputOverWindow(Vector2.new(
+                ColorPickerButton.AbsolutePosition.X, 
+                ColorPickerButton.AbsolutePosition.Y
+            ))
+            
             local isOverWindow = isInputOverWindow(inputPos)
             
             if not isOverWindow and not isOverColorButton then
