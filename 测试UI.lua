@@ -704,158 +704,194 @@ function FengUI.new(FengUI, name, theme)
         TabContainer.Size = UDim2.new(1, 0, 1, 0)
         
         if windowCount == 2 then
-    TabContainer.Size = UDim2.new(1, 0, 0, 0)
-    
-    local LeftContainer = Instance.new("ScrollingFrame")
-    LeftContainer.Name = "LeftContainer"
-    LeftContainer.Parent = TabContainer
-    LeftContainer.BackgroundTransparency = 1
-    LeftContainer.Size = UDim2.new(0.48, -2, 1, -10)  -- 减少高度，为滚动条留空间
-    LeftContainer.Position = UDim2.new(0, 2, 0, 0)
-    LeftContainer.ScrollBarThickness = 3
-    LeftContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
-    LeftContainer.ScrollBarImageTransparency = 0.5
-    LeftContainer.ScrollingEnabled = true
-    LeftContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    LeftContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-    LeftContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-    LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-    LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-    LeftContainer.ScrollBarImageTransparency = 0.7
-    LeftContainer.ScrollBarThickness = 2
-    LeftContainer.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Right
-    
-    local LeftLayout = Instance.new("UIListLayout")
-    LeftLayout.Name = "LeftLayout"
-    LeftLayout.Parent = LeftContainer
-    LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    LeftLayout.Padding = UDim.new(0, 4)
-    
-    local RightContainer = Instance.new("ScrollingFrame")
-    RightContainer.Name = "RightContainer"
-    RightContainer.Parent = TabContainer
-    RightContainer.BackgroundTransparency = 1
-    RightContainer.Size = UDim2.new(0.50, -2, 1, -10)  -- 减少高度，为滚动条留空间
-    RightContainer.Position = UDim2.new(0.48, 0, 0, 0)
-    RightContainer.ScrollBarThickness = 3
-    RightContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
-    RightContainer.ScrollBarImageTransparency = 0.5
-    RightContainer.ScrollingEnabled = true
-    RightContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    RightContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-    RightContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-    RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-    RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-    RightContainer.ScrollBarImageTransparency = 0.7
-    RightContainer.ScrollBarThickness = 2
-    RightContainer.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Right
-    
-    local RightLayout = Instance.new("UIListLayout")
-    RightLayout.Name = "RightLayout"
-    RightLayout.Parent = RightContainer
-    RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    RightLayout.Padding = UDim.new(0, 4)
-    
-    -- 独立的滚动更新函数
-    local function updateLeftContainer()
-        if LeftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y then
+            TabContainer.Size = UDim2.new(1, 0, 0, 0)
+            
+            local LeftContainer = Instance.new("ScrollingFrame")
+            LeftContainer.Name = "LeftContainer"
+            LeftContainer.Parent = TabContainer
+            LeftContainer.BackgroundTransparency = 1
+            LeftContainer.Size = UDim2.new(0.48, -2, 1, -10)
+            LeftContainer.Position = UDim2.new(0, 2, 0, 0)
+            LeftContainer.ScrollBarThickness = 3
+            LeftContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+            LeftContainer.ScrollBarImageTransparency = 0.5
             LeftContainer.ScrollingEnabled = true
-            LeftContainer.CanvasSize = UDim2.new(0, 0, 0, LeftLayout.AbsoluteContentSize.Y + 10)
-        else
-            LeftContainer.ScrollingEnabled = false
+            LeftContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
             LeftContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-        end
-    end
-    
-    local function updateRightContainer()
-        if RightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y then
+            LeftContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
+            LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+            LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+            LeftContainer.ScrollBarImageTransparency = 0.7
+            LeftContainer.ScrollBarThickness = 2
+            LeftContainer.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Right
+            
+            local LeftLayout = Instance.new("UIListLayout")
+            LeftLayout.Name = "LeftLayout"
+            LeftLayout.Parent = LeftContainer
+            LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            LeftLayout.Padding = UDim.new(0, 4)
+            
+            local RightContainer = Instance.new("ScrollingFrame")
+            RightContainer.Name = "RightContainer"
+            RightContainer.Parent = TabContainer
+            RightContainer.BackgroundTransparency = 1
+            RightContainer.Size = UDim2.new(0.50, -2, 1, -10)
+            RightContainer.Position = UDim2.new(0.48, 0, 0, 0)
+            RightContainer.ScrollBarThickness = 3
+            RightContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+            RightContainer.ScrollBarImageTransparency = 0.5
             RightContainer.ScrollingEnabled = true
-            RightContainer.CanvasSize = UDim2.new(0, 0, 0, RightLayout.AbsoluteContentSize.Y + 10)
-        else
-            RightContainer.ScrollingEnabled = false
+            RightContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
             RightContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+            RightContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
+            RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+            RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+            RightContainer.ScrollBarImageTransparency = 0.7
+            RightContainer.ScrollBarThickness = 2
+            RightContainer.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Right
+            
+            local RightLayout = Instance.new("UIListLayout")
+            RightLayout.Name = "RightLayout"
+            RightLayout.Parent = RightContainer
+            RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            RightLayout.Padding = UDim.new(0, 4)
+            
+            -- 独立的滚动更新函数
+            local function updateLeftContainer()
+                if LeftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y then
+                    LeftContainer.ScrollingEnabled = true
+                    LeftContainer.CanvasSize = UDim2.new(0, 0, 0, LeftLayout.AbsoluteContentSize.Y + 10)
+                else
+                    LeftContainer.ScrollingEnabled = false
+                    LeftContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+                end
+            end
+            
+            local function updateRightContainer()
+                if RightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y then
+                    RightContainer.ScrollingEnabled = true
+                    RightContainer.CanvasSize = UDim2.new(0, 0, 0, RightLayout.AbsoluteContentSize.Y + 10)
+                else
+                    RightContainer.ScrollingEnabled = false
+                    RightContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+                end
+            end
+            
+            -- 监听内容大小变化
+            LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                updateLeftContainer()
+            end)
+            
+            RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                updateRightContainer()
+            end)
+            
+            -- 初始更新
+            task.defer(function()
+                updateLeftContainer()
+                updateRightContainer()
+            end)
+            
+            -- 使用独立的滚动物理效果
+            LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Always
+            RightContainer.ElasticBehavior = Enum.ElasticBehavior.Always
+            
+            -- 添加滚动条美化效果
+            local leftScrollBar = Instance.new("UIStroke")
+            leftScrollBar.Parent = LeftContainer
+            leftScrollBar.Color = Color3.fromRGB(80, 80, 100)
+            leftScrollBar.Thickness = 1
+            leftScrollBar.Transparency = 0.7
+            leftScrollBar.LineJoinMode = Enum.LineJoinMode.Round
+            
+            local rightScrollBar = Instance.new("UIStroke")
+            rightScrollBar.Parent = RightContainer
+            rightScrollBar.Color = Color3.fromRGB(80, 80, 100)
+            rightScrollBar.Thickness = 1
+            rightScrollBar.Transparency = 0.7
+            rightScrollBar.LineJoinMode = Enum.LineJoinMode.Round
         end
-    end
-    
-    -- 监听内容大小变化
-    LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        updateLeftContainer()
-    end)
-    
-    RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        updateRightContainer()
-    end)
-    
-    -- 初始更新
-    task.defer(function()
-        updateLeftContainer()
-        updateRightContainer()
-    end)
-    
-    -- 使用独立的滚动物理效果
-    LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Always
-    RightContainer.ElasticBehavior = Enum.ElasticBehavior.Always
-    
-    -- 添加滚动条美化效果
-    local leftScrollBar = Instance.new("UIStroke")
-    leftScrollBar.Parent = LeftContainer
-    leftScrollBar.Color = Color3.fromRGB(80, 80, 100)
-    leftScrollBar.Thickness = 1
-    leftScrollBar.Transparency = 0.7
-    leftScrollBar.LineJoinMode = Enum.LineJoinMode.Round
-    
-    local rightScrollBar = Instance.new("UIStroke")
-    rightScrollBar.Parent = RightContainer
-    rightScrollBar.Color = Color3.fromRGB(80, 80, 100)
-    rightScrollBar.Thickness = 1
-    rightScrollBar.Transparency = 0.7
-    rightScrollBar.LineJoinMode = Enum.LineJoinMode.Round
-end
-
--- 在 section.section 函数中，更新容器的选择逻辑
-local TargetContainer
-if windowCount == 2 then
-    if windowPosition:lower() == "left" then
-        TargetContainer = TabContainer:FindFirstChild("LeftContainer")
-    else
-        TargetContainer = TabContainer:FindFirstChild("RightContainer")
-    end
-else
-    TargetContainer = TabContainer
-end
-
--- 更新双窗口模式下的容器高度同步逻辑
-if windowCount == 2 then
-    local function updateContainerHeight()
-        local leftContentHeight = TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout").AbsoluteContentSize.Y + 20
-        local rightContentHeight = TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout").AbsoluteContentSize.Y + 20
-        local maxHeight = math.max(leftContentHeight, rightContentHeight)
         
-        -- 确保最小高度为200
-        maxHeight = math.max(maxHeight, 200)
+        TabIco.Name = "TabIco"
+        TabIco.Parent = TabBtns
+        TabIco.BackgroundTransparency = 1
+        TabIco.BorderSizePixel = 0
+        TabIco.Size = UDim2.new(0, 22, 0, 22)
+        TabIco.Image = "rbxassetid://84830962019412"
+        TabIco.ImageTransparency = 0.5
         
-        -- 设置容器高度
-        TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
+        startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
         
-        -- 同步设置左右容器的高度
-        TabContainer:FindFirstChild("LeftContainer").Size = UDim2.new(0.48, -2, 0, maxHeight - 10)
-        TabContainer:FindFirstChild("RightContainer").Size = UDim2.new(0.50, -2, 0, maxHeight - 10)
+        TabText.Name = "TabText"
+        TabText.Parent = TabIco
+        TabText.BackgroundTransparency = 1
+        TabText.Position = UDim2.new(1.2, 0, 0, 0)
+        TabText.Size = UDim2.new(0, 65, 0, 22)
+        TabText.Font = Enum.Font.GothamSemibold
+        TabText.Text = name
+        TabText.TextColor3 = config.TextColor
+        TabText.TextSize = 14
+        TabText.TextXAlignment = Enum.TextXAlignment.Left
+        TabText.TextTransparency = 0.5
         
-        -- 设置Tab的CanvasSize
-        Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight + 10)
-    end
-    
-    -- 监听左右布局的变化
-    TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
-    TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
-    
-    -- 初始更新
-    task.defer(updateContainerHeight)
-    
-    -- 禁止Tab自身的滚动
-    Tab.ScrollingEnabled = false
-    Tab.ScrollBarThickness = 0
-end
+        TabBtn.Name = "TabBtn"
+        TabBtn.Parent = TabIco
+        TabBtn.BackgroundTransparency = 1
+        TabBtn.BorderSizePixel = 0
+        TabBtn.Size = UDim2.new(0, 90, 0, 22)
+        TabBtn.AutoButtonColor = false
+        TabBtn.Font = Enum.Font.SourceSans
+        TabBtn.Text = ""
+        
+        TabL.Name = "TabL"
+        TabL.Parent = TabContainer
+        TabL.SortOrder = Enum.SortOrder.LayoutOrder
+        TabL.Padding = UDim.new(0, 4)
+        
+        if windowCount == 2 then
+            TabL:Destroy()
+            
+            -- 更新双窗口模式下的容器高度同步逻辑
+            local function updateContainerHeight()
+                local leftContentHeight = TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout").AbsoluteContentSize.Y + 20
+                local rightContentHeight = TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout").AbsoluteContentSize.Y + 20
+                local maxHeight = math.max(leftContentHeight, rightContentHeight)
+                
+                -- 确保最小高度为200
+                maxHeight = math.max(maxHeight, 200)
+                
+                -- 设置容器高度
+                TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
+                
+                -- 同步设置左右容器的高度
+                TabContainer:FindFirstChild("LeftContainer").Size = UDim2.new(0.48, -2, 0, maxHeight - 10)
+                TabContainer:FindFirstChild("RightContainer").Size = UDim2.new(0.50, -2, 0, maxHeight - 10)
+                
+                -- 设置Tab的CanvasSize
+                Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight + 10)
+            end
+            
+            -- 监听左右布局的变化
+            TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
+            TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
+            
+            -- 初始更新
+            task.defer(updateContainerHeight)
+            
+            -- 禁止Tab自身的滚动
+            Tab.ScrollingEnabled = false
+            Tab.ScrollBarThickness = 0
+        else
+            setupSmoothScrolling(Tab, TabL)
+        end
+        
+        TabBtn.MouseButton1Click:Connect(function()
+            switchTab({ TabIco, Tab })
+        end)
+        
+        if FengUI.currentTab == nil then
+            switchTab({ TabIco, Tab })
+        end
         
         local tab = {}
         
@@ -1082,115 +1118,115 @@ end
             end
             
             function section.Image(section, imageSource, sizeX, sizeY)
-    local ImageModule = Instance.new("Frame")
-    local ImageLabel = Instance.new("ImageLabel")
-    local ImageCorner = Instance.new("UICorner")
-    
-    ImageModule.Name = "ImageModule"
-    ImageModule.Parent = Objs
-    ImageModule.BackgroundTransparency = 1
-    ImageModule.BorderSizePixel = 0
-    ImageModule.Size = UDim2.new(0, elementWidth, 0, sizeY or 120)
-    
-    ImageLabel.Parent = ImageModule
-    ImageLabel.BackgroundTransparency = 1
-    ImageLabel.BorderSizePixel = 0
-    ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
-    ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
-    ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, elementWidth), 0, sizeY or 120)
-    ImageLabel.ScaleType = Enum.ScaleType.Crop
-    
-    ImageCorner.CornerRadius = UDim.new(0, 6)
-    ImageCorner.Parent = ImageLabel
-    
-    local imageGlow = Instance.new("UIStroke")
-    imageGlow.Parent = ImageLabel
-    imageGlow.Color = config.AccentColor
-    imageGlow.Thickness = 1
-    imageGlow.Transparency = 0.8
-    
-    local function setImage(source)
-        if type(source) == "table" then
-            if source.Type == "Player" then
-                local userId = source.UserId
-                if userId then
-                    task.spawn(function()
-                        local success, result = pcall(function()
-                            return game.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-                        end)
-                        
-                        if success and result then
-                            ImageLabel.Image = result
-                        else
-                            ImageLabel.Image = "rbxassetid://0"
+                local ImageModule = Instance.new("Frame")
+                local ImageLabel = Instance.new("ImageLabel")
+                local ImageCorner = Instance.new("UICorner")
+                
+                ImageModule.Name = "ImageModule"
+                ImageModule.Parent = Objs
+                ImageModule.BackgroundTransparency = 1
+                ImageModule.BorderSizePixel = 0
+                ImageModule.Size = UDim2.new(0, elementWidth, 0, sizeY or 120)
+                
+                ImageLabel.Parent = ImageModule
+                ImageLabel.BackgroundTransparency = 1
+                ImageLabel.BorderSizePixel = 0
+                ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
+                ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
+                ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, elementWidth), 0, sizeY or 120)
+                ImageLabel.ScaleType = Enum.ScaleType.Crop
+                
+                ImageCorner.CornerRadius = UDim.new(0, 6)
+                ImageCorner.Parent = ImageLabel
+                
+                local imageGlow = Instance.new("UIStroke")
+                imageGlow.Parent = ImageLabel
+                imageGlow.Color = config.AccentColor
+                imageGlow.Thickness = 1
+                imageGlow.Transparency = 0.8
+                
+                local function setImage(source)
+                    if type(source) == "table" then
+                        if source.Type == "Player" then
+                            local userId = source.UserId
+                            if userId then
+                                task.spawn(function()
+                                    local success, result = pcall(function()
+                                        return game.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+                                    end)
+                                    
+                                    if success and result then
+                                        ImageLabel.Image = result
+                                    else
+                                        ImageLabel.Image = "rbxassetid://0"
+                                    end
+                                end)
+                            end
+                        elseif source.Type == "Game" then
+                            local placeId = source.PlaceId
+                            if placeId then
+                                task.spawn(function()
+                                    local success1, gameInfo = pcall(function()
+                                        local MarketplaceService = game:GetService("MarketplaceService")
+                                        return MarketplaceService:GetProductInfo(placeId, Enum.InfoType.Asset)
+                                    end)
+                                    
+                                    if success1 and gameInfo and gameInfo.IconImageAssetId then
+                                        ImageLabel.Image = "rbxassetid://" .. gameInfo.IconImageAssetId
+                                        return
+                                    end
+                                    
+                                    local success2, thumbnailUrl = pcall(function()
+                                        local ThumbnailService = game:GetService("ThumbnailService")
+                                        return ThumbnailService:GetGameThumbnailAsync(placeId)
+                                    end)
+                                    
+                                    if success2 and thumbnailUrl then
+                                        ImageLabel.Image = thumbnailUrl
+                                        return
+                                    end
+                                    
+                                    ImageLabel.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=" .. placeId
+                                end)
+                            end
                         end
-                    end)
+                    else
+                        ImageLabel.Image = "rbxassetid://" .. tostring(source)
+                    end
                 end
-            elseif source.Type == "Game" then
-                local placeId = source.PlaceId
-                if placeId then
-                    task.spawn(function()
-                        local success1, gameInfo = pcall(function()
-                            local MarketplaceService = game:GetService("MarketplaceService")
-                            return MarketplaceService:GetProductInfo(placeId, Enum.InfoType.Asset)
-                        end)
-                        
-                        if success1 and gameInfo and gameInfo.IconImageAssetId then
-                            ImageLabel.Image = "rbxassetid://" .. gameInfo.IconImageAssetId
-                            return
-                        end
-                        
-                        local success2, thumbnailUrl = pcall(function()
-                            local ThumbnailService = game:GetService("ThumbnailService")
-                            return ThumbnailService:GetGameThumbnailAsync(placeId)
-                        end)
-                        
-                        if success2 and thumbnailUrl then
-                            ImageLabel.Image = thumbnailUrl
-                            return
-                        end
-                        
-                        ImageLabel.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=" .. placeId
-                    end)
+                
+                setImage(imageSource)
+                
+                local imageController = {}
+                
+                function imageController:SetImage(newSource)
+                    setImage(newSource)
                 end
+                
+                function imageController:SetPlayerAvatar(userId)
+                    setImage({Type = "Player", UserId = userId})
+                end
+                
+                function imageController:SetGameIcon(placeId)
+                    setImage({Type = "Game", PlaceId = placeId})
+                end
+                
+                function imageController:SetLocalPlayerAvatar()
+                    local localPlayer = game.Players.LocalPlayer
+                    if localPlayer then
+                        setImage({Type = "Player", UserId = localPlayer.UserId})
+                    end
+                end
+                
+                function imageController:Destroy()
+                    ImageModule:Destroy()
+                end
+                
+                imageController.Instance = ImageLabel
+                imageController.Module = ImageModule
+                
+                return imageController
             end
-        else
-            ImageLabel.Image = "rbxassetid://" .. tostring(source)
-        end
-    end
-    
-    setImage(imageSource)
-    
-    local imageController = {}
-    
-    function imageController:SetImage(newSource)
-        setImage(newSource)
-    end
-    
-    function imageController:SetPlayerAvatar(userId)
-        setImage({Type = "Player", UserId = userId})
-    end
-    
-    function imageController:SetGameIcon(placeId)
-        setImage({Type = "Game", PlaceId = placeId})
-    end
-    
-    function imageController:SetLocalPlayerAvatar()
-        local localPlayer = game.Players.LocalPlayer
-        if localPlayer then
-            setImage({Type = "Player", UserId = localPlayer.UserId})
-        end
-    end
-    
-    function imageController:Destroy()
-        ImageModule:Destroy()
-    end
-    
-    imageController.Instance = ImageLabel
-    imageController.Module = ImageModule
-    
-    return imageController
-end
             
             function section:Label(text)
                 local LabelModule = Instance.new("Frame")
@@ -1527,650 +1563,650 @@ end
                 BoxBG.Text = ""
                 
                 BoxBGC.CornerRadius = UDim.new(0, 6)
-    BoxBGC.Name = "BoxBGC"
-    BoxBGC.Parent = BoxBG
-    
-    TextBox.Parent = BoxBG
-    TextBox.BackgroundTransparency = 1
-    TextBox.BorderSizePixel = 0
-    TextBox.Size = UDim2.new(1, 0, 1, 0)
-    TextBox.Font = Enum.Font.Gotham
-    TextBox.Text = default
-    TextBox.TextColor3 = config.TextColor
-    TextBox.TextSize = 12
-    TextBox.PlaceholderColor3 = config.SecondaryTextColor
-    
-    TextboxBackL.Name = "TextboxBackL"
-    TextboxBackL.Parent = TextboxBack
-    TextboxBackL.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    TextboxBackL.SortOrder = Enum.SortOrder.LayoutOrder
-    TextboxBackL.VerticalAlignment = Enum.VerticalAlignment.Center
-    
-    TextboxBackP.Name = "TextboxBackP"
-    TextboxBackP.Parent = TextboxBack
-    TextboxBackP.PaddingRight = UDim.new(0, 12)
-    
-    TextboxBack.MouseEnter:Connect(function()
-        services.TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-            BackgroundColor3 = Color3.fromRGB(
-                math.floor(config.Textbox_Color.R * 255 * 1.1),
-                math.floor(config.Textbox_Color.G * 255 * 1.1),
-                math.floor(config.Textbox_Color.B * 255 * 1.1)
-            )
-        }):Play()
-    end)
-    
-    TextboxBack.MouseLeave:Connect(function()
-        services.TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-            BackgroundColor3 = config.Textbox_Color
-        }):Play()
-    end)
-    
-    TextBox.FocusLost:Connect(function()
-        if TextBox.Text == "" then
-            TextBox.Text = default
-        end
-        FengUI.flags[flag] = TextBox.Text
-        callback(TextBox.Text)
-    end)
-    
-    TextBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
-        BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 22)
-    end)
-    
-    BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 22)
-end
+                BoxBGC.Name = "BoxBGC"
+                BoxBGC.Parent = BoxBG
+                
+                TextBox.Parent = BoxBG
+                TextBox.BackgroundTransparency = 1
+                TextBox.BorderSizePixel = 0
+                TextBox.Size = UDim2.new(1, 0, 1, 0)
+                TextBox.Font = Enum.Font.Gotham
+                TextBox.Text = default
+                TextBox.TextColor3 = config.TextColor
+                TextBox.TextSize = 12
+                TextBox.PlaceholderColor3 = config.SecondaryTextColor
+                
+                TextboxBackL.Name = "TextboxBackL"
+                TextboxBackL.Parent = TextboxBack
+                TextboxBackL.HorizontalAlignment = Enum.HorizontalAlignment.Right
+                TextboxBackL.SortOrder = Enum.SortOrder.LayoutOrder
+                TextboxBackL.VerticalAlignment = Enum.VerticalAlignment.Center
+                
+                TextboxBackP.Name = "TextboxBackP"
+                TextboxBackP.Parent = TextboxBack
+                TextboxBackP.PaddingRight = UDim.new(0, 12)
+                
+                TextboxBack.MouseEnter:Connect(function()
+                    services.TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            math.floor(config.Textbox_Color.R * 255 * 1.1),
+                            math.floor(config.Textbox_Color.G * 255 * 1.1),
+                            math.floor(config.Textbox_Color.B * 255 * 1.1)
+                        )
+                    }):Play()
+                end)
+                
+                TextboxBack.MouseLeave:Connect(function()
+                    services.TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                        BackgroundColor3 = config.Textbox_Color
+                    }):Play()
+                end)
+                
+                TextBox.FocusLost:Connect(function()
+                    if TextBox.Text == "" then
+                        TextBox.Text = default
+                    end
+                    FengUI.flags[flag] = TextBox.Text
+                    callback(TextBox.Text)
+                end)
+                
+                TextBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
+                    BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 22)
+                end)
+                
+                BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 22)
+            end
+            
+            function section.Slider(section, text, flag, default, min, max, precise, callback)
+                callback = callback or function() end
+                min = min or 0
+                max = max or 10
+                default = default or min
+                precise = precise or false
+                
+                assert(text, "No text provided")
+                assert(flag, "No flag provided")
+                assert(default, "No default value provided")
+                
+                FengUI.flags[flag] = default
 
-function section.Slider(section, text, flag, default, min, max, precise, callback)
-    callback = callback or function() end
-    min = min or 0
-    max = max or 10
-    default = default or min
-    precise = precise or false
-    
-    assert(text, "No text provided")
-    assert(flag, "No flag provided")
-    assert(default, "No default value provided")
-    
-    FengUI.flags[flag] = default
-
-    local SliderModule = Instance.new("Frame")
-    local SliderBack = Instance.new("TextButton")
-    local SliderBackC = Instance.new("UICorner")
-    local SliderBar = Instance.new("Frame")
-    local SliderBarC = Instance.new("UICorner")
-    local SliderPart = Instance.new("Frame")
-    local SliderPartC = Instance.new("UICorner")
-    local SliderValBG = Instance.new("TextButton")
-    local SliderValBGC = Instance.new("UICorner")
-    local SliderValue = Instance.new("TextBox")
-    
-    SliderModule.Name = "SliderModule"
-    SliderModule.Parent = Objs
-    SliderModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SliderModule.BackgroundTransparency = 1.000
-    SliderModule.BorderSizePixel = 0
-    SliderModule.Position = UDim2.new(0, 0, 0, 0)
-    
-    if windowCount == 2 then
-        SliderModule.Size = UDim2.new(0, elementWidth, 0, 52)
-    else
-        SliderModule.Size = UDim2.new(0, elementWidth, 0, 36)
-    end
-    
-    SliderBack.Name = "SliderBack"
-    SliderBack.Parent = SliderModule
-    SliderBack.BackgroundColor3 = config.Slider_Color
-    SliderBack.BackgroundTransparency = 0.2
-    SliderBack.BorderSizePixel = 0
-    SliderBack.Size = UDim2.new(1, 0, 1, 0)
-    SliderBack.AutoButtonColor = false
-    SliderBack.Font = Enum.Font.GothamSemibold
-    SliderBack.Text = "   " .. text
-    SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SliderBack.TextSize = 14.000
-    SliderBack.TextXAlignment = Enum.TextXAlignment.Left
-    
-    if windowCount == 2 then
-        SliderBack.TextYAlignment = Enum.TextYAlignment.Top
-        local padding = Instance.new("UIPadding")
-        padding.Parent = SliderBack
-        padding.PaddingTop = UDim.new(0, 4)
-    end
-    
-    SliderBackC.CornerRadius = UDim.new(0, 6)
-    SliderBackC.Name = "SliderBackC"
-    SliderBackC.Parent = SliderBack
-    
-    if windowCount == 2 then
-        SliderBar.Name = "SliderBar"
-        SliderBar.Parent = SliderBack
-        SliderBar.AnchorPoint = Vector2.new(0, 0)
-        SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-        SliderBar.BorderSizePixel = 0
-        SliderBar.Position = UDim2.new(0.03, 0, 0.45, 0)
-        SliderBar.Size = UDim2.new(0.65, 0, 0, 14)
-        SliderBarC.CornerRadius = UDim.new(0, 4)
-        SliderBarC.Name = "SliderBarC"
-        SliderBarC.Parent = SliderBar
-        
-        SliderPart.Name = "SliderPart"
-        SliderPart.Parent = SliderBar
-        SliderPart.BackgroundColor3 = config.SliderBar_Color
-        SliderPart.BorderSizePixel = 0
-        SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
-        SliderPartC.CornerRadius = UDim.new(0, 4)
-        SliderPartC.Name = "SliderPartC"
-        SliderPartC.Parent = SliderPart
-        
-        SliderValBG.Name = "SliderValBG"
-        SliderValBG.Parent = SliderBack
-        SliderValBG.BackgroundColor3 = config.Bg_Color
-        SliderValBG.BorderSizePixel = 0
-        SliderValBG.Position = UDim2.new(0.72, 0, 0.42, 0)
-        SliderValBG.Size = UDim2.new(0, 36, 0, 22)
-        SliderValBG.AutoButtonColor = false
-        SliderValBG.Font = Enum.Font.Gotham
-        SliderValBG.Text = ""
-        SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
-        SliderValBG.TextSize = 14.000
-        
-        SliderValBGC.CornerRadius = UDim.new(0, 6)
-        SliderValBGC.Name = "SliderValBGC"
-        SliderValBGC.Parent = SliderValBG
-        
-        SliderBack.Text = "   " .. text
-    else
-        local sliderBarPosition = 0.35
-        local sliderBarWidth = 120
-        local sliderValuePosition = 0.82
-        local minSliderPosition = 0.28
-        local addSliderPosition = 0.75
-        
-        SliderBar.Name = "SliderBar"
-        SliderBar.Parent = SliderBack
-        SliderBar.AnchorPoint = Vector2.new(0, 0.5)
-        SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-        SliderBar.BorderSizePixel = 0
-        SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.5, 0)
-        SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, 14)
-        SliderBarC.CornerRadius = UDim.new(0, 4)
-        SliderBarC.Name = "SliderBarC"
-        SliderBarC.Parent = SliderBar
-        
-        SliderPart.Name = "SliderPart"
-        SliderPart.Parent = SliderBar
-        SliderPart.BackgroundColor3 = config.SliderBar_Color
-        SliderPart.BorderSizePixel = 0
-        SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
-        SliderPartC.CornerRadius = UDim.new(0, 4)
-        SliderPartC.Name = "SliderPartC"
-        SliderPartC.Parent = SliderPart
-        
-        SliderValBG.Name = "SliderValBG"
-        SliderValBG.Parent = SliderBack
-        SliderValBG.BackgroundColor3 = config.Bg_Color
-        SliderValBG.BorderSizePixel = 0
-        SliderValBG.Position = UDim2.new(sliderValuePosition, 0, 0.22, 0)
-        SliderValBG.Size = UDim2.new(0, 36, 0, 22)
-        SliderValBG.AutoButtonColor = false
-        SliderValBG.Font = Enum.Font.Gotham
-        SliderValBG.Text = ""
-        SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
-        SliderValBG.TextSize = 14.000
-        
-        SliderValBGC.CornerRadius = UDim.new(0, 6)
-        SliderValBGC.Name = "SliderValBGC"
-        SliderValBGC.Parent = SliderValBG
-        
-        local MinSlider = Instance.new("TextButton")
-        MinSlider.Name = "MinSlider"
-        MinSlider.Parent = SliderBack
-        MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-        MinSlider.BackgroundTransparency = 0
-        MinSlider.BorderSizePixel = 0
-        MinSlider.Position = UDim2.new(minSliderPosition, 0, 0.25, 0)
-        MinSlider.Size = UDim2.new(0, 18, 0, 18)
-        MinSlider.Font = Enum.Font.Gotham
-        MinSlider.Text = "减"
-        MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-        MinSlider.TextSize = 13.000
-        MinSlider.TextWrapped = true
-        MinSlider.ZIndex = 2
-        
-        local MinSliderC = Instance.new("UICorner")
-        MinSliderC.CornerRadius = UDim.new(0, 4)
-        MinSliderC.Parent = MinSlider
-        
-        local AddSlider = Instance.new("TextButton")
-        AddSlider.Name = "AddSlider"
-        AddSlider.Parent = SliderBack
-        AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-        AddSlider.BackgroundTransparency = 0
-        AddSlider.BorderSizePixel = 0
-        AddSlider.Position = UDim2.new(addSliderPosition, 0, 0.25, 0)
-        AddSlider.Size = UDim2.new(0, 18, 0, 18)
-        AddSlider.Font = Enum.Font.Gotham
-        AddSlider.Text = "加"
-        AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-        AddSlider.TextSize = 13.000
-        AddSlider.TextWrapped = true
-        AddSlider.ZIndex = 2
-        
-        local AddSliderC = Instance.new("UICorner")
-        AddSliderC.CornerRadius = UDim.new(0, 4)
-        AddSliderC.Parent = AddSlider
-        
-        MinSlider.MouseButton1Click:Connect(function()
-            local currentValue = FengUI.flags[flag]
-            currentValue = math.clamp(currentValue - 1, min, max)
-            funcs:SetValue(currentValue)
-        end)
-        
-        AddSlider.MouseButton1Click:Connect(function()
-            local currentValue = FengUI.flags[flag]
-            currentValue = math.clamp(currentValue + 1, min, max)
-            funcs:SetValue(currentValue)
-        end)
-    end
-    
-    SliderValue.Name = "SliderValue"
-    SliderValue.Parent = SliderValBG
-    SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SliderValue.BackgroundTransparency = 1.000
-    SliderValue.BorderSizePixel = 0
-    SliderValue.Size = UDim2.new(1, 0, 1, 0)
-    SliderValue.Font = Enum.Font.Gotham
-    SliderValue.Text = tostring(default)
-    SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SliderValue.TextSize = 11.000
-    
-    if windowCount == 2 then
-        SliderValue.TextSize = 12
-        SliderValue.Font = Enum.Font.Gotham
-    end
-    
-    local funcs = {
-        SetValue = function(self, value)
-            local percent
-            
-            if value then
-                percent = (value - min)/(max - min)
-            else
-                local mouse = services.Players.LocalPlayer:GetMouse()
-                local barPos = SliderBar.AbsolutePosition.X
-                local barSize = SliderBar.AbsoluteSize.X
-                local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
-                percent = (mouseX - barPos) / barSize
-                value = min + (max - min) * percent
-            end
-            
-            if precise then
-                value = tonumber(string.format("%.2f", value))
-            else
-                value = math.floor(value + 0.5)
-            end
-            
-            value = math.clamp(value, min, max)
-            percent = (value - min)/(max - min)
-            FengUI.flags[flag] = tonumber(value)
-            SliderValue.Text = tostring(value)
-            
-            services.TweenService:Create(SliderPart, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                Size = UDim2.new(percent, 0, 1, 0)
-            }):Play()
-            
-            callback(tonumber(value))
-        end,
-        
-        GetValue = function(self)
-            return FengUI.flags[flag]
-        end
-    }
-    
-    funcs:SetValue(default)
-    
-    local dragging = false
-    
-    SliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            funcs:SetValue()
-        end
-    end)
-    
-    SliderPart.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            funcs:SetValue()
-        end
-    end)
-    
-    services.UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    services.UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            funcs:SetValue()
-        end
-    end)
-    
-    SliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            funcs:SetValue()
-        end
-    end)
-    
-    services.UserInputService.InputEnded:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-    
-    services.UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.Touch then
-            funcs:SetValue()
-        end
-    end)
-    
-    local boxFocused = false
-    local allowed = { [""] = true, ["-"] = true }
-    
-    SliderValue.Focused:Connect(function()
-        boxFocused = true
-    end)
-    
-    SliderValue.FocusLost:Connect(function()
-        boxFocused = false
-        if SliderValue.Text == "" then
-            funcs:SetValue(default)
-            return
-        end
-        
-        local numValue = tonumber(SliderValue.Text)
-        if numValue then
-            numValue = math.clamp(numValue, min, max)
-            funcs:SetValue(numValue)
-        else
-            funcs:SetValue(default)
-        end
-    end)
-    
-    SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
-        if not boxFocused then
-            return
-        end
-        
-        local text = SliderValue.Text
-        local newText = ""
-        
-        for i = 1, #text do
-            local char = text:sub(i, i)
-            if char:match("%d") or (char == "." and precise) then
-                newText = newText .. char
-            end
-        end
-        
-        local dotCount = 0
-        local finalText = ""
-        for i = 1, #newText do
-            local char = newText:sub(i, i)
-            if char == "." then
-                dotCount = dotCount + 1
-                if dotCount <= 1 then
-                    finalText = finalText .. char
+                local SliderModule = Instance.new("Frame")
+                local SliderBack = Instance.new("TextButton")
+                local SliderBackC = Instance.new("UICorner")
+                local SliderBar = Instance.new("Frame")
+                local SliderBarC = Instance.new("UICorner")
+                local SliderPart = Instance.new("Frame")
+                local SliderPartC = Instance.new("UICorner")
+                local SliderValBG = Instance.new("TextButton")
+                local SliderValBGC = Instance.new("UICorner")
+                local SliderValue = Instance.new("TextBox")
+                
+                SliderModule.Name = "SliderModule"
+                SliderModule.Parent = Objs
+                SliderModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                SliderModule.BackgroundTransparency = 1.000
+                SliderModule.BorderSizePixel = 0
+                SliderModule.Position = UDim2.new(0, 0, 0, 0)
+                
+                if windowCount == 2 then
+                    SliderModule.Size = UDim2.new(0, elementWidth, 0, 52)
+                else
+                    SliderModule.Size = UDim2.new(0, elementWidth, 0, 36)
                 end
-            else
-                finalText = finalText .. char
-            end
-        end
-        
-        SliderValue.Text = finalText
-        
-        local text = SliderValue.Text
-        if not tonumber(text) and not allowed[text] then
-            SliderValue.Text = SliderValue.Text:gsub("%D+", "")
-        elseif not allowed[text] then
-            if tonumber(text) > max then
-                text = max
-                SliderValue.Text = tostring(max)
-            end
-            funcs:SetValue(tonumber(text))
-        end
-    end)
-    
-    return funcs
-end
-            
-function section.Dropdown(section, text, flag, options, callback)
-    local callback = callback or function() end
-    local options = options or {}
-    assert(text, "No text provided")
-    assert(flag, "No flag provided")
-    FengUI.flags[flag] = nil
-    
-    local DropdownModule = Instance.new("Frame")
-    local DropdownTop = Instance.new("TextButton")
-    local DropdownTopC = Instance.new("UICorner")
-    local DropdownOpenFrame = Instance.new("Frame")
-    local DropdownOpenFrameC = Instance.new("UICorner")
-    local DropdownOpen = Instance.new("TextButton")
-    local DropdownText = Instance.new("TextBox")
-    local DropdownModuleL = Instance.new("UIListLayout")
-    
-    DropdownModule.Name = "DropdownModule"
-    DropdownModule.Parent = Objs
-    DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    DropdownModule.BackgroundTransparency = 1.000
-    DropdownModule.BorderSizePixel = 0
-    DropdownModule.ClipsDescendants = true
-    DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-    DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
-    
-    DropdownTop.Name = "DropdownTop"
-    DropdownTop.Parent = DropdownModule
-    DropdownTop.BackgroundColor3 = config.Dropdown_Color
-    DropdownTop.BackgroundTransparency = 0.2
-    DropdownTop.BorderSizePixel = 0
-    DropdownTop.Size = UDim2.new(0, elementWidth, 0, 36)
-    DropdownTop.AutoButtonColor = false
-    DropdownTop.Font = Enum.Font.GothamSemibold
-    DropdownTop.Text = ""
-    DropdownTop.TextColor3 = config.TextColor
-    DropdownTop.TextSize = 14.000
-    DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
-    
-    DropdownTopC.CornerRadius = UDim.new(0, 6)
-    DropdownTopC.Name = "DropdownTopC"
-    DropdownTopC.Parent = DropdownTop
-    
-    local BackgroundFill = Instance.new("Frame")
-    BackgroundFill.Name = "BackgroundFill"
-    BackgroundFill.Parent = DropdownTop
-    BackgroundFill.BackgroundColor3 = config.Dropdown_Color
-    BackgroundFill.BorderSizePixel = 0
-    BackgroundFill.Position = UDim2.new(0.75, 0, 0, 0)
-    BackgroundFill.Size = UDim2.new(0.25, 0, 1, 0)
-    BackgroundFill.ZIndex = 0
-    
-    local dropdownFramePosition = 0.80
-    local separatorPosition = 0.74
-    if windowCount == 2 then
-        dropdownFramePosition = 0.71
-        separatorPosition = 0.65
-    end
-    
-    DropdownOpenFrame.Name = "DropdownOpenFrame"
-    DropdownOpenFrame.Parent = DropdownTop
-    DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
-    DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
-    DropdownOpenFrame.BorderSizePixel = 0
-    DropdownOpenFrame.Position = UDim2.new(dropdownFramePosition, 0, 0.5, 0)
-    DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 22)
-    DropdownOpenFrame.ZIndex = 2
-    
-    DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
-    DropdownOpenFrameC.Name = "DropdownOpenFrameC"
-    DropdownOpenFrameC.Parent = DropdownOpenFrame
-    
-    DropdownOpen.Name = "DropdownOpen"
-    DropdownOpen.Parent = DropdownOpenFrame
-    DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    DropdownOpen.BackgroundTransparency = 1.000
-    DropdownOpen.BorderSizePixel = 0
-    DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
-    DropdownOpen.Font = Enum.Font.GothamSemibold
-    DropdownOpen.Text = "选择"
-    DropdownOpen.TextColor3 = config.TextColor
-    DropdownOpen.TextSize = 11.000
-    DropdownOpen.TextWrapped = true
-    DropdownOpen.ZIndex = 3
-    
-    DropdownText.Name = "DropdownText"
-    DropdownText.Parent = DropdownTop
-    DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    DropdownText.BackgroundTransparency = 1.000
-    DropdownText.BorderSizePixel = 0
-    DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-    DropdownText.Size = UDim2.new(0, 230, 0, 36)
-    DropdownText.Font = Enum.Font.GothamSemibold
-    DropdownText.PlaceholderColor3 = config.SecondaryTextColor
-    DropdownText.PlaceholderText = text
-    DropdownText.Text = ""
-    DropdownText.TextColor3 = config.TextColor
-    DropdownText.TextSize = 14.000
-    DropdownText.TextXAlignment = Enum.TextXAlignment.Left
-    DropdownText.ZIndex = 2
-    
-    local Separator = Instance.new("Frame")
-    Separator.Name = "Separator"
-    Separator.Parent = DropdownTop
-    Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    Separator.BorderSizePixel = 0
-    Separator.Position = UDim2.new(separatorPosition, 0, 0.2, 0)
-    Separator.Size = UDim2.new(0, 1, 0, 22)
-    Separator.ZIndex = 1
-    
-    DropdownModuleL.Name = "DropdownModuleL"
-    DropdownModuleL.Parent = DropdownModule
-    DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
-    DropdownModuleL.Padding = UDim.new(0, 4)
-    
-    local setAllVisible = function()
-        local options = DropdownModule:GetChildren()
-        for i = 1, #options do
-            local option = options[i]
-            if option:IsA("TextButton") and option.Name:match("Option_") then
-                option.Visible = true
-            end
-        end
-    end
-    
-    local searchDropdown = function(text)
-        local options = DropdownModule:GetChildren()
-        for i = 1, #options do
-            local option = options[i]
-            if text == "" then
-                setAllVisible()
-            else
-                if option:IsA("TextButton") and option.Name:match("Option_") then
-                    if option.Text:lower():match(text:lower()) then
-                        option.Visible = true
+                
+                SliderBack.Name = "SliderBack"
+                SliderBack.Parent = SliderModule
+                SliderBack.BackgroundColor3 = config.Slider_Color
+                SliderBack.BackgroundTransparency = 0.2
+                SliderBack.BorderSizePixel = 0
+                SliderBack.Size = UDim2.new(1, 0, 1, 0)
+                SliderBack.AutoButtonColor = false
+                SliderBack.Font = Enum.Font.GothamSemibold
+                SliderBack.Text = "   " .. text
+                SliderBack.TextColor3 = Color3.fromRGB(255, 255, 255)
+                SliderBack.TextSize = 14.000
+                SliderBack.TextXAlignment = Enum.TextXAlignment.Left
+                
+                if windowCount == 2 then
+                    SliderBack.TextYAlignment = Enum.TextYAlignment.Top
+                    local padding = Instance.new("UIPadding")
+                    padding.Parent = SliderBack
+                    padding.PaddingTop = UDim.new(0, 4)
+                end
+                
+                SliderBackC.CornerRadius = UDim.new(0, 6)
+                SliderBackC.Name = "SliderBackC"
+                SliderBackC.Parent = SliderBack
+                
+                if windowCount == 2 then
+                    SliderBar.Name = "SliderBar"
+                    SliderBar.Parent = SliderBack
+                    SliderBar.AnchorPoint = Vector2.new(0, 0)
+                    SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                    SliderBar.BorderSizePixel = 0
+                    SliderBar.Position = UDim2.new(0.03, 0, 0.45, 0)
+                    SliderBar.Size = UDim2.new(0.65, 0, 0, 14)
+                    SliderBarC.CornerRadius = UDim.new(0, 4)
+                    SliderBarC.Name = "SliderBarC"
+                    SliderBarC.Parent = SliderBar
+                    
+                    SliderPart.Name = "SliderPart"
+                    SliderPart.Parent = SliderBar
+                    SliderPart.BackgroundColor3 = config.SliderBar_Color
+                    SliderPart.BorderSizePixel = 0
+                    SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+                    SliderPartC.CornerRadius = UDim.new(0, 4)
+                    SliderPartC.Name = "SliderPartC"
+                    SliderPartC.Parent = SliderPart
+                    
+                    SliderValBG.Name = "SliderValBG"
+                    SliderValBG.Parent = SliderBack
+                    SliderValBG.BackgroundColor3 = config.Bg_Color
+                    SliderValBG.BorderSizePixel = 0
+                    SliderValBG.Position = UDim2.new(0.72, 0, 0.42, 0)
+                    SliderValBG.Size = UDim2.new(0, 36, 0, 22)
+                    SliderValBG.AutoButtonColor = false
+                    SliderValBG.Font = Enum.Font.Gotham
+                    SliderValBG.Text = ""
+                    SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    SliderValBG.TextSize = 14.000
+                    
+                    SliderValBGC.CornerRadius = UDim.new(0, 6)
+                    SliderValBGC.Name = "SliderValBGC"
+                    SliderValBGC.Parent = SliderValBG
+                    
+                    SliderBack.Text = "   " .. text
+                else
+                    local sliderBarPosition = 0.35
+                    local sliderBarWidth = 120
+                    local sliderValuePosition = 0.82
+                    local minSliderPosition = 0.28
+                    local addSliderPosition = 0.75
+                    
+                    SliderBar.Name = "SliderBar"
+                    SliderBar.Parent = SliderBack
+                    SliderBar.AnchorPoint = Vector2.new(0, 0.5)
+                    SliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                    SliderBar.BorderSizePixel = 0
+                    SliderBar.Position = UDim2.new(sliderBarPosition, 0, 0.5, 0)
+                    SliderBar.Size = UDim2.new(0, sliderBarWidth, 0, 14)
+                    SliderBarC.CornerRadius = UDim.new(0, 4)
+                    SliderBarC.Name = "SliderBarC"
+                    SliderBarC.Parent = SliderBar
+                    
+                    SliderPart.Name = "SliderPart"
+                    SliderPart.Parent = SliderBar
+                    SliderPart.BackgroundColor3 = config.SliderBar_Color
+                    SliderPart.BorderSizePixel = 0
+                    SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+                    SliderPartC.CornerRadius = UDim.new(0, 4)
+                    SliderPartC.Name = "SliderPartC"
+                    SliderPartC.Parent = SliderPart
+                    
+                    SliderValBG.Name = "SliderValBG"
+                    SliderValBG.Parent = SliderBack
+                    SliderValBG.BackgroundColor3 = config.Bg_Color
+                    SliderValBG.BorderSizePixel = 0
+                    SliderValBG.Position = UDim2.new(sliderValuePosition, 0, 0.22, 0)
+                    SliderValBG.Size = UDim2.new(0, 36, 0, 22)
+                    SliderValBG.AutoButtonColor = false
+                    SliderValBG.Font = Enum.Font.Gotham
+                    SliderValBG.Text = ""
+                    SliderValBG.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    SliderValBG.TextSize = 14.000
+                    
+                    SliderValBGC.CornerRadius = UDim.new(0, 6)
+                    SliderValBGC.Name = "SliderValBGC"
+                    SliderValBGC.Parent = SliderValBG
+                    
+                    local MinSlider = Instance.new("TextButton")
+                    MinSlider.Name = "MinSlider"
+                    MinSlider.Parent = SliderBack
+                    MinSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                    MinSlider.BackgroundTransparency = 0
+                    MinSlider.BorderSizePixel = 0
+                    MinSlider.Position = UDim2.new(minSliderPosition, 0, 0.25, 0)
+                    MinSlider.Size = UDim2.new(0, 18, 0, 18)
+                    MinSlider.Font = Enum.Font.Gotham
+                    MinSlider.Text = "减"
+                    MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    MinSlider.TextSize = 13.000
+                    MinSlider.TextWrapped = true
+                    MinSlider.ZIndex = 2
+                    
+                    local MinSliderC = Instance.new("UICorner")
+                    MinSliderC.CornerRadius = UDim.new(0, 4)
+                    MinSliderC.Parent = MinSlider
+                    
+                    local AddSlider = Instance.new("TextButton")
+                    AddSlider.Name = "AddSlider"
+                    AddSlider.Parent = SliderBack
+                    AddSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                    AddSlider.BackgroundTransparency = 0
+                    AddSlider.BorderSizePixel = 0
+                    AddSlider.Position = UDim2.new(addSliderPosition, 0, 0.25, 0)
+                    AddSlider.Size = UDim2.new(0, 18, 0, 18)
+                    AddSlider.Font = Enum.Font.Gotham
+                    AddSlider.Text = "加"
+                    AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    AddSlider.TextSize = 13.000
+                    AddSlider.TextWrapped = true
+                    AddSlider.ZIndex = 2
+                    
+                    local AddSliderC = Instance.new("UICorner")
+                    AddSliderC.CornerRadius = UDim.new(0, 4)
+                    AddSliderC.Parent = AddSlider
+                    
+                    MinSlider.MouseButton1Click:Connect(function()
+                        local currentValue = FengUI.flags[flag]
+                        currentValue = math.clamp(currentValue - 1, min, max)
+                        funcs:SetValue(currentValue)
+                    end)
+                    
+                    AddSlider.MouseButton1Click:Connect(function()
+                        local currentValue = FengUI.flags[flag]
+                        currentValue = math.clamp(currentValue + 1, min, max)
+                        funcs:SetValue(currentValue)
+                    end)
+                end
+                
+                SliderValue.Name = "SliderValue"
+                SliderValue.Parent = SliderValBG
+                SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                SliderValue.BackgroundTransparency = 1.000
+                SliderValue.BorderSizePixel = 0
+                SliderValue.Size = UDim2.new(1, 0, 1, 0)
+                SliderValue.Font = Enum.Font.Gotham
+                SliderValue.Text = tostring(default)
+                SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+                SliderValue.TextSize = 11.000
+                
+                if windowCount == 2 then
+                    SliderValue.TextSize = 12
+                    SliderValue.Font = Enum.Font.Gotham
+                end
+                
+                local funcs = {
+                    SetValue = function(self, value)
+                        local percent
+                        
+                        if value then
+                            percent = (value - min)/(max - min)
+                        else
+                            local mouse = services.Players.LocalPlayer:GetMouse()
+                            local barPos = SliderBar.AbsolutePosition.X
+                            local barSize = SliderBar.AbsoluteSize.X
+                            local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
+                            percent = (mouseX - barPos) / barSize
+                            value = min + (max - min) * percent
+                        end
+                        
+                        if precise then
+                            value = tonumber(string.format("%.2f", value))
+                        else
+                            value = math.floor(value + 0.5)
+                        end
+                        
+                        value = math.clamp(value, min, max)
+                        percent = (value - min)/(max - min)
+                        FengUI.flags[flag] = tonumber(value)
+                        SliderValue.Text = tostring(value)
+                        
+                        services.TweenService:Create(SliderPart, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                            Size = UDim2.new(percent, 0, 1, 0)
+                        }):Play()
+                        
+                        callback(tonumber(value))
+                    end,
+                    
+                    GetValue = function(self)
+                        return FengUI.flags[flag]
+                    end
+                }
+                
+                funcs:SetValue(default)
+                
+                local dragging = false
+                
+                SliderBar.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = true
+                        funcs:SetValue()
+                    end
+                end)
+                
+                SliderPart.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = true
+                        funcs:SetValue()
+                    end
+                end)
+                
+                services.UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = false
+                    end
+                end)
+                
+                services.UserInputService.InputChanged:Connect(function(input)
+                    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                        funcs:SetValue()
+                    end
+                end)
+                
+                SliderBar.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.Touch then
+                        dragging = true
+                        funcs:SetValue()
+                    end
+                end)
+                
+                services.UserInputService.InputEnded:Connect(function(input)
+                    if dragging and input.UserInputType == Enum.UserInputType.Touch then
+                        dragging = false
+                    end
+                end)
+                
+                services.UserInputService.InputChanged:Connect(function(input)
+                    if dragging and input.UserInputType == Enum.UserInputType.Touch then
+                        funcs:SetValue()
+                    end
+                end)
+                
+                local boxFocused = false
+                local allowed = { [""] = true, ["-"] = true }
+                
+                SliderValue.Focused:Connect(function()
+                    boxFocused = true
+                end)
+                
+                SliderValue.FocusLost:Connect(function()
+                    boxFocused = false
+                    if SliderValue.Text == "" then
+                        funcs:SetValue(default)
+                        return
+                    end
+                    
+                    local numValue = tonumber(SliderValue.Text)
+                    if numValue then
+                        numValue = math.clamp(numValue, min, max)
+                        funcs:SetValue(numValue)
                     else
-                        option.Visible = false
+                        funcs:SetValue(default)
+                    end
+                end)
+                
+                SliderValue:GetPropertyChangedSignal("Text"):Connect(function()
+                    if not boxFocused then
+                        return
+                    end
+                    
+                    local text = SliderValue.Text
+                    local newText = ""
+                    
+                    for i = 1, #text do
+                        local char = text:sub(i, i)
+                        if char:match("%d") or (char == "." and precise) then
+                            newText = newText .. char
+                        end
+                    end
+                    
+                    local dotCount = 0
+                    local finalText = ""
+                    for i = 1, #newText do
+                        local char = newText:sub(i, i)
+                        if char == "." then
+                            dotCount = dotCount + 1
+                            if dotCount <= 1 then
+                                finalText = finalText .. char
+                            end
+                        else
+                            finalText = finalText .. char
+                        end
+                    end
+                    
+                    SliderValue.Text = finalText
+                    
+                    local text = SliderValue.Text
+                    if not tonumber(text) and not allowed[text] then
+                        SliderValue.Text = SliderValue.Text:gsub("%D+", "")
+                    elseif not allowed[text] then
+                        if tonumber(text) > max then
+                            text = max
+                            SliderValue.Text = tostring(max)
+                        end
+                        funcs:SetValue(tonumber(text))
+                    end
+                end)
+                
+                return funcs
+            end
+            
+            function section.Dropdown(section, text, flag, options, callback)
+                local callback = callback or function() end
+                local options = options or {}
+                assert(text, "No text provided")
+                assert(flag, "No flag provided")
+                FengUI.flags[flag] = nil
+                
+                local DropdownModule = Instance.new("Frame")
+                local DropdownTop = Instance.new("TextButton")
+                local DropdownTopC = Instance.new("UICorner")
+                local DropdownOpenFrame = Instance.new("Frame")
+                local DropdownOpenFrameC = Instance.new("UICorner")
+                local DropdownOpen = Instance.new("TextButton")
+                local DropdownText = Instance.new("TextBox")
+                local DropdownModuleL = Instance.new("UIListLayout")
+                
+                DropdownModule.Name = "DropdownModule"
+                DropdownModule.Parent = Objs
+                DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                DropdownModule.BackgroundTransparency = 1.000
+                DropdownModule.BorderSizePixel = 0
+                DropdownModule.ClipsDescendants = true
+                DropdownModule.Position = UDim2.new(0, 0, 0, 0)
+                DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
+                
+                DropdownTop.Name = "DropdownTop"
+                DropdownTop.Parent = DropdownModule
+                DropdownTop.BackgroundColor3 = config.Dropdown_Color
+                DropdownTop.BackgroundTransparency = 0.2
+                DropdownTop.BorderSizePixel = 0
+                DropdownTop.Size = UDim2.new(0, elementWidth, 0, 36)
+                DropdownTop.AutoButtonColor = false
+                DropdownTop.Font = Enum.Font.GothamSemibold
+                DropdownTop.Text = ""
+                DropdownTop.TextColor3 = config.TextColor
+                DropdownTop.TextSize = 14.000
+                DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
+                
+                DropdownTopC.CornerRadius = UDim.new(0, 6)
+                DropdownTopC.Name = "DropdownTopC"
+                DropdownTopC.Parent = DropdownTop
+                
+                local BackgroundFill = Instance.new("Frame")
+                BackgroundFill.Name = "BackgroundFill"
+                BackgroundFill.Parent = DropdownTop
+                BackgroundFill.BackgroundColor3 = config.Dropdown_Color
+                BackgroundFill.BorderSizePixel = 0
+                BackgroundFill.Position = UDim2.new(0.75, 0, 0, 0)
+                BackgroundFill.Size = UDim2.new(0.25, 0, 1, 0)
+                BackgroundFill.ZIndex = 0
+                
+                local dropdownFramePosition = 0.80
+                local separatorPosition = 0.74
+                if windowCount == 2 then
+                    dropdownFramePosition = 0.71
+                    separatorPosition = 0.65
+                end
+                
+                DropdownOpenFrame.Name = "DropdownOpenFrame"
+                DropdownOpenFrame.Parent = DropdownTop
+                DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
+                DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
+                DropdownOpenFrame.BorderSizePixel = 0
+                DropdownOpenFrame.Position = UDim2.new(dropdownFramePosition, 0, 0.5, 0)
+                DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 22)
+                DropdownOpenFrame.ZIndex = 2
+                
+                DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
+                DropdownOpenFrameC.Name = "DropdownOpenFrameC"
+                DropdownOpenFrameC.Parent = DropdownOpenFrame
+                
+                DropdownOpen.Name = "DropdownOpen"
+                DropdownOpen.Parent = DropdownOpenFrame
+                DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                DropdownOpen.BackgroundTransparency = 1.000
+                DropdownOpen.BorderSizePixel = 0
+                DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
+                DropdownOpen.Font = Enum.Font.GothamSemibold
+                DropdownOpen.Text = "选择"
+                DropdownOpen.TextColor3 = config.TextColor
+                DropdownOpen.TextSize = 11.000
+                DropdownOpen.TextWrapped = true
+                DropdownOpen.ZIndex = 3
+                
+                DropdownText.Name = "DropdownText"
+                DropdownText.Parent = DropdownTop
+                DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                DropdownText.BackgroundTransparency = 1.000
+                DropdownText.BorderSizePixel = 0
+                DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
+                DropdownText.Size = UDim2.new(0, 230, 0, 36)
+                DropdownText.Font = Enum.Font.GothamSemibold
+                DropdownText.PlaceholderColor3 = config.SecondaryTextColor
+                DropdownText.PlaceholderText = text
+                DropdownText.Text = ""
+                DropdownText.TextColor3 = config.TextColor
+                DropdownText.TextSize = 14.000
+                DropdownText.TextXAlignment = Enum.TextXAlignment.Left
+                DropdownText.ZIndex = 2
+                
+                local Separator = Instance.new("Frame")
+                Separator.Name = "Separator"
+                Separator.Parent = DropdownTop
+                Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                Separator.BorderSizePixel = 0
+                Separator.Position = UDim2.new(separatorPosition, 0, 0.2, 0)
+                Separator.Size = UDim2.new(0, 1, 0, 22)
+                Separator.ZIndex = 1
+                
+                DropdownModuleL.Name = "DropdownModuleL"
+                DropdownModuleL.Parent = DropdownModule
+                DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
+                DropdownModuleL.Padding = UDim.new(0, 4)
+                
+                local setAllVisible = function()
+                    local options = DropdownModule:GetChildren()
+                    for i = 1, #options do
+                        local option = options[i]
+                        if option:IsA("TextButton") and option.Name:match("Option_") then
+                            option.Visible = true
+                        end
                     end
                 end
+                
+                local searchDropdown = function(text)
+                    local options = DropdownModule:GetChildren()
+                    for i = 1, #options do
+                        local option = options[i]
+                        if text == "" then
+                            setAllVisible()
+                        else
+                            if option:IsA("TextButton") and option.Name:match("Option_") then
+                                if option.Text:lower():match(text:lower()) then
+                                    option.Visible = true
+                                else
+                                    option.Visible = false
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                local open = false
+                local ToggleDropVis = function()
+                    open = not open
+                    if open then
+                        setAllVisible()
+                    end
+                    DropdownOpen.Text = (open and "取消" or "选择")
+                    
+                    DropdownModule.Size = UDim2.new(0, elementWidth, 0, open and (36 + DropdownModuleL.AbsoluteContentSize.Y + 4) or 36)
+                    
+                    create3DFlipAnimation(DropdownOpenFrame, 0.3)
+                end
+                
+                DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
+                DropdownText.Focused:Connect(function()
+                    if open then
+                        return
+                    end
+                    ToggleDropVis()
+                end)
+                
+                DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
+                    if not open then
+                        return
+                    end
+                    searchDropdown(DropdownText.Text)
+                end)
+                
+                DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    if open then
+                        DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36 + DropdownModuleL.AbsoluteContentSize.Y + 4)
+                    end
+                end)
+                
+                local funcs = {}
+                funcs.AddOption = function(self, option)
+                    local Option = Instance.new("TextButton")
+                    local OptionC = Instance.new("UICorner")
+                    Option.Name = "Option_" .. option
+                    Option.Parent = DropdownModule
+                    Option.BackgroundColor3 = config.TabColor
+                    Option.BackgroundTransparency = 0.2
+                    Option.BorderSizePixel = 0
+                    Option.Position = UDim2.new(0, 0, 0.328125, 0)
+                    Option.Size = UDim2.new(0, elementWidth - 20, 0, 24)
+                    Option.AutoButtonColor = false
+                    Option.Font = Enum.Font.Gotham
+                    Option.Text = option
+                    Option.TextColor3 = config.TextColor
+                    Option.TextSize = 13.000
+                    OptionC.CornerRadius = UDim.new(0, 6)
+                    OptionC.Name = "OptionC"
+                    OptionC.Parent = Option
+                    
+                    Option.MouseButton1Click:Connect(function()
+                        ToggleDropVis()
+                        callback(Option.Text)
+                        DropdownText.Text = Option.Text
+                        FengUI.flags[flag] = Option.Text
+                    end)
+                end
+                
+                funcs.RemoveOption = function(self, option)
+                    local option = DropdownModule:FindFirstChild("Option_" .. option)
+                    if option then
+                        option:Destroy()
+                    end
+                end
+                
+                funcs.SetOptions = function(self, options)
+                    for _, v in next, DropdownModule:GetChildren() do
+                        if v.Name:match("Option_") then
+                            v:Destroy()
+                        end
+                    end
+                    for _, v in next, options do
+                        funcs:AddOption(v)
+                    end
+                end
+                
+                funcs:SetOptions(options)
+                return funcs
             end
-        end
-    end
-    
-    local open = false
-    local ToggleDropVis = function()
-        open = not open
-        if open then
-            setAllVisible()
-        end
-        DropdownOpen.Text = (open and "取消" or "选择")
-        
-        DropdownModule.Size = UDim2.new(0, elementWidth, 0, open and (36 + DropdownModuleL.AbsoluteContentSize.Y + 4) or 36)
-        
-        create3DFlipAnimation(DropdownOpenFrame, 0.3)
-    end
-    
-    DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
-    DropdownText.Focused:Connect(function()
-        if open then
-            return
-        end
-        ToggleDropVis()
-    end)
-    
-    DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
-        if not open then
-            return
-        end
-        searchDropdown(DropdownText.Text)
-    end)
-    
-    DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        if open then
-            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36 + DropdownModuleL.AbsoluteContentSize.Y + 4)
-        end
-    end)
-    
-    local funcs = {}
-    funcs.AddOption = function(self, option)
-        local Option = Instance.new("TextButton")
-        local OptionC = Instance.new("UICorner")
-        Option.Name = "Option_" .. option
-        Option.Parent = DropdownModule
-        Option.BackgroundColor3 = config.TabColor
-        Option.BackgroundTransparency = 0.2
-        Option.BorderSizePixel = 0
-        Option.Position = UDim2.new(0, 0, 0.328125, 0)
-        Option.Size = UDim2.new(0, elementWidth - 20, 0, 24)
-        Option.AutoButtonColor = false
-        Option.Font = Enum.Font.Gotham
-        Option.Text = option
-        Option.TextColor3 = config.TextColor
-        Option.TextSize = 13.000
-        OptionC.CornerRadius = UDim.new(0, 6)
-        OptionC.Name = "OptionC"
-        OptionC.Parent = Option
-        
-        Option.MouseButton1Click:Connect(function()
-            ToggleDropVis()
-            callback(Option.Text)
-            DropdownText.Text = Option.Text
-            FengUI.flags[flag] = Option.Text
-        end)
-    end
-    
-    funcs.RemoveOption = function(self, option)
-        local option = DropdownModule:FindFirstChild("Option_" .. option)
-        if option then
-            option:Destroy()
-        end
-    end
-    
-    funcs.SetOptions = function(self, options)
-        for _, v in next, DropdownModule:GetChildren() do
-            if v.Name:match("Option_") then
-                v:Destroy()
-            end
-        end
-        for _, v in next, options do
-            funcs:AddOption(v)
-        end
-    end
-    
-    funcs:SetOptions(options)
-    return funcs
-end
 
             return section
         end
