@@ -710,13 +710,20 @@ function FengUI.new(FengUI, name, theme)
     LeftContainer.Name = "LeftContainer"
     LeftContainer.Parent = TabContainer
     LeftContainer.BackgroundTransparency = 1
-    LeftContainer.Size = UDim2.new(0.48, -2, 1, 0)
+    LeftContainer.Size = UDim2.new(0.48, -2, 1, -10)  -- 减少高度，为滚动条留空间
     LeftContainer.Position = UDim2.new(0, 2, 0, 0)
-    LeftContainer.ScrollBarThickness = 2
+    LeftContainer.ScrollBarThickness = 3
+    LeftContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
     LeftContainer.ScrollBarImageTransparency = 0.5
-    LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+    LeftContainer.ScrollingEnabled = true
+    LeftContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    LeftContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+    LeftContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
     LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+    LeftContainer.ScrollBarImageTransparency = 0.7
+    LeftContainer.ScrollBarThickness = 2
+    LeftContainer.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Right
     
     local LeftLayout = Instance.new("UIListLayout")
     LeftLayout.Name = "LeftLayout"
@@ -728,13 +735,20 @@ function FengUI.new(FengUI, name, theme)
     RightContainer.Name = "RightContainer"
     RightContainer.Parent = TabContainer
     RightContainer.BackgroundTransparency = 1
-    RightContainer.Size = UDim2.new(0.50, -2, 1, 0)
+    RightContainer.Size = UDim2.new(0.50, -2, 1, -10)  -- 减少高度，为滚动条留空间
     RightContainer.Position = UDim2.new(0.48, 0, 0, 0)
-    RightContainer.ScrollBarThickness = 2
+    RightContainer.ScrollBarThickness = 3
+    RightContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
     RightContainer.ScrollBarImageTransparency = 0.5
-    RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+    RightContainer.ScrollingEnabled = true
+    RightContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    RightContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+    RightContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
     RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+    RightContainer.ScrollBarImageTransparency = 0.7
+    RightContainer.ScrollBarThickness = 2
+    RightContainer.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Right
     
     local RightLayout = Instance.new("UIListLayout")
     RightLayout.Name = "RightLayout"
@@ -742,84 +756,114 @@ function FengUI.new(FengUI, name, theme)
     RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
     RightLayout.Padding = UDim.new(0, 4)
     
-    setupSmoothScrolling(LeftContainer, LeftLayout)
-    setupSmoothScrolling(RightContainer, RightLayout)
-end
-        
-        TabIco.Name = "TabIco"
-        TabIco.Parent = TabBtns
-        TabIco.BackgroundTransparency = 1
-        TabIco.BorderSizePixel = 0
-        TabIco.Size = UDim2.new(0, 22, 0, 22)
-        TabIco.Image = "rbxassetid://84830962019412"
-        TabIco.ImageTransparency = 0.5
-        
-        startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
-        
-        TabText.Name = "TabText"
-        TabText.Parent = TabIco
-        TabText.BackgroundTransparency = 1
-        TabText.Position = UDim2.new(1.2, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 65, 0, 22)
-        TabText.Font = Enum.Font.GothamSemibold
-        TabText.Text = name
-        TabText.TextColor3 = config.TextColor
-        TabText.TextSize = 14
-        TabText.TextXAlignment = Enum.TextXAlignment.Left
-        TabText.TextTransparency = 0.5
-        
-        TabBtn.Name = "TabBtn"
-        TabBtn.Parent = TabIco
-        TabBtn.BackgroundTransparency = 1
-        TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 90, 0, 22)
-        TabBtn.AutoButtonColor = false
-        TabBtn.Font = Enum.Font.SourceSans
-        TabBtn.Text = ""
-        
-        TabL.Name = "TabL"
-        TabL.Parent = TabContainer
-        TabL.SortOrder = Enum.SortOrder.LayoutOrder
-        TabL.Padding = UDim.new(0, 4)
-        
-        if windowCount == 2 then
-            TabL:Destroy()
+    -- 独立的滚动更新函数
+    local function updateLeftContainer()
+        if LeftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y then
+            LeftContainer.ScrollingEnabled = true
+            LeftContainer.CanvasSize = UDim2.new(0, 0, 0, LeftLayout.AbsoluteContentSize.Y + 10)
         else
-            setupSmoothScrolling(Tab, TabL)
+            LeftContainer.ScrollingEnabled = false
+            LeftContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
         end
-        
-        TabBtn.MouseButton1Click:Connect(function()
-            switchTab({ TabIco, Tab })
-        end)
-        
-        if FengUI.currentTab == nil then
-            switchTab({ TabIco, Tab })
+    end
+    
+    local function updateRightContainer()
+        if RightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y then
+            RightContainer.ScrollingEnabled = true
+            RightContainer.CanvasSize = UDim2.new(0, 0, 0, RightLayout.AbsoluteContentSize.Y + 10)
+        else
+            RightContainer.ScrollingEnabled = false
+            RightContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
         end
+    end
+    
+    -- 监听内容大小变化
+    LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        updateLeftContainer()
+    end)
+    
+    RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        updateRightContainer()
+    end)
+    
+    -- 初始更新
+    task.defer(function()
+        updateLeftContainer()
+        updateRightContainer()
+    end)
+    
+    -- 使用独立的滚动物理效果
+    LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Always
+    RightContainer.ElasticBehavior = Enum.ElasticBehavior.Always
+    
+    -- 添加滚动条美化效果
+    local leftScrollBar = Instance.new("UIStroke")
+    leftScrollBar.Parent = LeftContainer
+    leftScrollBar.Color = Color3.fromRGB(80, 80, 100)
+    leftScrollBar.Thickness = 1
+    leftScrollBar.Transparency = 0.7
+    leftScrollBar.LineJoinMode = Enum.LineJoinMode.Round
+    
+    local rightScrollBar = Instance.new("UIStroke")
+    rightScrollBar.Parent = RightContainer
+    rightScrollBar.Color = Color3.fromRGB(80, 80, 100)
+    rightScrollBar.Thickness = 1
+    rightScrollBar.Transparency = 0.7
+    rightScrollBar.LineJoinMode = Enum.LineJoinMode.Round
+end
+
+-- 在 section.section 函数中，更新容器的选择逻辑
+local TargetContainer
+if windowCount == 2 then
+    if windowPosition:lower() == "left" then
+        TargetContainer = TabContainer:FindFirstChild("LeftContainer")
+    else
+        TargetContainer = TabContainer:FindFirstChild("RightContainer")
+    end
+else
+    TargetContainer = TabContainer
+end
+
+-- 更新双窗口模式下的容器高度同步逻辑
+if windowCount == 2 then
+    local function updateContainerHeight()
+        local leftContentHeight = TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout").AbsoluteContentSize.Y + 20
+        local rightContentHeight = TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout").AbsoluteContentSize.Y + 20
+        local maxHeight = math.max(leftContentHeight, rightContentHeight)
         
-        if windowCount == 2 then
-            local function updateContainerHeight()
-                local leftHeight = TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout").AbsoluteContentSize.Y
-                local rightHeight = TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout").AbsoluteContentSize.Y
-                local maxHeight = math.max(leftHeight, rightHeight) + 10
-                
-                TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
-                Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
-            end
-            
-            TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
-            TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
-        end
+        -- 确保最小高度为200
+        maxHeight = math.max(maxHeight, 200)
+        
+        -- 设置容器高度
+        TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
+        
+        -- 同步设置左右容器的高度
+        TabContainer:FindFirstChild("LeftContainer").Size = UDim2.new(0.48, -2, 0, maxHeight - 10)
+        TabContainer:FindFirstChild("RightContainer").Size = UDim2.new(0.50, -2, 0, maxHeight - 10)
+        
+        -- 设置Tab的CanvasSize
+        Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight + 10)
+    end
+    
+    -- 监听左右布局的变化
+    TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
+    TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
+    
+    -- 初始更新
+    task.defer(updateContainerHeight)
+    
+    -- 禁止Tab自身的滚动
+    Tab.ScrollingEnabled = false
+    Tab.ScrollBarThickness = 0
+end
         
         local tab = {}
         
         function tab.section(tab, name, windowPosition, TabVal)
-            -- 参数处理：支持 windowPosition 作为字符串或布尔值
             if type(windowPosition) == "boolean" then
-                -- 如果 windowPosition 是布尔值，说明用户想控制展开状态
                 TabVal = windowPosition
-                windowPosition = "Left" -- 设置默认位置
+                windowPosition = "Left"
             elseif not windowPosition or type(windowPosition) ~= "string" then
-                -- 如果 windowPosition 不是字符串，设为默认值
                 windowPosition = "Left"
             end
             
