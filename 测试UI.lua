@@ -2910,27 +2910,6 @@ function FengUI.applyTheme()
         end
     end
     
-    -- 更新所有卡片
-    if CardsContainer then
-        for _, card in ipairs(CardsContainer:GetChildren()) do
-            if card:IsA("TextButton") then
-                card.BackgroundColor3 = config.TabColor
-                
-                if card:FindFirstChild("CardGlow") then
-                    card.CardGlow.Color = config.AccentColor
-                end
-                
-                if card:FindFirstChild("CardTitle") then
-                    card.CardTitle.TextColor3 = config.TextColor
-                end
-                
-                if card:FindFirstChild("CardDescription") then
-                    card.CardDescription.TextColor3 = config.SecondaryTextColor
-                end
-            end
-        end
-    end
-    
     -- 更新侧边栏
     if MainSideContainer then
         MainSideContainer.BackgroundColor3 = config.TabColor
