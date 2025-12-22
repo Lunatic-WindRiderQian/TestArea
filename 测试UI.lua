@@ -30,6 +30,7 @@ local FengUI = {}
 local ToggleUI = true
 FengUI.currentTab = nil
 FengUI.flags = {}
+FengUI.colors = {} -- 存储所有颜色配置
 
 local services = {
     TweenService = game:GetService("TweenService"),
@@ -43,6 +44,7 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
+-- 默认颜色配置
 local config = {
     MainColor = Color3.fromRGB(18, 18, 30),
     TabColor = Color3.fromRGB(25, 25, 40),
@@ -70,6 +72,30 @@ local config = {
     ElementColor = Color3.fromRGB(30, 30, 50),
     ElementTransparency = 0.2,
     GlassEffect = Color3.fromRGB(255, 255, 255),
+    
+    -- ESP颜色配置
+    ESP_BoxColor = Color3.fromRGB(0, 255, 0),
+    ESP_TextColor = Color3.fromRGB(255, 255, 255),
+    ESP_TracerColor = Color3.fromRGB(255, 0, 0),
+    ESP_HealthBarColor = Color3.fromRGB(0, 255, 0),
+    ESP_HealthBarBGColor = Color3.fromRGB(255, 0, 0),
+}
+
+-- 将配置复制到FengUI.colors中，便于外部访问
+for k, v in pairs(config) do
+    FengUI.colors[k] = v
+end
+
+-- 颜色预设
+local colorPresets = {
+    {"深空蓝", Color3.fromRGB(18, 18, 30), Color3.fromRGB(0, 200, 255)},
+    {"霓虹紫", Color3.fromRGB(25, 10, 35), Color3.fromRGB(180, 0, 255)},
+    {"暗夜绿", Color3.fromRGB(10, 25, 15), Color3.fromRGB(0, 255, 150)},
+    {"熔岩红", Color3.fromRGB(30, 10, 10), Color3.fromRGB(255, 60, 0)},
+    {"优雅金", Color3.fromRGB(30, 25, 15), Color3.fromRGB(255, 215, 0)},
+    {"赛博粉", Color3.fromRGB(25, 5, 25), Color3.fromRGB(255, 0, 200)},
+    {"深海青", Color3.fromRGB(5, 20, 25), Color3.fromRGB(0, 255, 255)},
+    {"午夜黑", Color3.fromRGB(5, 5, 10), Color3.fromRGB(150, 150, 150)},
 }
 
 local function startNeonFlowEffect(object, property, speed)
@@ -656,6 +682,490 @@ task.spawn(function()
     end
 end)
 
+-- 颜色选择器工具函数
+local function hexToColor(hex)
+    hex = hex:gsub("#", "")
+    if #hex == 3 then
+        hex = hex:gsub("(.)", "%1%1")
+    end
+    local r = tonumber(hex:sub(1, 2), 16) / 255
+    local g = tonumber(hex:sub(3, 4), 16) / 255
+    local b = tonumber(hex:sub(5, 6), 16) / 255
+    return Color3.new(r, g, b)
+end
+
+local function colorToHex(color)
+    local r = math.floor(color.R * 255)
+    local g = math.floor(color.G * 255)
+    local b = math.floor(color.B * 255)
+    return string.format("#%02X%02X%02X", r, g, b)
+end
+
+-- 颜色选择器主函数
+local function createColorPickerUI(parentElement, defaultColor, onColorChanged, presetColors)
+    local colorPickerOpen = false
+    local currentColor = defaultColor or Color3.new(1, 1, 1)
+    local colorPickerFrame
+    
+    -- 创建颜色选择器框架
+    local function createColorPickerFrame()
+        local pickerFrame = Instance.new("Frame")
+        pickerFrame.Name = "ColorPickerFrame"
+        pickerFrame.BackgroundColor3 = config.TabColor
+        pickerFrame.BackgroundTransparency = 0.1
+        pickerFrame.BorderSizePixel = 0
+        pickerFrame.Position = UDim2.new(0, 0, 1, 5)
+        pickerFrame.Size = UDim2.new(0, 280, 0, 200)
+        pickerFrame.ZIndex = 100
+        pickerFrame.Visible = false
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 8)
+        corner.Parent = pickerFrame
+        
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = config.AccentColor
+        stroke.Thickness = 2
+        stroke.Transparency = 0.3
+        stroke.Parent = pickerFrame
+        
+        -- 颜色预览
+        local previewFrame = Instance.new("Frame")
+        previewFrame.Name = "ColorPreview"
+        previewFrame.BackgroundColor3 = currentColor
+        previewFrame.BorderSizePixel = 0
+        previewFrame.Position = UDim2.new(0, 10, 0, 10)
+        previewFrame.Size = UDim2.new(0, 60, 0, 60)
+        previewFrame.ZIndex = 101
+        
+        local previewCorner = Instance.new("UICorner")
+        previewCorner.CornerRadius = UDim.new(0, 6)
+        previewCorner.Parent = previewFrame
+        
+        local previewStroke = Instance.new("UIStroke")
+        previewStroke.Color = Color3.new(1, 1, 1)
+        previewStroke.Thickness = 2
+        previewStroke.Transparency = 0.5
+        previewStroke.Parent = previewFrame
+        
+        -- 十六进制输入框
+        local hexInput = Instance.new("TextBox")
+        hexInput.Name = "HexInput"
+        hexInput.BackgroundColor3 = config.Button_Color
+        hexInput.BackgroundTransparency = 0.2
+        hexInput.BorderSizePixel = 0
+        hexInput.Position = UDim2.new(0, 80, 0, 10)
+        hexInput.Size = UDim2.new(0, 100, 0, 30)
+        hexInput.Font = Enum.Font.Gotham
+        hexInput.PlaceholderText = "#FFFFFF"
+        hexInput.Text = colorToHex(currentColor)
+        hexInput.TextColor3 = config.TextColor
+        hexInput.TextSize = 14
+        hexInput.ZIndex = 101
+        
+        local hexCorner = Instance.new("UICorner")
+        hexCorner.CornerRadius = UDim.new(0, 6)
+        hexCorner.Parent = hexInput
+        
+        hexInput.FocusLost:Connect(function(enterPressed)
+            if enterPressed then
+                local text = hexInput.Text
+                if text:match("^#?[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]$") then
+                    local newColor = hexToColor(text)
+                    currentColor = newColor
+                    previewFrame.BackgroundColor3 = newColor
+                    if onColorChanged then
+                        onColorChanged(newColor)
+                    end
+                end
+            end
+        end)
+        
+        -- RGB滑块
+        local sliders = {}
+        local rgbLabels = {"R", "G", "B"}
+        
+        for i, label in ipairs(rgbLabels) do
+            local sliderFrame = Instance.new("Frame")
+            sliderFrame.Name = label .. "Slider"
+            sliderFrame.BackgroundTransparency = 1
+            sliderFrame.Position = UDim2.new(0, 80, 0, 50 + (i-1)*35)
+            sliderFrame.Size = UDim2.new(0, 190, 0, 25)
+            sliderFrame.ZIndex = 101
+            
+            local labelText = Instance.new("TextLabel")
+            labelText.Name = "Label"
+            labelText.BackgroundTransparency = 1
+            labelText.Position = UDim2.new(0, 0, 0, 0)
+            labelText.Size = UDim2.new(0, 20, 1, 0)
+            labelText.Font = Enum.Font.GothamBold
+            labelText.Text = label
+            labelText.TextColor3 = config.TextColor
+            labelText.TextSize = 14
+            labelText.TextXAlignment = Enum.TextXAlignment.Left
+            labelText.ZIndex = 101
+            labelText.Parent = sliderFrame
+            
+            local sliderBar = Instance.new("Frame")
+            sliderBar.Name = "SliderBar"
+            sliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+            sliderBar.BorderSizePixel = 0
+            sliderBar.Position = UDim2.new(0, 25, 0.5, 0)
+            sliderBar.AnchorPoint = Vector2.new(0, 0.5)
+            sliderBar.Size = UDim2.new(0, 140, 0, 10)
+            sliderBar.ZIndex = 101
+            
+            local sliderBarCorner = Instance.new("UICorner")
+            sliderBarCorner.CornerRadius = UDim.new(0, 5)
+            sliderBarCorner.Parent = sliderBar
+            
+            local sliderPart = Instance.new("Frame")
+            sliderPart.Name = "SliderPart"
+            sliderPart.BackgroundColor3 = (function()
+                if label == "R" then return Color3.new(1, 0, 0)
+                elseif label == "G" then return Color3.new(0, 1, 0)
+                else return Color3.new(0, 0, 1) end
+            end)()
+            sliderPart.BorderSizePixel = 0
+            sliderPart.Size = UDim2.new(0, 140, 1, 0)
+            sliderPart.ZIndex = 102
+            
+            local sliderPartCorner = Instance.new("UICorner")
+            sliderPartCorner.CornerRadius = UDim.new(0, 5)
+            sliderPartCorner.Parent = sliderPart
+            
+            local sliderHandle = Instance.new("Frame")
+            sliderHandle.Name = "SliderHandle"
+            sliderHandle.BackgroundColor3 = Color3.new(1, 1, 1)
+            sliderHandle.BorderSizePixel = 0
+            sliderHandle.Position = UDim2.new(0, 135, 0.5, 0)
+            sliderHandle.AnchorPoint = Vector2.new(0, 0.5)
+            sliderHandle.Size = UDim2.new(0, 15, 0, 15)
+            sliderHandle.ZIndex = 103
+            
+            local sliderHandleCorner = Instance.new("UICorner")
+            sliderHandleCorner.CornerRadius = UDim.new(1, 0)
+            sliderHandleCorner.Parent = sliderHandle
+            
+            local valueText = Instance.new("TextLabel")
+            valueText.Name = "ValueText"
+            valueText.BackgroundTransparency = 1
+            valueText.Position = UDim2.new(0, 170, 0, 0)
+            valueText.Size = UDim2.new(0, 20, 1, 0)
+            valueText.Font = Enum.Font.Gotham
+            valueText.Text = "255"
+            valueText.TextColor3 = config.TextColor
+            valueText.TextSize = 12
+            valueText.ZIndex = 101
+            valueText.Parent = sliderFrame
+            
+            sliderPart.Parent = sliderBar
+            sliderBar.Parent = sliderFrame
+            sliderHandle.Parent = sliderBar
+            sliderFrame.Parent = pickerFrame
+            
+            sliders[label] = {
+                bar = sliderBar,
+                part = sliderPart,
+                handle = sliderHandle,
+                valueText = valueText,
+                dragging = false
+            }
+        end
+        
+        -- 更新滑块函数
+        local function updateSlidersFromColor(color)
+            local r = math.floor(color.R * 255)
+            local g = math.floor(color.G * 255)
+            local b = math.floor(color.B * 255)
+            
+            sliders["R"].valueText.Text = tostring(r)
+            sliders["G"].valueText.Text = tostring(g)
+            sliders["B"].valueText.Text = tostring(b)
+            
+            sliders["R"].part.Size = UDim2.new(r/255, 0, 1, 0)
+            sliders["G"].part.Size = UDim2.new(g/255, 0, 1, 0)
+            sliders["B"].part.Size = UDim2.new(b/255, 0, 1, 0)
+            
+            sliders["R"].handle.Position = UDim2.new(r/255, -7.5, 0.5, 0)
+            sliders["G"].handle.Position = UDim2.new(g/255, -7.5, 0.5, 0)
+            sliders["B"].handle.Position = UDim2.new(b/255, -7.5, 0.5, 0)
+        end
+        
+        -- 更新颜色函数
+        local function updateColorFromSliders()
+            local r = tonumber(sliders["R"].valueText.Text) or 0
+            local g = tonumber(sliders["G"].valueText.Text) or 0
+            local b = tonumber(sliders["B"].valueText.Text) or 0
+            
+            r = math.clamp(r, 0, 255)
+            g = math.clamp(g, 0, 255)
+            b = math.clamp(b, 0, 255)
+            
+            currentColor = Color3.fromRGB(r, g, b)
+            previewFrame.BackgroundColor3 = currentColor
+            hexInput.Text = colorToHex(currentColor)
+            
+            if onColorChanged then
+                onColorChanged(currentColor)
+            end
+        end
+        
+        -- 预设颜色网格
+        local presetGrid = Instance.new("Frame")
+        presetGrid.Name = "PresetGrid"
+        presetGrid.BackgroundTransparency = 1
+        presetGrid.Position = UDim2.new(0, 10, 0, 140)
+        presetGrid.Size = UDim2.new(1, -20, 0, 50)
+        presetGrid.ZIndex = 101
+        
+        local presetUIListLayout = Instance.new("UIListLayout")
+        presetUIListLayout.FillDirection = Enum.FillDirection.Horizontal
+        presetUIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        presetUIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        presetUIListLayout.Padding = UDim.new(0, 5)
+        presetUIListLayout.Parent = presetGrid
+        
+        -- 添加预设颜色
+        local presetsToUse = presetColors or colorPresets
+        for i, preset in ipairs(presetsToUse) do
+            local presetBtn = Instance.new("TextButton")
+            presetBtn.Name = "Preset_" .. i
+            presetBtn.BackgroundColor3 = preset[2]
+            presetBtn.BorderSizePixel = 0
+            presetBtn.Size = UDim2.new(0, 30, 0, 30)
+            presetBtn.AutoButtonColor = false
+            presetBtn.Text = ""
+            presetBtn.ZIndex = 102
+            
+            local presetCorner = Instance.new("UICorner")
+            presetCorner.CornerRadius = UDim.new(0, 6)
+            presetCorner.Parent = presetBtn
+            
+            local presetStroke = Instance.new("UIStroke")
+            presetStroke.Color = preset[3]
+            presetStroke.Thickness = 2
+            presetStroke.Parent = presetBtn
+            
+            presetBtn.MouseButton1Click:Connect(function()
+                currentColor = preset[2]
+                previewFrame.BackgroundColor3 = currentColor
+                hexInput.Text = colorToHex(currentColor)
+                updateSlidersFromColor(currentColor)
+                if onColorChanged then
+                    onColorChanged(currentColor)
+                end
+            end)
+            
+            presetBtn.Parent = presetGrid
+        end
+        
+        -- 滑块交互逻辑
+        for label, slider in pairs(sliders) do
+            local function updateSliderValue(input)
+                if slider.dragging then
+                    local mouse = services.Players.LocalPlayer:GetMouse()
+                    local barPos = slider.bar.AbsolutePosition.X
+                    local barSize = slider.bar.AbsoluteSize.X
+                    local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
+                    local percent = (mouseX - barPos) / barSize
+                    
+                    local value = math.floor(percent * 255 + 0.5)
+                    value = math.clamp(value, 0, 255)
+                    
+                    slider.valueText.Text = tostring(value)
+                    slider.part.Size = UDim2.new(percent, 0, 1, 0)
+                    slider.handle.Position = UDim2.new(percent, -7.5, 0.5, 0)
+                    
+                    updateColorFromSliders()
+                end
+            end
+            
+            slider.handle.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    slider.dragging = true
+                    updateSliderValue(input)
+                end
+            end)
+            
+            slider.bar.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    slider.dragging = true
+                    updateSliderValue(input)
+                end
+            end)
+            
+            services.UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    slider.dragging = false
+                end
+            end)
+            
+            services.UserInputService.InputChanged:Connect(function(input)
+                if slider.dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                    updateSliderValue(input)
+                end
+            end)
+        end
+        
+        -- 初始化滑块
+        updateSlidersFromColor(currentColor)
+        
+        -- 关闭按钮
+        local closeBtn = Instance.new("TextButton")
+        closeBtn.Name = "CloseButton"
+        closeBtn.BackgroundColor3 = config.Button_Color
+        closeBtn.BackgroundTransparency = 0.2
+        closeBtn.BorderSizePixel = 0
+        closeBtn.Position = UDim2.new(0.5, -35, 1, -40)
+        closeBtn.AnchorPoint = Vector2.new(0.5, 0)
+        closeBtn.Size = UDim2.new(0, 70, 0, 25)
+        closeBtn.Font = Enum.Font.GothamBold
+        closeBtn.Text = "关闭"
+        closeBtn.TextColor3 = config.TextColor
+        closeBtn.TextSize = 14
+        closeBtn.ZIndex = 101
+        
+        local closeCorner = Instance.new("UICorner")
+        closeCorner.CornerRadius = UDim.new(0, 6)
+        closeCorner.Parent = closeBtn
+        
+        closeBtn.MouseButton1Click:Connect(function()
+            pickerFrame.Visible = false
+            colorPickerOpen = false
+        end)
+        
+        closeBtn.Parent = pickerFrame
+        previewFrame.Parent = pickerFrame
+        hexInput.Parent = pickerFrame
+        
+        return pickerFrame
+    end
+    
+    -- 创建颜色选择器按钮
+    local colorPickerBtn = Instance.new("TextButton")
+    colorPickerBtn.Name = "ColorPickerBtn"
+    colorPickerBtn.BackgroundColor3 = config.Button_Color
+    colorPickerBtn.BackgroundTransparency = 0.2
+    colorPickerBtn.BorderSizePixel = 0
+    colorPickerBtn.Size = UDim2.new(0, parentElement.Size.X.Offset, 0, 36)
+    colorPickerBtn.AutoButtonColor = false
+    colorPickerBtn.Font = Enum.Font.GothamSemibold
+    colorPickerBtn.Text = "  选择颜色"
+    colorPickerBtn.TextColor3 = config.TextColor
+    colorPickerBtn.TextSize = 14
+    colorPickerBtn.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local colorPickerCorner = Instance.new("UICorner")
+    colorPickerCorner.CornerRadius = UDim.new(0, 6)
+    colorPickerCorner.Parent = colorPickerBtn
+    
+    -- 颜色预览框
+    local colorPreview = Instance.new("Frame")
+    colorPreview.Name = "ColorPreview"
+    colorPreview.BackgroundColor3 = currentColor
+    colorPreview.BorderSizePixel = 0
+    colorPreview.Position = UDim2.new(0.85, 0, 0.22, 0)
+    colorPreview.Size = UDim2.new(0, 34, 0, 22)
+    
+    local colorPreviewCorner = Instance.new("UICorner")
+    colorPreviewCorner.CornerRadius = UDim.new(0, 6)
+    colorPreviewCorner.Parent = colorPreview
+    
+    local colorPreviewStroke = Instance.new("UIStroke")
+    colorPreviewStroke.Color = Color3.new(1, 1, 1)
+    colorPreviewStroke.Thickness = 2
+    colorPreviewStroke.Transparency = 0.5
+    colorPreviewStroke.Parent = colorPreview
+    
+    colorPreview.Parent = colorPickerBtn
+    
+    -- 创建颜色选择器框架
+    colorPickerFrame = createColorPickerFrame()
+    colorPickerFrame.Parent = colorPickerBtn
+    
+    -- 按钮交互
+    colorPickerBtn.MouseEnter:Connect(function()
+        services.TweenService:Create(colorPickerBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.floor(config.Button_Color.R * 255 * 1.1),
+                math.floor(config.Button_Color.G * 255 * 1.1),
+                math.floor(config.Button_Color.B * 255 * 1.1)
+            )
+        }):Play()
+    end)
+    
+    colorPickerBtn.MouseLeave:Connect(function()
+        services.TweenService:Create(colorPickerBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            BackgroundColor3 = config.Button_Color
+        }):Play()
+    end)
+    
+    -- 切换颜色选择器显示
+    colorPickerBtn.MouseButton1Click:Connect(function()
+        colorPickerOpen = not colorPickerOpen
+        colorPickerFrame.Visible = colorPickerOpen
+        
+        if colorPickerOpen then
+            create3DFlipAnimation(colorPreview, 0.3)
+        end
+    end)
+    
+    -- 点击外部关闭颜色选择器
+    local function onInputBegan(input)
+        if colorPickerOpen and input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local mouse = services.Players.LocalPlayer:GetMouse()
+            if colorPickerFrame then
+                local framePos = colorPickerFrame.AbsolutePosition
+                local frameSize = colorPickerFrame.AbsoluteSize
+                
+                if mouse.X < framePos.X or mouse.X > framePos.X + frameSize.X or
+                   mouse.Y < framePos.Y or mouse.Y > framePos.Y + frameSize.Y then
+                    colorPickerOpen = false
+                    colorPickerFrame.Visible = false
+                end
+            end
+        end
+    end
+    
+    services.UserInputService.InputBegan:Connect(onInputBegan)
+    
+    -- 返回控制函数
+    local colorPickerController = {
+        SetColor = function(self, newColor)
+            currentColor = newColor
+            colorPreview.BackgroundColor3 = newColor
+            if colorPickerFrame then
+                local preview = colorPickerFrame:FindFirstChild("ColorPreview")
+                if preview then
+                    preview.BackgroundColor3 = newColor
+                end
+                local hexInput = colorPickerFrame:FindFirstChild("HexInput")
+                if hexInput then
+                    hexInput.Text = colorToHex(newColor)
+                end
+            end
+            if onColorChanged then
+                onColorChanged(newColor)
+            end
+        end,
+        
+        GetColor = function(self)
+            return currentColor
+        end,
+        
+        Destroy = function(self)
+            if colorPickerFrame then
+                colorPickerFrame:Destroy()
+            end
+            colorPickerBtn:Destroy()
+            services.UserInputService.InputBegan:Disconnect(onInputBegan)
+        end
+    }
+    
+    return colorPickerBtn, colorPickerController
+end
+
 function FengUI.new(FengUI, name, theme)
     for _, v in next, services.CoreGui:GetChildren() do
         if v.Name == "REN" then
@@ -943,6 +1453,122 @@ end
             end)
             
             local section = {}
+            
+            -- 新增：颜色选择器组件
+            function section.ColorPicker(section, text, flag, defaultColor, callback, colorType)
+                callback = callback or function() end
+                defaultColor = defaultColor or Color3.new(1, 1, 1)
+                assert(text, "No text provided")
+                if flag then
+                    FengUI.flags[flag] = defaultColor
+                end
+                
+                local ColorPickerModule = Instance.new("Frame")
+                ColorPickerModule.Name = "ColorPickerModule"
+                ColorPickerModule.Parent = Objs
+                ColorPickerModule.BackgroundTransparency = 1
+                ColorPickerModule.BorderSizePixel = 0
+                ColorPickerModule.Size = UDim2.new(0, elementWidth, 0, 36)
+                
+                local colorType = colorType or "UI"
+                local presets = colorPresets
+                
+                -- 如果是ESP颜色，使用不同的预设
+                if colorType:lower():find("esp") then
+                    presets = {
+                        {"绿色", Color3.fromRGB(0, 255, 0), Color3.fromRGB(50, 255, 50)},
+                        {"红色", Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 50, 50)},
+                        {"蓝色", Color3.fromRGB(0, 100, 255), Color3.fromRGB(50, 150, 255)},
+                        {"黄色", Color3.fromRGB(255, 255, 0), Color3.fromRGB(255, 255, 100)},
+                        {"紫色", Color3.fromRGB(180, 0, 255), Color3.fromRGB(200, 50, 255)},
+                        {"青色", Color3.fromRGB(0, 255, 255), Color3.fromRGB(50, 255, 255)},
+                        {"白色", Color3.fromRGB(255, 255, 255), Color3.fromRGB(220, 220, 220)},
+                        {"粉色", Color3.fromRGB(255, 100, 180), Color3.fromRGB(255, 130, 200)},
+                    }
+                end
+                
+                -- 创建颜色选择器
+                local colorPickerBtn, colorController = createColorPickerUI(ColorPickerModule, defaultColor, function(newColor)
+                    if flag then
+                        FengUI.flags[flag] = newColor
+                        -- 更新config中的对应颜色
+                        if config[flag] ~= nil then
+                            config[flag] = newColor
+                            FengUI.colors[flag] = newColor
+                            
+                            -- 如果是主要颜色，更新UI外观
+                            if flag == "AccentColor" then
+                                -- 更新标题颜色
+                                services.TweenService:Create(TitleText, TweenInfo.new(0.3), {
+                                    TextColor3 = newColor
+                                }):Play()
+                                
+                                -- 更新当前标签颜色
+                                if FengUI.currentTab then
+                                    services.TweenService:Create(FengUI.currentTab[1].TabText, TweenInfo.new(0.3), {
+                                        TextColor3 = newColor
+                                    }):Play()
+                                end
+                                
+                                -- 更新打开按钮
+                                startNeonFlowEffect(Open, "BackgroundColor3", 0.012)
+                            end
+                        end
+                    end
+                    callback(newColor, colorType)
+                end, presets)
+                
+                colorPickerBtn.Text = "   " .. text
+                colorPickerBtn.Size = UDim2.new(0, elementWidth, 0, 36)
+                
+                -- 添加颜色类型标签
+                local typeLabel = Instance.new("TextLabel")
+                typeLabel.Name = "TypeLabel"
+                typeLabel.BackgroundTransparency = 1
+                typeLabel.Position = UDim2.new(0.7, 0, 0, 0)
+                typeLabel.Size = UDim2.new(0, 60, 1, 0)
+                typeLabel.Font = Enum.Font.Gotham
+                typeLabel.Text = "[" .. colorType .. "]"
+                typeLabel.TextColor3 = colorType:lower():find("esp") and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(100, 200, 255)
+                typeLabel.TextSize = 10
+                typeLabel.TextXAlignment = Enum.TextXAlignment.Right
+                typeLabel.Parent = colorPickerBtn
+                
+                -- 创建控制函数
+                local funcs = {
+                    SetColor = function(self, newColor)
+                        colorController:SetColor(newColor)
+                    end,
+                    GetColor = function(self)
+                        return colorController:GetColor()
+                    end,
+                    Destroy = function(self)
+                        colorController:Destroy()
+                        ColorPickerModule:Destroy()
+                    end,
+                    Module = ColorPickerModule
+                }
+                
+                return funcs
+            end
+            
+            -- 新增：UI主题颜色选择器（方便使用的快捷函数）
+            function section.UIThemePicker(section, text, flag, callback)
+                return section:ColorPicker(text, flag or "AccentColor", config.AccentColor, function(newColor, colorType)
+                    if callback then
+                        callback(newColor)
+                    end
+                end, "UI主题")
+            end
+            
+            -- 新增：ESP颜色选择器（方便使用的快捷函数）
+            function section.ESPColorPicker(section, text, flag, callback)
+                return section:ColorPicker(text, flag or "ESP_BoxColor", config.ESP_BoxColor, function(newColor, colorType)
+                    if callback then
+                        callback(newColor)
+                    end
+                end, "ESP颜色")
+            end
             
             function section.Button(section, text, callback)
                 callback = callback or function() end
@@ -2125,685 +2751,6 @@ function section.Dropdown(section, text, flag, options, callback)
     return funcs
 end
 
-function section.ColorPicker(section, text, flag, default, callback)
-    callback = callback or function() end
-    default = default or Color3.fromRGB(255, 255, 255)
-    assert(text, "No text provided")
-    assert(flag, "No flag provided")
-    FengUI.flags[flag] = default
-    
-    -- 创建颜色选择器模块
-    local ColorPickerModule = Instance.new("Frame")
-    ColorPickerModule.Name = "ColorPickerModule"
-    ColorPickerModule.Parent = Objs
-    ColorPickerModule.BackgroundTransparency = 1
-    ColorPickerModule.BorderSizePixel = 0
-    ColorPickerModule.Size = UDim2.new(0, 330, 0, 36)
-    
-    -- 颜色选择器按钮
-    local ColorPickerTop = Instance.new("TextButton")
-    ColorPickerTop.Name = "ColorPickerTop"
-    ColorPickerTop.Parent = ColorPickerModule
-    ColorPickerTop.BackgroundColor3 = config.Dropdown_Color
-    ColorPickerTop.BackgroundTransparency = 0.2
-    ColorPickerTop.BorderSizePixel = 0
-    ColorPickerTop.Size = UDim2.new(0, 330, 0, 36)
-    ColorPickerTop.AutoButtonColor = false
-    ColorPickerTop.Font = Enum.Font.GothamSemibold
-    ColorPickerTop.Text = "   " .. text
-    ColorPickerTop.TextColor3 = config.TextColor
-    ColorPickerTop.TextSize = 14
-    ColorPickerTop.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local ColorPickerTopC = Instance.new("UICorner")
-    ColorPickerTopC.CornerRadius = UDim.new(0, 6)
-    ColorPickerTopC.Name = "ColorPickerTopC"
-    ColorPickerTopC.Parent = ColorPickerTop
-    
-    -- 颜色预览框
-    local ColorPickerPreview = Instance.new("Frame")
-    ColorPickerPreview.Name = "ColorPickerPreview"
-    ColorPickerPreview.Parent = ColorPickerTop
-    ColorPickerPreview.BackgroundColor3 = default
-    ColorPickerPreview.BorderSizePixel = 0
-    ColorPickerPreview.Position = UDim2.new(0.82, 0, 0.22, 0)
-    ColorPickerPreview.Size = UDim2.new(0, 22, 0, 22)
-    
-    local ColorPickerPreviewC = Instance.new("UICorner")
-    ColorPickerPreviewC.CornerRadius = UDim.new(0, 4)
-    ColorPickerPreviewC.Name = "ColorPickerPreviewC"
-    ColorPickerPreviewC.Parent = ColorPickerPreview
-    
-    local previewGlow = Instance.new("UIStroke")
-    previewGlow.Parent = ColorPickerPreview
-    previewGlow.Color = Color3.new(1, 1, 1)
-    previewGlow.Thickness = 1
-    previewGlow.Transparency = 0.5
-    
-    -- 打开颜色选择器的按钮
-    local ColorPickerButton = Instance.new("TextButton")
-    ColorPickerButton.Name = "ColorPickerButton"
-    ColorPickerButton.Parent = ColorPickerTop
-    ColorPickerButton.BackgroundTransparency = 1
-    ColorPickerButton.BorderSizePixel = 0
-    ColorPickerButton.Position = ColorPickerPreview.Position
-    ColorPickerButton.Size = ColorPickerPreview.Size
-    ColorPickerButton.AutoButtonColor = false
-    ColorPickerButton.Font = Enum.Font.Gotham
-    ColorPickerButton.Text = ""
-    ColorPickerButton.ZIndex = 10
-    
-    -- 显示当前颜色的文本
-    local ColorPickerText = Instance.new("TextLabel")
-    ColorPickerText.Name = "ColorPickerText"
-    ColorPickerText.Parent = ColorPickerTop
-    ColorPickerText.BackgroundTransparency = 1
-    ColorPickerText.Position = UDim2.new(0.65, 0, 0, 0)
-    ColorPickerText.Size = UDim2.new(0, 50, 0, 36)
-    ColorPickerText.Font = Enum.Font.GothamSemibold
-    ColorPickerText.Text = string.format("#%02X%02X%02X", 
-        math.floor(default.R * 255), 
-        math.floor(default.G * 255), 
-        math.floor(default.B * 255))
-    ColorPickerText.TextColor3 = config.SecondaryTextColor
-    ColorPickerText.TextSize = 12
-    ColorPickerText.TextXAlignment = Enum.TextXAlignment.Right
-    
-    -- 创建颜色选择器窗口（弹出窗口）
-    local ColorPickerWindow = Instance.new("Frame")
-    ColorPickerWindow.Name = "ColorPickerWindow"
-    ColorPickerWindow.Parent = Main
-    ColorPickerWindow.BackgroundColor3 = Color3.fromRGB(40, 40, 65)
-    ColorPickerWindow.BackgroundTransparency = 0.05
-    ColorPickerWindow.BorderSizePixel = 0
-    ColorPickerWindow.Size = UDim2.new(0, 280, 0, 200)
-    ColorPickerWindow.Visible = false
-    ColorPickerWindow.ZIndex = 100
-    ColorPickerWindow.Visible = false
-    
-    local WindowCorner = Instance.new("UICorner")
-    WindowCorner.CornerRadius = UDim.new(0, 8)
-    WindowCorner.Parent = ColorPickerWindow
-    
-    local WindowStroke = Instance.new("UIStroke")
-    WindowStroke.Parent = ColorPickerWindow
-    WindowStroke.Color = config.AccentColor
-    WindowStroke.Thickness = 2
-    WindowStroke.Transparency = 0.3
-    
-    -- 标题栏
-    local TitleBar = Instance.new("Frame")
-    TitleBar.Name = "TitleBar"
-    TitleBar.Parent = ColorPickerWindow
-    TitleBar.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-    TitleBar.BackgroundTransparency = 0.1
-    TitleBar.BorderSizePixel = 0
-    TitleBar.Size = UDim2.new(1, 0, 0, 30)
-    TitleBar.ZIndex = 101
-    
-    local TitleBarCorner = Instance.new("UICorner")
-    TitleBarCorner.CornerRadius = UDim.new(0, 8, 0, 0)
-    TitleBarCorner.Parent = TitleBar
-    
-    local WindowTitle = Instance.new("TextLabel")
-    WindowTitle.Name = "WindowTitle"
-    WindowTitle.Parent = TitleBar
-    WindowTitle.BackgroundTransparency = 1
-    WindowTitle.Position = UDim2.new(0, 10, 0, 0)
-    WindowTitle.Size = UDim2.new(1, -20, 1, 0)
-    WindowTitle.Font = Enum.Font.GothamBold
-    WindowTitle.Text = text .. " - 颜色选择器"
-    WindowTitle.TextColor3 = config.AccentColor
-    WindowTitle.TextSize = 14
-    WindowTitle.TextXAlignment = Enum.TextXAlignment.Left
-    WindowTitle.ZIndex = 102
-    
-    -- 颜色画布
-    local ColorCanvas = Instance.new("Frame")
-    ColorCanvas.Name = "ColorCanvas"
-    ColorCanvas.Parent = ColorPickerWindow
-    ColorCanvas.BackgroundColor3 = Color3.new(1, 1, 1)
-    ColorCanvas.BorderSizePixel = 0
-    ColorCanvas.Position = UDim2.new(0, 10, 0, 40)
-    ColorCanvas.Size = UDim2.new(0, 150, 0, 100)
-    ColorCanvas.ZIndex = 102
-    
-    local ColorCanvasCorner = Instance.new("UICorner")
-    ColorCanvasCorner.CornerRadius = UDim.new(0, 4)
-    ColorCanvasCorner.Parent = ColorCanvas
-    
-    -- 颜色渐变（色相）
-    local HueGradient = Instance.new("UIGradient")
-    HueGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-        ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
-        ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
-        ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
-        ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
-    })
-    HueGradient.Parent = ColorCanvas
-    
-    -- 亮度渐变
-    local ValueGradient = Instance.new("UIGradient")
-    ValueGradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0),
-        NumberSequenceKeypoint.new(1, 1)
-    })
-    ValueGradient.Parent = ColorCanvas
-    
-    -- 饱和度渐变
-    local SaturationGradient = Instance.new("UIGradient")
-    SaturationGradient.Rotation = 90
-    SaturationGradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 1),
-        NumberSequenceKeypoint.new(1, 0)
-    })
-    SaturationGradient.Parent = ColorCanvas
-    
-    -- 选择器指示器
-    local Selector = Instance.new("Frame")
-    Selector.Name = "Selector"
-    Selector.Parent = ColorCanvas
-    Selector.BackgroundColor3 = Color3.new(1, 1, 1)
-    Selector.BackgroundTransparency = 1
-    Selector.BorderSizePixel = 0
-    Selector.Size = UDim2.new(0, 8, 0, 8)
-    Selector.AnchorPoint = Vector2.new(0.5, 0.5)
-    Selector.ZIndex = 103
-    
-    local SelectorCorner = Instance.new("UICorner")
-    SelectorCorner.CornerRadius = UDim.new(1, 0)
-    SelectorCorner.Parent = Selector
-    
-    local SelectorStroke = Instance.new("UIStroke")
-    SelectorStroke.Parent = Selector
-    SelectorStroke.Color = Color3.new(0, 0, 0)
-    SelectorStroke.Thickness = 2
-    
-    -- 色相滑块
-    local HueSlider = Instance.new("Frame")
-    HueSlider.Name = "HueSlider"
-    HueSlider.Parent = ColorPickerWindow
-    HueSlider.BackgroundColor3 = Color3.new(1, 1, 1)
-    HueSlider.BorderSizePixel = 0
-    HueSlider.Position = UDim2.new(0, 170, 0, 40)
-    HueSlider.Size = UDim2.new(0, 15, 0, 100)
-    HueSlider.ZIndex = 102
-    
-    local HueSliderCorner = Instance.new("UICorner")
-    HueSliderCorner.CornerRadius = UDim.new(0, 4)
-    HueSliderCorner.Parent = HueSlider
-    
-    local HueGradientSlider = Instance.new("UIGradient")
-    HueGradientSlider.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-        ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
-        ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
-        ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
-        ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
-    })
-    HueGradientSlider.Parent = HueSlider
-    
-    -- 色相选择器
-    local HueSelector = Instance.new("Frame")
-    HueSelector.Name = "HueSelector"
-    HueSelector.Parent = HueSlider
-    HueSelector.BackgroundColor3 = Color3.new(1, 1, 1)
-    HueSelector.BackgroundTransparency = 1
-    HueSelector.BorderSizePixel = 0
-    HueSelector.Size = UDim2.new(2, 0, 0, 3)
-    HueSelector.AnchorPoint = Vector2.new(0.5, 0.5)
-    HueSelector.ZIndex = 103
-    
-    local HueSelectorCorner = Instance.new("UICorner")
-    HueSelectorCorner.CornerRadius = UDim.new(0, 2)
-    HueSelectorCorner.Parent = HueSelector
-    
-    local HueSelectorStroke = Instance.new("UIStroke")
-    HueSelectorStroke.Parent = HueSelector
-    HueSelectorStroke.Color = Color3.new(1, 1, 1)
-    HueSelectorStroke.Thickness = 1
-    
-    -- 当前颜色预览
-    local CurrentColorPreview = Instance.new("Frame")
-    CurrentColorPreview.Name = "CurrentColorPreview"
-    CurrentColorPreview.Parent = ColorPickerWindow
-    CurrentColorPreview.BackgroundColor3 = default
-    CurrentColorPreview.BorderSizePixel = 0
-    CurrentColorPreview.Position = UDim2.new(0, 195, 0, 40)
-    CurrentColorPreview.Size = UDim2.new(0, 70, 0, 40)
-    CurrentColorPreview.ZIndex = 102
-    
-    local PreviewCorner = Instance.new("UICorner")
-    PreviewCorner.CornerRadius = UDim.new(0, 4)
-    PreviewCorner.Parent = CurrentColorPreview
-    
-    local PreviewStroke = Instance.new("UIStroke")
-    PreviewStroke.Parent = CurrentColorPreview
-    PreviewStroke.Color = Color3.new(1, 1, 1)
-    PreviewStroke.Thickness = 2
-    PreviewStroke.Transparency = 0.3
-    
-    -- RGB输入框
-    local RInput = Instance.new("TextBox")
-    RInput.Name = "RInput"
-    RInput.Parent = ColorPickerWindow
-    RInput.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
-    RInput.BackgroundTransparency = 0.2
-    RInput.BorderSizePixel = 0
-    RInput.Position = UDim2.new(0, 195, 0, 90)
-    RInput.Size = UDim2.new(0, 70, 0, 20)
-    RInput.Font = Enum.Font.Gotham
-    RInput.Text = tostring(math.floor(default.R * 255))
-    RInput.TextColor3 = Color3.new(1, 1, 1)
-    RInput.TextSize = 12
-    RInput.PlaceholderText = "R"
-    RInput.ZIndex = 102
-    
-    local RCorner = Instance.new("UICorner")
-    RCorner.CornerRadius = UDim.new(0, 4)
-    RCorner.Parent = RInput
-    
-    local GInput = Instance.new("TextBox")
-    GInput.Name = "GInput"
-    GInput.Parent = ColorPickerWindow
-    GInput.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
-    GInput.BackgroundTransparency = 0.2
-    GInput.BorderSizePixel = 0
-    GInput.Position = UDim2.new(0, 195, 0, 115)
-    GInput.Size = UDim2.new(0, 70, 0, 20)
-    GInput.Font = Enum.Font.Gotham
-    GInput.Text = tostring(math.floor(default.G * 255))
-    GInput.TextColor3 = Color3.new(1, 1, 1)
-    GInput.TextSize = 12
-    GInput.PlaceholderText = "G"
-    GInput.ZIndex = 102
-    
-    local GCorner = Instance.new("UICorner")
-    GCorner.CornerRadius = UDim.new(0, 4)
-    GCorner.Parent = GInput
-    
-    local BInput = Instance.new("TextBox")
-    BInput.Name = "BInput"
-    BInput.Parent = ColorPickerWindow
-    BInput.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
-    BInput.BackgroundTransparency = 0.2
-    BInput.BorderSizePixel = 0
-    BInput.Position = UDim2.new(0, 195, 0, 140)
-    BInput.Size = UDim2.new(0, 70, 0, 20)
-    BInput.Font = Enum.Font.Gotham
-    BInput.Text = tostring(math.floor(default.B * 255))
-    BInput.TextColor3 = Color3.new(1, 1, 1)
-    BInput.TextSize = 12
-    BInput.PlaceholderText = "B"
-    BInput.ZIndex = 102
-    
-    local BCorner = Instance.new("UICorner")
-    BCorner.CornerRadius = UDim.new(0, 4)
-    BCorner.Parent = BInput
-    
-    -- HEX输入框
-    local HexInput = Instance.new("TextBox")
-    HexInput.Name = "HexInput"
-    HexInput.Parent = ColorPickerWindow
-    HexInput.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
-    HexInput.BackgroundTransparency = 0.2
-    HexInput.BorderSizePixel = 0
-    HexInput.Position = UDim2.new(0, 10, 0, 155)
-    HexInput.Size = UDim2.new(0, 120, 0, 20)
-    HexInput.Font = Enum.Font.Gotham
-    HexInput.Text = string.format("#%02X%02X%02X", 
-        math.floor(default.R * 255), 
-        math.floor(default.G * 255), 
-        math.floor(default.B * 255))
-    HexInput.TextColor3 = Color3.new(1, 1, 1)
-    HexInput.TextSize = 12
-    HexInput.PlaceholderText = "HEX颜色码"
-    HexInput.ZIndex = 102
-    
-    local HexCorner = Instance.new("UICorner")
-    HexCorner.CornerRadius = UDim.new(0, 4)
-    HexCorner.Parent = HexInput
-    
-    -- 确认按钮
-    local ConfirmButton = Instance.new("TextButton")
-    ConfirmButton.Name = "ConfirmButton"
-    ConfirmButton.Parent = ColorPickerWindow
-    ConfirmButton.BackgroundColor3 = Color3.fromRGB(70, 120, 200)
-    ConfirmButton.BackgroundTransparency = 0.2
-    ConfirmButton.BorderSizePixel = 0
-    ConfirmButton.Position = UDim2.new(0, 140, 0, 155)
-    ConfirmButton.Size = UDim2.new(0, 60, 0, 20)
-    ConfirmButton.Font = Enum.Font.GothamSemibold
-    ConfirmButton.Text = "应用"
-    ConfirmButton.TextColor3 = Color3.new(1, 1, 1)
-    ConfirmButton.TextSize = 12
-    ConfirmButton.ZIndex = 102
-    
-    local ConfirmCorner = Instance.new("UICorner")
-    ConfirmCorner.CornerRadius = UDim.new(0, 4)
-    ConfirmCorner.Parent = ConfirmButton
-    
-    -- 取消按钮
-    local CancelButton = Instance.new("TextButton")
-    CancelButton.Name = "CancelButton"
-    CancelButton.Parent = ColorPickerWindow
-    CancelButton.BackgroundColor3 = Color3.fromRGB(200, 70, 70)
-    CancelButton.BackgroundTransparency = 0.2
-    CancelButton.BorderSizePixel = 0
-    CancelButton.Position = UDim2.new(0, 205, 0, 155)
-    CancelButton.Size = UDim2.new(0, 60, 0, 20)
-    CancelButton.Font = Enum.Font.GothamSemibold
-    CancelButton.Text = "取消"
-    CancelButton.TextColor3 = Color3.new(1, 1, 1)
-    CancelButton.TextSize = 12
-    CancelButton.ZIndex = 102
-    
-    local CancelCorner = Instance.new("UICorner")
-    CancelCorner.CornerRadius = UDim.new(0, 4)
-    CancelCorner.Parent = CancelButton
-    
-    -- 初始化选择器位置
-    local currentHue, currentSaturation, currentValue = default:ToHSV()
-    Selector.Position = UDim2.new(currentSaturation, 0, 1 - currentValue, 0)
-    HueSelector.Position = UDim2.new(0.5, 0, currentHue, 0)
-    
-    -- 更新预览颜色
-    local function updatePreviewColor(color)
-        CurrentColorPreview.BackgroundColor3 = color
-        ColorPickerPreview.BackgroundColor3 = color
-        ColorPickerText.Text = string.format("#%02X%02X%02X", 
-            math.floor(color.R * 255), 
-            math.floor(color.G * 255), 
-            math.floor(color.B * 255))
-        RInput.Text = tostring(math.floor(color.R * 255))
-        GInput.Text = tostring(math.floor(color.G * 255))
-        BInput.Text = tostring(math.floor(color.B * 255))
-        HexInput.Text = string.format("#%02X%02X%02X", 
-            math.floor(color.R * 255), 
-            math.floor(color.G * 255), 
-            math.floor(color.B * 255))
-    end
-    
-    -- 从HSV更新颜色
-    local function updateColorFromHSV(h, s, v)
-        local color = Color3.fromHSV(h, s, v)
-        updatePreviewColor(color)
-        return color
-    end
-    
-    -- 从RGB更新颜色
-    local function updateColorFromRGB(r, g, b)
-        r = math.clamp(tonumber(r) or 0, 0, 255) / 255
-        g = math.clamp(tonumber(g) or 0, 0, 255) / 255
-        b = math.clamp(tonumber(b) or 0, 0, 255) / 255
-        local color = Color3.new(r, g, b)
-        local h, s, v = color:ToHSV()
-        Selector.Position = UDim2.new(s, 0, 1 - v, 0)
-        HueSelector.Position = UDim2.new(0.5, 0, h, 0)
-        updatePreviewColor(color)
-        return color, h, s, v
-    end
-    
-    -- 从HEX更新颜色
-    local function updateColorFromHex(hex)
-        hex = hex:gsub("#", "")
-        if #hex == 3 then
-            hex = hex:sub(1,1)..hex:sub(1,1)..hex:sub(2,2)..hex:sub(2,2)..hex:sub(3,3)..hex:sub(3,3)
-        end
-        
-        if #hex == 6 then
-            local r = tonumber(hex:sub(1,2), 16) or 0
-            local g = tonumber(hex:sub(3,4), 16) or 0
-            local b = tonumber(hex:sub(5,6), 16) or 0
-            return updateColorFromRGB(r, g, b)
-        end
-        return nil
-    end
-    
-    -- 颜色选择交互
-    local colorSelecting = false
-    local hueSelecting = false
-    
-    -- 颜色画布交互
-    local TouchArea = Instance.new("TextButton")
-    TouchArea.Name = "TouchArea"
-    TouchArea.Parent = ColorCanvas
-    TouchArea.BackgroundTransparency = 1
-    TouchArea.BorderSizePixel = 0
-    TouchArea.Size = UDim2.new(1, 0, 1, 0)
-    TouchArea.Text = ""
-    TouchArea.ZIndex = 104
-    
-    -- 色相滑块交互
-    local HueTouchArea = Instance.new("TextButton")
-    HueTouchArea.Name = "HueTouchArea"
-    HueTouchArea.Parent = HueSlider
-    HueTouchArea.BackgroundTransparency = 1
-    HueTouchArea.BorderSizePixel = 0
-    HueTouchArea.Size = UDim2.new(1, 0, 1, 0)
-    HueTouchArea.Text = ""
-    HueTouchArea.ZIndex = 104
-    
-    -- 颜色区域交互
-    TouchArea.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
-            colorSelecting = true
-            
-            local canvasPos = ColorCanvas.AbsolutePosition
-            local canvasSize = ColorCanvas.AbsoluteSize
-            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
-            
-            local x = math.clamp((inputPos.X - canvasPos.X) / canvasSize.X, 0, 1)
-            local y = math.clamp((inputPos.Y - canvasPos.Y) / canvasSize.Y, 0, 1)
-            
-            Selector.Position = UDim2.new(x, 0, y, 0)
-            local h = HueSelector.Position.Y.Scale
-            local color = updateColorFromHSV(h, x, 1 - y)
-        end
-    end)
-    
-    TouchArea.InputChanged:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseMovement or 
-            input.UserInputType == Enum.UserInputType.Touch) and colorSelecting then
-            
-            local canvasPos = ColorCanvas.AbsolutePosition
-            local canvasSize = ColorCanvas.AbsoluteSize
-            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
-            
-            local x = math.clamp((inputPos.X - canvasPos.X) / canvasSize.X, 0, 1)
-            local y = math.clamp((inputPos.Y - canvasPos.Y) / canvasSize.Y, 0, 1)
-            
-            Selector.Position = UDim2.new(x, 0, y, 0)
-            local h = HueSelector.Position.Y.Scale
-            local color = updateColorFromHSV(h, x, 1 - y)
-        end
-    end)
-    
-    TouchArea.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
-            colorSelecting = false
-        end
-    end)
-    
-    -- 色相滑块交互
-    HueTouchArea.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
-            hueSelecting = true
-            
-            local sliderPos = HueSlider.AbsolutePosition
-            local sliderSize = HueSlider.AbsoluteSize
-            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
-            
-            local y = math.clamp((inputPos.Y - sliderPos.Y) / sliderSize.Y, 0, 1)
-            HueSelector.Position = UDim2.new(0.5, 0, y, 0)
-            
-            local h = y
-            local s = Selector.Position.X.Scale
-            local v = 1 - Selector.Position.Y.Scale
-            local color = updateColorFromHSV(h, s, v)
-        end
-    end)
-    
-    HueTouchArea.InputChanged:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseMovement or 
-            input.UserInputType == Enum.UserInputType.Touch) and hueSelecting then
-            
-            local sliderPos = HueSlider.AbsolutePosition
-            local sliderSize = HueSlider.AbsoluteSize
-            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
-            
-            local y = math.clamp((inputPos.Y - sliderPos.Y) / sliderSize.Y, 0, 1)
-            HueSelector.Position = UDim2.new(0.5, 0, y, 0)
-            
-            local h = y
-            local s = Selector.Position.X.Scale
-            local v = 1 - Selector.Position.Y.Scale
-            local color = updateColorFromHSV(h, s, v)
-        end
-    end)
-    
-    HueTouchArea.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
-            hueSelecting = false
-        end
-    end)
-    
-    -- RGB输入框事件
-    RInput.FocusLost:Connect(function(enterPressed)
-        if enterPressed then
-            local color = updateColorFromRGB(RInput.Text, GInput.Text, BInput.Text)
-        end
-    end)
-    
-    GInput.FocusLost:Connect(function(enterPressed)
-        if enterPressed then
-            local color = updateColorFromRGB(RInput.Text, GInput.Text, BInput.Text)
-        end
-    end)
-    
-    BInput.FocusLost:Connect(function(enterPressed)
-        if enterPressed then
-            local color = updateColorFromRGB(RInput.Text, GInput.Text, BInput.Text)
-        end
-    end)
-    
-    -- HEX输入框事件
-    HexInput.FocusLost:Connect(function(enterPressed)
-        if enterPressed then
-            local hex = HexInput.Text
-            local color = updateColorFromHex(hex)
-        end
-    end)
-    
-    -- 按钮事件
-    local windowOpen = false
-    ColorPickerButton.MouseButton1Click:Connect(function()
-        if not windowOpen then
-            DigitalParticleExplosion(ColorPickerButton)
-            ColorPickerWindow.Visible = true
-            windowOpen = true
-            
-            -- 计算窗口位置
-            local mainPos = Main.AbsolutePosition
-            local mainSize = Main.AbsoluteSize
-            local windowSize = ColorPickerWindow.AbsoluteSize
-            
-            local buttonPos = ColorPickerButton.AbsolutePosition
-            local buttonSize = ColorPickerButton.AbsoluteSize
-            
-            local xOffset = buttonPos.X - mainPos.X + buttonSize.X + 5
-            local yOffset = buttonPos.Y - mainPos.Y
-            
-            if xOffset + windowSize.X > mainSize.X then
-                xOffset = buttonPos.X - mainPos.X - windowSize.X - 5
-            end
-            
-            if yOffset + windowSize.Y > mainSize.Y then
-                yOffset = mainSize.Y - windowSize.Y - 10
-            end
-            
-            xOffset = math.max(10, math.min(xOffset, mainSize.X - windowSize.X - 10))
-            yOffset = math.max(35, math.min(yOffset, mainSize.Y - windowSize.Y - 10))
-            
-            ColorPickerWindow.Position = UDim2.new(0, xOffset, 0, yOffset)
-        end
-    end)
-    
-    ConfirmButton.MouseButton1Click:Connect(function()
-        local currentColor = CurrentColorPreview.BackgroundColor3
-        FengUI.flags[flag] = currentColor
-        callback(currentColor)
-        ColorPickerWindow.Visible = false
-        windowOpen = false
-        DigitalParticleExplosion(ConfirmButton)
-    end)
-    
-    CancelButton.MouseButton1Click:Connect(function()
-        ColorPickerWindow.Visible = false
-        windowOpen = false
-        DigitalParticleExplosion(CancelButton)
-    end)
-    
-    -- 点击外部关闭窗口
-    local function isInputOverWindow(inputPosition)
-        if not ColorPickerWindow.Visible then return false end
-        
-        local windowPos = ColorPickerWindow.AbsolutePosition
-        local windowSize = ColorPickerWindow.AbsoluteSize
-        
-        return inputPosition.X >= windowPos.X and inputPosition.X <= windowPos.X + windowSize.X and
-               inputPosition.Y >= windowPos.Y and inputPosition.Y <= windowPos.Y + windowSize.Y
-    end
-    
-    services.UserInputService.InputBegan:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseButton1 or 
-            input.UserInputType == Enum.UserInputType.Touch) and windowOpen then
-            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
-            
-            local isOverColorButton = isInputOverWindow(Vector2.new(
-                ColorPickerButton.AbsolutePosition.X, 
-                ColorPickerButton.AbsolutePosition.Y
-            ))
-            
-            local isOverWindow = isInputOverWindow(inputPos)
-            
-            if not isOverWindow and not isOverColorButton then
-                ColorPickerWindow.Visible = false
-                windowOpen = false
-            end
-        end
-    end)
-    
-    -- 返回函数
-    local funcs = {
-        SetColor = function(self, color)
-            local h, s, v = color:ToHSV()
-            Selector.Position = UDim2.new(s, 0, 1 - v, 0)
-            HueSelector.Position = UDim2.new(0.5, 0, h, 0)
-            updatePreviewColor(color)
-            FengUI.flags[flag] = color
-            callback(color)
-        end,
-        
-        GetColor = function(self)
-            return FengUI.flags[flag]
-        end,
-        
-        Module = ColorPickerModule
-    }
-    
-    return funcs
-end
-
             return section
         end
 
@@ -2829,117 +2776,65 @@ function ToggleUILib()
     Main.Visible = not ToggleUI
 end
 
-if not getgenv then getgenv = function() return _G end end
-getgenv().FengUI = FengUI
-
--- 添加主题系统支持
-FengUI.themes = {}
-FengUI.currentTheme = config
-
--- 预定义主题
-FengUI.themes.Dark = {
-    MainColor = Color3.fromRGB(18, 18, 30),
-    AccentColor = Color3.fromRGB(0, 200, 255),
-    TextColor = Color3.fromRGB(240, 245, 255),
-    SecondaryTextColor = Color3.fromRGB(180, 190, 210)
-}
-
-FengUI.themes.Light = {
-    MainColor = Color3.fromRGB(245, 245, 245),
-    AccentColor = Color3.fromRGB(0, 150, 255),
-    TextColor = Color3.fromRGB(30, 30, 30),
-    SecondaryTextColor = Color3.fromRGB(80, 80, 80)
-}
-
-FengUI.themes.Neon = {
-    MainColor = Color3.fromRGB(10, 10, 20),
-    AccentColor = Color3.fromRGB(0, 255, 255),
-    TextColor = Color3.fromRGB(255, 255, 255),
-    SecondaryTextColor = Color3.fromRGB(200, 200, 200)
-}
-
--- 主题更新函数
-function FengUI.updateTheme(newTheme)
-    for k, v in pairs(newTheme) do
-        if config[k] ~= nil then
-            config[k] = v
-            FengUI.currentTheme[k] = v
-        end
-    end
-    
-    -- 重新应用主题到UI元素
-    if FengUI.applyTheme then
-        FengUI.applyTheme()
-    end
+-- 新增：获取颜色配置函数
+function FengUI:GetColors()
+    return FengUI.colors
 end
 
--- 获取当前主题
-function FengUI.getTheme()
-    return FengUI.currentTheme
+-- 新增：设置颜色函数
+function FengUI:SetColor(key, color)
+    if config[key] ~= nil then
+        config[key] = color
+        FengUI.colors[key] = color
+        return true
+    end
+    return false
 end
 
--- 应用主题到UI元素
-function FengUI.applyTheme()
-    -- 这里需要递归更新所有UI元素的颜色
-    -- 由于UI结构复杂，这是一个简化的实现
-    if Main then
-        -- 更新主窗口
-        if Main:FindFirstChild("MainStroke") then
-            Main.MainStroke.Color = config.AccentColor
-        end
-        
-        if Main:FindFirstChild("TitleBar") then
-            Main.TitleBar.BackgroundColor3 = config.TabColor
-        end
-        
-        if Main:FindFirstChild("TitleText") then
-            Main.TitleText.TextColor3 = config.AccentColor
-        end
-    end
+-- 新增：应用UI颜色主题
+function FengUI:ApplyTheme(themeName)
+    local themes = {
+        ["默认"] = {
+            MainColor = Color3.fromRGB(18, 18, 30),
+            AccentColor = Color3.fromRGB(0, 200, 255),
+            TextColor = Color3.fromRGB(240, 245, 255)
+        },
+        ["暗黑"] = {
+            MainColor = Color3.fromRGB(10, 10, 15),
+            AccentColor = Color3.fromRGB(100, 100, 120),
+            TextColor = Color3.fromRGB(200, 200, 200)
+        },
+        ["霓虹"] = {
+            MainColor = Color3.fromRGB(5, 5, 20),
+            AccentColor = Color3.fromRGB(0, 255, 255),
+            TextColor = Color3.fromRGB(255, 255, 255)
+        },
+        ["熔岩"] = {
+            MainColor = Color3.fromRGB(20, 5, 5),
+            AccentColor = Color3.fromRGB(255, 80, 0),
+            TextColor = Color3.fromRGB(255, 240, 220)
+        },
+        ["森林"] = {
+            MainColor = Color3.fromRGB(5, 15, 8),
+            AccentColor = Color3.fromRGB(0, 255, 100),
+            TextColor = Color3.fromRGB(220, 255, 230)
+        }
+    }
     
-    -- 更新所有卡片
-    if CardsContainer then
-        for _, card in ipairs(CardsContainer:GetChildren()) do
-            if card:IsA("TextButton") then
-                card.BackgroundColor3 = config.TabColor
-                
-                if card:FindFirstChild("CardGlow") then
-                    card.CardGlow.Color = config.AccentColor
-                end
-                
-                if card:FindFirstChild("CardTitle") then
-                    card.CardTitle.TextColor3 = config.TextColor
-                end
-                
-                if card:FindFirstChild("CardDescription") then
-                    card.CardDescription.TextColor3 = config.SecondaryTextColor
-                end
+    local theme = themes[themeName]
+    if theme then
+        for k, v in pairs(theme) do
+            if config[k] ~= nil then
+                config[k] = v
+                FengUI.colors[k] = v
             end
         end
+        return true
     end
-    
-    -- 更新侧边栏
-    if MainSideContainer then
-        MainSideContainer.BackgroundColor3 = config.TabColor
-    end
-    
-    -- 更新返回按钮
-    if ReturnToCardsButton then
-        ReturnToCardsButton.BackgroundColor3 = config.Button_Color
-        ReturnToCardsButton.TextColor3 = config.TextColor
-    end
-    
-    -- 通知所有颜色已更新
-    if FengUI.onThemeChanged then
-        FengUI.onThemeChanged(config)
-    end
+    return false
 end
 
--- 颜色变化监听器
-FengUI.onThemeChanged = nil
-
-function FengUI.onThemeChange(callback)
-    FengUI.onThemeChanged = callback
-end
+if not getgenv then getgenv = function() return _G end end
+getgenv().FengUI = FengUI
 
 return FengUI
