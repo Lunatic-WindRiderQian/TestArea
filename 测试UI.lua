@@ -2132,20 +2132,16 @@ function section.ColorPicker(section, text, flag, default, callback)
     assert(flag, "No flag provided")
     FengUI.flags[flag] = default
     
+    -- 创建颜色选择器模块
     local ColorPickerModule = Instance.new("Frame")
-    local ColorPickerTop = Instance.new("TextButton")
-    local ColorPickerTopC = Instance.new("UICorner")
-    local ColorPickerPreview = Instance.new("Frame")
-    local ColorPickerPreviewC = Instance.new("UICorner")
-    local ColorPickerButton = Instance.new("TextButton")
-    local ColorPickerText = Instance.new("TextLabel")
-    
     ColorPickerModule.Name = "ColorPickerModule"
     ColorPickerModule.Parent = Objs
     ColorPickerModule.BackgroundTransparency = 1
     ColorPickerModule.BorderSizePixel = 0
     ColorPickerModule.Size = UDim2.new(0, 330, 0, 36)
     
+    -- 颜色选择器按钮
+    local ColorPickerTop = Instance.new("TextButton")
     ColorPickerTop.Name = "ColorPickerTop"
     ColorPickerTop.Parent = ColorPickerModule
     ColorPickerTop.BackgroundColor3 = config.Dropdown_Color
@@ -2159,10 +2155,13 @@ function section.ColorPicker(section, text, flag, default, callback)
     ColorPickerTop.TextSize = 14
     ColorPickerTop.TextXAlignment = Enum.TextXAlignment.Left
     
+    local ColorPickerTopC = Instance.new("UICorner")
     ColorPickerTopC.CornerRadius = UDim.new(0, 6)
     ColorPickerTopC.Name = "ColorPickerTopC"
     ColorPickerTopC.Parent = ColorPickerTop
     
+    -- 颜色预览框
+    local ColorPickerPreview = Instance.new("Frame")
     ColorPickerPreview.Name = "ColorPickerPreview"
     ColorPickerPreview.Parent = ColorPickerTop
     ColorPickerPreview.BackgroundColor3 = default
@@ -2170,6 +2169,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     ColorPickerPreview.Position = UDim2.new(0.82, 0, 0.22, 0)
     ColorPickerPreview.Size = UDim2.new(0, 22, 0, 22)
     
+    local ColorPickerPreviewC = Instance.new("UICorner")
     ColorPickerPreviewC.CornerRadius = UDim.new(0, 4)
     ColorPickerPreviewC.Name = "ColorPickerPreviewC"
     ColorPickerPreviewC.Parent = ColorPickerPreview
@@ -2180,6 +2180,8 @@ function section.ColorPicker(section, text, flag, default, callback)
     previewGlow.Thickness = 1
     previewGlow.Transparency = 0.5
     
+    -- 打开颜色选择器的按钮
+    local ColorPickerButton = Instance.new("TextButton")
     ColorPickerButton.Name = "ColorPickerButton"
     ColorPickerButton.Parent = ColorPickerTop
     ColorPickerButton.BackgroundTransparency = 1
@@ -2191,6 +2193,8 @@ function section.ColorPicker(section, text, flag, default, callback)
     ColorPickerButton.Text = ""
     ColorPickerButton.ZIndex = 10
     
+    -- 显示当前颜色的文本
+    local ColorPickerText = Instance.new("TextLabel")
     ColorPickerText.Name = "ColorPickerText"
     ColorPickerText.Parent = ColorPickerTop
     ColorPickerText.BackgroundTransparency = 1
@@ -2205,16 +2209,17 @@ function section.ColorPicker(section, text, flag, default, callback)
     ColorPickerText.TextSize = 12
     ColorPickerText.TextXAlignment = Enum.TextXAlignment.Right
     
-    -- 颜色选择器窗口（初始隐藏）
+    -- 创建颜色选择器窗口（弹出窗口）
     local ColorPickerWindow = Instance.new("Frame")
     ColorPickerWindow.Name = "ColorPickerWindow"
     ColorPickerWindow.Parent = Main
     ColorPickerWindow.BackgroundColor3 = Color3.fromRGB(40, 40, 65)
     ColorPickerWindow.BackgroundTransparency = 0.05
     ColorPickerWindow.BorderSizePixel = 0
-    ColorPickerWindow.Size = UDim2.new(0, 300, 0, 220)
+    ColorPickerWindow.Size = UDim2.new(0, 280, 0, 200)
     ColorPickerWindow.Visible = false
     ColorPickerWindow.ZIndex = 100
+    ColorPickerWindow.Visible = false
     
     local WindowCorner = Instance.new("UICorner")
     WindowCorner.CornerRadius = UDim.new(0, 8)
@@ -2226,7 +2231,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     WindowStroke.Thickness = 2
     WindowStroke.Transparency = 0.3
     
-    -- 标题区域
+    -- 标题栏
     local TitleBar = Instance.new("Frame")
     TitleBar.Name = "TitleBar"
     TitleBar.Parent = ColorPickerWindow
@@ -2253,21 +2258,21 @@ function section.ColorPicker(section, text, flag, default, callback)
     WindowTitle.TextXAlignment = Enum.TextXAlignment.Left
     WindowTitle.ZIndex = 102
     
-    -- 颜色选择区域
+    -- 颜色画布
     local ColorCanvas = Instance.new("Frame")
     ColorCanvas.Name = "ColorCanvas"
     ColorCanvas.Parent = ColorPickerWindow
     ColorCanvas.BackgroundColor3 = Color3.new(1, 1, 1)
     ColorCanvas.BorderSizePixel = 0
     ColorCanvas.Position = UDim2.new(0, 10, 0, 40)
-    ColorCanvas.Size = UDim2.new(0, 180, 0, 120)
+    ColorCanvas.Size = UDim2.new(0, 150, 0, 100)
     ColorCanvas.ZIndex = 102
     
     local ColorCanvasCorner = Instance.new("UICorner")
     ColorCanvasCorner.CornerRadius = UDim.new(0, 4)
     ColorCanvasCorner.Parent = ColorCanvas
     
-    -- 创建颜色渐变（色相）
+    -- 颜色渐变（色相）
     local HueGradient = Instance.new("UIGradient")
     HueGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
@@ -2280,7 +2285,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     })
     HueGradient.Parent = ColorCanvas
     
-    -- 创建亮度渐变（从上到下，从白色到黑色）
+    -- 亮度渐变
     local ValueGradient = Instance.new("UIGradient")
     ValueGradient.Transparency = NumberSequence.new({
         NumberSequenceKeypoint.new(0, 0),
@@ -2288,7 +2293,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     })
     ValueGradient.Parent = ColorCanvas
     
-    -- 饱和度渐变（从左到右，从透明到不透明）
+    -- 饱和度渐变
     local SaturationGradient = Instance.new("UIGradient")
     SaturationGradient.Rotation = 90
     SaturationGradient.Transparency = NumberSequence.new({
@@ -2317,14 +2322,14 @@ function section.ColorPicker(section, text, flag, default, callback)
     SelectorStroke.Color = Color3.new(0, 0, 0)
     SelectorStroke.Thickness = 2
     
-    -- 色相选择条
+    -- 色相滑块
     local HueSlider = Instance.new("Frame")
     HueSlider.Name = "HueSlider"
     HueSlider.Parent = ColorPickerWindow
     HueSlider.BackgroundColor3 = Color3.new(1, 1, 1)
     HueSlider.BorderSizePixel = 0
-    HueSlider.Position = UDim2.new(0, 195, 0, 40)
-    HueSlider.Size = UDim2.new(0, 15, 0, 120)
+    HueSlider.Position = UDim2.new(0, 170, 0, 40)
+    HueSlider.Size = UDim2.new(0, 15, 0, 100)
     HueSlider.ZIndex = 102
     
     local HueSliderCorner = Instance.new("UICorner")
@@ -2343,7 +2348,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     })
     HueGradientSlider.Parent = HueSlider
     
-    -- 色相选择指示器
+    -- 色相选择器
     local HueSelector = Instance.new("Frame")
     HueSelector.Name = "HueSelector"
     HueSelector.Parent = HueSlider
@@ -2353,7 +2358,6 @@ function section.ColorPicker(section, text, flag, default, callback)
     HueSelector.Size = UDim2.new(2, 0, 0, 3)
     HueSelector.AnchorPoint = Vector2.new(0.5, 0.5)
     HueSelector.ZIndex = 103
-    HueSelector.Position = UDim2.new(0.5, 0, 0, 0)
     
     local HueSelectorCorner = Instance.new("UICorner")
     HueSelectorCorner.CornerRadius = UDim.new(0, 2)
@@ -2370,7 +2374,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     CurrentColorPreview.Parent = ColorPickerWindow
     CurrentColorPreview.BackgroundColor3 = default
     CurrentColorPreview.BorderSizePixel = 0
-    CurrentColorPreview.Position = UDim2.new(0, 220, 0, 40)
+    CurrentColorPreview.Position = UDim2.new(0, 195, 0, 40)
     CurrentColorPreview.Size = UDim2.new(0, 70, 0, 40)
     CurrentColorPreview.ZIndex = 102
     
@@ -2391,8 +2395,8 @@ function section.ColorPicker(section, text, flag, default, callback)
     RInput.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
     RInput.BackgroundTransparency = 0.2
     RInput.BorderSizePixel = 0
-    RInput.Position = UDim2.new(0, 220, 0, 90)
-    RInput.Size = UDim2.new(0, 70, 0, 22)
+    RInput.Position = UDim2.new(0, 195, 0, 90)
+    RInput.Size = UDim2.new(0, 70, 0, 20)
     RInput.Font = Enum.Font.Gotham
     RInput.Text = tostring(math.floor(default.R * 255))
     RInput.TextColor3 = Color3.new(1, 1, 1)
@@ -2410,8 +2414,8 @@ function section.ColorPicker(section, text, flag, default, callback)
     GInput.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
     GInput.BackgroundTransparency = 0.2
     GInput.BorderSizePixel = 0
-    GInput.Position = UDim2.new(0, 220, 0, 117)
-    GInput.Size = UDim2.new(0, 70, 0, 22)
+    GInput.Position = UDim2.new(0, 195, 0, 115)
+    GInput.Size = UDim2.new(0, 70, 0, 20)
     GInput.Font = Enum.Font.Gotham
     GInput.Text = tostring(math.floor(default.G * 255))
     GInput.TextColor3 = Color3.new(1, 1, 1)
@@ -2429,8 +2433,8 @@ function section.ColorPicker(section, text, flag, default, callback)
     BInput.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
     BInput.BackgroundTransparency = 0.2
     BInput.BorderSizePixel = 0
-    BInput.Position = UDim2.new(0, 220, 0, 144)
-    BInput.Size = UDim2.new(0, 70, 0, 22)
+    BInput.Position = UDim2.new(0, 195, 0, 140)
+    BInput.Size = UDim2.new(0, 70, 0, 20)
     BInput.Font = Enum.Font.Gotham
     BInput.Text = tostring(math.floor(default.B * 255))
     BInput.TextColor3 = Color3.new(1, 1, 1)
@@ -2449,8 +2453,8 @@ function section.ColorPicker(section, text, flag, default, callback)
     HexInput.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
     HexInput.BackgroundTransparency = 0.2
     HexInput.BorderSizePixel = 0
-    HexInput.Position = UDim2.new(0, 10, 0, 170)
-    HexInput.Size = UDim2.new(0, 135, 0, 22)
+    HexInput.Position = UDim2.new(0, 10, 0, 155)
+    HexInput.Size = UDim2.new(0, 120, 0, 20)
     HexInput.Font = Enum.Font.Gotham
     HexInput.Text = string.format("#%02X%02X%02X", 
         math.floor(default.R * 255), 
@@ -2472,8 +2476,8 @@ function section.ColorPicker(section, text, flag, default, callback)
     ConfirmButton.BackgroundColor3 = Color3.fromRGB(70, 120, 200)
     ConfirmButton.BackgroundTransparency = 0.2
     ConfirmButton.BorderSizePixel = 0
-    ConfirmButton.Position = UDim2.new(0, 155, 0, 170)
-    ConfirmButton.Size = UDim2.new(0, 60, 0, 22)
+    ConfirmButton.Position = UDim2.new(0, 140, 0, 155)
+    ConfirmButton.Size = UDim2.new(0, 60, 0, 20)
     ConfirmButton.Font = Enum.Font.GothamSemibold
     ConfirmButton.Text = "应用"
     ConfirmButton.TextColor3 = Color3.new(1, 1, 1)
@@ -2491,8 +2495,8 @@ function section.ColorPicker(section, text, flag, default, callback)
     CancelButton.BackgroundColor3 = Color3.fromRGB(200, 70, 70)
     CancelButton.BackgroundTransparency = 0.2
     CancelButton.BorderSizePixel = 0
-    CancelButton.Position = UDim2.new(0, 220, 0, 170)
-    CancelButton.Size = UDim2.new(0, 70, 0, 22)
+    CancelButton.Position = UDim2.new(0, 205, 0, 155)
+    CancelButton.Size = UDim2.new(0, 60, 0, 20)
     CancelButton.Font = Enum.Font.GothamSemibold
     CancelButton.Text = "取消"
     CancelButton.TextColor3 = Color3.new(1, 1, 1)
@@ -2503,7 +2507,7 @@ function section.ColorPicker(section, text, flag, default, callback)
     CancelCorner.CornerRadius = UDim.new(0, 4)
     CancelCorner.Parent = CancelButton
     
-    -- 初始选择器位置
+    -- 初始化选择器位置
     local currentHue, currentSaturation, currentValue = default:ToHSV()
     Selector.Position = UDim2.new(currentSaturation, 0, 1 - currentValue, 0)
     HueSelector.Position = UDim2.new(0.5, 0, currentHue, 0)
@@ -2561,9 +2565,11 @@ function section.ColorPicker(section, text, flag, default, callback)
         return nil
     end
     
-    -- === 全新的触摸交互逻辑 ===
+    -- 颜色选择交互
+    local colorSelecting = false
+    local hueSelecting = false
     
-    -- 创建透明的触摸区域覆盖整个颜色选择区域
+    -- 颜色画布交互
     local TouchArea = Instance.new("TextButton")
     TouchArea.Name = "TouchArea"
     TouchArea.Parent = ColorCanvas
@@ -2571,9 +2577,9 @@ function section.ColorPicker(section, text, flag, default, callback)
     TouchArea.BorderSizePixel = 0
     TouchArea.Size = UDim2.new(1, 0, 1, 0)
     TouchArea.Text = ""
-    TouchArea.ZIndex = 104  -- 最高层级
+    TouchArea.ZIndex = 104
     
-    -- 创建透明的触摸区域覆盖色相滑块
+    -- 色相滑块交互
     local HueTouchArea = Instance.new("TextButton")
     HueTouchArea.Name = "HueTouchArea"
     HueTouchArea.Parent = HueSlider
@@ -2583,104 +2589,93 @@ function section.ColorPicker(section, text, flag, default, callback)
     HueTouchArea.Text = ""
     HueTouchArea.ZIndex = 104
     
-    -- 颜色选择交互函数
-    local function updateColorFromTouch(position)
-        local canvasSize = ColorCanvas.AbsoluteSize
-        local canvasPos = ColorCanvas.AbsolutePosition
-        
-        -- 计算相对位置
-        local x = math.clamp((position.X - canvasPos.X) / canvasSize.X, 0, 1)
-        local y = math.clamp((position.Y - canvasPos.Y) / canvasSize.Y, 0, 1)
-        
-        -- 更新选择器位置
-        Selector.Position = UDim2.new(x, 0, y, 0)
-        
-        -- 获取当前色相
-        local h = HueSelector.Position.Y.Scale
-        
-        -- 计算颜色
-        local color = updateColorFromHSV(h, x, 1 - y)
-        return color
-    end
+    -- 颜色区域交互
+    TouchArea.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            colorSelecting = true
+            
+            local canvasPos = ColorCanvas.AbsolutePosition
+            local canvasSize = ColorCanvas.AbsoluteSize
+            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+            
+            local x = math.clamp((inputPos.X - canvasPos.X) / canvasSize.X, 0, 1)
+            local y = math.clamp((inputPos.Y - canvasPos.Y) / canvasSize.Y, 0, 1)
+            
+            Selector.Position = UDim2.new(x, 0, y, 0)
+            local h = HueSelector.Position.Y.Scale
+            local color = updateColorFromHSV(h, x, 1 - y)
+        end
+    end)
     
-    -- 色相选择交互函数
-    local function updateHueFromTouch(position)
-        local sliderSize = HueSlider.AbsoluteSize
-        local sliderPos = HueSlider.AbsolutePosition
-        
-        -- 计算相对位置
-        local y = math.clamp((position.Y - sliderPos.Y) / sliderSize.Y, 0, 1)
-        
-        -- 更新选择器位置
-        HueSelector.Position = UDim2.new(0.5, 0, y, 0)
-        
-        -- 获取当前饱和度和亮度
-        local s = Selector.Position.X.Scale
-        local v = 1 - Selector.Position.Y.Scale
-        
-        -- 计算颜色
-        local color = updateColorFromHSV(y, s, v)
-        return color
-    end
+    TouchArea.InputChanged:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.MouseMovement or 
+            input.UserInputType == Enum.UserInputType.Touch) and colorSelecting then
+            
+            local canvasPos = ColorCanvas.AbsolutePosition
+            local canvasSize = ColorCanvas.AbsoluteSize
+            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+            
+            local x = math.clamp((inputPos.X - canvasPos.X) / canvasSize.X, 0, 1)
+            local y = math.clamp((inputPos.Y - canvasPos.Y) / canvasSize.Y, 0, 1)
+            
+            Selector.Position = UDim2.new(x, 0, y, 0)
+            local h = HueSelector.Position.Y.Scale
+            local color = updateColorFromHSV(h, x, 1 - y)
+        end
+    end)
     
-    -- 鼠标/触摸交互处理
-    local function setupTouchInteraction()
-        local isDragging = false
-        local isHueDragging = false
-        
-        -- 颜色区域触摸开始
-        TouchArea.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-               input.UserInputType == Enum.UserInputType.Touch then
-                isDragging = true
-                local color = updateColorFromTouch(input.Position)
-            end
-        end)
-        
-        -- 颜色区域触摸移动
-        TouchArea.InputChanged:Connect(function(input)
-            if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
-                               input.UserInputType == Enum.UserInputType.Touch) then
-                local color = updateColorFromTouch(input.Position)
-            end
-        end)
-        
-        -- 颜色区域触摸结束
-        TouchArea.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-               input.UserInputType == Enum.UserInputType.Touch then
-                isDragging = false
-            end
-        end)
-        
-        -- 色相区域触摸开始
-        HueTouchArea.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-               input.UserInputType == Enum.UserInputType.Touch then
-                isHueDragging = true
-                local color = updateHueFromTouch(input.Position)
-            end
-        end)
-        
-        -- 色相区域触摸移动
-        HueTouchArea.InputChanged:Connect(function(input)
-            if isHueDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
-                                  input.UserInputType == Enum.UserInputType.Touch) then
-                local color = updateHueFromTouch(input.Position)
-            end
-        end)
-        
-        -- 色相区域触摸结束
-        HueTouchArea.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-               input.UserInputType == Enum.UserInputType.Touch then
-                isHueDragging = false
-            end
-        end)
-    end
+    TouchArea.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            colorSelecting = false
+        end
+    end)
     
-    -- 初始化触摸交互
-    setupTouchInteraction()
+    -- 色相滑块交互
+    HueTouchArea.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            hueSelecting = true
+            
+            local sliderPos = HueSlider.AbsolutePosition
+            local sliderSize = HueSlider.AbsoluteSize
+            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+            
+            local y = math.clamp((inputPos.Y - sliderPos.Y) / sliderSize.Y, 0, 1)
+            HueSelector.Position = UDim2.new(0.5, 0, y, 0)
+            
+            local h = y
+            local s = Selector.Position.X.Scale
+            local v = 1 - Selector.Position.Y.Scale
+            local color = updateColorFromHSV(h, s, v)
+        end
+    end)
+    
+    HueTouchArea.InputChanged:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.MouseMovement or 
+            input.UserInputType == Enum.UserInputType.Touch) and hueSelecting then
+            
+            local sliderPos = HueSlider.AbsolutePosition
+            local sliderSize = HueSlider.AbsoluteSize
+            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+            
+            local y = math.clamp((inputPos.Y - sliderPos.Y) / sliderSize.Y, 0, 1)
+            HueSelector.Position = UDim2.new(0.5, 0, y, 0)
+            
+            local h = y
+            local s = Selector.Position.X.Scale
+            local v = 1 - Selector.Position.Y.Scale
+            local color = updateColorFromHSV(h, s, v)
+        end
+    end)
+    
+    HueTouchArea.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            hueSelecting = false
+        end
+    end)
     
     -- RGB输入框事件
     RInput.FocusLost:Connect(function(enterPressed)
@@ -2717,33 +2712,25 @@ function section.ColorPicker(section, text, flag, default, callback)
             ColorPickerWindow.Visible = true
             windowOpen = true
             
-            -- 将窗口置于最前
-            ColorPickerWindow.ZIndex = 100
-            
-            -- 计算位置：确保在Main内部且不会超出
+            -- 计算窗口位置
             local mainPos = Main.AbsolutePosition
             local mainSize = Main.AbsoluteSize
             local windowSize = ColorPickerWindow.AbsoluteSize
             
-            -- 尝试将窗口放在颜色预览按钮附近
             local buttonPos = ColorPickerButton.AbsolutePosition
             local buttonSize = ColorPickerButton.AbsoluteSize
             
-            -- 计算窗口位置
             local xOffset = buttonPos.X - mainPos.X + buttonSize.X + 5
             local yOffset = buttonPos.Y - mainPos.Y
             
-            -- 如果窗口会超出Main右侧，则放在左侧
             if xOffset + windowSize.X > mainSize.X then
                 xOffset = buttonPos.X - mainPos.X - windowSize.X - 5
             end
             
-            -- 如果窗口会超出Main底部，则向上调整
             if yOffset + windowSize.Y > mainSize.Y then
                 yOffset = mainSize.Y - windowSize.Y - 10
             end
             
-            -- 确保至少有一部分在Main内部
             xOffset = math.max(10, math.min(xOffset, mainSize.X - windowSize.X - 10))
             yOffset = math.max(35, math.min(yOffset, mainSize.Y - windowSize.Y - 10))
             
@@ -2782,7 +2769,6 @@ function section.ColorPicker(section, text, flag, default, callback)
             input.UserInputType == Enum.UserInputType.Touch) and windowOpen then
             local inputPos = Vector2.new(input.Position.X, input.Position.Y)
             
-            -- 检查是否点击在窗口内或颜色预览按钮上
             local isOverColorButton = isInputOverWindow(Vector2.new(
                 ColorPickerButton.AbsolutePosition.X, 
                 ColorPickerButton.AbsolutePosition.Y
@@ -2797,6 +2783,7 @@ function section.ColorPicker(section, text, flag, default, callback)
         end
     end)
     
+    -- 返回函数
     local funcs = {
         SetColor = function(self, color)
             local h, s, v = color:ToHSV()
@@ -2907,6 +2894,27 @@ function FengUI.applyTheme()
         
         if Main:FindFirstChild("TitleText") then
             Main.TitleText.TextColor3 = config.AccentColor
+        end
+    end
+    
+    -- 更新所有卡片
+    if CardsContainer then
+        for _, card in ipairs(CardsContainer:GetChildren()) do
+            if card:IsA("TextButton") then
+                card.BackgroundColor3 = config.TabColor
+                
+                if card:FindFirstChild("CardGlow") then
+                    card.CardGlow.Color = config.AccentColor
+                end
+                
+                if card:FindFirstChild("CardTitle") then
+                    card.CardTitle.TextColor3 = config.TextColor
+                end
+                
+                if card:FindFirstChild("CardDescription") then
+                    card.CardDescription.TextColor3 = config.SecondaryTextColor
+                end
+            end
         end
     end
     
