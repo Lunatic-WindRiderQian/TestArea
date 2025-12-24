@@ -1295,20 +1295,16 @@ function FengUI.new(FengUI, name, theme)
         funcs:SetState(true)
     end
     
-    -- 重写点击事件 - 使用 InputBegan 避免事件被拦截
-    local isDebouncing = false
+    -- 修复点击事件 - 确保状态正确切换
+    local isClicking = false
     
     ToggleBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            if isClicking then return end
+            isClicking = true
             
-            -- 防抖检查
-            if isDebouncing then return end
-            isDebouncing = true
-            
-            -- 立即切换状态
+            -- 立即更新状态
             local newState = not FengUI.flags[flag]
-            
-            -- 更新状态
             FengUI.flags[flag] = newState
             
             -- 播放切换动画
@@ -1317,15 +1313,9 @@ function FengUI.new(FengUI, name, theme)
                 BackgroundColor3 = newState and config.Toggle_On or config.Toggle_Off
             }):Play()
             
-            -- 点击反馈效果
+            -- 按钮点击反馈
             services.TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {
-                BackgroundTransparency = 0.05
-            }):Play()
-            
-            task.wait(0.1)
-            
-            services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                BackgroundTransparency = 0.2
+                BackgroundTransparency = 0.1
             }):Play()
             
             -- 执行回调
@@ -1333,9 +1323,15 @@ function FengUI.new(FengUI, name, theme)
                 pcall(callback, newState)
             end)
             
-            -- 重置防抖
-            task.wait(0.1)
-            isDebouncing = false
+            -- 恢复按钮状态
+            task.delay(0.1, function()
+                services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                    BackgroundTransparency = 0.2
+                }):Play()
+            end)
+            
+            -- 重置点击状态
+            isClicking = false
         end
     end)
     
