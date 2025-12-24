@@ -677,344 +677,282 @@ function FengUI.new(FengUI, name, theme)
     local window = {}
     
     function window.Tab(window, name, icon, windowCount)
-    local windowCount = windowCount or 1
-    
-    local Tab = Instance.new("ScrollingFrame")
-    local TabIco = Instance.new("ImageLabel")
-    local TabText = Instance.new("TextLabel")
-    local TabBtn = Instance.new("TextButton")
-    local TabL = Instance.new("UIListLayout")
-    local TabContainer = Instance.new("Frame")
-    
-    Tab.Name = "Tab"
-    Tab.Parent = TabMain
-    Tab.Active = true
-    Tab.BackgroundTransparency = 1
-    Tab.Size = UDim2.new(1, 0, 1, 0)
-    Tab.ScrollBarThickness = 0 -- 禁用外层滚动条
-    Tab.ScrollBarImageTransparency = 1
-    Tab.Visible = false
-    Tab.ElasticBehavior = Enum.ElasticBehavior.Never
-    Tab.ScrollingDirection = Enum.ScrollingDirection.Y
-    Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-    Tab.ScrollBarImageColor3 = config.SecondaryTextColor
-    
-    TabContainer.Name = "TabContainer"
-    TabContainer.Parent = Tab
-    TabContainer.BackgroundTransparency = 1
-    TabContainer.Size = UDim2.new(1, 0, 1, 0) -- 修改为固定高度100%
-    
-    if windowCount == 2 then
-        -- 创建左容器
-        local LeftContainer = Instance.new("ScrollingFrame")
-        LeftContainer.Name = "LeftContainer"
-        LeftContainer.Parent = TabContainer
-        LeftContainer.BackgroundTransparency = 1
-        LeftContainer.Size = UDim2.new(0.5, -5, 1, 0)
-        LeftContainer.Position = UDim2.new(0, 0, 0, 0)
-        LeftContainer.ScrollBarThickness = 4
-        LeftContainer.ScrollBarImageColor3 = config.SecondaryTextColor
-        LeftContainer.ScrollBarImageTransparency = 0.7
-        LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Always
-        LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-        LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+        local windowCount = windowCount or 1
         
-        -- 创建右容器
-        local RightContainer = Instance.new("ScrollingFrame")
-        RightContainer.Name = "RightContainer"
-        RightContainer.Parent = TabContainer
-        RightContainer.BackgroundTransparency = 1
-        RightContainer.Size = UDim2.new(0.5, -5, 1, 0)
-        RightContainer.Position = UDim2.new(0.5, 5, 0, 0)
-        RightContainer.ScrollBarThickness = 4
-        RightContainer.ScrollBarImageColor3 = config.SecondaryTextColor
-        RightContainer.ScrollBarImageTransparency = 0.7
-        RightContainer.ElasticBehavior = Enum.ElasticBehavior.Always
-        RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-        RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+        local Tab = Instance.new("ScrollingFrame")
+        local TabIco = Instance.new("ImageLabel")
+        local TabText = Instance.new("TextLabel")
+        local TabBtn = Instance.new("TextButton")
+        local TabL = Instance.new("UIListLayout")
+        local TabContainer = Instance.new("Frame")
         
-        -- 左容器布局
-        local LeftLayout = Instance.new("UIListLayout")
-        LeftLayout.Name = "LeftLayout"
-        LeftLayout.Parent = LeftContainer
-        LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        LeftLayout.Padding = UDim.new(0, 4)
+        Tab.Name = "Tab"
+        Tab.Parent = TabMain
+        Tab.Active = true
+        Tab.BackgroundTransparency = 1
+        Tab.Size = UDim2.new(1, 0, 1, 0)
+        Tab.ScrollBarThickness = 2
+        Tab.ScrollBarImageTransparency = 0.5
+        Tab.Visible = false
+        Tab.ElasticBehavior = Enum.ElasticBehavior.Never
+        Tab.ScrollingDirection = Enum.ScrollingDirection.Y
+        Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
         
-        -- 右容器布局
-        local RightLayout = Instance.new("UIListLayout")
-        RightLayout.Name = "RightLayout"
-        RightLayout.Parent = RightContainer
-        RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        RightLayout.Padding = UDim.new(0, 4)
-        
-        -- 左容器滚动处理
-        LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            local contentHeight = LeftLayout.AbsoluteContentSize.Y
-            
-            -- 设置左容器画布大小
-            LeftContainer.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 10)
-            
-            -- 自动显示/隐藏左容器滚动条
-            if contentHeight > LeftContainer.AbsoluteSize.Y then
-                LeftContainer.ScrollBarThickness = 4
-                LeftContainer.ScrollingEnabled = true
-            else
-                LeftContainer.ScrollBarThickness = 0
-                LeftContainer.ScrollingEnabled = false
-            end
-            
-            -- 更新整个Tab的画布大小为左右容器的最大高度
-            local leftContentHeight = LeftLayout.AbsoluteContentSize.Y + 10
-            local rightContentHeight = RightLayout.AbsoluteContentSize.Y + 10
-            local maxHeight = math.max(leftContentHeight, rightContentHeight)
-            
-            -- 设置整个Tab的画布大小
-            Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
-        end)
-        
-        -- 右容器滚动处理
-        RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            local contentHeight = RightLayout.AbsoluteContentSize.Y
-            
-            -- 设置右容器画布大小
-            RightContainer.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 10)
-            
-            -- 自动显示/隐藏右容器滚动条
-            if contentHeight > RightContainer.AbsoluteSize.Y then
-                RightContainer.ScrollBarThickness = 4
-                RightContainer.ScrollingEnabled = true
-            else
-                RightContainer.ScrollBarThickness = 0
-                RightContainer.ScrollingEnabled = false
-            end
-            
-            -- 更新整个Tab的画布大小为左右容器的最大高度
-            local leftContentHeight = LeftLayout.AbsoluteContentSize.Y + 10
-            local rightContentHeight = contentHeight + 10
-            local maxHeight = math.max(leftContentHeight, rightContentHeight)
-            
-            -- 设置整个Tab的画布大小
-            Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
-        end)
-        
-        -- 初始化画布大小
-        LeftContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-        RightContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-        
-        -- 监听Tab大小变化，重新计算滚动
-        Tab:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-            local leftContentHeight = LeftLayout.AbsoluteContentSize.Y
-            local rightContentHeight = RightLayout.AbsoluteContentSize.Y
-            
-            -- 更新左右容器的画布大小
-            LeftContainer.CanvasSize = UDim2.new(0, 0, 0, leftContentHeight + 10)
-            RightContainer.CanvasSize = UDim2.new(0, 0, 0, rightContentHeight + 10)
-            
-            -- 更新整个Tab的画布大小
-            local maxHeight = math.max(leftContentHeight, rightContentHeight) + 10
-            Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
-        end)
-    else
-        -- 单窗口布局（保持原有逻辑）
-        Tab.ScrollBarThickness = 4
-        Tab.ScrollBarImageTransparency = 0.7
+        TabContainer.Name = "TabContainer"
+        TabContainer.Parent = Tab
+        TabContainer.BackgroundTransparency = 1
         TabContainer.Size = UDim2.new(1, 0, 1, 0)
+        
+        if windowCount == 2 then
+            TabContainer.Size = UDim2.new(1, 0, 1, 0)  -- 改为1而不是0
+            
+            local LeftContainer = Instance.new("ScrollingFrame")
+            LeftContainer.Name = "LeftContainer"
+            LeftContainer.Parent = TabContainer
+            LeftContainer.BackgroundTransparency = 1
+            LeftContainer.Size = UDim2.new(0.48, -2, 1, 0)
+            LeftContainer.Position = UDim2.new(0, 2, 0, 0)
+            LeftContainer.ScrollBarThickness = 2
+            LeftContainer.ScrollBarImageTransparency = 0.5
+            LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+            LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+            LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+            
+            local LeftLayout = Instance.new("UIListLayout")
+            LeftLayout.Name = "LeftLayout"
+            LeftLayout.Parent = LeftContainer
+            LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            LeftLayout.Padding = UDim.new(0, 4)
+            
+            local RightContainer = Instance.new("ScrollingFrame")
+            RightContainer.Name = "RightContainer"
+            RightContainer.Parent = TabContainer
+            RightContainer.BackgroundTransparency = 1
+            RightContainer.Size = UDim2.new(0.50, -2, 1, 0)
+            RightContainer.Position = UDim2.new(0.48, 0, 0, 0)
+            RightContainer.ScrollBarThickness = 2
+            RightContainer.ScrollBarImageTransparency = 0.5
+            RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+            RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+            RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+            
+            local RightLayout = Instance.new("UIListLayout")
+            RightLayout.Name = "RightLayout"
+            RightLayout.Parent = RightContainer
+            RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            RightLayout.Padding = UDim.new(0, 4)
+            
+            -- 修复双窗口滚动问题
+            local function updateLeftScrolling()
+                LeftContainer.CanvasSize = UDim2.new(0, 0, 0, LeftLayout.AbsoluteContentSize.Y + 10)
+                LeftContainer.ScrollingEnabled = LeftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y
+            end
+            
+            local function updateRightScrolling()
+                RightContainer.CanvasSize = UDim2.new(0, 0, 0, RightLayout.AbsoluteContentSize.Y + 10)
+                RightContainer.ScrollingEnabled = RightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y
+            end
+            
+            LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateLeftScrolling)
+            RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightScrolling)
+            
+            -- 初始化滚动设置
+            task.spawn(function()
+                task.wait(0.1)
+                updateLeftScrolling()
+                updateRightScrolling()
+            end)
+        end
+        
+        TabIco.Name = "TabIco"
+        TabIco.Parent = TabBtns
+        TabIco.BackgroundTransparency = 1
+        TabIco.BorderSizePixel = 0
+        TabIco.Size = UDim2.new(0, 22, 0, 22)
+        TabIco.Image = "rbxassetid://84830962019412"
+        TabIco.ImageTransparency = 0.5
+        
+        startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
+        
+        TabText.Name = "TabText"
+        TabText.Parent = TabIco
+        TabText.BackgroundTransparency = 1
+        TabText.Position = UDim2.new(1.2, 0, 0, 0)
+        TabText.Size = UDim2.new(0, 65, 0, 22)
+        TabText.Font = Enum.Font.GothamSemibold
+        TabText.Text = name
+        TabText.TextColor3 = config.TextColor
+        TabText.TextSize = 14
+        TabText.TextXAlignment = Enum.TextXAlignment.Left
+        TabText.TextTransparency = 0.5
+        
+        TabBtn.Name = "TabBtn"
+        TabBtn.Parent = TabIco
+        TabBtn.BackgroundTransparency = 1
+        TabBtn.BorderSizePixel = 0
+        TabBtn.Size = UDim2.new(0, 90, 0, 22)
+        TabBtn.AutoButtonColor = false
+        TabBtn.Font = Enum.Font.SourceSans
+        TabBtn.Text = ""
         
         TabL.Name = "TabL"
         TabL.Parent = TabContainer
         TabL.SortOrder = Enum.SortOrder.LayoutOrder
         TabL.Padding = UDim.new(0, 4)
         
-        setupSmoothScrolling(Tab, TabL)
-    end
-    
-    TabIco.Name = "TabIco"
-    TabIco.Parent = TabBtns
-    TabIco.BackgroundTransparency = 1
-    TabIco.BorderSizePixel = 0
-    TabIco.Size = UDim2.new(0, 22, 0, 22)
-    TabIco.Image = "rbxassetid://84830962019412"
-    TabIco.ImageTransparency = 0.5
-    
-    startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
-    
-    TabText.Name = "TabText"
-    TabText.Parent = TabIco
-    TabText.BackgroundTransparency = 1
-    TabText.Position = UDim2.new(1.2, 0, 0, 0)
-    TabText.Size = UDim2.new(0, 65, 0, 22)
-    TabText.Font = Enum.Font.GothamSemibold
-    TabText.Text = name
-    TabText.TextColor3 = config.TextColor
-    TabText.TextSize = 14
-    TabText.TextXAlignment = Enum.TextXAlignment.Left
-    TabText.TextTransparency = 0.5
-    
-    TabBtn.Name = "TabBtn"
-    TabBtn.Parent = TabIco
-    TabBtn.BackgroundTransparency = 1
-    TabBtn.BorderSizePixel = 0
-    TabBtn.Size = UDim2.new(0, 90, 0, 22)
-    TabBtn.AutoButtonColor = false
-    TabBtn.Font = Enum.Font.SourceSans
-    TabBtn.Text = ""
-    
-    TabBtn.MouseButton1Click:Connect(function()
-        switchTab({ TabIco, Tab })
-    end)
-    
-    if FengUI.currentTab == nil then
-        switchTab({ TabIco, Tab })
-    end
-    
-    if windowCount == 2 then
-        local function updateContainerHeight()
-            local leftHeight = TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout").AbsoluteContentSize.Y
-            local rightHeight = TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout").AbsoluteContentSize.Y
-            local maxHeight = math.max(leftHeight, rightHeight) + 10
-            
-            TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
-            Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
-        end
-        
-        TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
-        TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
-    end
-    
-    local tab = {}
-    
-    function tab.section(tab, name, windowPosition, TabVal)
-        if type(windowPosition) == "boolean" then
-            TabVal = windowPosition
-            windowPosition = "Left"
-        elseif not windowPosition or type(windowPosition) ~= "string" then
-            windowPosition = "Left"
-        end
-        
-        local TargetContainer
         if windowCount == 2 then
-            if windowPosition:lower() == "left" then
-                TargetContainer = TabContainer:FindFirstChild("LeftContainer")
-            else
-                TargetContainer = TabContainer:FindFirstChild("RightContainer")
-            end
+            TabL:Destroy()
+            Tab.ScrollingEnabled = false  -- 双窗口模式下禁用主Tab滚动
+            Tab.CanvasSize = UDim2.new(0, 0, 1, 0)  -- 设置固定CanvasSize
         else
-            TargetContainer = TabContainer
+            setupSmoothScrolling(Tab, TabL)
         end
         
-        if not TargetContainer then
-            TargetContainer = TabContainer
+        TabBtn.MouseButton1Click:Connect(function()
+            switchTab({ TabIco, Tab })
+        end)
+        
+        if FengUI.currentTab == nil then
+            switchTab({ TabIco, Tab })
         end
         
-        local Section = Instance.new("Frame")
-        local SectionText = Instance.new("TextLabel")
-        local SectionOpen = Instance.new("ImageLabel")
-        local SectionOpened = Instance.new("ImageLabel")
-        local SectionToggle = Instance.new("ImageButton")
-        local Objs = Instance.new("Frame")
-        local ObjsL = Instance.new("UIListLayout")
+        local tab = {}
         
-        Section.Name = "Section"
-        Section.Parent = TargetContainer
-        Section.BackgroundTransparency = 1
-        Section.BorderSizePixel = 0
-        Section.ClipsDescendants = true
-        Section.Size = UDim2.new(1, 0, 0, 36)
-        
-        local elementWidth = 330
-        if windowCount == 2 then
-            if windowPosition:lower() == "left" then
-                elementWidth = 162
+        function tab.section(tab, name, windowPosition, TabVal)
+            if type(windowPosition) == "boolean" then
+                TabVal = windowPosition
+                windowPosition = "Left"
+            elseif not windowPosition or type(windowPosition) ~= "string" then
+                windowPosition = "Left"
+            end
+            
+            local TargetContainer
+            if windowCount == 2 then
+                if windowPosition:lower() == "left" then
+                    TargetContainer = TabContainer:FindFirstChild("LeftContainer")
+                else
+                    TargetContainer = TabContainer:FindFirstChild("RightContainer")
+                end
             else
-                elementWidth = 168
+                TargetContainer = TabContainer
             end
-        end
-        
-        SectionText.Name = "SectionText"
-        SectionText.Parent = Section
-        SectionText.BackgroundTransparency = 1
-        SectionText.Position = UDim2.new(0, 35, 0, 0)
-        SectionText.Size = UDim2.new(1, -35, 0, 36)
-        SectionText.Font = Enum.Font.GothamSemibold
-        SectionText.Text = name
-        SectionText.TextColor3 = config.AccentColor
-        SectionText.TextSize = 16
-        SectionText.TextXAlignment = Enum.TextXAlignment.Left
-        
-        SectionOpen.Name = "SectionOpen"
-        SectionOpen.Parent = Section
-        SectionOpen.BackgroundTransparency = 1
-        SectionOpen.BorderSizePixel = 0
-        SectionOpen.Position = UDim2.new(0, 5, 0, 5)
-        SectionOpen.Size = UDim2.new(0, 22, 0, 22)
-        SectionOpen.Image = "rbxassetid://84830962019412"
-        SectionOpen.ImageColor3 = config.SecondaryTextColor
-        
-        SectionOpened.Name = "SectionOpened"
-        SectionOpened.Parent = SectionOpen
-        SectionOpened.BackgroundTransparency = 1
-        SectionOpened.BorderSizePixel = 0
-        SectionOpened.Size = UDim2.new(1, 0, 1, 0)
-        SectionOpened.Image = "rbxassetid://84830962019412"
-        SectionOpened.ImageColor3 = config.AccentColor
-        SectionOpened.ImageTransparency = 1
-        
-        SectionToggle.Name = "SectionToggle"
-        SectionToggle.Parent = SectionOpen
-        SectionToggle.BackgroundTransparency = 1
-        SectionToggle.BorderSizePixel = 0
-        SectionToggle.Size = UDim2.new(1, 0, 1, 0)
-        
-        Objs.Name = "Objs"
-        Objs.Parent = Section
-        Objs.BackgroundTransparency = 1
-        Objs.BorderSizePixel = 0
-        Objs.Position = UDim2.new(0, 0, 0, 36)
-        Objs.Size = UDim2.new(1, 0, 0, 0)
-        
-        ObjsL.Name = "ObjsL"
-        ObjsL.Parent = Objs
-        ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
-        ObjsL.Padding = UDim.new(0, 8)
-        
-        local open = true
-        if TabVal ~= nil then
-            if type(TabVal) == "boolean" then
-                open = TabVal
-            elseif TabVal == "false" or TabVal == "0" then
-                open = false
-            elseif TabVal == "true" or TabVal == "1" then
-                open = true
-            end
-        end
-        
-        Section.Size = UDim2.new(1, 0, 0, open and (36 + ObjsL.AbsoluteContentSize.Y + 8) or 36)
-        SectionOpened.ImageTransparency = open and 0 or 1
-        SectionOpen.ImageTransparency = open and 1 or 0
-        
-        SectionToggle.MouseButton1Click:Connect(function()
-            open = not open
-            services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                Size = UDim2.new(1, 0, 0, open and (36 + ObjsL.AbsoluteContentSize.Y + 8) or 36)
-            }):Play()
             
-            services.TweenService:Create(SectionOpened, TweenInfo.new(0.3), {
-                ImageTransparency = open and 0 or 1
-            }):Play()
-            
-            services.TweenService:Create(SectionOpen, TweenInfo.new(0.3), {
-                ImageTransparency = open and 1 or 0
-            }):Play()
-        end)
-        
-        ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            if open then
-                Section.Size = UDim2.new(1, 0, 0, 36 + ObjsL.AbsoluteContentSize.Y + 8)
+            if not TargetContainer then
+                TargetContainer = TabContainer
             end
-        end)
-        
-        local section = {}
-        
+            
+            local Section = Instance.new("Frame")
+            local SectionText = Instance.new("TextLabel")
+            local SectionOpen = Instance.new("ImageLabel")
+            local SectionOpened = Instance.new("ImageLabel")
+            local SectionToggle = Instance.new("ImageButton")
+            local Objs = Instance.new("Frame")
+            local ObjsL = Instance.new("UIListLayout")
+            
+            Section.Name = "Section"
+            Section.Parent = TargetContainer
+            Section.BackgroundTransparency = 1
+            Section.BorderSizePixel = 0
+            Section.ClipsDescendants = true
+            
+            local elementWidth = 330
+            if windowCount == 2 then
+                if windowPosition:lower() == "left" then
+                    elementWidth = 160  -- 调整为160
+                else
+                    elementWidth = 168  -- 调整为168
+                end
+            end
+            
+            SectionText.Name = "SectionText"
+            SectionText.Parent = Section
+            SectionText.BackgroundTransparency = 1
+            SectionText.Position = UDim2.new(0, 35, 0, 0)
+            SectionText.Size = UDim2.new(1, -35, 0, 36)
+            SectionText.Font = Enum.Font.GothamSemibold
+            SectionText.Text = name
+            SectionText.TextColor3 = config.AccentColor
+            SectionText.TextSize = 16
+            SectionText.TextXAlignment = Enum.TextXAlignment.Left
+            
+            SectionOpen.Name = "SectionOpen"
+            SectionOpen.Parent = Section
+            SectionOpen.BackgroundTransparency = 1
+            SectionOpen.BorderSizePixel = 0
+            SectionOpen.Position = UDim2.new(0, 5, 0, 5)
+            SectionOpen.Size = UDim2.new(0, 22, 0, 22)
+            SectionOpen.Image = "rbxassetid://84830962019412"
+            SectionOpen.ImageColor3 = config.SecondaryTextColor
+            
+            SectionOpened.Name = "SectionOpened"
+            SectionOpened.Parent = SectionOpen
+            SectionOpened.BackgroundTransparency = 1
+            SectionOpened.BorderSizePixel = 0
+            SectionOpened.Size = UDim2.new(1, 0, 1, 0)
+            SectionOpened.Image = "rbxassetid://84830962019412"
+            SectionOpened.ImageColor3 = config.AccentColor
+            SectionOpened.ImageTransparency = 1
+            
+            SectionToggle.Name = "SectionToggle"
+            SectionToggle.Parent = SectionOpen
+            SectionToggle.BackgroundTransparency = 1
+            SectionToggle.BorderSizePixel = 0
+            SectionToggle.Size = UDim2.new(1, 0, 1, 0)
+            
+            Objs.Name = "Objs"
+            Objs.Parent = Section
+            Objs.BackgroundTransparency = 1
+            Objs.BorderSizePixel = 0
+            Objs.Position = UDim2.new(0, 0, 0, 36)
+            Objs.Size = UDim2.new(1, 0, 0, 0)
+            
+            ObjsL.Name = "ObjsL"
+            ObjsL.Parent = Objs
+            ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
+            ObjsL.Padding = UDim.new(0, 8)
+            
+            local open = true
+            if TabVal ~= nil then
+                if type(TabVal) == "boolean" then
+                    open = TabVal
+                elseif TabVal == "false" or TabVal == "0" then
+                    open = false
+                elseif TabVal == "true" or TabVal == "1" then
+                    open = true
+                end
+            end
+            
+            local function updateSectionHeight()
+                Section.Size = UDim2.new(1, 0, 0, open and (36 + ObjsL.AbsoluteContentSize.Y + 8) or 36)
+            end
+            
+            updateSectionHeight()
+            SectionOpened.ImageTransparency = open and 0 or 1
+            SectionOpen.ImageTransparency = open and 1 or 0
+            
+            SectionToggle.MouseButton1Click:Connect(function()
+                open = not open
+                services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                    Size = UDim2.new(1, 0, 0, open and (36 + ObjsL.AbsoluteContentSize.Y + 8) or 36)
+                }):Play()
+                
+                services.TweenService:Create(SectionOpened, TweenInfo.new(0.3), {
+                    ImageTransparency = open and 0 or 1
+                }):Play()
+                
+                services.TweenService:Create(SectionOpen, TweenInfo.new(0.3), {
+                    ImageTransparency = open and 1 or 0
+                }):Play()
+            end)
+            
+            ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                if open then
+                    updateSectionHeight()
+                end
+            end)
+            
+            local section = {}
+            
             function section.Button(section, text, callback)
                 callback = callback or function() end
                 
@@ -1105,116 +1043,124 @@ function FengUI.new(FengUI, name, theme)
                 end)
             end
             
-            function section.Image(section, imageSource, sizeX, sizeY)
-    local ImageModule = Instance.new("Frame")
-    local ImageLabel = Instance.new("ImageLabel")
-    local ImageCorner = Instance.new("UICorner")
-    
-    ImageModule.Name = "ImageModule"
-    ImageModule.Parent = Objs
-    ImageModule.BackgroundTransparency = 1
-    ImageModule.BorderSizePixel = 0
-    ImageModule.Size = UDim2.new(0, elementWidth, 0, sizeY or 120)
-    
-    ImageLabel.Parent = ImageModule
-    ImageLabel.BackgroundTransparency = 1
-    ImageLabel.BorderSizePixel = 0
-    ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
-    ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
-    ImageLabel.Size = UDim2.new(0, math.min(sizeX or 140, elementWidth), 0, sizeY or 120)
-    ImageLabel.ScaleType = Enum.ScaleType.Crop
-    
-    ImageCorner.CornerRadius = UDim.new(0, 6)
-    ImageCorner.Parent = ImageLabel
-    
-    local imageGlow = Instance.new("UIStroke")
-    imageGlow.Parent = ImageLabel
-    imageGlow.Color = config.AccentColor
-    imageGlow.Thickness = 1
-    imageGlow.Transparency = 0.8
-    
-    local function setImage(source)
-        if type(source) == "table" then
-            if source.Type == "Player" then
-                local userId = source.UserId
-                if userId then
-                    task.spawn(function()
-                        local success, result = pcall(function()
-                            return game.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-                        end)
-                        
-                        if success and result then
-                            ImageLabel.Image = result
+                        function section.Image(section, imageSource, sizeX, sizeY)
+                local ImageModule = Instance.new("Frame")
+                local ImageLabel = Instance.new("ImageLabel")
+                local ImageCorner = Instance.new("UICorner")
+                
+                ImageModule.Name = "ImageModule"
+                ImageModule.Parent = Objs
+                ImageModule.BackgroundTransparency = 1
+                ImageModule.BorderSizePixel = 0
+                ImageModule.Size = UDim2.new(0, elementWidth, 0, sizeY or 120)
+                
+                ImageLabel.Name = "ImageLabel"
+                ImageLabel.Parent = ImageModule
+                ImageLabel.BackgroundTransparency = 1
+                ImageLabel.BorderSizePixel = 0
+                ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
+                ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
+                ImageLabel.Size = UDim2.new(0, math.min(sizeX or elementWidth - 20, elementWidth), 0, sizeY or 120)
+                ImageLabel.ScaleType = Enum.ScaleType.Crop
+                
+                ImageCorner.CornerRadius = UDim.new(0, 6)
+                ImageCorner.Parent = ImageLabel
+                
+                local imageGlow = Instance.new("UIStroke")
+                imageGlow.Parent = ImageLabel
+                imageGlow.Color = config.AccentColor
+                imageGlow.Thickness = 1
+                imageGlow.Transparency = 0.8
+                
+                local function setImage(source)
+                    if type(source) == "table" then
+                        if source.Type == "Player" then
+                            local userId = source.UserId
+                            if userId then
+                                task.spawn(function()
+                                    local success, result = pcall(function()
+                                        return game.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+                                    end)
+                                    
+                                    if success and result then
+                                        ImageLabel.Image = result
+                                    else
+                                        ImageLabel.Image = "rbxassetid://0"
+                                    end
+                                end)
+                            end
+                        elseif source.Type == "Game" then
+                            local placeId = source.PlaceId
+                            if placeId then
+                                task.spawn(function()
+                                    local success1, gameInfo = pcall(function()
+                                        local MarketplaceService = game:GetService("MarketplaceService")
+                                        return MarketplaceService:GetProductInfo(placeId, Enum.InfoType.Asset)
+                                    end)
+                                    
+                                    if success1 and gameInfo and gameInfo.IconImageAssetId then
+                                        ImageLabel.Image = "rbxassetid://" .. gameInfo.IconImageAssetId
+                                        return
+                                    end
+                                    
+                                    local success2, thumbnailUrl = pcall(function()
+                                        local ThumbnailService = game:GetService("ThumbnailService")
+                                        return ThumbnailService:GetGameThumbnailAsync(placeId)
+                                    end)
+                                    
+                                    if success2 and thumbnailUrl then
+                                        ImageLabel.Image = thumbnailUrl
+                                        return
+                                    end
+                                    
+                                    ImageLabel.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=" .. placeId
+                                end)
+                            end
+                        end
+                    else
+                        local imageId = tostring(source)
+                        if imageId:match("^%d+$") then
+                            ImageLabel.Image = "rbxassetid://" .. imageId
                         else
-                            ImageLabel.Image = "rbxassetid://0"
+                            ImageLabel.Image = imageId
                         end
-                    end)
+                    end
                 end
-            elseif source.Type == "Game" then
-                local placeId = source.PlaceId
-                if placeId then
-                    task.spawn(function()
-                        local success1, gameInfo = pcall(function()
-                            local MarketplaceService = game:GetService("MarketplaceService")
-                            return MarketplaceService:GetProductInfo(placeId, Enum.InfoType.Asset)
-                        end)
-                        
-                        if success1 and gameInfo and gameInfo.IconImageAssetId then
-                            ImageLabel.Image = "rbxassetid://" .. gameInfo.IconImageAssetId
-                            return
-                        end
-                        
-                        local success2, thumbnailUrl = pcall(function()
-                            local ThumbnailService = game:GetService("ThumbnailService")
-                            return ThumbnailService:GetGameThumbnailAsync(placeId)
-                        end)
-                        
-                        if success2 and thumbnailUrl then
-                            ImageLabel.Image = thumbnailUrl
-                            return
-                        end
-                        
-                        ImageLabel.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=" .. placeId
-                    end)
+                
+                if imageSource then
+                    setImage(imageSource)
                 end
+                
+                local imageController = {}
+                
+                function imageController:SetImage(newSource)
+                    setImage(newSource)
+                end
+                
+                function imageController:SetPlayerAvatar(userId)
+                    setImage({Type = "Player", UserId = userId})
+                end
+                
+                function imageController:SetGameIcon(placeId)
+                    setImage({Type = "Game", PlaceId = placeId})
+                end
+                
+                function imageController:SetLocalPlayerAvatar()
+                    local localPlayer = game.Players.LocalPlayer
+                    if localPlayer then
+                        setImage({Type = "Player", UserId = localPlayer.UserId})
+                    end
+                end
+                
+                function imageController:Destroy()
+                    ImageModule:Destroy()
+                end
+                
+                imageController.Instance = ImageLabel
+                imageController.Module = ImageModule
+                
+                return imageController
             end
-        else
-            ImageLabel.Image = "rbxassetid://" .. tostring(source)
-        end
-    end
-    
-    setImage(imageSource)
-    
-    local imageController = {}
-    
-    function imageController:SetImage(newSource)
-        setImage(newSource)
-    end
-    
-    function imageController:SetPlayerAvatar(userId)
-        setImage({Type = "Player", UserId = userId})
-    end
-    
-    function imageController:SetGameIcon(placeId)
-        setImage({Type = "Game", PlaceId = placeId})
-    end
-    
-    function imageController:SetLocalPlayerAvatar()
-        local localPlayer = game.Players.LocalPlayer
-        if localPlayer then
-            setImage({Type = "Player", UserId = localPlayer.UserId})
-        end
-    end
-    
-    function imageController:Destroy()
-        ImageModule:Destroy()
-    end
-    
-    imageController.Instance = ImageLabel
-    imageController.Module = ImageModule
-    
-    return imageController
-end
             
             function section:Label(text)
                 local LabelModule = Instance.new("Frame")
