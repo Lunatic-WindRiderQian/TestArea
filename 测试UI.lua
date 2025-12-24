@@ -691,8 +691,7 @@ function FengUI.new(FengUI, name, theme)
         Tab.Active = true
         Tab.BackgroundTransparency = 1
         Tab.Size = UDim2.new(1, 0, 1, 0)
-        Tab.ScrollBarThickness = 2
-        Tab.ScrollBarImageTransparency = 0.5
+        Tab.ScrollBarThickness = 0  -- 移除主Tab滚动条
         Tab.Visible = false
         Tab.ElasticBehavior = Enum.ElasticBehavior.Never
         Tab.ScrollingDirection = Enum.ScrollingDirection.Y
@@ -704,7 +703,7 @@ function FengUI.new(FengUI, name, theme)
         TabContainer.Size = UDim2.new(1, 0, 1, 0)
         
         if windowCount == 2 then
-            TabContainer.Size = UDim2.new(1, 0, 1, 0)  -- 改为1而不是0
+            TabContainer.Size = UDim2.new(1, 0, 1, 0)
             
             local LeftContainer = Instance.new("ScrollingFrame")
             LeftContainer.Name = "LeftContainer"
@@ -712,8 +711,7 @@ function FengUI.new(FengUI, name, theme)
             LeftContainer.BackgroundTransparency = 1
             LeftContainer.Size = UDim2.new(0.48, -2, 1, 0)
             LeftContainer.Position = UDim2.new(0, 2, 0, 0)
-            LeftContainer.ScrollBarThickness = 2
-            LeftContainer.ScrollBarImageTransparency = 0.5
+            LeftContainer.ScrollBarThickness = 0  -- 移除左容器滚动条
             LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
             LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
             LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
@@ -730,8 +728,7 @@ function FengUI.new(FengUI, name, theme)
             RightContainer.BackgroundTransparency = 1
             RightContainer.Size = UDim2.new(0.50, -2, 1, 0)
             RightContainer.Position = UDim2.new(0.48, 0, 0, 0)
-            RightContainer.ScrollBarThickness = 2
-            RightContainer.ScrollBarImageTransparency = 0.5
+            RightContainer.ScrollBarThickness = 0  -- 移除右容器滚动条
             RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
             RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
             RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
@@ -802,9 +799,11 @@ function FengUI.new(FengUI, name, theme)
         
         if windowCount == 2 then
             TabL:Destroy()
-            Tab.ScrollingEnabled = false  -- 双窗口模式下禁用主Tab滚动
-            Tab.CanvasSize = UDim2.new(0, 0, 1, 0)  -- 设置固定CanvasSize
+            Tab.ScrollingEnabled = false
+            Tab.CanvasSize = UDim2.new(0, 0, 1, 0)
+            Tab.ScrollBarThickness = 0  -- 确保主Tab也没有滚动条
         else
+            Tab.ScrollBarThickness = 0  -- 单窗口模式也移除滚动条
             setupSmoothScrolling(Tab, TabL)
         end
         
@@ -858,9 +857,9 @@ function FengUI.new(FengUI, name, theme)
             local elementWidth = 330
             if windowCount == 2 then
                 if windowPosition:lower() == "left" then
-                    elementWidth = 160  -- 调整为160
+                    elementWidth = 160
                 else
-                    elementWidth = 168  -- 调整为168
+                    elementWidth = 168
                 end
             end
             
@@ -1043,7 +1042,7 @@ function FengUI.new(FengUI, name, theme)
                 end)
             end
             
-                        function section.Image(section, imageSource, sizeX, sizeY)
+                                    function section.Image(section, imageSource, sizeX, sizeY)
                 local ImageModule = Instance.new("Frame")
                 local ImageLabel = Instance.new("ImageLabel")
                 local ImageCorner = Instance.new("UICorner")
