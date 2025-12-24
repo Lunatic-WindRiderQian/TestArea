@@ -1193,8 +1193,10 @@ function FengUI.new(FengUI, name, theme)
     enabled = enabled or false
     assert(text, "No text provided")
     assert(flag, "No flag provided")
+    
+    -- 初始化标志
     FengUI.flags[flag] = enabled
-
+    
     local ToggleModule = Instance.new("Frame")
     local ToggleBtn = Instance.new("TextButton")
     local ToggleBtnC = Instance.new("UICorner")
@@ -1253,6 +1255,14 @@ function FengUI.new(FengUI, name, theme)
     ToggleDisableC.Name = "ToggleDisableC"
     ToggleDisableC.Parent = ToggleDisable
     
+    -- 添加发光效果
+    local toggleGlow = Instance.new("UIStroke")
+    toggleGlow.Parent = ToggleDisable
+    toggleGlow.Color = enabled and config.Toggle_On or Color3.fromRGB(100, 100, 120)
+    toggleGlow.Thickness = 1
+    toggleGlow.Transparency = 0.7
+    
+    -- 鼠标悬停效果
     ToggleBtn.MouseEnter:Connect(function()
         services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
             BackgroundTransparency = 0.1,
@@ -1262,6 +1272,14 @@ function FengUI.new(FengUI, name, theme)
                 math.floor(config.Toggle_Color.B * 255 * 1.1)
             )
         }):Play()
+        
+        if not enabled then
+            services.TweenService:Create(toggleGlow, TweenInfo.new(0.2), {
+                Color = Color3.fromRGB(150, 150, 170),
+                Thickness = 1.5,
+                Transparency = 0.5
+            }):Play()
+        end
     end)
     
     ToggleBtn.MouseLeave:Connect(function()
@@ -1269,46 +1287,93 @@ function FengUI.new(FengUI, name, theme)
             BackgroundTransparency = 0.2,
             BackgroundColor3 = config.Toggle_Color
         }):Play()
+        
+        if not enabled then
+            services.TweenService:Create(toggleGlow, TweenInfo.new(0.2), {
+                Color = Color3.fromRGB(100, 100, 120),
+                Thickness = 1,
+                Transparency = 0.7
+            }):Play()
+        end
     end)
     
-    -- 简化的SetState函数，直接切换状态
-    local function setState(newState)
-        if newState == nil then
-            newState = not FengUI.flags[flag]
-        end
+    -- 简化的状态切换函数
+    local function toggleState()
+        enabled = not enabled
+        FengUI.flags[flag] = enabled
         
-        FengUI.flags[flag] = newState
-        
+        -- 动画效果
         services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0, newState and 14 or 0, 0, 0),
-            BackgroundColor3 = newState and config.Toggle_On or config.Toggle_Off
+            Position = UDim2.new(0, enabled and 14 or 0, 0, 0),
+            BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
         }):Play()
         
-        callback(newState)
+        services.TweenService:Create(toggleGlow, TweenInfo.new(0.3), {
+            Color = enabled and config.Toggle_On or Color3.fromRGB(100, 100, 120),
+            Thickness = enabled and 2 or 1
+        }):Play()
+        
+        -- 点击动画
+        services.TweenService:Create(ToggleBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundTransparency = 0
+        }):Play()
+        
+        task.wait(0.1)
+        
+        services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            BackgroundTransparency = 0.2
+        }):Play()
+        
+        -- 调用回调函数
+        callback(enabled)
     end
     
-    local funcs = {
-        SetState = function(self, state)
-            setState(state)
-        end,
-        Module = ToggleModule
-    }
-    
-    -- 直接设置初始状态，不需要额外调用SetState
-    if enabled then
-        FengUI.flags[flag] = true
-        ToggleSwitch.Position = UDim2.new(0, 14, 0, 0)
-        ToggleSwitch.BackgroundColor3 = config.Toggle_On
-    else
-        FengUI.flags[flag] = false
-        ToggleSwitch.Position = UDim2.new(0, 0, 0, 0)
-        ToggleSwitch.BackgroundColor3 = config.Toggle_Off
-    end
-    
+    -- 点击事件
     ToggleBtn.MouseButton1Click:Connect(function()
-        local newState = not FengUI.flags[flag]
-        setState(newState)
+        toggleState()
     end)
+    
+    -- 点击开关本身也可以切换
+    ToggleSwitch.MouseButton1Click:Connect(function()
+        toggleState()
+    end)
+    
+    -- 创建功能方法
+    local funcs = {}
+    
+    function funcs:SetState(state)
+        if state == enabled then return end
+        
+        if state ~= nil then
+            enabled = state
+        else
+            enabled = not enabled
+        end
+        
+        FengUI.flags[flag] = enabled
+        
+        services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0, enabled and 14 or 0, 0, 0),
+            BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
+        }):Play()
+        
+        services.TweenService:Create(toggleGlow, TweenInfo.new(0.3), {
+            Color = enabled and config.Toggle_On or Color3.fromRGB(100, 100, 120),
+            Thickness = enabled and 2 or 1
+        }):Play()
+        
+        callback(enabled)
+    end
+    
+    function funcs:GetState()
+        return enabled
+    end
+    
+    function funcs:Destroy()
+        ToggleModule:Destroy()
+    end
+    
+    funcs.Module = ToggleModule
     
     return funcs
 end
