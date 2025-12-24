@@ -702,7 +702,7 @@ function FengUI.new(FengUI, name, theme)
     TabContainer.Name = "TabContainer"
     TabContainer.Parent = Tab
     TabContainer.BackgroundTransparency = 1
-    TabContainer.Size = UDim2.new(1, 0, 1, 0) -- 修改为固定高度100%，而不是0
+    TabContainer.Size = UDim2.new(1, 0, 1, 0) -- 修改为固定高度100%
     
     if windowCount == 2 then
         -- 创建左容器
@@ -867,6 +867,20 @@ function FengUI.new(FengUI, name, theme)
         switchTab({ TabIco, Tab })
     end
     
+    if windowCount == 2 then
+        local function updateContainerHeight()
+            local leftHeight = TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout").AbsoluteContentSize.Y
+            local rightHeight = TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout").AbsoluteContentSize.Y
+            local maxHeight = math.max(leftHeight, rightHeight) + 10
+            
+            TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
+            Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
+        end
+        
+        TabContainer:FindFirstChild("LeftContainer"):FindFirstChild("LeftLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
+        TabContainer:FindFirstChild("RightContainer"):FindFirstChild("RightLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContainerHeight)
+    end
+    
     local tab = {}
     
     function tab.section(tab, name, windowPosition, TabVal)
@@ -907,11 +921,13 @@ function FengUI.new(FengUI, name, theme)
         Section.ClipsDescendants = true
         Section.Size = UDim2.new(1, 0, 0, 36)
         
-        local elementWidth
+        local elementWidth = 330
         if windowCount == 2 then
-            elementWidth = 162
-        else
-            elementWidth = 330
+            if windowPosition:lower() == "left" then
+                elementWidth = 162
+            else
+                elementWidth = 168
+            end
         end
         
         SectionText.Name = "SectionText"
