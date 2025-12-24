@@ -677,147 +677,116 @@ function FengUI.new(FengUI, name, theme)
     local window = {}
     
     function window.Tab(window, name, icon, windowCount)
-    local windowCount = windowCount or 1
-    
-    local Tab = Instance.new("ScrollingFrame")
-    local TabIco = Instance.new("ImageLabel")
-    local TabText = Instance.new("TextLabel")
-    local TabBtn = Instance.new("TextButton")
-    local TabL = Instance.new("UIListLayout")
-    local TabContainer = Instance.new("Frame")
-    
-    Tab.Name = "Tab"
-    Tab.Parent = TabMain
-    Tab.Active = true
-    Tab.BackgroundTransparency = 1
-    Tab.Size = UDim2.new(1, 0, 1, 0)
-    Tab.ScrollBarThickness = 0 -- 外层Tab禁用滚动条
-    Tab.ScrollBarImageTransparency = 1
-    Tab.Visible = false
-    Tab.ElasticBehavior = Enum.ElasticBehavior.Never
-    Tab.ScrollingDirection = Enum.ScrollingDirection.Y
-    Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-    
-    TabContainer.Name = "TabContainer"
-    TabContainer.Parent = Tab
-    TabContainer.BackgroundTransparency = 1
-    TabContainer.Size = UDim2.new(1, 0, 0, 0) -- 高度设为0，由内容决定
-    
-    if windowCount == 2 then
-        -- 创建左右容器布局
-        local LeftContainer = Instance.new("ScrollingFrame")
-        local RightContainer = Instance.new("ScrollingFrame")
-        local LeftLayout = Instance.new("UIListLayout")
-        local RightLayout = Instance.new("UIListLayout")
+        local windowCount = windowCount or 1
         
-        -- 左容器
-        LeftContainer.Name = "LeftContainer"
-        LeftContainer.Parent = TabContainer
-        LeftContainer.BackgroundTransparency = 1
-        LeftContainer.Size = UDim2.new(0.5, -5, 1, 0) -- 减去边距
-        LeftContainer.Position = UDim2.new(0, 0, 0, 0)
-        LeftContainer.ScrollBarThickness = 4
-        LeftContainer.ScrollBarImageColor3 = config.SecondaryTextColor
-        LeftContainer.ScrollBarImageTransparency = 0.7
-        LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Always
-        LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-        LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+        local Tab = Instance.new("ScrollingFrame")
+        local TabIco = Instance.new("ImageLabel")
+        local TabText = Instance.new("TextLabel")
+        local TabBtn = Instance.new("TextButton")
+        local TabL = Instance.new("UIListLayout")
+        local TabContainer = Instance.new("Frame")
         
-        -- 右容器
-        RightContainer.Name = "RightContainer"
-        RightContainer.Parent = TabContainer
-        RightContainer.BackgroundTransparency = 1
-        RightContainer.Size = UDim2.new(0.5, -5, 1, 0) -- 减去边距
-        RightContainer.Position = UDim2.new(0.5, 5, 0, 0)
-        RightContainer.ScrollBarThickness = 4
-        RightContainer.ScrollBarImageColor3 = config.SecondaryTextColor
-        RightContainer.ScrollBarImageTransparency = 0.7
-        RightContainer.ElasticBehavior = Enum.ElasticBehavior.Always
-        RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-        RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+        Tab.Name = "Tab"
+        Tab.Parent = TabMain
+        Tab.Active = true
+        Tab.BackgroundTransparency = 1
+        Tab.Size = UDim2.new(1, 0, 1, 0)
+        Tab.ScrollBarThickness = 2
+        Tab.ScrollBarImageTransparency = 0.5
+        Tab.Visible = false
+        Tab.ElasticBehavior = Enum.ElasticBehavior.Never
+        Tab.ScrollingDirection = Enum.ScrollingDirection.Y
+        Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
         
-        -- 左容器布局
-        LeftLayout.Name = "LeftLayout"
-        LeftLayout.Parent = LeftContainer
-        LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        LeftLayout.Padding = UDim.new(0, 4)
-        
-        -- 右容器布局
-        RightLayout.Name = "RightLayout"
-        RightLayout.Parent = RightContainer
-        RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        RightLayout.Padding = UDim.new(0, 4)
-        
-        -- 为左右容器分别设置自动滚动
-        LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            local contentHeight = LeftLayout.AbsoluteContentSize.Y
-            LeftContainer.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 10)
-            
-            -- 计算最大高度
-            local leftHeight = contentHeight + 10
-            local rightHeight = RightLayout.AbsoluteContentSize.Y + 10
-            local maxHeight = math.max(leftHeight, rightHeight)
-            
-            -- 设置TabContainer和Tab的CanvasSize
-            TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
-            Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
-            
-            -- 如果内容高度大于容器高度，启用滚动
-            if contentHeight > LeftContainer.AbsoluteSize.Y then
-                LeftContainer.ScrollBarThickness = 4
-            else
-                LeftContainer.ScrollBarThickness = 0
-            end
-        end)
-        
-        RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            local contentHeight = RightLayout.AbsoluteContentSize.Y
-            RightContainer.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 10)
-            
-            -- 计算最大高度
-            local leftHeight = LeftLayout.AbsoluteContentSize.Y + 10
-            local rightHeight = contentHeight + 10
-            local maxHeight = math.max(leftHeight, rightHeight)
-            
-            -- 设置TabContainer和Tab的CanvasSize
-            TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
-            Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
-            
-            -- 如果内容高度大于容器高度，启用滚动
-            if contentHeight > RightContainer.AbsoluteSize.Y then
-                RightContainer.ScrollBarThickness = 4
-            else
-                RightContainer.ScrollBarThickness = 0
-            end
-        end)
-        
-        -- 设置初始CanvasSize
-        LeftContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-        RightContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-        
-        -- 监听窗口大小变化，调整容器高度
-        Tab:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-            local leftContentHeight = LeftLayout.AbsoluteContentSize.Y
-            local rightContentHeight = RightLayout.AbsoluteContentSize.Y
-            local maxHeight = math.max(leftContentHeight, rightContentHeight) + 10
-            
-            TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
-            Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
-        end)
-    else
-        -- 单窗口布局（保持原有逻辑）
-        Tab.ScrollBarThickness = 4
-        Tab.ScrollBarImageTransparency = 0.7
+        TabContainer.Name = "TabContainer"
+        TabContainer.Parent = Tab
+        TabContainer.BackgroundTransparency = 1
         TabContainer.Size = UDim2.new(1, 0, 1, 0)
+        
+        if windowCount == 2 then
+    TabContainer.Size = UDim2.new(1, 0, 0, 0)
+    
+    local LeftContainer = Instance.new("ScrollingFrame")
+    LeftContainer.Name = "LeftContainer"
+    LeftContainer.Parent = TabContainer
+    LeftContainer.BackgroundTransparency = 1
+    LeftContainer.Size = UDim2.new(0.48, -2, 1, 0)
+    LeftContainer.Position = UDim2.new(0, 2, 0, 0)
+    LeftContainer.ScrollBarThickness = 2
+    LeftContainer.ScrollBarImageTransparency = 0.5
+    LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+    LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+    LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+    
+    local LeftLayout = Instance.new("UIListLayout")
+    LeftLayout.Name = "LeftLayout"
+    LeftLayout.Parent = LeftContainer
+    LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    LeftLayout.Padding = UDim.new(0, 4)
+    
+    local RightContainer = Instance.new("ScrollingFrame")
+    RightContainer.Name = "RightContainer"
+    RightContainer.Parent = TabContainer
+    RightContainer.BackgroundTransparency = 1
+    RightContainer.Size = UDim2.new(0.50, -2, 1, 0)
+    RightContainer.Position = UDim2.new(0.48, 0, 0, 0)
+    RightContainer.ScrollBarThickness = 2
+    RightContainer.ScrollBarImageTransparency = 0.5
+    RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+    RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+    RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+    
+    local RightLayout = Instance.new("UIListLayout")
+    RightLayout.Name = "RightLayout"
+    RightLayout.Parent = RightContainer
+    RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    RightLayout.Padding = UDim.new(0, 4)
+    
+    setupSmoothScrolling(LeftContainer, LeftLayout)
+    setupSmoothScrolling(RightContainer, RightLayout)
+end
+        
+        TabIco.Name = "TabIco"
+        TabIco.Parent = TabBtns
+        TabIco.BackgroundTransparency = 1
+        TabIco.BorderSizePixel = 0
+        TabIco.Size = UDim2.new(0, 22, 0, 22)
+        TabIco.Image = "rbxassetid://84830962019412"
+        TabIco.ImageTransparency = 0.5
+        
+        startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
+        
+        TabText.Name = "TabText"
+        TabText.Parent = TabIco
+        TabText.BackgroundTransparency = 1
+        TabText.Position = UDim2.new(1.2, 0, 0, 0)
+        TabText.Size = UDim2.new(0, 65, 0, 22)
+        TabText.Font = Enum.Font.GothamSemibold
+        TabText.Text = name
+        TabText.TextColor3 = config.TextColor
+        TabText.TextSize = 14
+        TabText.TextXAlignment = Enum.TextXAlignment.Left
+        TabText.TextTransparency = 0.5
+        
+        TabBtn.Name = "TabBtn"
+        TabBtn.Parent = TabIco
+        TabBtn.BackgroundTransparency = 1
+        TabBtn.BorderSizePixel = 0
+        TabBtn.Size = UDim2.new(0, 90, 0, 22)
+        TabBtn.AutoButtonColor = false
+        TabBtn.Font = Enum.Font.SourceSans
+        TabBtn.Text = ""
         
         TabL.Name = "TabL"
         TabL.Parent = TabContainer
         TabL.SortOrder = Enum.SortOrder.LayoutOrder
         TabL.Padding = UDim.new(0, 4)
         
-        setupSmoothScrolling(Tab, TabL)
-    end
-    
+        if windowCount == 2 then
+            TabL:Destroy()
+        else
+            setupSmoothScrolling(Tab, TabL)
+        end
         
         TabBtn.MouseButton1Click:Connect(function()
             switchTab({ TabIco, Tab })
