@@ -2105,73 +2105,103 @@ function section.Dropdown(section, text, flag, options, callback)
     DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
     DropdownModuleL.Padding = UDim.new(0, 4)
     
-    local setAllVisible = function()
-        local options = DropdownModule:GetChildren()
-        for i = 1, #options do
-            local option = options[i]
-            if option:IsA("TextButton") and option.Name:match("Option_") then
+    -- 存储所有选项的表
+    local allOptions = {}
+    
+    local function updateDropdownHeight()
+        if not open then return end
+        
+        local visibleCount = 0
+        for _, option in pairs(allOptions) do
+            if option and option.Parent and option.Visible then
+                visibleCount = visibleCount + 1
+            end
+        end
+        
+        if visibleCount == 0 then
+            -- 如果没有可见选项，显示一个提示选项
+            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36 + 28)
+        else
+            -- 计算总高度：顶部36 + 每个选项28 + 最后一个选项的额外边距4
+            local totalHeight = 36 + (visibleCount * 28) + 4
+            DropdownModule.Size = UDim2.new(0, elementWidth, 0, totalHeight)
+        end
+    end
+    
+    local function setAllVisible()
+        for _, option in pairs(allOptions) do
+            if option then
                 option.Visible = true
             end
         end
+        updateDropdownHeight()
     end
     
-    local searchDropdown = function(text)
-        local options = DropdownModule:GetChildren()
-        for i = 1, #options do
-            local option = options[i]
-            if text == "" then
-                setAllVisible()
-            else
-                if option:IsA("TextButton") and option.Name:match("Option_") then
-                    if option.Text:lower():match(text:lower()) then
-                        option.Visible = true
-                    else
-                        option.Visible = false
-                    end
+    local function searchDropdown(text)
+        local visibleCount = 0
+        
+        for _, option in pairs(allOptions) do
+            if option then
+                if text == "" then
+                    option.Visible = true
+                else
+                    option.Visible = option.Text:lower():match(text:lower()) ~= nil
+                end
+                
+                if option.Visible then
+                    visibleCount = visibleCount + 1
                 end
             end
         end
+        
+        -- 如果没有可见选项，显示提示
+        if visibleCount == 0 and text ~= "" then
+            -- 可以在这里添加"无结果"提示
+        end
+        
+        updateDropdownHeight()
     end
     
     local open = false
-    local ToggleDropVis = function()
+    local function toggleDropdown()
         open = not open
+        DropdownOpen.Text = open and "取消" or "选择"
+        
         if open then
             setAllVisible()
+            updateDropdownHeight()
+        else
+            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
         end
-        DropdownOpen.Text = (open and "取消" or "选择")
-        
-        DropdownModule.Size = UDim2.new(0, elementWidth, 0, open and (36 + DropdownModuleL.AbsoluteContentSize.Y + 4) or 36)
         
         create3DFlipAnimation(DropdownOpenFrame, 0.3)
     end
     
-    DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
+    DropdownOpen.MouseButton1Click:Connect(toggleDropdown)
+    
     DropdownText.Focused:Connect(function()
-        if open then
-            return
+        if not open then
+            toggleDropdown()
         end
-        ToggleDropVis()
     end)
     
     DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
-        if not open then
-            return
+        if open then
+            searchDropdown(DropdownText.Text)
         end
-        searchDropdown(DropdownText.Text)
     end)
     
     DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        if open then
-            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36 + DropdownModuleL.AbsoluteContentSize.Y + 4)
-        end
+        updateDropdownHeight()
     end)
     
     local funcs = {}
-    funcs.AddOption = function(self, option)
+    
+    funcs.AddOption = function(self, optionText)
         local Option = Instance.new("TextButton")
         local OptionC = Instance.new("UICorner")
-        Option.Name = "Option_" .. option
+        
+        Option.Name = "Option_" .. optionText
         Option.Parent = DropdownModule
         Option.BackgroundColor3 = config.TabColor
         Option.BackgroundTransparency = 0.2
@@ -2180,40 +2210,58 @@ function section.Dropdown(section, text, flag, options, callback)
         Option.Size = UDim2.new(0, elementWidth - 20, 0, 24)
         Option.AutoButtonColor = false
         Option.Font = Enum.Font.Gotham
-        Option.Text = option
+        Option.Text = optionText
         Option.TextColor3 = config.TextColor
         Option.TextSize = 13.000
+        Option.Visible = open  -- 根据下拉状态设置初始可见性
+        
         OptionC.CornerRadius = UDim.new(0, 6)
         OptionC.Name = "OptionC"
         OptionC.Parent = Option
         
+        -- 存储到所有选项表
+        table.insert(allOptions, Option)
+        
         Option.MouseButton1Click:Connect(function()
-            ToggleDropVis()
+            toggleDropdown()
             callback(Option.Text)
             DropdownText.Text = Option.Text
             FengUI.flags[flag] = Option.Text
         end)
+        
+        updateDropdownHeight()
     end
     
-    funcs.RemoveOption = function(self, option)
-        local option = DropdownModule:FindFirstChild("Option_" .. option)
-        if option then
-            option:Destroy()
-        end
-    end
-    
-    funcs.SetOptions = function(self, options)
-        for _, v in next, DropdownModule:GetChildren() do
-            if v.Name:match("Option_") then
-                v:Destroy()
+    funcs.RemoveOption = function(self, optionText)
+        for i, option in pairs(allOptions) do
+            if option and option.Text == optionText then
+                option:Destroy()
+                table.remove(allOptions, i)
+                break
             end
         end
-        for _, v in next, options do
-            funcs:AddOption(v)
+        updateDropdownHeight()
+    end
+    
+    funcs.SetOptions = function(self, newOptions)
+        -- 清除现有选项
+        for _, option in pairs(allOptions) do
+            if option then
+                option:Destroy()
+            end
         end
+        allOptions = {}
+        
+        -- 添加新选项
+        for _, optionText in pairs(newOptions) do
+            funcs:AddOption(optionText)
+        end
+        
+        updateDropdownHeight()
     end
     
     funcs:SetOptions(options)
+    
     return funcs
 end
 
