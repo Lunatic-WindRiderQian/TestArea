@@ -1189,194 +1189,118 @@ function FengUI.new(FengUI, name, theme)
             end
             
             function section.Toggle(section, text, flag, enabled, callback)
-    callback = callback or function() end
-    enabled = enabled or false
-    assert(text, "No text provided")
-    assert(flag, "No flag provided")
-    
-    -- 初始化标志
-    FengUI.flags[flag] = enabled
-    
-    local ToggleModule = Instance.new("Frame")
-    local ToggleBtn = Instance.new("TextButton")
-    local ToggleBtnC = Instance.new("UICorner")
-    local ToggleDisable = Instance.new("Frame")
-    local ToggleSwitch = Instance.new("Frame")
-    local ToggleSwitchC = Instance.new("UICorner")
-    local ToggleDisableC = Instance.new("UICorner")
-    
-    ToggleModule.Name = "ToggleModule"
-    ToggleModule.Parent = Objs
-    ToggleModule.BackgroundTransparency = 1
-    ToggleModule.BorderSizePixel = 0
-    ToggleModule.Size = UDim2.new(0, elementWidth, 0, 36)
-    
-    ToggleBtn.Name = "ToggleBtn"
-    ToggleBtn.Parent = ToggleModule
-    ToggleBtn.BackgroundColor3 = config.Toggle_Color
-    ToggleBtn.BackgroundTransparency = 0.2
-    ToggleBtn.BorderSizePixel = 0
-    ToggleBtn.Size = UDim2.new(0, elementWidth, 0, 36)
-    ToggleBtn.AutoButtonColor = false
-    ToggleBtn.Font = Enum.Font.GothamSemibold
-    ToggleBtn.Text = "   " .. text
-    ToggleBtn.TextColor3 = config.TextColor
-    ToggleBtn.TextSize = 14
-    ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
-    
-    ToggleBtnC.CornerRadius = UDim.new(0, 6)
-    ToggleBtnC.Name = "ToggleBtnC"
-    ToggleBtnC.Parent = ToggleBtn
-    
-    local togglePosition = 0.85
-    if windowCount == 2 then
-        togglePosition = 0.78
-    end
-    
-    ToggleDisable.Name = "ToggleDisable"
-    ToggleDisable.Parent = ToggleBtn
-    ToggleDisable.BackgroundColor3 = Color3.fromRGB(10, 20, 40)
-    ToggleDisable.BackgroundTransparency = 0.8
-    ToggleDisable.BorderSizePixel = 0
-    ToggleDisable.Position = UDim2.new(togglePosition, 0, 0.22, 0)
-    ToggleDisable.Size = UDim2.new(0, 34, 0, 18)
-    
-    ToggleSwitch.Name = "ToggleSwitch"
-    ToggleSwitch.Parent = ToggleDisable
-    ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
-    ToggleSwitch.Size = UDim2.new(0, 20, 0, 18)
-    ToggleSwitch.Position = UDim2.new(0, enabled and 14 or 0, 0, 0)
-    
-    ToggleSwitchC.CornerRadius = UDim.new(0, 6)
-    ToggleSwitchC.Name = "ToggleSwitchC"
-    ToggleSwitchC.Parent = ToggleSwitch
-    
-    ToggleDisableC.CornerRadius = UDim.new(0, 9)
-    ToggleDisableC.Name = "ToggleDisableC"
-    ToggleDisableC.Parent = ToggleDisable
-    
-    -- 添加发光效果
-    local toggleGlow = Instance.new("UIStroke")
-    toggleGlow.Parent = ToggleDisable
-    toggleGlow.Color = enabled and config.Toggle_On or Color3.fromRGB(100, 100, 120)
-    toggleGlow.Thickness = 1
-    toggleGlow.Transparency = 0.7
-    
-    -- 鼠标悬停效果
-    ToggleBtn.MouseEnter:Connect(function()
-        services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-            BackgroundTransparency = 0.1,
-            BackgroundColor3 = Color3.fromRGB(
-                math.floor(config.Toggle_Color.R * 255 * 1.1),
-                math.floor(config.Toggle_Color.G * 255 * 1.1),
-                math.floor(config.Toggle_Color.B * 255 * 1.1)
-            )
-        }):Play()
-        
-        if not enabled then
-            services.TweenService:Create(toggleGlow, TweenInfo.new(0.2), {
-                Color = Color3.fromRGB(150, 150, 170),
-                Thickness = 1.5,
-                Transparency = 0.5
-            }):Play()
-        end
-    end)
-    
-    ToggleBtn.MouseLeave:Connect(function()
-        services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-            BackgroundTransparency = 0.2,
-            BackgroundColor3 = config.Toggle_Color
-        }):Play()
-        
-        if not enabled then
-            services.TweenService:Create(toggleGlow, TweenInfo.new(0.2), {
-                Color = Color3.fromRGB(100, 100, 120),
-                Thickness = 1,
-                Transparency = 0.7
-            }):Play()
-        end
-    end)
-    
-    -- 简化的状态切换函数
-    local function toggleState()
-        enabled = not enabled
-        FengUI.flags[flag] = enabled
-        
-        -- 动画效果
-        services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0, enabled and 14 or 0, 0, 0),
-            BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
-        }):Play()
-        
-        services.TweenService:Create(toggleGlow, TweenInfo.new(0.3), {
-            Color = enabled and config.Toggle_On or Color3.fromRGB(100, 100, 120),
-            Thickness = enabled and 2 or 1
-        }):Play()
-        
-        -- 点击动画
-        services.TweenService:Create(ToggleBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            BackgroundTransparency = 0
-        }):Play()
-        
-        task.wait(0.1)
-        
-        services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-            BackgroundTransparency = 0.2
-        }):Play()
-        
-        -- 调用回调函数
-        callback(enabled)
-    end
-    
-    -- 点击事件
-    ToggleBtn.MouseButton1Click:Connect(function()
-        toggleState()
-    end)
-    
-    -- 点击开关本身也可以切换
-    ToggleSwitch.MouseButton1Click:Connect(function()
-        toggleState()
-    end)
-    
-    -- 创建功能方法
-    local funcs = {}
-    
-    function funcs:SetState(state)
-        if state == enabled then return end
-        
-        if state ~= nil then
-            enabled = state
-        else
-            enabled = not enabled
-        end
-        
-        FengUI.flags[flag] = enabled
-        
-        services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0, enabled and 14 or 0, 0, 0),
-            BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
-        }):Play()
-        
-        services.TweenService:Create(toggleGlow, TweenInfo.new(0.3), {
-            Color = enabled and config.Toggle_On or Color3.fromRGB(100, 100, 120),
-            Thickness = enabled and 2 or 1
-        }):Play()
-        
-        callback(enabled)
-    end
-    
-    function funcs:GetState()
-        return enabled
-    end
-    
-    function funcs:Destroy()
-        ToggleModule:Destroy()
-    end
-    
-    funcs.Module = ToggleModule
-    
-    return funcs
-end
+                callback = callback or function() end
+                enabled = enabled or false
+                assert(text, "No text provided")
+                assert(flag, "No flag provided")
+                FengUI.flags[flag] = enabled
+
+                local ToggleModule = Instance.new("Frame")
+                local ToggleBtn = Instance.new("TextButton")
+                local ToggleBtnC = Instance.new("UICorner")
+                local ToggleDisable = Instance.new("Frame")
+                local ToggleSwitch = Instance.new("Frame")
+                local ToggleSwitchC = Instance.new("UICorner")
+                local ToggleDisableC = Instance.new("UICorner")
+                
+                ToggleModule.Name = "ToggleModule"
+                ToggleModule.Parent = Objs
+                ToggleModule.BackgroundTransparency = 1
+                ToggleModule.BorderSizePixel = 0
+                ToggleModule.Size = UDim2.new(0, elementWidth, 0, 36)
+                
+                ToggleBtn.Name = "ToggleBtn"
+                ToggleBtn.Parent = ToggleModule
+                ToggleBtn.BackgroundColor3 = config.Toggle_Color
+                ToggleBtn.BackgroundTransparency = 0.2
+                ToggleBtn.BorderSizePixel = 0
+                ToggleBtn.Size = UDim2.new(0, elementWidth, 0, 36)
+                ToggleBtn.AutoButtonColor = false
+                ToggleBtn.Font = Enum.Font.GothamSemibold
+                ToggleBtn.Text = "   " .. text
+                ToggleBtn.TextColor3 = config.TextColor
+                ToggleBtn.TextSize = 14
+                ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
+                
+                ToggleBtnC.CornerRadius = UDim.new(0, 6)
+                ToggleBtnC.Name = "ToggleBtnC"
+                ToggleBtnC.Parent = ToggleBtn
+                
+                local togglePosition = 0.85
+                if windowCount == 2 then
+                    togglePosition = 0.78
+                end
+                
+                ToggleDisable.Name = "ToggleDisable"
+                ToggleDisable.Parent = ToggleBtn
+                ToggleDisable.BackgroundColor3 = Color3.fromRGB(10, 20, 40)
+                ToggleDisable.BackgroundTransparency = 0.8
+                ToggleDisable.BorderSizePixel = 0
+                ToggleDisable.Position = UDim2.new(togglePosition, 0, 0.22, 0)
+                ToggleDisable.Size = UDim2.new(0, 34, 0, 18)
+                
+                ToggleSwitch.Name = "ToggleSwitch"
+                ToggleSwitch.Parent = ToggleDisable
+                ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
+                ToggleSwitch.Size = UDim2.new(0, 20, 0, 18)
+                ToggleSwitch.Position = UDim2.new(0, enabled and 14 or 0, 0, 0)
+                
+                ToggleSwitchC.CornerRadius = UDim.new(0, 6)
+                ToggleSwitchC.Name = "ToggleSwitchC"
+                ToggleSwitchC.Parent = ToggleSwitch
+                
+                ToggleDisableC.CornerRadius = UDim.new(0, 9)
+                ToggleDisableC.Name = "ToggleDisableC"
+                ToggleDisableC.Parent = ToggleDisable
+                
+                ToggleBtn.MouseEnter:Connect(function()
+                    services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                        BackgroundTransparency = 0.1,
+                        BackgroundColor3 = Color3.fromRGB(
+                            math.floor(config.Toggle_Color.R * 255 * 1.1),
+                            math.floor(config.Toggle_Color.G * 255 * 1.1),
+                            math.floor(config.Toggle_Color.B * 255 * 1.1)
+                        )
+                    }):Play()
+                end)
+                
+                ToggleBtn.MouseLeave:Connect(function()
+                    services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                        BackgroundTransparency = 0.2,
+                        BackgroundColor3 = config.Toggle_Color
+                    }):Play()
+                end)
+                
+                local funcs = {
+                    SetState = function(self, state)
+                        if state == nil then
+                            state = not FengUI.flags[flag]
+                        end
+                        if FengUI.flags[flag] == state then
+                            return
+                        end
+                        
+                        services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                            Position = UDim2.new(0, state and 14 or 0, 0, 0),
+                            BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
+                        }):Play()
+                        
+                        FengUI.flags[flag] = state
+                        callback(state)
+                    end,
+                    Module = ToggleModule
+                }
+                
+                if enabled ~= false then
+                    funcs:SetState(true)
+                end
+                
+                ToggleBtn.MouseButton1Click:Connect(function()
+                    funcs:SetState()
+                end)
+                
+                return funcs
+            end
             
             function section.Keybind(section, text, default, callback)
                 callback = callback or function() end
@@ -2105,73 +2029,103 @@ function section.Dropdown(section, text, flag, options, callback)
     DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
     DropdownModuleL.Padding = UDim.new(0, 4)
     
-    local setAllVisible = function()
-        local options = DropdownModule:GetChildren()
-        for i = 1, #options do
-            local option = options[i]
-            if option:IsA("TextButton") and option.Name:match("Option_") then
+    -- 存储所有选项的表
+    local allOptions = {}
+    
+    local function updateDropdownHeight()
+        if not open then return end
+        
+        local visibleCount = 0
+        for _, option in pairs(allOptions) do
+            if option and option.Parent and option.Visible then
+                visibleCount = visibleCount + 1
+            end
+        end
+        
+        if visibleCount == 0 then
+            -- 如果没有可见选项，显示一个提示选项
+            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36 + 28)
+        else
+            -- 计算总高度：顶部36 + 每个选项28 + 最后一个选项的额外边距4
+            local totalHeight = 36 + (visibleCount * 28) + 4
+            DropdownModule.Size = UDim2.new(0, elementWidth, 0, totalHeight)
+        end
+    end
+    
+    local function setAllVisible()
+        for _, option in pairs(allOptions) do
+            if option then
                 option.Visible = true
             end
         end
+        updateDropdownHeight()
     end
     
-    local searchDropdown = function(text)
-        local options = DropdownModule:GetChildren()
-        for i = 1, #options do
-            local option = options[i]
-            if text == "" then
-                setAllVisible()
-            else
-                if option:IsA("TextButton") and option.Name:match("Option_") then
-                    if option.Text:lower():match(text:lower()) then
-                        option.Visible = true
-                    else
-                        option.Visible = false
-                    end
+    local function searchDropdown(text)
+        local visibleCount = 0
+        
+        for _, option in pairs(allOptions) do
+            if option then
+                if text == "" then
+                    option.Visible = true
+                else
+                    option.Visible = option.Text:lower():match(text:lower()) ~= nil
+                end
+                
+                if option.Visible then
+                    visibleCount = visibleCount + 1
                 end
             end
         end
+        
+        -- 如果没有可见选项，显示提示
+        if visibleCount == 0 and text ~= "" then
+            -- 可以在这里添加"无结果"提示
+        end
+        
+        updateDropdownHeight()
     end
     
     local open = false
-    local ToggleDropVis = function()
+    local function toggleDropdown()
         open = not open
+        DropdownOpen.Text = open and "取消" or "选择"
+        
         if open then
             setAllVisible()
+            updateDropdownHeight()
+        else
+            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
         end
-        DropdownOpen.Text = (open and "取消" or "选择")
-        
-        DropdownModule.Size = UDim2.new(0, elementWidth, 0, open and (36 + DropdownModuleL.AbsoluteContentSize.Y + 4) or 36)
         
         create3DFlipAnimation(DropdownOpenFrame, 0.3)
     end
     
-    DropdownOpen.MouseButton1Click:Connect(ToggleDropVis)
+    DropdownOpen.MouseButton1Click:Connect(toggleDropdown)
+    
     DropdownText.Focused:Connect(function()
-        if open then
-            return
+        if not open then
+            toggleDropdown()
         end
-        ToggleDropVis()
     end)
     
     DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
-        if not open then
-            return
+        if open then
+            searchDropdown(DropdownText.Text)
         end
-        searchDropdown(DropdownText.Text)
     end)
     
     DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        if open then
-            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36 + DropdownModuleL.AbsoluteContentSize.Y + 4)
-        end
+        updateDropdownHeight()
     end)
     
     local funcs = {}
-    funcs.AddOption = function(self, option)
+    
+    funcs.AddOption = function(self, optionText)
         local Option = Instance.new("TextButton")
         local OptionC = Instance.new("UICorner")
-        Option.Name = "Option_" .. option
+        
+        Option.Name = "Option_" .. optionText
         Option.Parent = DropdownModule
         Option.BackgroundColor3 = config.TabColor
         Option.BackgroundTransparency = 0.2
@@ -2180,40 +2134,58 @@ function section.Dropdown(section, text, flag, options, callback)
         Option.Size = UDim2.new(0, elementWidth - 20, 0, 24)
         Option.AutoButtonColor = false
         Option.Font = Enum.Font.Gotham
-        Option.Text = option
+        Option.Text = optionText
         Option.TextColor3 = config.TextColor
         Option.TextSize = 13.000
+        Option.Visible = open  -- 根据下拉状态设置初始可见性
+        
         OptionC.CornerRadius = UDim.new(0, 6)
         OptionC.Name = "OptionC"
         OptionC.Parent = Option
         
+        -- 存储到所有选项表
+        table.insert(allOptions, Option)
+        
         Option.MouseButton1Click:Connect(function()
-            ToggleDropVis()
+            toggleDropdown()
             callback(Option.Text)
             DropdownText.Text = Option.Text
             FengUI.flags[flag] = Option.Text
         end)
+        
+        updateDropdownHeight()
     end
     
-    funcs.RemoveOption = function(self, option)
-        local option = DropdownModule:FindFirstChild("Option_" .. option)
-        if option then
-            option:Destroy()
-        end
-    end
-    
-    funcs.SetOptions = function(self, options)
-        for _, v in next, DropdownModule:GetChildren() do
-            if v.Name:match("Option_") then
-                v:Destroy()
+    funcs.RemoveOption = function(self, optionText)
+        for i, option in pairs(allOptions) do
+            if option and option.Text == optionText then
+                option:Destroy()
+                table.remove(allOptions, i)
+                break
             end
         end
-        for _, v in next, options do
-            funcs:AddOption(v)
+        updateDropdownHeight()
+    end
+    
+    funcs.SetOptions = function(self, newOptions)
+        -- 清除现有选项
+        for _, option in pairs(allOptions) do
+            if option then
+                option:Destroy()
+            end
         end
+        allOptions = {}
+        
+        -- 添加新选项
+        for _, optionText in pairs(newOptions) do
+            funcs:AddOption(optionText)
+        end
+        
+        updateDropdownHeight()
     end
     
     funcs:SetOptions(options)
+    
     return funcs
 end
 
