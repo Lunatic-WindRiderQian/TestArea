@@ -1189,118 +1189,158 @@ function FengUI.new(FengUI, name, theme)
             end
             
             function section.Toggle(section, text, flag, enabled, callback)
-                callback = callback or function() end
-                enabled = enabled or false
-                assert(text, "No text provided")
-                assert(flag, "No flag provided")
-                FengUI.flags[flag] = enabled
+    callback = callback or function() end
+    enabled = enabled or false
+    assert(text, "No text provided")
+    assert(flag, "No flag provided")
+    FengUI.flags[flag] = enabled
 
-                local ToggleModule = Instance.new("Frame")
-                local ToggleBtn = Instance.new("TextButton")
-                local ToggleBtnC = Instance.new("UICorner")
-                local ToggleDisable = Instance.new("Frame")
-                local ToggleSwitch = Instance.new("Frame")
-                local ToggleSwitchC = Instance.new("UICorner")
-                local ToggleDisableC = Instance.new("UICorner")
-                
-                ToggleModule.Name = "ToggleModule"
-                ToggleModule.Parent = Objs
-                ToggleModule.BackgroundTransparency = 1
-                ToggleModule.BorderSizePixel = 0
-                ToggleModule.Size = UDim2.new(0, elementWidth, 0, 36)
-                
-                ToggleBtn.Name = "ToggleBtn"
-                ToggleBtn.Parent = ToggleModule
-                ToggleBtn.BackgroundColor3 = config.Toggle_Color
-                ToggleBtn.BackgroundTransparency = 0.2
-                ToggleBtn.BorderSizePixel = 0
-                ToggleBtn.Size = UDim2.new(0, elementWidth, 0, 36)
-                ToggleBtn.AutoButtonColor = false
-                ToggleBtn.Font = Enum.Font.GothamSemibold
-                ToggleBtn.Text = "   " .. text
-                ToggleBtn.TextColor3 = config.TextColor
-                ToggleBtn.TextSize = 14
-                ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
-                
-                ToggleBtnC.CornerRadius = UDim.new(0, 6)
-                ToggleBtnC.Name = "ToggleBtnC"
-                ToggleBtnC.Parent = ToggleBtn
-                
-                local togglePosition = 0.85
-                if windowCount == 2 then
-                    togglePosition = 0.78
-                end
-                
-                ToggleDisable.Name = "ToggleDisable"
-                ToggleDisable.Parent = ToggleBtn
-                ToggleDisable.BackgroundColor3 = Color3.fromRGB(10, 20, 40)
-                ToggleDisable.BackgroundTransparency = 0.8
-                ToggleDisable.BorderSizePixel = 0
-                ToggleDisable.Position = UDim2.new(togglePosition, 0, 0.22, 0)
-                ToggleDisable.Size = UDim2.new(0, 34, 0, 18)
-                
-                ToggleSwitch.Name = "ToggleSwitch"
-                ToggleSwitch.Parent = ToggleDisable
-                ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
-                ToggleSwitch.Size = UDim2.new(0, 20, 0, 18)
-                ToggleSwitch.Position = UDim2.new(0, enabled and 14 or 0, 0, 0)
-                
-                ToggleSwitchC.CornerRadius = UDim.new(0, 6)
-                ToggleSwitchC.Name = "ToggleSwitchC"
-                ToggleSwitchC.Parent = ToggleSwitch
-                
-                ToggleDisableC.CornerRadius = UDim.new(0, 9)
-                ToggleDisableC.Name = "ToggleDisableC"
-                ToggleDisableC.Parent = ToggleDisable
-                
-                ToggleBtn.MouseEnter:Connect(function()
-                    services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.1,
-                        BackgroundColor3 = Color3.fromRGB(
-                            math.floor(config.Toggle_Color.R * 255 * 1.1),
-                            math.floor(config.Toggle_Color.G * 255 * 1.1),
-                            math.floor(config.Toggle_Color.B * 255 * 1.1)
-                        )
-                    }):Play()
-                end)
-                
-                ToggleBtn.MouseLeave:Connect(function()
-                    services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                        BackgroundTransparency = 0.2,
-                        BackgroundColor3 = config.Toggle_Color
-                    }):Play()
-                end)
-                
-                local funcs = {
-                    SetState = function(self, state)
-                        if state == nil then
-                            state = not FengUI.flags[flag]
-                        end
-                        if FengUI.flags[flag] == state then
-                            return
-                        end
-                        
-                        services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                            Position = UDim2.new(0, state and 14 or 0, 0, 0),
-                            BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
-                        }):Play()
-                        
-                        FengUI.flags[flag] = state
-                        callback(state)
-                    end,
-                    Module = ToggleModule
-                }
-                
-                if enabled ~= false then
-                    funcs:SetState(true)
-                end
-                
-                ToggleBtn.MouseButton1Click:Connect(function()
-                    funcs:SetState()
-                end)
-                
-                return funcs
+    local ToggleModule = Instance.new("Frame")
+    local ToggleBtn = Instance.new("TextButton")
+    local ToggleBtnC = Instance.new("UICorner")
+    local ToggleDisable = Instance.new("Frame")
+    local ToggleSwitch = Instance.new("Frame")
+    local ToggleSwitchC = Instance.new("UICorner")
+    local ToggleDisableC = Instance.new("UICorner")
+    
+    ToggleModule.Name = "ToggleModule"
+    ToggleModule.Parent = Objs
+    ToggleModule.BackgroundTransparency = 1
+    ToggleModule.BorderSizePixel = 0
+    ToggleModule.Size = UDim2.new(0, elementWidth, 0, 36)
+    
+    ToggleBtn.Name = "ToggleBtn"
+    ToggleBtn.Parent = ToggleModule
+    ToggleBtn.BackgroundColor3 = config.Toggle_Color
+    ToggleBtn.BackgroundTransparency = 0.2
+    ToggleBtn.BorderSizePixel = 0
+    ToggleBtn.Size = UDim2.new(0, elementWidth, 0, 36)
+    ToggleBtn.AutoButtonColor = false
+    ToggleBtn.Font = Enum.Font.GothamSemibold
+    ToggleBtn.Text = "   " .. text
+    ToggleBtn.TextColor3 = config.TextColor
+    ToggleBtn.TextSize = 14
+    ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
+    
+    ToggleBtnC.CornerRadius = UDim.new(0, 6)
+    ToggleBtnC.Name = "ToggleBtnC"
+    ToggleBtnC.Parent = ToggleBtn
+    
+    local togglePosition = 0.85
+    if windowCount == 2 then
+        togglePosition = 0.78
+    end
+    
+    ToggleDisable.Name = "ToggleDisable"
+    ToggleDisable.Parent = ToggleBtn
+    ToggleDisable.BackgroundColor3 = Color3.fromRGB(10, 20, 40)
+    ToggleDisable.BackgroundTransparency = 0.8
+    ToggleDisable.BorderSizePixel = 0
+    ToggleDisable.Position = UDim2.new(togglePosition, 0, 0.22, 0)
+    ToggleDisable.Size = UDim2.new(0, 34, 0, 18)
+    
+    ToggleSwitch.Name = "ToggleSwitch"
+    ToggleSwitch.Parent = ToggleDisable
+    ToggleSwitch.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
+    ToggleSwitch.Size = UDim2.new(0, 20, 0, 18)
+    ToggleSwitch.Position = UDim2.new(0, enabled and 14 or 0, 0, 0)
+    
+    ToggleSwitchC.CornerRadius = UDim.new(0, 6)
+    ToggleSwitchC.Name = "ToggleSwitchC"
+    ToggleSwitchC.Parent = ToggleSwitch
+    
+    ToggleDisableC.CornerRadius = UDim.new(0, 9)
+    ToggleDisableC.Name = "ToggleDisableC"
+    ToggleDisableC.Parent = ToggleDisable
+    
+    ToggleBtn.MouseEnter:Connect(function()
+        services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            BackgroundTransparency = 0.1,
+            BackgroundColor3 = Color3.fromRGB(
+                math.floor(config.Toggle_Color.R * 255 * 1.1),
+                math.floor(config.Toggle_Color.G * 255 * 1.1),
+                math.floor(config.Toggle_Color.B * 255 * 1.1)
+            )
+        }):Play()
+    end)
+    
+    ToggleBtn.MouseLeave:Connect(function()
+        services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            BackgroundTransparency = 0.2,
+            BackgroundColor3 = config.Toggle_Color
+        }):Play()
+    end)
+    
+    local funcs = {
+        SetState = function(self, state)
+            if state == nil then
+                state = not FengUI.flags[flag]
             end
+            if FengUI.flags[flag] == state then
+                return
+            end
+            
+            services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                Position = UDim2.new(0, state and 14 or 0, 0, 0),
+                BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
+            }):Play()
+            
+            FengUI.flags[flag] = state
+            callback(state)
+        end,
+        Module = ToggleModule
+    }
+    
+    if enabled ~= false then
+        funcs:SetState(true)
+    end
+    
+    -- 重写点击事件 - 使用 InputBegan 避免事件被拦截
+    local isDebouncing = false
+    
+    ToggleBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            
+            -- 防抖检查
+            if isDebouncing then return end
+            isDebouncing = true
+            
+            -- 立即切换状态
+            local newState = not FengUI.flags[flag]
+            
+            -- 更新状态
+            FengUI.flags[flag] = newState
+            
+            -- 播放切换动画
+            services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                Position = UDim2.new(0, newState and 14 or 0, 0, 0),
+                BackgroundColor3 = newState and config.Toggle_On or config.Toggle_Off
+            }):Play()
+            
+            -- 点击反馈效果
+            services.TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {
+                BackgroundTransparency = 0.05
+            }):Play()
+            
+            task.wait(0.1)
+            
+            services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                BackgroundTransparency = 0.2
+            }):Play()
+            
+            -- 执行回调
+            task.spawn(function()
+                pcall(callback, newState)
+            end)
+            
+            -- 重置防抖
+            task.wait(0.1)
+            isDebouncing = false
+        end
+    end)
+    
+    return funcs
+end
             
             function section.Keybind(section, text, default, callback)
                 callback = callback or function() end
