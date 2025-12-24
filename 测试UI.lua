@@ -1271,68 +1271,43 @@ function FengUI.new(FengUI, name, theme)
         }):Play()
     end)
     
+    -- 简化的SetState函数，直接切换状态
+    local function setState(newState)
+        if newState == nil then
+            newState = not FengUI.flags[flag]
+        end
+        
+        FengUI.flags[flag] = newState
+        
+        services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0, newState and 14 or 0, 0, 0),
+            BackgroundColor3 = newState and config.Toggle_On or config.Toggle_Off
+        }):Play()
+        
+        callback(newState)
+    end
+    
     local funcs = {
         SetState = function(self, state)
-            if state == nil then
-                state = not FengUI.flags[flag]
-            end
-            if FengUI.flags[flag] == state then
-                return
-            end
-            
-            services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                Position = UDim2.new(0, state and 14 or 0, 0, 0),
-                BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
-            }):Play()
-            
-            FengUI.flags[flag] = state
-            callback(state)
+            setState(state)
         end,
         Module = ToggleModule
     }
     
-    if enabled ~= false then
-        funcs:SetState(true)
+    -- 直接设置初始状态，不需要额外调用SetState
+    if enabled then
+        FengUI.flags[flag] = true
+        ToggleSwitch.Position = UDim2.new(0, 14, 0, 0)
+        ToggleSwitch.BackgroundColor3 = config.Toggle_On
+    else
+        FengUI.flags[flag] = false
+        ToggleSwitch.Position = UDim2.new(0, 0, 0, 0)
+        ToggleSwitch.BackgroundColor3 = config.Toggle_Off
     end
     
-    -- 修复点击事件 - 确保状态正确切换
-    local isClicking = false
-    
-    ToggleBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            if isClicking then return end
-            isClicking = true
-            
-            -- 立即更新状态
-            local newState = not FengUI.flags[flag]
-            FengUI.flags[flag] = newState
-            
-            -- 播放切换动画
-            services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-                Position = UDim2.new(0, newState and 14 or 0, 0, 0),
-                BackgroundColor3 = newState and config.Toggle_On or config.Toggle_Off
-            }):Play()
-            
-            -- 按钮点击反馈
-            services.TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {
-                BackgroundTransparency = 0.1
-            }):Play()
-            
-            -- 执行回调
-            task.spawn(function()
-                pcall(callback, newState)
-            end)
-            
-            -- 恢复按钮状态
-            task.delay(0.1, function()
-                services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                    BackgroundTransparency = 0.2
-                }):Play()
-            end)
-            
-            -- 重置点击状态
-            isClicking = false
-        end
+    ToggleBtn.MouseButton1Click:Connect(function()
+        local newState = not FengUI.flags[flag]
+        setState(newState)
     end)
     
     return funcs
