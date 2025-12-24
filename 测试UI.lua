@@ -702,7 +702,7 @@ function FengUI.new(FengUI, name, theme)
     TabContainer.Name = "TabContainer"
     TabContainer.Parent = Tab
     TabContainer.BackgroundTransparency = 1
-    TabContainer.Size = UDim2.new(1, 0, 0, 0) -- 高度设为0，由内容决定
+    TabContainer.Size = UDim2.new(1, 0, 1, 0) -- 修改为固定高度100%，而不是0
     
     if windowCount == 2 then
         -- 创建左容器
@@ -747,65 +747,71 @@ function FengUI.new(FengUI, name, theme)
         RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
         RightLayout.Padding = UDim.new(0, 4)
         
-        -- 左容器自动滚动函数
+        -- 左容器滚动处理
         LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             local contentHeight = LeftLayout.AbsoluteContentSize.Y
             
             -- 设置左容器画布大小
             LeftContainer.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 10)
             
-            -- 计算左右容器的最大高度
-            local leftHeight = contentHeight + 10
-            local rightHeight = RightLayout.AbsoluteContentSize.Y + 10
-            local maxHeight = math.max(leftHeight, rightHeight)
-            
-            -- 设置TabContainer和Tab的画布大小
-            TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
-            Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
-            
             -- 自动显示/隐藏左容器滚动条
             if contentHeight > LeftContainer.AbsoluteSize.Y then
                 LeftContainer.ScrollBarThickness = 4
+                LeftContainer.ScrollingEnabled = true
             else
                 LeftContainer.ScrollBarThickness = 0
+                LeftContainer.ScrollingEnabled = false
             end
+            
+            -- 更新整个Tab的画布大小为左右容器的最大高度
+            local leftContentHeight = LeftLayout.AbsoluteContentSize.Y + 10
+            local rightContentHeight = RightLayout.AbsoluteContentSize.Y + 10
+            local maxHeight = math.max(leftContentHeight, rightContentHeight)
+            
+            -- 设置整个Tab的画布大小
+            Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
         end)
         
-        -- 右容器自动滚动函数
+        -- 右容器滚动处理
         RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             local contentHeight = RightLayout.AbsoluteContentSize.Y
             
             -- 设置右容器画布大小
             RightContainer.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 10)
             
-            -- 计算左右容器的最大高度
-            local leftHeight = LeftLayout.AbsoluteContentSize.Y + 10
-            local rightHeight = contentHeight + 10
-            local maxHeight = math.max(leftHeight, rightHeight)
-            
-            -- 设置TabContainer和Tab的画布大小
-            TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
-            Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
-            
             -- 自动显示/隐藏右容器滚动条
             if contentHeight > RightContainer.AbsoluteSize.Y then
                 RightContainer.ScrollBarThickness = 4
+                RightContainer.ScrollingEnabled = true
             else
                 RightContainer.ScrollBarThickness = 0
+                RightContainer.ScrollingEnabled = false
             end
+            
+            -- 更新整个Tab的画布大小为左右容器的最大高度
+            local leftContentHeight = LeftLayout.AbsoluteContentSize.Y + 10
+            local rightContentHeight = contentHeight + 10
+            local maxHeight = math.max(leftContentHeight, rightContentHeight)
+            
+            -- 设置整个Tab的画布大小
+            Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
         end)
         
         -- 初始化画布大小
         LeftContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
         RightContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
         
-        -- 监听Tab大小变化，重新计算容器高度
+        -- 监听Tab大小变化，重新计算滚动
         Tab:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
             local leftContentHeight = LeftLayout.AbsoluteContentSize.Y
             local rightContentHeight = RightLayout.AbsoluteContentSize.Y
-            local maxHeight = math.max(leftContentHeight, rightContentHeight) + 10
             
-            TabContainer.Size = UDim2.new(1, 0, 0, maxHeight)
+            -- 更新左右容器的画布大小
+            LeftContainer.CanvasSize = UDim2.new(0, 0, 0, leftContentHeight + 10)
+            RightContainer.CanvasSize = UDim2.new(0, 0, 0, rightContentHeight + 10)
+            
+            -- 更新整个Tab的画布大小
+            local maxHeight = math.max(leftContentHeight, rightContentHeight) + 10
             Tab.CanvasSize = UDim2.new(0, 0, 0, maxHeight)
         end)
     else
@@ -992,7 +998,7 @@ function FengUI.new(FengUI, name, theme)
         end)
         
         local section = {}
-            
+        
             function section.Button(section, text, callback)
                 callback = callback or function() end
                 
