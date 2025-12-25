@@ -42,6 +42,8 @@ local services = {
 
 local UserInputService = services.UserInputService
 local RunService = services.RunService
+local TweenService = services.TweenService
+local Players = services.Players
 
 local config = {
     MainColor = Color3.fromRGB(18, 18, 30),
@@ -70,17 +72,6 @@ local config = {
     ElementColor = Color3.fromRGB(30, 30, 50),
     ElementTransparency = 0.2,
     GlassEffect = Color3.fromRGB(255, 255, 255),
-}
-
--- 添加颜色选择器相关配置
-local colorpickerConfig = {
-    DialogColor = Color3.fromRGB(25, 25, 40),
-    DialogStrokeColor = Color3.fromRGB(50, 50, 80),
-    DialogTextColor = Color3.fromRGB(240, 245, 255),
-    SliderBackground = Color3.fromRGB(100, 100, 100),
-    CheckerPattern = "http://www.roblox.com/asset/?id=14204231522",
-    CursorImage = "http://www.roblox.com/asset/?id=4805639000",
-    HueSliderImage = "http://www.roblox.com/asset/?id=12266946128",
 }
 
 local function startNeonFlowEffect(object, property, speed)
@@ -241,40 +232,15 @@ end
 local function create3DFlipAnimation(object, duration)
     duration = duration or 0.5
     
-    services.TweenService:Create(object, TweenInfo.new(duration/2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    TweenService:Create(object, TweenInfo.new(duration/2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
         Rotation = 15
     }):Play()
     
     task.wait(duration/2)
     
-    services.TweenService:Create(object, TweenInfo.new(duration/2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+    TweenService:Create(object, TweenInfo.new(duration/2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         Rotation = 0
     }):Play()
-end
-
-local function createParticleTrail(startPos, endPos, parent)
-    local trail = Instance.new("Frame")
-    trail.Name = "ParticleTrail"
-    trail.BackgroundColor3 = Color3.new(1, 1, 1)
-    trail.BackgroundTransparency = 0.3
-    trail.Size = UDim2.new(0, 4, 0, 4)
-    trail.Position = startPos
-    trail.Parent = parent
-    trail.ZIndex = 10
-    
-    local trailCorner = Instance.new("UICorner")
-    trailCorner.CornerRadius = UDim.new(1, 0)
-    trailCorner.Parent = trail
-    
-    services.TweenService:Create(trail, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Position = endPos,
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0, 2, 0, 2)
-    }):Play()
-    
-    delay(0.3, function()
-        trail:Destroy()
-    end)
 end
 
 local function setupSmoothScrolling(scrollingFrame, layout)
@@ -299,11 +265,11 @@ function switchTab(new)
     if old == nil then
         new[2].Visible = true
         FengUI.currentTab = new
-        services.TweenService:Create(new[1], TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { 
+        TweenService:Create(new[1], TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { 
             ImageTransparency = 0,
             Size = UDim2.new(0, 25, 0, 25)
         }):Play()
-        services.TweenService:Create(new[1].TabText, TweenInfo.new(0.3), { 
+        TweenService:Create(new[1].TabText, TweenInfo.new(0.3), { 
             TextTransparency = 0,
             TextColor3 = config.AccentColor
         }):Play()
@@ -316,19 +282,19 @@ function switchTab(new)
     FengUI.currentTab = new
     
     local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    services.TweenService:Create(old[1], tweenInfo, { 
+    TweenService:Create(old[1], tweenInfo, { 
         ImageTransparency = 0.5,
         Size = UDim2.new(0, 22, 0, 22)
     }):Play()
-    services.TweenService:Create(new[1], tweenInfo, { 
+    TweenService:Create(new[1], tweenInfo, { 
         ImageTransparency = 0,
         Size = UDim2.new(0, 25, 0, 25)
     }):Play()
-    services.TweenService:Create(old[1].TabText, tweenInfo, { 
+    TweenService:Create(old[1].TabText, tweenInfo, { 
         TextTransparency = 0.5,
         TextColor3 = config.TextColor
     }):Play()
-    services.TweenService:Create(new[1].TabText, tweenInfo, { 
+    TweenService:Create(new[1].TabText, tweenInfo, { 
         TextTransparency = 0,
         TextColor3 = config.AccentColor
         }):Play()
@@ -429,7 +395,7 @@ CloseCorner.CornerRadius = UDim.new(0, 4)
 CloseCorner.Parent = CloseButton
 
 CloseButton.MouseEnter:Connect(function()
-    services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+    TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         TextColor3 = Color3.fromRGB(255, 100, 100),
         TextSize = 18,
         Position = UDim2.new(1, -26, 0, 6)
@@ -437,7 +403,7 @@ CloseButton.MouseEnter:Connect(function()
 end)
 
 CloseButton.MouseLeave:Connect(function()
-    services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+    TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         TextColor3 = Color3.fromRGB(255, 60, 60),
         TextSize = 16,
         Position = UDim2.new(1, -25, 0, 7)
@@ -445,35 +411,35 @@ CloseButton.MouseLeave:Connect(function()
 end)
 
 CloseButton.MouseButton1Click:Connect(function()
-    services.TweenService:Create(CloseButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    TweenService:Create(CloseButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         TextColor3 = Color3.fromRGB(255, 30, 30),
         TextSize = 14,
         Position = UDim2.new(1, -24, 0, 8)
     }):Play()
     
-    services.TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+    TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         Position = UDim2.new(0.5, 0, 0.3, 0),
         BackgroundTransparency = 1,
         Size = UDim2.new(0, 10, 0, 10)
     }):Play()
     
-    services.TweenService:Create(MainStroke, TweenInfo.new(0.4), {
+    TweenService:Create(MainStroke, TweenInfo.new(0.4), {
         Transparency = 1
     }):Play()
     
-    services.TweenService:Create(neonStroke, TweenInfo.new(0.4), {
+    TweenService:Create(neonStroke, TweenInfo.new(0.4), {
         Transparency = 1
     }):Play()
     
-    services.TweenService:Create(TitleBar, TweenInfo.new(0.4), {
+    TweenService:Create(TitleBar, TweenInfo.new(0.4), {
         BackgroundTransparency = 1
     }):Play()
     
-    services.TweenService:Create(TitleText, TweenInfo.new(0.4), {
+    TweenService:Create(TitleText, TweenInfo.new(0.4), {
         TextTransparency = 1
     }):Play()
     
-    services.TweenService:Create(CloseButton, TweenInfo.new(0.4), {
+    TweenService:Create(CloseButton, TweenInfo.new(0.4), {
         TextTransparency = 1
     }):Play()
     
@@ -515,7 +481,7 @@ Open.MouseButton1Click:Connect(function()
     create3DFlipAnimation(Open, 0.5)
 end)
 
-services.UserInputService.InputEnded:Connect(function(input)
+UserInputService.InputEnded:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.LeftControl then
         Main.Visible = not Main.Visible
         if Main.Visible then
@@ -592,37 +558,37 @@ local function playEntranceAnimation()
     TabMain.Visible = false
     TabBtns.Visible = false
     
-    services.TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+    TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.4, 0),
         BackgroundTransparency = 1,
         Size = UDim2.new(0, 450, 0, 280)
     }):Play()
     
-    services.TweenService:Create(MainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    TweenService:Create(MainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Transparency = 0.5
     }):Play()
     
-    services.TweenService:Create(neonStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    TweenService:Create(neonStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Transparency = 0.7
     }):Play()
     
     task.wait(0.2)
     
-    services.TweenService:Create(TitleBar, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    TweenService:Create(TitleBar, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         BackgroundTransparency = 1
     }):Play()
     
-    services.TweenService:Create(TitleText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    TweenService:Create(TitleText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         TextTransparency = 0
     }):Play()
     
-    services.TweenService:Create(CloseButton, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    TweenService:Create(CloseButton, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         TextTransparency = 0
     }):Play()
     
     task.wait(0.2)
     
-    services.TweenService:Create(Side, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    TweenService:Create(Side, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         BackgroundTransparency = 1
     }):Play()
     
@@ -659,7 +625,7 @@ task.spawn(function()
             ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 1, 1))
         })
         
-        services.TweenService:Create(TitleText, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+        TweenService:Create(TitleText, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
             TextSize = 15 + math.sin(tick() * 3) * 2
         }):Play()
         
@@ -668,16 +634,48 @@ task.spawn(function()
 end)
 
 -- 颜色选择器对话框函数
-local function createColorPickerDialog(defaultColor, callback, allowTransparency)
+local currentColorPickerDialog = nil
+
+local function createColorPickerDialog(defaultColor, callback)
+    -- 关闭现有的颜色选择器
+    if currentColorPickerDialog then
+        currentColorPickerDialog:Destroy()
+        currentColorPickerDialog = nil
+    end
+    
+    -- 创建对话框容器
+    local dialogContainer = Instance.new("Frame")
+    dialogContainer.Name = "ColorPickerDialogContainer"
+    dialogContainer.BackgroundTransparency = 1
+    dialogContainer.Size = UDim2.new(1, 0, 1, 0)
+    dialogContainer.Position = UDim2.new(0, 0, 0, 0)
+    dialogContainer.ZIndex = 100
+    dialogContainer.Parent = Main
+    
+    -- 创建背景遮罩
+    local backgroundOverlay = Instance.new("Frame")
+    backgroundOverlay.Name = "BackgroundOverlay"
+    backgroundOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+    backgroundOverlay.BackgroundTransparency = 0.5
+    backgroundOverlay.Size = UDim2.new(1, 0, 1, 0)
+    backgroundOverlay.ZIndex = 100
+    backgroundOverlay.Parent = dialogContainer
+    
+    -- 创建对话框
     local dialog = Instance.new("Frame")
     dialog.Name = "ColorPickerDialog"
-    dialog.BackgroundColor3 = colorpickerConfig.DialogColor
+    dialog.BackgroundColor3 = config.TabColor
     dialog.BackgroundTransparency = 0.1
     dialog.BorderSizePixel = 0
-    dialog.Position = UDim2.new(0.5, -215, 0.5, -165)
-    dialog.Size = UDim2.new(0, 430, 0, 330)
-    dialog.ZIndex = 100
-    dialog.Parent = FengYu
+    dialog.AnchorPoint = Vector2.new(0.5, 0.5)
+    dialog.Position = UDim2.new(0.5, 0, 0.5, 0)
+    dialog.Size = UDim2.new(0, 400, 0, 320)
+    dialog.ZIndex = 101
+    dialog.Parent = dialogContainer
+    
+    -- 确保对话框不能独立拖动
+    dialog.Active = false
+    dialog.Draggable = false
     
     local dialogCorner = Instance.new("UICorner")
     dialogCorner.CornerRadius = UDim.new(0, 10)
@@ -685,7 +683,7 @@ local function createColorPickerDialog(defaultColor, callback, allowTransparency
     
     local dialogStroke = Instance.new("UIStroke")
     dialogStroke.Parent = dialog
-    dialogStroke.Color = colorpickerConfig.DialogStrokeColor
+    dialogStroke.Color = config.AccentColor
     dialogStroke.Thickness = 2
     dialogStroke.Transparency = 0.2
     
@@ -697,7 +695,7 @@ local function createColorPickerDialog(defaultColor, callback, allowTransparency
     dialogTitle.Size = UDim2.new(1, -30, 0, 30)
     dialogTitle.Font = Enum.Font.GothamBold
     dialogTitle.Text = "颜色选择器"
-    dialogTitle.TextColor3 = colorpickerConfig.DialogTextColor
+    dialogTitle.TextColor3 = config.TextColor
     dialogTitle.TextSize = 18
     dialogTitle.TextXAlignment = Enum.TextXAlignment.Left
     
@@ -713,17 +711,20 @@ local function createColorPickerDialog(defaultColor, callback, allowTransparency
     closeButton.TextSize = 18
     
     closeButton.MouseButton1Click:Connect(function()
-        services.TweenService:Create(dialog, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        TweenService:Create(dialog, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
             Size = UDim2.new(0, 10, 0, 10),
             BackgroundTransparency = 1
         }):Play()
-        task.wait(0.3)
-        dialog:Destroy()
+        TweenService:Create(backgroundOverlay, TweenInfo.new(0.2), {
+            BackgroundTransparency = 1
+        }):Play()
+        task.wait(0.2)
+        dialogContainer:Destroy()
+        currentColorPickerDialog = nil
     end)
     
     -- 解析默认颜色
     local hue, saturation, value = Color3.toHSV(defaultColor)
-    local transparency = 0
     
     -- 饱和度/亮度选择区域
     local satVibMap = Instance.new("Frame")
@@ -738,15 +739,42 @@ local function createColorPickerDialog(defaultColor, callback, allowTransparency
     satVibCorner.CornerRadius = UDim.new(0, 4)
     satVibCorner.Parent = satVibMap
     
+    -- 饱和度/亮度渐变
+    local satGradient = Instance.new("UIGradient")
+    satGradient.Rotation = 0
+    satGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+        ColorSequenceKeypoint.new(1, Color3.fromHSV(hue, 1, 1))
+    })
+    satGradient.Parent = satVibMap
+    
+    local vibGradient = Instance.new("UIGradient")
+    vibGradient.Rotation = 90
+    vibGradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    vibGradient.Parent = satVibMap
+    
     -- 饱和度/亮度光标
-    local satCursor = Instance.new("ImageLabel")
+    local satCursor = Instance.new("Frame")
     satCursor.Name = "SatCursor"
     satCursor.Parent = satVibMap
     satCursor.AnchorPoint = Vector2.new(0.5, 0.5)
-    satCursor.BackgroundTransparency = 1
+    satCursor.BackgroundColor3 = Color3.new(1, 1, 1)
+    satCursor.BorderSizePixel = 0
     satCursor.Position = UDim2.new(saturation, 0, 1 - value, 0)
-    satCursor.Size = UDim2.new(0, 18, 0, 18)
-    satCursor.Image = colorpickerConfig.CursorImage
+    satCursor.Size = UDim2.new(0, 8, 0, 8)
+    satCursor.ZIndex = 2
+    
+    local satCursorCorner = Instance.new("UICorner")
+    satCursorCorner.CornerRadius = UDim.new(1, 0)
+    satCursorCorner.Parent = satCursor
+    
+    local satCursorStroke = Instance.new("UIStroke")
+    satCursorStroke.Parent = satCursor
+    satCursorStroke.Color = Color3.new(0, 0, 0)
+    satCursorStroke.Thickness = 2
     
     -- 色调滑块
     local hueSlider = Instance.new("Frame")
@@ -754,67 +782,42 @@ local function createColorPickerDialog(defaultColor, callback, allowTransparency
     hueSlider.Parent = dialog
     hueSlider.BackgroundTransparency = 1
     hueSlider.Position = UDim2.new(0, 210, 0, 55)
-    hueSlider.Size = UDim2.new(0, 12, 0, 190)
+    hueSlider.Size = UDim2.new(0, 12, 0, 160)
     
-    local hueGradient = Instance.new("UIGradient")
-    hueGradient.Rotation = 90
+    local hueCorner = Instance.new("UICorner")
+    hueCorner.CornerRadius = UDim.new(1, 0)
+    hueCorner.Parent = hueSlider
     
     -- 创建色调渐变
     local hueSequence = {}
     for i = 0, 1, 0.1 do
         table.insert(hueSequence, ColorSequenceKeypoint.new(i, Color3.fromHSV(i, 1, 1)))
     end
+    
+    local hueGradient = Instance.new("UIGradient")
+    hueGradient.Rotation = 90
     hueGradient.Color = ColorSequence.new(hueSequence)
     hueGradient.Parent = hueSlider
     
-    local hueCorner = Instance.new("UICorner")
-    hueCorner.CornerRadius = UDim.new(1, 0)
-    hueCorner.Parent = hueSlider
-    
     -- 色调滑块光标
-    local hueDrag = Instance.new("ImageLabel")
+    local hueDrag = Instance.new("Frame")
     hueDrag.Name = "HueDrag"
     hueDrag.Parent = hueSlider
     hueDrag.AnchorPoint = Vector2.new(0.5, 0.5)
-    hueDrag.BackgroundTransparency = 1
+    hueDrag.BackgroundColor3 = Color3.new(1, 1, 1)
+    hueDrag.BorderSizePixel = 0
     hueDrag.Position = UDim2.new(0.5, 0, hue, 0)
-    hueDrag.Size = UDim2.new(0, 14, 0, 14)
-    hueDrag.Image = colorpickerConfig.HueSliderImage
-    hueDrag.ImageColor3 = config.TextColor
+    hueDrag.Size = UDim2.new(0, 16, 0, 8)
+    hueDrag.ZIndex = 2
     
-    -- 透明度滑块（如果允许）
-    local transparencySlider, transparencyDrag
-    if allowTransparency then
-        transparencySlider = Instance.new("Frame")
-        transparencySlider.Name = "TransparencySlider"
-        transparencySlider.Parent = dialog
-        transparencySlider.BackgroundTransparency = 1
-        transparencySlider.Position = UDim2.new(0, 230, 0, 55)
-        transparencySlider.Size = UDim2.new(0, 12, 0, 190)
-        
-        local transparencyCorner = Instance.new("UICorner")
-        transparencyCorner.CornerRadius = UDim.new(1, 0)
-        transparencyCorner.Parent = transparencySlider
-        
-        -- 透明度渐变
-        local transparencyGradient = Instance.new("UIGradient")
-        transparencyGradient.Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0),
-            NumberSequenceKeypoint.new(1, 1)
-        })
-        transparencyGradient.Rotation = 270
-        transparencyGradient.Parent = transparencySlider
-        
-        transparencyDrag = Instance.new("ImageLabel")
-        transparencyDrag.Name = "TransparencyDrag"
-        transparencyDrag.Parent = transparencySlider
-        transparencyDrag.AnchorPoint = Vector2.new(0.5, 0.5)
-        transparencyDrag.BackgroundTransparency = 1
-        transparencyDrag.Position = UDim2.new(0.5, 0, 1 - transparency, 0)
-        transparencyDrag.Size = UDim2.new(0, 14, 0, 14)
-        transparencyDrag.Image = colorpickerConfig.HueSliderImage
-        transparencyDrag.ImageColor3 = config.TextColor
-    end
+    local hueDragCorner = Instance.new("UICorner")
+    hueDragCorner.CornerRadius = UDim.new(0, 2)
+    hueDragCorner.Parent = hueDrag
+    
+    local hueDragStroke = Instance.new("UIStroke")
+    hueDragStroke.Parent = hueDrag
+    hueDragStroke.Color = Color3.new(0, 0, 0)
+    hueDragStroke.Thickness = 2
     
     -- 颜色显示区域
     local oldColorFrame = Instance.new("Frame")
@@ -842,17 +845,14 @@ local function createColorPickerDialog(defaultColor, callback, allowTransparency
     newColorCorner.Parent = newColorFrame
     
     -- RGB/HEX输入
-    local inputX = allowTransparency and 260 or 240
-    local labelX = allowTransparency and 360 or 340
-    
-    local function createInputField(yPos, labelText, defaultValue)
+    local function createInputField(yPos, labelText, defaultValue, width)
         local textBox = Instance.new("TextBox")
         textBox.Parent = dialog
         textBox.BackgroundColor3 = config.Bg_Color
         textBox.BackgroundTransparency = 0.2
         textBox.BorderSizePixel = 0
-        textBox.Position = UDim2.new(0, inputX, 0, yPos)
-        textBox.Size = UDim2.new(0, 90, 0, 32)
+        textBox.Position = UDim2.new(0, 240, 0, yPos)
+        textBox.Size = UDim2.new(0, width or 90, 0, 32)
         textBox.Font = Enum.Font.Gotham
         textBox.Text = defaultValue
         textBox.TextColor3 = config.TextColor
@@ -866,7 +866,7 @@ local function createColorPickerDialog(defaultColor, callback, allowTransparency
         local label = Instance.new("TextLabel")
         label.Parent = dialog
         label.BackgroundTransparency = 1
-        label.Position = UDim2.new(0, labelX, 0, yPos + 8)
+        label.Position = UDim2.new(0, 340, 0, yPos + 8)
         label.Size = UDim2.new(0, 50, 0, 20)
         label.Font = Enum.Font.Gotham
         label.Text = labelText
@@ -877,15 +877,10 @@ local function createColorPickerDialog(defaultColor, callback, allowTransparency
         return textBox
     end
     
-    local hexInput = createInputField(55, "Hex", "#" .. defaultColor:ToHex())
+    local hexInput = createInputField(55, "Hex", "#" .. defaultColor:ToHex(), 100)
     local redInput = createInputField(95, "Red", math.floor(defaultColor.r * 255))
     local greenInput = createInputField(135, "Green", math.floor(defaultColor.g * 255))
     local blueInput = createInputField(175, "Blue", math.floor(defaultColor.b * 255))
-    
-    local alphaInput
-    if allowTransparency then
-        alphaInput = createInputField(215, "Alpha", "100%")
-    end
     
     -- 确认按钮
     local confirmButton = Instance.new("TextButton")
@@ -929,109 +924,95 @@ local function createColorPickerDialog(defaultColor, callback, allowTransparency
         newColorFrame.BackgroundColor3 = newColor
         satVibMap.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
         
+        -- 更新饱和度渐变
+        satGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+            ColorSequenceKeypoint.new(1, Color3.fromHSV(hue, 1, 1))
+        })
+        
         -- 更新光标位置
         satCursor.Position = UDim2.new(saturation, 0, 1 - value, 0)
         hueDrag.Position = UDim2.new(0.5, 0, hue, 0)
-        
-        if allowTransparency and transparencyDrag then
-            transparencyDrag.Position = UDim2.new(0.5, 0, 1 - transparency, 0)
-            newColorFrame.BackgroundTransparency = transparency
-        end
         
         -- 更新输入框
         hexInput.Text = "#" .. newColor:ToHex()
         redInput.Text = math.floor(newColor.r * 255)
         greenInput.Text = math.floor(newColor.g * 255)
         blueInput.Text = math.floor(newColor.b * 255)
-        
-        if allowTransparency and alphaInput then
-            alphaInput.Text = math.floor((1 - transparency) * 100) .. "%"
-        end
-        
-        -- 更新透明度滑块颜色
-        if allowTransparency and transparencySlider then
-            transparencySlider.BackgroundColor3 = newColor
-        end
     end
     
     -- 处理饱和度/亮度选择
-    local function handleSatVibSelection(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local mouse = services.Players.LocalPlayer:GetMouse()
-            local connection
-            
-            connection = RunService.RenderStepped:Connect(function()
-                if not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-                    connection:Disconnect()
-                    return
-                end
-                
-                local minX = satVibMap.AbsolutePosition.X
-                local maxX = minX + satVibMap.AbsoluteSize.X
-                local mouseX = math.clamp(mouse.X, minX, maxX)
-                
-                local minY = satVibMap.AbsolutePosition.Y
-                local maxY = minY + satVibMap.AbsoluteSize.Y
-                local mouseY = math.clamp(mouse.Y, minY, maxY)
-                
-                saturation = (mouseX - minX) / (maxX - minX)
-                value = 1 - ((mouseY - minY) / (maxY - minY))
-                updateColorDisplay()
-            end)
-        end
+    local satVibDragging = false
+    
+    local function updateSatVibFromMouse()
+        if not satVibDragging then return end
+        
+        local mouse = Players.LocalPlayer:GetMouse()
+        local minX = satVibMap.AbsolutePosition.X
+        local maxX = minX + satVibMap.AbsoluteSize.X
+        local mouseX = math.clamp(mouse.X, minX, maxX)
+        
+        local minY = satVibMap.AbsolutePosition.Y
+        local maxY = minY + satVibMap.AbsoluteSize.Y
+        local mouseY = math.clamp(mouse.Y, minY, maxY)
+        
+        saturation = (mouseX - minX) / (maxX - minX)
+        value = 1 - ((mouseY - minY) / (maxY - minY))
+        updateColorDisplay()
     end
+    
+    satVibMap.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            satVibDragging = true
+            updateSatVibFromMouse()
+        end
+    end)
+    
+    satVibMap.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            satVibDragging = false
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateSatVibFromMouse()
+        end
+    end)
     
     -- 处理色调选择
-    local function handleHueSelection(input)
+    local hueDragging = false
+    
+    local function updateHueFromMouse()
+        if not hueDragging then return end
+        
+        local mouse = Players.LocalPlayer:GetMouse()
+        local minY = hueSlider.AbsolutePosition.Y
+        local maxY = minY + hueSlider.AbsoluteSize.Y
+        local mouseY = math.clamp(mouse.Y, minY, maxY)
+        
+        hue = (mouseY - minY) / (maxY - minY)
+        updateColorDisplay()
+    end
+    
+    hueSlider.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local mouse = services.Players.LocalPlayer:GetMouse()
-            local connection
-            
-            connection = RunService.RenderStepped:Connect(function()
-                if not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-                    connection:Disconnect()
-                    return
-                end
-                
-                local minY = hueSlider.AbsolutePosition.Y
-                local maxY = minY + hueSlider.AbsoluteSize.Y
-                local mouseY = math.clamp(mouse.Y, minY, maxY)
-                
-                hue = (mouseY - minY) / (maxY - minY)
-                updateColorDisplay()
-            end)
+            hueDragging = true
+            updateHueFromMouse()
         end
-    end
+    end)
     
-    -- 处理透明度选择
-    local function handleTransparencySelection(input)
+    hueSlider.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local mouse = services.Players.LocalPlayer:GetMouse()
-            local connection
-            
-            connection = RunService.RenderStepped:Connect(function()
-                if not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-                    connection:Disconnect()
-                    return
-                end
-                
-                local minY = transparencySlider.AbsolutePosition.Y
-                local maxY = minY + transparencySlider.AbsoluteSize.Y
-                local mouseY = math.clamp(mouse.Y, minY, maxY)
-                
-                transparency = 1 - ((mouseY - minY) / (maxY - minY))
-                updateColorDisplay()
-            end)
+            hueDragging = false
         end
-    end
+    end)
     
-    -- 连接事件
-    satVibMap.InputBegan:Connect(handleSatVibSelection)
-    hueSlider.InputBegan:Connect(handleHueSelection)
-    
-    if allowTransparency and transparencySlider then
-        transparencySlider.InputBegan:Connect(handleTransparencySelection)
-    end
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateHueFromMouse()
+        end
+    end)
     
     -- 输入框事件
     hexInput.FocusLost:Connect(function(enterPressed)
@@ -1039,9 +1020,11 @@ local function createColorPickerDialog(defaultColor, callback, allowTransparency
             local success, result = pcall(function()
                 return Color3.fromHex(hexInput.Text:gsub("#", ""))
             end)
-            if success then
+            if success and typeof(result) == "Color3" then
                 hue, saturation, value = Color3.toHSV(result)
                 updateColorDisplay()
+            else
+                hexInput.Text = "#" .. Color3.fromHSV(hue, saturation, value):ToHex()
             end
         end
     end)
@@ -1079,47 +1062,43 @@ local function createColorPickerDialog(defaultColor, callback, allowTransparency
         end
     end)
     
-    if allowTransparency and alphaInput then
-        alphaInput.FocusLost:Connect(function(enterPressed)
-            if enterPressed then
-                local text = alphaInput.Text:gsub("%%", "")
-                local alpha = tonumber(text) or 100
-                transparency = 1 - (math.clamp(alpha, 0, 100) / 100)
-                updateColorDisplay()
-            end
-        end)
-    end
-    
     -- 按钮事件
     confirmButton.MouseButton1Click:Connect(function()
         local newColor = Color3.fromHSV(hue, saturation, value)
-        callback(newColor, transparency)
+        callback(newColor)
         
-        services.TweenService:Create(dialog, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        TweenService:Create(dialog, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
             Size = UDim2.new(0, 10, 0, 10),
             BackgroundTransparency = 1
         }):Play()
-        task.wait(0.3)
-        dialog:Destroy()
+        TweenService:Create(backgroundOverlay, TweenInfo.new(0.2), {
+            BackgroundTransparency = 1
+        }):Play()
+        task.wait(0.2)
+        dialogContainer:Destroy()
+        currentColorPickerDialog = nil
     end)
     
     cancelButton.MouseButton1Click:Connect(function()
-        services.TweenService:Create(dialog, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        TweenService:Create(dialog, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
             Size = UDim2.new(0, 10, 0, 10),
             BackgroundTransparency = 1
         }):Play()
-        task.wait(0.3)
-        dialog:Destroy()
+        TweenService:Create(backgroundOverlay, TweenInfo.new(0.2), {
+            BackgroundTransparency = 1
+        }):Play()
+        task.wait(0.2)
+        dialogContainer:Destroy()
+        currentColorPickerDialog = nil
     end)
     
     -- 初始更新
     updateColorDisplay()
     
-    -- 添加拖拽功能
-    dialog.Active = true
-    dialog.Draggable = true
+    -- 存储当前对话框
+    currentColorPickerDialog = dialogContainer
     
-    return dialog
+    return dialogContainer
 end
 
 function FengUI.new(FengUI, name, theme)
@@ -1395,15 +1374,15 @@ function FengUI.new(FengUI, name, theme)
             
             SectionToggle.MouseButton1Click:Connect(function()
                 open = not open
-                services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                     Size = UDim2.new(1, 0, 0, open and (36 + ObjsL.AbsoluteContentSize.Y + 8) or 36)
                 }):Play()
                 
-                services.TweenService:Create(SectionOpened, TweenInfo.new(0.3), {
+                TweenService:Create(SectionOpened, TweenInfo.new(0.3), {
                     ImageTransparency = open and 0 or 1
                 }):Play()
                 
-                services.TweenService:Create(SectionOpen, TweenInfo.new(0.3), {
+                TweenService:Create(SectionOpen, TweenInfo.new(0.3), {
                     ImageTransparency = open and 1 or 0
                 }):Play()
             end)
@@ -1417,14 +1396,13 @@ function FengUI.new(FengUI, name, theme)
             local section = {}
             
             -- 颜色选择器函数
-            function section.Colorpicker(section, text, flag, defaultColor, allowTransparency, callback)
+            function section.Colorpicker(section, text, flag, defaultColor, callback)
                 callback = callback or function() end
                 assert(text, "No text provided")
                 assert(flag, "No flag provided")
                 
                 defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
-                allowTransparency = allowTransparency or false
-                FengUI.flags[flag] = {Color = defaultColor, Transparency = 0}
+                FengUI.flags[flag] = defaultColor
                 
                 local ColorpickerModule = Instance.new("Frame")
                 local ColorpickerBtn = Instance.new("TextButton")
@@ -1481,24 +1459,24 @@ function FengUI.new(FengUI, name, theme)
                 startNeonFlowEffect(ColorDisplayStroke, "Color", 0.01)
                 
                 ColorpickerBtn.MouseEnter:Connect(function()
-                    services.TweenService:Create(ColorpickerBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                    TweenService:Create(ColorpickerBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                         BackgroundColor3 = Color3.fromRGB(
                             math.floor(config.Button_Color.R * 255 * 1.1),
                             math.floor(config.Button_Color.G * 255 * 1.1),
                             math.floor(config.Button_Color.B * 255 * 1.1)
                         )
                     }):Play()
-                    services.TweenService:Create(ColorDisplayStroke, TweenInfo.new(0.2), {
+                    TweenService:Create(ColorDisplayStroke, TweenInfo.new(0.2), {
                         Thickness = 2,
                         Transparency = 0.3
                     }):Play()
                 end)
                 
                 ColorpickerBtn.MouseLeave:Connect(function()
-                    services.TweenService:Create(ColorpickerBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                    TweenService:Create(ColorpickerBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundColor3 = config.Button_Color
                     }):Play()
-                    services.TweenService:Create(ColorDisplayStroke, TweenInfo.new(0.2), {
+                    TweenService:Create(ColorDisplayStroke, TweenInfo.new(0.2), {
                         Thickness = 1,
                         Transparency = 0.5
                     }):Play()
@@ -1506,47 +1484,41 @@ function FengUI.new(FengUI, name, theme)
                 
                 local funcs = {}
                 
-                funcs.SetColor = function(self, color, transparency)
+                funcs.SetColor = function(self, color)
                     if typeof(color) == "Color3" then
-                        FengUI.flags[flag] = {
-                            Color = color,
-                            Transparency = transparency or 0
-                        }
+                        FengUI.flags[flag] = color
                         ColorDisplay.BackgroundColor3 = color
-                        ColorDisplay.BackgroundTransparency = transparency or 0
-                        callback(color, transparency or 0)
+                        callback(color)
                     end
                 end
                 
                 funcs.GetColor = function(self)
-                    return FengUI.flags[flag].Color, FengUI.flags[flag].Transparency
+                    return FengUI.flags[flag]
                 end
                 
-                funcs.SetValueRGB = function(self, r, g, b, transparency)
+                funcs.SetValueRGB = function(self, r, g, b)
                     local color = Color3.fromRGB(r, g, b)
-                    funcs:SetColor(color, transparency)
+                    funcs:SetColor(color)
                 end
                 
-                funcs.SetValueHSV = function(self, h, s, v, transparency)
+                funcs.SetValueHSV = function(self, h, s, v)
                     local color = Color3.fromHSV(h, s, v)
-                    funcs:SetColor(color, transparency)
+                    funcs:SetColor(color)
                 end
                 
                 funcs.OnChanged = function(self, func)
                     local oldCallback = callback
-                    callback = function(color, transparency)
-                        oldCallback(color, transparency)
-                        func(color, transparency)
+                    callback = function(color)
+                        oldCallback(color)
+                        func(color)
                     end
                 end
                 
                 ColorpickerBtn.MouseButton1Click:Connect(function()
-                    local currentColor = FengUI.flags[flag].Color
-                    local currentTransparency = FengUI.flags[flag].Transparency
-                    
-                    createColorPickerDialog(currentColor, function(newColor, newTransparency)
-                        funcs:SetColor(newColor, newTransparency)
-                    end, allowTransparency)
+                    local currentColor = FengUI.flags[flag] or defaultColor
+                    createColorPickerDialog(currentColor, function(newColor)
+                        funcs:SetColor(newColor)
+                    end)
                 end)
                 
                 return funcs
@@ -1592,24 +1564,24 @@ function FengUI.new(FengUI, name, theme)
                 createPulseGlow(btnGlow)
                 
                 Btn.MouseEnter:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                    TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                         BackgroundColor3 = Color3.fromRGB(
                             math.floor(config.Button_Color.R * 255 * 1.1),
                             math.floor(config.Button_Color.G * 255 * 1.1),
                             math.floor(config.Button_Color.B * 255 * 1.1)
                         )
                     }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                    TweenService:Create(btnGlow, TweenInfo.new(0.2), {
                         Thickness = 2,
                         Transparency = 0.5
                     }):Play()
                 end)
                 
                 Btn.MouseLeave:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                    TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundColor3 = config.Button_Color
                     }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                    TweenService:Create(btnGlow, TweenInfo.new(0.2), {
                         Thickness = 1,
                         Transparency = 0.8
                     }):Play()
@@ -1618,24 +1590,24 @@ function FengUI.new(FengUI, name, theme)
                 Btn.MouseButton1Click:Connect(function()
                     callback()
                     
-                    services.TweenService:Create(Btn, TweenInfo.new(0.1), {
+                    TweenService:Create(Btn, TweenInfo.new(0.1), {
                         BackgroundColor3 = Color3.fromRGB(
                             math.floor(config.Button_Color.R * 255 * 0.8),
                             math.floor(config.Button_Color.G * 255 * 0.8),
                             math.floor(config.Button_Color.B * 255 * 0.8)
                         )
                     }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.1), {
+                    TweenService:Create(btnGlow, TweenInfo.new(0.1), {
                         Thickness = 3,
                         Transparency = 0.3
                     }):Play()
                     
                     task.wait(0.1)
                     
-                    services.TweenService:Create(Btn, TweenInfo.new(0.2), {
+                    TweenService:Create(Btn, TweenInfo.new(0.2), {
                         BackgroundColor3 = config.Button_Color
                     }):Play()
-                    services.TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+                    TweenService:Create(btnGlow, TweenInfo.new(0.2), {
                         Thickness = 1,
                         Transparency = 0.8
                     }):Play()
@@ -1854,7 +1826,7 @@ function FengUI.new(FengUI, name, theme)
                 ToggleDisableC.Parent = ToggleDisable
                 
                 ToggleBtn.MouseEnter:Connect(function()
-                    services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                    TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                         BackgroundTransparency = 0.1,
                         BackgroundColor3 = Color3.fromRGB(
                             math.floor(config.Toggle_Color.R * 255 * 1.1),
@@ -1865,7 +1837,7 @@ function FengUI.new(FengUI, name, theme)
                 end)
                 
                 ToggleBtn.MouseLeave:Connect(function()
-                    services.TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                    TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundTransparency = 0.2,
                         BackgroundColor3 = config.Toggle_Color
                     }):Play()
@@ -1880,7 +1852,7 @@ function FengUI.new(FengUI, name, theme)
                             return
                         end
                         
-                        services.TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                        TweenService:Create(ToggleSwitch, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                             Position = UDim2.new(0, state and 14 or 0, 0, 0),
                             BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
                         }):Play()
@@ -1987,7 +1959,7 @@ function FengUI.new(FengUI, name, theme)
                 UIPadding.PaddingRight = UDim.new(0, 6)
                 
                 KeybindBtn.MouseEnter:Connect(function()
-                    services.TweenService:Create(KeybindBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                    TweenService:Create(KeybindBtn, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                         BackgroundColor3 = Color3.fromRGB(
                             math.floor(config.Keybind_Color.R * 255 * 1.1),
                             math.floor(config.Keybind_Color.G * 255 * 1.1),
@@ -1997,7 +1969,7 @@ function FengUI.new(FengUI, name, theme)
                 end)
                 
                 KeybindBtn.MouseLeave:Connect(function()
-                    services.TweenService:Create(KeybindBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                    TweenService:Create(KeybindBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundColor3 = config.Keybind_Color
                     }):Play()
                 end)
@@ -2120,7 +2092,7 @@ function FengUI.new(FengUI, name, theme)
                 TextboxBackP.PaddingRight = UDim.new(0, 12)
                 
                 TextboxBack.MouseEnter:Connect(function()
-                    services.TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                    TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                         BackgroundColor3 = Color3.fromRGB(
                             math.floor(config.Textbox_Color.R * 255 * 1.1),
                             math.floor(config.Textbox_Color.G * 255 * 1.1),
@@ -2130,7 +2102,7 @@ function FengUI.new(FengUI, name, theme)
                 end)
                 
                 TextboxBack.MouseLeave:Connect(function()
-                    services.TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                    TweenService:Create(TextboxBack, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                         BackgroundColor3 = config.Textbox_Color
                     }):Play()
                 end)
@@ -2366,7 +2338,7 @@ function FengUI.new(FengUI, name, theme)
                         if value then
                             percent = (value - min)/(max - min)
                         else
-                            local mouse = services.Players.LocalPlayer:GetMouse()
+                            local mouse = Players.LocalPlayer:GetMouse()
                             local barPos = SliderBar.AbsolutePosition.X
                             local barSize = SliderBar.AbsoluteSize.X
                             local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
@@ -2385,7 +2357,7 @@ function FengUI.new(FengUI, name, theme)
                         FengUI.flags[flag] = tonumber(value)
                         SliderValue.Text = tostring(value)
                         
-                        services.TweenService:Create(SliderPart, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                        TweenService:Create(SliderPart, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
                             Size = UDim2.new(percent, 0, 1, 0)
                         }):Play()
                         
@@ -2415,13 +2387,13 @@ function FengUI.new(FengUI, name, theme)
                     end
                 end)
                 
-                services.UserInputService.InputEnded:Connect(function(input)
+                UserInputService.InputEnded:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         dragging = false
                     end
                 end)
                 
-                services.UserInputService.InputChanged:Connect(function(input)
+                UserInputService.InputChanged:Connect(function(input)
                     if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
                         funcs:SetValue()
                     end
@@ -2434,13 +2406,13 @@ function FengUI.new(FengUI, name, theme)
                     end
                 end)
                 
-                services.UserInputService.InputEnded:Connect(function(input)
+                UserInputService.InputEnded:Connect(function(input)
                     if dragging and input.UserInputType == Enum.UserInputType.Touch then
                         dragging = false
                     end
                 end)
                 
-                services.UserInputService.InputChanged:Connect(function(input)
+                UserInputService.InputChanged:Connect(function(input)
                     if dragging and input.UserInputType == Enum.UserInputType.Touch then
                         funcs:SetValue()
                     end
