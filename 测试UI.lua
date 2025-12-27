@@ -1550,8 +1550,6 @@ function FengUI.new(FengUI, name, theme)
     BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 20, 0, 22)
 end
 
--- 在你的代码中（在 section.Textbox 函数之后，section.Slider 函数之前）添加以下代码
-
 function section.ColorPicker(section, text, flag, defaultColor, callback)
     callback = callback or function() end
     defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
@@ -1628,71 +1626,73 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     ColorPickerPopup.Name = "ColorPickerPopup"
     ColorPickerPopup.Parent = FengYu
     ColorPickerPopup.AnchorPoint = Vector2.new(0.5, 0.5)
-    ColorPickerPopup.BackgroundColor3 = config.MainColor
-    ColorPickerPopup.BackgroundTransparency = 0.2
+    ColorPickerPopup.BackgroundColor3 = Color3.fromRGB(30, 35, 45) -- 调亮背景
+    ColorPickerPopup.BackgroundTransparency = 0.05 -- 减少透明度
     ColorPickerPopup.BorderSizePixel = 0
     ColorPickerPopup.Position = UDim2.new(0.5, 0, 0.5, 0)
-    ColorPickerPopup.Size = UDim2.new(0, 430, 0, 330) -- 调整大小以适应新组件
+    ColorPickerPopup.Size = UDim2.new(0, 430, 0, 350)
     ColorPickerPopup.Visible = false
-    ColorPickerPopup.ZIndex = 100
-    ColorPickerPopup.Active = true
-    ColorPickerPopup.Draggable = true
+    ColorPickerPopup.ZIndex = 1000
+    ColorPickerPopup.Active = false -- GUI不可拖动
+    ColorPickerPopup.Draggable = false -- 禁用拖动
     
     local PopupCorner = Instance.new("UICorner")
-    PopupCorner.CornerRadius = UDim.new(0, 10)
+    PopupCorner.CornerRadius = UDim.new(0, 12)
     PopupCorner.Parent = ColorPickerPopup
     
     local PopupStroke = Instance.new("UIStroke")
     PopupStroke.Parent = ColorPickerPopup
-    PopupStroke.Color = config.AccentColor
+    PopupStroke.Color = Color3.fromRGB(0, 180, 255)
     PopupStroke.Thickness = 2
-    PopupStroke.Transparency = 0.3
+    PopupStroke.Transparency = 0.2
     
     startNeonFlowEffect(PopupStroke, "Color", 0.01)
-    -- 删除脉冲效果 createPulseGlow(PopupStroke)
     
     local PopupTitle = Instance.new("TextLabel")
     PopupTitle.Name = "PopupTitle"
     PopupTitle.Parent = ColorPickerPopup
     PopupTitle.BackgroundTransparency = 1
-    PopupTitle.Position = UDim2.new(0, 10, 0, 5)
-    PopupTitle.Size = UDim2.new(1, -20, 0, 30)
+    PopupTitle.Position = UDim2.new(0, 20, 0, 10)
+    PopupTitle.Size = UDim2.new(1, -40, 0, 30)
     PopupTitle.Font = Enum.Font.GothamBold
     PopupTitle.Text = text .. " - 颜色选择器"
-    PopupTitle.TextColor3 = config.AccentColor
-    PopupTitle.TextSize = 16
-    PopupTitle.TextXAlignment = Enum.TextXAlignment.Left
+    PopupTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
+    PopupTitle.TextSize = 18
+    PopupTitle.TextXAlignment = Enum.TextXAlignment.Center
+    PopupTitle.ZIndex = 1001
     
-    -- 饱和度/亮度区域（使用提供的设计）
+    -- 饱和度/亮度区域
     local SatVibMap = Instance.new("ImageLabel")
     SatVibMap.Name = "SatVibMap"
     SatVibMap.Parent = ColorPickerPopup
-    SatVibMap.Size = UDim2.fromOffset(180, 160)
-    SatVibMap.Position = UDim2.fromOffset(20, 55)
+    SatVibMap.Size = UDim2.fromOffset(200, 180)
+    SatVibMap.Position = UDim2.fromOffset(20, 60)
     SatVibMap.Image = "rbxassetid://4155801252"
     SatVibMap.BackgroundColor3 = defaultColor
     SatVibMap.BackgroundTransparency = 0
+    SatVibMap.ZIndex = 1001
     
     local SatVibCorner = Instance.new("UICorner")
-    SatVibCorner.CornerRadius = UDim.new(0, 4)
+    SatVibCorner.CornerRadius = UDim.new(0, 6)
     SatVibCorner.Parent = SatVibMap
     
     local SatCursor = Instance.new("ImageLabel")
     SatCursor.Name = "SatCursor"
-    SatCursor.Size = UDim2.new(0, 18, 0, 18)
+    SatCursor.Size = UDim2.new(0, 20, 0, 20)
     SatCursor.ScaleType = Enum.ScaleType.Fit
     SatCursor.AnchorPoint = Vector2.new(0.5, 0.5)
     SatCursor.BackgroundTransparency = 1
     SatCursor.Image = "http://www.roblox.com/asset/?id=4805639000"
-    SatCursor.ZIndex = 5
+    SatCursor.ZIndex = 1002
     SatCursor.Parent = SatVibMap
     
-    -- 色相选择条（垂直，使用提供的设计）
+    -- 色相选择条（垂直）
     local HueSlider = Instance.new("Frame")
     HueSlider.Name = "HueSlider"
     HueSlider.Parent = ColorPickerPopup
-    HueSlider.Size = UDim2.fromOffset(12, 190)
-    HueSlider.Position = UDim2.fromOffset(210, 55)
+    HueSlider.Size = UDim2.fromOffset(20, 180)
+    HueSlider.Position = UDim2.fromOffset(230, 60)
+    HueSlider.ZIndex = 1001
     
     local HueSliderCorner = Instance.new("UICorner")
     HueSliderCorner.CornerRadius = UDim.new(1, 0)
@@ -1715,21 +1715,24 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     HueDragHolder.Position = UDim2.fromOffset(0, 5)
     HueDragHolder.BackgroundTransparency = 1
     HueDragHolder.Parent = HueSlider
+    HueDragHolder.ZIndex = 1002
     
     local HueDrag = Instance.new("ImageLabel")
     HueDrag.Name = "HueDrag"
-    HueDrag.Size = UDim2.fromOffset(14, 14)
+    HueDrag.Size = UDim2.fromOffset(16, 16)
     HueDrag.Image = "http://www.roblox.com/asset/?id=12266946128"
     HueDrag.Parent = HueDragHolder
-    HueDrag.ImageColor3 = config.TextColor
+    HueDrag.ImageColor3 = Color3.new(1, 1, 1)
+    HueDrag.ZIndex = 1003
     
     -- RGB输入区域
     local RGBInputs = Instance.new("Frame")
     RGBInputs.Name = "RGBInputs"
     RGBInputs.Parent = ColorPickerPopup
     RGBInputs.BackgroundTransparency = 1
-    RGBInputs.Position = UDim2.new(0, 240, 0, 55)
-    RGBInputs.Size = UDim2.new(0, 180, 0, 160)
+    RGBInputs.Position = UDim2.new(0, 260, 0, 60)
+    RGBInputs.Size = UDim2.new(0, 150, 0, 180)
+    RGBInputs.ZIndex = 1001
     
     local function createRGBInput(label, position, defaultValue)
         local InputFrame = Instance.new("Frame")
@@ -1738,133 +1741,181 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         InputFrame.BackgroundTransparency = 1
         InputFrame.Position = position
         InputFrame.Size = UDim2.new(1, 0, 0, 32)
+        InputFrame.ZIndex = 1002
         
         local InputLabel = Instance.new("TextLabel")
         InputLabel.Name = "Label"
         InputLabel.Parent = InputFrame
         InputLabel.BackgroundTransparency = 1
         InputLabel.Position = UDim2.new(0, 0, 0, 0)
-        InputLabel.Size = UDim2.new(0, 40, 1, 0)
+        InputLabel.Size = UDim2.new(0, 45, 1, 0)
         InputLabel.Font = Enum.Font.GothamSemibold
         InputLabel.Text = label .. ":"
-        InputLabel.TextColor3 = config.TextColor
+        InputLabel.TextColor3 = Color3.new(0.9, 0.9, 0.9)
         InputLabel.TextSize = 14
         InputLabel.TextXAlignment = Enum.TextXAlignment.Left
+        InputLabel.ZIndex = 1002
         
         local InputBox = Instance.new("TextBox")
         InputBox.Name = "InputBox"
         InputBox.Parent = InputFrame
-        InputBox.BackgroundColor3 = config.Textbox_Color
-        InputBox.BackgroundTransparency = 0.2
+        InputBox.BackgroundColor3 = Color3.fromRGB(50, 55, 65)
+        InputBox.BackgroundTransparency = 0.1
         InputBox.BorderSizePixel = 0
-        InputBox.Position = UDim2.new(0, 45, 0, 0)
-        InputBox.Size = UDim2.new(0, 50, 0, 32)
+        InputBox.Position = UDim2.new(0, 50, 0, 0)
+        InputBox.Size = UDim2.new(0, 90, 0, 32)
         InputBox.Font = Enum.Font.Gotham
         InputBox.Text = tostring(defaultValue)
-        InputBox.TextColor3 = config.TextColor
+        InputBox.TextColor3 = Color3.new(1, 1, 1)
         InputBox.TextSize = 14
-        InputBox.Text = "255"
+        InputBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+        InputBox.ZIndex = 1002
         
         local InputCorner = Instance.new("UICorner")
-        InputCorner.CornerRadius = UDim.new(0, 4)
+        InputCorner.CornerRadius = UDim.new(0, 6)
         InputCorner.Parent = InputBox
         
         return InputBox
     end
     
-    local HexInput = createRGBInput("Hex", UDim2.new(0, 0, 0, 0), Color3.new(defaultColor.R, defaultColor.G, defaultColor.B):ToHex())
-    local RInput = createRGBInput("R", UDim2.new(0, 0, 0, 37), math.floor(defaultColor.R * 255))
-    local GInput = createRGBInput("G", UDim2.new(0, 0, 0, 74), math.floor(defaultColor.G * 255))
-    local BInput = createRGBInput("B", UDim2.new(0, 0, 0, 111), math.floor(defaultColor.B * 255))
+    local HexInput = createRGBInput("Hex", UDim2.new(0, 0, 0, 0), "#" .. defaultColor:ToHex())
+    local RInput = createRGBInput("R", UDim2.new(0, 0, 0, 40), math.floor(defaultColor.R * 255))
+    local GInput = createRGBInput("G", UDim2.new(0, 0, 0, 80), math.floor(defaultColor.G * 255))
+    local BInput = createRGBInput("B", UDim2.new(0, 0, 0, 120), math.floor(defaultColor.B * 255))
     
-    -- 当前颜色预览
+    -- 颜色预览区域
+    local PreviewContainer = Instance.new("Frame")
+    PreviewContainer.Name = "PreviewContainer"
+    PreviewContainer.Parent = ColorPickerPopup
+    PreviewContainer.BackgroundTransparency = 1
+    PreviewContainer.Position = UDim2.new(0, 20, 0, 250)
+    PreviewContainer.Size = UDim2.new(1, -40, 0, 50)
+    PreviewContainer.ZIndex = 1001
+    
+    local OldColorLabel = Instance.new("TextLabel")
+    OldColorLabel.Name = "OldColorLabel"
+    OldColorLabel.Parent = PreviewContainer
+    OldColorLabel.BackgroundTransparency = 1
+    OldColorLabel.Position = UDim2.new(0, 0, 0, 0)
+    OldColorLabel.Size = UDim2.new(0.45, -5, 0, 20)
+    OldColorLabel.Font = Enum.Font.Gotham
+    OldColorLabel.Text = "原颜色"
+    OldColorLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+    OldColorLabel.TextSize = 14
+    OldColorLabel.TextXAlignment = Enum.TextXAlignment.Center
+    OldColorLabel.ZIndex = 1002
+    
+    local CurrentColorLabel = Instance.new("TextLabel")
+    CurrentColorLabel.Name = "CurrentColorLabel"
+    CurrentColorLabel.Parent = PreviewContainer
+    CurrentColorLabel.BackgroundTransparency = 1
+    CurrentColorLabel.Position = UDim2.new(0.55, 5, 0, 0)
+    CurrentColorLabel.Size = UDim2.new(0.45, -5, 0, 20)
+    CurrentColorLabel.Font = Enum.Font.Gotham
+    CurrentColorLabel.Text = "新颜色"
+    CurrentColorLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+    CurrentColorLabel.TextSize = 14
+    CurrentColorLabel.TextXAlignment = Enum.TextXAlignment.Center
+    CurrentColorLabel.ZIndex = 1002
+    
     local OldColorFrame = Instance.new("Frame")
+    OldColorFrame.Name = "OldColorFrame"
+    OldColorFrame.Parent = PreviewContainer
     OldColorFrame.BackgroundColor3 = defaultColor
-    OldColorFrame.Size = UDim2.fromScale(1, 1)
+    OldColorFrame.Size = UDim2.new(0.45, -5, 0, 25)
+    OldColorFrame.Position = UDim2.new(0, 0, 0, 25)
     OldColorFrame.BackgroundTransparency = 0
-    
-    local OldColorFrameChecker = Instance.new("ImageLabel")
-    OldColorFrameChecker.Image = "http://www.roblox.com/asset/?id=14204231522"
-    OldColorFrameChecker.ImageTransparency = 0.45
-    OldColorFrameChecker.ScaleType = Enum.ScaleType.Tile
-    OldColorFrameChecker.TileSize = UDim2.fromOffset(40, 40)
-    OldColorFrameChecker.BackgroundTransparency = 1
-    OldColorFrameChecker.Position = UDim2.fromOffset(20, 220)
-    OldColorFrameChecker.Size = UDim2.fromOffset(88, 24)
-    OldColorFrameChecker.Parent = ColorPickerPopup
+    OldColorFrame.ZIndex = 1002
     
     local OldColorFrameCorner = Instance.new("UICorner")
-    OldColorFrameCorner.CornerRadius = UDim.new(0, 4)
-    OldColorFrameCorner.Parent = OldColorFrameChecker
+    OldColorFrameCorner.CornerRadius = UDim.new(0, 6)
+    OldColorFrameCorner.Parent = OldColorFrame
     
     local OldColorFrameStroke = Instance.new("UIStroke")
-    OldColorFrameStroke.Thickness = 2
-    OldColorFrameStroke.Transparency = 0.75
-    OldColorFrameStroke.Parent = OldColorFrameChecker
-    
-    OldColorFrame.Parent = OldColorFrameChecker
+    OldColorFrameStroke.Thickness = 1
+    OldColorFrameStroke.Color = Color3.new(0.5, 0.5, 0.5)
+    OldColorFrameStroke.Transparency = 0.5
+    OldColorFrameStroke.Parent = OldColorFrame
     
     local CurrentColorFrame = Instance.new("Frame")
+    CurrentColorFrame.Name = "CurrentColorFrame"
+    CurrentColorFrame.Parent = PreviewContainer
     CurrentColorFrame.BackgroundColor3 = defaultColor
-    CurrentColorFrame.Size = UDim2.fromScale(1, 1)
+    CurrentColorFrame.Size = UDim2.new(0.45, -5, 0, 25)
+    CurrentColorFrame.Position = UDim2.new(0.55, 5, 0, 25)
     CurrentColorFrame.BackgroundTransparency = 0
-    
-    local CurrentColorFrameChecker = Instance.new("ImageLabel")
-    CurrentColorFrameChecker.Image = "http://www.roblox.com/asset/?id=14204231522"
-    CurrentColorFrameChecker.ImageTransparency = 0.45
-    CurrentColorFrameChecker.ScaleType = Enum.ScaleType.Tile
-    CurrentColorFrameChecker.TileSize = UDim2.fromOffset(40, 40)
-    CurrentColorFrameChecker.BackgroundTransparency = 1
-    CurrentColorFrameChecker.Position = UDim2.fromOffset(112, 220)
-    CurrentColorFrameChecker.Size = UDim2.fromOffset(88, 24)
-    CurrentColorFrameChecker.Parent = ColorPickerPopup
+    CurrentColorFrame.ZIndex = 1002
     
     local CurrentColorFrameCorner = Instance.new("UICorner")
-    CurrentColorFrameCorner.CornerRadius = UDim.new(0, 4)
-    CurrentColorFrameCorner.Parent = CurrentColorFrameChecker
+    CurrentColorFrameCorner.CornerRadius = UDim.new(0, 6)
+    CurrentColorFrameCorner.Parent = CurrentColorFrame
     
     local CurrentColorFrameStroke = Instance.new("UIStroke")
-    CurrentColorFrameStroke.Thickness = 2
-    CurrentColorFrameStroke.Transparency = 0.75
-    CurrentColorFrameStroke.Parent = CurrentColorFrameChecker
+    CurrentColorFrameStroke.Thickness = 1
+    CurrentColorFrameStroke.Color = Color3.new(0.5, 0.5, 0.5)
+    CurrentColorFrameStroke.Transparency = 0.5
+    CurrentColorFrameStroke.Parent = CurrentColorFrame
     
-    CurrentColorFrame.Parent = CurrentColorFrameChecker
+    -- 确认和取消按钮
+    local ButtonContainer = Instance.new("Frame")
+    ButtonContainer.Name = "ButtonContainer"
+    ButtonContainer.Parent = ColorPickerPopup
+    ButtonContainer.BackgroundTransparency = 1
+    ButtonContainer.Position = UDim2.new(0, 20, 1, -50)
+    ButtonContainer.Size = UDim2.new(1, -40, 0, 40)
+    ButtonContainer.ZIndex = 1001
     
-    -- 确认按钮
     local ConfirmBtn = Instance.new("TextButton")
     ConfirmBtn.Name = "ConfirmBtn"
-    ConfirmBtn.Parent = ColorPickerPopup
-    ConfirmBtn.BackgroundColor3 = config.AccentColor
-    ConfirmBtn.BackgroundTransparency = 0.2
+    ConfirmBtn.Parent = ButtonContainer
+    ConfirmBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+    ConfirmBtn.BackgroundTransparency = 0.1
     ConfirmBtn.BorderSizePixel = 0
-    ConfirmBtn.Position = UDim2.new(0, 20, 1, -40)
-    ConfirmBtn.Size = UDim2.new(0, 180, 0, 30)
+    ConfirmBtn.Position = UDim2.new(0, 0, 0, 0)
+    ConfirmBtn.Size = UDim2.new(0.5, -5, 1, 0)
     ConfirmBtn.Font = Enum.Font.GothamBold
     ConfirmBtn.Text = "确认"
     ConfirmBtn.TextColor3 = Color3.new(1, 1, 1)
-    ConfirmBtn.TextSize = 14
+    ConfirmBtn.TextSize = 16
+    ConfirmBtn.AutoButtonColor = true
+    ConfirmBtn.ZIndex = 1002
+    ConfirmBtn.Modal = true -- 防止点击穿透
     
     local ConfirmCorner = Instance.new("UICorner")
-    ConfirmCorner.CornerRadius = UDim.new(0, 6)
+    ConfirmCorner.CornerRadius = UDim.new(0, 8)
     ConfirmCorner.Parent = ConfirmBtn
     
-    -- 取消按钮
     local CancelBtn = Instance.new("TextButton")
     CancelBtn.Name = "CancelBtn"
-    CancelBtn.Parent = ColorPickerPopup
-    CancelBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    CancelBtn.BackgroundTransparency = 0.2
+    CancelBtn.Parent = ButtonContainer
+    CancelBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 90)
+    CancelBtn.BackgroundTransparency = 0.1
     CancelBtn.BorderSizePixel = 0
-    CancelBtn.Position = UDim2.new(0, 220, 1, -40)
-    CancelBtn.Size = UDim2.new(0, 180, 0, 30)
+    CancelBtn.Position = UDim2.new(0.5, 5, 0, 0)
+    CancelBtn.Size = UDim2.new(0.5, -5, 1, 0)
     CancelBtn.Font = Enum.Font.GothamBold
     CancelBtn.Text = "取消"
     CancelBtn.TextColor3 = Color3.new(1, 1, 1)
-    CancelBtn.TextSize = 14
+    CancelBtn.TextSize = 16
+    CancelBtn.AutoButtonColor = true
+    CancelBtn.ZIndex = 1002
+    CancelBtn.Modal = true -- 防止点击穿透
     
     local CancelCorner = Instance.new("UICorner")
-    CancelCorner.CornerRadius = UDim.new(0, 6)
+    CancelCorner.CornerRadius = UDim.new(0, 8)
     CancelCorner.Parent = CancelBtn
+    
+    -- 关闭按钮（点击外部关闭）
+    local CloseClickArea = Instance.new("TextButton")
+    CloseClickArea.Name = "CloseClickArea"
+    CloseClickArea.Parent = FengYu
+    CloseClickArea.BackgroundTransparency = 1
+    CloseClickArea.BorderSizePixel = 0
+    CloseClickArea.Size = UDim2.new(1, 0, 1, 0)
+    CloseClickArea.Text = ""
+    CloseClickArea.Visible = false
+    CloseClickArea.ZIndex = 999 -- 在颜色选择器下面
+    CloseClickArea.Modal = true -- 阻止点击穿透到其他元素
     
     -- 当前颜色值
     local currentColor = defaultColor
@@ -1877,7 +1928,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         
         -- 更新选择器位置
         SatCursor.Position = UDim2.new(currentSat, 0, 1 - currentVib, 0)
-        HueDrag.Position = UDim2.new(0, -1, currentHue, -6)
+        HueDrag.Position = UDim2.new(0, 2, currentHue, -8)
         
         -- 更新当前颜色
         currentColor = Color3.fromHSV(currentHue, currentSat, currentVib)
@@ -1907,7 +1958,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
                 satVibDragging = true
                 
                 local connection
-                connection = services.RunService.Heartbeat:Connect(function()
+                connection = services.RunService.RenderStepped:Connect(function()
                     if not satVibDragging then
                         connection:Disconnect()
                         return
@@ -1937,6 +1988,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         end
         
         SatVibMap.InputBegan:Connect(updateSatVib)
+        SatCursor.InputBegan:Connect(updateSatVib)
         
         -- 色相条交互
         local hueDragging = false
@@ -1946,7 +1998,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
                 hueDragging = true
                 
                 local connection
-                connection = services.RunService.Heartbeat:Connect(function()
+                connection = services.RunService.RenderStepped:Connect(function()
                     if not hueDragging then
                         connection:Disconnect()
                         return
@@ -1971,58 +2023,50 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         end
         
         HueSlider.InputBegan:Connect(updateHue)
+        HueDragHolder.InputBegan:Connect(updateHue)
+        HueDrag.InputBegan:Connect(updateHue)
     end
     
     -- 设置RGB输入事件
     local function setupRGBInputs()
         local function validateRGBInput(inputBox, maxValue)
-            inputBox.FocusLost:Connect(function()
+            inputBox.FocusLost:Connect(function(enterPressed)
                 local text = inputBox.Text
-                local num = tonumber(text)
                 
-                if num then
-                    num = math.clamp(num, 0, maxValue)
-                    inputBox.Text = tostring(num)
-                    
-                    if inputBox == RInput then
-                        local r = tonumber(RInput.Text) or 255
-                        local g = tonumber(GInput.Text) or 255
-                        local b = tonumber(BInput.Text) or 255
-                        local color = Color3.fromRGB(r, g, b)
-                        currentHue, currentSat, currentVib = Color3.toHSV(color)
-                    elseif inputBox == GInput then
-                        local r = tonumber(RInput.Text) or 255
-                        local g = tonumber(GInput.Text) or 255
-                        local b = tonumber(BInput.Text) or 255
-                        local color = Color3.fromRGB(r, g, b)
-                        currentHue, currentSat, currentVib = Color3.toHSV(color)
-                    elseif inputBox == BInput then
-                        local r = tonumber(RInput.Text) or 255
-                        local g = tonumber(GInput.Text) or 255
-                        local b = tonumber(BInput.Text) or 255
-                        local color = Color3.fromRGB(r, g, b)
-                        currentHue, currentSat, currentVib = Color3.toHSV(color)
-                    elseif inputBox == HexInput then
-                        local hex = text:gsub("#", "")
-                        if hex:match("^[0-9A-Fa-f]+$") then
-                            local success, color = pcall(Color3.fromHex, hex)
-                            if success then
-                                currentHue, currentSat, currentVib = Color3.toHSV(color)
-                            end
+                if inputBox == HexInput then
+                    local hex = text:gsub("#", "")
+                    if hex:match("^[0-9A-Fa-f]+$") and #hex == 6 then
+                        local success, color = pcall(Color3.fromHex, hex)
+                        if success then
+                            currentHue, currentSat, currentVib = Color3.toHSV(color)
+                            updateDisplay()
+                            return
                         end
                     end
-                    
-                    updateDisplay()
-                else
                     -- 恢复当前值
-                    if inputBox == RInput then
-                        inputBox.Text = tostring(math.floor(currentColor.R * 255))
-                    elseif inputBox == GInput then
-                        inputBox.Text = tostring(math.floor(currentColor.G * 255))
-                    elseif inputBox == BInput then
-                        inputBox.Text = tostring(math.floor(currentColor.B * 255))
-                    elseif inputBox == HexInput then
-                        inputBox.Text = "#" .. currentColor:ToHex()
+                    inputBox.Text = "#" .. currentColor:ToHex()
+                else
+                    local num = tonumber(text)
+                    
+                    if num then
+                        num = math.clamp(num, 0, maxValue)
+                        inputBox.Text = tostring(num)
+                        
+                        local r = tonumber(RInput.Text) or 255
+                        local g = tonumber(GInput.Text) or 255
+                        local b = tonumber(BInput.Text) or 255
+                        local color = Color3.fromRGB(r, g, b)
+                        currentHue, currentSat, currentVib = Color3.toHSV(color)
+                        updateDisplay()
+                    else
+                        -- 恢复当前值
+                        if inputBox == RInput then
+                            inputBox.Text = tostring(math.floor(currentColor.R * 255))
+                        elseif inputBox == GInput then
+                            inputBox.Text = tostring(math.floor(currentColor.G * 255))
+                        elseif inputBox == BInput then
+                            inputBox.Text = tostring(math.floor(currentColor.B * 255))
+                        end
                     end
                 end
             end)
@@ -2058,25 +2102,62 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     
     ConfirmBtn.MouseEnter:Connect(function()
         services.TweenService:Create(ConfirmBtn, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0.1
+            BackgroundTransparency = 0.05,
+            Size = UDim2.new(0.5, -3, 1, 4),
+            Position = UDim2.new(0, 0, 0, -2)
         }):Play()
     end)
     
     ConfirmBtn.MouseLeave:Connect(function()
         services.TweenService:Create(ConfirmBtn, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0.2
+            BackgroundTransparency = 0.1,
+            Size = UDim2.new(0.5, -5, 1, 0),
+            Position = UDim2.new(0, 0, 0, 0)
         }):Play()
     end)
     
     CancelBtn.MouseEnter:Connect(function()
         services.TweenService:Create(CancelBtn, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0.1
+            BackgroundTransparency = 0.05,
+            Size = UDim2.new(0.5, -3, 1, 4),
+            Position = UDim2.new(0.5, 5, 0, -2)
         }):Play()
     end)
     
     CancelBtn.MouseLeave:Connect(function()
         services.TweenService:Create(CancelBtn, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0.2
+            BackgroundTransparency = 0.1,
+            Size = UDim2.new(0.5, -5, 1, 0),
+            Position = UDim2.new(0.5, 5, 0, 0)
+        }):Play()
+    end)
+    
+    -- 按钮点击效果
+    ConfirmBtn.MouseButton1Down:Connect(function()
+        services.TweenService:Create(ConfirmBtn, TweenInfo.new(0.1), {
+            BackgroundTransparency = 0.2,
+            Size = UDim2.new(0.5, -7, 0.95, 0)
+        }):Play()
+    end)
+    
+    ConfirmBtn.MouseButton1Up:Connect(function()
+        services.TweenService:Create(ConfirmBtn, TweenInfo.new(0.1), {
+            BackgroundTransparency = 0.1,
+            Size = UDim2.new(0.5, -5, 1, 0)
+        }):Play()
+    end)
+    
+    CancelBtn.MouseButton1Down:Connect(function()
+        services.TweenService:Create(CancelBtn, TweenInfo.new(0.1), {
+            BackgroundTransparency = 0.2,
+            Size = UDim2.new(0.5, -7, 0.95, 0)
+        }):Play()
+    end)
+    
+    CancelBtn.MouseButton1Up:Connect(function()
+        services.TweenService:Create(CancelBtn, TweenInfo.new(0.1), {
+            BackgroundTransparency = 0.1,
+            Size = UDim2.new(0.5, -5, 1, 0)
         }):Play()
     end)
     
@@ -2085,13 +2166,13 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         -- 保存原始颜色
         OldColorFrame.BackgroundColor3 = FengUI.flags[flag] or defaultColor
         
-        -- 显示弹窗
+        -- 显示弹窗和关闭区域
         ColorPickerPopup.Visible = true
-        ColorPickerPopup.Position = UDim2.new(0.5, 0, 0.5, 0)
+        CloseClickArea.Visible = true
         
         services.TweenService:Create(ColorPickerPopup, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
             Position = UDim2.new(0.5, 0, 0.5, 0),
-            BackgroundTransparency = 0.1
+            BackgroundTransparency = 0.05
         }):Play()
     end)
     
@@ -2107,6 +2188,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         
         task.wait(0.3)
         ColorPickerPopup.Visible = false
+        CloseClickArea.Visible = false
     end)
     
     -- 取消按钮
@@ -2124,32 +2206,12 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         
         task.wait(0.3)
         ColorPickerPopup.Visible = false
+        CloseClickArea.Visible = false
     end)
     
-    -- 点击外部关闭（替代右上角关闭按钮）
-    local ClickCapture = Instance.new("TextButton")
-    ClickCapture.Name = "ClickCapture"
-    ClickCapture.Parent = FengYu
-    ClickCapture.BackgroundTransparency = 1
-    ClickCapture.BorderSizePixel = 0
-    ClickCapture.Size = UDim2.new(1, 0, 1, 0)
-    ClickCapture.Text = ""
-    ClickCapture.Visible = false
-    ClickCapture.ZIndex = 99
-    
-    ColorPickerBtn.MouseButton1Click:Connect(function()
-        ClickCapture.Visible = true
-        ColorPickerPopup.Visible = true
-        
-        services.TweenService:Create(ColorPickerPopup, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            BackgroundTransparency = 0.1
-        }):Play()
-    end)
-    
-    ClickCapture.MouseButton1Click:Connect(function()
+    -- 点击外部关闭
+    CloseClickArea.MouseButton1Click:Connect(function()
         CancelBtn.MouseButton1Click:Fire()
-        ClickCapture.Visible = false
     end)
     
     local funcs = {
