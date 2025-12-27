@@ -1632,7 +1632,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     ColorPickerPopup.BackgroundTransparency = 0.2
     ColorPickerPopup.BorderSizePixel = 0
     ColorPickerPopup.Position = UDim2.new(0.5, 0, 0.5, 0)
-    ColorPickerPopup.Size = UDim2.new(0, 300, 0, 240)
+    ColorPickerPopup.Size = UDim2.new(0, 430, 0, 330) -- 调整大小以适应新组件
     ColorPickerPopup.Visible = false
     ColorPickerPopup.ZIndex = 100
     ColorPickerPopup.Active = true
@@ -1649,7 +1649,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     PopupStroke.Transparency = 0.3
     
     startNeonFlowEffect(PopupStroke, "Color", 0.01)
-    createPulseGlow(PopupStroke)
+    -- 删除脉冲效果 createPulseGlow(PopupStroke)
     
     local PopupTitle = Instance.new("TextLabel")
     PopupTitle.Name = "PopupTitle"
@@ -1663,131 +1663,73 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     PopupTitle.TextSize = 16
     PopupTitle.TextXAlignment = Enum.TextXAlignment.Left
     
-    local ClosePopupBtn = Instance.new("TextButton")
-    ClosePopupBtn.Name = "ClosePopupBtn"
-    ClosePopupBtn.Parent = ColorPickerPopup
-    ClosePopupBtn.BackgroundTransparency = 1
-    ClosePopupBtn.BorderSizePixel = 0
-    ClosePopupBtn.Position = UDim2.new(1, -30, 0, 5)
-    ClosePopupBtn.Size = UDim2.new(0, 25, 0, 25)
-    ClosePopupBtn.Font = Enum.Font.GothamBold
-    ClosePopupBtn.Text = "X"
-    ClosePopupBtn.TextColor3 = Color3.fromRGB(255, 60, 60)
-    ClosePopupBtn.TextSize = 16
-    ClosePopupBtn.ZIndex = 101
+    -- 饱和度/亮度区域（使用提供的设计）
+    local SatVibMap = Instance.new("ImageLabel")
+    SatVibMap.Name = "SatVibMap"
+    SatVibMap.Parent = ColorPickerPopup
+    SatVibMap.Size = UDim2.fromOffset(180, 160)
+    SatVibMap.Position = UDim2.fromOffset(20, 55)
+    SatVibMap.Image = "rbxassetid://4155801252"
+    SatVibMap.BackgroundColor3 = defaultColor
+    SatVibMap.BackgroundTransparency = 0
     
-    -- 颜色选择区域
-    local ColorWheelContainer = Instance.new("Frame")
-    ColorWheelContainer.Name = "ColorWheelContainer"
-    ColorWheelContainer.Parent = ColorPickerPopup
-    ColorWheelContainer.BackgroundTransparency = 1
-    ColorWheelContainer.Position = UDim2.new(0, 10, 0, 40)
-    ColorWheelContainer.Size = UDim2.new(0, 160, 0, 160)
+    local SatVibCorner = Instance.new("UICorner")
+    SatVibCorner.CornerRadius = UDim.new(0, 4)
+    SatVibCorner.Parent = SatVibMap
     
-    -- 创建色轮（简化版 - 使用渐变和叠加）
-    local HueGradient = Instance.new("UIGradient")
-    HueGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-        ColorSequenceKeypoint.new(0.166, Color3.fromRGB(255, 255, 0)),
-        ColorSequenceKeypoint.new(0.333, Color3.fromRGB(0, 255, 0)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
-        ColorSequenceKeypoint.new(0.666, Color3.fromRGB(0, 0, 255)),
-        ColorSequenceKeypoint.new(0.833, Color3.fromRGB(255, 0, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
-    })
-    HueGradient.Rotation = 0
+    local SatCursor = Instance.new("ImageLabel")
+    SatCursor.Name = "SatCursor"
+    SatCursor.Size = UDim2.new(0, 18, 0, 18)
+    SatCursor.ScaleType = Enum.ScaleType.Fit
+    SatCursor.AnchorPoint = Vector2.new(0.5, 0.5)
+    SatCursor.BackgroundTransparency = 1
+    SatCursor.Image = "http://www.roblox.com/asset/?id=4805639000"
+    SatCursor.ZIndex = 5
+    SatCursor.Parent = SatVibMap
     
-    -- 色相条（垂直）
-    local HueBar = Instance.new("Frame")
-    HueBar.Name = "HueBar"
-    HueBar.Parent = ColorWheelContainer
-    HueBar.BackgroundColor3 = Color3.new(1, 1, 1)
-    HueBar.BorderSizePixel = 0
-    HueBar.Position = UDim2.new(1, 10, 0, 0)
-    HueBar.Size = UDim2.new(0, 20, 1, 0)
-    HueBar.ZIndex = 5
+    -- 色相选择条（垂直，使用提供的设计）
+    local HueSlider = Instance.new("Frame")
+    HueSlider.Name = "HueSlider"
+    HueSlider.Parent = ColorPickerPopup
+    HueSlider.Size = UDim2.fromOffset(12, 190)
+    HueSlider.Position = UDim2.fromOffset(210, 55)
     
-    HueGradient.Parent = HueBar
+    local HueSliderCorner = Instance.new("UICorner")
+    HueSliderCorner.CornerRadius = UDim.new(1, 0)
+    HueSliderCorner.Parent = HueSlider
     
-    local HueBarCorner = Instance.new("UICorner")
-    HueBarCorner.CornerRadius = UDim.new(0, 4)
-    HueBarCorner.Parent = HueBar
+    -- 色相渐变
+    local SequenceTable = {}
+    for Color = 0, 1, 0.1 do
+        table.insert(SequenceTable, ColorSequenceKeypoint.new(Color, Color3.fromHSV(Color, 1, 1)))
+    end
     
-    -- 色相选择器
-    local HueSelector = Instance.new("Frame")
-    HueSelector.Name = "HueSelector"
-    HueSelector.Parent = HueBar
-    HueSelector.BackgroundColor3 = Color3.new(1, 1, 1)
-    HueSelector.BorderSizePixel = 0
-    HueSelector.Position = UDim2.new(0, 0, 0, 0)
-    HueSelector.Size = UDim2.new(1, 0, 0, 2)
-    HueSelector.ZIndex = 6
+    local HueSliderGradient = Instance.new("UIGradient")
+    HueSliderGradient.Color = ColorSequence.new(SequenceTable)
+    HueSliderGradient.Rotation = 90
+    HueSliderGradient.Parent = HueSlider
     
-    local HueSelectorCorner = Instance.new("UICorner")
-    HueSelectorCorner.CornerRadius = UDim.new(1, 0)
-    HueSelectorCorner.Parent = HueSelector
+    local HueDragHolder = Instance.new("Frame")
+    HueDragHolder.Name = "HueDragHolder"
+    HueDragHolder.Size = UDim2.new(1, 0, 1, -10)
+    HueDragHolder.Position = UDim2.fromOffset(0, 5)
+    HueDragHolder.BackgroundTransparency = 1
+    HueDragHolder.Parent = HueSlider
     
-    -- 饱和度/亮度区域
-    local SVSquare = Instance.new("Frame")
-    SVSquare.Name = "SVSquare"
-    SVSquare.Parent = ColorWheelContainer
-    SVSquare.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- 初始为红色
-    SVSquare.BorderSizePixel = 0
-    SVSquare.Size = UDim2.new(1, 0, 1, 0)
-    SVSquare.ZIndex = 3
-    
-    local SVSquareCorner = Instance.new("UICorner")
-    SVSquareCorner.CornerRadius = UDim.new(0, 6)
-    SVSquareCorner.Parent = SVSquare
-    
-    -- 饱和度/亮度渐变（白到透明）
-    local SaturationGradient = Instance.new("UIGradient")
-    SaturationGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
-    })
-    SaturationGradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0),
-        NumberSequenceKeypoint.new(1, 1)
-    })
-    SaturationGradient.Rotation = 0
-    SaturationGradient.Parent = SVSquare
-    
-    -- 亮度渐变（黑到透明）
-    local ValueGradient = Instance.new("UIGradient")
-    ValueGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
-    })
-    ValueGradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 1),
-        NumberSequenceKeypoint.new(1, 0)
-    })
-    ValueGradient.Rotation = 90
-    ValueGradient.Parent = SVSquare
-    
-    -- 颜色选择点
-    local ColorSelector = Instance.new("Frame")
-    ColorSelector.Name = "ColorSelector"
-    ColorSelector.Parent = SVSquare
-    ColorSelector.BackgroundColor3 = Color3.new(1, 1, 1)
-    ColorSelector.BorderSizePixel = 2
-    ColorSelector.BorderColor3 = Color3.new(0, 0, 0)
-    ColorSelector.Position = UDim2.new(1, -5, 0, -5)
-    ColorSelector.Size = UDim2.new(0, 10, 0, 10)
-    ColorSelector.ZIndex = 10
-    
-    local ColorSelectorCorner = Instance.new("UICorner")
-    ColorSelectorCorner.CornerRadius = UDim.new(1, 0)
-    ColorSelectorCorner.Parent = ColorSelector
+    local HueDrag = Instance.new("ImageLabel")
+    HueDrag.Name = "HueDrag"
+    HueDrag.Size = UDim2.fromOffset(14, 14)
+    HueDrag.Image = "http://www.roblox.com/asset/?id=12266946128"
+    HueDrag.Parent = HueDragHolder
+    HueDrag.ImageColor3 = config.TextColor
     
     -- RGB输入区域
     local RGBInputs = Instance.new("Frame")
     RGBInputs.Name = "RGBInputs"
     RGBInputs.Parent = ColorPickerPopup
     RGBInputs.BackgroundTransparency = 1
-    RGBInputs.Position = UDim2.new(0, 180, 0, 40)
-    RGBInputs.Size = UDim2.new(0, 110, 0, 160)
+    RGBInputs.Position = UDim2.new(0, 240, 0, 55)
+    RGBInputs.Size = UDim2.new(0, 180, 0, 160)
     
     local function createRGBInput(label, position, defaultValue)
         local InputFrame = Instance.new("Frame")
@@ -1795,14 +1737,14 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         InputFrame.Parent = RGBInputs
         InputFrame.BackgroundTransparency = 1
         InputFrame.Position = position
-        InputFrame.Size = UDim2.new(1, 0, 0, 30)
+        InputFrame.Size = UDim2.new(1, 0, 0, 32)
         
         local InputLabel = Instance.new("TextLabel")
         InputLabel.Name = "Label"
         InputLabel.Parent = InputFrame
         InputLabel.BackgroundTransparency = 1
         InputLabel.Position = UDim2.new(0, 0, 0, 0)
-        InputLabel.Size = UDim2.new(0, 30, 1, 0)
+        InputLabel.Size = UDim2.new(0, 40, 1, 0)
         InputLabel.Font = Enum.Font.GothamSemibold
         InputLabel.Text = label .. ":"
         InputLabel.TextColor3 = config.TextColor
@@ -1815,8 +1757,8 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         InputBox.BackgroundColor3 = config.Textbox_Color
         InputBox.BackgroundTransparency = 0.2
         InputBox.BorderSizePixel = 0
-        InputBox.Position = UDim2.new(0, 35, 0, 0)
-        InputBox.Size = UDim2.new(0, 50, 0, 30)
+        InputBox.Position = UDim2.new(0, 45, 0, 0)
+        InputBox.Size = UDim2.new(0, 50, 0, 32)
         InputBox.Font = Enum.Font.Gotham
         InputBox.Text = tostring(defaultValue)
         InputBox.TextColor3 = config.TextColor
@@ -1830,32 +1772,63 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         return InputBox
     end
     
-    local RInput = createRGBInput("R", UDim2.new(0, 0, 0, 0), 255)
-    local GInput = createRGBInput("G", UDim2.new(0, 0, 0, 35), 255)
-    local BInput = createRGBInput("B", UDim2.new(0, 0, 0, 70), 255)
+    local HexInput = createRGBInput("Hex", UDim2.new(0, 0, 0, 0), Color3.new(defaultColor.R, defaultColor.G, defaultColor.B):ToHex())
+    local RInput = createRGBInput("R", UDim2.new(0, 0, 0, 37), math.floor(defaultColor.R * 255))
+    local GInput = createRGBInput("G", UDim2.new(0, 0, 0, 74), math.floor(defaultColor.G * 255))
+    local BInput = createRGBInput("B", UDim2.new(0, 0, 0, 111), math.floor(defaultColor.B * 255))
     
     -- 当前颜色预览
-    local CurrentColorPreview = Instance.new("Frame")
-    CurrentColorPreview.Name = "CurrentColorPreview"
-    CurrentColorPreview.Parent = RGBInputs
-    CurrentColorPreview.BackgroundColor3 = defaultColor
-    CurrentColorPreview.BorderSizePixel = 0
-    CurrentColorPreview.Position = UDim2.new(0, 0, 0, 110)
-    CurrentColorPreview.Size = UDim2.new(1, 0, 0, 40)
+    local OldColorFrame = Instance.new("Frame")
+    OldColorFrame.BackgroundColor3 = defaultColor
+    OldColorFrame.Size = UDim2.fromScale(1, 1)
+    OldColorFrame.BackgroundTransparency = 0
     
-    local CurrentColorCorner = Instance.new("UICorner")
-    CurrentColorCorner.CornerRadius = UDim.new(0, 6)
-    CurrentColorCorner.Parent = CurrentColorPreview
+    local OldColorFrameChecker = Instance.new("ImageLabel")
+    OldColorFrameChecker.Image = "http://www.roblox.com/asset/?id=14204231522"
+    OldColorFrameChecker.ImageTransparency = 0.45
+    OldColorFrameChecker.ScaleType = Enum.ScaleType.Tile
+    OldColorFrameChecker.TileSize = UDim2.fromOffset(40, 40)
+    OldColorFrameChecker.BackgroundTransparency = 1
+    OldColorFrameChecker.Position = UDim2.fromOffset(20, 220)
+    OldColorFrameChecker.Size = UDim2.fromOffset(88, 24)
+    OldColorFrameChecker.Parent = ColorPickerPopup
     
-    local CurrentColorLabel = Instance.new("TextLabel")
-    CurrentColorLabel.Name = "CurrentColorLabel"
-    CurrentColorLabel.Parent = CurrentColorPreview
-    CurrentColorLabel.BackgroundTransparency = 1
-    CurrentColorLabel.Size = UDim2.new(1, 0, 1, 0)
-    CurrentColorLabel.Font = Enum.Font.GothamSemibold
-    CurrentColorLabel.Text = "当前颜色"
-    CurrentColorLabel.TextColor3 = Color3.new(1, 1, 1)
-    CurrentColorLabel.TextSize = 14
+    local OldColorFrameCorner = Instance.new("UICorner")
+    OldColorFrameCorner.CornerRadius = UDim.new(0, 4)
+    OldColorFrameCorner.Parent = OldColorFrameChecker
+    
+    local OldColorFrameStroke = Instance.new("UIStroke")
+    OldColorFrameStroke.Thickness = 2
+    OldColorFrameStroke.Transparency = 0.75
+    OldColorFrameStroke.Parent = OldColorFrameChecker
+    
+    OldColorFrame.Parent = OldColorFrameChecker
+    
+    local CurrentColorFrame = Instance.new("Frame")
+    CurrentColorFrame.BackgroundColor3 = defaultColor
+    CurrentColorFrame.Size = UDim2.fromScale(1, 1)
+    CurrentColorFrame.BackgroundTransparency = 0
+    
+    local CurrentColorFrameChecker = Instance.new("ImageLabel")
+    CurrentColorFrameChecker.Image = "http://www.roblox.com/asset/?id=14204231522"
+    CurrentColorFrameChecker.ImageTransparency = 0.45
+    CurrentColorFrameChecker.ScaleType = Enum.ScaleType.Tile
+    CurrentColorFrameChecker.TileSize = UDim2.fromOffset(40, 40)
+    CurrentColorFrameChecker.BackgroundTransparency = 1
+    CurrentColorFrameChecker.Position = UDim2.fromOffset(112, 220)
+    CurrentColorFrameChecker.Size = UDim2.fromOffset(88, 24)
+    CurrentColorFrameChecker.Parent = ColorPickerPopup
+    
+    local CurrentColorFrameCorner = Instance.new("UICorner")
+    CurrentColorFrameCorner.CornerRadius = UDim.new(0, 4)
+    CurrentColorFrameCorner.Parent = CurrentColorFrameChecker
+    
+    local CurrentColorFrameStroke = Instance.new("UIStroke")
+    CurrentColorFrameStroke.Thickness = 2
+    CurrentColorFrameStroke.Transparency = 0.75
+    CurrentColorFrameStroke.Parent = CurrentColorFrameChecker
+    
+    CurrentColorFrame.Parent = CurrentColorFrameChecker
     
     -- 确认按钮
     local ConfirmBtn = Instance.new("TextButton")
@@ -1864,8 +1837,8 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     ConfirmBtn.BackgroundColor3 = config.AccentColor
     ConfirmBtn.BackgroundTransparency = 0.2
     ConfirmBtn.BorderSizePixel = 0
-    ConfirmBtn.Position = UDim2.new(0, 10, 1, -35)
-    ConfirmBtn.Size = UDim2.new(0.5, -15, 0, 30)
+    ConfirmBtn.Position = UDim2.new(0, 20, 1, -40)
+    ConfirmBtn.Size = UDim2.new(0, 180, 0, 30)
     ConfirmBtn.Font = Enum.Font.GothamBold
     ConfirmBtn.Text = "确认"
     ConfirmBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -1882,8 +1855,8 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     CancelBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     CancelBtn.BackgroundTransparency = 0.2
     CancelBtn.BorderSizePixel = 0
-    CancelBtn.Position = UDim2.new(0.5, 5, 1, -35)
-    CancelBtn.Size = UDim2.new(0.5, -15, 0, 30)
+    CancelBtn.Position = UDim2.new(0, 220, 1, -40)
+    CancelBtn.Size = UDim2.new(0, 180, 0, 30)
     CancelBtn.Font = Enum.Font.GothamBold
     CancelBtn.Text = "取消"
     CancelBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -1895,224 +1868,176 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     
     -- 当前颜色值
     local currentColor = defaultColor
-    local currentHue = 0
-    local currentSaturation = 0
-    local currentValue = 1
+    local currentHue, currentSat, currentVib = Color3.toHSV(defaultColor)
     
-    -- 转换函数
-    local function RGBtoHSV(r, g, b)
-        local max = math.max(r, g, b)
-        local min = math.min(r, g, b)
-        local h, s, v
-        
-        v = max
-        
-        local d = max - min
-        if max == 0 then
-            s = 0
-        else
-            s = d / max
-        end
-        
-        if max == min then
-            h = 0 -- 灰色
-        else
-            if max == r then
-                h = (g - b) / d
-                if g < b then
-                    h = h + 6
-                end
-            elseif max == g then
-                h = (b - r) / d + 2
-            elseif max == b then
-                h = (r - g) / d + 4
-            end
-            h = h / 6
-        end
-        
-        return h, s, v
-    end
-    
-    local function HSVtoRGB(h, s, v)
-        local r, g, b
-        
-        local i = math.floor(h * 6)
-        local f = h * 6 - i
-        local p = v * (1 - s)
-        local q = v * (1 - f * s)
-        local t = v * (1 - (1 - f) * s)
-        
-        i = i % 6
-        
-        if i == 0 then
-            r, g, b = v, t, p
-        elseif i == 1 then
-            r, g, b = q, v, p
-        elseif i == 2 then
-            r, g, b = p, v, t
-        elseif i == 3 then
-            r, g, b = p, q, v
-        elseif i == 4 then
-            r, g, b = t, p, v
-        elseif i == 5 then
-            r, g, b = v, p, q
-        end
-        
-        return Color3.new(r, g, b)
-    end
-    
-    -- 更新颜色函数
-    local function updateColorFromHSV(h, s, v)
-        currentHue = h
-        currentSaturation = s
-        currentValue = v
-        currentColor = HSVtoRGB(h, s, v)
-        
-        -- 更新SVSquare背景色（基于当前色相）
-        SVSquare.BackgroundColor3 = HSVtoRGB(h, 1, 1)
+    -- 更新显示函数
+    local function updateDisplay()
+        -- 更新饱和度/亮度区域背景
+        SatVibMap.BackgroundColor3 = Color3.fromHSV(currentHue, 1, 1)
         
         -- 更新选择器位置
-        local xPos = s
-        local yPos = 1 - v
+        SatCursor.Position = UDim2.new(currentSat, 0, 1 - currentVib, 0)
+        HueDrag.Position = UDim2.new(0, -1, currentHue, -6)
         
-        ColorSelector.Position = UDim2.new(xPos, -5, yPos, -5)
-        HueSelector.Position = UDim2.new(0, 0, h, -1)
-        
-        -- 更新预览
-        CurrentColorPreview.BackgroundColor3 = currentColor
+        -- 更新当前颜色
+        currentColor = Color3.fromHSV(currentHue, currentSat, currentVib)
+        CurrentColorFrame.BackgroundColor3 = currentColor
         ColorPreview.BackgroundColor3 = currentColor
         
         -- 更新RGB输入
-        local r = math.floor(currentColor.R * 255 + 0.5)
-        local g = math.floor(currentColor.G * 255 + 0.5)
-        local b = math.floor(currentColor.B * 255 + 0.5)
+        local rgb = {
+            R = math.floor(currentColor.R * 255),
+            G = math.floor(currentColor.G * 255),
+            B = math.floor(currentColor.B * 255)
+        }
         
-        RInput.Text = tostring(r)
-        GInput.Text = tostring(g)
-        BInput.Text = tostring(b)
+        HexInput.Text = "#" .. currentColor:ToHex()
+        RInput.Text = tostring(rgb.R)
+        GInput.Text = tostring(rgb.G)
+        BInput.Text = tostring(rgb.B)
+    end
+    
+    -- 触摸/鼠标交互处理函数
+    local function setupInteraction()
+        -- 饱和度/亮度区域交互
+        local satVibDragging = false
         
-        -- 更新文本颜色（基于亮度）
-        local brightness = (currentColor.R * 0.299 + currentColor.G * 0.587 + currentColor.B * 0.114)
-        CurrentColorLabel.TextColor3 = brightness > 0.5 and Color3.new(0, 0, 0) or Color3.new(1, 1, 1)
-    end
-    
-    local function updateColorFromRGB(r, g, b)
-        local color = Color3.fromRGB(r, g, b)
-        local h, s, v = RGBtoHSV(color.R, color.G, color.B)
-        updateColorFromHSV(h, s, v)
-    end
-    
-    -- 初始化
-    local initH, initS, initV = RGBtoHSV(defaultColor.R, defaultColor.G, defaultColor.B)
-    updateColorFromHSV(initH, initS, initV)
-    
-    -- 触摸交互状态
-    local hueDragging = false
-    local svDragging = false
-    
-    -- 色相条触摸交互
-    local function onHueBarInput(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            hueDragging = true
-            
-            local connection
-            connection = services.RunService.Heartbeat:Connect(function()
-                if not hueDragging then
-                    connection:Disconnect()
-                    return
-                end
+        local function updateSatVib(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                satVibDragging = true
                 
-                local mouse = services.Players.LocalPlayer:GetMouse()
-                local barPos = HueBar.AbsolutePosition.Y
-                local barSize = HueBar.AbsoluteSize.Y
+                local connection
+                connection = services.RunService.Heartbeat:Connect(function()
+                    if not satVibDragging then
+                        connection:Disconnect()
+                        return
+                    end
+                    
+                    local mouse = services.Players.LocalPlayer:GetMouse()
+                    local minX = SatVibMap.AbsolutePosition.X
+                    local maxX = minX + SatVibMap.AbsoluteSize.X
+                    local mouseX = math.clamp(mouse.X, minX, maxX)
+                    
+                    local minY = SatVibMap.AbsolutePosition.Y
+                    local maxY = minY + SatVibMap.AbsoluteSize.Y
+                    local mouseY = math.clamp(mouse.Y, minY, maxY)
+                    
+                    currentSat = (mouseX - minX) / (maxX - minX)
+                    currentVib = 1 - ((mouseY - minY) / (maxY - minY))
+                    
+                    updateDisplay()
+                end)
                 
-                local relativeY = math.clamp(mouse.Y - barPos, 0, barSize)
-                local hue = relativeY / barSize
-                
-                updateColorFromHSV(hue, currentSaturation, currentValue)
-            end)
-            
-            services.UserInputService.InputEnded:Connect(function(endInput)
-                if endInput.UserInputType == Enum.UserInputType.Touch or endInput.UserInputType == Enum.UserInputType.MouseButton1 then
-                    hueDragging = false
-                end
-            end)
-        end
-    end
-    
-    -- 饱和度/亮度区域触摸交互
-    local function onSVSquareInput(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            svDragging = true
-            
-            local connection
-            connection = services.RunService.Heartbeat:Connect(function()
-                if not svDragging then
-                    connection:Disconnect()
-                    return
-                end
-                
-                local mouse = services.Players.LocalPlayer:GetMouse()
-                local squarePos = SVSquare.AbsolutePosition
-                local squareSize = SVSquare.AbsoluteSize
-                
-                local relativeX = math.clamp(mouse.X - squarePos.X, 0, squareSize.X)
-                local relativeY = math.clamp(mouse.Y - squarePos.Y, 0, squareSize.Y)
-                
-                local s = relativeX / squareSize.X
-                local v = 1 - (relativeY / squareSize.Y)  -- 反转Y轴
-                
-                updateColorFromHSV(currentHue, s, v)
-            end)
-            
-            services.UserInputService.InputEnded:Connect(function(endInput)
-                if endInput.UserInputType == Enum.UserInputType.Touch or endInput.UserInputType == Enum.UserInputType.MouseButton1 then
-                    svDragging = false
-                end
-            end)
-        end
-    end
-    
-    -- 绑定触摸事件（支持手机）
-    HueBar.InputBegan:Connect(onHueBarInput)
-    SVSquare.InputBegan:Connect(onSVSquareInput)
-    ColorSelector.InputBegan:Connect(onSVSquareInput)
-    
-    -- 鼠标交互
-    HueBar.InputBegan:Connect(onHueBarInput)
-    SVSquare.InputBegan:Connect(onSVSquareInput)
-    
-    -- RGB输入框事件
-    local function validateRGBInput(inputBox, maxValue)
-        inputBox.FocusLost:Connect(function()
-            local text = inputBox.Text
-            local num = tonumber(text)
-            
-            if num then
-                num = math.clamp(num, 0, 255)
-                inputBox.Text = tostring(num)
-                
-                local r = tonumber(RInput.Text) or 255
-                local g = tonumber(GInput.Text) or 255
-                local b = tonumber(BInput.Text) or 255
-                
-                updateColorFromRGB(r, g, b)
-            else
-                -- 恢复当前值
-                local currentValue = math.floor(currentColor.R * 255)
-                if inputBox == GInput then
-                    currentValue = math.floor(currentColor.G * 255)
-                elseif inputBox == BInput then
-                    currentValue = math.floor(currentColor.B * 255)
-                end
-                inputBox.Text = tostring(currentValue)
+                services.UserInputService.InputEnded:Connect(function(endInput)
+                    if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
+                        satVibDragging = false
+                    end
+                end)
             end
-        end)
+        end
+        
+        SatVibMap.InputBegan:Connect(updateSatVib)
+        
+        -- 色相条交互
+        local hueDragging = false
+        
+        local function updateHue(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                hueDragging = true
+                
+                local connection
+                connection = services.RunService.Heartbeat:Connect(function()
+                    if not hueDragging then
+                        connection:Disconnect()
+                        return
+                    end
+                    
+                    local mouse = services.Players.LocalPlayer:GetMouse()
+                    local minY = HueSlider.AbsolutePosition.Y
+                    local maxY = minY + HueSlider.AbsoluteSize.Y
+                    local mouseY = math.clamp(mouse.Y, minY, maxY)
+                    
+                    currentHue = ((mouseY - minY) / (maxY - minY))
+                    
+                    updateDisplay()
+                end)
+                
+                services.UserInputService.InputEnded:Connect(function(endInput)
+                    if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
+                        hueDragging = false
+                    end
+                end)
+            end
+        end
+        
+        HueSlider.InputBegan:Connect(updateHue)
     end
     
-    validateRGBInput(RInput, 255)
-    validateRGBInput(GInput, 255)
-    validateRGBInput(BInput, 255)
+    -- 设置RGB输入事件
+    local function setupRGBInputs()
+        local function validateRGBInput(inputBox, maxValue)
+            inputBox.FocusLost:Connect(function()
+                local text = inputBox.Text
+                local num = tonumber(text)
+                
+                if num then
+                    num = math.clamp(num, 0, maxValue)
+                    inputBox.Text = tostring(num)
+                    
+                    if inputBox == RInput then
+                        local r = tonumber(RInput.Text) or 255
+                        local g = tonumber(GInput.Text) or 255
+                        local b = tonumber(BInput.Text) or 255
+                        local color = Color3.fromRGB(r, g, b)
+                        currentHue, currentSat, currentVib = Color3.toHSV(color)
+                    elseif inputBox == GInput then
+                        local r = tonumber(RInput.Text) or 255
+                        local g = tonumber(GInput.Text) or 255
+                        local b = tonumber(BInput.Text) or 255
+                        local color = Color3.fromRGB(r, g, b)
+                        currentHue, currentSat, currentVib = Color3.toHSV(color)
+                    elseif inputBox == BInput then
+                        local r = tonumber(RInput.Text) or 255
+                        local g = tonumber(GInput.Text) or 255
+                        local b = tonumber(BInput.Text) or 255
+                        local color = Color3.fromRGB(r, g, b)
+                        currentHue, currentSat, currentVib = Color3.toHSV(color)
+                    elseif inputBox == HexInput then
+                        local hex = text:gsub("#", "")
+                        if hex:match("^[0-9A-Fa-f]+$") then
+                            local success, color = pcall(Color3.fromHex, hex)
+                            if success then
+                                currentHue, currentSat, currentVib = Color3.toHSV(color)
+                            end
+                        end
+                    end
+                    
+                    updateDisplay()
+                else
+                    -- 恢复当前值
+                    if inputBox == RInput then
+                        inputBox.Text = tostring(math.floor(currentColor.R * 255))
+                    elseif inputBox == GInput then
+                        inputBox.Text = tostring(math.floor(currentColor.G * 255))
+                    elseif inputBox == BInput then
+                        inputBox.Text = tostring(math.floor(currentColor.B * 255))
+                    elseif inputBox == HexInput then
+                        inputBox.Text = "#" .. currentColor:ToHex()
+                    end
+                end
+            end)
+        end
+    
+        validateRGBInput(HexInput, 255)
+        validateRGBInput(RInput, 255)
+        validateRGBInput(GInput, 255)
+        validateRGBInput(BInput, 255)
+    end
+    
+    -- 初始化显示
+    updateDisplay()
+    setupInteraction()
+    setupRGBInputs()
     
     -- 按钮悬停效果
     ColorPickerBtn.MouseEnter:Connect(function()
@@ -2157,6 +2082,10 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     
     -- 打开颜色选择器
     ColorPickerBtn.MouseButton1Click:Connect(function()
+        -- 保存原始颜色
+        OldColorFrame.BackgroundColor3 = FengUI.flags[flag] or defaultColor
+        
+        -- 显示弹窗
         ColorPickerPopup.Visible = true
         ColorPickerPopup.Position = UDim2.new(0.5, 0, 0.5, 0)
         
@@ -2184,11 +2113,9 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     CancelBtn.MouseButton1Click:Connect(function()
         -- 恢复原始颜色
         local originalColor = FengUI.flags[flag] or defaultColor
-        updateColorFromRGB(
-            math.floor(originalColor.R * 255),
-            math.floor(originalColor.G * 255),
-            math.floor(originalColor.B * 255)
-        )
+        currentHue, currentSat, currentVib = Color3.toHSV(originalColor)
+        currentColor = originalColor
+        updateDisplay()
         
         services.TweenService:Create(ColorPickerPopup, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
             Position = UDim2.new(0.5, 0, 0.5, 1),
@@ -2199,12 +2126,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         ColorPickerPopup.Visible = false
     end)
     
-    -- 关闭按钮
-    ClosePopupBtn.MouseButton1Click:Connect(function()
-        CancelBtn.MouseButton1Click:Fire()
-    end)
-    
-    -- 点击外部关闭
+    -- 点击外部关闭（替代右上角关闭按钮）
     local ClickCapture = Instance.new("TextButton")
     ClickCapture.Name = "ClickCapture"
     ClickCapture.Parent = FengYu
@@ -2233,11 +2155,9 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     local funcs = {
         SetColor = function(self, color)
             if typeof(color) == "Color3" then
-                updateColorFromRGB(
-                    math.floor(color.R * 255),
-                    math.floor(color.G * 255),
-                    math.floor(color.B * 255)
-                )
+                currentHue, currentSat, currentVib = Color3.toHSV(color)
+                currentColor = color
+                updateDisplay()
                 FengUI.flags[flag] = color
                 callback(color)
             end
