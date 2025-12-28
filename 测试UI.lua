@@ -54,19 +54,19 @@ local config = {
     Keybind_Color = Color3.fromRGB(30, 30, 50),
     Label_Color = Color3.fromRGB(30, 30, 50),
     Slider_Color = Color3.fromRGB(30, 30, 50),
-    SliderBar_Color = Color3.fromRGB(0, 200, 255),  -- 恢复蓝色
+    SliderBar_Color = Color3.fromRGB(255, 60, 60), -- 改为红色
     Toggle_Color = Color3.fromRGB(30, 30, 50),
     Toggle_Off = Color3.fromRGB(50, 50, 70),
-    Toggle_On = Color3.fromRGB(0, 230, 230),  -- 恢复蓝色
-    AccentColor = Color3.fromRGB(0, 200, 255),  -- 恢复蓝色
+    Toggle_On = Color3.fromRGB(255, 60, 60), -- 改为红色
+    AccentColor = Color3.fromRGB(255, 60, 60), -- 改为红色
     TextColor = Color3.fromRGB(240, 245, 255),
-    SecondaryTextColor = Color3.fromRGB(180, 190, 210),  -- 恢复原文件灰色
-    GlowColor = Color3.fromRGB(0, 150, 255),  -- 恢复蓝色
+    SecondaryTextColor = Color3.fromRGB(180, 190, 210),
+    GlowColor = Color3.fromRGB(255, 60, 60), -- 改为红色
     
     DeepSpaceColor = Color3.fromRGB(1, 2, 10),
-    NebulaColor1 = Color3.fromRGB(0, 40, 80),  -- 恢复蓝色调
-    NebulaColor2 = Color3.fromRGB(20, 60, 120),  -- 恢复蓝色调
-    AccentGlow = Color3.fromRGB(0, 220, 255),
+    NebulaColor1 = Color3.fromRGB(40, 40, 40), -- 改为灰色
+    NebulaColor2 = Color3.fromRGB(60, 60, 60), -- 改为灰色
+    AccentGlow = Color3.fromRGB(255, 80, 80), -- 改为红色
     ElementColor = Color3.fromRGB(30, 30, 50),
     ElementTransparency = 0.2,
     GlassEffect = Color3.fromRGB(255, 255, 255),
@@ -82,9 +82,10 @@ local function startNeonFlowEffect(object, property, speed)
             return
         end
         hue = (hue + speed) % 1
-        local r = math.sin(hue * 6 + 0) * 0.5 + 0.5
-        local g = math.sin(hue * 6 + 2) * 0.5 + 0.5
-        local b = math.sin(hue * 6 + 4) * 0.5 + 0.5
+        -- 改为红色系渐变
+        local r = math.sin(hue * 3 + 0) * 0.3 + 0.7
+        local g = math.sin(hue * 3 + 2) * 0.1
+        local b = math.sin(hue * 3 + 4) * 0.1
         object[property] = Color3.new(r, g, b)
     end)
     return connection
@@ -122,8 +123,8 @@ local function createSpaceBackground(parent)
     
     local gradient2 = Instance.new("UIGradient")
     gradient2.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 50, 100)),  -- 恢复蓝色调
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 80, 150))   -- 恢复蓝色调
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 60)), -- 改为灰色
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(90, 90, 90))  -- 改为灰色
     })
     gradient2.Rotation = 135
     gradient2.Transparency = NumberSequence.new({
@@ -189,10 +190,11 @@ local function createHologramEffect(frame, intensity)
         NumberSequenceKeypoint.new(1, 0.8)
     })
     
+    -- 改为红色系渐变
     local colors = {
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 255)),  -- 恢复蓝色调
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 200, 255)),  -- 恢复蓝色调
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 150, 255))   -- 恢复蓝色调
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 60, 60)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 100, 100)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 140, 140))
     }
     glow.Color = ColorSequence.new(colors)
     glow.Parent = hologram
@@ -215,10 +217,13 @@ local function createHologramEffect(frame, intensity)
         
         local time = tick()
         for i, keypoint in ipairs(colors) do
-            local hue = (time * 0.2 + i * 0.3) % 1
+            -- 改为红色系渐变
+            local hue = 0  -- 红色对应的hue值约为0
+            local saturation = 0.8
+            local value = 0.7 + math.sin(time * 0.2 + i * 0.3) * 0.3
             colors[i] = ColorSequenceKeypoint.new(
                 keypoint.Time,
-                Color3.fromHSV(0.6 + math.sin(time + i) * 0.1, 0.8, 1)  -- 蓝色调
+                Color3.fromHSV(hue, saturation, value)
             )
         end
         glow.Color = ColorSequence.new(colors)
@@ -244,7 +249,7 @@ end
 local function createParticleTrail(startPos, endPos, parent)
     local trail = Instance.new("Frame")
     trail.Name = "ParticleTrail"
-    trail.BackgroundColor3 = Color3.new(0.2, 0.8, 1)  -- 恢复蓝色
+    trail.BackgroundColor3 = Color3.new(1, 0, 0) -- 改为红色
     trail.BackgroundTransparency = 0.3
     trail.Size = UDim2.new(0, 4, 0, 4)
     trail.Position = startPos
@@ -390,38 +395,13 @@ TitleText.Name = "TitleText"
 TitleText.Parent = TitleBar
 TitleText.BackgroundTransparency = 1
 TitleText.Position = UDim2.new(0, 10, 0, 0)
-TitleText.Size = UDim2.new(0, 380, 1, 0)  -- 进一步增加宽度到380
+TitleText.Size = UDim2.new(0, 200, 1, 0)
 TitleText.Font = Enum.Font.GothamBold
 TitleText.Text = "FengUI"
-TitleText.TextColor3 = config.AccentColor  -- 恢复蓝色
+TitleText.TextColor3 = config.AccentColor
 TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.TextTransparency = 1
-
--- 为脚本名字增加背景框
-local TitleBackground = Instance.new("Frame")
-TitleBackground.Name = "TitleBackground"
-TitleBackground.Parent = TitleBar
-TitleBackground.BackgroundColor3 = Color3.fromRGB(20, 25, 35)
-TitleBackground.BackgroundTransparency = 0.8
-TitleBackground.Position = UDim2.new(0, 5, 0, 5)
-TitleBackground.Size = UDim2.new(0, 390, 0, 25)  -- 背景框宽度
-TitleBackground.ZIndex = 1
-
-local TitleBackgroundCorner = Instance.new("UICorner")
-TitleBackgroundCorner.CornerRadius = UDim.new(0, 6)
-TitleBackgroundCorner.Parent = TitleBackground
-
-local TitleBackgroundStroke = Instance.new("UIStroke")
-TitleBackgroundStroke.Parent = TitleBackground
-TitleBackgroundStroke.Color = config.AccentColor
-TitleBackgroundStroke.Thickness = 1
-TitleBackgroundStroke.Transparency = 0.7
-TitleBackgroundStroke.LineJoinMode = Enum.LineJoinMode.Round
-
--- 将TitleText放到背景框上方
-TitleText.ZIndex = 3
-TitleText.Position = UDim2.new(0, 15, 0, 0)  -- 调整位置
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
@@ -543,8 +523,8 @@ local TabMain = Instance.new("Frame")
 TabMain.Name = "TabMain"
 TabMain.Parent = Main
 TabMain.BackgroundTransparency = 1
-TabMain.Position = UDim2.new(0, 120, 0, 37)  -- 调整位置
-TabMain.Size = UDim2.new(0, 320, 0, 243)  -- 调整大小
+TabMain.Position = UDim2.new(0.2, 0, 0, 37)
+TabMain.Size = UDim2.new(0, 360, 0, 243)
 TabMain.Visible = false
 
 local Side = Instance.new("Frame")
@@ -555,7 +535,7 @@ Side.BackgroundTransparency = 1
 Side.BorderSizePixel = 0
 Side.ClipsDescendants = true
 Side.Position = UDim2.new(0, 0, 0, 35)
-Side.Size = UDim2.new(0, 120, 0, 245)  -- 保持侧边栏宽度120
+Side.Size = UDim2.new(0, 90, 0, 245)
 
 local SideCorner = Instance.new("UICorner")
 SideCorner.CornerRadius = UDim.new(0, 10)
@@ -568,7 +548,7 @@ TabBtns.Active = true
 TabBtns.BackgroundTransparency = 1
 TabBtns.BorderSizePixel = 0
 TabBtns.Position = UDim2.new(0, 0, 0, 5)
-TabBtns.Size = UDim2.new(0, 120, 0, 235)  -- 保持宽度
+TabBtns.Size = UDim2.new(0, 90, 0, 235)
 TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBtns.ScrollBarThickness = 3
 TabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
@@ -665,13 +645,13 @@ task.spawn(function()
     while TitleText and TitleText.Parent do
         hue = (hue + 0.03) % 1
         
-        -- 使用蓝色调
-        TitleText.TextColor3 = Color3.fromHSV(0.6, 0.8, 1)  -- 蓝色
+        -- 改为红色系渐变
+        TitleText.TextColor3 = Color3.fromHSV(0, 1, 0.7 + math.sin(tick() * 2) * 0.3)
         
         matrixEffect.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 100, 200)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 200, 255)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 150, 230))
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 80, 80)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 60, 60)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 40, 40))
         })
         
         services.TweenService:Create(TitleText, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
@@ -799,7 +779,7 @@ function FengUI.new(FengUI, name, theme)
         TabText.Parent = TabIco
         TabText.BackgroundTransparency = 1
         TabText.Position = UDim2.new(1.2, 0, 0, 0)
-        TabText.Size = UDim2.new(0, 85, 0, 22)  -- 增加宽度以适应更宽的侧边栏
+        TabText.Size = UDim2.new(0, 65, 0, 22)
         TabText.Font = Enum.Font.GothamSemibold
         TabText.Text = name
         TabText.TextColor3 = config.TextColor
@@ -811,7 +791,7 @@ function FengUI.new(FengUI, name, theme)
         TabBtn.Parent = TabIco
         TabBtn.BackgroundTransparency = 1
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(0, 120, 0, 22)  -- 增加宽度以适应更宽的侧边栏
+        TabBtn.Size = UDim2.new(0, 90, 0, 22)
         TabBtn.AutoButtonColor = false
         TabBtn.Font = Enum.Font.SourceSans
         TabBtn.Text = ""
@@ -878,12 +858,12 @@ function FengUI.new(FengUI, name, theme)
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
             
-            local elementWidth = 300  -- 调整宽度
+            local elementWidth = 330
             if windowCount == 2 then
                 if windowPosition:lower() == "left" then
-                    elementWidth = 145  -- 调整宽度
+                    elementWidth = 160
                 else
-                    elementWidth = 153  -- 调整宽度
+                    elementWidth = 168
                 end
             end
             
@@ -894,7 +874,7 @@ function FengUI.new(FengUI, name, theme)
             SectionText.Size = UDim2.new(1, -35, 0, 36)
             SectionText.Font = Enum.Font.GothamSemibold
             SectionText.Text = name
-            SectionText.TextColor3 = config.AccentColor  -- 蓝色
+            SectionText.TextColor3 = config.AccentColor
             SectionText.TextSize = 16
             SectionText.TextXAlignment = Enum.TextXAlignment.Left
             
@@ -905,7 +885,7 @@ function FengUI.new(FengUI, name, theme)
             SectionOpen.Position = UDim2.new(0, 5, 0, 5)
             SectionOpen.Size = UDim2.new(0, 22, 0, 22)
             SectionOpen.Image = "rbxassetid://84830962019412"
-            SectionOpen.ImageColor3 = config.SecondaryTextColor  -- 恢复原文件灰色
+            SectionOpen.ImageColor3 = config.SecondaryTextColor
             
             SectionOpened.Name = "SectionOpened"
             SectionOpened.Parent = SectionOpen
@@ -913,7 +893,7 @@ function FengUI.new(FengUI, name, theme)
             SectionOpened.BorderSizePixel = 0
             SectionOpened.Size = UDim2.new(1, 0, 1, 0)
             SectionOpened.Image = "rbxassetid://84830962019412"
-            SectionOpened.ImageColor3 = config.AccentColor  -- 蓝色
+            SectionOpened.ImageColor3 = config.AccentColor
             SectionOpened.ImageTransparency = 1
             
             SectionToggle.Name = "SectionToggle"
@@ -1008,7 +988,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 local btnGlow = Instance.new("UIStroke")
                 btnGlow.Parent = Btn
-                btnGlow.Color = config.AccentColor  -- 蓝色
+                btnGlow.Color = config.AccentColor
                 btnGlow.Thickness = 1
                 btnGlow.Transparency = 0.8
                 
@@ -1066,7 +1046,7 @@ function FengUI.new(FengUI, name, theme)
                 end)
             end
             
-            function section.Image(section, imageSource, sizeX, sizeY)
+                                    function section.Image(section, imageSource, sizeX, sizeY)
                 local ImageModule = Instance.new("Frame")
                 local ImageLabel = Instance.new("ImageLabel")
                 local ImageCorner = Instance.new("UICorner")
@@ -1091,7 +1071,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 local imageGlow = Instance.new("UIStroke")
                 imageGlow.Parent = ImageLabel
-                imageGlow.Color = config.AccentColor  -- 蓝色
+                imageGlow.Color = config.AccentColor
                 imageGlow.Thickness = 1
                 imageGlow.Transparency = 0.8
                 
@@ -1202,7 +1182,7 @@ function FengUI.new(FengUI, name, theme)
                 TextLabel.Size = UDim2.new(0, elementWidth, 0, 28)
                 TextLabel.Font = Enum.Font.GothamSemibold
                 TextLabel.Text = text
-                TextLabel.TextColor3 = config.SecondaryTextColor  -- 恢复原文件灰色
+                TextLabel.TextColor3 = config.SecondaryTextColor
                 TextLabel.TextSize = 14
                 
                 LabelC.CornerRadius = UDim.new(0, 6)
@@ -1250,9 +1230,9 @@ function FengUI.new(FengUI, name, theme)
                 ToggleBtnC.Name = "ToggleBtnC"
                 ToggleBtnC.Parent = ToggleBtn
                 
-                local togglePosition = 0.80  -- 调整位置
+                local togglePosition = 0.85
                 if windowCount == 2 then
-                    togglePosition = 0.73  -- 调整位置
+                    togglePosition = 0.78
                 end
                 
                 ToggleDisable.Name = "ToggleDisable"
@@ -1380,9 +1360,9 @@ function FengUI.new(FengUI, name, theme)
                 KeybindBtnC.Name = "KeybindBtnC"
                 KeybindBtnC.Parent = KeybindBtn
                 
-                local keybindPosition = 0.67  -- 调整位置
+                local keybindPosition = 0.72
                 if windowCount == 2 then
-                    keybindPosition = 0.59  -- 调整位置
+                    keybindPosition = 0.64
                 end
                 
                 KeybindValue.Name = "KeybindValue"
@@ -1504,9 +1484,9 @@ function FengUI.new(FengUI, name, theme)
                 TextboxBackC.Name = "TextboxBackC"
                 TextboxBackC.Parent = TextboxBack
                 
-                local textboxPosition = 0.40  -- 调整位置
+                local textboxPosition = 0.45
                 if windowCount == 2 then
-                    textboxPosition = 0.31  -- 调整位置
+                    textboxPosition = 0.36
                 end
                 
                 BoxBG.Name = "BoxBG"
@@ -1531,7 +1511,7 @@ function FengUI.new(FengUI, name, theme)
     TextBox.Text = default
     TextBox.TextColor3 = config.TextColor
     TextBox.TextSize = 12
-    TextBox.PlaceholderColor3 = config.SecondaryTextColor  -- 恢复原文件灰色
+    TextBox.PlaceholderColor3 = config.SecondaryTextColor
     
     TextboxBackL.Name = "TextboxBackL"
     TextboxBackL.Parent = TextboxBack
@@ -1576,15 +1556,15 @@ end
 
 function section.ColorPicker(section, text, flag, defaultColor, callback)
     callback = callback or function() end
-    defaultColor = defaultColor or Color3.fromRGB(0, 200, 255)  -- 默认蓝色
+    defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
     assert(text, "No text provided")
     assert(flag, "No flag provided")
     
     FengUI.flags[flag] = defaultColor
     
-    local elementWidth = 300  -- 调整宽度
+    local elementWidth = 330
     if windowCount == 2 then
-        elementWidth = 145  -- 调整宽度
+        elementWidth = 160
     end
     
     local ColorPickerModule = Instance.new("Frame")
@@ -1618,9 +1598,9 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     ColorPickerBtnC.Name = "ColorPickerBtnC"
     ColorPickerBtnC.Parent = ColorPickerBtn
     
-    local colorPickerPosition = 0.60  -- 调整位置
+    local colorPickerPosition = 0.65
     if windowCount == 2 then
-        colorPickerPosition = 0.51  -- 调整位置
+        colorPickerPosition = 0.56
     end
     
     ColorPreview.Name = "ColorPreview"
@@ -1664,7 +1644,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     
     local PopupStroke = Instance.new("UIStroke")
     PopupStroke.Parent = ColorPickerPopup
-    PopupStroke.Color = Color3.fromRGB(0, 180, 255)  -- 蓝色
+    PopupStroke.Color = Color3.fromRGB(255, 60, 60) -- 改为红色
     PopupStroke.Thickness = 1.5
     PopupStroke.Transparency = 0.2
     
@@ -1678,7 +1658,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     PopupTitle.Size = UDim2.new(1, -20, 0, 24)
     PopupTitle.Font = Enum.Font.GothamBold
     PopupTitle.Text = text
-    PopupTitle.TextColor3 = Color3.fromRGB(0, 200, 255)  -- 蓝色
+    PopupTitle.TextColor3 = Color3.fromRGB(255, 60, 60) -- 改为红色
     PopupTitle.TextSize = 16
     PopupTitle.TextXAlignment = Enum.TextXAlignment.Center
     PopupTitle.ZIndex = 1001
@@ -1870,7 +1850,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     local ConfirmBtn = Instance.new("TextButton")
     ConfirmBtn.Name = "ConfirmBtn"
     ConfirmBtn.Parent = ButtonContainer
-    ConfirmBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 255)  -- 蓝色
+    ConfirmBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60) -- 改为红色
     ConfirmBtn.BackgroundTransparency = 0.1
     ConfirmBtn.BorderSizePixel = 0
     ConfirmBtn.Position = UDim2.new(0, 0, 0, 0)
@@ -2263,7 +2243,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
         
         SliderPart.Name = "SliderPart"
         SliderPart.Parent = SliderBar
-        SliderPart.BackgroundColor3 = config.SliderBar_Color  -- 蓝色
+        SliderPart.BackgroundColor3 = config.SliderBar_Color
         SliderPart.BorderSizePixel = 0
         SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
         SliderPartC.CornerRadius = UDim.new(0, 4)
@@ -2288,11 +2268,11 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
         
         SliderBack.Text = "   " .. text
     else
-        local sliderBarPosition = 0.30  -- 调整位置
-        local sliderBarWidth = 110  -- 调整宽度
-        local sliderValuePosition = 0.77  -- 调整位置
-        local minSliderPosition = 0.23  -- 调整位置
-        local addSliderPosition = 0.70  -- 调整位置
+        local sliderBarPosition = 0.35
+        local sliderBarWidth = 120
+        local sliderValuePosition = 0.82
+        local minSliderPosition = 0.28
+        local addSliderPosition = 0.75
         
         SliderBar.Name = "SliderBar"
         SliderBar.Parent = SliderBack
@@ -2307,7 +2287,7 @@ function section.Slider(section, text, flag, default, min, max, precise, callbac
         
         SliderPart.Name = "SliderPart"
         SliderPart.Parent = SliderBar
-        SliderPart.BackgroundColor3 = config.SliderBar_Color  -- 蓝色
+        SliderPart.BackgroundColor3 = config.SliderBar_Color
         SliderPart.BorderSizePixel = 0
         SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
         SliderPartC.CornerRadius = UDim.new(0, 4)
@@ -2604,11 +2584,11 @@ function section.Dropdown(section, text, flag, options, callback)
     BackgroundFill.Size = UDim2.new(0.25, 0, 1, 0)
     BackgroundFill.ZIndex = 0
     
-    local dropdownFramePosition = 0.75  -- 调整位置
-    local separatorPosition = 0.69  -- 调整位置
+    local dropdownFramePosition = 0.80
+    local separatorPosition = 0.74
     if windowCount == 2 then
-        dropdownFramePosition = 0.66  -- 调整位置
-        separatorPosition = 0.60  -- 调整位置
+        dropdownFramePosition = 0.71
+        separatorPosition = 0.65
     end
     
     DropdownOpenFrame.Name = "DropdownOpenFrame"
@@ -2645,7 +2625,7 @@ function section.Dropdown(section, text, flag, options, callback)
     DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
     DropdownText.Size = UDim2.new(0, 230, 0, 36)
     DropdownText.Font = Enum.Font.GothamSemibold
-    DropdownText.PlaceholderColor3 = config.SecondaryTextColor  -- 恢复原文件灰色
+    DropdownText.PlaceholderColor3 = config.SecondaryTextColor
     DropdownText.PlaceholderText = text
     DropdownText.Text = ""
     DropdownText.TextColor3 = config.TextColor
