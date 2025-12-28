@@ -645,13 +645,12 @@ task.spawn(function()
     while TitleText and TitleText.Parent do
         hue = (hue + 0.03) % 1
         
-        -- 改为红色系渐变
-        TitleText.TextColor3 = Color3.fromHSV(0, 1, 0.7 + math.sin(tick() * 2) * 0.3)
+        TitleText.TextColor3 = Color3.fromHSV(hue, 1, 1)
         
         matrixEffect.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 80, 80)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 60, 60)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 40, 40))
+            ColorSequenceKeypoint.new(0, Color3.fromHSV((hue + 0.2) % 1, 1, 1)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromHSV(hue, 1, 1)),
+            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue - 0.2) % 1, 1, 1))
         })
         
         services.TweenService:Create(TitleText, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
