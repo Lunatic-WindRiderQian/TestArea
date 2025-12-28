@@ -1621,18 +1621,18 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     ColorPickerP.Parent = ColorPickerBtn
     ColorPickerP.PaddingRight = UDim.new(0, 8)
     
-    -- 颜色选择器弹窗（调整回小尺寸）
+    -- 颜色选择器弹窗
     local ColorPickerPopup = Instance.new("Frame")
     ColorPickerPopup.Name = "ColorPickerPopup"
-    ColorPickerPopup.Parent = FengYu
+    ColorPickerPopup.Parent = Main -- 父级改为Main，这样会跟随Main移动
     ColorPickerPopup.AnchorPoint = Vector2.new(0.5, 0.5)
-    ColorPickerPopup.BackgroundColor3 = Color3.fromRGB(35, 40, 50) -- 微调亮度
+    ColorPickerPopup.BackgroundColor3 = Color3.fromRGB(35, 40, 50)
     ColorPickerPopup.BackgroundTransparency = 0.1
     ColorPickerPopup.BorderSizePixel = 0
-    ColorPickerPopup.Position = UDim2.new(0.5, 0, 0.5, 0)
-    ColorPickerPopup.Size = UDim2.new(0, 320, 0, 260) -- 减小尺寸
+    ColorPickerPopup.Position = UDim2.new(0.5, 0, 0.5, 0) -- 在Main中央
+    ColorPickerPopup.Size = UDim2.new(0, 320, 0, 260)
     ColorPickerPopup.Visible = false
-    ColorPickerPopup.ZIndex = 1000
+    ColorPickerPopup.ZIndex = 1000 -- 确保在Main上方
     ColorPickerPopup.Active = false
     ColorPickerPopup.Draggable = false
     
@@ -1661,12 +1661,12 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     PopupTitle.TextXAlignment = Enum.TextXAlignment.Center
     PopupTitle.ZIndex = 1001
     
-    -- 饱和度/亮度区域（缩小）
+    -- 饱和度/亮度区域
     local SatVibMap = Instance.new("ImageLabel")
     SatVibMap.Name = "SatVibMap"
     SatVibMap.Parent = ColorPickerPopup
-    SatVibMap.Size = UDim2.fromOffset(150, 140) -- 缩小
-    SatVibMap.Position = UDim2.fromOffset(15, 40) -- 调整位置
+    SatVibMap.Size = UDim2.fromOffset(150, 140)
+    SatVibMap.Position = UDim2.fromOffset(15, 40)
     SatVibMap.Image = "rbxassetid://4155801252"
     SatVibMap.BackgroundColor3 = defaultColor
     SatVibMap.BackgroundTransparency = 0
@@ -1678,7 +1678,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     
     local SatCursor = Instance.new("ImageLabel")
     SatCursor.Name = "SatCursor"
-    SatCursor.Size = UDim2.new(0, 16, 0, 16) -- 缩小
+    SatCursor.Size = UDim2.new(0, 16, 0, 16)
     SatCursor.ScaleType = Enum.ScaleType.Fit
     SatCursor.AnchorPoint = Vector2.new(0.5, 0.5)
     SatCursor.BackgroundTransparency = 1
@@ -1686,12 +1686,12 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     SatCursor.ZIndex = 1002
     SatCursor.Parent = SatVibMap
     
-    -- 色相选择条（垂直，缩小）
+    -- 色相选择条（垂直）
     local HueSlider = Instance.new("Frame")
     HueSlider.Name = "HueSlider"
     HueSlider.Parent = ColorPickerPopup
-    HueSlider.Size = UDim2.fromOffset(14, 140) -- 缩小
-    HueSlider.Position = UDim2.fromOffset(175, 40) -- 调整位置
+    HueSlider.Size = UDim2.fromOffset(14, 140)
+    HueSlider.Position = UDim2.fromOffset(175, 40)
     HueSlider.ZIndex = 1001
     
     local HueSliderCorner = Instance.new("UICorner")
@@ -1725,7 +1725,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     HueDrag.ImageColor3 = Color3.new(1, 1, 1)
     HueDrag.ZIndex = 1003
     
-    -- RGB输入区域（简化）
+    -- RGB输入区域
     local RGBInputs = Instance.new("Frame")
     RGBInputs.Name = "RGBInputs"
     RGBInputs.Parent = ColorPickerPopup
@@ -1783,7 +1783,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     local BInput = createRGBInput("B", UDim2.new(0, 0, 0, 64), math.floor(defaultColor.B * 255))
     local HexInput = createRGBInput("Hex", UDim2.new(0, 0, 0, 96), "#" .. defaultColor:ToHex())
     
-    -- 颜色预览区域（简化）
+    -- 颜色预览区域
     local PreviewContainer = Instance.new("Frame")
     PreviewContainer.Name = "PreviewContainer"
     PreviewContainer.Parent = ColorPickerPopup
@@ -1891,7 +1891,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     CancelCorner.CornerRadius = UDim.new(0, 6)
     CancelCorner.Parent = CancelBtn
     
-    -- 关闭按钮（点击外部关闭）
+    -- 全屏透明点击区域（用于点击外部关闭）
     local CloseClickArea = Instance.new("TextButton")
     CloseClickArea.Name = "CloseClickArea"
     CloseClickArea.Parent = FengYu
@@ -1900,7 +1900,7 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
     CloseClickArea.Size = UDim2.new(1, 0, 1, 0)
     CloseClickArea.Text = ""
     CloseClickArea.Visible = false
-    CloseClickArea.ZIndex = 999
+    CloseClickArea.ZIndex = 99 -- 低于颜色选择器但高于其他元素
     CloseClickArea.Modal = true
     
     -- 当前颜色值
@@ -2130,8 +2130,11 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         ColorPickerPopup.Visible = true
         CloseClickArea.Visible = true
         
+        -- 重置到Main中央位置
+        ColorPickerPopup.Position = UDim2.new(0.5, 0, 0.5, 0)
+        ColorPickerPopup.BackgroundTransparency = 0.8
+        
         services.TweenService:Create(ColorPickerPopup, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0.5, 0, 0.5, 0),
             BackgroundTransparency = 0.1
         }):Play()
     end)
@@ -2142,7 +2145,6 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         callback(currentColor)
         
         services.TweenService:Create(ColorPickerPopup, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Position = UDim2.new(0.5, 0, 0.5, 1),
             BackgroundTransparency = 0.8
         }):Play()
         
@@ -2160,7 +2162,6 @@ function section.ColorPicker(section, text, flag, defaultColor, callback)
         updateDisplay()
         
         services.TweenService:Create(ColorPickerPopup, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Position = UDim2.new(0.5, 0, 0.5, 1),
             BackgroundTransparency = 0.8
         }):Play()
         
