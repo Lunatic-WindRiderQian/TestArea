@@ -1106,7 +1106,7 @@ function FengUI.new(FengUI, name, theme)
             Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
             
             -- 双窗口布局
-            if windowCount == 2 then
+if windowCount == 2 then
     local TabContainer = Instance.new("Frame")
     TabContainer.Name = "TabContainer"
     TabContainer.Parent = Tab
@@ -1195,10 +1195,7 @@ else
     TabL.Name = "TabL"
     TabL.Parent = Tab
     TabL.SortOrder = Enum.SortOrder.LayoutOrder
-    TabL.Padding = UDim.new(0, 4)
-    
-    setupSmoothScrolling(Tab, TabL)
-end
+    TabL.Padding = UDim.new(0, 4)      
                 setupSmoothScrolling(Tab, TabL)
             end
             
