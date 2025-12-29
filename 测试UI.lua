@@ -1413,6 +1413,125 @@ function FengUI.new(FengUI, name, theme)
                     end)
                 end
                 
+                function section.Image(section, imageSource, sizeX, sizeY)
+                    local ImageModule = Instance.new("Frame")
+                    local ImageLabel = Instance.new("ImageLabel")
+                    local ImageCorner = Instance.new("UICorner")
+                    
+                    ImageModule.Name = "ImageModule"
+                    ImageModule.Parent = Objs
+                    ImageModule.BackgroundTransparency = 1
+                    ImageModule.BorderSizePixel = 0
+                    ImageModule.Size = UDim2.new(0, elementWidth, 0, sizeY or 120)
+                    
+                    ImageLabel.Name = "ImageLabel"
+                    ImageLabel.Parent = ImageModule
+                    ImageLabel.BackgroundTransparency = 1
+                    ImageLabel.BorderSizePixel = 0
+                    ImageLabel.AnchorPoint = Vector2.new(0.5, 0)
+                    ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
+                    ImageLabel.Size = UDim2.new(0, math.min(sizeX or elementWidth - 20, elementWidth), 0, sizeY or 120)
+                    ImageLabel.ScaleType = Enum.ScaleType.Crop
+                    
+                    ImageCorner.CornerRadius = UDim.new(0, 6)
+                    ImageCorner.Parent = ImageLabel
+                    
+                    local imageGlow = Instance.new("UIStroke")
+                    imageGlow.Parent = ImageLabel
+                    imageGlow.Color = config.AccentColor
+                    imageGlow.Thickness = 1
+                    imageGlow.Transparency = 0.8
+                    
+                    local function setImage(source)
+                        if type(source) == "table" then
+                            if source.Type == "Player" then
+                                local userId = source.UserId
+                                if userId then
+                                    task.spawn(function()
+                                        local success, result = pcall(function()
+                                            return game.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+                                        end)
+                                        
+                                        if success and result then
+                                            ImageLabel.Image = result
+                                        else
+                                            ImageLabel.Image = "rbxassetid://0"
+                                        end
+                                    end)
+                                end
+                            elseif source.Type == "Game" then
+                                local placeId = source.PlaceId
+                                if placeId then
+                                    task.spawn(function()
+                                        local success1, gameInfo = pcall(function()
+                                            local MarketplaceService = game:GetService("MarketplaceService")
+                                            return MarketplaceService:GetProductInfo(placeId, Enum.InfoType.Asset)
+                                        end)
+                                        
+                                        if success1 and gameInfo and gameInfo.IconImageAssetId then
+                                            ImageLabel.Image = "rbxassetid://" .. gameInfo.IconImageAssetId
+                                            return
+                                        end
+                                        
+                                        local success2, thumbnailUrl = pcall(function()
+                                            local ThumbnailService = game:GetService("ThumbnailService")
+                                            return ThumbnailService:GetGameThumbnailAsync(placeId)
+                                        end)
+                                        
+                                        if success2 and thumbnailUrl then
+                                            ImageLabel.Image = thumbnailUrl
+                                            return
+                                        end
+                                        
+                                        ImageLabel.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=" .. placeId
+                                    end)
+                                end
+                            end
+                        else
+                            local imageId = tostring(source)
+                            if imageId:match("^%d+$") then
+                                ImageLabel.Image = "rbxassetid://" .. imageId
+                            else
+                                ImageLabel.Image = imageId
+                            end
+                        end
+                    end
+                    
+                    if imageSource then
+                        setImage(imageSource)
+                    end
+                    
+                    local imageController = {}
+                    
+                    function imageController:SetImage(newSource)
+                        setImage(newSource)
+                    end
+                    
+                    function imageController:SetPlayerAvatar(userId)
+                        setImage({Type = "Player", UserId = userId})
+                    end
+                    
+                    function imageController:SetGameIcon(placeId)
+                        setImage({Type = "Game", PlaceId = placeId})
+                    end
+                    
+                    function imageController:SetLocalPlayerAvatar()
+                        local localPlayer = game.Players.LocalPlayer
+                        if localPlayer then
+                            setImage({Type = "Player", UserId = localPlayer.UserId})
+                        end
+                    end
+                    
+                    function imageController:Destroy()
+                        ImageModule:Destroy()
+                    end
+                    
+                    imageController.Instance = ImageLabel
+                    imageController.Module = ImageModule
+                    
+                    return imageController
+                end
+                
                 -- 标签
                 function section:Label(text)
                     local LabelModule = Instance.new("Frame")
