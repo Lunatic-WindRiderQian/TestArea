@@ -1107,71 +1107,98 @@ function FengUI.new(FengUI, name, theme)
             
             -- 双窗口布局
             if windowCount == 2 then
-                local TabContainer = Instance.new("Frame")
-                TabContainer.Name = "TabContainer"
-                TabContainer.Parent = Tab
-                TabContainer.BackgroundTransparency = 1
-                TabContainer.Size = UDim2.new(1, 0, 1, 0)
-                
-                local LeftContainer = Instance.new("ScrollingFrame")
-                LeftContainer.Name = "LeftContainer"
-                LeftContainer.Parent = TabContainer
-                LeftContainer.BackgroundTransparency = 1
-                LeftContainer.Size = UDim2.new(0.48, -2, 1, 0)
-                LeftContainer.Position = UDim2.new(0, 2, 0, 0)
-                LeftContainer.ScrollBarThickness = 0
-                LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-                LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-                LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-                
-                local LeftLayout = Instance.new("UIListLayout")
-                LeftLayout.Name = "LeftLayout"
-                LeftLayout.Parent = LeftContainer
-                LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                LeftLayout.Padding = UDim.new(0, 4)
-                
-                local RightContainer = Instance.new("ScrollingFrame")
-                RightContainer.Name = "RightContainer"
-                RightContainer.Parent = TabContainer
-                RightContainer.BackgroundTransparency = 1
-                RightContainer.Size = UDim2.new(0.50, -2, 1, 0)
-                RightContainer.Position = UDim2.new(0.48, 0, 0, 0)
-                RightContainer.ScrollBarThickness = 0
-                RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-                RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-                RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-                
-                local RightLayout = Instance.new("UIListLayout")
-                RightLayout.Name = "RightLayout"
-                RightLayout.Parent = RightContainer
-                RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                RightLayout.Padding = UDim.new(0, 4)
-                
-                local function updateLeftScrolling()
-                    LeftContainer.CanvasSize = UDim2.new(0, 0, 0, LeftLayout.AbsoluteContentSize.Y + 10)
-                    LeftContainer.ScrollingEnabled = LeftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y
-                end
-                
-                local function updateRightScrolling()
-                    RightContainer.CanvasSize = UDim2.new(0, 0, 0, RightLayout.AbsoluteContentSize.Y + 10)
-                    RightContainer.ScrollingEnabled = RightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y
-                end
-                
-                LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateLeftScrolling)
-                RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightScrolling)
-                
-                task.spawn(function()
-                    task.wait(0.1)
-                    updateLeftScrolling()
-                    updateRightScrolling()
-                end)
-            else
-                local TabL = Instance.new("UIListLayout")
-                TabL.Name = "TabL"
-                TabL.Parent = Tab
-                TabL.SortOrder = Enum.SortOrder.LayoutOrder
-                TabL.Padding = UDim.new(0, 4)
-                
+    local TabContainer = Instance.new("Frame")
+    TabContainer.Name = "TabContainer"
+    TabContainer.Parent = Tab
+    TabContainer.BackgroundTransparency = 1
+    TabContainer.Size = UDim2.new(1, 0, 1, 0)
+    
+    local LeftContainer = Instance.new("ScrollingFrame")
+    LeftContainer.Name = "LeftContainer"
+    LeftContainer.Parent = TabContainer
+    LeftContainer.BackgroundTransparency = 1
+    LeftContainer.Size = UDim2.new(0.48, -2, 1, 0)
+    LeftContainer.Position = UDim2.new(0, 2, 0, 0)
+    LeftContainer.ScrollBarThickness = 2
+    LeftContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    LeftContainer.ScrollBarImageTransparency = 0.5
+    LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+    LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+    LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+    LeftContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
+    
+    local LeftLayout = Instance.new("UIListLayout")
+    LeftLayout.Name = "LeftLayout"
+    LeftLayout.Parent = LeftContainer
+    LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    LeftLayout.Padding = UDim.new(0, 4)
+    
+    local RightContainer = Instance.new("ScrollingFrame")
+    RightContainer.Name = "RightContainer"
+    RightContainer.Parent = TabContainer
+    RightContainer.BackgroundTransparency = 1
+    RightContainer.Size = UDim2.new(0.48, -2, 1, 0)
+    RightContainer.Position = UDim2.new(0.5, 2, 0, 0)
+    RightContainer.ScrollBarThickness = 2
+    RightContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    RightContainer.ScrollBarImageTransparency = 0.5
+    RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+    RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+    RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+    RightContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
+    
+    local RightLayout = Instance.new("UIListLayout")
+    RightLayout.Name = "RightLayout"
+    RightLayout.Parent = RightContainer
+    RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    RightLayout.Padding = UDim.new(0, 4)
+    
+    local function updateLeftScrolling()
+        local contentHeight = LeftLayout.AbsoluteContentSize.Y
+        LeftContainer.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 20)
+        
+        if contentHeight <= LeftContainer.AbsoluteSize.Y then
+            LeftContainer.ScrollBarThickness = 0
+            LeftContainer.ScrollingEnabled = false
+        else
+            LeftContainer.ScrollBarThickness = 2
+            LeftContainer.ScrollingEnabled = true
+        end
+    end
+    
+    local function updateRightScrolling()
+        local contentHeight = RightLayout.AbsoluteContentSize.Y
+        RightContainer.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 20)
+        
+        if contentHeight <= RightContainer.AbsoluteSize.Y then
+            RightContainer.ScrollBarThickness = 0
+            RightContainer.ScrollingEnabled = false
+        else
+            RightContainer.ScrollBarThickness = 2
+            RightContainer.ScrollingEnabled = true
+        end
+    end
+    
+    LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateLeftScrolling)
+    RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightScrolling)
+    
+    LeftContainer:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateLeftScrolling)
+    RightContainer:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateRightScrolling)
+    
+    task.spawn(function()
+        task.wait(0.2)
+        updateLeftScrolling()
+        updateRightScrolling()
+    end)
+else
+    local TabL = Instance.new("UIListLayout")
+    TabL.Name = "TabL"
+    TabL.Parent = Tab
+    TabL.SortOrder = Enum.SortOrder.LayoutOrder
+    TabL.Padding = UDim.new(0, 4)
+    
+    setupSmoothScrolling(Tab, TabL)
+end
                 setupSmoothScrolling(Tab, TabL)
             end
             
