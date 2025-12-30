@@ -443,7 +443,7 @@ TitleText.Name = "TitleText"
 TitleText.Parent = TitleBar
 TitleText.BackgroundTransparency = 1
 TitleText.Position = UDim2.new(0, 10, 0, 0)
-TitleText.Size = UDim2.new(0, 200, 1, 0)
+TitleText.Size = UDim2.new(0, 0, 1, 0) -- 宽度自适应
 TitleText.Font = Enum.Font.GothamBold
 TitleText.Text = "FengUI"
 TitleText.TextColor3 = config.AccentColor
@@ -451,22 +451,39 @@ TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.TextTransparency = 1
 
--- 添加标签容器
+-- 添加标签容器到标题文本右边
 local TagContainer = Instance.new("Frame")
 TagContainer.Name = "TagContainer"
 TagContainer.Parent = TitleBar
 TagContainer.BackgroundTransparency = 1
-TagContainer.Position = UDim2.new(1, -180, 0, 5)
-TagContainer.Size = UDim2.new(0, 170, 1, -10)
+TagContainer.Position = UDim2.new(0, 0, 0, 0) -- 初始位置，将在UpdateTagContainerPosition中更新
+TagContainer.Size = UDim2.new(0, 0, 1, 0) -- 宽度自适应
 TagContainer.ZIndex = 5
 
 local TagLayout = Instance.new("UIListLayout")
 TagLayout.Parent = TagContainer
 TagLayout.FillDirection = Enum.FillDirection.Horizontal
-TagLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+TagLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 TagLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 TagLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TagLayout.Padding = UDim.new(0, 5)
+
+-- 函数：更新标签容器位置
+local function UpdateTagContainerPosition()
+    local textSize = game:GetService("TextService"):GetTextSize(
+        TitleText.Text, 
+        TitleText.TextSize, 
+        TitleText.Font, 
+        Vector2.new(10000, TitleText.AbsoluteSize.Y)
+    )
+    
+    TagContainer.Position = UDim2.new(0, textSize.X + 20, 0, 0)
+end
+
+-- 监听标题文本变化
+TitleText:GetPropertyChangedSignal("Text"):Connect(UpdateTagContainerPosition)
+TitleText:GetPropertyChangedSignal("TextSize"):Connect(UpdateTagContainerPosition)
+TitleText:GetPropertyChangedSignal("Font"):Connect(UpdateTagContainerPosition)
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
@@ -834,7 +851,7 @@ function FengUI.new(FengUI, name, theme)
     window.tagCount = 0
     window.maxTags = 3
     
-    -- 添加标签方法
+    -- 添加标签方法（修改为不可点击）
     function window:AddTag(text, bgColor, textColor)
         if self.tagCount >= self.maxTags then
             warn("标签数量已达上限（最多3个）")
@@ -844,12 +861,12 @@ function FengUI.new(FengUI, name, theme)
         bgColor = bgColor or Color3.fromRGB(60, 60, 80)
         textColor = textColor or Color3.fromRGB(240, 245, 255)
         
-        local Tag = Instance.new("TextButton")
+        -- 使用TextLabel而不是TextButton，使其不可点击
+        local Tag = Instance.new("TextLabel")
         Tag.Name = "Tag_" .. text
         Tag.Parent = TagContainer
         Tag.BackgroundColor3 = bgColor
         Tag.BackgroundTransparency = 0.3
-        Tag.AutoButtonColor = false
         Tag.Text = text
         Tag.Font = Enum.Font.GothamSemibold
         Tag.TextColor3 = textColor
@@ -868,7 +885,7 @@ function FengUI.new(FengUI, name, theme)
         TagStroke.Thickness = 1
         TagStroke.Transparency = 0.5
         
-        -- 标签动画
+        -- 标签动画（保留动画效果但不添加交互）
         Tag.Size = UDim2.new(0, 0, 0, 0)
         Tag.BackgroundTransparency = 1
         Tag.TextTransparency = 1
@@ -879,33 +896,7 @@ function FengUI.new(FengUI, name, theme)
             TextTransparency = 0
         }):Play()
         
-        -- 标签点击效果
-        Tag.MouseEnter:Connect(function()
-            services.TweenService:Create(Tag, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.2,
-                Size = UDim2.new(0, 52, 0, 21)
-            }):Play()
-        end)
-        
-        Tag.MouseLeave:Connect(function()
-            services.TweenService:Create(Tag, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.3,
-                Size = UDim2.new(0, 50, 0, 20)
-            }):Play()
-        end)
-        
-        Tag.MouseButton1Click:Connect(function()
-            DigitalParticleExplosion(Tag)
-            services.TweenService:Create(Tag, TweenInfo.new(0.1), {
-                BackgroundTransparency = 0.1,
-                Size = UDim2.new(0, 48, 0, 18)
-            }):Play()
-            task.wait(0.1)
-            services.TweenService:Create(Tag, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.3,
-                Size = UDim2.new(0, 50, 0, 20)
-            }):Play()
-        end)
+        -- 移除所有鼠标交互事件
         
         -- 根据文本自动调整宽度
         local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
@@ -916,6 +907,9 @@ function FengUI.new(FengUI, name, theme)
         -- 存储标签引用
         table.insert(self.tags, Tag)
         self.tagCount = self.tagCount + 1
+        
+        -- 更新标签容器位置
+        UpdateTagContainerPosition()
         
         return {
             Instance = Tag,
@@ -952,6 +946,9 @@ function FengUI.new(FengUI, name, theme)
             for i, remainingTag in ipairs(self.tags) do
                 remainingTag.LayoutOrder = i
             end
+            
+            -- 更新标签容器位置
+            UpdateTagContainerPosition()
         end
     end
     
@@ -986,6 +983,9 @@ function FengUI.new(FengUI, name, theme)
                     TextColor3 = textColor
                 }):Play()
             end
+            
+            -- 更新标签容器位置
+            UpdateTagContainerPosition()
         end
     end
     
@@ -3870,6 +3870,29 @@ end
 
 function FengUI:ColorPicker(options)
     return self:CreateColorPicker(options)
+end
+
+function FengUI:PickColor(title, defaultColor)
+    defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
+    
+    local colorSelected = false
+    local selectedColor = defaultColor
+    
+    local picker = self:CreateColorPicker({
+        title = title or "选择颜色",
+        defaultColor = defaultColor,
+        callback = function(color)
+            selectedColor = color
+            colorSelected = true
+        end,
+        position = UDim2.new(0.5, 0, 0.4, 0)
+    })
+    
+    while not picker.Closed do
+        task.wait()
+    end
+    
+    return selectedColor
 end
 
 function FengUI:PickColor(title, defaultColor)
