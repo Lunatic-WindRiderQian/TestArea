@@ -1308,137 +1308,114 @@ function FengUI.new(FengUI, name, theme)
                 TabContainerFrame.BackgroundTransparency = 1
                 TabContainerFrame.Size = UDim2.new(1, 0, 1, 0)
                 
-                -- 修改双窗口创建部分，移除 AutomaticCanvasSize 设置
-local LeftContainer = Instance.new("ScrollingFrame")
-LeftContainer.Name = "LeftContainer"
-LeftContainer.Parent = TabContainerFrame
-LeftContainer.BackgroundTransparency = 1
-LeftContainer.Size = UDim2.new(0.48, -4, 1, -4)
-LeftContainer.Position = UDim2.new(0, 2, 0, 2)
-LeftContainer.ScrollBarThickness = 4
-LeftContainer.ScrollBarImageColor3 = config.SecondaryTextColor
-LeftContainer.ScrollBarImageTransparency = 0.7
-LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-LeftContainer.ScrollingEnabled = true
-LeftContainer.AutomaticCanvasSize = Enum.AutomaticSize.None -- 改为 None
-LeftContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-LeftContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-LeftContainer.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Right
-
-local RightContainer = Instance.new("ScrollingFrame")
-RightContainer.Name = "RightContainer"
-RightContainer.Parent = TabContainerFrame
-RightContainer.BackgroundTransparency = 1
-RightContainer.Size = UDim2.new(0.48, -4, 1, -4)
-RightContainer.Position = UDim2.new(0.52, 0, 0, 2)
-RightContainer.ScrollBarThickness = 4
-RightContainer.ScrollBarImageColor3 = config.SecondaryTextColor
-RightContainer.ScrollBarImageTransparency = 0.7
-RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-RightContainer.ScrollingEnabled = true
-RightContainer.AutomaticCanvasSize = Enum.AutomaticSize.None -- 改为 None
-RightContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-RightContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-RightContainer.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Right
-
--- 创建内容容器（用于自动调整大小）
-local LeftContent = Instance.new("Frame")
-LeftContent.Name = "LeftContent"
-LeftContent.Parent = LeftContainer
-LeftContent.BackgroundTransparency = 1
-LeftContent.Size = UDim2.new(1, 0, 0, 0)
-LeftContent.AutomaticSize = Enum.AutomaticSize.Y -- 内容容器使用自动调整
-
-local RightContent = Instance.new("Frame")
-RightContent.Name = "RightContent"
-RightContent.Parent = RightContainer
-RightContent.BackgroundTransparency = 1
-RightContent.Size = UDim2.new(1, 0, 0, 0)
-RightContent.AutomaticSize = Enum.AutomaticSize.Y -- 内容容器使用自动调整
-
-local LeftLayout = Instance.new("UIListLayout")
-LeftLayout.Name = "LeftLayout"
-LeftLayout.Parent = LeftContent
-LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-LeftLayout.Padding = UDim.new(0, 4)
-LeftLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-
-local RightLayout = Instance.new("UIListLayout")
-RightLayout.Name = "RightLayout"
-RightLayout.Parent = RightContent
-RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-RightLayout.Padding = UDim.new(0, 4)
-RightLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-
--- 设置自动调整大小
-local cleanupLeft = setupAutoSize(LeftContainer, LeftContent, LeftLayout)
-local cleanupRight = setupAutoSize(RightContainer, RightContent, RightLayout)
+                local LeftContainer = Instance.new("ScrollingFrame")
+                LeftContainer.Name = "LeftContainer"
+                LeftContainer.Parent = TabContainerFrame
+                LeftContainer.BackgroundTransparency = 1
+                LeftContainer.Size = UDim2.new(0.48, -4, 1, -4)
+                LeftContainer.Position = UDim2.new(0, 2, 0, 2)
+                LeftContainer.ScrollBarThickness = 4
+                LeftContainer.ScrollBarImageColor3 = config.SecondaryTextColor
+                LeftContainer.ScrollBarImageTransparency = 0.7
+                LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+                LeftContainer.ScrollBarImageTransparency = 0.5
+                LeftContainer.ScrollingEnabled = true
+                LeftContainer.AutomaticCanvasSize = Enum.AutomaticSize.None  -- 修复：禁用自动调整大小
+                LeftContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+                LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+                LeftContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
                 
-                -- 修改 setupAutoSize 函数，移除 AutomaticCanvasSize 设置
-local function setupAutoSize(scrollingFrame, contentFrame, layout)
-    local function updateCanvasSize()
-        local contentHeight = layout.AbsoluteContentSize.Y
-        local containerHeight = scrollingFrame.AbsoluteSize.Y
-        
-        -- 更新内容容器的大小
-        contentFrame.Size = UDim2.new(1, 0, 0, math.max(contentHeight, 10)) -- 最小高度
-        
-        -- 设置画布大小，确保可以滚动到底部
-        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
-        
-        -- 检查是否需要滚动
-        local needsScroll = contentHeight > containerHeight
-        
-        -- 启用或禁用滚动
-        scrollingFrame.ScrollingEnabled = needsScroll
-        
-        if needsScroll then
-            scrollingFrame.ScrollBarThickness = 4
-            scrollingFrame.ScrollBarImageTransparency = 0.5
-        else
-            scrollingFrame.ScrollBarThickness = 0
-            scrollingFrame.ScrollBarImageTransparency = 1
-            -- 重置到顶部
-            scrollingFrame.CanvasPosition = Vector2.new(0, 0)
-        end
-    end
-    
-    -- 监听布局大小变化
-    local contentConnection = layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
-    
-    -- 监听容器大小变化
-    local sizeConnection = scrollingFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateCanvasSize)
-    
-    -- 初始更新
-    task.spawn(function()
-        task.wait(0.1) -- 等待布局稳定
-        updateCanvasSize()
-        
-        -- 再次检查，确保正确
-        task.wait(0.1)
-        updateCanvasSize()
-    end)
-    
-    -- 返回断开连接的函数
-    return function()
-        if contentConnection then
-            contentConnection:Disconnect()
-        end
-        if sizeConnection then
-            sizeConnection:Disconnect()
-        end
-    end
-end
+                local RightContainer = Instance.new("ScrollingFrame")
+                RightContainer.Name = "RightContainer"
+                RightContainer.Parent = TabContainerFrame
+                RightContainer.BackgroundTransparency = 1
+                RightContainer.Size = UDim2.new(0.48, -4, 1, -4)
+                RightContainer.Position = UDim2.new(0.52, 0, 0, 2)
+                RightContainer.ScrollBarThickness = 4
+                RightContainer.ScrollBarImageColor3 = config.SecondaryTextColor
+                RightContainer.ScrollBarImageTransparency = 0.7
+                RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+                RightContainer.ScrollBarImageTransparency = 0.5
+                RightContainer.ScrollingEnabled = true
+                RightContainer.AutomaticCanvasSize = Enum.AutomaticSize.None  -- 修复：禁用自动调整大小
+                RightContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+                RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+                RightContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
+                
+                -- 创建内容容器（用于自动调整大小）
+                local LeftContent = Instance.new("Frame")
+                LeftContent.Name = "LeftContent"
+                LeftContent.Parent = LeftContainer
+                LeftContent.BackgroundTransparency = 1
+                LeftContent.Size = UDim2.new(1, 0, 0, 0)
+                
+                local RightContent = Instance.new("Frame")
+                RightContent.Name = "RightContent"
+                RightContent.Parent = RightContainer
+                RightContent.BackgroundTransparency = 1
+                RightContent.Size = UDim2.new(1, 0, 0, 0)
+                
+                local LeftLayout = Instance.new("UIListLayout")
+                LeftLayout.Name = "LeftLayout"
+                LeftLayout.Parent = LeftContent
+                LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                LeftLayout.Padding = UDim.new(0, 4)
+                
+                local RightLayout = Instance.new("UIListLayout")
+                RightLayout.Name = "RightLayout"
+                RightLayout.Parent = RightContent
+                RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                RightLayout.Padding = UDim.new(0, 4)
+                
+                -- 改进的自动调整大小函数 - 修复滚动到底部的问题
+                local function setupAutoSize(scrollingFrame, contentFrame, layout)
+                    local function updateCanvasSize()
+                        local contentHeight = layout.AbsoluteContentSize.Y
+                        local containerHeight = scrollingFrame.AbsoluteSize.Y
+                        
+                        -- 确保内容容器至少有容器的高度
+                        contentFrame.Size = UDim2.new(1, 0, 0, math.max(contentHeight, containerHeight))
+                        
+                        -- 修复：当内容高度大于容器高度时，正确设置画布大小
+                        if contentHeight > containerHeight then
+                            scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
+                        else
+                            -- 当内容较少时，确保可以滚动到底部
+                            scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, containerHeight)
+                        end
+                        
+                        -- 检查是否需要滚动条
+                        local needsScroll = contentHeight > containerHeight
+                        
+                        -- 当不需要滚动时，将滚动位置重置为0
+                        if not needsScroll then
+                            scrollingFrame.CanvasPosition = Vector2.new(0, 0)
+                        end
+                    end
+                    
+                    -- 监听布局大小变化
+                    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
+                    
+                    -- 监听容器大小变化
+                    scrollingFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateCanvasSize)
+                    
+                    -- 初始更新
+                    task.spawn(function()
+                        task.wait(0.1)
+                        updateCanvasSize()
+                    end)
+                    
+                    return updateCanvasSize
+                end
+                
                 -- 设置左右容器的自动调整大小
                 local updateLeftSize = setupAutoSize(LeftContainer, LeftContent, LeftLayout)
                 local updateRightSize = setupAutoSize(RightContainer, RightContent, RightLayout)
                 
-                -- 防过度滚动功能
+                -- 防过度滚动功能 - 修复滚动限制
                 local function setupAntiOverscroll(scrollingFrame, contentFrame)
                     scrollingFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-                        local contentHeight = contentFrame.AbsoluteSize.Y
+                        local contentHeight = layout.AbsoluteContentSize.Y
                         local containerHeight = scrollingFrame.AbsoluteSize.Y
                         local maxScroll = math.max(0, contentHeight - containerHeight)
                         local currentScroll = scrollingFrame.CanvasPosition.Y
