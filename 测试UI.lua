@@ -451,13 +451,12 @@ TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.TextTransparency = 1
 
--- 添加标签容器到标题文本右边
 local TagContainer = Instance.new("Frame")
 TagContainer.Name = "TagContainer"
 TagContainer.Parent = TitleBar
 TagContainer.BackgroundTransparency = 1
-TagContainer.Position = UDim2.new(0, 0, 0, 0) -- 初始位置，将在UpdateTagContainerPosition中更新
-TagContainer.Size = UDim2.new(0, 0, 1, 0) -- 宽度自适应
+TagContainer.Position = UDim2.new(0, 0, 0, 8) -- 初始位置，稍后会更新
+TagContainer.Size = UDim2.new(0, 0, 1, -16) -- 宽度自适应，高度比标题栏稍小
 TagContainer.ZIndex = 5
 
 local TagLayout = Instance.new("UIListLayout")
@@ -470,20 +469,25 @@ TagLayout.Padding = UDim.new(0, 5)
 
 -- 函数：更新标签容器位置
 local function UpdateTagContainerPosition()
+    -- 使用固定文本大小计算文本宽度，不受动画影响
     local textSize = game:GetService("TextService"):GetTextSize(
         TitleText.Text, 
-        TitleText.TextSize, 
+        16, -- 固定大小，不使用动画中的变化
         TitleText.Font, 
         Vector2.new(10000, TitleText.AbsoluteSize.Y)
     )
     
-    TagContainer.Position = UDim2.new(0, textSize.X + 20, 0, 0)
+    -- 设置标签容器的位置（在标题文本右边，加10像素间距）
+    TagContainer.Position = UDim2.new(0, textSize.X + 20, 0, 8)
 end
 
--- 监听标题文本变化
-TitleText:GetPropertyChangedSignal("Text"):Connect(UpdateTagContainerPosition)
-TitleText:GetPropertyChangedSignal("TextSize"):Connect(UpdateTagContainerPosition)
-TitleText:GetPropertyChangedSignal("Font"):Connect(UpdateTagContainerPosition)
+-- 只监听标题文本内容变化，不监听大小和字体变化
+TitleText:GetPropertyChangedSignal("Text"):Connect(function()
+    UpdateTagContainerPosition()
+end)
+
+-- 初始化标签容器位置
+UpdateTagContainerPosition()
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
@@ -851,114 +855,83 @@ function FengUI.new(FengUI, name, theme)
     window.tagCount = 0
     window.maxTags = 3
     
-    -- 添加标签方法（修改为不可点击）
-    -- 在 window:AddTag 函数中修改如下部分：
-
--- 添加标签方法（修改为不可点击且无动画效果）
-function window:AddTag(text, bgColor, textColor)
-    if self.tagCount >= self.maxTags then
-        return nil
-    end
-    
-    bgColor = bgColor or Color3.fromRGB(60, 60, 80)
-    textColor = textColor or Color3.fromRGB(240, 245, 255)
-    
-    -- 使用TextLabel而不是TextButton，使其不可点击
-    local Tag = Instance.new("TextLabel")
-    Tag.Name = "Tag_" .. text
-    Tag.Parent = TagContainer
-    Tag.BackgroundColor3 = bgColor
-    Tag.BackgroundTransparency = 0.3
-    Tag.Text = text
-    Tag.Font = Enum.Font.GothamSemibold
-    Tag.TextColor3 = textColor
-    Tag.TextSize = 11
-    Tag.TextWrapped = true
-    Tag.Size = UDim2.new(0, 50, 0, 20)
-    Tag.ZIndex = 6
-    
-    local TagCorner = Instance.new("UICorner")
-    TagCorner.CornerRadius = UDim.new(0, 6)
-    TagCorner.Parent = Tag
-    
-    local TagStroke = Instance.new("UIStroke")
-    TagStroke.Parent = Tag
-    TagStroke.Color = bgColor
-    TagStroke.Thickness = 1
-    TagStroke.Transparency = 0.5
-    
-    -- 根据文本自动调整宽度
-    local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
-    Tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
-    
-    -- 存储标签引用
-    table.insert(self.tags, Tag)
-    self.tagCount = self.tagCount + 1
-    
-    -- 更新标签容器位置
-    UpdateTagContainerPosition()
-    
-    return {
-        Instance = Tag,
-        Text = Tag.Text,
-        Color = Tag.BackgroundColor3,
-        TextColor = Tag.TextColor3,
-        Destroy = function()
-            self:RemoveTag(#self.tags)
-        end,
-        Update = function(newText, newBgColor, newTextColor)
-            self:UpdateTag(#self.tags, newText, newBgColor, newTextColor)
+    function window:AddTag(text, bgColor, textColor)
+        if self.tagCount >= self.maxTags then
+            warn("标签数量已达上限（最多3个）")
+            return nil
         end
-    }
-end
-
--- 移除标签方法（简化版本，无动画）
-function window:RemoveTag(index)
-    if index < 1 or index > #self.tags then return end
-    
-    local tag = self.tags[index]
-    if tag and tag.Parent then
-        tag:Destroy()
-        table.remove(self.tags, index)
-        self.tagCount = self.tagCount - 1
         
-        -- 重新排列剩余标签
-        for i, remainingTag in ipairs(self.tags) do
-            remainingTag.LayoutOrder = i
-        end
+        bgColor = bgColor or Color3.fromRGB(60, 60, 80)
+        textColor = textColor or Color3.fromRGB(240, 245, 255)
+        
+        -- 使用TextLabel而不是TextButton，使其不可点击
+        local Tag = Instance.new("TextLabel")
+        Tag.Name = "Tag_" .. text
+        Tag.Parent = TagContainer
+        Tag.BackgroundColor3 = bgColor
+        Tag.BackgroundTransparency = 0.3
+        Tag.Text = text
+        Tag.Font = Enum.Font.GothamSemibold
+        Tag.TextColor3 = textColor
+        Tag.TextSize = 11
+        Tag.TextWrapped = true
+        Tag.Size = UDim2.new(0, 50, 0, 20)
+        Tag.ZIndex = 6
+        
+        local TagCorner = Instance.new("UICorner")
+        TagCorner.CornerRadius = UDim.new(0, 6)
+        TagCorner.Parent = Tag
+        
+        local TagStroke = Instance.new("UIStroke")
+        TagStroke.Parent = Tag
+        TagStroke.Color = bgColor
+        TagStroke.Thickness = 1
+        TagStroke.Transparency = 0.5
+        
+        -- 根据文本自动调整宽度
+        local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
+        Tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
+        
+        -- 存储标签引用
+        table.insert(self.tags, Tag)
+        self.tagCount = self.tagCount + 1
         
         -- 更新标签容器位置
         UpdateTagContainerPosition()
-    end
-end
-
--- 更新标签方法（简化版本，无动画）
-function window:UpdateTag(index, text, bgColor, textColor)
-    if index < 1 or index > #self.tags then return end
-    
-    local tag = self.tags[index]
-    if tag and tag.Parent then
-        if text then
-            tag.Text = text
-            local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
-            tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
-        end
         
-        if bgColor then
-            tag.BackgroundColor3 = bgColor
-            if tag:FindFirstChild("UIStroke") then
-                tag.UIStroke.Color = bgColor
+        return {
+            Instance = Tag,
+            Text = Tag.Text,
+            Color = Tag.BackgroundColor3,
+            TextColor = Tag.TextColor3,
+            Destroy = function()
+                self:RemoveTag(#self.tags)
+            end,
+            Update = function(newText, newBgColor, newTextColor)
+                self:UpdateTag(#self.tags, newText, newBgColor, newTextColor)
             end
-        end
-        
-        if textColor then
-            tag.TextColor3 = textColor
-        end
-        
-        -- 更新标签容器位置
-        UpdateTagContainerPosition()
+        }
     end
-end
+    
+    -- 移除标签方法
+    function window:RemoveTag(index)
+        if index < 1 or index > #self.tags then return end
+        
+        local tag = self.tags[index]
+        if tag and tag.Parent then
+            tag:Destroy()
+            table.remove(self.tags, index)
+            self.tagCount = self.tagCount - 1
+            
+            -- 重新排列剩余标签
+            for i, remainingTag in ipairs(self.tags) do
+                remainingTag.LayoutOrder = i
+            end
+            
+            -- 更新标签容器位置
+            UpdateTagContainerPosition()
+        end
+    end
     
     -- 更新标签方法
     function window:UpdateTag(index, text, bgColor, textColor)
@@ -969,27 +942,18 @@ end
             if text then
                 tag.Text = text
                 local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
-                services.TweenService:Create(tag, TweenInfo.new(0.2), {
-                    Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
-                }):Play()
+                tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
             end
             
             if bgColor then
-                services.TweenService:Create(tag, TweenInfo.new(0.3), {
-                    BackgroundColor3 = bgColor
-                }):Play()
-                
+                tag.BackgroundColor3 = bgColor
                 if tag:FindFirstChild("UIStroke") then
-                    services.TweenService:Create(tag.UIStroke, TweenInfo.new(0.3), {
-                        Color = bgColor
-                    }):Play()
+                    tag.UIStroke.Color = bgColor
                 end
             end
             
             if textColor then
-                services.TweenService:Create(tag, TweenInfo.new(0.3), {
-                    TextColor3 = textColor
-                }):Play()
+                tag.TextColor3 = textColor
             end
             
             -- 更新标签容器位置
