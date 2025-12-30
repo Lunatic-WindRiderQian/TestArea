@@ -74,6 +74,10 @@ local config = {
     ElementColor = Color3.fromRGB(30, 30, 50),
     ElementTransparency = 0.2,
     GlassEffect = Color3.fromRGB(255, 255, 255),
+    
+    -- 新增：脚本标签颜色
+    ScriptTagColor = Color3.fromRGB(255, 60, 60),
+    ScriptTagTextColor = Color3.fromRGB(240, 245, 255),
 }
 
 -- 保留mainUI的粒子爆炸效果
@@ -318,7 +322,8 @@ local function create3DFlipAnimation(object, duration)
 end
 
 local function setupSmoothScrolling(scrollingFrame, layout)
-    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    -- 修复滚动到底的问题
+    local function updateCanvasSize()
         scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
         
         if layout.AbsoluteContentSize.Y <= scrollingFrame.AbsoluteSize.Y then
@@ -326,9 +331,18 @@ local function setupSmoothScrolling(scrollingFrame, layout)
         else
             scrollingFrame.ScrollingEnabled = true
         end
-    end)
+    end
+    
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
+    scrollingFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateCanvasSize)
     
     scrollingFrame.ElasticBehavior = Enum.ElasticBehavior.Never
+    
+    -- 初始更新
+    task.spawn(function()
+        task.wait(0.1)
+        updateCanvasSize()
+    end)
 end
 
 -- 切换标签页功能
@@ -451,6 +465,36 @@ TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.TextTransparency = 1
 
+-- 新增：脚本标签（类似WindUI）
+local ScriptTag = Instance.new("TextLabel")
+ScriptTag.Name = "ScriptTag"
+ScriptTag.Parent = TitleBar
+ScriptTag.BackgroundColor3 = config.ScriptTagColor
+ScriptTag.BackgroundTransparency = 0.2
+ScriptTag.BorderSizePixel = 0
+ScriptTag.Position = UDim2.new(0, 150, 0.15, 0)
+ScriptTag.Size = UDim2.new(0, 80, 0, 24)
+ScriptTag.Font = Enum.Font.GothamBold
+ScriptTag.Text = "脚本标签"
+ScriptTag.TextColor3 = config.ScriptTagTextColor
+ScriptTag.TextSize = 12
+ScriptTag.TextXAlignment = Enum.TextXAlignment.Center
+ScriptTag.Visible = false
+ScriptTag.TextTransparency = 1
+
+local ScriptTagCorner = Instance.new("UICorner")
+ScriptTagCorner.CornerRadius = UDim.new(0, 6)
+ScriptTagCorner.Parent = ScriptTag
+
+local ScriptTagGlow = Instance.new("UIStroke")
+ScriptTagGlow.Parent = ScriptTag
+ScriptTagGlow.Color = config.AccentColor
+ScriptTagGlow.Thickness = 1
+ScriptTagGlow.Transparency = 0.8
+
+startNeonFlowEffect(ScriptTagGlow, "Color", 0.01)
+createPulseGlow(ScriptTagGlow)
+
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = TitleBar
@@ -515,6 +559,11 @@ CloseButton.MouseButton1Click:Connect(function()
     
     services.TweenService:Create(TitleText, TweenInfo.new(0.4), {
         TextTransparency = 1
+    }):Play()
+    
+    services.TweenService:Create(ScriptTag, TweenInfo.new(0.4), {
+        TextTransparency = 1,
+        BackgroundTransparency = 1
     }):Play()
     
     services.TweenService:Create(CloseButton, TweenInfo.new(0.4), {
@@ -695,6 +744,8 @@ local function playEntranceAnimation()
     
     TitleBar.BackgroundTransparency = 1
     TitleText.TextTransparency = 1
+    ScriptTag.TextTransparency = 1
+    ScriptTag.BackgroundTransparency = 1
     CloseButton.TextTransparency = 1
     MainSideContainer.BackgroundTransparency = 1
     CardsContainer.BackgroundTransparency = 1
@@ -727,6 +778,13 @@ local function playEntranceAnimation()
     services.TweenService:Create(TitleText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         TextTransparency = 0
     }):Play()
+    
+    if ScriptTag.Visible then
+        services.TweenService:Create(ScriptTag, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            TextTransparency = 0,
+            BackgroundTransparency = 0.2
+        }):Play()
+    end
     
     services.TweenService:Create(CloseButton, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         TextTransparency = 0
@@ -811,6 +869,41 @@ function FengUI.new(FengUI, name, theme)
     TitleText.Text = scriptName
     
     local window = {}
+    
+    -- 新增：设置脚本标签函数
+    function window.SetScriptTag(window, tagText, tagColor, textColor)
+        if tagText then
+            ScriptTag.Text = tagText
+            
+            -- 动态调整标签大小
+            local textService = game:GetService("TextService")
+            local textSize = textService:GetTextSize(tagText, 12, Enum.Font.GothamBold, Vector2.new(200, 24))
+            ScriptTag.Size = UDim2.new(0, math.max(80, textSize.X + 20), 0, 24)
+            
+            -- 更新标签位置（在标题右侧）
+            local titleTextSize = textService:GetTextSize(TitleText.Text, 16, Enum.Font.GothamBold, Vector2.new(200, 35))
+            ScriptTag.Position = UDim2.new(0, titleTextSize.X + 20, 0.15, 0)
+            
+            ScriptTag.Visible = true
+            ScriptTag.TextTransparency = 0
+            ScriptTag.BackgroundTransparency = 0.2
+        end
+        
+        if tagColor then
+            ScriptTag.BackgroundColor3 = tagColor
+        end
+        
+        if textColor then
+            ScriptTag.TextColor3 = textColor
+        end
+        
+        return ScriptTag
+    end
+    
+    -- 新增：移除脚本标签函数
+    function window.RemoveScriptTag(window)
+        ScriptTag.Visible = false
+    end
     
     -- 卡片创建函数（mainUI风格）
     function window.card(window, name, description, icon)
@@ -1119,7 +1212,9 @@ function FengUI.new(FengUI, name, theme)
                 LeftContainer.BackgroundTransparency = 1
                 LeftContainer.Size = UDim2.new(0.48, -2, 1, 0)
                 LeftContainer.Position = UDim2.new(0, 2, 0, 0)
-                LeftContainer.ScrollBarThickness = 0
+                LeftContainer.ScrollBarThickness = 3  -- 修复：添加滚动条厚度
+                LeftContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+                LeftContainer.ScrollBarImageTransparency = 0.5
                 LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
                 LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
                 LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
@@ -1136,7 +1231,9 @@ function FengUI.new(FengUI, name, theme)
                 RightContainer.BackgroundTransparency = 1
                 RightContainer.Size = UDim2.new(0.50, -2, 1, 0)
                 RightContainer.Position = UDim2.new(0.48, 0, 0, 0)
-                RightContainer.ScrollBarThickness = 0
+                RightContainer.ScrollBarThickness = 3  -- 修复：添加滚动条厚度
+                RightContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+                RightContainer.ScrollBarImageTransparency = 0.5
                 RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
                 RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
                 RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
@@ -1147,18 +1244,37 @@ function FengUI.new(FengUI, name, theme)
                 RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 RightLayout.Padding = UDim.new(0, 4)
                 
+                -- 修复：改进双窗口滚动到底的处理
                 local function updateLeftScrolling()
-                    LeftContainer.CanvasSize = UDim2.new(0, 0, 0, LeftLayout.AbsoluteContentSize.Y + 10)
-                    LeftContainer.ScrollingEnabled = LeftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y
+                    local contentHeight = LeftLayout.AbsoluteContentSize.Y
+                    local containerHeight = LeftContainer.AbsoluteSize.Y
+                    LeftContainer.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 10)
+                    LeftContainer.ScrollingEnabled = contentHeight > containerHeight
+                    
+                    -- 如果当前滚动位置超过内容高度，则重置到底部
+                    if LeftContainer.CanvasPosition.Y + containerHeight > contentHeight + 10 then
+                        LeftContainer.CanvasPosition = Vector2.new(0, contentHeight - containerHeight + 10)
+                    end
                 end
                 
                 local function updateRightScrolling()
-                    RightContainer.CanvasSize = UDim2.new(0, 0, 0, RightLayout.AbsoluteContentSize.Y + 10)
-                    RightContainer.ScrollingEnabled = RightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y
+                    local contentHeight = RightLayout.AbsoluteContentSize.Y
+                    local containerHeight = RightContainer.AbsoluteSize.Y
+                    RightContainer.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 10)
+                    RightContainer.ScrollingEnabled = contentHeight > containerHeight
+                    
+                    -- 如果当前滚动位置超过内容高度，则重置到底部
+                    if RightContainer.CanvasPosition.Y + containerHeight > contentHeight + 10 then
+                        RightContainer.CanvasPosition = Vector2.new(0, contentHeight - containerHeight + 10)
+                    end
                 end
                 
                 LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateLeftScrolling)
                 RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightScrolling)
+                
+                -- 修复：监听容器大小变化
+                LeftContainer:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateLeftScrolling)
+                RightContainer:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateRightScrolling)
                 
                 task.spawn(function()
                     task.wait(0.1)
@@ -2015,7 +2131,7 @@ function FengUI.new(FengUI, name, theme)
                     
                     local PopupStroke = Instance.new("UIStroke")
                     PopupStroke.Parent = ColorPickerPopup
-                    PopupStroke.Color = Color3.fromRGB(255, 60, 60)
+                    PopupStroke.Color = config.AccentColor
                     PopupStroke.Thickness = 1.5
                     PopupStroke.Transparency = 0.2
                     
@@ -2029,7 +2145,7 @@ function FengUI.new(FengUI, name, theme)
                     PopupTitle.Size = UDim2.new(1, -20, 0, 24)
                     PopupTitle.Font = Enum.Font.GothamBold
                     PopupTitle.Text = text
-                    PopupTitle.TextColor3 = Color3.fromRGB(255, 60, 60)
+                    PopupTitle.TextColor3 = config.AccentColor
                     PopupTitle.TextSize = 16
                     PopupTitle.TextXAlignment = Enum.TextXAlignment.Center
                     PopupTitle.ZIndex = 1001
@@ -2221,7 +2337,7 @@ function FengUI.new(FengUI, name, theme)
                     local ConfirmBtn = Instance.new("TextButton")
                     ConfirmBtn.Name = "ConfirmBtn"
                     ConfirmBtn.Parent = ButtonContainer
-                    ConfirmBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+                    ConfirmBtn.BackgroundColor3 = config.AccentColor
                     ConfirmBtn.BackgroundTransparency = 0.1
                     ConfirmBtn.BorderSizePixel = 0
                     ConfirmBtn.Position = UDim2.new(0, 0, 0, 0)
@@ -3290,7 +3406,7 @@ function FengUI:CreateColorPicker(options)
     HueDragHolder.BackgroundTransparency = 1
     HueDragHolder.Parent = HueSlider
     HueDragHolder.ZIndex = 1002
-    
+                    
     local HueDrag = Instance.new("ImageLabel")
     HueDrag.Name = "HueDrag"
     HueDrag.Size = UDim2.fromOffset(14, 14)
@@ -3735,7 +3851,7 @@ function FengUI:BindColorPicker(button, options)
             end,
             position = UDim2.new(0.5, 0, 0.5, 0)
         })
-    end)
+    })
     
     return {
         GetColor = function()
