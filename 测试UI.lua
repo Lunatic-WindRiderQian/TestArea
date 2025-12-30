@@ -852,7 +852,10 @@ function FengUI.new(FengUI, name, theme)
     window.maxTags = 3
     
     -- 添加标签方法（修改为不可点击）
-    function window:AddTag(text, bgColor, textColor)
+    -- 在 window:AddTag 函数中修改如下部分：
+
+-- 添加标签方法（修改为不可点击且无动画效果）
+function window:AddTag(text, bgColor, textColor)
     if self.tagCount >= self.maxTags then
         return nil
     end
@@ -884,7 +887,6 @@ function FengUI.new(FengUI, name, theme)
     TagStroke.Thickness = 1
     TagStroke.Transparency = 0.5
     
-    -- 移除了所有动画效果，直接显示
     -- 根据文本自动调整宽度
     local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
     Tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
