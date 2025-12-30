@@ -3972,7 +3972,7 @@ function FengUI:BindColorPicker(button, options)
             end,
             position = UDim2.new(0.5, 0, 0.5, 0)
         })
-    })
+    end)
     
     return {
         GetColor = function()
