@@ -318,6 +318,12 @@ local function create3DFlipAnimation(object, duration)
 end
 
 local function setupSmoothScrolling(scrollingFrame, layout)
+    -- 修复滚动到底的问题
+    scrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    scrollingFrame.ScrollBarThickness = 2
+    scrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    scrollingFrame.ScrollBarImageTransparency = 0.5
+    
     layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
         
@@ -438,12 +444,38 @@ local TitleBarCorner = Instance.new("UICorner")
 TitleBarCorner.CornerRadius = UDim.new(0, 10)
 TitleBarCorner.Parent = TitleBar
 
+-- 在标题文本前添加标签
+local TitleContainer = Instance.new("Frame")
+TitleContainer.Name = "TitleContainer"
+TitleContainer.Parent = TitleBar
+TitleContainer.BackgroundTransparency = 1
+TitleContainer.Position = UDim2.new(0, 10, 0, 0)
+TitleContainer.Size = UDim2.new(0, 200, 1, 0)
+
+local TitleTag = Instance.new("TextLabel")
+TitleTag.Name = "TitleTag"
+TitleTag.Parent = TitleContainer
+TitleTag.BackgroundColor3 = config.AccentColor
+TitleTag.BackgroundTransparency = 0.7
+TitleTag.BorderSizePixel = 0
+TitleTag.Position = UDim2.new(0, 0, 0, 7)
+TitleTag.Size = UDim2.new(0, 50, 0, 20)
+TitleTag.Font = Enum.Font.GothamBold
+TitleTag.Text = "测试版"
+TitleTag.TextColor3 = config.TextColor
+TitleTag.TextSize = 10
+TitleTag.TextTransparency = 1
+
+local TitleTagCorner = Instance.new("UICorner")
+TitleTagCorner.CornerRadius = UDim.new(0, 4)
+TitleTagCorner.Parent = TitleTag
+
 local TitleText = Instance.new("TextLabel")
 TitleText.Name = "TitleText"
-TitleText.Parent = TitleBar
+TitleText.Parent = TitleContainer
 TitleText.BackgroundTransparency = 1
-TitleText.Position = UDim2.new(0, 10, 0, 0)
-TitleText.Size = UDim2.new(0, 200, 1, 0)
+TitleText.Position = UDim2.new(0, 55, 0, 0)
+TitleText.Size = UDim2.new(0, 145, 1, 0)
 TitleText.Font = Enum.Font.GothamBold
 TitleText.Text = "FengUI"
 TitleText.TextColor3 = config.AccentColor
@@ -514,6 +546,10 @@ CloseButton.MouseButton1Click:Connect(function()
     }):Play()
     
     services.TweenService:Create(TitleText, TweenInfo.new(0.4), {
+        TextTransparency = 1
+    }):Play()
+    
+    services.TweenService:Create(TitleTag, TweenInfo.new(0.4), {
         TextTransparency = 1
     }):Play()
     
@@ -695,6 +731,7 @@ local function playEntranceAnimation()
     
     TitleBar.BackgroundTransparency = 1
     TitleText.TextTransparency = 1
+    TitleTag.TextTransparency = 1
     CloseButton.TextTransparency = 1
     MainSideContainer.BackgroundTransparency = 1
     CardsContainer.BackgroundTransparency = 1
@@ -725,6 +762,10 @@ local function playEntranceAnimation()
     }):Play()
     
     services.TweenService:Create(TitleText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        TextTransparency = 0
+    }):Play()
+    
+    services.TweenService:Create(TitleTag, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         TextTransparency = 0
     }):Play()
     
@@ -1098,8 +1139,8 @@ function FengUI.new(FengUI, name, theme)
             Tab.Active = true
             Tab.BackgroundTransparency = 1
             Tab.Size = UDim2.new(1, 0, 1, 0)
-            Tab.ScrollBarThickness = 2
-            Tab.ScrollBarImageTransparency = 0.5
+            Tab.ScrollBarThickness = 0  -- 移除滚动条
+            Tab.ScrollBarImageTransparency = 1
             Tab.Visible = false
             Tab.ElasticBehavior = Enum.ElasticBehavior.Never
             Tab.ScrollingDirection = Enum.ScrollingDirection.Y
@@ -1119,7 +1160,7 @@ function FengUI.new(FengUI, name, theme)
                 LeftContainer.BackgroundTransparency = 1
                 LeftContainer.Size = UDim2.new(0.48, -2, 1, 0)
                 LeftContainer.Position = UDim2.new(0, 2, 0, 0)
-                LeftContainer.ScrollBarThickness = 0
+                LeftContainer.ScrollBarThickness = 0  -- 移除滚动条
                 LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
                 LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
                 LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
@@ -1136,7 +1177,7 @@ function FengUI.new(FengUI, name, theme)
                 RightContainer.BackgroundTransparency = 1
                 RightContainer.Size = UDim2.new(0.50, -2, 1, 0)
                 RightContainer.Position = UDim2.new(0.48, 0, 0, 0)
-                RightContainer.ScrollBarThickness = 0
+                RightContainer.ScrollBarThickness = 0  -- 移除滚动条
                 RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
                 RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
                 RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
@@ -1147,23 +1188,30 @@ function FengUI.new(FengUI, name, theme)
                 RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 RightLayout.Padding = UDim.new(0, 4)
                 
-                local function updateLeftScrolling()
-                    LeftContainer.CanvasSize = UDim2.new(0, 0, 0, LeftLayout.AbsoluteContentSize.Y + 10)
-                    LeftContainer.ScrollingEnabled = LeftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y
+                -- 修复双窗口滚动问题
+                local function updateScrollingFrame(scrollingFrame, layout)
+                    if layout.AbsoluteContentSize.Y > scrollingFrame.AbsoluteSize.Y then
+                        scrollingFrame.ScrollingEnabled = true
+                        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)  -- 增加额外空间确保能滚到底
+                    else
+                        scrollingFrame.ScrollingEnabled = false
+                        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+                    end
                 end
                 
-                local function updateRightScrolling()
-                    RightContainer.CanvasSize = UDim2.new(0, 0, 0, RightLayout.AbsoluteContentSize.Y + 10)
-                    RightContainer.ScrollingEnabled = RightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y
-                end
+                LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    updateScrollingFrame(LeftContainer, LeftLayout)
+                end)
                 
-                LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateLeftScrolling)
-                RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightScrolling)
+                RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    updateScrollingFrame(RightContainer, RightLayout)
+                end)
                 
+                -- 初始更新
                 task.spawn(function()
                     task.wait(0.1)
-                    updateLeftScrolling()
-                    updateRightScrolling()
+                    updateScrollingFrame(LeftContainer, LeftLayout)
+                    updateScrollingFrame(RightContainer, RightLayout)
                 end)
             else
                 local TabL = Instance.new("UIListLayout")
@@ -3735,7 +3783,7 @@ function FengUI:BindColorPicker(button, options)
             end,
             position = UDim2.new(0.5, 0, 0.5, 0)
         })
-    end)
+    })
     
     return {
         GetColor = function()
