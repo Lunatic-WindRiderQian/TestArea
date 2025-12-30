@@ -1300,107 +1300,137 @@ function FengUI.new(FengUI, name, theme)
             Tab.ScrollingDirection = Enum.ScrollingDirection.Y
             Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
             
-            -- 双窗口布局
+            -- 双窗口布局 - 修复后的版本
             if windowCount == 2 then
-                local TabContainer = Instance.new("Frame")
-                TabContainer.Name = "TabContainer"
-                TabContainer.Parent = Tab
-                TabContainer.BackgroundTransparency = 1
-                TabContainer.Size = UDim2.new(1, 0, 1, 0)
+                local TabContainerFrame = Instance.new("Frame")
+                TabContainerFrame.Name = "TabContainer"
+                TabContainerFrame.Parent = Tab
+                TabContainerFrame.BackgroundTransparency = 1
+                TabContainerFrame.Size = UDim2.new(1, 0, 1, 0)
                 
                 local LeftContainer = Instance.new("ScrollingFrame")
                 LeftContainer.Name = "LeftContainer"
-                LeftContainer.Parent = TabContainer
+                LeftContainer.Parent = TabContainerFrame
                 LeftContainer.BackgroundTransparency = 1
-                LeftContainer.Size = UDim2.new(0.48, -2, 1, 0)
-                LeftContainer.Position = UDim2.new(0, 2, 0, 0)
-                LeftContainer.ScrollBarThickness = 0
-                LeftContainer.ScrollBarImageTransparency = 1
-                LeftContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
-                LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+                LeftContainer.Size = UDim2.new(0.48, -4, 1, -4)  -- 稍微调整宽度，留出间距
+                LeftContainer.Position = UDim2.new(0, 2, 0, 2)
+                LeftContainer.ScrollBarThickness = 4
+                LeftContainer.ScrollBarImageColor3 = config.SecondaryTextColor
+                LeftContainer.ScrollBarImageTransparency = 0.7
                 LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-                LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-                
-                local LeftLayout = Instance.new("UIListLayout")
-                LeftLayout.Name = "LeftLayout"
-                LeftLayout.Parent = LeftContainer
-                LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                LeftLayout.Padding = UDim.new(0, 4)
+                LeftContainer.ScrollBarImageTransparency = 0.5
+                LeftContainer.ScrollingEnabled = true
+                LeftContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y  -- 关键：自动调整画布大小
+                LeftContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+                LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+                LeftContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
                 
                 local RightContainer = Instance.new("ScrollingFrame")
                 RightContainer.Name = "RightContainer"
-                RightContainer.Parent = TabContainer
+                RightContainer.Parent = TabContainerFrame
                 RightContainer.BackgroundTransparency = 1
-                RightContainer.Size = UDim2.new(0.50, -2, 1, 0)
-                RightContainer.Position = UDim2.new(0.48, 0, 0, 0)
-                RightContainer.ScrollBarThickness = 0
-                RightContainer.ScrollBarImageTransparency = 1
-                RightContainer.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
-                RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+                RightContainer.Size = UDim2.new(0.48, -4, 1, -4)
+                RightContainer.Position = UDim2.new(0.52, 0, 0, 2)
+                RightContainer.ScrollBarThickness = 4
+                RightContainer.ScrollBarImageColor3 = config.SecondaryTextColor
+                RightContainer.ScrollBarImageTransparency = 0.7
                 RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-                RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+                RightContainer.ScrollBarImageTransparency = 0.5
+                RightContainer.ScrollingEnabled = true
+                RightContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y  -- 关键：自动调整画布大小
+                RightContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+                RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+                RightContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
+                
+                -- 创建内容容器（用于自动调整大小）
+                local LeftContent = Instance.new("Frame")
+                LeftContent.Name = "LeftContent"
+                LeftContent.Parent = LeftContainer
+                LeftContent.BackgroundTransparency = 1
+                LeftContent.Size = UDim2.new(1, 0, 0, 0)
+                
+                local RightContent = Instance.new("Frame")
+                RightContent.Name = "RightContent"
+                RightContent.Parent = RightContainer
+                RightContent.BackgroundTransparency = 1
+                RightContent.Size = UDim2.new(1, 0, 0, 0)
+                
+                local LeftLayout = Instance.new("UIListLayout")
+                LeftLayout.Name = "LeftLayout"
+                LeftLayout.Parent = LeftContent
+                LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                LeftLayout.Padding = UDim.new(0, 4)
                 
                 local RightLayout = Instance.new("UIListLayout")
                 RightLayout.Name = "RightLayout"
-                RightLayout.Parent = RightContainer
+                RightLayout.Parent = RightContent
                 RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 RightLayout.Padding = UDim.new(0, 4)
                 
-                -- 改进的滚动条管理函数
-                local function updateContainerScrolling(container, layout)
-                    local contentHeight = layout.AbsoluteContentSize.Y
-                    local containerHeight = container.AbsoluteSize.Y
-                    
-                    container.CanvasSize = UDim2.new(0, 0, 0, math.max(contentHeight, containerHeight))
-                    
-                    local needsScrolling = contentHeight > containerHeight
-                    
-                    container.ScrollingEnabled = needsScrolling
-                    container.ScrollBarThickness = needsScrolling and 3 or 0
-                    container.ScrollBarImageTransparency = needsScrolling and 0.5 or 1
-                    
-                    if not needsScrolling then
-                        container.CanvasPosition = Vector2.new(0, 0)
+                -- 改进的自动调整大小函数
+                local function setupAutoSize(scrollingFrame, contentFrame, layout)
+                    local function updateCanvasSize()
+                        local contentHeight = layout.AbsoluteContentSize.Y
+                        local containerHeight = scrollingFrame.AbsoluteSize.Y
+                        
+                        -- 确保内容容器至少有容器的高度
+                        contentFrame.Size = UDim2.new(1, 0, 0, math.max(contentHeight, containerHeight))
+                        
+                        -- 设置画布大小为内容高度
+                        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
+                        
+                        -- 检查是否需要滚动条
+                        local needsScroll = contentHeight > containerHeight
+                        
+                        -- 当不需要滚动时，将滚动位置重置为0
+                        if not needsScroll then
+                            scrollingFrame.CanvasPosition = Vector2.new(0, 0)
+                        end
                     end
+                    
+                    -- 监听布局大小变化
+                    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
+                    
+                    -- 监听容器大小变化
+                    scrollingFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateCanvasSize)
+                    
+                    -- 初始更新
+                    task.spawn(function()
+                        task.wait(0.1)
+                        updateCanvasSize()
+                    end)
+                    
+                    return updateCanvasSize
                 end
                 
-                LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    updateContainerScrolling(LeftContainer, LeftLayout)
-                end)
+                -- 设置左右容器的自动调整大小
+                local updateLeftSize = setupAutoSize(LeftContainer, LeftContent, LeftLayout)
+                local updateRightSize = setupAutoSize(RightContainer, RightContent, RightLayout)
                 
-                RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    updateContainerScrolling(RightContainer, RightLayout)
-                end)
-                
-                LeftContainer:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-                    updateContainerScrolling(LeftContainer, LeftLayout)
-                end)
-                
-                RightContainer:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-                    updateContainerScrolling(RightContainer, RightLayout)
-                end)
-                
-                task.spawn(function()
-                    task.wait(0.2)
-                    updateContainerScrolling(LeftContainer, LeftLayout)
-                    updateContainerScrolling(RightContainer, RightLayout)
-                end)
-                
-                local function setupAntiOverscroll(container, layout)
-                    container:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-                        local contentHeight = layout.AbsoluteContentSize.Y
-                        local containerHeight = container.AbsoluteSize.Y
-                        local maxScroll = contentHeight - containerHeight
+                -- 防过度滚动功能
+                local function setupAntiOverscroll(scrollingFrame, contentFrame)
+                    scrollingFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+                        local contentHeight = contentFrame.AbsoluteSize.Y
+                        local containerHeight = scrollingFrame.AbsoluteSize.Y
+                        local maxScroll = math.max(0, contentHeight - containerHeight)
+                        local currentScroll = scrollingFrame.CanvasPosition.Y
                         
-                        if maxScroll > 0 and container.CanvasPosition.Y > maxScroll then
-                            container.CanvasPosition = Vector2.new(0, math.max(0, maxScroll))
+                        -- 防止滚动到底部以下
+                        if currentScroll > maxScroll then
+                            scrollingFrame.CanvasPosition = Vector2.new(0, maxScroll)
+                        end
+                        
+                        -- 防止滚动到顶部以上
+                        if currentScroll < 0 then
+                            scrollingFrame.CanvasPosition = Vector2.new(0, 0)
                         end
                     end)
                 end
                 
-                setupAntiOverscroll(LeftContainer, LeftLayout)
-                setupAntiOverscroll(RightContainer, RightLayout)
+                setupAntiOverscroll(LeftContainer, LeftContent)
+                setupAntiOverscroll(RightContainer, RightContent)
             else
+                -- 单窗口模式
                 local TabL = Instance.new("UIListLayout")
                 TabL.Name = "TabL"
                 TabL.Parent = Tab
@@ -1433,20 +1463,42 @@ function FengUI.new(FengUI, name, theme)
                 local TargetContainer
                 local elementWidth
                 
+                -- 修复：正确获取双窗口模式下的目标容器
                 if windowCount == 2 then
-                    if windowPosition:lower() == "left" then
-                        TargetContainer = Tab:FindFirstChild("TabContainer"):FindFirstChild("LeftContainer")
-                        elementWidth = 160
-                    else
-                        TargetContainer = Tab:FindFirstChild("TabContainer"):FindFirstChild("RightContainer")
-                        elementWidth = 168
+                    -- 确保容器存在
+                    local TabContainerFrame = Tab:FindFirstChild("TabContainer")
+                    if TabContainerFrame then
+                        if windowPosition:lower() == "left" then
+                            local LeftContainer = TabContainerFrame:FindFirstChild("LeftContainer")
+                            if LeftContainer then
+                                local LeftContent = LeftContainer:FindFirstChild("LeftContent")
+                                if LeftContent then
+                                    TargetContainer = LeftContent
+                                else
+                                    TargetContainer = LeftContainer
+                                end
+                            end
+                            elementWidth = 160
+                        else
+                            local RightContainer = TabContainerFrame:FindFirstChild("RightContainer")
+                            if RightContainer then
+                                local RightContent = RightContainer:FindFirstChild("RightContent")
+                                if RightContent then
+                                    TargetContainer = RightContent
+                                else
+                                    TargetContainer = RightContainer
+                                end
+                            end
+                            elementWidth = 168
+                        end
+                    end
+                    
+                    -- 如果未找到目标容器，使用默认值
+                    if not TargetContainer then
+                        TargetContainer = Tab
+                        elementWidth = 330
                     end
                 else
-                    TargetContainer = Tab
-                    elementWidth = 330
-                end
-                
-                if not TargetContainer then
                     TargetContainer = Tab
                     elementWidth = 330
                 end
