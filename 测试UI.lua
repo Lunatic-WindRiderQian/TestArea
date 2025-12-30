@@ -74,20 +74,6 @@ local config = {
     ElementColor = Color3.fromRGB(30, 30, 50),
     ElementTransparency = 0.2,
     GlassEffect = Color3.fromRGB(255, 255, 255),
-    
-    -- 新增：脚本标签配置
-    ScriptTagColor = Color3.fromRGB(255, 60, 60),
-    ScriptTagTextColor = Color3.fromRGB(240, 245, 255),
-    ScriptTag2Color = Color3.fromRGB(60, 140, 255),
-    ScriptTag3Color = Color3.fromRGB(140, 255, 60),
-    
-    -- 标签最大宽度限制
-    ScriptTagMaxWidth = 100,
-    ScriptTagMinWidth = 80,
-    
-    -- 禁用标签的发光效果
-    ScriptTagGlowEnabled = false,
-    ScriptTagNeonEnabled = false
 }
 
 -- 保留mainUI的粒子爆炸效果
@@ -332,36 +318,23 @@ local function create3DFlipAnimation(object, duration)
 end
 
 local function setupSmoothScrolling(scrollingFrame, layout)
-    local function updateCanvasSize()
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
         
         if layout.AbsoluteContentSize.Y <= scrollingFrame.AbsoluteSize.Y then
             scrollingFrame.ScrollingEnabled = false
-            scrollingFrame.ScrollBarThickness = 0
-            scrollingFrame.ScrollBarImageTransparency = 1
         else
             scrollingFrame.ScrollingEnabled = true
-            scrollingFrame.ScrollBarThickness = 3
-            scrollingFrame.ScrollBarImageTransparency = 0.5
         end
-    end
-    
-    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
-    scrollingFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateCanvasSize)
+    end)
     
     scrollingFrame.ElasticBehavior = Enum.ElasticBehavior.Never
-    
-    task.spawn(function()
-        task.wait(0.1)
-        updateCanvasSize()
-    end)
 end
 
 -- 切换标签页功能
 local switchingTabs = false
 function switchTab(new)
     if switchingTabs then return end
-    if not new or not new[1] or not new[2] then return end
     
     local old = FengUI.currentTab
     if old == nil then
@@ -478,71 +451,6 @@ TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.TextTransparency = 1
 
--- 修复：脚本标签容器（支持最多3个标签）
-local ScriptTagsContainer = Instance.new("Frame")
-ScriptTagsContainer.Name = "ScriptTagsContainer"
-ScriptTagsContainer.Parent = TitleBar
-ScriptTagsContainer.BackgroundTransparency = 1
-ScriptTagsContainer.Position = UDim2.new(0, 150, 0.15, 0)
-ScriptTagsContainer.Size = UDim2.new(0, 0, 0, 24)
-ScriptTagsContainer.Visible = false
-
-local ScriptTagsLayout = Instance.new("UIListLayout")
-ScriptTagsLayout.Parent = ScriptTagsContainer
-ScriptTagsLayout.FillDirection = Enum.FillDirection.Horizontal
-ScriptTagsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-ScriptTagsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-ScriptTagsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ScriptTagsLayout.Padding = UDim.new(0, 5)
-
--- 创建标签的函数
-local function createScriptTag(text, color, textColor)
-    color = color or config.ScriptTagColor
-    textColor = textColor or config.ScriptTagTextColor
-    
-    local tag = Instance.new("TextLabel")
-    tag.Name = "ScriptTag"
-    tag.BackgroundColor3 = color
-    tag.BackgroundTransparency = 0.2
-    tag.BorderSizePixel = 0
-    tag.Size = UDim2.new(0, 0, 0, 24)
-    tag.Font = Enum.Font.GothamBold
-    tag.Text = text
-    tag.TextColor3 = textColor
-    tag.TextSize = 12
-    tag.TextXAlignment = Enum.TextXAlignment.Center
-    tag.Visible = true
-    tag.TextTransparency = 1
-    tag.ClipsDescendants = true
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = tag
-    
-    -- 简单边框，无发光效果
-    local stroke = Instance.new("UIStroke")
-    stroke.Parent = tag
-    stroke.Color = color
-    stroke.Thickness = 1
-    stroke.Transparency = 0.5
-    
-    -- 动态调整宽度
-    local function updateSize()
-        local textService = game:GetService("TextService")
-        local textSize = textService:GetTextSize(tag.Text, 12, Enum.Font.GothamBold, Vector2.new(1000, 24))
-        local width = math.clamp(textSize.X + 20, config.ScriptTagMinWidth, config.ScriptTagMaxWidth)
-        tag.Size = UDim2.new(0, width, 0, 24)
-    end
-    
-    updateSize()
-    tag:GetPropertyChangedSignal("Text"):Connect(updateSize)
-    
-    return tag
-end
-
--- 存储标签的数组
-local scriptTags = {}
-
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = TitleBar
@@ -608,16 +516,6 @@ CloseButton.MouseButton1Click:Connect(function()
     services.TweenService:Create(TitleText, TweenInfo.new(0.4), {
         TextTransparency = 1
     }):Play()
-    
-    -- 隐藏脚本标签
-    for i, tag in ipairs(scriptTags) do
-        if tag and tag.Parent then
-            services.TweenService:Create(tag, TweenInfo.new(0.4), {
-                TextTransparency = 1,
-                BackgroundTransparency = 1
-            }):Play()
-        end
-    end
     
     services.TweenService:Create(CloseButton, TweenInfo.new(0.4), {
         TextTransparency = 1
@@ -830,17 +728,6 @@ local function playEntranceAnimation()
         TextTransparency = 0
     }):Play()
     
-    -- 显示脚本标签容器（如果有标签）
-    if ScriptTagsContainer.Visible then
-        for i, tag in ipairs(scriptTags) do
-            if tag and tag.Parent then
-                services.TweenService:Create(tag, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    TextTransparency = 0
-                }):Play()
-            end
-        end
-    end
-    
     services.TweenService:Create(CloseButton, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         TextTransparency = 0
     }):Play()
@@ -924,89 +811,6 @@ function FengUI.new(FengUI, name, theme)
     TitleText.Text = scriptName
     
     local window = {}
-    
-    -- 新增：设置脚本标签函数
-    function window.SetScriptTag(window, tagText, tagColor, textColor, index)
-        index = index or 1
-        
-        if index < 1 or index > 3 then
-            index = 1
-        end
-        
-        if not scriptTags[index] then
-            scriptTags[index] = createScriptTag(tagText, tagColor, textColor)
-            scriptTags[index].Parent = ScriptTagsContainer
-            
-            services.TweenService:Create(scriptTags[index], TweenInfo.new(0.4), {
-                TextTransparency = 0
-            }):Play()
-        else
-            if tagText then
-                scriptTags[index].Text = tagText
-            end
-            if tagColor then
-                scriptTags[index].BackgroundColor3 = tagColor
-            end
-            if textColor then
-                scriptTags[index].TextColor3 = textColor
-            end
-        end
-        
-        ScriptTagsContainer.Visible = true
-        
-        local totalWidth = 0
-        for i, tag in ipairs(scriptTags) do
-            if tag and tag.Parent then
-                totalWidth = totalWidth + tag.AbsoluteSize.X + 5
-            end
-        end
-        
-        ScriptTagsContainer.Size = UDim2.new(0, totalWidth, 0, 24)
-        
-        local textService = game:GetService("TextService")
-        local titleTextSize = textService:GetTextSize(TitleText.Text, 16, Enum.Font.GothamBold, Vector2.new(1000, 35))
-        ScriptTagsContainer.Position = UDim2.new(0, titleTextSize.X + 20, 0.15, 0)
-        
-        return scriptTags[index]
-    end
-    
-    -- 新增：设置多个标签的函数
-    function window.SetMultipleScriptTags(window, tags)
-        for i, tag in ipairs(scriptTags) do
-            if tag then
-                tag:Destroy()
-            end
-        end
-        scriptTags = {}
-        
-        for i, tagData in ipairs(tags) do
-            if i <= 3 then
-                window.SetScriptTag(window, tagData.text, tagData.color, tagData.textColor, i)
-            end
-        end
-        
-        if #tags == 0 then
-            ScriptTagsContainer.Visible = false
-        end
-    end
-    
-    -- 新增：移除脚本标签函数
-    function window.RemoveScriptTag(window, index)
-        if index then
-            if scriptTags[index] then
-                scriptTags[index]:Destroy()
-                scriptTags[index] = nil
-            end
-        else
-            for i, tag in ipairs(scriptTags) do
-                if tag then
-                    tag:Destroy()
-                end
-            end
-            scriptTags = {}
-            ScriptTagsContainer.Visible = false
-        end
-    end
     
     -- 卡片创建函数（mainUI风格）
     function window.card(window, name, description, icon)
@@ -1111,8 +915,9 @@ function FengUI.new(FengUI, name, theme)
         tabBtns.Position = UDim2.new(0, 0, 0, 25)
         tabBtns.Size = UDim2.new(0, 90, 0, 220)
         tabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
-        tabBtns.ScrollBarThickness = 0
-        tabBtns.ScrollBarImageTransparency = 1
+        tabBtns.ScrollBarThickness = 3
+        tabBtns.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+        tabBtns.ScrollBarImageTransparency = 0.5
         tabBtns.VerticalScrollBarInset = Enum.ScrollBarInset.Always
         tabBtns.ScrollingDirection = Enum.ScrollingDirection.Y
         tabBtns.HorizontalScrollBarInset = Enum.ScrollBarInset.None
@@ -1241,272 +1046,180 @@ function FengUI.new(FengUI, name, theme)
         
         -- 单窗口标签页
         function cardObj.Tab(cardObj, tabName, tabIcon)
-            return createTab(cardObj, tabName, tabIcon, 1)
-        end
-        
-        -- 双窗口标签页（使用DualTab方法）
-        function cardObj.DualTab(cardObj, tabName, tabIcon)
-            return createTab(cardObj, tabName, tabIcon, 2)
-        end
-        
+    return createTab(cardObj, tabName, tabIcon, 1)
+end
+
+function cardObj.DualTab(cardObj, tabName, tabIcon)
+    return createTab(cardObj, tabName, tabIcon, 2)
+end
+
         -- 创建标签页的内部函数
         function createTab(cardObj, tabName, tabIcon, windowCount)
-            windowCount = windowCount or 1
+    windowCount = windowCount or 1
+    
+    local TabIco = Instance.new("ImageLabel")
+    TabIco.Name = "TabIco"
+    TabIco.Parent = tabBtns
+    TabIco.BackgroundTransparency = 1
+    TabIco.BorderSizePixel = 0
+    TabIco.Size = UDim2.new(0, 22, 0, 22)
+    TabIco.Image = "rbxassetid://" .. tostring(tabIcon or "84830962019412")
+    TabIco.ImageTransparency = 0.5
+    
+    startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
+    
+    local TabText = Instance.new("TextLabel")
+    TabText.Name = "TabText"
+    TabText.Parent = TabIco
+    TabText.BackgroundTransparency = 1
+    TabText.Position = UDim2.new(1.2, 0, 0, 0)
+    TabText.Size = UDim2.new(0, 65, 0, 22)
+    TabText.Font = Enum.Font.GothamSemibold
+    TabText.Text = tabName
+    TabText.TextColor3 = config.TextColor
+    TabText.TextSize = 14
+    TabText.TextXAlignment = Enum.TextXAlignment.Left
+    TabText.TextTransparency = 0.5
+    
+    local TabBtn = Instance.new("TextButton")
+    TabBtn.Name = "TabBtn"
+    TabBtn.Parent = TabIco
+    TabBtn.BackgroundTransparency = 1
+    TabBtn.BorderSizePixel = 0
+    TabBtn.Size = UDim2.new(0, 90, 0, 22)
+    TabBtn.AutoButtonColor = false
+    TabBtn.Font = Enum.Font.SourceSans
+    TabBtn.Text = ""
+    
+    local Tab = Instance.new("ScrollingFrame")
+    Tab.Name = "Tab_" .. tabName
+    Tab.Parent = tabContainer
+    Tab.Active = true
+    Tab.BackgroundTransparency = 1
+    Tab.Size = UDim2.new(1, 0, 1, 0)
+    Tab.ScrollBarThickness = 0
+    Tab.ScrollBarImageTransparency = 1
+    Tab.Visible = false
+    Tab.ElasticBehavior = Enum.ElasticBehavior.Never
+    Tab.ScrollingDirection = Enum.ScrollingDirection.Y
+    Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+    
             
-            local TabIco = Instance.new("ImageLabel")
-            TabIco.Name = "TabIco"
-            TabIco.Parent = tabBtns
-            TabIco.BackgroundTransparency = 1
-            TabIco.BorderSizePixel = 0
-            TabIco.Size = UDim2.new(0, 22, 0, 22)
-            TabIco.Image = "rbxassetid://" .. tostring(tabIcon or "84830962019412")
-            TabIco.ImageTransparency = 0.5
-            
-            startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
-            
-            local TabText = Instance.new("TextLabel")
-            TabText.Name = "TabText"
-            TabText.Parent = TabIco
-            TabText.BackgroundTransparency = 1
-            TabText.Position = UDim2.new(1.2, 0, 0, 0)
-            TabText.Size = UDim2.new(0, 65, 0, 22)
-            TabText.Font = Enum.Font.GothamSemibold
-            TabText.Text = tabName
-            TabText.TextColor3 = config.TextColor
-            TabText.TextSize = 14
-            TabText.TextXAlignment = Enum.TextXAlignment.Left
-            TabText.TextTransparency = 0.5
-            
-            local TabBtn = Instance.new("TextButton")
-            TabBtn.Name = "TabBtn"
-            TabBtn.Parent = TabIco
-            TabBtn.BackgroundTransparency = 1
-            TabBtn.BorderSizePixel = 0
-            TabBtn.Size = UDim2.new(0, 90, 0, 22)
-            TabBtn.AutoButtonColor = false
-            TabBtn.Font = Enum.Font.SourceSans
-            TabBtn.Text = ""
-            
-            local Tab = Instance.new("ScrollingFrame")
-            Tab.Name = "Tab_" .. tabName
-            Tab.Parent = tabContainer
-            Tab.Active = true
-            Tab.BackgroundTransparency = 1
-            Tab.Size = UDim2.new(1, 0, 1, 0)
-            Tab.ScrollBarThickness = 0
-            Tab.ScrollBarImageTransparency = 1
-            Tab.Visible = false
-            Tab.ElasticBehavior = Enum.ElasticBehavior.Never
-            Tab.ScrollingDirection = Enum.ScrollingDirection.Y
-            Tab.HorizontalScrollBarInset = Enum.ScrollBarInset.None
-            
-            -- 双窗口布局 - 修复后的版本
-            if windowCount == 2 then
-                local TabContainerFrame = Instance.new("Frame")
-                TabContainerFrame.Name = "TabContainer"
-                TabContainerFrame.Parent = Tab
-                TabContainerFrame.BackgroundTransparency = 1
-                TabContainerFrame.Size = UDim2.new(1, 0, 1, 0)
-                
-                local LeftContainer = Instance.new("ScrollingFrame")
-                LeftContainer.Name = "LeftContainer"
-                LeftContainer.Parent = TabContainerFrame
-                LeftContainer.BackgroundTransparency = 1
-                LeftContainer.Size = UDim2.new(0.48, -4, 1, -4)
-                LeftContainer.Position = UDim2.new(0, 2, 0, 2)
-                LeftContainer.ScrollBarThickness = 4
-                LeftContainer.ScrollBarImageColor3 = config.SecondaryTextColor
-                LeftContainer.ScrollBarImageTransparency = 0.7
-                LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-                LeftContainer.ScrollBarImageTransparency = 0.5
-                LeftContainer.ScrollingEnabled = true
-                LeftContainer.AutomaticCanvasSize = Enum.AutomaticSize.None  -- 修复：禁用自动调整大小
-                LeftContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-                LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-                LeftContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-                
-                local RightContainer = Instance.new("ScrollingFrame")
-                RightContainer.Name = "RightContainer"
-                RightContainer.Parent = TabContainerFrame
-                RightContainer.BackgroundTransparency = 1
-                RightContainer.Size = UDim2.new(0.48, -4, 1, -4)
-                RightContainer.Position = UDim2.new(0.52, 0, 0, 2)
-                RightContainer.ScrollBarThickness = 4
-                RightContainer.ScrollBarImageColor3 = config.SecondaryTextColor
-                RightContainer.ScrollBarImageTransparency = 0.7
-                RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-                RightContainer.ScrollBarImageTransparency = 0.5
-                RightContainer.ScrollingEnabled = true
-                RightContainer.AutomaticCanvasSize = Enum.AutomaticSize.None  -- 修复：禁用自动调整大小
-                RightContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-                RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-                RightContainer.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-                
-                -- 创建内容容器（用于自动调整大小）
-                local LeftContent = Instance.new("Frame")
-                LeftContent.Name = "LeftContent"
-                LeftContent.Parent = LeftContainer
-                LeftContent.BackgroundTransparency = 1
-                LeftContent.Size = UDim2.new(1, 0, 0, 0)
-                
-                local RightContent = Instance.new("Frame")
-                RightContent.Name = "RightContent"
-                RightContent.Parent = RightContainer
-                RightContent.BackgroundTransparency = 1
-                RightContent.Size = UDim2.new(1, 0, 0, 0)
-                
-                local LeftLayout = Instance.new("UIListLayout")
-                LeftLayout.Name = "LeftLayout"
-                LeftLayout.Parent = LeftContent
-                LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                LeftLayout.Padding = UDim.new(0, 4)
-                
-                local RightLayout = Instance.new("UIListLayout")
-                RightLayout.Name = "RightLayout"
-                RightLayout.Parent = RightContent
-                RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                RightLayout.Padding = UDim.new(0, 4)
-                
-                -- 改进的自动调整大小函数 - 修复滚动到底部的问题
-                local function setupAutoSize(scrollingFrame, contentFrame, layout)
-                    local function updateCanvasSize()
-                        local contentHeight = layout.AbsoluteContentSize.Y
-                        local containerHeight = scrollingFrame.AbsoluteSize.Y
-                        
-                        -- 确保内容容器至少有容器的高度
-                        contentFrame.Size = UDim2.new(1, 0, 0, math.max(contentHeight, containerHeight))
-                        
-                        -- 修复：当内容高度大于容器高度时，正确设置画布大小
-                        if contentHeight > containerHeight then
-                            scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
-                        else
-                            -- 当内容较少时，确保可以滚动到底部
-                            scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, containerHeight)
-                        end
-                        
-                        -- 检查是否需要滚动条
-                        local needsScroll = contentHeight > containerHeight
-                        
-                        -- 当不需要滚动时，将滚动位置重置为0
-                        if not needsScroll then
-                            scrollingFrame.CanvasPosition = Vector2.new(0, 0)
-                        end
-                    end
-                    
-                    -- 监听布局大小变化
-                    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
-                    
-                    -- 监听容器大小变化
-                    scrollingFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateCanvasSize)
-                    
-                    -- 初始更新
-                    task.spawn(function()
-                        task.wait(0.1)
-                        updateCanvasSize()
-                    end)
-                    
-                    return updateCanvasSize
-                end
-                
-                -- 设置左右容器的自动调整大小
-                local updateLeftSize = setupAutoSize(LeftContainer, LeftContent, LeftLayout)
-                local updateRightSize = setupAutoSize(RightContainer, RightContent, RightLayout)
-                
-                -- 防过度滚动功能 - 修复滚动限制
-                local function setupAntiOverscroll(scrollingFrame, contentFrame)
-                    scrollingFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-                        local contentHeight = layout.AbsoluteContentSize.Y
-                        local containerHeight = scrollingFrame.AbsoluteSize.Y
-                        local maxScroll = math.max(0, contentHeight - containerHeight)
-                        local currentScroll = scrollingFrame.CanvasPosition.Y
-                        
-                        -- 防止滚动到底部以下
-                        if currentScroll > maxScroll then
-                            scrollingFrame.CanvasPosition = Vector2.new(0, maxScroll)
-                        end
-                        
-                        -- 防止滚动到顶部以上
-                        if currentScroll < 0 then
-                            scrollingFrame.CanvasPosition = Vector2.new(0, 0)
-                        end
-                    end)
-                end
-                
-                setupAntiOverscroll(LeftContainer, LeftContent)
-                setupAntiOverscroll(RightContainer, RightContent)
-            else
-                -- 单窗口模式
-                local TabL = Instance.new("UIListLayout")
-                TabL.Name = "TabL"
-                TabL.Parent = Tab
-                TabL.SortOrder = Enum.SortOrder.LayoutOrder
-                TabL.Padding = UDim.new(0, 4)
-                
-                setupSmoothScrolling(Tab, TabL)
-            end
-            
-            TabBtn.MouseButton1Click:Connect(function()
-                DigitalParticleExplosion(TabBtn)
-                switchTab({ TabIco, Tab })
-            end)
-            
-            if FengUI.currentTab == nil then
-                switchTab({ TabIco, Tab })
-            end
-            
-            local tabObj = {}
+    if windowCount == 2 then
+        local TabContainer = Instance.new("Frame")
+        TabContainer.Name = "TabContainer"
+        TabContainer.Parent = Tab
+        TabContainer.BackgroundTransparency = 1
+        TabContainer.Size = UDim2.new(1, 0, 1, 0)
+        
+        local LeftContainer = Instance.new("ScrollingFrame")
+        LeftContainer.Name = "LeftContainer"
+        LeftContainer.Parent = TabContainer
+        LeftContainer.BackgroundTransparency = 1
+        LeftContainer.Size = UDim2.new(0.48, -2, 1, 0)
+        LeftContainer.Position = UDim2.new(0, 2, 0, 0)
+        LeftContainer.ScrollBarThickness = 0
+        LeftContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+        LeftContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+        LeftContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+        
+        local LeftLayout = Instance.new("UIListLayout")
+        LeftLayout.Name = "LeftLayout"
+        LeftLayout.Parent = LeftContainer
+        LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        LeftLayout.Padding = UDim.new(0, 4)
+        
+        local RightContainer = Instance.new("ScrollingFrame")
+        RightContainer.Name = "RightContainer"
+        RightContainer.Parent = TabContainer
+        RightContainer.BackgroundTransparency = 1
+        RightContainer.Size = UDim2.new(0.50, -2, 1, 0)
+        RightContainer.Position = UDim2.new(0.48, 0, 0, 0)
+        RightContainer.ScrollBarThickness = 0
+        RightContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+        RightContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+        RightContainer.HorizontalScrollBarInset = Enum.ScrollBarInset.None
+        
+        local RightLayout = Instance.new("UIListLayout")
+        RightLayout.Name = "RightLayout"
+        RightLayout.Parent = RightContainer
+        RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        RightLayout.Padding = UDim.new(0, 4)
+        
+        -- 文档1的滚动管理实现
+        local function updateLeftScrolling()
+            LeftContainer.CanvasSize = UDim2.new(0, 0, 0, LeftLayout.AbsoluteContentSize.Y + 10)
+            LeftContainer.ScrollingEnabled = LeftLayout.AbsoluteContentSize.Y > LeftContainer.AbsoluteSize.Y
+        end
+        
+        local function updateRightScrolling()
+            RightContainer.CanvasSize = UDim2.new(0, 0, 0, RightLayout.AbsoluteContentSize.Y + 10)
+            RightContainer.ScrollingEnabled = RightLayout.AbsoluteContentSize.Y > RightContainer.AbsoluteSize.Y
+        end
+        
+        LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateLeftScrolling)
+        RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightScrolling)
+        
+        task.spawn(function()
+            task.wait(0.1)
+            updateLeftScrolling()
+            updateRightScrolling()
+        end)
+        
+        Tab.ScrollingEnabled = false
+        Tab.CanvasSize = UDim2.new(0, 0, 1, 0)
+        Tab.ScrollBarThickness = 0
+    else
+        -- 单窗口布局
+        local TabL = Instance.new("UIListLayout")
+        TabL.Name = "TabL"
+        TabL.Parent = Tab
+        TabL.SortOrder = Enum.SortOrder.LayoutOrder
+        TabL.Padding = UDim.new(0, 4)
+        
+        setupSmoothScrolling(Tab, TabL)
+    end
+    
+    TabBtn.MouseButton1Click:Connect(function()
+        DigitalParticleExplosion(TabBtn)
+        switchTab({ TabIco, Tab })
+    end)
+    
+    if FengUI.currentTab == nil then
+        switchTab({ TabIco, Tab })
+    end
+    
+    local tabObj = {}
             
             -- 重写的section函数（来自UI.lua）
             function tabObj.section(tabObj, name, windowPosition, TabVal)
-                if type(windowPosition) == "boolean" then
-                    TabVal = windowPosition
-                    windowPosition = "Left"
-                elseif not windowPosition or type(windowPosition) ~= "string" then
-                    windowPosition = "Left"
-                end
-                
-                local TargetContainer
-                local elementWidth
-                
-                -- 修复：正确获取双窗口模式下的目标容器
-                if windowCount == 2 then
-                    -- 确保容器存在
-                    local TabContainerFrame = Tab:FindFirstChild("TabContainer")
-                    if TabContainerFrame then
-                        if windowPosition:lower() == "left" then
-                            local LeftContainer = TabContainerFrame:FindFirstChild("LeftContainer")
-                            if LeftContainer then
-                                local LeftContent = LeftContainer:FindFirstChild("LeftContent")
-                                if LeftContent then
-                                    TargetContainer = LeftContent
-                                else
-                                    TargetContainer = LeftContainer
-                                end
-                            end
-                            elementWidth = 160
-                        else
-                            local RightContainer = TabContainerFrame:FindFirstChild("RightContainer")
-                            if RightContainer then
-                                local RightContent = RightContainer:FindFirstChild("RightContent")
-                                if RightContent then
-                                    TargetContainer = RightContent
-                                else
-                                    TargetContainer = RightContainer
-                                end
-                            end
-                            elementWidth = 168
-                        end
-                    end
-                    
-                    -- 如果未找到目标容器，使用默认值
-                    if not TargetContainer then
-                        TargetContainer = Tab
-                        elementWidth = 330
-                    end
-                else
-                    TargetContainer = Tab
-                    elementWidth = 330
-                end
+        if type(windowPosition) == "boolean" then
+            TabVal = windowPosition
+            windowPosition = "Left"
+        elseif not windowPosition or type(windowPosition) ~= "string" then
+            windowPosition = "Left"
+        end
+        
+        local TargetContainer
+        local elementWidth
+        
+        if windowCount == 2 then
+            if windowPosition:lower() == "left" then
+                TargetContainer = Tab:FindFirstChild("TabContainer"):FindFirstChild("LeftContainer")
+                elementWidth = 160  -- 双窗口模式下左侧宽度
+            else
+                TargetContainer = Tab:FindFirstChild("TabContainer"):FindFirstChild("RightContainer")
+                elementWidth = 168  -- 双窗口模式下右侧宽度
+            end
+        else
+            TargetContainer = Tab
+            elementWidth = 330  -- 单窗口模式宽度
+        end
+        
+        if not TargetContainer then
+            TargetContainer = Tab
+            elementWidth = 330
+        end
                 
                 local Section = Instance.new("Frame")
                 local SectionText = Instance.new("TextLabel")
@@ -2307,7 +2020,7 @@ function FengUI.new(FengUI, name, theme)
                     
                     local PopupStroke = Instance.new("UIStroke")
                     PopupStroke.Parent = ColorPickerPopup
-                    PopupStroke.Color = config.AccentColor
+                    PopupStroke.Color = Color3.fromRGB(255, 60, 60)
                     PopupStroke.Thickness = 1.5
                     PopupStroke.Transparency = 0.2
                     
@@ -2321,7 +2034,7 @@ function FengUI.new(FengUI, name, theme)
                     PopupTitle.Size = UDim2.new(1, -20, 0, 24)
                     PopupTitle.Font = Enum.Font.GothamBold
                     PopupTitle.Text = text
-                    PopupTitle.TextColor3 = config.AccentColor
+                    PopupTitle.TextColor3 = Color3.fromRGB(255, 60, 60)
                     PopupTitle.TextSize = 16
                     PopupTitle.TextXAlignment = Enum.TextXAlignment.Center
                     PopupTitle.ZIndex = 1001
@@ -2513,7 +2226,7 @@ function FengUI.new(FengUI, name, theme)
                     local ConfirmBtn = Instance.new("TextButton")
                     ConfirmBtn.Name = "ConfirmBtn"
                     ConfirmBtn.Parent = ButtonContainer
-                    ConfirmBtn.BackgroundColor3 = config.AccentColor
+                    ConfirmBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
                     ConfirmBtn.BackgroundTransparency = 0.1
                     ConfirmBtn.BorderSizePixel = 0
                     ConfirmBtn.Position = UDim2.new(0, 0, 0, 0)
@@ -2675,7 +2388,7 @@ function FengUI.new(FengUI, name, theme)
                                 
                                 if inputBox == HexInput then
                                     local hex = text:gsub("#", "")
-                                    if hex:match("^[0-9A-Fa-f]+$") and (#hex == 6 or #hex == 3) then
+                                    if hex:match("^[0-9A-Fa-f]+$") and #hex == 6 then
                                         local success, color = pcall(Color3.fromHex, hex)
                                         if success then
                                             currentHue, currentSat, currentVib = Color3.toHSV(color)
@@ -3350,12 +3063,10 @@ function FengUI.new(FengUI, name, theme)
                         
                         for _, option in pairs(allOptions) do
                             if option then
-                                if text == "" or text == nil then
+                                if text == "" then
                                     option.Visible = true
                                 else
-                                    local searchText = text:lower()
-                                    local optionText = option.Text:lower()
-                                    option.Visible = optionText:find(searchText, 1, true) ~= nil
+                                    option.Visible = option.Text:lower():match(text:lower()) ~= nil
                                 end
                                 
                                 if option.Visible then
@@ -3584,7 +3295,7 @@ function FengUI:CreateColorPicker(options)
     HueDragHolder.BackgroundTransparency = 1
     HueDragHolder.Parent = HueSlider
     HueDragHolder.ZIndex = 1002
-                    
+    
     local HueDrag = Instance.new("ImageLabel")
     HueDrag.Name = "HueDrag"
     HueDrag.Size = UDim2.fromOffset(14, 14)
@@ -3872,7 +3583,7 @@ function FengUI:CreateColorPicker(options)
                 
                 if inputBox == HexInput then
                     local hex = text:gsub("#", "")
-                    if hex:match("^[0-9A-Fa-f]+$") and (#hex == 6 or #hex == 3) then
+                    if hex:match("^[0-9A-Fa-f]+$") and #hex == 6 then
                         local success, color = pcall(Color3.fromHex, hex)
                         if success then
                             currentHue, currentSat, currentVib = Color3.toHSV(color)
