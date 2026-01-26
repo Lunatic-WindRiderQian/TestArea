@@ -30,10 +30,6 @@ local FengUI = {}
 local ToggleUI = true
 FengUI.currentTab = nil
 FengUI.flags = {}
-FengUI.is3DMode = false
-FengUI.projectorPart = nil
-FengUI.projectorBeam = nil
-FengUI.projectorCamera = nil
 
 local services = {
     TweenService = game:GetService("TweenService"),
@@ -41,16 +37,11 @@ local services = {
     CoreGui = game:GetService("CoreGui"),
     Players = game:GetService("Players"),
     RunService = game:GetService("RunService"),
-    SoundService = game:GetService("SoundService"),
-    Lighting = game:GetService("Lighting"),
-    Workspace = game:GetService("Workspace")
+    SoundService = game:GetService("SoundService")
 }
 
 local UserInputService = services.UserInputService
 local RunService = services.RunService
-local Lighting = services.Lighting
-local Workspace = services.Workspace
-local localPlayer = services.Players.LocalPlayer
 
 local config = {
     MainColor = Color3.fromRGB(18, 18, 30),
@@ -81,20 +72,6 @@ local config = {
     GlassEffect = Color3.fromRGB(255, 255, 255),
 }
 
--- 3D投影仪效果配置
-local projectorConfig = {
-    ProjectorColor = Color3.fromRGB(255, 60, 60),
-    ProjectorGlow = Color3.fromRGB(255, 100, 100, 0.5),
-    BeamTransparency = 0.7,
-    BeamSize = 8,
-    ProjectorHeight = 10,  -- 降低高度
-    ProjectorDistance = 15,  -- 减小距离
-    ProjectorSpeed = 0.5,
-    HologramIntensity = 0.8,
-    ScreenWidth = 12,  -- 减小屏幕宽度
-    ScreenHeight = 7   -- 减小屏幕高度
-}
-
 local function startNeonFlowEffect(object, property, speed)
     speed = speed or 0.008
     local hue = 0
@@ -111,6 +88,58 @@ local function startNeonFlowEffect(object, property, speed)
         object[property] = Color3.new(r, g, b)
     end)
     return connection
+end
+
+local function createRainbowEffect(object, property, speed)
+    speed = speed or 0.01
+    local hue = 0
+    local connection
+    connection = RunService.Heartbeat:Connect(function()
+        if not object or not object.Parent then
+            connection:Disconnect()
+            return
+        end
+        hue = (hue + speed) % 1
+        local color = Color3.fromHSV(hue, 0.9, 0.9)
+        object[property] = color
+    end)
+    return connection
+end
+
+local function createRainbowFlowEffect(object, property, speed)
+    speed = speed or 0.008
+    local timeOffset = math.random() * 10
+    local connection
+    local isRunning = true
+    
+    connection = RunService.Heartbeat:Connect(function()
+        if not object or not object.Parent or not isRunning then
+            if connection then
+                connection:Disconnect()
+            end
+            return
+        end
+        
+        local time = tick() + timeOffset
+        local r = math.sin(time * 0.5 + 0) * 0.5 + 0.5
+        local g = math.sin(time * 0.5 + 2) * 0.5 + 0.5
+        local b = math.sin(time * 0.5 + 4) * 0.5 + 0.5
+        
+        object[property] = Color3.new(r, g, b)
+    end)
+    
+    return {
+        Disconnect = function()
+            isRunning = false
+            if connection then
+                connection:Disconnect()
+                connection = nil
+            end
+        end,
+        IsRunning = function()
+            return isRunning and object and object.Parent
+        end
+    }
 end
 
 local function createSpaceBackground(parent)
@@ -159,10 +188,14 @@ local function createSpaceBackground(parent)
 end
 
 local function createPulseGlow(object)
-    local pulseConnection
-    pulseConnection = RunService.Heartbeat:Connect(function()
-        if not object or not object.Parent then
-            pulseConnection:Disconnect()
+    local connection
+    local isRunning = true
+    
+    connection = RunService.Heartbeat:Connect(function()
+        if not object or not object.Parent or not isRunning then
+            if connection then
+                connection:Disconnect()
+            end
             return
         end
         
@@ -173,7 +206,19 @@ local function createPulseGlow(object)
             object.BackgroundTransparency = alpha
         end
     end)
-    return pulseConnection
+    
+    return {
+        Disconnect = function()
+            isRunning = false
+            if connection then
+                connection:Disconnect()
+                connection = nil
+            end
+        end,
+        IsRunning = function()
+            return isRunning and object and object.Parent
+        end
+    }
 end
 
 local function createHologramEffect(frame, intensity)
@@ -305,348 +350,6 @@ local function setupSmoothScrolling(scrollingFrame, layout)
     scrollingFrame.ElasticBehavior = Enum.ElasticBehavior.Never
 end
 
--- 创建3D立体效果
-local function create3DEffect(frame)
-    if not frame:FindFirstChild("DepthEffect") then
-        local depthEffect = Instance.new("UIGradient")
-        depthEffect.Name = "DepthEffect"
-        depthEffect.Rotation = 90
-        depthEffect.Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0),
-            NumberSequenceKeypoint.new(0.3, 0.2),
-            NumberSequenceKeypoint.new(0.7, 0.2),
-            NumberSequenceKeypoint.new(1, 0)
-        })
-        depthEffect.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50, 50, 50)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100))
-        })
-        depthEffect.Parent = frame
-    end
-end
-
--- 创建投影仪光束
-local function createProjectorBeam(startPos, endPos, parent)
-    local beam = Instance.new("Part")
-    beam.Name = "ProjectorBeam"
-    beam.Material = Enum.Material.Neon
-    beam.Transparency = projectorConfig.BeamTransparency
-    beam.Color = projectorConfig.ProjectorColor
-    beam.Anchored = true
-    beam.CanCollide = false
-    beam.CastShadow = false
-    beam.Parent = parent
-    
-    local attachment1 = Instance.new("Attachment")
-    attachment1.Parent = beam
-    local attachment2 = Instance.new("Attachment")
-    attachment2.Parent = beam
-    
-    local beamMesh = Instance.new("Beam")
-    beamMesh.Attachment0 = attachment1
-    beamMesh.Attachment1 = attachment2
-    beamMesh.Color = ColorSequence.new(projectorConfig.ProjectorColor)
-    beamMesh.Width0 = projectorConfig.BeamSize
-    beamMesh.Width1 = projectorConfig.BeamSize * 0.5
-    beamMesh.Texture = "rbxassetid://446111271"
-    beamMesh.TextureSpeed = 2
-    beamMesh.TextureLength = 2
-    beamMesh.Transparency = NumberSequence.new(projectorConfig.BeamTransparency)
-    beamMesh.Parent = beam
-    
-    attachment1.WorldPosition = startPos
-    attachment2.WorldPosition = endPos
-    
-    return beam
-end
-
--- 创建3D投影仪效果
-local function enable3DProjectorMode()
-    if FengUI.is3DMode then return end
-    
-    FengUI.is3DMode = true
-    
-    -- 保存原始UI位置
-    local originalPosition = Main.Position
-    local originalSize = Main.Size
-    
-    -- 隐藏原始UI
-    Main.Visible = false
-    Open.Visible = false
-    
-    -- 等待一帧确保UI隐藏
-    task.wait(0.1)
-    
-    -- 创建投影仪主体
-    local projector = Instance.new("Part")
-    projector.Name = "Projector"
-    projector.Material = Enum.Material.Neon
-    projector.Color = projectorConfig.ProjectorColor
-    projector.Transparency = 0.3
-    projector.Size = Vector3.new(1, 0.5, 1)  -- 减小尺寸
-    projector.Anchored = true
-    projector.CanCollide = false
-    projector.Parent = Workspace
-    
-    -- 创建投影仪发光效果
-    local pointLight = Instance.new("PointLight")
-    pointLight.Color = projectorConfig.ProjectorColor
-    pointLight.Range = 15
-    pointLight.Brightness = 2
-    pointLight.Parent = projector
-    
-    -- 创建投影仪屏幕（SurfaceGui）
-    local screen = Instance.new("Part")
-    screen.Name = "ProjectorScreen"
-    screen.Material = Enum.Material.Neon
-    screen.Color = config.DeepSpaceColor
-    screen.Transparency = 0.1
-    screen.Size = Vector3.new(projectorConfig.ScreenWidth, projectorConfig.ScreenHeight, 0.1)
-    screen.Anchored = true
-    screen.CanCollide = false
-    screen.Parent = Workspace
-    
-    -- 创建SurfaceGui来显示UI
-    local surfaceGui = Instance.new("SurfaceGui")
-    surfaceGui.Name = "ProjectorUI"
-    surfaceGui.Face = Enum.NormalId.Front
-    surfaceGui.AlwaysOnTop = true
-    surfaceGui.LightInfluence = 0
-    surfaceGui.PixelsPerStud = 80  -- 提高分辨率
-    surfaceGui.Adornee = screen
-    surfaceGui.Parent = screen
-    
-    -- 创建UI容器
-    local uiContainer = Instance.new("Frame")
-    uiContainer.Name = "ProjectorUIContainer"
-    uiContainer.Size = UDim2.new(1, 0, 1, 0)
-    uiContainer.BackgroundTransparency = 1
-    uiContainer.Parent = surfaceGui
-    
-    -- 克隆Main到surfaceGui
-    local mainClone = Main:Clone()
-    mainClone.Name = "ProjectorMain"
-    mainClone.Parent = uiContainer
-    mainClone.AnchorPoint = Vector2.new(0.5, 0.5)
-    mainClone.Position = UDim2.new(0.5, 0, 0.5, 0)
-    mainClone.Size = UDim2.new(0.9, 0, 0.9, 0)  -- 稍微小一点以适应屏幕
-    mainClone.BackgroundTransparency = 0.3
-    mainClone.Active = false
-    mainClone.Draggable = false
-    
-    -- 移除不需要的组件
-    if mainClone:FindFirstChild("SpaceBackground") then
-        mainClone.SpaceBackground:Destroy()
-    end
-    
-    -- 重新创建空间背景
-    createSpaceBackground(mainClone)
-    
-    -- 调整所有元素的透明度，使其在3D模式下更清晰
-    local function adjustElementTransparency(element)
-        if element:IsA("Frame") then
-            if element.BackgroundTransparency < 0.8 then
-                element.BackgroundTransparency = element.BackgroundTransparency * 0.7
-            end
-        elseif element:IsA("TextLabel") or element:IsA("TextButton") then
-            if element.TextTransparency < 0.8 then
-                element.TextTransparency = element.TextTransparency * 0.7
-            end
-        end
-        
-        for _, child in ipairs(element:GetChildren()) do
-            adjustElementTransparency(child)
-        end
-    end
-    
-    adjustElementTransparency(mainClone)
-    
-    -- 创建投影仪光束
-    local beamStart = projector.Position + Vector3.new(0, 0.25, 0)
-    local beamEnd = screen.Position - Vector3.new(0, 0, 0.1)
-    local projectorBeam = createProjectorBeam(beamStart, beamEnd, Workspace)
-    
-    -- 创建全息扫描效果
-    local hologramAttachment = Instance.new("Attachment")
-    hologramAttachment.Parent = screen
-    local hologramParticle = Instance.new("ParticleEmitter")
-    hologramParticle.Parent = hologramAttachment
-    hologramParticle.Color = ColorSequence.new(projectorConfig.ProjectorColor)
-    hologramParticle.Size = NumberSequence.new(0.3)
-    hologramParticle.Transparency = NumberSequence.new(0.7)
-    hologramParticle.Lifetime = NumberRange.new(1, 2)
-    hologramParticle.Rate = 30
-    hologramParticle.Speed = NumberRange.new(0.3)
-    hologramParticle.VelocityInheritance = 0
-    hologramParticle.Rotation = NumberRange.new(0, 360)
-    hologramParticle.RotSpeed = NumberRange.new(-30, 30)
-    
-    -- 保存引用
-    FengUI.projectorPart = projector
-    FengUI.screenPart = screen
-    FengUI.projectorBeam = projectorBeam
-    FengUI.surfaceGui = surfaceGui
-    FengUI.uiContainer = uiContainer
-    
-    -- 更新位置的函数
-    local function updateProjectorPosition()
-        if not localPlayer or not localPlayer.Character then return end
-        
-        local character = localPlayer.Character
-        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso")
-        
-        if humanoidRootPart then
-            local lookVector = humanoidRootPart.CFrame.LookVector
-            
-            -- 投影仪位置（在玩家前方上方）
-            local projectorPos = humanoidRootPart.Position + 
-                Vector3.new(0, projectorConfig.ProjectorHeight, 0) +
-                (lookVector * projectorConfig.ProjectorDistance)
-            
-            -- 屏幕位置（在玩家正前方）
-            local screenPos = humanoidRootPart.Position + 
-                Vector3.new(0, projectorConfig.ProjectorHeight - 3, 0) +  -- 稍微低一点
-                (lookVector * (projectorConfig.ProjectorDistance + 5))  -- 比投影仪远一点
-            
-            -- 确保投影仪指向屏幕
-            local projectorCFrame = CFrame.new(projectorPos, screenPos)
-            local screenCFrame = CFrame.new(screenPos, humanoidRootPart.Position) * CFrame.Angles(0, math.rad(180), 0)
-            
-            projector.CFrame = projectorCFrame
-            screen.CFrame = screenCFrame
-            
-            -- 更新光束
-            if projectorBeam and projectorBeam.Parent then
-                local attachments = projectorBeam:GetChildren()
-                if #attachments >= 2 then
-                    attachments[1].WorldPosition = projectorPos + Vector3.new(0, 0.25, 0)
-                    attachments[2].WorldPosition = screenPos - Vector3.new(0, 0, 0.1)
-                end
-            end
-            
-            -- 更新相机位置（第一人称视角）
-            local camera = Workspace.CurrentCamera
-            if camera then
-                camera.CameraType = Enum.CameraType.Custom  -- 保持自定义相机
-                camera.CameraSubject = humanoidRootPart
-            end
-        end
-    end
-    
-    -- 初始化位置
-    updateProjectorPosition()
-    
-    -- 持续更新位置
-    FengUI.projectorConnection = RunService.RenderStepped:Connect(updateProjectorPosition)
-    
-    -- 添加退出3D模式的按键监听
-    FengUI.exit3DConnection = UserInputService.InputBegan:Connect(function(input)
-        if input.KeyCode == Enum.KeyCode.E then
-            disable3DProjectorMode()
-        end
-    end)
-    
-    -- 播放进入3D模式的音效
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://9118978339" -- 科幻音效
-    sound.Volume = 0.5
-    sound.Parent = Workspace
-    sound:Play()
-    game:GetService("Debris"):AddItem(sound, 3)
-    
-    -- 显示提示信息
-    local hint = Instance.new("BillboardGui")
-    hint.Size = UDim2.new(0, 200, 0, 50)
-    hint.AlwaysOnTop = true
-    hint.Parent = screen
-    
-    local hintText = Instance.new("TextLabel")
-    hintText.Size = UDim2.new(1, 0, 1, 0)
-    hintText.BackgroundTransparency = 1
-    hintText.Text = "3D投影模式已激活\n按E键退出"
-    hintText.TextColor3 = Color3.fromRGB(255, 60, 60)
-    hintText.TextSize = 14
-    hintText.Font = Enum.Font.GothamBold
-    hintText.Parent = hint
-    
-    services.TweenService:Create(hintText, TweenInfo.new(3), {
-        TextTransparency = 1
-    }):Play()
-    
-    delay(3, function()
-        if hint then
-            hint:Destroy()
-        end
-    end)
-    
-    print("3D投影模式已激活")
-end
-
--- 禁用3D投影仪效果
-local function disable3DProjectorMode()
-    if not FengUI.is3DMode then return end
-    
-    FengUI.is3DMode = false
-    
-    -- 断开连接
-    if FengUI.projectorConnection then
-        FengUI.projectorConnection:Disconnect()
-        FengUI.projectorConnection = nil
-    end
-    
-    if FengUI.exit3DConnection then
-        FengUI.exit3DConnection:Disconnect()
-        FengUI.exit3DConnection = nil
-    end
-    
-    -- 移除3D对象
-    if FengUI.projectorPart then
-        FengUI.projectorPart:Destroy()
-        FengUI.projectorPart = nil
-    end
-    
-    if FengUI.screenPart then
-        FengUI.screenPart:Destroy()
-        FengUI.screenPart = nil
-    end
-    
-    if FengUI.projectorBeam then
-        FengUI.projectorBeam:Destroy()
-        FengUI.projectorBeam = nil
-    end
-    
-    if FengUI.surfaceGui then
-        FengUI.surfaceGui:Destroy()
-        FengUI.surfaceGui = nil
-    end
-    
-    if FengUI.uiContainer then
-        FengUI.uiContainer:Destroy()
-        FengUI.uiContainer = nil
-    end
-    
-    -- 恢复原始UI
-    Main.Visible = true
-    Open.Visible = true
-    
-    -- 恢复相机
-    local camera = Workspace.CurrentCamera
-    if camera then
-        camera.CameraType = Enum.CameraType.Custom
-    end
-    
-    -- 播放退出3D模式的音效
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://9118978345" -- 科幻音效
-    sound.Volume = 0.5
-    sound.Parent = Workspace
-    sound:Play()
-    game:GetService("Debris"):AddItem(sound, 3)
-    
-    print("3D投影模式已关闭")
-end
-
 local switchingTabs = false
 function switchTab(new)
     if switchingTabs then return end
@@ -759,7 +462,7 @@ TitleText.BackgroundTransparency = 1
 TitleText.Position = UDim2.new(0, 10, 0, 0)
 TitleText.Size = UDim2.new(0, 200, 1, 0)
 TitleText.Font = Enum.Font.GothamBold
-TitleText.Text = "FengUI 3D"
+TitleText.Text = "FengUI"
 TitleText.TextColor3 = config.AccentColor
 TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
@@ -807,7 +510,7 @@ CloseButton.BorderSizePixel = 0
 CloseButton.Position = UDim2.new(1, -25, 0, 7)
 CloseButton.Size = UDim2.new(0, 20, 0, 20)
 CloseButton.Font = Enum.Font.GothamBold
-CloseButton.Text = "3D"
+CloseButton.Text = "X"
 CloseButton.TextColor3 = Color3.fromRGB(255, 60, 60)
 CloseButton.TextSize = 16
 CloseButton.ZIndex = 10
@@ -817,7 +520,6 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 4)
 CloseCorner.Parent = CloseButton
 
--- 修改关闭按钮的功能为切换3D模式
 CloseButton.MouseEnter:Connect(function()
     services.TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
         TextColor3 = Color3.fromRGB(255, 100, 100),
@@ -835,15 +537,40 @@ CloseButton.MouseLeave:Connect(function()
 end)
 
 CloseButton.MouseButton1Click:Connect(function()
-    if FengUI.is3DMode then
-        disable3DProjectorMode()
-        CloseButton.Text = "3D"
-        CloseButton.TextColor3 = Color3.fromRGB(255, 60, 60)
-    else
-        enable3DProjectorMode()
-        CloseButton.Text = "2D"
-        CloseButton.TextColor3 = Color3.fromRGB(0, 200, 255)
-    end
+    services.TweenService:Create(CloseButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        TextColor3 = Color3.fromRGB(255, 30, 30),
+        TextSize = 14,
+        Position = UDim2.new(1, -24, 0, 8)
+    }):Play()
+    
+    services.TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        Position = UDim2.new(0.5, 0, 0.3, 0),
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0, 10, 0, 10)
+    }):Play()
+    
+    services.TweenService:Create(MainStroke, TweenInfo.new(0.4), {
+        Transparency = 1
+    }):Play()
+    
+    services.TweenService:Create(neonStroke, TweenInfo.new(0.4), {
+        Transparency = 1
+    }):Play()
+    
+    services.TweenService:Create(TitleBar, TweenInfo.new(0.4), {
+        BackgroundTransparency = 1
+    }):Play()
+    
+    services.TweenService:Create(TitleText, TweenInfo.new(0.4), {
+        TextTransparency = 1
+    }):Play()
+    
+    services.TweenService:Create(CloseButton, TweenInfo.new(0.4), {
+        TextTransparency = 1
+    }):Play()
+    
+    task.wait(0.4)
+    FengYu:Destroy()
 end)
 
 local Open = Instance.new("ImageButton")
@@ -1047,115 +774,241 @@ function FengUI.new(FengUI, name, theme)
         end
     end
 
-    local scriptName = name or "FengUI 3D"
+    local scriptName = name or "FengUI"
     TitleText.Text = scriptName
     
-    local window = {}
+    local window = {
+    tags = {},
+    tagObjects = {},
+    tagCount = 0,
+    maxTags = 3,
+    }
     
-    window.tags = {}
-    window.tagCount = 0
-    window.maxTags = 3
-    
-    function window:AddTag(text, bgColor, textColor)
-        if self.tagCount >= self.maxTags then
-            return nil
-        end
-        
-        bgColor = bgColor or Color3.fromRGB(60, 60, 80)
-        textColor = textColor or Color3.fromRGB(240, 245, 255)
-        
-        local Tag = Instance.new("TextLabel")
-        Tag.Name = "Tag_" .. text
-        Tag.Parent = TagContainer
-        Tag.BackgroundColor3 = bgColor
-        Tag.BackgroundTransparency = 0.3
-        Tag.Text = text
-        Tag.Font = Enum.Font.GothamSemibold
-        Tag.TextColor3 = textColor
-        Tag.TextSize = 11
-        Tag.TextWrapped = true
-        Tag.Size = UDim2.new(0, 50, 0, 20)
-        Tag.ZIndex = 6
-        
-        local TagCorner = Instance.new("UICorner")
-        TagCorner.CornerRadius = UDim.new(0, 6)
-        TagCorner.Parent = Tag
-        
-        local TagStroke = Instance.new("UIStroke")
-        TagStroke.Parent = Tag
-        TagStroke.Color = bgColor
-        TagStroke.Thickness = 1
-        TagStroke.Transparency = 0.5
-        
-        local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
-        Tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
-        
-        table.insert(self.tags, Tag)
-        self.tagCount = self.tagCount + 1
-        
-        UpdateTagContainerPosition()
-        
-        return {
-            Instance = Tag,
-            Text = Tag.Text,
-            Color = Tag.BackgroundColor3,
-            TextColor = Tag.TextColor3,
-            Destroy = function()
-                self:RemoveTag(#self.tags)
-            end,
-            Update = function(newText, newBgColor, newTextColor)
-                self:UpdateTag(#self.tags, newText, newBgColor, newTextColor)
-            end
-        }
+    function window:AddTag(text, bgColor, textColor, useNeonEffect)
+    if self.tagCount >= self.maxTags then
+        return nil
     end
     
-    function window:RemoveTag(index)
-        if index < 1 or index > #self.tags then return end
-        
-        local tag = self.tags[index]
-        if tag and tag.Parent then
-            tag:Destroy()
-            table.remove(self.tags, index)
-            self.tagCount = self.tagCount - 1
-            
-            for i, remainingTag in ipairs(self.tags) do
-                remainingTag.LayoutOrder = i
-            end
-            
-            UpdateTagContainerPosition()
-        end
-    end
+    bgColor = bgColor or Color3.fromRGB(60, 60, 80)
+    textColor = textColor or Color3.fromRGB(240, 245, 255)
+    useNeonEffect = useNeonEffect or false
     
-    function window:UpdateTag(index, text, bgColor, textColor)
-        if index < 1 or index > #self.tags then return end
+    local Tag = Instance.new("TextLabel")
+    Tag.Name = "Tag_" .. text
+    Tag.Parent = TagContainer
+    Tag.BackgroundColor3 = bgColor
+    Tag.BackgroundTransparency = 0.3
+    Tag.Text = text
+    Tag.Font = Enum.Font.GothamSemibold
+    Tag.TextColor3 = textColor
+    Tag.TextSize = 11
+    Tag.TextWrapped = true
+    Tag.Size = UDim2.new(0, 50, 0, 20)
+    Tag.ZIndex = 6
+    
+    local TagCorner = Instance.new("UICorner")
+    TagCorner.CornerRadius = UDim.new(0, 6)
+    TagCorner.Parent = Tag
+    
+    local TagStroke = Instance.new("UIStroke")
+    TagStroke.Parent = Tag
+    TagStroke.Color = bgColor
+    TagStroke.Thickness = 1
+    TagStroke.Transparency = 0.5
+    
+    local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
+    Tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
+    
+    local tagObj = {
+        Instance = Tag,
+        Stroke = TagStroke,
+        Text = text,
+        Color = bgColor,
+        TextColor = textColor,
+        UseNeonEffect = false,
         
-        local tag = self.tags[index]
-        if tag and tag.Parent then
-            if text then
-                tag.Text = text
-                local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
-                tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
+        RainbowBackgroundConnection = nil,
+        RainbowBorderConnection = nil,
+        PulseConnection = nil,
+        InnerGlow = nil,
+        
+        Destroy = function()
+            if tagObj.RainbowBackgroundConnection then
+                tagObj.RainbowBackgroundConnection:Disconnect()
+                tagObj.RainbowBackgroundConnection = nil
             end
             
-            if bgColor then
-                tag.BackgroundColor3 = bgColor
-                if tag:FindFirstChild("UIStroke") then
-                    tag.UIStroke.Color = bgColor
+            if tagObj.RainbowBorderConnection then
+                tagObj.RainbowBorderConnection:Disconnect()
+                tagObj.RainbowBorderConnection = nil
+            end
+            
+            if tagObj.PulseConnection then
+                tagObj.PulseConnection:Disconnect()
+                tagObj.PulseConnection = nil
+            end
+            
+            if tagObj.InnerGlow then
+                tagObj.InnerGlow:Destroy()
+                tagObj.InnerGlow = nil
+            end
+            
+            Tag:Destroy()
+        end,
+        
+        Update = function(newText, newBgColor, newTextColor, newUseNeonEffect)
+            if newText then
+                Tag.Text = newText
+                tagObj.Text = newText
+                local textSize = game:GetService("TextService"):GetTextSize(newText, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
+                Tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
+            end
+            
+            if newBgColor then
+                tagObj.Color = newBgColor
+                if not tagObj.UseNeonEffect then
+                    Tag.BackgroundColor3 = newBgColor
+                    TagStroke.Color = newBgColor
                 end
             end
             
-            if textColor then
-                tag.TextColor3 = textColor
+            if newTextColor then
+                Tag.TextColor3 = newTextColor
+                tagObj.TextColor = newTextColor
+            end
+            
+            if newUseNeonEffect ~= nil then
+                tagObj:SetNeonEffect(newUseNeonEffect)
             end
             
             UpdateTagContainerPosition()
+        end,
+        
+        SetNeonEffect = function(selfObj, enabled)
+            if selfObj.RainbowBackgroundConnection then
+                selfObj.RainbowBackgroundConnection:Disconnect()
+                selfObj.RainbowBackgroundConnection = nil
+            end
+            
+            if selfObj.RainbowBorderConnection then
+                selfObj.RainbowBorderConnection:Disconnect()
+                selfObj.RainbowBorderConnection = nil
+            end
+            
+            if selfObj.PulseConnection then
+                selfObj.PulseConnection:Disconnect()
+                selfObj.PulseConnection = nil
+            end
+            
+            if selfObj.InnerGlow then
+                selfObj.InnerGlow:Destroy()
+                selfObj.InnerGlow = nil
+            end
+            
+            selfObj.UseNeonEffect = enabled
+            
+            if enabled then
+                selfObj.RainbowBackgroundConnection = createRainbowFlowEffect(Tag, "BackgroundColor3", 0.01)
+                selfObj.RainbowBorderConnection = createRainbowFlowEffect(TagStroke, "Color", 0.015)
+                selfObj.PulseConnection = createPulseGlow(TagStroke)
+                
+                local innerGlow = Instance.new("UIGradient")
+                innerGlow.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 100)),
+                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 255, 100)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 255))
+                })
+                innerGlow.Rotation = 90
+                innerGlow.Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 0.7),
+                    NumberSequenceKeypoint.new(0.5, 0.3),
+                    NumberSequenceKeypoint.new(1, 0.7)
+                })
+                innerGlow.Parent = Tag
+                selfObj.InnerGlow = innerGlow
+            else
+                Tag.BackgroundColor3 = selfObj.Color
+                Tag.TextColor3 = selfObj.TextColor
+                TagStroke.Color = selfObj.Color
+                TagStroke.Transparency = 0.5
+                
+                for _, child in ipairs(Tag:GetChildren()) do
+                    if child:IsA("UIGradient") and child.Name ~= "InnerGlow" then
+                        child:Destroy()
+                    end
+                end
+            end
+        end,
+        
+        SetColor = function(selfObj, newColor)
+            selfObj.Color = newColor
+            
+            if not selfObj.UseNeonEffect then
+                Tag.BackgroundColor3 = newColor
+                TagStroke.Color = newColor
+            else
+            end
+        end
+    }
+    
+    if useNeonEffect then
+        tagObj:SetNeonEffect(true)
+    else
+        Tag.BackgroundColor3 = tagObj.Color
+        TagStroke.Color = tagObj.Color
+    end
+    
+    table.insert(self.tags, Tag)
+    table.insert(self.tagObjects, tagObj)
+    self.tagCount = self.tagCount + 1
+    
+    UpdateTagContainerPosition()
+    
+    return tagObj
+end
+
+function window:UpdateTag(index, text, bgColor, textColor, useNeonEffect)
+    if index < 1 or index > #self.tagObjects then return end
+    
+    local tagObj = self.tagObjects[index]
+    if not tagObj or not tagObj.Instance or not tagObj.Instance.Parent then return end
+    
+    local Tag = tagObj.Instance
+    local TagStroke = tagObj.Stroke
+    
+    if text then
+        Tag.Text = text
+        tagObj.Text = text
+        local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
+        Tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
+    end
+    
+    if bgColor then
+        tagObj.Color = bgColor
+        if not tagObj.UseNeonEffect then
+            Tag.BackgroundColor3 = bgColor
+            TagStroke.Color = bgColor
         end
     end
     
+    if textColor then
+        Tag.TextColor3 = textColor
+        tagObj.TextColor = textColor
+    end
+    
+    if useNeonEffect ~= nil then
+        tagObj:SetNeonEffect(useNeonEffect)
+    end
+    
+    UpdateTagContainerPosition()
+end
+    
     function window:ClearTags()
-        for i = #self.tags, 1, -1 do
-            self:RemoveTag(i)
-        end
+    for i = #self.tagObjects, 1, -1 do
+        self:RemoveTag(i)
+    end
+    
+        self.tagCount = 0
     end
     
     function window.Tab(window, name, icon, windowCount)
@@ -1246,7 +1099,15 @@ function FengUI.new(FengUI, name, theme)
         TabIco.BackgroundTransparency = 1
         TabIco.BorderSizePixel = 0
         TabIco.Size = UDim2.new(0, 22, 0, 22)
-        TabIco.Image = "rbxassetid://84830962019412"
+        
+        if icon and type(icon) == "string" and icon:match("^%d+$") then
+            TabIco.Image = "rbxassetid://" .. icon
+        elseif icon and type(icon) == "string" then
+            TabIco.Image = icon
+        else
+            TabIco.Image = "rbxassetid://84830962019412"
+        end
+        
         TabIco.ImageTransparency = 0.5
         
         startNeonFlowEffect(TabIco, "ImageColor3", 0.005)
@@ -3010,270 +2871,283 @@ function FengUI.new(FengUI, name, theme)
             end
                     
             function section.Dropdown(section, text, flag, options, callback)
-                local callback = callback or function() end
-                local options = options or {}
-                assert(text, "No text provided")
-                assert(flag, "No flag provided")
-                FengUI.flags[flag] = nil
-                
-                local DropdownModule = Instance.new("Frame")
-                local DropdownTop = Instance.new("TextButton")
-                local DropdownTopC = Instance.new("UICorner")
-                local DropdownOpenFrame = Instance.new("Frame")
-                local DropdownOpenFrameC = Instance.new("UICorner")
-                local DropdownOpen = Instance.new("TextButton")
-                local DropdownText = Instance.new("TextBox")
-                local DropdownModuleL = Instance.new("UIListLayout")
-                
-                DropdownModule.Name = "DropdownModule"
-                DropdownModule.Parent = Objs
-                DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                DropdownModule.BackgroundTransparency = 1.000
-                DropdownModule.BorderSizePixel = 0
-                DropdownModule.ClipsDescendants = true
-                DropdownModule.Position = UDim2.new(0, 0, 0, 0)
-                DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
-                
-                DropdownTop.Name = "DropdownTop"
-                DropdownTop.Parent = DropdownModule
-                DropdownTop.BackgroundColor3 = config.Dropdown_Color
-                DropdownTop.BackgroundTransparency = 0.2
-                DropdownTop.BorderSizePixel = 0
-                DropdownTop.Size = UDim2.new(0, elementWidth, 0, 36)
-                DropdownTop.AutoButtonColor = false
-                DropdownTop.Font = Enum.Font.GothamSemibold
-                DropdownTop.Text = ""
-                DropdownTop.TextColor3 = config.TextColor
-                DropdownTop.TextSize = 14.000
-                DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
-                
-                DropdownTopC.CornerRadius = UDim.new(0, 6)
-                DropdownTopC.Name = "DropdownTopC"
-                DropdownTopC.Parent = DropdownTop
-                
-                local BackgroundFill = Instance.new("Frame")
-                BackgroundFill.Name = "BackgroundFill"
-                BackgroundFill.Parent = DropdownTop
-                BackgroundFill.BackgroundColor3 = config.Dropdown_Color
-                BackgroundFill.BorderSizePixel = 0
-                BackgroundFill.Position = UDim2.new(0.75, 0, 0, 0)
-                BackgroundFill.Size = UDim2.new(0.25, 0, 1, 0)
-                BackgroundFill.ZIndex = 0
-                
-                local dropdownFramePosition = 0.80
-                local separatorPosition = 0.74
-                if windowCount == 2 then
-                    dropdownFramePosition = 0.71
-                    separatorPosition = 0.65
-                end
-                
-                DropdownOpenFrame.Name = "DropdownOpenFrame"
-                DropdownOpenFrame.Parent = DropdownTop
-                DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
-                DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
-                DropdownOpenFrame.BorderSizePixel = 0
-                DropdownOpenFrame.Position = UDim2.new(dropdownFramePosition, 0, 0.5, 0)
-                DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 22)
-                DropdownOpenFrame.ZIndex = 2
-                
-                DropdownOpenFrameC.CornerRadius = UDim.new(0, 4)
-                DropdownOpenFrameC.Name = "DropdownOpenFrameC"
-                DropdownOpenFrameC.Parent = DropdownOpenFrame
-                
-                DropdownOpen.Name = "DropdownOpen"
-                DropdownOpen.Parent = DropdownOpenFrame
-                DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                DropdownOpen.BackgroundTransparency = 1.000
-                DropdownOpen.BorderSizePixel = 0
-                DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
-                DropdownOpen.Font = Enum.Font.GothamSemibold
-                DropdownOpen.Text = "选择"
-                DropdownOpen.TextColor3 = config.TextColor
-                DropdownOpen.TextSize = 11.000
-                DropdownOpen.TextWrapped = true
-                DropdownOpen.ZIndex = 3
-                
-                DropdownText.Name = "DropdownText"
-                DropdownText.Parent = DropdownTop
-                DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                DropdownText.BackgroundTransparency = 1.000
-                DropdownText.BorderSizePixel = 0
-                DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
-                DropdownText.Size = UDim2.new(0, 230, 0, 36)
-                DropdownText.Font = Enum.Font.GothamSemibold
-                DropdownText.PlaceholderColor3 = config.SecondaryTextColor
-                DropdownText.PlaceholderText = text
-                DropdownText.Text = ""
-                DropdownText.TextColor3 = config.TextColor
-                DropdownText.TextSize = 14.000
-                DropdownText.TextXAlignment = Enum.TextXAlignment.Left
-                DropdownText.ZIndex = 2
-                
-                local Separator = Instance.new("Frame")
-                Separator.Name = "Separator"
-                Separator.Parent = DropdownTop
-                Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-                Separator.BorderSizePixel = 0
-                Separator.Position = UDim2.new(separatorPosition, 0, 0.2, 0)
-                Separator.Size = UDim2.new(0, 1, 0, 22)
-                Separator.ZIndex = 1
-                
-                DropdownModuleL.Name = "DropdownModuleL"
-                DropdownModuleL.Parent = DropdownModule
-                DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
-                DropdownModuleL.Padding = UDim.new(0, 4)
-                
-                local allOptions = {}
-                
-                local function updateDropdownHeight()
-                    if not open then return end
-                    
-                    local visibleCount = 0
-                    for _, option in pairs(allOptions) do
-                        if option and option.Parent and option.Visible then
-                            visibleCount = visibleCount + 1
-                        end
-                    end
-                    
-                    if visibleCount == 0 then
-                        DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36 + 28)
-                    else
-                        local totalHeight = 36 + (visibleCount * 28) + 4
-                        DropdownModule.Size = UDim2.new(0, elementWidth, 0, totalHeight)
-                    end
-                end
-                
-                local function setAllVisible()
-                    for _, option in pairs(allOptions) do
-                        if option then
-                            option.Visible = true
-                        end
-                    end
-                    updateDropdownHeight()
-                end
-                
-                local function searchDropdown(text)
-                    local visibleCount = 0
-                    
-                    for _, option in pairs(allOptions) do
-                        if option then
-                            if text == "" then
-                                option.Visible = true
-                            else
-                                option.Visible = option.Text:lower():match(text:lower()) ~= nil
-                            end
-                            
-                            if option.Visible then
-                                visibleCount = visibleCount + 1
-                            end
-                        end
-                    end
-                    
-                    if visibleCount == 0 and text ~= "" then
-                    end
-                    
-                    updateDropdownHeight()
-                end
-                
-                local open = false
-                local function toggleDropdown()
-                    open = not open
-                    DropdownOpen.Text = open and "取消" or "选择"
-                    
-                    if open then
-                        setAllVisible()
-                        updateDropdownHeight()
-                    else
-                        DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
-                    end
-                    
-                    create3DFlipAnimation(DropdownOpenFrame, 0.3)
-                end
-                
-                DropdownOpen.MouseButton1Click:Connect(toggleDropdown)
-                
-                DropdownText.Focused:Connect(function()
-                    if not open then
-                        toggleDropdown()
-                    end
-                end)
-                
-                DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
-                    if open then
-                        searchDropdown(DropdownText.Text)
-                    end
-                end)
-                
-                DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    updateDropdownHeight()
-                end)
-                
-                local funcs = {}
-                
-                funcs.AddOption = function(self, optionText)
-                    local Option = Instance.new("TextButton")
-                    local OptionC = Instance.new("UICorner")
-                    
-                    Option.Name = "Option_" .. optionText
-                    Option.Parent = DropdownModule
-                    Option.BackgroundColor3 = config.TabColor
-                    Option.BackgroundTransparency = 0.2
-                    Option.BorderSizePixel = 0
-                    Option.Position = UDim2.new(0, 0, 0.328125, 0)
-                    Option.Size = UDim2.new(0, elementWidth - 20, 0, 24)
-                    Option.AutoButtonColor = false
-                    Option.Font = Enum.Font.Gotham
-                    Option.Text = optionText
-                    Option.TextColor3 = config.TextColor
-                    Option.TextSize = 13.000
-                    Option.Visible = open
-                    
-                    OptionC.CornerRadius = UDim.new(0, 6)
-                    OptionC.Name = "OptionC"
-                    OptionC.Parent = Option
-                    
-                    table.insert(allOptions, Option)
-                    
-                    Option.MouseButton1Click:Connect(function()
-                        toggleDropdown()
-                        callback(Option.Text)
-                        DropdownText.Text = Option.Text
-                        FengUI.flags[flag] = Option.Text
-                    end)
-                    
-                    updateDropdownHeight()
-                end
-                
-                funcs.RemoveOption = function(self, optionText)
-                    for i, option in pairs(allOptions) do
-                        if option and option.Text == optionText then
-                            option:Destroy()
-                            table.remove(allOptions, i)
-                            break
-                        end
-                    end
-                    updateDropdownHeight()
-                end
-                
-                funcs.SetOptions = function(self, newOptions)
-                    for _, option in pairs(allOptions) do
-                        if option then
-                            option:Destroy()
-                        end
-                    end
-                    allOptions = {}
-                    
-                    for _, optionText in pairs(newOptions) do
-                        funcs:AddOption(optionText)
-                    end
-                    
-                    updateDropdownHeight()
-                end
-                
-                funcs:SetOptions(options)
-                
-                return funcs
+    local callback = callback or function() end
+    local options = options or {}
+    assert(text, "No text provided")
+    assert(flag, "No flag provided")
+    FengUI.flags[flag] = nil
+    
+    local DropdownModule = Instance.new("Frame")
+    local DropdownTop = Instance.new("TextButton")
+    local DropdownTopC = Instance.new("UICorner")
+    local DropdownOpenFrame = Instance.new("Frame")
+    local DropdownOpenFrameC = Instance.new("UICorner")
+    local DropdownOpen = Instance.new("TextButton")
+    local DropdownText = Instance.new("TextBox")
+    
+    DropdownModule.Name = "DropdownModule"
+    DropdownModule.Parent = Objs
+    DropdownModule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    DropdownModule.BackgroundTransparency = 1.000
+    DropdownModule.BorderSizePixel = 0
+    DropdownModule.ClipsDescendants = true
+    DropdownModule.Position = UDim2.new(0, 0, 0, 0)
+    DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
+    
+    DropdownTop.Name = "DropdownTop"
+    DropdownTop.Parent = DropdownModule
+    DropdownTop.BackgroundColor3 = config.Dropdown_Color
+    DropdownTop.BackgroundTransparency = 0.2
+    DropdownTop.BorderSizePixel = 0
+    DropdownTop.Size = UDim2.new(1, 0, 0, 36)
+    DropdownTop.AutoButtonColor = false
+    DropdownTop.Font = Enum.Font.GothamSemibold
+    DropdownTop.Text = ""
+    DropdownTop.TextColor3 = config.TextColor
+    DropdownTop.TextSize = 14.000
+    DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
+    
+    DropdownTopC.CornerRadius = UDim.new(0, 6)
+    DropdownTopC.Name = "DropdownTopC"
+    DropdownTopC.Parent = DropdownTop
+    
+    local BackgroundFill = Instance.new("Frame")
+    BackgroundFill.Name = "BackgroundFill"
+    BackgroundFill.Parent = DropdownTop
+    BackgroundFill.BackgroundColor3 = config.Dropdown_Color
+    BackgroundFill.BorderSizePixel = 0
+    BackgroundFill.Position = UDim2.new(0.75, 0, 0, 0)
+    BackgroundFill.Size = UDim2.new(0.25, 0, 1, 0)
+    BackgroundFill.ZIndex = 0
+    
+    local dropdownFramePosition = 0.80
+    local separatorPosition = 0.74
+    if windowCount == 2 then
+        dropdownFramePosition = 0.71
+        separatorPosition = 0.65
+    end
+    
+    DropdownOpenFrame.Name = "DropdownOpenFrame"
+    DropdownOpenFrame.Parent = DropdownTop
+    DropdownOpenFrame.AnchorPoint = Vector2.new(0, 0.5)
+    DropdownOpenFrame.BackgroundColor3 = config.Bg_Color
+    DropdownOpenFrame.BorderSizePixel = 0
+    DropdownOpenFrame.Position = UDim2.new(dropdownFramePosition, 0, 0.5, 0)
+    DropdownOpenFrame.Size = UDim2.new(0, 35, 0, 22)
+    DropdownOpenFrame.ZIndex = 2
+    
+    DropdownOpenFrameC.CornerRadius = UDim.new(0, 6)
+    DropdownOpenFrameC.Name = "DropdownOpenFrameC"
+    DropdownOpenFrameC.Parent = DropdownOpenFrame
+    
+    DropdownOpen.Name = "DropdownOpen"
+    DropdownOpen.Parent = DropdownOpenFrame
+    DropdownOpen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    DropdownOpen.BackgroundTransparency = 1.000
+    DropdownOpen.BorderSizePixel = 0
+    DropdownOpen.Size = UDim2.new(1, 0, 1, 0)
+    DropdownOpen.Font = Enum.Font.GothamSemibold
+    DropdownOpen.Text = "选择"
+    DropdownOpen.TextColor3 = config.TextColor
+    DropdownOpen.TextSize = 11.000
+    DropdownOpen.TextWrapped = true
+    DropdownOpen.ZIndex = 3
+    
+    DropdownText.Name = "DropdownText"
+    DropdownText.Parent = DropdownTop
+    DropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    DropdownText.BackgroundTransparency = 1.000
+    DropdownText.BorderSizePixel = 0
+    DropdownText.Position = UDim2.new(0.037, 0, 0, 0)
+    DropdownText.Size = UDim2.new(0, 230, 1, 0)
+    DropdownText.Font = Enum.Font.GothamSemibold
+    DropdownText.PlaceholderColor3 = config.SecondaryTextColor
+    DropdownText.PlaceholderText = text
+    DropdownText.Text = ""
+    DropdownText.TextColor3 = config.TextColor
+    DropdownText.TextSize = 14.000
+    DropdownText.TextXAlignment = Enum.TextXAlignment.Left
+    DropdownText.ZIndex = 2
+    
+    local Separator = Instance.new("Frame")
+    Separator.Name = "Separator"
+    Separator.Parent = DropdownTop
+    Separator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    Separator.BorderSizePixel = 0
+    Separator.Position = UDim2.new(separatorPosition, 0, 0.2, 0)
+    Separator.Size = UDim2.new(0, 1, 0, 22)
+    Separator.ZIndex = 1
+    
+    local OptionsContainer = Instance.new("Frame")
+    OptionsContainer.Name = "OptionsContainer"
+    OptionsContainer.Parent = DropdownModule
+    OptionsContainer.BackgroundTransparency = 1
+    OptionsContainer.BorderSizePixel = 0
+    OptionsContainer.Position = UDim2.new(0, 0, 1, 4) -- 在DropdownTop下面
+    OptionsContainer.Size = UDim2.new(1, 0, 0, 0) -- 初始高度为0
+    OptionsContainer.ClipsDescendants = true
+    
+    local OptionsLayout = Instance.new("UIListLayout")
+    OptionsLayout.Name = "OptionsLayout"
+    OptionsLayout.Parent = OptionsContainer
+    OptionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    OptionsLayout.Padding = UDim.new(0, 4)
+    
+    local allOptions = {}
+    local open = false
+    
+    local function updateDropdownHeight()
+        if not open then 
+            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
+            OptionsContainer.Size = UDim2.new(1, 0, 0, 0)
+            return 
+        end
+        
+        local visibleCount = 0
+        for _, option in pairs(allOptions) do
+            if option and option.Parent and option.Visible then
+                visibleCount = visibleCount + 1
             end
+        end
+        
+        if visibleCount == 0 then
+            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
+            OptionsContainer.Size = UDim2.new(1, 0, 0, 0)
+        else
+            local optionHeight = 24
+            local padding = 4
+            local totalHeight = 36 + (visibleCount * (optionHeight + padding)) + 4
+            DropdownModule.Size = UDim2.new(0, elementWidth, 0, totalHeight)
+            OptionsContainer.Size = UDim2.new(1, 0, 0, visibleCount * (optionHeight + padding))
+        end
+    end
+    
+    local function setAllVisible()
+        for _, option in pairs(allOptions) do
+            if option then
+                option.Visible = true
+            end
+        end
+        updateDropdownHeight()
+    end
+    
+    local function searchDropdown(text)
+        local visibleCount = 0
+        
+        for _, option in pairs(allOptions) do
+            if option then
+                if text == "" then
+                    option.Visible = true
+                else
+                    option.Visible = option.Text:lower():match(text:lower()) ~= nil
+                end
+                
+                if option.Visible then
+                    visibleCount = visibleCount + 1
+                end
+            end
+        end
+        
+        updateDropdownHeight()
+    end
+    
+    local function toggleDropdown()
+        open = not open
+        DropdownOpen.Text = open and "取消" or "选择"
+        
+        if open then
+            setAllVisible()
+        end
+        
+        updateDropdownHeight()
+        create3DFlipAnimation(DropdownOpenFrame, 0.3)
+    end
+    
+    DropdownOpen.MouseButton1Click:Connect(toggleDropdown)
+    
+    DropdownText.Focused:Connect(function()
+        if not open then
+            toggleDropdown()
+        end
+    end)
+    
+    DropdownText:GetPropertyChangedSignal("Text"):Connect(function()
+        if open then
+            searchDropdown(DropdownText.Text)
+        end
+    end)
+    
+    OptionsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        if open then
+            updateDropdownHeight()
+        end
+    end)
+    
+    local funcs = {}
+    
+    funcs.AddOption = function(self, optionText)
+        local Option = Instance.new("TextButton")
+        local OptionC = Instance.new("UICorner")
+        
+        Option.Name = "Option_" .. optionText
+        Option.Parent = OptionsContainer
+        Option.BackgroundColor3 = config.TabColor
+        Option.BackgroundTransparency = 0.2
+        Option.BorderSizePixel = 0
+        Option.Size = UDim2.new(1, 0, 0, 24)
+        Option.AutoButtonColor = false
+        Option.Font = Enum.Font.Gotham
+        Option.Text = optionText
+        Option.TextColor3 = config.TextColor
+        Option.TextSize = 13.000
+        Option.Visible = open
+        
+        OptionC.CornerRadius = UDim.new(0, 6)
+        OptionC.Name = "OptionC"
+        OptionC.Parent = Option
+        
+        table.insert(allOptions, Option)
+        
+        Option.MouseButton1Click:Connect(function()
+            toggleDropdown()
+            callback(Option.Text)
+            DropdownText.Text = Option.Text
+            FengUI.flags[flag] = Option.Text
+        end)
+        
+        updateDropdownHeight()
+    end
+    
+    funcs.RemoveOption = function(self, optionText)
+        for i, option in pairs(allOptions) do
+            if option and option.Text == optionText then
+                option:Destroy()
+                table.remove(allOptions, i)
+                break
+            end
+        end
+        updateDropdownHeight()
+    end
+    
+    funcs.SetOptions = function(self, newOptions)
+        for _, option in pairs(allOptions) do
+            if option then
+                option:Destroy()
+            end
+        end
+        allOptions = {}
+        
+        for _, optionText in pairs(newOptions) do
+            funcs:AddOption(optionText)
+        end
+        
+        updateDropdownHeight()
+    end
+    
+    funcs:SetOptions(options)
+    
+    return funcs
+end
 
             return section
         end
@@ -3282,6 +3156,10 @@ function FengUI.new(FengUI, name, theme)
     end
     
     function window:DualTab(name, icon)
+        if type(icon) == "number" then
+            icon = tostring(icon)
+        end
+        
         return window:Tab(name, icon, 2)
     end
 
@@ -3497,386 +3375,383 @@ function FengUI:CreateColorPicker(options)
     CurrentColorFrame.Position = UDim2.new(0.52, 0, 0, 0)
     CurrentColorFrame.BackgroundTransparency = 0
     CurrentColorFrame.ZIndex = 1002
-    
-    local CurrentColorFrameCorner = Instance.new("UICorner")
-    CurrentColorFrameCorner.CornerRadius = UDim.new(0, 4)
-    CurrentColorFrameCorner.Parent = CurrentColorFrame
-    
-    local CurrentColorLabel = Instance.new("TextLabel")
-    CurrentColorLabel.Name = "CurrentColorLabel"
-    CurrentColorLabel.Parent = CurrentColorFrame
-    CurrentColorLabel.BackgroundTransparency = 1
-    CurrentColorLabel.Size = UDim2.new(1, 0, 1, 0)
-    CurrentColorLabel.Font = Enum.Font.Gotham
-    CurrentColorLabel.Text = "新色"
-    CurrentColorLabel.TextColor3 = Color3.new(1, 1, 1)
-    CurrentColorLabel.TextSize = 12
-    CurrentColorLabel.TextXAlignment = Enum.TextXAlignment.Center
-    CurrentColorLabel.ZIndex = 1003
-    
-    local ButtonContainer = Instance.new("Frame")
-    ButtonContainer.Name = "ButtonContainer"
-    ButtonContainer.Parent = ColorPickerPopup
-    ButtonContainer.BackgroundTransparency = 1
-    ButtonContainer.Position = UDim2.new(0, 15, 1, -40)
-    ButtonContainer.Size = UDim2.new(1, -30, 0, 30)
-    ButtonContainer.ZIndex = 1001
-    
-    local ConfirmBtn = Instance.new("TextButton")
-    ConfirmBtn.Name = "ConfirmBtn"
-    ConfirmBtn.Parent = ButtonContainer
-    ConfirmBtn.BackgroundColor3 = config.AccentColor or Color3.fromRGB(255, 60, 60)
-    ConfirmBtn.BackgroundTransparency = 0.1
-    ConfirmBtn.BorderSizePixel = 0
-    ConfirmBtn.Position = UDim2.new(0, 0, 0, 0)
-    ConfirmBtn.Size = UDim2.new(0.48, 0, 1, 0)
-    ConfirmBtn.Font = Enum.Font.GothamBold
-    ConfirmBtn.Text = "确认"
-    ConfirmBtn.TextColor3 = Color3.new(1, 1, 1)
-    ConfirmBtn.TextSize = 14
-    ConfirmBtn.AutoButtonColor = true
-    ConfirmBtn.ZIndex = 1002
-    ConfirmBtn.Modal = true
-    
-    local ConfirmCorner = Instance.new("UICorner")
-    ConfirmCorner.CornerRadius = UDim.new(0, 6)
-    ConfirmCorner.Parent = ConfirmBtn
-    
-    local CancelBtn = Instance.new("TextButton")
-    CancelBtn.Name = "CancelBtn"
-    CancelBtn.Parent = ButtonContainer
-    CancelBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 90)
-    CancelBtn.BackgroundTransparency = 0.1
-    CancelBtn.BorderSizePixel = 0
-    CancelBtn.Position = UDim2.new(0.52, 0, 0, 0)
-    CancelBtn.Size = UDim2.new(0.48, 0, 1, 0)
-    CancelBtn.Font = Enum.Font.GothamBold
-    CancelBtn.Text = "取消"
-    CancelBtn.TextColor3 = Color3.new(1, 1, 1)
-    CancelBtn.TextSize = 14
-    CancelBtn.AutoButtonColor = true
-    CancelBtn.ZIndex = 1002
-    CancelBtn.Modal = true
-    
-    local CancelCorner = Instance.new("UICorner")
-    CancelCorner.CornerRadius = UDim.new(0, 6)
-    CancelCorner.Parent = CancelBtn
-    
-    local currentColor = config.defaultColor
-    local currentHue, currentSat, currentVib = Color3.toHSV(config.defaultColor)
-    
-    local function updateDisplay()
-        SatVibMap.BackgroundColor3 = Color3.fromHSV(currentHue, 1, 1)
-        
-        local cursorX = currentSat
-        local cursorY = 1 - currentVib
-        SatCursor.Position = UDim2.new(cursorX, -8, cursorY, -8)
-        
-        HueDrag.Position = UDim2.new(0, 0, currentHue, -7)
-        
-        currentColor = Color3.fromHSV(currentHue, currentSat, currentVib)
-        CurrentColorFrame.BackgroundColor3 = currentColor
-        
-        local oldBrightness = (OldColorFrame.BackgroundColor3.R * 0.299 + OldColorFrame.BackgroundColor3.G * 0.587 + OldColorFrame.BackgroundColor3.B * 0.114)
-        OldColorLabel.TextColor3 = oldBrightness > 0.5 and Color3.new(0, 0, 0) or Color3.new(1, 1, 1)
-        
-        local currentBrightness = (currentColor.R * 0.299 + currentColor.G * 0.587 + currentColor.B * 0.114)
-        CurrentColorLabel.TextColor3 = currentBrightness > 0.5 and Color3.new(0, 0, 0) or Color3.new(1, 1, 1)
-        
-        local rgb = {
-            R = math.floor(currentColor.R * 255),
-            G = math.floor(currentColor.G * 255),
-            B = math.floor(currentColor.B * 255)
-        }
-        
-        HexInput.Text = "#" .. currentColor:ToHex()
-        RInput.Text = tostring(rgb.R)
-        GInput.Text = tostring(rgb.G)
-        BInput.Text = tostring(rgb.B)
-    end
-    
-    local function setupInteraction()
-        local satVibDragging = false
-        
-        local function updateSatVib(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                satVibDragging = true
                 
-                local connection
-                connection = services.RunService.RenderStepped:Connect(function()
-                    if not satVibDragging then
-                        connection:Disconnect()
-                        return
-                    end
-                    
-                    local mouse = services.Players.LocalPlayer:GetMouse()
-                    local minX = SatVibMap.AbsolutePosition.X
-                    local maxX = minX + SatVibMap.AbsoluteSize.X
-                    local mouseX = math.clamp(mouse.X, minX, maxX)
-                    
-                    local minY = SatVibMap.AbsolutePosition.Y
-                    local maxY = minY + SatVibMap.AbsoluteSize.Y
-                    local mouseY = math.clamp(mouse.Y, minY, maxY)
-                    
-                    currentSat = (mouseX - minX) / (maxX - minX)
-                    currentVib = 1 - ((mouseY - minY) / (maxY - minY))
-                    
-                    updateDisplay()
-                end)
+                local CurrentColorFrameCorner = Instance.new("UICorner")
+                CurrentColorFrameCorner.CornerRadius = UDim.new(0, 4)
+                CurrentColorFrameCorner.Parent = CurrentColorFrame
                 
-                services.UserInputService.InputEnded:Connect(function(endInput)
-                    if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
-                        satVibDragging = false
-                    end
-                end)
-            end
-        end
-        
-        SatVibMap.InputBegan:Connect(updateSatVib)
-        SatCursor.InputBegan:Connect(updateSatVib)
-        
-        local hueDragging = false
-        
-        local function updateHue(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                hueDragging = true
+                local CurrentColorLabel = Instance.new("TextLabel")
+                CurrentColorLabel.Name = "CurrentColorLabel"
+                CurrentColorLabel.Parent = CurrentColorFrame
+                CurrentColorLabel.BackgroundTransparency = 1
+                CurrentColorLabel.Size = UDim2.new(1, 0, 1, 0)
+                CurrentColorLabel.Font = Enum.Font.Gotham
+                CurrentColorLabel.Text = "新色"
+                CurrentColorLabel.TextColor3 = Color3.new(1, 1, 1)
+                CurrentColorLabel.TextSize = 12
+                CurrentColorLabel.TextXAlignment = Enum.TextXAlignment.Center
+                CurrentColorLabel.ZIndex = 1003
                 
-                local connection
-                connection = services.RunService.RenderStepped:Connect(function()
-                    if not hueDragging then
-                        connection:Disconnect()
-                        return
-                    end
-                    
-                    local mouse = services.Players.LocalPlayer:GetMouse()
-                    local minY = HueSlider.AbsolutePosition.Y
-                    local maxY = minY + HueSlider.AbsoluteSize.Y
-                    local mouseY = math.clamp(mouse.Y, minY, maxY)
-                    
-                    currentHue = ((mouseY - minY) / (maxY - minY))
-                    
-                    updateDisplay()
-                end)
+                local ButtonContainer = Instance.new("Frame")
+                ButtonContainer.Name = "ButtonContainer"
+                ButtonContainer.Parent = ColorPickerPopup
+                ButtonContainer.BackgroundTransparency = 1
+                ButtonContainer.Position = UDim2.new(0, 15, 1, -40)
+                ButtonContainer.Size = UDim2.new(1, -30, 0, 30)
+                ButtonContainer.ZIndex = 1001
                 
-                services.UserInputService.InputEnded:Connect(function(endInput)
-                    if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
-                        hueDragging = false
-                    end
-                end)
-            end
-        end
-        
-        HueSlider.InputBegan:Connect(updateHue)
-        HueDragHolder.InputBegan:Connect(updateHue)
-        HueDrag.InputBegan:Connect(updateHue)
-    end
-    
-    local function setupRGBInputs()
-        local function validateRGBInput(inputBox, maxValue)
-            inputBox.FocusLost:Connect(function(enterPressed)
-                local text = inputBox.Text
+                local ConfirmBtn = Instance.new("TextButton")
+                ConfirmBtn.Name = "ConfirmBtn"
+                ConfirmBtn.Parent = ButtonContainer
+                ConfirmBtn.BackgroundColor3 = config.AccentColor or Color3.fromRGB(255, 60, 60)
+                ConfirmBtn.BackgroundTransparency = 0.1
+                ConfirmBtn.BorderSizePixel = 0
+                ConfirmBtn.Position = UDim2.new(0, 0, 0, 0)
+                ConfirmBtn.Size = UDim2.new(0.48, 0, 1, 0)
+                ConfirmBtn.Font = Enum.Font.GothamBold
+                ConfirmBtn.Text = "确认"
+                ConfirmBtn.TextColor3 = Color3.new(1, 1, 1)
+                ConfirmBtn.TextSize = 14
+                ConfirmBtn.AutoButtonColor = true
+                ConfirmBtn.ZIndex = 1002
+                ConfirmBtn.Modal = true
                 
-                if inputBox == HexInput then
-                    local hex = text:gsub("#", "")
-                    if hex:match("^[0-9A-Fa-f]+$") and #hex == 6 then
-                        local success, color = pcall(Color3.fromHex, hex)
-                        if success then
-                            currentHue, currentSat, currentVib = Color3.toHSV(color)
-                            updateDisplay()
-                            return
+                local ConfirmCorner = Instance.new("UICorner")
+                ConfirmCorner.CornerRadius = UDim.new(0, 6)
+                ConfirmCorner.Parent = ConfirmBtn
+                
+                local CancelBtn = Instance.new("TextButton")
+                CancelBtn.Name = "CancelBtn"
+                CancelBtn.Parent = ButtonContainer
+                CancelBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 90)
+                CancelBtn.BackgroundTransparency = 0.1
+                CancelBtn.BorderSizePixel = 0
+                CancelBtn.Position = UDim2.new(0.52, 0, 0, 0)
+                CancelBtn.Size = UDim2.new(0.48, 0, 1, 0)
+                CancelBtn.Font = Enum.Font.GothamBold
+                CancelBtn.Text = "取消"
+                CancelBtn.TextColor3 = Color3.new(1, 1, 1)
+                CancelBtn.TextSize = 14
+                CancelBtn.AutoButtonColor = true
+                CancelBtn.ZIndex = 1002
+                CancelBtn.Modal = true
+                
+                local CancelCorner = Instance.new("UICorner")
+                CancelCorner.CornerRadius = UDim.new(0, 6)
+                CancelCorner.Parent = CancelBtn
+                
+                local currentColor = config.defaultColor
+                local currentHue, currentSat, currentVib = Color3.toHSV(config.defaultColor)
+                
+                local function updateDisplay()
+                    SatVibMap.BackgroundColor3 = Color3.fromHSV(currentHue, 1, 1)
+                    
+                    local cursorX = currentSat
+                    local cursorY = 1 - currentVib
+                    SatCursor.Position = UDim2.new(cursorX, -8, cursorY, -8)
+                    
+                    HueDrag.Position = UDim2.new(0, 0, currentHue, -7)
+                    
+                    currentColor = Color3.fromHSV(currentHue, currentSat, currentVib)
+                    CurrentColorFrame.BackgroundColor3 = currentColor
+                    
+                    local oldBrightness = (OldColorFrame.BackgroundColor3.R * 0.299 + OldColorFrame.BackgroundColor3.G * 0.587 + OldColorFrame.BackgroundColor3.B * 0.114)
+                    OldColorLabel.TextColor3 = oldBrightness > 0.5 and Color3.new(0, 0, 0) or Color3.new(1, 1, 1)
+                    
+                    local currentBrightness = (currentColor.R * 0.299 + currentColor.G * 0.587 + currentColor.B * 0.114)
+                    CurrentColorLabel.TextColor3 = currentBrightness > 0.5 and Color3.new(0, 0, 0) or Color3.new(1, 1, 1)
+                    
+                    local rgb = {
+                        R = math.floor(currentColor.R * 255),
+                        G = math.floor(currentColor.G * 255),
+                        B = math.floor(currentColor.B * 255)
+                    }
+                    
+                    HexInput.Text = "#" .. currentColor:ToHex()
+                    RInput.Text = tostring(rgb.R)
+                    GInput.Text = tostring(rgb.G)
+                    BInput.Text = tostring(rgb.B)
+                end
+                
+                local function setupInteraction()
+                    local satVibDragging = false
+                    
+                    local function updateSatVib(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                            satVibDragging = true
+                            
+                            local connection
+                            connection = services.RunService.RenderStepped:Connect(function()
+                                if not satVibDragging then
+                                    connection:Disconnect()
+                                    return
+                                end
+                                
+                                local mouse = services.Players.LocalPlayer:GetMouse()
+                                local minX = SatVibMap.AbsolutePosition.X
+                                local maxX = minX + SatVibMap.AbsoluteSize.X
+                                local mouseX = math.clamp(mouse.X, minX, maxX)
+                                
+                                local minY = SatVibMap.AbsolutePosition.Y
+                                local maxY = minY + SatVibMap.AbsoluteSize.Y
+                                local mouseY = math.clamp(mouse.Y, minY, maxY)
+                                
+                                currentSat = (mouseX - minX) / (maxX - minX)
+                                currentVib = 1 - ((mouseY - minY) / (maxY - minY))
+                                
+                                updateDisplay()
+                            end)
+                            
+                            services.UserInputService.InputEnded:Connect(function(endInput)
+                                if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
+                                    satVibDragging = false
+                                end
+                            end)
                         end
                     end
-                    inputBox.Text = "#" .. currentColor:ToHex()
-                else
-                    local num = tonumber(text)
                     
-                    if num then
-                        num = math.clamp(num, 0, maxValue)
-                        inputBox.Text = tostring(num)
-                        
-                        local r = tonumber(RInput.Text) or 255
-                        local g = tonumber(GInput.Text) or 255
-                        local b = tonumber(BInput.Text) or 255
-                        local color = Color3.fromRGB(r, g, b)
-                        currentHue, currentSat, currentVib = Color3.toHSV(color)
-                        updateDisplay()
-                    else
-                        if inputBox == RInput then
-                            inputBox.Text = tostring(math.floor(currentColor.R * 255))
-                        elseif inputBox == GInput then
-                            inputBox.Text = tostring(math.floor(currentColor.G * 255))
-                        elseif inputBox == BInput then
-                            inputBox.Text = tostring(math.floor(currentColor.B * 255))
+                    SatVibMap.InputBegan:Connect(updateSatVib)
+                    SatCursor.InputBegan:Connect(updateSatVib)
+                    
+                    local hueDragging = false
+                    
+                    local function updateHue(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                            hueDragging = true
+                            
+                            local connection
+                            connection = services.RunService.RenderStepped:Connect(function()
+                                if not hueDragging then
+                                    connection:Disconnect()
+                                    return
+                                end
+                                
+                                local mouse = services.Players.LocalPlayer:GetMouse()
+                                local minY = HueSlider.AbsolutePosition.Y
+                                local maxY = minY + HueSlider.AbsoluteSize.Y
+                                local mouseY = math.clamp(mouse.Y, minY, maxY)
+                                
+                                currentHue = ((mouseY - minY) / (maxY - minY))
+                                
+                                updateDisplay()
+                            end)
+                            
+                            services.UserInputService.InputEnded:Connect(function(endInput)
+                                if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
+                                    hueDragging = false
+                                end
+                            end)
                         end
                     end
+                    
+                    HueSlider.InputBegan:Connect(updateHue)
+                    HueDragHolder.InputBegan:Connect(updateHue)
+                    HueDrag.InputBegan:Connect(updateHue)
                 end
-            end)
-        end
-    
-        validateRGBInput(HexInput, 255)
-        validateRGBInput(RInput, 255)
-        validateRGBInput(GInput, 255)
-        validateRGBInput(BInput, 255)
-    end
-    
-    updateDisplay()
-    setupInteraction()
-    setupRGBInputs()
-    
-    local colorPickerObj = {
-        Instance = ColorPickerPopup,
-        CurrentColor = currentColor,
-        Closed = false
-    }
-    
-    local pickerId = #FengUI.ColorPickers + 1
-    FengUI.ColorPickers[pickerId] = colorPickerObj
-    
-    local function closePicker(saveColor)
-        if colorPickerObj.Closed then return end
-        
-        colorPickerObj.Closed = true
-        
-        services.TweenService:Create(ColorPickerPopup, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            BackgroundTransparency = 0.8,
-            Size = UDim2.new(0, 10, 0, 10)
-        }):Play()
-        
-        task.wait(0.2)
-        
-        if saveColor then
-            config.callback(currentColor)
-        end
-        
-        ColorPickerPopup:Destroy()
-        FengUI.ColorPickers[pickerId] = nil
-    end
-    
-    ConfirmBtn.MouseButton1Click:Connect(function()
-        closePicker(true)
-    end)
-    
-    CancelBtn.MouseButton1Click:Connect(function()
-        closePicker(false)
-    end)
-    
-    local ClosePickerBtn = Instance.new("TextButton")
-    ClosePickerBtn.Name = "ClosePickerBtn"
-    ClosePickerBtn.Parent = ColorPickerPopup
-    ClosePickerBtn.BackgroundTransparency = 1
-    ClosePickerBtn.BorderSizePixel = 0
-    ClosePickerBtn.Position = UDim2.new(1, -25, 0, 5)
-    ClosePickerBtn.Size = UDim2.new(0, 20, 0, 20)
-    ClosePickerBtn.Font = Enum.Font.GothamBold
-    ClosePickerBtn.Text = "X"
-    ClosePickerBtn.TextColor3 = Color3.fromRGB(255, 60, 60)
-    ClosePickerBtn.TextSize = 16
-    ClosePickerBtn.ZIndex = 1002
-    
-    ClosePickerBtn.MouseButton1Click:Connect(function()
-        closePicker(false)
-    end)
-    
-    return colorPickerObj
-end
-
-function FengUI:ColorPicker(options)
-    return self:CreateColorPicker(options)
-end
-
-function FengUI:PickColor(title, defaultColor)
-    defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
-    
-    local colorSelected = false
-    local selectedColor = defaultColor
-    
-    local picker = self:CreateColorPicker({
-        title = title or "选择颜色",
-        defaultColor = defaultColor,
-        callback = function(color)
-            selectedColor = color
-            colorSelected = true
-        end,
-        position = UDim2.new(0.5, 0, 0.4, 0)
-    })
-    
-    while not picker.Closed do
-        task.wait()
-    end
-    
-    return selectedColor
-end
-
-function FengUI:BindColorPicker(button, options)
-    local currentColor = options.defaultColor or Color3.fromRGB(255, 255, 255)
-    
-    local previewFrame = Instance.new("Frame")
-    previewFrame.Name = "ColorPreview"
-    previewFrame.Parent = button
-    previewFrame.BackgroundColor3 = currentColor
-    previewFrame.BorderSizePixel = 0
-    previewFrame.Position = UDim2.new(0.8, 0, 0.2, 0)
-    previewFrame.Size = UDim2.new(0, 40, 0, 22)
-    
-    local previewCorner = Instance.new("UICorner")
-    previewCorner.CornerRadius = UDim.new(0, 4)
-    previewCorner.Parent = previewFrame
-    
-    button.MouseButton1Click:Connect(function()
-        local picker = FengUI:CreateColorPicker({
-            title = options.title or "选择颜色",
-            defaultColor = currentColor,
-            callback = function(color)
-                currentColor = color
-                previewFrame.BackgroundColor3 = color
-                if options.callback then
-                    options.callback(color)
+                
+                local function setupRGBInputs()
+                    local function validateRGBInput(inputBox, maxValue)
+                        inputBox.FocusLost:Connect(function(enterPressed)
+                            local text = inputBox.Text
+                            
+                            if inputBox == HexInput then
+                                local hex = text:gsub("#", "")
+                                if hex:match("^[0-9A-Fa-f]+$") and #hex == 6 then
+                                    local success, color = pcall(Color3.fromHex, hex)
+                                    if success then
+                                        currentHue, currentSat, currentVib = Color3.toHSV(color)
+                                        updateDisplay()
+                                        return
+                                    end
+                                end
+                                inputBox.Text = "#" .. currentColor:ToHex()
+                            else
+                                local num = tonumber(text)
+                                
+                                if num then
+                                    num = math.clamp(num, 0, maxValue)
+                                    inputBox.Text = tostring(num)
+                                    
+                                    local r = tonumber(RInput.Text) or 255
+                                    local g = tonumber(GInput.Text) or 255
+                                    local b = tonumber(BInput.Text) or 255
+                                    local color = Color3.fromRGB(r, g, b)
+                                    currentHue, currentSat, currentVib = Color3.toHSV(color)
+                                    updateDisplay()
+                                else
+                                    if inputBox == RInput then
+                                        inputBox.Text = tostring(math.floor(currentColor.R * 255))
+                                    elseif inputBox == GInput then
+                                        inputBox.Text = tostring(math.floor(currentColor.G * 255))
+                                    elseif inputBox == BInput then
+                                        inputBox.Text = tostring(math.floor(currentColor.B * 255))
+                                    end
+                                end
+                            end
+                        end)
+                    end
+                
+                    validateRGBInput(HexInput, 255)
+                    validateRGBInput(RInput, 255)
+                    validateRGBInput(GInput, 255)
+                    validateRGBInput(BInput, 255)
                 end
-            end,
-            position = UDim2.new(0.5, 0, 0.5, 0)
-        })
-    end)
-    
-    return {
-        GetColor = function()
-            return currentColor
-        end,
-        SetColor = function(color)
-            currentColor = color
-            previewFrame.BackgroundColor3 = color
-            if options.callback then
-                options.callback(color)
+                
+                updateDisplay()
+                setupInteraction()
+                setupRGBInputs()
+                
+                local colorPickerObj = {
+                    Instance = ColorPickerPopup,
+                    CurrentColor = currentColor,
+                    Closed = false
+                }
+                
+                local pickerId = #FengUI.ColorPickers + 1
+                FengUI.ColorPickers[pickerId] = colorPickerObj
+                
+                local function closePicker(saveColor)
+                    if colorPickerObj.Closed then return end
+                    
+                    colorPickerObj.Closed = true
+                    
+                    services.TweenService:Create(ColorPickerPopup, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                        BackgroundTransparency = 0.8,
+                        Size = UDim2.new(0, 10, 0, 10)
+                    }):Play()
+                    
+                    task.wait(0.2)
+                    
+                    if saveColor then
+                        config.callback(currentColor)
+                    end
+                    
+                    ColorPickerPopup:Destroy()
+                    FengUI.ColorPickers[pickerId] = nil
+                end
+                
+                ConfirmBtn.MouseButton1Click:Connect(function()
+                    closePicker(true)
+                end)
+                
+                CancelBtn.MouseButton1Click:Connect(function()
+                    closePicker(false)
+                end)
+                
+                local ClosePickerBtn = Instance.new("TextButton")
+                ClosePickerBtn.Name = "ClosePickerBtn"
+                ClosePickerBtn.Parent = ColorPickerPopup
+                ClosePickerBtn.BackgroundTransparency = 1
+                ClosePickerBtn.BorderSizePixel = 0
+                ClosePickerBtn.Position = UDim2.new(1, -25, 0, 5)
+                ClosePickerBtn.Size = UDim2.new(0, 20, 0, 20)
+                ClosePickerBtn.Font = Enum.Font.GothamBold
+                ClosePickerBtn.Text = "X"
+                ClosePickerBtn.TextColor3 = Color3.fromRGB(255, 60, 60)
+                ClosePickerBtn.TextSize = 16
+                ClosePickerBtn.ZIndex = 1002
+                
+                ClosePickerBtn.MouseButton1Click:Connect(function()
+                    closePicker(false)
+                end)
+                
+                return colorPickerObj
             end
-        end
-    }
-end
 
-function FengUI:CloseAllColorPickers()
-    for _, picker in pairs(FengUI.ColorPickers) do
-        if picker.Instance and picker.Instance.Parent then
-            picker.Instance:Destroy()
-        end
-    end
-    FengUI.ColorPickers = {}
-end
+            function FengUI:ColorPicker(options)
+                return self:CreateColorPicker(options)
+            end
 
-function UiDestroy()
-    if FengYu then
-        FengYu:Destroy()
-    end
-    FengUI:CloseAllColorPickers()
-    if FengUI.is3DMode then
-        disable3DProjectorMode()
-    end
-end
+            function FengUI:PickColor(title, defaultColor)
+                defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
+                
+                local colorSelected = false
+                local selectedColor = defaultColor
+                
+                local picker = self:CreateColorPicker({
+                    title = title or "选择颜色",
+                    defaultColor = defaultColor,
+                    callback = function(color)
+                        selectedColor = color
+                        colorSelected = true
+                    end,
+                    position = UDim2.new(0.5, 0, 0.4, 0)
+                })
+                
+                while not picker.Closed do
+                    task.wait()
+                end
+                
+                return selectedColor
+            end
 
-function ToggleUILib()
-    ToggleUI = not ToggleUI
-    FengYu.Enabled = ToggleUI
-    Main.Visible = not ToggleUI
-end
+            function FengUI:BindColorPicker(button, options)
+                local currentColor = options.defaultColor or Color3.fromRGB(255, 255, 255)
+                
+                local previewFrame = Instance.new("Frame")
+                previewFrame.Name = "ColorPreview"
+                previewFrame.Parent = button
+                previewFrame.BackgroundColor3 = currentColor
+                previewFrame.BorderSizePixel = 0
+                previewFrame.Position = UDim2.new(0.8, 0, 0.2, 0)
+                previewFrame.Size = UDim2.new(0, 40, 0, 22)
+                
+                local previewCorner = Instance.new("UICorner")
+                previewCorner.CornerRadius = UDim.new(0, 4)
+                previewCorner.Parent = previewFrame
+                
+                button.MouseButton1Click:Connect(function()
+                    local picker = FengUI:CreateColorPicker({
+                        title = options.title or "选择颜色",
+                        defaultColor = currentColor,
+                        callback = function(color)
+                            currentColor = color
+                            previewFrame.BackgroundColor3 = color
+                            if options.callback then
+                                options.callback(color)
+                            end
+                        end,
+                        position = UDim2.new(0.5, 0, 0.5, 0)
+                    })
+                end)
+                
+                return {
+                    GetColor = function()
+                        return currentColor
+                    end,
+                    SetColor = function(color)
+                        currentColor = color
+                        previewFrame.BackgroundColor3 = color
+                        if options.callback then
+                            options.callback(color)
+                        end
+                    end
+                }
+            end
 
-if not getgenv then getgenv = function() return _G end end
-getgenv().FengUI = FengUI
+            function FengUI:CloseAllColorPickers()
+                for _, picker in pairs(FengUI.ColorPickers) do
+                    if picker.Instance and picker.Instance.Parent then
+                        picker.Instance:Destroy()
+                    end
+                end
+                FengUI.ColorPickers = {}
+            end
 
-return FengUI
+            function UiDestroy()
+                if FengYu then
+                    FengYu:Destroy()
+                end
+                FengUI:CloseAllColorPickers()
+            end
+
+            function ToggleUILib()
+                ToggleUI = not ToggleUI
+                FengYu.Enabled = ToggleUI
+                Main.Visible = not ToggleUI
+            end
+
+            if not getgenv then getgenv = function() return _G end end
+            getgenv().FengUI = FengUI
+
+            return FengUI
