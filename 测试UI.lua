@@ -2978,14 +2978,16 @@ end
     Separator.Size = UDim2.new(0, 1, 0, 22)
     Separator.ZIndex = 1
     
+    -- 选项容器
     local OptionsContainer = Instance.new("Frame")
     OptionsContainer.Name = "OptionsContainer"
     OptionsContainer.Parent = DropdownModule
     OptionsContainer.BackgroundTransparency = 1
     OptionsContainer.BorderSizePixel = 0
-    OptionsContainer.Position = UDim2.new(0, 0, 1, 4) -- 在DropdownTop下面
+    OptionsContainer.Position = UDim2.new(0, 0, 0, 40) -- 放在下拉按钮下方
     OptionsContainer.Size = UDim2.new(1, 0, 0, 0) -- 初始高度为0
     OptionsContainer.ClipsDescendants = true
+    OptionsContainer.Visible = false -- 初始不可见
     
     local OptionsLayout = Instance.new("UIListLayout")
     OptionsLayout.Name = "OptionsLayout"
@@ -2998,10 +3000,13 @@ end
     
     local function updateDropdownHeight()
         if not open then 
-            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
+            OptionsContainer.Visible = false
             OptionsContainer.Size = UDim2.new(1, 0, 0, 0)
+            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
             return 
         end
+        
+        OptionsContainer.Visible = true
         
         local visibleCount = 0
         for _, option in pairs(allOptions) do
@@ -3011,14 +3016,14 @@ end
         end
         
         if visibleCount == 0 then
-            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36)
-            OptionsContainer.Size = UDim2.new(1, 0, 0, 0)
+            OptionsContainer.Size = UDim2.new(1, 0, 0, 28) -- 即使没有可见选项，也保留一点空间
+            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36 + 28)
         else
             local optionHeight = 24
             local padding = 4
-            local totalHeight = 36 + (visibleCount * (optionHeight + padding)) + 4
-            DropdownModule.Size = UDim2.new(0, elementWidth, 0, totalHeight)
-            OptionsContainer.Size = UDim2.new(1, 0, 0, visibleCount * (optionHeight + padding))
+            local totalOptionsHeight = (optionHeight + padding) * visibleCount
+            OptionsContainer.Size = UDim2.new(1, 0, 0, totalOptionsHeight)
+            DropdownModule.Size = UDim2.new(0, elementWidth, 0, 36 + totalOptionsHeight + 8)
         end
     end
     
@@ -3057,6 +3062,7 @@ end
         
         if open then
             setAllVisible()
+            DropdownText:CaptureFocus() -- 打开时自动聚焦到输入框
         end
         
         updateDropdownHeight()
@@ -3100,13 +3106,28 @@ end
         Option.Text = optionText
         Option.TextColor3 = config.TextColor
         Option.TextSize = 13.000
-        Option.Visible = open
+        Option.Visible = true -- 始终可见，由容器控制显示
+        Option.LayoutOrder = #allOptions + 1
         
         OptionC.CornerRadius = UDim.new(0, 6)
         OptionC.Name = "OptionC"
         OptionC.Parent = Option
         
-        table.insert(allOptions, Option)
+        Option.MouseEnter:Connect(function()
+            services.TweenService:Create(Option, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+                BackgroundColor3 = Color3.fromRGB(
+                    math.floor(config.TabColor.R * 255 * 1.2),
+                    math.floor(config.TabColor.G * 255 * 1.2),
+                    math.floor(config.TabColor.B * 255 * 1.2)
+                )
+            }):Play()
+        end)
+        
+        Option.MouseLeave:Connect(function()
+            services.TweenService:Create(Option, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                BackgroundColor3 = config.TabColor
+            }):Play()
+        end)
         
         Option.MouseButton1Click:Connect(function()
             toggleDropdown()
@@ -3115,7 +3136,13 @@ end
             FengUI.flags[flag] = Option.Text
         end)
         
-        updateDropdownHeight()
+        table.insert(allOptions, Option)
+        
+        if open then
+            updateDropdownHeight()
+        end
+        
+        return Option
     end
     
     funcs.RemoveOption = function(self, optionText)
@@ -3126,10 +3153,13 @@ end
                 break
             end
         end
-        updateDropdownHeight()
+        if open then
+            updateDropdownHeight()
+        end
     end
     
     funcs.SetOptions = function(self, newOptions)
+        -- 清除现有选项
         for _, option in pairs(allOptions) do
             if option then
                 option:Destroy()
@@ -3137,13 +3167,62 @@ end
         end
         allOptions = {}
         
+        -- 添加新选项
         for _, optionText in pairs(newOptions) do
             funcs:AddOption(optionText)
         end
         
-        updateDropdownHeight()
+        if open then
+            updateDropdownHeight()
+        end
     end
     
+    funcs.GetSelected = function(self)
+        return FengUI.flags[flag]
+    end
+    
+    funcs.SetSelected = function(self, value)
+        if value then
+            for _, option in pairs(allOptions) do
+                if option and option.Text == value then
+                    DropdownText.Text = value
+                    FengUI.flags[flag] = value
+                    break
+                end
+            end
+        else
+            DropdownText.Text = ""
+            FengUI.flags[flag] = nil
+        end
+    end
+    
+    funcs.Clear = function(self)
+        for _, option in pairs(allOptions) do
+            if option then
+                option:Destroy()
+            end
+        end
+        allOptions = {}
+        DropdownText.Text = ""
+        FengUI.flags[flag] = nil
+        if open then
+            updateDropdownHeight()
+        end
+    end
+    
+    funcs.Open = function(self)
+        if not open then
+            toggleDropdown()
+        end
+    end
+    
+    funcs.Close = function(self)
+        if open then
+            toggleDropdown()
+        end
+    end
+    
+    -- 初始化选项
     funcs:SetOptions(options)
     
     return funcs
