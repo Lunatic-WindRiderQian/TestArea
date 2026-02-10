@@ -191,13 +191,13 @@ workareacornerhider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 workareacornerhider.BorderSizePixel = 0
 workareacornerhider.Size = UDim2.new(0, 18, 0.99895674, 0)
 
--- 搜索框（调整到标题下方）
+-- 搜索框移动到侧边栏右边的最上面（工作区的右上角）
 local search = Instance.new("Frame")
 search.Name = "search"
-search.Parent = main
+search.Parent = workarea  -- 父级改为workarea
 search.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-search.Position = UDim2.new(0.0256588068, 0, 0.15, 0) -- 调整位置
-search.Size = UDim2.new(0, isMobile and 140 or 225, 0, 34)
+search.Position = UDim2.new(isMobile and 0.1 or 0.7, 0, 0.01, 0) -- 右上角位置
+search.Size = UDim2.new(0, isMobile and 120 or 120, 0, 28) -- 适当缩小大小
 
 local uc_8 = Instance.new("UICorner")
 uc_8.CornerRadius = UDim.new(0, 9)
@@ -209,8 +209,8 @@ searchicon.Parent = search
 searchicon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 searchicon.BackgroundTransparency = 1
 searchicon.BorderColor3 = Color3.fromRGB(27, 42, 53)
-searchicon.Position = UDim2.new(0.0379999988, -2, 0.138999999, 2)
-searchicon.Size = UDim2.new(0, 24, 0, 21)
+searchicon.Position = UDim2.new(0.05, 0, 0.1, 0)
+searchicon.Size = UDim2.new(0, 20, 0, 20) -- 缩小图标
 searchicon.Image = "rbxassetid://2804603863"
 searchicon.ImageColor3 = Color3.fromRGB(95, 95, 95)
 searchicon.ScaleType = Enum.ScaleType.Fit
@@ -221,14 +221,14 @@ searchtextbox.Parent = search
 searchtextbox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 searchtextbox.BackgroundTransparency = 1
 searchtextbox.ClipsDescendants = true
-searchtextbox.Position = UDim2.new(0.180257514, 0, -0.0162218884, 0)
-searchtextbox.Size = UDim2.new(0, isMobile and 100 or 176, 0, 34)
+searchtextbox.Position = UDim2.new(0.3, 0, 0, 0)
+searchtextbox.Size = UDim2.new(0, isMobile and 80 or 85, 0, 28)
 searchtextbox.Font = Enum.Font.Gotham
 searchtextbox.LineHeight = 0.870
 searchtextbox.PlaceholderText = "Search"
 searchtextbox.Text = ""
 searchtextbox.TextColor3 = Color3.fromRGB(95, 95, 95)
-searchtextbox.TextSize = isMobile and 18 or 22
+searchtextbox.TextSize = isMobile and 14 or 16
 searchtextbox.TextXAlignment = Enum.TextXAlignment.Left
 
 searchicon.MouseButton1Click:Connect(function()
@@ -299,7 +299,8 @@ TabMain.Active = true
 TabMain.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 TabMain.BackgroundTransparency = 1
 TabMain.BorderSizePixel = 0
-TabMain.Position = UDim2.new(0.0393013097, 0, 0.0958904102, 0)
+-- 调整位置，为搜索框留出空间
+TabMain.Position = UDim2.new(0.0393013097, 0, isMobile and 0.15 or 0.12, 0)
 TabMain.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 220 or 512)
 TabMain.ZIndex = 3
 TabMain.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -405,7 +406,8 @@ function FengUI.new(name, theme)
         workareamain.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         workareamain.BackgroundTransparency = 1
         workareamain.BorderSizePixel = 0
-        workareamain.Position = UDim2.new(0.0393013097, 0, 0.0958904102, 0)
+        -- 调整位置，为搜索框留出空间
+        workareamain.Position = UDim2.new(0.0393013097, 0, isMobile and 0.15 or 0.12, 0)
         workareamain.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 220 or 512)
         workareamain.ZIndex = 3
         workareamain.CanvasSize = UDim2.new(0, 0, 0, 0)
