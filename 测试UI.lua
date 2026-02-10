@@ -81,7 +81,6 @@ local function tp(ins, pos, time, thing)
     game:GetService("TweenService"):Create(ins, TweenInfo.new(time, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut),{Position = pos}):Play()
 end
 
--- 清理旧的UI
 for _, gui in ipairs(services.CoreGui:GetChildren()) do
     if gui.Name == "UniversalUI" and gui:IsA("ScreenGui") then
         gui:Destroy()
@@ -195,10 +194,10 @@ workareacornerhider.Size = UDim2.new(0, 18, 0.99895674, 0)
 -- 搜索框移动到侧边栏右边的最上面（工作区的右上角）
 local search = Instance.new("Frame")
 search.Name = "search"
-search.Parent = workarea
+search.Parent = workarea  -- 父级改为workarea
 search.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-search.Position = UDim2.new(isMobile and 0.1 or 0.7, 0, 0.01, 0)
-search.Size = UDim2.new(0, isMobile and 120 or 120, 0, 28)
+search.Position = UDim2.new(isMobile and 0.1 or 0.7, 0, 0.01, 0) -- 右上角位置
+search.Size = UDim2.new(0, isMobile and 120 or 120, 0, 28) -- 适当缩小大小
 
 local uc_8 = Instance.new("UICorner")
 uc_8.CornerRadius = UDim.new(0, 9)
@@ -211,7 +210,7 @@ searchicon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 searchicon.BackgroundTransparency = 1
 searchicon.BorderColor3 = Color3.fromRGB(27, 42, 53)
 searchicon.Position = UDim2.new(0.05, 0, 0.1, 0)
-searchicon.Size = UDim2.new(0, 20, 0, 20)
+searchicon.Size = UDim2.new(0, 20, 0, 20) -- 缩小图标
 searchicon.Image = "rbxassetid://2804603863"
 searchicon.ImageColor3 = Color3.fromRGB(95, 95, 95)
 searchicon.ScaleType = Enum.ScaleType.Fit
@@ -236,14 +235,14 @@ searchicon.MouseButton1Click:Connect(function()
     searchtextbox:CaptureFocus()
 end)
 
--- 侧边栏标题（脚本名字）
+-- 侧边栏标题（脚本名字） - 放在最上面，位置更靠上
 local SidebarTitle = Instance.new("TextLabel")
 SidebarTitle.Name = "SidebarTitle"
 SidebarTitle.Parent = main
 SidebarTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 SidebarTitle.BackgroundTransparency = 1
 SidebarTitle.BorderSizePixel = 0
-SidebarTitle.Position = UDim2.new(0.025, 0, 0.02, 0)
+SidebarTitle.Position = UDim2.new(0.025, 0, 0.02, 0) -- 从0.06改为0.02，更靠上
 SidebarTitle.Size = UDim2.new(0, SIDEBAR_WIDTH, 0, isMobile and 30 or 50)
 SidebarTitle.Font = Enum.Font.GothamBold
 SidebarTitle.Text = "FengUI"
@@ -261,8 +260,8 @@ sidebar.Active = true
 sidebar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 sidebar.BackgroundTransparency = 1
 sidebar.BorderSizePixel = 0
-sidebar.Position = UDim2.new(0.0249653254, 0, 0.20, 0)
-sidebar.Size = UDim2.new(0, SIDEBAR_WIDTH, 0, isMobile and 150 or 400)
+sidebar.Position = UDim2.new(0.0249653254, 0, 0.20, 0) -- 在标题下方
+sidebar.Size = UDim2.new(0, SIDEBAR_WIDTH, 0, isMobile and 150 or 400) -- 调整高度
 sidebar.AutomaticCanvasSize = "Y"
 sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
 sidebar.ScrollBarThickness = 2
@@ -300,6 +299,7 @@ TabMain.Active = true
 TabMain.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 TabMain.BackgroundTransparency = 1
 TabMain.BorderSizePixel = 0
+-- 调整位置，为搜索框留出空间
 TabMain.Position = UDim2.new(0.0393013097, 0, isMobile and 0.15 or 0.12, 0)
 TabMain.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 220 or 512)
 TabMain.ZIndex = 3
@@ -338,68 +338,42 @@ end)
 tp(main, UDim2.new(0.5, 0, 0.5, 0), 1)
 
 -- =========================================
--- FengUI API 功能代码（从UI.lua移植，但使用iOS样式）
+-- 万能UI界面代码结束
+-- 以下是苹果.lua的API功能代码
 -- =========================================
 
-local config = {
-    MainColor = Color3.fromRGB(255, 255, 255),
-    TabColor = Color3.fromRGB(21, 103, 251),
-    Bg_Color = Color3.fromRGB(240, 240, 240),
-    Zy_Color = Color3.fromRGB(240, 240, 240),
-    Button_Color = Color3.fromRGB(216, 216, 216),
-    Textbox_Color = Color3.fromRGB(240, 240, 240),
-    Dropdown_Color = Color3.fromRGB(240, 240, 240),
-    Keybind_Color = Color3.fromRGB(240, 240, 240),
-    Label_Color = Color3.fromRGB(240, 240, 240),
-    Slider_Color = Color3.fromRGB(240, 240, 240),
-    SliderBar_Color = Color3.fromRGB(21, 103, 251),
-    Toggle_Color = Color3.fromRGB(240, 240, 240),
-    Toggle_Off = Color3.fromRGB(216, 216, 216),
-    Toggle_On = Color3.fromRGB(21, 103, 251),
-    AccentColor = Color3.fromRGB(21, 103, 251),
-    TextColor = Color3.fromRGB(12, 12, 12),
-    SecondaryTextColor = Color3.fromRGB(95, 95, 95),
-}
-
-function FengUI.new(FengUI, name, theme)
-    for _, v in next, services.CoreGui:GetChildren() do
-        if v.Name == "REN" then
-            v:Destroy()
-        end
+function FengUI.new(name, theme)
+    -- 设置脚本名字
+    if name then
+        SidebarTitle.Text = name
+    else
+        SidebarTitle.Text = "FengUI"
     end
-
-    if theme then
-        for k, v in pairs(theme) do
-            if config[k] ~= nil then
-                config[k] = v
-            end
-        end
-    end
-
-    local scriptName = name or "FengUI"
-    SidebarTitle.Text = scriptName
     
     local window = {
-    tabs = {},
-    currentTab = nil
+        tabs = {},
+        currentTab = nil
     }
     
     function window:AddTag(text, bgColor, textColor)
-        -- iOS版本不支持标签功能
-        warn("iOS版本UI不支持标签功能")
+        -- 这个版本的UI没有标签功能
+        warn("测试UI版本不支持标签功能")
         return nil
     end
     
     function window:UpdateTag(index, text, bgColor, textColor)
-        warn("iOS版本UI不支持标签功能")
+        -- 这个版本的UI没有标签功能
+        warn("测试UI版本不支持标签功能")
     end
     
     function window:ClearTags()
-        warn("iOS版本UI不支持标签功能")
+        -- 这个版本的UI没有标签功能
+        warn("测试UI版本不支持标签功能")
     end
     
     function window:RemoveTag(index)
-        warn("iOS版本UI不支持标签功能")
+        -- 这个版本的UI没有标签功能
+        warn("测试UI版本不支持标签功能")
     end
     
     function window.Tab(window, name, icon, windowCount)
@@ -412,7 +386,7 @@ function FengUI.new(FengUI, name, theme)
         sidebar2.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
         sidebar2.BackgroundTransparency = 1
         sidebar2.Size = UDim2.new(0, SIDEBAR_WIDTH - 7, 0, isMobile and 28 or 37)
-        sidebar2.ZIndex = 10
+        sidebar2.ZIndex = 10 -- 提高ZIndex确保按钮在最前面
         sidebar2.AutoButtonColor = false
         sidebar2.Font = Enum.Font.Gotham
         sidebar2.Text = name
@@ -441,6 +415,7 @@ function FengUI.new(FengUI, name, theme)
         workareamain.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         workareamain.BackgroundTransparency = 1
         workareamain.BorderSizePixel = 0
+        -- 调整位置，为搜索框留出空间
         workareamain.Position = UDim2.new(0.0393013097, 0, isMobile and 0.15 or 0.12, 0)
         workareamain.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 220 or 512)
         workareamain.ZIndex = 3
@@ -458,15 +433,13 @@ function FengUI.new(FengUI, name, theme)
         
         local tab = {}
         
-        function tab.section(tab, name, windowPosition, TabVal)
-            if type(windowPosition) == "boolean" then
-                TabVal = windowPosition
-                windowPosition = "Left"
-            elseif not windowPosition or type(windowPosition) ~= "string" then
-                windowPosition = "Left"
-            end
+        function tab.section(tab, name, icon, defaultOpen)
+            -- 参数说明：
+            -- name: section名称
+            -- icon: 图标ID（数字或字符串），如果为nil则使用默认图标
+            -- defaultOpen: 默认是否展开（true/false），默认为true
+            local defaultOpen = defaultOpen == nil and true or defaultOpen
             
-            -- iOS版本不支持双窗口，忽略windowPosition参数
             local section = {}
             local sectionFrame = Instance.new("Frame")
             sectionFrame.Name = "section_" .. name
@@ -479,14 +452,49 @@ function FengUI.new(FengUI, name, theme)
             sectionLayout.SortOrder = Enum.SortOrder.LayoutOrder
             sectionLayout.Padding = UDim.new(0, isMobile and 4 or 8)
             
-            -- 分隔符标题
+            -- 创建一个容器用于存放标题和图标
+            local headerContainer = Instance.new("Frame")
+            headerContainer.Name = "headerContainer"
+            headerContainer.Parent = sectionFrame
+            headerContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            headerContainer.BackgroundTransparency = 1
+            headerContainer.BorderSizePixel = 0
+            headerContainer.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 40 or 50)
+            
+            -- 图标按钮（用于展开/折叠）
+            local iconButton = Instance.new("ImageButton")
+            iconButton.Name = "iconButton"
+            iconButton.Parent = headerContainer
+            iconButton.BackgroundTransparency = 1
+            iconButton.Position = UDim2.new(0, 0, 0, isMobile and 10 or 15)
+            iconButton.Size = UDim2.new(0, isMobile and 20 or 25, 0, isMobile and 20 or 25)
+            
+            -- 设置图标
+            if icon then
+                local iconId = tostring(icon)
+                if iconId:match("^%d+$") then
+                    iconButton.Image = "rbxassetid://" .. iconId
+                else
+                    iconButton.Image = iconId
+                end
+            else
+                -- 默认图标（向右的箭头）
+                iconButton.Image = "rbxassetid://3926305904"
+                iconButton.ImageRectOffset = Vector2.new(124, 364)
+                iconButton.ImageRectSize = Vector2.new(36, 36)
+            end
+            
+            iconButton.ImageColor3 = Color3.fromRGB(21, 103, 251)
+            
+            -- section标题
             local sectionDivider = Instance.new("TextLabel")
             sectionDivider.Name = "sectionDivider"
-            sectionDivider.Parent = sectionFrame
+            sectionDivider.Parent = headerContainer
             sectionDivider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             sectionDivider.BackgroundTransparency = 1
             sectionDivider.BorderSizePixel = 2
-            sectionDivider.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 30 or 50)
+            sectionDivider.Position = UDim2.new(0, isMobile and 30 or 35, 0, 0)
+            sectionDivider.Size = UDim2.new(0, WORKAREA_WIDTH - 36 - (isMobile and 30 or 35), 0, isMobile and 40 or 50)
             sectionDivider.Font = Enum.Font.Gotham
             sectionDivider.LineHeight = 1.180
             sectionDivider.Text = name
@@ -494,15 +502,59 @@ function FengUI.new(FengUI, name, theme)
             sectionDivider.TextSize = isMobile and 18 or 25
             sectionDivider.TextWrapped = true
             sectionDivider.TextXAlignment = Enum.TextXAlignment.Left
-            sectionDivider.TextYAlignment = Enum.TextYAlignment.Bottom
+            sectionDivider.TextYAlignment = Enum.TextYAlignment.Center
             
+            -- 创建一个容器用于存放section内容
+            local contentContainer = Instance.new("Frame")
+            contentContainer.Name = "contentContainer"
+            contentContainer.Parent = sectionFrame
+            contentContainer.BackgroundTransparency = 1
+            contentContainer.Size = UDim2.new(1, 0, 0, 0)
+            
+            local contentLayout = Instance.new("UIListLayout")
+            contentLayout.Parent = contentContainer
+            contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            contentLayout.Padding = UDim.new(0, isMobile and 4 or 8)
+            
+            -- 控制section的展开/折叠状态
+            local isExpanded = defaultOpen
+            contentContainer.Visible = isExpanded
+            
+            -- 更新图标旋转
+            local function updateIconRotation()
+                if isExpanded then
+                    -- 展开时图标向下（默认是向右，这里旋转90度）
+                    iconButton.Rotation = 90
+                else
+                    -- 折叠时图标向右
+                    iconButton.Rotation = 0
+                end
+            end
+            
+            updateIconRotation()
+            
+            -- 点击图标展开/折叠
+            iconButton.MouseButton1Click:Connect(function()
+                isExpanded = not isExpanded
+                contentContainer.Visible = isExpanded
+                updateIconRotation()
+            end)
+            
+            -- 也可以点击标题展开/折叠
+            sectionDivider.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    isExpanded = not isExpanded
+                    contentContainer.Visible = isExpanded
+                    updateIconRotation()
+                end
+            end)
+            
+            -- 修改所有内部函数，使其将元素添加到contentContainer而不是sectionFrame
             function section.Button(section, text, callback)
-                callback = callback or function() end
-                
                 local button = Instance.new("TextButton")
                 button.Name = "button_" .. text
                 button.Text = text
-                button.Parent = sectionFrame
+                button.Parent = contentContainer  -- 改为contentContainer
                 button.BackgroundColor3 = Color3.fromRGB(216, 216, 216)
                 button.BackgroundTransparency = 1
                 button.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 28 or 37)
@@ -520,21 +572,23 @@ function FengUI.new(FengUI, name, theme)
                 buttonStroke.Color = Color3.fromRGB(21, 103, 251)
                 buttonStroke.Thickness = 1
 
-                button.MouseButton1Click:Connect(function() 
-                    coroutine.wrap(function()
-                        button.TextSize -= 3
-                        task.wait(0.06)
-                        button.TextSize += 3
-                    end)()
-                    callback()
-                end)
+                if callback then
+                    button.MouseButton1Click:Connect(function() 
+                        coroutine.wrap(function()
+                            button.TextSize -= 3
+                            task.wait(0.06)
+                            button.TextSize += 3
+                        end)()
+                        callback()
+                    end)
+                end
                 return button
             end
             
             function section.Image(section, imageSource, sizeX, sizeY)
                 local ImageModule = Instance.new("Frame")
                 ImageModule.Name = "ImageModule"
-                ImageModule.Parent = sectionFrame
+                ImageModule.Parent = contentContainer  -- 改为contentContainer
                 ImageModule.BackgroundTransparency = 1
                 ImageModule.BorderSizePixel = 0
                 ImageModule.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, sizeY or (isMobile and 80 or 100))
@@ -628,7 +682,7 @@ function FengUI.new(FengUI, name, theme)
             function section:Label(text)
                 local label = Instance.new("TextLabel")
                 label.Name = "label_" .. text
-                label.Parent = sectionFrame
+                label.Parent = contentContainer  -- 改为contentContainer
                 label.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 label.BackgroundTransparency = 1
                 label.BorderSizePixel = 2
@@ -650,7 +704,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 local toggleFrame = Instance.new("Frame")
                 toggleFrame.Name = "toggle_" .. flag
-                toggleFrame.Parent = sectionFrame
+                toggleFrame.Parent = contentContainer  -- 改为contentContainer
                 toggleFrame.BackgroundTransparency = 1
                 toggleFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 40 or 50)
                 
@@ -772,7 +826,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 local keybindFrame = Instance.new("Frame")
                 keybindFrame.Name = "keybind_" .. text
-                keybindFrame.Parent = sectionFrame
+                keybindFrame.Parent = contentContainer  -- 改为contentContainer
                 keybindFrame.BackgroundTransparency = 1
                 keybindFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 40 or 50)
                 
@@ -856,7 +910,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 local textboxFrame = Instance.new("Frame")
                 textboxFrame.Name = "textbox_" .. flag
-                textboxFrame.Parent = sectionFrame
+                textboxFrame.Parent = contentContainer  -- 改为contentContainer
                 textboxFrame.BackgroundTransparency = 1
                 textboxFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 60 or 70)
                 
@@ -928,7 +982,7 @@ function FengUI.new(FengUI, name, theme)
 
                 local sliderFrame = Instance.new("Frame")
                 sliderFrame.Name = "slider_" .. flag
-                sliderFrame.Parent = sectionFrame
+                sliderFrame.Parent = contentContainer  -- 改为contentContainer
                 sliderFrame.BackgroundTransparency = 1
                 sliderFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 70 or 80)
                 
@@ -1050,7 +1104,7 @@ function FengUI.new(FengUI, name, theme)
                 
                 local dropdownFrame = Instance.new("Frame")
                 dropdownFrame.Name = "dropdown_" .. flag
-                dropdownFrame.Parent = sectionFrame
+                dropdownFrame.Parent = contentContainer  -- 改为contentContainer
                 dropdownFrame.BackgroundTransparency = 1
                 dropdownFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 70 or 80)
                 
@@ -1084,451 +1138,68 @@ function FengUI.new(FengUI, name, theme)
                 dropdownCorner.CornerRadius = UDim.new(0, 9)
                 dropdownCorner.Parent = dropdownButton
                 
-                -- 下拉菜单容器
-                local dropdownContainer = Instance.new("Frame")
-                dropdownContainer.Name = "dropdownContainer"
-                dropdownContainer.Parent = dropdownFrame
-                dropdownContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                dropdownContainer.BorderSizePixel = 0
-                dropdownContainer.Position = UDim2.new(0, 0, 1, 5)
-                dropdownContainer.Size = UDim2.new(1, 0, 0, 0)
-                dropdownContainer.Visible = false
-                dropdownContainer.ClipsDescendants = true
-                
-                local dropdownContainerCorner = Instance.new("UICorner")
-                dropdownContainerCorner.CornerRadius = UDim.new(0, 9)
-                dropdownContainerCorner.Parent = dropdownContainer
-                
-                local dropdownList = Instance.new("UIListLayout")
-                dropdownList.Parent = dropdownContainer
-                dropdownList.SortOrder = Enum.SortOrder.LayoutOrder
-                dropdownList.Padding = UDim.new(0, 2)
-                
-                local dropdownPadding = Instance.new("UIPadding")
-                dropdownPadding.Parent = dropdownContainer
-                dropdownPadding.PaddingTop = UDim.new(0, 5)
-                dropdownPadding.PaddingBottom = UDim.new(0, 5)
-                
                 local allOptions = {}
                 local selectedOption = nil
-                local isOpen = false
-                
-                local function updateDropdownHeight()
-                    local optionCount = 0
-                    for _, child in pairs(dropdownContainer:GetChildren()) do
-                        if child:IsA("TextButton") then
-                            optionCount = optionCount + 1
-                        end
-                    end
-                    
-                    dropdownContainer.Size = UDim2.new(1, 0, 0, optionCount * (isMobile and 30 or 36) + 10)
-                    dropdownFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 70 + (isOpen and optionCount * 30 + 15 or 0) or 80 + (isOpen and optionCount * 36 + 15 or 0))
-                end
-                
-                local function toggleDropdown()
-                    isOpen = not isOpen
-                    dropdownContainer.Visible = isOpen
-                    updateDropdownHeight()
-                end
                 
                 local funcs = {}
                 
                 funcs.AddOption = function(self, optionText)
-                    local optionButton = Instance.new("TextButton")
-                    optionButton.Name = "option_" .. optionText
-                    optionButton.Parent = dropdownContainer
-                    optionButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                    optionButton.BackgroundTransparency = 1
-                    optionButton.Size = UDim2.new(1, -10, 0, isMobile and 30 or 36)
-                    optionButton.Font = Enum.Font.Gotham
-                    optionButton.Text = optionText
-                    optionButton.TextColor3 = Color3.fromRGB(95, 95, 95)
-                    optionButton.TextSize = isMobile and 14 or 16
-                    
-                    optionButton.MouseButton1Click:Connect(function()
-                        selectedOption = optionText
-                        dropdownButton.Text = optionText
-                        FengUI.flags[flag] = optionText
-                        callback(optionText)
-                        toggleDropdown()
-                    end)
-                    
-                    optionButton.MouseEnter:Connect(function()
-                        optionButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-                    end)
-                    
-                    optionButton.MouseLeave:Connect(function()
-                        optionButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                    end)
-                    
-                    table.insert(allOptions, optionButton)
-                    updateDropdownHeight()
-                    
-                    return optionButton
-                end
-                
-                funcs.RemoveOption = function(self, optionText)
-                    for i, option in pairs(allOptions) do
-                        if option and option.Text == optionText then
-                            option:Destroy()
-                            table.remove(allOptions, i)
-                            break
-                        end
-                    end
-                    updateDropdownHeight()
+                    table.insert(allOptions, optionText)
                 end
                 
                 funcs.SetOptions = function(self, newOptions)
-                    for _, option in pairs(allOptions) do
-                        if option then
-                            option:Destroy()
-                        end
-                    end
-                    allOptions = {}
-                    
-                    for _, optionText in pairs(newOptions) do
-                        funcs:AddOption(optionText)
-                    end
-                    
-                    updateDropdownHeight()
-                end
-                
-                funcs.GetSelected = function(self)
-                    return FengUI.flags[flag]
-                end
-                
-                funcs.SetSelected = function(self, value)
-                    if value then
-                        for _, option in pairs(allOptions) do
-                            if option and option.Text == value then
-                                selectedOption = value
-                                dropdownButton.Text = value
-                                FengUI.flags[flag] = value
-                                break
-                            end
-                        end
-                    else
-                        selectedOption = nil
-                        dropdownButton.Text = "Select..."
-                        FengUI.flags[flag] = nil
-                    end
-                end
-                
-                funcs.Clear = function(self)
-                    for _, option in pairs(allOptions) do
-                        if option then
-                            option:Destroy()
-                        end
-                    end
-                    allOptions = {}
-                    selectedOption = nil
-                    dropdownButton.Text = "Select..."
-                    FengUI.flags[flag] = nil
-                    updateDropdownHeight()
-                end
-                
-                funcs.Open = function(self)
-                    if not isOpen then
-                        toggleDropdown()
-                    end
-                end
-                
-                funcs.Close = function(self)
-                    if isOpen then
-                        toggleDropdown()
-                    end
+                    allOptions = newOptions or {}
                 end
                 
                 dropdownButton.MouseButton1Click:Connect(function()
-                    toggleDropdown()
-                end)
-                
-                -- 点击外部关闭下拉菜单
-                services.UserInputService.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        local mouse = services.Players.LocalPlayer:GetMouse()
-                        local dropdownPos = dropdownContainer.AbsolutePosition
-                        local dropdownSize = dropdownContainer.AbsoluteSize
-                        
-                        if isOpen and (mouse.X < dropdownPos.X or mouse.X > dropdownPos.X + dropdownSize.X or mouse.Y < dropdownPos.Y or mouse.Y > dropdownPos.Y + dropdownSize.Y) then
-                            local buttonPos = dropdownButton.AbsolutePosition
-                            local buttonSize = dropdownButton.AbsoluteSize
-                            
-                            if mouse.X < buttonPos.X or mouse.X > buttonPos.X + buttonSize.X or mouse.Y < buttonPos.Y or mouse.Y > buttonPos.Y + buttonSize.Y then
-                                toggleDropdown()
-                            end
-                        end
+                    -- 这里需要实现下拉菜单的展开逻辑
+                    -- 由于万能UI没有内置下拉菜单，我们可以使用一个简单的文本选择
+                    if #allOptions > 0 then
+                        selectedOption = allOptions[1]
+                        dropdownButton.Text = selectedOption
+                        callback(selectedOption)
+                        FengUI.flags[flag] = selectedOption
                     end
                 end)
                 
                 funcs:SetOptions(options)
                 
                 if #options > 0 then
-                    funcs:SetSelected(options[1])
+                    selectedOption = options[1]
+                    dropdownButton.Text = selectedOption
+                    FengUI.flags[flag] = selectedOption
                 end
                 
                 return funcs
             end
             
-            function section.ColorPicker(section, text, flag, defaultColor, callback)
-                callback = callback or function() end
-                defaultColor = defaultColor or Color3.fromRGB(21, 103, 251)
-                assert(text, "No text provided")
-                assert(flag, "No flag provided")
-                
-                FengUI.flags[flag] = defaultColor
-                
-                local colorPickerFrame = Instance.new("Frame")
-                colorPickerFrame.Name = "colorpicker_" .. flag
-                colorPickerFrame.Parent = sectionFrame
-                colorPickerFrame.BackgroundTransparency = 1
-                colorPickerFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 40 or 50)
-                
-                local colorPickerLabel = Instance.new("TextLabel")
-                colorPickerLabel.Name = "colorPickerLabel"
-                colorPickerLabel.Parent = colorPickerFrame
-                colorPickerLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                colorPickerLabel.BackgroundTransparency = 1
-                colorPickerLabel.BorderSizePixel = 2
-                colorPickerLabel.Position = UDim2.new(0, 0, 0, 0)
-                colorPickerLabel.Size = UDim2.new(0, isMobile and 200 or 300, 0, isMobile and 28 or 37)
-                colorPickerLabel.Font = Enum.Font.Gotham
-                colorPickerLabel.Text = text
-                colorPickerLabel.TextColor3 = Color3.fromRGB(95, 95, 95)
-                colorPickerLabel.TextSize = isMobile and 16 or 21
-                colorPickerLabel.TextWrapped = true
-                colorPickerLabel.TextXAlignment = Enum.TextXAlignment.Left
-                
-                local colorPreview = Instance.new("Frame")
-                colorPreview.Name = "colorPreview"
-                colorPreview.Parent = colorPickerFrame
-                colorPreview.BackgroundColor3 = defaultColor
-                colorPreview.Position = UDim2.new(isMobile and 0.5 or 0.7, 0, 0.1, 0)
-                colorPreview.Size = UDim2.new(0, isMobile and 60 or 80, 0, isMobile and 26 or 34)
-                
-                local colorPreviewCorner = Instance.new("UICorner")
-                colorPreviewCorner.CornerRadius = UDim.new(0, 9)
-                colorPreviewCorner.Parent = colorPreview
-                
-                local colorPreviewButton = Instance.new("TextButton")
-                colorPreviewButton.Name = "colorPreviewButton"
-                colorPreviewButton.Parent = colorPreview
-                colorPreviewButton.BackgroundTransparency = 1
-                colorPreviewButton.Size = UDim2.new(1, 0, 1, 0)
-                colorPreviewButton.Text = ""
-                
-                -- 颜色选择器弹出窗口
-                local colorPickerPopup = Instance.new("Frame")
-                colorPickerPopup.Name = "colorPickerPopup"
-                colorPickerPopup.Parent = FengYu
-                colorPickerPopup.AnchorPoint = Vector2.new(0.5, 0.5)
-                colorPickerPopup.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                colorPickerPopup.BackgroundTransparency = 0.1
-                colorPickerPopup.BorderSizePixel = 0
-                colorPickerPopup.Position = UDim2.new(0.5, 0, 0.5, 0)
-                colorPickerPopup.Size = UDim2.new(0, 300, 0, 240)
-                colorPickerPopup.Visible = false
-                colorPickerPopup.ZIndex = 100
-                
-                local popupCorner = Instance.new("UICorner")
-                popupCorner.CornerRadius = UDim.new(0, 18)
-                popupCorner.Parent = colorPickerPopup
-                
-                local popupTitle = Instance.new("TextLabel")
-                popupTitle.Name = "popupTitle"
-                popupTitle.Parent = colorPickerPopup
-                popupTitle.BackgroundTransparency = 1
-                popupTitle.Position = UDim2.new(0, 10, 0, 10)
-                popupTitle.Size = UDim2.new(1, -20, 0, 30)
-                popupTitle.Font = Enum.Font.GothamBold
-                popupTitle.Text = "选择颜色"
-                popupTitle.TextColor3 = Color3.fromRGB(0, 0, 0)
-                popupTitle.TextSize = 18
-                popupTitle.TextXAlignment = Enum.TextXAlignment.Center
-                
-                local hueSlider = Instance.new("Frame")
-                hueSlider.Name = "hueSlider"
-                hueSlider.Parent = colorPickerPopup
-                hueSlider.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-                hueSlider.Position = UDim2.new(0.1, 0, 0.2, 0)
-                hueSlider.Size = UDim2.new(0.8, 0, 0, 20)
-                
-                local hueSliderCorner = Instance.new("UICorner")
-                hueSliderCorner.CornerRadius = UDim.new(1, 0)
-                hueSliderCorner.Parent = hueSlider
-                
-                local hueGradient = Instance.new("UIGradient")
-                hueGradient.Color = ColorSequence.new{
-                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-                    ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
-                    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
-                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
-                    ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
-                    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
-                }
-                hueGradient.Parent = hueSlider
-                
-                local hueSliderThumb = Instance.new("Frame")
-                hueSliderThumb.Name = "hueSliderThumb"
-                hueSliderThumb.Parent = hueSlider
-                hueSliderThumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                hueSliderThumb.Size = UDim2.new(0, 10, 0, 24)
-                hueSliderThumb.Position = UDim2.new(0.5, -5, -0.1, 0)
-                
-                local hueSliderThumbCorner = Instance.new("UICorner")
-                hueSliderThumbCorner.CornerRadius = UDim.new(0, 2)
-                hueSliderThumbCorner.Parent = hueSliderThumb
-                
-                local currentColor = defaultColor
-                local currentHue, currentSat, currentVal = Color3.toHSV(defaultColor)
-                
-                local function updateColorDisplay()
-                    colorPreview.BackgroundColor3 = currentColor
-                end
-                
-                local function updateHueSlider()
-                    hueSliderThumb.Position = UDim2.new(currentHue, -5, -0.1, 0)
-                end
-                
-                local function openColorPicker()
-                    colorPickerPopup.Visible = true
-                    colorPickerPopup.Position = UDim2.new(0.5, 0, 0.5, 0)
-                    updateHueSlider()
-                end
-                
-                local function closeColorPicker(save)
-                    colorPickerPopup.Visible = false
-                    if save then
-                        FengUI.flags[flag] = currentColor
-                        callback(currentColor)
+            -- 添加一个方法来控制section的展开/折叠状态
+            function section:SetExpanded(expanded)
+                isExpanded = expanded
+                contentContainer.Visible = isExpanded
+                updateIconRotation()
+            end
+            
+            -- 添加一个方法来获取当前状态
+            function section:GetExpanded()
+                return isExpanded
+            end
+            
+            -- 添加一个方法来更改图标
+            function section:SetIcon(newIcon)
+                if newIcon then
+                    local iconId = tostring(newIcon)
+                    if iconId:match("^%d+$") then
+                        iconButton.Image = "rbxassetid://" .. iconId
+                    else
+                        iconButton.Image = iconId
                     end
+                else
+                    -- 恢复默认图标
+                    iconButton.Image = "rbxassetid://3926305904"
+                    iconButton.ImageRectOffset = Vector2.new(124, 364)
+                    iconButton.ImageRectSize = Vector2.new(36, 36)
                 end
-                
-                colorPreviewButton.MouseButton1Click:Connect(openColorPicker)
-                
-                -- 色相滑块交互
-                local hueDragging = false
-                
-                hueSlider.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        hueDragging = true
-                    end
-                end)
-                
-                hueSlider.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        hueDragging = false
-                    end
-                end)
-                
-                services.UserInputService.InputChanged:Connect(function(input)
-                    if hueDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        local mouse = services.Players.LocalPlayer:GetMouse()
-                        local sliderPos = hueSlider.AbsolutePosition.X
-                        local sliderSize = hueSlider.AbsoluteSize.X
-                        local mouseX = math.clamp(mouse.X, sliderPos, sliderPos + sliderSize)
-                        
-                        currentHue = (mouseX - sliderPos) / sliderSize
-                        currentColor = Color3.fromHSV(currentHue, currentSat, currentVal)
-                        updateColorDisplay()
-                        updateHueSlider()
-                    end
-                end)
-                
-                -- 添加确认和取消按钮
-                local confirmButton = Instance.new("TextButton")
-                confirmButton.Name = "confirmButton"
-                confirmButton.Parent = colorPickerPopup
-                confirmButton.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
-                confirmButton.Position = UDim2.new(0.1, 0, 0.8, 0)
-                confirmButton.Size = UDim2.new(0.35, 0, 0, 30)
-                confirmButton.Font = Enum.Font.GothamBold
-                confirmButton.Text = "确认"
-                confirmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-                confirmButton.TextSize = 14
-                
-                local confirmCorner = Instance.new("UICorner")
-                confirmCorner.CornerRadius = UDim.new(0, 9)
-                confirmCorner.Parent = confirmButton
-                
-                local cancelButton = Instance.new("TextButton")
-                cancelButton.Name = "cancelButton"
-                cancelButton.Parent = colorPickerPopup
-                cancelButton.BackgroundColor3 = Color3.fromRGB(216, 216, 216)
-                cancelButton.Position = UDim2.new(0.55, 0, 0.8, 0)
-                cancelButton.Size = UDim2.new(0.35, 0, 0, 30)
-                cancelButton.Font = Enum.Font.GothamBold
-                cancelButton.Text = "取消"
-                cancelButton.TextColor3 = Color3.fromRGB(12, 12, 12)
-                cancelButton.TextSize = 14
-                
-                local cancelCorner = Instance.new("UICorner")
-                cancelCorner.CornerRadius = UDim.new(0, 9)
-                cancelCorner.Parent = cancelButton
-                
-                confirmButton.MouseButton1Click:Connect(function()
-                    closeColorPicker(true)
-                end)
-                
-                cancelButton.MouseButton1Click:Connect(function()
-                    closeColorPicker(false)
-                end)
-                
-                -- 点击外部关闭
-                local closeClickArea = Instance.new("TextButton")
-                closeClickArea.Name = "closeClickArea"
-                closeClickArea.Parent = FengYu
-                closeClickArea.BackgroundTransparency = 1
-                closeClickArea.Size = UDim2.new(1, 0, 1, 0)
-                closeClickArea.Text = ""
-                closeClickArea.Visible = false
-                closeClickArea.ZIndex = 99
-                
-                colorPreviewButton.MouseButton1Click:Connect(function()
-                    openColorPicker()
-                    closeClickArea.Visible = true
-                end)
-                
-                closeClickArea.MouseButton1Click:Connect(function()
-                    colorPickerPopup.Visible = false
-                    closeClickArea.Visible = false
-                end)
-                
-                confirmButton.MouseButton1Click:Connect(function()
-                    colorPickerPopup.Visible = false
-                    closeClickArea.Visible = false
-                    closeColorPicker(true)
-                end)
-                
-                cancelButton.MouseButton1Click:Connect(function()
-                    colorPickerPopup.Visible = false
-                    closeClickArea.Visible = false
-                    closeColorPicker(false)
-                end)
-                
-                updateColorDisplay()
-                
-                local funcs = {
-                    SetColor = function(self, color)
-                        if typeof(color) == "Color3" then
-                            currentColor = color
-                            currentHue, currentSat, currentVal = Color3.toHSV(color)
-                            updateColorDisplay()
-                            updateHueSlider()
-                            FengUI.flags[flag] = color
-                            callback(color)
-                        end
-                    end,
-                    
-                    GetColor = function(self)
-                        return FengUI.flags[flag] or defaultColor
-                    end,
-                    
-                    Module = colorPickerFrame
-                }
-                
-                return funcs
             end
             
             return section
@@ -1559,37 +1230,15 @@ function FengUI.new(FengUI, name, theme)
     end
     
     function window:DualTab(name, icon)
-        -- iOS版本不支持双窗口，但保持API兼容性
-        warn("iOS版本UI不支持双窗口，使用单窗口替代")
-        return window:Tab(name, icon, 1)
+        if type(icon) == "number" then
+            icon = tostring(icon)
+        end
+        
+        return window:Tab(name, icon, 2)
     end
 
     return window
 end
-
--- 动画效果
-Open.MouseButton1Click:Connect(function()
-    main.Visible = not main.Visible
-    if main.Visible then
-        tp(main, UDim2.new(0.5, 0, 0.5, 0), 0.5)
-    else
-        tp(main, UDim2.new(0.5, 0, 2, 0), 0.5)
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.LeftControl then
-        main.Visible = not main.Visible
-        if main.Visible then
-            tp(main, UDim2.new(0.5, 0, 0.5, 0), 0.5)
-        else
-            tp(main, UDim2.new(0.5, 0, 2, 0), 0.5)
-        end
-    end
-end)
-
--- 初始化动画
-tp(main, UDim2.new(0.5, 0, 0.5, 0), 1)
 
 function UiDestroy()
     if FengYu then
