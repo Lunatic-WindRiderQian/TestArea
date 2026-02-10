@@ -43,31 +43,6 @@ local services = {
 local UserInputService = services.UserInputService
 local RunService = services.RunService
 
--- 配置颜色（使用iOS风格）
-local config = {
-    MainColor = Color3.fromRGB(255, 255, 255),
-    TabColor = Color3.fromRGB(245, 245, 247),
-    Bg_Color = Color3.fromRGB(245, 245, 247),
-    Zy_Color = Color3.fromRGB(245, 245, 247),
-    Button_Color = Color3.fromRGB(0, 122, 255),
-    Textbox_Color = Color3.fromRGB(245, 245, 247),
-    Dropdown_Color = Color3.fromRGB(245, 245, 247),
-    Keybind_Color = Color3.fromRGB(245, 245, 247),
-    Label_Color = Color3.fromRGB(245, 245, 247),
-    Slider_Color = Color3.fromRGB(245, 245, 247),
-    SliderBar_Color = Color3.fromRGB(0, 122, 255),
-    Toggle_Color = Color3.fromRGB(245, 245, 247),
-    Toggle_Off = Color3.fromRGB(199, 199, 204),
-    Toggle_On = Color3.fromRGB(0, 122, 255),
-    AccentColor = Color3.fromRGB(0, 122, 255),
-    TextColor = Color3.fromRGB(0, 0, 0),
-    SecondaryTextColor = Color3.fromRGB(142, 142, 147),
-    GlowColor = Color3.fromRGB(0, 122, 255),
-    
-    ElementTransparency = 0,
-    GlassEffect = Color3.fromRGB(255, 255, 255),
-}
-
 -- =========================================
 -- 设备检测和UI尺寸设置
 -- =========================================
@@ -106,6 +81,7 @@ local function tp(ins, pos, time, thing)
     game:GetService("TweenService"):Create(ins, TweenInfo.new(time, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut),{Position = pos}):Play()
 end
 
+-- 清理旧的UI
 for _, gui in ipairs(services.CoreGui:GetChildren()) do
     if gui.Name == "UniversalUI" and gui:IsA("ScreenGui") then
         gui:Destroy()
@@ -122,17 +98,17 @@ FengYu.Parent = services.CoreGui
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
 Open.Parent = FengYu
-Open.BackgroundColor3 = config.AccentColor
-Open.BackgroundTransparency = 0.1
+Open.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
+Open.BackgroundTransparency = 0
 Open.Position = UDim2.new(0.92, 0, 0.01, 0)
-Open.Size = UDim2.new(0, 40, 0, 40)
+Open.Size = UDim2.new(0, 36, 0, 36)
 Open.Active = true
 Open.Draggable = true
 Open.Image = ""
 Open.ImageTransparency = 1
 
 local OpenCorner = Instance.new("UICorner")
-OpenCorner.CornerRadius = UDim.new(0, 8)
+OpenCorner.CornerRadius = UDim.new(1, 0)
 OpenCorner.Parent = Open
 
 local OpenText = Instance.new("TextLabel")
@@ -150,8 +126,8 @@ local main = Instance.new("Frame")
 main.Name = "main"
 main.Parent = FengYu
 main.AnchorPoint = Vector2.new(0.5, 0.5)
-main.BackgroundColor3 = config.MainColor
-main.BackgroundTransparency = 0
+main.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+main.BackgroundTransparency = 0.150
 main.Position = UDim2.new(0.5, 0, 0.5, 0)
 main.Size = UDim2.new(0, MAIN_WIDTH, 0, MAIN_HEIGHT)
 main.Visible = false
@@ -201,7 +177,7 @@ end)
 local workarea = Instance.new("Frame")
 workarea.Name = "workarea"
 workarea.Parent = main
-workarea.BackgroundColor3 = config.MainColor
+workarea.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 workarea.Position = UDim2.new(0.36403501, 0, 0, 0)
 workarea.Size = UDim2.new(0, WORKAREA_WIDTH, 0, WORKAREA_HEIGHT)
 
@@ -212,17 +188,17 @@ uc_2.Parent = workarea
 local workareacornerhider = Instance.new("Frame")
 workareacornerhider.Name = "workareacornerhider"
 workareacornerhider.Parent = workarea
-workareacornerhider.BackgroundColor3 = config.MainColor
+workareacornerhider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 workareacornerhider.BorderSizePixel = 0
 workareacornerhider.Size = UDim2.new(0, 18, 0.99895674, 0)
 
 -- 搜索框移动到侧边栏右边的最上面（工作区的右上角）
 local search = Instance.new("Frame")
 search.Name = "search"
-search.Parent = workarea  -- 父级改为workarea
+search.Parent = workarea
 search.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-search.Position = UDim2.new(isMobile and 0.1 or 0.7, 0, 0.01, 0) -- 右上角位置
-search.Size = UDim2.new(0, isMobile and 120 or 120, 0, 28) -- 适当缩小大小
+search.Position = UDim2.new(isMobile and 0.1 or 0.7, 0, 0.01, 0)
+search.Size = UDim2.new(0, isMobile and 120 or 120, 0, 28)
 
 local uc_8 = Instance.new("UICorner")
 uc_8.CornerRadius = UDim.new(0, 9)
@@ -235,9 +211,9 @@ searchicon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 searchicon.BackgroundTransparency = 1
 searchicon.BorderColor3 = Color3.fromRGB(27, 42, 53)
 searchicon.Position = UDim2.new(0.05, 0, 0.1, 0)
-searchicon.Size = UDim2.new(0, 20, 0, 20) -- 缩小图标
+searchicon.Size = UDim2.new(0, 20, 0, 20)
 searchicon.Image = "rbxassetid://2804603863"
-searchicon.ImageColor3 = config.SecondaryTextColor
+searchicon.ImageColor3 = Color3.fromRGB(95, 95, 95)
 searchicon.ScaleType = Enum.ScaleType.Fit
 
 local searchtextbox = Instance.new("TextBox")
@@ -252,7 +228,7 @@ searchtextbox.Font = Enum.Font.Gotham
 searchtextbox.LineHeight = 0.870
 searchtextbox.PlaceholderText = "Search"
 searchtextbox.Text = ""
-searchtextbox.TextColor3 = config.TextColor
+searchtextbox.TextColor3 = Color3.fromRGB(95, 95, 95)
 searchtextbox.TextSize = isMobile and 14 or 16
 searchtextbox.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -260,18 +236,18 @@ searchicon.MouseButton1Click:Connect(function()
     searchtextbox:CaptureFocus()
 end)
 
--- 侧边栏标题（脚本名字） - 放在最上面，位置更靠上
+-- 侧边栏标题（脚本名字）
 local SidebarTitle = Instance.new("TextLabel")
 SidebarTitle.Name = "SidebarTitle"
 SidebarTitle.Parent = main
 SidebarTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 SidebarTitle.BackgroundTransparency = 1
 SidebarTitle.BorderSizePixel = 0
-SidebarTitle.Position = UDim2.new(0.025, 0, 0.02, 0) -- 从0.06改为0.02，更靠上
+SidebarTitle.Position = UDim2.new(0.025, 0, 0.02, 0)
 SidebarTitle.Size = UDim2.new(0, SIDEBAR_WIDTH, 0, isMobile and 30 or 50)
 SidebarTitle.Font = Enum.Font.GothamBold
 SidebarTitle.Text = "FengUI"
-SidebarTitle.TextColor3 = config.TextColor
+SidebarTitle.TextColor3 = Color3.fromRGB(0, 0, 0)
 SidebarTitle.TextSize = isMobile and 18 or 24
 SidebarTitle.TextWrapped = true
 SidebarTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -285,8 +261,8 @@ sidebar.Active = true
 sidebar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 sidebar.BackgroundTransparency = 1
 sidebar.BorderSizePixel = 0
-sidebar.Position = UDim2.new(0.0249653254, 0, 0.20, 0) -- 在标题下方
-sidebar.Size = UDim2.new(0, SIDEBAR_WIDTH, 0, isMobile and 150 or 400) -- 调整高度
+sidebar.Position = UDim2.new(0.0249653254, 0, 0.20, 0)
+sidebar.Size = UDim2.new(0, SIDEBAR_WIDTH, 0, isMobile and 150 or 400)
 sidebar.AutomaticCanvasSize = "Y"
 sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
 sidebar.ScrollBarThickness = 2
@@ -324,7 +300,6 @@ TabMain.Active = true
 TabMain.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 TabMain.BackgroundTransparency = 1
 TabMain.BorderSizePixel = 0
--- 调整位置，为搜索框留出空间
 TabMain.Position = UDim2.new(0.0393013097, 0, isMobile and 0.15 or 0.12, 0)
 TabMain.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 220 or 512)
 TabMain.ZIndex = 3
@@ -363,112 +338,68 @@ end)
 tp(main, UDim2.new(0.5, 0, 0.5, 0), 1)
 
 -- =========================================
--- 万能UI界面代码结束
--- 以下是苹果.lua的API功能代码
+-- FengUI API 功能代码（从UI.lua移植，但使用iOS样式）
 -- =========================================
 
--- 修复section重叠问题的函数
-local function setupSmoothScrolling(scrollingFrame, layout)
-    if not layout then return end
-    
-    local function updateScrolling()
-        if not scrollingFrame or not scrollingFrame.Parent then return end
-        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
-        
-        if layout.AbsoluteContentSize.Y <= scrollingFrame.AbsoluteSize.Y then
-            scrollingFrame.ScrollingEnabled = false
-        else
-            scrollingFrame.ScrollingEnabled = true
+local config = {
+    MainColor = Color3.fromRGB(255, 255, 255),
+    TabColor = Color3.fromRGB(21, 103, 251),
+    Bg_Color = Color3.fromRGB(240, 240, 240),
+    Zy_Color = Color3.fromRGB(240, 240, 240),
+    Button_Color = Color3.fromRGB(216, 216, 216),
+    Textbox_Color = Color3.fromRGB(240, 240, 240),
+    Dropdown_Color = Color3.fromRGB(240, 240, 240),
+    Keybind_Color = Color3.fromRGB(240, 240, 240),
+    Label_Color = Color3.fromRGB(240, 240, 240),
+    Slider_Color = Color3.fromRGB(240, 240, 240),
+    SliderBar_Color = Color3.fromRGB(21, 103, 251),
+    Toggle_Color = Color3.fromRGB(240, 240, 240),
+    Toggle_Off = Color3.fromRGB(216, 216, 216),
+    Toggle_On = Color3.fromRGB(21, 103, 251),
+    AccentColor = Color3.fromRGB(21, 103, 251),
+    TextColor = Color3.fromRGB(12, 12, 12),
+    SecondaryTextColor = Color3.fromRGB(95, 95, 95),
+}
+
+function FengUI.new(FengUI, name, theme)
+    for _, v in next, services.CoreGui:GetChildren() do
+        if v.Name == "REN" then
+            v:Destroy()
         end
     end
-    
-    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateScrolling)
-    
-    -- 初始更新
-    task.wait(0.1)
-    updateScrolling()
-    
-    scrollingFrame.ElasticBehavior = Enum.ElasticBehavior.Never
-end
 
--- 标签功能
-local function UpdateTagContainerPosition()
-    -- 测试UI版本没有标签容器，所以留空
-end
-
-function FengUI.new(name, theme)
-    -- 设置脚本名字
-    if name then
-        SidebarTitle.Text = name
-    else
-        SidebarTitle.Text = "FengUI"
+    if theme then
+        for k, v in pairs(theme) do
+            if config[k] ~= nil then
+                config[k] = v
+            end
+        end
     end
+
+    local scriptName = name or "FengUI"
+    SidebarTitle.Text = scriptName
     
     local window = {
-        tabs = {},
-        currentTab = nil,
-        tags = {},
-        tagObjects = {},
-        tagCount = 0,
-        maxTags = 3
+    tabs = {},
+    currentTab = nil
     }
     
-    -- 标签功能（简化版）
     function window:AddTag(text, bgColor, textColor)
-        if self.tagCount >= self.maxTags then
-            return nil
-        end
-        
-        bgColor = bgColor or Color3.fromRGB(60, 60, 80)
-        textColor = textColor or Color3.fromRGB(240, 245, 255)
-        
-        -- 这个版本的UI没有标签功能，只返回一个空对象
-        local tagObj = {
-            Text = text,
-            Color = bgColor,
-            TextColor = textColor,
-            UseNeonEffect = false,
-            
-            Destroy = function()
-                -- 空实现
-            end,
-            
-            Update = function(newText, newBgColor, newTextColor, newUseNeonEffect)
-                -- 空实现
-            end,
-            
-            SetNeonEffect = function(selfObj, enabled)
-                -- 空实现
-            end,
-            
-            SetColor = function(selfObj, newColor)
-                -- 空实现
-            end
-        }
-        
-        table.insert(self.tags, text)
-        table.insert(self.tagObjects, tagObj)
-        self.tagCount = self.tagCount + 1
-        
-        return tagObj
+        -- iOS版本不支持标签功能
+        warn("iOS版本UI不支持标签功能")
+        return nil
     end
     
-    function window:UpdateTag(index, text, bgColor, textColor, useNeonEffect)
-        if index < 1 or index > #self.tagObjects then return end
-        -- 空实现
+    function window:UpdateTag(index, text, bgColor, textColor)
+        warn("iOS版本UI不支持标签功能")
     end
     
     function window:ClearTags()
-        self.tags = {}
-        self.tagObjects = {}
-        self.tagCount = 0
+        warn("iOS版本UI不支持标签功能")
     end
     
     function window:RemoveTag(index)
-        if index < 1 or index > #self.tagObjects then return end
-        table.remove(self.tags, index)
-        table.remove(self.tagObjects, index)
-        self.tagCount = self.tagCount - 1
+        warn("iOS版本UI不支持标签功能")
     end
     
     function window.Tab(window, name, icon, windowCount)
@@ -478,21 +409,21 @@ function FengUI.new(name, theme)
         local sidebar2 = Instance.new("TextButton")
         sidebar2.Name = "sidebar2_" .. name
         sidebar2.Parent = sidebar
-        sidebar2.BackgroundColor3 = config.AccentColor
+        sidebar2.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
         sidebar2.BackgroundTransparency = 1
         sidebar2.Size = UDim2.new(0, SIDEBAR_WIDTH - 7, 0, isMobile and 28 or 37)
-        sidebar2.ZIndex = 10 -- 提高ZIndex确保按钮在最前面
+        sidebar2.ZIndex = 10
         sidebar2.AutoButtonColor = false
         sidebar2.Font = Enum.Font.Gotham
         sidebar2.Text = name
-        sidebar2.TextColor3 = config.TextColor
+        sidebar2.TextColor3 = Color3.fromRGB(0, 0, 0)
         sidebar2.TextSize = isMobile and 16 or 21
         
         -- 添加一个透明的背景框确保点击区域
         local buttonBackground = Instance.new("Frame")
         buttonBackground.Name = "buttonBackground"
         buttonBackground.Parent = sidebar2
-        buttonBackground.BackgroundColor3 = config.AccentColor
+        buttonBackground.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
         buttonBackground.BackgroundTransparency = 1
         buttonBackground.Size = UDim2.new(1, 0, 1, 0)
         buttonBackground.ZIndex = 9
@@ -510,7 +441,6 @@ function FengUI.new(name, theme)
         workareamain.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         workareamain.BackgroundTransparency = 1
         workareamain.BorderSizePixel = 0
-        -- 调整位置，为搜索框留出空间
         workareamain.Position = UDim2.new(0.0393013097, 0, isMobile and 0.15 or 0.12, 0)
         workareamain.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 220 or 512)
         workareamain.ZIndex = 3
@@ -526,9 +456,6 @@ function FengUI.new(name, theme)
         
         table.insert(workareas, workareamain)
         
-        -- 设置平滑滚动
-        setupSmoothScrolling(workareamain, workarealayout)
-        
         local tab = {}
         
         function tab.section(tab, name, windowPosition, TabVal)
@@ -539,6 +466,7 @@ function FengUI.new(name, theme)
                 windowPosition = "Left"
             end
             
+            -- iOS版本不支持双窗口，忽略windowPosition参数
             local section = {}
             local sectionFrame = Instance.new("Frame")
             sectionFrame.Name = "section_" .. name
@@ -562,28 +490,25 @@ function FengUI.new(name, theme)
             sectionDivider.Font = Enum.Font.Gotham
             sectionDivider.LineHeight = 1.180
             sectionDivider.Text = name
-            sectionDivider.TextColor3 = config.TextColor
+            sectionDivider.TextColor3 = Color3.fromRGB(0, 0, 0)
             sectionDivider.TextSize = isMobile and 18 or 25
             sectionDivider.TextWrapped = true
             sectionDivider.TextXAlignment = Enum.TextXAlignment.Left
             sectionDivider.TextYAlignment = Enum.TextYAlignment.Bottom
             
-            -- 动态更新section高度
-            sectionLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                sectionFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, sectionLayout.AbsoluteContentSize.Y)
-            end)
-            
             function section.Button(section, text, callback)
+                callback = callback or function() end
+                
                 local button = Instance.new("TextButton")
                 button.Name = "button_" .. text
                 button.Text = text
                 button.Parent = sectionFrame
-                button.BackgroundColor3 = config.Button_Color
-                button.BackgroundTransparency = 0.8
+                button.BackgroundColor3 = Color3.fromRGB(216, 216, 216)
+                button.BackgroundTransparency = 1
                 button.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 28 or 37)
                 button.ZIndex = 2
                 button.Font = Enum.Font.Gotham
-                button.TextColor3 = Color3.fromRGB(255, 255, 255)
+                button.TextColor3 = Color3.fromRGB(21, 103, 251)
                 button.TextSize = isMobile and 16 or 21
 
                 local buttonCorner = Instance.new("UICorner")
@@ -592,42 +517,17 @@ function FengUI.new(name, theme)
 
                 local buttonStroke = Instance.new("UIStroke", button)
                 buttonStroke.ApplyStrokeMode = "Border"
-                buttonStroke.Color = config.Button_Color
+                buttonStroke.Color = Color3.fromRGB(21, 103, 251)
                 buttonStroke.Thickness = 1
-                buttonStroke.Transparency = 0.5
 
-                -- 添加悬停效果
-                button.MouseEnter:Connect(function()
-                    services.TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.7,
-                        Size = UDim2.new(0, WORKAREA_WIDTH - 36 - 5, 0, isMobile and 28 or 37)
-                    }):Play()
+                button.MouseButton1Click:Connect(function() 
+                    coroutine.wrap(function()
+                        button.TextSize -= 3
+                        task.wait(0.06)
+                        button.TextSize += 3
+                    end)()
+                    callback()
                 end)
-                
-                button.MouseLeave:Connect(function()
-                    services.TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.8,
-                        Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 28 or 37)
-                    }):Play()
-                end)
-
-                if callback then
-                    button.MouseButton1Click:Connect(function() 
-                        -- 点击动画
-                        services.TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                            BackgroundTransparency = 0.5,
-                            Size = UDim2.new(0, WORKAREA_WIDTH - 36 - 10, 0, isMobile and 28 or 37)
-                        }):Play()
-                        task.wait(0.1)
-                        services.TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                            BackgroundTransparency = 0.8,
-                            Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 28 or 37)
-                        }):Play()
-                        
-                        -- 执行回调
-                        callback()
-                    end)
-                end
                 return button
             end
             
@@ -729,20 +629,15 @@ function FengUI.new(name, theme)
                 local label = Instance.new("TextLabel")
                 label.Name = "label_" .. text
                 label.Parent = sectionFrame
-                label.BackgroundColor3 = config.Label_Color
-                label.BackgroundTransparency = 0.5
-                label.BorderSizePixel = 0
+                label.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                label.BackgroundTransparency = 1
+                label.BorderSizePixel = 2
                 label.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 28 or 37)
                 label.Font = Enum.Font.Gotham
-                label.TextColor3 = config.TextColor
+                label.TextColor3 = Color3.fromRGB(95, 95, 95)
                 label.TextSize = isMobile and 16 or 21
                 label.TextWrapped = true
                 label.Text = text
-                
-                local labelCorner = Instance.new("UICorner")
-                labelCorner.CornerRadius = UDim.new(0, 6)
-                labelCorner.Parent = label
-                
                 return label
             end
             
@@ -769,7 +664,7 @@ function FengUI.new(name, theme)
                 toggleLabel.Size = UDim2.new(0, isMobile and 200 or 300, 0, isMobile and 28 or 37)
                 toggleLabel.Font = Enum.Font.Gotham
                 toggleLabel.Text = text
-                toggleLabel.TextColor3 = config.TextColor
+                toggleLabel.TextColor3 = Color3.fromRGB(95, 95, 95)
                 toggleLabel.TextSize = isMobile and 16 or 21
                 toggleLabel.TextWrapped = true
                 toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -789,7 +684,6 @@ function FengUI.new(name, theme)
                 switchFrame.Size = UDim2.new(0, isMobile and 50 or 70, 0, isMobile and 26 or 36)
                 switchFrame.Text=""
                 switchFrame.AutoButtonColor = false
-                switchFrame.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
 
                 local switchCorner = Instance.new("UICorner")
                 switchCorner.CornerRadius = UDim.new(5, 0)
@@ -808,10 +702,10 @@ function FengUI.new(name, theme)
 
                 if enabled == false then
                     switchButton.Position = UDim2.new(0, 1, 0, 1)
-                    switchFrame.BackgroundColor3 = config.Toggle_Off
+                    switchFrame.BackgroundColor3 = Color3.fromRGB(216, 216, 216)
                 else
                     switchButton.Position = UDim2.new(0, isMobile and 25 or 35, 0, 1)
-                    switchFrame.BackgroundColor3 = config.Toggle_On
+                    switchFrame.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
                 end
                 
                 local funcs = {
@@ -826,19 +720,11 @@ function FengUI.new(name, theme)
                         FengUI.flags[flag] = state
                         
                         if state then
-                            services.TweenService:Create(switchButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                                Position = UDim2.new(0, isMobile and 25 or 35, 0, 1)
-                            }):Play()
-                            services.TweenService:Create(switchFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                                BackgroundColor3 = config.Toggle_On
-                            }):Play()
+                            switchButton:TweenPosition(UDim2.new(0, isMobile and 25 or 35, 0, 1), "In", "Sine", 0.1, true)
+                            switchFrame.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
                         else
-                            services.TweenService:Create(switchButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                                Position = UDim2.new(0, 1, 0, 1)
-                            }):Play()
-                            services.TweenService:Create(switchFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                                BackgroundColor3 = config.Toggle_Off
-                            }):Play()
+                            switchButton:TweenPosition(UDim2.new(0,1,0,1), "In", "Sine", 0.1, true)
+                            switchFrame.BackgroundColor3 = Color3.fromRGB(216, 216, 216)
                         end
                         
                         callback(state)
@@ -900,7 +786,7 @@ function FengUI.new(name, theme)
                 keybindLabel.Size = UDim2.new(0, isMobile and 200 or 300, 0, isMobile and 28 or 37)
                 keybindLabel.Font = Enum.Font.Gotham
                 keybindLabel.Text = text
-                keybindLabel.TextColor3 = config.TextColor
+                keybindLabel.TextColor3 = Color3.fromRGB(95, 95, 95)
                 keybindLabel.TextSize = isMobile and 16 or 21
                 keybindLabel.TextWrapped = true
                 keybindLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -908,31 +794,17 @@ function FengUI.new(name, theme)
                 local keybindButton = Instance.new("TextButton")
                 keybindButton.Name = "keybindButton"
                 keybindButton.Parent = keybindFrame
-                keybindButton.BackgroundColor3 = config.Keybind_Color
-                keybindButton.BackgroundTransparency = 0.2
+                keybindButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
                 keybindButton.Position = UDim2.new(isMobile and 0.5 or 0.7, 0, 0.1, 0)
                 keybindButton.Size = UDim2.new(0, isMobile and 80 or 100, 0, isMobile and 26 or 34)
                 keybindButton.Font = Enum.Font.Gotham
                 keybindButton.Text = keyTxt
-                keybindButton.TextColor3 = config.TextColor
+                keybindButton.TextColor3 = Color3.fromRGB(12, 12, 12)
                 keybindButton.TextSize = isMobile and 14 or 18
                 
                 local keybindCorner = Instance.new("UICorner")
                 keybindCorner.CornerRadius = UDim.new(0, 9)
                 keybindCorner.Parent = keybindButton
-                
-                -- 添加悬停效果
-                keybindButton.MouseEnter:Connect(function()
-                    services.TweenService:Create(keybindButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.1
-                    }):Play()
-                end)
-                
-                keybindButton.MouseLeave:Connect(function()
-                    services.TweenService:Create(keybindButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.2
-                    }):Play()
-                end)
                 
                 UserInputService.InputBegan:Connect(function(inp, gpe)
                     if gpe then return end
@@ -943,7 +815,7 @@ function FengUI.new(name, theme)
                 
                 keybindButton.MouseButton1Click:Connect(function()
                     keybindButton.Text = "..."
-                    keybindButton.BackgroundColor3 = config.AccentColor
+                    keybindButton.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
                     keybindButton.TextColor3 = Color3.fromRGB(255, 255, 255)
                     
                     task.wait()
@@ -953,15 +825,15 @@ function FengUI.new(name, theme)
                     
                     if key.UserInputType ~= Enum.UserInputType.Keyboard then
                         keybindButton.Text = keyTxt
-                        keybindButton.BackgroundColor3 = config.Keybind_Color
-                        keybindButton.TextColor3 = config.TextColor
+                        keybindButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+                        keybindButton.TextColor3 = Color3.fromRGB(12, 12, 12)
                         return
                     end
                     
                     if banned[keyName] then
                         keybindButton.Text = keyTxt
-                        keybindButton.BackgroundColor3 = config.Keybind_Color
-                        keybindButton.TextColor3 = config.TextColor
+                        keybindButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+                        keybindButton.TextColor3 = Color3.fromRGB(12, 12, 12)
                         return
                     end
                     
@@ -969,8 +841,8 @@ function FengUI.new(name, theme)
                     bindKey = Enum.KeyCode[keyName]
                     keyTxt = shortNames[keyName] or keyName
                     keybindButton.Text = keyTxt
-                    keybindButton.BackgroundColor3 = config.Keybind_Color
-                    keybindButton.TextColor3 = config.TextColor
+                    keybindButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+                    keybindButton.TextColor3 = Color3.fromRGB(12, 12, 12)
                 end)
             end
             
@@ -998,15 +870,14 @@ function FengUI.new(name, theme)
                 textboxLabel.Size = UDim2.new(0, isMobile and 200 or 300, 0, isMobile and 28 or 37)
                 textboxLabel.Font = Enum.Font.Gotham
                 textboxLabel.Text = text
-                textboxLabel.TextColor3 = config.TextColor
+                textboxLabel.TextColor3 = Color3.fromRGB(95, 95, 95)
                 textboxLabel.TextSize = isMobile and 16 or 21
                 textboxLabel.TextWrapped = true
                 textboxLabel.TextXAlignment = Enum.TextXAlignment.Left
                 
                 local textboxInput = Instance.new("Frame")
                 textboxInput.Parent = textboxFrame
-                textboxInput.BackgroundColor3 = config.Textbox_Color
-                textboxInput.BackgroundTransparency = 0.2
+                textboxInput.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
                 textboxInput.Position = UDim2.new(0, 0, 0.5, 0)
                 textboxInput.Size = UDim2.new(1, 0, 0, isMobile and 26 or 34)
 
@@ -1026,25 +897,12 @@ function FengUI.new(name, theme)
                 textbox.ClearTextOnFocus = false
                 textbox.Font = Enum.Font.Gotham
                 textbox.LineHeight = 0.870
-                textbox.PlaceholderColor3 = config.SecondaryTextColor
+                textbox.PlaceholderColor3 = Color3.fromRGB(113, 113, 113)
                 textbox.PlaceholderText = "Type..."
                 textbox.Text = default
-                textbox.TextColor3 = config.TextColor
+                textbox.TextColor3 = Color3.fromRGB(12, 12, 12)
                 textbox.TextSize = isMobile and 16 or 21
                 textbox.TextXAlignment = Enum.TextXAlignment.Left
-
-                -- 添加悬停效果
-                textboxInput.MouseEnter:Connect(function()
-                    services.TweenService:Create(textboxInput, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.1
-                    }):Play()
-                end)
-                
-                textboxInput.MouseLeave:Connect(function()
-                    services.TweenService:Create(textboxInput, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.2
-                    }):Play()
-                end)
 
                 textbox.FocusLost:Connect(function()
                     if textbox.Text == "" then
@@ -1084,7 +942,7 @@ function FengUI.new(name, theme)
                 sliderLabel.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 28 or 37)
                 sliderLabel.Font = Enum.Font.Gotham
                 sliderLabel.Text = text .. ": " .. tostring(default)
-                sliderLabel.TextColor3 = config.TextColor
+                sliderLabel.TextColor3 = Color3.fromRGB(95, 95, 95)
                 sliderLabel.TextSize = isMobile and 16 or 21
                 sliderLabel.TextWrapped = true
                 sliderLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -1104,7 +962,7 @@ function FengUI.new(name, theme)
                 local sliderPart = Instance.new("Frame")
                 sliderPart.Name = "sliderPart"
                 sliderPart.Parent = sliderBar
-                sliderPart.BackgroundColor3 = config.SliderBar_Color
+                sliderPart.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
                 sliderPart.BorderSizePixel = 0
                 sliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
                 
@@ -1206,7 +1064,7 @@ function FengUI.new(name, theme)
                 dropdownLabel.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 28 or 37)
                 dropdownLabel.Font = Enum.Font.Gotham
                 dropdownLabel.Text = text
-                dropdownLabel.TextColor3 = config.TextColor
+                dropdownLabel.TextColor3 = Color3.fromRGB(95, 95, 95)
                 dropdownLabel.TextSize = isMobile and 16 or 21
                 dropdownLabel.TextWrapped = true
                 dropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -1214,71 +1072,207 @@ function FengUI.new(name, theme)
                 local dropdownButton = Instance.new("TextButton")
                 dropdownButton.Name = "dropdownButton"
                 dropdownButton.Parent = dropdownFrame
-                dropdownButton.BackgroundColor3 = config.Dropdown_Color
-                dropdownButton.BackgroundTransparency = 0.2
+                dropdownButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
                 dropdownButton.Position = UDim2.new(0, 0, 0.5, 0)
                 dropdownButton.Size = UDim2.new(1, 0, 0, isMobile and 26 or 34)
                 dropdownButton.Font = Enum.Font.Gotham
                 dropdownButton.Text = "Select..."
-                dropdownButton.TextColor3 = config.TextColor
+                dropdownButton.TextColor3 = Color3.fromRGB(12, 12, 12)
                 dropdownButton.TextSize = isMobile and 14 or 18
                 
                 local dropdownCorner = Instance.new("UICorner")
                 dropdownCorner.CornerRadius = UDim.new(0, 9)
                 dropdownCorner.Parent = dropdownButton
                 
-                -- 添加悬停效果
-                dropdownButton.MouseEnter:Connect(function()
-                    services.TweenService:Create(dropdownButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.1
-                    }):Play()
-                end)
+                -- 下拉菜单容器
+                local dropdownContainer = Instance.new("Frame")
+                dropdownContainer.Name = "dropdownContainer"
+                dropdownContainer.Parent = dropdownFrame
+                dropdownContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                dropdownContainer.BorderSizePixel = 0
+                dropdownContainer.Position = UDim2.new(0, 0, 1, 5)
+                dropdownContainer.Size = UDim2.new(1, 0, 0, 0)
+                dropdownContainer.Visible = false
+                dropdownContainer.ClipsDescendants = true
                 
-                dropdownButton.MouseLeave:Connect(function()
-                    services.TweenService:Create(dropdownButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 0.2
-                    }):Play()
-                end)
+                local dropdownContainerCorner = Instance.new("UICorner")
+                dropdownContainerCorner.CornerRadius = UDim.new(0, 9)
+                dropdownContainerCorner.Parent = dropdownContainer
+                
+                local dropdownList = Instance.new("UIListLayout")
+                dropdownList.Parent = dropdownContainer
+                dropdownList.SortOrder = Enum.SortOrder.LayoutOrder
+                dropdownList.Padding = UDim.new(0, 2)
+                
+                local dropdownPadding = Instance.new("UIPadding")
+                dropdownPadding.Parent = dropdownContainer
+                dropdownPadding.PaddingTop = UDim.new(0, 5)
+                dropdownPadding.PaddingBottom = UDim.new(0, 5)
                 
                 local allOptions = {}
                 local selectedOption = nil
+                local isOpen = false
+                
+                local function updateDropdownHeight()
+                    local optionCount = 0
+                    for _, child in pairs(dropdownContainer:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            optionCount = optionCount + 1
+                        end
+                    end
+                    
+                    dropdownContainer.Size = UDim2.new(1, 0, 0, optionCount * (isMobile and 30 or 36) + 10)
+                    dropdownFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 70 + (isOpen and optionCount * 30 + 15 or 0) or 80 + (isOpen and optionCount * 36 + 15 or 0))
+                end
+                
+                local function toggleDropdown()
+                    isOpen = not isOpen
+                    dropdownContainer.Visible = isOpen
+                    updateDropdownHeight()
+                end
                 
                 local funcs = {}
                 
                 funcs.AddOption = function(self, optionText)
-                    table.insert(allOptions, optionText)
+                    local optionButton = Instance.new("TextButton")
+                    optionButton.Name = "option_" .. optionText
+                    optionButton.Parent = dropdownContainer
+                    optionButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                    optionButton.BackgroundTransparency = 1
+                    optionButton.Size = UDim2.new(1, -10, 0, isMobile and 30 or 36)
+                    optionButton.Font = Enum.Font.Gotham
+                    optionButton.Text = optionText
+                    optionButton.TextColor3 = Color3.fromRGB(95, 95, 95)
+                    optionButton.TextSize = isMobile and 14 or 16
+                    
+                    optionButton.MouseButton1Click:Connect(function()
+                        selectedOption = optionText
+                        dropdownButton.Text = optionText
+                        FengUI.flags[flag] = optionText
+                        callback(optionText)
+                        toggleDropdown()
+                    end)
+                    
+                    optionButton.MouseEnter:Connect(function()
+                        optionButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+                    end)
+                    
+                    optionButton.MouseLeave:Connect(function()
+                        optionButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                    end)
+                    
+                    table.insert(allOptions, optionButton)
+                    updateDropdownHeight()
+                    
+                    return optionButton
+                end
+                
+                funcs.RemoveOption = function(self, optionText)
+                    for i, option in pairs(allOptions) do
+                        if option and option.Text == optionText then
+                            option:Destroy()
+                            table.remove(allOptions, i)
+                            break
+                        end
+                    end
+                    updateDropdownHeight()
                 end
                 
                 funcs.SetOptions = function(self, newOptions)
-                    allOptions = newOptions or {}
+                    for _, option in pairs(allOptions) do
+                        if option then
+                            option:Destroy()
+                        end
+                    end
+                    allOptions = {}
+                    
+                    for _, optionText in pairs(newOptions) do
+                        funcs:AddOption(optionText)
+                    end
+                    
+                    updateDropdownHeight()
+                end
+                
+                funcs.GetSelected = function(self)
+                    return FengUI.flags[flag]
+                end
+                
+                funcs.SetSelected = function(self, value)
+                    if value then
+                        for _, option in pairs(allOptions) do
+                            if option and option.Text == value then
+                                selectedOption = value
+                                dropdownButton.Text = value
+                                FengUI.flags[flag] = value
+                                break
+                            end
+                        end
+                    else
+                        selectedOption = nil
+                        dropdownButton.Text = "Select..."
+                        FengUI.flags[flag] = nil
+                    end
+                end
+                
+                funcs.Clear = function(self)
+                    for _, option in pairs(allOptions) do
+                        if option then
+                            option:Destroy()
+                        end
+                    end
+                    allOptions = {}
+                    selectedOption = nil
+                    dropdownButton.Text = "Select..."
+                    FengUI.flags[flag] = nil
+                    updateDropdownHeight()
+                end
+                
+                funcs.Open = function(self)
+                    if not isOpen then
+                        toggleDropdown()
+                    end
+                end
+                
+                funcs.Close = function(self)
+                    if isOpen then
+                        toggleDropdown()
+                    end
                 end
                 
                 dropdownButton.MouseButton1Click:Connect(function()
-                    -- 这里需要实现下拉菜单的展开逻辑
-                    -- 由于万能UI没有内置下拉菜单，我们可以使用一个简单的文本选择
-                    if #allOptions > 0 then
-                        selectedOption = allOptions[1]
-                        dropdownButton.Text = selectedOption
-                        callback(selectedOption)
-                        FengUI.flags[flag] = selectedOption
+                    toggleDropdown()
+                end)
+                
+                -- 点击外部关闭下拉菜单
+                services.UserInputService.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        local mouse = services.Players.LocalPlayer:GetMouse()
+                        local dropdownPos = dropdownContainer.AbsolutePosition
+                        local dropdownSize = dropdownContainer.AbsoluteSize
+                        
+                        if isOpen and (mouse.X < dropdownPos.X or mouse.X > dropdownPos.X + dropdownSize.X or mouse.Y < dropdownPos.Y or mouse.Y > dropdownPos.Y + dropdownSize.Y) then
+                            local buttonPos = dropdownButton.AbsolutePosition
+                            local buttonSize = dropdownButton.AbsoluteSize
+                            
+                            if mouse.X < buttonPos.X or mouse.X > buttonPos.X + buttonSize.X or mouse.Y < buttonPos.Y or mouse.Y > buttonPos.Y + buttonSize.Y then
+                                toggleDropdown()
+                            end
+                        end
                     end
                 end)
                 
                 funcs:SetOptions(options)
                 
                 if #options > 0 then
-                    selectedOption = options[1]
-                    dropdownButton.Text = selectedOption
-                    FengUI.flags[flag] = selectedOption
+                    funcs:SetSelected(options[1])
                 end
                 
                 return funcs
             end
             
-            -- 添加颜色选择器功能
             function section.ColorPicker(section, text, flag, defaultColor, callback)
                 callback = callback or function() end
-                defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
+                defaultColor = defaultColor or Color3.fromRGB(21, 103, 251)
                 assert(text, "No text provided")
                 assert(flag, "No flag provided")
                 
@@ -1300,90 +1294,239 @@ function FengUI.new(name, theme)
                 colorPickerLabel.Size = UDim2.new(0, isMobile and 200 or 300, 0, isMobile and 28 or 37)
                 colorPickerLabel.Font = Enum.Font.Gotham
                 colorPickerLabel.Text = text
-                colorPickerLabel.TextColor3 = config.TextColor
+                colorPickerLabel.TextColor3 = Color3.fromRGB(95, 95, 95)
                 colorPickerLabel.TextSize = isMobile and 16 or 21
                 colorPickerLabel.TextWrapped = true
                 colorPickerLabel.TextXAlignment = Enum.TextXAlignment.Left
                 
-                local colorPreview = Instance.new("TextButton")
+                local colorPreview = Instance.new("Frame")
                 colorPreview.Name = "colorPreview"
                 colorPreview.Parent = colorPickerFrame
                 colorPreview.BackgroundColor3 = defaultColor
-                colorPreview.BackgroundTransparency = 0
                 colorPreview.Position = UDim2.new(isMobile and 0.5 or 0.7, 0, 0.1, 0)
-                colorPreview.Size = UDim2.new(0, isMobile and 80 or 100, 0, isMobile and 26 or 34)
-                colorPreview.Font = Enum.Font.Gotham
-                colorPreview.Text = ""
-                colorPreview.TextColor3 = Color3.fromRGB(255, 255, 255)
-                colorPreview.TextSize = isMobile and 14 or 18
+                colorPreview.Size = UDim2.new(0, isMobile and 60 or 80, 0, isMobile and 26 or 34)
                 
                 local colorPreviewCorner = Instance.new("UICorner")
                 colorPreviewCorner.CornerRadius = UDim.new(0, 9)
                 colorPreviewCorner.Parent = colorPreview
                 
-                local colorStroke = Instance.new("UIStroke", colorPreview)
-                colorStroke.Color = Color3.fromRGB(200, 200, 200)
-                colorStroke.Thickness = 1
+                local colorPreviewButton = Instance.new("TextButton")
+                colorPreviewButton.Name = "colorPreviewButton"
+                colorPreviewButton.Parent = colorPreview
+                colorPreviewButton.BackgroundTransparency = 1
+                colorPreviewButton.Size = UDim2.new(1, 0, 1, 0)
+                colorPreviewButton.Text = ""
                 
-                -- 添加悬停效果
-                colorPreview.MouseEnter:Connect(function()
-                    services.TweenService:Create(colorPreview, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(0, isMobile and 85 or 105, 0, isMobile and 28 or 36)
-                    }):Play()
-                end)
+                -- 颜色选择器弹出窗口
+                local colorPickerPopup = Instance.new("Frame")
+                colorPickerPopup.Name = "colorPickerPopup"
+                colorPickerPopup.Parent = FengYu
+                colorPickerPopup.AnchorPoint = Vector2.new(0.5, 0.5)
+                colorPickerPopup.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                colorPickerPopup.BackgroundTransparency = 0.1
+                colorPickerPopup.BorderSizePixel = 0
+                colorPickerPopup.Position = UDim2.new(0.5, 0, 0.5, 0)
+                colorPickerPopup.Size = UDim2.new(0, 300, 0, 240)
+                colorPickerPopup.Visible = false
+                colorPickerPopup.ZIndex = 100
                 
-                colorPreview.MouseLeave:Connect(function()
-                    services.TweenService:Create(colorPreview, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(0, isMobile and 80 or 100, 0, isMobile and 26 or 34)
-                    }):Play()
-                end)
+                local popupCorner = Instance.new("UICorner")
+                popupCorner.CornerRadius = UDim.new(0, 18)
+                popupCorner.Parent = colorPickerPopup
                 
-                local funcs = {}
+                local popupTitle = Instance.new("TextLabel")
+                popupTitle.Name = "popupTitle"
+                popupTitle.Parent = colorPickerPopup
+                popupTitle.BackgroundTransparency = 1
+                popupTitle.Position = UDim2.new(0, 10, 0, 10)
+                popupTitle.Size = UDim2.new(1, -20, 0, 30)
+                popupTitle.Font = Enum.Font.GothamBold
+                popupTitle.Text = "选择颜色"
+                popupTitle.TextColor3 = Color3.fromRGB(0, 0, 0)
+                popupTitle.TextSize = 18
+                popupTitle.TextXAlignment = Enum.TextXAlignment.Center
                 
-                funcs.SetColor = function(self, color)
-                    if typeof(color) == "Color3" then
-                        colorPreview.BackgroundColor3 = color
-                        FengUI.flags[flag] = color
-                        callback(color)
+                local hueSlider = Instance.new("Frame")
+                hueSlider.Name = "hueSlider"
+                hueSlider.Parent = colorPickerPopup
+                hueSlider.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+                hueSlider.Position = UDim2.new(0.1, 0, 0.2, 0)
+                hueSlider.Size = UDim2.new(0.8, 0, 0, 20)
+                
+                local hueSliderCorner = Instance.new("UICorner")
+                hueSliderCorner.CornerRadius = UDim.new(1, 0)
+                hueSliderCorner.Parent = hueSlider
+                
+                local hueGradient = Instance.new("UIGradient")
+                hueGradient.Color = ColorSequence.new{
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+                    ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+                    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+                    ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+                    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+                }
+                hueGradient.Parent = hueSlider
+                
+                local hueSliderThumb = Instance.new("Frame")
+                hueSliderThumb.Name = "hueSliderThumb"
+                hueSliderThumb.Parent = hueSlider
+                hueSliderThumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                hueSliderThumb.Size = UDim2.new(0, 10, 0, 24)
+                hueSliderThumb.Position = UDim2.new(0.5, -5, -0.1, 0)
+                
+                local hueSliderThumbCorner = Instance.new("UICorner")
+                hueSliderThumbCorner.CornerRadius = UDim.new(0, 2)
+                hueSliderThumbCorner.Parent = hueSliderThumb
+                
+                local currentColor = defaultColor
+                local currentHue, currentSat, currentVal = Color3.toHSV(defaultColor)
+                
+                local function updateColorDisplay()
+                    colorPreview.BackgroundColor3 = currentColor
+                end
+                
+                local function updateHueSlider()
+                    hueSliderThumb.Position = UDim2.new(currentHue, -5, -0.1, 0)
+                end
+                
+                local function openColorPicker()
+                    colorPickerPopup.Visible = true
+                    colorPickerPopup.Position = UDim2.new(0.5, 0, 0.5, 0)
+                    updateHueSlider()
+                end
+                
+                local function closeColorPicker(save)
+                    colorPickerPopup.Visible = false
+                    if save then
+                        FengUI.flags[flag] = currentColor
+                        callback(currentColor)
                     end
                 end
                 
-                funcs.GetColor = function(self)
-                    return FengUI.flags[flag] or defaultColor
-                end
+                colorPreviewButton.MouseButton1Click:Connect(openColorPicker)
                 
-                -- 简单的点击选择颜色（在实际使用中，这里应该打开一个颜色选择器对话框）
-                colorPreview.MouseButton1Click:Connect(function()
-                    -- 这里可以打开一个颜色选择器
-                    -- 由于测试UI版本没有内置颜色选择器，我们只切换几个预设颜色
-                    local colors = {
-                        Color3.fromRGB(255, 59, 48),  -- 红色
-                        Color3.fromRGB(255, 149, 0),  -- 橙色
-                        Color3.fromRGB(255, 204, 0),  -- 黄色
-                        Color3.fromRGB(52, 199, 89),  -- 绿色
-                        Color3.fromRGB(0, 122, 255),  -- 蓝色
-                        Color3.fromRGB(88, 86, 214),  -- 紫色
-                    }
-                    
-                    local currentColor = FengUI.flags[flag] or defaultColor
-                    local found = false
-                    
-                    for i, color in ipairs(colors) do
-                        if currentColor == color then
-                            if i < #colors then
-                                funcs:SetColor(colors[i + 1])
-                            else
-                                funcs:SetColor(colors[1])
-                            end
-                            found = true
-                            break
+                -- 色相滑块交互
+                local hueDragging = false
+                
+                hueSlider.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        hueDragging = true
+                    end
+                end)
+                
+                hueSlider.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        hueDragging = false
+                    end
+                end)
+                
+                services.UserInputService.InputChanged:Connect(function(input)
+                    if hueDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                        local mouse = services.Players.LocalPlayer:GetMouse()
+                        local sliderPos = hueSlider.AbsolutePosition.X
+                        local sliderSize = hueSlider.AbsoluteSize.X
+                        local mouseX = math.clamp(mouse.X, sliderPos, sliderPos + sliderSize)
+                        
+                        currentHue = (mouseX - sliderPos) / sliderSize
+                        currentColor = Color3.fromHSV(currentHue, currentSat, currentVal)
+                        updateColorDisplay()
+                        updateHueSlider()
+                    end
+                end)
+                
+                -- 添加确认和取消按钮
+                local confirmButton = Instance.new("TextButton")
+                confirmButton.Name = "confirmButton"
+                confirmButton.Parent = colorPickerPopup
+                confirmButton.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
+                confirmButton.Position = UDim2.new(0.1, 0, 0.8, 0)
+                confirmButton.Size = UDim2.new(0.35, 0, 0, 30)
+                confirmButton.Font = Enum.Font.GothamBold
+                confirmButton.Text = "确认"
+                confirmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                confirmButton.TextSize = 14
+                
+                local confirmCorner = Instance.new("UICorner")
+                confirmCorner.CornerRadius = UDim.new(0, 9)
+                confirmCorner.Parent = confirmButton
+                
+                local cancelButton = Instance.new("TextButton")
+                cancelButton.Name = "cancelButton"
+                cancelButton.Parent = colorPickerPopup
+                cancelButton.BackgroundColor3 = Color3.fromRGB(216, 216, 216)
+                cancelButton.Position = UDim2.new(0.55, 0, 0.8, 0)
+                cancelButton.Size = UDim2.new(0.35, 0, 0, 30)
+                cancelButton.Font = Enum.Font.GothamBold
+                cancelButton.Text = "取消"
+                cancelButton.TextColor3 = Color3.fromRGB(12, 12, 12)
+                cancelButton.TextSize = 14
+                
+                local cancelCorner = Instance.new("UICorner")
+                cancelCorner.CornerRadius = UDim.new(0, 9)
+                cancelCorner.Parent = cancelButton
+                
+                confirmButton.MouseButton1Click:Connect(function()
+                    closeColorPicker(true)
+                end)
+                
+                cancelButton.MouseButton1Click:Connect(function()
+                    closeColorPicker(false)
+                end)
+                
+                -- 点击外部关闭
+                local closeClickArea = Instance.new("TextButton")
+                closeClickArea.Name = "closeClickArea"
+                closeClickArea.Parent = FengYu
+                closeClickArea.BackgroundTransparency = 1
+                closeClickArea.Size = UDim2.new(1, 0, 1, 0)
+                closeClickArea.Text = ""
+                closeClickArea.Visible = false
+                closeClickArea.ZIndex = 99
+                
+                colorPreviewButton.MouseButton1Click:Connect(function()
+                    openColorPicker()
+                    closeClickArea.Visible = true
+                end)
+                
+                closeClickArea.MouseButton1Click:Connect(function()
+                    colorPickerPopup.Visible = false
+                    closeClickArea.Visible = false
+                end)
+                
+                confirmButton.MouseButton1Click:Connect(function()
+                    colorPickerPopup.Visible = false
+                    closeClickArea.Visible = false
+                    closeColorPicker(true)
+                end)
+                
+                cancelButton.MouseButton1Click:Connect(function()
+                    colorPickerPopup.Visible = false
+                    closeClickArea.Visible = false
+                    closeColorPicker(false)
+                end)
+                
+                updateColorDisplay()
+                
+                local funcs = {
+                    SetColor = function(self, color)
+                        if typeof(color) == "Color3" then
+                            currentColor = color
+                            currentHue, currentSat, currentVal = Color3.toHSV(color)
+                            updateColorDisplay()
+                            updateHueSlider()
+                            FengUI.flags[flag] = color
+                            callback(color)
                         end
-                    end
+                    end,
                     
-                    if not found then
-                        funcs:SetColor(colors[1])
-                    end
-                end)
+                    GetColor = function(self)
+                        return FengUI.flags[flag] or defaultColor
+                    end,
+                    
+                    Module = colorPickerFrame
+                }
                 
                 return funcs
             end
@@ -1395,7 +1538,7 @@ function FengUI.new(name, theme)
         sidebar2.MouseButton1Click:Connect(function()
             for b, v in next, sections do
                 v.BackgroundTransparency = 1
-                v.TextColor3 = config.TextColor
+                v.TextColor3 = Color3.fromRGB(0, 0, 0)
             end
             sidebar2.BackgroundTransparency = 0
             sidebar2.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1416,15 +1559,37 @@ function FengUI.new(name, theme)
     end
     
     function window:DualTab(name, icon)
-        if type(icon) == "number" then
-            icon = tostring(icon)
-        end
-        
-        return window:Tab(name, icon, 2)
+        -- iOS版本不支持双窗口，但保持API兼容性
+        warn("iOS版本UI不支持双窗口，使用单窗口替代")
+        return window:Tab(name, icon, 1)
     end
 
     return window
 end
+
+-- 动画效果
+Open.MouseButton1Click:Connect(function()
+    main.Visible = not main.Visible
+    if main.Visible then
+        tp(main, UDim2.new(0.5, 0, 0.5, 0), 0.5)
+    else
+        tp(main, UDim2.new(0.5, 0, 2, 0), 0.5)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.LeftControl then
+        main.Visible = not main.Visible
+        if main.Visible then
+            tp(main, UDim2.new(0.5, 0, 0.5, 0), 0.5)
+        else
+            tp(main, UDim2.new(0.5, 0, 2, 0), 0.5)
+        end
+    end
+end)
+
+-- 初始化动画
+tp(main, UDim2.new(0.5, 0, 0.5, 0), 1)
 
 function UiDestroy()
     if FengYu then
