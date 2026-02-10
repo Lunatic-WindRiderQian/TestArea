@@ -725,12 +725,13 @@ function FengUI.new(name, theme)
         
         local tab = {}
         
-        function tab.section(tab, name, windowPosition, TabVal)
-            if type(windowPosition) == "boolean" then
-                TabVal = windowPosition
-                windowPosition = "Left"
-            elseif not windowPosition or type(windowPosition) ~= "string" then
-                windowPosition = "Left"
+        function tab.section(tab, name, TabVal)
+            -- 简化参数处理，只接受name和TabVal
+            if type(name) == "boolean" then
+                TabVal = name
+                name = "Section"
+            elseif not TabVal then
+                TabVal = true  -- 默认展开
             end
             
             local section = {}
@@ -767,7 +768,7 @@ function FengUI.new(name, theme)
             sectionToggle.Name = "sectionToggle"
             sectionToggle.Parent = sectionDivider
             sectionToggle.BackgroundTransparency = 1
-            sectionToggle.Text = "▼"
+            sectionToggle.Text = TabVal and "▲" or "▼"
             sectionToggle.TextColor3 = config.AccentColor
             sectionToggle.TextSize = isMobile and 14 or 18
             sectionToggle.Position = UDim2.new(0.9, 0, 0, 0)
@@ -778,23 +779,14 @@ function FengUI.new(name, theme)
             sectionContent.Parent = sectionFrame
             sectionContent.BackgroundTransparency = 1
             sectionContent.Size = UDim2.new(1, 0, 0, 0)
-            sectionContent.Visible = true
+            sectionContent.Visible = TabVal
             
             local sectionContentLayout = Instance.new("UIListLayout")
             sectionContentLayout.Parent = sectionContent
             sectionContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
             sectionContentLayout.Padding = UDim.new(0, isMobile and 4 or 8)
             
-            local open = true
-            if TabVal ~= nil then
-                if type(TabVal) == "boolean" then
-                    open = TabVal
-                elseif TabVal == "false" or TabVal == "0" then
-                    open = false
-                elseif TabVal == "true" or TabVal == "1" then
-                    open = true
-                end
-            end
+            local open = TabVal
             
             local function updateSectionHeight()
                 if open then
@@ -807,15 +799,15 @@ function FengUI.new(name, theme)
                     sectionContent.Size = UDim2.new(1, 0, 0, 0)
                 end
                 sectionFrame.Size = UDim2.new(1, 0, 0, sectionDivider.AbsoluteSize.Y + (open and sectionContent.AbsoluteSize.Y or 0))
+                
+                -- 更新滚动框架的CanvasSize
+                task.wait()
+                workareamain.CanvasSize = UDim2.new(0, 0, 0, workarealayout.AbsoluteContentSize.Y + 10)
             end
             
             sectionToggle.MouseButton1Click:Connect(function()
                 open = not open
                 updateSectionHeight()
-                
-                -- 更新滚动框架的CanvasSize
-                task.wait()
-                workareamain.CanvasSize = UDim2.new(0, 0, 0, workarealayout.AbsoluteContentSize.Y + 10)
             end)
             
             sectionContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
