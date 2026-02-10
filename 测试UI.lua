@@ -72,32 +72,6 @@ else
     SIDEBAR_WIDTH = 233
 end
 
--- iOS风格配置
-local config = {
-    MainColor = Color3.fromRGB(245, 245, 247),  -- iOS浅灰背景
-    TabColor = Color3.fromRGB(255, 255, 255),   -- 白色标签背景
-    Bg_Color = Color3.fromRGB(242, 242, 247),   -- iOS系统灰色
-    Button_Color = Color3.fromRGB(0, 122, 255),  -- iOS蓝色
-    Textbox_Color = Color3.fromRGB(255, 255, 255), -- 白色
-    Dropdown_Color = Color3.fromRGB(255, 255, 255), -- 白色
-    Keybind_Color = Color3.fromRGB(255, 255, 255),  -- 白色
-    Label_Color = Color3.fromRGB(255, 255, 255),    -- 白色
-    Slider_Color = Color3.fromRGB(255, 255, 255),   -- 白色
-    SliderBar_Color = Color3.fromRGB(0, 122, 255),  -- iOS蓝色
-    Toggle_Color = Color3.fromRGB(255, 255, 255),   -- 白色
-    Toggle_Off = Color3.fromRGB(230, 230, 235),     -- iOS关闭状态灰色
-    Toggle_On = Color3.fromRGB(52, 199, 89),        -- iOS绿色
-    AccentColor = Color3.fromRGB(0, 122, 255),      -- iOS蓝色
-    TextColor = Color3.fromRGB(0, 0, 0),            -- 黑色文字
-    SecondaryTextColor = Color3.fromRGB(110, 110, 115), -- iOS次要文字颜色
-    BorderColor = Color3.fromRGB(230, 230, 235),    -- iOS边框颜色
-    
-    -- 新增iOS风格配置
-    SectionColor = Color3.fromRGB(255, 255, 255),   -- 白色分区背景
-    ShadowColor = Color3.fromRGB(0, 0, 0, 0.1),     -- iOS阴影
-    SelectedColor = Color3.fromRGB(230, 230, 235),  -- 选中状态颜色
-}
-
 local sections = {}
 local workareas = {}
 local visible = true
@@ -123,35 +97,36 @@ FengYu.Parent = services.CoreGui
 local Open = Instance.new("ImageButton")
 Open.Name = "Open"
 Open.Parent = FengYu
-Open.BackgroundColor3 = config.AccentColor  -- iOS蓝色
-Open.BackgroundTransparency = 0.9
+Open.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
+Open.BackgroundTransparency = 0
 Open.Position = UDim2.new(0.92, 0, 0.01, 0)
-Open.Size = UDim2.new(0, 44, 0, 44)  -- 增大按钮大小
+Open.Size = UDim2.new(0, 36, 0, 36)
 Open.Active = true
 Open.Draggable = true
-Open.Image = "rbxassetid://3926305904"  -- iOS风格图标
-Open.ImageRectOffset = Vector2.new(964, 324)
-Open.ImageRectSize = Vector2.new(36, 36)
-Open.ImageColor3 = Color3.fromRGB(255, 255, 255)
-Open.ImageTransparency = 0
+Open.Image = ""
+Open.ImageTransparency = 1
 
 local OpenCorner = Instance.new("UICorner")
 OpenCorner.CornerRadius = UDim.new(1, 0)
 OpenCorner.Parent = Open
 
-local OpenShadow = Instance.new("UIStroke")
-OpenShadow.Parent = Open
-OpenShadow.Color = Color3.fromRGB(0, 0, 0, 0.1)
-OpenShadow.Thickness = 1
-OpenShadow.Transparency = 0.5
+local OpenText = Instance.new("TextLabel")
+OpenText.Name = "OpenText"
+OpenText.Parent = Open
+OpenText.BackgroundTransparency = 1
+OpenText.Size = UDim2.new(1, 0, 1, 0)
+OpenText.Font = Enum.Font.GothamBold
+OpenText.Text = "☰"
+OpenText.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenText.TextSize = 18
 
 -- 创建主窗口（根据设备类型调整大小）
 local main = Instance.new("Frame")
 main.Name = "main"
 main.Parent = FengYu
 main.AnchorPoint = Vector2.new(0.5, 0.5)
-main.BackgroundColor3 = config.MainColor  -- iOS浅灰背景
-main.BackgroundTransparency = 0
+main.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+main.BackgroundTransparency = 0.150
 main.Position = UDim2.new(0.5, 0, 0.5, 0)
 main.Size = UDim2.new(0, MAIN_WIDTH, 0, MAIN_HEIGHT)
 main.Visible = false
@@ -159,13 +134,6 @@ main.Visible = false
 local uc = Instance.new("UICorner")
 uc.CornerRadius = UDim.new(0, 18)
 uc.Parent = main
-
--- iOS风格阴影
-local mainShadow = Instance.new("UIStroke")
-mainShadow.Parent = main
-mainShadow.Color = config.ShadowColor
-mainShadow.Thickness = 1
-mainShadow.Transparency = 0
 
 -- 拖拽功能
 local dragging
@@ -208,7 +176,7 @@ end)
 local workarea = Instance.new("Frame")
 workarea.Name = "workarea"
 workarea.Parent = main
-workarea.BackgroundColor3 = config.SectionColor  -- iOS白色背景
+workarea.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 workarea.Position = UDim2.new(0.36403501, 0, 0, 0)
 workarea.Size = UDim2.new(0, WORKAREA_WIDTH, 0, WORKAREA_HEIGHT)
 
@@ -216,30 +184,24 @@ local uc_2 = Instance.new("UICorner")
 uc_2.CornerRadius = UDim.new(0, 18)
 uc_2.Parent = workarea
 
--- iOS风格边框
-local workareaBorder = Instance.new("UIStroke")
-workareaBorder.Parent = workarea
-workareaBorder.Color = config.BorderColor
-workareaBorder.Thickness = 1
-workareaBorder.Transparency = 0
+local workareacornerhider = Instance.new("Frame")
+workareacornerhider.Name = "workareacornerhider"
+workareacornerhider.Parent = workarea
+workareacornerhider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+workareacornerhider.BorderSizePixel = 0
+workareacornerhider.Size = UDim2.new(0, 18, 0.99895674, 0)
 
 -- 搜索框移动到侧边栏右边的最上面（工作区的右上角）
 local search = Instance.new("Frame")
 search.Name = "search"
 search.Parent = workarea  -- 父级改为workarea
-search.BackgroundColor3 = config.Textbox_Color  -- 白色
+search.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 search.Position = UDim2.new(isMobile and 0.1 or 0.7, 0, 0.01, 0) -- 右上角位置
-search.Size = UDim2.new(0, isMobile and 120 or 120, 0, 32) -- iOS风格高度
+search.Size = UDim2.new(0, isMobile and 120 or 120, 0, 28) -- 适当缩小大小
 
 local uc_8 = Instance.new("UICorner")
-uc_8.CornerRadius = UDim.new(0, 8)  -- iOS圆角
+uc_8.CornerRadius = UDim.new(0, 9)
 uc_8.Parent = search
-
-local searchBorder = Instance.new("UIStroke")
-searchBorder.Parent = search
-searchBorder.Color = config.BorderColor
-searchBorder.Thickness = 1
-searchBorder.Transparency = 0
 
 local searchicon = Instance.new("ImageButton")
 searchicon.Name = "searchicon"
@@ -247,12 +209,10 @@ searchicon.Parent = search
 searchicon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 searchicon.BackgroundTransparency = 1
 searchicon.BorderColor3 = Color3.fromRGB(27, 42, 53)
-searchicon.Position = UDim2.new(0.05, 0, 0.15, 0)
-searchicon.Size = UDim2.new(0, 18, 0, 18) -- 缩小图标
-searchicon.Image = "rbxassetid://3926305904"  -- iOS搜索图标
-searchicon.ImageRectOffset = Vector2.new(84, 204)
-searchicon.ImageRectSize = Vector2.new(36, 36)
-searchicon.ImageColor3 = config.SecondaryTextColor
+searchicon.Position = UDim2.new(0.05, 0, 0.1, 0)
+searchicon.Size = UDim2.new(0, 20, 0, 20) -- 缩小图标
+searchicon.Image = "rbxassetid://2804603863"
+searchicon.ImageColor3 = Color3.fromRGB(95, 95, 95)
 searchicon.ScaleType = Enum.ScaleType.Fit
 
 local searchtextbox = Instance.new("TextBox")
@@ -261,14 +221,13 @@ searchtextbox.Parent = search
 searchtextbox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 searchtextbox.BackgroundTransparency = 1
 searchtextbox.ClipsDescendants = true
-searchtextbox.Position = UDim2.new(0.25, 0, 0, 0)
-searchtextbox.Size = UDim2.new(0, isMobile and 80 or 85, 0, 32)
-searchtextbox.Font = Enum.Font.SourceSans  -- iOS字体
+searchtextbox.Position = UDim2.new(0.3, 0, 0, 0)
+searchtextbox.Size = UDim2.new(0, isMobile and 80 or 85, 0, 28)
+searchtextbox.Font = Enum.Font.Gotham
 searchtextbox.LineHeight = 0.870
-searchtextbox.PlaceholderText = "搜索..."
-searchtextbox.PlaceholderColor3 = config.SecondaryTextColor
+searchtextbox.PlaceholderText = "Search"
 searchtextbox.Text = ""
-searchtextbox.TextColor3 = config.TextColor
+searchtextbox.TextColor3 = Color3.fromRGB(95, 95, 95)
 searchtextbox.TextSize = isMobile and 14 or 16
 searchtextbox.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -276,18 +235,18 @@ searchicon.MouseButton1Click:Connect(function()
     searchtextbox:CaptureFocus()
 end)
 
--- 侧边栏标题（脚本名字） - 放在最上面
+-- 侧边栏标题（脚本名字） - 放在最上面，位置更靠上
 local SidebarTitle = Instance.new("TextLabel")
 SidebarTitle.Name = "SidebarTitle"
 SidebarTitle.Parent = main
 SidebarTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 SidebarTitle.BackgroundTransparency = 1
 SidebarTitle.BorderSizePixel = 0
-SidebarTitle.Position = UDim2.new(0.025, 0, 0.06, 0)
+SidebarTitle.Position = UDim2.new(0.025, 0, 0.02, 0) -- 从0.06改为0.02，更靠上
 SidebarTitle.Size = UDim2.new(0, SIDEBAR_WIDTH, 0, isMobile and 30 or 50)
-SidebarTitle.Font = Enum.Font.SourceSansBold  -- iOS粗体
+SidebarTitle.Font = Enum.Font.GothamBold
 SidebarTitle.Text = "FengUI"
-SidebarTitle.TextColor3 = config.TextColor
+SidebarTitle.TextColor3 = Color3.fromRGB(0, 0, 0)
 SidebarTitle.TextSize = isMobile and 18 or 24
 SidebarTitle.TextWrapped = true
 SidebarTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -306,7 +265,6 @@ sidebar.Size = UDim2.new(0, SIDEBAR_WIDTH, 0, isMobile and 150 or 400) -- 调整
 sidebar.AutomaticCanvasSize = "Y"
 sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
 sidebar.ScrollBarThickness = 2
-sidebar.ScrollBarImageColor3 = config.SecondaryTextColor
 
 local ull_2 = Instance.new("UIListLayout")
 ull_2.Parent = sidebar
@@ -394,123 +352,28 @@ function FengUI.new(name, theme)
     
     local window = {
         tabs = {},
-        currentTab = nil,
-        tags = {},
-        tagObjects = {},
-        tagCount = 0,
-        maxTags = 3,
+        currentTab = nil
     }
     
     function window:AddTag(text, bgColor, textColor)
-        if self.tagCount >= self.maxTags then
-            return nil
-        end
-        
-        bgColor = bgColor or config.AccentColor
-        textColor = textColor or Color3.fromRGB(255, 255, 255)
-        
-        local TagContainer = main:FindFirstChild("TagContainer")
-        if not TagContainer then
-            TagContainer = Instance.new("Frame")
-            TagContainer.Name = "TagContainer"
-            TagContainer.Parent = main
-            TagContainer.BackgroundTransparency = 1
-            TagContainer.Position = UDim2.new(0.7, 0, 0.06, 0)
-            TagContainer.Size = UDim2.new(0, 120, 0, 30)
-        end
-        
-        local Tag = Instance.new("TextLabel")
-        Tag.Name = "Tag_" .. text
-        Tag.Parent = TagContainer
-        Tag.BackgroundColor3 = bgColor
-        Tag.BackgroundTransparency = 0.3
-        Tag.Text = text
-        Tag.Font = Enum.Font.SourceSansSemibold
-        Tag.TextColor3 = textColor
-        Tag.TextSize = 11
-        Tag.TextWrapped = true
-        Tag.Size = UDim2.new(0, 50, 0, 20)
-        Tag.ZIndex = 6
-        
-        local TagCorner = Instance.new("UICorner")
-        TagCorner.CornerRadius = UDim.new(0, 6)
-        TagCorner.Parent = Tag
-        
-        local TagStroke = Instance.new("UIStroke")
-        TagStroke.Parent = Tag
-        TagStroke.Color = bgColor
-        TagStroke.Thickness = 1
-        TagStroke.Transparency = 0.5
-        
-        local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.SourceSansSemibold, Vector2.new(200, 20))
-        Tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
-        
-        local tagObj = {
-            Instance = Tag,
-            Stroke = TagStroke,
-            Text = text,
-            Color = bgColor,
-            TextColor = textColor,
-            
-            Destroy = function()
-                Tag:Destroy()
-            end,
-            
-            Update = function(newText, newBgColor, newTextColor)
-                if newText then
-                    Tag.Text = newText
-                    tagObj.Text = newText
-                    local textSize = game:GetService("TextService"):GetTextSize(newText, 11, Enum.Font.SourceSansSemibold, Vector2.new(200, 20))
-                    Tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
-                end
-                
-                if newBgColor then
-                    tagObj.Color = newBgColor
-                    Tag.BackgroundColor3 = newBgColor
-                    TagStroke.Color = newBgColor
-                end
-                
-                if newTextColor then
-                    Tag.TextColor3 = newTextColor
-                    tagObj.TextColor = newTextColor
-                end
-            end
-        }
-        
-        table.insert(self.tags, Tag)
-        table.insert(self.tagObjects, tagObj)
-        self.tagCount = self.tagCount + 1
-        
-        return tagObj
+        -- 这个版本的UI没有标签功能
+        warn("测试UI版本不支持标签功能")
+        return nil
     end
     
     function window:UpdateTag(index, text, bgColor, textColor)
-        if index < 1 or index > #self.tagObjects then return end
-        
-        local tagObj = self.tagObjects[index]
-        if not tagObj or not tagObj.Instance or not tagObj.Instance.Parent then return end
-        
-        tagObj:Update(text, bgColor, textColor)
+        -- 这个版本的UI没有标签功能
+        warn("测试UI版本不支持标签功能")
     end
     
     function window:ClearTags()
-        for i = #self.tagObjects, 1, -1 do
-            self:RemoveTag(i)
-        end
-        
-        self.tagCount = 0
+        -- 这个版本的UI没有标签功能
+        warn("测试UI版本不支持标签功能")
     end
     
     function window:RemoveTag(index)
-        if index < 1 or index > #self.tagObjects then return end
-        
-        local tagObj = self.tagObjects[index]
-        if tagObj then
-            tagObj:Destroy()
-            table.remove(self.tagObjects, index)
-            table.remove(self.tags, index)
-            self.tagCount = self.tagCount - 1
-        end
+        -- 这个版本的UI没有标签功能
+        warn("测试UI版本不支持标签功能")
     end
     
     function window.Tab(window, name, icon, windowCount)
@@ -520,26 +383,28 @@ function FengUI.new(name, theme)
         local sidebar2 = Instance.new("TextButton")
         sidebar2.Name = "sidebar2_" .. name
         sidebar2.Parent = sidebar
-        sidebar2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)  -- iOS白色
+        sidebar2.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
         sidebar2.BackgroundTransparency = 1
-        sidebar2.Size = UDim2.new(0, SIDEBAR_WIDTH - 7, 0, isMobile and 36 or 44)  -- iOS高度
-        sidebar2.ZIndex = 2
+        sidebar2.Size = UDim2.new(0, SIDEBAR_WIDTH - 7, 0, isMobile and 28 or 37)
+        sidebar2.ZIndex = 10 -- 提高ZIndex确保按钮在最前面
         sidebar2.AutoButtonColor = false
-        sidebar2.Font = Enum.Font.SourceSansSemibold  -- iOS字体
+        sidebar2.Font = Enum.Font.Gotham
         sidebar2.Text = name
-        sidebar2.TextColor3 = config.TextColor
-        sidebar2.TextSize = isMobile and 16 or 18
+        sidebar2.TextColor3 = Color3.fromRGB(0, 0, 0)
+        sidebar2.TextSize = isMobile and 16 or 21
+        
+        -- 添加一个透明的背景框确保点击区域
+        local buttonBackground = Instance.new("Frame")
+        buttonBackground.Name = "buttonBackground"
+        buttonBackground.Parent = sidebar2
+        buttonBackground.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
+        buttonBackground.BackgroundTransparency = 1
+        buttonBackground.Size = UDim2.new(1, 0, 1, 0)
+        buttonBackground.ZIndex = 9
         
         local uc_10 = Instance.new("UICorner")
-        uc_10.CornerRadius = UDim.new(0, 8)  -- iOS圆角
+        uc_10.CornerRadius = UDim.new(0, 9)
         uc_10.Parent = sidebar2
-        
-        local sidebar2Stroke = Instance.new("UIStroke")
-        sidebar2Stroke.Parent = sidebar2
-        sidebar2Stroke.Color = config.BorderColor
-        sidebar2Stroke.Thickness = 1
-        sidebar2Stroke.Transparency = 0.8
-        
         table.insert(sections, sidebar2)
         
         -- 为这个标签页创建工作区
@@ -588,7 +453,7 @@ function FengUI.new(name, theme)
             sectionLayout.SortOrder = Enum.SortOrder.LayoutOrder
             sectionLayout.Padding = UDim.new(0, isMobile and 4 or 8)
             
-            -- iOS风格分隔符标题
+            -- 分隔符标题
             local sectionDivider = Instance.new("TextLabel")
             sectionDivider.Name = "sectionDivider"
             sectionDivider.Parent = sectionFrame
@@ -596,57 +461,43 @@ function FengUI.new(name, theme)
             sectionDivider.BackgroundTransparency = 1
             sectionDivider.BorderSizePixel = 2
             sectionDivider.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 30 or 50)
-            sectionDivider.Font = Enum.Font.SourceSansSemibold  -- iOS字体
+            sectionDivider.Font = Enum.Font.Gotham
             sectionDivider.LineHeight = 1.180
             sectionDivider.Text = name
-            sectionDivider.TextColor3 = config.SecondaryTextColor  -- iOS次要颜色
-            sectionDivider.TextSize = isMobile and 14 or 16
+            sectionDivider.TextColor3 = Color3.fromRGB(0, 0, 0)
+            sectionDivider.TextSize = isMobile and 18 or 25
             sectionDivider.TextWrapped = true
             sectionDivider.TextXAlignment = Enum.TextXAlignment.Left
             sectionDivider.TextYAlignment = Enum.TextYAlignment.Bottom
-            
-            -- iOS风格分隔线
-            local sectionLine = Instance.new("Frame")
-            sectionLine.Name = "sectionLine"
-            sectionLine.Parent = sectionDivider
-            sectionLine.BackgroundColor3 = config.BorderColor
-            sectionLine.BorderSizePixel = 0
-            sectionLine.Position = UDim2.new(0, 0, 1, 0)
-            sectionLine.Size = UDim2.new(1, 0, 0, 1)
             
             function section.Button(section, text, callback)
                 local button = Instance.new("TextButton")
                 button.Name = "button_" .. text
                 button.Text = text
                 button.Parent = sectionFrame
-                button.BackgroundColor3 = config.Button_Color
-                button.BackgroundTransparency = 0.9
-                button.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 36 or 44)
+                button.BackgroundColor3 = Color3.fromRGB(216, 216, 216)
+                button.BackgroundTransparency = 1
+                button.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 28 or 37)
                 button.ZIndex = 2
-                button.Font = Enum.Font.SourceSansSemibold
-                button.TextColor3 = config.AccentColor  -- iOS蓝色文字
-                button.TextSize = isMobile and 16 or 18
+                button.Font = Enum.Font.Gotham
+                button.TextColor3 = Color3.fromRGB(21, 103, 251)
+                button.TextSize = isMobile and 16 or 21
 
                 local buttonCorner = Instance.new("UICorner")
-                buttonCorner.CornerRadius = UDim.new(0, 8)  -- iOS圆角
+                buttonCorner.CornerRadius = UDim.new(0, 9)
                 buttonCorner.Parent = button
 
-                local buttonBorder = Instance.new("UIStroke")
-                buttonBorder.Parent = button
-                buttonBorder.Color = config.BorderColor
-                buttonBorder.Thickness = 1
-                buttonBorder.Transparency = 0
+                local buttonStroke = Instance.new("UIStroke", button)
+                buttonStroke.ApplyStrokeMode = "Border"
+                buttonStroke.Color = Color3.fromRGB(21, 103, 251)
+                buttonStroke.Thickness = 1
 
                 if callback then
                     button.MouseButton1Click:Connect(function() 
                         coroutine.wrap(function()
-                            services.TweenService:Create(button, TweenInfo.new(0.1), {
-                                BackgroundTransparency = 0.8
-                            }):Play()
+                            button.TextSize -= 3
                             task.wait(0.06)
-                            services.TweenService:Create(button, TweenInfo.new(0.1), {
-                                BackgroundTransparency = 0.9
-                            }):Play()
+                            button.TextSize += 3
                         end)()
                         callback()
                     end)
@@ -673,7 +524,7 @@ function FengUI.new(name, theme)
                 ImageLabel.ScaleType = Enum.ScaleType.Crop
                 
                 local ImageCorner = Instance.new("UICorner")
-                ImageCorner.CornerRadius = UDim.new(0, 8)  -- iOS圆角
+                ImageCorner.CornerRadius = UDim.new(0, 9)
                 ImageCorner.Parent = ImageLabel
                 
                 local function setImage(source)
@@ -756,9 +607,9 @@ function FengUI.new(name, theme)
                 label.BackgroundTransparency = 1
                 label.BorderSizePixel = 2
                 label.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 28 or 37)
-                label.Font = Enum.Font.SourceSans
-                label.TextColor3 = config.SecondaryTextColor
-                label.TextSize = isMobile and 14 or 16
+                label.Font = Enum.Font.Gotham
+                label.TextColor3 = Color3.fromRGB(95, 95, 95)
+                label.TextSize = isMobile and 16 or 21
                 label.TextWrapped = true
                 label.Text = text
                 return label
@@ -775,7 +626,7 @@ function FengUI.new(name, theme)
                 toggleFrame.Name = "toggle_" .. flag
                 toggleFrame.Parent = sectionFrame
                 toggleFrame.BackgroundTransparency = 1
-                toggleFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 44 or 52)  -- iOS高度
+                toggleFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 40 or 50)
                 
                 local toggleLabel = Instance.new("TextLabel")
                 toggleLabel.Name = "toggleLabel"
@@ -785,10 +636,10 @@ function FengUI.new(name, theme)
                 toggleLabel.BorderSizePixel = 2
                 toggleLabel.Position = UDim2.new(0, 0, 0, 0)
                 toggleLabel.Size = UDim2.new(0, isMobile and 200 or 300, 0, isMobile and 28 or 37)
-                toggleLabel.Font = Enum.Font.SourceSans
+                toggleLabel.Font = Enum.Font.Gotham
                 toggleLabel.Text = text
-                toggleLabel.TextColor3 = config.TextColor
-                toggleLabel.TextSize = isMobile and 14 or 16
+                toggleLabel.TextColor3 = Color3.fromRGB(95, 95, 95)
+                toggleLabel.TextSize = isMobile and 16 or 21
                 toggleLabel.TextWrapped = true
                 toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -796,32 +647,40 @@ function FengUI.new(name, theme)
                 toggleSwitch.Name = "toggleSwitch"
                 toggleSwitch.Parent = toggleFrame
                 toggleSwitch.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                toggleSwitch.BackgroundTransparency = 0.9
-                toggleSwitch.BorderSizePixel = 0
-                toggleSwitch.Position = UDim2.new(isMobile and 0.5 or 0.7, 0, 0.1, 0)
-                toggleSwitch.Size = UDim2.new(0, isMobile and 60 or 68, 0, isMobile and 32 or 36)  -- iOS开关尺寸
+                toggleSwitch.BackgroundTransparency = 1
+                toggleSwitch.BorderSizePixel = 2
+                toggleSwitch.Position = UDim2.new(isMobile and 0.5 or 0.7, 0, 0, 0)
+                toggleSwitch.Size = UDim2.new(0, isMobile and 90 or 118, 0, isMobile and 28 or 37)
                 
+                local switchFrame = Instance.new("TextButton")
+                switchFrame.Parent = toggleSwitch
+                switchFrame.Position = UDim2.new(0.832535863, 0, 0.0270270277, 0)
+                switchFrame.Size = UDim2.new(0, isMobile and 50 or 70, 0, isMobile and 26 or 36)
+                switchFrame.Text=""
+                switchFrame.AutoButtonColor = false
+
                 local switchCorner = Instance.new("UICorner")
-                switchCorner.CornerRadius = UDim.new(1, 0)  -- 圆形开关
-                switchCorner.Parent = toggleSwitch
-                
-                local switchBorder = Instance.new("UIStroke")
-                switchBorder.Parent = toggleSwitch
-                switchBorder.Color = config.BorderColor
-                switchBorder.Thickness = 1
-                switchBorder.Transparency = 0
-                
+                switchCorner.CornerRadius = UDim.new(5, 0)
+                switchCorner.Parent = switchFrame
+
                 local switchButton = Instance.new("TextButton")
-                switchButton.Parent = toggleSwitch
-                switchButton.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
-                switchButton.Size = UDim2.new(0, isMobile and 28 or 32, 0, isMobile and 28 or 32)
+                switchButton.Parent = switchFrame
+                switchButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                switchButton.Size = UDim2.new(0, isMobile and 24 or 34, 0, isMobile and 24 or 34)
                 switchButton.AutoButtonColor = false
                 switchButton.Text = ""
-                switchButton.Position = UDim2.new(0, enabled and (isMobile and 30 or 34) or 2, 0, 2)
 
                 local buttonCorner = Instance.new("UICorner")
-                buttonCorner.CornerRadius = UDim.new(1, 0)
+                buttonCorner.CornerRadius = UDim.new(5, 0)
                 buttonCorner.Parent = switchButton
+
+                if enabled == false then
+                    switchButton.Position = UDim2.new(0, 1, 0, 1)
+                    switchFrame.BackgroundColor3 = Color3.fromRGB(216, 216, 216)
+                else
+                    switchButton.Position = UDim2.new(0, isMobile and 25 or 35, 0, 1)
+                    switchFrame.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
+                end
                 
                 local funcs = {
                     SetState = function(self, state)
@@ -834,10 +693,13 @@ function FengUI.new(name, theme)
                         
                         FengUI.flags[flag] = state
                         
-                        services.TweenService:Create(switchButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                            Position = UDim2.new(0, state and (isMobile and 30 or 34) or 2, 0, 2),
-                            BackgroundColor3 = state and config.Toggle_On or config.Toggle_Off
-                        }):Play()
+                        if state then
+                            switchButton:TweenPosition(UDim2.new(0, isMobile and 25 or 35, 0, 1), "In", "Sine", 0.1, true)
+                            switchFrame.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
+                        else
+                            switchButton:TweenPosition(UDim2.new(0,1,0,1), "In", "Sine", 0.1, true)
+                            switchFrame.BackgroundColor3 = Color3.fromRGB(216, 216, 216)
+                        end
                         
                         callback(state)
                     end,
@@ -848,11 +710,11 @@ function FengUI.new(name, theme)
                     funcs:SetState(true)
                 end
                 
-                switchButton.MouseButton1Click:Connect(function()
+                switchFrame.MouseButton1Click:Connect(function()
                     funcs:SetState()
                 end)
                 
-                toggleSwitch.MouseButton1Click:Connect(function()
+                switchButton.MouseButton1Click:Connect(function()
                     funcs:SetState()
                 end)
                 
@@ -886,7 +748,7 @@ function FengUI.new(name, theme)
                 keybindFrame.Name = "keybind_" .. text
                 keybindFrame.Parent = sectionFrame
                 keybindFrame.BackgroundTransparency = 1
-                keybindFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 44 or 52)  -- iOS高度
+                keybindFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 40 or 50)
                 
                 local keybindLabel = Instance.new("TextLabel")
                 keybindLabel.Name = "keybindLabel"
@@ -896,34 +758,27 @@ function FengUI.new(name, theme)
                 keybindLabel.BorderSizePixel = 2
                 keybindLabel.Position = UDim2.new(0, 0, 0, 0)
                 keybindLabel.Size = UDim2.new(0, isMobile and 200 or 300, 0, isMobile and 28 or 37)
-                keybindLabel.Font = Enum.Font.SourceSans
+                keybindLabel.Font = Enum.Font.Gotham
                 keybindLabel.Text = text
-                keybindLabel.TextColor3 = config.TextColor
-                keybindLabel.TextSize = isMobile and 14 or 16
+                keybindLabel.TextColor3 = Color3.fromRGB(95, 95, 95)
+                keybindLabel.TextSize = isMobile and 16 or 21
                 keybindLabel.TextWrapped = true
                 keybindLabel.TextXAlignment = Enum.TextXAlignment.Left
                 
                 local keybindButton = Instance.new("TextButton")
                 keybindButton.Name = "keybindButton"
                 keybindButton.Parent = keybindFrame
-                keybindButton.BackgroundColor3 = config.Bg_Color
-                keybindButton.BackgroundTransparency = 0.9
+                keybindButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
                 keybindButton.Position = UDim2.new(isMobile and 0.5 or 0.7, 0, 0.1, 0)
-                keybindButton.Size = UDim2.new(0, isMobile and 80 or 100, 0, isMobile and 32 or 36)
-                keybindButton.Font = Enum.Font.SourceSans
+                keybindButton.Size = UDim2.new(0, isMobile and 80 or 100, 0, isMobile and 26 or 34)
+                keybindButton.Font = Enum.Font.Gotham
                 keybindButton.Text = keyTxt
-                keybindButton.TextColor3 = config.TextColor
-                keybindButton.TextSize = isMobile and 14 or 16
+                keybindButton.TextColor3 = Color3.fromRGB(12, 12, 12)
+                keybindButton.TextSize = isMobile and 14 or 18
                 
                 local keybindCorner = Instance.new("UICorner")
-                keybindCorner.CornerRadius = UDim.new(0, 8)  -- iOS圆角
+                keybindCorner.CornerRadius = UDim.new(0, 9)
                 keybindCorner.Parent = keybindButton
-                
-                local keybindBorder = Instance.new("UIStroke")
-                keybindBorder.Parent = keybindButton
-                keybindBorder.Color = config.BorderColor
-                keybindBorder.Thickness = 1
-                keybindBorder.Transparency = 0
                 
                 UserInputService.InputBegan:Connect(function(inp, gpe)
                     if gpe then return end
@@ -934,8 +789,7 @@ function FengUI.new(name, theme)
                 
                 keybindButton.MouseButton1Click:Connect(function()
                     keybindButton.Text = "..."
-                    keybindButton.BackgroundColor3 = config.AccentColor
-                    keybindButton.BackgroundTransparency = 0.8
+                    keybindButton.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
                     keybindButton.TextColor3 = Color3.fromRGB(255, 255, 255)
                     
                     task.wait()
@@ -945,17 +799,15 @@ function FengUI.new(name, theme)
                     
                     if key.UserInputType ~= Enum.UserInputType.Keyboard then
                         keybindButton.Text = keyTxt
-                        keybindButton.BackgroundColor3 = config.Bg_Color
-                        keybindButton.BackgroundTransparency = 0.9
-                        keybindButton.TextColor3 = config.TextColor
+                        keybindButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+                        keybindButton.TextColor3 = Color3.fromRGB(12, 12, 12)
                         return
                     end
                     
                     if banned[keyName] then
                         keybindButton.Text = keyTxt
-                        keybindButton.BackgroundColor3 = config.Bg_Color
-                        keybindButton.BackgroundTransparency = 0.9
-                        keybindButton.TextColor3 = config.TextColor
+                        keybindButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+                        keybindButton.TextColor3 = Color3.fromRGB(12, 12, 12)
                         return
                     end
                     
@@ -963,28 +815,9 @@ function FengUI.new(name, theme)
                     bindKey = Enum.KeyCode[keyName]
                     keyTxt = shortNames[keyName] or keyName
                     keybindButton.Text = keyTxt
-                    keybindButton.BackgroundColor3 = config.Bg_Color
-                    keybindButton.BackgroundTransparency = 0.9
-                    keybindButton.TextColor3 = config.TextColor
+                    keybindButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+                    keybindButton.TextColor3 = Color3.fromRGB(12, 12, 12)
                 end)
-                
-                -- 返回一个控制器对象
-                local controller = {}
-                function controller:SetKey(key)
-                    if typeof(key) == "string" then
-                        bindKey = Enum.KeyCode[key]
-                    else
-                        bindKey = key
-                    end
-                    keyTxt = bindKey and (shortNames[bindKey.Name] or bindKey.Name) or "None"
-                    keybindButton.Text = keyTxt
-                end
-                
-                function controller:GetKey()
-                    return bindKey
-                end
-                
-                return controller
             end
             
             function section.Textbox(section, text, flag, default, callback)
@@ -1009,29 +842,22 @@ function FengUI.new(name, theme)
                 textboxLabel.BorderSizePixel = 2
                 textboxLabel.Position = UDim2.new(0, 0, 0, 0)
                 textboxLabel.Size = UDim2.new(0, isMobile and 200 or 300, 0, isMobile and 28 or 37)
-                textboxLabel.Font = Enum.Font.SourceSans
+                textboxLabel.Font = Enum.Font.Gotham
                 textboxLabel.Text = text
-                textboxLabel.TextColor3 = config.TextColor
-                textboxLabel.TextSize = isMobile and 14 or 16
+                textboxLabel.TextColor3 = Color3.fromRGB(95, 95, 95)
+                textboxLabel.TextSize = isMobile and 16 or 21
                 textboxLabel.TextWrapped = true
                 textboxLabel.TextXAlignment = Enum.TextXAlignment.Left
                 
                 local textboxInput = Instance.new("Frame")
                 textboxInput.Parent = textboxFrame
-                textboxInput.BackgroundColor3 = config.Textbox_Color
-                textboxInput.BackgroundTransparency = 0.9
+                textboxInput.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
                 textboxInput.Position = UDim2.new(0, 0, 0.5, 0)
-                textboxInput.Size = UDim2.new(1, 0, 0, isMobile and 32 or 36)
+                textboxInput.Size = UDim2.new(1, 0, 0, isMobile and 26 or 34)
 
                 local textboxCorner = Instance.new("UICorner")
-                textboxCorner.CornerRadius = UDim.new(0, 8)  -- iOS圆角
+                textboxCorner.CornerRadius = UDim.new(0, 9)
                 textboxCorner.Parent = textboxInput
-
-                local textboxBorder = Instance.new("UIStroke")
-                textboxBorder.Parent = textboxInput
-                textboxBorder.Color = config.BorderColor
-                textboxBorder.Thickness = 1
-                textboxBorder.Transparency = 0
 
                 local textbox = Instance.new("TextBox")
                 textbox.Parent = textboxInput
@@ -1041,15 +867,15 @@ function FengUI.new(name, theme)
                 textbox.BorderSizePixel = 0
                 textbox.ClipsDescendants = true
                 textbox.Position = UDim2.new(0.0643776804, 0, 0, -2)
-                textbox.Size = UDim2.new(0, WORKAREA_WIDTH - 76, 0, isMobile and 32 or 36)
+                textbox.Size = UDim2.new(0, WORKAREA_WIDTH - 76, 0, isMobile and 26 or 34)
                 textbox.ClearTextOnFocus = false
-                textbox.Font = Enum.Font.SourceSans
+                textbox.Font = Enum.Font.Gotham
                 textbox.LineHeight = 0.870
-                textbox.PlaceholderColor3 = config.SecondaryTextColor
+                textbox.PlaceholderColor3 = Color3.fromRGB(113, 113, 113)
                 textbox.PlaceholderText = "Type..."
                 textbox.Text = default
-                textbox.TextColor3 = config.TextColor
-                textbox.TextSize = isMobile and 14 or 16
+                textbox.TextColor3 = Color3.fromRGB(12, 12, 12)
+                textbox.TextSize = isMobile and 16 or 21
                 textbox.TextXAlignment = Enum.TextXAlignment.Left
 
                 textbox.FocusLost:Connect(function()
@@ -1059,22 +885,8 @@ function FengUI.new(name, theme)
                     FengUI.flags[flag] = textbox.Text
                     callback(textbox.Text)
                 end)
-                
-                -- 返回一个控制器对象
-                local controller = {}
-                function controller:SetText(newText)
-                    textbox.Text = newText
-                    FengUI.flags[flag] = newText
-                end
-                
-                function controller:GetText()
-                    return FengUI.flags[flag]
-                end
-                
-                return controller
             end
             
-            -- windUI风格的滑块
             function section.Slider(section, text, flag, default, min, max, precise, callback)
                 callback = callback or function() end
                 min = min or 0
@@ -1102,72 +914,49 @@ function FengUI.new(name, theme)
                 sliderLabel.BorderSizePixel = 2
                 sliderLabel.Position = UDim2.new(0, 0, 0, 0)
                 sliderLabel.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 28 or 37)
-                sliderLabel.Font = Enum.Font.SourceSans
+                sliderLabel.Font = Enum.Font.Gotham
                 sliderLabel.Text = text .. ": " .. tostring(default)
-                sliderLabel.TextColor3 = config.TextColor
-                sliderLabel.TextSize = isMobile and 14 or 16
+                sliderLabel.TextColor3 = Color3.fromRGB(95, 95, 95)
+                sliderLabel.TextSize = isMobile and 16 or 21
                 sliderLabel.TextWrapped = true
                 sliderLabel.TextXAlignment = Enum.TextXAlignment.Left
                 
-                local sliderContainer = Instance.new("Frame")
-                sliderContainer.Name = "sliderContainer"
-                sliderContainer.Parent = sliderFrame
-                sliderContainer.BackgroundTransparency = 1
-                sliderContainer.Position = UDim2.new(0, 0, 0.5, 0)
-                sliderContainer.Size = UDim2.new(1, 0, 0, isMobile and 32 or 36)
-                
                 local sliderBar = Instance.new("Frame")
                 sliderBar.Name = "sliderBar"
-                sliderBar.Parent = sliderContainer
-                sliderBar.BackgroundColor3 = config.Toggle_Off  -- iOS灰色
+                sliderBar.Parent = sliderFrame
+                sliderBar.BackgroundColor3 = Color3.fromRGB(225, 225, 230)
                 sliderBar.BorderSizePixel = 0
-                sliderBar.Position = UDim2.new(0, 0, 0.5, -2)
-                sliderBar.Size = UDim2.new(1, 0, 0, 4)
+                sliderBar.Position = UDim2.new(0, 0, 0.6, 0)
+                sliderBar.Size = UDim2.new(1, 0, 0, 5)
                 
                 local sliderBarCorner = Instance.new("UICorner")
                 sliderBarCorner.CornerRadius = UDim.new(1, 0)
                 sliderBarCorner.Parent = sliderBar
                 
-                local sliderProgress = Instance.new("Frame")
-                sliderProgress.Name = "sliderProgress"
-                sliderProgress.Parent = sliderBar
-                sliderProgress.BackgroundColor3 = config.SliderBar_Color  -- iOS蓝色
-                sliderProgress.BorderSizePixel = 0
-                sliderProgress.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+                local sliderPart = Instance.new("Frame")
+                sliderPart.Name = "sliderPart"
+                sliderPart.Parent = sliderBar
+                sliderPart.BackgroundColor3 = Color3.fromRGB(21, 103, 251)
+                sliderPart.BorderSizePixel = 0
+                sliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
                 
-                local sliderProgressCorner = Instance.new("UICorner")
-                sliderProgressCorner.CornerRadius = UDim.new(1, 0)
-                sliderProgressCorner.Parent = sliderProgress
-                
-                local sliderThumb = Instance.new("Frame")
-                sliderThumb.Name = "sliderThumb"
-                sliderThumb.Parent = sliderBar
-                sliderThumb.BackgroundColor3 = config.SliderBar_Color  -- iOS蓝色
-                sliderThumb.BorderSizePixel = 0
-                sliderThumb.Size = UDim2.new(0, isMobile and 20 or 24, 0, isMobile and 20 or 24)
-                sliderThumb.Position = UDim2.new((default - min)/(max - min), -(isMobile and 10 or 12), 0.5, -(isMobile and 10 or 12))
-                sliderThumb.AnchorPoint = Vector2.new(0.5, 0.5)
-                
-                local sliderThumbCorner = Instance.new("UICorner")
-                sliderThumbCorner.CornerRadius = UDim.new(1, 0)
-                sliderThumbCorner.Parent = sliderThumb
-                
-                local sliderValue = Instance.new("TextLabel")
-                sliderValue.Name = "sliderValue"
-                sliderValue.Parent = sliderContainer
-                sliderValue.BackgroundTransparency = 1
-                sliderValue.Size = UDim2.new(0, 40, 1, 0)
-                sliderValue.Position = UDim2.new(1, -40, 0, 0)
-                sliderValue.Font = Enum.Font.SourceSans
-                sliderValue.Text = tostring(default)
-                sliderValue.TextColor3 = config.SecondaryTextColor
-                sliderValue.TextSize = isMobile and 14 or 16
-                sliderValue.TextXAlignment = Enum.TextXAlignment.Right
+                local sliderPartCorner = Instance.new("UICorner")
+                sliderPartCorner.CornerRadius = UDim.new(1, 0)
+                sliderPartCorner.Parent = sliderPart
                 
                 local funcs = {
                     SetValue = function(self, value)
-                        if value == nil then
-                            return
+                        local percent
+                        
+                        if value then
+                            percent = (value - min)/(max - min)
+                        else
+                            local mouse = services.Players.LocalPlayer:GetMouse()
+                            local barPos = sliderBar.AbsolutePosition.X
+                            local barSize = sliderBar.AbsoluteSize.X
+                            local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
+                            percent = (mouseX - barPos) / barSize
+                            value = min + (max - min) * percent
                         end
                         
                         if precise then
@@ -1177,18 +966,12 @@ function FengUI.new(name, theme)
                         end
                         
                         value = math.clamp(value, min, max)
-                        local percent = (value - min)/(max - min)
-                        
+                        percent = (value - min)/(max - min)
                         FengUI.flags[flag] = tonumber(value)
                         sliderLabel.Text = text .. ": " .. tostring(value)
-                        sliderValue.Text = tostring(value)
                         
-                        services.TweenService:Create(sliderProgress, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        services.TweenService:Create(sliderPart, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                             Size = UDim2.new(percent, 0, 1, 0)
-                        }):Play()
-                        
-                        services.TweenService:Create(sliderThumb, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                            Position = UDim2.new(percent, -(isMobile and 10 or 12), 0.5, -(isMobile and 10 or 12))
                         }):Play()
                         
                         callback(tonumber(value))
@@ -1196,80 +979,42 @@ function FengUI.new(name, theme)
                     
                     GetValue = function(self)
                         return FengUI.flags[flag]
-                    end,
-                    
-                    SetMin = function(self, newMin)
-                        min = newMin
-                        if FengUI.flags[flag] < min then
-                            funcs:SetValue(min)
-                        end
-                    end,
-                    
-                    SetMax = function(self, newMax)
-                        max = newMax
-                        if FengUI.flags[flag] > max then
-                            funcs:SetValue(max)
-                        end
-                    end,
-                    
-                    SetRange = function(self, newMin, newMax)
-                        min = newMin
-                        max = newMax
-                        local current = FengUI.flags[flag]
-                        if current < min then
-                            funcs:SetValue(min)
-                        elseif current > max then
-                            funcs:SetValue(max)
-                        end
                     end
                 }
                 
                 funcs:SetValue(default)
                 
                 local dragging = false
-                local function updateFromMouse()
-                    if not dragging then return end
-                    
-                    local mouse = services.Players.LocalPlayer:GetMouse()
-                    local barPos = sliderBar.AbsolutePosition.X
-                    local barSize = sliderBar.AbsoluteSize.X
-                    local mouseX = math.clamp(mouse.X, barPos, barPos + barSize)
-                    local percent = (mouseX - barPos) / barSize
-                    local value = min + (max - min) * percent
-                    
-                    funcs:SetValue(value)
-                end
                 
-                sliderThumb.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                sliderBar.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         dragging = true
-                        updateFromMouse()
+                        funcs:SetValue()
                     end
                 end)
                 
-                sliderBar.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                sliderPart.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         dragging = true
-                        updateFromMouse()
+                        funcs:SetValue()
                     end
                 end)
                 
                 services.UserInputService.InputEnded:Connect(function(input)
-                    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and dragging then
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         dragging = false
                     end
                 end)
                 
                 services.UserInputService.InputChanged:Connect(function(input)
-                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                        updateFromMouse()
+                    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                        funcs:SetValue()
                     end
                 end)
                 
                 return funcs
             end
             
-            -- windUI风格的下拉菜单
             function section.Dropdown(section, text, flag, options, callback)
                 local callback = callback or function() end
                 local options = options or {}
@@ -1281,7 +1026,7 @@ function FengUI.new(name, theme)
                 dropdownFrame.Name = "dropdown_" .. flag
                 dropdownFrame.Parent = sectionFrame
                 dropdownFrame.BackgroundTransparency = 1
-                dropdownFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 44 or 52)
+                dropdownFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 70 or 80)
                 
                 local dropdownLabel = Instance.new("TextLabel")
                 dropdownLabel.Name = "dropdownLabel"
@@ -1291,529 +1036,59 @@ function FengUI.new(name, theme)
                 dropdownLabel.BorderSizePixel = 2
                 dropdownLabel.Position = UDim2.new(0, 0, 0, 0)
                 dropdownLabel.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 28 or 37)
-                dropdownLabel.Font = Enum.Font.SourceSans
+                dropdownLabel.Font = Enum.Font.Gotham
                 dropdownLabel.Text = text
-                dropdownLabel.TextColor3 = config.TextColor
-                dropdownLabel.TextSize = isMobile and 14 or 16
+                dropdownLabel.TextColor3 = Color3.fromRGB(95, 95, 95)
+                dropdownLabel.TextSize = isMobile and 16 or 21
                 dropdownLabel.TextWrapped = true
                 dropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
                 
                 local dropdownButton = Instance.new("TextButton")
                 dropdownButton.Name = "dropdownButton"
                 dropdownButton.Parent = dropdownFrame
-                dropdownButton.BackgroundColor3 = config.Bg_Color
-                dropdownButton.BackgroundTransparency = 0.9
-                dropdownButton.Position = UDim2.new(isMobile and 0.5 or 0.6, 0, 0, 0)
-                dropdownButton.Size = UDim2.new(0, isMobile and 140 or 160, 0, isMobile and 32 or 36)
-                dropdownButton.Font = Enum.Font.SourceSans
+                dropdownButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+                dropdownButton.Position = UDim2.new(0, 0, 0.5, 0)
+                dropdownButton.Size = UDim2.new(1, 0, 0, isMobile and 26 or 34)
+                dropdownButton.Font = Enum.Font.Gotham
                 dropdownButton.Text = "Select..."
-                dropdownButton.TextColor3 = config.SecondaryTextColor
-                dropdownButton.TextSize = isMobile and 14 or 16
-                dropdownButton.AutoButtonColor = false
+                dropdownButton.TextColor3 = Color3.fromRGB(12, 12, 12)
+                dropdownButton.TextSize = isMobile and 14 or 18
                 
                 local dropdownCorner = Instance.new("UICorner")
-                dropdownCorner.CornerRadius = UDim.new(0, 8)  -- iOS圆角
+                dropdownCorner.CornerRadius = UDim.new(0, 9)
                 dropdownCorner.Parent = dropdownButton
-                
-                local dropdownBorder = Instance.new("UIStroke")
-                dropdownBorder.Parent = dropdownButton
-                dropdownBorder.Color = config.BorderColor
-                dropdownBorder.Thickness = 1
-                dropdownBorder.Transparency = 0
-                
-                local dropdownArrow = Instance.new("ImageLabel")
-                dropdownArrow.Name = "dropdownArrow"
-                dropdownArrow.Parent = dropdownButton
-                dropdownArrow.BackgroundTransparency = 1
-                dropdownArrow.Size = UDim2.new(0, 16, 0, 16)
-                dropdownArrow.Position = UDim2.new(1, -24, 0.5, -8)
-                dropdownArrow.Image = "rbxassetid://3926305904"
-                dropdownArrow.ImageRectOffset = Vector2.new(964, 324)
-                dropdownArrow.ImageRectSize = Vector2.new(36, 36)
-                dropdownArrow.ImageColor3 = config.SecondaryTextColor
-                
-                local dropdownOptionsFrame = Instance.new("Frame")
-                dropdownOptionsFrame.Name = "dropdownOptionsFrame"
-                dropdownOptionsFrame.Parent = dropdownFrame
-                dropdownOptionsFrame.BackgroundColor3 = config.SectionColor
-                dropdownOptionsFrame.BackgroundTransparency = 0
-                dropdownOptionsFrame.Position = UDim2.new(0, 0, 1, 5)
-                dropdownOptionsFrame.Size = UDim2.new(0, isMobile and 140 or 160, 0, 0)
-                dropdownOptionsFrame.Visible = false
-                dropdownOptionsFrame.ClipsDescendants = true
-                
-                local dropdownOptionsCorner = Instance.new("UICorner")
-                dropdownOptionsCorner.CornerRadius = UDim.new(0, 8)
-                dropdownOptionsCorner.Parent = dropdownOptionsFrame
-                
-                local dropdownOptionsBorder = Instance.new("UIStroke")
-                dropdownOptionsBorder.Parent = dropdownOptionsFrame
-                dropdownOptionsBorder.Color = config.BorderColor
-                dropdownOptionsBorder.Thickness = 1
-                dropdownOptionsBorder.Transparency = 0
-                
-                local dropdownOptionsLayout = Instance.new("UIListLayout")
-                dropdownOptionsLayout.Parent = dropdownOptionsFrame
-                dropdownOptionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                dropdownOptionsLayout.Padding = UDim.new(0, 1)
                 
                 local allOptions = {}
                 local selectedOption = nil
-                local isOpen = false
-                
-                local function updateOptionsHeight()
-                    local optionCount = #allOptions
-                    local optionHeight = isMobile and 32 or 36
-                    local maxHeight = isMobile and 160 or 200
-                    local totalHeight = math.min(optionCount * optionHeight, maxHeight)
-                    
-                    services.TweenService:Create(dropdownOptionsFrame, TweenInfo.new(0.2), {
-                        Size = UDim2.new(dropdownOptionsFrame.Size.X.Scale, dropdownOptionsFrame.Size.X.Offset, 0, totalHeight)
-                    }):Play()
-                end
-                
-                local function toggleDropdown()
-                    isOpen = not isOpen
-                    dropdownOptionsFrame.Visible = isOpen
-                    
-                    if isOpen then
-                        updateOptionsHeight()
-                        services.TweenService:Create(dropdownArrow, TweenInfo.new(0.2), {
-                            Rotation = 180
-                        }):Play()
-                    else
-                        services.TweenService:Create(dropdownOptionsFrame, TweenInfo.new(0.2), {
-                            Size = UDim2.new(dropdownOptionsFrame.Size.X.Scale, dropdownOptionsFrame.Size.X.Offset, 0, 0)
-                        }):Play()
-                        
-                        services.TweenService:Create(dropdownArrow, TweenInfo.new(0.2), {
-                            Rotation = 0
-                        }):Play()
-                    end
-                end
                 
                 local funcs = {}
                 
-                funcs.AddOption = function(self, optionText, optionValue)
-                    optionValue = optionValue or optionText
-                    
-                    local optionButton = Instance.new("TextButton")
-                    optionButton.Name = "option_" .. optionText
-                    optionButton.Parent = dropdownOptionsFrame
-                    optionButton.BackgroundColor3 = config.SectionColor
-                    optionButton.BackgroundTransparency = 1
-                    optionButton.Size = UDim2.new(1, 0, 0, isMobile and 32 or 36)
-                    optionButton.Font = Enum.Font.SourceSans
-                    optionButton.Text = optionText
-                    optionButton.TextColor3 = config.TextColor
-                    optionButton.TextSize = isMobile and 14 or 16
-                    optionButton.AutoButtonColor = false
-                    
-                    optionButton.MouseEnter:Connect(function()
-                        services.TweenService:Create(optionButton, TweenInfo.new(0.2), {
-                            BackgroundTransparency = 0.9,
-                            BackgroundColor3 = config.SelectedColor
-                        }):Play()
-                    end)
-                    
-                    optionButton.MouseLeave:Connect(function()
-                        services.TweenService:Create(optionButton, TweenInfo.new(0.2), {
-                            BackgroundTransparency = 1
-                        }):Play()
-                    end)
-                    
-                    optionButton.MouseButton1Click:Connect(function()
-                        selectedOption = {
-                            text = optionText,
-                            value = optionValue
-                        }
-                        dropdownButton.Text = optionText
-                        dropdownButton.TextColor3 = config.TextColor
-                        FengUI.flags[flag] = optionValue
-                        callback(optionValue)
-                        toggleDropdown()
-                    end)
-                    
-                    table.insert(allOptions, {
-                        button = optionButton,
-                        text = optionText,
-                        value = optionValue
-                    })
-                    
-                    if isOpen then
-                        updateOptionsHeight()
-                    end
-                    
-                    return optionButton
-                end
-                
-                funcs.RemoveOption = function(self, optionText)
-                    for i, option in ipairs(allOptions) do
-                        if option.text == optionText then
-                            option.button:Destroy()
-                            table.remove(allOptions, i)
-                            break
-                        end
-                    end
-                    
-                    if isOpen then
-                        updateOptionsHeight()
-                    end
+                funcs.AddOption = function(self, optionText)
+                    table.insert(allOptions, optionText)
                 end
                 
                 funcs.SetOptions = function(self, newOptions)
-                    -- 清除现有选项
-                    for _, option in ipairs(allOptions) do
-                        option.button:Destroy()
-                    end
-                    allOptions = {}
-                    
-                    -- 添加新选项
-                    if type(newOptions) == "table" then
-                        for _, option in ipairs(newOptions) do
-                            if type(option) == "table" then
-                                funcs:AddOption(option.text or option[1], option.value or option[2] or option[1])
-                            else
-                                funcs:AddOption(option, option)
-                            end
-                        end
-                    end
-                    
-                    if isOpen then
-                        updateOptionsHeight()
-                    end
-                end
-                
-                funcs.GetSelected = function(self)
-                    return FengUI.flags[flag]
-                end
-                
-                funcs.SetSelected = function(self, value)
-                    for _, option in ipairs(allOptions) do
-                        if option.value == value then
-                            selectedOption = option
-                            dropdownButton.Text = option.text
-                            dropdownButton.TextColor3 = config.TextColor
-                            FengUI.flags[flag] = value
-                            break
-                        end
-                    end
-                end
-                
-                funcs.Clear = function(self)
-                    for _, option in ipairs(allOptions) do
-                        option.button:Destroy()
-                    end
-                    allOptions = {}
-                    selectedOption = nil
-                    dropdownButton.Text = "Select..."
-                    dropdownButton.TextColor3 = config.SecondaryTextColor
-                    FengUI.flags[flag] = nil
-                    
-                    if isOpen then
-                        updateOptionsHeight()
-                    end
-                end
-                
-                funcs.Open = function(self)
-                    if not isOpen then
-                        toggleDropdown()
-                    end
-                end
-                
-                funcs.Close = function(self)
-                    if isOpen then
-                        toggleDropdown()
-                    end
-                end
-                
-                funcs.IsOpen = function(self)
-                    return isOpen
+                    allOptions = newOptions or {}
                 end
                 
                 dropdownButton.MouseButton1Click:Connect(function()
-                    toggleDropdown()
-                end)
-                
-                -- 点击外部关闭下拉菜单
-                local function handleOutsideClick(input)
-                    if isOpen and dropdownOptionsFrame.Visible then
-                        local mousePos = input.Position
-                        local framePos = dropdownOptionsFrame.AbsolutePosition
-                        local frameSize = dropdownOptionsFrame.AbsoluteSize
-                        
-                        if mousePos.X < framePos.X or mousePos.X > framePos.X + frameSize.X or
-                           mousePos.Y < framePos.Y or mousePos.Y > framePos.Y + frameSize.Y then
-                            toggleDropdown()
-                        end
-                    end
-                end
-                
-                UserInputService.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        handleOutsideClick(input)
+                    -- 这里需要实现下拉菜单的展开逻辑
+                    -- 由于万能UI没有内置下拉菜单，我们可以使用一个简单的文本选择
+                    if #allOptions > 0 then
+                        selectedOption = allOptions[1]
+                        dropdownButton.Text = selectedOption
+                        callback(selectedOption)
+                        FengUI.flags[flag] = selectedOption
                     end
                 end)
                 
-                -- 初始化选项
                 funcs:SetOptions(options)
                 
-                return funcs
-            end
-            
-            function section.ColorPicker(section, text, flag, defaultColor, callback)
-                callback = callback or function() end
-                defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
-                assert(text, "No text provided")
-                assert(flag, "No flag provided")
-                
-                FengUI.flags[flag] = defaultColor
-                
-                local colorPickerFrame = Instance.new("Frame")
-                colorPickerFrame.Name = "colorPicker_" .. flag
-                colorPickerFrame.Parent = sectionFrame
-                colorPickerFrame.BackgroundTransparency = 1
-                colorPickerFrame.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 44 or 52)
-                
-                local colorPickerLabel = Instance.new("TextLabel")
-                colorPickerLabel.Name = "colorPickerLabel"
-                colorPickerLabel.Parent = colorPickerFrame
-                colorPickerLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                colorPickerLabel.BackgroundTransparency = 1
-                colorPickerLabel.BorderSizePixel = 2
-                colorPickerLabel.Position = UDim2.new(0, 0, 0, 0)
-                colorPickerLabel.Size = UDim2.new(0, isMobile and 200 or 300, 0, isMobile and 28 or 37)
-                colorPickerLabel.Font = Enum.Font.SourceSans
-                colorPickerLabel.Text = text
-                colorPickerLabel.TextColor3 = config.TextColor
-                colorPickerLabel.TextSize = isMobile and 14 or 16
-                colorPickerLabel.TextWrapped = true
-                colorPickerLabel.TextXAlignment = Enum.TextXAlignment.Left
-                
-                local colorPickerButton = Instance.new("TextButton")
-                colorPickerButton.Name = "colorPickerButton"
-                colorPickerButton.Parent = colorPickerFrame
-                colorPickerButton.BackgroundColor3 = config.Bg_Color
-                colorPickerButton.BackgroundTransparency = 0.9
-                colorPickerButton.Position = UDim2.new(isMobile and 0.5 or 0.7, 0, 0.1, 0)
-                colorPickerButton.Size = UDim2.new(0, isMobile and 80 or 100, 0, isMobile and 32 or 36)
-                colorPickerButton.Font = Enum.Font.SourceSans
-                colorPickerButton.Text = ""
-                colorPickerButton.AutoButtonColor = false
-                
-                local colorPickerCorner = Instance.new("UICorner")
-                colorPickerCorner.CornerRadius = UDim.new(0, 8)
-                colorPickerCorner.Parent = colorPickerButton
-                
-                local colorPickerBorder = Instance.new("UIStroke")
-                colorPickerBorder.Parent = colorPickerButton
-                colorPickerBorder.Color = config.BorderColor
-                colorPickerBorder.Thickness = 1
-                colorPickerBorder.Transparency = 0
-                
-                local colorPreview = Instance.new("Frame")
-                colorPreview.Name = "colorPreview"
-                colorPreview.Parent = colorPickerButton
-                colorPreview.BackgroundColor3 = defaultColor
-                colorPreview.BorderSizePixel = 0
-                colorPreview.Size = UDim2.new(1, -10, 1, -10)
-                colorPreview.Position = UDim2.new(0.5, -colorPreview.Size.X.Offset/2, 0.5, -colorPreview.Size.Y.Offset/2)
-                colorPreview.AnchorPoint = Vector2.new(0.5, 0.5)
-                
-                local colorPreviewCorner = Instance.new("UICorner")
-                colorPreviewCorner.CornerRadius = UDim.new(0, 4)
-                colorPreviewCorner.Parent = colorPreview
-                
-                -- 颜色选择器弹窗
-                local colorPickerPopup = Instance.new("Frame")
-                colorPickerPopup.Name = "colorPickerPopup_" .. flag
-                colorPickerPopup.Parent = FengYu
-                colorPickerPopup.BackgroundColor3 = config.SectionColor
-                colorPickerPopup.BackgroundTransparency = 0
-                colorPickerPopup.Position = UDim2.new(0.5, -160, 0.5, -130)
-                colorPickerPopup.Size = UDim2.new(0, 320, 0, 260)
-                colorPickerPopup.Visible = false
-                colorPickerPopup.ZIndex = 100
-                colorPickerPopup.Active = true
-                colorPickerPopup.Draggable = true
-                
-                local popupCorner = Instance.new("UICorner")
-                popupCorner.CornerRadius = UDim.new(0, 16)
-                popupCorner.Parent = colorPickerPopup
-                
-                local popupBorder = Instance.new("UIStroke")
-                popupBorder.Parent = colorPickerPopup
-                popupBorder.Color = config.BorderColor
-                popupBorder.Thickness = 1
-                popupBorder.Transparency = 0
-                
-                local popupTitle = Instance.new("TextLabel")
-                popupTitle.Name = "popupTitle"
-                popupTitle.Parent = colorPickerPopup
-                popupTitle.BackgroundTransparency = 1
-                popupTitle.Size = UDim2.new(1, 0, 0, 40)
-                popupTitle.Font = Enum.Font.SourceSansSemibold
-                popupTitle.Text = "选择颜色"
-                popupTitle.TextColor3 = config.TextColor
-                popupTitle.TextSize = 18
-                popupTitle.TextXAlignment = Enum.TextXAlignment.Center
-                
-                local closeButton = Instance.new("TextButton")
-                closeButton.Name = "closeButton"
-                closeButton.Parent = colorPickerPopup
-                closeButton.BackgroundTransparency = 1
-                closeButton.Size = UDim2.new(0, 40, 0, 40)
-                closeButton.Position = UDim2.new(1, -40, 0, 0)
-                closeButton.Font = Enum.Font.SourceSansBold
-                closeButton.Text = "×"
-                closeButton.TextColor3 = config.SecondaryTextColor
-                closeButton.TextSize = 24
-                
-                local hueSlider = Instance.new("Frame")
-                hueSlider.Name = "hueSlider"
-                hueSlider.Parent = colorPickerPopup
-                hueSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                hueSlider.Position = UDim2.new(0.05, 0, 0.2, 0)
-                hueSlider.Size = UDim2.new(0.9, 0, 0, 20)
-                
-                local hueSliderCorner = Instance.new("UICorner")
-                hueSliderCorner.CornerRadius = UDim.new(0, 10)
-                hueSliderCorner.Parent = hueSlider
-                
-                local hueGradient = Instance.new("UIGradient")
-                hueGradient.Parent = hueSlider
-                hueGradient.Color = ColorSequence.new{
-                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-                    ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
-                    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
-                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
-                    ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
-                    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
-                }
-                
-                local hueThumb = Instance.new("Frame")
-                hueThumb.Name = "hueThumb"
-                hueThumb.Parent = hueSlider
-                hueThumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                hueThumb.BorderSizePixel = 0
-                hueThumb.Size = UDim2.new(0, 10, 1, 4)
-                hueThumb.Position = UDim2.new(0.5, -5, 0, -2)
-                
-                local hueThumbCorner = Instance.new("UICorner")
-                hueThumbCorner.CornerRadius = UDim.new(0, 5)
-                hueThumbCorner.Parent = hueThumb
-                
-                local hueThumbBorder = Instance.new("UIStroke")
-                hueThumbBorder.Parent = hueThumb
-                hueThumbBorder.Color = Color3.fromRGB(0, 0, 0)
-                hueThumbBorder.Thickness = 2
-                
-                local colorPreviewLarge = Instance.new("Frame")
-                colorPreviewLarge.Name = "colorPreviewLarge"
-                colorPreviewLarge.Parent = colorPickerPopup
-                colorPreviewLarge.BackgroundColor3 = defaultColor
-                colorPreviewLarge.Position = UDim2.new(0.05, 0, 0.4, 0)
-                colorPreviewLarge.Size = UDim2.new(0.9, 0, 0, 80)
-                
-                local colorPreviewCornerLarge = Instance.new("UICorner")
-                colorPreviewCornerLarge.CornerRadius = UDim.new(0, 12)
-                colorPreviewCornerLarge.Parent = colorPreviewLarge
-                
-                local confirmButton = Instance.new("TextButton")
-                confirmButton.Name = "confirmButton"
-                confirmButton.Parent = colorPickerPopup
-                confirmButton.BackgroundColor3 = config.AccentColor
-                confirmButton.BackgroundTransparency = 0
-                confirmButton.Position = UDim2.new(0.05, 0, 0.85, 0)
-                confirmButton.Size = UDim2.new(0.9, 0, 0, 40)
-                confirmButton.Font = Enum.Font.SourceSansSemibold
-                confirmButton.Text = "确认"
-                confirmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-                confirmButton.TextSize = 16
-                
-                local confirmCorner = Instance.new("UICorner")
-                confirmCorner.CornerRadius = UDim.new(0, 8)
-                confirmCorner.Parent = confirmButton
-                
-                local currentHue = 0
-                local currentColor = defaultColor
-                
-                local function updateColorFromHue(hue)
-                    currentHue = hue
-                    currentColor = Color3.fromHSV(hue, 1, 1)
-                    colorPreviewLarge.BackgroundColor3 = currentColor
+                if #options > 0 then
+                    selectedOption = options[1]
+                    dropdownButton.Text = selectedOption
+                    FengUI.flags[flag] = selectedOption
                 end
-                
-                local function setColor(color)
-                    currentColor = color
-                    colorPreview.BackgroundColor3 = color
-                    colorPreviewLarge.BackgroundColor3 = color
-                    FengUI.flags[flag] = color
-                    
-                    -- 更新色调滑块位置
-                    local h, s, v = Color3.toHSV(color)
-                    if s > 0 or v > 0 then
-                        currentHue = h
-                        hueThumb.Position = UDim2.new(currentHue, -5, 0, -2)
-                    end
-                end
-                
-                -- 初始化颜色
-                setColor(defaultColor)
-                
-                -- 色调滑块交互
-                local hueDragging = false
-                hueSlider.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        hueDragging = true
-                    end
-                end)
-                
-                hueSlider.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        hueDragging = false
-                    end
-                end)
-                
-                UserInputService.InputChanged:Connect(function(input)
-                    if hueDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        local mouse = services.Players.LocalPlayer:GetMouse()
-                        local sliderPos = hueSlider.AbsolutePosition.X
-                        local sliderSize = hueSlider.AbsoluteSize.X
-                        local mouseX = math.clamp(mouse.X, sliderPos, sliderPos + sliderSize)
-                        local hue = (mouseX - sliderPos) / sliderSize
-                        
-                        currentHue = hue
-                        hueThumb.Position = UDim2.new(hue, -5, 0, -2)
-                        updateColorFromHue(hue)
-                    end
-                end)
-                
-                colorPickerButton.MouseButton1Click:Connect(function()
-                    colorPickerPopup.Visible = true
-                    colorPickerPopup.Position = UDim2.new(0.5, -160, 0.5, -130)
-                end)
-                
-                closeButton.MouseButton1Click:Connect(function()
-                    colorPickerPopup.Visible = false
-                end)
-                
-                confirmButton.MouseButton1Click:Connect(function()
-                    setColor(currentColor)
-                    callback(currentColor)
-                    colorPickerPopup.Visible = false
-                end)
-                
-                local funcs = {
-                    SetColor = function(self, color)
-                        setColor(color)
-                    end,
-                    
-                    GetColor = function(self)
-                        return FengUI.flags[flag]
-                    end
-                }
                 
                 return funcs
             end
@@ -1825,19 +1100,10 @@ function FengUI.new(name, theme)
         sidebar2.MouseButton1Click:Connect(function()
             for b, v in next, sections do
                 v.BackgroundTransparency = 1
-                v.TextColor3 = config.TextColor
-                local stroke = v:FindFirstChild("UIStroke")
-                if stroke then
-                    stroke.Color = config.BorderColor
-                end
+                v.TextColor3 = Color3.fromRGB(0, 0, 0)
             end
             sidebar2.BackgroundTransparency = 0
-            sidebar2.BackgroundColor3 = config.SelectedColor
-            sidebar2.TextColor3 = config.AccentColor
-            local stroke = sidebar2:FindFirstChild("UIStroke")
-            if stroke then
-                stroke.Color = config.AccentColor
-            end
+            sidebar2.TextColor3 = Color3.fromRGB(255, 255, 255)
             for b, v in next, workareas do
                 v.Visible = false
             end
@@ -1847,12 +1113,7 @@ function FengUI.new(name, theme)
         -- 默认选择第一个标签
         if #sections == 1 then
             sidebar2.BackgroundTransparency = 0
-            sidebar2.BackgroundColor3 = config.SelectedColor
-            sidebar2.TextColor3 = config.AccentColor
-            local stroke = sidebar2:FindFirstChild("UIStroke")
-            if stroke then
-                stroke.Color = config.AccentColor
-            end
+            sidebar2.TextColor3 = Color3.fromRGB(255, 255, 255)
             workareamain.Visible = true
         end
 
