@@ -729,11 +729,13 @@ function FengUI.new(name, theme)
         
         local tab = {}
         
-        function tab.section(tab, name, TabVal)
-            -- 简化参数处理
-            local open = TabVal
-            if open == nil then
-                open = true  -- 默认展开
+        function tab.section(name, options)
+            -- 处理参数
+            local open = true
+            if type(options) == "boolean" then
+                open = options
+            elseif type(options) == "table" then
+                open = options.open or true
             end
             
             -- 创建Section主容器
@@ -743,6 +745,7 @@ function FengUI.new(name, theme)
             SectionContainer.BackgroundTransparency = 1
             SectionContainer.Size = UDim2.new(1, 0, 0, 0)
             SectionContainer.Visible = true
+            SectionContainer.LayoutOrder = #MainContainer:GetChildren() -- 确保正确排序
             
             -- Section标题
             local SectionHeader = Instance.new("Frame")
@@ -776,13 +779,14 @@ function FengUI.new(name, theme)
             ToggleButton.TextColor3 = config.AccentColor
             ToggleButton.TextSize = isMobile and 16 or 20
             ToggleButton.Visible = true
+            ToggleButton.AutoButtonColor = false
             
             -- Section内容区域
             local SectionContent = Instance.new("Frame")
             SectionContent.Name = "SectionContent"
             SectionContent.Parent = SectionContainer
             SectionContent.BackgroundTransparency = 1
-            SectionContent.Size = UDim2.new(1, 0, 0, 0)
+            SectionContent.ClipsDescendants = true
             SectionContent.Visible = open
             
             local ContentLayout = Instance.new("UIListLayout")
@@ -790,18 +794,47 @@ function FengUI.new(name, theme)
             ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
             ContentLayout.Padding = UDim.new(0, 8)
             
-            -- 更新Section高度
+            local ContentPadding = Instance.new("UIPadding")
+            ContentPadding.Parent = SectionContent
+            ContentPadding.PaddingTop = UDim.new(0, 8)
+            
+            -- 初始设置内容区域大小
+            if open then
+                SectionContent.Size = UDim2.new(1, 0, 0, 0) -- 初始为0，等待内容填充
+            else
+                SectionContent.Size = UDim2.new(1, 0, 0, 0)
+            end
+            
+            -- 更新Section高度的函数
             local function updateSectionHeight()
+                local headerHeight = SectionHeader.AbsoluteSize.Y
+                local contentHeight = 0
+                
                 if open then
-                    ToggleButton.Text = "▲"
+                    contentHeight = ContentLayout.AbsoluteContentSize.Y
                     SectionContent.Visible = true
-                    SectionContent.Size = UDim2.new(1, 0, 0, ContentLayout.AbsoluteContentSize.Y)
+                    SectionContent.Size = UDim2.new(1, 0, 0, contentHeight)
+                    ToggleButton.Text = "▲"
                 else
-                    ToggleButton.Text = "▼"
+                    contentHeight = 0
                     SectionContent.Visible = false
                     SectionContent.Size = UDim2.new(1, 0, 0, 0)
+                    ToggleButton.Text = "▼"
                 end
-                SectionContainer.Size = UDim2.new(1, 0, 0, SectionHeader.AbsoluteSize.Y + (open and SectionContent.AbsoluteSize.Y or 0))
+                
+                local totalHeight = headerHeight + contentHeight + 8 -- 加上一些间距
+                SectionContainer.Size = UDim2.new(1, 0, 0, totalHeight)
+                
+                -- 触发父级布局更新
+                if MainContainer and workarealayout then
+                    task.spawn(function()
+                        task.wait(0.05)
+                        MainContainer.Size = UDim2.new(1, 0, 0, workarealayout.AbsoluteContentSize.Y)
+                        if workareamain then
+                            workareamain.CanvasSize = UDim2.new(0, 0, 0, workarealayout.AbsoluteContentSize.Y + 20)
+                        end
+                    end)
+                end
             end
             
             -- 监听内容变化
@@ -817,9 +850,13 @@ function FengUI.new(name, theme)
                 updateSectionHeight()
             end)
             
-            updateSectionHeight()
+            -- 初始更新
+            task.spawn(function()
+                task.wait(0.1)
+                updateSectionHeight()
+            end)
             
-            -- 创建section对象，包含所有功能方法
+            -- 创建section对象
             local sectionObj = {}
             
             -- Button功能
@@ -848,13 +885,17 @@ function FengUI.new(name, theme)
                 buttonStroke.Thickness = 1
                 buttonStroke.Transparency = 0.8
 
-                -- 添加点击效果
+                -- 点击效果
                 button.MouseButton1Down:Connect(function()
-                    button.BackgroundTransparency = 0.4
+                    services.TweenService:Create(button, TweenInfo.new(0.1), {
+                        BackgroundTransparency = 0.4
+                    }):Play()
                 end)
                 
                 button.MouseButton1Up:Connect(function()
-                    button.BackgroundTransparency = 0.2
+                    services.TweenService:Create(button, TweenInfo.new(0.1), {
+                        BackgroundTransparency = 0.2
+                    }):Play()
                 end)
 
                 if callback then
@@ -862,6 +903,13 @@ function FengUI.new(name, theme)
                         callback()
                     end)
                 end
+                
+                -- 更新布局
+                task.spawn(function()
+                    task.wait(0.05)
+                    updateSectionHeight()
+                end)
+                
                 return button
             end
             
@@ -959,6 +1007,12 @@ function FengUI.new(name, theme)
                     ImageModule:Destroy()
                 end
                 
+                -- 更新布局
+                task.spawn(function()
+                    task.wait(0.05)
+                    updateSectionHeight()
+                end)
+                
                 return imageController
             end
             
@@ -980,6 +1034,12 @@ function FengUI.new(name, theme)
                 local labelCorner = Instance.new("UICorner")
                 labelCorner.CornerRadius = UDim.new(0, 8)
                 labelCorner.Parent = label
+                
+                -- 更新布局
+                task.spawn(function()
+                    task.wait(0.05)
+                    updateSectionHeight()
+                end)
                 
                 return label
             end
@@ -1091,6 +1151,12 @@ function FengUI.new(name, theme)
                     funcs:SetState()
                 end)
                 
+                -- 更新布局
+                task.spawn(function()
+                    task.wait(0.05)
+                    updateSectionHeight()
+                end)
+                
                 return funcs
             end
             
@@ -1197,6 +1263,12 @@ function FengUI.new(name, theme)
                     KeybindButton.BackgroundTransparency = 0.2
                     KeybindButton.TextColor3 = config.TextColor
                 end)
+                
+                -- 更新布局
+                task.spawn(function()
+                    task.wait(0.05)
+                    updateSectionHeight()
+                end)
             end
             
             -- Textbox功能
@@ -1262,6 +1334,12 @@ function FengUI.new(name, theme)
                     end
                     FengUI.flags[flag] = textbox.Text
                     callback(textbox.Text)
+                end)
+                
+                -- 更新布局
+                task.spawn(function()
+                    task.wait(0.05)
+                    updateSectionHeight()
                 end)
             end
             
@@ -1391,6 +1469,12 @@ function FengUI.new(name, theme)
                     end
                 end)
                 
+                -- 更新布局
+                task.spawn(function()
+                    task.wait(0.05)
+                    updateSectionHeight()
+                end)
+                
                 return funcs
             end
             
@@ -1470,6 +1554,12 @@ function FengUI.new(name, theme)
                     FengUI.flags[flag] = selectedOption
                 end
                 
+                -- 更新布局
+                task.spawn(function()
+                    task.wait(0.05)
+                    updateSectionHeight()
+                end)
+                
                 return funcs
             end
             
@@ -1534,6 +1624,12 @@ function FengUI.new(name, theme)
                 
                 ColorPreview.MouseButton1Click:Connect(function()
                     print("颜色选择器功能需要完整实现")
+                end)
+                
+                -- 更新布局
+                task.spawn(function()
+                    task.wait(0.05)
+                    updateSectionHeight()
                 end)
                 
                 return funcs
