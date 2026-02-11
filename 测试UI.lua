@@ -674,6 +674,7 @@ function FengUI.new(name, theme)
         sidebar2.Text = name
         sidebar2.TextColor3 = config.TextColor
         sidebar2.TextSize = isMobile and 16 or 21
+        sidebar2.Visible = true -- 确保按钮可见
         
         -- 添加一个透明的背景框确保点击区域
         local buttonBackground = Instance.new("Frame")
@@ -728,7 +729,6 @@ function FengUI.new(name, theme)
         
         local tab = {}
         
-        -- 修复：定义section函数作为tab的方法
         function tab.section(tab, name, TabVal)
             -- 简化参数处理
             local open = TabVal
@@ -742,6 +742,7 @@ function FengUI.new(name, theme)
             SectionContainer.Parent = MainContainer
             SectionContainer.BackgroundTransparency = 1
             SectionContainer.Size = UDim2.new(1, 0, 0, 0)
+            SectionContainer.Visible = true
             
             -- Section标题
             local SectionHeader = Instance.new("Frame")
@@ -749,6 +750,7 @@ function FengUI.new(name, theme)
             SectionHeader.Parent = SectionContainer
             SectionHeader.BackgroundTransparency = 1
             SectionHeader.Size = UDim2.new(1, 0, 0, isMobile and 40 or 50)
+            SectionHeader.Visible = true
             
             local SectionTitle = Instance.new("TextLabel")
             SectionTitle.Name = "SectionTitle"
@@ -760,6 +762,7 @@ function FengUI.new(name, theme)
             SectionTitle.TextColor3 = config.AccentColor
             SectionTitle.TextSize = isMobile and 18 or 22
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+            SectionTitle.Visible = true
             
             -- 展开/折叠按钮
             local ToggleButton = Instance.new("TextButton")
@@ -772,6 +775,7 @@ function FengUI.new(name, theme)
             ToggleButton.Text = open and "▲" or "▼"
             ToggleButton.TextColor3 = config.AccentColor
             ToggleButton.TextSize = isMobile and 16 or 20
+            ToggleButton.Visible = true
             
             -- Section内容区域
             local SectionContent = Instance.new("Frame")
@@ -830,6 +834,9 @@ function FengUI.new(name, theme)
                 button.Font = Enum.Font.Gotham
                 button.TextColor3 = config.AccentColor
                 button.TextSize = isMobile and 16 or 18
+                button.AutoButtonColor = false
+                button.Visible = true
+                button.Active = true
 
                 local buttonCorner = Instance.new("UICorner")
                 buttonCorner.CornerRadius = UDim.new(0, 8)
@@ -840,6 +847,15 @@ function FengUI.new(name, theme)
                 buttonStroke.Color = config.AccentColor
                 buttonStroke.Thickness = 1
                 buttonStroke.Transparency = 0.8
+
+                -- 添加点击效果
+                button.MouseButton1Down:Connect(function()
+                    button.BackgroundTransparency = 0.4
+                end)
+                
+                button.MouseButton1Up:Connect(function()
+                    button.BackgroundTransparency = 0.2
+                end)
 
                 if callback then
                     button.MouseButton1Click:Connect(function() 
@@ -857,6 +873,7 @@ function FengUI.new(name, theme)
                 ImageModule.BackgroundTransparency = 1
                 ImageModule.BorderSizePixel = 0
                 ImageModule.Size = UDim2.new(1, 0, 0, sizeY or (isMobile and 100 or 120))
+                ImageModule.Visible = true
                 
                 local ImageLabel = Instance.new("ImageLabel")
                 ImageLabel.Name = "ImageLabel"
@@ -867,6 +884,7 @@ function FengUI.new(name, theme)
                 ImageLabel.Position = UDim2.new(0.5, 0, 0, 0)
                 ImageLabel.Size = UDim2.new(0, math.min(sizeX or (WORKAREA_WIDTH - 56), WORKAREA_WIDTH - 56), 0, sizeY or (isMobile and 100 or 120))
                 ImageLabel.ScaleType = Enum.ScaleType.Crop
+                ImageLabel.Visible = true
                 
                 local ImageCorner = Instance.new("UICorner")
                 ImageCorner.CornerRadius = UDim.new(0, 9)
@@ -957,6 +975,7 @@ function FengUI.new(name, theme)
                 label.TextSize = isMobile and 14 or 16
                 label.TextWrapped = true
                 label.Text = text
+                label.Visible = true
                 
                 local labelCorner = Instance.new("UICorner")
                 labelCorner.CornerRadius = UDim.new(0, 8)
@@ -978,6 +997,7 @@ function FengUI.new(name, theme)
                 ToggleContainer.Parent = SectionContent
                 ToggleContainer.BackgroundTransparency = 1
                 ToggleContainer.Size = UDim2.new(1, 0, 0, isMobile and 40 or 48)
+                ToggleContainer.Visible = true
                 
                 local ToggleLabel = Instance.new("TextLabel")
                 ToggleLabel.Name = "ToggleLabel"
@@ -989,6 +1009,7 @@ function FengUI.new(name, theme)
                 ToggleLabel.TextColor3 = config.TextColor
                 ToggleLabel.TextSize = isMobile and 14 or 16
                 ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+                ToggleLabel.Visible = true
                 
                 local ToggleButton = Instance.new("Frame")
                 ToggleButton.Name = "ToggleButton"
@@ -996,6 +1017,7 @@ function FengUI.new(name, theme)
                 ToggleButton.BackgroundTransparency = 1
                 ToggleButton.Position = UDim2.new(0.7, 0, 0, 0)
                 ToggleButton.Size = UDim2.new(0.3, 0, 1, 0)
+                ToggleButton.Visible = true
                 
                 local SwitchFrame = Instance.new("TextButton")
                 SwitchFrame.Parent = ToggleButton
@@ -1004,6 +1026,8 @@ function FengUI.new(name, theme)
                 SwitchFrame.Size = UDim2.new(0, isMobile and 50 or 60, 0, isMobile and 24 or 28)
                 SwitchFrame.Text=""
                 SwitchFrame.AutoButtonColor = false
+                SwitchFrame.Visible = true
+                SwitchFrame.Active = true
 
                 local SwitchCorner = Instance.new("UICorner")
                 SwitchCorner.CornerRadius = UDim.new(1, 0)
@@ -1016,6 +1040,8 @@ function FengUI.new(name, theme)
                 SwitchButton.Size = UDim2.new(0, isMobile and 20 or 24, 0, isMobile and 20 or 24)
                 SwitchButton.AutoButtonColor = false
                 SwitchButton.Text = ""
+                SwitchButton.Visible = true
+                SwitchButton.Active = true
 
                 local ButtonCorner = Instance.new("UICorner")
                 ButtonCorner.CornerRadius = UDim.new(1, 0)
@@ -1097,6 +1123,7 @@ function FengUI.new(name, theme)
                 KeybindContainer.Parent = SectionContent
                 KeybindContainer.BackgroundTransparency = 1
                 KeybindContainer.Size = UDim2.new(1, 0, 0, isMobile and 40 or 48)
+                KeybindContainer.Visible = true
                 
                 local KeybindLabel = Instance.new("TextLabel")
                 KeybindLabel.Name = "KeybindLabel"
@@ -1108,6 +1135,7 @@ function FengUI.new(name, theme)
                 KeybindLabel.TextColor3 = config.TextColor
                 KeybindLabel.TextSize = isMobile and 14 or 16
                 KeybindLabel.TextXAlignment = Enum.TextXAlignment.Left
+                KeybindLabel.Visible = true
                 
                 local KeybindButton = Instance.new("TextButton")
                 KeybindButton.Name = "KeybindButton"
@@ -1120,6 +1148,9 @@ function FengUI.new(name, theme)
                 KeybindButton.Text = keyTxt
                 KeybindButton.TextColor3 = config.TextColor
                 KeybindButton.TextSize = isMobile and 12 or 14
+                KeybindButton.AutoButtonColor = false
+                KeybindButton.Visible = true
+                KeybindButton.Active = true
                 
                 local KeybindCorner = Instance.new("UICorner")
                 KeybindCorner.CornerRadius = UDim.new(0, 6)
@@ -1182,6 +1213,7 @@ function FengUI.new(name, theme)
                 TextboxContainer.Parent = SectionContent
                 TextboxContainer.BackgroundTransparency = 1
                 TextboxContainer.Size = UDim2.new(1, 0, 0, isMobile and 60 or 70)
+                TextboxContainer.Visible = true
                 
                 local TextboxLabel = Instance.new("TextLabel")
                 TextboxLabel.Name = "TextboxLabel"
@@ -1193,6 +1225,7 @@ function FengUI.new(name, theme)
                 TextboxLabel.TextColor3 = config.TextColor
                 TextboxLabel.TextSize = isMobile and 14 or 16
                 TextboxLabel.TextXAlignment = Enum.TextXAlignment.Left
+                TextboxLabel.Visible = true
                 
                 local TextboxInput = Instance.new("Frame")
                 TextboxInput.Parent = TextboxContainer
@@ -1200,6 +1233,7 @@ function FengUI.new(name, theme)
                 TextboxInput.BackgroundTransparency = 0.2
                 TextboxInput.Position = UDim2.new(0, 0, 0.4, 0)
                 TextboxInput.Size = UDim2.new(1, 0, 0.6, 0)
+                TextboxInput.Visible = true
 
                 local TextboxCorner = Instance.new("UICorner")
                 TextboxCorner.CornerRadius = UDim.new(0, 8)
@@ -1219,6 +1253,8 @@ function FengUI.new(name, theme)
                 textbox.TextColor3 = config.TextColor
                 textbox.TextSize = isMobile and 14 or 16
                 textbox.TextXAlignment = Enum.TextXAlignment.Left
+                textbox.Visible = true
+                textbox.Active = true
 
                 textbox.FocusLost:Connect(function()
                     if textbox.Text == "" then
@@ -1248,6 +1284,7 @@ function FengUI.new(name, theme)
                 SliderContainer.Parent = SectionContent
                 SliderContainer.BackgroundTransparency = 1
                 SliderContainer.Size = UDim2.new(1, 0, 0, isMobile and 70 or 80)
+                SliderContainer.Visible = true
                 
                 local SliderLabel = Instance.new("TextLabel")
                 SliderLabel.Name = "SliderLabel"
@@ -1259,6 +1296,7 @@ function FengUI.new(name, theme)
                 SliderLabel.TextColor3 = config.TextColor
                 SliderLabel.TextSize = isMobile and 14 or 16
                 SliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+                SliderLabel.Visible = true
                 
                 local SliderBar = Instance.new("Frame")
                 SliderBar.Name = "SliderBar"
@@ -1267,6 +1305,7 @@ function FengUI.new(name, theme)
                 SliderBar.BackgroundTransparency = 0.2
                 SliderBar.Position = UDim2.new(0, 0, 0.6, 0)
                 SliderBar.Size = UDim2.new(1, 0, 0.2, 0)
+                SliderBar.Visible = true
                 
                 local SliderBarCorner = Instance.new("UICorner")
                 SliderBarCorner.CornerRadius = UDim.new(1, 0)
@@ -1278,6 +1317,7 @@ function FengUI.new(name, theme)
                 SliderPart.BackgroundColor3 = config.SliderBar_Color
                 SliderPart.BorderSizePixel = 0
                 SliderPart.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+                SliderPart.Visible = true
                 
                 local SliderPartCorner = Instance.new("UICorner")
                 SliderPartCorner.CornerRadius = UDim.new(1, 0)
@@ -1326,27 +1366,27 @@ function FengUI.new(name, theme)
                 local dragging = false
                 
                 SliderBar.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         dragging = true
                         funcs:SetValue()
                     end
                 end)
                 
                 SliderPart.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         dragging = true
                         funcs:SetValue()
                     end
                 end)
                 
                 services.UserInputService.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         dragging = false
                     end
                 end)
                 
                 services.UserInputService.InputChanged:Connect(function(input)
-                    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                         funcs:SetValue()
                     end
                 end)
@@ -1367,6 +1407,7 @@ function FengUI.new(name, theme)
                 DropdownContainer.Parent = SectionContent
                 DropdownContainer.BackgroundTransparency = 1
                 DropdownContainer.Size = UDim2.new(1, 0, 0, isMobile and 60 or 70)
+                DropdownContainer.Visible = true
                 
                 local DropdownLabel = Instance.new("TextLabel")
                 DropdownLabel.Name = "DropdownLabel"
@@ -1378,6 +1419,7 @@ function FengUI.new(name, theme)
                 DropdownLabel.TextColor3 = config.TextColor
                 DropdownLabel.TextSize = isMobile and 14 or 16
                 DropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+                DropdownLabel.Visible = true
                 
                 local DropdownButton = Instance.new("TextButton")
                 DropdownButton.Name = "DropdownButton"
@@ -1390,6 +1432,9 @@ function FengUI.new(name, theme)
                 DropdownButton.Text = "Select..."
                 DropdownButton.TextColor3 = config.TextColor
                 DropdownButton.TextSize = isMobile and 14 or 16
+                DropdownButton.AutoButtonColor = false
+                DropdownButton.Visible = true
+                DropdownButton.Active = true
                 
                 local DropdownCorner = Instance.new("UICorner")
                 DropdownCorner.CornerRadius = UDim.new(0, 8)
@@ -1442,6 +1487,7 @@ function FengUI.new(name, theme)
                 ColorPickerContainer.Parent = SectionContent
                 ColorPickerContainer.BackgroundTransparency = 1
                 ColorPickerContainer.Size = UDim2.new(1, 0, 0, isMobile and 60 or 70)
+                ColorPickerContainer.Visible = true
                 
                 local ColorPickerLabel = Instance.new("TextLabel")
                 ColorPickerLabel.Name = "ColorPickerLabel"
@@ -1453,6 +1499,7 @@ function FengUI.new(name, theme)
                 ColorPickerLabel.TextColor3 = config.TextColor
                 ColorPickerLabel.TextSize = isMobile and 14 or 16
                 ColorPickerLabel.TextXAlignment = Enum.TextXAlignment.Left
+                ColorPickerLabel.Visible = true
                 
                 local ColorPreview = Instance.new("TextButton")
                 ColorPreview.Name = "ColorPreview"
@@ -1461,6 +1508,9 @@ function FengUI.new(name, theme)
                 ColorPreview.Position = UDim2.new(0.7, 0, 0.25, 0)
                 ColorPreview.Size = UDim2.new(0.3, 0, 0.5, 0)
                 ColorPreview.Text = ""
+                ColorPreview.AutoButtonColor = false
+                ColorPreview.Visible = true
+                ColorPreview.Active = true
                 
                 local ColorPreviewCorner = Instance.new("UICorner")
                 ColorPreviewCorner.CornerRadius = UDim.new(0, 8)
