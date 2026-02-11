@@ -792,13 +792,15 @@ function FengUI.new(name, theme)
                 if open then
                     ToggleButton.Text = "▲"
                     SectionContent.Visible = true
-                    SectionContent.Size = UDim2.new(1, 0, 0, ContentLayout.AbsoluteContentSize.Y)
+                    local contentHeight = ContentLayout.AbsoluteContentSize.Y
+                    SectionContent.Size = UDim2.new(1, 0, 0, contentHeight)
                 else
                     ToggleButton.Text = "▼"
                     SectionContent.Visible = false
                     SectionContent.Size = UDim2.new(1, 0, 0, 0)
                 end
-                SectionContainer.Size = UDim2.new(1, 0, 0, SectionHeader.AbsoluteSize.Y + (open and SectionContent.AbsoluteSize.Y or 0))
+                local sectionHeight = SectionHeader.AbsoluteSize.Y + (open and ContentLayout.AbsoluteContentSize.Y or 0)
+                SectionContainer.Size = UDim2.new(1, 0, 0, sectionHeight)
             end
             
             -- 监听内容变化
@@ -808,13 +810,14 @@ function FengUI.new(name, theme)
                 end
             end)
             
+            -- 初始更新高度
+            updateSectionHeight()
+            
             -- 切换展开/折叠
             ToggleButton.MouseButton1Click:Connect(function()
                 open = not open
                 updateSectionHeight()
             end)
-            
-            updateSectionHeight()
             
             -- 功能函数
             function section.Button(section, text, callback)
@@ -844,6 +847,11 @@ function FengUI.new(name, theme)
                         callback()
                     end)
                 end
+                
+                -- 延迟更新高度
+                task.wait(0.05)
+                updateSectionHeight()
+                
                 return button
             end
             
@@ -938,6 +946,10 @@ function FengUI.new(name, theme)
                     ImageModule:Destroy()
                 end
                 
+                -- 延迟更新高度
+                task.wait(0.05)
+                updateSectionHeight()
+                
                 return imageController
             end
             
@@ -957,6 +969,10 @@ function FengUI.new(name, theme)
                 local labelCorner = Instance.new("UICorner")
                 labelCorner.CornerRadius = UDim.new(0, 8)
                 labelCorner.Parent = label
+                
+                -- 延迟更新高度
+                task.wait(0.05)
+                updateSectionHeight()
                 
                 return label
             end
@@ -1060,6 +1076,10 @@ function FengUI.new(name, theme)
                     funcs:SetState()
                 end)
                 
+                -- 延迟更新高度
+                task.wait(0.05)
+                updateSectionHeight()
+                
                 return funcs
             end
             
@@ -1160,6 +1180,10 @@ function FengUI.new(name, theme)
                     KeybindButton.BackgroundTransparency = 0.2
                     KeybindButton.TextColor3 = config.TextColor
                 end)
+                
+                -- 延迟更新高度
+                task.wait(0.05)
+                updateSectionHeight()
             end
             
             function section.Textbox(section, text, flag, default, callback)
@@ -1220,6 +1244,10 @@ function FengUI.new(name, theme)
                     FengUI.flags[flag] = textbox.Text
                     callback(textbox.Text)
                 end)
+                
+                -- 延迟更新高度
+                task.wait(0.05)
+                updateSectionHeight()
             end
             
             function section.Slider(section, text, flag, default, min, max, precise, callback)
@@ -1343,6 +1371,10 @@ function FengUI.new(name, theme)
                     end
                 end)
                 
+                -- 延迟更新高度
+                task.wait(0.05)
+                updateSectionHeight()
+                
                 return funcs
             end
             
@@ -1416,6 +1448,10 @@ function FengUI.new(name, theme)
                     FengUI.flags[flag] = selectedOption
                 end
                 
+                -- 延迟更新高度
+                task.wait(0.05)
+                updateSectionHeight()
+                
                 return funcs
             end
             
@@ -1476,6 +1512,10 @@ function FengUI.new(name, theme)
                 ColorPreview.MouseButton1Click:Connect(function()
                     print("颜色选择器功能需要完整实现")
                 end)
+                
+                -- 延迟更新高度
+                task.wait(0.05)
+                updateSectionHeight()
                 
                 return funcs
             end
