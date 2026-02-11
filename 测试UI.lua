@@ -729,7 +729,7 @@ function FengUI.new(name, theme)
         local tab = {}
         
         function tab.section(tab, name, TabVal)
-            -- 参数处理
+            -- 简化参数处理
             local open = TabVal
             if open == nil then
                 open = true  -- 默认展开
