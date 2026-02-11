@@ -728,14 +728,13 @@ function FengUI.new(name, theme)
         
         local tab = {}
         
+        -- 修复：定义section函数作为tab的方法
         function tab.section(tab, name, TabVal)
             -- 简化参数处理
             local open = TabVal
             if open == nil then
                 open = true  -- 默认展开
             end
-            
-            local section = {}
             
             -- 创建Section主容器
             local SectionContainer = Instance.new("Frame")
@@ -792,15 +791,13 @@ function FengUI.new(name, theme)
                 if open then
                     ToggleButton.Text = "▲"
                     SectionContent.Visible = true
-                    local contentHeight = ContentLayout.AbsoluteContentSize.Y
-                    SectionContent.Size = UDim2.new(1, 0, 0, contentHeight)
+                    SectionContent.Size = UDim2.new(1, 0, 0, ContentLayout.AbsoluteContentSize.Y)
                 else
                     ToggleButton.Text = "▼"
                     SectionContent.Visible = false
                     SectionContent.Size = UDim2.new(1, 0, 0, 0)
                 end
-                local sectionHeight = SectionHeader.AbsoluteSize.Y + (open and ContentLayout.AbsoluteContentSize.Y or 0)
-                SectionContainer.Size = UDim2.new(1, 0, 0, sectionHeight)
+                SectionContainer.Size = UDim2.new(1, 0, 0, SectionHeader.AbsoluteSize.Y + (open and SectionContent.AbsoluteSize.Y or 0))
             end
             
             -- 监听内容变化
@@ -810,17 +807,19 @@ function FengUI.new(name, theme)
                 end
             end)
             
-            -- 初始更新高度
-            updateSectionHeight()
-            
             -- 切换展开/折叠
             ToggleButton.MouseButton1Click:Connect(function()
                 open = not open
                 updateSectionHeight()
             end)
             
-            -- 功能函数
-            function section.Button(section, text, callback)
+            updateSectionHeight()
+            
+            -- 创建section对象，包含所有功能方法
+            local sectionObj = {}
+            
+            -- Button功能
+            function sectionObj.Button(text, callback)
                 local button = Instance.new("TextButton")
                 button.Name = "button_" .. text
                 button.Text = text
@@ -847,15 +846,11 @@ function FengUI.new(name, theme)
                         callback()
                     end)
                 end
-                
-                -- 延迟更新高度
-                task.wait(0.05)
-                updateSectionHeight()
-                
                 return button
             end
             
-            function section.Image(section, imageSource, sizeX, sizeY)
+            -- Image功能
+            function sectionObj.Image(imageSource, sizeX, sizeY)
                 local ImageModule = Instance.new("Frame")
                 ImageModule.Name = "ImageModule"
                 ImageModule.Parent = SectionContent
@@ -946,14 +941,11 @@ function FengUI.new(name, theme)
                     ImageModule:Destroy()
                 end
                 
-                -- 延迟更新高度
-                task.wait(0.05)
-                updateSectionHeight()
-                
                 return imageController
             end
             
-            function section:Label(text)
+            -- Label功能
+            function sectionObj.Label(text)
                 local label = Instance.new("TextLabel")
                 label.Name = "label_" .. text
                 label.Parent = SectionContent
@@ -970,14 +962,11 @@ function FengUI.new(name, theme)
                 labelCorner.CornerRadius = UDim.new(0, 8)
                 labelCorner.Parent = label
                 
-                -- 延迟更新高度
-                task.wait(0.05)
-                updateSectionHeight()
-                
                 return label
             end
             
-            function section.Toggle(section, text, flag, enabled, callback)
+            -- Toggle功能
+            function sectionObj.Toggle(text, flag, enabled, callback)
                 callback = callback or function() end
                 enabled = enabled or false
                 assert(text, "No text provided")
@@ -1076,14 +1065,11 @@ function FengUI.new(name, theme)
                     funcs:SetState()
                 end)
                 
-                -- 延迟更新高度
-                task.wait(0.05)
-                updateSectionHeight()
-                
                 return funcs
             end
             
-            function section.Keybind(section, text, default, callback)
+            -- Keybind功能
+            function sectionObj.Keybind(text, default, callback)
                 callback = callback or function() end
                 assert(text, "No text provided")
                 assert(default, "No default key provided")
@@ -1180,13 +1166,10 @@ function FengUI.new(name, theme)
                     KeybindButton.BackgroundTransparency = 0.2
                     KeybindButton.TextColor3 = config.TextColor
                 end)
-                
-                -- 延迟更新高度
-                task.wait(0.05)
-                updateSectionHeight()
             end
             
-            function section.Textbox(section, text, flag, default, callback)
+            -- Textbox功能
+            function sectionObj.Textbox(text, flag, default, callback)
                 callback = callback or function() end
                 assert(text, "No text provided")
                 assert(flag, "No flag provided")
@@ -1244,13 +1227,10 @@ function FengUI.new(name, theme)
                     FengUI.flags[flag] = textbox.Text
                     callback(textbox.Text)
                 end)
-                
-                -- 延迟更新高度
-                task.wait(0.05)
-                updateSectionHeight()
             end
             
-            function section.Slider(section, text, flag, default, min, max, precise, callback)
+            -- Slider功能
+            function sectionObj.Slider(text, flag, default, min, max, precise, callback)
                 callback = callback or function() end
                 min = min or 0
                 max = max or 100
@@ -1371,14 +1351,11 @@ function FengUI.new(name, theme)
                     end
                 end)
                 
-                -- 延迟更新高度
-                task.wait(0.05)
-                updateSectionHeight()
-                
                 return funcs
             end
             
-            function section.Dropdown(section, text, flag, options, callback)
+            -- Dropdown功能
+            function sectionObj.Dropdown(text, flag, options, callback)
                 local callback = callback or function() end
                 local options = options or {}
                 assert(text, "No text provided")
@@ -1448,15 +1425,11 @@ function FengUI.new(name, theme)
                     FengUI.flags[flag] = selectedOption
                 end
                 
-                -- 延迟更新高度
-                task.wait(0.05)
-                updateSectionHeight()
-                
                 return funcs
             end
             
             -- 颜色选择器功能
-            function section.ColorPicker(section, text, flag, defaultColor, callback)
+            function sectionObj.ColorPicker(text, flag, defaultColor, callback)
                 callback = callback or function() end
                 defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
                 assert(text, "No text provided")
@@ -1513,14 +1486,10 @@ function FengUI.new(name, theme)
                     print("颜色选择器功能需要完整实现")
                 end)
                 
-                -- 延迟更新高度
-                task.wait(0.05)
-                updateSectionHeight()
-                
                 return funcs
             end
             
-            return section
+            return sectionObj
         end
 
         -- 标签选择功能
