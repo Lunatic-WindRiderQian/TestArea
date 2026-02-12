@@ -37,7 +37,8 @@ local services = {
     CoreGui = game:GetService("CoreGui"),
     Players = game:GetService("Players"),
     RunService = game:GetService("RunService"),
-    SoundService = game:GetService("SoundService")
+    SoundService = game:GetService("SoundService"),
+    TextService = game:GetService("TextService")
 }
 
 local UserInputService = services.UserInputService
@@ -46,25 +47,21 @@ local RunService = services.RunService
 -- =========================================
 -- 设备检测和UI尺寸设置
 -- =========================================
--- 检测是否为手机/平板设备
 local isMobile = UserInputService.TouchEnabled
 local isConsole = UserInputService.GamepadEnabled and not UserInputService.MouseEnabled
 local isDesktop = not isMobile and not isConsole
 
--- 设置UI尺寸
 local MAIN_WIDTH, MAIN_HEIGHT
 local WORKAREA_WIDTH, WORKAREA_HEIGHT
 local SIDEBAR_WIDTH
 
 if isMobile then
-    -- 手机端尺寸
     MAIN_WIDTH = 450
     MAIN_HEIGHT = 280
     WORKAREA_WIDTH = 280
     WORKAREA_HEIGHT = 280
     SIDEBAR_WIDTH = 150
 else
-    -- 电脑端尺寸
     MAIN_WIDTH = 721
     MAIN_HEIGHT = 584
     WORKAREA_WIDTH = 458
@@ -107,9 +104,10 @@ local visible = true
 local dbcooper = false
 
 local function tp(ins, pos, time, thing)
-    game:GetService("TweenService"):Create(ins, TweenInfo.new(time, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut),{Position = pos}):Play()
+    services.TweenService:Create(ins, TweenInfo.new(time, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut),{Position = pos}):Play()
 end
 
+-- 清理已存在的UI
 for _, gui in ipairs(services.CoreGui:GetChildren()) do
     if gui.Name == "UniversalUI" and gui:IsA("ScreenGui") then
         gui:Destroy()
@@ -149,7 +147,7 @@ OpenText.Text = "☰"
 OpenText.TextColor3 = Color3.fromRGB(255, 255, 255)
 OpenText.TextSize = 18
 
--- 创建主窗口（根据设备类型调整大小）
+-- 创建主窗口
 local main = Instance.new("Frame")
 main.Name = "main"
 main.Parent = FengYu
@@ -201,7 +199,7 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- workarea right side setup
+-- workarea 右侧工作区
 local workarea = Instance.new("Frame")
 workarea.Name = "workarea"
 workarea.Parent = main
@@ -220,14 +218,15 @@ workareacornerhider.BackgroundColor3 = config.MainColor
 workareacornerhider.BorderSizePixel = 0
 workareacornerhider.Size = UDim2.new(0, 18, 0.99895674, 0)
 
--- 搜索框移动到侧边栏右边的最上面（工作区的右上角）
+-- 搜索框（放在工作区右上角）
 local search = Instance.new("Frame")
 search.Name = "search"
-search.Parent = workarea  -- 父级改为workarea
+search.Parent = workarea
 search.BackgroundColor3 = config.Textbox_Color
 search.BackgroundTransparency = 0.2
-search.Position = UDim2.new(isMobile and 0.1 or 0.7, 0, 0.01, 0) -- 右上角位置
-search.Size = UDim2.new(0, isMobile and 120 or 120, 0, 28) -- 适当缩小大小
+search.Position = UDim2.new(isMobile and 0.1 or 0.7, 0, 0.01, 0)
+search.Size = UDim2.new(0, isMobile and 120 or 120, 0, 28)
+search.ZIndex = 10
 
 local uc_8 = Instance.new("UICorner")
 uc_8.CornerRadius = UDim.new(0, 9)
@@ -240,10 +239,11 @@ searchicon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 searchicon.BackgroundTransparency = 1
 searchicon.BorderColor3 = Color3.fromRGB(27, 42, 53)
 searchicon.Position = UDim2.new(0.05, 0, 0.1, 0)
-searchicon.Size = UDim2.new(0, 20, 0, 20) -- 缩小图标
+searchicon.Size = UDim2.new(0, 20, 0, 20)
 searchicon.Image = "rbxassetid://2804603863"
 searchicon.ImageColor3 = config.SecondaryTextColor
 searchicon.ScaleType = Enum.ScaleType.Fit
+searchicon.ZIndex = 10
 
 local searchtextbox = Instance.new("TextBox")
 searchtextbox.Name = "searchtextbox"
@@ -261,19 +261,20 @@ searchtextbox.Text = ""
 searchtextbox.TextColor3 = config.TextColor
 searchtextbox.TextSize = isMobile and 14 or 16
 searchtextbox.TextXAlignment = Enum.TextXAlignment.Left
+searchtextbox.ZIndex = 10
 
 searchicon.MouseButton1Click:Connect(function()
     searchtextbox:CaptureFocus()
 end)
 
--- 侧边栏标题（脚本名字） - 放在最上面，位置更靠上
+-- 侧边栏标题
 local SidebarTitle = Instance.new("TextLabel")
 SidebarTitle.Name = "SidebarTitle"
 SidebarTitle.Parent = main
 SidebarTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 SidebarTitle.BackgroundTransparency = 1
 SidebarTitle.BorderSizePixel = 0
-SidebarTitle.Position = UDim2.new(0.025, 0, 0.02, 0) -- 从0.06改为0.02，更靠上
+SidebarTitle.Position = UDim2.new(0.025, 0, 0.02, 0)
 SidebarTitle.Size = UDim2.new(0, SIDEBAR_WIDTH, 0, isMobile and 30 or 50)
 SidebarTitle.Font = Enum.Font.GothamBold
 SidebarTitle.Text = "FengUI"
@@ -288,7 +289,7 @@ local TagContainer = Instance.new("Frame")
 TagContainer.Name = "TagContainer"
 TagContainer.Parent = main
 TagContainer.BackgroundTransparency = 1
-TagContainer.Position = UDim2.new(0.025, 0, 0.12, 0) -- 在标题下方
+TagContainer.Position = UDim2.new(0.025, 0, 0.12, 0)
 TagContainer.Size = UDim2.new(0, SIDEBAR_WIDTH, 0, 30)
 TagContainer.ZIndex = 5
 
@@ -308,8 +309,8 @@ sidebar.Active = true
 sidebar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 sidebar.BackgroundTransparency = 1
 sidebar.BorderSizePixel = 0
-sidebar.Position = UDim2.new(0.0249653254, 0, isMobile and 0.25 or 0.20, 0) -- 在标题下方
-sidebar.Size = UDim2.new(0, SIDEBAR_WIDTH, 0, isMobile and 150 or 400) -- 调整高度
+sidebar.Position = UDim2.new(0.0249653254, 0, isMobile and 0.25 or 0.20, 0)
+sidebar.Size = UDim2.new(0, SIDEBAR_WIDTH, 0, isMobile and 150 or 400)
 sidebar.AutomaticCanvasSize = "Y"
 sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
 sidebar.ScrollBarThickness = 2
@@ -319,27 +320,27 @@ ull_2.Parent = sidebar
 ull_2.SortOrder = Enum.SortOrder.LayoutOrder
 ull_2.Padding = UDim.new(0, 5)
 
--- 搜索功能
-game:GetService("RunService"):BindToRenderStep("search", 1, function()
+-- 搜索过滤功能
+RunService:BindToRenderStep("search", 1, function()
     if not searchtextbox:IsFocused() then 
         for b,v in next, sidebar:GetChildren() do
             if not v:IsA("TextButton") then return end
             v.Visible = true
         end
     end
-    local InputText=string.upper(searchtextbox.Text)
-    for _,button in pairs(sidebar:GetChildren())do
-        if button:IsA("TextButton")then
-            if InputText==""or string.find(string.upper(button.Text),InputText)~=nil then
-                button.Visible=true
+    local InputText = string.upper(searchtextbox.Text)
+    for _,button in pairs(sidebar:GetChildren()) do
+        if button:IsA("TextButton") then
+            if InputText == "" or string.find(string.upper(button.Text), InputText) ~= nil then
+                button.Visible = true
             else
-                button.Visible=false
+                button.Visible = false
             end
         end
     end
 end)
 
--- 动画效果
+-- 打开/关闭动画
 Open.MouseButton1Click:Connect(function()
     main.Visible = not main.Visible
     if main.Visible then
@@ -404,8 +405,10 @@ function switchTab(new)
     switchingTabs = false
 end
 
+-- =========================================
+-- 主构建函数
+-- =========================================
 function FengUI.new(name, theme)
-    -- 设置脚本名字
     if name then
         SidebarTitle.Text = name
     else
@@ -429,10 +432,9 @@ function FengUI.new(name, theme)
         maxTags = 3,
     }
     
+    -- 标签相关方法 ------------------------------------------------------------
     function window:AddTag(text, bgColor, textColor, useNeonEffect)
-        if self.tagCount >= self.maxTags then
-            return nil
-        end
+        if self.tagCount >= self.maxTags then return nil end
         
         bgColor = bgColor or Color3.fromRGB(21, 103, 251)
         textColor = textColor or Color3.fromRGB(255, 255, 255)
@@ -461,7 +463,7 @@ function FengUI.new(name, theme)
         TagStroke.Thickness = 1
         TagStroke.Transparency = 0.5
         
-        local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
+        local textSize = services.TextService:GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
         Tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
         
         local tagObj = {
@@ -471,7 +473,6 @@ function FengUI.new(name, theme)
             Color = bgColor,
             TextColor = textColor,
             UseNeonEffect = false,
-            
             RainbowBackgroundConnection = nil,
             RainbowBorderConnection = nil,
             PulseConnection = nil,
@@ -482,22 +483,18 @@ function FengUI.new(name, theme)
                     tagObj.RainbowBackgroundConnection:Disconnect()
                     tagObj.RainbowBackgroundConnection = nil
                 end
-                
                 if tagObj.RainbowBorderConnection then
                     tagObj.RainbowBorderConnection:Disconnect()
                     tagObj.RainbowBorderConnection = nil
                 end
-                
                 if tagObj.PulseConnection then
                     tagObj.PulseConnection:Disconnect()
                     tagObj.PulseConnection = nil
                 end
-                
                 if tagObj.InnerGlow then
                     tagObj.InnerGlow:Destroy()
                     tagObj.InnerGlow = nil
                 end
-                
                 Tag:Destroy()
             end,
             
@@ -505,10 +502,9 @@ function FengUI.new(name, theme)
                 if newText then
                     Tag.Text = newText
                     tagObj.Text = newText
-                    local textSize = game:GetService("TextService"):GetTextSize(newText, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
+                    local textSize = services.TextService:GetTextSize(newText, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
                     Tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
                 end
-                
                 if newBgColor then
                     tagObj.Color = newBgColor
                     if not tagObj.UseNeonEffect then
@@ -516,42 +512,24 @@ function FengUI.new(name, theme)
                         TagStroke.Color = newBgColor
                     end
                 end
-                
                 if newTextColor then
                     Tag.TextColor3 = newTextColor
                     tagObj.TextColor = newTextColor
                 end
-                
                 if newUseNeonEffect ~= nil then
                     tagObj:SetNeonEffect(newUseNeonEffect)
                 end
             end,
             
             SetNeonEffect = function(selfObj, enabled)
-                if selfObj.RainbowBackgroundConnection then
-                    selfObj.RainbowBackgroundConnection:Disconnect()
-                    selfObj.RainbowBackgroundConnection = nil
-                end
-                
-                if selfObj.RainbowBorderConnection then
-                    selfObj.RainbowBorderConnection:Disconnect()
-                    selfObj.RainbowBorderConnection = nil
-                end
-                
-                if selfObj.PulseConnection then
-                    selfObj.PulseConnection:Disconnect()
-                    selfObj.PulseConnection = nil
-                end
-                
-                if selfObj.InnerGlow then
-                    selfObj.InnerGlow:Destroy()
-                    selfObj.InnerGlow = nil
-                end
+                if selfObj.RainbowBackgroundConnection then selfObj.RainbowBackgroundConnection:Disconnect() selfObj.RainbowBackgroundConnection = nil end
+                if selfObj.RainbowBorderConnection then selfObj.RainbowBorderConnection:Disconnect() selfObj.RainbowBorderConnection = nil end
+                if selfObj.PulseConnection then selfObj.PulseConnection:Disconnect() selfObj.PulseConnection = nil end
+                if selfObj.InnerGlow then selfObj.InnerGlow:Destroy() selfObj.InnerGlow = nil end
                 
                 selfObj.UseNeonEffect = enabled
                 
                 if enabled then
-                    -- 创建彩虹效果
                     local hue = 0
                     selfObj.RainbowBackgroundConnection = RunService.Heartbeat:Connect(function()
                         if not Tag or not Tag.Parent then
@@ -563,7 +541,6 @@ function FengUI.new(name, theme)
                         TagStroke.Color = Color3.fromHSV((hue + 0.2) % 1, 0.9, 0.9)
                     end)
                     
-                    -- 创建脉动效果
                     selfObj.PulseConnection = RunService.Heartbeat:Connect(function()
                         if not Tag or not Tag.Parent then
                             selfObj.PulseConnection:Disconnect()
@@ -582,7 +559,6 @@ function FengUI.new(name, theme)
             
             SetColor = function(selfObj, newColor)
                 selfObj.Color = newColor
-                
                 if not selfObj.UseNeonEffect then
                     Tag.BackgroundColor3 = newColor
                     TagStroke.Color = newColor
@@ -606,49 +582,20 @@ function FengUI.new(name, theme)
     
     function window:UpdateTag(index, text, bgColor, textColor, useNeonEffect)
         if index < 1 or index > #self.tagObjects then return end
-        
         local tagObj = self.tagObjects[index]
         if not tagObj or not tagObj.Instance or not tagObj.Instance.Parent then return end
-        
-        local Tag = tagObj.Instance
-        local TagStroke = tagObj.Stroke
-        
-        if text then
-            Tag.Text = text
-            tagObj.Text = text
-            local textSize = game:GetService("TextService"):GetTextSize(text, 11, Enum.Font.GothamSemibold, Vector2.new(200, 20))
-            Tag.Size = UDim2.new(0, math.clamp(textSize.X + 15, 40, 80), 0, 20)
-        end
-        
-        if bgColor then
-            tagObj.Color = bgColor
-            if not tagObj.UseNeonEffect then
-                Tag.BackgroundColor3 = bgColor
-                TagStroke.Color = bgColor
-            end
-        end
-        
-        if textColor then
-            Tag.TextColor3 = textColor
-            tagObj.TextColor = textColor
-        end
-        
-        if useNeonEffect ~= nil then
-            tagObj:SetNeonEffect(useNeonEffect)
-        end
+        tagObj:Update(text, bgColor, textColor, useNeonEffect)
     end
     
     function window:ClearTags()
         for i = #self.tagObjects, 1, -1 do
             self:RemoveTag(i)
         end
-        
         self.tagCount = 0
     end
     
     function window:RemoveTag(index)
         if index < 1 or index > #self.tagObjects then return end
-        
         local tagObj = self.tagObjects[index]
         if tagObj then
             tagObj:Destroy()
@@ -658,6 +605,7 @@ function FengUI.new(name, theme)
         end
     end
     
+    -- 标签页创建方法 ---------------------------------------------------------
     function window.Tab(window, name, icon, windowCount)
         local windowCount = windowCount or 1
         
@@ -668,14 +616,13 @@ function FengUI.new(name, theme)
         sidebar2.BackgroundColor3 = config.AccentColor
         sidebar2.BackgroundTransparency = 1
         sidebar2.Size = UDim2.new(0, SIDEBAR_WIDTH - 7, 0, isMobile and 28 or 37)
-        sidebar2.ZIndex = 10 -- 提高ZIndex确保按钮在最前面
+        sidebar2.ZIndex = 10
         sidebar2.AutoButtonColor = false
         sidebar2.Font = Enum.Font.Gotham
         sidebar2.Text = name
         sidebar2.TextColor3 = config.TextColor
         sidebar2.TextSize = isMobile and 16 or 21
         
-        -- 添加一个透明的背景框确保点击区域
         local buttonBackground = Instance.new("Frame")
         buttonBackground.Name = "buttonBackground"
         buttonBackground.Parent = sidebar2
@@ -689,7 +636,7 @@ function FengUI.new(name, theme)
         uc_10.Parent = sidebar2
         table.insert(sections, sidebar2)
         
-        -- 为这个标签页创建工作区 - 直接放在workarea下
+        -- 工作区（调整位置，确保在搜索框下方）
         local workareamain = Instance.new("ScrollingFrame")
         workareamain.Name = "workareamain_" .. name
         workareamain.Parent = workarea
@@ -697,16 +644,15 @@ function FengUI.new(name, theme)
         workareamain.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         workareamain.BackgroundTransparency = 1
         workareamain.BorderSizePixel = 0
-        -- 调整位置，为搜索框留出空间
-        workareamain.Position = UDim2.new(0.0393013097, 0, isMobile and 0.15 or 0.12, 0)
-        workareamain.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 220 or 512)
+        workareamain.Position = UDim2.new(0.0393013097, 0, isMobile and 0.18 or 0.15, 0) -- 下移，避免与搜索框重叠
+        workareamain.Size = UDim2.new(0, WORKAREA_WIDTH - 36, 0, isMobile and 210 or 492) -- 调整高度
         workareamain.ZIndex = 3
         workareamain.CanvasSize = UDim2.new(0, 0, 0, 0)
         workareamain.ScrollBarThickness = 2
         workareamain.Visible = false
         workareamain.ScrollingEnabled = true
         
-        -- 创建主容器
+        -- 主内容容器
         local MainContainer = Instance.new("Frame")
         MainContainer.Name = "MainContainer"
         MainContainer.Parent = workareamain
@@ -718,7 +664,6 @@ function FengUI.new(name, theme)
         workarealayout.SortOrder = Enum.SortOrder.LayoutOrder
         workarealayout.Padding = UDim.new(0, 10)
         
-        -- 自动调整容器大小
         workarealayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             MainContainer.Size = UDim2.new(1, 0, 0, workarealayout.AbsoluteContentSize.Y)
             workareamain.CanvasSize = UDim2.new(0, 0, 0, workarealayout.AbsoluteContentSize.Y + 20)
@@ -728,23 +673,20 @@ function FengUI.new(name, theme)
         
         local tab = {}
         
+        -- ===================== Section 构建器 =====================
         function tab.section(tab, name, TabVal)
-            -- 简化参数处理
             local open = TabVal
-            if open == nil then
-                open = true  -- 默认展开
-            end
+            if open == nil then open = true end
             
-            local section = {}
+            local sectionObj = {}   -- 改为 sectionObj，避免与函数名重合
             
-            -- 创建Section主容器
             local SectionContainer = Instance.new("Frame")
             SectionContainer.Name = "Section_" .. name
             SectionContainer.Parent = MainContainer
             SectionContainer.BackgroundTransparency = 1
             SectionContainer.Size = UDim2.new(1, 0, 0, 0)
             
-            -- Section标题
+            -- 标题栏
             local SectionHeader = Instance.new("Frame")
             SectionHeader.Name = "SectionHeader"
             SectionHeader.Parent = SectionContainer
@@ -762,7 +704,6 @@ function FengUI.new(name, theme)
             SectionTitle.TextSize = isMobile and 18 or 22
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
             
-            -- 展开/折叠按钮
             local ToggleButton = Instance.new("TextButton")
             ToggleButton.Name = "ToggleButton"
             ToggleButton.Parent = SectionHeader
@@ -774,7 +715,7 @@ function FengUI.new(name, theme)
             ToggleButton.TextColor3 = config.AccentColor
             ToggleButton.TextSize = isMobile and 16 or 20
             
-            -- Section内容区域
+            -- 内容区域
             local SectionContent = Instance.new("Frame")
             SectionContent.Name = "SectionContent"
             SectionContent.Parent = SectionContainer
@@ -785,13 +726,14 @@ function FengUI.new(name, theme)
             local ContentLayout = Instance.new("UIListLayout")
             ContentLayout.Parent = SectionContent
             ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            ContentLayout.Padding = UDim.new(0, 8)
+            ContentLayout.Padding = UDim.new(0, 10)  -- 增加间距，避免组件贴合
             
-            -- 更新Section高度
             local function updateSectionHeight()
                 if open then
                     ToggleButton.Text = "▲"
                     SectionContent.Visible = true
+                    -- 延迟一帧确保布局完成
+                    task.wait()
                     SectionContent.Size = UDim2.new(1, 0, 0, ContentLayout.AbsoluteContentSize.Y)
                 else
                     ToggleButton.Text = "▼"
@@ -801,23 +743,17 @@ function FengUI.new(name, theme)
                 SectionContainer.Size = UDim2.new(1, 0, 0, SectionHeader.AbsoluteSize.Y + (open and SectionContent.AbsoluteSize.Y or 0))
             end
             
-            -- 监听内容变化
-            ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                if open then
-                    updateSectionHeight()
-                end
-            end)
-            
-            -- 切换展开/折叠
+            ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSectionHeight)
             ToggleButton.MouseButton1Click:Connect(function()
                 open = not open
                 updateSectionHeight()
             end)
             
-            updateSectionHeight()
+            -- 延迟初始化高度，避免首次出现高度为0
+            task.defer(updateSectionHeight)
             
-            -- 功能函数
-            function section.Button(section, text, callback)
+            -- ==================== 组件生成器 ====================
+            function sectionObj:Button(text, callback)
                 local button = Instance.new("TextButton")
                 button.Name = "button_" .. text
                 button.Text = text
@@ -828,26 +764,24 @@ function FengUI.new(name, theme)
                 button.Font = Enum.Font.Gotham
                 button.TextColor3 = config.AccentColor
                 button.TextSize = isMobile and 16 or 18
-
+                
                 local buttonCorner = Instance.new("UICorner")
                 buttonCorner.CornerRadius = UDim.new(0, 8)
                 buttonCorner.Parent = button
-
+                
                 local buttonStroke = Instance.new("UIStroke", button)
                 buttonStroke.ApplyStrokeMode = "Border"
                 buttonStroke.Color = config.AccentColor
                 buttonStroke.Thickness = 1
                 buttonStroke.Transparency = 0.8
-
+                
                 if callback then
-                    button.MouseButton1Click:Connect(function() 
-                        callback()
-                    end)
+                    button.MouseButton1Click:Connect(callback)
                 end
                 return button
             end
             
-            function section.Image(section, imageSource, sizeX, sizeY)
+            function sectionObj:Image(imageSource, sizeX, sizeY)
                 local ImageModule = Instance.new("Frame")
                 ImageModule.Name = "ImageModule"
                 ImageModule.Parent = SectionContent
@@ -876,9 +810,8 @@ function FengUI.new(name, theme)
                             if userId then
                                 task.spawn(function()
                                     local success, result = pcall(function()
-                                        return game.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+                                        return services.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
                                     end)
-                                    
                                     if success and result then
                                         ImageLabel.Image = result
                                     else
@@ -894,22 +827,18 @@ function FengUI.new(name, theme)
                                         local MarketplaceService = game:GetService("MarketplaceService")
                                         return MarketplaceService:GetProductInfo(placeId, Enum.InfoType.Asset)
                                     end)
-                                    
                                     if success1 and gameInfo and gameInfo.IconImageAssetId then
                                         ImageLabel.Image = "rbxassetid://" .. gameInfo.IconImageAssetId
                                         return
                                     end
-                                    
                                     local success2, thumbnailUrl = pcall(function()
                                         local ThumbnailService = game:GetService("ThumbnailService")
                                         return ThumbnailService:GetGameThumbnailAsync(placeId)
                                     end)
-                                    
                                     if success2 and thumbnailUrl then
                                         ImageLabel.Image = thumbnailUrl
                                         return
                                     end
-                                    
                                     ImageLabel.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=" .. placeId
                                 end)
                             end
@@ -924,24 +853,15 @@ function FengUI.new(name, theme)
                     end
                 end
                 
-                if imageSource then
-                    setImage(imageSource)
-                end
+                if imageSource then setImage(imageSource) end
                 
                 local imageController = {}
-                
-                function imageController:SetImage(newSource)
-                    setImage(newSource)
-                end
-                
-                function imageController:Destroy()
-                    ImageModule:Destroy()
-                end
-                
+                function imageController:SetImage(newSource) setImage(newSource) end
+                function imageController:Destroy() ImageModule:Destroy() end
                 return imageController
             end
             
-            function section:Label(text)
+            function sectionObj:Label(text)
                 local label = Instance.new("TextLabel")
                 label.Name = "label_" .. text
                 label.Parent = SectionContent
@@ -957,11 +877,10 @@ function FengUI.new(name, theme)
                 local labelCorner = Instance.new("UICorner")
                 labelCorner.CornerRadius = UDim.new(0, 8)
                 labelCorner.Parent = label
-                
                 return label
             end
             
-            function section.Toggle(section, text, flag, enabled, callback)
+            function sectionObj:Toggle(text, flag, enabled, callback)
                 callback = callback or function() end
                 enabled = enabled or false
                 assert(text, "No text provided")
@@ -997,44 +916,32 @@ function FengUI.new(name, theme)
                 SwitchFrame.AnchorPoint = Vector2.new(0.5, 0.5)
                 SwitchFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
                 SwitchFrame.Size = UDim2.new(0, isMobile and 50 or 60, 0, isMobile and 24 or 28)
-                SwitchFrame.Text=""
+                SwitchFrame.Text = ""
                 SwitchFrame.AutoButtonColor = false
-
+                
                 local SwitchCorner = Instance.new("UICorner")
                 SwitchCorner.CornerRadius = UDim.new(1, 0)
                 SwitchCorner.Parent = SwitchFrame
-
+                
                 local SwitchButton = Instance.new("TextButton")
                 SwitchButton.Parent = SwitchFrame
                 SwitchButton.AnchorPoint = Vector2.new(0.5, 0.5)
-                SwitchButton.Position = UDim2.new(0.5, 0, 0.5, 0)
+                SwitchButton.Position = UDim2.new(enabled and 0.75 or 0.25, 0, 0.5, 0)
                 SwitchButton.Size = UDim2.new(0, isMobile and 20 or 24, 0, isMobile and 20 or 24)
                 SwitchButton.AutoButtonColor = false
                 SwitchButton.Text = ""
-
+                
                 local ButtonCorner = Instance.new("UICorner")
                 ButtonCorner.CornerRadius = UDim.new(1, 0)
                 ButtonCorner.Parent = SwitchButton
-
-                if enabled == false then
-                    SwitchButton.Position = UDim2.new(0.25, 0, 0.5, 0)
-                    SwitchFrame.BackgroundColor3 = config.Toggle_Off
-                else
-                    SwitchButton.Position = UDim2.new(0.75, 0, 0.5, 0)
-                    SwitchFrame.BackgroundColor3 = config.Toggle_On
-                end
+                
+                SwitchFrame.BackgroundColor3 = enabled and config.Toggle_On or config.Toggle_Off
                 
                 local funcs = {
                     SetState = function(self, state)
-                        if state == nil then
-                            state = not FengUI.flags[flag]
-                        end
-                        if FengUI.flags[flag] == state then
-                            return
-                        end
-                        
+                        if state == nil then state = not FengUI.flags[flag] end
+                        if FengUI.flags[flag] == state then return end
                         FengUI.flags[flag] = state
-                        
                         if state then
                             SwitchButton:TweenPosition(UDim2.new(0.75, 0, 0.5, 0), "In", "Sine", 0.1, true)
                             SwitchFrame.BackgroundColor3 = config.Toggle_On
@@ -1042,39 +949,30 @@ function FengUI.new(name, theme)
                             SwitchButton:TweenPosition(UDim2.new(0.25, 0, 0.5, 0), "In", "Sine", 0.1, true)
                             SwitchFrame.BackgroundColor3 = config.Toggle_Off
                         end
-                        
                         callback(state)
                     end,
                     Module = ToggleContainer
                 }
                 
-                if enabled ~= false then
-                    funcs:SetState(true)
-                end
+                if enabled then funcs:SetState(true) end
                 
-                SwitchFrame.MouseButton1Click:Connect(function()
-                    funcs:SetState()
-                end)
-                
-                SwitchButton.MouseButton1Click:Connect(function()
-                    funcs:SetState()
-                end)
+                SwitchFrame.MouseButton1Click:Connect(function() funcs:SetState() end)
+                SwitchButton.MouseButton1Click:Connect(function() funcs:SetState() end)
                 
                 return funcs
             end
             
-            function section.Keybind(section, text, default, callback)
+            function sectionObj:Keybind(text, default, callback)
                 callback = callback or function() end
                 assert(text, "No text provided")
                 assert(default, "No default key provided")
                 
-                local default = typeof(default) == "string" and Enum.KeyCode[default] or default
+                local defaultKey = typeof(default) == "string" and Enum.KeyCode[default] or default
                 local banned = {
                     Return = true, Space = true, Tab = true,
                     Backquote = true, CapsLock = true, Escape = true,
                     Unknown = true
                 }
-                
                 local shortNames = {
                     RightControl = "Right Ctrl", LeftControl = "Left Ctrl",
                     LeftShift = "Left Shift", RightShift = "Right Shift",
@@ -1083,8 +981,8 @@ function FengUI.new(name, theme)
                     RightAlt = "Right Alt", LeftAlt = "Left Alt"
                 }
                 
-                local bindKey = default
-                local keyTxt = default and (shortNames[default.Name] or default.Name) or "None"
+                local bindKey = defaultKey
+                local keyTxt = defaultKey and (shortNames[defaultKey.Name] or defaultKey.Name) or "None"
                 
                 local KeybindContainer = Instance.new("Frame")
                 KeybindContainer.Name = "keybind_" .. text
@@ -1122,8 +1020,9 @@ function FengUI.new(name, theme)
                 UserInputService.InputBegan:Connect(function(inp, gpe)
                     if gpe then return end
                     if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
-                    if inp.KeyCode ~= bindKey then return end
-                    callback(bindKey.Name)
+                    if inp.KeyCode == bindKey then
+                        callback(bindKey.Name)
+                    end
                 end)
                 
                 KeybindButton.MouseButton1Click:Connect(function()
@@ -1132,14 +1031,12 @@ function FengUI.new(name, theme)
                     KeybindButton.TextColor3 = Color3.fromRGB(255, 255, 255)
                     
                     task.wait()
-                    
                     local key = UserInputService.InputEnded:Wait()
                     local keyName = tostring(key.KeyCode.Name)
                     
                     if key.UserInputType ~= Enum.UserInputType.Keyboard then
                         KeybindButton.Text = keyTxt
                         KeybindButton.BackgroundColor3 = config.Keybind_Color
-                        KeybindButton.BackgroundTransparency = 0.2
                         KeybindButton.TextColor3 = config.TextColor
                         return
                     end
@@ -1147,7 +1044,6 @@ function FengUI.new(name, theme)
                     if banned[keyName] then
                         KeybindButton.Text = keyTxt
                         KeybindButton.BackgroundColor3 = config.Keybind_Color
-                        KeybindButton.BackgroundTransparency = 0.2
                         KeybindButton.TextColor3 = config.TextColor
                         return
                     end
@@ -1157,12 +1053,11 @@ function FengUI.new(name, theme)
                     keyTxt = shortNames[keyName] or keyName
                     KeybindButton.Text = keyTxt
                     KeybindButton.BackgroundColor3 = config.Keybind_Color
-                    KeybindButton.BackgroundTransparency = 0.2
                     KeybindButton.TextColor3 = config.TextColor
                 end)
             end
             
-            function section.Textbox(section, text, flag, default, callback)
+            function sectionObj:Textbox(text, flag, default, callback)
                 callback = callback or function() end
                 assert(text, "No text provided")
                 assert(flag, "No flag provided")
@@ -1193,11 +1088,11 @@ function FengUI.new(name, theme)
                 TextboxInput.BackgroundTransparency = 0.2
                 TextboxInput.Position = UDim2.new(0, 0, 0.4, 0)
                 TextboxInput.Size = UDim2.new(1, 0, 0.6, 0)
-
+                
                 local TextboxCorner = Instance.new("UICorner")
                 TextboxCorner.CornerRadius = UDim.new(0, 8)
                 TextboxCorner.Parent = TextboxInput
-
+                
                 local textbox = Instance.new("TextBox")
                 textbox.Parent = TextboxInput
                 textbox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1212,7 +1107,7 @@ function FengUI.new(name, theme)
                 textbox.TextColor3 = config.TextColor
                 textbox.TextSize = isMobile and 14 or 16
                 textbox.TextXAlignment = Enum.TextXAlignment.Left
-
+                
                 textbox.FocusLost:Connect(function()
                     if textbox.Text == "" then
                         textbox.Text = default
@@ -1222,7 +1117,7 @@ function FengUI.new(name, theme)
                 end)
             end
             
-            function section.Slider(section, text, flag, default, min, max, precise, callback)
+            function sectionObj:Slider(text, flag, default, min, max, precise, callback)
                 callback = callback or function() end
                 min = min or 0
                 max = max or 100
@@ -1234,7 +1129,7 @@ function FengUI.new(name, theme)
                 assert(default, "No default value provided")
                 
                 FengUI.flags[flag] = default
-
+                
                 local SliderContainer = Instance.new("Frame")
                 SliderContainer.Name = "slider_" .. flag
                 SliderContainer.Parent = SectionContent
@@ -1278,7 +1173,6 @@ function FengUI.new(name, theme)
                 local funcs = {
                     SetValue = function(self, value)
                         local percent
-                        
                         if value then
                             percent = (value - min)/(max - min)
                         else
@@ -1307,7 +1201,6 @@ function FengUI.new(name, theme)
                         
                         callback(tonumber(value))
                     end,
-                    
                     GetValue = function(self)
                         return FengUI.flags[flag]
                     end
@@ -1316,28 +1209,24 @@ function FengUI.new(name, theme)
                 funcs:SetValue(default)
                 
                 local dragging = false
-                
                 SliderBar.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         dragging = true
                         funcs:SetValue()
                     end
                 end)
-                
                 SliderPart.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         dragging = true
                         funcs:SetValue()
                     end
                 end)
-                
-                services.UserInputService.InputEnded:Connect(function(input)
+                UserInputService.InputEnded:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         dragging = false
                     end
                 end)
-                
-                services.UserInputService.InputChanged:Connect(function(input)
+                UserInputService.InputChanged:Connect(function(input)
                     if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
                         funcs:SetValue()
                     end
@@ -1346,7 +1235,7 @@ function FengUI.new(name, theme)
                 return funcs
             end
             
-            function section.Dropdown(section, text, flag, options, callback)
+            function sectionObj:Dropdown(text, flag, options, callback)
                 local callback = callback or function() end
                 local options = options or {}
                 assert(text, "No text provided")
@@ -1390,11 +1279,9 @@ function FengUI.new(name, theme)
                 local selectedOption = nil
                 
                 local funcs = {}
-                
                 funcs.AddOption = function(self, optionText)
                     table.insert(allOptions, optionText)
                 end
-                
                 funcs.SetOptions = function(self, newOptions)
                     allOptions = newOptions or {}
                 end
@@ -1409,7 +1296,6 @@ function FengUI.new(name, theme)
                 end)
                 
                 funcs:SetOptions(options)
-                
                 if #options > 0 then
                     selectedOption = options[1]
                     DropdownButton.Text = selectedOption
@@ -1419,8 +1305,7 @@ function FengUI.new(name, theme)
                 return funcs
             end
             
-            -- 颜色选择器功能
-            function section.ColorPicker(section, text, flag, defaultColor, callback)
+            function sectionObj:ColorPicker(text, flag, defaultColor, callback)
                 callback = callback or function() end
                 defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
                 assert(text, "No text provided")
@@ -1465,37 +1350,35 @@ function FengUI.new(name, theme)
                             callback(color)
                         end
                     end,
-                    
                     GetColor = function(self)
                         return FengUI.flags[flag] or defaultColor
                     end,
-                    
                     Module = ColorPickerContainer
                 }
                 
                 ColorPreview.MouseButton1Click:Connect(function()
-                    print("颜色选择器功能需要完整实现")
+                    -- 这里可以调用完整的颜色选择器，目前仅打印
+                    print("Color picker clicked for flag:", flag)
                 end)
                 
                 return funcs
             end
             
-            return section
+            return sectionObj   -- 返回section对象
         end
-
-        -- 标签选择功能
+        
+        -- 标签点击切换
         sidebar2.MouseButton1Click:Connect(function()
             switchTab({sidebar2, workareamain})
         end)
         
-        -- 默认选择第一个标签
         if #sections == 1 then
             sidebar2.BackgroundTransparency = 0
             sidebar2.TextColor3 = Color3.fromRGB(255, 255, 255)
             workareamain.Visible = true
             FengUI.currentTab = {sidebar2, workareamain}
         end
-
+        
         return tab
     end
     
@@ -1503,35 +1386,35 @@ function FengUI.new(name, theme)
         if type(icon) == "number" then
             icon = tostring(icon)
         end
-        
         return window:Tab(name, icon, 2)
     end
-
+    
     return window
 end
 
--- 颜色选择器相关功能
+-- =========================================
+-- 全局颜色选择器管理（简化）
+-- =========================================
 FengUI.ColorPickers = {}
 
 function FengUI:CreateColorPicker(options)
-    -- 这是一个简化版本的颜色选择器
-    -- 完整的颜色选择器实现需要更多代码
-    local config = {
+    local configPicker = {
         title = options.title or "选择颜色",
         defaultColor = options.defaultColor or Color3.fromRGB(255, 255, 255),
         callback = options.callback or function(color) end,
         position = options.position or UDim2.new(0.5, 0, 0.5, 0),
-        parent = options.parent or FengYu
+        parent = options.parent or FengYu,
+        accentColor = options.accentColor or config.AccentColor   -- 从主配置继承
     }
     
     local ColorPickerPopup = Instance.new("Frame")
     ColorPickerPopup.Name = "ColorPickerPopup"
-    ColorPickerPopup.Parent = config.parent
+    ColorPickerPopup.Parent = configPicker.parent
     ColorPickerPopup.AnchorPoint = Vector2.new(0.5, 0.5)
     ColorPickerPopup.BackgroundColor3 = Color3.fromRGB(240, 240, 245)
     ColorPickerPopup.BackgroundTransparency = 0.1
     ColorPickerPopup.BorderSizePixel = 0
-    ColorPickerPopup.Position = config.position
+    ColorPickerPopup.Position = configPicker.position
     ColorPickerPopup.Size = UDim2.new(0, 320, 0, 260)
     ColorPickerPopup.Visible = true
     ColorPickerPopup.ZIndex = 1000
@@ -1544,19 +1427,17 @@ function FengUI:CreateColorPicker(options)
     
     local PopupStroke = Instance.new("UIStroke")
     PopupStroke.Parent = ColorPickerPopup
-    PopupStroke.Color = config.AccentColor
+    PopupStroke.Color = configPicker.accentColor
     PopupStroke.Thickness = 1.5
     PopupStroke.Transparency = 0.2
     
     local colorPickerObj = {
         Instance = ColorPickerPopup,
-        CurrentColor = config.defaultColor,
+        CurrentColor = configPicker.defaultColor,
         Closed = false
     }
     
-    local pickerId = #FengUI.ColorPickers + 1
-    FengUI.ColorPickers[pickerId] = colorPickerObj
-    
+    table.insert(FengUI.ColorPickers, colorPickerObj)
     return colorPickerObj
 end
 
@@ -1565,7 +1446,7 @@ function FengUI:ColorPicker(options)
 end
 
 function FengUI:CloseAllColorPickers()
-    for _, picker in pairs(FengUI.ColorPickers) do
+    for _, picker in ipairs(FengUI.ColorPickers) do
         if picker.Instance and picker.Instance.Parent then
             picker.Instance:Destroy()
         end
@@ -1573,6 +1454,9 @@ function FengUI:CloseAllColorPickers()
     FengUI.ColorPickers = {}
 end
 
+-- =========================================
+-- 全局控制
+-- =========================================
 function UiDestroy()
     if FengYu then
         FengYu:Destroy()
