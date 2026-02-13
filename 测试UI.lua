@@ -813,12 +813,10 @@ function FengUI.new(name, theme)
                 end
             end)
 
+            -- 修复：移除对 Text 属性的 Tween（不可 tween），直接设置文本
             ToggleBtn.MouseButton1Click:Connect(function()
                 open = not open
-                services.TweenService:Create(Arrow, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                    Text = open and "▲" or "▼",
-                    Rotation = 0
-                }):Play()
+                Arrow.Text = open and "▲" or "▼"  -- 直接更新箭头文本
                 local targetHeight = open and (36 + ContentLayout.AbsoluteContentSize.Y + 8) or 36
                 services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
                     Size = UDim2.new(1, 0, 0, targetHeight)
