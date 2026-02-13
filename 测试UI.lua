@@ -745,7 +745,7 @@ function FengUI.new(name, theme)
             SectionIcon.Position = UDim2.new(0, 5, 0, 5)
             SectionIcon.Size = UDim2.new(0, 22, 0, 22)
             SectionIcon.Font = Enum.Font.GothamBold
-            SectionIcon.Text = "▶"
+            SectionIcon.Text = open and "▼" or "▶"  -- 根据状态设置初始箭头方向
             SectionIcon.TextColor3 = config.AccentColor
             SectionIcon.TextSize = isMobile and 14 or 16
 
@@ -761,16 +761,7 @@ function FengUI.new(name, theme)
             SectionTitle.TextSize = isMobile and 16 or 18
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-            local Arrow = Instance.new("TextLabel")
-            Arrow.Name = "Arrow"
-            Arrow.Parent = SectionHeader
-            Arrow.BackgroundTransparency = 1
-            Arrow.Position = UDim2.new(1, -30, 0, 5)
-            Arrow.Size = UDim2.new(0, 22, 0, 22)
-            Arrow.Font = Enum.Font.GothamBold
-            Arrow.Text = open and "▲" or "▼"
-            Arrow.TextColor3 = config.AccentColor
-            Arrow.TextSize = isMobile and 14 or 16
+            -- [修改] 移除右侧 Arrow 的创建，只保留左侧 SectionIcon
 
             local ToggleBtn = Instance.new("TextButton")
             ToggleBtn.Name = "ToggleBtn"
@@ -813,10 +804,10 @@ function FengUI.new(name, theme)
                 end
             end)
 
-            -- 修复：移除对 Text 属性的 Tween（不可 tween），直接设置文本
+            -- [修改] 点击时只更新左侧 SectionIcon 的文本，不再操作右侧 Arrow
             ToggleBtn.MouseButton1Click:Connect(function()
                 open = not open
-                Arrow.Text = open and "▲" or "▼"  -- 直接更新箭头文本
+                SectionIcon.Text = open and "▼" or "▶"  -- 更新左侧箭头
                 local targetHeight = open and (36 + ContentLayout.AbsoluteContentSize.Y + 8) or 36
                 services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
                     Size = UDim2.new(1, 0, 0, targetHeight)
