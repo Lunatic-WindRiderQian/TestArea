@@ -100,6 +100,10 @@ local config = {
     GlassEffect = Color3.fromRGB(255, 255, 255),
 }
 
+-- 图标资源（FontAwesome 箭头）
+local ICON_EXPAND = "rbxassetid://6031090998"   -- 向下箭头（展开时）
+local ICON_COLLAPSE = "rbxassetid://6031061049" -- 向右箭头（收缩时）
+
 local sections = {}
 local workareas = {}
 local visible = true
@@ -738,16 +742,20 @@ function FengUI.new(name, theme)
             SectionHeader.BackgroundTransparency = 1
             SectionHeader.Size = UDim2.new(1, 0, 0, 36)
 
-            local SectionIcon = Instance.new("TextLabel")
+            -- [修改] 将文本标签改为 ImageLabel，支持图片
+            local SectionIcon = Instance.new("ImageLabel")
             SectionIcon.Name = "SectionIcon"
             SectionIcon.Parent = SectionHeader
             SectionIcon.BackgroundTransparency = 1
             SectionIcon.Position = UDim2.new(0, 5, 0, 5)
             SectionIcon.Size = UDim2.new(0, 22, 0, 22)
-            SectionIcon.Font = Enum.Font.GothamBold
-            SectionIcon.Text = open and "▼" or "▶"  -- 根据状态设置初始箭头方向
-            SectionIcon.TextColor3 = config.AccentColor
-            SectionIcon.TextSize = isMobile and 14 or 16
+            SectionIcon.Image = open and ICON_EXPAND or ICON_COLLAPSE
+            SectionIcon.ImageColor3 = config.AccentColor
+            SectionIcon.ScaleType = Enum.ScaleType.Fit
+            -- 添加圆角（正方形带圆形效果）
+            local iconCorner = Instance.new("UICorner")
+            iconCorner.CornerRadius = UDim.new(0, 4) -- 小圆角，可调整为圆形（如0.5）
+            iconCorner.Parent = SectionIcon
 
             local SectionTitle = Instance.new("TextLabel")
             SectionTitle.Name = "SectionTitle"
@@ -761,7 +769,7 @@ function FengUI.new(name, theme)
             SectionTitle.TextSize = isMobile and 16 or 18
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-            -- [修改] 移除右侧 Arrow 的创建，只保留左侧 SectionIcon
+            -- [移除] 右侧 Arrow 已删除
 
             local ToggleBtn = Instance.new("TextButton")
             ToggleBtn.Name = "ToggleBtn"
@@ -804,10 +812,10 @@ function FengUI.new(name, theme)
                 end
             end)
 
-            -- [修改] 点击时只更新左侧 SectionIcon 的文本，不再操作右侧 Arrow
+            -- [修改] 点击时更新图标图片
             ToggleBtn.MouseButton1Click:Connect(function()
                 open = not open
-                SectionIcon.Text = open and "▼" or "▶"  -- 更新左侧箭头
+                SectionIcon.Image = open and ICON_EXPAND or ICON_COLLAPSE  -- 切换图标
                 local targetHeight = open and (36 + ContentLayout.AbsoluteContentSize.Y + 8) or 36
                 services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
                     Size = UDim2.new(1, 0, 0, targetHeight)
