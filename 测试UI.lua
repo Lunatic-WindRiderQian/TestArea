@@ -712,7 +712,7 @@ function FengUI.new(name, theme)
 
         -- ============= 完全重写的 section 实现，包含完整控件 =============
         -- 参数顺序：tab, name, iconAssets, TabVal
-        -- iconAssets: 字符串（仅展开图标）或表格 {expanded="id", collapsed="id"}（完全自定义）
+        -- iconAssets: 字符串（仅展开图标）或表格 {Y="展开图标ID", F="收缩图标ID"}（完全自定义）
         -- TabVal: 可选，默认为 true，可传布尔值或 "false"/"0" 字符串
         function tab.section(tab, name, iconAssets, TabVal)
             -- 处理默认展开状态
@@ -730,8 +730,9 @@ function FengUI.new(name, theme)
             -- 处理图标资源
             local expandedIcon, collapsedIcon
             if type(iconAssets) == "table" then
-                expandedIcon = iconAssets.expanded or DEFAULT_ICON_EXPAND
-                collapsedIcon = iconAssets.collapsed or DEFAULT_ICON_COLLAPSE
+                -- 完全自定义：使用 Y 字段为展开图标，F 字段为收缩图标
+                expandedIcon = iconAssets.Y or DEFAULT_ICON_EXPAND
+                collapsedIcon = iconAssets.F or DEFAULT_ICON_COLLAPSE
             elseif type(iconAssets) == "string" then
                 expandedIcon = iconAssets
                 collapsedIcon = DEFAULT_ICON_COLLAPSE  -- 只提供一个时，展开用自定义，收缩用默认
