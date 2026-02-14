@@ -104,6 +104,26 @@ local config = {
 local DEFAULT_ICON_EXPAND = "rbxassetid://6031090998"   -- 向下箭头（展开时）
 local DEFAULT_ICON_COLLAPSE = "rbxassetid://6031061049" -- 向右箭头（收缩时）
 
+-- 辅助函数：确保图片ID为有效URL
+local function formatImageId(id)
+    if type(id) == "number" then
+        return "rbxassetid://" .. tostring(id)
+    elseif type(id) == "string" then
+        -- 如果已经是完整URL（以rbxassetid://或http开头），直接返回
+        if id:match("^rbxassetid://") or id:match("^https?://") then
+            return id
+        elseif id:match("^%d+$") then
+            -- 纯数字字符串
+            return "rbxassetid://" .. id
+        else
+            -- 其他字符串，原样返回
+            return id
+        end
+    else
+        return nil
+    end
+end
+
 local sections = {}
 local workareas = {}
 local visible = true
@@ -727,14 +747,16 @@ function FengUI.new(name, theme)
                 end
             end
 
-            -- 处理图标资源
+            -- 处理图标资源（使用辅助函数格式化ID）
             local expandedIcon, collapsedIcon
             if type(iconAssets) == "table" then
-                -- 完全自定义：使用 Y 字段为展开图标，F 字段为收缩图标
-                expandedIcon = iconAssets.Y or DEFAULT_ICON_EXPAND
-                collapsedIcon = iconAssets.F or DEFAULT_ICON_COLLAPSE
-            elseif type(iconAssets) == "string" then
-                expandedIcon = iconAssets
+                -- 完全自定义：使用 Y 字段为展开图标，F 字段为收缩图标（同时支持小写 y/f 作为备选）
+                expandedIcon = iconAssets.Y or iconAssets.y or DEFAULT_ICON_EXPAND
+                collapsedIcon = iconAssets.F or iconAssets.f or DEFAULT_ICON_COLLAPSE
+                expandedIcon = formatImageId(expandedIcon)
+                collapsedIcon = formatImageId(collapsedIcon)
+            elseif type(iconAssets) == "string" or type(iconAssets) == "number" then
+                expandedIcon = formatImageId(iconAssets)
                 collapsedIcon = DEFAULT_ICON_COLLAPSE  -- 只提供一个时，展开用自定义，收缩用默认
             else
                 expandedIcon = DEFAULT_ICON_EXPAND
@@ -767,7 +789,7 @@ function FengUI.new(name, theme)
             SectionIcon.Position = UDim2.new(0, 5, 0, 5)
             SectionIcon.Size = UDim2.new(0, 22, 0, 22)
             SectionIcon.Image = open and expandedIcon or collapsedIcon
-            SectionIcon.ImageColor3 = config.AccentColor
+            SectionIcon.ImageColor3 = Color3.new(1, 1, 1)  -- 设置为白色，确保图片原色显示（不改变色调）
             SectionIcon.ScaleType = Enum.ScaleType.Fit
             -- 添加圆角（正方形带圆形效果）
             local iconCorner = Instance.new("UICorner")
