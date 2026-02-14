@@ -100,9 +100,9 @@ local config = {
     GlassEffect = Color3.fromRGB(255, 255, 255),
 }
 
--- 图标资源（FontAwesome 箭头）
-local ICON_EXPAND = "rbxassetid://6031090998"   -- 向下箭头（展开时）
-local ICON_COLLAPSE = "rbxassetid://6031061049" -- 向右箭头（收缩时）
+-- 默认图标资源（FontAwesome 箭头）
+local DEFAULT_ICON_EXPAND = "rbxassetid://6031090998"   -- 向下箭头（展开时）
+local DEFAULT_ICON_COLLAPSE = "rbxassetid://6031061049" -- 向右箭头（收缩时）
 
 local sections = {}
 local workareas = {}
@@ -711,7 +711,8 @@ function FengUI.new(name, theme)
         local tab = {}
 
         -- ============= 完全重写的 section 实现，包含完整控件 =============
-        function tab.section(tab, name, TabVal)
+        -- 参数：tab, name, TabVal, iconAssets（可选）
+        function tab.section(tab, name, TabVal, iconAssets)
             -- 处理默认展开状态
             local open = true
             if TabVal ~= nil then
@@ -722,6 +723,19 @@ function FengUI.new(name, theme)
                 else
                     open = true
                 end
+            end
+
+            -- 处理图标资源
+            local expandedIcon, collapsedIcon
+            if type(iconAssets) == "table" then
+                expandedIcon = iconAssets.expanded or DEFAULT_ICON_EXPAND
+                collapsedIcon = iconAssets.collapsed or DEFAULT_ICON_COLLAPSE
+            elseif type(iconAssets) == "string" then
+                expandedIcon = iconAssets
+                collapsedIcon = DEFAULT_ICON_COLLAPSE  -- 只提供一个时，展开用自定义，收缩用默认
+            else
+                expandedIcon = DEFAULT_ICON_EXPAND
+                collapsedIcon = DEFAULT_ICON_COLLAPSE
             end
 
             local elementWidth = WORKAREA_WIDTH - 56  -- 工作区可用宽度
@@ -742,19 +756,19 @@ function FengUI.new(name, theme)
             SectionHeader.BackgroundTransparency = 1
             SectionHeader.Size = UDim2.new(1, 0, 0, 36)
 
-            -- [修改] 将文本标签改为 ImageLabel，支持图片
+            -- 左侧图标（ImageLabel）
             local SectionIcon = Instance.new("ImageLabel")
             SectionIcon.Name = "SectionIcon"
             SectionIcon.Parent = SectionHeader
             SectionIcon.BackgroundTransparency = 1
             SectionIcon.Position = UDim2.new(0, 5, 0, 5)
             SectionIcon.Size = UDim2.new(0, 22, 0, 22)
-            SectionIcon.Image = open and ICON_EXPAND or ICON_COLLAPSE
+            SectionIcon.Image = open and expandedIcon or collapsedIcon
             SectionIcon.ImageColor3 = config.AccentColor
             SectionIcon.ScaleType = Enum.ScaleType.Fit
             -- 添加圆角（正方形带圆形效果）
             local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 4) -- 小圆角，可调整为圆形（如0.5）
+            iconCorner.CornerRadius = UDim.new(0, 4) -- 小圆角
             iconCorner.Parent = SectionIcon
 
             local SectionTitle = Instance.new("TextLabel")
@@ -769,8 +783,7 @@ function FengUI.new(name, theme)
             SectionTitle.TextSize = isMobile and 16 or 18
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-            -- [移除] 右侧 Arrow 已删除
-
+            -- 点击按钮（覆盖整个标题栏）
             local ToggleBtn = Instance.new("TextButton")
             ToggleBtn.Name = "ToggleBtn"
             ToggleBtn.Parent = SectionHeader
@@ -812,10 +825,10 @@ function FengUI.new(name, theme)
                 end
             end)
 
-            -- [修改] 点击时更新图标图片
+            -- 点击切换
             ToggleBtn.MouseButton1Click:Connect(function()
                 open = not open
-                SectionIcon.Image = open and ICON_EXPAND or ICON_COLLAPSE  -- 切换图标
+                SectionIcon.Image = open and expandedIcon or collapsedIcon  -- 切换图标
                 local targetHeight = open and (36 + ContentLayout.AbsoluteContentSize.Y + 8) or 36
                 services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
                     Size = UDim2.new(1, 0, 0, targetHeight)
