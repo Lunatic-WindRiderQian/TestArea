@@ -781,7 +781,7 @@ function FengUI.new(name, theme)
             SectionHeader.BackgroundTransparency = 1
             SectionHeader.Size = UDim2.new(1, 0, 0, 36)
 
-            -- 左侧图标（ImageLabel）- 修改：尺寸增大为30x30，完全圆角
+            -- 左侧图标（ImageLabel）- 修改：尺寸增大为30x30，圆角设为8（小圆角）
             local SectionIcon = Instance.new("ImageLabel")
             SectionIcon.Name = "SectionIcon"
             SectionIcon.Parent = SectionHeader
@@ -791,9 +791,9 @@ function FengUI.new(name, theme)
             SectionIcon.Image = open and expandedIcon or collapsedIcon
             SectionIcon.ImageColor3 = Color3.new(1, 1, 1)  -- 白色，确保原色显示
             SectionIcon.ScaleType = Enum.ScaleType.Fit
-            -- 添加完全圆角（圆形）
+            -- 添加小圆角（正方形四边圆形，即圆角矩形）
             local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(1, 0)      -- 比例1表示完全圆角（圆形）
+            iconCorner.CornerRadius = UDim.new(0, 8)      -- 8像素圆角，保持方形但带圆角
             iconCorner.Parent = SectionIcon
 
             local SectionTitle = Instance.new("TextLabel")
