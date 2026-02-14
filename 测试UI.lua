@@ -711,8 +711,10 @@ function FengUI.new(name, theme)
         local tab = {}
 
         -- ============= 完全重写的 section 实现，包含完整控件 =============
-        -- 参数：tab, name, TabVal, iconAssets（可选）
-        function tab.section(tab, name, TabVal, iconAssets)
+        -- 参数顺序：tab, name, iconAssets, TabVal
+        -- iconAssets: 字符串（仅展开图标）或表格 {expanded="id", collapsed="id"}（完全自定义）
+        -- TabVal: 可选，默认为 true，可传布尔值或 "false"/"0" 字符串
+        function tab.section(tab, name, iconAssets, TabVal)
             -- 处理默认展开状态
             local open = true
             if TabVal ~= nil then
