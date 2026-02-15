@@ -850,7 +850,7 @@ function FengUI.new(name, theme)
                 end
             end)
 
-            -- 点击切换
+            -- 点击切换（修复：展开时立即显示内容）
             ToggleBtn.MouseButton1Click:Connect(function()
                 open = not open
                 SectionIcon.Image = open and expandedIcon or collapsedIcon  -- 切换图标
@@ -859,7 +859,7 @@ function FengUI.new(name, theme)
                     Size = UDim2.new(1, 0, 0, targetHeight)
                 }):Play()
                 if open then
-                    SectionContent.Visible = true
+                    SectionContent.Visible = true   -- 立即显示内容
                 else
                     task.delay(0.25, function()
                         if not open then
