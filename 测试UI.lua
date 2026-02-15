@@ -109,14 +109,11 @@ local function formatImageId(id)
     if type(id) == "number" then
         return "rbxassetid://" .. tostring(id)
     elseif type(id) == "string" then
-        -- 如果已经是完整URL（以rbxassetid://或http开头），直接返回
         if id:match("^rbxassetid://") or id:match("^https?://") then
             return id
         elseif id:match("^%d+$") then
-            -- 纯数字字符串
             return "rbxassetid://" .. id
         else
-            -- 其他字符串，原样返回
             return id
         end
     else
@@ -458,7 +455,7 @@ local function setupSmoothScrolling(scrollingFrame, layout)
 end
 
 -- =========================================
--- 完全重写的 section 逻辑，包含完整控件（已修复展开/收缩问题）
+-- 完全重写的 section 逻辑，包含完整控件（已修复展开/收缩和动态高度）
 -- =========================================
 function FengUI.new(name, theme)
     -- 设置脚本名字
@@ -664,7 +661,7 @@ function FengUI.new(name, theme)
         end
     end
 
-    -- ---------- Tab 创建（与原测试UI相同，但内部 section 已修复）----------
+    -- ---------- Tab 创建（与原测试UI相同，但内部 section 已完全修复）----------
     function window.Tab(window, name, icon, windowCount)
         local windowCount = windowCount or 1
 
@@ -750,14 +747,13 @@ function FengUI.new(name, theme)
             -- 处理图标资源（使用辅助函数格式化ID）
             local expandedIcon, collapsedIcon
             if type(iconAssets) == "table" then
-                -- 完全自定义：使用 Y 字段为展开图标，F 字段为收缩图标（同时支持小写 y/f 作为备选）
                 expandedIcon = iconAssets.Y or iconAssets.y or DEFAULT_ICON_EXPAND
                 collapsedIcon = iconAssets.F or iconAssets.f or DEFAULT_ICON_COLLAPSE
                 expandedIcon = formatImageId(expandedIcon)
                 collapsedIcon = formatImageId(collapsedIcon)
             elseif type(iconAssets) == "string" or type(iconAssets) == "number" then
                 expandedIcon = formatImageId(iconAssets)
-                collapsedIcon = DEFAULT_ICON_COLLAPSE  -- 只提供一个时，展开用自定义，收缩用默认
+                collapsedIcon = DEFAULT_ICON_COLLAPSE
             else
                 expandedIcon = DEFAULT_ICON_EXPAND
                 collapsedIcon = DEFAULT_ICON_COLLAPSE
@@ -786,21 +782,20 @@ function FengUI.new(name, theme)
             SectionIcon.Name = "SectionIcon"
             SectionIcon.Parent = SectionHeader
             SectionIcon.BackgroundTransparency = 1
-            SectionIcon.Position = UDim2.new(0, 3, 0, 5)  -- 左移1像素（原为5），垂直居中 (36-26)/2 = 5
-            SectionIcon.Size = UDim2.new(0, 26, 0, 26)   -- 改为26x26
+            SectionIcon.Position = UDim2.new(0, 3, 0, 5)
+            SectionIcon.Size = UDim2.new(0, 26, 0, 26)
             SectionIcon.Image = open and expandedIcon or collapsedIcon
-            SectionIcon.ImageColor3 = Color3.new(1, 1, 1)  -- 白色，确保图片原色显示
-            SectionIcon.ScaleType = Enum.ScaleType.Fit    -- 按比例缩放，完整显示图片，不超出边界
-            -- 小圆角（圆角矩形），保持方形但四边圆形
+            SectionIcon.ImageColor3 = Color3.new(1, 1, 1)
+            SectionIcon.ScaleType = Enum.ScaleType.Fit
             local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 6)      -- 圆角6像素
+            iconCorner.CornerRadius = UDim.new(0, 6)
             iconCorner.Parent = SectionIcon
 
             local SectionTitle = Instance.new("TextLabel")
             SectionTitle.Name = "SectionTitle"
             SectionTitle.Parent = SectionHeader
             SectionTitle.BackgroundTransparency = 1
-            SectionTitle.Position = UDim2.new(0, 33, 0, 0)  -- 3 + 26 + 4 = 33（原为34，整体左移1）
+            SectionTitle.Position = UDim2.new(0, 33, 0, 0)
             SectionTitle.Size = UDim2.new(1, -45, 1, 0)
             SectionTitle.Font = Enum.Font.GothamBold
             SectionTitle.Text = name
@@ -830,9 +825,9 @@ function FengUI.new(name, theme)
             ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
             ContentLayout.Padding = UDim.new(0, 8)
 
-            -- ========== 新增：动态高度更新 ==========
+            -- ========== 动态高度更新（核心修复） ==========
             local function updateSectionHeight()
-                if not open then return end  -- 只在展开时更新
+                if not open then return end  -- 仅在展开时调整高度
                 local contentHeight = ContentLayout.AbsoluteContentSize.Y
                 SectionContent.Size = UDim2.new(1, 0, 0, contentHeight)
                 Section.Size = UDim2.new(1, 0, 0, 36 + contentHeight + 8)
@@ -843,7 +838,7 @@ function FengUI.new(name, theme)
 
             -- 立即执行一次，确保初始高度正确（即使无内容，高度为0）
             updateSectionHeight()
-            -- ========================================
+            -- =============================================
 
             -- 点击切换（修复：展开时等待一帧获取正确高度）
             ToggleBtn.MouseButton1Click:Connect(function()
