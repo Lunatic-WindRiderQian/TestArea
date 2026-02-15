@@ -781,13 +781,13 @@ function FengUI.new(name, theme)
             SectionHeader.BackgroundTransparency = 1
             SectionHeader.Size = UDim2.new(1, 0, 0, 36)
 
-            -- 左侧图标（ImageLabel）- 尺寸24x24，圆角6，ScaleType.Fit确保图片完整显示且不超出正方形
+            -- 左侧图标（ImageLabel）- 尺寸26x26，圆角6，ScaleType.Fit确保图片完整显示且不超出正方形
             local SectionIcon = Instance.new("ImageLabel")
             SectionIcon.Name = "SectionIcon"
             SectionIcon.Parent = SectionHeader
             SectionIcon.BackgroundTransparency = 1
-            SectionIcon.Position = UDim2.new(0, 5, 0, 6)  -- 垂直居中 (36-24)/2 = 6
-            SectionIcon.Size = UDim2.new(0, 24, 0, 24)   -- 改为24x24
+            SectionIcon.Position = UDim2.new(0, 3, 0, 5)  -- 左移1像素（原为5），垂直居中 (36-26)/2 = 5
+            SectionIcon.Size = UDim2.new(0, 26, 0, 26)   -- 改为26x26
             SectionIcon.Image = open and expandedIcon or collapsedIcon
             SectionIcon.ImageColor3 = Color3.new(1, 1, 1)  -- 白色，确保图片原色显示
             SectionIcon.ScaleType = Enum.ScaleType.Fit    -- 按比例缩放，完整显示图片，不超出边界
@@ -800,7 +800,7 @@ function FengUI.new(name, theme)
             SectionTitle.Name = "SectionTitle"
             SectionTitle.Parent = SectionHeader
             SectionTitle.BackgroundTransparency = 1
-            SectionTitle.Position = UDim2.new(0, 34, 0, 0)  -- 24 + 5 + 5 = 34
+            SectionTitle.Position = UDim2.new(0, 33, 0, 0)  -- 3 + 26 + 4 = 33（原为34，整体左移1）
             SectionTitle.Size = UDim2.new(1, -45, 1, 0)
             SectionTitle.Font = Enum.Font.GothamBold
             SectionTitle.Text = name
