@@ -830,49 +830,43 @@ function FengUI.new(name, theme)
             ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
             ContentLayout.Padding = UDim.new(0, 8)
 
-            -- 动态更新 Section 高度（当内容变化时自动调整，但无动画）
-            local function updateSectionHeight()
+            -- 等待一帧让布局更新，然后设置初始高度
+            task.defer(function()
                 if open then
                     local contentHeight = ContentLayout.AbsoluteContentSize.Y
                     SectionContent.Size = UDim2.new(1, 0, 0, contentHeight)
                     Section.Size = UDim2.new(1, 0, 0, 36 + contentHeight + 8)
-                else
-                    SectionContent.Size = UDim2.new(1, 0, 0, 0)
-                    -- 不改变 Section.Size，保持收缩时的固定高度
                 end
-            end
-
-            ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                updateSectionHeight()
             end)
 
-            -- 点击切换（修复：展开时立即设置内容容器大小，并带动画改变外框高度）
+            -- 点击切换（修复：展开时等待一帧获取正确高度）
             ToggleBtn.MouseButton1Click:Connect(function()
                 open = not open
-                SectionIcon.Image = open and expandedIcon or collapsedIcon  -- 切换图标
+                SectionIcon.Image = open and expandedIcon or collapsedIcon
 
                 if open then
-                    -- 立即显示内容并设置正确的高度
                     SectionContent.Visible = true
-                    SectionContent.Size = UDim2.new(1, 0, 0, ContentLayout.AbsoluteContentSize.Y)
+                    -- 等待一帧让布局更新，确保获取正确的内容高度
+                    task.wait()
+                    local contentHeight = ContentLayout.AbsoluteContentSize.Y
+                    SectionContent.Size = UDim2.new(1, 0, 0, contentHeight)
+                    local targetHeight = 36 + contentHeight + 8
+                    services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                        Size = UDim2.new(1, 0, 0, targetHeight)
+                    }):Play()
                 else
-                    -- 延迟隐藏内容，配合动画
+                    -- 收缩：先启动外框动画到36，然后延迟隐藏内容
+                    services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                        Size = UDim2.new(1, 0, 0, 36)
+                    }):Play()
                     task.delay(0.25, function()
                         if not open then
                             SectionContent.Visible = false
+                            SectionContent.Size = UDim2.new(1, 0, 0, 0)
                         end
                     end)
                 end
-
-                -- 计算目标高度并带动画改变外框大小
-                local targetHeight = open and (36 + ContentLayout.AbsoluteContentSize.Y + 8) or 36
-                services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                    Size = UDim2.new(1, 0, 0, targetHeight)
-                }):Play()
             end)
-
-            -- 初始化高度（根据初始 open 状态）
-            updateSectionHeight()
 
             -- ---------- 控件工厂（完整移植原测试UI，仅调整父级为 SectionContent）----------
             local section = {}
