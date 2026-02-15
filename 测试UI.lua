@@ -455,7 +455,7 @@ local function setupSmoothScrolling(scrollingFrame, layout)
 end
 
 -- =========================================
--- 完全重写的 section 逻辑，包含完整控件（已修复展开/收缩和动态高度）
+-- 完全重写的 section 逻辑（无高度冲突，支持任意数量）
 -- =========================================
 function FengUI.new(name, theme)
     -- 设置脚本名字
@@ -661,7 +661,7 @@ function FengUI.new(name, theme)
         end
     end
 
-    -- ---------- Tab 创建（与原测试UI相同，但内部 section 已完全修复）----------
+    -- ---------- Tab 创建（完全修复的 section）----------
     function window.Tab(window, name, icon, windowCount)
         local windowCount = windowCount or 1
 
@@ -727,10 +727,7 @@ function FengUI.new(name, theme)
 
         local tab = {}
 
-        -- ============= 完全重写的 section 实现，包含完整控件（已修复展开/收缩问题） =============
-        -- 参数顺序：tab, name, iconAssets, TabVal
-        -- iconAssets: 字符串（仅展开图标）或表格 {Y="展开图标ID", F="收缩图标ID"}（完全自定义）
-        -- TabVal: 可选，默认为 true，可传布尔值或 "false"/"0" 字符串
+        -- ============= 完全重构的 section（支持动态高度、无冲突） =============
         function tab.section(tab, name, iconAssets, TabVal)
             -- 处理默认展开状态
             local open = true
@@ -744,7 +741,7 @@ function FengUI.new(name, theme)
                 end
             end
 
-            -- 处理图标资源（使用辅助函数格式化ID）
+            -- 处理图标资源
             local expandedIcon, collapsedIcon
             if type(iconAssets) == "table" then
                 expandedIcon = iconAssets.Y or iconAssets.y or DEFAULT_ICON_EXPAND
@@ -759,16 +756,14 @@ function FengUI.new(name, theme)
                 collapsedIcon = DEFAULT_ICON_COLLAPSE
             end
 
-            local elementWidth = WORKAREA_WIDTH - 56  -- 工作区可用宽度
-
-            -- ---------- Section 主框架 ----------
+            -- ---------- Section 主框架（不设置固定高度，由内容自动撑开）----------
             local Section = Instance.new("Frame")
             Section.Name = "Section_" .. name
             Section.Parent = MainContainer
             Section.BackgroundTransparency = 1
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
-            Section.Size = UDim2.new(1, 0, 0, 36)
+            -- 不设置 Size.Y，让布局自动决定
 
             -- ---------- 标题栏 ----------
             local SectionHeader = Instance.new("Frame")
@@ -777,7 +772,7 @@ function FengUI.new(name, theme)
             SectionHeader.BackgroundTransparency = 1
             SectionHeader.Size = UDim2.new(1, 0, 0, 36)
 
-            -- 左侧图标（ImageLabel）- 尺寸26x26，圆角6，ScaleType.Fit确保图片完整显示且不超出正方形
+            -- 左侧图标
             local SectionIcon = Instance.new("ImageLabel")
             SectionIcon.Name = "SectionIcon"
             SectionIcon.Parent = SectionHeader
@@ -803,7 +798,7 @@ function FengUI.new(name, theme)
             SectionTitle.TextSize = isMobile and 16 or 18
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-            -- 点击按钮（覆盖整个标题栏）
+            -- 点击按钮
             local ToggleBtn = Instance.new("TextButton")
             ToggleBtn.Name = "ToggleBtn"
             ToggleBtn.Parent = SectionHeader
@@ -819,57 +814,63 @@ function FengUI.new(name, theme)
             SectionContent.Position = UDim2.new(0, 0, 0, 36)
             SectionContent.Size = UDim2.new(1, 0, 0, 0)
             SectionContent.Visible = open
+            SectionContent.ClipsDescendants = true
 
             local ContentLayout = Instance.new("UIListLayout")
             ContentLayout.Parent = SectionContent
             ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
             ContentLayout.Padding = UDim.new(0, 8)
 
-            -- ========== 动态高度更新（核心修复） ==========
-            local function updateSectionHeight()
-                if not open then return end  -- 仅在展开时调整高度
+            -- ========== 核心修复：动态更新内容高度 ==========
+            local function updateContentHeight()
+                if not open then return end  -- 只在展开时更新高度
                 local contentHeight = ContentLayout.AbsoluteContentSize.Y
                 SectionContent.Size = UDim2.new(1, 0, 0, contentHeight)
-                Section.Size = UDim2.new(1, 0, 0, 36 + contentHeight + 8)
             end
 
-            -- 监听内容布局变化（添加/移除控件时自动调整高度）
-            ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSectionHeight)
+            ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContentHeight)
 
-            -- 立即执行一次，确保初始高度正确（即使无内容，高度为0）
-            updateSectionHeight()
-            -- =============================================
+            -- 初始高度设置（如果是展开状态）
+            if open then
+                -- 等待一帧让布局计算完成
+                task.defer(updateContentHeight)
+            else
+                SectionContent.Size = UDim2.new(1, 0, 0, 0)
+            end
 
-            -- 点击切换（修复：展开时等待一帧获取正确高度）
+            -- 点击切换（动画基于 SectionContent.Size 的 Tween）
             ToggleBtn.MouseButton1Click:Connect(function()
                 open = not open
                 SectionIcon.Image = open and expandedIcon or collapsedIcon
 
                 if open then
+                    -- 展开：先显示内容，再获取高度，然后动画放大
                     SectionContent.Visible = true
-                    -- 等待一帧让布局更新，确保获取正确的内容高度
-                    task.wait()
+                    -- 立即获取一次高度（如果已有内容）
                     local contentHeight = ContentLayout.AbsoluteContentSize.Y
-                    SectionContent.Size = UDim2.new(1, 0, 0, contentHeight)
-                    local targetHeight = 36 + contentHeight + 8
-                    services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(1, 0, 0, targetHeight)
+                    -- 如果高度为0（可能还没布局），等待一帧
+                    if contentHeight == 0 then
+                        task.wait()
+                        contentHeight = ContentLayout.AbsoluteContentSize.Y
+                    end
+                    -- 从当前高度（可能是0）动画到实际高度
+                    services.TweenService:Create(SectionContent, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                        Size = UDim2.new(1, 0, 0, contentHeight)
                     }):Play()
                 else
-                    -- 收缩：先启动外框动画到36，然后延迟隐藏内容
-                    services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(1, 0, 0, 36)
+                    -- 收缩：先动画内容高度到0，结束后隐藏
+                    services.TweenService:Create(SectionContent, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                        Size = UDim2.new(1, 0, 0, 0)
                     }):Play()
                     task.delay(0.25, function()
                         if not open then
                             SectionContent.Visible = false
-                            SectionContent.Size = UDim2.new(1, 0, 0, 0)
                         end
                     end)
                 end
             end)
 
-            -- ---------- 控件工厂（完整移植原测试UI，仅调整父级为 SectionContent）----------
+            -- ---------- 控件工厂（完全移植原测试UI）----------
             local section = {}
 
             function section.Button(section, text, callback)
