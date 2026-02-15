@@ -717,6 +717,7 @@ function FengUI.new(name, theme)
         MainContainer.Parent = workareamain
         MainContainer.BackgroundTransparency = 1
         MainContainer.Size = UDim2.new(1, 0, 0, 0)
+        MainContainer.AutomaticSize = Enum.AutomaticSize.Y
 
         local workarealayout = Instance.new("UIListLayout")
         workarealayout.Parent = MainContainer
@@ -731,9 +732,6 @@ function FengUI.new(name, theme)
         local tab = {}
 
         -- ============= 完全重写的 section 实现，包含完整控件（已修复展开/收缩问题） =============
-        -- 参数顺序：tab, name, iconAssets, TabVal
-        -- iconAssets: 字符串（仅展开图标）或表格 {Y="展开图标ID", F="收缩图标ID"}（完全自定义）
-        -- TabVal: 可选，默认为 true，可传布尔值或 "false"/"0" 字符串
         function tab.section(tab, name, iconAssets, TabVal)
             -- 处理默认展开状态
             local open = true
@@ -747,23 +745,22 @@ function FengUI.new(name, theme)
                 end
             end
 
-            -- 处理图标资源（使用辅助函数格式化ID）
+            -- 处理图标资源
             local expandedIcon, collapsedIcon
             if type(iconAssets) == "table" then
-                -- 完全自定义：使用 Y 字段为展开图标，F 字段为收缩图标（同时支持小写 y/f 作为备选）
                 expandedIcon = iconAssets.Y or iconAssets.y or DEFAULT_ICON_EXPAND
                 collapsedIcon = iconAssets.F or iconAssets.f or DEFAULT_ICON_COLLAPSE
                 expandedIcon = formatImageId(expandedIcon)
                 collapsedIcon = formatImageId(collapsedIcon)
             elseif type(iconAssets) == "string" or type(iconAssets) == "number" then
                 expandedIcon = formatImageId(iconAssets)
-                collapsedIcon = DEFAULT_ICON_COLLAPSE  -- 只提供一个时，展开用自定义，收缩用默认
+                collapsedIcon = DEFAULT_ICON_COLLAPSE
             else
                 expandedIcon = DEFAULT_ICON_EXPAND
                 collapsedIcon = DEFAULT_ICON_COLLAPSE
             end
 
-            local elementWidth = WORKAREA_WIDTH - 56  -- 工作区可用宽度
+            local elementWidth = WORKAREA_WIDTH - 56
 
             -- ---------- Section 主框架 ----------
             local Section = Instance.new("Frame")
@@ -772,7 +769,7 @@ function FengUI.new(name, theme)
             Section.BackgroundTransparency = 1
             Section.BorderSizePixel = 0
             Section.ClipsDescendants = true
-            Section.Size = UDim2.new(1, 0, 0, 36)
+            Section.Size = UDim2.new(1, 0, 0, 36)  -- 初始只有标题栏高度
 
             -- ---------- 标题栏 ----------
             local SectionHeader = Instance.new("Frame")
@@ -781,26 +778,25 @@ function FengUI.new(name, theme)
             SectionHeader.BackgroundTransparency = 1
             SectionHeader.Size = UDim2.new(1, 0, 0, 36)
 
-            -- 左侧图标（ImageLabel）- 尺寸26x26，圆角6，ScaleType.Fit确保图片完整显示且不超出正方形
+            -- 左侧图标
             local SectionIcon = Instance.new("ImageLabel")
             SectionIcon.Name = "SectionIcon"
             SectionIcon.Parent = SectionHeader
             SectionIcon.BackgroundTransparency = 1
-            SectionIcon.Position = UDim2.new(0, 3, 0, 5)  -- 左移1像素（原为5），垂直居中 (36-26)/2 = 5
-            SectionIcon.Size = UDim2.new(0, 26, 0, 26)   -- 改为26x26
+            SectionIcon.Position = UDim2.new(0, 3, 0, 5)
+            SectionIcon.Size = UDim2.new(0, 26, 0, 26)
             SectionIcon.Image = open and expandedIcon or collapsedIcon
-            SectionIcon.ImageColor3 = Color3.new(1, 1, 1)  -- 白色，确保图片原色显示
-            SectionIcon.ScaleType = Enum.ScaleType.Fit    -- 按比例缩放，完整显示图片，不超出边界
-            -- 小圆角（圆角矩形），保持方形但四边圆形
+            SectionIcon.ImageColor3 = Color3.new(1, 1, 1)
+            SectionIcon.ScaleType = Enum.ScaleType.Fit
             local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 6)      -- 圆角6像素
+            iconCorner.CornerRadius = UDim.new(0, 6)
             iconCorner.Parent = SectionIcon
 
             local SectionTitle = Instance.new("TextLabel")
             SectionTitle.Name = "SectionTitle"
             SectionTitle.Parent = SectionHeader
             SectionTitle.BackgroundTransparency = 1
-            SectionTitle.Position = UDim2.new(0, 33, 0, 0)  -- 3 + 26 + 4 = 33（原为34，整体左移1）
+            SectionTitle.Position = UDim2.new(0, 33, 0, 0)
             SectionTitle.Size = UDim2.new(1, -45, 1, 0)
             SectionTitle.Font = Enum.Font.GothamBold
             SectionTitle.Text = name
@@ -830,35 +826,79 @@ function FengUI.new(name, theme)
             ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
             ContentLayout.Padding = UDim.new(0, 8)
 
-            -- 等待一帧让布局更新，然后设置初始高度
-            task.defer(function()
+            -- 动态大小管理
+            local currentContentHeight = 0
+            local currentTween = nil
+
+            local function cancelCurrentTween()
+                if currentTween then
+                    currentTween:Cancel()
+                    currentTween = nil
+                end
+            end
+
+            local function updateSize(animate)
+                local targetSectionHeight = 36
+                local targetContentHeight = 0
                 if open then
-                    local contentHeight = ContentLayout.AbsoluteContentSize.Y
-                    SectionContent.Size = UDim2.new(1, 0, 0, contentHeight)
-                    Section.Size = UDim2.new(1, 0, 0, 36 + contentHeight + 8)
+                    targetContentHeight = currentContentHeight
+                    targetSectionHeight = 36 + targetContentHeight + 8  -- 标题+内容+间距
+                else
+                    targetContentHeight = 0
+                    targetSectionHeight = 36
+                end
+
+                cancelCurrentTween()
+
+                local setSize = function()
+                    SectionContent.Size = UDim2.new(1, 0, 0, targetContentHeight)
+                    Section.Size = UDim2.new(1, 0, 0, targetSectionHeight)
+                end
+
+                if animate then
+                    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+                    local goals = {
+                        Size = UDim2.new(1, 0, 0, targetSectionHeight)
+                    }
+                    currentTween = services.TweenService:Create(Section, tweenInfo, goals)
+                    currentTween:Play()
+
+                    -- 同时动画内容高度（可选，也可以直接设置，因为Section裁剪）
+                    -- 为了平滑，也可以动画SectionContent
+                    local contentGoals = { Size = UDim2.new(1, 0, 0, targetContentHeight) }
+                    local contentTween = services.TweenService:Create(SectionContent, tweenInfo, contentGoals)
+                    contentTween:Play()
+
+                    currentTween.Completed:Connect(function()
+                        currentTween = nil
+                    end)
+                else
+                    setSize()
+                end
+            end
+
+            -- 监听内容大小变化
+            local layoutConnection = ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                currentContentHeight = ContentLayout.AbsoluteContentSize.Y
+                if open then
+                    updateSize(true)
                 end
             end)
 
-            -- 点击切换（修复：展开时等待一帧获取正确高度）
+            -- 点击切换
             ToggleBtn.MouseButton1Click:Connect(function()
                 open = not open
                 SectionIcon.Image = open and expandedIcon or collapsedIcon
 
                 if open then
                     SectionContent.Visible = true
-                    -- 等待一帧让布局更新，确保获取正确的内容高度
-                    task.wait()
-                    local contentHeight = ContentLayout.AbsoluteContentSize.Y
-                    SectionContent.Size = UDim2.new(1, 0, 0, contentHeight)
-                    local targetHeight = 36 + contentHeight + 8
-                    services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(1, 0, 0, targetHeight)
-                    }):Play()
+                    -- 展开时立即获取最新高度并动画
+                    currentContentHeight = ContentLayout.AbsoluteContentSize.Y
+                    updateSize(true)
                 else
-                    -- 收缩：先启动外框动画到36，然后延迟隐藏内容
-                    services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(1, 0, 0, 36)
-                    }):Play()
+                    -- 收缩：先动画到标题栏高度，然后隐藏内容
+                    updateSize(true)
+                    -- 延迟隐藏内容，等动画接近完成
                     task.delay(0.25, function()
                         if not open then
                             SectionContent.Visible = false
@@ -867,6 +907,10 @@ function FengUI.new(name, theme)
                     end)
                 end
             end)
+
+            -- 初始设置
+            currentContentHeight = ContentLayout.AbsoluteContentSize.Y
+            updateSize(false)  -- 无动画初始大小
 
             -- ---------- 控件工厂（完整移植原测试UI，仅调整父级为 SectionContent）----------
             local section = {}
