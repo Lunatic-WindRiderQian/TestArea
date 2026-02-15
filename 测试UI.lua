@@ -109,14 +109,11 @@ local function formatImageId(id)
     if type(id) == "number" then
         return "rbxassetid://" .. tostring(id)
     elseif type(id) == "string" then
-        -- 如果已经是完整URL（以rbxassetid://或http开头），直接返回
         if id:match("^rbxassetid://") or id:match("^https?://") then
             return id
         elseif id:match("^%d+$") then
-            -- 纯数字字符串
             return "rbxassetid://" .. id
         else
-            -- 其他字符串，原样返回
             return id
         end
     else
@@ -732,7 +729,7 @@ function FengUI.new(name, theme)
 
         -- ============= 完全重写的 section 实现，包含完整控件 =============
         -- 参数顺序：tab, name, iconAssets, TabVal
-        -- iconAssets: 字符串（仅展开图标）或表格 {Y="展开图标ID", F="收缩图标ID"}（完全自定义）
+        -- iconAssets: 必须为表格 {Y="展开图标ID", F="收缩图标ID"} 用于完全自定义；若不提供或格式错误，则使用默认箭头
         -- TabVal: 可选，默认为 true，可传布尔值或 "false"/"0" 字符串
         function tab.section(tab, name, iconAssets, TabVal)
             -- 处理默认展开状态
@@ -747,7 +744,7 @@ function FengUI.new(name, theme)
                 end
             end
 
-            -- 处理图标资源（使用辅助函数格式化ID）
+            -- 处理图标资源：仅支持表格完全自定义，否则回退至默认箭头
             local expandedIcon, collapsedIcon
             if type(iconAssets) == "table" then
                 -- 完全自定义：使用 Y 字段为展开图标，F 字段为收缩图标（同时支持小写 y/f 作为备选）
@@ -755,10 +752,8 @@ function FengUI.new(name, theme)
                 collapsedIcon = iconAssets.F or iconAssets.f or DEFAULT_ICON_COLLAPSE
                 expandedIcon = formatImageId(expandedIcon)
                 collapsedIcon = formatImageId(collapsedIcon)
-            elseif type(iconAssets) == "string" or type(iconAssets) == "number" then
-                expandedIcon = formatImageId(iconAssets)
-                collapsedIcon = DEFAULT_ICON_COLLAPSE  -- 只提供一个时，展开用自定义，收缩用默认
             else
+                -- 非表格则使用默认箭头（删除单个字符串自定义功能）
                 expandedIcon = DEFAULT_ICON_EXPAND
                 collapsedIcon = DEFAULT_ICON_COLLAPSE
             end
@@ -781,20 +776,34 @@ function FengUI.new(name, theme)
             SectionHeader.BackgroundTransparency = 1
             SectionHeader.Size = UDim2.new(1, 0, 0, 36)
 
-            -- 左侧图标（ImageLabel）- 尺寸30x30，圆角8（小圆角），ScaleType.Fit确保图片完整显示且不超出正方形
-            local SectionIcon = Instance.new("ImageLabel")
-            SectionIcon.Name = "SectionIcon"
-            SectionIcon.Parent = SectionHeader
-            SectionIcon.BackgroundTransparency = 1
-            SectionIcon.Position = UDim2.new(0, 5, 0, 3)  -- 垂直居中
-            SectionIcon.Size = UDim2.new(0, 30, 0, 30)   -- 30x30正方形
-            SectionIcon.Image = open and expandedIcon or collapsedIcon
-            SectionIcon.ImageColor3 = Color3.new(1, 1, 1)  -- 白色，确保图片原色显示
-            SectionIcon.ScaleType = Enum.ScaleType.Fit    -- 按比例缩放，完整显示图片，不超出边界
-            -- 小圆角（圆角矩形），保持方形但四边圆形
-            local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 8)      -- 8像素圆角
-            iconCorner.Parent = SectionIcon
+            -- 左侧图标（双图层）：SectionOpen 为收缩状态图标（暗淡色），SectionOpened 为展开状态图标（高亮色）
+            local SectionOpen = Instance.new("ImageLabel")
+            SectionOpen.Name = "SectionOpen"
+            SectionOpen.Parent = SectionHeader
+            SectionOpen.BackgroundTransparency = 1
+            SectionOpen.Position = UDim2.new(0, 5, 0, 3)
+            SectionOpen.Size = UDim2.new(0, 30, 0, 30)
+            SectionOpen.Image = collapsedIcon   -- 收缩时显示收缩图标
+            SectionOpen.ImageColor3 = config.SecondaryTextColor
+            SectionOpen.ScaleType = Enum.ScaleType.Fit
+            SectionOpen.ImageTransparency = open and 1 or 0  -- 打开时隐藏收缩图标
+            local iconCorner1 = Instance.new("UICorner")
+            iconCorner1.CornerRadius = UDim.new(0, 8)
+            iconCorner1.Parent = SectionOpen
+
+            local SectionOpened = Instance.new("ImageLabel")
+            SectionOpened.Name = "SectionOpened"
+            SectionOpened.Parent = SectionHeader
+            SectionOpened.BackgroundTransparency = 1
+            SectionOpened.Position = UDim2.new(0, 5, 0, 3)
+            SectionOpened.Size = UDim2.new(0, 30, 0, 30)
+            SectionOpened.Image = expandedIcon   -- 展开时显示展开图标
+            SectionOpened.ImageColor3 = config.AccentColor
+            SectionOpened.ScaleType = Enum.ScaleType.Fit
+            SectionOpened.ImageTransparency = open and 0 or 1  -- 打开时显示展开图标
+            local iconCorner2 = Instance.new("UICorner")
+            iconCorner2.CornerRadius = UDim.new(0, 8)
+            iconCorner2.Parent = SectionOpened
 
             local SectionTitle = Instance.new("TextLabel")
             SectionTitle.Name = "SectionTitle"
@@ -853,7 +862,14 @@ function FengUI.new(name, theme)
             -- 点击切换
             ToggleBtn.MouseButton1Click:Connect(function()
                 open = not open
-                SectionIcon.Image = open and expandedIcon or collapsedIcon  -- 切换图标
+                -- 渐变动画切换图标透明度
+                services.TweenService:Create(SectionOpened, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                    ImageTransparency = open and 0 or 1
+                }):Play()
+                services.TweenService:Create(SectionOpen, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                    ImageTransparency = open and 1 or 0
+                }):Play()
+
                 local targetHeight = open and (36 + ContentLayout.AbsoluteContentSize.Y + 8) or 36
                 services.TweenService:Create(Section, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
                     Size = UDim2.new(1, 0, 0, targetHeight)
