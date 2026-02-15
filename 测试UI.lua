@@ -781,26 +781,26 @@ function FengUI.new(name, theme)
             SectionHeader.BackgroundTransparency = 1
             SectionHeader.Size = UDim2.new(1, 0, 0, 36)
 
-            -- 左侧图标（ImageLabel）- 尺寸30x30，圆角8（小圆角），ScaleType.Fit确保图片完整显示且不超出正方形
+            -- 左侧图标（ImageLabel）- 修改：尺寸增大为30x30，圆角设为8（小圆角）
             local SectionIcon = Instance.new("ImageLabel")
             SectionIcon.Name = "SectionIcon"
             SectionIcon.Parent = SectionHeader
             SectionIcon.BackgroundTransparency = 1
-            SectionIcon.Position = UDim2.new(0, 5, 0, 3)  -- 垂直居中
-            SectionIcon.Size = UDim2.new(0, 30, 0, 30)   -- 30x30正方形
+            SectionIcon.Position = UDim2.new(0, 5, 0, 3)  -- 稍微调整垂直居中
+            SectionIcon.Size = UDim2.new(0, 30, 0, 30)   -- 增大为30x30
             SectionIcon.Image = open and expandedIcon or collapsedIcon
-            SectionIcon.ImageColor3 = Color3.new(1, 1, 1)  -- 白色，确保图片原色显示
-            SectionIcon.ScaleType = Enum.ScaleType.Fit    -- 按比例缩放，完整显示图片，不超出边界
-            -- 小圆角（圆角矩形），保持方形但四边圆形
+            SectionIcon.ImageColor3 = Color3.new(1, 1, 1)  -- 白色，确保原色显示
+            SectionIcon.ScaleType = Enum.ScaleType.Fit
+            -- 添加小圆角（正方形四边圆形，即圆角矩形）
             local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 8)      -- 8像素圆角
+            iconCorner.CornerRadius = UDim.new(0, 8)      -- 8像素圆角，保持方形但带圆角
             iconCorner.Parent = SectionIcon
 
             local SectionTitle = Instance.new("TextLabel")
             SectionTitle.Name = "SectionTitle"
             SectionTitle.Parent = SectionHeader
             SectionTitle.BackgroundTransparency = 1
-            SectionTitle.Position = UDim2.new(0, 40, 0, 0)  -- 位置适应更大的图标
+            SectionTitle.Position = UDim2.new(0, 40, 0, 0)  -- 位置左移以适应更大的图标
             SectionTitle.Size = UDim2.new(1, -45, 1, 0)
             SectionTitle.Font = Enum.Font.GothamBold
             SectionTitle.Text = name
