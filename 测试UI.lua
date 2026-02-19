@@ -354,31 +354,14 @@ function Library:CreateWindow(Config)
             -- 默认展开状态（如果没有提供，默认展开）
             if defaultOpen == nil then defaultOpen = true end
 
-            -- 辅助函数：将图标参数转换为有效的 Image 字符串
-            local function resolveIcon(icon)
-                if not icon then return nil end
-                if type(icon) == "number" then
-                    return "rbxassetid://" .. icon
-                elseif type(icon) == "string" then
-                    if tonumber(icon) then
-                        return "rbxassetid://" .. icon
-                    else
-                        return icon
-                    end
-                else
-                    return tostring(icon)
-                end
-            end
-
             -- 处理图标
             local iconOpen, iconClosed
             if type(icons) == "table" then
-                iconOpen = resolveIcon(icons.Y or icons.open)
-                iconClosed = resolveIcon(icons.F or icons.closed)
+                iconOpen = icons.Y or icons.open
+                iconClosed = icons.F or icons.closed
             else
                 -- 如果 icons 是单个值，则作为共用图标（通过旋转区分方向）
-                local single = resolveIcon(icons)
-                iconOpen = single or "rbxassetid://6031091004"  -- 默认箭头图标
+                iconOpen = icons or "rbxassetid://6031091004"  -- 默认箭头图标
                 iconClosed = iconOpen  -- 同一个
             end
 
@@ -505,7 +488,6 @@ function Library:CreateWindow(Config)
                     Tween(Btn, {Size = UDim2.new(1, 0, 0, 35)}, 0.1)
                     callback()
                 end)
-                return child  -- 返回自身支持链式调用
             end
 
             -- Toggle
@@ -551,7 +533,6 @@ function Library:CreateWindow(Config)
 
                 Btn.MouseButton1Click:Connect(function() Enabled = not Enabled; Update() end)
                 ConfigObjects[toggleText] = {Type = "Toggle", Value = Enabled, Set = function(val) Enabled = val; Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)}); Tween(Dot, {Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)}); callback(Enabled) end}
-                return child
             end
 
             -- Slider
@@ -615,7 +596,6 @@ function Library:CreateWindow(Config)
                 UserInputService.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=false end end)
                 UserInputService.InputChanged:Connect(function(i) if sliding and i.UserInputType==Enum.UserInputType.MouseMovement then Drag(i) end end)
                 ConfigObjects[sliderText] = {Type = "Slider", Value = Val, Set = function(val) Update(val) end}
-                return child
             end
 
             -- Textbox
@@ -652,7 +632,6 @@ function Library:CreateWindow(Config)
                     callback(Box.Text)
                 end)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
-                return child
             end
 
             -- Dropdown
@@ -735,7 +714,7 @@ function Library:CreateWindow(Config)
                 end)
 
                 ConfigObjects[dropText] = {Type = "Dropdown", Value = options[1], Set = function(val) Select(val) end, Refresh = RefreshOptions}
-                return child
+                return {Refresh = RefreshOptions}
             end
 
             -- Keybind
@@ -783,7 +762,6 @@ function Library:CreateWindow(Config)
                     end
                 end)
                 ConfigObjects[keyText] = {Type = "Keybind", Value = Key.Name, Set = function(val) Key = Enum.KeyCode[val] or Key; KeyLabel.Text = Key.Name; callback(Key) end}
-                return child
             end
 
             -- Value (文本输入)
@@ -825,7 +803,6 @@ function Library:CreateWindow(Config)
                 end)
 
                 ConfigObjects[valText] = {Type = "Value", Value = default, Set = function(val) ValBox.Text = val end}
-                return child
             end
 
             return child
