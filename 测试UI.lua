@@ -349,10 +349,10 @@ function Library:CreateWindow(Config)
 
         local Elements = {}
 
-        -- Section 函数，文字大小增大至 18
+        -- Section 函数，文字大小增大至 20
         function Elements:Section(text, icon)
             local SectionFrame = Instance.new("Frame")
-            SectionFrame.Size = UDim2.new(1, 0, 0, 30)  -- 高度增加以适应大文字
+            SectionFrame.Size = UDim2.new(1, 0, 0, 32)  -- 高度增加以适应 20 号字体
             SectionFrame.BackgroundTransparency = 1
             SectionFrame.Parent = Page
 
@@ -378,10 +378,10 @@ function Library:CreateWindow(Config)
 
             local TextLabel = Instance.new("TextLabel")
             TextLabel.Text = text
-            TextLabel.Size = UDim2.new(1, icon and -21 or 0, 0, 26)  -- 高度 26 以容纳 18 号字体
+            TextLabel.Size = UDim2.new(1, icon and -21 or 0, 0, 28)  -- 高度 28 以容纳 20 号字体
             TextLabel.BackgroundTransparency = 1
             TextLabel.Font = Enum.Font.GothamBold
-            TextLabel.TextSize = 18  -- 文字大小 18
+            TextLabel.TextSize = 20  -- 文字大小 20
             TextLabel.TextXAlignment = Enum.TextXAlignment.Left
             TextLabel.Parent = SectionFrame
             AddToRegistry(TextLabel, "TextColor3", "Accent")
