@@ -440,9 +440,9 @@ function Library:CreateWindow(Config)
             local contentHeight = 0
             local function updateContentHeight()
                 contentHeight = contentLayout.AbsoluteContentSize.Y
-                -- 如果当前是展开状态，则实时调整容器高度（用于动态添加控件）
+                -- 如果当前是展开状态，则实时调整容器高度
                 if open then
-                    Tween(contentContainer, {Size = UDim2.new(1, 0, 0, contentHeight)}, 0.2)
+                    contentContainer.Size = UDim2.new(1, 0, 0, contentHeight)
                 end
             end
             contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContentHeight)
@@ -471,14 +471,14 @@ function Library:CreateWindow(Config)
                 end
 
                 if open then
-                    -- 展开：强制获取最新内容高度（保证控件都可见）
+                    -- 展开：强制获取最新内容高度
                     contentHeight = contentLayout.AbsoluteContentSize.Y
-                    Tween(contentContainer, {Size = UDim2.new(1, 0, 0, contentHeight)}, 0.2)
-                    Tween(sectionFrame, {Size = UDim2.new(1, 0, 0, 36 + contentHeight)}, 0.2)
+                    contentContainer.Size = UDim2.new(1, 0, 0, contentHeight)
+                    sectionFrame.Size = UDim2.new(1, 0, 0, 36 + contentHeight)
                 else
                     -- 折叠
-                    Tween(contentContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
-                    Tween(sectionFrame, {Size = UDim2.new(1, 0, 0, 36)}, 0.2)
+                    contentContainer.Size = UDim2.new(1, 0, 0, 0)
+                    sectionFrame.Size = UDim2.new(1, 0, 0, 36)
                 end
             end
 
@@ -685,6 +685,7 @@ function Library:CreateWindow(Config)
                 Container.Visible = false
                 Container.ClipsDescendants = true
                 Container.Parent = contentContainer
+                Container.ZIndex = 10  -- 提高ZIndex确保选项在最上层
                 Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Container, "BackgroundColor3", "Top")
                 local List = Instance.new("UIListLayout")
