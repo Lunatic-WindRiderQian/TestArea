@@ -349,620 +349,465 @@ function Library:CreateWindow(Config)
 
         local Elements = {}
 
-        -- ==================== 修改后的 Section ====================
-        -- 支持折叠，图标需传入 {Y = 展开图标ID, F = 收缩图标ID}，第三个参数为默认展开状态（true/false）
-        function Elements:Section(text, icons, defaultExpanded)
-            local isCollapsible = type(icons) == "table"
-            local expanded = isCollapsible and (defaultExpanded ~= false) -- 默认展开，除非显示指定 false
-            
-            -- 标题栏容器
-            local SectionFrame = Instance.new("Frame")
-            SectionFrame.Size = UDim2.new(1, 0, 0, 36)
-            SectionFrame.BackgroundTransparency = 1
-            SectionFrame.Parent = Page
+        -- 新版 Section：可折叠容器，支持自定义图标（展开/折叠），返回子元素表
+        function Elements:Section(text, icons, defaultOpen)
+            -- 默认展开状态（如果没有提供，默认展开）
+            if defaultOpen == nil then defaultOpen = true end
 
-            -- 点击按钮（覆盖整个标题栏）
-            local TitleButton = Instance.new("TextButton")
-            TitleButton.Size = UDim2.new(1, 0, 1, 0)
-            TitleButton.BackgroundTransparency = 1
-            TitleButton.Text = ""
-            TitleButton.Parent = SectionFrame
-
-            -- 水平布局（图标 + 文字）
-            local Layout = Instance.new("UIListLayout")
-            Layout.FillDirection = Enum.FillDirection.Horizontal
-            Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-            Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-            Layout.Padding = UDim.new(0, 5)
-            Layout.Parent = TitleButton
-
-            -- 图标（如果有）
-            local IconLabel
-            if isCollapsible then
-                -- 折叠专用图标，使用传入的 Y 和 F
-                local iconId = expanded and icons.Y or icons.F
-                IconLabel = Instance.new("ImageLabel")
-                IconLabel.Size = UDim2.new(0, 24, 0, 24)
-                IconLabel.BackgroundTransparency = 1
-                if tonumber(iconId) then
-                    IconLabel.Image = "rbxassetid://" .. iconId
-                else
-                    IconLabel.Image = iconId
-                end
-                IconLabel.Parent = TitleButton
-                -- 不注册颜色
-            elseif icons and type(icons) ~= "table" then
-                -- 兼容旧版：单个图标
-                IconLabel = Instance.new("ImageLabel")
-                IconLabel.Size = UDim2.new(0, 24, 0, 24)
-                IconLabel.BackgroundTransparency = 1
-                if tonumber(icons) then
-                    IconLabel.Image = "rbxassetid://" .. icons
-                else
-                    IconLabel.Image = icons
-                end
-                IconLabel.Parent = TitleButton
+            -- 处理图标
+            local iconOpen, iconClosed
+            if type(icons) == "table" then
+                iconOpen = icons.Y or icons.open
+                iconClosed = icons.F or icons.closed
+            else
+                -- 如果 icons 是单个值，则作为共用图标（通过旋转区分方向）
+                iconOpen = icons or "rbxassetid://6031091004"  -- 默认箭头图标
+                iconClosed = iconOpen  -- 同一个
             end
 
+            -- Section 主框架
+            local sectionFrame = Instance.new("Frame")
+            sectionFrame.Size = UDim2.new(1, 0, 0, 36)  -- 初始高度为标题栏高度
+            sectionFrame.BackgroundTransparency = 1
+            sectionFrame.Parent = Page
+            sectionFrame.ClipsDescendants = true
+
+            -- 标题栏
+            local titleBar = Instance.new("Frame")
+            titleBar.Size = UDim2.new(1, 0, 0, 36)
+            titleBar.BackgroundTransparency = 1
+            titleBar.Parent = sectionFrame
+
+            -- 图标（显示折叠状态）
+            local iconLabel = Instance.new("ImageLabel")
+            iconLabel.Size = UDim2.new(0, 24, 0, 24)
+            iconLabel.Position = UDim2.new(0, 5, 0.5, -12)
+            iconLabel.BackgroundTransparency = 1
+            iconLabel.Image = defaultOpen and iconOpen or iconClosed
+            if iconOpen == iconClosed then
+                -- 如果使用同一图标，通过旋转表示状态：展开时向下（90°），折叠时向右（0°）
+                iconLabel.Rotation = defaultOpen and 90 or 0
+            end
+            iconLabel.Parent = titleBar
+
             -- 文字标签
-            local TextLabel = Instance.new("TextLabel")
-            TextLabel.Text = text
-            TextLabel.Size = UDim2.new(1, IconLabel and -29 or 0, 0, 28)
-            TextLabel.BackgroundTransparency = 1
-            TextLabel.Font = Enum.Font.GothamBold
-            TextLabel.TextSize = 20
-            TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-            TextLabel.Parent = TitleButton
-            AddToRegistry(TextLabel, "TextColor3", "Accent")
+            local textLabel = Instance.new("TextLabel")
+            textLabel.Text = text
+            textLabel.Size = UDim2.new(1, -34, 1, 0)
+            textLabel.Position = UDim2.new(0, 34, 0, 0)
+            textLabel.BackgroundTransparency = 1
+            textLabel.Font = Enum.Font.GothamBold
+            textLabel.TextSize = 20
+            textLabel.TextXAlignment = Enum.TextXAlignment.Left
+            textLabel.Parent = titleBar
+            AddToRegistry(textLabel, "TextColor3", "Accent")
 
-            -- 如果是可折叠的，创建内容容器并返回元素添加器
-            if isCollapsible then
-                -- 内容容器
-                local ContentContainer = Instance.new("Frame")
-                ContentContainer.Size = UDim2.new(1, 0, 0, expanded and 0 or 0) -- 初始为0，由列表自动调整
-                ContentContainer.BackgroundTransparency = 1
-                ContentContainer.ClipsDescendants = true
-                ContentContainer.Visible = expanded
-                ContentContainer.Parent = Page
+            -- 点击按钮（覆盖整个标题栏）
+            local toggleBtn = Instance.new("TextButton")
+            toggleBtn.Size = UDim2.new(1, 0, 1, 0)
+            toggleBtn.BackgroundTransparency = 1
+            toggleBtn.Text = ""
+            toggleBtn.Parent = titleBar
 
-                local ContentList = Instance.new("UIListLayout")
-                ContentList.Padding = UDim.new(0, 6)
-                ContentList.SortOrder = Enum.SortOrder.LayoutOrder
-                ContentList.Parent = ContentContainer
-                ContentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    if ContentContainer.Visible then
-                        ContentContainer.Size = UDim2.new(1, 0, 0, ContentList.AbsoluteContentSize.Y)
-                    end
+            -- 内容容器（放置子元素）
+            local contentContainer = Instance.new("Frame")
+            contentContainer.Size = UDim2.new(1, 0, 0, 0)
+            contentContainer.Position = UDim2.new(0, 0, 0, 36)
+            contentContainer.BackgroundTransparency = 1
+            contentContainer.ClipsDescendants = true
+            contentContainer.Parent = sectionFrame
+
+            local contentLayout = Instance.new("UIListLayout")
+            contentLayout.Padding = UDim.new(0, 6)
+            contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            contentLayout.Parent = contentContainer
+
+            local contentHeight = 0
+            local function updateContentHeight()
+                contentHeight = contentLayout.AbsoluteContentSize.Y
+                if open then
+                    Tween(contentContainer, {Size = UDim2.new(1, 0, 0, contentHeight)}, 0.2)
+                end
+            end
+            contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContentHeight)
+
+            local open = defaultOpen
+            -- 初始化高度
+            if open then
+                task.spawn(function()
+                    task.wait()  -- 等待布局计算
+                    contentContainer.Size = UDim2.new(1, 0, 0, contentLayout.AbsoluteContentSize.Y)
+                    sectionFrame.Size = UDim2.new(1, 0, 0, 36 + contentLayout.AbsoluteContentSize.Y)
                 end)
+            else
+                contentContainer.Size = UDim2.new(1, 0, 0, 0)
+                sectionFrame.Size = UDim2.new(1, 0, 0, 36)
+            end
 
-                -- 点击切换折叠状态
-                TitleButton.MouseButton1Click:Connect(function()
-                    expanded = not expanded
+            local function toggle()
+                open = not open
+                -- 更新图标
+                if iconOpen == iconClosed then
+                    iconLabel.Rotation = open and 90 or 0
+                else
+                    iconLabel.Image = open and iconOpen or iconClosed
+                end
+
+                if open then
+                    updateContentHeight()  -- 触发内容高度更新并 Tween
+                    Tween(sectionFrame, {Size = UDim2.new(1, 0, 0, 36 + contentHeight)}, 0.2)
+                else
+                    Tween(contentContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
+                    Tween(sectionFrame, {Size = UDim2.new(1, 0, 0, 36)}, 0.2)
+                end
+            end
+
+            toggleBtn.MouseButton1Click:Connect(function()
+                PlaySound(Sounds.Click)
+                toggle()
+            end)
+
+            -- 子元素表（将元素添加到 contentContainer）
+            local child = {}
+
+            -- Button
+            child.Button = function(_, btnText, callback)
+                local Btn = Instance.new("TextButton")
+                Btn.Size = UDim2.new(1, 0, 0, 35)
+                Btn.Text = btnText
+                Btn.Font = Enum.Font.Gotham
+                Btn.TextSize = 14
+                Btn.Parent = contentContainer
+                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(Btn, "BackgroundColor3", "Top")
+                AddToRegistry(Btn, "TextColor3", "Text")
+                Btn.MouseButton1Click:Connect(function()
                     PlaySound(Sounds.Click)
-                    
-                    -- 切换图标
-                    local newIconId = expanded and icons.Y or icons.F
-                    if tonumber(newIconId) then
-                        IconLabel.Image = "rbxassetid://" .. newIconId
-                    else
-                        IconLabel.Image = newIconId
-                    end
-
-                    -- 展开/收缩动画
-                    if expanded then
-                        ContentContainer.Visible = true
-                        local targetHeight = ContentList.AbsoluteContentSize.Y
-                        ContentContainer.Size = UDim2.new(1, 0, 0, 0)
-                        Tween(ContentContainer, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.3)
-                    else
-                        Tween(ContentContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.3, function()
-                            ContentContainer.Visible = false
-                        end)
-                    end
+                    Tween(Btn, {Size = UDim2.new(0.95, 0, 0, 32)}, 0.1)
+                    task.wait(0.1)
+                    Tween(Btn, {Size = UDim2.new(1, 0, 0, 35)}, 0.1)
+                    callback()
                 end)
+            end
 
-                -- ===== 返回给 section 内部使用的元素添加器 =====
-                local SectionElements = {}
+            -- Toggle
+            child.Toggle = function(_, toggleText, default, callback)
+                local Enabled = default or false
+                local Btn = Instance.new("TextButton")
+                Btn.Size = UDim2.new(1, 0, 0, 35)
+                Btn.Text = ""
+                Btn.Parent = contentContainer
+                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(Btn, "BackgroundColor3", "Top")
+                local Title = Instance.new("TextLabel")
+                Title.Text = toggleText
+                Title.Size = UDim2.new(0.7,0,1,0)
+                Title.Position = UDim2.new(0,10,0,0)
+                Title.BackgroundTransparency = 1
+                Title.Font = Enum.Font.Gotham
+                Title.TextSize = 14
+                Title.TextXAlignment = Enum.TextXAlignment.Left
+                Title.Parent = Btn
+                AddToRegistry(Title, "TextColor3", "Text")
+                local Switch = Instance.new("Frame")
+                Switch.Size = UDim2.new(0,40,0,20)
+                Switch.Position = UDim2.new(1,-50,0.5,-10)
+                Switch.Parent = Btn
+                Instance.new("UICorner", Switch).CornerRadius = UDim.new(1,0)
+                Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)
+                local Dot = Instance.new("Frame")
+                Dot.Size = UDim2.new(0,16,0,16)
+                Dot.Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)
+                Dot.BackgroundColor3 = Color3.new(1,1,1)
+                Dot.Parent = Switch
+                Instance.new("UICorner", Dot).CornerRadius = UDim.new(1,0)
 
-                function SectionElements:Button(text, callback)
-                    local Btn = Instance.new("TextButton")
-                    Btn.Size = UDim2.new(1, 0, 0, 35)
-                    Btn.Text = text
-                    Btn.Font = Enum.Font.Gotham
-                    Btn.TextSize = 14
-                    Btn.Parent = ContentContainer
-                    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-                    AddToRegistry(Btn, "BackgroundColor3", "Top")
-                    AddToRegistry(Btn, "TextColor3", "Text")
-                    Btn.MouseButton1Click:Connect(function()
-                        PlaySound(Sounds.Click)
-                        Tween(Btn, {Size = UDim2.new(0.95, 0, 0, 32)}, 0.1)
-                        task.wait(0.1)
-                        Tween(Btn, {Size = UDim2.new(1, 0, 0, 35)}, 0.1)
-                        callback()
-                    end)
+                local function Update()
+                    if Enabled then PlaySound(Sounds.ToggleOn) else PlaySound(Sounds.ToggleOff) end
+                    Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)})
+                    Tween(Dot, {Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)})
+                    ConfigObjects[toggleText].Value = Enabled
+                    callback(Enabled)
+                    Window:Notification(toggleText..": "..tostring(Enabled))
                 end
 
-                function SectionElements:Toggle(text, default, callback)
-                    local Enabled = default or false
-                    local Btn = Instance.new("TextButton")
-                    Btn.Size = UDim2.new(1, 0, 0, 35)
-                    Btn.Text = ""
-                    Btn.Parent = ContentContainer
-                    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-                    AddToRegistry(Btn, "BackgroundColor3", "Top")
-                    local Title = Instance.new("TextLabel")
-                    Title.Text = text
-                    Title.Size = UDim2.new(0.7,0,1,0)
-                    Title.Position = UDim2.new(0,10,0,0)
-                    Title.BackgroundTransparency = 1
-                    Title.Font = Enum.Font.Gotham
-                    Title.TextSize = 14
-                    Title.TextXAlignment = Enum.TextXAlignment.Left
-                    Title.Parent = Btn
-                    AddToRegistry(Title, "TextColor3", "Text")
-                    local Switch = Instance.new("Frame")
-                    Switch.Size = UDim2.new(0,40,0,20)
-                    Switch.Position = UDim2.new(1,-50,0.5,-10)
-                    Switch.Parent = Btn
-                    Instance.new("UICorner", Switch).CornerRadius = UDim.new(1,0)
-                    Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)
-                    local Dot = Instance.new("Frame")
-                    Dot.Size = UDim2.new(0,16,0,16)
-                    Dot.Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)
-                    Dot.BackgroundColor3 = Color3.new(1,1,1)
-                    Dot.Parent = Switch
-                    Instance.new("UICorner", Dot).CornerRadius = UDim.new(1,0)
+                Btn.MouseButton1Click:Connect(function() Enabled = not Enabled; Update() end)
+                ConfigObjects[toggleText] = {Type = "Toggle", Value = Enabled, Set = function(val) Enabled = val; Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)}); Tween(Dot, {Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)}); callback(Enabled) end}
+            end
 
-                    local function Update()
-                        if Enabled then PlaySound(Sounds.ToggleOn) else PlaySound(Sounds.ToggleOff) end
-                        Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)})
-                        Tween(Dot, {Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)})
-                        ConfigObjects[text] = {Type = "Toggle", Value = Enabled}
-                        callback(Enabled)
-                        Window:Notification(text..": "..tostring(Enabled))
-                    end
+            -- Slider
+            child.Slider = function(_, sliderText, min, max, default, callback)
+                local Val = default or min
+                local Frame = Instance.new("Frame")
+                Frame.Size = UDim2.new(1,0,0,50)
+                Frame.Parent = contentContainer
+                Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,6)
+                AddToRegistry(Frame, "BackgroundColor3", "Top")
+                local Lbl = Instance.new("TextLabel")
+                Lbl.Text = sliderText
+                Lbl.Size = UDim2.new(1,-20,0,20)
+                Lbl.Position = UDim2.new(0,10,0,5)
+                Lbl.BackgroundTransparency = 1
+                Lbl.Font = Enum.Font.Gotham
+                Lbl.TextSize = 14
+                Lbl.TextXAlignment = Enum.TextXAlignment.Left
+                Lbl.Parent = Frame
+                AddToRegistry(Lbl, "TextColor3", "Text")
+                local Num = Instance.new("TextLabel")
+                Num.Text = tostring(Val)
+                Num.Size = UDim2.new(0,40,0,20)
+                Num.Position = UDim2.new(1,-50,0,5)
+                Num.BackgroundTransparency = 1
+                Num.TextColor3 = Color3.fromRGB(150,150,150)
+                Num.Font = Enum.Font.Gotham
+                Num.TextSize = 12
+                Num.Parent = Frame
+                local Bar = Instance.new("TextButton")
+                Bar.Text = ""
+                Bar.Size = UDim2.new(1,-20,0,6)
+                Bar.Position = UDim2.new(0,10,0,35)
+                Bar.BackgroundColor3 = Color3.fromRGB(60,60,60)
+                Bar.AutoButtonColor = false
+                Bar.Parent = Frame
+                Instance.new("UICorner", Bar).CornerRadius = UDim.new(1,0)
+                local Fill = Instance.new("Frame")
+                Fill.Size = UDim2.new((Val-min)/(max-min),0,1,0)
+                Fill.Parent = Bar
+                Instance.new("UICorner", Fill).CornerRadius = UDim.new(1,0)
+                AddToRegistry(Fill, "BackgroundColor3", "Accent")
 
-                    Btn.MouseButton1Click:Connect(function() Enabled = not Enabled; Update() end)
-                    ConfigObjects[text] = {Type = "Toggle", Value = Enabled, Set = function(val) Enabled = val; Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)}); Tween(Dot, {Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)}); callback(Enabled) end}
-                end
-
-                function SectionElements:Slider(text, min, max, default, callback)
-                    local Val = default or min
-                    local Frame = Instance.new("Frame")
-                    Frame.Size = UDim2.new(1,0,0,50)
-                    Frame.Parent = ContentContainer
-                    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,6)
-                    AddToRegistry(Frame, "BackgroundColor3", "Top")
-                    local Lbl = Instance.new("TextLabel")
-                    Lbl.Text = text
-                    Lbl.Size = UDim2.new(1,-20,0,20)
-                    Lbl.Position = UDim2.new(0,10,0,5)
-                    Lbl.BackgroundTransparency = 1
-                    Lbl.Font = Enum.Font.Gotham
-                    Lbl.TextSize = 14
-                    Lbl.TextXAlignment = Enum.TextXAlignment.Left
-                    Lbl.Parent = Frame
-                    AddToRegistry(Lbl, "TextColor3", "Text")
-                    local Num = Instance.new("TextLabel")
+                local function Update(val_new)
+                    Val = val_new
+                    local p = (Val - min) / (max - min)
+                    Tween(Fill, {Size = UDim2.new(p,0,1,0)}, 0.1)
                     Num.Text = tostring(Val)
-                    Num.Size = UDim2.new(0,40,0,20)
-                    Num.Position = UDim2.new(1,-50,0,5)
-                    Num.BackgroundTransparency = 1
-                    Num.TextColor3 = Color3.fromRGB(150,150,150)
-                    Num.Font = Enum.Font.Gotham
-                    Num.TextSize = 12
-                    Num.Parent = Frame
-                    local Bar = Instance.new("TextButton")
-                    Bar.Text = ""
-                    Bar.Size = UDim2.new(1,-20,0,6)
-                    Bar.Position = UDim2.new(0,10,0,35)
-                    Bar.BackgroundColor3 = Color3.fromRGB(60,60,60)
-                    Bar.AutoButtonColor = false
-                    Bar.Parent = Frame
-                    Instance.new("UICorner", Bar).CornerRadius = UDim.new(1,0)
-                    local Fill = Instance.new("Frame")
-                    Fill.Size = UDim2.new((Val-min)/(max-min),0,1,0)
-                    Fill.Parent = Bar
-                    Instance.new("UICorner", Fill).CornerRadius = UDim.new(1,0)
-                    AddToRegistry(Fill, "BackgroundColor3", "Accent")
-
-                    local function Update(val_new)
-                        Val = val_new
-                        local p = (Val - min) / (max - min)
-                        Tween(Fill, {Size = UDim2.new(p,0,1,0)}, 0.1)
-                        Num.Text = tostring(Val)
-                        ConfigObjects[text].Value = Val
-                        callback(Val)
-                    end
-
-                    local function Drag(input)
-                        local p = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-                        local newVal = math.floor(min + ((max - min) * p))
-                        Update(newVal)
-                    end
-
-                    local sliding
-                    Bar.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=true; PlaySound(Sounds.Slide); Drag(i) end end)
-                    UserInputService.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=false end end)
-                    UserInputService.InputChanged:Connect(function(i) if sliding and i.UserInputType==Enum.UserInputType.MouseMovement then Drag(i) end end)
-                    ConfigObjects[text] = {Type = "Slider", Value = Val, Set = function(val) Update(val) end}
+                    ConfigObjects[sliderText].Value = Val
+                    callback(Val)
                 end
 
-                function SectionElements:Textbox(text, placeholder, callback)
-                    local Frame = Instance.new("Frame")
-                    Frame.Size = UDim2.new(1,0,0,60)
-                    Frame.Parent = ContentContainer
-                    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,6)
-                    AddToRegistry(Frame, "BackgroundColor3", "Top")
-                    local Lbl = Instance.new("TextLabel")
-                    Lbl.Text = text
-                    Lbl.Size = UDim2.new(1,0,0,20)
-                    Lbl.Position = UDim2.new(0,10,0,5)
-                    Lbl.BackgroundTransparency = 1
-                    Lbl.Font = Enum.Font.Gotham
-                    Lbl.TextSize = 14
-                    Lbl.TextXAlignment = Enum.TextXAlignment.Left
-                    Lbl.Parent = Frame
-                    AddToRegistry(Lbl, "TextColor3", "Text")
-                    local Box = Instance.new("TextBox")
-                    Box.Size = UDim2.new(1,-20,0,25)
-                    Box.Position = UDim2.new(0,10,0,28)
-                    Box.Text = ""
-                    Box.PlaceholderText = placeholder
-                    Box.Font = Enum.Font.Gotham
-                    Box.TextSize = 13
-                    Box.Parent = Frame
-                    Instance.new("UICorner", Box).CornerRadius = UDim.new(0,4)
-                    AddToRegistry(Box, "BackgroundColor3", "Main")
-                    AddToRegistry(Box, "TextColor3", "Text")
-                    
-                    Box.FocusLost:Connect(function() 
-                        ConfigObjects[text].Value = Box.Text
-                        callback(Box.Text) 
-                    end)
-                    ConfigObjects[text] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
+                local function Drag(input)
+                    local p = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+                    local newVal = math.floor(min + ((max - min) * p))
+                    Update(newVal)
                 end
 
-                function SectionElements:Dropdown(text, options, callback)
-                    local Dropped = false
-                    local Btn = Instance.new("TextButton")
-                    Btn.Size = UDim2.new(1,0,0,35)
-                    Btn.Text = ""
-                    Btn.Parent = ContentContainer
-                    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,6)
-                    AddToRegistry(Btn, "BackgroundColor3", "Top")
-                    local Lbl = Instance.new("TextLabel")
-                    Lbl.Text = text
-                    Lbl.Size = UDim2.new(1,-30,1,0)
-                    Lbl.Position = UDim2.new(0,10,0,0)
-                    Lbl.BackgroundTransparency = 1
-                    Lbl.Font = Enum.Font.Gotham
-                    Lbl.TextSize = 14
-                    Lbl.TextXAlignment = Enum.TextXAlignment.Left
-                    Lbl.Parent = Btn
-                    AddToRegistry(Lbl, "TextColor3", "Text")
-                    local Icon = Instance.new("ImageLabel")
-                    Icon.Image = "rbxassetid://6031091004"
-                    Icon.Size = UDim2.new(0,20,0,20)
-                    Icon.Position = UDim2.new(1,-30,0.5,-10)
-                    Icon.BackgroundTransparency = 1
-                    Icon.Parent = Btn
-                    
-                    local Container = Instance.new("Frame")
-                    Container.Size = UDim2.new(1,0,0,0)
+                local sliding
+                Bar.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=true; PlaySound(Sounds.Slide); Drag(i) end end)
+                UserInputService.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=false end end)
+                UserInputService.InputChanged:Connect(function(i) if sliding and i.UserInputType==Enum.UserInputType.MouseMovement then Drag(i) end end)
+                ConfigObjects[sliderText] = {Type = "Slider", Value = Val, Set = function(val) Update(val) end}
+            end
+
+            -- Textbox
+            child.Textbox = function(_, boxText, placeholder, callback)
+                local Frame = Instance.new("Frame")
+                Frame.Size = UDim2.new(1,0,0,60)
+                Frame.Parent = contentContainer
+                Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,6)
+                AddToRegistry(Frame, "BackgroundColor3", "Top")
+                local Lbl = Instance.new("TextLabel")
+                Lbl.Text = boxText
+                Lbl.Size = UDim2.new(1,0,0,20)
+                Lbl.Position = UDim2.new(0,10,0,5)
+                Lbl.BackgroundTransparency = 1
+                Lbl.Font = Enum.Font.Gotham
+                Lbl.TextSize = 14
+                Lbl.TextXAlignment = Enum.TextXAlignment.Left
+                Lbl.Parent = Frame
+                AddToRegistry(Lbl, "TextColor3", "Text")
+                local Box = Instance.new("TextBox")
+                Box.Size = UDim2.new(1,-20,0,25)
+                Box.Position = UDim2.new(0,10,0,28)
+                Box.Text = ""
+                Box.PlaceholderText = placeholder
+                Box.Font = Enum.Font.Gotham
+                Box.TextSize = 13
+                Box.Parent = Frame
+                Instance.new("UICorner", Box).CornerRadius = UDim.new(0,4)
+                AddToRegistry(Box, "BackgroundColor3", "Main")
+                AddToRegistry(Box, "TextColor3", "Text")
+
+                Box.FocusLost:Connect(function()
+                    ConfigObjects[boxText].Value = Box.Text
+                    callback(Box.Text)
+                end)
+                ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
+            end
+
+            -- Dropdown
+            child.Dropdown = function(_, dropText, options, callback)
+                local Dropped = false
+                local Btn = Instance.new("TextButton")
+                Btn.Size = UDim2.new(1,0,0,35)
+                Btn.Text = ""
+                Btn.Parent = contentContainer
+                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,6)
+                AddToRegistry(Btn, "BackgroundColor3", "Top")
+                local Lbl = Instance.new("TextLabel")
+                Lbl.Text = dropText
+                Lbl.Size = UDim2.new(1,-30,1,0)
+                Lbl.Position = UDim2.new(0,10,0,0)
+                Lbl.BackgroundTransparency = 1
+                Lbl.Font = Enum.Font.Gotham
+                Lbl.TextSize = 14
+                Lbl.TextXAlignment = Enum.TextXAlignment.Left
+                Lbl.Parent = Btn
+                AddToRegistry(Lbl, "TextColor3", "Text")
+                local Icon = Instance.new("ImageLabel")
+                Icon.Image = "rbxassetid://6031091004"
+                Icon.Size = UDim2.new(0,20,0,20)
+                Icon.Position = UDim2.new(1,-30,0.5,-10)
+                Icon.BackgroundTransparency = 1
+                Icon.Parent = Btn
+
+                local Container = Instance.new("Frame")
+                Container.Size = UDim2.new(1,0,0,0)
+                Container.Visible = false
+                Container.ClipsDescendants = true
+                Container.Parent = contentContainer
+                Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
+                AddToRegistry(Container, "BackgroundColor3", "Top")
+                local List = Instance.new("UIListLayout")
+                List.SortOrder = Enum.SortOrder.LayoutOrder
+                List.Parent = Container
+
+                local function Select(opt)
+                    Dropped = false
+                    Lbl.Text = dropText..": "..opt
+                    ConfigObjects[dropText].Value = opt
+                    callback(opt)
+                    Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
+                    Tween(Icon, {Rotation = 0}, 0.2)
+                    task.wait(0.2)
                     Container.Visible = false
-                    Container.ClipsDescendants = true
-                    Container.Parent = ContentContainer
-                    Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
-                    AddToRegistry(Container, "BackgroundColor3", "Top")
-                    local List = Instance.new("UIListLayout")
-                    List.SortOrder = Enum.SortOrder.LayoutOrder
-                    List.Parent = Container
+                end
 
-                    local function Select(opt)
-                        Dropped = false
-                        Lbl.Text = text..": "..opt
-                        ConfigObjects[text].Value = opt
-                        callback(opt)
+                local function RefreshOptions(newOpts)
+                    for _,v in pairs(Container:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
+                    for _, opt in pairs(newOpts) do
+                        local O = Instance.new("TextButton")
+                        O.Size = UDim2.new(1,0,0,30)
+                        O.Text = opt
+                        O.TextColor3 = Color3.fromRGB(150,150,150)
+                        O.Font = Enum.Font.Gotham
+                        O.TextSize = 13
+                        O.BackgroundTransparency = 1
+                        O.Parent = Container
+                        O.MouseButton1Click:Connect(function() Select(opt) end)
+                    end
+                end
+                RefreshOptions(options)
+
+                Btn.MouseButton1Click:Connect(function()
+                    Dropped = not Dropped
+                    PlaySound(Sounds.Click)
+                    if Dropped then
+                        Container.Visible = true
+                        Tween(Container, {Size = UDim2.new(1,0,0, #Container:GetChildren()*30)}, 0.3)
+                        Tween(Icon, {Rotation = 180}, 0.3)
+                    else
                         Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
                         Tween(Icon, {Rotation = 0}, 0.2)
                         task.wait(0.2)
                         Container.Visible = false
                     end
-                    
-                    local function RefreshOptions(newOpts)
-                        for _,v in pairs(Container:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
-                        for _, opt in pairs(newOpts) do
-                            local O = Instance.new("TextButton")
-                            O.Size = UDim2.new(1,0,0,30)
-                            O.Text = opt
-                            O.TextColor3 = Color3.fromRGB(150,150,150)
-                            O.Font = Enum.Font.Gotham
-                            O.TextSize = 13
-                            O.BackgroundTransparency = 1
-                            O.Parent = Container
-                            O.MouseButton1Click:Connect(function() Select(opt) end)
-                        end
+                end)
+
+                ConfigObjects[dropText] = {Type = "Dropdown", Value = options[1], Set = function(val) Select(val) end, Refresh = RefreshOptions}
+                return {Refresh = RefreshOptions}
+            end
+
+            -- Keybind
+            child.Keybind = function(_, keyText, default, callback)
+                local Key = default or Enum.KeyCode.M
+                local Btn = Instance.new("TextButton")
+                Btn.Size = UDim2.new(1, 0, 0, 40)
+                Btn.Text = ""
+                Btn.Parent = contentContainer
+                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(Btn, "BackgroundColor3", "Top")
+                local Title = Instance.new("TextLabel")
+                Title.Text = keyText
+                Title.Size = UDim2.new(0.6, 0, 1, 0)
+                Title.Position = UDim2.new(0, 10, 0, 0)
+                Title.BackgroundTransparency = 1
+                Title.Font = Enum.Font.Gotham
+                Title.TextSize = 14
+                Title.TextXAlignment = Enum.TextXAlignment.Left
+                Title.Parent = Btn
+                AddToRegistry(Title, "TextColor3", "Text")
+                local KeyLabel = Instance.new("TextLabel")
+                KeyLabel.Text = Key.Name
+                KeyLabel.Size = UDim2.new(0, 80, 0, 24)
+                KeyLabel.Position = UDim2.new(1, -90, 0.5, -12)
+                KeyLabel.Font = Enum.Font.GothamBold
+                KeyLabel.TextSize = 13
+                KeyLabel.Parent = Btn
+                Instance.new("UICorner", KeyLabel).CornerRadius = UDim.new(0, 5)
+                AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
+                AddToRegistry(KeyLabel, "TextColor3", "Accent")
+
+                Btn.MouseButton1Click:Connect(function()
+                    PlaySound(Sounds.Click)
+                    KeyLabel.Text = "..."
+                    local input = UserInputService.InputBegan:Wait()
+                    if input.KeyCode.Name ~= "Unknown" then
+                        Key = input.KeyCode
+                        KeyLabel.Text = Key.Name
+                        ConfigObjects[keyText] = {Type = "Keybind", Value = Key.Name}
+                        callback(Key)
+                        Window:Notification("Keybind: "..Key.Name)
+                    else
+                        KeyLabel.Text = Key.Name
                     end
-                    RefreshOptions(options)
-
-                    Btn.MouseButton1Click:Connect(function()
-                        Dropped = not Dropped
-                        PlaySound(Sounds.Click)
-                        if Dropped then
-                            Container.Visible = true
-                            Tween(Container, {Size = UDim2.new(1,0,0, #Container:GetChildren()*30)}, 0.3)
-                            Tween(Icon, {Rotation = 180}, 0.3)
-                        else
-                            Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
-                            Tween(Icon, {Rotation = 0}, 0.2)
-                            task.wait(0.2)
-                            Container.Visible = false
-                        end
-                    end)
-
-                    ConfigObjects[text] = {Type = "Dropdown", Value = options[1], Set = function(val) Select(val) end, Refresh = RefreshOptions}
-                    return {Refresh = RefreshOptions} 
-                end
-
-                function SectionElements:Keybind(text, default, callback)
-                    local Key = default or Enum.KeyCode.M
-                    local Btn = Instance.new("TextButton")
-                    Btn.Size = UDim2.new(1, 0, 0, 40)
-                    Btn.Text = ""
-                    Btn.Parent = ContentContainer
-                    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-                    AddToRegistry(Btn, "BackgroundColor3", "Top")
-                    local Title = Instance.new("TextLabel")
-                    Title.Text = text
-                    Title.Size = UDim2.new(0.6, 0, 1, 0)
-                    Title.Position = UDim2.new(0, 10, 0, 0)
-                    Title.BackgroundTransparency = 1
-                    Title.Font = Enum.Font.Gotham
-                    Title.TextSize = 14
-                    Title.TextXAlignment = Enum.TextXAlignment.Left
-                    Title.Parent = Btn
-                    AddToRegistry(Title, "TextColor3", "Text")
-                    local KeyLabel = Instance.new("TextLabel")
-                    KeyLabel.Text = Key.Name
-                    KeyLabel.Size = UDim2.new(0, 80, 0, 24)
-                    KeyLabel.Position = UDim2.new(1, -90, 0.5, -12)
-                    KeyLabel.Font = Enum.Font.GothamBold
-                    KeyLabel.TextSize = 13
-                    KeyLabel.Parent = Btn
-                    Instance.new("UICorner", KeyLabel).CornerRadius = UDim.new(0, 5)
-                    AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
-                    AddToRegistry(KeyLabel, "TextColor3", "Accent")
-
-                    Btn.MouseButton1Click:Connect(function()
-                        PlaySound(Sounds.Click)
-                        KeyLabel.Text = "..."
-                        local input = UserInputService.InputBegan:Wait()
-                        if input.KeyCode.Name ~= "Unknown" then 
-                            Key = input.KeyCode
-                            KeyLabel.Text = Key.Name
-                            ConfigObjects[text] = {Type = "Keybind", Value = Key.Name}
-                            callback(Key)
-                            Window:Notification("Keybind: "..Key.Name)
-                        else 
-                            KeyLabel.Text = Key.Name 
-                        end
-                    end)
-                    ConfigObjects[text] = {Type = "Keybind", Value = Key.Name, Set = function(val) Key = Enum.KeyCode[val] or Key; KeyLabel.Text = Key.Name; callback(Key) end}
-                end
-
-                function SectionElements:Value(text, default, callback)
-                    local ValFrame = Instance.new("Frame")
-                    ValFrame.Size = UDim2.new(1,0,0,35)
-                    ValFrame.Parent = ContentContainer
-                    Instance.new("UICorner", ValFrame).CornerRadius = UDim.new(0, 6)
-                    AddToRegistry(ValFrame, "BackgroundColor3", "Top")
-                    
-                    local NameLbl = Instance.new("TextLabel")
-                    NameLbl.Text = text
-                    NameLbl.Size = UDim2.new(0.6, 0, 1, 0)
-                    NameLbl.Position = UDim2.new(0, 10, 0, 0)
-                    NameLbl.TextXAlignment = Enum.TextXAlignment.Left
-                    NameLbl.Font = Enum.Font.Gotham
-                    NameLbl.TextSize = 14
-                    NameLbl.BackgroundTransparency = 1
-                    NameLbl.Parent = ValFrame
-                    AddToRegistry(NameLbl, "TextColor3", "Text")
-                    
-                    local ValBox = Instance.new("TextBox")
-                    ValBox.Text = tostring(default)
-                    ValBox.Size = UDim2.new(0.3, 0, 0, 26)
-                    ValBox.Position = UDim2.new(0.7, -10, 0.5, -13)
-                    ValBox.Font = Enum.Font.GothamBold
-                    ValBox.TextSize = 13
-                    ValBox.TextXAlignment = Enum.TextXAlignment.Center
-                    ValBox.Parent = ValFrame
-                    Instance.new("UICorner", ValBox).CornerRadius = UDim.new(0, 5)
-                    AddToRegistry(ValBox, "BackgroundColor3", "Main")
-                    AddToRegistry(ValBox, "TextColor3", "Accent")
-
-                    ValBox.FocusLost:Connect(function()
-                        PlaySound(Sounds.Click)
-                        ConfigObjects[text] = {Type = "Value", Value = ValBox.Text}
-                        if callback then callback(ValBox.Text) end
-                        Window:Notification(text..": "..ValBox.Text)
-                    end)
-
-                    ConfigObjects[text] = {Type = "Value", Value = default, Set = function(val) ValBox.Text = val end}
-                end
-
-                return SectionElements
-            else
-                -- 不可折叠，不返回元素添加器
-                return nil
-            end
-        end
-
-        -- ==================== 原有元素保持不变 ====================
-        function Elements:Value(text, default, callback)
-            local ValFrame = Instance.new("Frame")
-            ValFrame.Size = UDim2.new(1,0,0,35)
-            ValFrame.Parent = Page
-            Instance.new("UICorner", ValFrame).CornerRadius = UDim.new(0, 6)
-            AddToRegistry(ValFrame, "BackgroundColor3", "Top")
-            
-            local NameLbl = Instance.new("TextLabel")
-            NameLbl.Text = text
-            NameLbl.Size = UDim2.new(0.6, 0, 1, 0)
-            NameLbl.Position = UDim2.new(0, 10, 0, 0)
-            NameLbl.TextXAlignment = Enum.TextXAlignment.Left
-            NameLbl.Font = Enum.Font.Gotham
-            NameLbl.TextSize = 14
-            NameLbl.BackgroundTransparency = 1
-            NameLbl.Parent = ValFrame
-            AddToRegistry(NameLbl, "TextColor3", "Text")
-            
-            local ValBox = Instance.new("TextBox")
-            ValBox.Text = tostring(default)
-            ValBox.Size = UDim2.new(0.3, 0, 0, 26)
-            ValBox.Position = UDim2.new(0.7, -10, 0.5, -13)
-            ValBox.Font = Enum.Font.GothamBold
-            ValBox.TextSize = 13
-            ValBox.TextXAlignment = Enum.TextXAlignment.Center
-            ValBox.Parent = ValFrame
-            Instance.new("UICorner", ValBox).CornerRadius = UDim.new(0, 5)
-            AddToRegistry(ValBox, "BackgroundColor3", "Main")
-            AddToRegistry(ValBox, "TextColor3", "Accent")
-
-            ValBox.FocusLost:Connect(function()
-                PlaySound(Sounds.Click)
-                ConfigObjects[text] = {Type = "Value", Value = ValBox.Text}
-                if callback then callback(ValBox.Text) end
-                Window:Notification(text..": "..ValBox.Text)
-            end)
-
-            ConfigObjects[text] = {Type = "Value", Value = default, Set = function(val) ValBox.Text = val end}
-        end
-
-        function Elements:Keybind(text, default, callback)
-            local Key = default or Enum.KeyCode.M
-            local Btn = Instance.new("TextButton"); Btn.Size = UDim2.new(1, 0, 0, 40); Btn.Text = ""; Btn.Parent = Page; Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6); AddToRegistry(Btn, "BackgroundColor3", "Top")
-            local Title = Instance.new("TextLabel"); Title.Text = text; Title.Size = UDim2.new(0.6, 0, 1, 0); Title.Position = UDim2.new(0, 10, 0, 0); Title.BackgroundTransparency = 1; Title.Font = Enum.Font.Gotham; Title.TextSize = 14; Title.TextXAlignment = Enum.TextXAlignment.Left; Title.Parent = Btn; AddToRegistry(Title, "TextColor3", "Text")
-            local KeyLabel = Instance.new("TextLabel"); KeyLabel.Text = Key.Name; KeyLabel.Size = UDim2.new(0, 80, 0, 24); KeyLabel.Position = UDim2.new(1, -90, 0.5, -12); KeyLabel.Font = Enum.Font.GothamBold; KeyLabel.TextSize = 13; KeyLabel.Parent = Btn; Instance.new("UICorner", KeyLabel).CornerRadius = UDim.new(0, 5); AddToRegistry(KeyLabel, "BackgroundColor3", "Main"); AddToRegistry(KeyLabel, "TextColor3", "Accent")
-
-            Btn.MouseButton1Click:Connect(function()
-                PlaySound(Sounds.Click); KeyLabel.Text = "..."; local input = UserInputService.InputBegan:Wait()
-                if input.KeyCode.Name ~= "Unknown" then 
-                    Key = input.KeyCode; 
-                    KeyLabel.Text = Key.Name; 
-                    ConfigObjects[text] = {Type = "Keybind", Value = Key.Name}; 
-                    callback(Key)
-                    Window:Notification("Keybind: "..Key.Name)
-                else 
-                    KeyLabel.Text = Key.Name 
-                end
-            end)
-            ConfigObjects[text] = {Type = "Keybind", Value = Key.Name, Set = function(val) Key = Enum.KeyCode[val] or Key; KeyLabel.Text = Key.Name; callback(Key) end}
-        end
-
-        function Elements:Button(text, callback)
-            local Btn = Instance.new("TextButton"); Btn.Size = UDim2.new(1, 0, 0, 35); Btn.Text = text; Btn.Font = Enum.Font.Gotham; Btn.TextSize = 14; Btn.Parent = Page; Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6); AddToRegistry(Btn, "BackgroundColor3", "Top"); AddToRegistry(Btn, "TextColor3", "Text")
-            Btn.MouseButton1Click:Connect(function() PlaySound(Sounds.Click); Tween(Btn, {Size = UDim2.new(0.95, 0, 0, 32)}, 0.1); task.wait(0.1); Tween(Btn, {Size = UDim2.new(1, 0, 0, 35)}, 0.1); callback() end)
-        end
-
-        function Elements:Toggle(text, default, callback)
-            local Enabled = default or false
-            local Btn = Instance.new("TextButton"); Btn.Size = UDim2.new(1, 0, 0, 35); Btn.Text = ""; Btn.Parent = Page; Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6); AddToRegistry(Btn, "BackgroundColor3", "Top")
-            local Title = Instance.new("TextLabel"); Title.Text = text; Title.Size = UDim2.new(0.7,0,1,0); Title.Position = UDim2.new(0,10,0,0); Title.BackgroundTransparency = 1; Title.Font = Enum.Font.Gotham; Title.TextSize = 14; Title.TextXAlignment = Enum.TextXAlignment.Left; Title.Parent = Btn; AddToRegistry(Title, "TextColor3", "Text")
-            local Switch = Instance.new("Frame"); Switch.Size = UDim2.new(0,40,0,20); Switch.Position = UDim2.new(1,-50,0.5,-10); Switch.Parent = Btn; Instance.new("UICorner", Switch).CornerRadius = UDim.new(1,0); Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)
-            local Dot = Instance.new("Frame"); Dot.Size = UDim2.new(0,16,0,16); Dot.Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8); Dot.BackgroundColor3 = Color3.new(1,1,1); Dot.Parent = Switch; Instance.new("UICorner", Dot).CornerRadius = UDim.new(1,0)
-
-            local function Update()
-                if Enabled then PlaySound(Sounds.ToggleOn) else PlaySound(Sounds.ToggleOff) end
-                Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)})
-                Tween(Dot, {Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)})
-                ConfigObjects[text].Value = Enabled
-                callback(Enabled)
-                Window:Notification(text..": "..tostring(Enabled))
+                end)
+                ConfigObjects[keyText] = {Type = "Keybind", Value = Key.Name, Set = function(val) Key = Enum.KeyCode[val] or Key; KeyLabel.Text = Key.Name; callback(Key) end}
             end
 
-            Btn.MouseButton1Click:Connect(function() Enabled = not Enabled; Update() end)
-            ConfigObjects[text] = {Type = "Toggle", Value = Enabled, Set = function(val) Enabled = val; Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)}); Tween(Dot, {Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)}); callback(Enabled) end}
-        end
+            -- Value (文本输入)
+            child.Value = function(_, valText, default, callback)
+                local ValFrame = Instance.new("Frame")
+                ValFrame.Size = UDim2.new(1,0,0,35)
+                ValFrame.Parent = contentContainer
+                Instance.new("UICorner", ValFrame).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(ValFrame, "BackgroundColor3", "Top")
 
-        function Elements:Slider(text, min, max, default, callback)
-            local Val = default or min
-            local Frame = Instance.new("Frame"); Frame.Size = UDim2.new(1,0,0,50); Frame.Parent = Page; Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,6); AddToRegistry(Frame, "BackgroundColor3", "Top")
-            local Lbl = Instance.new("TextLabel"); Lbl.Text = text; Lbl.Size = UDim2.new(1,-20,0,20); Lbl.Position = UDim2.new(0,10,0,5); Lbl.BackgroundTransparency = 1; Lbl.Font = Enum.Font.Gotham; Lbl.TextSize = 14; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = Frame; AddToRegistry(Lbl, "TextColor3", "Text")
-            local Num = Instance.new("TextLabel"); Num.Text = tostring(Val); Num.Size = UDim2.new(0,40,0,20); Num.Position = UDim2.new(1,-50,0,5); Num.BackgroundTransparency = 1; Num.TextColor3 = Color3.fromRGB(150,150,150); Num.Font = Enum.Font.Gotham; Num.TextSize = 12; Num.Parent = Frame
-            local Bar = Instance.new("TextButton"); Bar.Text = ""; Bar.Size = UDim2.new(1,-20,0,6); Bar.Position = UDim2.new(0,10,0,35); Bar.BackgroundColor3 = Color3.fromRGB(60,60,60); Bar.AutoButtonColor = false; Bar.Parent = Frame; Instance.new("UICorner", Bar).CornerRadius = UDim.new(1,0)
-            local Fill = Instance.new("Frame"); Fill.Size = UDim2.new((Val-min)/(max-min),0,1,0); Fill.Parent = Bar; Instance.new("UICorner", Fill).CornerRadius = UDim.new(1,0); AddToRegistry(Fill, "BackgroundColor3", "Accent")
+                local NameLbl = Instance.new("TextLabel")
+                NameLbl.Text = valText
+                NameLbl.Size = UDim2.new(0.6, 0, 1, 0)
+                NameLbl.Position = UDim2.new(0, 10, 0, 0)
+                NameLbl.TextXAlignment = Enum.TextXAlignment.Left
+                NameLbl.Font = Enum.Font.Gotham
+                NameLbl.TextSize = 14
+                NameLbl.BackgroundTransparency = 1
+                NameLbl.Parent = ValFrame
+                AddToRegistry(NameLbl, "TextColor3", "Text")
 
-            local function Update(val_new)
-                Val = val_new
-                local p = (Val - min) / (max - min)
-                Tween(Fill, {Size = UDim2.new(p,0,1,0)}, 0.1)
-                Num.Text = tostring(Val)
-                ConfigObjects[text].Value = Val
-                callback(Val)
+                local ValBox = Instance.new("TextBox")
+                ValBox.Text = tostring(default)
+                ValBox.Size = UDim2.new(0.3, 0, 0, 26)
+                ValBox.Position = UDim2.new(0.7, -10, 0.5, -13)
+                ValBox.Font = Enum.Font.GothamBold
+                ValBox.TextSize = 13
+                ValBox.TextXAlignment = Enum.TextXAlignment.Center
+                ValBox.Parent = ValFrame
+                Instance.new("UICorner", ValBox).CornerRadius = UDim.new(0, 5)
+                AddToRegistry(ValBox, "BackgroundColor3", "Main")
+                AddToRegistry(ValBox, "TextColor3", "Accent")
+
+                ValBox.FocusLost:Connect(function()
+                    PlaySound(Sounds.Click)
+                    ConfigObjects[valText] = {Type = "Value", Value = ValBox.Text}
+                    if callback then callback(ValBox.Text) end
+                    Window:Notification(valText..": "..ValBox.Text)
+                end)
+
+                ConfigObjects[valText] = {Type = "Value", Value = default, Set = function(val) ValBox.Text = val end}
             end
 
-            local function Drag(input)
-                local p = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-                local newVal = math.floor(min + ((max - min) * p))
-                Update(newVal)
-            end
-
-            local sliding
-            Bar.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=true; PlaySound(Sounds.Slide); Drag(i) end end)
-            UserInputService.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=false end end)
-            UserInputService.InputChanged:Connect(function(i) if sliding and i.UserInputType==Enum.UserInputType.MouseMovement then Drag(i) end end)
-            ConfigObjects[text] = {Type = "Slider", Value = Val, Set = function(val) Update(val) end}
+            return child
         end
 
-        function Elements:Textbox(text, placeholder, callback)
-            local Frame = Instance.new("Frame"); Frame.Size = UDim2.new(1,0,0,60); Frame.Parent = Page; Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,6); AddToRegistry(Frame, "BackgroundColor3", "Top")
-            local Lbl = Instance.new("TextLabel"); Lbl.Text = text; Lbl.Size = UDim2.new(1,0,0,20); Lbl.Position = UDim2.new(0,10,0,5); Lbl.BackgroundTransparency = 1; Lbl.Font = Enum.Font.Gotham; Lbl.TextSize = 14; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = Frame; AddToRegistry(Lbl, "TextColor3", "Text")
-            local Box = Instance.new("TextBox"); Box.Size = UDim2.new(1,-20,0,25); Box.Position = UDim2.new(0,10,0,28); Box.Text = ""; Box.PlaceholderText = placeholder; Box.Font = Enum.Font.Gotham; Box.TextSize = 13; Box.Parent = Frame; Instance.new("UICorner", Box).CornerRadius = UDim.new(0,4); AddToRegistry(Box, "BackgroundColor3", "Main"); AddToRegistry(Box, "TextColor3", "Text")
-            
-            Box.FocusLost:Connect(function() 
-                ConfigObjects[text].Value = Box.Text
-                callback(Box.Text) 
-            end)
-            ConfigObjects[text] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
-        end
-
-        function Elements:Dropdown(text, options, callback)
-            local Dropped = false
-            local Btn = Instance.new("TextButton"); Btn.Size = UDim2.new(1,0,0,35); Btn.Text = ""; Btn.Parent = Page; Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,6); AddToRegistry(Btn, "BackgroundColor3", "Top")
-            local Lbl = Instance.new("TextLabel"); Lbl.Text = text; Lbl.Size = UDim2.new(1,-30,1,0); Lbl.Position = UDim2.new(0,10,0,0); Lbl.BackgroundTransparency = 1; Lbl.Font = Enum.Font.Gotham; Lbl.TextSize = 14; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = Btn; AddToRegistry(Lbl, "TextColor3", "Text")
-            local Icon = Instance.new("ImageLabel"); Icon.Image = "rbxassetid://6031091004"; Icon.Size = UDim2.new(0,20,0,20); Icon.Position = UDim2.new(1,-30,0.5,-10); Icon.BackgroundTransparency = 1; Icon.Parent = Btn
-            
-            local Container = Instance.new("Frame"); Container.Size = UDim2.new(1,0,0,0); Container.Visible = false; Container.ClipsDescendants = true; Container.Parent = Page; Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6); AddToRegistry(Container, "BackgroundColor3", "Top")
-            local List = Instance.new("UIListLayout"); List.SortOrder = Enum.SortOrder.LayoutOrder; List.Parent = Container
-
-            local function Select(opt)
-                Dropped = false; Lbl.Text = text..": "..opt; 
-                ConfigObjects[text].Value = opt
-                callback(opt)
-                Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2); Tween(Icon, {Rotation = 0}, 0.2); task.wait(0.2); Container.Visible = false
-            end
-            
-            local function RefreshOptions(newOpts)
-                for _,v in pairs(Container:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
-                for _, opt in pairs(newOpts) do
-                    local O = Instance.new("TextButton"); O.Size = UDim2.new(1,0,0,30); O.Text = opt; O.TextColor3 = Color3.fromRGB(150,150,150); O.Font = Enum.Font.Gotham; O.TextSize = 13; O.BackgroundTransparency = 1; O.Parent = Container
-                    O.MouseButton1Click:Connect(function() Select(opt) end)
-                end
-            end
-            RefreshOptions(options)
-
-            Btn.MouseButton1Click:Connect(function()
-                Dropped = not Dropped
-                PlaySound(Sounds.Click)
-                if Dropped then Container.Visible = true; Tween(Container, {Size = UDim2.new(1,0,0, #Container:GetChildren()*30)}, 0.3); Tween(Icon, {Rotation = 180}, 0.3)
-                else Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2); Tween(Icon, {Rotation = 0}, 0.2); task.wait(0.2); Container.Visible = false end
-            end)
-
-            ConfigObjects[text] = {Type = "Dropdown", Value = options[1], Set = function(val) Select(val) end, Refresh = RefreshOptions}
-            return {Refresh = RefreshOptions} 
-        end
         return Elements
     end
 
