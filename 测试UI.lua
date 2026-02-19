@@ -5,6 +5,7 @@ local CoreGui = game:GetService("CoreGui")
 local SoundService = game:GetService("SoundService")
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService") 
+local TextService = game:GetService("TextService")  -- 用于计算文本宽度
 local LocalPlayer = Players.LocalPlayer
 
 local Library = {}
@@ -255,25 +256,25 @@ function Library:CreateWindow(Config)
     function Window:Destroy() ScreenGui:Destroy() end
 
     local firstTab = true
-    -- Tab 函数，增加 icon 参数，使用水平布局避免覆盖
+    -- Tab 函数，图标与文字整体居中
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
         TabBtn.BackgroundTransparency = 1
-        TabBtn.Text = ""  -- 清空文字，改用自定义 Label
+        TabBtn.Text = ""
         TabBtn.Parent = TabContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
 
-        -- 创建容器用于水平布局图标和文字
+        -- 容器，填满按钮，用于居中内容
         local ContentFrame = Instance.new("Frame")
-        ContentFrame.Size = UDim2.new(1, -10, 1, 0)
-        ContentFrame.Position = UDim2.new(0, 5, 0, 0)
+        ContentFrame.Size = UDim2.new(1, 0, 1, 0)
         ContentFrame.BackgroundTransparency = 1
         ContentFrame.Parent = TabBtn
 
+        -- 水平布局，整体居中
         local Layout = Instance.new("UIListLayout")
         Layout.FillDirection = Enum.FillDirection.Horizontal
-        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         Layout.VerticalAlignment = Enum.VerticalAlignment.Center
         Layout.Padding = UDim.new(0, 5)
         Layout.Parent = ContentFrame
@@ -289,13 +290,13 @@ function Library:CreateWindow(Config)
                 TabIcon.Image = icon
             end
             TabIcon.Parent = ContentFrame
-            -- 图标颜色跟随主题文字
             AddToRegistry(TabIcon, "ImageColor3", "Text")
         end
 
-        -- 文字标签
+        -- 文字标签，宽度根据文本内容自动计算
         local TabText = Instance.new("TextLabel")
-        TabText.Size = UDim2.new(1, -(icon and 25 or 0), 1, 0)
+        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
+        TabText.Size = UDim2.new(0, textWidth, 1, 0)
         TabText.BackgroundTransparency = 1
         TabText.Font = Enum.Font.GothamMedium
         TabText.Text = name
@@ -303,7 +304,6 @@ function Library:CreateWindow(Config)
         TabText.TextSize = 14
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
-        -- 文字颜色注册到主题
         AddToRegistry(TabText, "TextColor3", "Text")
 
         local Page = Instance.new("ScrollingFrame")
@@ -323,11 +323,13 @@ function Library:CreateWindow(Config)
             PlaySound(Sounds.Tab) 
             for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
             for _, v in pairs(TabContainer:GetChildren()) do if v:IsA("TextButton") then 
-                -- 重置其他按钮样式
                 Tween(v, {BackgroundTransparency = 1})
-                local textLabel = v:FindFirstChild("ContentFrame") and v.ContentFrame:FindFirstChildOfClass("TextLabel")
-                if textLabel then
-                    Tween(textLabel, {TextColor3 = Color3.fromRGB(150,150,150)})
+                local content = v:FindFirstChild("ContentFrame")
+                if content then
+                    local textLabel = content:FindFirstChildOfClass("TextLabel")
+                    if textLabel then
+                        Tween(textLabel, {TextColor3 = Color3.fromRGB(150,150,150)})
+                    end
                 end
             end end
             Page.Visible = true
@@ -347,10 +349,10 @@ function Library:CreateWindow(Config)
 
         local Elements = {}
 
-        -- Section 函数，增加 icon 参数，图标不注册颜色（保持原色）
+        -- Section 函数，文字大小增大至16
         function Elements:Section(text, icon)
             local SectionFrame = Instance.new("Frame")
-            SectionFrame.Size = UDim2.new(1, 0, 0, 24)
+            SectionFrame.Size = UDim2.new(1, 0, 0, 28)  -- 高度增加以容纳大文字
             SectionFrame.BackgroundTransparency = 1
             SectionFrame.Parent = Page
 
@@ -371,15 +373,15 @@ function Library:CreateWindow(Config)
                     IconLabel.Image = icon
                 end
                 IconLabel.Parent = SectionFrame
-                -- 不注册颜色，图标保持原色（通常为白色）
+                -- 图标不注册颜色，保持原色
             end
 
             local TextLabel = Instance.new("TextLabel")
             TextLabel.Text = text
-            TextLabel.Size = UDim2.new(1, icon and -21 or 0, 0, 20)
+            TextLabel.Size = UDim2.new(1, icon and -21 or 0, 0, 24)  -- 高度24
             TextLabel.BackgroundTransparency = 1
             TextLabel.Font = Enum.Font.GothamBold
-            TextLabel.TextSize = 12
+            TextLabel.TextSize = 16  -- 文字大小16
             TextLabel.TextXAlignment = Enum.TextXAlignment.Left
             TextLabel.Parent = SectionFrame
             AddToRegistry(TextLabel, "TextColor3", "Accent")
@@ -551,7 +553,6 @@ function Library:CreateWindow(Config)
         return Elements
     end
 
-    -- 注意：已移除内置的 Config 与 Settings 标签页，如需添加请参照示例
     return Window
 end
 
