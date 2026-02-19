@@ -75,6 +75,11 @@ end
 function Library:ToggleRainbow(bool) RainbowEnabled = bool end
 function Library:SetRainbowType(val) RainbowType = val end
 
+-- SFX CONTROL (public method)
+function Library:SetSFXEnabled(state)
+    SFXEnabled = state
+end
+
 function Library:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "M0dzn UI"
@@ -463,6 +468,11 @@ function Library:CreateWindow(Config)
     -- 如果你需要配置管理或个性化设置功能，请参考文件末尾的示例代码手动添加。
 
     return Window
+end
+
+-- 公开方法：控制音效开关
+function Library:SetSFXEnabled(state)
+    SFXEnabled = state
 end
 
 return Library
