@@ -87,6 +87,7 @@ function Library:CreateWindow(Config)
     
     Window.RootFolder = Title 
     Window.ConfigFolder = Title.."/Config"
+    -- Window.CurrentConfig = ""   -- 已移除（由 Config 标签页使用）
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "M0dznLib_V1.2"
@@ -255,8 +256,7 @@ function Library:CreateWindow(Config)
     function Window:Destroy() ScreenGui:Destroy() end
 
     local firstTab = true
-    -- 修改 Tab 函数，增加 icon 参数，并在文字左侧显示图标（移除特效动画）
-    function Window:Tab(name, icon)
+    function Window:Tab(name)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
         TabBtn.BackgroundTransparency = 1
@@ -264,26 +264,8 @@ function Library:CreateWindow(Config)
         TabBtn.Font = Enum.Font.GothamMedium
         TabBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
         TabBtn.TextSize = 14
-        TabBtn.TextXAlignment = Enum.TextXAlignment.Left
         TabBtn.Parent = TabContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
-
-        -- 左侧图标（如果提供）
-        if icon then
-            local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 20, 0, 20)
-            TabIcon.Position = UDim2.new(0, 5, 0.5, -10)
-            TabIcon.BackgroundTransparency = 1
-            -- 判断 icon 是否为纯数字（asset id）
-            if tonumber(icon) then
-                TabIcon.Image = "rbxassetid://" .. icon
-            else
-                TabIcon.Image = icon
-            end
-            TabIcon.Parent = TabBtn
-            -- 注册图标颜色跟随主题文字颜色（可调整）
-            AddToRegistry(TabIcon, "ImageColor3", "Text")
-        end
 
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
@@ -312,45 +294,8 @@ function Library:CreateWindow(Config)
 
         local Elements = {}
 
-        -- 修改 Section 函数，增加 icon 参数，并在文字左侧显示图标
-        function Elements:Section(text, icon)
-            local SectionFrame = Instance.new("Frame")
-            SectionFrame.Size = UDim2.new(1, 0, 0, 24) -- 高度稍大以容纳图标
-            SectionFrame.BackgroundTransparency = 1
-            SectionFrame.Parent = Page
-
-            -- 水平布局放置图标和文字
-            local Layout = Instance.new("UIListLayout")
-            Layout.FillDirection = Enum.FillDirection.Horizontal
-            Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-            Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-            Layout.Padding = UDim.new(0, 5)
-            Layout.Parent = SectionFrame
-
-            local IconLabel
-            if icon then
-                IconLabel = Instance.new("ImageLabel")
-                IconLabel.Size = UDim2.new(0, 16, 0, 16)
-                IconLabel.BackgroundTransparency = 1
-                if tonumber(icon) then
-                    IconLabel.Image = "rbxassetid://" .. icon
-                else
-                    IconLabel.Image = icon
-                end
-                IconLabel.Parent = SectionFrame
-                -- 图标颜色跟随强调色
-                AddToRegistry(IconLabel, "ImageColor3", "Accent")
-            end
-
-            local TextLabel = Instance.new("TextLabel")
-            TextLabel.Text = text
-            TextLabel.Size = UDim2.new(1, icon and -21 or 0, 0, 20) -- 减去图标宽度
-            TextLabel.BackgroundTransparency = 1
-            TextLabel.Font = Enum.Font.GothamBold
-            TextLabel.TextSize = 12
-            TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-            TextLabel.Parent = SectionFrame
-            AddToRegistry(TextLabel, "TextColor3", "Accent")
+        function Elements:Section(text)
+            local S = Instance.new("TextLabel"); S.Text = text; S.Size = UDim2.new(1, 0, 0, 20); S.BackgroundTransparency = 1; S.Font = Enum.Font.GothamBold; S.TextSize = 12; S.TextXAlignment = Enum.TextXAlignment.Left; S.Parent = Page; AddToRegistry(S, "TextColor3", "Accent")
         end
 
         function Elements:Value(text, default, callback)
@@ -519,7 +464,9 @@ function Library:CreateWindow(Config)
         return Elements
     end
 
-    -- 注意：已移除内置的 Config 与 Settings 标签页，如需添加请参照示例
+    -- ！！！注意：此处已移除内置的 Config 与 Settings 标签页 ！！！
+    -- 如果你需要配置管理或个性化设置功能，请参考文件末尾的示例代码手动添加。
+
     return Window
 end
 
