@@ -354,15 +354,30 @@ function Library:CreateWindow(Config)
             -- 默认展开状态（如果没有提供，默认展开）
             if defaultOpen == nil then defaultOpen = true end
 
+            -- 辅助函数：将数字/字符串转换为完整 asset url
+            local function formatAssetId(id)
+                if type(id) == "number" then
+                    return "rbxassetid://" .. tostring(id)
+                elseif type(id) == "string" then
+                    if tonumber(id) then
+                        return "rbxassetid://" .. id
+                    else
+                        return id
+                    end
+                else
+                    return nil
+                end
+            end
+
             -- 处理图标
             local iconOpen, iconClosed
             if type(icons) == "table" then
-                iconOpen = icons.Y or icons.open
-                iconClosed = icons.F or icons.closed
+                iconOpen = formatAssetId(icons.Y or icons.open) or "rbxassetid://6031091004"
+                iconClosed = formatAssetId(icons.F or icons.closed) or "rbxassetid://6031091004"
             else
-                -- 如果 icons 是单个值，则作为共用图标（通过旋转区分方向）
-                iconOpen = icons or "rbxassetid://6031091004"  -- 默认箭头图标
-                iconClosed = iconOpen  -- 同一个
+                local defaultIcon = formatAssetId(icons) or "rbxassetid://6031091004"
+                iconOpen = defaultIcon
+                iconClosed = defaultIcon
             end
 
             -- Section 主框架
