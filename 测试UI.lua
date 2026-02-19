@@ -87,7 +87,6 @@ function Library:CreateWindow(Config)
     
     Window.RootFolder = Title 
     Window.ConfigFolder = Title.."/Config"
-    -- Window.CurrentConfig = ""   -- 已移除（由 Config 标签页使用）
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "M0dznLib_V1.2"
@@ -256,44 +255,35 @@ function Library:CreateWindow(Config)
     function Window:Destroy() ScreenGui:Destroy() end
 
     local firstTab = true
+    -- 修改 Tab 函数，增加 icon 参数，并在文字左侧显示图标（移除特效动画）
     function Window:Tab(name, icon)
-        icon = icon or "rbxassetid://84830962019412" -- 默认图标
+        local TabBtn = Instance.new("TextButton")
+        TabBtn.Size = UDim2.new(1, 0, 0, 32)
+        TabBtn.BackgroundTransparency = 1
+        TabBtn.Text = name
+        TabBtn.Font = Enum.Font.GothamMedium
+        TabBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+        TabBtn.TextSize = 14
+        TabBtn.TextXAlignment = Enum.TextXAlignment.Left
+        TabBtn.Parent = TabContainer
+        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
 
-        -- 创建标签容器
-        local TabContainerItem = Instance.new("Frame")
-        TabContainerItem.Size = UDim2.new(1, 0, 0, 32)
-        TabContainerItem.BackgroundTransparency = 1
-        TabContainerItem.BackgroundColor3 = Color3.new(1,1,1) -- 占位
-        TabContainerItem.Parent = TabContainer
-        Instance.new("UICorner", TabContainerItem).CornerRadius = UDim.new(0, 6)
-
-        -- 图标
-        local TabIcon = Instance.new("ImageLabel")
-        TabIcon.Size = UDim2.new(0, 20, 0, 20)
-        TabIcon.Position = UDim2.new(0, 5, 0.5, -10)
-        TabIcon.BackgroundTransparency = 1
-        TabIcon.Image = icon
-        TabIcon.ImageColor3 = Color3.fromRGB(150,150,150) -- 默认灰色
-        TabIcon.Parent = TabContainerItem
-
-        -- 文字
-        local TabLabel = Instance.new("TextLabel")
-        TabLabel.Size = UDim2.new(1, -30, 1, 0)
-        TabLabel.Position = UDim2.new(0, 30, 0, 0)
-        TabLabel.BackgroundTransparency = 1
-        TabLabel.Text = name
-        TabLabel.Font = Enum.Font.GothamMedium
-        TabLabel.TextColor3 = Color3.fromRGB(150,150,150)
-        TabLabel.TextSize = 14
-        TabLabel.TextXAlignment = Enum.TextXAlignment.Left
-        TabLabel.Parent = TabContainerItem
-
-        -- 点击区域
-        local TabHitbox = Instance.new("TextButton")
-        TabHitbox.Size = UDim2.new(1, 0, 1, 0)
-        TabHitbox.BackgroundTransparency = 1
-        TabHitbox.Text = ""
-        TabHitbox.Parent = TabContainerItem
+        -- 左侧图标（如果提供）
+        if icon then
+            local TabIcon = Instance.new("ImageLabel")
+            TabIcon.Size = UDim2.new(0, 20, 0, 20)
+            TabIcon.Position = UDim2.new(0, 5, 0.5, -10)
+            TabIcon.BackgroundTransparency = 1
+            -- 判断 icon 是否为纯数字（asset id）
+            if tonumber(icon) then
+                TabIcon.Image = "rbxassetid://" .. icon
+            else
+                TabIcon.Image = icon
+            end
+            TabIcon.Parent = TabBtn
+            -- 注册图标颜色跟随主题文字颜色（可调整）
+            AddToRegistry(TabIcon, "ImageColor3", "Text")
+        end
 
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
@@ -308,74 +298,59 @@ function Library:CreateWindow(Config)
         PageList.Parent = Page
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() Page.CanvasSize = UDim2.new(0,0,0, PageList.AbsoluteContentSize.Y + 10) end)
 
-        -- 存储页面引用
-        TabContainerItem.Page = Page
-
-        TabHitbox.MouseButton1Click:Connect(function()
+        TabBtn.MouseButton1Click:Connect(function()
             PlaySound(Sounds.Tab) 
-            -- 隐藏所有页面
-            for _, v in pairs(PageContainer:GetChildren()) do
-                v.Visible = false
-            end
-            -- 重置所有标签样式
-            for _, v in pairs(TabContainer:GetChildren()) do
-                if v:IsA("Frame") and v ~= TabContainerItem then
-                    Tween(v, {BackgroundTransparency = 1}, 0.3)
-                    local iconImg = v:FindFirstChildOfClass("ImageLabel")
-                    if iconImg then
-                        Tween(iconImg, {ImageColor3 = Color3.fromRGB(150,150,150)}, 0.3)
-                    end
-                    local textLbl = v:FindFirstChildOfClass("TextLabel")
-                    if textLbl then
-                        Tween(textLbl, {TextColor3 = Color3.fromRGB(150,150,150)}, 0.3)
-                    end
-                end
-            end
-            -- 设置当前标签样式
-            Page.Visible = true
-            Tween(TabContainerItem, {BackgroundTransparency = 0.9, BackgroundColor3 = CurrentTheme.Accent}, 0.3)
-            Tween(TabIcon, {ImageColor3 = CurrentTheme.Text}, 0.3)
-            Tween(TabLabel, {TextColor3 = CurrentTheme.Text}, 0.3)
+            for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
+            for _, v in pairs(TabContainer:GetChildren()) do if v:IsA("TextButton") then Tween(v, {BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(150,150,150)}) end end
+            Page.Visible = true; Tween(TabBtn, {BackgroundTransparency = 0.9, TextColor3 = CurrentTheme.Text}); Tween(TabBtn, {BackgroundColor3 = CurrentTheme.Accent})
         end)
 
-        if firstTab then
-            firstTab = false
-            Page.Visible = true
-            TabContainerItem.BackgroundTransparency = 0.9
-            TabContainerItem.BackgroundColor3 = CurrentTheme.Accent
-            TabIcon.ImageColor3 = CurrentTheme.Text
-            TabLabel.TextColor3 = CurrentTheme.Text
-        end
+        if firstTab then firstTab = false; Page.Visible = true; TabBtn.TextColor3 = CurrentTheme.Text; TabBtn.BackgroundTransparency = 0.9; TabBtn.BackgroundColor3 = CurrentTheme.Accent end
 
-        if name == "Config" then TabContainerItem.LayoutOrder = 99998 end
-        if name == "Settings" then TabContainerItem.LayoutOrder = 99999 end
+        if name == "Config" then TabBtn.LayoutOrder = 99998 end
+        if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
         local Elements = {}
 
-        function Elements:Section(text)
-            local SectionHeader = Instance.new("Frame")
-            SectionHeader.Size = UDim2.new(1, 0, 0, 24)
-            SectionHeader.BackgroundTransparency = 1
-            SectionHeader.Parent = Page
+        -- 修改 Section 函数，增加 icon 参数，并在文字左侧显示图标
+        function Elements:Section(text, icon)
+            local SectionFrame = Instance.new("Frame")
+            SectionFrame.Size = UDim2.new(1, 0, 0, 24) -- 高度稍大以容纳图标
+            SectionFrame.BackgroundTransparency = 1
+            SectionFrame.Parent = Page
 
-            local SectionIcon = Instance.new("ImageLabel")
-            SectionIcon.Size = UDim2.new(0, 16, 0, 16)
-            SectionIcon.Position = UDim2.new(0, 4, 0.5, -8)
-            SectionIcon.BackgroundTransparency = 1
-            SectionIcon.Image = "rbxassetid://84830962019412"
-            SectionIcon.Parent = SectionHeader
-            AddToRegistry(SectionIcon, "ImageColor3", "Accent") -- 图标颜色随主题强调色
+            -- 水平布局放置图标和文字
+            local Layout = Instance.new("UIListLayout")
+            Layout.FillDirection = Enum.FillDirection.Horizontal
+            Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+            Layout.VerticalAlignment = Enum.VerticalAlignment.Center
+            Layout.Padding = UDim.new(0, 5)
+            Layout.Parent = SectionFrame
 
-            local SectionLabel = Instance.new("TextLabel")
-            SectionLabel.Size = UDim2.new(1, -24, 1, 0)
-            SectionLabel.Position = UDim2.new(0, 24, 0, 0)
-            SectionLabel.BackgroundTransparency = 1
-            SectionLabel.Text = text
-            SectionLabel.Font = Enum.Font.GothamBold
-            SectionLabel.TextSize = 12
-            SectionLabel.TextXAlignment = Enum.TextXAlignment.Left
-            SectionLabel.Parent = SectionHeader
-            AddToRegistry(SectionLabel, "TextColor3", "Accent") -- 文字颜色也是 Accent
+            local IconLabel
+            if icon then
+                IconLabel = Instance.new("ImageLabel")
+                IconLabel.Size = UDim2.new(0, 16, 0, 16)
+                IconLabel.BackgroundTransparency = 1
+                if tonumber(icon) then
+                    IconLabel.Image = "rbxassetid://" .. icon
+                else
+                    IconLabel.Image = icon
+                end
+                IconLabel.Parent = SectionFrame
+                -- 图标颜色跟随强调色
+                AddToRegistry(IconLabel, "ImageColor3", "Accent")
+            end
+
+            local TextLabel = Instance.new("TextLabel")
+            TextLabel.Text = text
+            TextLabel.Size = UDim2.new(1, icon and -21 or 0, 0, 20) -- 减去图标宽度
+            TextLabel.BackgroundTransparency = 1
+            TextLabel.Font = Enum.Font.GothamBold
+            TextLabel.TextSize = 12
+            TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+            TextLabel.Parent = SectionFrame
+            AddToRegistry(TextLabel, "TextColor3", "Accent")
         end
 
         function Elements:Value(text, default, callback)
@@ -544,9 +519,7 @@ function Library:CreateWindow(Config)
         return Elements
     end
 
-    -- ！！！注意：此处已移除内置的 Config 与 Settings 标签页 ！！！
-    -- 如果你需要配置管理或个性化设置功能，请参考文件末尾的示例代码手动添加。
-
+    -- 注意：已移除内置的 Config 与 Settings 标签页，如需添加请参照示例
     return Window
 end
 
