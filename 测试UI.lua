@@ -5,7 +5,7 @@ local CoreGui = game:GetService("CoreGui")
 local SoundService = game:GetService("SoundService")
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService") 
-local TextService = game:GetService("TextService")  -- 用于计算文本宽度
+local TextService = game:GetService("TextService")
 local LocalPlayer = Players.LocalPlayer
 
 local Library = {}
@@ -349,10 +349,10 @@ function Library:CreateWindow(Config)
 
         local Elements = {}
 
-        -- Section 函数，文字大小增大至16
+        -- Section 函数，文字大小增大至 18
         function Elements:Section(text, icon)
             local SectionFrame = Instance.new("Frame")
-            SectionFrame.Size = UDim2.new(1, 0, 0, 28)  -- 高度增加以容纳大文字
+            SectionFrame.Size = UDim2.new(1, 0, 0, 30)  -- 高度增加以适应大文字
             SectionFrame.BackgroundTransparency = 1
             SectionFrame.Parent = Page
 
@@ -378,10 +378,10 @@ function Library:CreateWindow(Config)
 
             local TextLabel = Instance.new("TextLabel")
             TextLabel.Text = text
-            TextLabel.Size = UDim2.new(1, icon and -21 or 0, 0, 24)  -- 高度24
+            TextLabel.Size = UDim2.new(1, icon and -21 or 0, 0, 26)  -- 高度 26 以容纳 18 号字体
             TextLabel.BackgroundTransparency = 1
             TextLabel.Font = Enum.Font.GothamBold
-            TextLabel.TextSize = 16  -- 文字大小16
+            TextLabel.TextSize = 18  -- 文字大小 18
             TextLabel.TextXAlignment = Enum.TextXAlignment.Left
             TextLabel.Parent = SectionFrame
             AddToRegistry(TextLabel, "TextColor3", "Accent")
