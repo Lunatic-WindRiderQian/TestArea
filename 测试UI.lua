@@ -82,7 +82,7 @@ function Library:CreateWindow(Config)
     
     Window.RootFolder = Title 
     Window.ConfigFolder = Title.."/Config"
-    Window.CurrentConfig = ""
+    -- Window.CurrentConfig = ""   -- 已移除（由 Config 标签页使用）
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "M0dznLib_V1.2"
@@ -98,8 +98,6 @@ function Library:CreateWindow(Config)
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
-
-    -- BACKGROUND REMOVED
 
     local Stroke = Instance.new("UIStroke")
     Stroke.Thickness = 2
@@ -215,7 +213,7 @@ function Library:CreateWindow(Config)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
-    -- 窗口展开动画（尺寸改为 450×280）
+    -- 窗口展开动画（尺寸 450×280）
     Tween(MainFrame, {Size = UDim2.new(0, 450, 0, 280)}, 0.6)
 
     local dragging, dragInput, dragStart, startPos
@@ -234,7 +232,6 @@ function Library:CreateWindow(Config)
             MainFrame.Visible = not MainFrame.Visible
             if MainFrame.Visible then 
                 MainFrame.Size = UDim2.new(0,0,0,0)
-                -- 重新打开时也设为 450×280
                 Tween(MainFrame, {Size = UDim2.new(0, 450, 0, 280)}, 0.4)
             end
         end
@@ -301,7 +298,7 @@ function Library:CreateWindow(Config)
             ValFrame.Size = UDim2.new(1,0,0,35)
             ValFrame.Parent = Page
             Instance.new("UICorner", ValFrame).CornerRadius = UDim.new(0, 6)
-            AddToRegistry(ValFrame, "BackgroundColor3", "Top") -- Added background color
+            AddToRegistry(ValFrame, "BackgroundColor3", "Top")
             
             local NameLbl = Instance.new("TextLabel")
             NameLbl.Text = text
@@ -330,7 +327,7 @@ function Library:CreateWindow(Config)
                 PlaySound(Sounds.Click)
                 ConfigObjects[text] = {Type = "Value", Value = ValBox.Text}
                 if callback then callback(ValBox.Text) end
-                Window:Notification(text..": "..ValBox.Text) -- Added Notification
+                Window:Notification(text..": "..ValBox.Text)
             end)
 
             ConfigObjects[text] = {Type = "Value", Value = default, Set = function(val) ValBox.Text = val end}
@@ -349,7 +346,7 @@ function Library:CreateWindow(Config)
                     KeyLabel.Text = Key.Name; 
                     ConfigObjects[text] = {Type = "Keybind", Value = Key.Name}; 
                     callback(Key)
-                    Window:Notification("Keybind: "..Key.Name) -- Added Notification
+                    Window:Notification("Keybind: "..Key.Name)
                 else 
                     KeyLabel.Text = Key.Name 
                 end
@@ -375,7 +372,7 @@ function Library:CreateWindow(Config)
                 Tween(Dot, {Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)})
                 ConfigObjects[text].Value = Enabled
                 callback(Enabled)
-                Window:Notification(text..": "..tostring(Enabled)) -- Added Notification
+                Window:Notification(text..": "..tostring(Enabled))
             end
 
             Btn.MouseButton1Click:Connect(function() Enabled = not Enabled; Update() end)
@@ -462,71 +459,10 @@ function Library:CreateWindow(Config)
         return Elements
     end
 
-    local ConfigTab = Window:Tab("Config")
-    ConfigTab:Section("Manage Configs")
+    -- ！！！注意：此处已移除内置的 Config 与 Settings 标签页 ！！！
+    -- 如果你需要配置管理或个性化设置功能，请参考文件末尾的示例代码手动添加。
 
-    local ConfigName = ""
-    ConfigTab:Textbox("Config Name", "Type name here...", function(val) ConfigName = val end)
-    
-    local ConfigList = {}
-    local Dropdown = ConfigTab:Dropdown("Select Config", {"None"}, function(val) Window.CurrentConfig = val end)
-
-    local function RefreshConfigs()
-        if not isfolder(Window.RootFolder) then makefolder(Window.RootFolder) end
-        if not isfolder(Window.ConfigFolder) then makefolder(Window.ConfigFolder) end
-        
-        ConfigList = {}
-        for _, file in pairs(listfiles(Window.ConfigFolder)) do
-            local name = file:gsub(Window.ConfigFolder.."\\", ""):gsub(Window.ConfigFolder.."/", ""):gsub(".json", "")
-            table.insert(ConfigList, name)
-        end
-        Dropdown.Refresh(ConfigList)
-    end
-
-    ConfigTab:Button("Refresh List", function() RefreshConfigs() end)
-
-    ConfigTab:Button("Save Config", function()
-        if ConfigName == "" then Window:Notification("Enter a name!"); return end
-        if not isfolder(Window.RootFolder) then makefolder(Window.RootFolder) end
-        if not isfolder(Window.ConfigFolder) then makefolder(Window.ConfigFolder) end
-        
-        local SaveData = {}
-        for name, data in pairs(ConfigObjects) do
-            SaveData[name] = data.Value
-        end
-        
-        writefile(Window.ConfigFolder.."/"..ConfigName..".json", HttpService:JSONEncode(SaveData))
-        Window:Notification("Saved: "..ConfigName)
-        RefreshConfigs()
-    end)
-
-    ConfigTab:Button("Load Config", function()
-        if Window.CurrentConfig == "" or Window.CurrentConfig == "None" then Window:Notification("Select a config!"); return end
-        local path = Window.ConfigFolder.."/"..Window.CurrentConfig..".json"
-        
-        if isfile(path) then
-            local data = HttpService:JSONDecode(readfile(path))
-            for name, val in pairs(data) do
-                if ConfigObjects[name] then
-                    ConfigObjects[name].Set(val)
-                end
-            end
-            Window:Notification("Loaded: "..Window.CurrentConfig)
-        else
-            Window:Notification("Config not found!")
-        end
-    end)
-
-    local Settings = Window:Tab("Settings")
-    Settings:Section("Customization")
-    Settings:Toggle("Rainbow Edge", false, function(v) Library:ToggleRainbow(v) end)
-    Settings:Dropdown("Rainbow Type", {"Linear Gradient (Solid Rainbow)", "Animated/Cycling Rainbow", "Smooth Fading Gradient", "Step/Band Rainbow", "Rainbow Pulse", "Radial Rainbow", "Neon/Glowing Rainbow", "Pastel Rainbow", "Vertical/Horizontal Fade"}, function(val) Library:SetRainbowType(val) end)
-    Settings:Dropdown("Theme", {"Dark", "White", "Purple", "Blue", "Red", "Yellow", "Green"}, function(v) Library:SetTheme(v) end)
-    Settings:Keybind("Menu Keybind", Keybind or Enum.KeyCode.M, function(v) Window:SetKeybind(v) end)
-    Settings:Toggle("UI SFX", true, function(v) SFXEnabled = v end)
-    Settings:Button("Destroy UI", function() Window:Destroy() end)
-
-    RefreshConfigs()
     return Window
 end
+
 return Library
