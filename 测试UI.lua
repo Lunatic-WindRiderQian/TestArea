@@ -87,7 +87,6 @@ function Library:CreateWindow(Config)
     
     Window.RootFolder = Title 
     Window.ConfigFolder = Title.."/Config"
-    -- Window.CurrentConfig = ""   -- 已移除（由 Config 标签页使用）
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "M0dznLib_V1.2"
@@ -256,16 +255,56 @@ function Library:CreateWindow(Config)
     function Window:Destroy() ScreenGui:Destroy() end
 
     local firstTab = true
-    function Window:Tab(name)
+    -- Tab 函数，增加 icon 参数，使用水平布局避免覆盖
+    function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
         TabBtn.BackgroundTransparency = 1
-        TabBtn.Text = name
-        TabBtn.Font = Enum.Font.GothamMedium
-        TabBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
-        TabBtn.TextSize = 14
+        TabBtn.Text = ""  -- 清空文字，改用自定义 Label
         TabBtn.Parent = TabContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
+
+        -- 创建容器用于水平布局图标和文字
+        local ContentFrame = Instance.new("Frame")
+        ContentFrame.Size = UDim2.new(1, -10, 1, 0)
+        ContentFrame.Position = UDim2.new(0, 5, 0, 0)
+        ContentFrame.BackgroundTransparency = 1
+        ContentFrame.Parent = TabBtn
+
+        local Layout = Instance.new("UIListLayout")
+        Layout.FillDirection = Enum.FillDirection.Horizontal
+        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        Layout.VerticalAlignment = Enum.VerticalAlignment.Center
+        Layout.Padding = UDim.new(0, 5)
+        Layout.Parent = ContentFrame
+
+        -- 图标（如果提供）
+        if icon then
+            local TabIcon = Instance.new("ImageLabel")
+            TabIcon.Size = UDim2.new(0, 20, 0, 20)
+            TabIcon.BackgroundTransparency = 1
+            if tonumber(icon) then
+                TabIcon.Image = "rbxassetid://" .. icon
+            else
+                TabIcon.Image = icon
+            end
+            TabIcon.Parent = ContentFrame
+            -- 图标颜色跟随主题文字
+            AddToRegistry(TabIcon, "ImageColor3", "Text")
+        end
+
+        -- 文字标签
+        local TabText = Instance.new("TextLabel")
+        TabText.Size = UDim2.new(1, -(icon and 25 or 0), 1, 0)
+        TabText.BackgroundTransparency = 1
+        TabText.Font = Enum.Font.GothamMedium
+        TabText.Text = name
+        TabText.TextColor3 = Color3.fromRGB(150, 150, 150)
+        TabText.TextSize = 14
+        TabText.TextXAlignment = Enum.TextXAlignment.Left
+        TabText.Parent = ContentFrame
+        -- 文字颜色注册到主题
+        AddToRegistry(TabText, "TextColor3", "Text")
 
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
@@ -283,19 +322,67 @@ function Library:CreateWindow(Config)
         TabBtn.MouseButton1Click:Connect(function()
             PlaySound(Sounds.Tab) 
             for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
-            for _, v in pairs(TabContainer:GetChildren()) do if v:IsA("TextButton") then Tween(v, {BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(150,150,150)}) end end
-            Page.Visible = true; Tween(TabBtn, {BackgroundTransparency = 0.9, TextColor3 = CurrentTheme.Text}); Tween(TabBtn, {BackgroundColor3 = CurrentTheme.Accent})
+            for _, v in pairs(TabContainer:GetChildren()) do if v:IsA("TextButton") then 
+                -- 重置其他按钮样式
+                Tween(v, {BackgroundTransparency = 1})
+                local textLabel = v:FindFirstChild("ContentFrame") and v.ContentFrame:FindFirstChildOfClass("TextLabel")
+                if textLabel then
+                    Tween(textLabel, {TextColor3 = Color3.fromRGB(150,150,150)})
+                end
+            end end
+            Page.Visible = true
+            Tween(TabBtn, {BackgroundTransparency = 0.9, BackgroundColor3 = CurrentTheme.Accent})
+            Tween(TabText, {TextColor3 = CurrentTheme.Text})
         end)
 
-        if firstTab then firstTab = false; Page.Visible = true; TabBtn.TextColor3 = CurrentTheme.Text; TabBtn.BackgroundTransparency = 0.9; TabBtn.BackgroundColor3 = CurrentTheme.Accent end
+        if firstTab then 
+            firstTab = false
+            Page.Visible = true
+            Tween(TabBtn, {BackgroundTransparency = 0.9, BackgroundColor3 = CurrentTheme.Accent})
+            Tween(TabText, {TextColor3 = CurrentTheme.Text})
+        end
 
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
         if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
         local Elements = {}
 
-        function Elements:Section(text)
-            local S = Instance.new("TextLabel"); S.Text = text; S.Size = UDim2.new(1, 0, 0, 20); S.BackgroundTransparency = 1; S.Font = Enum.Font.GothamBold; S.TextSize = 12; S.TextXAlignment = Enum.TextXAlignment.Left; S.Parent = Page; AddToRegistry(S, "TextColor3", "Accent")
+        -- Section 函数，增加 icon 参数，图标不注册颜色（保持原色）
+        function Elements:Section(text, icon)
+            local SectionFrame = Instance.new("Frame")
+            SectionFrame.Size = UDim2.new(1, 0, 0, 24)
+            SectionFrame.BackgroundTransparency = 1
+            SectionFrame.Parent = Page
+
+            local Layout = Instance.new("UIListLayout")
+            Layout.FillDirection = Enum.FillDirection.Horizontal
+            Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+            Layout.VerticalAlignment = Enum.VerticalAlignment.Center
+            Layout.Padding = UDim.new(0, 5)
+            Layout.Parent = SectionFrame
+
+            if icon then
+                local IconLabel = Instance.new("ImageLabel")
+                IconLabel.Size = UDim2.new(0, 16, 0, 16)
+                IconLabel.BackgroundTransparency = 1
+                if tonumber(icon) then
+                    IconLabel.Image = "rbxassetid://" .. icon
+                else
+                    IconLabel.Image = icon
+                end
+                IconLabel.Parent = SectionFrame
+                -- 不注册颜色，图标保持原色（通常为白色）
+            end
+
+            local TextLabel = Instance.new("TextLabel")
+            TextLabel.Text = text
+            TextLabel.Size = UDim2.new(1, icon and -21 or 0, 0, 20)
+            TextLabel.BackgroundTransparency = 1
+            TextLabel.Font = Enum.Font.GothamBold
+            TextLabel.TextSize = 12
+            TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+            TextLabel.Parent = SectionFrame
+            AddToRegistry(TextLabel, "TextColor3", "Accent")
         end
 
         function Elements:Value(text, default, callback)
@@ -464,9 +551,7 @@ function Library:CreateWindow(Config)
         return Elements
     end
 
-    -- ！！！注意：此处已移除内置的 Config 与 Settings 标签页 ！！！
-    -- 如果你需要配置管理或个性化设置功能，请参考文件末尾的示例代码手动添加。
-
+    -- 注意：已移除内置的 Config 与 Settings 标签页，如需添加请参照示例
     return Window
 end
 
