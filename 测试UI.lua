@@ -349,10 +349,10 @@ function Library:CreateWindow(Config)
 
         local Elements = {}
 
-        -- Section 函数，图标增大至 20x20
+        -- Section 函数，图标增大至 24x24
         function Elements:Section(text, icon)
             local SectionFrame = Instance.new("Frame")
-            SectionFrame.Size = UDim2.new(1, 0, 0, 32)  -- 高度保持32
+            SectionFrame.Size = UDim2.new(1, 0, 0, 36)  -- 高度增加至36
             SectionFrame.BackgroundTransparency = 1
             SectionFrame.Parent = Page
 
@@ -365,7 +365,7 @@ function Library:CreateWindow(Config)
 
             if icon then
                 local IconLabel = Instance.new("ImageLabel")
-                IconLabel.Size = UDim2.new(0, 20, 0, 20)  -- 图标尺寸 20x20
+                IconLabel.Size = UDim2.new(0, 24, 0, 24)  -- 图标尺寸 24x24
                 IconLabel.BackgroundTransparency = 1
                 if tonumber(icon) then
                     IconLabel.Image = "rbxassetid://" .. icon
@@ -378,7 +378,7 @@ function Library:CreateWindow(Config)
 
             local TextLabel = Instance.new("TextLabel")
             TextLabel.Text = text
-            TextLabel.Size = UDim2.new(1, icon and -25 or 0, 0, 28)  -- 偏移调整为25（图标20 + 间距5）
+            TextLabel.Size = UDim2.new(1, icon and -29 or 0, 0, 28)  -- 偏移调整为29（图标24 + 间距5）
             TextLabel.BackgroundTransparency = 1
             TextLabel.Font = Enum.Font.GothamBold
             TextLabel.TextSize = 20  -- 文字大小20
