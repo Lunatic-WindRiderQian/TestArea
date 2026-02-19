@@ -425,6 +425,7 @@ function Library:CreateWindow(Config)
             local contentHeight = 0
             local function updateContentHeight()
                 contentHeight = contentLayout.AbsoluteContentSize.Y
+                -- 如果当前是展开状态，则实时调整容器高度（用于动态添加控件）
                 if open then
                     Tween(contentContainer, {Size = UDim2.new(1, 0, 0, contentHeight)}, 0.2)
                 end
@@ -436,8 +437,9 @@ function Library:CreateWindow(Config)
             if open then
                 task.spawn(function()
                     task.wait()  -- 等待布局计算
-                    contentContainer.Size = UDim2.new(1, 0, 0, contentLayout.AbsoluteContentSize.Y)
-                    sectionFrame.Size = UDim2.new(1, 0, 0, 36 + contentLayout.AbsoluteContentSize.Y)
+                    contentHeight = contentLayout.AbsoluteContentSize.Y
+                    contentContainer.Size = UDim2.new(1, 0, 0, contentHeight)
+                    sectionFrame.Size = UDim2.new(1, 0, 0, 36 + contentHeight)
                 end)
             else
                 contentContainer.Size = UDim2.new(1, 0, 0, 0)
@@ -454,9 +456,12 @@ function Library:CreateWindow(Config)
                 end
 
                 if open then
-                    updateContentHeight()  -- 触发内容高度更新并 Tween
+                    -- 展开：强制获取最新内容高度（保证控件都可见）
+                    contentHeight = contentLayout.AbsoluteContentSize.Y
+                    Tween(contentContainer, {Size = UDim2.new(1, 0, 0, contentHeight)}, 0.2)
                     Tween(sectionFrame, {Size = UDim2.new(1, 0, 0, 36 + contentHeight)}, 0.2)
                 else
+                    -- 折叠
                     Tween(contentContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
                     Tween(sectionFrame, {Size = UDim2.new(1, 0, 0, 36)}, 0.2)
                 end
