@@ -671,15 +671,15 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- Dropdown
+            -- Dropdown (弹出式菜单)
             child.Dropdown = function(_, dropText, options, callback)
-                local Dropped = false
                 local Btn = Instance.new("TextButton")
-                Btn.Size = UDim2.new(1,0,0,35)
+                Btn.Size = UDim2.new(1, 0, 0, 35)
                 Btn.Text = ""
                 Btn.Parent = contentContainer
                 Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Btn, "BackgroundColor3", "Top")
+
                 local Lbl = Instance.new("TextLabel")
                 Lbl.Text = dropText
                 Lbl.Size = UDim2.new(1,-30,1,0)
@@ -690,6 +690,7 @@ function Library:CreateWindow(Config)
                 Lbl.TextXAlignment = Enum.TextXAlignment.Left
                 Lbl.Parent = Btn
                 AddToRegistry(Lbl, "TextColor3", "Text")
+
                 local Icon = Instance.new("ImageLabel")
                 Icon.Image = "rbxassetid://6031091004"
                 Icon.Size = UDim2.new(0,20,0,20)
@@ -697,57 +698,98 @@ function Library:CreateWindow(Config)
                 Icon.BackgroundTransparency = 1
                 Icon.Parent = Btn
 
+                -- 选项容器（悬浮）
                 local Container = Instance.new("Frame")
-                Container.Size = UDim2.new(1,0,0,0)
+                Container.Size = UDim2.new(0, 150, 0, 0)  -- 固定宽度，高度动态
                 Container.Visible = false
                 Container.ClipsDescendants = true
-                Container.Parent = contentContainer
-                Container.ZIndex = 10  -- 提高ZIndex确保选项在最上层
+                Container.ZIndex = 100  -- 确保在最前
+                Container.Parent = PageContainer  -- 放在页面容器中，不受Section限制
                 Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Container, "BackgroundColor3", "Top")
+
                 local List = Instance.new("UIListLayout")
                 List.SortOrder = Enum.SortOrder.LayoutOrder
                 List.Parent = Container
 
-                local function Select(opt)
-                    Dropped = false
-                    Lbl.Text = dropText..": "..opt
-                    ConfigObjects[dropText].Value = opt
-                    callback(opt)
-                    Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
-                    Tween(Icon, {Rotation = 0}, 0.2)
-                    task.wait(0.2)
-                    Container.Visible = false
-                end
-
+                -- 更新选项
                 local function RefreshOptions(newOpts)
                     for _,v in pairs(Container:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
                     for _, opt in pairs(newOpts) do
                         local O = Instance.new("TextButton")
-                        O.Size = UDim2.new(1,0,0,30)
+                        O.Size = UDim2.new(1, 0, 0, 30)
                         O.Text = opt
                         O.TextColor3 = Color3.fromRGB(150,150,150)
                         O.Font = Enum.Font.Gotham
                         O.TextSize = 13
                         O.BackgroundTransparency = 1
                         O.Parent = Container
-                        O.MouseButton1Click:Connect(function() Select(opt) end)
+                        O.MouseButton1Click:Connect(function()
+                            Select(opt)
+                        end)
                     end
+                    -- 更新容器高度
+                    Container.Size = UDim2.new(0, 150, 0, #newOpts * 30)
                 end
                 RefreshOptions(options)
 
-                Btn.MouseButton1Click:Connect(function()
-                    Dropped = not Dropped
-                    PlaySound(Sounds.Click)
-                    if Dropped then
-                        Container.Visible = true
-                        Tween(Container, {Size = UDim2.new(1,0,0, #Container:GetChildren()*30)}, 0.3)
-                        Tween(Icon, {Rotation = 180}, 0.3)
-                    else
-                        Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
-                        Tween(Icon, {Rotation = 0}, 0.2)
-                        task.wait(0.2)
+                local function UpdatePosition()
+                    -- 将Container定位到按钮下方
+                    local absPos = Btn.AbsolutePosition
+                    local absSize = Btn.AbsoluteSize
+                    Container.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y)
+                end
+
+                local function Select(opt)
+                    Lbl.Text = dropText..": "..opt
+                    ConfigObjects[dropText].Value = opt
+                    callback(opt)
+                    Container.Visible = false
+                    Tween(Icon, {Rotation = 0}, 0.2)
+                end
+
+                local function CloseMenu()
+                    if Container.Visible then
                         Container.Visible = false
+                        Tween(Icon, {Rotation = 0}, 0.2)
+                    end
+                end
+
+                Btn.MouseButton1Click:Connect(function()
+                    PlaySound(Sounds.Click)
+                    if not Container.Visible then
+                        UpdatePosition()
+                        Container.Visible = true
+                        Tween(Icon, {Rotation = 180}, 0.2)
+                    else
+                        CloseMenu()
+                    end
+                end)
+
+                -- 点击外部关闭
+                UserInputService.InputBegan:Connect(function(input, gpe)
+                    if gpe then return end
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        local mousePos = UserInputService:GetMouseLocation()
+                        local containerAbs = Container.AbsolutePosition
+                        local containerSize = Container.AbsoluteSize
+                        local btnAbs = Btn.AbsolutePosition
+                        local btnSize = Btn.AbsoluteSize
+                        -- 检查是否点击在Container或Btn之外
+                        if not ( (mousePos.X >= containerAbs.X and mousePos.X <= containerAbs.X + containerSize.X and
+                                  mousePos.Y >= containerAbs.Y and mousePos.Y <= containerAbs.Y + containerSize.Y) or
+                                 (mousePos.X >= btnAbs.X and mousePos.X <= btnAbs.X + btnSize.X and
+                                  mousePos.Y >= btnAbs.Y and mousePos.Y <= btnAbs.Y + btnSize.Y) ) then
+                            CloseMenu()
+                        end
+                    end
+                end)
+
+                -- 窗口拖动时更新位置或关闭
+                local dragConn
+                dragConn = RunService.RenderStepped:Connect(function()
+                    if Container.Visible then
+                        UpdatePosition()
                     end
                 end)
 
