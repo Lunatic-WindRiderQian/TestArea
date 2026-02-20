@@ -28,6 +28,12 @@ local Sounds = {
     Tab = "rbxassetid://4510087056" 
 }
 
+-- Toggle 图片资源（取自 maclib）
+local ToggleAssets = {
+    Bg = "rbxassetid://18772190202",   -- 开关背景
+    Head = "rbxassetid://18772309008"  -- 滑块头
+}
+
 local function PlaySound(id)
     if not SFXEnabled then return end
     task.spawn(function()
@@ -477,7 +483,7 @@ function Library:CreateWindow(Config)
             -- 子元素表
             local child = {}
 
-            -- Button (已替换为 maclib 风格)
+            -- Button (maclib 风格)
             child.Button = function(_, btnText, callback)
                 -- 主按钮（TextButton 作为容器，背景色主题化）
                 local Btn = Instance.new("TextButton")
@@ -542,49 +548,83 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- Toggle
+            -- Toggle (maclib 风格)
             child.Toggle = function(_, toggleText, default, callback)
                 local Enabled = default or false
+
+                -- 主按钮（背景容器）
                 local Btn = Instance.new("TextButton")
                 Btn.Size = UDim2.new(1, 0, 0, 35)
                 Btn.Text = ""
                 Btn.Parent = contentContainer
                 Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Btn, "BackgroundColor3", "Top")
+
+                -- 文本标签
                 local Title = Instance.new("TextLabel")
                 Title.Text = toggleText
-                Title.Size = UDim2.new(0.7,0,1,0)
-                Title.Position = UDim2.new(0,10,0,0)
+                Title.Size = UDim2.new(0.7, 0, 1, 0)
+                Title.Position = UDim2.new(0, 10, 0, 0)
                 Title.BackgroundTransparency = 1
                 Title.Font = Enum.Font.Gotham
                 Title.TextSize = 14
                 Title.TextXAlignment = Enum.TextXAlignment.Left
                 Title.Parent = Btn
                 AddToRegistry(Title, "TextColor3", "Text")
-                local Switch = Instance.new("Frame")
-                Switch.Size = UDim2.new(0,40,0,20)
-                Switch.Position = UDim2.new(1,-50,0.5,-10)
-                Switch.Parent = Btn
-                Instance.new("UICorner", Switch).CornerRadius = UDim.new(1,0)
-                Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)
-                local Dot = Instance.new("Frame")
-                Dot.Size = UDim2.new(0,16,0,16)
-                Dot.Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)
-                Dot.BackgroundColor3 = Color3.new(1,1,1)
-                Dot.Parent = Switch
-                Instance.new("UICorner", Dot).CornerRadius = UDim.new(1,0)
 
+                -- 开关背景 (ImageLabel，非交互)
+                local Switch = Instance.new("ImageLabel")
+                Switch.Size = UDim2.new(0, 40, 0, 20)
+                Switch.Position = UDim2.new(1, -50, 0.5, -10)
+                Switch.BackgroundTransparency = 1
+                Switch.Image = ToggleAssets.Bg
+                Switch.ImageColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
+                Switch.Parent = Btn
+
+                -- 滑块头 (ImageLabel)
+                local Dot = Instance.new("ImageLabel")
+                Dot.Size = UDim2.new(0, 16, 0, 16)
+                Dot.BackgroundTransparency = 1
+                Dot.Image = ToggleAssets.Head
+                Dot.ImageColor3 = Color3.new(1, 1, 1)
+                Dot.AnchorPoint = Vector2.new(0.5, 0.5)
+                Dot.Parent = Switch
+                -- 初始位置：启用时靠右 (x=32)，禁用时靠左 (x=8)
+                Dot.Position = Enabled and UDim2.new(0, 32, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
+
+                -- 更新状态函数
                 local function Update()
                     if Enabled then PlaySound(Sounds.ToggleOn) else PlaySound(Sounds.ToggleOff) end
-                    Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)})
-                    Tween(Dot, {Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)})
+
+                    -- 开关背景颜色
+                    local targetColor = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
+                    Tween(Switch, {ImageColor3 = targetColor}, 0.2)
+
+                    -- 滑块头位置
+                    local targetPos = Enabled and UDim2.new(0, 32, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
+                    Tween(Dot, {Position = targetPos}, 0.2)
+
+                    -- 更新配置和回调
                     ConfigObjects[toggleText].Value = Enabled
                     callback(Enabled)
-                    Window:Notification(toggleText..": "..tostring(Enabled))
+                    Window:Notification(toggleText .. ": " .. tostring(Enabled))
                 end
 
-                Btn.MouseButton1Click:Connect(function() Enabled = not Enabled; Update() end)
-                ConfigObjects[toggleText] = {Type = "Toggle", Value = Enabled, Set = function(val) Enabled = val; Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)}); Tween(Dot, {Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)}); callback(Enabled) end}
+                Btn.MouseButton1Click:Connect(function()
+                    Enabled = not Enabled
+                    Update()
+                end)
+
+                ConfigObjects[toggleText] = {
+                    Type = "Toggle",
+                    Value = Enabled,
+                    Set = function(val)
+                        Enabled = val
+                        Switch.ImageColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
+                        Dot.Position = Enabled and UDim2.new(0, 32, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
+                        callback(Enabled)
+                    end
+                }
             end
 
             -- Slider
