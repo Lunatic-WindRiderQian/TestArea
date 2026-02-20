@@ -631,13 +631,13 @@ function Library:CreateWindow(Config)
                 }
             end
 
-            -- Slider (maclib 风格，数值框百分百搬运)
+            -- Slider (maclib 风格，数值框百分百搬运，滑块头放大，背景高度优化，百分比显示)
             child.Slider = function(_, sliderText, min, max, default, callback)
                 local Val = default or min
 
                 -- 主容器（保留背景主题色 Top）
                 local Frame = Instance.new("Frame")
-                Frame.Size = UDim2.new(1, 0, 0, 70)  -- 高度 70，容纳两行
+                Frame.Size = UDim2.new(1, 0, 0, 60)  -- 高度从 70 调整为 60
                 Frame.Parent = contentContainer
                 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Frame, "BackgroundColor3", "Top")
@@ -645,7 +645,7 @@ function Library:CreateWindow(Config)
                 -- 第一行：标签 + 数值框
                 local TopRow = Instance.new("Frame")
                 TopRow.Size = UDim2.new(1, -20, 0, 30)  -- 留出左右边距
-                TopRow.Position = UDim2.new(0, 10, 0, 8)
+                TopRow.Position = UDim2.new(0, 10, 0, 5)  -- 顶部间距从 8 调整为 5
                 TopRow.BackgroundTransparency = 1
                 TopRow.Parent = Frame
 
@@ -704,22 +704,22 @@ function Library:CreateWindow(Config)
                 SliderBar.ImageColor3 = Color3.fromRGB(87, 86, 86)  -- maclib 固定色
                 SliderBar.BackgroundTransparency = 1
                 SliderBar.Size = UDim2.new(1, -20, 0, 3)  -- 与左右边距对齐
-                SliderBar.Position = UDim2.new(0, 10, 0, 45)  -- 位于第二行
+                SliderBar.Position = UDim2.new(0, 10, 0, 40)  -- 调整 Y 位置以配合新高度
                 SliderBar.Parent = Frame
 
-                -- 滑块头
+                -- 滑块头（放大至 16x16）
                 local SliderHead = Instance.new("ImageButton")
                 SliderHead.Name = "SliderHead"
                 SliderHead.Image = SliderAssets.Head
                 SliderHead.AnchorPoint = Vector2.new(0.5, 0.5)
                 SliderHead.BackgroundTransparency = 1
-                SliderHead.Size = UDim2.fromOffset(12, 12)
+                SliderHead.Size = UDim2.fromOffset(16, 16)  -- 从 12 增大至 16
                 SliderHead.Parent = SliderBar
                 -- 初始位置根据默认值计算
                 local initPosX = (Val - min) / (max - min)
                 SliderHead.Position = UDim2.new(initPosX, 0, 0.5, 0)
 
-                -- 显示方法（从 maclib 复制）
+                -- 显示方法（从 maclib 复制，默认改为百分比显示）
                 local DisplayMethods = {
                     Hundredths = function(sliderValue) return string.format("%.2f", sliderValue) end,
                     Tenths = function(sliderValue) return string.format("%.1f", sliderValue) end,
@@ -736,15 +736,15 @@ function Library:CreateWindow(Config)
                     end,
                     Percent = function(sliderValue, precision)
                         local percentage = (sliderValue - min) / (max - min) * 100
-                        return precision and string.format("%." .. precision .. "f", percentage) .. "%" or tostring(math.round(percentage)) .. "%"
+                        return (precision and string.format("%." .. precision .. "f", percentage) or tostring(math.round(percentage))) .. "%"
                     end,
                     Value = function(sliderValue, precision)
                         return precision and string.format("%." .. precision .. "f", sliderValue) or tostring(sliderValue)
                     end
                 }
-                -- 默认显示方式：Value（直接显示数值）
-                local DisplayMethod = DisplayMethods.Value
-                local Precision = nil  -- 可后续扩展
+                -- 默认显示方式：Percent（百分比），精度 0（整数）
+                local DisplayMethod = DisplayMethods.Percent
+                local Precision = 0
 
                 local function SetValue(input, ignorecallback)
                     local posXScale
