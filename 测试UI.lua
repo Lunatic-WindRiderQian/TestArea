@@ -632,28 +632,23 @@ function Library:CreateWindow(Config)
                 }
             end
 
-            -- Slider (maclib 风格)
+            -- Slider (结合测试.lua布局和maclib视觉)
             child.Slider = function(_, sliderText, min, max, default, callback)
                 local Val = default or min
                 local isDragging = false
 
-                -- 主容器
+                -- 外层容器（保持测试.lua的高度和背景）
                 local Frame = Instance.new("Frame")
-                Frame.Size = UDim2.new(1, 0, 0, 38)
-                Frame.BackgroundTransparency = 1
+                Frame.Size = UDim2.new(1, 0, 0, 50)
                 Frame.Parent = contentContainer
+                Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(Frame, "BackgroundColor3", "Top")
 
-                -- 水平布局：左侧标题，右侧滑块条+文本框
-                local Layout = Instance.new("UIListLayout")
-                Layout.FillDirection = Enum.FillDirection.Horizontal
-                Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-                Layout.Padding = UDim.new(0, 10)
-                Layout.Parent = Frame
-
-                -- 标题标签（左对齐，自动宽度）
+                -- 标题（测试.lua样式：在上方）
                 local Lbl = Instance.new("TextLabel")
                 Lbl.Text = sliderText
-                Lbl.Size = UDim2.new(0, TextService:GetTextSize(sliderText, 14, Enum.Font.Gotham, Vector2.new(200, 38)).X + 2, 1, 0)
+                Lbl.Size = UDim2.new(1, -20, 0, 20)
+                Lbl.Position = UDim2.new(0, 10, 0, 5)
                 Lbl.BackgroundTransparency = 1
                 Lbl.Font = Enum.Font.Gotham
                 Lbl.TextSize = 14
@@ -661,28 +656,29 @@ function Library:CreateWindow(Config)
                 Lbl.Parent = Frame
                 AddToRegistry(Lbl, "TextColor3", "Text")
 
-                -- 右侧容器（滑块条 + 文本框）
-                local RightContainer = Instance.new("Frame")
-                RightContainer.Size = UDim2.new(1, - (Lbl.AbsoluteSize.X + 10), 1, 0)
-                RightContainer.BackgroundTransparency = 1
-                RightContainer.Parent = Frame
+                -- 滑块区域容器（位于标题下方）
+                local SliderArea = Instance.new("Frame")
+                SliderArea.Size = UDim2.new(1, -20, 0, 25)  -- 高度25，容纳滑块和数值框
+                SliderArea.Position = UDim2.new(0, 10, 0, 30)
+                SliderArea.BackgroundTransparency = 1
+                SliderArea.Parent = Frame
 
-                -- 右侧水平布局
-                local RightLayout = Instance.new("UIListLayout")
-                RightLayout.FillDirection = Enum.FillDirection.Horizontal
-                RightLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-                RightLayout.Padding = UDim.new(0, 8)
-                RightLayout.Parent = RightContainer
+                -- 水平布局（滑块条和数值框左右排列）
+                local AreaLayout = Instance.new("UIListLayout")
+                AreaLayout.FillDirection = Enum.FillDirection.Horizontal
+                AreaLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+                AreaLayout.Padding = UDim.new(0, 8)
+                AreaLayout.Parent = SliderArea
 
-                -- 滑块条背景（图片）
+                -- 滑块条背景（maclib图片）
                 local Bar = Instance.new("ImageLabel")
                 Bar.Image = SliderAssets.Bar
                 Bar.ImageColor3 = Color3.fromRGB(87, 86, 86)  -- 灰色
-                Bar.Size = UDim2.new(1, -70, 0, 3)  -- 留出文本框宽度
+                Bar.Size = UDim2.new(1, -70, 0, 3)  -- 留出数值框宽度
                 Bar.BackgroundTransparency = 1
-                Bar.Parent = RightContainer
+                Bar.Parent = SliderArea
 
-                -- 滑块头（可拖动按钮）
+                -- 滑块头（maclib图片，可拖动）
                 local Head = Instance.new("ImageButton")
                 Head.Image = SliderAssets.Head
                 Head.ImageColor3 = Color3.new(1, 1, 1)
@@ -691,7 +687,7 @@ function Library:CreateWindow(Config)
                 Head.BackgroundTransparency = 1
                 Head.Parent = Bar
 
-                -- 文本框（显示数值）
+                -- 数值文本框（maclib样式）
                 local ValueBox = Instance.new("TextBox")
                 ValueBox.Size = UDim2.new(0, 60, 0, 25)
                 ValueBox.BackgroundTransparency = 0.95
@@ -700,9 +696,8 @@ function Library:CreateWindow(Config)
                 ValueBox.TextSize = 12
                 ValueBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                 ValueBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-                ValueBox.PlaceholderText = tostring(default)
-                ValueBox.Text = tostring(default)
-                ValueBox.Parent = RightContainer
+                ValueBox.Text = string.format("%.2f", Val)
+                ValueBox.Parent = SliderArea
                 Instance.new("UICorner", ValueBox).CornerRadius = UDim.new(0, 4)
 
                 -- 更新滑块位置和数值的函数
