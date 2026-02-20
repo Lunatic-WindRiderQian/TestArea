@@ -671,7 +671,7 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- Dropdown (弹出式菜单)
+            -- Dropdown (弹出式菜单，放在ScreenGui顶层)
             child.Dropdown = function(_, dropText, options, callback)
                 local Btn = Instance.new("TextButton")
                 Btn.Size = UDim2.new(1, 0, 0, 35)
@@ -698,13 +698,13 @@ function Library:CreateWindow(Config)
                 Icon.BackgroundTransparency = 1
                 Icon.Parent = Btn
 
-                -- 选项容器（悬浮）
+                -- 选项容器（悬浮，放在ScreenGui顶层）
                 local Container = Instance.new("Frame")
                 Container.Size = UDim2.new(0, 150, 0, 0)  -- 固定宽度，高度动态
                 Container.Visible = false
                 Container.ClipsDescendants = true
-                Container.ZIndex = 100  -- 确保在最前
-                Container.Parent = PageContainer  -- 放在页面容器中，不受Section限制
+                Container.ZIndex = 200  -- 确保在最前
+                Container.Parent = ScreenGui  -- 直接放在ScreenGui
                 Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Container, "BackgroundColor3", "Top")
 
@@ -734,7 +734,7 @@ function Library:CreateWindow(Config)
                 RefreshOptions(options)
 
                 local function UpdatePosition()
-                    -- 将Container定位到按钮下方
+                    -- 将Container定位到按钮下方（相对于屏幕）
                     local absPos = Btn.AbsolutePosition
                     local absSize = Btn.AbsoluteSize
                     Container.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y)
@@ -785,7 +785,7 @@ function Library:CreateWindow(Config)
                     end
                 end)
 
-                -- 窗口拖动时更新位置或关闭
+                -- 窗口拖动时更新位置
                 local dragConn
                 dragConn = RunService.RenderStepped:Connect(function()
                     if Container.Visible then
