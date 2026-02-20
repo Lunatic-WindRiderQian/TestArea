@@ -1,6 +1,6 @@
-local MacLib = {
-	Options = {},
-	Folder = "Maclib",
+local MacLib = { 
+	Options = {}, 
+	Folder = "Maclib", 
 	GetService = function(service)
 		return cloneref and cloneref(game:GetService(service)) or game:GetService(service)
 	end
@@ -53,7 +53,7 @@ local function GetGui()
 	newGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	newGui.DisplayOrder = 2147483647
 
-	local parent = RunService:IsStudio()
+	local parent = RunService:IsStudio() 
 		and LocalPlayer:FindFirstChild("PlayerGui")
 		or (gethui and gethui())
 		or (cloneref and cloneref(MacLib.GetService("CoreGui")) or MacLib.GetService("CoreGui"))
@@ -660,13 +660,14 @@ function MacLib:Window(Settings)
 	local TweenSettings = {
 		DefaultTransparency = 0.9,
 		HoverTransparency = 0.85,
+
 		EasingStyle = Enum.EasingStyle.Sine
 	}
 
 	local function ChangeState(State)
 		Tween(divider, TweenInfo.new(0.2, TweenSettings.EasingStyle), {
 			BackgroundTransparency = State == "Idle" and TweenSettings.DefaultTransparency or TweenSettings.HoverTransparency
-		}):Play()
+		}):Play()  
 	end
 
 	dividerInteract.MouseEnter:Connect(function()
@@ -1170,10 +1171,10 @@ function MacLib:Window(Settings)
 			end
 		end
 		DrawQuad(
-			camera:ScreenPointToRay(tl.x, tl.y, zIndex).Origin,
-			camera:ScreenPointToRay(tr.x, tr.y, zIndex).Origin,
-			camera:ScreenPointToRay(bl.x, bl.y, zIndex).Origin,
-			camera:ScreenPointToRay(br.x, br.y, zIndex).Origin,
+			camera:ScreenPointToRay(tl.x, tl.y, zIndex).Origin, 
+			camera:ScreenPointToRay(tr.x, tr.y, zIndex).Origin, 
+			camera:ScreenPointToRay(bl.x, bl.y, zIndex).Origin, 
+			camera:ScreenPointToRay(br.x, br.y, zIndex).Origin, 
 			parts
 		)
 		if fetchProps then
@@ -1641,6 +1642,7 @@ function MacLib:Window(Settings)
 					local TweenSettings = {
 						DefaultTransparency = 0.5,
 						HoverTransparency = 0.3,
+
 						EasingStyle = Enum.EasingStyle.Sine
 					}
 
@@ -1766,6 +1768,7 @@ function MacLib:Window(Settings)
 
 					local TweenSettings = {
 						Info = TweenInfo.new(0.15, Enum.EasingStyle.Quad),
+
 						EnabledPosition = UDim2.new(1, 0, 0.5, 0),
 						DisabledPosition = UDim2.new(0.5, 0, 0.5, 0),
 					}
@@ -1875,6 +1878,7 @@ function MacLib:Window(Settings)
 					sliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
 					sliderValue.TextSize = 12
 					sliderValue.TextTransparency = 0.1
+					--sliderValue.TextTruncate = Enum.TextTruncate.AtEnd
 					sliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 					sliderValue.BackgroundTransparency = 0.95
 					sliderValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -4013,7 +4017,7 @@ function MacLib:Window(Settings)
 						modifierInputs.Blue.Text = tostring(math.floor(c.b * 255 + 0.5))
 						modifierInputs.Alpha.Text = clampInput(modifierInputs.Alpha.Text, 0, 1)
 
-						local hexColor = string.format("#%02X%02X%02X",
+						local hexColor = string.format("#%02X%02X%02X", 
 							math.floor(c.r * 255 + 0.5),
 							math.floor(c.g * 255 + 0.5),
 							math.floor(c.b * 255 + 0.5))
@@ -4370,7 +4374,7 @@ function MacLib:Window(Settings)
 					labelText.Name = "LabelText"
 					labelText.FontFace = Font.new(assets.interFont)
 					labelText.RichText = true
-					labelText.Text = LabelFunctions.Settings.Text or LabelFunctions.Settings.Name
+					labelText.Text = LabelFunctions.Settings.Text or LabelFunctions.Settings.Name -- Settings.Name Deprecated use Settings.Text
 					labelText.TextColor3 = Color3.fromRGB(255, 255, 255)
 					labelText.TextSize = 13
 					labelText.TextTransparency = 0.5
@@ -4414,7 +4418,7 @@ function MacLib:Window(Settings)
 					subLabelText.Name = "SubLabelText"
 					subLabelText.FontFace = Font.new(assets.interFont)
 					subLabelText.RichText = true
-					subLabelText.Text = SubLabelFunctions.Settings.Text or SubLabelFunctions.Settings.Name
+					subLabelText.Text = SubLabelFunctions.Settings.Text or SubLabelFunctions.Settings.Name -- Settings.Name Deprecated use Settings.Text
 					subLabelText.TextColor3 = Color3.fromRGB(255, 255, 255)
 					subLabelText.TextSize = 12
 					subLabelText.TextTransparency = 0.7
@@ -4635,7 +4639,7 @@ function MacLib:Window(Settings)
 
 				if isStudio then
 					configSection:Label({Text = "Config system unavailable. (Environment isStudio)"})
-					return "Config system unavailable."
+					return "Config system unavailable." 
 				end
 
 				local inputPath = nil
@@ -5190,6 +5194,7 @@ function MacLib:Window(Settings)
 				DefaultTransparency2 = 0.5,
 				HoverTransparency = 0.3,
 				HoverTransparency2 = 0.6,
+
 				EasingStyle = Enum.EasingStyle.Sine
 			}
 
@@ -5261,7 +5266,7 @@ function MacLib:Window(Settings)
 
 	function WindowFunctions:Unload()
 		if onUnloadCallback then
-			onUnloadCallback()
+			onUnloadCallback()  
 		end
 		macLib:Destroy()
 		unloaded = true
@@ -5370,8 +5375,8 @@ function MacLib:Window(Settings)
 		["Toggle"] = {
 			Save = function(Flag, data)
 				return {
-					type = "Toggle",
-					flag = Flag,
+					type = "Toggle", 
+					flag = Flag, 
 					state = data.State or false
 				}
 			end,
@@ -5384,8 +5389,8 @@ function MacLib:Window(Settings)
 		["Slider"] = {
 			Save = function(Flag, data)
 				return {
-					type = "Slider",
-					flag = Flag,
+					type = "Slider", 
+					flag = Flag, 
 					value = (data.Value and tostring(data.Value)) or false
 				}
 			end,
@@ -5398,8 +5403,8 @@ function MacLib:Window(Settings)
 		["Input"] = {
 			Save = function(Flag, data)
 				return {
-					type = "Input",
-					flag = Flag,
+					type = "Input", 
+					flag = Flag, 
 					text = data.Text
 				}
 			end,
@@ -5412,8 +5417,8 @@ function MacLib:Window(Settings)
 		["Keybind"] = {
 			Save = function(Flag, data)
 				return {
-					type = "Keybind",
-					flag = Flag,
+					type = "Keybind", 
+					flag = Flag, 
 					bind = (typeof(data.Bind) == "EnumItem" and data.Bind.Name) or nil
 				}
 			end,
@@ -5426,8 +5431,8 @@ function MacLib:Window(Settings)
 		["Dropdown"] = {
 			Save = function(Flag, data)
 				return {
-					type = "Dropdown",
-					flag = Flag,
+					type = "Dropdown", 
+					flag = Flag, 
 					value = data.Value
 				}
 			end,
@@ -5444,8 +5449,8 @@ function MacLib:Window(Settings)
 				end
 
 				return {
-					type = "Colorpicker",
-					flag = Flag,
+					type = "Colorpicker", 
+					flag = Flag, 
 					color = Color3ToHex(data.Color) or nil,
 					alpha = data.Alpha
 				}
@@ -5459,7 +5464,7 @@ function MacLib:Window(Settings)
 				end
 
 				if MacLib.Options[Flag] and data.color then
-					MacLib.Options[Flag]:SetColor(HexToColor3(data.color))
+					MacLib.Options[Flag]:SetColor(HexToColor3(data.color)) 
 					if data.alpha then
 						MacLib.Options[Flag]:SetAlpha(data.alpha)
 					end
@@ -5530,7 +5535,7 @@ function MacLib:Window(Settings)
 			if option.IgnoreConfig then continue end
 
 			table.insert(data.objects, ClassParser[option.Class].Save(flag, option))
-		end
+		end	
 
 		local success, encoded = pcall(HttpService.JSONEncode, HttpService, data)
 		if not success then
@@ -5556,8 +5561,8 @@ function MacLib:Window(Settings)
 
 		for _, option in next, decoded.objects do
 			if ClassParser[option.type] then
-				task.spawn(function()
-					ClassParser[option.type].Load(option.flag, option)
+				task.spawn(function() 
+					ClassParser[option.type].Load(option.flag, option) 
 				end)
 			end
 		end
