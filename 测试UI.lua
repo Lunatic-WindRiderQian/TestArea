@@ -349,7 +349,7 @@ function Library:CreateWindow(Config)
 
         local Elements = {}
 
-        -- Section：可折叠容器，支持自定义图标，保留展开/收缩动画，删除所有图标动画（图标不旋转，仅瞬间切换图片）
+        -- Section：可折叠容器，支持自定义图标，保留展开/收缩动画，自动适应高度
         function Elements:Section(text, icons, defaultOpen)
             -- 默认展开状态（如果没有提供，默认展开）
             if defaultOpen == nil then defaultOpen = true end
@@ -435,21 +435,24 @@ function Library:CreateWindow(Config)
 
             -- 存储当前的动画，以便取消
             local currentContentTween, currentSectionTween
-            local isUserToggling = false  -- 标记是否由用户手动折叠/展开
 
-            -- 更新内容高度的函数（仅自动适应，非用户手动时）
+            -- 更新内容高度的函数（始终根据实际内容调整）
             local function updateSizeFromContent()
-                -- 仅在 Section 展开且不是用户主动点击时，自动适应内容高度
-                if not open or isUserToggling then return end
                 local newHeight = contentLayout.AbsoluteContentSize.Y
                 -- 取消正在进行的动画
                 if currentContentTween then currentContentTween:Cancel() end
                 if currentSectionTween then currentSectionTween:Cancel() end
-                -- 平滑调整到新高度
-                currentContentTween = TweenService:Create(contentContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, newHeight)})
-                currentSectionTween = TweenService:Create(sectionFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 36 + newHeight)})
-                currentContentTween:Play()
-                currentSectionTween:Play()
+                -- 平滑调整到新高度（仅当展开时）
+                if open then
+                    currentContentTween = TweenService:Create(contentContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, newHeight)})
+                    currentSectionTween = TweenService:Create(sectionFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 36 + newHeight)})
+                    currentContentTween:Play()
+                    currentSectionTween:Play()
+                else
+                    -- 折叠状态直接设置为0
+                    contentContainer.Size = UDim2.new(1, 0, 0, 0)
+                    sectionFrame.Size = UDim2.new(1, 0, 0, 36)
+                end
             end
 
             -- 监听布局变化
@@ -457,46 +460,19 @@ function Library:CreateWindow(Config)
 
             local open = defaultOpen
             -- 初始化高度
-            if open then
-                task.spawn(function()
-                    task.wait()  -- 等待布局计算
-                    local contentHeight = contentLayout.AbsoluteContentSize.Y
-                    contentContainer.Size = UDim2.new(1, 0, 0, contentHeight)
-                    sectionFrame.Size = UDim2.new(1, 0, 0, 36 + contentHeight)
-                end)
-            else
-                contentContainer.Size = UDim2.new(1, 0, 0, 0)
-                sectionFrame.Size = UDim2.new(1, 0, 0, 36)
-            end
+            task.spawn(function()
+                task.wait()
+                updateSizeFromContent()
+            end)
 
             local function toggle()
-                isUserToggling = true
                 open = not open
 
                 -- 瞬间切换图标图片（无动画）
                 iconLabel.Image = open and iconOpen or iconClosed
 
-                -- 计算目标尺寸
-                local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
-                local targetSectionHeight = 36 + targetContentHeight
-
-                -- 取消正在进行的动画
-                if currentContentTween then currentContentTween:Cancel() end
-                if currentSectionTween then currentSectionTween:Cancel() end
-
-                -- 使用 Tween 实现平滑展开/收缩动画
-                local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-                currentContentTween = TweenService:Create(contentContainer, tweenInfo, {Size = UDim2.new(1, 0, 0, targetContentHeight)})
-                currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
-
-                currentContentTween:Play()
-                currentSectionTween:Play()
-
-                -- 动画结束后恢复监听
-                task.spawn(function()
-                    currentContentTween.Completed:Wait()
-                    isUserToggling = false
-                end)
+                -- 更新高度
+                updateSizeFromContent()
             end
 
             toggleBtn.MouseButton1Click:Connect(function()
@@ -671,15 +647,15 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- Dropdown (弹出式菜单，放在ScreenGui顶层)
+            -- Dropdown (内嵌式，完全修复)
             child.Dropdown = function(_, dropText, options, callback)
+                local Dropped = false
                 local Btn = Instance.new("TextButton")
-                Btn.Size = UDim2.new(1, 0, 0, 35)
+                Btn.Size = UDim2.new(1,0,0,35)
                 Btn.Text = ""
                 Btn.Parent = contentContainer
                 Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Btn, "BackgroundColor3", "Top")
-
                 local Lbl = Instance.new("TextLabel")
                 Lbl.Text = dropText
                 Lbl.Size = UDim2.new(1,-30,1,0)
@@ -690,7 +666,6 @@ function Library:CreateWindow(Config)
                 Lbl.TextXAlignment = Enum.TextXAlignment.Left
                 Lbl.Parent = Btn
                 AddToRegistry(Lbl, "TextColor3", "Text")
-
                 local Icon = Instance.new("ImageLabel")
                 Icon.Image = "rbxassetid://6031091004"
                 Icon.Size = UDim2.new(0,20,0,20)
@@ -698,98 +673,57 @@ function Library:CreateWindow(Config)
                 Icon.BackgroundTransparency = 1
                 Icon.Parent = Btn
 
-                -- 选项容器（悬浮，放在ScreenGui顶层）
                 local Container = Instance.new("Frame")
-                Container.Size = UDim2.new(0, 150, 0, 0)  -- 固定宽度，高度动态
+                Container.Size = UDim2.new(1,0,0,0)
                 Container.Visible = false
                 Container.ClipsDescendants = true
-                Container.ZIndex = 200  -- 确保在最前
-                Container.Parent = ScreenGui  -- 直接放在ScreenGui
+                Container.Parent = contentContainer
+                Container.ZIndex = 10  -- 提高ZIndex确保选项在最上层
                 Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Container, "BackgroundColor3", "Top")
-
                 local List = Instance.new("UIListLayout")
                 List.SortOrder = Enum.SortOrder.LayoutOrder
                 List.Parent = Container
 
-                -- 更新选项
+                local function Select(opt)
+                    Dropped = false
+                    Lbl.Text = dropText..": "..opt
+                    ConfigObjects[dropText].Value = opt
+                    callback(opt)
+                    Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
+                    Tween(Icon, {Rotation = 0}, 0.2)
+                    task.wait(0.2)
+                    Container.Visible = false
+                end
+
                 local function RefreshOptions(newOpts)
                     for _,v in pairs(Container:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
                     for _, opt in pairs(newOpts) do
                         local O = Instance.new("TextButton")
-                        O.Size = UDim2.new(1, 0, 0, 30)
+                        O.Size = UDim2.new(1,0,0,30)
                         O.Text = opt
                         O.TextColor3 = Color3.fromRGB(150,150,150)
                         O.Font = Enum.Font.Gotham
                         O.TextSize = 13
                         O.BackgroundTransparency = 1
                         O.Parent = Container
-                        O.MouseButton1Click:Connect(function()
-                            Select(opt)
-                        end)
+                        O.MouseButton1Click:Connect(function() Select(opt) end)
                     end
-                    -- 更新容器高度
-                    Container.Size = UDim2.new(0, 150, 0, #newOpts * 30)
                 end
                 RefreshOptions(options)
 
-                local function UpdatePosition()
-                    -- 将Container定位到按钮下方（相对于屏幕）
-                    local absPos = Btn.AbsolutePosition
-                    local absSize = Btn.AbsoluteSize
-                    Container.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y)
-                end
-
-                local function Select(opt)
-                    Lbl.Text = dropText..": "..opt
-                    ConfigObjects[dropText].Value = opt
-                    callback(opt)
-                    Container.Visible = false
-                    Tween(Icon, {Rotation = 0}, 0.2)
-                end
-
-                local function CloseMenu()
-                    if Container.Visible then
-                        Container.Visible = false
-                        Tween(Icon, {Rotation = 0}, 0.2)
-                    end
-                end
-
                 Btn.MouseButton1Click:Connect(function()
+                    Dropped = not Dropped
                     PlaySound(Sounds.Click)
-                    if not Container.Visible then
-                        UpdatePosition()
+                    if Dropped then
                         Container.Visible = true
-                        Tween(Icon, {Rotation = 180}, 0.2)
+                        Tween(Container, {Size = UDim2.new(1,0,0, #Container:GetChildren()*30)}, 0.3)
+                        Tween(Icon, {Rotation = 180}, 0.3)
                     else
-                        CloseMenu()
-                    end
-                end)
-
-                -- 点击外部关闭
-                UserInputService.InputBegan:Connect(function(input, gpe)
-                    if gpe then return end
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        local mousePos = UserInputService:GetMouseLocation()
-                        local containerAbs = Container.AbsolutePosition
-                        local containerSize = Container.AbsoluteSize
-                        local btnAbs = Btn.AbsolutePosition
-                        local btnSize = Btn.AbsoluteSize
-                        -- 检查是否点击在Container或Btn之外
-                        if not ( (mousePos.X >= containerAbs.X and mousePos.X <= containerAbs.X + containerSize.X and
-                                  mousePos.Y >= containerAbs.Y and mousePos.Y <= containerAbs.Y + containerSize.Y) or
-                                 (mousePos.X >= btnAbs.X and mousePos.X <= btnAbs.X + btnSize.X and
-                                  mousePos.Y >= btnAbs.Y and mousePos.Y <= btnAbs.Y + btnSize.Y) ) then
-                            CloseMenu()
-                        end
-                    end
-                end)
-
-                -- 窗口拖动时更新位置
-                local dragConn
-                dragConn = RunService.RenderStepped:Connect(function()
-                    if Container.Visible then
-                        UpdatePosition()
+                        Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
+                        Tween(Icon, {Rotation = 0}, 0.2)
+                        task.wait(0.2)
+                        Container.Visible = false
                     end
                 end)
 
