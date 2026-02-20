@@ -28,14 +28,10 @@ local Sounds = {
     Tab = "rbxassetid://4510087056" 
 }
 
--- 图片资源（取自 maclib）
+-- Toggle 图片资源（取自 maclib）
 local ToggleAssets = {
     Bg = "rbxassetid://18772190202",   -- 开关背景
     Head = "rbxassetid://18772309008"  -- 滑块头
-}
-local SliderAssets = {
-    Bar = "rbxassetid://18772615246",   -- 滑块条背景
-    Head = "rbxassetid://18772834246"   -- 滑块头
 }
 
 local function PlaySound(id)
@@ -593,8 +589,8 @@ function Library:CreateWindow(Config)
                 Dot.ImageColor3 = Color3.new(1, 1, 1)
                 Dot.AnchorPoint = Vector2.new(0.5, 0.5)
                 Dot.Parent = Switch
-                -- 位置：启用时靠右 (1,0)，禁用时居中 (0.5,0)（锚点为中心）
-                Dot.Position = Enabled and UDim2.new(1, 0, 0.5, 0) or UDim2.new(0.5, 0, 0.5, 0)
+                -- 初始位置：启用时靠右 (x=32)，禁用时靠左 (x=8)
+                Dot.Position = Enabled and UDim2.new(0, 32, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
 
                 -- 更新状态函数
                 local function Update()
@@ -605,7 +601,7 @@ function Library:CreateWindow(Config)
                     Tween(Switch, {ImageColor3 = targetColor}, 0.2)
 
                     -- 滑块头位置
-                    local targetPos = Enabled and UDim2.new(1, 0, 0.5, 0) or UDim2.new(0.5, 0, 0.5, 0)
+                    local targetPos = Enabled and UDim2.new(0, 32, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
                     Tween(Dot, {Position = targetPos}, 0.2)
 
                     -- 更新配置和回调
@@ -625,202 +621,73 @@ function Library:CreateWindow(Config)
                     Set = function(val)
                         Enabled = val
                         Switch.ImageColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
-                        Dot.Position = Enabled and UDim2.new(1, 0, 0.5, 0) or UDim2.new(0.5, 0, 0.5, 0)
+                        Dot.Position = Enabled and UDim2.new(0, 32, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
                         callback(Enabled)
                     end
                 }
             end
 
-            -- Slider (maclib 风格)
+            -- Slider
             child.Slider = function(_, sliderText, min, max, default, callback)
                 local Val = default or min
-
-                -- 主容器（保留背景主题色 Top）
                 local Frame = Instance.new("Frame")
-                Frame.Size = UDim2.new(1, 0, 0, 70)  -- 高度 70，容纳两行
+                Frame.Size = UDim2.new(1,0,0,50)
                 Frame.Parent = contentContainer
-                Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+                Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Frame, "BackgroundColor3", "Top")
-
-                -- 第一行：标签 + 数值框
-                local TopRow = Instance.new("Frame")
-                TopRow.Size = UDim2.new(1, -20, 0, 30)  -- 留出左右边距
-                TopRow.Position = UDim2.new(0, 10, 0, 8)
-                TopRow.BackgroundTransparency = 1
-                TopRow.Parent = Frame
-
-                -- 标签（左对齐）
                 local Lbl = Instance.new("TextLabel")
                 Lbl.Text = sliderText
-                Lbl.Size = UDim2.new(0.5, 0, 1, 0)
+                Lbl.Size = UDim2.new(1,-20,0,20)
+                Lbl.Position = UDim2.new(0,10,0,5)
                 Lbl.BackgroundTransparency = 1
                 Lbl.Font = Enum.Font.Gotham
                 Lbl.TextSize = 14
                 Lbl.TextXAlignment = Enum.TextXAlignment.Left
-                Lbl.Parent = TopRow
+                Lbl.Parent = Frame
                 AddToRegistry(Lbl, "TextColor3", "Text")
+                local Num = Instance.new("TextLabel")
+                Num.Text = tostring(Val)
+                Num.Size = UDim2.new(0,40,0,20)
+                Num.Position = UDim2.new(1,-50,0,5)
+                Num.BackgroundTransparency = 1
+                Num.TextColor3 = Color3.fromRGB(150,150,150)
+                Num.Font = Enum.Font.Gotham
+                Num.TextSize = 12
+                Num.Parent = Frame
+                local Bar = Instance.new("TextButton")
+                Bar.Text = ""
+                Bar.Size = UDim2.new(1,-20,0,6)
+                Bar.Position = UDim2.new(0,10,0,35)
+                Bar.BackgroundColor3 = Color3.fromRGB(60,60,60)
+                Bar.AutoButtonColor = false
+                Bar.Parent = Frame
+                Instance.new("UICorner", Bar).CornerRadius = UDim.new(1,0)
+                local Fill = Instance.new("Frame")
+                Fill.Size = UDim2.new((Val-min)/(max-min),0,1,0)
+                Fill.Parent = Bar
+                Instance.new("UICorner", Fill).CornerRadius = UDim.new(1,0)
+                AddToRegistry(Fill, "BackgroundColor3", "Accent")
 
-                -- 数值框（右对齐，maclib 风格）
-                local NumBox = Instance.new("TextBox")
-                NumBox.Name = "SliderValue"
-                NumBox.FontFace = Font.new("rbxassetid://12187365364")  -- maclib 字体
-                NumBox.Text = tostring(Val)
-                NumBox.TextColor3 = Color3.fromRGB(255, 255, 255)  -- 固定白色
-                NumBox.TextSize = 12
-                NumBox.TextTransparency = 0.1
-                NumBox.TextXAlignment = Enum.TextXAlignment.Left
-                NumBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                NumBox.BackgroundTransparency = 0.95
-                NumBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                NumBox.BorderSizePixel = 0
-                NumBox.Size = UDim2.fromOffset(75, 25)
-                NumBox.Position = UDim2.new(1, -75, 0.5, -12.5)  -- 靠右
-                NumBox.Parent = TopRow
-
-                -- 数值框圆角和边框
-                local boxCorner = Instance.new("UICorner")
-                boxCorner.CornerRadius = UDim.new(0, 4)
-                boxCorner.Parent = NumBox
-
-                local boxStroke = Instance.new("UIStroke")
-                boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                boxStroke.Color = Color3.fromRGB(255, 255, 255)
-                boxStroke.Transparency = 0.9
-                boxStroke.Parent = NumBox
-
-                local boxPadding = Instance.new("UIPadding")
-                boxPadding.PaddingLeft = UDim.new(0, 8)
-                boxPadding.PaddingRight = UDim.new(0, 8)
-                boxPadding.Parent = NumBox
-
-                -- 第二行：滑块条（maclib 风格）
-                local SliderBar = Instance.new("ImageLabel")
-                SliderBar.Name = "SliderBar"
-                SliderBar.Image = SliderAssets.Bar
-                SliderBar.ImageColor3 = Color3.fromRGB(87, 86, 86)  -- maclib 固定色
-                SliderBar.BackgroundTransparency = 1
-                SliderBar.Size = UDim2.new(1, -20, 0, 3)  -- 与左右边距对齐
-                SliderBar.Position = UDim2.new(0, 10, 0, 45)  -- 位于第二行
-                SliderBar.Parent = Frame
-
-                -- 滑块头
-                local SliderHead = Instance.new("ImageButton")
-                SliderHead.Name = "SliderHead"
-                SliderHead.Image = SliderAssets.Head
-                SliderHead.AnchorPoint = Vector2.new(0.5, 0.5)
-                SliderHead.BackgroundTransparency = 1
-                SliderHead.Size = UDim2.fromOffset(12, 12)
-                SliderHead.Parent = SliderBar
-                -- 初始位置根据默认值计算
-                local initPosX = (Val - min) / (max - min)
-                SliderHead.Position = UDim2.new(initPosX, 0, 0.5, 0)
-
-                -- 显示方法（从 maclib 复制）
-                local DisplayMethods = {
-                    Hundredths = function(sliderValue) return string.format("%.2f", sliderValue) end,
-                    Tenths = function(sliderValue) return string.format("%.1f", sliderValue) end,
-                    Round = function(sliderValue, precision)
-                        if precision then
-                            return string.format("%." .. precision .. "f", sliderValue)
-                        else
-                            return tostring(math.round(sliderValue))
-                        end
-                    end,
-                    Degrees = function(sliderValue, precision)
-                        local formattedValue = precision and string.format("%." .. precision .. "f", sliderValue) or tostring(sliderValue)
-                        return formattedValue .. "°"
-                    end,
-                    Percent = function(sliderValue, precision)
-                        local percentage = (sliderValue - min) / (max - min) * 100
-                        return precision and string.format("%." .. precision .. "f", percentage) .. "%" or tostring(math.round(percentage)) .. "%"
-                    end,
-                    Value = function(sliderValue, precision)
-                        return precision and string.format("%." .. precision .. "f", sliderValue) or tostring(sliderValue)
-                    end
-                }
-                -- 默认显示方式：Value（直接显示数值）
-                local DisplayMethod = DisplayMethods.Value
-                local Precision = nil  -- 可后续扩展
-
-                local function SetValue(input, ignorecallback)
-                    local posXScale
-                    if typeof(input) == "Instance" then
-                        -- 来自拖动
-                        local mouseX = input.Position.X
-                        local barX = SliderBar.AbsolutePosition.X
-                        local barWidth = SliderBar.AbsoluteSize.X
-                        posXScale = math.clamp((mouseX - barX) / barWidth, 0, 1)
-                    else
-                        -- 来自数值设置
-                        posXScale = (input - min) / (max - min)
-                    end
-
-                    SliderHead.Position = UDim2.new(posXScale, 0, 0.5, 0)
-                    local newValue = min + posXScale * (max - min)
-
-                    -- 更新数值框（使用 DisplayMethod）
-                    NumBox.Text = DisplayMethod(newValue, Precision)
-
-                    if not ignorecallback then
-                        task.spawn(function()
-                            if callback then callback(newValue) end
-                        end)
-                    end
-
-                    -- 更新配置对象的值
-                    if ConfigObjects[sliderText] then
-                        ConfigObjects[sliderText].Value = newValue
-                    end
+                local function Update(val_new)
+                    Val = val_new
+                    local p = (Val - min) / (max - min)
+                    Tween(Fill, {Size = UDim2.new(p,0,1,0)}, 0.1)
+                    Num.Text = tostring(Val)
+                    ConfigObjects[sliderText].Value = Val
+                    callback(Val)
                 end
 
-                -- 初始化
-                SetValue(Val, true)
+                local function Drag(input)
+                    local p = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+                    local newVal = math.floor(min + ((max - min) * p))
+                    Update(newVal)
+                end
 
-                -- 拖动逻辑
-                local dragging = false
-                SliderHead.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        dragging = true
-                        PlaySound(Sounds.Slide)
-                        SetValue(input)
-                    end
-                end)
-                SliderHead.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        dragging = false
-                    end
-                end)
-                UserInputService.InputChanged:Connect(function(input)
-                    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        SetValue(input)
-                    end
-                end)
-
-                -- 数值框输入处理（支持百分比）
-                NumBox.FocusLost:Connect(function(enterPressed)
-                    local inputText = NumBox.Text
-                    local value, isPercent = inputText:match("^(%-?%d+%.?%d*)(%%?)$")
-                    if value then
-                        value = tonumber(value)
-                        if isPercent == "%" then
-                            value = min + (value / 100) * (max - min)
-                        end
-                        local newValue = math.clamp(value, min, max)
-                        SetValue(newValue)
-                    else
-                        -- 恢复为当前值
-                        SetValue(Val, true)
-                    end
-                end)
-
-                -- 注册配置对象
-                ConfigObjects[sliderText] = {
-                    Type = "Slider",
-                    Value = Val,
-                    Set = function(val)
-                        SetValue(val, true)
-                    end
-                }
+                local sliding
+                Bar.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=true; PlaySound(Sounds.Slide); Drag(i) end end)
+                UserInputService.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=false end end)
+                UserInputService.InputChanged:Connect(function(i) if sliding and i.UserInputType==Enum.UserInputType.MouseMovement then Drag(i) end end)
+                ConfigObjects[sliderText] = {Type = "Slider", Value = Val, Set = function(val) Update(val) end}
             end
 
             -- Textbox
