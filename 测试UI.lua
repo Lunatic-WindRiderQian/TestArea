@@ -349,7 +349,7 @@ function Library:CreateWindow(Config)
 
         local Elements = {}
 
-        -- Section：可折叠容器，支持自定义图标，无动画（瞬间展开/折叠）
+        -- Section：可折叠容器，支持自定义图标，保留展开/收缩动画，删除所有图标动画（图标不旋转，仅瞬间切换图片）
         function Elements:Section(text, icons, defaultOpen)
             -- 默认展开状态（如果没有提供，默认展开）
             if defaultOpen == nil then defaultOpen = true end
@@ -369,11 +369,11 @@ function Library:CreateWindow(Config)
                 end
             end
 
-            -- 处理图标
+            -- 处理图标：始终使用 iconOpen（如果有两个图标，则在展开/折叠时瞬间切换图片，无动画）
             local iconOpen, iconClosed
             if type(icons) == "table" then
                 iconOpen = formatAssetId(icons.Y or icons.open) or "rbxassetid://6031091004"
-                iconClosed = formatAssetId(icons.F or icons.closed) or "rbxassetid://6031091004"
+                iconClosed = formatAssetId(icons.F or icons.closed) or iconOpen  -- 如果没有关闭图标，默认使用打开图标
             else
                 local defaultIcon = formatAssetId(icons) or "rbxassetid://6031091004"
                 iconOpen = defaultIcon
@@ -393,16 +393,12 @@ function Library:CreateWindow(Config)
             titleBar.BackgroundTransparency = 1
             titleBar.Parent = sectionFrame
 
-            -- 图标（显示折叠状态）
+            -- 图标（固定使用 iconOpen，不旋转，只在状态改变时瞬间切换图片）
             local iconLabel = Instance.new("ImageLabel")
             iconLabel.Size = UDim2.new(0, 24, 0, 24)
             iconLabel.Position = UDim2.new(0, 5, 0.5, -12)
             iconLabel.BackgroundTransparency = 1
-            iconLabel.Image = defaultOpen and iconOpen or iconClosed
-            if iconOpen == iconClosed then
-                -- 如果使用同一图标，通过旋转表示状态：展开时向下（90°），折叠时向右（0°）
-                iconLabel.Rotation = defaultOpen and 90 or 0
-            end
+            iconLabel.Image = defaultOpen and iconOpen or iconClosed  -- 初始状态对应图片
             iconLabel.Parent = titleBar
 
             -- 文字标签
@@ -437,22 +433,17 @@ function Library:CreateWindow(Config)
             contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
             contentLayout.Parent = contentContainer
 
-            local contentHeight = 0
+            -- 更新内容高度的函数
             local function updateContentHeight()
-                contentHeight = contentLayout.AbsoluteContentSize.Y
-                -- 如果当前是展开状态，则实时调整容器高度
-                if open then
-                    contentContainer.Size = UDim2.new(1, 0, 0, contentHeight)
-                end
+                return contentLayout.AbsoluteContentSize.Y
             end
-            contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContentHeight)
 
             local open = defaultOpen
             -- 初始化高度
             if open then
                 task.spawn(function()
                     task.wait()  -- 等待布局计算
-                    contentHeight = contentLayout.AbsoluteContentSize.Y
+                    local contentHeight = updateContentHeight()
                     contentContainer.Size = UDim2.new(1, 0, 0, contentHeight)
                     sectionFrame.Size = UDim2.new(1, 0, 0, 36 + contentHeight)
                 end)
@@ -461,25 +452,30 @@ function Library:CreateWindow(Config)
                 sectionFrame.Size = UDim2.new(1, 0, 0, 36)
             end
 
+            -- 存储当前的动画，以便取消
+            local currentContentTween, currentSectionTween
+
             local function toggle()
                 open = not open
-                -- 更新图标（瞬间切换，无动画）
-                if iconOpen == iconClosed then
-                    iconLabel.Rotation = open and 90 or 0
-                else
-                    iconLabel.Image = open and iconOpen or iconClosed
-                end
 
-                if open then
-                    -- 展开：强制获取最新内容高度
-                    contentHeight = contentLayout.AbsoluteContentSize.Y
-                    contentContainer.Size = UDim2.new(1, 0, 0, contentHeight)
-                    sectionFrame.Size = UDim2.new(1, 0, 0, 36 + contentHeight)
-                else
-                    -- 折叠
-                    contentContainer.Size = UDim2.new(1, 0, 0, 0)
-                    sectionFrame.Size = UDim2.new(1, 0, 0, 36)
-                end
+                -- 瞬间切换图标图片（无动画）
+                iconLabel.Image = open and iconOpen or iconClosed
+
+                -- 计算目标尺寸
+                local targetContentHeight = open and updateContentHeight() or 0
+                local targetSectionHeight = 36 + targetContentHeight
+
+                -- 取消正在进行的动画
+                if currentContentTween then currentContentTween:Cancel() end
+                if currentSectionTween then currentSectionTween:Cancel() end
+
+                -- 使用 Tween 实现平滑展开/收缩动画
+                local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+                currentContentTween = TweenService:Create(contentContainer, tweenInfo, {Size = UDim2.new(1, 0, 0, targetContentHeight)})
+                currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
+
+                currentContentTween:Play()
+                currentSectionTween:Play()
             end
 
             toggleBtn.MouseButton1Click:Connect(function()
