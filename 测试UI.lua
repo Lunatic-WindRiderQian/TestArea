@@ -490,19 +490,15 @@ function Library:CreateWindow(Config)
 
             -- Button (maclib 风格)
             child.Button = function(_, btnText, callback)
-                -- 主按钮（TextButton 作为容器，背景色主题化）
                 local Btn = Instance.new("TextButton")
                 Btn.Size = UDim2.new(1, 0, 0, 35)
-                Btn.Text = ""  -- 文本由内部 Label 控制
-                Btn.Font = Enum.Font.Gotham
-                Btn.TextSize = 14
+                Btn.Text = ""
                 Btn.Parent = contentContainer
                 Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Btn, "BackgroundColor3", "Top")
 
-                -- 文本标签（左对齐）
                 local TextLabel = Instance.new("TextLabel")
-                TextLabel.Size = UDim2.new(1, -30, 1, 0)  -- 留出右侧图标空间
+                TextLabel.Size = UDim2.new(1, -30, 1, 0)
                 TextLabel.Position = UDim2.new(0, 10, 0, 0)
                 TextLabel.BackgroundTransparency = 1
                 TextLabel.Font = Enum.Font.Gotham
@@ -512,17 +508,15 @@ function Library:CreateWindow(Config)
                 TextLabel.Parent = Btn
                 AddToRegistry(TextLabel, "TextColor3", "Text")
 
-                -- 图标（右箭头，取自 maclib）
                 local Icon = Instance.new("ImageLabel")
                 Icon.Size = UDim2.new(0, 15, 0, 15)
                 Icon.Position = UDim2.new(1, -20, 0.5, -7.5)
                 Icon.BackgroundTransparency = 1
-                Icon.Image = "rbxassetid://10709791437"  -- maclib 箭头 asset
-                Icon.ImageTransparency = 0.5  -- 初始半透明
+                Icon.Image = "rbxassetid://10709791437"
+                Icon.ImageTransparency = 0.5
                 Icon.Parent = Btn
-                AddToRegistry(Icon, "ImageColor3", "Text")  -- 图标颜色跟随文本主题
+                AddToRegistry(Icon, "ImageColor3", "Text")
 
-                -- 悬停效果：图标透明度变化
                 local function onHover()
                     Tween(Icon, {ImageTransparency = 0}, 0.2)
                 end
@@ -533,7 +527,6 @@ function Library:CreateWindow(Config)
                 Btn.MouseEnter:Connect(onHover)
                 Btn.MouseLeave:Connect(onLeave)
 
-                -- 点击事件（保留原缩放动画和声音）
                 Btn.MouseButton1Click:Connect(function()
                     PlaySound(Sounds.Click)
                     Tween(Btn, {Size = UDim2.new(0.95, 0, 0, 32)}, 0.1)
@@ -542,7 +535,6 @@ function Library:CreateWindow(Config)
                     callback()
                 end)
 
-                -- 返回控制方法（可选）
                 local self = {}
                 function self.UpdateText(newText)
                     TextLabel.Text = newText
@@ -557,7 +549,6 @@ function Library:CreateWindow(Config)
             child.Toggle = function(_, toggleText, default, callback)
                 local Enabled = default or false
 
-                -- 主按钮（背景容器）
                 local Btn = Instance.new("TextButton")
                 Btn.Size = UDim2.new(1, 0, 0, 35)
                 Btn.Text = ""
@@ -565,7 +556,6 @@ function Library:CreateWindow(Config)
                 Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Btn, "BackgroundColor3", "Top")
 
-                -- 文本标签
                 local Title = Instance.new("TextLabel")
                 Title.Text = toggleText
                 Title.Size = UDim2.new(0.7, 0, 1, 0)
@@ -577,7 +567,6 @@ function Library:CreateWindow(Config)
                 Title.Parent = Btn
                 AddToRegistry(Title, "TextColor3", "Text")
 
-                -- 开关背景 (ImageLabel，非交互)
                 local Switch = Instance.new("ImageLabel")
                 Switch.Size = UDim2.new(0, 40, 0, 20)
                 Switch.Position = UDim2.new(1, -50, 0.5, -10)
@@ -586,7 +575,6 @@ function Library:CreateWindow(Config)
                 Switch.ImageColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
                 Switch.Parent = Btn
 
-                -- 滑块头 (ImageLabel)
                 local Dot = Instance.new("ImageLabel")
                 Dot.Size = UDim2.new(0, 16, 0, 16)
                 Dot.BackgroundTransparency = 1
@@ -594,22 +582,14 @@ function Library:CreateWindow(Config)
                 Dot.ImageColor3 = Color3.new(1, 1, 1)
                 Dot.AnchorPoint = Vector2.new(0.5, 0.5)
                 Dot.Parent = Switch
-                -- 初始位置：启用时靠右 (x=32)，禁用时靠左 (x=8)
                 Dot.Position = Enabled and UDim2.new(0, 32, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
 
-                -- 更新状态函数
                 local function Update()
                     if Enabled then PlaySound(Sounds.ToggleOn) else PlaySound(Sounds.ToggleOff) end
-
-                    -- 开关背景颜色
                     local targetColor = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
                     Tween(Switch, {ImageColor3 = targetColor}, 0.2)
-
-                    -- 滑块头位置
                     local targetPos = Enabled and UDim2.new(0, 32, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
                     Tween(Dot, {Position = targetPos}, 0.2)
-
-                    -- 更新配置和回调
                     ConfigObjects[toggleText].Value = Enabled
                     callback(Enabled)
                     Window:Notification(toggleText .. ": " .. tostring(Enabled))
@@ -632,112 +612,268 @@ function Library:CreateWindow(Config)
                 }
             end
 
-            -- Slider (maclib 风格，但保留原测试.lua 的上下布局)
+            -- Slider (完整移植 maclib 实现，采用上下布局)
             child.Slider = function(_, sliderText, min, max, default, callback)
-                local Val = default or min
-                local sliding = false
+                -- 将参数转换为 maclib 的 Settings 表
+                local Settings = {
+                    Name = sliderText,
+                    Minimum = min,
+                    Maximum = max,
+                    Default = default,
+                    Callback = callback,
+                    DisplayMethod = "Value",      -- 可改为 "Percent" 等，这里保持原样
+                    Precision = 2,                -- 保留两位小数
+                    Prefix = "",
+                    Suffix = "",
+                    onInputComplete = nil
+                }
 
-                -- 主容器（背景色 Top）
-                local Frame = Instance.new("Frame")
-                Frame.Size = UDim2.new(1, 0, 0, 50)  -- 高度 50，与测试.lua 一致
-                Frame.Parent = contentContainer
-                Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(Frame, "BackgroundColor3", "Top")
+                -- 创建主容器（背景色 Top，高度 60，与测试.lua 一致）
+                local slider = Instance.new("Frame")
+                slider.Size = UDim2.new(1, 0, 0, 60)
+                slider.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                slider.BackgroundTransparency = 0.98  -- 半透明，与 maclib 一致
+                slider.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                slider.BorderSizePixel = 0
+                slider.Parent = contentContainer
+                Instance.new("UICorner", slider).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(slider, "BackgroundColor3", "Top")  -- 注册主题色
+
+                -- 顶部区域：标题和数值框
+                local topFrame = Instance.new("Frame")
+                topFrame.Size = UDim2.new(1, 0, 0, 25)
+                topFrame.BackgroundTransparency = 1
+                topFrame.Parent = slider
 
                 -- 标题标签（左对齐）
-                local Lbl = Instance.new("TextLabel")
-                Lbl.Text = sliderText
-                Lbl.Size = UDim2.new(1, -20, 0, 20)
-                Lbl.Position = UDim2.new(0, 10, 0, 5)
-                Lbl.BackgroundTransparency = 1
-                Lbl.Font = Enum.Font.Gotham
-                Lbl.TextSize = 14
-                Lbl.TextXAlignment = Enum.TextXAlignment.Left
-                Lbl.Parent = Frame
-                AddToRegistry(Lbl, "TextColor3", "Text")
+                local sliderName = Instance.new("TextLabel")
+                sliderName.Name = "SliderName"
+                sliderName.FontFace = Font.new(assets.interFont or "rbxasset://fonts/families/GothamSSm.json")  -- 使用原 maclib 字体
+                sliderName.Text = Settings.Name
+                sliderName.RichText = true
+                sliderName.TextColor3 = Color3.fromRGB(255, 255, 255)
+                sliderName.TextSize = 13
+                sliderName.TextTransparency = 0.5
+                sliderName.TextTruncate = Enum.TextTruncate.AtEnd
+                sliderName.TextXAlignment = Enum.TextXAlignment.Left
+                sliderName.TextYAlignment = Enum.TextYAlignment.Top
+                sliderName.AnchorPoint = Vector2.new(0, 0.5)
+                sliderName.AutomaticSize = Enum.AutomaticSize.XY
+                sliderName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                sliderName.BackgroundTransparency = 1
+                sliderName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                sliderName.BorderSizePixel = 0
+                sliderName.Position = UDim2.new(0, 10, 0.5, 0)
+                sliderName.Parent = topFrame
+                AddToRegistry(sliderName, "TextColor3", "Text")
 
-                -- 数值显示（右上角）
-                local Num = Instance.new("TextLabel")
-                Num.Text = tostring(Val)
-                Num.Size = UDim2.new(0, 40, 0, 20)
-                Num.Position = UDim2.new(1, -50, 0, 5)
-                Num.BackgroundTransparency = 1
-                Num.TextColor3 = Color3.fromRGB(150, 150, 150)
-                Num.Font = Enum.Font.Gotham
-                Num.TextSize = 12
-                Num.Parent = Frame
+                -- 数值框 (TextBox，完全照搬 maclib 样式)
+                local sliderValue = Instance.new("TextBox")
+                sliderValue.Name = "SliderValue"
+                sliderValue.FontFace = Font.new(assets.interFont or "rbxasset://fonts/families/GothamSSm.json")
+                sliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+                sliderValue.TextSize = 12
+                sliderValue.TextTransparency = 0.1
+                sliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                sliderValue.BackgroundTransparency = 0.95
+                sliderValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                sliderValue.BorderSizePixel = 0
+                sliderValue.ClipsDescendants = true
+                sliderValue.Size = UDim2.fromOffset(60, 25)  -- 固定宽度
+                sliderValue.AnchorPoint = Vector2.new(1, 0.5)
+                sliderValue.Position = UDim2.new(1, -15, 0.5, 0)
+                sliderValue.Parent = topFrame
 
-                -- 滑动条背景（使用 maclib 图片）
-                local Bar = Instance.new("ImageLabel")
-                Bar.Size = UDim2.new(1, -20, 0, 6)
-                Bar.Position = UDim2.new(0, 10, 0, 35)
-                Bar.BackgroundTransparency = 1
-                Bar.Image = SliderAssets.Bar
-                Bar.ImageColor3 = Color3.fromRGB(87, 86, 86)  -- 灰色
-                Bar.Parent = Frame
+                -- 数值框装饰
+                local sliderValueUICorner = Instance.new("UICorner")
+                sliderValueUICorner.Name = "SliderValueUICorner"
+                sliderValueUICorner.CornerRadius = UDim.new(0, 4)
+                sliderValueUICorner.Parent = sliderValue
 
-                -- 滑块头（可拖动按钮，使用 maclib 图片）
-                local Head = Instance.new("ImageButton")
-                Head.Size = UDim2.new(0, 12, 0, 12)
-                Head.AnchorPoint = Vector2.new(0.5, 0.5)
-                Head.BackgroundTransparency = 1
-                Head.Image = SliderAssets.Head
-                Head.ImageColor3 = Color3.new(1, 1, 1)
-                Head.Parent = Bar
+                local sliderValueUIStroke = Instance.new("UIStroke")
+                sliderValueUIStroke.Name = "SliderValueUIStroke"
+                sliderValueUIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                sliderValueUIStroke.Color = Color3.fromRGB(255, 255, 255)
+                sliderValueUIStroke.Transparency = 0.9
+                sliderValueUIStroke.Parent = sliderValue
 
-                -- 初始化滑块头位置
-                local function UpdateFromValue(newVal)
-                    Val = math.clamp(newVal, min, max)
-                    local p = (Val - min) / (max - min)
-                    Head.Position = UDim2.new(p, 0, 0.5, 0)
-                    Num.Text = string.format("%.2f", Val)  -- 保留两位小数
-                    ConfigObjects[sliderText].Value = Val
-                    callback(Val)
+                local sliderValueUIPadding = Instance.new("UIPadding")
+                sliderValueUIPadding.Name = "SliderValueUIPadding"
+                sliderValueUIPadding.PaddingLeft = UDim.new(0, 5)
+                sliderValueUIPadding.PaddingRight = UDim.new(0, 5)
+                sliderValueUIPadding.Parent = sliderValue
+
+                -- 底部区域：滑块条
+                local bottomFrame = Instance.new("Frame")
+                bottomFrame.Size = UDim2.new(1, 0, 0, 25)
+                bottomFrame.Position = UDim2.new(0, 0, 1, -25)
+                bottomFrame.BackgroundTransparency = 1
+                bottomFrame.Parent = slider
+
+                -- 滑块条背景（图片）
+                local sliderBar = Instance.new("ImageLabel")
+                sliderBar.Name = "SliderBar"
+                sliderBar.Image = SliderAssets.Bar
+                sliderBar.ImageColor3 = Color3.fromRGB(87, 86, 86)
+                sliderBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                sliderBar.BackgroundTransparency = 1
+                sliderBar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                sliderBar.BorderSizePixel = 0
+                sliderBar.Size = UDim2.new(1, -20, 0, 3)
+                sliderBar.Position = UDim2.new(0, 10, 0.5, 0)
+                sliderBar.AnchorPoint = Vector2.new(0, 0.5)
+                sliderBar.Parent = bottomFrame
+
+                -- 滑块头（可拖动按钮）
+                local sliderHead = Instance.new("ImageButton")
+                sliderHead.Name = "SliderHead"
+                sliderHead.Image = SliderAssets.Head
+                sliderHead.AnchorPoint = Vector2.new(0.5, 0.5)
+                sliderHead.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                sliderHead.BackgroundTransparency = 1
+                sliderHead.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                sliderHead.BorderSizePixel = 0
+                sliderHead.Position = UDim2.fromScale(1, 0.5)  -- 初始位置，稍后更新
+                sliderHead.Size = UDim2.fromOffset(12, 12)
+                sliderHead.Parent = sliderBar
+
+                -- 显示方法表（完全复制 maclib）
+                local DisplayMethods = {
+                    Hundredths = function(sliderValue)
+                        return string.format("%.2f", sliderValue)
+                    end,
+                    Tenths = function(sliderValue)
+                        return string.format("%.1f", sliderValue)
+                    end,
+                    Round = function(sliderValue, precision)
+                        if precision then
+                            return string.format("%." .. precision .. "f", sliderValue)
+                        else
+                            return tostring(math.round(sliderValue))
+                        end
+                    end,
+                    Degrees = function(sliderValue, precision)
+                        local formattedValue = precision and string.format("%." .. precision .. "f", sliderValue) or tostring(sliderValue)
+                        return formattedValue .. "°"
+                    end,
+                    Percent = function(sliderValue, precision)
+                        local percentage = (sliderValue - Settings.Minimum) / (Settings.Maximum - Settings.Minimum) * 100
+                        return precision and string.format("%." .. precision .. "f", percentage) .. "%" or tostring(math.round(percentage)) .. "%"
+                    end,
+                    Value = function(sliderValue, precision)
+                        return precision and string.format("%." .. precision .. "f", sliderValue) or tostring(sliderValue)
+                    end
+                }
+
+                local ValueDisplayMethod = DisplayMethods[Settings.DisplayMethod] or DisplayMethods.Value
+                local finalValue
+
+                -- 设置值函数（核心逻辑）
+                local function SetValue(val, ignorecallback)
+                    local posXScale
+                    if typeof(val) == "Instance" then
+                        local input = val
+                        posXScale = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+                    else
+                        local value = val
+                        posXScale = (value - Settings.Minimum) / (Settings.Maximum - Settings.Minimum)
+                    end
+
+                    local pos = UDim2.new(posXScale, 0, 0.5, 0)
+                    sliderHead.Position = pos
+
+                    finalValue = posXScale * (Settings.Maximum - Settings.Minimum) + Settings.Minimum
+
+                    sliderValue.Text = (Settings.Prefix or "") .. ValueDisplayMethod(finalValue, Settings.Precision) .. (Settings.Suffix or "")
+
+                    if not ignorecallback then
+                        task.spawn(function()
+                            if Settings.Callback then
+                                Settings.Callback(finalValue)
+                            end
+                        end)
+                    end
+
+                    -- 更新配置对象
+                    if ConfigObjects[sliderText] then
+                        ConfigObjects[sliderText].Value = finalValue
+                    end
                 end
-                UpdateFromValue(Val)
+
+                -- 初始化
+                SetValue(Settings.Default, true)
 
                 -- 拖动逻辑
-                local function Drag(input)
-                    local barSize = Bar.AbsoluteSize.X
-                    local mouseX = input.Position.X
-                    local barX = Bar.AbsolutePosition.X
-                    local relativeX = math.clamp(mouseX - barX, 0, barSize)
-                    local p = relativeX / barSize
-                    local newVal = min + p * (max - min)
-                    UpdateFromValue(newVal)
-                end
+                local dragging = false
 
-                Head.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        sliding = true
+                sliderHead.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        dragging = true
                         PlaySound(Sounds.Slide)
-                        Drag(input)
+                        SetValue(input)
                     end
                 end)
 
-                Head.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        sliding = false
+                sliderHead.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        dragging = false
+                        if Settings.onInputComplete then
+                            Settings.onInputComplete(finalValue)
+                        end
                     end
                 end)
 
                 UserInputService.InputChanged:Connect(function(input)
-                    if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        Drag(input)
+                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                        SetValue(input)
                     end
                 end)
 
-                -- 数值框也可手动输入（可选，原测试.lua 没有输入功能，但为增强可加，这里不加以保持原样）
-                -- 如果需要可自行添加 TextBox 替代 Num，这里保持原样使用 Label
+                -- 文本框输入处理（支持百分比等）
+                sliderValue.FocusLost:Connect(function(enterPressed)
+                    local inputText = sliderValue.Text
+                    local value, isPercent = inputText:match("^(%-?%d+%.?%d*)(%%?)$")
+
+                    if value then
+                        value = tonumber(value)
+                        isPercent = isPercent == "%"
+
+                        if isPercent then
+                            value = Settings.Minimum + (value / 100) * (Settings.Maximum - Settings.Minimum)
+                        end
+
+                        local newValue = math.clamp(value, Settings.Minimum, Settings.Maximum)
+                        SetValue(newValue)
+                    else
+                        sliderValue.Text = ValueDisplayMethod(finalValue, Settings.Precision)
+                    end
+
+                    if Settings.onInputComplete then
+                        Settings.onInputComplete(finalValue)
+                    end
+                end)
 
                 -- 注册配置对象
                 ConfigObjects[sliderText] = {
                     Type = "Slider",
-                    Value = Val,
+                    Value = finalValue,
                     Set = function(val)
-                        UpdateFromValue(val)
+                        SetValue(val, true)
                     end
                 }
+
+                -- 返回控制方法（可选）
+                local self = {}
+                function self.UpdateValue(newVal)
+                    SetValue(newVal, true)
+                end
+                function self.GetValue()
+                    return finalValue
+                end
+                function self.SetVisible(state)
+                    slider.Visible = state
+                end
+                return self
             end
 
             -- Textbox
@@ -776,7 +912,7 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- Dropdown (原版样式，放在内容容器内)
+            -- Dropdown (原版样式)
             child.Dropdown = function(_, dropText, options, callback)
                 local Dropped = false
                 local Btn = Instance.new("TextButton")
