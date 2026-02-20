@@ -349,7 +349,7 @@ function Library:CreateWindow(Config)
 
         local Elements = {}
 
-        -- Section：可折叠容器，支持自定义图标，保留展开/收缩动画，自动适应高度
+        -- Section：可折叠容器，支持自定义图标，保留展开/收缩动画
         function Elements:Section(text, icons, defaultOpen)
             -- 默认展开状态（如果没有提供，默认展开）
             if defaultOpen == nil then defaultOpen = true end
@@ -369,11 +369,11 @@ function Library:CreateWindow(Config)
                 end
             end
 
-            -- 处理图标：始终使用 iconOpen（如果有两个图标，则在展开/折叠时瞬间切换图片，无动画）
+            -- 处理图标
             local iconOpen, iconClosed
             if type(icons) == "table" then
                 iconOpen = formatAssetId(icons.Y or icons.open) or "rbxassetid://6031091004"
-                iconClosed = formatAssetId(icons.F or icons.closed) or iconOpen  -- 如果没有关闭图标，默认使用打开图标
+                iconClosed = formatAssetId(icons.F or icons.closed) or iconOpen
             else
                 local defaultIcon = formatAssetId(icons) or "rbxassetid://6031091004"
                 iconOpen = defaultIcon
@@ -382,7 +382,7 @@ function Library:CreateWindow(Config)
 
             -- Section 主框架
             local sectionFrame = Instance.new("Frame")
-            sectionFrame.Size = UDim2.new(1, 0, 0, 36)  -- 初始高度为标题栏高度
+            sectionFrame.Size = UDim2.new(1, 0, 0, 36)
             sectionFrame.BackgroundTransparency = 1
             sectionFrame.Parent = Page
             sectionFrame.ClipsDescendants = true
@@ -393,12 +393,12 @@ function Library:CreateWindow(Config)
             titleBar.BackgroundTransparency = 1
             titleBar.Parent = sectionFrame
 
-            -- 图标（固定使用 iconOpen，不旋转，只在状态改变时瞬间切换图片）
+            -- 图标
             local iconLabel = Instance.new("ImageLabel")
             iconLabel.Size = UDim2.new(0, 24, 0, 24)
             iconLabel.Position = UDim2.new(0, 5, 0.5, -12)
             iconLabel.BackgroundTransparency = 1
-            iconLabel.Image = defaultOpen and iconOpen or iconClosed  -- 初始状态对应图片
+            iconLabel.Image = defaultOpen and iconOpen or iconClosed
             iconLabel.Parent = titleBar
 
             -- 文字标签
@@ -413,14 +413,14 @@ function Library:CreateWindow(Config)
             textLabel.Parent = titleBar
             AddToRegistry(textLabel, "TextColor3", "Accent")
 
-            -- 点击按钮（覆盖整个标题栏）
+            -- 点击按钮
             local toggleBtn = Instance.new("TextButton")
             toggleBtn.Size = UDim2.new(1, 0, 1, 0)
             toggleBtn.BackgroundTransparency = 1
             toggleBtn.Text = ""
             toggleBtn.Parent = titleBar
 
-            -- 内容容器（放置子元素）
+            -- 内容容器
             local contentContainer = Instance.new("Frame")
             contentContainer.Size = UDim2.new(1, 0, 0, 0)
             contentContainer.Position = UDim2.new(0, 0, 0, 36)
@@ -433,46 +433,33 @@ function Library:CreateWindow(Config)
             contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
             contentLayout.Parent = contentContainer
 
-            -- 存储当前的动画，以便取消
+            -- 存储动画
             local currentContentTween, currentSectionTween
+            local open = defaultOpen
 
-            -- 更新内容高度的函数（始终根据实际内容调整）
-            local function updateSizeFromContent()
-                local newHeight = contentLayout.AbsoluteContentSize.Y
-                -- 取消正在进行的动画
+            -- 更新 Section 高度的函数（可手动调用）
+            local function updateSectionHeight(instant)
+                local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
+                local targetSectionHeight = 36 + targetContentHeight
                 if currentContentTween then currentContentTween:Cancel() end
                 if currentSectionTween then currentSectionTween:Cancel() end
-                -- 平滑调整到新高度（仅当展开时）
-                if open then
-                    currentContentTween = TweenService:Create(contentContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, newHeight)})
-                    currentSectionTween = TweenService:Create(sectionFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 36 + newHeight)})
-                    currentContentTween:Play()
-                    currentSectionTween:Play()
-                else
-                    -- 折叠状态直接设置为0
-                    contentContainer.Size = UDim2.new(1, 0, 0, 0)
-                    sectionFrame.Size = UDim2.new(1, 0, 0, 36)
-                end
+                local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+                currentContentTween = TweenService:Create(contentContainer, tweenInfo, {Size = UDim2.new(1, 0, 0, targetContentHeight)})
+                currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
+                currentContentTween:Play()
+                currentSectionTween:Play()
             end
 
-            -- 监听布局变化
-            contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSizeFromContent)
-
-            local open = defaultOpen
             -- 初始化高度
             task.spawn(function()
                 task.wait()
-                updateSizeFromContent()
+                updateSectionHeight(true)
             end)
 
             local function toggle()
                 open = not open
-
-                -- 瞬间切换图标图片（无动画）
                 iconLabel.Image = open and iconOpen or iconClosed
-
-                -- 更新高度
-                updateSizeFromContent()
+                updateSectionHeight(false)
             end
 
             toggleBtn.MouseButton1Click:Connect(function()
@@ -480,7 +467,14 @@ function Library:CreateWindow(Config)
                 toggle()
             end)
 
-            -- 子元素表（将元素添加到 contentContainer）
+            -- 监听内容变化（备用，确保高度自动适应）
+            contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                if open then
+                    updateSectionHeight(false)
+                end
+            end)
+
+            -- 子元素表
             local child = {}
 
             -- Button
@@ -647,7 +641,7 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- Dropdown (内嵌式，完全修复)
+            -- Dropdown (原版样式，放在内容容器内)
             child.Dropdown = function(_, dropText, options, callback)
                 local Dropped = false
                 local Btn = Instance.new("TextButton")
@@ -677,8 +671,8 @@ function Library:CreateWindow(Config)
                 Container.Size = UDim2.new(1,0,0,0)
                 Container.Visible = false
                 Container.ClipsDescendants = true
-                Container.Parent = contentContainer
-                Container.ZIndex = 10  -- 提高ZIndex确保选项在最上层
+                Container.Parent = contentContainer  -- 恢复为内容容器内
+                Container.ZIndex = 10
                 Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Container, "BackgroundColor3", "Top")
                 local List = Instance.new("UIListLayout")
@@ -694,6 +688,8 @@ function Library:CreateWindow(Config)
                     Tween(Icon, {Rotation = 0}, 0.2)
                     task.wait(0.2)
                     Container.Visible = false
+                    -- 更新Section高度
+                    updateSectionHeight(false)
                 end
 
                 local function RefreshOptions(newOpts)
@@ -717,13 +713,25 @@ function Library:CreateWindow(Config)
                     PlaySound(Sounds.Click)
                     if Dropped then
                         Container.Visible = true
-                        Tween(Container, {Size = UDim2.new(1,0,0, #Container:GetChildren()*30)}, 0.3)
+                        local targetHeight = #options * 30
+                        -- 先展开选项容器
+                        local tweenOpt = TweenService:Create(Container, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1,0,0, targetHeight)})
+                        tweenOpt:Play()
                         Tween(Icon, {Rotation = 180}, 0.3)
+                        -- 等待选项容器动画完成后更新Section高度
+                        tweenOpt.Completed:Connect(function()
+                            updateSectionHeight(false)
+                        end)
                     else
-                        Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
+                        -- 折叠选项容器
+                        local tweenOpt = TweenService:Create(Container, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1,0,0, 0)})
+                        tweenOpt:Play()
                         Tween(Icon, {Rotation = 0}, 0.2)
-                        task.wait(0.2)
-                        Container.Visible = false
+                        -- 同时更新Section高度（或等待折叠完成）
+                        tweenOpt.Completed:Connect(function()
+                            Container.Visible = false
+                            updateSectionHeight(false)
+                        end)
                     end
                 end)
 
