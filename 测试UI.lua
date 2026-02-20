@@ -633,136 +633,143 @@ function Library:CreateWindow(Config)
             end
 
             -- Slider (结合测试.lua布局和maclib视觉)
-            child.Slider = function(_, sliderText, min, max, default, callback)
-                local Val = default or min
-                local isDragging = false
+            -- Slider (修正布局：标题与数值同行，滑动条在下)
+child.Slider = function(_, sliderText, min, max, default, callback)
+    local Val = default or min
+    local isDragging = false
 
-                -- 外层容器（保持测试.lua的高度和背景）
-                local Frame = Instance.new("Frame")
-                Frame.Size = UDim2.new(1, 0, 0, 50)
-                Frame.Parent = contentContainer
-                Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(Frame, "BackgroundColor3", "Top")
+    -- 外层容器（高度增加至60以容纳两行）
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(1, 0, 0, 60)
+    Frame.Parent = contentContainer
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+    AddToRegistry(Frame, "BackgroundColor3", "Top")
 
-                -- 标题（测试.lua样式：在上方）
-                local Lbl = Instance.new("TextLabel")
-                Lbl.Text = sliderText
-                Lbl.Size = UDim2.new(1, -20, 0, 20)
-                Lbl.Position = UDim2.new(0, 10, 0, 5)
-                Lbl.BackgroundTransparency = 1
-                Lbl.Font = Enum.Font.Gotham
-                Lbl.TextSize = 14
-                Lbl.TextXAlignment = Enum.TextXAlignment.Left
-                Lbl.Parent = Frame
-                AddToRegistry(Lbl, "TextColor3", "Text")
+    -- 顶部行（标题 + 数值框）
+    local TopRow = Instance.new("Frame")
+    TopRow.Size = UDim2.new(1, -20, 0, 25)
+    TopRow.Position = UDim2.new(0, 10, 0, 5)
+    TopRow.BackgroundTransparency = 1
+    TopRow.Parent = Frame
 
-                -- 滑块区域容器（位于标题下方）
-                local SliderArea = Instance.new("Frame")
-                SliderArea.Size = UDim2.new(1, -20, 0, 25)  -- 高度25，容纳滑块和数值框
-                SliderArea.Position = UDim2.new(0, 10, 0, 30)
-                SliderArea.BackgroundTransparency = 1
-                SliderArea.Parent = Frame
+    local RowLayout = Instance.new("UIListLayout")
+    RowLayout.FillDirection = Enum.FillDirection.Horizontal
+    RowLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    RowLayout.Padding = UDim.new(0, 10)
+    RowLayout.Parent = TopRow
 
-                -- 水平布局（滑块条和数值框左右排列）
-                local AreaLayout = Instance.new("UIListLayout")
-                AreaLayout.FillDirection = Enum.FillDirection.Horizontal
-                AreaLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-                AreaLayout.Padding = UDim.new(0, 8)
-                AreaLayout.Parent = SliderArea
+    -- 标题标签（左对齐，自动宽度）
+    local Lbl = Instance.new("TextLabel")
+    Lbl.Text = sliderText
+    Lbl.Size = UDim2.new(0, TextService:GetTextSize(sliderText, 14, Enum.Font.Gotham, Vector2.new(200, 25)).X + 2, 1, 0)
+    Lbl.BackgroundTransparency = 1
+    Lbl.Font = Enum.Font.Gotham
+    Lbl.TextSize = 14
+    Lbl.TextXAlignment = Enum.TextXAlignment.Left
+    Lbl.Parent = TopRow
+    AddToRegistry(Lbl, "TextColor3", "Text")
 
-                -- 滑块条背景（maclib图片）
-                local Bar = Instance.new("ImageLabel")
-                Bar.Image = SliderAssets.Bar
-                Bar.ImageColor3 = Color3.fromRGB(87, 86, 86)  -- 灰色
-                Bar.Size = UDim2.new(1, -70, 0, 3)  -- 留出数值框宽度
-                Bar.BackgroundTransparency = 1
-                Bar.Parent = SliderArea
+    -- 数值文本框（固定宽度60，右侧）
+    local ValueBox = Instance.new("TextBox")
+    ValueBox.Size = UDim2.new(0, 60, 0, 22)
+    ValueBox.BackgroundTransparency = 0.95
+    ValueBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ValueBox.Font = Enum.Font.Gotham
+    ValueBox.TextSize = 12
+    ValueBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ValueBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    ValueBox.Text = string.format("%.2f", Val)
+    ValueBox.Parent = TopRow
+    Instance.new("UICorner", ValueBox).CornerRadius = UDim.new(0, 4)
 
-                -- 滑块头（maclib图片，可拖动）
-                local Head = Instance.new("ImageButton")
-                Head.Image = SliderAssets.Head
-                Head.ImageColor3 = Color3.new(1, 1, 1)
-                Head.Size = UDim2.new(0, 12, 0, 12)
-                Head.AnchorPoint = Vector2.new(0.5, 0.5)
-                Head.BackgroundTransparency = 1
-                Head.Parent = Bar
+    -- 滑动条区域（位于下方）
+    local SliderRow = Instance.new("Frame")
+    SliderRow.Size = UDim2.new(1, -20, 0, 20)
+    SliderRow.Position = UDim2.new(0, 10, 0, 35)
+    SliderRow.BackgroundTransparency = 1
+    SliderRow.Parent = Frame
 
-                -- 数值文本框（maclib样式）
-                local ValueBox = Instance.new("TextBox")
-                ValueBox.Size = UDim2.new(0, 60, 0, 25)
-                ValueBox.BackgroundTransparency = 0.95
-                ValueBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                ValueBox.Font = Enum.Font.Gotham
-                ValueBox.TextSize = 12
-                ValueBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-                ValueBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-                ValueBox.Text = string.format("%.2f", Val)
-                ValueBox.Parent = SliderArea
-                Instance.new("UICorner", ValueBox).CornerRadius = UDim.new(0, 4)
+    -- 滑块条背景（maclib图片）
+    local Bar = Instance.new("ImageLabel")
+    Bar.Image = SliderAssets.Bar
+    Bar.ImageColor3 = Color3.fromRGB(87, 86, 86)
+    Bar.Size = UDim2.new(1, 0, 0, 3)
+    Bar.Position = UDim2.new(0, 0, 0.5, -1)  -- 垂直居中
+    Bar.BackgroundTransparency = 1
+    Bar.Parent = SliderRow
 
-                -- 更新滑块位置和数值的函数
-                local function UpdateFromValue(newVal)
-                    Val = math.clamp(newVal, min, max)
-                    local p = (Val - min) / (max - min)
-                    Head.Position = UDim2.new(p, 0, 0.5, 0)
-                    ValueBox.Text = string.format("%.2f", Val)
-                    ConfigObjects[sliderText].Value = Val
-                    callback(Val)
-                end
+    -- 滑块头（maclib图片，可拖动）
+    local Head = Instance.new("ImageButton")
+    Head.Image = SliderAssets.Head
+    Head.ImageColor3 = Color3.new(1, 1, 1)
+    Head.Size = UDim2.new(0, 12, 0, 12)
+    Head.AnchorPoint = Vector2.new(0.5, 0.5)
+    Head.BackgroundTransparency = 1
+    Head.Parent = Bar
 
-                -- 初始化位置
-                UpdateFromValue(Val)
+    -- 更新滑块位置和数值的函数
+    local function UpdateFromValue(newVal)
+        Val = math.clamp(newVal, min, max)
+        local p = (Val - min) / (max - min)
+        Head.Position = UDim2.new(p, 0, 0.5, 0)
+        ValueBox.Text = string.format("%.2f", Val)
+        ConfigObjects[sliderText].Value = Val
+        callback(Val)
+    end
 
-                -- 滑块头拖动逻辑
-                local function Drag(input)
-                    local barSize = Bar.AbsoluteSize.X
-                    local mouseX = input.Position.X
-                    local barX = Bar.AbsolutePosition.X
-                    local relativeX = math.clamp(mouseX - barX, 0, barSize)
-                    local p = relativeX / barSize
-                    local newVal = min + p * (max - min)
-                    UpdateFromValue(newVal)
-                end
+    -- 初始化位置
+    UpdateFromValue(Val)
 
-                Head.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        isDragging = true
-                        PlaySound(Sounds.Slide)
-                        Drag(input)
-                    end
-                end)
+    -- 滑块头拖动逻辑
+    local function Drag(input)
+        local barSize = Bar.AbsoluteSize.X
+        local mouseX = input.Position.X
+        local barX = Bar.AbsolutePosition.X
+        local relativeX = math.clamp(mouseX - barX, 0, barSize)
+        local p = relativeX / barSize
+        local newVal = min + p * (max - min)
+        UpdateFromValue(newVal)
+    end
 
-                Head.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        isDragging = false
-                    end
-                end)
+    Head.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = true
+            PlaySound(Sounds.Slide)
+            Drag(input)
+        end
+    end)
 
-                UserInputService.InputChanged:Connect(function(input)
-                    if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        Drag(input)
-                    end
-                end)
+    Head.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = false
+        end
+    end)
 
-                -- 文本框输入处理
-                ValueBox.FocusLost:Connect(function(enterPressed)
-                    local newVal = tonumber(ValueBox.Text)
-                    if newVal then
-                        UpdateFromValue(newVal)
-                    else
-                        ValueBox.Text = string.format("%.2f", Val)  -- 恢复上次有效值
-                    end
-                end)
+    UserInputService.InputChanged:Connect(function(input)
+        if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            Drag(input)
+        end
+    end)
 
-                -- 注册配置对象
-                ConfigObjects[sliderText] = {
-                    Type = "Slider",
-                    Value = Val,
-                    Set = function(val)
-                        UpdateFromValue(val)
-                    end
-                }
-            end
+    -- 文本框输入处理
+    ValueBox.FocusLost:Connect(function(enterPressed)
+        local newVal = tonumber(ValueBox.Text)
+        if newVal then
+            UpdateFromValue(newVal)
+        else
+            ValueBox.Text = string.format("%.2f", Val)  -- 恢复上次有效值
+        end
+    end)
+
+    -- 注册配置对象
+    ConfigObjects[sliderText] = {
+        Type = "Slider",
+        Value = Val,
+        Set = function(val)
+            UpdateFromValue(val)
+        end
+    }
+end
 
             -- Textbox
             child.Textbox = function(_, boxText, placeholder, callback)
