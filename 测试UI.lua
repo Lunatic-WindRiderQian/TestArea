@@ -633,45 +633,34 @@ function Library:CreateWindow(Config)
             end
 
             -- Slider (结合测试.lua布局和maclib视觉)
-            -- Slider (修正布局：标题与数值同行，滑动条在下)
+            -- Slider (修正布局：标题与数值同行，数值框在右侧，滑动条在下)
 child.Slider = function(_, sliderText, min, max, default, callback)
     local Val = default or min
     local isDragging = false
 
-    -- 外层容器（高度增加至60以容纳两行）
+    -- 外层容器
     local Frame = Instance.new("Frame")
     Frame.Size = UDim2.new(1, 0, 0, 60)
     Frame.Parent = contentContainer
     Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
     AddToRegistry(Frame, "BackgroundColor3", "Top")
 
-    -- 顶部行（标题 + 数值框）
-    local TopRow = Instance.new("Frame")
-    TopRow.Size = UDim2.new(1, -20, 0, 25)
-    TopRow.Position = UDim2.new(0, 10, 0, 5)
-    TopRow.BackgroundTransparency = 1
-    TopRow.Parent = Frame
-
-    local RowLayout = Instance.new("UIListLayout")
-    RowLayout.FillDirection = Enum.FillDirection.Horizontal
-    RowLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    RowLayout.Padding = UDim.new(0, 10)
-    RowLayout.Parent = TopRow
-
-    -- 标题标签（左对齐，自动宽度）
+    -- 标题标签（左对齐）
     local Lbl = Instance.new("TextLabel")
     Lbl.Text = sliderText
-    Lbl.Size = UDim2.new(0, TextService:GetTextSize(sliderText, 14, Enum.Font.Gotham, Vector2.new(200, 25)).X + 2, 1, 0)
+    Lbl.Size = UDim2.new(0.7, -20, 0, 22)  -- 占据70%宽度，留出右侧空间
+    Lbl.Position = UDim2.new(0, 10, 0, 8)   -- 左上角偏移
     Lbl.BackgroundTransparency = 1
     Lbl.Font = Enum.Font.Gotham
     Lbl.TextSize = 14
     Lbl.TextXAlignment = Enum.TextXAlignment.Left
-    Lbl.Parent = TopRow
+    Lbl.Parent = Frame
     AddToRegistry(Lbl, "TextColor3", "Text")
 
-    -- 数值文本框（固定宽度60，右侧）
+    -- 数值文本框（固定在右侧）
     local ValueBox = Instance.new("TextBox")
     ValueBox.Size = UDim2.new(0, 60, 0, 22)
+    ValueBox.Position = UDim2.new(1, -80, 0, 8)  -- 右侧偏移80（包括右边距）
     ValueBox.BackgroundTransparency = 0.95
     ValueBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     ValueBox.Font = Enum.Font.Gotham
@@ -679,7 +668,7 @@ child.Slider = function(_, sliderText, min, max, default, callback)
     ValueBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     ValueBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
     ValueBox.Text = string.format("%.2f", Val)
-    ValueBox.Parent = TopRow
+    ValueBox.Parent = Frame
     Instance.new("UICorner", ValueBox).CornerRadius = UDim.new(0, 4)
 
     -- 滑动条区域（位于下方）
@@ -694,7 +683,7 @@ child.Slider = function(_, sliderText, min, max, default, callback)
     Bar.Image = SliderAssets.Bar
     Bar.ImageColor3 = Color3.fromRGB(87, 86, 86)
     Bar.Size = UDim2.new(1, 0, 0, 3)
-    Bar.Position = UDim2.new(0, 0, 0.5, -1)  -- 垂直居中
+    Bar.Position = UDim2.new(0, 0, 0.5, -1)
     Bar.BackgroundTransparency = 1
     Bar.Parent = SliderRow
 
@@ -757,7 +746,7 @@ child.Slider = function(_, sliderText, min, max, default, callback)
         if newVal then
             UpdateFromValue(newVal)
         else
-            ValueBox.Text = string.format("%.2f", Val)  -- 恢复上次有效值
+            ValueBox.Text = string.format("%.2f", Val)
         end
     end)
 
