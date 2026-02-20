@@ -15,23 +15,6 @@ local SFXEnabled = true
 local Registry = {} 
 local ConfigObjects = {} 
 
--- 从 maclib.lua 中提取的资源 ID
-local Assets = {
-	interFont = "rbxassetid://12187365364",
-	toggleBackground = "rbxassetid://18772190202",
-	togglerHead = "rbxassetid://18772309008",
-	buttonImage = "rbxassetid://10709791437",
-	dropdown = "rbxassetid://18865373378",
-	sliderbar = "rbxassetid://18772615246",
-	sliderhead = "rbxassetid://18772834246",
-	searchIcon = "rbxassetid://86737463322606",
-	grid = "rbxassetid://121484455191370",
-	colorWheel = "rbxassetid://2849458409",
-	colorTarget = "rbxassetid://73265255323268",
-	globe = "rbxassetid://108952102602834",
-	transform = "rbxassetid://90336395745819",
-}
-
 -- SFX
 local Sounds = {
     Hover = "rbxassetid://4510086912",
@@ -494,382 +477,311 @@ function Library:CreateWindow(Config)
             -- 子元素表
             local child = {}
 
-            -- ==================== 组件替换开始 ====================
-            -- 使用 maclib.lua 的实现，但保留测试UI的背景色（通过 AddToRegistry 注册 Top 色）
-
-            -- Button
+            -- Button (已替换为 maclib 风格)
             child.Button = function(_, btnText, callback)
+                -- 主按钮（TextButton 作为容器，背景色主题化）
+                local Btn = Instance.new("TextButton")
+                Btn.Size = UDim2.new(1, 0, 0, 35)
+                Btn.Text = ""  -- 文本由内部 Label 控制
+                Btn.Font = Enum.Font.Gotham
+                Btn.TextSize = 14
+                Btn.Parent = contentContainer
+                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(Btn, "BackgroundColor3", "Top")
+
+                -- 文本标签（左对齐）
+                local TextLabel = Instance.new("TextLabel")
+                TextLabel.Size = UDim2.new(1, -30, 1, 0)  -- 留出右侧图标空间
+                TextLabel.Position = UDim2.new(0, 10, 0, 0)
+                TextLabel.BackgroundTransparency = 1
+                TextLabel.Font = Enum.Font.Gotham
+                TextLabel.Text = btnText
+                TextLabel.TextSize = 14
+                TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+                TextLabel.Parent = Btn
+                AddToRegistry(TextLabel, "TextColor3", "Text")
+
+                -- 图标（右箭头，取自 maclib）
+                local Icon = Instance.new("ImageLabel")
+                Icon.Size = UDim2.new(0, 15, 0, 15)
+                Icon.Position = UDim2.new(1, -20, 0.5, -7.5)
+                Icon.BackgroundTransparency = 1
+                Icon.Image = "rbxassetid://10709791437"  -- maclib 箭头 asset
+                Icon.ImageTransparency = 0.5  -- 初始半透明
+                Icon.Parent = Btn
+                AddToRegistry(Icon, "ImageColor3", "Text")  -- 图标颜色跟随文本主题
+
+                -- 悬停效果：图标透明度变化
+                local function onHover()
+                    Tween(Icon, {ImageTransparency = 0}, 0.2)
+                end
+                local function onLeave()
+                    Tween(Icon, {ImageTransparency = 0.5}, 0.2)
+                end
+
+                Btn.MouseEnter:Connect(onHover)
+                Btn.MouseLeave:Connect(onLeave)
+
+                -- 点击事件（保留原缩放动画和声音）
+                Btn.MouseButton1Click:Connect(function()
+                    PlaySound(Sounds.Click)
+                    Tween(Btn, {Size = UDim2.new(0.95, 0, 0, 32)}, 0.1)
+                    task.wait(0.1)
+                    Tween(Btn, {Size = UDim2.new(1, 0, 0, 35)}, 0.1)
+                    callback()
+                end)
+
+                -- 返回控制方法（可选）
+                local self = {}
+                function self.UpdateText(newText)
+                    TextLabel.Text = newText
+                end
+                function self.SetVisible(state)
+                    Btn.Visible = state
+                end
+                return self
+            end
+
+            -- Toggle
+            child.Toggle = function(_, toggleText, default, callback)
+                local Enabled = default or false
                 local Btn = Instance.new("TextButton")
                 Btn.Size = UDim2.new(1, 0, 0, 35)
                 Btn.Text = ""
                 Btn.Parent = contentContainer
                 Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Btn, "BackgroundColor3", "Top")
-
-                -- 文字标签
-                local Label = Instance.new("TextLabel")
-                Label.Text = btnText
-                Label.Size = UDim2.new(1, -30, 1, 0)
-                Label.Position = UDim2.new(0, 10, 0, 0)
-                Label.BackgroundTransparency = 1
-                Label.Font = Enum.Font.Gotham
-                Label.TextSize = 14
-                Label.TextXAlignment = Enum.TextXAlignment.Left
-                Label.Parent = Btn
-                AddToRegistry(Label, "TextColor3", "Text")
-
-                -- 箭头图标 (maclib 风格)
-                local Icon = Instance.new("ImageLabel")
-                Icon.Image = Assets.buttonImage
-                Icon.ImageTransparency = 0.5
-                Icon.Size = UDim2.fromOffset(15, 15)
-                Icon.Position = UDim2.new(1, -30, 0.5, -7.5)
-                Icon.BackgroundTransparency = 1
-                Icon.Parent = Btn
-                AddToRegistry(Icon, "ImageColor3", "Text")
-
-                -- 悬停效果
-                local function ChangeState(state)
-                    local targetTrans = (state == "Hover") and 0.3 or 0.5
-                    Tween(Label, {TextTransparency = targetTrans}, 0.2)
-                    Tween(Icon, {ImageTransparency = targetTrans}, 0.2)
-                end
-
-                Btn.MouseEnter:Connect(function() ChangeState("Hover") end)
-                Btn.MouseLeave:Connect(function() ChangeState("Idle") end)
-
-                Btn.MouseButton1Click:Connect(function()
-                    PlaySound(Sounds.Click)
-                    Tween(Btn, {Size = UDim2.new(0.95, 0, 0, 32)}, 0.1)
-                    task.wait(0.1)
-                    Tween(Btn, {Size = UDim2.new(1, 0, 0, 35)}, 0.1)
-                    if callback then callback() end
-                end)
-            end
-
-            -- Toggle
-            child.Toggle = function(_, toggleText, default, callback)
-                local Enabled = default or false
-                local Btn = Instance.new("Frame")
-                Btn.Size = UDim2.new(1, 0, 0, 35)
-                Btn.BackgroundTransparency = 1
-                Btn.Parent = contentContainer
-
-                -- 背景框 (Top色)
-                local Background = Instance.new("Frame")
-                Background.Size = UDim2.new(1, 0, 1, 0)
-                Background.BackgroundTransparency = 0
-                Background.Parent = Btn
-                Instance.new("UICorner", Background).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(Background, "BackgroundColor3", "Top")
-
-                -- 文本标签
                 local Title = Instance.new("TextLabel")
                 Title.Text = toggleText
-                Title.Size = UDim2.new(0.7, 0, 1, 0)
-                Title.Position = UDim2.new(0, 10, 0, 0)
+                Title.Size = UDim2.new(0.7,0,1,0)
+                Title.Position = UDim2.new(0,10,0,0)
                 Title.BackgroundTransparency = 1
                 Title.Font = Enum.Font.Gotham
                 Title.TextSize = 14
                 Title.TextXAlignment = Enum.TextXAlignment.Left
                 Title.Parent = Btn
                 AddToRegistry(Title, "TextColor3", "Text")
-
-                -- 开关 (maclib 图片)
-                local Switch = Instance.new("ImageButton")
-                Switch.Image = Assets.toggleBackground
-                Switch.ImageColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(87, 86, 86)
-                Switch.AutoButtonColor = false
-                Switch.BackgroundTransparency = 1
-                Switch.Size = UDim2.fromOffset(41, 21)
-                Switch.Position = UDim2.new(1, -50, 0.5, -10)
+                local Switch = Instance.new("Frame")
+                Switch.Size = UDim2.new(0,40,0,20)
+                Switch.Position = UDim2.new(1,-50,0.5,-10)
                 Switch.Parent = Btn
-
-                local Dot = Instance.new("ImageLabel")
-                Dot.Image = Assets.togglerHead
-                Dot.ImageColor3 = Color3.new(1, 1, 1)
-                Dot.BackgroundTransparency = 1
-                Dot.Size = UDim2.fromOffset(15, 15)
+                Instance.new("UICorner", Switch).CornerRadius = UDim.new(1,0)
+                Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)
+                local Dot = Instance.new("Frame")
+                Dot.Size = UDim2.new(0,16,0,16)
+                Dot.Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)
+                Dot.BackgroundColor3 = Color3.new(1,1,1)
                 Dot.Parent = Switch
-                Dot.Position = Enabled and UDim2.new(1, -18, 0.5, -7.5) or UDim2.new(0, 2, 0.5, -7.5)
+                Instance.new("UICorner", Dot).CornerRadius = UDim.new(1,0)
 
-                -- 状态更新
-                local function UpdateState(newState)
-                    Enabled = newState
-                    Tween(Switch, {ImageColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(87,86,86)}, 0.15)
-                    Tween(Dot, {Position = Enabled and UDim2.new(1, -18, 0.5, -7.5) or UDim2.new(0, 2, 0.5, -7.5)}, 0.15)
-                    ConfigObjects[toggleText].Value = Enabled
-                    if callback then callback(Enabled) end
+                local function Update()
                     if Enabled then PlaySound(Sounds.ToggleOn) else PlaySound(Sounds.ToggleOff) end
+                    Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)})
+                    Tween(Dot, {Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)})
+                    ConfigObjects[toggleText].Value = Enabled
+                    callback(Enabled)
+                    Window:Notification(toggleText..": "..tostring(Enabled))
                 end
 
-                Switch.MouseButton1Click:Connect(function()
-                    UpdateState(not Enabled)
-                end)
-
-                ConfigObjects[toggleText] = {
-                    Type = "Toggle",
-                    Value = Enabled,
-                    Set = function(val) UpdateState(val) end
-                }
+                Btn.MouseButton1Click:Connect(function() Enabled = not Enabled; Update() end)
+                ConfigObjects[toggleText] = {Type = "Toggle", Value = Enabled, Set = function(val) Enabled = val; Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60,60,60)}); Tween(Dot, {Position = Enabled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)}); callback(Enabled) end}
             end
 
             -- Slider
             child.Slider = function(_, sliderText, min, max, default, callback)
                 local Val = default or min
                 local Frame = Instance.new("Frame")
-                Frame.Size = UDim2.new(1, 0, 0, 60)  -- 高度增加以容纳输入框
+                Frame.Size = UDim2.new(1,0,0,50)
                 Frame.Parent = contentContainer
-                Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+                Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Frame, "BackgroundColor3", "Top")
-
-                -- 文本标签
                 local Lbl = Instance.new("TextLabel")
                 Lbl.Text = sliderText
-                Lbl.Size = UDim2.new(1, -20, 0, 20)
-                Lbl.Position = UDim2.new(0, 10, 0, 5)
+                Lbl.Size = UDim2.new(1,-20,0,20)
+                Lbl.Position = UDim2.new(0,10,0,5)
                 Lbl.BackgroundTransparency = 1
                 Lbl.Font = Enum.Font.Gotham
                 Lbl.TextSize = 14
                 Lbl.TextXAlignment = Enum.TextXAlignment.Left
                 Lbl.Parent = Frame
                 AddToRegistry(Lbl, "TextColor3", "Text")
-
-                -- 数值输入框 (maclib 风格)
-                local NumBox = Instance.new("TextBox")
-                NumBox.Size = UDim2.fromOffset(50, 25)
-                NumBox.Position = UDim2.new(1, -60, 0, 5)
-                NumBox.Text = tostring(Val)
-                NumBox.Font = Enum.Font.GothamBold
-                NumBox.TextSize = 13
-                NumBox.TextXAlignment = Enum.TextXAlignment.Center
-                NumBox.Parent = Frame
-                Instance.new("UICorner", NumBox).CornerRadius = UDim.new(0, 4)
-                AddToRegistry(NumBox, "BackgroundColor3", "Main")
-                AddToRegistry(NumBox, "TextColor3", "Accent")
-
-                -- 滑块条 (maclib 图片)
-                local Bar = Instance.new("ImageLabel")
-                Bar.Image = Assets.sliderbar
-                Bar.ImageColor3 = Color3.fromRGB(87, 86, 86)
-                Bar.Size = UDim2.new(1, -80, 0, 3)
-                Bar.Position = UDim2.new(0, 10, 0, 40)
-                Bar.BackgroundTransparency = 1
+                local Num = Instance.new("TextLabel")
+                Num.Text = tostring(Val)
+                Num.Size = UDim2.new(0,40,0,20)
+                Num.Position = UDim2.new(1,-50,0,5)
+                Num.BackgroundTransparency = 1
+                Num.TextColor3 = Color3.fromRGB(150,150,150)
+                Num.Font = Enum.Font.Gotham
+                Num.TextSize = 12
+                Num.Parent = Frame
+                local Bar = Instance.new("TextButton")
+                Bar.Text = ""
+                Bar.Size = UDim2.new(1,-20,0,6)
+                Bar.Position = UDim2.new(0,10,0,35)
+                Bar.BackgroundColor3 = Color3.fromRGB(60,60,60)
+                Bar.AutoButtonColor = false
                 Bar.Parent = Frame
+                Instance.new("UICorner", Bar).CornerRadius = UDim.new(1,0)
+                local Fill = Instance.new("Frame")
+                Fill.Size = UDim2.new((Val-min)/(max-min),0,1,0)
+                Fill.Parent = Bar
+                Instance.new("UICorner", Fill).CornerRadius = UDim.new(1,0)
+                AddToRegistry(Fill, "BackgroundColor3", "Accent")
 
-                -- 滑块头
-                local Head = Instance.new("ImageButton")
-                Head.Image = Assets.sliderhead
-                Head.Size = UDim2.fromOffset(12, 12)
-                Head.BackgroundTransparency = 1
-                Head.Parent = Bar
-                Head.Position = UDim2.new((Val-min)/(max-min), 0, 0.5, 0)
-
-                -- 更新滑块位置和数值
-                local function UpdateValueFromPos(input)
-                    local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-                    local newVal = min + (max - min) * pos
-                    newVal = math.floor(newVal)  -- 取整
-                    Val = newVal
-                    Head.Position = UDim2.new(pos, 0, 0.5, 0)
-                    NumBox.Text = tostring(Val)
+                local function Update(val_new)
+                    Val = val_new
+                    local p = (Val - min) / (max - min)
+                    Tween(Fill, {Size = UDim2.new(p,0,1,0)}, 0.1)
+                    Num.Text = tostring(Val)
                     ConfigObjects[sliderText].Value = Val
-                    if callback then callback(Val) end
+                    callback(Val)
                 end
 
-                local sliding = false
-                Head.InputBegan:Connect(function(i)
-                    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-                        sliding = true
-                        PlaySound(Sounds.Slide)
-                        UpdateValueFromPos(i)
-                    end
-                end)
-                Head.InputEnded:Connect(function(i)
-                    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-                        sliding = false
-                    end
-                end)
-                UserInputService.InputChanged:Connect(function(i)
-                    if sliding and i.UserInputType == Enum.UserInputType.MouseMovement then
-                        UpdateValueFromPos(i)
-                    end
-                end)
+                local function Drag(input)
+                    local p = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+                    local newVal = math.floor(min + ((max - min) * p))
+                    Update(newVal)
+                end
 
-                -- 输入框手动输入
-                NumBox.FocusLost:Connect(function()
-                    local newVal = tonumber(NumBox.Text)
-                    if newVal then
-                        Val = math.clamp(newVal, min, max)
-                    end
-                    local pos = (Val - min) / (max - min)
-                    Head.Position = UDim2.new(pos, 0, 0.5, 0)
-                    NumBox.Text = tostring(Val)
-                    ConfigObjects[sliderText].Value = Val
-                    if callback then callback(Val) end
-                end)
-
-                ConfigObjects[sliderText] = {
-                    Type = "Slider",
-                    Value = Val,
-                    Set = function(val)
-                        Val = val
-                        local pos = (Val - min) / (max - min)
-                        Head.Position = UDim2.new(pos, 0, 0.5, 0)
-                        NumBox.Text = tostring(Val)
-                    end
-                }
+                local sliding
+                Bar.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=true; PlaySound(Sounds.Slide); Drag(i) end end)
+                UserInputService.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=false end end)
+                UserInputService.InputChanged:Connect(function(i) if sliding and i.UserInputType==Enum.UserInputType.MouseMovement then Drag(i) end end)
+                ConfigObjects[sliderText] = {Type = "Slider", Value = Val, Set = function(val) Update(val) end}
             end
 
-            -- Dropdown (简化版，单选，带搜索)
-            child.Dropdown = function(_, dropText, options, callback)
-                local Dropped = false
-                local Selected = options[1] or ""
-                local OptionObjs = {}
-
-                -- 主按钮 (显示当前选择)
-                local MainBtn = Instance.new("TextButton")
-                MainBtn.Size = UDim2.new(1, 0, 0, 35)
-                MainBtn.Text = ""
-                MainBtn.Parent = contentContainer
-                Instance.new("UICorner", MainBtn).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(MainBtn, "BackgroundColor3", "Top")
-
+            -- Textbox
+            child.Textbox = function(_, boxText, placeholder, callback)
+                local Frame = Instance.new("Frame")
+                Frame.Size = UDim2.new(1,0,0,60)
+                Frame.Parent = contentContainer
+                Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,6)
+                AddToRegistry(Frame, "BackgroundColor3", "Top")
                 local Lbl = Instance.new("TextLabel")
-                Lbl.Text = dropText .. ": " .. Selected
-                Lbl.Size = UDim2.new(1, -30, 1, 0)
-                Lbl.Position = UDim2.new(0, 10, 0, 0)
+                Lbl.Text = boxText
+                Lbl.Size = UDim2.new(1,0,0,20)
+                Lbl.Position = UDim2.new(0,10,0,5)
                 Lbl.BackgroundTransparency = 1
                 Lbl.Font = Enum.Font.Gotham
                 Lbl.TextSize = 14
                 Lbl.TextXAlignment = Enum.TextXAlignment.Left
-                Lbl.Parent = MainBtn
+                Lbl.Parent = Frame
                 AddToRegistry(Lbl, "TextColor3", "Text")
+                local Box = Instance.new("TextBox")
+                Box.Size = UDim2.new(1,-20,0,25)
+                Box.Position = UDim2.new(0,10,0,28)
+                Box.Text = ""
+                Box.PlaceholderText = placeholder
+                Box.Font = Enum.Font.Gotham
+                Box.TextSize = 13
+                Box.Parent = Frame
+                Instance.new("UICorner", Box).CornerRadius = UDim.new(0,4)
+                AddToRegistry(Box, "BackgroundColor3", "Main")
+                AddToRegistry(Box, "TextColor3", "Text")
 
+                Box.FocusLost:Connect(function()
+                    ConfigObjects[boxText].Value = Box.Text
+                    callback(Box.Text)
+                end)
+                ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
+            end
+
+            -- Dropdown (原版样式，放在内容容器内)
+            child.Dropdown = function(_, dropText, options, callback)
+                local Dropped = false
+                local Btn = Instance.new("TextButton")
+                Btn.Size = UDim2.new(1,0,0,35)
+                Btn.Text = ""
+                Btn.Parent = contentContainer
+                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,6)
+                AddToRegistry(Btn, "BackgroundColor3", "Top")
+                local Lbl = Instance.new("TextLabel")
+                Lbl.Text = dropText
+                Lbl.Size = UDim2.new(1,-30,1,0)
+                Lbl.Position = UDim2.new(0,10,0,0)
+                Lbl.BackgroundTransparency = 1
+                Lbl.Font = Enum.Font.Gotham
+                Lbl.TextSize = 14
+                Lbl.TextXAlignment = Enum.TextXAlignment.Left
+                Lbl.Parent = Btn
+                AddToRegistry(Lbl, "TextColor3", "Text")
                 local Icon = Instance.new("ImageLabel")
-                Icon.Image = Assets.dropdown
-                Icon.ImageTransparency = 0.5
-                Icon.Size = UDim2.fromOffset(14, 14)
-                Icon.Position = UDim2.new(1, -30, 0.5, -7)
+                Icon.Image = "rbxassetid://6031091004"
+                Icon.Size = UDim2.new(0,20,0,20)
+                Icon.Position = UDim2.new(1,-30,0.5,-10)
                 Icon.BackgroundTransparency = 1
-                Icon.Parent = MainBtn
-                AddToRegistry(Icon, "ImageColor3", "Text")
+                Icon.Parent = Btn
 
-                -- 下拉容器
                 local Container = Instance.new("Frame")
-                Container.Size = UDim2.new(1, 0, 0, 0)
+                Container.Size = UDim2.new(1,0,0,0)
                 Container.Visible = false
                 Container.ClipsDescendants = true
-                Container.Parent = contentContainer
-                Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 6)
+                Container.Parent = contentContainer  -- 恢复为内容容器内
+                Container.ZIndex = 10
+                Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Container, "BackgroundColor3", "Top")
-
-                -- 搜索框 (可选，为简洁默认不启用，但保留结构)
-                local SearchBox = Instance.new("TextBox")
-                SearchBox.Size = UDim2.new(1, -20, 0, 30)
-                SearchBox.Position = UDim2.new(0, 10, 0, 5)
-                SearchBox.Visible = false  -- 设为 false 隐藏搜索
-                SearchBox.PlaceholderText = "Search..."
-                SearchBox.Font = Enum.Font.Gotham
-                SearchBox.TextSize = 13
-                SearchBox.Parent = Container
-                Instance.new("UICorner", SearchBox).CornerRadius = UDim.new(0, 4)
-                AddToRegistry(SearchBox, "BackgroundColor3", "Main")
-                AddToRegistry(SearchBox, "TextColor3", "Text")
-
-                -- 选项列表布局
                 local List = Instance.new("UIListLayout")
-                List.Padding = UDim.new(0, 2)
                 List.SortOrder = Enum.SortOrder.LayoutOrder
                 List.Parent = Container
 
-                -- 创建选项
-                local function CreateOptions(opts)
-                    for _, opt in ipairs(opts) do
-                        local OptBtn = Instance.new("TextButton")
-                        OptBtn.Size = UDim2.new(1, -20, 0, 30)
-                        OptBtn.Position = UDim2.new(0, 10, 0, 0)
-                        OptBtn.Text = opt
-                        OptBtn.Font = Enum.Font.Gotham
-                        OptBtn.TextSize = 13
-                        OptBtn.BackgroundTransparency = 1
-                        OptBtn.Parent = Container
-                        AddToRegistry(OptBtn, "TextColor3", "Text")
+                local function Select(opt)
+                    Dropped = false
+                    Lbl.Text = dropText..": "..opt
+                    ConfigObjects[dropText].Value = opt
+                    callback(opt)
+                    Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
+                    Tween(Icon, {Rotation = 0}, 0.2)
+                    task.wait(0.2)
+                    Container.Visible = false
+                    -- 更新Section高度
+                    updateSectionHeight(false)
+                end
 
-                        -- 选中标记 (勾)
-                        local Check = Instance.new("TextLabel")
-                        Check.Text = "✓"
-                        Check.TextTransparency = (opt == Selected) and 0 or 1
-                        Check.Size = UDim2.fromOffset(20, 20)
-                        Check.Position = UDim2.new(0, 5, 0.5, -10)
-                        Check.BackgroundTransparency = 1
-                        Check.Font = Enum.Font.GothamBold
-                        Check.TextSize = 14
-                        Check.Parent = OptBtn
-                        AddToRegistry(Check, "TextColor3", "Accent")
-
-                        OptionObjs[opt] = {Button = OptBtn, Check = Check}
-
-                        OptBtn.MouseButton1Click:Connect(function()
-                            -- 更新选中状态
-                            for _, obj in pairs(OptionObjs) do
-                                obj.Check.TextTransparency = 1
-                            end
-                            Check.TextTransparency = 0
-                            Selected = opt
-                            Lbl.Text = dropText .. ": " .. opt
-                            -- 折叠
-                            Dropped = false
-                            Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
-                            Tween(Icon, {Rotation = 0}, 0.2)
-                            task.wait(0.2)
-                            Container.Visible = false
-                            ConfigObjects[dropText].Value = opt
-                            if callback then callback(opt) end
-                            PlaySound(Sounds.Click)
-                        end)
+                local function RefreshOptions(newOpts)
+                    for _,v in pairs(Container:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
+                    for _, opt in pairs(newOpts) do
+                        local O = Instance.new("TextButton")
+                        O.Size = UDim2.new(1,0,0,30)
+                        O.Text = opt
+                        O.TextColor3 = Color3.fromRGB(150,150,150)
+                        O.Font = Enum.Font.Gotham
+                        O.TextSize = 13
+                        O.BackgroundTransparency = 1
+                        O.Parent = Container
+                        O.MouseButton1Click:Connect(function() Select(opt) end)
                     end
                 end
-                CreateOptions(options)
+                RefreshOptions(options)
 
-                -- 点击主按钮展开/折叠
-                MainBtn.MouseButton1Click:Connect(function()
+                Btn.MouseButton1Click:Connect(function()
                     Dropped = not Dropped
                     PlaySound(Sounds.Click)
                     if Dropped then
                         Container.Visible = true
-                        local targetHeight = #options * 32 + (SearchBox.Visible and 35 or 0) + 10
-                        Tween(Container, {Size = UDim2.new(1,0,0,targetHeight)}, 0.3)
+                        local targetHeight = #options * 30
+                        -- 先展开选项容器
+                        local tweenOpt = TweenService:Create(Container, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1,0,0, targetHeight)})
+                        tweenOpt:Play()
                         Tween(Icon, {Rotation = 180}, 0.3)
+                        -- 等待选项容器动画完成后更新Section高度
+                        tweenOpt.Completed:Connect(function()
+                            updateSectionHeight(false)
+                        end)
                     else
-                        Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
+                        -- 折叠选项容器
+                        local tweenOpt = TweenService:Create(Container, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1,0,0, 0)})
+                        tweenOpt:Play()
                         Tween(Icon, {Rotation = 0}, 0.2)
-                        task.wait(0.2)
-                        Container.Visible = false
+                        -- 同时更新Section高度（或等待折叠完成）
+                        tweenOpt.Completed:Connect(function()
+                            Container.Visible = false
+                            updateSectionHeight(false)
+                        end)
                     end
                 end)
 
-                ConfigObjects[dropText] = {
-                    Type = "Dropdown",
-                    Value = Selected,
-                    Set = function(val)
-                        for _, obj in pairs(OptionObjs) do
-                            obj.Check.TextTransparency = (obj.Button.Text == val) and 0 or 1
-                        end
-                        Selected = val
-                        Lbl.Text = dropText .. ": " .. val
-                    end,
-                    Refresh = function(newOpts)
-                        -- 清空并重新创建选项
-                        for _, obj in pairs(OptionObjs) do
-                            obj.Button:Destroy()
-                        end
-                        OptionObjs = {}
-                        CreateOptions(newOpts)
-                    end
-                }
-
-                return {Refresh = function(newOpts) ConfigObjects[dropText].Refresh(newOpts) end}
+                ConfigObjects[dropText] = {Type = "Dropdown", Value = options[1], Set = function(val) Select(val) end, Refresh = RefreshOptions}
+                return {Refresh = RefreshOptions}
             end
 
             -- Keybind
@@ -881,7 +793,6 @@ function Library:CreateWindow(Config)
                 Btn.Parent = contentContainer
                 Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Btn, "BackgroundColor3", "Top")
-
                 local Title = Instance.new("TextLabel")
                 Title.Text = keyText
                 Title.Size = UDim2.new(0.6, 0, 1, 0)
@@ -892,10 +803,9 @@ function Library:CreateWindow(Config)
                 Title.TextXAlignment = Enum.TextXAlignment.Left
                 Title.Parent = Btn
                 AddToRegistry(Title, "TextColor3", "Text")
-
                 local KeyLabel = Instance.new("TextLabel")
                 KeyLabel.Text = Key.Name
-                KeyLabel.Size = UDim2.fromOffset(80, 24)
+                KeyLabel.Size = UDim2.new(0, 80, 0, 24)
                 KeyLabel.Position = UDim2.new(1, -90, 0.5, -12)
                 KeyLabel.Font = Enum.Font.GothamBold
                 KeyLabel.TextSize = 13
@@ -904,87 +814,63 @@ function Library:CreateWindow(Config)
                 AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
                 AddToRegistry(KeyLabel, "TextColor3", "Accent")
 
-                local binding = false
                 Btn.MouseButton1Click:Connect(function()
                     PlaySound(Sounds.Click)
                     KeyLabel.Text = "..."
-                    binding = true
-                    local con
-                    con = UserInputService.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.Keyboard then
-                            Key = input.KeyCode
-                            KeyLabel.Text = Key.Name
-                            binding = false
-                            con:Disconnect()
-                            ConfigObjects[keyText].Value = Key.Name
-                            if callback then callback(Key) end
-                        end
-                    end)
-                end)
-
-                -- 点击外部取消绑定
-                UserInputService.InputBegan:Connect(function(input)
-                    if binding and input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        binding = false
+                    local input = UserInputService.InputBegan:Wait()
+                    if input.KeyCode.Name ~= "Unknown" then
+                        Key = input.KeyCode
+                        KeyLabel.Text = Key.Name
+                        ConfigObjects[keyText] = {Type = "Keybind", Value = Key.Name}
+                        callback(Key)
+                        Window:Notification("Keybind: "..Key.Name)
+                    else
                         KeyLabel.Text = Key.Name
                     end
                 end)
-
-                ConfigObjects[keyText] = {
-                    Type = "Keybind",
-                    Value = Key.Name,
-                    Set = function(val)
-                        Key = Enum.KeyCode[val] or Key
-                        KeyLabel.Text = Key.Name
-                    end
-                }
+                ConfigObjects[keyText] = {Type = "Keybind", Value = Key.Name, Set = function(val) Key = Enum.KeyCode[val] or Key; KeyLabel.Text = Key.Name; callback(Key) end}
             end
 
-            -- Textbox
-            child.Textbox = function(_, boxText, placeholder, callback)
-                local Frame = Instance.new("Frame")
-                Frame.Size = UDim2.new(1, 0, 0, 60)
-                Frame.Parent = contentContainer
-                Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(Frame, "BackgroundColor3", "Top")
+            -- Value (文本输入)
+            child.Value = function(_, valText, default, callback)
+                local ValFrame = Instance.new("Frame")
+                ValFrame.Size = UDim2.new(1,0,0,35)
+                ValFrame.Parent = contentContainer
+                Instance.new("UICorner", ValFrame).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(ValFrame, "BackgroundColor3", "Top")
 
-                local Lbl = Instance.new("TextLabel")
-                Lbl.Text = boxText
-                Lbl.Size = UDim2.new(1, 0, 0, 20)
-                Lbl.Position = UDim2.new(0, 10, 0, 5)
-                Lbl.BackgroundTransparency = 1
-                Lbl.Font = Enum.Font.Gotham
-                Lbl.TextSize = 14
-                Lbl.TextXAlignment = Enum.TextXAlignment.Left
-                Lbl.Parent = Frame
-                AddToRegistry(Lbl, "TextColor3", "Text")
+                local NameLbl = Instance.new("TextLabel")
+                NameLbl.Text = valText
+                NameLbl.Size = UDim2.new(0.6, 0, 1, 0)
+                NameLbl.Position = UDim2.new(0, 10, 0, 0)
+                NameLbl.TextXAlignment = Enum.TextXAlignment.Left
+                NameLbl.Font = Enum.Font.Gotham
+                NameLbl.TextSize = 14
+                NameLbl.BackgroundTransparency = 1
+                NameLbl.Parent = ValFrame
+                AddToRegistry(NameLbl, "TextColor3", "Text")
 
-                local Box = Instance.new("TextBox")
-                Box.Size = UDim2.new(1, -20, 0, 25)
-                Box.Position = UDim2.new(0, 10, 0, 28)
-                Box.Text = ""
-                Box.PlaceholderText = placeholder
-                Box.Font = Enum.Font.Gotham
-                Box.TextSize = 13
-                Box.Parent = Frame
-                Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 4)
-                AddToRegistry(Box, "BackgroundColor3", "Main")
-                AddToRegistry(Box, "TextColor3", "Text")
+                local ValBox = Instance.new("TextBox")
+                ValBox.Text = tostring(default)
+                ValBox.Size = UDim2.new(0.3, 0, 0, 26)
+                ValBox.Position = UDim2.new(0.7, -10, 0.5, -13)
+                ValBox.Font = Enum.Font.GothamBold
+                ValBox.TextSize = 13
+                ValBox.TextXAlignment = Enum.TextXAlignment.Center
+                ValBox.Parent = ValFrame
+                Instance.new("UICorner", ValBox).CornerRadius = UDim.new(0, 5)
+                AddToRegistry(ValBox, "BackgroundColor3", "Main")
+                AddToRegistry(ValBox, "TextColor3", "Accent")
 
-                Box.FocusLost:Connect(function()
-                    ConfigObjects[boxText].Value = Box.Text
-                    if callback then callback(Box.Text) end
+                ValBox.FocusLost:Connect(function()
+                    PlaySound(Sounds.Click)
+                    ConfigObjects[valText] = {Type = "Value", Value = ValBox.Text}
+                    if callback then callback(ValBox.Text) end
+                    Window:Notification(valText..": "..ValBox.Text)
                 end)
 
-                ConfigObjects[boxText] = {
-                    Type = "Textbox",
-                    Value = "",
-                    Set = function(val) Box.Text = val end
-                }
+                ConfigObjects[valText] = {Type = "Value", Value = default, Set = function(val) ValBox.Text = val end}
             end
-
-            -- Value (与 Textbox 相同)
-            child.Value = child.Textbox
 
             return child
         end
