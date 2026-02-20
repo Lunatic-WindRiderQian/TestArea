@@ -349,8 +349,11 @@ function Library:CreateWindow(Config)
 
         local Elements = {}
 
-        -- 新版 Section：始终展开，不可折叠，无动画
-        function Elements:Section(text, icons)
+        -- Section：可折叠容器，支持自定义图标，无动画（瞬间展开/折叠）
+        function Elements:Section(text, icons, defaultOpen)
+            -- 默认展开状态（如果没有提供，默认展开）
+            if defaultOpen == nil then defaultOpen = true end
+
             -- 辅助函数：将数字/字符串转换为完整 asset url
             local function formatAssetId(id)
                 if type(id) == "number" then
@@ -366,12 +369,15 @@ function Library:CreateWindow(Config)
                 end
             end
 
-            -- 处理图标（只取第一个图标或默认）
-            local iconAsset
+            -- 处理图标
+            local iconOpen, iconClosed
             if type(icons) == "table" then
-                iconAsset = formatAssetId(icons.Y or icons.open) or "rbxassetid://6031091004"
+                iconOpen = formatAssetId(icons.Y or icons.open) or "rbxassetid://6031091004"
+                iconClosed = formatAssetId(icons.F or icons.closed) or "rbxassetid://6031091004"
             else
-                iconAsset = formatAssetId(icons) or "rbxassetid://6031091004"
+                local defaultIcon = formatAssetId(icons) or "rbxassetid://6031091004"
+                iconOpen = defaultIcon
+                iconClosed = defaultIcon
             end
 
             -- Section 主框架
@@ -387,12 +393,16 @@ function Library:CreateWindow(Config)
             titleBar.BackgroundTransparency = 1
             titleBar.Parent = sectionFrame
 
-            -- 图标
+            -- 图标（显示折叠状态）
             local iconLabel = Instance.new("ImageLabel")
             iconLabel.Size = UDim2.new(0, 24, 0, 24)
             iconLabel.Position = UDim2.new(0, 5, 0.5, -12)
             iconLabel.BackgroundTransparency = 1
-            iconLabel.Image = iconAsset
+            iconLabel.Image = defaultOpen and iconOpen or iconClosed
+            if iconOpen == iconClosed then
+                -- 如果使用同一图标，通过旋转表示状态：展开时向下（90°），折叠时向右（0°）
+                iconLabel.Rotation = defaultOpen and 90 or 0
+            end
             iconLabel.Parent = titleBar
 
             -- 文字标签
@@ -407,6 +417,13 @@ function Library:CreateWindow(Config)
             textLabel.Parent = titleBar
             AddToRegistry(textLabel, "TextColor3", "Accent")
 
+            -- 点击按钮（覆盖整个标题栏）
+            local toggleBtn = Instance.new("TextButton")
+            toggleBtn.Size = UDim2.new(1, 0, 1, 0)
+            toggleBtn.BackgroundTransparency = 1
+            toggleBtn.Text = ""
+            toggleBtn.Parent = titleBar
+
             -- 内容容器（放置子元素）
             local contentContainer = Instance.new("Frame")
             contentContainer.Size = UDim2.new(1, 0, 0, 0)
@@ -420,14 +437,55 @@ function Library:CreateWindow(Config)
             contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
             contentLayout.Parent = contentContainer
 
-            -- 自动调整 Section 总高度
-            local function updateHeight()
-                local contentHeight = contentLayout.AbsoluteContentSize.Y
-                contentContainer.Size = UDim2.new(1, 0, 0, contentHeight)
-                sectionFrame.Size = UDim2.new(1, 0, 0, 36 + contentHeight)
+            local contentHeight = 0
+            local function updateContentHeight()
+                contentHeight = contentLayout.AbsoluteContentSize.Y
+                -- 如果当前是展开状态，则实时调整容器高度
+                if open then
+                    contentContainer.Size = UDim2.new(1, 0, 0, contentHeight)
+                end
             end
-            contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateHeight)
-            task.spawn(updateHeight)  -- 初始更新
+            contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContentHeight)
+
+            local open = defaultOpen
+            -- 初始化高度
+            if open then
+                task.spawn(function()
+                    task.wait()  -- 等待布局计算
+                    contentHeight = contentLayout.AbsoluteContentSize.Y
+                    contentContainer.Size = UDim2.new(1, 0, 0, contentHeight)
+                    sectionFrame.Size = UDim2.new(1, 0, 0, 36 + contentHeight)
+                end)
+            else
+                contentContainer.Size = UDim2.new(1, 0, 0, 0)
+                sectionFrame.Size = UDim2.new(1, 0, 0, 36)
+            end
+
+            local function toggle()
+                open = not open
+                -- 更新图标（瞬间切换，无动画）
+                if iconOpen == iconClosed then
+                    iconLabel.Rotation = open and 90 or 0
+                else
+                    iconLabel.Image = open and iconOpen or iconClosed
+                end
+
+                if open then
+                    -- 展开：强制获取最新内容高度
+                    contentHeight = contentLayout.AbsoluteContentSize.Y
+                    contentContainer.Size = UDim2.new(1, 0, 0, contentHeight)
+                    sectionFrame.Size = UDim2.new(1, 0, 0, 36 + contentHeight)
+                else
+                    -- 折叠
+                    contentContainer.Size = UDim2.new(1, 0, 0, 0)
+                    sectionFrame.Size = UDim2.new(1, 0, 0, 36)
+                end
+            end
+
+            toggleBtn.MouseButton1Click:Connect(function()
+                PlaySound(Sounds.Click)
+                toggle()
+            end)
 
             -- 子元素表（将元素添加到 contentContainer）
             local child = {}
