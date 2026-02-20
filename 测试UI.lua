@@ -349,11 +349,8 @@ function Library:CreateWindow(Config)
 
         local Elements = {}
 
-        -- 新版 Section：可折叠容器，支持自定义图标（展开/折叠），返回子元素表（已移除动画）
-        function Elements:Section(text, icons, defaultOpen)
-            -- 默认展开状态（如果没有提供，默认展开）
-            if defaultOpen == nil then defaultOpen = true end
-
+        -- 新版 Section：始终展开，不可折叠，无动画
+        function Elements:Section(text, icons)
             -- 辅助函数：将数字/字符串转换为完整 asset url
             local function formatAssetId(id)
                 if type(id) == "number" then
@@ -369,15 +366,12 @@ function Library:CreateWindow(Config)
                 end
             end
 
-            -- 处理图标
-            local iconOpen, iconClosed
+            -- 处理图标（只取第一个图标或默认）
+            local iconAsset
             if type(icons) == "table" then
-                iconOpen = formatAssetId(icons.Y or icons.open) or "rbxassetid://6031091004"
-                iconClosed = formatAssetId(icons.F or icons.closed) or "rbxassetid://6031091004"
+                iconAsset = formatAssetId(icons.Y or icons.open) or "rbxassetid://6031091004"
             else
-                local defaultIcon = formatAssetId(icons) or "rbxassetid://6031091004"
-                iconOpen = defaultIcon
-                iconClosed = defaultIcon
+                iconAsset = formatAssetId(icons) or "rbxassetid://6031091004"
             end
 
             -- Section 主框架
@@ -393,16 +387,12 @@ function Library:CreateWindow(Config)
             titleBar.BackgroundTransparency = 1
             titleBar.Parent = sectionFrame
 
-            -- 图标（显示折叠状态）
+            -- 图标
             local iconLabel = Instance.new("ImageLabel")
             iconLabel.Size = UDim2.new(0, 24, 0, 24)
             iconLabel.Position = UDim2.new(0, 5, 0.5, -12)
             iconLabel.BackgroundTransparency = 1
-            iconLabel.Image = defaultOpen and iconOpen or iconClosed
-            if iconOpen == iconClosed then
-                -- 如果使用同一图标，通过旋转表示状态：展开时向下（90°），折叠时向右（0°）
-                iconLabel.Rotation = defaultOpen and 90 or 0
-            end
+            iconLabel.Image = iconAsset
             iconLabel.Parent = titleBar
 
             -- 文字标签
@@ -417,13 +407,6 @@ function Library:CreateWindow(Config)
             textLabel.Parent = titleBar
             AddToRegistry(textLabel, "TextColor3", "Accent")
 
-            -- 点击按钮（覆盖整个标题栏）
-            local toggleBtn = Instance.new("TextButton")
-            toggleBtn.Size = UDim2.new(1, 0, 1, 0)
-            toggleBtn.BackgroundTransparency = 1
-            toggleBtn.Text = ""
-            toggleBtn.Parent = titleBar
-
             -- 内容容器（放置子元素）
             local contentContainer = Instance.new("Frame")
             contentContainer.Size = UDim2.new(1, 0, 0, 0)
@@ -437,54 +420,14 @@ function Library:CreateWindow(Config)
             contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
             contentLayout.Parent = contentContainer
 
-            local function updateContentHeight()
-                local newHeight = contentLayout.AbsoluteContentSize.Y
-                if open then
-                    contentContainer.Size = UDim2.new(1, 0, 0, newHeight)
-                    sectionFrame.Size = UDim2.new(1, 0, 0, 36 + newHeight)
-                end
+            -- 自动调整 Section 总高度
+            local function updateHeight()
+                local contentHeight = contentLayout.AbsoluteContentSize.Y
+                contentContainer.Size = UDim2.new(1, 0, 0, contentHeight)
+                sectionFrame.Size = UDim2.new(1, 0, 0, 36 + contentHeight)
             end
-            contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContentHeight)
-
-            local open = defaultOpen
-            -- 初始化高度
-            if open then
-                task.spawn(function()
-                    task.wait()  -- 等待布局计算
-                    local newHeight = contentLayout.AbsoluteContentSize.Y
-                    contentContainer.Size = UDim2.new(1, 0, 0, newHeight)
-                    sectionFrame.Size = UDim2.new(1, 0, 0, 36 + newHeight)
-                end)
-            else
-                contentContainer.Size = UDim2.new(1, 0, 0, 0)
-                sectionFrame.Size = UDim2.new(1, 0, 0, 36)
-            end
-
-            local function toggle()
-                open = not open
-                -- 更新图标
-                if iconOpen == iconClosed then
-                    iconLabel.Rotation = open and 90 or 0
-                else
-                    iconLabel.Image = open and iconOpen or iconClosed
-                end
-
-                if open then
-                    -- 展开
-                    local newHeight = contentLayout.AbsoluteContentSize.Y
-                    contentContainer.Size = UDim2.new(1, 0, 0, newHeight)
-                    sectionFrame.Size = UDim2.new(1, 0, 0, 36 + newHeight)
-                else
-                    -- 折叠
-                    contentContainer.Size = UDim2.new(1, 0, 0, 0)
-                    sectionFrame.Size = UDim2.new(1, 0, 0, 36)
-                end
-            end
-
-            toggleBtn.MouseButton1Click:Connect(function()
-                PlaySound(Sounds.Click)
-                toggle()
-            end)
+            contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateHeight)
+            task.spawn(updateHeight)  -- 初始更新
 
             -- 子元素表（将元素添加到 contentContainer）
             local child = {}
@@ -653,7 +596,7 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- Dropdown (已移除动画，并优化高度计算)
+            -- Dropdown
             child.Dropdown = function(_, dropText, options, callback)
                 local Dropped = false
                 local Btn = Instance.new("TextButton")
@@ -684,6 +627,7 @@ function Library:CreateWindow(Config)
                 Container.Visible = false
                 Container.ClipsDescendants = true
                 Container.Parent = contentContainer
+                Container.ZIndex = 10  -- 提高ZIndex确保选项在最上层
                 Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Container, "BackgroundColor3", "Top")
                 local List = Instance.new("UIListLayout")
@@ -695,8 +639,9 @@ function Library:CreateWindow(Config)
                     Lbl.Text = dropText..": "..opt
                     ConfigObjects[dropText].Value = opt
                     callback(opt)
-                    Container.Size = UDim2.new(1,0,0,0)
-                    Icon.Rotation = 0
+                    Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
+                    Tween(Icon, {Rotation = 0}, 0.2)
+                    task.wait(0.2)
                     Container.Visible = false
                 end
 
@@ -721,12 +666,12 @@ function Library:CreateWindow(Config)
                     PlaySound(Sounds.Click)
                     if Dropped then
                         Container.Visible = true
-                        local optionCount = #Container:GetChildren() - 1 -- 减去布局
-                        Container.Size = UDim2.new(1,0,0, optionCount * 30)
-                        Icon.Rotation = 180
+                        Tween(Container, {Size = UDim2.new(1,0,0, #Container:GetChildren()*30)}, 0.3)
+                        Tween(Icon, {Rotation = 180}, 0.3)
                     else
-                        Container.Size = UDim2.new(1,0,0,0)
-                        Icon.Rotation = 0
+                        Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
+                        Tween(Icon, {Rotation = 0}, 0.2)
+                        task.wait(0.2)
                         Container.Visible = false
                     end
                 end)
