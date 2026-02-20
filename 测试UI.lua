@@ -28,15 +28,16 @@ local Sounds = {
     Tab = "rbxassetid://4510087056" 
 }
 
--- 图片资源（取自 maclib）
+-- Toggle 图片资源（取自 maclib）
 local ToggleAssets = {
     Bg = "rbxassetid://18772190202",   -- 开关背景
     Head = "rbxassetid://18772309008"  -- 滑块头
 }
 
+-- Slider 图片资源（取自 maclib）
 local SliderAssets = {
-    Bar = "rbxassetid://18772615246",  -- 滑块条背景
-    Head = "rbxassetid://18772834246"  -- 滑块头
+    Bar = "rbxassetid://18772615246",   -- 滑轨
+    Head = "rbxassetid://18772834246"   -- 滑块头
 }
 
 local function PlaySound(id)
@@ -632,22 +633,21 @@ function Library:CreateWindow(Config)
                 }
             end
 
-            -- Slider (maclib 风格，但布局采用测试UI的上下结构)
+            -- Slider (maclib 风格，标签和数值框在上，滑块条在下)
             child.Slider = function(_, sliderText, min, max, default, callback)
                 local Val = default or min
-                local isDragging = false
-
-                -- 主容器 (高度50，背景色Top，圆角6)
+                -- 整体容器（背景色主题 Top）
                 local Frame = Instance.new("Frame")
-                Frame.Size = UDim2.new(1, 0, 0, 50)
+                Frame.Size = UDim2.new(1, 0, 0, 70)  -- 高度70，容纳两行
                 Frame.Parent = contentContainer
                 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Frame, "BackgroundColor3", "Top")
 
-                -- 标题标签 (左上角)
+                -- 上部：标签 + 数值框
+                -- 标签
                 local Lbl = Instance.new("TextLabel")
                 Lbl.Text = sliderText
-                Lbl.Size = UDim2.new(0.7, 0, 0, 20)  -- 宽度70%，高度20
+                Lbl.Size = UDim2.new(0.7, 0, 0, 25)   -- 占宽70%，高度25
                 Lbl.Position = UDim2.new(0, 10, 0, 5)
                 Lbl.BackgroundTransparency = 1
                 Lbl.Font = Enum.Font.Gotham
@@ -656,89 +656,107 @@ function Library:CreateWindow(Config)
                 Lbl.Parent = Frame
                 AddToRegistry(Lbl, "TextColor3", "Text")
 
-                -- 数值文本框 (右上角，maclib样式)
-                local ValueBox = Instance.new("TextBox")
-                ValueBox.Size = UDim2.new(0, 60, 0, 25)
-                ValueBox.Position = UDim2.new(1, -70, 0, 5)
-                ValueBox.BackgroundTransparency = 0.95
-                ValueBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                ValueBox.Font = Enum.Font.Gotham
-                ValueBox.TextSize = 12
-                ValueBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-                ValueBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-                ValueBox.Text = tostring(Val)
-                ValueBox.Parent = Frame
-                Instance.new("UICorner", ValueBox).CornerRadius = UDim.new(0, 4)
+                -- 数值框 (可编辑 TextBox)
+                local NumBox = Instance.new("TextBox")
+                NumBox.Size = UDim2.new(0, 60, 0, 25)
+                NumBox.Position = UDim2.new(1, -70, 0, 5)  -- 右边缘留10px边距
+                NumBox.AnchorPoint = Vector2.new(1, 0)
+                NumBox.Text = tostring(Val)
+                NumBox.Font = Enum.Font.Gotham
+                NumBox.TextSize = 13
+                NumBox.TextColor3 = Color3.fromRGB(255, 255, 255)  -- 临时，将被注册覆盖
+                NumBox.BackgroundColor3 = Color3.fromRGB(0,0,0)    -- 临时
+                NumBox.Parent = Frame
+                Instance.new("UICorner", NumBox).CornerRadius = UDim.new(0, 4)
+                AddToRegistry(NumBox, "BackgroundColor3", "Main")
+                AddToRegistry(NumBox, "TextColor3", "Text")
 
-                -- 滑块条背景 (图片，位于下方)
+                -- 下部：滑轨容器
+                local BarContainer = Instance.new("Frame")
+                BarContainer.Size = UDim2.new(1, -20, 0, 6)  -- 宽度留边距，高度6
+                BarContainer.Position = UDim2.new(0, 10, 0, 38)  -- Y位置=5(标签上边距)+25(标签高度)+8(间距)
+                BarContainer.BackgroundTransparency = 1
+                BarContainer.Parent = Frame
+
+                -- 滑轨 (ImageLabel)
                 local Bar = Instance.new("ImageLabel")
+                Bar.Size = UDim2.new(1, 0, 1, 0)
                 Bar.Image = SliderAssets.Bar
-                Bar.ImageColor3 = Color3.fromRGB(87, 86, 86)  -- 灰色
-                Bar.Size = UDim2.new(1, -20, 0, 6)
-                Bar.Position = UDim2.new(0, 10, 0, 30)
+                Bar.ImageColor3 = Color3.fromRGB(87, 86, 86)  -- 固定灰色
                 Bar.BackgroundTransparency = 1
-                Bar.Parent = Frame
+                Bar.Parent = BarContainer
+                Instance.new("UICorner", Bar).CornerRadius = UDim.new(1, 0)  -- 圆角滑轨
 
-                -- 滑块头 (可拖动按钮)
+                -- 滑块头 (ImageButton)
                 local Head = Instance.new("ImageButton")
+                Head.Size = UDim2.new(0, 12, 0, 12)  -- 与 maclib 一致
+                Head.AnchorPoint = Vector2.new(0.5, 0.5)
                 Head.Image = SliderAssets.Head
                 Head.ImageColor3 = Color3.new(1, 1, 1)
-                Head.Size = UDim2.new(0, 12, 0, 12)
-                Head.AnchorPoint = Vector2.new(0.5, 0.5)
                 Head.BackgroundTransparency = 1
-                Head.Parent = Bar
+                Head.Parent = BarContainer
+                -- 根据初始值设置位置
+                local initialPos = (Val - min) / (max - min)
+                Head.Position = UDim2.new(initialPos, 0, 0.5, 0)
 
-                -- 更新滑块位置和数值的函数
-                local function UpdateFromValue(newVal)
-                    Val = math.clamp(newVal, min, max)
-                    local p = (Val - min) / (max - min)
-                    Head.Position = UDim2.new(p, 0, 0.5, 0)
-                    ValueBox.Text = string.format("%.2f", Val)
+                -- 更新滑块和数值的函数
+                local function UpdateFromRatio(ratio, ignoreCallback)
+                    ratio = math.clamp(ratio, 0, 1)
+                    Head.Position = UDim2.new(ratio, 0, 0.5, 0)
+                    local newVal = min + ratio * (max - min)
+                    -- 取整（与原测试 UI 一致，保留整数）
+                    newVal = math.floor(newVal + 0.5)  -- 四舍五入
+                    Val = newVal
+                    NumBox.Text = tostring(Val)
                     ConfigObjects[sliderText].Value = Val
-                    callback(Val)
-                end
-
-                -- 初始化
-                UpdateFromValue(Val)
-
-                -- 滑块头拖动逻辑
-                local function Drag(input)
-                    local barSize = Bar.AbsoluteSize.X
-                    local mouseX = input.Position.X
-                    local barX = Bar.AbsolutePosition.X
-                    local relativeX = math.clamp(mouseX - barX, 0, barSize)
-                    local p = relativeX / barSize
-                    local newVal = min + p * (max - min)
-                    UpdateFromValue(newVal)
-                end
-
-                Head.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        isDragging = true
-                        PlaySound(Sounds.Slide)
-                        Drag(input)
+                    if not ignoreCallback then
+                        callback(Val)
                     end
+                end
+
+                local function UpdateFromValue(value, ignoreCallback)
+                    local ratio = (value - min) / (max - min)
+                    UpdateFromRatio(ratio, ignoreCallback)
+                end
+
+                -- 拖拽逻辑
+                local dragging = false
+                Head.MouseButton1Down:Connect(function()
+                    dragging = true
+                    PlaySound(Sounds.Slide)
                 end)
 
-                Head.InputEnded:Connect(function(input)
+                UserInputService.InputEnded:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        isDragging = false
+                        dragging = false
                     end
                 end)
 
                 UserInputService.InputChanged:Connect(function(input)
-                    if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        Drag(input)
+                    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                        local mousePos = UserInputService:GetMouseLocation()
+                        local barAbsPos = BarContainer.AbsolutePosition
+                        local barSize = BarContainer.AbsoluteSize
+                        local relativeX = mousePos.X - barAbsPos.X
+                        local ratio = relativeX / barSize.X
+                        UpdateFromRatio(ratio, false)
                     end
                 end)
 
-                -- 文本框输入处理
-                ValueBox.FocusLost:Connect(function()
-                    local newVal = tonumber(ValueBox.Text)
-                    if newVal then
-                        UpdateFromValue(newVal)
+                -- 数值框输入
+                NumBox.FocusLost:Connect(function(enterPressed)
+                    if enterPressed then
+                        local inputVal = tonumber(NumBox.Text)
+                        if inputVal then
+                            inputVal = math.clamp(inputVal, min, max)
+                            UpdateFromValue(inputVal, false)
+                        else
+                            -- 输入无效，恢复显示当前值
+                            NumBox.Text = tostring(Val)
+                        end
                     else
-                        ValueBox.Text = string.format("%.2f", Val)  -- 恢复上次有效值
+                        -- 失去焦点但不按回车，恢复当前值（可选）
+                        NumBox.Text = tostring(Val)
                     end
                 end)
 
@@ -747,9 +765,16 @@ function Library:CreateWindow(Config)
                     Type = "Slider",
                     Value = Val,
                     Set = function(val)
-                        UpdateFromValue(val)
+                        UpdateFromValue(val, false)
                     end
                 }
+
+                -- 可选返回控制表
+                local self = {}
+                function self.UpdateValue(newVal)
+                    UpdateFromValue(newVal, false)
+                end
+                return self
             end
 
             -- Textbox
@@ -818,7 +843,7 @@ function Library:CreateWindow(Config)
                 Container.Size = UDim2.new(1,0,0,0)
                 Container.Visible = false
                 Container.ClipsDescendants = true
-                Container.Parent = contentContainer
+                Container.Parent = contentContainer  -- 恢复为内容容器内
                 Container.ZIndex = 10
                 Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Container, "BackgroundColor3", "Top")
@@ -835,6 +860,7 @@ function Library:CreateWindow(Config)
                     Tween(Icon, {Rotation = 0}, 0.2)
                     task.wait(0.2)
                     Container.Visible = false
+                    -- 更新Section高度
                     updateSectionHeight(false)
                 end
 
@@ -860,16 +886,20 @@ function Library:CreateWindow(Config)
                     if Dropped then
                         Container.Visible = true
                         local targetHeight = #options * 30
+                        -- 先展开选项容器
                         local tweenOpt = TweenService:Create(Container, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1,0,0, targetHeight)})
                         tweenOpt:Play()
                         Tween(Icon, {Rotation = 180}, 0.3)
+                        -- 等待选项容器动画完成后更新Section高度
                         tweenOpt.Completed:Connect(function()
                             updateSectionHeight(false)
                         end)
                     else
+                        -- 折叠选项容器
                         local tweenOpt = TweenService:Create(Container, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1,0,0, 0)})
                         tweenOpt:Play()
                         Tween(Icon, {Rotation = 0}, 0.2)
+                        -- 同时更新Section高度（或等待折叠完成）
                         tweenOpt.Completed:Connect(function()
                             Container.Visible = false
                             updateSectionHeight(false)
