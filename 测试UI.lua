@@ -487,17 +487,14 @@ function Library:CreateWindow(Config)
             -- 子元素表
             local child = {}
 
-            -- Button (maclib 风格)
+            -- Button (maclib 风格，已替换)
             child.Button = function(_, btnText, callback)
-                -- 主按钮（TextButton 作为容器，背景色主题化）
+                -- 主按钮（透明背景）
                 local Btn = Instance.new("TextButton")
                 Btn.Size = UDim2.new(1, 0, 0, 35)
-                Btn.Text = ""  -- 文本由内部 Label 控制
-                Btn.Font = Enum.Font.Gotham
-                Btn.TextSize = 14
+                Btn.Text = ""
+                Btn.BackgroundTransparency = 1  -- 完全透明
                 Btn.Parent = contentContainer
-                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(Btn, "BackgroundColor3", "Top")
 
                 -- 文本标签（左对齐）
                 local TextLabel = Instance.new("TextLabel")
@@ -508,40 +505,40 @@ function Library:CreateWindow(Config)
                 TextLabel.Text = btnText
                 TextLabel.TextSize = 14
                 TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+                TextLabel.TextTransparency = 0.5  -- 初始半透明
                 TextLabel.Parent = Btn
-                AddToRegistry(TextLabel, "TextColor3", "Text")
+                AddToRegistry(TextLabel, "TextColor3", "Text")  -- 文本颜色跟随主题
 
-                -- 图标（右箭头，取自 maclib）
+                -- 图标（右箭头）
                 local Icon = Instance.new("ImageLabel")
                 Icon.Size = UDim2.new(0, 15, 0, 15)
                 Icon.Position = UDim2.new(1, -20, 0.5, -7.5)
                 Icon.BackgroundTransparency = 1
-                Icon.Image = "rbxassetid://10709791437"  -- maclib 箭头 asset
+                Icon.Image = "rbxassetid://10709791437"  -- 箭头 asset
                 Icon.ImageTransparency = 0.5  -- 初始半透明
                 Icon.Parent = Btn
-                AddToRegistry(Icon, "ImageColor3", "Text")  -- 图标颜色跟随文本主题
+                AddToRegistry(Icon, "ImageColor3", "Text")  -- 图标颜色跟随主题
 
-                -- 悬停效果：图标透明度变化
+                -- 悬停效果：图标和文本透明度变化
                 local function onHover()
                     Tween(Icon, {ImageTransparency = 0}, 0.2)
+                    Tween(TextLabel, {TextTransparency = 0}, 0.2)
                 end
                 local function onLeave()
                     Tween(Icon, {ImageTransparency = 0.5}, 0.2)
+                    Tween(TextLabel, {TextTransparency = 0.5}, 0.2)
                 end
 
                 Btn.MouseEnter:Connect(onHover)
                 Btn.MouseLeave:Connect(onLeave)
 
-                -- 点击事件（保留原缩放动画和声音）
+                -- 点击事件：播放声音，执行回调（无缩放动画）
                 Btn.MouseButton1Click:Connect(function()
                     PlaySound(Sounds.Click)
-                    Tween(Btn, {Size = UDim2.new(0.95, 0, 0, 32)}, 0.1)
-                    task.wait(0.1)
-                    Tween(Btn, {Size = UDim2.new(1, 0, 0, 35)}, 0.1)
                     callback()
                 end)
 
-                -- 返回控制方法（可选）
+                -- 返回控制方法
                 local self = {}
                 function self.UpdateText(newText)
                     TextLabel.Text = newText
@@ -552,17 +549,17 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- Toggle (maclib 风格，禁用时靠左，启用时靠右且左移8像素)
+            -- Toggle (maclib 风格，已替换)
             child.Toggle = function(_, toggleText, default, callback)
                 local Enabled = default or false
+                local Gray = Color3.fromRGB(87, 86, 86)  -- 开关背景固定灰色
 
-                -- 主按钮（背景容器）
+                -- 主按钮（透明背景）
                 local Btn = Instance.new("TextButton")
                 Btn.Size = UDim2.new(1, 0, 0, 35)
                 Btn.Text = ""
+                Btn.BackgroundTransparency = 1
                 Btn.Parent = contentContainer
-                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(Btn, "BackgroundColor3", "Top")
 
                 -- 文本标签
                 local Title = Instance.new("TextLabel")
@@ -576,36 +573,51 @@ function Library:CreateWindow(Config)
                 Title.Parent = Btn
                 AddToRegistry(Title, "TextColor3", "Text")
 
-                -- 开关背景 (ImageLabel，非交互)
+                -- 开关背景
                 local Switch = Instance.new("ImageLabel")
                 Switch.Size = UDim2.new(0, 40, 0, 20)
                 Switch.Position = UDim2.new(1, -50, 0.5, -10)
                 Switch.BackgroundTransparency = 1
                 Switch.Image = ToggleAssets.Bg
-                Switch.ImageColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
+                Switch.ImageColor3 = Gray  -- 固定灰色
                 Switch.Parent = Btn
 
-                -- 滑块头 (ImageLabel)
+                -- 滑块头
                 local Dot = Instance.new("ImageLabel")
                 Dot.Size = UDim2.new(0, 16, 0, 16)
                 Dot.BackgroundTransparency = 1
                 Dot.Image = ToggleAssets.Head
-                Dot.ImageColor3 = Color3.new(1, 1, 1)
+                Dot.ImageColor3 = Color3.new(1, 1, 1)  -- 白色
                 Dot.AnchorPoint = Vector2.new(0.5, 0.5)
                 Dot.Parent = Switch
-                -- 位置：启用时靠右且左移8像素 (1, -8)，禁用时靠左 (0, 8)
-                Dot.Position = Enabled and UDim2.new(1, -8, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
 
-                -- 更新状态函数
+                -- 根据初始状态设置透明度和位置
+                local function applyState()
+                    if Enabled then
+                        Switch.ImageTransparency = 0  -- 启用时背景不透明
+                        Dot.ImageTransparency = 0    -- 滑块头不透明
+                        Dot.Position = UDim2.new(1, -8, 0.5, 0)  -- 右
+                    else
+                        Switch.ImageTransparency = 0.5  -- 禁用时背景半透明
+                        Dot.ImageTransparency = 0.85    -- 滑块头半透明
+                        Dot.Position = UDim2.new(0, 8, 0.5, 0)   -- 左
+                    end
+                end
+                applyState()
+
+                -- 更新状态函数（带动画）
                 local function Update()
                     if Enabled then PlaySound(Sounds.ToggleOn) else PlaySound(Sounds.ToggleOff) end
 
-                    -- 开关背景颜色
-                    local targetColor = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
-                    Tween(Switch, {ImageColor3 = targetColor}, 0.2)
-
+                    -- 开关背景透明度
+                    local targetSwitchTrans = Enabled and 0 or 0.5
+                    -- 滑块头透明度
+                    local targetDotTrans = Enabled and 0 or 0.85
                     -- 滑块头位置
                     local targetPos = Enabled and UDim2.new(1, -8, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
+
+                    Tween(Switch, {ImageTransparency = targetSwitchTrans}, 0.2)
+                    Tween(Dot, {ImageTransparency = targetDotTrans}, 0.2)
                     Tween(Dot, {Position = targetPos}, 0.2)
 
                     -- 更新配置和回调
@@ -624,8 +636,12 @@ function Library:CreateWindow(Config)
                     Value = Enabled,
                     Set = function(val)
                         Enabled = val
-                        Switch.ImageColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
-                        Dot.Position = Enabled and UDim2.new(1, -8, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
+                        local targetSwitchTrans = Enabled and 0 or 0.5
+                        local targetDotTrans = Enabled and 0 or 0.85
+                        local targetPos = Enabled and UDim2.new(1, -8, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
+                        Tween(Switch, {ImageTransparency = targetSwitchTrans}, 0.2)
+                        Tween(Dot, {ImageTransparency = targetDotTrans}, 0.2)
+                        Tween(Dot, {Position = targetPos}, 0.2)
                         callback(Enabled)
                     end
                 }
