@@ -552,7 +552,7 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- Toggle (maclib 风格)
+            -- Toggle (maclib 风格，禁用时靠左)
             child.Toggle = function(_, toggleText, default, callback)
                 local Enabled = default or false
 
@@ -593,8 +593,8 @@ function Library:CreateWindow(Config)
                 Dot.ImageColor3 = Color3.new(1, 1, 1)
                 Dot.AnchorPoint = Vector2.new(0.5, 0.5)
                 Dot.Parent = Switch
-                -- 位置：启用时靠右 (1,0)，禁用时居中 (0.5,0)（锚点为中心）
-                Dot.Position = Enabled and UDim2.new(1, 0, 0.5, 0) or UDim2.new(0.5, 0, 0.5, 0)
+                -- 位置：启用时靠右 (1,0)，禁用时靠左 (0,0)（锚点为中心）
+                Dot.Position = Enabled and UDim2.new(1, 0, 0.5, 0) or UDim2.new(0, 0, 0.5, 0)
 
                 -- 更新状态函数
                 local function Update()
@@ -605,7 +605,7 @@ function Library:CreateWindow(Config)
                     Tween(Switch, {ImageColor3 = targetColor}, 0.2)
 
                     -- 滑块头位置
-                    local targetPos = Enabled and UDim2.new(1, 0, 0.5, 0) or UDim2.new(0.5, 0, 0.5, 0)
+                    local targetPos = Enabled and UDim2.new(1, 0, 0.5, 0) or UDim2.new(0, 0, 0.5, 0)
                     Tween(Dot, {Position = targetPos}, 0.2)
 
                     -- 更新配置和回调
@@ -625,14 +625,16 @@ function Library:CreateWindow(Config)
                     Set = function(val)
                         Enabled = val
                         Switch.ImageColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
-                        Dot.Position = Enabled and UDim2.new(1, 0, 0.5, 0) or UDim2.new(0.5, 0, 0.5, 0)
+                        Dot.Position = Enabled and UDim2.new(1, 0, 0.5, 0) or UDim2.new(0, 0, 0.5, 0)
                         callback(Enabled)
                     end
                 }
             end
 
-            -- Slider (maclib 风格，数值框百分百搬运，滑块头放大，背景高度优化，文本居中，输入始终作为百分比)
-            child.Slider = function(_, sliderText, min, max, default, callback)
+            -- Slider (maclib 风格，支持自定义显示方式，默认数值)
+            child.Slider = function(_, sliderText, min, max, default, callback, options)
+                -- options 可选：{DisplayMethod="Percent", Precision=0} 等
+                options = options or {}
                 local Val = default or min
 
                 -- 主容器（保留背景主题色 Top）
@@ -718,15 +720,19 @@ function Library:CreateWindow(Config)
                 local initPosX = (Val - min) / (max - min)
                 SliderHead.Position = UDim2.new(initPosX, 0, 0.5, 0)
 
-                -- 显示方法（百分比）
+                -- 显示方法
                 local DisplayMethods = {
+                    Value = function(sliderValue, precision)
+                        return precision and string.format("%." .. precision .. "f", sliderValue) or tostring(sliderValue)
+                    end,
                     Percent = function(sliderValue, precision)
                         local percentage = (sliderValue - min) / (max - min) * 100
-                        return (precision and string.format("%." .. precision .. "f", percentage) or tostring(math.round(percentage))) .. "%"
+                        return (precision and string.format("%." .. precision .. "f", percentage) or tostring(math.floor(percentage + 0.5))) .. "%"
                     end,
+                    -- 可扩展其他
                 }
-                local DisplayMethod = DisplayMethods.Percent
-                local Precision = 0  -- 整数百分比
+                local displayMethod = DisplayMethods[options.DisplayMethod] or DisplayMethods.Value
+                local precision = options.Precision  -- nil 或数字
 
                 local function SetValue(input, ignorecallback)
                     local posXScale
@@ -743,8 +749,8 @@ function Library:CreateWindow(Config)
                     local newValue = min + posXScale * (max - min)
                     Val = newValue  -- 更新外部变量
 
-                    -- 更新数值框（百分比显示）
-                    NumBox.Text = DisplayMethod(newValue, Precision)
+                    -- 更新数值框
+                    NumBox.Text = displayMethod(newValue, precision)
 
                     if not ignorecallback then
                         task.spawn(function()
@@ -780,15 +786,16 @@ function Library:CreateWindow(Config)
                     end
                 end)
 
-                -- 数值框输入处理（始终作为百分比）
+                -- 数值框输入处理（始终尝试解析数字）
                 NumBox.FocusLost:Connect(function(enterPressed)
                     local inputText = NumBox.Text
-                    local value = inputText:match("^(%-?%d+%.?%d*)")  -- 提取数字部分
+                    local value = tonumber(inputText:match("%d+%.?%d*"))
                     if value then
-                        value = tonumber(value)
-                        -- 始终将输入视为百分比，转换为数值
-                        local newValue = min + (value / 100) * (max - min)
-                        newValue = math.clamp(newValue, min, max)
+                        -- 如果显示方式为百分比，则将输入视为百分比
+                        if options.DisplayMethod == "Percent" then
+                            value = min + (value / 100) * (max - min)
+                        end
+                        local newValue = math.clamp(value, min, max)
                         SetValue(newValue, false)  -- 触发回调
                     else
                         -- 无效输入，恢复为当前值
