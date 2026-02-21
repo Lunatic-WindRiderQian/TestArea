@@ -470,7 +470,7 @@ function Library:CreateWindow(Config)
 
             local child = {}
 
-            -- Button (maclib 风格)
+            -- Button
             child.Button = function(_, btnText, callback)
                 local Btn = Instance.new("TextButton")
                 Btn.Size = UDim2.new(1, 0, 0, 35)
@@ -529,7 +529,7 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- Toggle (maclib 风格)
+            -- Toggle
             child.Toggle = function(_, toggleText, default, callback)
                 local Enabled = default or false
 
@@ -596,7 +596,7 @@ function Library:CreateWindow(Config)
                 }
             end
 
-            -- Slider (maclib 风格)
+            -- Slider
             child.Slider = function(_, sliderText, min, max, default, callback, options)
                 options = options or {}
                 local Val = default or min
@@ -795,18 +795,19 @@ function Library:CreateWindow(Config)
             end
 
             -- ============================================================
-            -- Dropdown – 功能完全移植自 maclib.lua，背景采用原测试UI样式
+            -- 高级 Dropdown（移植自 maclib.lua）
+            -- 支持：单选/多选、搜索、图标（箭头/搜索）、动态更新
             -- ============================================================
             child.Dropdown = function(_, settings)
-                local dropText = settings.name
-                local optionsList = settings.options or {}
-                local callback = settings.callback
-                local multi = settings.multi or false
-                local searchEnabled = settings.search or false
-                local default = settings.default
-                local required = settings.required or false
+                local dropText = settings.name               -- 标题
+                local optionsList = settings.options or {}   -- 选项列表（数组）
+                local callback = settings.callback           -- 回调函数
+                local multi = settings.multi or false        -- 是否多选
+                local searchEnabled = settings.search or false -- 是否启用搜索
+                local default = settings.default              -- 默认选中（多选时为表，单选时为值）
+                local required = settings.required or false   -- 是否必须至少选中一项
 
-                -- 主框架（背景使用 Top 主题色，边框使用 Stroke）
+                -- 主框架（背景使用 Top 主题色）
                 local dropdown = Instance.new("Frame")
                 dropdown.Name = "Dropdown"
                 dropdown.Size = UDim2.new(1, 0, 0, 38)
@@ -816,10 +817,12 @@ function Library:CreateWindow(Config)
                 Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(dropdown, "BackgroundColor3", "Top")
 
+                -- 边框
                 local stroke = Instance.new("UIStroke")
                 stroke.Parent = dropdown
                 AddToRegistry(stroke, "Color", "Stroke")
 
+                -- 点击交互按钮（覆盖整个区域）
                 local interact = Instance.new("TextButton")
                 interact.Name = "Interact"
                 interact.Text = ""
@@ -828,6 +831,7 @@ function Library:CreateWindow(Config)
                 interact.Parent = dropdown
                 interact.ZIndex = 2
 
+                -- 标题标签
                 local dropdownName = Instance.new("TextLabel")
                 dropdownName.Name = "DropdownName"
                 dropdownName.Text = dropText .. "..."
@@ -840,6 +844,7 @@ function Library:CreateWindow(Config)
                 dropdownName.Parent = dropdown
                 AddToRegistry(dropdownName, "TextColor3", "Text")
 
+                -- 箭头图标
                 local arrow = Instance.new("ImageLabel")
                 arrow.Name = "Arrow"
                 arrow.Image = DropdownAssets.Arrow
@@ -849,6 +854,7 @@ function Library:CreateWindow(Config)
                 arrow.Parent = dropdown
                 AddToRegistry(arrow, "ImageColor3", "Text")
 
+                -- 下拉内容容器（初始隐藏）
                 local dropdownFrame = Instance.new("Frame")
                 dropdownFrame.Name = "DropdownFrame"
                 dropdownFrame.Size = UDim2.new(1, 0, 0, 0)
@@ -858,6 +864,7 @@ function Library:CreateWindow(Config)
                 dropdownFrame.Visible = false
                 dropdownFrame.Parent = dropdown
 
+                -- 内容布局
                 local frameLayout = Instance.new("UIListLayout")
                 frameLayout.Padding = UDim.new(0, 5)
                 frameLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -867,6 +874,7 @@ function Library:CreateWindow(Config)
                 framePadding.PaddingBottom = UDim.new(0, 10)
                 framePadding.Parent = dropdownFrame
 
+                -- 搜索框（可选）
                 local searchBox
                 if searchEnabled then
                     local searchFrame = Instance.new("Frame")
@@ -900,9 +908,11 @@ function Library:CreateWindow(Config)
                     AddToRegistry(searchBox, "TextColor3", "Text")
                 end
 
+                -- 存储选项按钮的引用
                 local optionButtons = {}
-                local selected = multi and {} or nil
+                local selected = multi and {} or nil  -- 多选时用表，单选时直接用值
 
+                -- 切换选项选中外观
                 local function setOptionState(optionValue, state)
                     local btn = optionButtons[optionValue]
                     if not btn then return end
@@ -919,6 +929,7 @@ function Library:CreateWindow(Config)
                     end
                 end
 
+                -- 添加一个选项
                 local function addOption(optionValue)
                     local optionBtn = Instance.new("TextButton")
                     optionBtn.Name = "Option"
@@ -928,23 +939,26 @@ function Library:CreateWindow(Config)
                     optionBtn.Position = UDim2.new(0, 10, 0, 0)
                     optionBtn.Parent = dropdownFrame
 
+                    -- 水平布局
                     local layout = Instance.new("UIListLayout")
                     layout.FillDirection = Enum.FillDirection.Horizontal
                     layout.VerticalAlignment = Enum.VerticalAlignment.Center
                     layout.Padding = UDim.new(0, 8)
                     layout.Parent = optionBtn
 
+                    -- 勾选框（文本）
                     local checkmark = Instance.new("TextLabel")
                     checkmark.Name = "Checkmark"
                     checkmark.Text = "✓"
                     checkmark.Font = Enum.Font.GothamBold
                     checkmark.TextSize = 14
-                    checkmark.Size = UDim2.new(0, 0, 1, 0)
+                    checkmark.Size = UDim2.new(0, 0, 1, 0)  -- 初始宽度 0
                     checkmark.BackgroundTransparency = 1
                     checkmark.TextTransparency = 1
                     checkmark.Parent = optionBtn
                     AddToRegistry(checkmark, "TextColor3", "Accent")
 
+                    -- 选项文本
                     local optionName = Instance.new("TextLabel")
                     optionName.Name = "OptionName"
                     optionName.Text = optionValue
@@ -963,31 +977,36 @@ function Library:CreateWindow(Config)
                         OptionName = optionName
                     }
 
+                    -- 选项点击事件
                     optionBtn.MouseButton1Click:Connect(function()
                         PlaySound(Sounds.Click)
 
                         if multi then
+                            -- 多选
                             local isSelected = selected[optionValue] or false
                             if required and isSelected and table.count(selected) == 1 then
-                                return
+                                return  -- 不能取消最后一个
                             end
                             selected[optionValue] = not isSelected
                             setOptionState(optionValue, selected[optionValue])
 
+                            -- 构建返回值（所有选中的值）
                             local result = {}
                             for val, sel in pairs(selected) do
                                 if sel then table.insert(result, val) end
                             end
                             callback(result)
 
+                            -- 更新标题显示
                             if #result > 0 then
                                 dropdownName.Text = dropText .. " • " .. table.concat(result, ", ")
                             else
                                 dropdownName.Text = dropText .. "..."
                             end
                         else
+                            -- 单选
                             if required and selected == optionValue then
-                                return
+                                return  -- 不能取消唯一选中
                             end
                             local prev = selected
                             selected = optionValue
@@ -998,6 +1017,7 @@ function Library:CreateWindow(Config)
                             callback(optionValue)
                             dropdownName.Text = dropText .. " • " .. optionValue
 
+                            -- 单选时选择后自动收起
                             if isOpen then
                                 toggleDropdown()
                             end
@@ -1005,10 +1025,12 @@ function Library:CreateWindow(Config)
                     end)
                 end
 
+                -- 初始化所有选项
                 for _, opt in ipairs(optionsList) do
                     addOption(opt)
                 end
 
+                -- 处理默认选中
                 if default then
                     if multi then
                         for _, val in ipairs(default) do
@@ -1029,6 +1051,7 @@ function Library:CreateWindow(Config)
                     end
                 end
 
+                -- 搜索过滤
                 if searchBox then
                     searchBox:GetPropertyChangedSignal("Text"):Connect(function()
                         local term = searchBox.Text:lower()
@@ -1036,6 +1059,7 @@ function Library:CreateWindow(Config)
                             local visible = string.find(opt:lower(), term) ~= nil
                             btnData.Button.Visible = visible
                         end
+                        -- 如果下拉已展开，重新调整高度
                         if isOpen then
                             local contentHeight = frameLayout.AbsoluteContentSize.Y + framePadding.PaddingBottom.Offset
                             if framePadding.PaddingTop then
@@ -1047,6 +1071,7 @@ function Library:CreateWindow(Config)
                     end)
                 end
 
+                -- 展开/收起动画
                 local isOpen = false
                 local function toggleDropdown()
                     isOpen = not isOpen
@@ -1054,6 +1079,7 @@ function Library:CreateWindow(Config)
 
                     if isOpen then
                         dropdownFrame.Visible = true
+                        -- 使用 AbsoluteContentSize 获取内容实际高度（已包含布局间距和子元素）
                         local contentHeight = frameLayout.AbsoluteContentSize.Y + framePadding.PaddingBottom.Offset
                         if framePadding.PaddingTop then
                             contentHeight = contentHeight + framePadding.PaddingTop.Offset
@@ -1064,6 +1090,7 @@ function Library:CreateWindow(Config)
                     else
                         Tween(dropdown, {Size = UDim2.new(1, 0, 0, 38)}, 0.2)
                         Tween(arrow, {Rotation = 0}, 0.2)
+                        -- 等待动画完成再隐藏内容
                         task.wait(0.2)
                         dropdownFrame.Visible = false
                     end
@@ -1071,12 +1098,16 @@ function Library:CreateWindow(Config)
 
                 interact.MouseButton1Click:Connect(toggleDropdown)
 
+                -- 注册到配置系统
                 ConfigObjects[dropText] = {
                     Type = "Dropdown",
                     Value = multi and selected or selected,
-                    Set = function(val) end
+                    Set = function(val)
+                        -- 可根据需要实现从外部设置值的方法
+                    end
                 }
 
+                -- 返回控制方法
                 local self = {}
                 function self.UpdateName(newName)
                     dropText = newName
@@ -1092,6 +1123,7 @@ function Library:CreateWindow(Config)
                     dropdown.Visible = state
                 end
                 function self.UpdateSelection(newSelection)
+                    -- 清除所有选中
                     for val, _ in pairs(optionButtons) do
                         setOptionState(val, false)
                     end
