@@ -37,6 +37,10 @@ local SliderAssets = {
     Bar = "rbxassetid://18772615246",   -- 滑块条背景
     Head = "rbxassetid://18772834246"   -- 滑块头
 }
+local DropdownAssets = {
+    Arrow = "rbxassetid://18865373378",      -- 下拉箭头
+    SearchIcon = "rbxassetid://86737463322606", -- 搜索图标
+}
 
 local function PlaySound(id)
     if not SFXEnabled then return end
@@ -847,342 +851,362 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- Dropdown (完整 maclib 核心实现 + 测试UI样式)
-            child.Dropdown = function(_, dropText, options, callback)
-                -- 兼容多种调用方式
-                local settings
-                if type(dropText) == "table" then
-                    settings = dropText
-                else
-                    settings = {
-                        Name = dropText,
-                        Options = options,
-                        Callback = callback,
-                        Multi = false,
-                        Search = false,
-                        Default = nil
-                    }
-                end
-                local dropText = settings.Name
-                local optionsList = settings.Options or {}
-                local callbackFn = settings.Callback
-                local multi = settings.Multi or false
-                local search = settings.Search or false
-                local defaultValue = settings.Default
+            -- Dropdown (完整 maclib 风格，支持单选/多选/搜索)
+            child.Dropdown = function(_, settings)
+                local dropText = settings.name               -- 标题
+                local optionsList = settings.options or {}   -- 选项列表（数组）
+                local callback = settings.callback           -- 回调函数
+                local multi = settings.multi or false        -- 是否多选
+                local searchEnabled = settings.search or false -- 是否启用搜索
+                local default = settings.default              -- 默认选中（多选时为表，单选时为值）
+                local required = settings.required or false   -- 是否必须至少选中一项
 
-                -- 主按钮 (测试UI样式)
-                local Btn = Instance.new("TextButton")
-                Btn.Size = UDim2.new(1,0,0,35)
-                Btn.Text = ""
-                Btn.Parent = contentContainer
-                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,6)
-                AddToRegistry(Btn, "BackgroundColor3", "Top")
+                -- 主框架（背景使用 Top 主题色）
+                local dropdown = Instance.new("Frame")
+                dropdown.Name = "Dropdown"
+                dropdown.Size = UDim2.new(1, 0, 0, 38)
+                dropdown.BackgroundTransparency = 1
+                dropdown.ClipsDescendants = true
+                dropdown.Parent = contentContainer
+                Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(dropdown, "BackgroundColor3", "Top")
 
-                local Lbl = Instance.new("TextLabel")
-                Lbl.Text = dropText
-                Lbl.Size = UDim2.new(1,-30,1,0)
-                Lbl.Position = UDim2.new(0,10,0,0)
-                Lbl.BackgroundTransparency = 1
-                Lbl.Font = Enum.Font.Gotham
-                Lbl.TextSize = 14
-                Lbl.TextXAlignment = Enum.TextXAlignment.Left
-                Lbl.Parent = Btn
-                AddToRegistry(Lbl, "TextColor3", "Text")
+                -- 边框
+                local stroke = Instance.new("UIStroke")
+                stroke.Parent = dropdown
+                AddToRegistry(stroke, "Color", "Stroke")
 
-                local Icon = Instance.new("ImageLabel")
-                Icon.Image = "rbxassetid://6031091004"  -- 箭头图标
-                Icon.Size = UDim2.new(0,20,0,20)
-                Icon.Position = UDim2.new(1,-30,0.5,-10)
-                Icon.BackgroundTransparency = 1
-                Icon.Parent = Btn
-                AddToRegistry(Icon, "ImageColor3", "Text")
+                -- 点击交互按钮（覆盖整个区域）
+                local interact = Instance.new("TextButton")
+                interact.Name = "Interact"
+                interact.Text = ""
+                interact.BackgroundTransparency = 1
+                interact.Size = UDim2.new(1, 0, 1, 0)
+                interact.Parent = dropdown
+                interact.ZIndex = 2
 
-                -- 选项容器
-                local Container = Instance.new("Frame")
-                Container.Size = UDim2.new(1,0,0,0)
-                Container.Visible = false
-                Container.ClipsDescendants = true
-                Container.Parent = contentContainer
-                Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
-                AddToRegistry(Container, "BackgroundColor3", "Top")
-                local Stroke = Instance.new("UIStroke")
-                Stroke.Parent = Container
-                AddToRegistry(Stroke, "Color", "Stroke")
+                -- 标题标签
+                local dropdownName = Instance.new("TextLabel")
+                dropdownName.Name = "DropdownName"
+                dropdownName.Text = dropText .. "..."
+                dropdownName.Size = UDim2.new(1, -30, 1, 0)
+                dropdownName.Position = UDim2.new(0, 10, 0, 0)
+                dropdownName.BackgroundTransparency = 1
+                dropdownName.Font = Enum.Font.Gotham
+                dropdownName.TextSize = 14
+                dropdownName.TextXAlignment = Enum.TextXAlignment.Left
+                dropdownName.Parent = dropdown
+                AddToRegistry(dropdownName, "TextColor3", "Text")
 
-                -- 内部布局（自动排列选项）
-                local List = Instance.new("UIListLayout")
-                List.Padding = UDim.new(0, 5)
-                List.SortOrder = Enum.SortOrder.LayoutOrder
-                List.Parent = Container
+                -- 箭头图标
+                local arrow = Instance.new("ImageLabel")
+                arrow.Name = "Arrow"
+                arrow.Image = DropdownAssets.Arrow
+                arrow.Size = UDim2.new(0, 16, 0, 16)
+                arrow.Position = UDim2.new(1, -25, 0.5, -8)
+                arrow.BackgroundTransparency = 1
+                arrow.Parent = dropdown
+                AddToRegistry(arrow, "ImageColor3", "Text")
+
+                -- 下拉内容容器（初始隐藏）
+                local dropdownFrame = Instance.new("Frame")
+                dropdownFrame.Name = "DropdownFrame"
+                dropdownFrame.Size = UDim2.new(1, 0, 0, 0)
+                dropdownFrame.Position = UDim2.new(0, 0, 0, 38)
+                dropdownFrame.BackgroundTransparency = 1
+                dropdownFrame.ClipsDescendants = true
+                dropdownFrame.Visible = false
+                dropdownFrame.Parent = dropdown
+
+                -- 内容布局
+                local frameLayout = Instance.new("UIListLayout")
+                frameLayout.Padding = UDim.new(0, 5)
+                frameLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                frameLayout.Parent = dropdownFrame
+
+                local framePadding = Instance.new("UIPadding")
+                framePadding.PaddingBottom = UDim.new(0, 10)
+                framePadding.Parent = dropdownFrame
 
                 -- 搜索框（可选）
-                local SearchBox
-                if search then
-                    local SearchFrame = Instance.new("Frame")
-                    SearchFrame.Size = UDim2.new(1, -20, 0, 30)
-                    SearchFrame.BackgroundTransparency = 0.95
-                    SearchFrame.Parent = Container
-                    AddToRegistry(SearchFrame, "BackgroundColor3", "Main")
-                    Instance.new("UICorner", SearchFrame).CornerRadius = UDim.new(0, 4)
+                local searchBox
+                if searchEnabled then
+                    local searchFrame = Instance.new("Frame")
+                    searchFrame.Name = "Search"
+                    searchFrame.Size = UDim2.new(1, -20, 0, 30)
+                    searchFrame.Position = UDim2.new(0, 10, 0, 0)
+                    searchFrame.BackgroundTransparency = 0.95
+                    searchFrame.Parent = dropdownFrame
+                    Instance.new("UICorner", searchFrame).CornerRadius = UDim.new(0, 6)
+                    AddToRegistry(searchFrame, "BackgroundColor3", "Main")
 
-                    local SearchIcon = Instance.new("ImageLabel")
-                    SearchIcon.Image = "rbxassetid://86737463322606"  -- 搜索图标 (maclib)
-                    SearchIcon.Size = UDim2.new(0, 12, 0, 12)
-                    SearchIcon.Position = UDim2.new(0, 8, 0.5, -6)
-                    SearchIcon.BackgroundTransparency = 1
-                    SearchIcon.Parent = SearchFrame
-                    AddToRegistry(SearchIcon, "ImageColor3", "Text")
+                    local searchIcon = Instance.new("ImageLabel")
+                    searchIcon.Image = DropdownAssets.SearchIcon
+                    searchIcon.Size = UDim2.new(0, 14, 0, 14)
+                    searchIcon.Position = UDim2.new(0, 8, 0.5, -7)
+                    searchIcon.BackgroundTransparency = 1
+                    searchIcon.Parent = searchFrame
+                    AddToRegistry(searchIcon, "ImageColor3", "Text")
 
-                    SearchBox = Instance.new("TextBox")
-                    SearchBox.Size = UDim2.new(1, -25, 1, 0)
-                    SearchBox.Position = UDim2.new(0, 25, 0, 0)
-                    SearchBox.BackgroundTransparency = 1
-                    SearchBox.Font = Enum.Font.Gotham
-                    SearchBox.TextSize = 13
-                    SearchBox.PlaceholderText = "Search..."
-                    SearchBox.PlaceholderColor3 = Color3.fromRGB(150,150,150)
-                    SearchBox.TextColor3 = Color3.fromRGB(200,200,200)
-                    SearchBox.TextXAlignment = Enum.TextXAlignment.Left
-                    SearchBox.Parent = SearchFrame
-                    AddToRegistry(SearchBox, "TextColor3", "Text")
+                    searchBox = Instance.new("TextBox")
+                    searchBox.Name = "SearchBox"
+                    searchBox.PlaceholderText = "Search..."
+                    searchBox.Text = ""
+                    searchBox.BackgroundTransparency = 1
+                    searchBox.Size = UDim2.new(1, -30, 1, 0)
+                    searchBox.Position = UDim2.new(0, 25, 0, 0)
+                    searchBox.Font = Enum.Font.Gotham
+                    searchBox.TextSize = 13
+                    searchBox.TextXAlignment = Enum.TextXAlignment.Left
+                    searchBox.Parent = searchFrame
+                    AddToRegistry(searchBox, "TextColor3", "Text")
                 end
 
-                -- 存储选项按钮
-                local OptionObjs = {}
-                local Selected = multi and {} or nil  -- 多选: table, 单选: string/nil
+                -- 存储选项按钮的引用
+                local optionButtons = {}
+                local selected = multi and {} or nil  -- 多选时用表，单选时直接用值
 
-                local function updateBtnText()
-                    if multi then
-                        local selectedNames = {}
-                        for name, _ in pairs(Selected) do
-                            table.insert(selectedNames, name)
-                        end
-                        Lbl.Text = #selectedNames > 0 and (dropText .. ": " .. table.concat(selectedNames, ", ")) or (dropText .. "...")
-                    else
-                        Lbl.Text = Selected and (dropText .. ": " .. Selected) or (dropText .. "...")
-                    end
-                end
-
-                local function toggleOption(optionName, state)
-                    local obj = OptionObjs[optionName]
-                    if not obj then return end
-                    local checkmark = obj.Checkmark
-                    local nameLabel = obj.NameLabel
-
+                -- 切换选项选中外观
+                local function setOptionState(optionValue, state)
+                    local btn = optionButtons[optionValue]
+                    if not btn then return end
                     if state then
-                        if not multi then
-                            -- 单选: 取消其他选项
-                            for name, _ in pairs(OptionObjs) do
-                                if name ~= optionName then
-                                    local other = OptionObjs[name]
-                                    Tween(other.Checkmark, {TextTransparency = 1}, 0.2)
-                                    Tween(other.NameLabel, {TextTransparency = 0.5}, 0.2)
-                                end
-                            end
-                            Selected = optionName
-                        else
-                            Selected[optionName] = true
-                        end
-                        Tween(checkmark, {TextTransparency = 0}, 0.2)
-                        Tween(nameLabel, {TextTransparency = 0.2}, 0.2)
+                        btn.Checkmark.TextTransparency = 0
+                        btn.OptionName.TextTransparency = 0.2
+                        Tween(btn.Checkmark, {Size = UDim2.new(0, 12, 1, 0)}, 0.2)
+                        Tween(btn.OptionName, {TextTransparency = 0.2}, 0.2)
                     else
-                        if multi then
-                            Selected[optionName] = nil
-                        else
-                            Selected = nil
-                        end
-                        Tween(checkmark, {TextTransparency = 1}, 0.2)
-                        Tween(nameLabel, {TextTransparency = 0.5}, 0.2)
-                    end
-                    updateBtnText()
-
-                    if callbackFn then
-                        if multi then
-                            local ret = {}
-                            for k,_ in pairs(Selected) do ret[k] = true end
-                            callbackFn(ret)
-                        else
-                            callbackFn(Selected)
-                        end
-                    end
-
-                    if ConfigObjects[dropText] then
-                        ConfigObjects[dropText].Value = multi and Selected or Selected
-                    end
-
-                    -- 单选选中后自动折叠
-                    if not multi and state then
-                        toggleDropdown(false)
+                        btn.Checkmark.TextTransparency = 1
+                        btn.OptionName.TextTransparency = 0.5
+                        Tween(btn.Checkmark, {Size = UDim2.new(0, 0, 1, 0)}, 0.2)
+                        Tween(btn.OptionName, {TextTransparency = 0.5}, 0.2)
                     end
                 end
 
-                local function addOption(optionName)
-                    local option = Instance.new("TextButton")
-                    option.Size = UDim2.new(1, 0, 0, 30)
-                    option.Text = ""
-                    option.BackgroundTransparency = 1
-                    option.Parent = Container
+                -- 添加一个选项
+                local function addOption(optionValue)
+                    local optionBtn = Instance.new("TextButton")
+                    optionBtn.Name = "Option"
+                    optionBtn.Text = ""
+                    optionBtn.BackgroundTransparency = 1
+                    optionBtn.Size = UDim2.new(1, -20, 0, 30)
+                    optionBtn.Position = UDim2.new(0, 10, 0, 0)
+                    optionBtn.Parent = dropdownFrame
 
-                    local nameLabel = Instance.new("TextLabel")
-                    nameLabel.Text = optionName
-                    nameLabel.Size = UDim2.new(1, -30, 1, 0)
-                    nameLabel.Position = UDim2.new(0, 15, 0, 0)
-                    nameLabel.BackgroundTransparency = 1
-                    nameLabel.Font = Enum.Font.Gotham
-                    nameLabel.TextSize = 13
-                    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-                    nameLabel.Parent = option
-                    AddToRegistry(nameLabel, "TextColor3", "Text")
-                    nameLabel.TextTransparency = 0.5
+                    -- 水平布局
+                    local layout = Instance.new("UIListLayout")
+                    layout.FillDirection = Enum.FillDirection.Horizontal
+                    layout.VerticalAlignment = Enum.VerticalAlignment.Center
+                    layout.Padding = UDim.new(0, 8)
+                    layout.Parent = optionBtn
 
+                    -- 勾选框（文本）
                     local checkmark = Instance.new("TextLabel")
+                    checkmark.Name = "Checkmark"
                     checkmark.Text = "✓"
-                    checkmark.Size = UDim2.new(0, 20, 1, 0)
-                    checkmark.Position = UDim2.new(1, -25, 0, 0)
-                    checkmark.BackgroundTransparency = 1
                     checkmark.Font = Enum.Font.GothamBold
-                    checkmark.TextSize = 16
+                    checkmark.TextSize = 14
+                    checkmark.Size = UDim2.new(0, 0, 1, 0)  -- 初始宽度 0
+                    checkmark.BackgroundTransparency = 1
                     checkmark.TextTransparency = 1
-                    checkmark.Parent = option
+                    checkmark.Parent = optionBtn
                     AddToRegistry(checkmark, "TextColor3", "Accent")
 
-                    OptionObjs[optionName] = {
-                        Button = option,
-                        NameLabel = nameLabel,
-                        Checkmark = checkmark
+                    -- 选项文本
+                    local optionName = Instance.new("TextLabel")
+                    optionName.Name = "OptionName"
+                    optionName.Text = optionValue
+                    optionName.Font = Enum.Font.Gotham
+                    optionName.TextSize = 13
+                    optionName.TextXAlignment = Enum.TextXAlignment.Left
+                    optionName.Size = UDim2.new(1, -30, 1, 0)
+                    optionName.BackgroundTransparency = 1
+                    optionName.TextTransparency = 0.5
+                    optionName.Parent = optionBtn
+                    AddToRegistry(optionName, "TextColor3", "Text")
+
+                    optionButtons[optionValue] = {
+                        Button = optionBtn,
+                        Checkmark = checkmark,
+                        OptionName = optionName
                     }
 
-                    option.MouseButton1Click:Connect(function()
-                        local newState
+                    -- 选项点击事件
+                    optionBtn.MouseButton1Click:Connect(function()
+                        PlaySound(Sounds.Click)
+
                         if multi then
-                            newState = not Selected[optionName]
+                            -- 多选
+                            local isSelected = selected[optionValue] or false
+                            if required and isSelected and #selected == 1 then
+                                return  -- 不能取消最后一个
+                            end
+                            selected[optionValue] = not isSelected
+                            setOptionState(optionValue, selected[optionValue])
+
+                            -- 构建返回值（所有选中的值）
+                            local result = {}
+                            for val, sel in pairs(selected) do
+                                if sel then table.insert(result, val) end
+                            end
+                            callback(result)
+
+                            -- 更新标题显示
+                            if #result > 0 then
+                                dropdownName.Text = dropText .. " • " .. table.concat(result, ", ")
+                            else
+                                dropdownName.Text = dropText .. "..."
+                            end
                         else
-                            newState = (Selected ~= optionName)
+                            -- 单选
+                            if required and selected == optionValue then
+                                return  -- 不能取消唯一选中
+                            end
+                            local prev = selected
+                            selected = optionValue
+                            if prev and optionButtons[prev] then
+                                setOptionState(prev, false)
+                            end
+                            setOptionState(optionValue, true)
+                            callback(optionValue)
+                            dropdownName.Text = dropText .. " • " .. optionValue
+
+                            -- 单选时选择后自动收起（可选）
+                            toggleDropdown()
                         end
-                        toggleOption(optionName, newState)
                     end)
                 end
 
-                -- 初始化选项
+                -- 初始化所有选项
                 for _, opt in ipairs(optionsList) do
                     addOption(opt)
                 end
 
-                -- 设置默认值
-                if defaultValue then
-                    if multi and type(defaultValue) == "table" then
-                        for _, opt in ipairs(defaultValue) do
-                            if OptionObjs[opt] then
-                                toggleOption(opt, true)
+                -- 处理默认选中
+                if default then
+                    if multi then
+                        for _, val in ipairs(default) do
+                            if optionButtons[val] then
+                                selected[val] = true
+                                setOptionState(val, true)
                             end
                         end
-                    elseif not multi then
-                        local targetOpt = type(defaultValue) == "number" and optionsList[defaultValue] or defaultValue
-                        if targetOpt and OptionObjs[targetOpt] then
-                            toggleOption(targetOpt, true)
+                        local names = {}
+                        for val, sel in pairs(selected) do if sel then table.insert(names, val) end end
+                        dropdownName.Text = dropText .. " • " .. table.concat(names, ", ")
+                    else
+                        if optionButtons[default] then
+                            selected = default
+                            setOptionState(default, true)
+                            dropdownName.Text = dropText .. " • " .. default
                         end
                     end
                 end
 
                 -- 搜索过滤
-                if SearchBox then
-                    SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-                        local term = SearchBox.Text:lower()
-                        for optName, obj in pairs(OptionObjs) do
-                            obj.Button.Visible = string.find(optName:lower(), term) ~= nil
+                if searchBox then
+                    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+                        local term = searchBox.Text:lower()
+                        for opt, btnData in pairs(optionButtons) do
+                            local visible = string.find(opt:lower(), term) ~= nil
+                            btnData.Button.Visible = visible
                         end
-                        if dropped then
-                            updateContainerHeight()
-                        end
+                        -- 重新计算下拉框高度（将在展开时自动处理）
                     end)
                 end
 
-                local function calculateContentHeight()
-                    local count = 0
-                    for _, obj in pairs(OptionObjs) do
-                        if obj.Button.Visible then
-                            count = count + 1
-                        end
-                    end
-                    local height = count * 30 + (count - 1) * 5  -- 选项高度 + 间距
-                    if search then
-                        height = height + 30 + 5  -- 搜索框高度 + 与选项的间距（由List自动处理，但需计入总高度）
-                        -- 由于搜索框也是Container的子元素，且List.Padding=5，搜索框与第一个选项之间会有5px间距，所以总高度需包含搜索框30 + 下间距5
-                    end
-                    return height
-                end
+                -- 展开/收起动画
+                local isOpen = false
+                local function toggleDropdown()
+                    isOpen = not isOpen
+                    PlaySound(Sounds.Click)
 
-                local function updateContainerHeight()
-                    if not dropped then return end
-                    local targetHeight = calculateContentHeight()
-                    Tween(Container, {Size = UDim2.new(1,0,0,targetHeight)}, 0.2)
-                end
-
-                local dropped = false
-                local function toggleDropdown(state)
-                    if state == nil then
-                        dropped = not dropped
-                    else
-                        dropped = state
-                    end
-                    if dropped then
-                        Container.Visible = true
-                        updateContainerHeight()
-                        Tween(Icon, {Rotation = 180}, 0.2)
-                    else
-                        Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
-                        Tween(Icon, {Rotation = 0}, 0.2)
-                        task.spawn(function()
-                            task.wait(0.2)
-                            if not dropped then
-                                Container.Visible = false
+                    if isOpen then
+                        dropdownFrame.Visible = true
+                        -- 计算内容总高度
+                        local contentHeight = 0
+                        for _, child in ipairs(dropdownFrame:GetChildren()) do
+                            if child:IsA("Frame") and child.Visible then
+                                contentHeight = contentHeight + child.AbsoluteSize.Y + frameLayout.Padding.Offset
                             end
-                        end)
+                        end
+                        local totalHeight = 38 + contentHeight
+                        Tween(dropdown, {Size = UDim2.new(1, 0, 0, totalHeight)}, 0.2)
+                        Tween(arrow, {Rotation = -90}, 0.2)
+                    else
+                        Tween(dropdown, {Size = UDim2.new(1, 0, 0, 38)}, 0.2)
+                        Tween(arrow, {Rotation = 0}, 0.2)
+                        -- 等待动画完成再隐藏内容
+                        task.wait(0.2)
+                        dropdownFrame.Visible = false
                     end
-                    updateSectionHeight(false)
                 end
 
-                Btn.MouseButton1Click:Connect(toggleDropdown)
+                interact.MouseButton1Click:Connect(toggleDropdown)
 
-                -- 注册配置对象
+                -- 注册到配置系统
                 ConfigObjects[dropText] = {
                     Type = "Dropdown",
-                    Value = multi and Selected or Selected,
+                    Value = multi and selected or selected,
                     Set = function(val)
-                        if multi then
-                            -- 先全部取消
-                            for opt,_ in pairs(OptionObjs) do
-                                toggleOption(opt, false)
-                            end
-                            -- 再设置新值
-                            for opt,_ in pairs(val) do
-                                toggleOption(opt, true)
-                            end
-                        else
-                            toggleOption(val, true)
-                        end
-                    end,
-                    Refresh = function(newOptions)
-                        -- 清除旧选项
-                        for _, obj in pairs(OptionObjs) do
-                            obj.Button:Destroy()
-                        end
-                        OptionObjs = {}
-                        Selected = multi and {} or nil
-                        for _, opt in ipairs(newOptions) do
-                            addOption(opt)
-                        end
-                        if dropped then
-                            updateContainerHeight()
-                        end
-                        updateSectionHeight(false)
+                        -- 可根据需要实现从外部设置值的方法
                     end
                 }
 
-                -- 返回控制方法 (兼容旧版Refresh)
+                -- 返回控制方法
                 local self = {}
-                function self.Refresh(newOptions)
-                    ConfigObjects[dropText].Refresh(newOptions)
+                function self.UpdateName(newName)
+                    dropText = newName
+                    if multi then
+                        local names = {}
+                        for val, sel in pairs(selected) do if sel then table.insert(names, val) end end
+                        dropdownName.Text = #names > 0 and (dropText .. " • " .. table.concat(names, ", ")) or dropText .. "..."
+                    else
+                        dropdownName.Text = selected and (dropText .. " • " .. selected) or dropText .. "..."
+                    end
+                end
+                function self.SetVisible(state)
+                    dropdown.Visible = state
+                end
+                function self.UpdateSelection(newSelection)
+                    -- 清除所有选中
+                    for val, _ in pairs(optionButtons) do
+                        setOptionState(val, false)
+                    end
+                    if multi then
+                        selected = {}
+                        for _, val in ipairs(newSelection) do
+                            if optionButtons[val] then
+                                selected[val] = true
+                                setOptionState(val, true)
+                            end
+                        end
+                        local names = {}
+                        for val, sel in pairs(selected) do if sel then table.insert(names, val) end end
+                        dropdownName.Text = #names > 0 and (dropText .. " • " .. table.concat(names, ", ")) or dropText .. "..."
+                    else
+                        selected = newSelection
+                        setOptionState(newSelection, true)
+                        dropdownName.Text = dropText .. " • " .. newSelection
+                    end
+                end
+                function self.InsertOptions(newOptions)
+                    for _, opt in ipairs(newOptions) do
+                        if not optionButtons[opt] then
+                            addOption(opt)
+                        end
+                    end
+                end
+                function self.ClearOptions()
+                    for _, btnData in pairs(optionButtons) do
+                        btnData.Button:Destroy()
+                    end
+                    optionButtons = {}
+                    selected = multi and {} or nil
+                    dropdownName.Text = dropText .. "..."
+                end
+                function self.GetOptions()
+                    return optionsList
                 end
                 return self
             end
