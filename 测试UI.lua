@@ -28,19 +28,14 @@ local Sounds = {
     Tab = "rbxassetid://4510087056" 
 }
 
--- 图片资源（取自 maclib + 原有）
+-- 图片资源（取自 maclib）
 local ToggleAssets = {
-    Bg = "rbxassetid://18772190202",
-    Head = "rbxassetid://18772309008"
+    Bg = "rbxassetid://18772190202",   -- 开关背景
+    Head = "rbxassetid://18772309008"  -- 滑块头
 }
 local SliderAssets = {
-    Bar = "rbxassetid://18772615246",
-    Head = "rbxassetid://18772834246"
-}
--- 新增 Dropdown 相关资源（从 maclib 搬运）
-local DropdownAssets = {
-    dropdownArrow = "rbxassetid://18865373378",
-    searchIcon = "rbxassetid://86737463322606"
+    Bar = "rbxassetid://18772615246",   -- 滑块条背景
+    Head = "rbxassetid://18772834246"   -- 滑块头
 }
 
 local function PlaySound(id)
@@ -852,493 +847,344 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- ==================== 新 Dropdown (从 maclib.lua 完整搬运，适配测试UI) ====================
+            -- Dropdown (maclib核心 + 测试UI样式)
             child.Dropdown = function(_, dropText, options, callback)
-                -- 将简单参数转换为 Settings 表
-                local Settings = {
-                    Name = dropText,
-                    Options = options,
-                    Callback = callback,
-                    Multi = false,          -- 默认单选
-                    Required = false,        -- 默认非必需
-                    Search = false,           -- 默认无搜索框
-                    Default = nil             -- 默认无选中
-                }
+                -- 兼容多种调用方式
+                local settings
+                if type(dropText) == "table" then
+                    settings = dropText
+                else
+                    settings = {
+                        Name = dropText,
+                        Options = options,
+                        Callback = callback,
+                        Multi = false,
+                        Search = false,
+                        Default = nil
+                    }
+                end
+                local dropText = settings.Name
+                local optionsList = settings.Options or {}
+                local callbackFn = settings.Callback
+                local multi = settings.Multi or false
+                local search = settings.Search or false
+                local defaultValue = settings.Default
 
-                local Selected = {}
+                -- 主按钮 (测试UI样式)
+                local Btn = Instance.new("TextButton")
+                Btn.Size = UDim2.new(1,0,0,35)
+                Btn.Text = ""
+                Btn.Parent = contentContainer
+                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,6)
+                AddToRegistry(Btn, "BackgroundColor3", "Top")
+
+                local Lbl = Instance.new("TextLabel")
+                Lbl.Text = dropText
+                Lbl.Size = UDim2.new(1,-30,1,0)
+                Lbl.Position = UDim2.new(0,10,0,0)
+                Lbl.BackgroundTransparency = 1
+                Lbl.Font = Enum.Font.Gotham
+                Lbl.TextSize = 14
+                Lbl.TextXAlignment = Enum.TextXAlignment.Left
+                Lbl.Parent = Btn
+                AddToRegistry(Lbl, "TextColor3", "Text")
+
+                local Icon = Instance.new("ImageLabel")
+                Icon.Image = "rbxassetid://6031091004"  -- 箭头图标
+                Icon.Size = UDim2.new(0,20,0,20)
+                Icon.Position = UDim2.new(1,-30,0.5,-10)
+                Icon.BackgroundTransparency = 1
+                Icon.Parent = Btn
+                AddToRegistry(Icon, "ImageColor3", "Text")
+
+                -- 选项容器
+                local Container = Instance.new("Frame")
+                Container.Size = UDim2.new(1,0,0,0)
+                Container.Visible = false
+                Container.ClipsDescendants = true
+                Container.Parent = contentContainer
+                Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
+                AddToRegistry(Container, "BackgroundColor3", "Top")
+                local Stroke = Instance.new("UIStroke")
+                Stroke.Parent = Container
+                AddToRegistry(Stroke, "Color", "Stroke")
+
+                local List = Instance.new("UIListLayout")
+                List.Padding = UDim.new(0, 5)
+                List.SortOrder = Enum.SortOrder.LayoutOrder
+                List.Parent = Container
+
+                -- 搜索框 (可选)
+                local SearchBox
+                if search then
+                    local SearchFrame = Instance.new("Frame")
+                    SearchFrame.Size = UDim2.new(1, -20, 0, 30)
+                    SearchFrame.Position = UDim2.new(0, 10, 0, 5)
+                    SearchFrame.BackgroundTransparency = 0.95
+                    SearchFrame.Parent = Container
+                    AddToRegistry(SearchFrame, "BackgroundColor3", "Main")
+                    Instance.new("UICorner", SearchFrame).CornerRadius = UDim.new(0, 4)
+
+                    local SearchIcon = Instance.new("ImageLabel")
+                    SearchIcon.Image = "rbxassetid://86737463322606"  -- 搜索图标 (maclib)
+                    SearchIcon.Size = UDim2.new(0, 12, 0, 12)
+                    SearchIcon.Position = UDim2.new(0, 8, 0.5, -6)
+                    SearchIcon.BackgroundTransparency = 1
+                    SearchIcon.Parent = SearchFrame
+                    AddToRegistry(SearchIcon, "ImageColor3", "Text")
+
+                    SearchBox = Instance.new("TextBox")
+                    SearchBox.Size = UDim2.new(1, -25, 1, 0)
+                    SearchBox.Position = UDim2.new(0, 25, 0, 0)
+                    SearchBox.BackgroundTransparency = 1
+                    SearchBox.Font = Enum.Font.Gotham
+                    SearchBox.TextSize = 13
+                    SearchBox.PlaceholderText = "Search..."
+                    SearchBox.PlaceholderColor3 = Color3.fromRGB(150,150,150)
+                    SearchBox.TextColor3 = Color3.fromRGB(200,200,200)
+                    SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+                    SearchBox.Parent = SearchFrame
+                    AddToRegistry(SearchBox, "TextColor3", "Text")
+                end
+
+                -- 存储选项按钮
                 local OptionObjs = {}
+                local Selected = multi and {} or nil  -- 多选: table, 单选: string/nil
 
-                -- 主框架 (使用测试UI的 Top 背景色，与 Section 内其他元素一致)
-                local dropdown = Instance.new("Frame")
-                dropdown.Name = "Dropdown"
-                dropdown.BackgroundColor3 = CurrentTheme.Top  -- 使用主题色，与按钮背景一致
-                dropdown.BackgroundTransparency = 0  -- 稍微透明以显示主题
-                dropdown.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                dropdown.BorderSizePixel = 0
-                dropdown.Size = UDim2.new(1, 0, 0, 38)
-                dropdown.Parent = contentContainer
-                dropdown.ClipsDescendants = true
-                Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0, 6)
-
-                local dropdownUIPadding = Instance.new("UIPadding")
-                dropdownUIPadding.Name = "DropdownUIPadding"
-                dropdownUIPadding.PaddingLeft = UDim.new(0, 15)
-                dropdownUIPadding.PaddingRight = UDim.new(0, 15)
-                dropdownUIPadding.Parent = dropdown
-
-                local interact = Instance.new("TextButton")
-                interact.Name = "Interact"
-                interact.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-                interact.Text = ""
-                interact.TextColor3 = Color3.fromRGB(0, 0, 0)
-                interact.TextSize = 14
-                interact.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                interact.BackgroundTransparency = 1
-                interact.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                interact.BorderSizePixel = 0
-                interact.Size = UDim2.new(1, 0, 0, 38)
-                interact.Parent = dropdown
-
-                local dropdownName = Instance.new("TextLabel")
-                dropdownName.Name = "DropdownName"
-                dropdownName.FontFace = Font.new(Enum.Font.Gotham)  -- 使用测试UI字体
-                dropdownName.Text = Settings.Default and (Settings.Name .. " • " .. table.concat(Selected, ", ")) or (Settings.Name .. "...")
-                dropdownName.RichText = true
-                dropdownName.TextColor3 = CurrentTheme.Text  -- 使用主题文字色
-                dropdownName.TextSize = 13
-                dropdownName.TextTransparency = 0.5
-                dropdownName.TextTruncate = Enum.TextTruncate.SplitWord
-                dropdownName.TextXAlignment = Enum.TextXAlignment.Left
-                dropdownName.AutomaticSize = Enum.AutomaticSize.Y
-                dropdownName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                dropdownName.BackgroundTransparency = 1
-                dropdownName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                dropdownName.BorderSizePixel = 0
-                dropdownName.Size = UDim2.new(1, -20, 0, 38)
-                dropdownName.Parent = dropdown
-                AddToRegistry(dropdownName, "TextColor3", "Text")  -- 注册主题
-
-                -- 箭头图标
-                local dropdownImage = Instance.new("ImageLabel")
-                dropdownImage.Name = "DropdownImage"
-                dropdownImage.Image = DropdownAssets.dropdownArrow
-                dropdownImage.ImageTransparency = 0.5
-                dropdownImage.AnchorPoint = Vector2.new(1, 0)
-                dropdownImage.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                dropdownImage.BackgroundTransparency = 1
-                dropdownImage.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                dropdownImage.BorderSizePixel = 0
-                dropdownImage.Position = UDim2.new(1, 0, 0, 12)
-                dropdownImage.Size = UDim2.fromOffset(14, 14)
-                dropdownImage.Parent = dropdown
-                AddToRegistry(dropdownImage, "ImageColor3", "Text")
-
-                -- 下拉列表容器 (初始隐藏)
-                local dropdownFrame = Instance.new("Frame")
-                dropdownFrame.Name = "DropdownFrame"
-                dropdownFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                dropdownFrame.BackgroundTransparency = 1
-                dropdownFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                dropdownFrame.BorderSizePixel = 0
-                dropdownFrame.ClipsDescendants = true
-                dropdownFrame.Size = UDim2.fromScale(1, 1)
-                dropdownFrame.Visible = false
-                dropdownFrame.AutomaticSize = Enum.AutomaticSize.Y
-
-                local dropdownFrameUIPadding = Instance.new("UIPadding")
-                dropdownFrameUIPadding.Name = "DropdownFrameUIPadding"
-                dropdownFrameUIPadding.PaddingTop = UDim.new(0, 38)
-                dropdownFrameUIPadding.PaddingBottom = UDim.new(0, 10)
-                dropdownFrameUIPadding.Parent = dropdownFrame
-
-                local dropdownFrameUIListLayout = Instance.new("UIListLayout")
-                dropdownFrameUIListLayout.Name = "DropdownFrameUIListLayout"
-                dropdownFrameUIListLayout.Padding = UDim.new(0, 5)
-                dropdownFrameUIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                dropdownFrameUIListLayout.Parent = dropdownFrame
-
-                -- 搜索框（如果需要）
-                local search = Instance.new("Frame")
-                search.Name = "Search"
-                search.BackgroundColor3 = CurrentTheme.Main  -- 搜索框背景使用 Main
-                search.BackgroundTransparency = 0.95
-                search.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                search.BorderSizePixel = 0
-                search.LayoutOrder = -1
-                search.Size = UDim2.new(1, 0, 0, 30)
-                search.Parent = dropdownFrame
-                search.Visible = Settings.Search
-
-                local searchIcon = Instance.new("ImageLabel")
-                searchIcon.Name = "SearchIcon"
-                searchIcon.Image = DropdownAssets.searchIcon
-                searchIcon.ImageColor3 = Color3.fromRGB(180, 180, 180)
-                searchIcon.AnchorPoint = Vector2.new(0, 0.5)
-                searchIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                searchIcon.BackgroundTransparency = 1
-                searchIcon.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                searchIcon.BorderSizePixel = 0
-                searchIcon.Position = UDim2.fromScale(0, 0.5)
-                searchIcon.Size = UDim2.fromOffset(12, 12)
-                searchIcon.Parent = search
-
-                local searchUIPadding = Instance.new("UIPadding")
-                searchUIPadding.Name = "SearchUIPadding"
-                searchUIPadding.PaddingLeft = UDim.new(0, 15)
-                searchUIPadding.Parent = search
-
-                local searchBox = Instance.new("TextBox")
-                searchBox.Name = "SearchBox"
-                searchBox.CursorPosition = -1
-                searchBox.FontFace = Font.new(Enum.Font.Gotham)
-                searchBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-                searchBox.PlaceholderText = "Search..."
-                searchBox.Text = ""
-                searchBox.TextColor3 = CurrentTheme.Text
-                searchBox.TextSize = 14
-                searchBox.TextXAlignment = Enum.TextXAlignment.Left
-                searchBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                searchBox.BackgroundTransparency = 1
-                searchBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                searchBox.BorderSizePixel = 0
-                searchBox.Size = UDim2.fromScale(1, 1)
-
-                local searchBoxUIPadding = Instance.new("UIPadding")
-                searchBoxUIPadding.Name = "SearchBoxUIPadding"
-                searchBoxUIPadding.PaddingLeft = UDim.new(0, 23)
-                searchBoxUIPadding.Parent = searchBox
-
-                searchBox.Parent = search
-
-                -- 计算下拉框总高度的辅助函数
-                local function CalculateDropdownSize()
-                    local totalHeight = 0
-                    local visibleChildrenCount = 0
-                    local padding = dropdownFrameUIPadding.PaddingTop.Offset + dropdownFrameUIPadding.PaddingBottom.Offset
-
-                    for _, v in pairs(dropdownFrame:GetChildren()) do
-                        if not v:IsA("UIComponent") and v.Visible then
-                            totalHeight += v.AbsoluteSize.Y
-                            visibleChildrenCount += 1
+                local function updateBtnText()
+                    if multi then
+                        local selectedNames = {}
+                        for name, _ in pairs(Selected) do
+                            table.insert(selectedNames, name)
                         end
+                        Lbl.Text = #selectedNames > 0 and (dropText .. ": " .. table.concat(selectedNames, ", ")) or (dropText .. "...")
+                    else
+                        Lbl.Text = Selected and (dropText .. ": " .. Selected) or (dropText .. "...")
                     end
-
-                    local spacing = dropdownFrameUIListLayout.Padding.Offset * (visibleChildrenCount - 1)
-                    return totalHeight + spacing + padding
                 end
 
-                -- 搜索过滤
-                local function findOption()
-                    local searchTerm = searchBox.Text:lower()
-                    for _, v in pairs(OptionObjs) do
-                        local optionText = v.NameLabel.Text:lower()
-                        local isVisible = string.find(optionText, searchTerm) ~= nil
-                        if v.Button.Visible ~= isVisible then
-                            v.Button.Visible = isVisible
-                        end
-                    end
-                    if dropped then
-                        dropdown.Size = UDim2.new(1, 0, 0, CalculateDropdownSize())
-                    end
-                end
-                searchBox:GetPropertyChangedSignal("Text"):Connect(findOption)
+                local function toggleOption(optionName, state)
+                    local obj = OptionObjs[optionName]
+                    if not obj then return end
+                    local checkmark = obj.Checkmark
+                    local nameLabel = obj.NameLabel
 
-                -- 动画参数
-                local tweensettings = {
-                    duration = 0.2,
-                    easingStyle = Enum.EasingStyle.Quint,
-                    transparencyIn = 0.2,
-                    transparencyOut = 0.5,
-                    checkSizeIncrease = 12,
-                    checkSizeDecrease = -13,
-                }
-
-                -- 切换选项选中状态
-                local function ToggleOption(optionName, State)
-                    local option = OptionObjs[optionName]
-                    if not option then return end
-
-                    local checkmark = option.Checkmark
-                    local optionNameLabel = option.NameLabel
-
-                    if State then
-                        if Settings.Multi then
-                            if not table.find(Selected, optionName) then
-                                table.insert(Selected, optionName)
-                            end
-                        else
-                            for name, opt in pairs(OptionObjs) do
+                    if state then
+                        if not multi then
+                            -- 单选: 取消其他选项
+                            for name, _ in pairs(OptionObjs) do
                                 if name ~= optionName then
-                                    Tween(opt.Checkmark, {Size = UDim2.new(opt.Checkmark.Size.X.Scale, tweensettings.checkSizeDecrease, opt.Checkmark.Size.Y.Scale, opt.Checkmark.Size.Y.Offset)}, tweensettings.duration)
-                                    Tween(opt.NameLabel, {TextTransparency = tweensettings.transparencyOut}, tweensettings.duration)
-                                    opt.Checkmark.TextTransparency = 1
+                                    local other = OptionObjs[name]
+                                    Tween(other.Checkmark, {TextTransparency = 1}, 0.2)
+                                    Tween(other.NameLabel, {TextTransparency = 0.5}, 0.2)
                                 end
                             end
-                            Selected = {optionName}
-                        end
-                        Tween(checkmark, {Size = UDim2.new(checkmark.Size.X.Scale, tweensettings.checkSizeIncrease, checkmark.Size.Y.Scale, checkmark.Size.Y.Offset)}, tweensettings.duration)
-                        Tween(optionNameLabel, {TextTransparency = tweensettings.transparencyIn}, tweensettings.duration)
-                        checkmark.TextTransparency = 0
-                    else
-                        if Settings.Multi then
-                            local idx = table.find(Selected, optionName)
-                            if idx then table.remove(Selected, idx) end
+                            Selected = optionName
                         else
-                            Selected = {}
+                            Selected[optionName] = true
                         end
-                        Tween(checkmark, {Size = UDim2.new(checkmark.Size.X.Scale, tweensettings.checkSizeDecrease, checkmark.Size.Y.Scale, checkmark.Size.Y.Offset)}, tweensettings.duration)
-                        Tween(optionNameLabel, {TextTransparency = tweensettings.transparencyOut}, tweensettings.duration)
-                        checkmark.TextTransparency = 1
-                    end
-
-                    if Settings.Required and #Selected == 0 and not State then
-                        return
-                    end
-
-                    if #Selected > 0 then
-                        dropdownName.Text = Settings.Name .. " • " .. table.concat(Selected, ", ")
+                        Tween(checkmark, {TextTransparency = 0}, 0.2)
+                        Tween(nameLabel, {TextTransparency = 0.2}, 0.2)
                     else
-                        dropdownName.Text = Settings.Name .. "..."
+                        if multi then
+                            Selected[optionName] = nil
+                        else
+                            Selected = nil
+                        end
+                        Tween(checkmark, {TextTransparency = 1}, 0.2)
+                        Tween(nameLabel, {TextTransparency = 0.5}, 0.2)
+                    end
+                    updateBtnText()
+
+                    if callbackFn then
+                        if multi then
+                            local ret = {}
+                            for k,_ in pairs(Selected) do ret[k] = true end
+                            callbackFn(ret)
+                        else
+                            callbackFn(Selected)
+                        end
+                    end
+
+                    if ConfigObjects[dropText] then
+                        ConfigObjects[dropText].Value = multi and Selected or Selected
+                    end
+
+                    -- 单选选中后自动折叠
+                    if not multi and state then
+                        toggleDropdown(false)
                     end
                 end
 
-                -- 展开/收起下拉框
-                local dropped = false
-                local db = false
-                local function ToggleDropdown()
-                    if db then return end
-                    db = true
-                    local defaultDropdownSize = 38
-                    local isDropdownOpen = not dropped
-                    local targetSize = isDropdownOpen and UDim2.new(1, 0, 0, CalculateDropdownSize()) or UDim2.new(1, 0, 0, defaultDropdownSize)
-
-                    local dropTween = TweenService:Create(dropdown, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {Size = targetSize})
-                    local iconTween = TweenService:Create(dropdownImage, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = isDropdownOpen and -90 or 0})
-
-                    dropTween:Play()
-                    iconTween:Play()
-
-                    if isDropdownOpen then
-                        dropdownFrame.Visible = true
-                        dropTween.Completed:Connect(function() db = false end)
-                    else
-                        dropTween.Completed:Connect(function()
-                            dropdownFrame.Visible = false
-                            db = false
-                        end)
-                    end
-
-                    dropped = isDropdownOpen
-                end
-                interact.MouseButton1Click:Connect(ToggleDropdown)
-
-                -- 添加单个选项
-                local function addOption(i, v)
+                local function addOption(optionName)
                     local option = Instance.new("TextButton")
-                    option.Name = "Option"
-                    option.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-                    option.Text = ""
-                    option.TextColor3 = Color3.fromRGB(0, 0, 0)
-                    option.TextSize = 14
-                    option.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                    option.BackgroundTransparency = 1
-                    option.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                    option.BorderSizePixel = 0
                     option.Size = UDim2.new(1, 0, 0, 30)
+                    option.Text = ""
+                    option.BackgroundTransparency = 1
+                    option.Parent = Container
 
-                    local optionUIPadding = Instance.new("UIPadding")
-                    optionUIPadding.Name = "OptionUIPadding"
-                    optionUIPadding.PaddingLeft = UDim.new(0, 15)
-                    optionUIPadding.Parent = option
-
-                    local optionName = Instance.new("TextLabel")
-                    optionName.Name = "OptionName"
-                    optionName.FontFace = Font.new(Enum.Font.Gotham)
-                    optionName.Text = v
-                    optionName.RichText = true
-                    optionName.TextColor3 = CurrentTheme.Text
-                    optionName.TextSize = 13
-                    optionName.TextTransparency = 0.5
-                    optionName.TextTruncate = Enum.TextTruncate.AtEnd
-                    optionName.TextXAlignment = Enum.TextXAlignment.Left
-                    optionName.TextYAlignment = Enum.TextYAlignment.Top
-                    optionName.AnchorPoint = Vector2.new(0, 0.5)
-                    optionName.AutomaticSize = Enum.AutomaticSize.XY
-                    optionName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                    optionName.BackgroundTransparency = 1
-                    optionName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                    optionName.BorderSizePixel = 0
-                    optionName.Position = UDim2.fromScale(1.3e-07, 0.5)
-                    optionName.Parent = option
-                    AddToRegistry(optionName, "TextColor3", "Text")
-
-                    local optionUIListLayout = Instance.new("UIListLayout")
-                    optionUIListLayout.Name = "OptionUIListLayout"
-                    optionUIListLayout.Padding = UDim.new(0, 10)
-                    optionUIListLayout.FillDirection = Enum.FillDirection.Horizontal
-                    optionUIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                    optionUIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-                    optionUIListLayout.Parent = option
+                    local nameLabel = Instance.new("TextLabel")
+                    nameLabel.Text = optionName
+                    nameLabel.Size = UDim2.new(1, -30, 1, 0)
+                    nameLabel.Position = UDim2.new(0, 15, 0, 0)
+                    nameLabel.BackgroundTransparency = 1
+                    nameLabel.Font = Enum.Font.Gotham
+                    nameLabel.TextSize = 13
+                    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+                    nameLabel.Parent = option
+                    AddToRegistry(nameLabel, "TextColor3", "Text")
+                    nameLabel.TextTransparency = 0.5
 
                     local checkmark = Instance.new("TextLabel")
-                    checkmark.Name = "Checkmark"
-                    checkmark.FontFace = Font.new(Enum.Font.Gotham)
                     checkmark.Text = "✓"
-                    checkmark.TextColor3 = CurrentTheme.Text
-                    checkmark.TextSize = 13
-                    checkmark.TextTransparency = 1
-                    checkmark.TextXAlignment = Enum.TextXAlignment.Left
-                    checkmark.TextYAlignment = Enum.TextYAlignment.Top
-                    checkmark.AnchorPoint = Vector2.new(0, 0.5)
-                    checkmark.AutomaticSize = Enum.AutomaticSize.Y
-                    checkmark.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                    checkmark.Size = UDim2.new(0, 20, 1, 0)
+                    checkmark.Position = UDim2.new(1, -25, 0, 0)
                     checkmark.BackgroundTransparency = 1
-                    checkmark.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                    checkmark.BorderSizePixel = 0
-                    checkmark.LayoutOrder = -1
-                    checkmark.Position = UDim2.fromScale(1.3e-07, 0.5)
-                    checkmark.Size = UDim2.fromOffset(-10, 0)
+                    checkmark.Font = Enum.Font.GothamBold
+                    checkmark.TextSize = 16
+                    checkmark.TextTransparency = 1
                     checkmark.Parent = option
-                    AddToRegistry(checkmark, "TextColor3", "Text")
+                    AddToRegistry(checkmark, "TextColor3", "Accent")
 
-                    option.Parent = dropdownFrame
-
-                    OptionObjs[v] = {
-                        Index = i,
+                    OptionObjs[optionName] = {
                         Button = option,
-                        NameLabel = optionName,
+                        NameLabel = nameLabel,
                         Checkmark = checkmark
                     }
 
-                    -- 根据默认值初始化选中状态
-                    local isSelected = false
-                    if Settings.Default then
-                        if Settings.Multi then
-                            isSelected = table.find(Settings.Default, v) and true or false
+                    option.MouseButton1Click:Connect(function()
+                        local newState
+                        if multi then
+                            newState = not Selected[optionName]
                         else
-                            isSelected = (Settings.Default == i) and true or false
+                            newState = (Selected ~= optionName)
+                        end
+                        toggleOption(optionName, newState)
+                    end)
+                end
+
+                -- 初始化选项
+                for _, opt in ipairs(optionsList) do
+                    addOption(opt)
+                end
+
+                -- 设置默认值
+                if defaultValue then
+                    if multi and type(defaultValue) == "table" then
+                        for _, opt in ipairs(defaultValue) do
+                            if OptionObjs[opt] then
+                                toggleOption(opt, true)
+                            end
+                        end
+                    elseif not multi then
+                        local targetOpt = type(defaultValue) == "number" and optionsList[defaultValue] or defaultValue
+                        if targetOpt and OptionObjs[targetOpt] then
+                            toggleOption(targetOpt, true)
                         end
                     end
-                    ToggleOption(v, isSelected)
+                end
 
-                    option.MouseButton1Click:Connect(function()
-                        local isSelected = table.find(Selected, v) and true or false
-                        local newSelected = not isSelected
-
-                        if Settings.Required and not newSelected and #Selected <= 1 then
-                            return
+                -- 搜索过滤
+                if SearchBox then
+                    SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+                        local term = SearchBox.Text:lower()
+                        for optName, obj in pairs(OptionObjs) do
+                            obj.Button.Visible = string.find(optName:lower(), term) ~= nil
                         end
+                        if dropped then
+                            updateContainerHeight()
+                        end
+                    end)
+                end
 
-                        ToggleOption(v, newSelected)
+                local function calculateContentHeight()
+                    local count = 0
+                    for _, obj in pairs(OptionObjs) do
+                        if obj.Button.Visible then
+                            count = count + 1
+                        end
+                    end
+                    local height = count * 30 + (count - 1) * 5
+                    if search then
+                        height = height + 40  -- 搜索框高度+边距
+                    end
+                    return height
+                end
 
+                local function updateContainerHeight()
+                    if not dropped then return end
+                    local targetHeight = calculateContentHeight()
+                    Tween(Container, {Size = UDim2.new(1,0,0,targetHeight)}, 0.2)
+                end
+
+                local dropped = false
+                local function toggleDropdown(state)
+                    if state == nil then
+                        dropped = not dropped
+                    else
+                        dropped = state
+                    end
+                    if dropped then
+                        Container.Visible = true
+                        updateContainerHeight()
+                        Tween(Icon, {Rotation = 180}, 0.2)
+                    else
+                        Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
+                        Tween(Icon, {Rotation = 0}, 0.2)
                         task.spawn(function()
-                            if Settings.Multi then
-                                local Return = {}
-                                for _, opt in ipairs(Selected) do
-                                    Return[opt] = true
-                                end
-                                if Settings.Callback then
-                                    Settings.Callback(Return)
-                                end
-                            else
-                                if newSelected and Settings.Callback then
-                                    Settings.Callback(Selected[1] or nil)
-                                end
+                            task.wait(0.2)
+                            if not dropped then
+                                Container.Visible = false
                             end
                         end)
-                    end)
-
-                    if dropped then
-                        dropdown.Size = UDim2.new(1, 0, 0, CalculateDropdownSize())
                     end
+                    updateSectionHeight(false)
                 end
 
-                -- 初始化所有选项
-                if Settings.Options then
-                    for i, v in pairs(Settings.Options) do
-                        addOption(i, v)
-                    end
-                end
+                Btn.MouseButton1Click:Connect(toggleDropdown)
 
-                dropdownFrame.Parent = dropdown
-
-                -- 返回的控制表（兼容原 Refresh 方法，并提供扩展方法）
-                local self = {}
-
-                function self:Refresh(newOptions)
-                    -- 清空旧选项
-                    for _, optionData in pairs(OptionObjs) do
-                        optionData.Button:Destroy()
-                    end
-                    OptionObjs = {}
-                    Selected = {}
-
-                    -- 添加新选项
-                    if newOptions then
-                        for i, v in ipairs(newOptions) do
-                            addOption(i, v)
-                        end
-                    end
-
-                    if dropped then
-                        dropdown.Size = UDim2.new(1, 0, 0, CalculateDropdownSize())
-                    end
-                end
-
-                -- 其他实用方法（可选，便于扩展）
-                function self:UpdateSelection(newSelection)
-                    if not newSelection then return end
-                    for option, _ in pairs(OptionObjs) do
-                        ToggleOption(option, false)
-                    end
-                    local selectedOptions = {}
-                    if type(newSelection) == "number" then
-                        for option, data in pairs(OptionObjs) do
-                            local isSelected = data.Index == newSelection
-                            ToggleOption(option, isSelected)
-                            if isSelected then table.insert(selectedOptions, option) end
-                        end
-                    elseif type(newSelection) == "string" then
-                        for option, data in pairs(OptionObjs) do
-                            local isSelected = option == newSelection
-                            ToggleOption(option, isSelected)
-                            if isSelected then table.insert(selectedOptions, option) end
-                        end
-                    elseif type(newSelection) == "table" then
-                        for option, _ in pairs(OptionObjs) do
-                            local isSelected = table.find(newSelection, option) ~= nil
-                            ToggleOption(option, isSelected)
-                            if isSelected then table.insert(selectedOptions, option) end
-                        end
-                    end
-                    if Settings.Callback then
-                        if Settings.Multi then
-                            local Return = {}
-                            for _, opt in ipairs(selectedOptions) do Return[opt] = true end
-                            Settings.Callback(Return)
-                        else
-                            Settings.Callback(selectedOptions[1] or nil)
-                        end
-                    end
-                end
-
-                function self:GetValue()
-                    return Selected
-                end
-
-                -- 注册配置对象（测试UI原有方式）
+                -- 注册配置对象
                 ConfigObjects[dropText] = {
                     Type = "Dropdown",
-                    Value = Selected,
+                    Value = multi and Selected or Selected,
                     Set = function(val)
-                        self:UpdateSelection(val)
+                        if multi then
+                            -- 先全部取消
+                            for opt,_ in pairs(OptionObjs) do
+                                toggleOption(opt, false)
+                            end
+                            -- 再设置新值
+                            for opt,_ in pairs(val) do
+                                toggleOption(opt, true)
+                            end
+                        else
+                            toggleOption(val, true)
+                        end
                     end,
-                    Refresh = self.Refresh  -- 保留原 Refresh 方法
+                    Refresh = function(newOptions)
+                        -- 清除旧选项
+                        for _, obj in pairs(OptionObjs) do
+                            obj.Button:Destroy()
+                        end
+                        OptionObjs = {}
+                        Selected = multi and {} or nil
+                        for _, opt in ipairs(newOptions) do
+                            addOption(opt)
+                        end
+                        if dropped then
+                            updateContainerHeight()
+                        end
+                        updateSectionHeight(false)
+                    end
                 }
 
+                -- 返回控制方法 (兼容旧版Refresh)
+                local self = {}
+                function self.Refresh(newOptions)
+                    ConfigObjects[dropText].Refresh(newOptions)
+                end
                 return self
             end
-            -- ==================== Dropdown 移植结束 ====================
 
             -- Keybind
             child.Keybind = function(_, keyText, default, callback)
