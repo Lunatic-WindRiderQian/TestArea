@@ -847,7 +847,7 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- Dropdown (maclib核心 + 测试UI样式)
+            -- Dropdown (完整 maclib 核心实现 + 测试UI样式)
             child.Dropdown = function(_, dropText, options, callback)
                 -- 兼容多种调用方式
                 local settings
@@ -909,17 +909,17 @@ function Library:CreateWindow(Config)
                 Stroke.Parent = Container
                 AddToRegistry(Stroke, "Color", "Stroke")
 
+                -- 内部布局（自动排列选项）
                 local List = Instance.new("UIListLayout")
                 List.Padding = UDim.new(0, 5)
                 List.SortOrder = Enum.SortOrder.LayoutOrder
                 List.Parent = Container
 
-                -- 搜索框 (可选)
+                -- 搜索框（可选）
                 local SearchBox
                 if search then
                     local SearchFrame = Instance.new("Frame")
                     SearchFrame.Size = UDim2.new(1, -20, 0, 30)
-                    SearchFrame.Position = UDim2.new(0, 10, 0, 5)
                     SearchFrame.BackgroundTransparency = 0.95
                     SearchFrame.Parent = Container
                     AddToRegistry(SearchFrame, "BackgroundColor3", "Main")
@@ -1104,9 +1104,10 @@ function Library:CreateWindow(Config)
                             count = count + 1
                         end
                     end
-                    local height = count * 30 + (count - 1) * 5
+                    local height = count * 30 + (count - 1) * 5  -- 选项高度 + 间距
                     if search then
-                        height = height + 40  -- 搜索框高度+边距
+                        height = height + 30 + 5  -- 搜索框高度 + 与选项的间距（由List自动处理，但需计入总高度）
+                        -- 由于搜索框也是Container的子元素，且List.Padding=5，搜索框与第一个选项之间会有5px间距，所以总高度需包含搜索框30 + 下间距5
                     end
                     return height
                 end
