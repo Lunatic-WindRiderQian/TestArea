@@ -1038,7 +1038,7 @@ function Library:CreateWindow(Config)
                         if multi then
                             -- 多选
                             local isSelected = selected[optionValue] or false
-                            if required and isSelected and #selected == 1 then
+                            if required and isSelected and table.count(selected) == 1 then
                                 return  -- 不能取消最后一个
                             end
                             selected[optionValue] = not isSelected
@@ -1071,8 +1071,10 @@ function Library:CreateWindow(Config)
                             callback(optionValue)
                             dropdownName.Text = dropText .. " • " .. optionValue
 
-                            -- 单选时选择后自动收起（可选）
-                            toggleDropdown()
+                            -- 单选时选择后自动收起
+                            if isOpen then
+                                toggleDropdown()
+                            end
                         end
                     end)
                 end
@@ -1093,7 +1095,7 @@ function Library:CreateWindow(Config)
                         end
                         local names = {}
                         for val, sel in pairs(selected) do if sel then table.insert(names, val) end end
-                        dropdownName.Text = dropText .. " • " .. table.concat(names, ", ")
+                        dropdownName.Text = #names > 0 and (dropText .. " • " .. table.concat(names, ", ")) or dropText .. "..."
                     else
                         if optionButtons[default] then
                             selected = default
@@ -1111,7 +1113,15 @@ function Library:CreateWindow(Config)
                             local visible = string.find(opt:lower(), term) ~= nil
                             btnData.Button.Visible = visible
                         end
-                        -- 重新计算下拉框高度（将在展开时自动处理）
+                        -- 如果下拉已展开，重新调整高度
+                        if isOpen then
+                            local contentHeight = frameLayout.AbsoluteContentSize.Y + framePadding.PaddingBottom.Offset
+                            if framePadding.PaddingTop then
+                                contentHeight = contentHeight + framePadding.PaddingTop.Offset
+                            end
+                            local totalHeight = 38 + contentHeight
+                            Tween(dropdown, {Size = UDim2.new(1, 0, 0, totalHeight)}, 0.1)
+                        end
                     end)
                 end
 
@@ -1123,12 +1133,10 @@ function Library:CreateWindow(Config)
 
                     if isOpen then
                         dropdownFrame.Visible = true
-                        -- 计算内容总高度
-                        local contentHeight = 0
-                        for _, child in ipairs(dropdownFrame:GetChildren()) do
-                            if child:IsA("Frame") and child.Visible then
-                                contentHeight = contentHeight + child.AbsoluteSize.Y + frameLayout.Padding.Offset
-                            end
+                        -- 使用 AbsoluteContentSize 获取内容实际高度（已包含布局间距和子元素）
+                        local contentHeight = frameLayout.AbsoluteContentSize.Y + framePadding.PaddingBottom.Offset
+                        if framePadding.PaddingTop then
+                            contentHeight = contentHeight + framePadding.PaddingTop.Offset
                         end
                         local totalHeight = 38 + contentHeight
                         Tween(dropdown, {Size = UDim2.new(1, 0, 0, totalHeight)}, 0.2)
