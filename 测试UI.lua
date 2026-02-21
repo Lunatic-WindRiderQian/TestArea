@@ -552,7 +552,7 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- Toggle (maclib 风格，禁用时靠左，启用时靠右)
+            -- Toggle (maclib 风格，禁用时靠左，启用时靠右且左移4像素)
             child.Toggle = function(_, toggleText, default, callback)
                 local Enabled = default or false
 
@@ -593,8 +593,8 @@ function Library:CreateWindow(Config)
                 Dot.ImageColor3 = Color3.new(1, 1, 1)
                 Dot.AnchorPoint = Vector2.new(0.5, 0.5)
                 Dot.Parent = Switch
-                -- 位置：启用时靠右 (1,0)，禁用时靠左 (0,8)（使滑块头左边缘与开关背景左边缘齐平）
-                Dot.Position = Enabled and UDim2.new(1, 0, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
+                -- 位置：启用时靠右且左移4像素 (1, -4)，禁用时靠左 (0, 8)
+                Dot.Position = Enabled and UDim2.new(1, -4, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
 
                 -- 更新状态函数
                 local function Update()
@@ -605,7 +605,7 @@ function Library:CreateWindow(Config)
                     Tween(Switch, {ImageColor3 = targetColor}, 0.2)
 
                     -- 滑块头位置
-                    local targetPos = Enabled and UDim2.new(1, 0, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
+                    local targetPos = Enabled and UDim2.new(1, -4, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
                     Tween(Dot, {Position = targetPos}, 0.2)
 
                     -- 更新配置和回调
@@ -625,19 +625,19 @@ function Library:CreateWindow(Config)
                     Set = function(val)
                         Enabled = val
                         Switch.ImageColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
-                        Dot.Position = Enabled and UDim2.new(1, 0, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
+                        Dot.Position = Enabled and UDim2.new(1, -4, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
                         callback(Enabled)
                     end
                 }
             end
 
-            -- Slider (maclib 风格，默认百分比显示，四舍五入正确)
+            -- Slider (maclib 风格，默认百分比显示，使用 string.format 确保四舍五入正确)
             child.Slider = function(_, sliderText, min, max, default, callback)
                 local Val = default or min
 
                 -- 主容器（保留背景主题色 Top）
                 local Frame = Instance.new("Frame")
-                Frame.Size = UDim2.new(1, 0, 0, 60)  -- 高度 60
+                Frame.Size = UDim2.new(1, 0, 0, 60)
                 Frame.Parent = contentContainer
                 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Frame, "BackgroundColor3", "Top")
@@ -663,12 +663,12 @@ function Library:CreateWindow(Config)
                 -- 数值框（maclib 样式，文本居中）
                 local NumBox = Instance.new("TextBox")
                 NumBox.Name = "SliderValue"
-                NumBox.FontFace = Font.new("rbxassetid://12187365364")  -- maclib 字体
+                NumBox.FontFace = Font.new("rbxassetid://12187365364")
                 NumBox.Text = tostring(Val)
                 NumBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                 NumBox.TextSize = 12
                 NumBox.TextTransparency = 0.1
-                NumBox.TextXAlignment = Enum.TextXAlignment.Center  -- 居中
+                NumBox.TextXAlignment = Enum.TextXAlignment.Center
                 NumBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 NumBox.BackgroundTransparency = 0.95
                 NumBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -707,7 +707,7 @@ function Library:CreateWindow(Config)
                 SliderBar.Position = UDim2.new(0, 10, 0, 40)
                 SliderBar.Parent = Frame
 
-                -- 滑块头（放大至 16x16）
+                -- 滑块头
                 local SliderHead = Instance.new("ImageButton")
                 SliderHead.Name = "SliderHead"
                 SliderHead.Image = SliderAssets.Head
@@ -784,9 +784,8 @@ function Library:CreateWindow(Config)
                         -- 将输入作为百分比转换为实际数值
                         local newValue = min + (value / 100) * (max - min)
                         newValue = math.clamp(newValue, min, max)
-                        SetValue(newValue, false)  -- 触发回调
+                        SetValue(newValue, false)
                     else
-                        -- 无效输入，恢复为当前值
                         SetValue(Val, true)
                     end
                 end)
