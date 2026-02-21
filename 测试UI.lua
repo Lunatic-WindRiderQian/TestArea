@@ -28,13 +28,7 @@ local Sounds = {
     Tab = "rbxassetid://4510087056" 
 }
 
--- 图片资源（原maclib资产，用于Dropdown）
-local DropdownAssets = {
-    Arrow = "rbxassetid://18865373378",      -- 下拉箭头
-    SearchIcon = "rbxassetid://86737463322606", -- 搜索图标
-}
-
--- 原有Toggle/Slider资产保持不变
+-- 图片资源（原 Toggle/Slider 资产）
 local ToggleAssets = {
     Bg = "rbxassetid://18772190202",
     Head = "rbxassetid://18772309008"
@@ -42,6 +36,12 @@ local ToggleAssets = {
 local SliderAssets = {
     Bar = "rbxassetid://18772615246",
     Head = "rbxassetid://18772834246"
+}
+
+-- Dropdown 专用资产（使用通用 ID 避免失效）
+local DropdownAssets = {
+    Arrow = "rbxassetid://6031091004",      -- 箭头
+    SearchIcon = "rbxassetid://7072725340", -- 搜索图标
 }
 
 local function PlaySound(id)
@@ -73,7 +73,7 @@ local function AddToRegistry(obj, prop, themeIndex)
     obj[prop] = CurrentTheme[themeIndex]
 end
 
--- 修改Tween函数使其返回创建的Tween对象（兼容原有用法）
+-- 修改 Tween 函数使其返回创建的 Tween 对象（兼容原有用法）
 local function Tween(obj, props, time)
     local tween = TweenService:Create(obj, TweenInfo.new(time or 0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), props)
     tween:Play()
@@ -984,7 +984,6 @@ function Library:CreateWindow(Config)
                 dropdownFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 dropdownFrame.BorderSizePixel = 0
                 dropdownFrame.ClipsDescendants = true
-                dropdownFrame.Size = UDim2.fromScale(1, 1)
                 dropdownFrame.Visible = false
                 dropdownFrame.AutomaticSize = Enum.AutomaticSize.Y
                 dropdownFrame.Parent = dropdown
@@ -1002,6 +1001,16 @@ function Library:CreateWindow(Config)
                 dropdownFrameUIListLayout.Padding = UDim.new(0, 5)
                 dropdownFrameUIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 dropdownFrameUIListLayout.Parent = dropdownFrame
+
+                -- 动态更新高度的函数（基于布局的实际内容高度）
+                local function updateDropdownSize()
+                    if dropped then
+                        local contentHeight = dropdownFrameUIListLayout.AbsoluteContentSize.Y
+                        local padding = dropdownFrameUIPadding.PaddingTop.Offset + dropdownFrameUIPadding.PaddingBottom.Offset
+                        dropdown.Size = UDim2.new(1, 0, 0, contentHeight + padding)
+                    end
+                end
+                dropdownFrameUIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateDropdownSize)
 
                 -- 搜索框框架（如果需要）
                 local search
@@ -1059,7 +1068,7 @@ function Library:CreateWindow(Config)
                     searchBoxUIPadding.PaddingLeft = UDim.new(0, 23)
                     searchBoxUIPadding.Parent = searchBox
 
-                    -- 搜索过滤函数
+                    -- 搜索过滤
                     local function filterOptions()
                         local searchTerm = searchBox.Text:lower()
                         for _, optData in pairs(OptionObjs) do
@@ -1069,29 +1078,9 @@ function Library:CreateWindow(Config)
                                 optData.Button.Visible = isVisible
                             end
                         end
-                        -- 更新下拉框高度
-                        if dropped then
-                            dropdown.Size = UDim2.new(1, 0, 0, calculateDropdownSize())
-                        end
+                        updateDropdownSize()
                     end
                     searchBox:GetPropertyChangedSignal("Text"):Connect(filterOptions)
-                end
-
-                -- 辅助函数：计算当前下拉框应得高度（包括可见选项）
-                local function calculateDropdownSize()
-                    local totalHeight = 0
-                    local visibleChildrenCount = 0
-                    local padding = dropdownFrameUIPadding.PaddingTop.Offset + dropdownFrameUIPadding.PaddingBottom.Offset
-
-                    for _, v in pairs(dropdownFrame:GetChildren()) do
-                        if not v:IsA("UIComponent") and v.Visible then
-                            totalHeight = totalHeight + v.AbsoluteSize.Y
-                            visibleChildrenCount = visibleChildrenCount + 1
-                        end
-                    end
-
-                    local spacing = dropdownFrameUIListLayout.Padding.Offset * (visibleChildrenCount - 1)
-                    return totalHeight + spacing + padding
                 end
 
                 -- 动画状态
@@ -1101,15 +1090,22 @@ function Library:CreateWindow(Config)
                 local function toggleDropdown()
                     if db then return end
                     db = true
-                    local defaultHeight = 38
                     local isOpen = not dropped
-                    local targetHeight = isOpen and calculateDropdownSize() or defaultHeight
+                    local targetHeight = 38  -- 默认高度
+                    if isOpen then
+                        dropdownFrame.Visible = true
+                        -- 立即更新一次高度（确保布局完成）
+                        task.wait()  -- 让一帧渲染选项
+                        updateDropdownSize()
+                        targetHeight = dropdown.Size.Y.Offset  -- 取当前已调整的高度
+                    else
+                        targetHeight = 38
+                    end
 
                     local dropTween = Tween(dropdown, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
                     local iconTween = Tween(dropdownImage, {Rotation = isOpen and -90 or 0}, 0.2)
 
                     if isOpen then
-                        dropdownFrame.Visible = true
                         dropTween.Completed:Connect(function()
                             db = false
                         end)
@@ -1132,7 +1128,7 @@ function Library:CreateWindow(Config)
                     transparencyIn = 0.2,
                     transparencyOut = 0.5,
                     checkSizeIncrease = 12,
-                    checkSizeDecrease = -13,  -- 根据布局的Padding调整
+                    checkSizeDecrease = -13,
                 }
 
                 -- 切换选项选中状态（内部函数）
@@ -1422,9 +1418,7 @@ function Library:CreateWindow(Config)
                     else
                         dropdownName.Text = settings.Name .. "..."
                     end
-                    if dropped then
-                        dropdown.Size = UDim2.new(1, 0, 0, calculateDropdownSize())
-                    end
+                    updateDropdownSize()
                 end
 
                 function self.IsOption(optionName)
