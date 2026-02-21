@@ -631,7 +631,7 @@ function Library:CreateWindow(Config)
                 }
             end
 
-            -- Slider (maclib 风格，数值框百分百搬运，滑块头放大，背景高度优化，百分比显示)
+            -- Slider (maclib 风格，数值框百分百搬运，滑块头放大，背景高度优化，百分比显示，文本居中)
             child.Slider = function(_, sliderText, min, max, default, callback)
                 local Val = default or min
 
@@ -660,7 +660,7 @@ function Library:CreateWindow(Config)
                 Lbl.Parent = TopRow
                 AddToRegistry(Lbl, "TextColor3", "Text")
 
-                -- 数值框（完全按照 maclib 样式）
+                -- 数值框（完全按照 maclib 样式，文本居中）
                 local NumBox = Instance.new("TextBox")
                 NumBox.Name = "SliderValue"
                 NumBox.FontFace = Font.new("rbxassetid://12187365364")  -- maclib 字体
@@ -668,7 +668,7 @@ function Library:CreateWindow(Config)
                 NumBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                 NumBox.TextSize = 12
                 NumBox.TextTransparency = 0.1
-                NumBox.TextXAlignment = Enum.TextXAlignment.Left
+                NumBox.TextXAlignment = Enum.TextXAlignment.Center  -- 改为居中
                 NumBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 NumBox.BackgroundTransparency = 0.95
                 NumBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -762,6 +762,9 @@ function Library:CreateWindow(Config)
                     SliderHead.Position = UDim2.new(posXScale, 0, 0.5, 0)
                     local newValue = min + posXScale * (max - min)
 
+                    -- 更新外部变量 Val 为最新值
+                    Val = newValue
+
                     -- 更新数值框（使用 DisplayMethod）
                     NumBox.Text = DisplayMethod(newValue, Precision)
 
@@ -810,9 +813,9 @@ function Library:CreateWindow(Config)
                             value = min + (value / 100) * (max - min)
                         end
                         local newValue = math.clamp(value, min, max)
-                        SetValue(newValue)
+                        SetValue(newValue, false)  -- 触发回调
                     else
-                        -- 恢复为当前值
+                        -- 恢复为当前值（Val 已是最新）
                         SetValue(Val, true)
                     end
                 end)
