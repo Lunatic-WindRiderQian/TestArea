@@ -848,7 +848,7 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- Dropdown (maclib 风格，支持搜索、多选、必需选项)
+            -- Dropdown (完整版，移植自 maclib.lua)
             child.Dropdown = function(_, dropText, options, callback, settings)
                 settings = settings or {}
                 local Multi = settings.Multi or false
@@ -876,10 +876,11 @@ function Library:CreateWindow(Config)
                 Lbl.TextXAlignment = Enum.TextXAlignment.Left
                 Lbl.Parent = Btn
                 AddToRegistry(Lbl, "TextColor3", "Text")
+                Lbl.Text = dropText .. "..."
 
                 -- 箭头图标
                 local Icon = Instance.new("ImageLabel")
-                Icon.Image = "rbxassetid://6031091004"  -- 原测试库箭头
+                Icon.Image = "rbxassetid://6031091004"
                 Icon.Size = UDim2.new(0,20,0,20)
                 Icon.Position = UDim2.new(1,-30,0.5,-10)
                 Icon.BackgroundTransparency = 1
@@ -901,6 +902,12 @@ function Library:CreateWindow(Config)
                 ContainerList.Padding = UDim.new(0, 5)
                 ContainerList.SortOrder = Enum.SortOrder.LayoutOrder
                 ContainerList.Parent = Container
+
+                -- 容器内边距
+                local ContainerPadding = Instance.new("UIPadding")
+                ContainerPadding.PaddingTop = UDim.new(0, 5)
+                ContainerPadding.PaddingBottom = UDim.new(0, 5)
+                ContainerPadding.Parent = Container
 
                 -- 搜索框（可选）
                 local SearchFrame
@@ -933,7 +940,7 @@ function Library:CreateWindow(Config)
                     SearchBox.TextXAlignment = Enum.TextXAlignment.Left
                     SearchBox.Parent = SearchFrame
                     AddToRegistry(SearchBox, "TextColor3", "Text")
-                    SearchBox.PlaceholderColor3 = Color3.fromRGB(150,150,150)  -- 固定灰色
+                    SearchBox.PlaceholderColor3 = Color3.fromRGB(150,150,150)
                 end
 
                 -- 计算容器目标高度
@@ -947,7 +954,7 @@ function Library:CreateWindow(Config)
                         end
                     end
                     local spacing = ContainerList.Padding.Offset * (visibleCount - 1)
-                    return total + spacing + 20  -- 上下各10内边距
+                    return total + spacing + 10  -- 上下各5内边距
                 end
 
                 -- 更新容器高度（带动画）
@@ -1146,11 +1153,15 @@ function Library:CreateWindow(Config)
                     end)
                 end
 
-                -- 返回控制方法
+                -- 返回控制方法（完整版）
                 local self = {}
+
+                -- 刷新选项列表
                 function self.Refresh(newOpts)
                     RefreshOptions(newOpts)
                 end
+
+                -- 更新选中项（支持索引、字符串、表）
                 function self.UpdateSelection(val)
                     -- 清除所有选中
                     for opt, _ in pairs(OptionObjs) do
@@ -1166,11 +1177,100 @@ function Library:CreateWindow(Config)
                     else
                         if OptionObjs[val] then
                             SelectOption(val, true)
+                        elseif type(val) == "number" then
+                            local idx = 1
+                            for opt, _ in pairs(OptionObjs) do
+                                if idx == val then
+                                    SelectOption(opt, true)
+                                    break
+                                end
+                                idx = idx + 1
+                            end
                         end
                     end
                 end
+
+                -- 获取当前选中值
                 function self.GetSelected()
                     return Multi and Selected or Selected[1]
+                end
+
+                -- 插入新选项（保留原有选项）
+                function self.InsertOptions(newOpts)
+                    for _, opt in ipairs(newOpts) do
+                        if not OptionObjs[opt] then
+                            AddOption(opt)
+                        end
+                    end
+                    if Container.Visible then
+                        UpdateContainerHeight(false)
+                    end
+                end
+
+                -- 清空所有选项
+                function self.ClearOptions()
+                    for opt, _ in pairs(OptionObjs) do
+                        OptionObjs[opt].Button:Destroy()
+                    end
+                    OptionObjs = {}
+                    Selected = Multi and {} or {}
+                    UpdateSelectionDisplay()
+                    if Container.Visible then
+                        UpdateContainerHeight(false)
+                    end
+                end
+
+                -- 获取所有选项及其选中状态
+                function self.GetOptions()
+                    local optionsStatus = {}
+                    for opt, obj in pairs(OptionObjs) do
+                        optionsStatus[opt] = obj.Checkmark.Visible
+                    end
+                    return optionsStatus
+                end
+
+                -- 移除指定选项
+                function self.RemoveOptions(removeList)
+                    if not removeList then return end
+                    for _, optName in ipairs(removeList) do
+                        local obj = OptionObjs[optName]
+                        if obj then
+                            -- 从 Selected 中移除
+                            if Multi then
+                                for i = #Selected, 1, -1 do
+                                    if Selected[i] == optName then
+                                        table.remove(Selected, i)
+                                    end
+                                end
+                            else
+                                if Selected[1] == optName then
+                                    Selected = {}
+                                end
+                            end
+                            obj.Button:Destroy()
+                            OptionObjs[optName] = nil
+                        end
+                    end
+                    UpdateSelectionDisplay()
+                    if Container.Visible then
+                        UpdateContainerHeight(false)
+                    end
+                end
+
+                -- 检查选项是否存在
+                function self.IsOption(optName)
+                    return OptionObjs[optName] ~= nil
+                end
+
+                -- 更新显示名称（头部文本）
+                function self.UpdateName(newName)
+                    dropText = newName
+                    UpdateSelectionDisplay()
+                end
+
+                -- 设置可见性
+                function self.SetVisible(state)
+                    Btn.Visible = state
                 end
 
                 ConfigObjects[dropText] = {
