@@ -631,21 +631,21 @@ function Library:CreateWindow(Config)
                 }
             end
 
-            -- Slider (maclib 风格，数值框百分百搬运，滑块头放大，背景高度优化，百分比显示，文本居中)
+            -- Slider (maclib 风格，数值框百分百搬运，滑块头放大，背景高度优化，文本居中，输入始终作为百分比)
             child.Slider = function(_, sliderText, min, max, default, callback)
                 local Val = default or min
 
                 -- 主容器（保留背景主题色 Top）
                 local Frame = Instance.new("Frame")
-                Frame.Size = UDim2.new(1, 0, 0, 60)  -- 高度从 70 调整为 60
+                Frame.Size = UDim2.new(1, 0, 0, 60)  -- 高度 60
                 Frame.Parent = contentContainer
                 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Frame, "BackgroundColor3", "Top")
 
                 -- 第一行：标签 + 数值框
                 local TopRow = Instance.new("Frame")
-                TopRow.Size = UDim2.new(1, -20, 0, 30)  -- 留出左右边距
-                TopRow.Position = UDim2.new(0, 10, 0, 5)  -- 顶部间距从 8 调整为 5
+                TopRow.Size = UDim2.new(1, -20, 0, 30)
+                TopRow.Position = UDim2.new(0, 10, 0, 5)
                 TopRow.BackgroundTransparency = 1
                 TopRow.Parent = Frame
 
@@ -660,7 +660,7 @@ function Library:CreateWindow(Config)
                 Lbl.Parent = TopRow
                 AddToRegistry(Lbl, "TextColor3", "Text")
 
-                -- 数值框（完全按照 maclib 样式，文本居中）
+                -- 数值框（maclib 样式，文本居中）
                 local NumBox = Instance.new("TextBox")
                 NumBox.Name = "SliderValue"
                 NumBox.FontFace = Font.new("rbxassetid://12187365364")  -- maclib 字体
@@ -668,14 +668,14 @@ function Library:CreateWindow(Config)
                 NumBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                 NumBox.TextSize = 12
                 NumBox.TextTransparency = 0.1
-                NumBox.TextXAlignment = Enum.TextXAlignment.Center  -- 改为居中
+                NumBox.TextXAlignment = Enum.TextXAlignment.Center  -- 居中
                 NumBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 NumBox.BackgroundTransparency = 0.95
                 NumBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 NumBox.BorderSizePixel = 0
-                NumBox.Size = UDim2.fromOffset(41, 21)  -- maclib 原始尺寸
+                NumBox.Size = UDim2.fromOffset(41, 21)
                 NumBox.AnchorPoint = Vector2.new(1, 0.5)
-                NumBox.Position = UDim2.new(1, 0, 0.5, 0)  -- 靠右垂直居中
+                NumBox.Position = UDim2.new(1, 0, 0.5, 0)
                 NumBox.ClipsDescendants = true
                 NumBox.Parent = TopRow
 
@@ -691,20 +691,20 @@ function Library:CreateWindow(Config)
                 boxStroke.Transparency = 0.9
                 boxStroke.Parent = NumBox
 
-                -- 内边距（左右各2，maclib 标准）
+                -- 内边距（左右各2）
                 local boxPadding = Instance.new("UIPadding")
                 boxPadding.PaddingLeft = UDim.new(0, 2)
                 boxPadding.PaddingRight = UDim.new(0, 2)
                 boxPadding.Parent = NumBox
 
-                -- 第二行：滑块条（maclib 风格）
+                -- 第二行：滑块条
                 local SliderBar = Instance.new("ImageLabel")
                 SliderBar.Name = "SliderBar"
                 SliderBar.Image = SliderAssets.Bar
-                SliderBar.ImageColor3 = Color3.fromRGB(87, 86, 86)  -- maclib 固定色
+                SliderBar.ImageColor3 = Color3.fromRGB(87, 86, 86)
                 SliderBar.BackgroundTransparency = 1
-                SliderBar.Size = UDim2.new(1, -20, 0, 3)  -- 与左右边距对齐
-                SliderBar.Position = UDim2.new(0, 10, 0, 40)  -- 调整 Y 位置以配合新高度
+                SliderBar.Size = UDim2.new(1, -20, 0, 3)
+                SliderBar.Position = UDim2.new(0, 10, 0, 40)
                 SliderBar.Parent = Frame
 
                 -- 滑块头（放大至 16x16）
@@ -713,59 +713,37 @@ function Library:CreateWindow(Config)
                 SliderHead.Image = SliderAssets.Head
                 SliderHead.AnchorPoint = Vector2.new(0.5, 0.5)
                 SliderHead.BackgroundTransparency = 1
-                SliderHead.Size = UDim2.fromOffset(16, 16)  -- 从 12 增大至 16
+                SliderHead.Size = UDim2.fromOffset(16, 16)
                 SliderHead.Parent = SliderBar
-                -- 初始位置根据默认值计算
                 local initPosX = (Val - min) / (max - min)
                 SliderHead.Position = UDim2.new(initPosX, 0, 0.5, 0)
 
-                -- 显示方法（从 maclib 复制，默认改为百分比显示）
+                -- 显示方法（百分比）
                 local DisplayMethods = {
-                    Hundredths = function(sliderValue) return string.format("%.2f", sliderValue) end,
-                    Tenths = function(sliderValue) return string.format("%.1f", sliderValue) end,
-                    Round = function(sliderValue, precision)
-                        if precision then
-                            return string.format("%." .. precision .. "f", sliderValue)
-                        else
-                            return tostring(math.round(sliderValue))
-                        end
-                    end,
-                    Degrees = function(sliderValue, precision)
-                        local formattedValue = precision and string.format("%." .. precision .. "f", sliderValue) or tostring(sliderValue)
-                        return formattedValue .. "°"
-                    end,
                     Percent = function(sliderValue, precision)
                         local percentage = (sliderValue - min) / (max - min) * 100
                         return (precision and string.format("%." .. precision .. "f", percentage) or tostring(math.round(percentage))) .. "%"
                     end,
-                    Value = function(sliderValue, precision)
-                        return precision and string.format("%." .. precision .. "f", sliderValue) or tostring(sliderValue)
-                    end
                 }
-                -- 默认显示方式：Percent（百分比），精度 0（整数）
                 local DisplayMethod = DisplayMethods.Percent
-                local Precision = 0
+                local Precision = 0  -- 整数百分比
 
                 local function SetValue(input, ignorecallback)
                     local posXScale
                     if typeof(input) == "Instance" then
-                        -- 来自拖动
                         local mouseX = input.Position.X
                         local barX = SliderBar.AbsolutePosition.X
                         local barWidth = SliderBar.AbsoluteSize.X
                         posXScale = math.clamp((mouseX - barX) / barWidth, 0, 1)
                     else
-                        -- 来自数值设置
                         posXScale = (input - min) / (max - min)
                     end
 
                     SliderHead.Position = UDim2.new(posXScale, 0, 0.5, 0)
                     local newValue = min + posXScale * (max - min)
+                    Val = newValue  -- 更新外部变量
 
-                    -- 更新外部变量 Val 为最新值
-                    Val = newValue
-
-                    -- 更新数值框（使用 DisplayMethod）
+                    -- 更新数值框（百分比显示）
                     NumBox.Text = DisplayMethod(newValue, Precision)
 
                     if not ignorecallback then
@@ -774,7 +752,6 @@ function Library:CreateWindow(Config)
                         end)
                     end
 
-                    -- 更新配置对象的值
                     if ConfigObjects[sliderText] then
                         ConfigObjects[sliderText].Value = newValue
                     end
@@ -803,19 +780,18 @@ function Library:CreateWindow(Config)
                     end
                 end)
 
-                -- 数值框输入处理（支持百分比）
+                -- 数值框输入处理（始终作为百分比）
                 NumBox.FocusLost:Connect(function(enterPressed)
                     local inputText = NumBox.Text
-                    local value, isPercent = inputText:match("^(%-?%d+%.?%d*)(%%?)$")
+                    local value = inputText:match("^(%-?%d+%.?%d*)")  -- 提取数字部分
                     if value then
                         value = tonumber(value)
-                        if isPercent == "%" then
-                            value = min + (value / 100) * (max - min)
-                        end
-                        local newValue = math.clamp(value, min, max)
+                        -- 始终将输入视为百分比，转换为数值
+                        local newValue = min + (value / 100) * (max - min)
+                        newValue = math.clamp(newValue, min, max)
                         SetValue(newValue, false)  -- 触发回调
                     else
-                        -- 恢复为当前值（Val 已是最新）
+                        -- 无效输入，恢复为当前值
                         SetValue(Val, true)
                     end
                 end)
@@ -866,7 +842,7 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- Dropdown (原版样式，放在内容容器内)
+            -- Dropdown (原版样式)
             child.Dropdown = function(_, dropText, options, callback)
                 local Dropped = false
                 local Btn = Instance.new("TextButton")
@@ -896,7 +872,7 @@ function Library:CreateWindow(Config)
                 Container.Size = UDim2.new(1,0,0,0)
                 Container.Visible = false
                 Container.ClipsDescendants = true
-                Container.Parent = contentContainer  -- 恢复为内容容器内
+                Container.Parent = contentContainer
                 Container.ZIndex = 10
                 Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Container, "BackgroundColor3", "Top")
@@ -913,7 +889,6 @@ function Library:CreateWindow(Config)
                     Tween(Icon, {Rotation = 0}, 0.2)
                     task.wait(0.2)
                     Container.Visible = false
-                    -- 更新Section高度
                     updateSectionHeight(false)
                 end
 
@@ -939,20 +914,16 @@ function Library:CreateWindow(Config)
                     if Dropped then
                         Container.Visible = true
                         local targetHeight = #options * 30
-                        -- 先展开选项容器
                         local tweenOpt = TweenService:Create(Container, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1,0,0, targetHeight)})
                         tweenOpt:Play()
                         Tween(Icon, {Rotation = 180}, 0.3)
-                        -- 等待选项容器动画完成后更新Section高度
                         tweenOpt.Completed:Connect(function()
                             updateSectionHeight(false)
                         end)
                     else
-                        -- 折叠选项容器
                         local tweenOpt = TweenService:Create(Container, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1,0,0, 0)})
                         tweenOpt:Play()
                         Tween(Icon, {Rotation = 0}, 0.2)
-                        -- 同时更新Section高度（或等待折叠完成）
                         tweenOpt.Completed:Connect(function()
                             Container.Visible = false
                             updateSectionHeight(false)
