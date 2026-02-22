@@ -847,204 +847,97 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- Dropdown (maclib风格，单选，带箭头和勾选标记)
+            -- Dropdown (原版样式，图标已替换为 maclib 的 Dropdown 图标)
             child.Dropdown = function(_, dropText, options, callback)
                 local Dropped = false
-                local Selected = nil  -- 单选，只存一个值
+                local Btn = Instance.new("TextButton")
+                Btn.Size = UDim2.new(1,0,0,35)
+                Btn.Text = ""
+                Btn.Parent = contentContainer
+                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,6)
+                AddToRegistry(Btn, "BackgroundColor3", "Top")
+                local Lbl = Instance.new("TextLabel")
+                Lbl.Text = dropText
+                Lbl.Size = UDim2.new(1,-30,1,0)
+                Lbl.Position = UDim2.new(0,10,0,0)
+                Lbl.BackgroundTransparency = 1
+                Lbl.Font = Enum.Font.Gotham
+                Lbl.TextSize = 14
+                Lbl.TextXAlignment = Enum.TextXAlignment.Left
+                Lbl.Parent = Btn
+                AddToRegistry(Lbl, "TextColor3", "Text")
+                local Icon = Instance.new("ImageLabel")
+                Icon.Image = "rbxassetid://18865373378"  -- 替换为 maclib 的 Dropdown 图标
+                Icon.Size = UDim2.new(0,20,0,20)
+                Icon.Position = UDim2.new(1,-30,0.5,-10)
+                Icon.BackgroundTransparency = 1
+                Icon.Parent = Btn
 
-                -- 根容器
-                local Dropdown = Instance.new("Frame")
-                Dropdown.Size = UDim2.new(1, 0, 0, 38)
-                Dropdown.BackgroundTransparency = 0
-                Dropdown.ClipsDescendants = true
-                Dropdown.Parent = contentContainer
-                Instance.new("UICorner", Dropdown).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(Dropdown, "BackgroundColor3", "Top")
+                local Container = Instance.new("Frame")
+                Container.Size = UDim2.new(1,0,0,0)
+                Container.Visible = false
+                Container.ClipsDescendants = true
+                Container.Parent = contentContainer
+                Container.ZIndex = 10
+                Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
+                AddToRegistry(Container, "BackgroundColor3", "Top")
+                local List = Instance.new("UIListLayout")
+                List.SortOrder = Enum.SortOrder.LayoutOrder
+                List.Parent = Container
 
-                -- 边框
-                local Stroke = Instance.new("UIStroke")
-                Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                Stroke.Parent = Dropdown
-                AddToRegistry(Stroke, "Color", "Stroke")
-
-                -- 交互按钮（覆盖整个区域）
-                local Interact = Instance.new("TextButton")
-                Interact.Size = UDim2.new(1, 0, 1, 0)
-                Interact.BackgroundTransparency = 1
-                Interact.Text = ""
-                Interact.Parent = Dropdown
-
-                -- 显示当前选择的标签
-                local DisplayLabel = Instance.new("TextLabel")
-                DisplayLabel.Text = dropText .. "..."
-                DisplayLabel.Size = UDim2.new(1, -35, 1, 0)
-                DisplayLabel.Position = UDim2.new(0, 10, 0, 0)
-                DisplayLabel.BackgroundTransparency = 1
-                DisplayLabel.Font = Enum.Font.Gotham
-                DisplayLabel.TextSize = 14
-                DisplayLabel.TextXAlignment = Enum.TextXAlignment.Left
-                DisplayLabel.Parent = Dropdown
-                AddToRegistry(DisplayLabel, "TextColor3", "Text")
-
-                -- 箭头图标（使用maclib的箭头ID）
-                local Arrow = Instance.new("ImageLabel")
-                Arrow.Size = UDim2.new(0, 15, 0, 15)
-                Arrow.Position = UDim2.new(1, -25, 0.5, -7.5)
-                Arrow.BackgroundTransparency = 1
-                Arrow.Image = "rbxassetid://10709791437"  -- 同测试.lua按钮箭头
-                Arrow.Parent = Dropdown
-                AddToRegistry(Arrow, "ImageColor3", "Text")
-
-                -- 下拉选项容器（初始隐藏）
-                local DropContainer = Instance.new("Frame")
-                DropContainer.Size = UDim2.new(1, 0, 0, 0)
-                DropContainer.Position = UDim2.new(0, 0, 0, 38)
-                DropContainer.BackgroundTransparency = 1
-                DropContainer.ClipsDescendants = true
-                DropContainer.Visible = false
-                DropContainer.Parent = Dropdown
-
-                local ListLayout = Instance.new("UIListLayout")
-                ListLayout.Padding = UDim.new(0, 2)
-                ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                ListLayout.Parent = DropContainer
-
-                -- 辅助函数：更新下拉框高度（基于选项数量）
-                local function UpdateHeight(instant)
-                    local targetHeight = Dropped and (38 + #options * 32 + 8) or 38  -- 选项高度32，底部留白8
-                    Tween(Dropdown, {Size = UDim2.new(1, 0, 0, targetHeight)}, instant and 0 or 0.2)
+                local function Select(opt)
+                    Dropped = false
+                    Lbl.Text = dropText..": "..opt
+                    ConfigObjects[dropText].Value = opt
+                    callback(opt)
+                    Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
+                    Tween(Icon, {Rotation = 0}, 0.2)
+                    task.wait(0.2)
+                    Container.Visible = false
+                    updateSectionHeight(false)
                 end
 
-                -- 选项按钮创建函数
-                local function CreateOption(opt)
-                    local OptBtn = Instance.new("TextButton")
-                    OptBtn.Size = UDim2.new(1, 0, 0, 32)
-                    OptBtn.BackgroundTransparency = 1
-                    OptBtn.Text = ""
-                    OptBtn.Parent = DropContainer
-
-                    -- 选项文本
-                    local OptLabel = Instance.new("TextLabel")
-                    OptLabel.Text = opt
-                    OptLabel.Size = UDim2.new(1, -30, 1, 0)
-                    OptLabel.Position = UDim2.new(0, 10, 0, 0)
-                    OptLabel.BackgroundTransparency = 1
-                    OptLabel.Font = Enum.Font.Gotham
-                    OptLabel.TextSize = 13
-                    OptLabel.TextXAlignment = Enum.TextXAlignment.Left
-                    OptLabel.Parent = OptBtn
-                    AddToRegistry(OptLabel, "TextColor3", "Text")
-
-                    -- 选中标记（对勾）
-                    local Check = Instance.new("ImageLabel")
-                    Check.Size = UDim2.new(0, 12, 0, 12)
-                    Check.Position = UDim2.new(1, -20, 0.5, -6)
-                    Check.BackgroundTransparency = 1
-                    Check.Image = "rbxassetid://6031091004"  -- 对勾图标（可替换）
-                    Check.ImageTransparency = 1
-                    Check.Parent = OptBtn
-                    AddToRegistry(Check, "ImageColor3", "Text")
-
-                    -- 点击事件
-                    OptBtn.MouseButton1Click:Connect(function()
-                        PlaySound(Sounds.Click)
-
-                        -- 取消之前选项的选中标记
-                        for _, btn in pairs(DropContainer:GetChildren()) do
-                            if btn:IsA("TextButton") then
-                                local check = btn:FindFirstChildOfClass("ImageLabel")
-                                if check then check.ImageTransparency = 1 end
-                            end
-                        end
-
-                        -- 标记当前选项
-                        Check.ImageTransparency = 0
-                        Selected = opt
-                        DisplayLabel.Text = dropText .. " • " .. opt
-
-                        -- 收起下拉
-                        Dropped = false
-                        Arrow.Rotation = 0
-                        DropContainer.Visible = false
-                        UpdateHeight(true)
-
-                        -- 更新配置并回调
-                        ConfigObjects[dropText].Value = opt
-                        callback(opt)
-                    end)
-
-                    -- 若该选项是当前选中项，显示标记
-                    if Selected == opt then
-                        Check.ImageTransparency = 0
+                local function RefreshOptions(newOpts)
+                    for _,v in pairs(Container:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
+                    for _, opt in pairs(newOpts) do
+                        local O = Instance.new("TextButton")
+                        O.Size = UDim2.new(1,0,0,30)
+                        O.Text = opt
+                        O.TextColor3 = Color3.fromRGB(150,150,150)
+                        O.Font = Enum.Font.Gotham
+                        O.TextSize = 13
+                        O.BackgroundTransparency = 1
+                        O.Parent = Container
+                        O.MouseButton1Click:Connect(function() Select(opt) end)
                     end
                 end
+                RefreshOptions(options)
 
-                -- 初始化所有选项
-                for _, opt in ipairs(options) do
-                    CreateOption(opt)
-                end
-
-                -- 点击主按钮展开/收起
-                Interact.MouseButton1Click:Connect(function()
-                    PlaySound(Sounds.Click)
+                Btn.MouseButton1Click:Connect(function()
                     Dropped = not Dropped
+                    PlaySound(Sounds.Click)
                     if Dropped then
-                        DropContainer.Visible = true
-                        Tween(Arrow, {Rotation = 180}, 0.2)
+                        Container.Visible = true
+                        local targetHeight = #options * 30
+                        local tweenOpt = TweenService:Create(Container, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1,0,0, targetHeight)})
+                        tweenOpt:Play()
+                        Tween(Icon, {Rotation = 180}, 0.3)
+                        tweenOpt.Completed:Connect(function()
+                            updateSectionHeight(false)
+                        end)
                     else
-                        Tween(Arrow, {Rotation = 0}, 0.2)
-                    end
-                    UpdateHeight(false)
-
-                    -- 动画结束后若收起则隐藏容器
-                    if not Dropped then
-                        task.wait(0.2)
-                        if not Dropped then DropContainer.Visible = false end
+                        local tweenOpt = TweenService:Create(Container, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1,0,0, 0)})
+                        tweenOpt:Play()
+                        Tween(Icon, {Rotation = 0}, 0.2)
+                        tweenOpt.Completed:Connect(function()
+                            Container.Visible = false
+                            updateSectionHeight(false)
+                        end)
                     end
                 end)
 
-                -- 刷新选项列表的方法
-                local function Refresh(newOptions)
-                    -- 清除现有选项
-                    for _, child in pairs(DropContainer:GetChildren()) do
-                        if child:IsA("TextButton") then
-                            child:Destroy()
-                        end
-                    end
-                    -- 重新创建
-                    options = newOptions
-                    for _, opt in ipairs(newOptions) do
-                        CreateOption(opt)
-                    end
-                    -- 重置显示
-                    Selected = nil
-                    DisplayLabel.Text = dropText .. "..."
-                    -- 如果当前是展开状态，调整高度
-                    if Dropped then
-                        UpdateHeight(true)
-                    end
-                end
-
-                -- 注册配置对象
-                ConfigObjects[dropText] = {
-                    Type = "Dropdown",
-                    Value = nil,
-                    Set = function(val)
-                        -- 根据值选中对应选项
-                        for _, btn in pairs(DropContainer:GetChildren()) do
-                            if btn:IsA("TextButton") then
-                                local label = btn:FindFirstChildOfClass("TextLabel")
-                                if label and label.Text == val then
-                                    btn.MouseButton1Click:Fire()
-                                    break
-                                end
-                            end
-                        end
-                    end,
-                    Refresh = Refresh
-                }
-
-                return { Refresh = Refresh }
+                ConfigObjects[dropText] = {Type = "Dropdown", Value = options[1], Set = function(val) Select(val) end, Refresh = RefreshOptions}
+                return {Refresh = RefreshOptions}
             end
 
             -- Keybind
