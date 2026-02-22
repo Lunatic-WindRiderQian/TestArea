@@ -1242,7 +1242,8 @@ function Library:CreateWindow(Config)
                 PreviewBg.TileSize = UDim2.fromOffset(500, 500)
                 PreviewBg.Size = UDim2.new(0, 30, 0, 20)
                 PreviewBg.Position = UDim2.new(1, -40, 0.5, -10)
-                PreviewBg.BackgroundTransparency = 1
+                PreviewBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  -- 后备背景色
+                PreviewBg.BackgroundTransparency = 0                     -- 不透明
                 PreviewBg.Parent = Frame
 
                 local PreviewColor = Instance.new("Frame")
