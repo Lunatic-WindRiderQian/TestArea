@@ -811,13 +811,14 @@ function Library:CreateWindow(Config)
                 }
             end
 
-            -- Textbox
+            -- ==================== Textbox (添加边框) ====================
             child.Textbox = function(_, boxText, placeholder, callback)
                 local Frame = Instance.new("Frame")
                 Frame.Size = UDim2.new(1,0,0,60)
                 Frame.Parent = contentContainer
                 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,6)
                 AddToRegistry(Frame, "BackgroundColor3", "Top")
+
                 local Lbl = Instance.new("TextLabel")
                 Lbl.Text = boxText
                 Lbl.Size = UDim2.new(1,0,0,20)
@@ -828,6 +829,7 @@ function Library:CreateWindow(Config)
                 Lbl.TextXAlignment = Enum.TextXAlignment.Left
                 Lbl.Parent = Frame
                 AddToRegistry(Lbl, "TextColor3", "Text")
+
                 local Box = Instance.new("TextBox")
                 Box.Size = UDim2.new(1,-20,0,25)
                 Box.Position = UDim2.new(0,10,0,28)
@@ -835,10 +837,18 @@ function Library:CreateWindow(Config)
                 Box.PlaceholderText = placeholder
                 Box.Font = Enum.Font.Gotham
                 Box.TextSize = 13
+                Box.BorderSizePixel = 0
                 Box.Parent = Frame
                 Instance.new("UICorner", Box).CornerRadius = UDim.new(0,4)
                 AddToRegistry(Box, "BackgroundColor3", "Main")
                 AddToRegistry(Box, "TextColor3", "Text")
+
+                -- 添加边框 (UIStroke)
+                local boxStroke = Instance.new("UIStroke")
+                boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                boxStroke.Color = Color3.fromRGB(255, 255, 255)
+                boxStroke.Transparency = 0.9
+                boxStroke.Parent = Box
 
                 Box.FocusLost:Connect(function()
                     ConfigObjects[boxText].Value = Box.Text
@@ -846,6 +856,7 @@ function Library:CreateWindow(Config)
                 end)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
+            -- =============================================================
 
             -- Dropdown (原版样式，图标已替换为 maclib 的 Dropdown 图标)
             child.Dropdown = function(_, dropText, options, callback)
@@ -940,7 +951,7 @@ function Library:CreateWindow(Config)
                 return {Refresh = RefreshOptions}
             end
 
-            -- Keybind (替换为 maclib 风格的 Keybind，背景更明显)
+            -- ==================== Keybind (添加边框) ====================
             child.Keybind = function(_, keyText, default, callback)
                 local Key = default or Enum.KeyCode.M
 
@@ -981,6 +992,13 @@ function Library:CreateWindow(Config)
                 Instance.new("UICorner", BinderBox).CornerRadius = UDim.new(0, 5)
                 AddToRegistry(BinderBox, "BackgroundColor3", "Main")  -- 背景色跟随主题 Main
                 AddToRegistry(BinderBox, "TextColor3", "Accent")
+
+                -- 添加边框 (UIStroke)
+                local boxStroke = Instance.new("UIStroke")
+                boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                boxStroke.Color = Color3.fromRGB(255, 255, 255)
+                boxStroke.Transparency = 0.9
+                boxStroke.Parent = BinderBox
 
                 -- 绑定状态控制
                 local isBinding = false
@@ -1051,6 +1069,7 @@ function Library:CreateWindow(Config)
                 end
                 return self
             end
+            -- =============================================================
 
             -- ==================== 替换 Value 为 Input (maclib 风格) ====================
             child.Input = function(_, inputText, default, callback, options)
