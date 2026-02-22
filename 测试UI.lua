@@ -1209,7 +1209,7 @@ function Library:CreateWindow(Config)
             end
             -- ==========================================================================
 
-            -- ==================== Colorpicker (maclib 风格) ====================
+            -- ==================== Colorpicker (maclib 风格，增强按钮) ====================
             child.Colorpicker = function(_, pickerText, defaultColor, callback, options)
                 options = options or {}
                 local hasAlpha = options.Alpha ~= nil
@@ -1301,8 +1301,8 @@ function Library:CreateWindow(Config)
 
                     -- 主弹出框
                     local PickerFrame = Instance.new("Frame")
-                    PickerFrame.Size = UDim2.new(0, 340, 0, 400)
-                    PickerFrame.Position = UDim2.new(0.5, -170, 0.5, -200)
+                    PickerFrame.Size = UDim2.new(0, 360, 0, 420)  -- 稍微加大尺寸，确保按钮可见
+                    PickerFrame.Position = UDim2.new(0.5, -180, 0.5, -210)
                     PickerFrame.BackgroundColor3 = CurrentTheme.Main
                     PickerFrame.BorderSizePixel = 0
                     PickerFrame.Parent = Canvas
@@ -1323,7 +1323,7 @@ function Library:CreateWindow(Config)
                     UIList.SortOrder = Enum.SortOrder.LayoutOrder
                     UIList.Padding = UDim.new(0, 10)
 
-                    -- 标题（可选）
+                    -- 标题
                     local TitleLabel = Instance.new("TextLabel")
                     TitleLabel.Text = pickerText
                     TitleLabel.Size = UDim2.new(1, 0, 0, 25)
@@ -1383,7 +1383,7 @@ function Library:CreateWindow(Config)
 
                     -- 右侧输入区域
                     local InputColumn = Instance.new("Frame")
-                    InputColumn.Size = UDim2.new(0, 130, 1, 0)
+                    InputColumn.Size = UDim2.new(0, 140, 1, 0)
                     InputColumn.Position = UDim2.new(0, 190, 0, 0)
                     InputColumn.BackgroundTransparency = 1
                     InputColumn.Parent = Row1
@@ -1482,34 +1482,60 @@ function Library:CreateWindow(Config)
                     NewColorBlock.Parent = NewColor
                     Instance.new("UICorner", NewColorBlock).CornerRadius = UDim.new(0, 4)
 
-                    -- 确认/取消按钮
+                    -- 确认/取消按钮行（增强样式）
                     local ButtonRow = Instance.new("Frame")
-                    ButtonRow.Size = UDim2.new(1, 0, 0, 35)
+                    ButtonRow.Size = UDim2.new(1, 0, 0, 40)
                     ButtonRow.BackgroundTransparency = 1
                     ButtonRow.Parent = PickerFrame
                     ButtonRow.LayoutOrder = 4
 
+                    -- 确认按钮
                     local Confirm = Instance.new("TextButton")
-                    Confirm.Size = UDim2.new(0.5, -5, 1, 0)
-                    Confirm.Position = UDim2.new(0, 0, 0, 0)
+                    Confirm.Size = UDim2.new(0.5, -6, 0, 35)
+                    Confirm.Position = UDim2.new(0, 0, 0.5, -17)
                     Confirm.Text = "Confirm"
                     Confirm.Font = Enum.Font.GothamBold
                     Confirm.TextSize = 14
                     Confirm.TextColor3 = CurrentTheme.Text
                     Confirm.BackgroundColor3 = CurrentTheme.Top
+                    Confirm.BorderSizePixel = 0
                     Confirm.Parent = ButtonRow
+                    Confirm.ZIndex = 12
                     Instance.new("UICorner", Confirm).CornerRadius = UDim.new(0, 6)
+                    local ConfirmStroke = Instance.new("UIStroke", Confirm)
+                    ConfirmStroke.Color = CurrentTheme.Accent
+                    ConfirmStroke.Thickness = 1.5
+                    ConfirmStroke.Transparency = 0.3
 
+                    -- 取消按钮
                     local Cancel = Instance.new("TextButton")
-                    Cancel.Size = UDim2.new(0.5, -5, 1, 0)
-                    Cancel.Position = UDim2.new(0.5, 5, 0, 0)
+                    Cancel.Size = UDim2.new(0.5, -6, 0, 35)
+                    Cancel.Position = UDim2.new(0.5, 6, 0.5, -17)
                     Cancel.Text = "Cancel"
                     Cancel.Font = Enum.Font.GothamBold
                     Cancel.TextSize = 14
                     Cancel.TextColor3 = CurrentTheme.Text
                     Cancel.BackgroundColor3 = CurrentTheme.Top
+                    Cancel.BorderSizePixel = 0
                     Cancel.Parent = ButtonRow
+                    Cancel.ZIndex = 12
                     Instance.new("UICorner", Cancel).CornerRadius = UDim.new(0, 6)
+                    local CancelStroke = Instance.new("UIStroke", Cancel)
+                    CancelStroke.Color = CurrentTheme.Stroke
+                    CancelStroke.Thickness = 1.5
+                    CancelStroke.Transparency = 0.3
+
+                    -- 按钮悬停效果
+                    local function onHover(btn, accent)
+                        Tween(btn, {BackgroundColor3 = CurrentTheme.Accent:Lerp(CurrentTheme.Top, 0.3)}, 0.2)
+                    end
+                    local function onLeave(btn)
+                        Tween(btn, {BackgroundColor3 = CurrentTheme.Top}, 0.2)
+                    end
+                    Confirm.MouseEnter:Connect(function() onHover(Confirm) end)
+                    Confirm.MouseLeave:Connect(function() onLeave(Confirm) end)
+                    Cancel.MouseEnter:Connect(function() onHover(Cancel) end)
+                    Cancel.MouseLeave:Connect(function() onLeave(Cancel) end)
 
                     -- 状态变量
                     local hue, sat, val = currentColor:ToHSV()
@@ -1524,7 +1550,6 @@ function Library:CreateWindow(Config)
                         NewColorBlock.BackgroundColor3 = tempColor
                         NewColorBlock.BackgroundTransparency = tempAlpha
 
-                        -- 更新输入框
                         RedBox.Text = tostring(math.floor(tempColor.R * 255 + 0.5))
                         GreenBox.Text = tostring(math.floor(tempColor.G * 255 + 0.5))
                         BlueBox.Text = tostring(math.floor(tempColor.B * 255 + 0.5))
@@ -1534,7 +1559,7 @@ function Library:CreateWindow(Config)
                             math.floor(tempColor.B * 255 + 0.5))
 
                         -- 更新滑块位置
-                        Target.Position = UDim2.new(sat * math.cos(hue * 2 * math.pi) * 0.5 + 0.5, 0, -sat * math.sin(hue * 2 * math.pi) * 0.5 + 0.5, 0)  -- 简化，实际需要精确映射
+                        Target.Position = UDim2.new(sat * math.cos(hue * 2 * math.pi) * 0.5 + 0.5, 0, -sat * math.sin(hue * 2 * math.pi) * 0.5 + 0.5, 0)
                         BrightnessHead.Position = UDim2.new(0.5, 0, 1 - val, 0)
                     end
 
@@ -1550,8 +1575,7 @@ function Library:CreateWindow(Config)
                         if dist > radius then
                             delta = delta.Unit * radius
                         end
-                        -- 计算角度和饱和度
-                        local angle = math.atan2(-delta.Y, delta.X)  -- 注意Y轴方向
+                        local angle = math.atan2(-delta.Y, delta.X)
                         if angle < 0 then angle = angle + 2 * math.pi end
                         hue = angle / (2 * math.pi)
                         sat = delta.Magnitude / radius
@@ -1641,7 +1665,7 @@ function Library:CreateWindow(Config)
                         end)
                     end
 
-                    -- 确认/取消
+                    -- 确认/取消点击事件
                     Confirm.MouseButton1Click:Connect(function()
                         PlaySound(Sounds.Click)
                         currentColor = tempColor
@@ -1649,10 +1673,8 @@ function Library:CreateWindow(Config)
                         CurrentColorBlock.BackgroundColor3 = currentColor
                         CurrentColorBlock.BackgroundTransparency = alpha
                         if callback then callback(currentColor, alpha) end
-                        -- 更新配置对象
                         ConfigObjects[pickerText].Value = currentColor
                         ConfigObjects[pickerText].Alpha = alpha
-                        -- 关闭
                         Tween(Canvas, {GroupTransparency = 1}, 0.2)
                         game.Debris:AddItem(Canvas, 0.3)
                     end)
@@ -1667,7 +1689,7 @@ function Library:CreateWindow(Config)
                     Tween(Canvas, {GroupTransparency = 0}, 0.2)
                 end
 
-                -- 返回控制方法（可选）
+                -- 返回控制方法
                 local self = {}
                 function self.UpdateText(newText)
                     Title.Text = newText
