@@ -847,230 +847,229 @@ function Library:CreateWindow(Config)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- ==================== 新版 Dropdown (旧布局 + maclib 核心功能) ====================
+            -- ========== 新 Dropdown (移植自 maclib) ==========
             child.Dropdown = function(_, dropText, options, callback)
-                local Selected = nil  -- 单选，存储当前选中项的文字
-                local OptionObjs = {} -- 存储选项按钮对象
+                local Dropped = false
+                local Selected = options[1] or ""  -- 默认选中第一个
 
-                -- 主按钮（背景容器）
+                -- 主框架
+                local Main = Instance.new("Frame")
+                Main.Size = UDim2.new(1, 0, 0, 35)
+                Main.BackgroundTransparency = 1
+                Main.Parent = contentContainer
+                Main.ClipsDescendants = true
+                Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(Main, "BackgroundColor3", "Top")
+
+                -- 边框
+                local Stroke = Instance.new("UIStroke")
+                Stroke.Thickness = 1
+                Stroke.Parent = Main
+                AddToRegistry(Stroke, "Color", "Stroke")
+
+                -- 点击按钮（覆盖整个Main）
                 local Btn = Instance.new("TextButton")
-                Btn.Size = UDim2.new(1, 0, 0, 35)
+                Btn.Size = UDim2.new(1, 0, 1, 0)
+                Btn.BackgroundTransparency = 1
                 Btn.Text = ""
-                Btn.Parent = contentContainer
-                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(Btn, "BackgroundColor3", "Top")
+                Btn.Parent = Main
+                Btn.ZIndex = 2
 
-                -- 标签（显示当前选中项）
+                -- 文本标签
                 local Lbl = Instance.new("TextLabel")
-                Lbl.Text = dropText .. "..."
+                Lbl.Text = dropText .. ": " .. tostring(Selected)
                 Lbl.Size = UDim2.new(1, -30, 1, 0)
                 Lbl.Position = UDim2.new(0, 10, 0, 0)
                 Lbl.BackgroundTransparency = 1
                 Lbl.Font = Enum.Font.Gotham
                 Lbl.TextSize = 14
                 Lbl.TextXAlignment = Enum.TextXAlignment.Left
-                Lbl.Parent = Btn
+                Lbl.Parent = Main
                 AddToRegistry(Lbl, "TextColor3", "Text")
 
-                -- 箭头图标（使用原图标）
+                -- 箭头图标
                 local Icon = Instance.new("ImageLabel")
-                Icon.Image = "rbxassetid://6031091004"
-                Icon.Size = UDim2.new(0, 20, 0, 20)
-                Icon.Position = UDim2.new(1, -30, 0.5, -10)
+                Icon.Size = UDim2.new(0, 15, 0, 15)
+                Icon.Position = UDim2.new(1, -20, 0.5, -7.5)
                 Icon.BackgroundTransparency = 1
-                Icon.Parent = Btn
+                Icon.Image = "rbxassetid://10709791437"  -- 箭头 asset
+                Icon.ImageTransparency = 0.5
+                Icon.Parent = Main
                 AddToRegistry(Icon, "ImageColor3", "Text")
 
-                -- 选项容器（独立，位于主按钮下方）
+                -- 下拉列表容器
                 local Container = Instance.new("Frame")
                 Container.Size = UDim2.new(1, 0, 0, 0)
-                Container.Visible = false
+                Container.Position = UDim2.new(0, 0, 0, 35)
+                Container.BackgroundTransparency = 1
                 Container.ClipsDescendants = true
-                Container.Parent = contentContainer
-                Container.ZIndex = 10
-                Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(Container, "BackgroundColor3", "Top")
+                Container.Visible = false
+                Container.Parent = Main
+                Container.ZIndex = 3
 
+                -- 选项列表布局
                 local List = Instance.new("UIListLayout")
                 List.Padding = UDim.new(0, 5)
                 List.SortOrder = Enum.SortOrder.LayoutOrder
                 List.Parent = Container
 
-                -- 刷新选项列表
-                local function RefreshOptions(newOpts)
-                    -- 清除旧选项
-                    for _, obj in pairs(OptionObjs) do
-                        obj.Button:Destroy()
-                    end
-                    OptionObjs = {}
-                    Selected = nil
-                    Lbl.Text = dropText .. "..."
+                -- 存储选项按钮的引用
+                local OptionButtons = {}
 
-                    -- 创建新选项
-                    for _, optText in ipairs(newOpts) do
+                -- 计算列表总高度
+                local function GetListHeight()
+                    local count = 0
+                    for _, btn in pairs(OptionButtons) do
+                        if btn.Visible then
+                            count = count + 1
+                        end
+                    end
+                    if count == 0 then return 0 end
+                    return count * 30 + (count - 1) * 5
+                end
+
+                -- 更新所有选项的选中状态
+                local function UpdateSelection()
+                    for _, btn in pairs(OptionButtons) do
+                        local isSelected = (btn.Text == Selected)
+                        if btn.Check then
+                            btn.Check.TextTransparency = isSelected and 0 or 1
+                        end
+                        if btn.Label then
+                            btn.Label.TextTransparency = isSelected and 0.2 or 0.5
+                        end
+                    end
+                end
+
+                -- 创建选项按钮
+                local function RefreshOptions(newOptions)
+                    -- 清除现有选项
+                    for _, btn in pairs(OptionButtons) do
+                        btn:Destroy()
+                    end
+                    OptionButtons = {}
+
+                    for _, opt in ipairs(newOptions) do
                         local OptBtn = Instance.new("TextButton")
                         OptBtn.Size = UDim2.new(1, 0, 0, 30)
-                        OptBtn.Text = ""
                         OptBtn.BackgroundTransparency = 1
+                        OptBtn.Text = ""
                         OptBtn.Parent = Container
+                        OptBtn.ZIndex = 4
 
-                        -- 内部水平布局
-                        local OptLayout = Instance.new("UIListLayout")
-                        OptLayout.FillDirection = Enum.FillDirection.Horizontal
-                        OptLayout.Padding = UDim.new(0, 10)
-                        OptLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-                        OptLayout.Parent = OptBtn
+                        -- 复选框（文本）
+                        local Check = Instance.new("TextLabel")
+                        Check.Text = "✓"
+                        Check.Size = UDim2.new(0, 20, 1, 0)
+                        Check.Position = UDim2.new(0, 5, 0, 0)
+                        Check.BackgroundTransparency = 1
+                        Check.Font = Enum.Font.GothamBold
+                        Check.TextSize = 14
+                        Check.TextTransparency = 1  -- 默认隐藏
+                        Check.TextXAlignment = Enum.TextXAlignment.Left
+                        Check.Parent = OptBtn
+                        AddToRegistry(Check, "TextColor3", "Text")
 
-                        -- 勾选标记（初始隐藏）
-                        local Checkmark = Instance.new("TextLabel")
-                        Checkmark.Text = "✓"
-                        Checkmark.Font = Enum.Font.GothamBold
-                        Checkmark.TextSize = 13
-                        Checkmark.TextTransparency = 1
-                        Checkmark.Size = UDim2.fromOffset(-10, 0) -- 隐藏
-                        Checkmark.BackgroundTransparency = 1
-                        Checkmark.Parent = OptBtn
-                        AddToRegistry(Checkmark, "TextColor3", "Text")
+                        -- 选项文本
+                        local OptLabel = Instance.new("TextLabel")
+                        OptLabel.Text = opt
+                        OptLabel.Size = UDim2.new(1, -25, 1, 0)
+                        OptLabel.Position = UDim2.new(0, 25, 0, 0)
+                        OptLabel.BackgroundTransparency = 1
+                        OptLabel.Font = Enum.Font.Gotham
+                        OptLabel.TextSize = 14
+                        OptLabel.TextXAlignment = Enum.TextXAlignment.Left
+                        OptLabel.Parent = OptBtn
+                        AddToRegistry(OptLabel, "TextColor3", "Text")
 
-                        -- 选项名称
-                        local NameLabel = Instance.new("TextLabel")
-                        NameLabel.Text = optText
-                        NameLabel.Font = Enum.Font.Gotham
-                        NameLabel.TextSize = 13
-                        NameLabel.TextXAlignment = Enum.TextXAlignment.Left
-                        NameLabel.BackgroundTransparency = 1
-                        NameLabel.Size = UDim2.new(1, -25, 1, 0)
-                        NameLabel.Parent = OptBtn
-                        AddToRegistry(NameLabel, "TextColor3", "Text")
-                        NameLabel.TextTransparency = 0.5
-
-                        -- 存储对象
-                        OptionObjs[optText] = {
-                            Button = OptBtn,
-                            Checkmark = Checkmark,
-                            NameLabel = NameLabel
-                        }
+                        -- 存储引用
+                        OptBtn.Check = Check
+                        OptBtn.Label = OptLabel
+                        OptBtn.Text = opt  -- 存储选项文本以便比较
 
                         -- 点击事件
                         OptBtn.MouseButton1Click:Connect(function()
                             PlaySound(Sounds.Click)
-
-                            -- 如果已选中同一项，且不是必需的，可以取消选中（这里实现简单的单选，不可取消）
-                            if Selected == optText then
-                                -- 可选：不允许取消，或者允许取消（这里保持选中，不做取消）
-                                return
+                            Selected = opt
+                            Lbl.Text = dropText .. ": " .. tostring(Selected)
+                            UpdateSelection()
+                            -- 关闭下拉
+                            if Dropped then
+                                Dropped = false
+                                local targetHeight = 35
+                                Tween(Main, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
+                                Tween(Icon, {Rotation = 0}, 0.2)
+                                task.wait(0.2)
+                                Container.Visible = false
                             end
-
-                            -- 清除其他选项的选中状态
-                            for name, obj in pairs(OptionObjs) do
-                                if name ~= optText then
-                                    Tween(obj.Checkmark, {Size = UDim2.fromOffset(-10, 0)}, 0.2)
-                                    Tween(obj.NameLabel, {TextTransparency = 0.5}, 0.2)
-                                    obj.Checkmark.TextTransparency = 1
-                                end
-                            end
-
-                            -- 选中当前选项
-                            Selected = optText
-                            Tween(OptionObjs[optText].Checkmark, {Size = UDim2.fromOffset(12, 0)}, 0.2)
-                            Tween(OptionObjs[optText].NameLabel, {TextTransparency = 0.2}, 0.2)
-                            OptionObjs[optText].Checkmark.TextTransparency = 0
-
-                            -- 更新主标签
-                            Lbl.Text = dropText .. ": " .. optText
-
-                            -- 更新配置对象
-                            ConfigObjects[dropText].Value = optText
-
                             -- 回调
-                            callback(optText)
+                            if callback then
+                                callback(opt)
+                            end
+                            -- 更新配置
+                            if ConfigObjects[dropText] then
+                                ConfigObjects[dropText].Value = opt
+                            end
+                            Window:Notification(dropText .. ": " .. tostring(opt))
                         end)
+
+                        table.insert(OptionButtons, OptBtn)
                     end
 
-                    -- 如果有选项且未选中任何项，默认选中第一个（可选）
-                    if #newOpts > 0 and not Selected then
-                        -- 触发第一个选项的点击事件（但不要造成递归）
-                        local firstOpt = newOpts[1]
-                        local obj = OptionObjs[firstOpt]
-                        if obj then
-                            Selected = firstOpt
-                            obj.Checkmark.Size = UDim2.fromOffset(12, 0)
-                            obj.Checkmark.TextTransparency = 0
-                            obj.NameLabel.TextTransparency = 0.2
-                            Lbl.Text = dropText .. ": " .. firstOpt
-                            ConfigObjects[dropText].Value = firstOpt
-                            -- 不触发callback，因为默认值应由外部设置
-                        end
-                    end
+                    -- 更新当前选中状态
+                    UpdateSelection()
                 end
 
                 -- 初始化选项
                 RefreshOptions(options)
 
-                -- 展开/折叠状态
-                local Dropped = false
-
-                -- 计算容器目标高度
-                local function getTargetHeight()
-                    local count = 0
-                    for _ in pairs(OptionObjs) do
-                        count = count + 1
-                    end
-                    return count * 30 + (count - 1) * List.Padding.Offset
-                end
-
-                -- 点击主按钮切换
+                -- 按钮点击切换下拉
                 Btn.MouseButton1Click:Connect(function()
-                    Dropped = not Dropped
                     PlaySound(Sounds.Click)
-
+                    Dropped = not Dropped
                     if Dropped then
                         Container.Visible = true
-                        local targetHeight = getTargetHeight()
-                        Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.3)
+                        local targetHeight = 35 + GetListHeight()
+                        Tween(Main, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.3)
                         Tween(Icon, {Rotation = 180}, 0.3)
-                        -- 等待动画完成后更新Section高度
-                        task.wait(0.3)
-                        updateSectionHeight(false)
                     else
-                        Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
+                        Tween(Main, {Size = UDim2.new(1, 0, 0, 35)}, 0.2)
                         Tween(Icon, {Rotation = 0}, 0.2)
                         task.wait(0.2)
                         Container.Visible = false
-                        updateSectionHeight(false)
                     end
                 end)
 
-                -- 注册配置对象
+                -- 注册配置
                 ConfigObjects[dropText] = {
                     Type = "Dropdown",
                     Value = Selected,
                     Set = function(val)
-                        -- val 应为选项文字
-                        if OptionObjs[val] then
-                            -- 触发选中（但不通过点击，直接更新状态）
-                            for name, obj in pairs(OptionObjs) do
-                                if name == val then
-                                    Selected = val
-                                    Tween(obj.Checkmark, {Size = UDim2.fromOffset(12, 0)}, 0.2)
-                                    Tween(obj.NameLabel, {TextTransparency = 0.2}, 0.2)
-                                    obj.Checkmark.TextTransparency = 0
-                                    Lbl.Text = dropText .. ": " .. val
-                                else
-                                    Tween(obj.Checkmark, {Size = UDim2.fromOffset(-10, 0)}, 0.2)
-                                    Tween(obj.NameLabel, {TextTransparency = 0.5}, 0.2)
-                                    obj.Checkmark.TextTransparency = 1
-                                end
+                        for _, btn in pairs(OptionButtons) do
+                            if btn.Text == val then
+                                Selected = val
+                                Lbl.Text = dropText .. ": " .. tostring(Selected)
+                                UpdateSelection()
+                                if callback then callback(val) end
+                                break
                             end
-                            callback(val)
                         end
                     end,
                     Refresh = RefreshOptions
                 }
 
-                -- 返回控制表
-                return {Refresh = RefreshOptions}
+                -- 返回外部方法
+                local self = {}
+                function self.Refresh(newOptions)
+                    RefreshOptions(newOptions)
+                    if Dropped then
+                        local targetHeight = 35 + GetListHeight()
+                        Tween(Main, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
+                    end
+                end
+                return self
             end
+            -- ========== 结束 Dropdown ==========
 
             -- Keybind
             child.Keybind = function(_, keyText, default, callback)
