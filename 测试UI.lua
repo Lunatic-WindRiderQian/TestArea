@@ -940,15 +940,19 @@ function Library:CreateWindow(Config)
                 return {Refresh = RefreshOptions}
             end
 
-            -- Keybind
+            -- Keybind (替换为 maclib 风格的 Keybind)
             child.Keybind = function(_, keyText, default, callback)
                 local Key = default or Enum.KeyCode.M
+
+                -- 主容器（保留原背景）
                 local Btn = Instance.new("TextButton")
                 Btn.Size = UDim2.new(1, 0, 0, 40)
                 Btn.Text = ""
                 Btn.Parent = contentContainer
                 Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Btn, "BackgroundColor3", "Top")
+
+                -- 左侧标题
                 local Title = Instance.new("TextLabel")
                 Title.Text = keyText
                 Title.Size = UDim2.new(0.6, 0, 1, 0)
@@ -959,32 +963,94 @@ function Library:CreateWindow(Config)
                 Title.TextXAlignment = Enum.TextXAlignment.Left
                 Title.Parent = Btn
                 AddToRegistry(Title, "TextColor3", "Text")
-                local KeyLabel = Instance.new("TextLabel")
-                KeyLabel.Text = Key.Name
-                KeyLabel.Size = UDim2.new(0, 80, 0, 24)
-                KeyLabel.Position = UDim2.new(1, -90, 0.5, -12)
-                KeyLabel.Font = Enum.Font.GothamBold
-                KeyLabel.TextSize = 13
-                KeyLabel.Parent = Btn
-                Instance.new("UICorner", KeyLabel).CornerRadius = UDim.new(0, 5)
-                AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
-                AddToRegistry(KeyLabel, "TextColor3", "Accent")
 
+                -- 右侧绑定框（模仿 maclib 的 TextBox）
+                local BinderBox = Instance.new("TextBox")
+                BinderBox.Name = "BinderBox"
+                BinderBox.Font = Enum.Font.GothamBold
+                BinderBox.Text = Key.Name
+                BinderBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                BinderBox.TextSize = 13
+                BinderBox.TextTransparency = 0.1
+                BinderBox.PlaceholderText = "..."
+                BinderBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                BinderBox.BackgroundTransparency = 0.95
+                BinderBox.BorderSizePixel = 0
+                BinderBox.Size = UDim2.new(0, 80, 0, 24)
+                BinderBox.Position = UDim2.new(1, -90, 0.5, -12)
+                BinderBox.Parent = Btn
+                Instance.new("UICorner", BinderBox).CornerRadius = UDim.new(0, 5)
+                AddToRegistry(BinderBox, "BackgroundColor3", "Main")
+                AddToRegistry(BinderBox, "TextColor3", "Accent")
+
+                -- 绑定状态控制
+                local isBinding = false
+                local focused = false
+
+                -- 点击按钮时聚焦输入框，进入绑定模式
                 Btn.MouseButton1Click:Connect(function()
                     PlaySound(Sounds.Click)
-                    KeyLabel.Text = "..."
-                    local input = UserInputService.InputBegan:Wait()
-                    if input.KeyCode.Name ~= "Unknown" then
-                        Key = input.KeyCode
-                        KeyLabel.Text = Key.Name
-                        ConfigObjects[keyText] = {Type = "Keybind", Value = Key.Name}
-                        callback(Key)
-                        Window:Notification("Keybind: "..Key.Name)
-                    else
-                        KeyLabel.Text = Key.Name
+                    BinderBox:CaptureFocus()
+                end)
+
+                -- 聚焦时进入绑定模式
+                BinderBox.Focused:Connect(function()
+                    focused = true
+                    isBinding = true
+                    BinderBox.Text = ""
+                    BinderBox.PlaceholderText = "..."
+                end)
+
+                -- 失去焦点时退出绑定模式，恢复显示当前键
+                BinderBox.FocusLost:Connect(function()
+                    focused = false
+                    isBinding = false
+                    BinderBox.Text = Key.Name
+                    BinderBox.PlaceholderText = ""
+                end)
+
+                -- 监听输入进行绑定
+                UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                    if gameProcessed then return end
+                    if focused and isBinding then
+                        local newKey
+                        if input.UserInputType == Enum.UserInputType.Keyboard then
+                            newKey = input.KeyCode
+                        elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
+                            newKey = input.UserInputType
+                        end
+                        if newKey and newKey.Name ~ = "Unknown" then
+                            Key = newKey
+                            BinderBox.Text = Key.Name
+                            callback(Key)
+                            Window:Notification("Keybind: " .. Key.Name)
+                            -- 更新配置对象
+                            ConfigObjects[keyText].Value = Key.Name
+                        end
+                        BinderBox:ReleaseFocus()  -- 退出绑定模式
                     end
                 end)
-                ConfigObjects[keyText] = {Type = "Keybind", Value = Key.Name, Set = function(val) Key = Enum.KeyCode[val] or Key; KeyLabel.Text = Key.Name; callback(Key) end}
+
+                -- 注册配置对象
+                ConfigObjects[keyText] = {
+                    Type = "Keybind",
+                    Value = Key.Name,
+                    Set = function(val)
+                        Key = Enum.KeyCode[val] or Key
+                        BinderBox.Text = Key.Name
+                        callback(Key)
+                    end
+                }
+
+                -- 返回控制方法（保持与其他组件一致）
+                local self = {}
+                function self.UpdateText(newText)
+                    Title.Text = newText
+                end
+                function self.SetVisible(state)
+                    Btn.Visible = state
+                end
+                return self
             end
 
             -- Value (文本输入)
