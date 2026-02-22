@@ -1052,46 +1052,135 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- Value (文本输入)
-            child.Value = function(_, valText, default, callback)
-                local ValFrame = Instance.new("Frame")
-                ValFrame.Size = UDim2.new(1,0,0,35)
-                ValFrame.Parent = contentContainer
-                Instance.new("UICorner", ValFrame).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(ValFrame, "BackgroundColor3", "Top")
+            -- ==================== 替换 Value 为 Input (maclib 风格) ====================
+            child.Input = function(_, inputText, default, callback, options)
+                options = options or {}
+                local placeholder = options.placeholder or ""
+                local acceptedCharacters = options.acceptedCharacters or "All"
+                local characterLimit = options.characterLimit
+                local onChanged = options.onChanged
 
+                -- 主容器（保留原背景）
+                local InputFrame = Instance.new("Frame")
+                InputFrame.Size = UDim2.new(1, 0, 0, 35)
+                InputFrame.Parent = contentContainer
+                Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(InputFrame, "BackgroundColor3", "Top")
+
+                -- 标签（左对齐）
                 local NameLbl = Instance.new("TextLabel")
-                NameLbl.Text = valText
+                NameLbl.Text = inputText
                 NameLbl.Size = UDim2.new(0.6, 0, 1, 0)
                 NameLbl.Position = UDim2.new(0, 10, 0, 0)
                 NameLbl.TextXAlignment = Enum.TextXAlignment.Left
                 NameLbl.Font = Enum.Font.Gotham
                 NameLbl.TextSize = 14
                 NameLbl.BackgroundTransparency = 1
-                NameLbl.Parent = ValFrame
+                NameLbl.Parent = InputFrame
                 AddToRegistry(NameLbl, "TextColor3", "Text")
 
-                local ValBox = Instance.new("TextBox")
-                ValBox.Text = tostring(default)
-                ValBox.Size = UDim2.new(0.3, 0, 0, 26)
-                ValBox.Position = UDim2.new(0.7, -10, 0.5, -13)
-                ValBox.Font = Enum.Font.GothamBold
-                ValBox.TextSize = 13
-                ValBox.TextXAlignment = Enum.TextXAlignment.Center
-                ValBox.Parent = ValFrame
-                Instance.new("UICorner", ValBox).CornerRadius = UDim.new(0, 5)
-                AddToRegistry(ValBox, "BackgroundColor3", "Main")
-                AddToRegistry(ValBox, "TextColor3", "Accent")
+                -- 文本框（右侧）
+                local InputBox = Instance.new("TextBox")
+                InputBox.Text = tostring(default or "")
+                InputBox.PlaceholderText = placeholder
+                InputBox.Size = UDim2.new(0.3, 0, 0, 26)
+                InputBox.Position = UDim2.new(0.7, -10, 0.5, -13)
+                InputBox.Font = Enum.Font.GothamBold
+                InputBox.TextSize = 13
+                InputBox.TextXAlignment = Enum.TextXAlignment.Center
+                InputBox.ClearTextOnFocus = false
+                InputBox.Parent = InputFrame
 
-                ValBox.FocusLost:Connect(function()
-                    PlaySound(Sounds.Click)
-                    ConfigObjects[valText] = {Type = "Value", Value = ValBox.Text}
-                    if callback then callback(ValBox.Text) end
-                    Window:Notification(valText..": "..ValBox.Text)
+                -- 圆角
+                local boxCorner = Instance.new("UICorner")
+                boxCorner.CornerRadius = UDim.new(0, 5)
+                boxCorner.Parent = InputBox
+
+                -- 注册背景和文字颜色
+                AddToRegistry(InputBox, "BackgroundColor3", "Main")
+                AddToRegistry(InputBox, "TextColor3", "Accent")
+
+                -- 边框（仿 maclib）
+                local boxStroke = Instance.new("UIStroke")
+                boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                boxStroke.Color = Color3.fromRGB(255, 255, 255)
+                boxStroke.Transparency = 0.9
+                boxStroke.Parent = InputBox
+
+                -- 字符过滤函数
+                local function filterText(text)
+                    -- 先应用字符限制
+                    if characterLimit then
+                        text = text:sub(1, characterLimit)
+                    end
+                    -- 根据 acceptedCharacters 过滤
+                    if type(acceptedCharacters) == "function" then
+                        return acceptedCharacters(text)
+                    elseif acceptedCharacters == "Numeric" then
+                        -- 允许数字和可选负号（仅开头）
+                        return text:gsub("[^%d-]", ""):gsub("-(.*)", function(m) return m:gsub("-", "") end) -- 简单处理，仅保留一个负号
+                    elseif acceptedCharacters == "Alphabetic" then
+                        return text:gsub("[^a-zA-Z]", "")
+                    elseif acceptedCharacters == "AlphaNumeric" then
+                        return text:gsub("[^a-zA-Z0-9]", "")
+                    else -- "All" 或其他
+                        return text
+                    end
+                end
+
+                -- 实时过滤
+                InputBox:GetPropertyChangedSignal("Text"):Connect(function()
+                    local filtered = filterText(InputBox.Text)
+                    if filtered ~= InputBox.Text then
+                        InputBox.Text = filtered
+                    end
+                    if onChanged then
+                        onChanged(filtered)
+                    end
                 end)
 
-                ConfigObjects[valText] = {Type = "Value", Value = default, Set = function(val) ValBox.Text = val end}
+                -- 焦点丢失回调
+                InputBox.FocusLost:Connect(function(enterPressed)
+                    local text = InputBox.Text
+                    -- 过滤（确保最终文本符合规则）
+                    local filtered = filterText(text)
+                    if filtered ~= text then
+                        InputBox.Text = filtered
+                        text = filtered
+                    end
+                    -- 调用回调
+                    if callback then
+                        callback(text)
+                    end
+                end)
+
+                -- 注册配置对象
+                ConfigObjects[inputText] = {
+                    Type = "Input",
+                    Value = InputBox.Text,
+                    Set = function(val)
+                        InputBox.Text = tostring(val)
+                    end
+                }
+
+                -- 返回控制方法（可选）
+                local self = {}
+                function self.UpdateText(newText)
+                    InputBox.Text = tostring(newText)
+                    ConfigObjects[inputText].Value = InputBox.Text
+                end
+                function self.GetText()
+                    return InputBox.Text
+                end
+                function self.SetVisible(state)
+                    InputFrame.Visible = state
+                end
+                function self.UpdatePlaceholder(newPlaceholder)
+                    InputBox.PlaceholderText = newPlaceholder
+                end
+                return self
             end
+            -- ==========================================================================
 
             return child
         end
