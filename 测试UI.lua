@@ -940,7 +940,7 @@ function Library:CreateWindow(Config)
                 return {Refresh = RefreshOptions}
             end
 
-            -- Keybind (替换为 maclib 风格的 Keybind)
+            -- Keybind (替换为 maclib 风格的 Keybind，背景更明显)
             child.Keybind = function(_, keyText, default, callback)
                 local Key = default or Enum.KeyCode.M
 
@@ -964,7 +964,7 @@ function Library:CreateWindow(Config)
                 Title.Parent = Btn
                 AddToRegistry(Title, "TextColor3", "Text")
 
-                -- 右侧绑定框（模仿 maclib 的 TextBox）
+                -- 右侧绑定框（模仿 maclib 的 TextBox，背景使用主题 Main 并降低透明度使其更明显）
                 local BinderBox = Instance.new("TextBox")
                 BinderBox.Name = "BinderBox"
                 BinderBox.Font = Enum.Font.GothamBold
@@ -973,14 +973,13 @@ function Library:CreateWindow(Config)
                 BinderBox.TextSize = 13
                 BinderBox.TextTransparency = 0.1
                 BinderBox.PlaceholderText = "..."
-                BinderBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                BinderBox.BackgroundTransparency = 0.95
+                BinderBox.BackgroundTransparency = 0.2  -- 降低透明度，使背景更明显
                 BinderBox.BorderSizePixel = 0
                 BinderBox.Size = UDim2.new(0, 80, 0, 24)
                 BinderBox.Position = UDim2.new(1, -90, 0.5, -12)
                 BinderBox.Parent = Btn
                 Instance.new("UICorner", BinderBox).CornerRadius = UDim.new(0, 5)
-                AddToRegistry(BinderBox, "BackgroundColor3", "Main")
+                AddToRegistry(BinderBox, "BackgroundColor3", "Main")  -- 背景色跟随主题 Main
                 AddToRegistry(BinderBox, "TextColor3", "Accent")
 
                 -- 绑定状态控制
