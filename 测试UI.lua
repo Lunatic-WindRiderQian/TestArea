@@ -1019,7 +1019,7 @@ function Library:CreateWindow(Config)
                         elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
                             newKey = input.UserInputType
                         end
-                        if newKey and newKey.Name ~ = "Unknown" then
+                        if newKey and newKey.Name ~= "Unknown" then
                             Key = newKey
                             BinderBox.Text = Key.Name
                             callback(Key)
