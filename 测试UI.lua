@@ -1279,18 +1279,27 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- 颜色选择器弹窗创建函数（内部使用）
+            -- 颜色选择器弹窗创建函数（内部使用，已修复点击问题）
             local function CreateColorPickerPopup(title, initialColor, callback, parentGui, window)
-                -- 创建遮罩层（防止点击外部）
-                local Overlay = Instance.new("TextButton")
+                -- 遮罩层（Frame，不接收点击）
+                local Overlay = Instance.new("Frame")
                 Overlay.Size = UDim2.new(1, 0, 1, 0)
                 Overlay.BackgroundTransparency = 0.5
                 Overlay.BackgroundColor3 = Color3.new(0, 0, 0)
-                Overlay.Text = ""
                 Overlay.Parent = parentGui
                 Overlay.ZIndex = 200
-                Overlay.AutoButtonColor = false
-                Overlay.Modal = true  -- 阻止点击穿透
+
+                -- 独立的关闭区域（全屏透明按钮）
+                local CloseArea = Instance.new("TextButton")
+                CloseArea.Size = UDim2.new(1, 0, 1, 0)
+                CloseArea.BackgroundTransparency = 1
+                CloseArea.Text = ""
+                CloseArea.Parent = Overlay
+                CloseArea.ZIndex = 201
+                CloseArea.MouseButton1Click:Connect(function()
+                    PlaySound(Sounds.Click)
+                    Overlay:Destroy()
+                end)
 
                 -- 颜色选择器主窗口
                 local PickerFrame = Instance.new("Frame")
@@ -1298,7 +1307,7 @@ function Library:CreateWindow(Config)
                 PickerFrame.Position = UDim2.new(0.5, -160, 0.5, -140)
                 PickerFrame.BackgroundTransparency = 0
                 PickerFrame.Parent = Overlay
-                PickerFrame.ZIndex = 201
+                PickerFrame.ZIndex = 202
                 AddToRegistry(PickerFrame, "BackgroundColor3", "Top")
                 Instance.new("UICorner", PickerFrame).CornerRadius = UDim.new(0, 8)
 
@@ -1329,7 +1338,7 @@ function Library:CreateWindow(Config)
                 CloseBtn.TextColor3 = Color3.fromRGB(255, 60, 60)
                 CloseBtn.TextSize = 18
                 CloseBtn.Parent = PickerFrame
-                CloseBtn.ZIndex = 202
+                CloseBtn.ZIndex = 203
                 CloseBtn.MouseButton1Click:Connect(function()
                     PlaySound(Sounds.Click)
                     Overlay:Destroy()
@@ -1344,7 +1353,7 @@ function Library:CreateWindow(Config)
                 SatVibMap.BackgroundColor3 = Color3.fromHSV(Color3.toHSV(initialColor))
                 SatVibMap.BackgroundTransparency = 0
                 SatVibMap.Parent = PickerFrame
-                SatVibMap.ZIndex = 202
+                SatVibMap.ZIndex = 203
                 Instance.new("UICorner", SatVibMap).CornerRadius = UDim.new(0, 4)
 
                 -- HSV 光标
@@ -1353,7 +1362,7 @@ function Library:CreateWindow(Config)
                 SatCursor.AnchorPoint = Vector2.new(0.5, 0.5)
                 SatCursor.BackgroundTransparency = 1
                 SatCursor.Image = "rbxassetid://4805639000"  -- 圆形光标
-                SatCursor.ZIndex = 203
+                SatCursor.ZIndex = 204
                 SatCursor.Parent = SatVibMap
                 -- 根据初始颜色设置光标位置
                 local h, s, v = Color3.toHSV(initialColor)
@@ -1364,7 +1373,7 @@ function Library:CreateWindow(Config)
                 HueSlider.Size = UDim2.fromOffset(14, 140)
                 HueSlider.Position = UDim2.fromOffset(175, 40)
                 HueSlider.Parent = PickerFrame
-                HueSlider.ZIndex = 202
+                HueSlider.ZIndex = 203
                 Instance.new("UICorner", HueSlider).CornerRadius = UDim.new(1, 0)
 
                 -- 色相渐变
@@ -1382,7 +1391,7 @@ function Library:CreateWindow(Config)
                 HueDrag.Size = UDim2.fromOffset(14, 14)
                 HueDrag.Image = "rbxassetid://12266946128"  -- 滑块图标
                 HueDrag.Parent = HueSlider
-                HueDrag.ZIndex = 203
+                HueDrag.ZIndex = 204
                 HueDrag.Position = UDim2.new(0, 0, h, -7)  -- 根据色相定位
 
                 -- RGB 输入区域
@@ -1391,7 +1400,7 @@ function Library:CreateWindow(Config)
                 RGBFrame.Position = UDim2.fromOffset(200, 40)
                 RGBFrame.BackgroundTransparency = 1
                 RGBFrame.Parent = PickerFrame
-                RGBFrame.ZIndex = 202
+                RGBFrame.ZIndex = 203
 
                 -- 辅助函数：创建带标签的输入框
                 local function createInput(label, default, yPos)
@@ -1440,7 +1449,7 @@ function Library:CreateWindow(Config)
                 PreviewOld.Position = UDim2.new(0, 15, 0, 190)
                 PreviewOld.BackgroundColor3 = initialColor
                 PreviewOld.Parent = PickerFrame
-                PreviewOld.ZIndex = 202
+                PreviewOld.ZIndex = 203
                 Instance.new("UICorner", PreviewOld).CornerRadius = UDim.new(0, 4)
 
                 local PreviewNew = Instance.new("Frame")
@@ -1448,7 +1457,7 @@ function Library:CreateWindow(Config)
                 PreviewNew.Position = UDim2.new(0.5, 5, 0, 190)
                 PreviewNew.BackgroundColor3 = initialColor
                 PreviewNew.Parent = PickerFrame
-                PreviewNew.ZIndex = 202
+                PreviewNew.ZIndex = 203
                 Instance.new("UICorner", PreviewNew).CornerRadius = UDim.new(0, 4)
 
                 -- 确定 / 取消按钮
@@ -1461,7 +1470,7 @@ function Library:CreateWindow(Config)
                 ConfirmBtn.Font = Enum.Font.GothamBold
                 ConfirmBtn.TextSize = 14
                 ConfirmBtn.Parent = PickerFrame
-                ConfirmBtn.ZIndex = 202
+                ConfirmBtn.ZIndex = 204
                 Instance.new("UICorner", ConfirmBtn).CornerRadius = UDim.new(0, 4)
 
                 local CancelBtn = Instance.new("TextButton")
@@ -1473,7 +1482,7 @@ function Library:CreateWindow(Config)
                 CancelBtn.Font = Enum.Font.GothamBold
                 CancelBtn.TextSize = 14
                 CancelBtn.Parent = PickerFrame
-                CancelBtn.ZIndex = 202
+                CancelBtn.ZIndex = 204
                 Instance.new("UICorner", CancelBtn).CornerRadius = UDim.new(0, 4)
 
                 -- 状态变量
@@ -1621,11 +1630,6 @@ function Library:CreateWindow(Config)
                 -- 取消按钮
                 CancelBtn.MouseButton1Click:Connect(function()
                     PlaySound(Sounds.Click)
-                    Overlay:Destroy()
-                end)
-
-                -- 点击遮罩关闭
-                Overlay.MouseButton1Click:Connect(function()
                     Overlay:Destroy()
                 end)
 
