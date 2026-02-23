@@ -1139,7 +1139,7 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- ==================== Colorpicker (移植自 maclib，点击整行打开) ====================
+            -- ==================== Colorpicker (移植自 maclib，尺寸优化，支持触屏) ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil  -- 是否启用透明度
@@ -1166,7 +1166,7 @@ function Library:CreateWindow(Config)
                 Title.Parent = Main
                 AddToRegistry(Title, "TextColor3", "Text")
 
-                -- 右侧颜色预览块（ImageLabel 即可，因为点击由 Main 处理）
+                -- 右侧颜色预览块
                 local PreviewBg = Instance.new("ImageLabel")
                 PreviewBg.Name = "ColorPreviewBg"
                 PreviewBg.Image = ColorPickerAssets.Grid
@@ -1190,7 +1190,7 @@ function Library:CreateWindow(Config)
                 PreviewColor.Parent = PreviewBg
                 Instance.new("UICorner", PreviewColor).CornerRadius = UDim.new(0, 6)
 
-                -- 边框（预览块边框跟随主题 Stroke）
+                -- 边框
                 local previewStroke = Instance.new("UIStroke")
                 previewStroke.Thickness = 1
                 previewStroke.Parent = PreviewBg
@@ -1221,14 +1221,14 @@ function Library:CreateWindow(Config)
                     overlay.Parent = canvas
                     canvas.GroupTransparency = 0  -- 渐显
 
-                    -- 选择器主框
+                    -- 选择器主框（宽度 380，高度自动）
                     prompt = Instance.new("Frame")
                     prompt.Name = "ColorPickerPrompt"
                     prompt.AnchorPoint = Vector2.new(0.5, 0.5)
                     prompt.Position = UDim2.new(0.5, 0, 0.5, 0)
-                    prompt.Size = UDim2.fromOffset(420, 0)
+                    prompt.Size = UDim2.fromOffset(380, 0)
                     prompt.AutomaticSize = Enum.AutomaticSize.Y
-                    prompt.BackgroundColor3 = CurrentTheme.Main  -- 使用主题 Main
+                    prompt.BackgroundColor3 = CurrentTheme.Main
                     prompt.BorderSizePixel = 0
                     prompt.Parent = canvas
 
@@ -1257,17 +1257,17 @@ function Library:CreateWindow(Config)
 
                     -- 颜色轮 + 输入区域（水平排列）
                     local wheelRow = Instance.new("Frame")
-                    wheelRow.Size = UDim2.new(1, 0, 0, 220)
+                    wheelRow.Size = UDim2.new(1, 0, 0, 200)  -- 高度调整为200以匹配颜色轮
                     wheelRow.BackgroundTransparency = 1
                     wheelRow.Parent = prompt
 
-                    -- 颜色轮
+                    -- 颜色轮（200x200）
                     local wheel = Instance.new("ImageButton")
                     wheel.Name = "ColorWheel"
                     wheel.Image = ColorPickerAssets.Wheel
                     wheel.AutoButtonColor = false
-                    wheel.Size = UDim2.fromOffset(220, 220)
-                    wheel.Position = UDim2.new(0, 0, 0.5, -110)
+                    wheel.Size = UDim2.fromOffset(200, 200)
+                    wheel.Position = UDim2.new(0, 0, 0.5, -100)
                     wheel.BackgroundTransparency = 1
                     wheel.Parent = wheelRow
 
@@ -1278,12 +1278,12 @@ function Library:CreateWindow(Config)
                     target.Size = UDim2.fromOffset(22, 22)
                     target.BackgroundTransparency = 1
                     target.Parent = wheel
-                    target.Position = UDim2.new(0.5, 0, 0.5, 0)  -- 初始居中
+                    target.Position = UDim2.new(0.5, 0, 0.5, 0)
 
-                    -- 右侧输入区域
+                    -- 右侧输入区域（宽度140）
                     local inputs = Instance.new("Frame")
-                    inputs.Size = UDim2.new(0, 160, 1, 0)
-                    inputs.Position = UDim2.new(1, -160, 0, 0)
+                    inputs.Size = UDim2.new(0, 140, 1, 0)
+                    inputs.Position = UDim2.new(1, -140, 0, 0)
                     inputs.BackgroundTransparency = 1
                     inputs.Parent = wheelRow
 
@@ -1300,7 +1300,7 @@ function Library:CreateWindow(Config)
                         row.Parent = inputs
 
                         local label = Instance.new("TextLabel")
-                        label.Size = UDim2.new(0, 40, 1, 0)
+                        label.Size = UDim2.new(0, 35, 1, 0)  -- 标签宽度35
                         label.Text = labelText
                         label.TextColor3 = CurrentTheme.Text
                         label.BackgroundTransparency = 1
@@ -1311,8 +1311,8 @@ function Library:CreateWindow(Config)
                         AddToRegistry(label, "TextColor3", "Text")
 
                         local box = Instance.new("TextBox")
-                        box.Size = UDim2.new(1, -45, 0, 25)
-                        box.Position = UDim2.new(0, 45, 0.5, -12.5)
+                        box.Size = UDim2.new(1, -40, 0, 25)
+                        box.Position = UDim2.new(0, 40, 0.5, -12.5)
                         box.Text = defaultText
                         box.TextColor3 = CurrentTheme.Accent
                         box.BackgroundColor3 = CurrentTheme.Main
@@ -1341,14 +1341,14 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块
+                    -- 亮度滑块（宽度适应）
                     local valueSliderRow = Instance.new("Frame")
                     valueSliderRow.Size = UDim2.new(1, 0, 0, 20)
                     valueSliderRow.BackgroundTransparency = 1
                     valueSliderRow.Parent = prompt
 
                     local valueLabel = Instance.new("TextLabel")
-                    valueLabel.Size = UDim2.new(0, 40, 1, 0)
+                    valueLabel.Size = UDim2.new(0, 35, 1, 0)
                     valueLabel.Text = "V"
                     valueLabel.TextColor3 = CurrentTheme.Text
                     valueLabel.BackgroundTransparency = 1
@@ -1359,8 +1359,8 @@ function Library:CreateWindow(Config)
                     AddToRegistry(valueLabel, "TextColor3", "Text")
 
                     local valueSlider = Instance.new("Frame")
-                    valueSlider.Size = UDim2.new(1, -50, 0, 10)
-                    valueSlider.Position = UDim2.new(0, 45, 0.5, -5)
+                    valueSlider.Size = UDim2.new(1, -45, 0, 10)  -- 减去标签宽度和间距
+                    valueSlider.Position = UDim2.new(0, 40, 0.5, -5)
                     valueSlider.BackgroundColor3 = Color3.new(1,1,1)
                     valueSlider.BackgroundTransparency = 0.2
                     valueSlider.Parent = valueSliderRow
@@ -1374,7 +1374,7 @@ function Library:CreateWindow(Config)
                     local valueThumb = Instance.new("Frame")
                     valueThumb.Size = UDim2.new(0, 12, 0, 12)
                     valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
-                    valueThumb.Position = UDim2.new(1, 0, 0.5, 0)  -- 初始最右（对应亮度1）
+                    valueThumb.Position = UDim2.new(1, 0, 0.5, 0)
                     valueThumb.BackgroundColor3 = Color3.new(1,1,1)
                     valueThumb.Parent = valueSlider
                     Instance.new("UICorner", valueThumb).CornerRadius = UDim.new(1,0)
@@ -1451,7 +1451,7 @@ function Library:CreateWindow(Config)
                     colorPickerGui = canvas
                     colorPickerFrame = prompt
 
-                    -- 颜色选择逻辑 (简化版，仅保留核心功能)
+                    -- 颜色选择逻辑
                     local hue, sat, val = Color3.toHSV(Color)
                     if not hue then hue = 0; sat = 0; val = 1 end
 
@@ -1467,24 +1467,24 @@ function Library:CreateWindow(Config)
                         hexBox.Text = string.format("#%02X%02X%02X", math.floor(c.R*255+0.5), math.floor(c.G*255+0.5), math.floor(c.B*255+0.5))
                     end
 
-                    -- 亮度滑块拖动
+                    -- 亮度滑块拖动（支持触屏）
                     local valueDragging = false
                     valueThumb.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                             valueDragging = true
                         end
                     end)
                     valueThumb.InputEnded:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                             valueDragging = false
                         end
                     end)
                     UserInputService.InputChanged:Connect(function(input)
-                        if valueDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                            local mouseX = input.Position.X
+                        if valueDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                            local pos = input.Position
                             local sliderPos = valueSlider.AbsolutePosition.X
                             local sliderWidth = valueSlider.AbsoluteSize.X
-                            local rel = math.clamp((mouseX - sliderPos) / sliderWidth, 0, 1)
+                            local rel = math.clamp((pos.X - sliderPos) / sliderWidth, 0, 1)
                             val = rel
                             valueThumb.Position = UDim2.new(rel, 0, 0.5, 0)
                             updateColorFromHSV()
@@ -1547,7 +1547,7 @@ function Library:CreateWindow(Config)
                     end)
 
                     overlay.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                             canvas:Destroy()
                             colorPickerOpen = false
                         end
