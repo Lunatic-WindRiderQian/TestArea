@@ -1139,14 +1139,14 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- ==================== Colorpicker (完全按照 maclib.lua 1:1 还原) ====================
+            -- ==================== Colorpicker (从 maclib.lua 完整移植) ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
                 local Color = default or Color3.new(1,1,1)
                 local Alpha = isAlpha and options.Alpha or 0
 
-                -- 主容器（与其他元素风格一致）
+                -- 主容器
                 local Main = Instance.new("TextButton")
                 Main.Size = UDim2.new(1, 0, 0, 35)
                 Main.Text = ""
@@ -1166,7 +1166,7 @@ function Library:CreateWindow(Config)
                 Title.Parent = Main
                 AddToRegistry(Title, "TextColor3", "Text")
 
-                -- 右侧颜色预览块
+                -- 右侧颜色预览
                 local PreviewBg = Instance.new("ImageLabel")
                 PreviewBg.Name = "ColorPreviewBg"
                 PreviewBg.Image = ColorPickerAssets.Grid
@@ -1195,10 +1195,8 @@ function Library:CreateWindow(Config)
                 previewStroke.Parent = PreviewBg
                 AddToRegistry(previewStroke, "Color", "Stroke")
 
-                -- 点击整行打开选择器
+                -- 点击打开选择器
                 local colorPickerOpen = false
-                local colorPickerGui, colorPickerFrame, prompt
-
                 local function openColorPicker()
                     if colorPickerOpen then return end
                     colorPickerOpen = true
@@ -1221,7 +1219,7 @@ function Library:CreateWindow(Config)
                     canvas.GroupTransparency = 0
 
                     -- 选择器主框
-                    prompt = Instance.new("Frame")
+                    local prompt = Instance.new("Frame")
                     prompt.Name = "ColorPickerPrompt"
                     prompt.AnchorPoint = Vector2.new(0.5, 0.5)
                     prompt.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -1240,7 +1238,7 @@ function Library:CreateWindow(Config)
                     promptStroke.Parent = prompt
                     AddToRegistry(promptStroke, "Color", "Stroke")
 
-                    -- 内部布局（与 maclib 完全一致）
+                    -- 内部布局
                     local list = Instance.new("UIListLayout")
                     list.Padding = UDim.new(0, 10)
                     list.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -1291,7 +1289,7 @@ function Library:CreateWindow(Config)
                     inputList.SortOrder = Enum.SortOrder.LayoutOrder
                     inputList.Parent = inputs
 
-                    -- 创建输入行（与 maclib 一致）
+                    -- 创建输入行
                     local function createInputRow(labelText, defaultText)
                         local row = Instance.new("Frame")
                         row.Size = UDim2.new(1, 0, 0, 30)
@@ -1340,7 +1338,7 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块（maclib 中称为 value）
+                    -- 亮度滑块
                     local valueSliderRow = Instance.new("Frame")
                     valueSliderRow.Size = UDim2.new(1, 0, 0, 20)
                     valueSliderRow.BackgroundTransparency = 1
@@ -1447,10 +1445,7 @@ function Library:CreateWindow(Config)
                     cancel.Parent = buttonRow
                     Instance.new("UICorner", cancel).CornerRadius = UDim.new(0,6)
 
-                    colorPickerGui = canvas
-                    colorPickerFrame = prompt
-
-                    -- 颜色选择逻辑（与 maclib 完全一致）
+                    -- 颜色选择逻辑
                     local hue, saturation, value = Color3.toHSV(Color)
                     if not hue then hue = 0; saturation = 0; value = 1 end
 
@@ -1571,7 +1566,7 @@ function Library:CreateWindow(Config)
                         end
                     end)
 
-                    -- 输入框焦点占位符处理（与 maclib 一致）
+                    -- 输入框焦点占位符处理
                     local function onFocusEnter(box)
                         local placeholder = box.Text
                         box.Text = ""
