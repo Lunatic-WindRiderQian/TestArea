@@ -1232,7 +1232,7 @@ function Library:CreateWindow(Config)
                 Lbl.Parent = Frame
                 AddToRegistry(Lbl, "TextColor3", "Text")
 
-                -- 颜色显示区域（网格背景 + 颜色块 + 边框）
+                -- 颜色显示区域（网格背景 + 深色备用背景）
                 local ColorBg = Instance.new("ImageLabel")
                 ColorBg.Name = "ColorBg"
                 ColorBg.Image = ColorPickerAssets.Grid
@@ -1240,7 +1240,7 @@ function Library:CreateWindow(Config)
                 ColorBg.TileSize = UDim2.fromOffset(500, 500)
                 ColorBg.Size = UDim2.new(0, 30, 0, 30)
                 ColorBg.Position = UDim2.new(1, -35, 0.5, -15)
-                ColorBg.BackgroundColor3 = Color3.fromRGB(80,80,80)  -- 备用颜色
+                ColorBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  -- 深色备用背景
                 ColorBg.BackgroundTransparency = 0
                 ColorBg.Parent = Frame
                 Instance.new("UICorner", ColorBg).CornerRadius = UDim.new(0, 6)
@@ -1255,14 +1255,14 @@ function Library:CreateWindow(Config)
                 ColorBlock.Parent = ColorBg
                 Instance.new("UICorner", ColorBlock).CornerRadius = UDim.new(0, 6)
 
-                -- 给颜色块添加一个半透明白色边框，使其在任何背景下可见
+                -- 高对比边框（白色，低透明度，确保在任何背景下可见）
                 local blockStroke = Instance.new("UIStroke")
                 blockStroke.Thickness = 1
-                blockStroke.Color = Color3.new(1,1,1)
-                blockStroke.Transparency = 0.5
+                blockStroke.Color = Color3.new(1, 1, 1)
+                blockStroke.Transparency = 0.2  -- 降低透明度，更显眼
                 blockStroke.Parent = ColorBlock
 
-                -- 边框美化
+                -- 外框装饰
                 local colorStroke = Instance.new("UIStroke")
                 colorStroke.Thickness = 1
                 colorStroke.Color = CurrentTheme.Stroke
@@ -1289,7 +1289,7 @@ function Library:CreateWindow(Config)
                 Btn.MouseButton1Click:Connect(function()
                     PlaySound(Sounds.Click)
 
-                    -- 创建遮罩和颜色选择器 (直接复制 maclib 结构)
+                    -- 创建遮罩和颜色选择器
                     local ColorPickerCanvas = Instance.new("CanvasGroup")
                     ColorPickerCanvas.Name = "ColorPickerCanvas"
                     ColorPickerCanvas.BackgroundTransparency = 1
