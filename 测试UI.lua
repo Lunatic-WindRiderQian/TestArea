@@ -1125,7 +1125,7 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- ==================== Colorpicker (移植自 maclib) ====================
+            -- ==================== Colorpicker (移植自 maclib，已修复点击) ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil  -- 是否启用透明度
@@ -1152,8 +1152,8 @@ function Library:CreateWindow(Config)
                 Title.Parent = Main
                 AddToRegistry(Title, "TextColor3", "Text")
 
-                -- 右侧颜色预览块（网格背景 + 颜色层）
-                local PreviewBg = Instance.new("ImageLabel")
+                -- 右侧颜色预览块（改为 ImageButton 以捕获点击）
+                local PreviewBg = Instance.new("ImageButton")
                 PreviewBg.Name = "ColorPreviewBg"
                 PreviewBg.Image = ColorPickerAssets.Grid
                 PreviewBg.ScaleType = Enum.ScaleType.Tile
@@ -1161,6 +1161,7 @@ function Library:CreateWindow(Config)
                 PreviewBg.Size = UDim2.new(0, 30, 0, 20)
                 PreviewBg.Position = UDim2.new(1, -40, 0.5, -10)
                 PreviewBg.BackgroundTransparency = 1
+                PreviewBg.AutoButtonColor = false  -- 避免自带点击效果
                 PreviewBg.Parent = Main
                 -- 圆角
                 local previewCorner = Instance.new("UICorner")
@@ -1173,6 +1174,7 @@ function Library:CreateWindow(Config)
                 PreviewColor.BackgroundColor3 = Color
                 PreviewColor.BackgroundTransparency = Alpha
                 PreviewColor.BorderSizePixel = 0
+                PreviewColor.HitTestTransparency = 1  -- 点击穿透，确保事件传递到 PreviewBg
                 PreviewColor.Parent = PreviewBg
                 Instance.new("UICorner", PreviewColor).CornerRadius = UDim.new(0, 6)
 
@@ -1327,7 +1329,7 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块（垂直放在轮子下方？为了简洁，我们将亮度作为单独的滑块放在底部）
+                    -- 亮度滑块
                     local valueSliderRow = Instance.new("Frame")
                     valueSliderRow.Size = UDim2.new(1, 0, 0, 20)
                     valueSliderRow.BackgroundTransparency = 1
@@ -1434,12 +1436,10 @@ function Library:CreateWindow(Config)
                     cancel.Parent = buttonRow
                     Instance.new("UICorner", cancel).CornerRadius = UDim.new(0,6)
 
-                    -- 将 canvas 和 prompt 存储起来，用于关闭
                     colorPickerGui = canvas
                     colorPickerFrame = prompt
 
-                    -- 颜色选择逻辑 (简化版，仅保留核心功能，实际可参照 maclib 实现完整 HSV 调整)
-                    -- 此处为保持代码简洁，仅实现基本 HSV 交互，如需完整功能可继续扩展
+                    -- 颜色选择逻辑 (简化版，仅保留核心功能)
                     local hue, sat, val = Color3.toHSV(Color)
                     if not hue then hue = 0; sat = 0; val = 1 end
 
@@ -1455,13 +1455,7 @@ function Library:CreateWindow(Config)
                         hexBox.Text = string.format("#%02X%02X%02X", math.floor(c.R*255+0.5), math.floor(c.G*255+0.5), math.floor(c.B*255+0.5))
                     end
 
-                    -- 简单轮子点击（仅示例，实际需计算角度和距离）
-                    wheel.MouseButton1Down:Connect(function()
-                        -- 此处应计算鼠标相对轮心的极坐标，更新 hue/sat
-                        -- 为简化，略
-                    end)
-
-                    -- 值滑块拖动
+                    -- 亮度滑块拖动
                     local valueDragging = false
                     valueThumb.InputBegan:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -1496,7 +1490,6 @@ function Library:CreateWindow(Config)
                         local c = Color3.new(r,g,b)
                         hue, sat, val = c:ToHSV()
                         updateColorFromHSV()
-                        -- 更新轮位置（略）
                     end
 
                     redBox.FocusLost:Connect(updateFromRGB)
@@ -1532,7 +1525,6 @@ function Library:CreateWindow(Config)
                         Alpha = PreviewColor.BackgroundTransparency
                         callback(Color, Alpha)
                         ConfigObjects[pickerText] = {Type = "Colorpicker", Value = Color, Alpha = Alpha}
-                        -- 关闭
                         canvas:Destroy()
                         colorPickerOpen = false
                     end)
@@ -1542,7 +1534,6 @@ function Library:CreateWindow(Config)
                         colorPickerOpen = false
                     end)
 
-                    -- 点击遮罩关闭
                     overlay.InputBegan:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.MouseButton1 then
                             canvas:Destroy()
@@ -1552,11 +1543,7 @@ function Library:CreateWindow(Config)
                 end
 
                 -- 点击预览块打开
-                PreviewBg.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        openColorPicker()
-                    end
-                end)
+                PreviewBg.MouseButton1Click:Connect(openColorPicker)
 
                 -- 注册配置对象
                 ConfigObjects[pickerText] = {
