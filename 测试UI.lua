@@ -1279,7 +1279,7 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- 颜色选择器弹窗创建函数（内部使用，已修复点击问题）
+            -- 颜色选择器弹窗创建函数（使用maclib核心，保留原框架）
             local function CreateColorPickerPopup(title, initialColor, callback, parentGui, window)
                 -- 遮罩层（Frame，不接收点击）
                 local Overlay = Instance.new("Frame")
@@ -1344,65 +1344,56 @@ function Library:CreateWindow(Config)
                     Overlay:Destroy()
                 end)
 
-                -- HSV 区域
-                local SatVibMap = Instance.new("ImageLabel")
-                SatVibMap.Name = "SatVibMap"
-                SatVibMap.Size = UDim2.fromOffset(150, 140)
-                SatVibMap.Position = UDim2.fromOffset(15, 40)
-                SatVibMap.Image = "rbxassetid://4155801252"  -- HSV 方块图
-                SatVibMap.BackgroundColor3 = Color3.fromHSV(Color3.toHSV(initialColor))
-                SatVibMap.BackgroundTransparency = 0
-                SatVibMap.Parent = PickerFrame
-                SatVibMap.ZIndex = 203
-                Instance.new("UICorner", SatVibMap).CornerRadius = UDim.new(0, 4)
+                -- ========== 替换核心：色轮和亮度滑块 ==========
+                -- 色轮（圆形）
+                local ColorWheel = Instance.new("ImageButton")
+                ColorWheel.Name = "ColorWheel"
+                ColorWheel.Size = UDim2.fromOffset(150, 150)
+                ColorWheel.Position = UDim2.fromOffset(15, 40)
+                ColorWheel.BackgroundTransparency = 1
+                ColorWheel.Image = "rbxassetid://2849458409"  -- maclib色轮
+                ColorWheel.Parent = PickerFrame
+                ColorWheel.ZIndex = 203
 
-                -- HSV 光标
-                local SatCursor = Instance.new("ImageLabel")
-                SatCursor.Size = UDim2.new(0, 16, 0, 16)
-                SatCursor.AnchorPoint = Vector2.new(0.5, 0.5)
-                SatCursor.BackgroundTransparency = 1
-                SatCursor.Image = "rbxassetid://4805639000"  -- 圆形光标
-                SatCursor.ZIndex = 204
-                SatCursor.Parent = SatVibMap
-                -- 根据初始颜色设置光标位置
-                local h, s, v = Color3.toHSV(initialColor)
-                SatCursor.Position = UDim2.new(s, 0, 1 - v, 0)
+                -- 色轮光标
+                local WheelCursor = Instance.new("ImageLabel")
+                WheelCursor.Name = "WheelCursor"
+                WheelCursor.Size = UDim2.fromOffset(16, 16)
+                WheelCursor.AnchorPoint = Vector2.new(0.5, 0.5)
+                WheelCursor.BackgroundTransparency = 1
+                WheelCursor.Image = "rbxassetid://73265255323268"  -- maclib光标
+                WheelCursor.ZIndex = 204
+                WheelCursor.Parent = ColorWheel
 
-                -- 色相条
-                local HueSlider = Instance.new("Frame")
-                HueSlider.Size = UDim2.fromOffset(14, 140)
-                HueSlider.Position = UDim2.fromOffset(175, 40)
-                HueSlider.Parent = PickerFrame
-                HueSlider.ZIndex = 203
-                Instance.new("UICorner", HueSlider).CornerRadius = UDim.new(1, 0)
+                -- 亮度滑块条背景
+                local ValueBar = Instance.new("ImageLabel")
+                ValueBar.Name = "ValueBar"
+                ValueBar.Size = UDim2.fromOffset(150, 3)
+                ValueBar.Position = UDim2.fromOffset(15, 200)
+                ValueBar.BackgroundTransparency = 1
+                ValueBar.Image = SliderAssets.Bar  -- 使用滑块条背景
+                ValueBar.ImageColor3 = Color3.fromRGB(87, 86, 86)
+                ValueBar.Parent = PickerFrame
+                ValueBar.ZIndex = 203
 
-                -- 色相渐变
-                local HueGradient = Instance.new("UIGradient")
-                local hues = {}
-                for i = 0, 1, 0.1 do
-                    table.insert(hues, ColorSequenceKeypoint.new(i, Color3.fromHSV(i, 1, 1)))
-                end
-                HueGradient.Color = ColorSequence.new(hues)
-                HueGradient.Rotation = 90
-                HueGradient.Parent = HueSlider
+                -- 亮度滑块头
+                local ValueHead = Instance.new("ImageButton")
+                ValueHead.Name = "ValueHead"
+                ValueHead.Size = UDim2.fromOffset(12, 12)
+                ValueHead.AnchorPoint = Vector2.new(0.5, 0.5)
+                ValueHead.BackgroundTransparency = 1
+                ValueHead.Image = SliderAssets.Head
+                ValueHead.ZIndex = 204
+                ValueHead.Parent = ValueBar
 
-                -- 色相滑块
-                local HueDrag = Instance.new("ImageLabel")
-                HueDrag.Size = UDim2.fromOffset(14, 14)
-                HueDrag.Image = "rbxassetid://12266946128"  -- 滑块图标
-                HueDrag.Parent = HueSlider
-                HueDrag.ZIndex = 204
-                HueDrag.Position = UDim2.new(0, 0, h, -7)  -- 根据色相定位
-
-                -- RGB 输入区域
+                -- ========== RGB/Hex输入区域（保留原有但调整位置） ==========
                 local RGBFrame = Instance.new("Frame")
                 RGBFrame.Size = UDim2.new(0, 110, 0, 100)
-                RGBFrame.Position = UDim2.fromOffset(200, 40)
+                RGBFrame.Position = UDim2.fromOffset(180, 40)
                 RGBFrame.BackgroundTransparency = 1
                 RGBFrame.Parent = PickerFrame
                 RGBFrame.ZIndex = 203
 
-                -- 辅助函数：创建带标签的输入框
                 local function createInput(label, default, yPos)
                     local Container = Instance.new("Frame")
                     Container.Size = UDim2.new(1, 0, 0, 25)
@@ -1446,7 +1437,7 @@ function Library:CreateWindow(Config)
                 -- 预览区域
                 local PreviewOld = Instance.new("Frame")
                 PreviewOld.Size = UDim2.new(0.45, -5, 0, 25)
-                PreviewOld.Position = UDim2.new(0, 15, 0, 190)
+                PreviewOld.Position = UDim2.new(0, 15, 0, 215)
                 PreviewOld.BackgroundColor3 = initialColor
                 PreviewOld.Parent = PickerFrame
                 PreviewOld.ZIndex = 203
@@ -1454,16 +1445,16 @@ function Library:CreateWindow(Config)
 
                 local PreviewNew = Instance.new("Frame")
                 PreviewNew.Size = UDim2.new(0.45, -5, 0, 25)
-                PreviewNew.Position = UDim2.new(0.5, 5, 0, 190)
+                PreviewNew.Position = UDim2.new(0.5, 5, 0, 215)
                 PreviewNew.BackgroundColor3 = initialColor
                 PreviewNew.Parent = PickerFrame
                 PreviewNew.ZIndex = 203
                 Instance.new("UICorner", PreviewNew).CornerRadius = UDim.new(0, 4)
 
-                -- 确定 / 取消按钮
+                -- 确定/取消按钮
                 local ConfirmBtn = Instance.new("TextButton")
                 ConfirmBtn.Size = UDim2.new(0.45, -5, 0, 30)
-                ConfirmBtn.Position = UDim2.new(0, 15, 0, 225)
+                ConfirmBtn.Position = UDim2.new(0, 15, 0, 245)
                 ConfirmBtn.BackgroundColor3 = CurrentTheme.Accent
                 ConfirmBtn.Text = "确认"
                 ConfirmBtn.TextColor3 = CurrentTheme.Text
@@ -1475,7 +1466,7 @@ function Library:CreateWindow(Config)
 
                 local CancelBtn = Instance.new("TextButton")
                 CancelBtn.Size = UDim2.new(0.45, -5, 0, 30)
-                CancelBtn.Position = UDim2.new(0.5, 5, 0, 225)
+                CancelBtn.Position = UDim2.new(0.5, 5, 0, 245)
                 CancelBtn.BackgroundColor3 = CurrentTheme.Stroke
                 CancelBtn.Text = "取消"
                 CancelBtn.TextColor3 = CurrentTheme.Text
@@ -1485,47 +1476,138 @@ function Library:CreateWindow(Config)
                 CancelBtn.ZIndex = 204
                 Instance.new("UICorner", CancelBtn).CornerRadius = UDim.new(0, 4)
 
-                -- 状态变量
+                -- ========== 核心逻辑（移植自maclib） ==========
                 local h, s, v = Color3.toHSV(initialColor)
                 local currentColor = initialColor
-                local updating = false  -- 防止循环更新
+                local updating = false
 
-                -- 更新所有UI以匹配当前颜色
+                -- 辅助函数
+                local function clamp(value, min, max)
+                    return math.max(min, math.min(max, value))
+                end
+
                 local function updateUI()
                     updating = true
-                    -- 更新光标位置
-                    SatCursor.Position = UDim2.new(s, 0, 1 - v, 0)
-                    HueDrag.Position = UDim2.new(0, 0, h, -7)
-                    -- 更新预览
+                    -- 更新色轮光标位置（极坐标）
+                    local r = ColorWheel.AbsoluteSize.X / 2
+                    local angle = h * 2 * math.pi
+                    local dist = s * r
+                    local x = dist * math.cos(angle)
+                    local y = dist * math.sin(angle)
+                    WheelCursor.Position = UDim2.new(0.5, x, 0.5, -y)  -- 注意坐标系Y轴向下
+
+                    -- 更新亮度滑块位置
+                    local barWidth = ValueBar.AbsoluteSize.X - ValueHead.AbsoluteSize.X
+                    local posX = (1 - v) * barWidth
+                    ValueHead.Position = UDim2.new(0, posX, 0.5, 0)
+
+                    -- 更新预览和输入框
                     PreviewNew.BackgroundColor3 = currentColor
-                    -- 更新RGB输入框
-                    RBox.Text = tostring(math.floor(currentColor.R * 255))
-                    GBox.Text = tostring(math.floor(currentColor.G * 255))
-                    BBox.Text = tostring(math.floor(currentColor.B * 255))
+                    RBox.Text = tostring(math.floor(currentColor.R * 255 + 0.5))
+                    GBox.Text = tostring(math.floor(currentColor.G * 255 + 0.5))
+                    BBox.Text = tostring(math.floor(currentColor.B * 255 + 0.5))
                     HexBox.Text = "#" .. currentColor:ToHex()
                     updating = false
                 end
 
-                -- 从HSV更新颜色
                 local function updateColorFromHSV()
                     currentColor = Color3.fromHSV(h, s, v)
                     updateUI()
                 end
 
-                -- 从RGB更新颜色
+                -- 色轮交互
+                local draggingWheel = false
+                ColorWheel.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        draggingWheel = true
+                        local mouse = UserInputService:GetMouseLocation()
+                        local center = ColorWheel.AbsolutePosition + ColorWheel.AbsoluteSize / 2
+                        local dx = mouse.X - center.X
+                        local dy = mouse.Y - center.Y
+                        local radius = ColorWheel.AbsoluteSize.X / 2
+                        local dist = math.sqrt(dx*dx + dy*dy)
+                        if dist > radius then
+                            dx = dx / dist * radius
+                            dy = dy / dist * radius
+                        end
+                        s = dist / radius
+                        local angle = math.atan2(-dy, dx)  -- 注意Y轴方向
+                        h = (angle + math.pi) / (2 * math.pi) % 1
+                        updateColorFromHSV()
+                    end
+                end)
+
+                ColorWheel.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        draggingWheel = false
+                    end
+                end)
+
+                UserInputService.InputChanged:Connect(function(input)
+                    if draggingWheel and input.UserInputType == Enum.UserInputType.MouseMovement then
+                        local mouse = UserInputService:GetMouseLocation()
+                        local center = ColorWheel.AbsolutePosition + ColorWheel.AbsoluteSize / 2
+                        local dx = mouse.X - center.X
+                        local dy = mouse.Y - center.Y
+                        local radius = ColorWheel.AbsoluteSize.X / 2
+                        local dist = math.sqrt(dx*dx + dy*dy)
+                        if dist > radius then
+                            dx = dx / dist * radius
+                            dy = dy / dist * radius
+                        end
+                        s = dist / radius
+                        local angle = math.atan2(-dy, dx)
+                        h = (angle + math.pi) / (2 * math.pi) % 1
+                        updateColorFromHSV()
+                    end
+                end)
+
+                -- 亮度滑块交互
+                local draggingValue = false
+                ValueHead.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        draggingValue = true
+                        local mouseX = UserInputService:GetMouseLocation().X
+                        local barLeft = ValueBar.AbsolutePosition.X
+                        local barWidth = ValueBar.AbsoluteSize.X
+                        local headWidth = ValueHead.AbsoluteSize.X
+                        local relX = clamp(mouseX - barLeft, 0, barWidth - headWidth)
+                        v = 1 - relX / (barWidth - headWidth)
+                        updateColorFromHSV()
+                    end
+                end)
+
+                ValueHead.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        draggingValue = false
+                    end
+                end)
+
+                UserInputService.InputChanged:Connect(function(input)
+                    if draggingValue and input.UserInputType == Enum.UserInputType.MouseMovement then
+                        local mouseX = UserInputService:GetMouseLocation().X
+                        local barLeft = ValueBar.AbsolutePosition.X
+                        local barWidth = ValueBar.AbsoluteSize.X
+                        local headWidth = ValueHead.AbsoluteSize.X
+                        local relX = clamp(mouseX - barLeft, 0, barWidth - headWidth)
+                        v = 1 - relX / (barWidth - headWidth)
+                        updateColorFromHSV()
+                    end
+                end)
+
+                -- RGB输入变更
                 local function updateColorFromRGB()
                     local r = tonumber(RBox.Text) or 0
                     local g = tonumber(GBox.Text) or 0
                     local b = tonumber(BBox.Text) or 0
-                    r = math.clamp(r, 0, 255)
-                    g = math.clamp(g, 0, 255)
-                    b = math.clamp(b, 0, 255)
+                    r = clamp(r, 0, 255)
+                    g = clamp(g, 0, 255)
+                    b = clamp(b, 0, 255)
                     currentColor = Color3.fromRGB(r, g, b)
                     h, s, v = Color3.toHSV(currentColor)
                     updateUI()
                 end
 
-                -- 从十六进制更新
                 local function updateColorFromHex()
                     local hex = HexBox.Text:gsub("#", "")
                     if #hex == 6 then
@@ -1538,86 +1620,17 @@ function Library:CreateWindow(Config)
                     end
                 end
 
-                -- 事件绑定：HSV 拖动
-                local draggingSat = false
-                SatVibMap.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        draggingSat = true
-                        -- 立即更新
-                        local mouse = UserInputService:GetMouseLocation()
-                        local absPos = SatVibMap.AbsolutePosition
-                        local absSize = SatVibMap.AbsoluteSize
-                        local relX = math.clamp(mouse.X - absPos.X, 0, absSize.X)
-                        local relY = math.clamp(mouse.Y - absPos.Y, 0, absSize.Y)
-                        s = relX / absSize.X
-                        v = 1 - (relY / absSize.Y)
-                        updateColorFromHSV()
-                    end
+                RBox:GetPropertyChangedSignal("Text"):Connect(function()
+                    if not updating then updateColorFromRGB() end
                 end)
-
-                SatVibMap.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        draggingSat = false
-                    end
+                GBox:GetPropertyChangedSignal("Text"):Connect(function()
+                    if not updating then updateColorFromRGB() end
                 end)
-
-                UserInputService.InputChanged:Connect(function(input)
-                    if draggingSat and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        local mouse = UserInputService:GetMouseLocation()
-                        local absPos = SatVibMap.AbsolutePosition
-                        local absSize = SatVibMap.AbsoluteSize
-                        local relX = math.clamp(mouse.X - absPos.X, 0, absSize.X)
-                        local relY = math.clamp(mouse.Y - absPos.Y, 0, absSize.Y)
-                        s = relX / absSize.X
-                        v = 1 - (relY / absSize.Y)
-                        updateColorFromHSV()
-                    end
+                BBox:GetPropertyChangedSignal("Text"):Connect(function()
+                    if not updating then updateColorFromRGB() end
                 end)
-
-                -- 色相拖动
-                local draggingHue = false
-                HueSlider.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        draggingHue = true
-                        local mouse = UserInputService:GetMouseLocation()
-                        local absPos = HueSlider.AbsolutePosition
-                        local absSize = HueSlider.AbsoluteSize
-                        local relY = math.clamp(mouse.Y - absPos.Y, 0, absSize.Y)
-                        h = relY / absSize.Y
-                        updateColorFromHSV()
-                    end
-                end)
-
-                HueSlider.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        draggingHue = false
-                    end
-                end)
-
-                UserInputService.InputChanged:Connect(function(input)
-                    if draggingHue and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        local mouse = UserInputService:GetMouseLocation()
-                        local absPos = HueSlider.AbsolutePosition
-                        local absSize = HueSlider.AbsoluteSize
-                        local relY = math.clamp(mouse.Y - absPos.Y, 0, absSize.Y)
-                        h = relY / absSize.Y
-                        updateColorFromHSV()
-                    end
-                end)
-
-                -- RGB 输入变更
-                local function onRGBChanged()
-                    if updating then return end
-                    updateColorFromRGB()
-                end
-                RBox:GetPropertyChangedSignal("Text"):Connect(onRGBChanged)
-                GBox:GetPropertyChangedSignal("Text"):Connect(onRGBChanged)
-                BBox:GetPropertyChangedSignal("Text"):Connect(onRGBChanged)
-
-                -- 十六进制输入
                 HexBox:GetPropertyChangedSignal("Text"):Connect(function()
-                    if updating then return end
-                    updateColorFromHex()
+                    if not updating then updateColorFromHex() end
                 end)
 
                 -- 确定按钮
