@@ -29,7 +29,7 @@ local Sounds = {
     Tab = "rbxassetid://4510087056" 
 }
 
--- 图片资源（取自 maclib）
+-- 图片资源
 local ToggleAssets = {
     Bg = "rbxassetid://18772190202",
     Head = "rbxassetid://18772309008"
@@ -38,14 +38,12 @@ local SliderAssets = {
     Bar = "rbxassetid://18772615246",
     Head = "rbxassetid://18772834246"
 }
--- ColorPicker 资源（与 maclib 一致）
 local ColorPickerAssets = {
     Wheel = "rbxassetid://2849458409",
     Target = "rbxassetid://73265255323268",
     Grid = "rbxassetid://121484455191370"
 }
 
--- 预加载所有图片资源
 ContentProvider:PreloadAsync({
     ToggleAssets.Bg,
     ToggleAssets.Head,
@@ -54,8 +52,8 @@ ContentProvider:PreloadAsync({
     ColorPickerAssets.Wheel,
     ColorPickerAssets.Target,
     ColorPickerAssets.Grid,
-    "rbxassetid://10709791437",  -- 按钮箭头
-    "rbxassetid://18865373378",  -- 下拉图标
+    "rbxassetid://10709791437",
+    "rbxassetid://18865373378",
 })
 
 local function PlaySound(id)
@@ -102,14 +100,9 @@ function Library:SetTheme(themeName)
     end
 end
 
--- RAINBOW
 function Library:ToggleRainbow(bool) RainbowEnabled = bool end
 function Library:SetRainbowType(val) RainbowType = val end
-
--- SFX CONTROL
-function Library:SetSFXEnabled(state)
-    SFXEnabled = state
-end
+function Library:SetSFXEnabled(state) SFXEnabled = state end
 
 function Library:CreateWindow(Config)
     local Window = {}
@@ -248,7 +241,6 @@ function Library:CreateWindow(Config)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
-    -- 窗口展开动画
     Tween(MainFrame, {Size = UDim2.new(0, 450, 0, 280)}, 0.6)
 
     local dragging, dragInput, dragStart, startPos
@@ -286,7 +278,6 @@ function Library:CreateWindow(Config)
     function Window:Destroy() ScreenGui:Destroy() end
 
     local firstTab = true
-    -- Tab 函数
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -375,7 +366,6 @@ function Library:CreateWindow(Config)
 
         local Elements = {}
 
-        -- Section：可折叠容器
         function Elements:Section(text, icons, defaultOpen)
             if defaultOpen == nil then defaultOpen = true end
 
@@ -489,7 +479,6 @@ function Library:CreateWindow(Config)
 
             local child = {}
 
-            -- Button
             child.Button = function(_, btnText, callback)
                 local Btn = Instance.new("TextButton")
                 Btn.Size = UDim2.new(1, 0, 0, 35)
@@ -539,16 +528,11 @@ function Library:CreateWindow(Config)
                 end)
 
                 local self = {}
-                function self.UpdateText(newText)
-                    TextLabel.Text = newText
-                end
-                function self.SetVisible(state)
-                    Btn.Visible = state
-                end
+                function self.UpdateText(newText) TextLabel.Text = newText end
+                function self.SetVisible(state) Btn.Visible = state end
                 return self
             end
 
-            -- Toggle
             child.Toggle = function(_, toggleText, default, callback)
                 local Enabled = default or false
 
@@ -618,7 +602,6 @@ function Library:CreateWindow(Config)
                 }
             end
 
-            -- Slider
             child.Slider = function(_, sliderText, min, max, default, callback, options)
                 options = options or {}
                 local Val = default or min
@@ -663,20 +646,9 @@ function Library:CreateWindow(Config)
                 NumBox.ClipsDescendants = true
                 NumBox.Parent = TopRow
 
-                local boxCorner = Instance.new("UICorner")
-                boxCorner.CornerRadius = UDim.new(0, 4)
-                boxCorner.Parent = NumBox
-
-                local boxStroke = Instance.new("UIStroke")
-                boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                boxStroke.Color = Color3.fromRGB(255, 255, 255)
-                boxStroke.Transparency = 0.9
-                boxStroke.Parent = NumBox
-
-                local boxPadding = Instance.new("UIPadding")
-                boxPadding.PaddingLeft = UDim.new(0, 2)
-                boxPadding.PaddingRight = UDim.new(0, 2)
-                boxPadding.Parent = NumBox
+                local boxCorner = Instance.new("UICorner"); boxCorner.CornerRadius = UDim.new(0, 4); boxCorner.Parent = NumBox
+                local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = Color3.fromRGB(255, 255, 255); boxStroke.Transparency = 0.9; boxStroke.Parent = NumBox
+                local boxPadding = Instance.new("UIPadding"); boxPadding.PaddingLeft = UDim.new(0, 2); boxPadding.PaddingRight = UDim.new(0, 2); boxPadding.Parent = NumBox
 
                 local SliderBar = Instance.new("ImageLabel")
                 SliderBar.Name = "SliderBar"
@@ -698,13 +670,8 @@ function Library:CreateWindow(Config)
                 SliderHead.Position = UDim2.new(initPosX, 0, 0.5, 0)
 
                 local DisplayMethods = {
-                    Value = function(sliderValue, precision)
-                        return precision and string.format("%." .. precision .. "f", sliderValue) or tostring(math.round(sliderValue * 100) / 100)
-                    end,
-                    Percent = function(sliderValue, precision)
-                        local percentage = (sliderValue - min) / (max - min) * 100
-                        return (precision and string.format("%." .. precision .. "f", percentage) or tostring(math.round(percentage))) .. "%"
-                    end,
+                    Value = function(sv, p) return p and string.format("%."..p.."f", sv) or tostring(math.round(sv*100)/100) end,
+                    Percent = function(sv, p) local perc = (sv-min)/(max-min)*100; return (p and string.format("%."..p.."f", perc) or tostring(math.round(perc))).."%" end,
                 }
                 local displayMethod = DisplayMethods[options.DisplayMethod] or DisplayMethods.Value
                 local precision = options.Precision
@@ -719,427 +686,138 @@ function Library:CreateWindow(Config)
                     else
                         posXScale = (input - min) / (max - min)
                     end
-
                     SliderHead.Position = UDim2.new(posXScale, 0, 0.5, 0)
                     local newValue = min + posXScale * (max - min)
                     Val = newValue
-
                     NumBox.Text = displayMethod(newValue, precision)
-
-                    if not ignorecallback then
-                        task.spawn(function()
-                            if callback then callback(newValue) end
-                        end)
-                    end
-
-                    if ConfigObjects[sliderText] then
-                        ConfigObjects[sliderText].Value = newValue
-                    end
+                    if not ignorecallback then task.spawn(function() if callback then callback(newValue) end end) end
+                    if ConfigObjects[sliderText] then ConfigObjects[sliderText].Value = newValue end
                 end
-
                 SetValue(Val, true)
 
                 local dragging = false
                 SliderHead.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = true
-                        PlaySound(Sounds.Slide)
-                        SetValue(input)
+                        dragging = true; PlaySound(Sounds.Slide); SetValue(input)
                     end
                 end)
                 SliderHead.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = false
-                    end
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
                 end)
                 UserInputService.InputChanged:Connect(function(input)
-                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                        SetValue(input)
-                    end
+                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then SetValue(input) end
                 end)
 
-                NumBox.FocusLost:Connect(function(enterPressed)
-                    local inputText = NumBox.Text
-                    local value = tonumber(inputText:match("%d+%.?%d*"))
-                    if value then
-                        if options.DisplayMethod == "Percent" then
-                            value = min + (value / 100) * (max - min)
-                        end
-                        local newValue = math.clamp(value, min, max)
-                        SetValue(newValue, false)
-                    else
-                        SetValue(Val, true)
-                    end
+                NumBox.FocusLost:Connect(function()
+                    local v = tonumber(NumBox.Text:match("%d+%.?%d*"))
+                    if v then
+                        if options.DisplayMethod == "Percent" then v = min + (v/100)*(max-min) end
+                        SetValue(math.clamp(v, min, max), false)
+                    else SetValue(Val, true) end
                 end)
 
-                ConfigObjects[sliderText] = {
-                    Type = "Slider",
-                    Value = Val,
-                    Set = function(val)
-                        SetValue(val, true)
-                    end
-                }
+                ConfigObjects[sliderText] = {Type = "Slider", Value = Val, Set = function(val) SetValue(val, true) end}
             end
 
-            -- Textbox
             child.Textbox = function(_, boxText, placeholder, callback)
-                local Frame = Instance.new("Frame")
-                Frame.Size = UDim2.new(1,0,0,60)
-                Frame.Parent = contentContainer
-                Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,6)
-                AddToRegistry(Frame, "BackgroundColor3", "Top")
-
-                local Lbl = Instance.new("TextLabel")
-                Lbl.Text = boxText
-                Lbl.Size = UDim2.new(1,0,0,20)
-                Lbl.Position = UDim2.new(0,10,0,5)
-                Lbl.BackgroundTransparency = 1
-                Lbl.Font = Enum.Font.Gotham
-                Lbl.TextSize = 14
-                Lbl.TextXAlignment = Enum.TextXAlignment.Left
-                Lbl.Parent = Frame
-                AddToRegistry(Lbl, "TextColor3", "Text")
-
-                local Box = Instance.new("TextBox")
-                Box.Size = UDim2.new(1,-20,0,25)
-                Box.Position = UDim2.new(0,10,0,28)
-                Box.Text = ""
-                Box.PlaceholderText = placeholder
-                Box.Font = Enum.Font.Gotham
-                Box.TextSize = 13
-                Box.BorderSizePixel = 0
-                Box.Parent = Frame
-                Instance.new("UICorner", Box).CornerRadius = UDim.new(0,4)
-                AddToRegistry(Box, "BackgroundColor3", "Main")
-                AddToRegistry(Box, "TextColor3", "Text")
-
-                local boxStroke = Instance.new("UIStroke")
-                boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                boxStroke.Color = Color3.fromRGB(255, 255, 255)
-                boxStroke.Transparency = 0.9
-                boxStroke.Parent = Box
-
-                Box.FocusLost:Connect(function()
-                    ConfigObjects[boxText].Value = Box.Text
-                    callback(Box.Text)
-                end)
+                local Frame = Instance.new("Frame"); Frame.Size = UDim2.new(1,0,0,60); Frame.Parent = contentContainer; Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,6); AddToRegistry(Frame, "BackgroundColor3", "Top")
+                local Lbl = Instance.new("TextLabel"); Lbl.Text = boxText; Lbl.Size = UDim2.new(1,0,0,20); Lbl.Position = UDim2.new(0,10,0,5); Lbl.BackgroundTransparency = 1; Lbl.Font = Enum.Font.Gotham; Lbl.TextSize = 14; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = Frame; AddToRegistry(Lbl, "TextColor3", "Text")
+                local Box = Instance.new("TextBox"); Box.Size = UDim2.new(1,-20,0,25); Box.Position = UDim2.new(0,10,0,28); Box.Text = ""; Box.PlaceholderText = placeholder; Box.Font = Enum.Font.Gotham; Box.TextSize = 13; Box.BorderSizePixel = 0; Box.Parent = Frame; Instance.new("UICorner", Box).CornerRadius = UDim.new(0,4); AddToRegistry(Box, "BackgroundColor3", "Main"); AddToRegistry(Box, "TextColor3", "Text")
+                local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = Color3.fromRGB(255,255,255); boxStroke.Transparency = 0.9; boxStroke.Parent = Box
+                Box.FocusLost:Connect(function() ConfigObjects[boxText].Value = Box.Text; callback(Box.Text) end)
                 ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
             end
 
-            -- Dropdown
             child.Dropdown = function(_, dropText, options, callback)
                 local Dropped = false
-                local Btn = Instance.new("TextButton")
-                Btn.Size = UDim2.new(1,0,0,35)
-                Btn.Text = ""
-                Btn.Parent = contentContainer
-                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,6)
-                AddToRegistry(Btn, "BackgroundColor3", "Top")
-                local Lbl = Instance.new("TextLabel")
-                Lbl.Text = dropText
-                Lbl.Size = UDim2.new(1,-30,1,0)
-                Lbl.Position = UDim2.new(0,10,0,0)
-                Lbl.BackgroundTransparency = 1
-                Lbl.Font = Enum.Font.Gotham
-                Lbl.TextSize = 14
-                Lbl.TextXAlignment = Enum.TextXAlignment.Left
-                Lbl.Parent = Btn
-                AddToRegistry(Lbl, "TextColor3", "Text")
-                local Icon = Instance.new("ImageLabel")
-                Icon.Image = "rbxassetid://18865373378"
-                Icon.Size = UDim2.new(0,20,0,20)
-                Icon.Position = UDim2.new(1,-30,0.5,-10)
-                Icon.BackgroundTransparency = 1
-                Icon.Parent = Btn
-
-                local Container = Instance.new("Frame")
-                Container.Size = UDim2.new(1,0,0,0)
-                Container.Visible = false
-                Container.ClipsDescendants = true
-                Container.Parent = contentContainer
-                Container.ZIndex = 10
-                Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
-                AddToRegistry(Container, "BackgroundColor3", "Top")
-                local List = Instance.new("UIListLayout")
-                List.SortOrder = Enum.SortOrder.LayoutOrder
-                List.Parent = Container
+                local Btn = Instance.new("TextButton"); Btn.Size = UDim2.new(1,0,0,35); Btn.Text = ""; Btn.Parent = contentContainer; Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,6); AddToRegistry(Btn, "BackgroundColor3", "Top")
+                local Lbl = Instance.new("TextLabel"); Lbl.Text = dropText; Lbl.Size = UDim2.new(1,-30,1,0); Lbl.Position = UDim2.new(0,10,0,0); Lbl.BackgroundTransparency = 1; Lbl.Font = Enum.Font.Gotham; Lbl.TextSize = 14; Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.Parent = Btn; AddToRegistry(Lbl, "TextColor3", "Text")
+                local Icon = Instance.new("ImageLabel"); Icon.Image = "rbxassetid://18865373378"; Icon.Size = UDim2.new(0,20,0,20); Icon.Position = UDim2.new(1,-30,0.5,-10); Icon.BackgroundTransparency = 1; Icon.Parent = Btn
+                local Container = Instance.new("Frame"); Container.Size = UDim2.new(1,0,0,0); Container.Visible = false; Container.ClipsDescendants = true; Container.Parent = contentContainer; Container.ZIndex = 10; Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6); AddToRegistry(Container, "BackgroundColor3", "Top")
+                local List = Instance.new("UIListLayout"); List.SortOrder = Enum.SortOrder.LayoutOrder; List.Parent = Container
 
                 local function Select(opt)
-                    Dropped = false
-                    Lbl.Text = dropText..": "..opt
-                    ConfigObjects[dropText].Value = opt
-                    callback(opt)
-                    Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2)
-                    Tween(Icon, {Rotation = 0}, 0.2)
-                    task.wait(0.2)
-                    Container.Visible = false
-                    updateSectionHeight(false)
+                    Dropped = false; Lbl.Text = dropText..": "..opt; ConfigObjects[dropText].Value = opt; callback(opt)
+                    Tween(Container, {Size = UDim2.new(1,0,0,0)}, 0.2); Tween(Icon, {Rotation = 0}, 0.2); task.wait(0.2); Container.Visible = false; updateSectionHeight(false)
                 end
-
                 local function RefreshOptions(newOpts)
                     for _,v in pairs(Container:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
                     for _, opt in pairs(newOpts) do
-                        local O = Instance.new("TextButton")
-                        O.Size = UDim2.new(1,0,0,30)
-                        O.Text = opt
-                        O.TextColor3 = Color3.fromRGB(150,150,150)
-                        O.Font = Enum.Font.Gotham
-                        O.TextSize = 13
-                        O.BackgroundTransparency = 1
-                        O.Parent = Container
+                        local O = Instance.new("TextButton"); O.Size = UDim2.new(1,0,0,30); O.Text = opt; O.TextColor3 = Color3.fromRGB(150,150,150); O.Font = Enum.Font.Gotham; O.TextSize = 13; O.BackgroundTransparency = 1; O.Parent = Container
                         O.MouseButton1Click:Connect(function() Select(opt) end)
                     end
                 end
                 RefreshOptions(options)
 
                 Btn.MouseButton1Click:Connect(function()
-                    Dropped = not Dropped
-                    PlaySound(Sounds.Click)
+                    Dropped = not Dropped; PlaySound(Sounds.Click)
                     if Dropped then
                         Container.Visible = true
                         local targetHeight = #options * 30
                         local tweenOpt = TweenService:Create(Container, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1,0,0, targetHeight)})
-                        tweenOpt:Play()
-                        Tween(Icon, {Rotation = 180}, 0.3)
-                        tweenOpt.Completed:Connect(function()
-                            updateSectionHeight(false)
-                        end)
+                        tweenOpt:Play(); Tween(Icon, {Rotation = 180}, 0.3)
+                        tweenOpt.Completed:Connect(function() updateSectionHeight(false) end)
                     else
                         local tweenOpt = TweenService:Create(Container, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1,0,0, 0)})
-                        tweenOpt:Play()
-                        Tween(Icon, {Rotation = 0}, 0.2)
-                        tweenOpt.Completed:Connect(function()
-                            Container.Visible = false
-                            updateSectionHeight(false)
-                        end)
+                        tweenOpt:Play(); Tween(Icon, {Rotation = 0}, 0.2)
+                        tweenOpt.Completed:Connect(function() Container.Visible = false; updateSectionHeight(false) end)
                     end
                 end)
-
                 ConfigObjects[dropText] = {Type = "Dropdown", Value = options[1], Set = function(val) Select(val) end, Refresh = RefreshOptions}
                 return {Refresh = RefreshOptions}
             end
 
-            -- Keybind
             child.Keybind = function(_, keyText, default, callback)
                 local Key = default or Enum.KeyCode.M
-
-                local Btn = Instance.new("TextButton")
-                Btn.Size = UDim2.new(1, 0, 0, 40)
-                Btn.Text = ""
-                Btn.Parent = contentContainer
-                Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(Btn, "BackgroundColor3", "Top")
-
-                local Title = Instance.new("TextLabel")
-                Title.Text = keyText
-                Title.Size = UDim2.new(0.6, 0, 1, 0)
-                Title.Position = UDim2.new(0, 10, 0, 0)
-                Title.BackgroundTransparency = 1
-                Title.Font = Enum.Font.Gotham
-                Title.TextSize = 14
-                Title.TextXAlignment = Enum.TextXAlignment.Left
-                Title.Parent = Btn
-                AddToRegistry(Title, "TextColor3", "Text")
-
-                local BinderBox = Instance.new("TextBox")
-                BinderBox.Name = "BinderBox"
-                BinderBox.Font = Enum.Font.GothamBold
-                BinderBox.Text = Key.Name
-                BinderBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-                BinderBox.TextSize = 13
-                BinderBox.TextTransparency = 0.1
-                BinderBox.PlaceholderText = "..."
-                BinderBox.BackgroundTransparency = 0.2
-                BinderBox.BorderSizePixel = 0
-                BinderBox.Size = UDim2.new(0, 80, 0, 24)
-                BinderBox.Position = UDim2.new(1, -90, 0.5, -12)
-                BinderBox.Parent = Btn
-                Instance.new("UICorner", BinderBox).CornerRadius = UDim.new(0, 5)
-                AddToRegistry(BinderBox, "BackgroundColor3", "Main")
-                AddToRegistry(BinderBox, "TextColor3", "Accent")
-
-                local boxStroke = Instance.new("UIStroke")
-                boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                boxStroke.Color = Color3.fromRGB(255, 255, 255)
-                boxStroke.Transparency = 0.9
-                boxStroke.Parent = BinderBox
-
-                local isBinding = false
-                local focused = false
-
-                Btn.MouseButton1Click:Connect(function()
-                    PlaySound(Sounds.Click)
-                    BinderBox:CaptureFocus()
-                end)
-
-                BinderBox.Focused:Connect(function()
-                    focused = true
-                    isBinding = true
-                    BinderBox.Text = ""
-                    BinderBox.PlaceholderText = "..."
-                end)
-
-                BinderBox.FocusLost:Connect(function()
-                    focused = false
-                    isBinding = false
-                    BinderBox.Text = Key.Name
-                    BinderBox.PlaceholderText = ""
-                end)
-
-                UserInputService.InputBegan:Connect(function(input, gameProcessed)
-                    if gameProcessed then return end
+                local Btn = Instance.new("TextButton"); Btn.Size = UDim2.new(1, 0, 0, 40); Btn.Text = ""; Btn.Parent = contentContainer; Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6); AddToRegistry(Btn, "BackgroundColor3", "Top")
+                local Title = Instance.new("TextLabel"); Title.Text = keyText; Title.Size = UDim2.new(0.6, 0, 1, 0); Title.Position = UDim2.new(0, 10, 0, 0); Title.BackgroundTransparency = 1; Title.Font = Enum.Font.Gotham; Title.TextSize = 14; Title.TextXAlignment = Enum.TextXAlignment.Left; Title.Parent = Btn; AddToRegistry(Title, "TextColor3", "Text")
+                local BinderBox = Instance.new("TextBox"); BinderBox.Name = "BinderBox"; BinderBox.Font = Enum.Font.GothamBold; BinderBox.Text = Key.Name; BinderBox.TextColor3 = Color3.fromRGB(255,255,255); BinderBox.TextSize = 13; BinderBox.TextTransparency = 0.1; BinderBox.PlaceholderText = "..."; BinderBox.BackgroundTransparency = 0.2; BinderBox.BorderSizePixel = 0; BinderBox.Size = UDim2.new(0,80,0,24); BinderBox.Position = UDim2.new(1,-90,0.5,-12); BinderBox.Parent = Btn; Instance.new("UICorner", BinderBox).CornerRadius = UDim.new(0,5); AddToRegistry(BinderBox, "BackgroundColor3", "Main"); AddToRegistry(BinderBox, "TextColor3", "Accent")
+                local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = Color3.fromRGB(255,255,255); boxStroke.Transparency = 0.9; boxStroke.Parent = BinderBox
+                local isBinding = false; local focused = false
+                Btn.MouseButton1Click:Connect(function() PlaySound(Sounds.Click); BinderBox:CaptureFocus() end)
+                BinderBox.Focused:Connect(function() focused = true; isBinding = true; BinderBox.Text = ""; BinderBox.PlaceholderText = "..." end)
+                BinderBox.FocusLost:Connect(function() focused = false; isBinding = false; BinderBox.Text = Key.Name; BinderBox.PlaceholderText = "" end)
+                UserInputService.InputBegan:Connect(function(input, gpe)
+                    if gpe then return end
                     if focused and isBinding then
                         local newKey
-                        if input.UserInputType == Enum.UserInputType.Keyboard then
-                            newKey = input.KeyCode
-                        elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
-                            newKey = input.UserInputType
-                        end
+                        if input.UserInputType == Enum.UserInputType.Keyboard then newKey = input.KeyCode
+                        elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then newKey = input.UserInputType end
                         if newKey and newKey.Name ~= "Unknown" then
-                            Key = newKey
-                            BinderBox.Text = Key.Name
-                            callback(Key)
-                            Window:Notification("Keybind: " .. Key.Name)
+                            Key = newKey; BinderBox.Text = Key.Name; callback(Key); Window:Notification("Keybind: " .. Key.Name)
                             ConfigObjects[keyText].Value = Key.Name
                         end
                         BinderBox:ReleaseFocus()
                     end
                 end)
-
-                ConfigObjects[keyText] = {
-                    Type = "Keybind",
-                    Value = Key.Name,
-                    Set = function(val)
-                        Key = Enum.KeyCode[val] or Key
-                        BinderBox.Text = Key.Name
-                        callback(Key)
-                    end
-                }
-
-                local self = {}
-                function self.UpdateText(newText)
-                    Title.Text = newText
-                end
-                function self.SetVisible(state)
-                    Btn.Visible = state
-                end
-                return self
+                ConfigObjects[keyText] = {Type = "Keybind", Value = Key.Name, Set = function(val) Key = Enum.KeyCode[val] or Key; BinderBox.Text = Key.Name; callback(Key) end}
+                local self = {}; function self.UpdateText(newText) Title.Text = newText end; function self.SetVisible(state) Btn.Visible = state end; return self
             end
 
-            -- Input
             child.Input = function(_, inputText, default, callback, options)
                 options = options or {}
-                local placeholder = options.placeholder or ""
-                local acceptedCharacters = options.acceptedCharacters or "All"
-                local characterLimit = options.characterLimit
-                local onChanged = options.onChanged
-
-                local InputFrame = Instance.new("Frame")
-                InputFrame.Size = UDim2.new(1, 0, 0, 35)
-                InputFrame.Parent = contentContainer
-                Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(InputFrame, "BackgroundColor3", "Top")
-
-                local NameLbl = Instance.new("TextLabel")
-                NameLbl.Text = inputText
-                NameLbl.Size = UDim2.new(0.6, 0, 1, 0)
-                NameLbl.Position = UDim2.new(0, 10, 0, 0)
-                NameLbl.TextXAlignment = Enum.TextXAlignment.Left
-                NameLbl.Font = Enum.Font.Gotham
-                NameLbl.TextSize = 14
-                NameLbl.BackgroundTransparency = 1
-                NameLbl.Parent = InputFrame
-                AddToRegistry(NameLbl, "TextColor3", "Text")
-
-                local InputBox = Instance.new("TextBox")
-                InputBox.Text = tostring(default or "")
-                InputBox.PlaceholderText = placeholder
-                InputBox.Size = UDim2.new(0.3, 0, 0, 26)
-                InputBox.Position = UDim2.new(0.7, -10, 0.5, -13)
-                InputBox.Font = Enum.Font.GothamBold
-                InputBox.TextSize = 13
-                InputBox.TextXAlignment = Enum.TextXAlignment.Center
-                InputBox.ClearTextOnFocus = false
-                InputBox.Parent = InputFrame
-
-                local boxCorner = Instance.new("UICorner")
-                boxCorner.CornerRadius = UDim.new(0, 5)
-                boxCorner.Parent = InputBox
-
-                AddToRegistry(InputBox, "BackgroundColor3", "Main")
-                AddToRegistry(InputBox, "TextColor3", "Accent")
-
-                local boxStroke = Instance.new("UIStroke")
-                boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                boxStroke.Color = Color3.fromRGB(255, 255, 255)
-                boxStroke.Transparency = 0.9
-                boxStroke.Parent = InputBox
-
+                local placeholder = options.placeholder or ""; local acceptedCharacters = options.acceptedCharacters or "All"; local characterLimit = options.characterLimit; local onChanged = options.onChanged
+                local InputFrame = Instance.new("Frame"); InputFrame.Size = UDim2.new(1, 0, 0, 35); InputFrame.Parent = contentContainer; Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 6); AddToRegistry(InputFrame, "BackgroundColor3", "Top")
+                local NameLbl = Instance.new("TextLabel"); NameLbl.Text = inputText; NameLbl.Size = UDim2.new(0.6,0,1,0); NameLbl.Position = UDim2.new(0,10,0,0); NameLbl.TextXAlignment = Enum.TextXAlignment.Left; NameLbl.Font = Enum.Font.Gotham; NameLbl.TextSize = 14; NameLbl.BackgroundTransparency = 1; NameLbl.Parent = InputFrame; AddToRegistry(NameLbl, "TextColor3", "Text")
+                local InputBox = Instance.new("TextBox"); InputBox.Text = tostring(default or ""); InputBox.PlaceholderText = placeholder; InputBox.Size = UDim2.new(0.3,0,0,26); InputBox.Position = UDim2.new(0.7,-10,0.5,-13); InputBox.Font = Enum.Font.GothamBold; InputBox.TextSize = 13; InputBox.TextXAlignment = Enum.TextXAlignment.Center; InputBox.ClearTextOnFocus = false; InputBox.Parent = InputFrame
+                local boxCorner = Instance.new("UICorner"); boxCorner.CornerRadius = UDim.new(0,5); boxCorner.Parent = InputBox
+                AddToRegistry(InputBox, "BackgroundColor3", "Main"); AddToRegistry(InputBox, "TextColor3", "Accent")
+                local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = Color3.fromRGB(255,255,255); boxStroke.Transparency = 0.9; boxStroke.Parent = InputBox
                 local function filterText(text)
-                    if characterLimit then
-                        text = text:sub(1, characterLimit)
-                    end
-                    if type(acceptedCharacters) == "function" then
-                        return acceptedCharacters(text)
-                    elseif acceptedCharacters == "Numeric" then
-                        return text:gsub("[^%d-]", ""):gsub("-(.*)", function(m) return m:gsub("-", "") end)
-                    elseif acceptedCharacters == "Alphabetic" then
-                        return text:gsub("[^a-zA-Z]", "")
-                    elseif acceptedCharacters == "AlphaNumeric" then
-                        return text:gsub("[^a-zA-Z0-9]", "")
-                    else
-                        return text
-                    end
+                    if characterLimit then text = text:sub(1,characterLimit) end
+                    if type(acceptedCharacters)=="function" then return acceptedCharacters(text)
+                    elseif acceptedCharacters=="Numeric" then return text:gsub("[^%d-]",""):gsub("-(.*)",function(m) return m:gsub("-","") end)
+                    elseif acceptedCharacters=="Alphabetic" then return text:gsub("[^a-zA-Z]","")
+                    elseif acceptedCharacters=="AlphaNumeric" then return text:gsub("[^a-zA-Z0-9]","")
+                    else return text end
                 end
-
-                InputBox:GetPropertyChangedSignal("Text"):Connect(function()
-                    local filtered = filterText(InputBox.Text)
-                    if filtered ~= InputBox.Text then
-                        InputBox.Text = filtered
-                    end
-                    if onChanged then
-                        onChanged(filtered)
-                    end
-                end)
-
-                InputBox.FocusLost:Connect(function(enterPressed)
-                    local text = InputBox.Text
-                    local filtered = filterText(text)
-                    if filtered ~= text then
-                        InputBox.Text = filtered
-                        text = filtered
-                    end
-                    if callback then
-                        callback(text)
-                    end
-                end)
-
-                ConfigObjects[inputText] = {
-                    Type = "Input",
-                    Value = InputBox.Text,
-                    Set = function(val)
-                        InputBox.Text = tostring(val)
-                    end
-                }
-
-                local self = {}
-                function self.UpdateText(newText)
-                    InputBox.Text = tostring(newText)
-                    ConfigObjects[inputText].Value = InputBox.Text
-                end
-                function self.GetText()
-                    return InputBox.Text
-                end
-                function self.SetVisible(state)
-                    InputFrame.Visible = state
-                end
-                function self.UpdatePlaceholder(newPlaceholder)
-                    InputBox.PlaceholderText = newPlaceholder
-                end
-                return self
+                InputBox:GetPropertyChangedSignal("Text"):Connect(function() local filtered = filterText(InputBox.Text); if filtered~=InputBox.Text then InputBox.Text=filtered end; if onChanged then onChanged(filtered) end end)
+                InputBox.FocusLost:Connect(function() local text = InputBox.Text; local filtered = filterText(text); if filtered~=text then InputBox.Text = filtered; text = filtered end; if callback then callback(text) end end)
+                ConfigObjects[inputText] = {Type = "Input", Value = InputBox.Text, Set = function(val) InputBox.Text = tostring(val) end}
+                local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== Colorpicker (从 maclib.lua 完整移植，已修复坐标问题) ====================
+            -- ==================== 全新重写的 ColorPicker ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -1154,7 +832,6 @@ function Library:CreateWindow(Config)
                 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Main, "BackgroundColor3", "Top")
 
-                -- 左侧标题
                 local Title = Instance.new("TextLabel")
                 Title.Text = pickerText
                 Title.Size = UDim2.new(0.7, 0, 1, 0)
@@ -1166,7 +843,6 @@ function Library:CreateWindow(Config)
                 Title.Parent = Main
                 AddToRegistry(Title, "TextColor3", "Text")
 
-                -- 右侧颜色预览
                 local PreviewBg = Instance.new("ImageLabel")
                 PreviewBg.Name = "ColorPreviewBg"
                 PreviewBg.Image = ColorPickerAssets.Grid
@@ -1195,13 +871,13 @@ function Library:CreateWindow(Config)
                 previewStroke.Parent = PreviewBg
                 AddToRegistry(previewStroke, "Color", "Stroke")
 
-                -- 点击打开选择器
+                -- 打开选择器
                 local colorPickerOpen = false
                 local function openColorPicker()
                     if colorPickerOpen then return end
                     colorPickerOpen = true
 
-                    -- 创建遮罩 CanvasGroup
+                    -- 创建遮罩
                     local canvas = Instance.new("CanvasGroup")
                     canvas.Name = "ColorPickerCanvas"
                     canvas.Size = UDim2.new(1, 0, 1, 0)
@@ -1210,7 +886,6 @@ function Library:CreateWindow(Config)
                     canvas.ZIndex = 200
                     canvas.Parent = ScreenGui
 
-                    -- 遮罩背景
                     local overlay = Instance.new("Frame")
                     overlay.Size = UDim2.new(1, 0, 1, 0)
                     overlay.BackgroundColor3 = Color3.new(0,0,0)
@@ -1218,25 +893,19 @@ function Library:CreateWindow(Config)
                     overlay.Parent = canvas
                     canvas.GroupTransparency = 0
 
-                    -- 选择器主框
+                    -- 选择器主框（宽度 380，高度自动）
                     local prompt = Instance.new("Frame")
                     prompt.Name = "ColorPickerPrompt"
                     prompt.AnchorPoint = Vector2.new(0.5, 0.5)
                     prompt.Position = UDim2.new(0.5, 0, 0.5, 0)
-                    prompt.Size = UDim2.fromOffset(420, 0)
+                    prompt.Size = UDim2.fromOffset(380, 0)
                     prompt.AutomaticSize = Enum.AutomaticSize.Y
                     prompt.BackgroundColor3 = CurrentTheme.Main
                     prompt.BorderSizePixel = 0
                     prompt.Parent = canvas
 
-                    local promptCorner = Instance.new("UICorner")
-                    promptCorner.CornerRadius = UDim.new(0, 10)
-                    promptCorner.Parent = prompt
-
-                    local promptStroke = Instance.new("UIStroke")
-                    promptStroke.Thickness = 2
-                    promptStroke.Parent = prompt
-                    AddToRegistry(promptStroke, "Color", "Stroke")
+                    local promptCorner = Instance.new("UICorner"); promptCorner.CornerRadius = UDim.new(0, 10); promptCorner.Parent = prompt
+                    local promptStroke = Instance.new("UIStroke"); promptStroke.Thickness = 2; promptStroke.Parent = prompt; AddToRegistry(promptStroke, "Color", "Stroke")
 
                     -- 内部布局
                     local list = Instance.new("UIListLayout")
@@ -1252,19 +921,19 @@ function Library:CreateWindow(Config)
                     padding.PaddingTop = UDim.new(0, 20)
                     padding.Parent = prompt
 
-                    -- 颜色轮 + 输入区
+                    -- 颜色轮 + 输入区（高度 200 匹配轮子）
                     local wheelRow = Instance.new("Frame")
-                    wheelRow.Size = UDim2.new(1, 0, 0, 220)
+                    wheelRow.Size = UDim2.new(1, 0, 0, 200)
                     wheelRow.BackgroundTransparency = 1
                     wheelRow.Parent = prompt
 
-                    -- 颜色轮
+                    -- 颜色轮（200x200）
                     local wheel = Instance.new("ImageButton")
                     wheel.Name = "ColorWheel"
                     wheel.Image = ColorPickerAssets.Wheel
                     wheel.AutoButtonColor = false
-                    wheel.Size = UDim2.fromOffset(220, 220)
-                    wheel.Position = UDim2.new(0, 0, 0.5, -110)
+                    wheel.Size = UDim2.fromOffset(200, 200)
+                    wheel.Position = UDim2.new(0, 0, 0.5, -100)
                     wheel.BackgroundTransparency = 1
                     wheel.Parent = wheelRow
 
@@ -1277,10 +946,10 @@ function Library:CreateWindow(Config)
                     target.Parent = wheel
                     target.Position = UDim2.new(0.5, 0, 0.5, 0)
 
-                    -- 右侧输入区
+                    -- 右侧输入区（宽度 140）
                     local inputs = Instance.new("Frame")
-                    inputs.Size = UDim2.new(0, 160, 1, 0)
-                    inputs.Position = UDim2.new(1, -160, 0, 0)
+                    inputs.Size = UDim2.new(0, 140, 1, 0)
+                    inputs.Position = UDim2.new(1, -140, 0, 0)
                     inputs.BackgroundTransparency = 1
                     inputs.Parent = wheelRow
 
@@ -1297,7 +966,7 @@ function Library:CreateWindow(Config)
                         row.Parent = inputs
 
                         local label = Instance.new("TextLabel")
-                        label.Size = UDim2.new(0, 40, 1, 0)
+                        label.Size = UDim2.new(0, 35, 1, 0)
                         label.Text = labelText
                         label.TextColor3 = CurrentTheme.Text
                         label.BackgroundTransparency = 1
@@ -1308,8 +977,8 @@ function Library:CreateWindow(Config)
                         AddToRegistry(label, "TextColor3", "Text")
 
                         local box = Instance.new("TextBox")
-                        box.Size = UDim2.new(1, -45, 0, 25)
-                        box.Position = UDim2.new(0, 45, 0.5, -12.5)
+                        box.Size = UDim2.new(1, -40, 0, 25)
+                        box.Position = UDim2.new(0, 40, 0.5, -12.5)
                         box.Text = defaultText
                         box.TextColor3 = CurrentTheme.Accent
                         box.BackgroundColor3 = CurrentTheme.Main
@@ -1319,16 +988,8 @@ function Library:CreateWindow(Config)
                         box.TextSize = 13
                         box.Parent = row
 
-                        local boxCorner = Instance.new("UICorner")
-                        boxCorner.CornerRadius = UDim.new(0, 5)
-                        boxCorner.Parent = box
-
-                        local boxStroke = Instance.new("UIStroke")
-                        boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                        boxStroke.Color = Color3.fromRGB(255,255,255)
-                        boxStroke.Transparency = 0.9
-                        boxStroke.Parent = box
-
+                        local boxCorner = Instance.new("UICorner"); boxCorner.CornerRadius = UDim.new(0, 5); boxCorner.Parent = box
+                        local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = Color3.fromRGB(255,255,255); boxStroke.Transparency = 0.9; boxStroke.Parent = box
                         return box
                     end
 
@@ -1345,7 +1006,7 @@ function Library:CreateWindow(Config)
                     valueSliderRow.Parent = prompt
 
                     local valueLabel = Instance.new("TextLabel")
-                    valueLabel.Size = UDim2.new(0, 40, 1, 0)
+                    valueLabel.Size = UDim2.new(0, 35, 1, 0)
                     valueLabel.Text = "V"
                     valueLabel.TextColor3 = CurrentTheme.Text
                     valueLabel.BackgroundTransparency = 1
@@ -1356,8 +1017,8 @@ function Library:CreateWindow(Config)
                     AddToRegistry(valueLabel, "TextColor3", "Text")
 
                     local valueSlider = Instance.new("Frame")
-                    valueSlider.Size = UDim2.new(1, -50, 0, 10)
-                    valueSlider.Position = UDim2.new(0, 45, 0.5, -5)
+                    valueSlider.Size = UDim2.new(1, -45, 0, 10)
+                    valueSlider.Position = UDim2.new(0, 40, 0.5, -5)
                     valueSlider.BackgroundColor3 = Color3.new(1,1,1)
                     valueSlider.BackgroundTransparency = 0.2
                     valueSlider.Parent = valueSliderRow
@@ -1461,81 +1122,82 @@ function Library:CreateWindow(Config)
                         hexBox.Text = string.format("#%02X%02X%02X", math.floor(c.R*255+0.5), math.floor(c.G*255+0.5), math.floor(c.B*255+0.5))
                     end
 
-                    local function UpdateRing(iX, iY)
-                        local r = wheel.AbsoluteSize.X / 2
-                        local d = Vector2.new(iX, iY) - (wheel.AbsolutePosition + wheel.AbsoluteSize / 2)
-                        if d:Dot(d) > r * r then
-                            d = d.Unit * r
-                        end
-                        target.Position = UDim2.new(0.5, d.X, 0.5, -d.Y)
-                        local phi, len = math.atan2(-d.Y, d.X), d.Magnitude
-                        hue = (phi + math.pi) / (2 * math.pi)
-                        saturation = math.clamp(len / r, 0, 1)
-                        valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
-                        updateColorFromHSV()
-                    end
-
-                    local function UpdateSlide(iX)
-                        local rX = iX - valueSlider.AbsolutePosition.X
-                        local cX = math.clamp(rX, 0, valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X)
-                        valueThumb.Position = UDim2.new(0, cX, 0.5, 0)
-                        value = 1 - (cX / (valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X))
-                        updateColorFromHSV()
-                    end
-
-                    local function updateFromRGB()
-                        local r = tonumber(redBox.Text) or 0
-                        local g = tonumber(greenBox.Text) or 0
-                        local b = tonumber(blueBox.Text) or 0
-                        r = math.clamp(r, 0, 255) / 255
-                        g = math.clamp(g, 0, 255) / 255
-                        b = math.clamp(b, 0, 255) / 255
-                        local c = Color3.new(r,g,b)
-                        hue, saturation, value = c:ToHSV()
-                        updateColorFromHSV()
-                        -- 更新轮和滑块位置
+                    -- 计算轮子上靶心的位置
+                    local function updateWheelPosition()
                         local r = wheel.AbsoluteSize.X / 2
                         local phi = hue * 2 * math.pi
                         local len = saturation * r
                         local x = len * math.cos(phi)
-                        local y = -len * math.sin(phi)
+                        local y = -len * math.sin(phi)  -- Y 轴向下为正，取反使 0° 在右侧顺时针
                         target.Position = UDim2.new(0.5, x, 0.5, y)
                         valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
+                    end
+
+                    -- 更新滑块位置
+                    local function updateSliderPosition()
                         local cX = (1 - value) * (valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X)
                         valueThumb.Position = UDim2.new(0, cX, 0.5, 0)
+                    end
+
+                    -- 从鼠标位置更新色相和饱和度
+                    local function updateHueSatFromMouse(mouseX, mouseY)
+                        local center = wheel.AbsolutePosition + wheel.AbsoluteSize / 2
+                        local dx = mouseX - center.X
+                        local dy = mouseY - center.Y
+                        local r = wheel.AbsoluteSize.X / 2
+                        local dist = math.sqrt(dx*dx + dy*dy)
+                        if dist > r then
+                            dx = dx / dist * r
+                            dy = dy / dist * r
+                        end
+                        local phi = math.atan2(-dy, dx)  -- 注意符号，使 0° 在右侧顺时针
+                        hue = (phi + math.pi) / (2 * math.pi)
+                        saturation = math.min(dist / r, 1)
+                        updateWheelPosition()
+                        updateColorFromHSV()
+                    end
+
+                    -- 从鼠标位置更新亮度
+                    local function updateValueFromMouse(mouseX)
+                        local sliderX = valueSlider.AbsolutePosition.X
+                        local sliderW = valueSlider.AbsoluteSize.X
+                        local thumbW = valueThumb.AbsoluteSize.X
+                        local rel = math.clamp((mouseX - sliderX) / sliderW, 0, 1)
+                        value = 1 - rel
+                        updateSliderPosition()
+                        updateColorFromHSV()
+                    end
+
+                    -- 从 RGB 输入更新
+                    local function updateFromRGB()
+                        local r = tonumber(redBox.Text) or 0; local g = tonumber(greenBox.Text) or 0; local b = tonumber(blueBox.Text) or 0
+                        r = math.clamp(r,0,255)/255; g = math.clamp(g,0,255)/255; b = math.clamp(b,0,255)/255
+                        local c = Color3.new(r,g,b)
+                        hue, saturation, value = c:ToHSV()
+                        updateWheelPosition()
+                        updateSliderPosition()
+                        updateColorFromHSV()
                     end
 
                     local function updateFromHex()
                         local hex = hexBox.Text:gsub("#","")
                         if #hex == 6 then
-                            local r = tonumber(hex:sub(1,2), 16) or 0
-                            local g = tonumber(hex:sub(3,4), 16) or 0
-                            local b = tonumber(hex:sub(5,6), 16) or 0
-                            r = math.clamp(r,0,255)/255
-                            g = math.clamp(g,0,255)/255
-                            b = math.clamp(b,0,255)/255
+                            local r = tonumber(hex:sub(1,2),16) or 0; local g = tonumber(hex:sub(3,4),16) or 0; local b = tonumber(hex:sub(5,6),16) or 0
+                            r = math.clamp(r,0,255)/255; g = math.clamp(g,0,255)/255; b = math.clamp(b,0,255)/255
                             local c = Color3.new(r,g,b)
                             hue, saturation, value = c:ToHSV()
+                            updateWheelPosition()
+                            updateSliderPosition()
                             updateColorFromHSV()
-                            -- 更新轮和滑块
-                            local r = wheel.AbsoluteSize.X / 2
-                            local phi = hue * 2 * math.pi
-                            local len = saturation * r
-                            local x = len * math.cos(phi)
-                            local y = -len * math.sin(phi)
-                            target.Position = UDim2.new(0.5, x, 0.5, y)
-                            valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
-                            local cX = (1 - value) * (valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X)
-                            valueThumb.Position = UDim2.new(0, cX, 0.5, 0)
                         end
                     end
 
-                    -- 轮子拖动
+                    -- 拖拽事件
                     local wheelDragging = false
                     wheel.InputBegan:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                             wheelDragging = true
-                            UpdateRing(input.Position.X, input.Position.Y)
+                            updateHueSatFromMouse(input.Position.X, input.Position.Y)
                         end
                     end)
                     wheel.InputEnded:Connect(function(input)
@@ -1544,12 +1206,11 @@ function Library:CreateWindow(Config)
                         end
                     end)
 
-                    -- 亮度滑块拖动
                     local valueDragging = false
                     valueThumb.InputBegan:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                             valueDragging = true
-                            UpdateSlide(input.Position.X)
+                            updateValueFromMouse(input.Position.X)
                         end
                     end)
                     valueThumb.InputEnded:Connect(function(input)
@@ -1560,19 +1221,14 @@ function Library:CreateWindow(Config)
 
                     UserInputService.InputChanged:Connect(function(input)
                         if wheelDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                            UpdateRing(input.Position.X, input.Position.Y)
+                            updateHueSatFromMouse(input.Position.X, input.Position.Y)
                         elseif valueDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                            UpdateSlide(input.Position.X)
+                            updateValueFromMouse(input.Position.X)
                         end
                     end)
 
-                    -- 输入框焦点占位符处理
-                    local function onFocusEnter(box)
-                        local placeholder = box.Text
-                        box.Text = ""
-                        box.PlaceholderText = placeholder
-                    end
-
+                    -- 输入框焦点处理
+                    local function onFocusEnter(box) local t = box.Text; box.Text = ""; box.PlaceholderText = t end
                     redBox.Focused:Connect(function() onFocusEnter(redBox) end)
                     greenBox.Focused:Connect(function() onFocusEnter(greenBox) end)
                     blueBox.Focused:Connect(function() onFocusEnter(blueBox) end)
@@ -1591,7 +1247,6 @@ function Library:CreateWindow(Config)
                         end)
                     end
 
-                    -- 确认/取消按钮
                     confirm.MouseButton1Click:Connect(function()
                         Color = PreviewColor.BackgroundColor3
                         Alpha = PreviewColor.BackgroundTransparency
@@ -1613,17 +1268,10 @@ function Library:CreateWindow(Config)
                         end
                     end)
 
-                    -- 延迟一帧确保尺寸已计算，然后初始化轮和滑块位置
+                    -- 初始化位置（延迟一帧确保尺寸已计算）
                     RunService.RenderStepped:Wait()
-                    local r = wheel.AbsoluteSize.X / 2
-                    local phi = hue * 2 * math.pi
-                    local len = saturation * r
-                    local x = len * math.cos(phi)
-                    local y = -len * math.sin(phi)
-                    target.Position = UDim2.new(0.5, x, 0.5, y)
-                    valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
-                    local cX = (1 - value) * (valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X)
-                    valueThumb.Position = UDim2.new(0, cX, 0.5, 0)
+                    updateWheelPosition()
+                    updateSliderPosition()
                 end
 
                 Main.MouseButton1Click:Connect(openColorPicker)
@@ -1642,12 +1290,8 @@ function Library:CreateWindow(Config)
                 }
 
                 local self = {}
-                function self.UpdateText(newText)
-                    Title.Text = newText
-                end
-                function self.SetVisible(state)
-                    Main.Visible = state
-                end
+                function self.UpdateText(newText) Title.Text = newText end
+                function self.SetVisible(state) Main.Visible = state end
                 function self.SetColor(color, alpha)
                     Color = color or Color
                     Alpha = alpha or Alpha
@@ -1663,16 +1307,10 @@ function Library:CreateWindow(Config)
 
             return child
         end
-
         return Elements
     end
-
     return Window
 end
 
--- 公开方法：控制音效开关
-function Library:SetSFXEnabled(state)
-    SFXEnabled = state
-end
-
+function Library:SetSFXEnabled(state) SFXEnabled = state end
 return Library
