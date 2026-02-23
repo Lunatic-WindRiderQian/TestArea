@@ -1207,20 +1207,20 @@ function Library:CreateWindow(Config)
             end
             -- ==========================================================================
 
-            -- ==================== ColorPicker (从 maclib 移植) ====================
+            -- ==================== ColorPicker (从 maclib 移植，优化颜色块可见性) ====================
             child.ColorPicker = function(_, pickerText, defaultColor, callback, options)
                 options = options or {}
-                local withAlpha = options.withAlpha or false  -- 是否启用透明度
+                local withAlpha = options.withAlpha or false
                 local defaultAlpha = options.defaultAlpha or 0
 
-                -- 主容器 (高度 35，与其他元素一致)
+                -- 主容器
                 local Frame = Instance.new("Frame")
                 Frame.Size = UDim2.new(1, 0, 0, 35)
                 Frame.Parent = contentContainer
                 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Frame, "BackgroundColor3", "Top")
 
-                -- 标签 (左对齐)
+                -- 标签
                 local Lbl = Instance.new("TextLabel")
                 Lbl.Text = pickerText
                 Lbl.Size = UDim2.new(0.6, 0, 1, 0)
@@ -1232,7 +1232,7 @@ function Library:CreateWindow(Config)
                 Lbl.Parent = Frame
                 AddToRegistry(Lbl, "TextColor3", "Text")
 
-                -- 颜色显示区域 (右侧)
+                -- 颜色显示区域（网格背景 + 颜色块 + 边框）
                 local ColorBg = Instance.new("ImageLabel")
                 ColorBg.Name = "ColorBg"
                 ColorBg.Image = ColorPickerAssets.Grid
@@ -1240,9 +1240,12 @@ function Library:CreateWindow(Config)
                 ColorBg.TileSize = UDim2.fromOffset(500, 500)
                 ColorBg.Size = UDim2.new(0, 30, 0, 30)
                 ColorBg.Position = UDim2.new(1, -35, 0.5, -15)
-                ColorBg.BackgroundTransparency = 1
+                ColorBg.BackgroundColor3 = Color3.fromRGB(80,80,80)  -- 备用颜色
+                ColorBg.BackgroundTransparency = 0
                 ColorBg.Parent = Frame
+                Instance.new("UICorner", ColorBg).CornerRadius = UDim.new(0, 6)
 
+                -- 颜色块
                 local ColorBlock = Instance.new("Frame")
                 ColorBlock.Name = "ColorBlock"
                 ColorBlock.Size = UDim2.new(1, 0, 1, 0)
@@ -1252,12 +1255,18 @@ function Library:CreateWindow(Config)
                 ColorBlock.Parent = ColorBg
                 Instance.new("UICorner", ColorBlock).CornerRadius = UDim.new(0, 6)
 
-                -- 圆角边框使颜色块与整体风格一致
+                -- 给颜色块添加一个半透明白色边框，使其在任何背景下可见
+                local blockStroke = Instance.new("UIStroke")
+                blockStroke.Thickness = 1
+                blockStroke.Color = Color3.new(1,1,1)
+                blockStroke.Transparency = 0.5
+                blockStroke.Parent = ColorBlock
+
+                -- 边框美化
                 local colorStroke = Instance.new("UIStroke")
                 colorStroke.Thickness = 1
                 colorStroke.Color = CurrentTheme.Stroke
                 colorStroke.Parent = ColorBg
-                Instance.new("UICorner", ColorBg).CornerRadius = UDim.new(0, 6)
 
                 -- 点击按钮
                 local Btn = Instance.new("TextButton")
