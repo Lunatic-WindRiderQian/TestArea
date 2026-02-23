@@ -1139,7 +1139,7 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- ==================== Colorpicker (从 maclib.lua 完整移植) ====================
+            -- ==================== Colorpicker (从 maclib.lua 完整移植，已修复坐标问题) ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -1613,7 +1613,8 @@ function Library:CreateWindow(Config)
                         end
                     end)
 
-                    -- 初始化轮和滑块位置
+                    -- 延迟一帧确保尺寸已计算，然后初始化轮和滑块位置
+                    RunService.RenderStepped:Wait()
                     local r = wheel.AbsoluteSize.X / 2
                     local phi = hue * 2 * math.pi
                     local len = saturation * r
