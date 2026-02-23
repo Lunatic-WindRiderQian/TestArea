@@ -1207,10 +1207,10 @@ function Library:CreateWindow(Config)
             end
             -- ==========================================================================
 
-            -- ==================== Colorpicker (maclib 风格，完全移植) ====================
+            -- ==================== Colorpicker (maclib 风格，完全移植并修复显示问题) ====================
             child.Colorpicker = function(_, pickerText, defaultColor, callback, options)
                 options = options or {}
-                local hasAlpha = options.Alpha ~= nil  -- 如果传入了 Alpha 参数，则启用透明度
+                local hasAlpha = options.Alpha ~= nil
                 local currentColor = defaultColor or Color3.new(1, 1, 1)
                 local currentAlpha = hasAlpha and math.clamp(options.Alpha, 0, 1) or 0
 
@@ -1258,9 +1258,14 @@ function Library:CreateWindow(Config)
                 -- 为显示区域添加圆角
                 Instance.new("UICorner", ColorDisplay).CornerRadius = UDim.new(0, 6)
 
+                -- 预加载图片资源，避免显示空白
+                local contentProvider = game:GetService("ContentProvider")
+                local assetsToPreload = {ColorPickerAssets.Wheel, ColorPickerAssets.Target, ColorPickerAssets.Grid}
+                contentProvider:PreloadAsync(assetsToPreload)
+
                 -- 点击打开颜色选择器
-                local pickerFrame = nil  -- 颜色选择器主框架，点击时创建
-                local inputChangedConn = nil  -- 用于断开全局输入事件
+                local pickerFrame = nil
+                local inputChangedConn = nil
 
                 local function closePicker(apply)
                     if pickerFrame then
@@ -1301,8 +1306,8 @@ function Library:CreateWindow(Config)
                     -- 颜色选择器主窗口
                     pickerFrame = Instance.new("Frame")
                     pickerFrame.Name = "ColorPicker"
-                    pickerFrame.Size = UDim2.new(0, 320, 0, 460)  -- 增加高度以容纳 Alpha 输入
-                    pickerFrame.Position = UDim2.new(0.5, -160, 0.5, -230)
+                    pickerFrame.Size = UDim2.new(0, 340, 0, hasAlpha and 500 or 460)  -- 根据是否启用Alpha调整高度
+                    pickerFrame.Position = UDim2.new(0.5, -170, 0.5, -(hasAlpha and 250 or 230))
                     pickerFrame.BackgroundColor3 = CurrentTheme.Main
                     pickerFrame.BorderSizePixel = 0
                     pickerFrame.Parent = screenGui
@@ -1409,7 +1414,7 @@ function Library:CreateWindow(Config)
                     previewColor.Parent = previewGrid
                     Instance.new("UICorner", previewColor).CornerRadius = UDim.new(0, 6)
 
-                    -- ---------- RGB 输入框 ----------
+                    -- ---------- RGB/Hex 输入框 ----------
                     local function createInputRow(labelText, yPos)
                         local row = Instance.new("Frame")
                         row.Size = UDim2.new(1, -30, 0, 30)
