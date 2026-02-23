@@ -1206,14 +1206,14 @@ function Library:CreateWindow(Config)
             end
             -- ==========================================================================
 
-            -- ==================== Colorpicker (maclib 核心移植) ====================
+            -- ==================== Colorpicker (修复版) ====================
             child.Colorpicker = function(_, pickerText, defaultColor, callback, options)
                 options = options or {}
                 local hasAlpha = options.Alpha ~= nil
                 local alpha = options.Alpha or 0
                 local color = defaultColor or Color3.new(1, 1, 1)
 
-                -- 主容器（背景色 Top，圆角）
+                -- 主容器
                 local Frame = Instance.new("Frame")
                 Frame.Size = UDim2.new(1, 0, 0, 40)
                 Frame.Parent = contentContainer
@@ -1232,7 +1232,7 @@ function Library:CreateWindow(Config)
                 Label.Parent = Frame
                 AddToRegistry(Label, "TextColor3", "Text")
 
-                -- 右侧颜色预览（带网格纹理表示透明）
+                -- 右侧颜色预览
                 local Preview = Instance.new("ImageLabel")
                 Preview.Size = UDim2.new(0, 40, 0, 24)
                 Preview.Position = UDim2.new(1, -50, 0.5, -12)
@@ -1242,7 +1242,6 @@ function Library:CreateWindow(Config)
                 Preview.ScaleType = Enum.ScaleType.Tile
                 Preview.TileSize = UDim2.fromOffset(20, 20)
                 Preview.Parent = Frame
-                -- 圆角与边框
                 local previewCorner = Instance.new("UICorner")
                 previewCorner.CornerRadius = UDim.new(0, 6)
                 previewCorner.Parent = Preview
@@ -1254,363 +1253,282 @@ function Library:CreateWindow(Config)
 
                 -- 打开颜色选择器
                 local function openPicker()
-                    local screenGui = Frame:FindFirstAncestorOfClass("ScreenGui")
-                    if not screenGui then return end
-
-                    -- 遮罩层（半透明黑，阻止背景交互）
-                    local overlay = Instance.new("Frame")
-                    overlay.Size = UDim2.new(1, 0, 1, 0)
-                    overlay.BackgroundColor3 = Color3.new(0, 0, 0)
-                    overlay.BackgroundTransparency = 0.5
-                    overlay.ZIndex = 100
-                    overlay.Parent = screenGui
-
-                    -- 主弹出窗口
-                    local pickerFrame = Instance.new("Frame")
-                    pickerFrame.Size = UDim2.new(0, 420, 0, 520)  -- 足够容纳所有控件
-                    pickerFrame.Position = UDim2.new(0.5, -210, 0.5, -260)
-                    pickerFrame.BackgroundColor3 = CurrentTheme.Main
-                    pickerFrame.BorderSizePixel = 0
-                    pickerFrame.ZIndex = 101
-                    pickerFrame.Parent = overlay
-
-                    local pickerCorner = Instance.new("UICorner")
-                    pickerCorner.CornerRadius = UDim.new(0, 12)
-                    pickerCorner.Parent = pickerFrame
-
-                    local pickerStroke = Instance.new("UIStroke")
-                    pickerStroke.Thickness = 2
-                    pickerStroke.Color = CurrentTheme.Stroke
-                    pickerStroke.Parent = pickerFrame
-
-                    -- 标题
-                    local titleLabel = Instance.new("TextLabel")
-                    titleLabel.Size = UDim2.new(1, -40, 0, 30)
-                    titleLabel.Position = UDim2.new(0, 20, 0, 10)
-                    titleLabel.BackgroundTransparency = 1
-                    titleLabel.Font = Enum.Font.GothamBold
-                    titleLabel.Text = "Color Picker"
-                    titleLabel.TextColor3 = CurrentTheme.Text
-                    titleLabel.TextSize = 18
-                    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-                    titleLabel.Parent = pickerFrame
-
-                    -- 关闭按钮 (X)
-                    local closeBtn = Instance.new("TextButton")
-                    closeBtn.Size = UDim2.new(0, 30, 0, 30)
-                    closeBtn.Position = UDim2.new(1, -40, 0, 10)
-                    closeBtn.BackgroundTransparency = 1
-                    closeBtn.Text = "✕"
-                    closeBtn.TextColor3 = CurrentTheme.Text
-                    closeBtn.TextSize = 20
-                    closeBtn.Font = Enum.Font.GothamBold
-                    closeBtn.Parent = pickerFrame
-                    closeBtn.MouseButton1Click:Connect(function()
-                        overlay:Destroy()
-                    end)
-
-                    -- 颜色轮区域
-                    local wheelContainer = Instance.new("Frame")
-                    wheelContainer.Size = UDim2.new(1, -40, 0, 200)
-                    wheelContainer.Position = UDim2.new(0, 20, 0, 50)
-                    wheelContainer.BackgroundTransparency = 1
-                    wheelContainer.Parent = pickerFrame
-
-                    -- 颜色轮
-                    local wheel = Instance.new("ImageButton")
-                    wheel.Name = "Wheel"
-                    wheel.Image = ColorPickerAssets.Wheel
-                    wheel.AutoButtonColor = false
-                    wheel.BackgroundTransparency = 1
-                    wheel.Size = UDim2.new(0, 200, 0, 200)
-                    wheel.Parent = wheelContainer
-
-                    -- 轮上指示器
-                    local target = Instance.new("ImageLabel")
-                    target.Name = "Target"
-                    target.Image = ColorPickerAssets.Target
-                    target.Size = UDim2.fromOffset(24, 24)
-                    target.BackgroundTransparency = 1
-                    target.Parent = wheel
-                    target.ZIndex = 102
-
-                    -- 明度滑块 (Value)
-                    local valueSlider = Instance.new("ImageLabel")
-                    valueSlider.Name = "ValueSlider"
-                    valueSlider.Image = ColorPickerAssets.Wheel  -- 复用颜色轮，实际应使用黑白渐变，这里用 UIGradient
-                    valueSlider.BackgroundColor3 = Color3.new(1, 1, 1)
-                    valueSlider.Size = UDim2.new(0, 20, 0, 200)
-                    valueSlider.Position = UDim2.new(1, 10, 0, 0)
-                    valueSlider.Parent = wheelContainer
-                    -- 使用 UIGradient 创建黑白渐变
-                    local gradient = Instance.new("UIGradient")
-                    gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(1,1,1)), ColorSequenceKeypoint.new(1, Color3.new(0,0,0))})
-                    gradient.Rotation = 90
-                    gradient.Parent = valueSlider
-
-                    local sliderHead = Instance.new("ImageButton")
-                    sliderHead.Image = SliderAssets.Head  -- 复用滑块头图片
-                    sliderHead.Size = UDim2.fromOffset(16, 16)
-                    sliderHead.AnchorPoint = Vector2.new(0.5, 0.5)
-                    sliderHead.BackgroundTransparency = 1
-                    sliderHead.Parent = valueSlider
-                    sliderHead.ZIndex = 103
-
-                    -- 当前 HSV 状态
-                    local hue, saturation, val = Color3.toHSV(color)
-                    if not hue then hue, saturation, val = 0, 0, 1 end
-
-                    local function updateFromHSV()
-                        local c = Color3.fromHSV(hue, saturation, val)
-                        -- 更新预览（内部颜色预览，稍后实现）
-                    end
-
-                    -- 颜色轮拖动逻辑
-                    local function updateWheelFromMouse(mouseX, mouseY)
-                        local wheelAbs = wheel.AbsolutePosition
-                        local wheelSize = wheel.AbsoluteSize
-                        local center = wheelAbs + wheelSize / 2
-                        local dx = mouseX - center.X
-                        local dy = mouseY - center.Y
-                        local r = wheelSize.X / 2
-                        local dist = math.sqrt(dx*dx + dy*dy)
-                        if dist > r then
-                            dx = dx / dist * r
-                            dy = dy / dist * r
+                    local success, err = pcall(function()
+                        local screenGui = Frame:FindFirstAncestorOfClass("ScreenGui")
+                        if not screenGui then
+                            warn("Colorpicker: No ScreenGui found")
+                            return
                         end
-                        target.Position = UDim2.new(0.5, dx, 0.5, -dy)  -- 注意坐标系
-                        -- 计算角度和饱和度
-                        local phi = math.atan2(-dy, dx)  -- 因为 Y 轴向下为正，需取反
-                        hue = (phi + math.pi) / (2 * math.pi)
-                        saturation = dist / r
-                        updateFromHSV()
-                    end
 
-                    local wheelDragging = false
-                    wheel.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                            wheelDragging = true
-                            updateWheelFromMouse(input.Position.X, input.Position.Y)
-                        end
-                    end)
-                    wheel.InputEnded:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                            wheelDragging = false
-                        end
-                    end)
+                        -- 遮罩层
+                        local overlay = Instance.new("Frame")
+                        overlay.Size = UDim2.new(1, 0, 1, 0)
+                        overlay.BackgroundColor3 = Color3.new(0, 0, 0)
+                        overlay.BackgroundTransparency = 0.5
+                        overlay.ZIndex = 100
+                        overlay.Parent = screenGui
 
-                    -- 明度滑块逻辑
-                    local sliderDragging = false
-                    local function updateSliderFromMouse(mouseX, mouseY)
-                        local sliderAbs = valueSlider.AbsolutePosition
-                        local sliderSize = valueSlider.AbsoluteSize
-                        local relativeY = mouseY - sliderAbs.Y
-                        local percent = math.clamp(relativeY / sliderSize.Y, 0, 1)
-                        val = 1 - percent  -- 上白下黑，所以减
-                        sliderHead.Position = UDim2.new(0.5, 0, 0, relativeY)
-                        updateFromHSV()
-                    end
+                        -- 主弹出窗口
+                        local pickerFrame = Instance.new("Frame")
+                        pickerFrame.Size = UDim2.new(0, 420, 0, 520)
+                        pickerFrame.Position = UDim2.new(0.5, -210, 0.5, -260)
+                        pickerFrame.BackgroundColor3 = CurrentTheme.Main
+                        pickerFrame.BorderSizePixel = 0
+                        pickerFrame.ZIndex = 101
+                        pickerFrame.Parent = overlay
 
-                    valueSlider.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                            sliderDragging = true
-                            updateSliderFromMouse(input.Position.X, input.Position.Y)
-                        end
-                    end)
-                    valueSlider.InputEnded:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                            sliderDragging = false
-                        end
-                    end)
+                        local pickerCorner = Instance.new("UICorner")
+                        pickerCorner.CornerRadius = UDim.new(0, 12)
+                        pickerCorner.Parent = pickerFrame
 
-                    UserInputService.InputChanged:Connect(function(input)
-                        if wheelDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                            updateWheelFromMouse(input.Position.X, input.Position.Y)
-                        elseif sliderDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                            updateSliderFromMouse(input.Position.X, input.Position.Y)
-                        end
-                    end)
+                        local pickerStroke = Instance.new("UIStroke")
+                        pickerStroke.Thickness = 2
+                        pickerStroke.Color = CurrentTheme.Stroke
+                        pickerStroke.Parent = pickerFrame
 
-                    -- RGB 输入区域
-                    local inputsFrame = Instance.new("Frame")
-                    inputsFrame.Size = UDim2.new(1, -40, 0, 120)
-                    inputsFrame.Position = UDim2.new(0, 20, 0, 270)
-                    inputsFrame.BackgroundTransparency = 1
-                    inputsFrame.Parent = pickerFrame
+                        -- 标题
+                        local titleLabel = Instance.new("TextLabel")
+                        titleLabel.Size = UDim2.new(1, -40, 0, 30)
+                        titleLabel.Position = UDim2.new(0, 20, 0, 10)
+                        titleLabel.BackgroundTransparency = 1
+                        titleLabel.Font = Enum.Font.GothamBold
+                        titleLabel.Text = "Color Picker"
+                        titleLabel.TextColor3 = CurrentTheme.Text
+                        titleLabel.TextSize = 18
+                        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+                        titleLabel.Parent = pickerFrame
 
-                    local function createInputRow(labelText, default)
-                        local row = Instance.new("Frame")
-                        row.Size = UDim2.new(1, 0, 0, 30)
-                        row.BackgroundTransparency = 1
-                        row.Parent = inputsFrame
-
-                        local label = Instance.new("TextLabel")
-                        label.Text = labelText
-                        label.Size = UDim2.new(0, 50, 1, 0)
-                        label.BackgroundTransparency = 1
-                        label.Font = Enum.Font.Gotham
-                        label.TextColor3 = CurrentTheme.Text
-                        label.TextSize = 14
-                        label.TextXAlignment = Enum.TextXAlignment.Left
-                        label.Parent = row
-
-                        local box = Instance.new("TextBox")
-                        box.Size = UDim2.new(0, 60, 0, 24)
-                        box.Position = UDim2.new(1, -70, 0.5, -12)
-                        box.Text = tostring(default)
-                        box.Font = Enum.Font.Gotham
-                        box.TextSize = 14
-                        box.TextColor3 = CurrentTheme.Text
-                        box.BackgroundColor3 = CurrentTheme.Main
-                        box.BorderSizePixel = 0
-                        box.Parent = row
-                        Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
-                        local stroke = Instance.new("UIStroke")
-                        stroke.Color = CurrentTheme.Stroke
-                        stroke.Parent = box
-
-                        return box
-                    end
-
-                    local rBox = createInputRow("R", math.floor(color.R * 255 + 0.5))
-                    local gBox = createInputRow("G", math.floor(color.G * 255 + 0.5))
-                    local bBox = createInputRow("B", math.floor(color.B * 255 + 0.5))
-                    local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(color.R*255), math.floor(color.G*255), math.floor(color.B*255)))
-                    hexBox.Size = UDim2.new(0, 80, 0, 24)
-                    hexBox.Position = UDim2.new(1, -90, 0.5, -12)
-
-                    -- 透明度（如果有）
-                    local alphaBox
-                    if hasAlpha then
-                        alphaBox = createInputRow("A", math.floor(alpha * 255 + 0.5))
-                        alphaBox.Parent = inputsFrame
-                        alphaBox.LayoutOrder = 4
-                    end
-
-                    -- 新/旧颜色预览
-                    local previewFrame = Instance.new("Frame")
-                    previewFrame.Size = UDim2.new(1, -40, 0, 50)
-                    previewFrame.Position = UDim2.new(0, 20, 0, 410)
-                    previewFrame.BackgroundTransparency = 1
-                    previewFrame.Parent = pickerFrame
-
-                    local oldColor = Instance.new("Frame")
-                    oldColor.Size = UDim2.new(0.5, -5, 1, 0)
-                    oldColor.BackgroundColor3 = color
-                    oldColor.BackgroundTransparency = alpha
-                    oldColor.Parent = previewFrame
-                    Instance.new("UICorner", oldColor).CornerRadius = UDim.new(0, 6)
-
-                    local newColor = Instance.new("Frame")
-                    newColor.Size = UDim2.new(0.5, -5, 1, 0)
-                    newColor.Position = UDim2.new(1, - (newColor.Size.X.Offset + 5), 0, 0)  -- 靠右
-                    newColor.BackgroundColor3 = color
-                    newColor.BackgroundTransparency = alpha
-                    newColor.Parent = previewFrame
-                    Instance.new("UICorner", newColor).CornerRadius = UDim.new(0, 6)
-
-                    -- 确认/取消按钮
-                    local btnFrame = Instance.new("Frame")
-                    btnFrame.Size = UDim2.new(1, -40, 0, 40)
-                    btnFrame.Position = UDim2.new(0, 20, 0, 470)
-                    btnFrame.BackgroundTransparency = 1
-                    btnFrame.Parent = pickerFrame
-
-                    local cancelBtn = Instance.new("TextButton")
-                    cancelBtn.Size = UDim2.new(0.5, -5, 1, 0)
-                    cancelBtn.Text = "Cancel"
-                    cancelBtn.Font = Enum.Font.GothamBold
-                    cancelBtn.TextColor3 = CurrentTheme.Text
-                    cancelBtn.BackgroundColor3 = CurrentTheme.Top
-                    cancelBtn.Parent = btnFrame
-                    Instance.new("UICorner", cancelBtn).CornerRadius = UDim.new(0, 6)
-                    cancelBtn.MouseButton1Click:Connect(function()
-                        overlay:Destroy()
-                    end)
-
-                    local confirmBtn = Instance.new("TextButton")
-                    confirmBtn.Size = UDim2.new(0.5, -5, 1, 0)
-                    confirmBtn.Position = UDim2.new(1, - (confirmBtn.Size.X.Offset + 5), 0, 0)
-                    confirmBtn.Text = "Confirm"
-                    confirmBtn.Font = Enum.Font.GothamBold
-                    confirmBtn.TextColor3 = CurrentTheme.Text
-                    confirmBtn.BackgroundColor3 = CurrentTheme.Accent
-                    confirmBtn.Parent = btnFrame
-                    Instance.new("UICorner", confirmBtn).CornerRadius = UDim.new(0, 6)
-                    confirmBtn.MouseButton1Click:Connect(function()
-                        -- 更新主预览和配置
-                        local newColorVal = newColor.BackgroundColor3
-                        local newAlphaVal = newColor.BackgroundTransparency
-                        Preview.BackgroundColor3 = newColorVal
-                        Preview.BackgroundTransparency = newAlphaVal
-                        color = newColorVal
-                        alpha = newAlphaVal
-                        -- 调用回调
-                        if callback then
-                            callback(newColorVal, newAlphaVal)
-                        end
-                        -- 更新配置对象
-                        ConfigObjects[pickerText].Value = newColorVal
-                        ConfigObjects[pickerText].Alpha = newAlphaVal
-                        overlay:Destroy()
-                    end)
-
-                    -- 初始化颜色轮和滑块位置
-                    local function initFromColor()
-                        local h, s, v = Color3.toHSV(color)
-                        hue, saturation, val = h, s, v
-                        -- 设置轮指示器
-                        local r = wheel.AbsoluteSize.X / 2
-                        local angle = hue * 2 * math.pi
-                        local dx = math.cos(angle) * saturation * r
-                        local dy = -math.sin(angle) * saturation * r  -- 因为 Y 向下
-                        target.Position = UDim2.new(0.5, dx, 0.5, dy)
-                        -- 设置滑块
-                        local sliderY = (1 - val) * valueSlider.AbsoluteSize.Y
-                        sliderHead.Position = UDim2.new(0.5, 0, 0, sliderY)
-                    end
-
-                    -- 连接输入框更新（简化版，仅演示）
-                    rBox.FocusLost:Connect(function()
-                        local r = tonumber(rBox.Text) or 0
-                        local g = tonumber(gBox.Text) or 0
-                        local b = tonumber(bBox.Text) or 0
-                        r = math.clamp(r, 0, 255)
-                        g = math.clamp(g, 0, 255)
-                        b = math.clamp(b, 0, 255)
-                        local c = Color3.fromRGB(r, g, b)
-                        hue, saturation, val = Color3.toHSV(c)
-                        initFromColor()
-                        newColor.BackgroundColor3 = c
-                        hexBox.Text = string.format("#%02X%02X%02X", r, g, b)
-                    end)
-
-                    gBox.FocusLost:Connect(rBox.FocusLost)
-                    bBox.FocusLost:Connect(rBox.FocusLost)
-
-                    hexBox.FocusLost:Connect(function()
-                        local hex = hexBox.Text:gsub("#", "")
-                        if #hex == 6 then
-                            local r = tonumber(hex:sub(1,2), 16) or 0
-                            local g = tonumber(hex:sub(3,4), 16) or 0
-                            local b = tonumber(hex:sub(5,6), 16) or 0
-                            rBox.Text = tostring(r)
-                            gBox.Text = tostring(g)
-                            bBox.Text = tostring(b)
-                            rBox.FocusLost()
-                        end
-                    end)
-
-                    if alphaBox then
-                        alphaBox.FocusLost:Connect(function()
-                            local a = tonumber(alphaBox.Text) or 0
-                            a = math.clamp(a, 0, 255) / 255
-                            newColor.BackgroundTransparency = a
+                        -- 关闭按钮
+                        local closeBtn = Instance.new("TextButton")
+                        closeBtn.Size = UDim2.new(0, 30, 0, 30)
+                        closeBtn.Position = UDim2.new(1, -40, 0, 10)
+                        closeBtn.BackgroundTransparency = 1
+                        closeBtn.Text = "✕"
+                        closeBtn.TextColor3 = CurrentTheme.Text
+                        closeBtn.TextSize = 20
+                        closeBtn.Font = Enum.Font.GothamBold
+                        closeBtn.Parent = pickerFrame
+                        closeBtn.MouseButton1Click:Connect(function()
+                            overlay:Destroy()
                         end)
-                    end
 
-                    -- 启动
-                    initFromColor()
+                        -- 颜色轮容器
+                        local wheelContainer = Instance.new("Frame")
+                        wheelContainer.Size = UDim2.new(1, -40, 0, 200)
+                        wheelContainer.Position = UDim2.new(0, 20, 0, 50)
+                        wheelContainer.BackgroundTransparency = 1
+                        wheelContainer.Parent = pickerFrame
+
+                        -- 颜色轮
+                        local wheel = Instance.new("ImageButton")
+                        wheel.Name = "Wheel"
+                        wheel.Image = ColorPickerAssets.Wheel
+                        wheel.AutoButtonColor = false
+                        wheel.BackgroundTransparency = 1
+                        wheel.Size = UDim2.new(0, 200, 0, 200)
+                        wheel.Parent = wheelContainer
+
+                        -- 轮上指示器（设置锚点为中心）
+                        local target = Instance.new("ImageLabel")
+                        target.Name = "Target"
+                        target.Image = ColorPickerAssets.Target
+                        target.Size = UDim2.fromOffset(24, 24)
+                        target.BackgroundTransparency = 1
+                        target.AnchorPoint = Vector2.new(0.5, 0.5)  -- 关键修复
+                        target.Parent = wheel
+                        target.ZIndex = 102
+
+                        -- 明度滑块
+                        local valueSlider = Instance.new("ImageLabel")
+                        valueSlider.Name = "ValueSlider"
+                        valueSlider.Image = ColorPickerAssets.Wheel
+                        valueSlider.BackgroundColor3 = Color3.new(1, 1, 1)
+                        valueSlider.Size = UDim2.new(0, 20, 0, 200)
+                        valueSlider.Position = UDim2.new(1, 10, 0, 0)
+                        valueSlider.Parent = wheelContainer
+                        local gradient = Instance.new("UIGradient")
+                        gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(1,1,1)), ColorSequenceKeypoint.new(1, Color3.new(0,0,0))})
+                        gradient.Rotation = 90
+                        gradient.Parent = valueSlider
+
+                        -- 滑块头（设置锚点为中心）
+                        local sliderHead = Instance.new("ImageButton")
+                        sliderHead.Image = SliderAssets.Head
+                        sliderHead.Size = UDim2.fromOffset(16, 16)
+                        sliderHead.AnchorPoint = Vector2.new(0.5, 0.5)
+                        sliderHead.BackgroundTransparency = 1
+                        sliderHead.Parent = valueSlider
+                        sliderHead.ZIndex = 103
+
+                        -- HSV 状态
+                        local hue, saturation, val = Color3.toHSV(color)
+                        if not hue then hue, saturation, val = 0, 0, 1 end
+
+                        -- 更新函数
+                        local function updateFromHSV()
+                            local c = Color3.fromHSV(hue, saturation, val)
+                            -- 更新新颜色预览
+                            newColor.BackgroundColor3 = c
+                        end
+
+                        -- 颜色轮拖动
+                        local function updateWheelFromMouse(mouseX, mouseY)
+                            local wheelAbs = wheel.AbsolutePosition
+                            local wheelSize = wheel.AbsoluteSize
+                            local center = wheelAbs + wheelSize / 2
+                            local dx = mouseX - center.X
+                            local dy = mouseY - center.Y
+                            local r = wheelSize.X / 2
+                            local dist = math.sqrt(dx*dx + dy*dy)
+                            if dist > r then
+                                dx = dx / dist * r
+                                dy = dy / dist * r
+                            end
+                            target.Position = UDim2.new(0.5, dx, 0.5, dy)
+                            local phi = math.atan2(-dy, dx)
+                            hue = (phi + math.pi) / (2 * math.pi)
+                            saturation = dist / r
+                            updateFromHSV()
+                        end
+
+                        local wheelDragging = false
+                        wheel.InputBegan:Connect(function(input)
+                            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                wheelDragging = true
+                                updateWheelFromMouse(input.Position.X, input.Position.Y)
+                            end
+                        end)
+                        wheel.InputEnded:Connect(function(input)
+                            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                wheelDragging = false
+                            end
+                        end)
+
+                        -- 滑块拖动
+                        local function updateSliderFromMouse(mouseX, mouseY)
+                            local sliderAbs = valueSlider.AbsolutePosition
+                            local sliderSize = valueSlider.AbsoluteSize
+                            local relativeY = mouseY - sliderAbs.Y
+                            local percent = math.clamp(relativeY / sliderSize.Y, 0, 1)
+                            val = 1 - percent
+                            sliderHead.Position = UDim2.new(0.5, 0, 0, relativeY)
+                            updateFromHSV()
+                        end
+
+                        local sliderDragging = false
+                        valueSlider.InputBegan:Connect(function(input)
+                            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                sliderDragging = true
+                                updateSliderFromMouse(input.Position.X, input.Position.Y)
+                            end
+                        end)
+                        valueSlider.InputEnded:Connect(function(input)
+                            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                sliderDragging = false
+                            end
+                        end)
+
+                        UserInputService.InputChanged:Connect(function(input)
+                            if wheelDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                                updateWheelFromMouse(input.Position.X, input.Position.Y)
+                            elseif sliderDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                                updateSliderFromMouse(input.Position.X, input.Position.Y)
+                            end
+                        end)
+
+                        -- 输入区域（简化，仅作演示）
+                        local inputsFrame = Instance.new("Frame")
+                        inputsFrame.Size = UDim2.new(1, -40, 0, 120)
+                        inputsFrame.Position = UDim2.new(0, 20, 0, 270)
+                        inputsFrame.BackgroundTransparency = 1
+                        inputsFrame.Parent = pickerFrame
+
+                        -- 新旧颜色预览
+                        local previewFrame = Instance.new("Frame")
+                        previewFrame.Size = UDim2.new(1, -40, 0, 50)
+                        previewFrame.Position = UDim2.new(0, 20, 0, 410)
+                        previewFrame.BackgroundTransparency = 1
+                        previewFrame.Parent = pickerFrame
+
+                        local oldColor = Instance.new("Frame")
+                        oldColor.Size = UDim2.new(0.5, -5, 1, 0)
+                        oldColor.BackgroundColor3 = color
+                        oldColor.BackgroundTransparency = alpha
+                        oldColor.Parent = previewFrame
+                        Instance.new("UICorner", oldColor).CornerRadius = UDim.new(0, 6)
+
+                        local newColor = Instance.new("Frame")
+                        newColor.Size = UDim2.new(0.5, -5, 1, 0)
+                        newColor.Position = UDim2.new(1, - (newColor.Size.X.Offset + 5), 0, 0)
+                        newColor.BackgroundColor3 = color
+                        newColor.BackgroundTransparency = alpha
+                        newColor.Parent = previewFrame
+                        Instance.new("UICorner", newColor).CornerRadius = UDim.new(0, 6)
+
+                        -- 确认/取消按钮
+                        local btnFrame = Instance.new("Frame")
+                        btnFrame.Size = UDim2.new(1, -40, 0, 40)
+                        btnFrame.Position = UDim2.new(0, 20, 0, 470)
+                        btnFrame.BackgroundTransparency = 1
+                        btnFrame.Parent = pickerFrame
+
+                        local cancelBtn = Instance.new("TextButton")
+                        cancelBtn.Size = UDim2.new(0.5, -5, 1, 0)
+                        cancelBtn.Text = "Cancel"
+                        cancelBtn.Font = Enum.Font.GothamBold
+                        cancelBtn.TextColor3 = CurrentTheme.Text
+                        cancelBtn.BackgroundColor3 = CurrentTheme.Top
+                        cancelBtn.Parent = btnFrame
+                        Instance.new("UICorner", cancelBtn).CornerRadius = UDim.new(0, 6)
+                        cancelBtn.MouseButton1Click:Connect(function()
+                            overlay:Destroy()
+                        end)
+
+                        local confirmBtn = Instance.new("TextButton")
+                        confirmBtn.Size = UDim2.new(0.5, -5, 1, 0)
+                        confirmBtn.Position = UDim2.new(1, - (confirmBtn.Size.X.Offset + 5), 0, 0)
+                        confirmBtn.Text = "Confirm"
+                        confirmBtn.Font = Enum.Font.GothamBold
+                        confirmBtn.TextColor3 = CurrentTheme.Text
+                        confirmBtn.BackgroundColor3 = CurrentTheme.Accent
+                        confirmBtn.Parent = btnFrame
+                        Instance.new("UICorner", confirmBtn).CornerRadius = UDim.new(0, 6)
+                        confirmBtn.MouseButton1Click:Connect(function()
+                            local newColorVal = newColor.BackgroundColor3
+                            local newAlphaVal = newColor.BackgroundTransparency
+                            Preview.BackgroundColor3 = newColorVal
+                            Preview.BackgroundTransparency = newAlphaVal
+                            color = newColorVal
+                            alpha = newAlphaVal
+                            if callback then
+                                callback(newColorVal, newAlphaVal)
+                            end
+                            ConfigObjects[pickerText].Value = newColorVal
+                            ConfigObjects[pickerText].Alpha = newAlphaVal
+                            overlay:Destroy()
+                        end)
+
+                        -- 初始化轮和滑块位置
+                        local function initFromColor()
+                            local h, s, v = Color3.toHSV(color)
+                            hue, saturation, val = h, s, v
+                            local r = wheel.AbsoluteSize.X / 2
+                            local angle = hue * 2 * math.pi
+                            local dx = math.cos(angle) * saturation * r
+                            local dy = -math.sin(angle) * saturation * r
+                            target.Position = UDim2.new(0.5, dx, 0.5, dy)
+                            local sliderY = (1 - val) * valueSlider.AbsoluteSize.Y
+                            sliderHead.Position = UDim2.new(0.5, 0, 0, sliderY)
+                        end
+
+                        -- 等待一轮渲染以确保 AbsoluteSize 有效
+                        RunService.Heartbeat:Wait()
+                        initFromColor()
+                    end)
+
+                    if not success then
+                        warn("Colorpicker error:", err)
+                    end
                 end
 
                 -- 点击预览打开
@@ -1636,7 +1554,6 @@ function Library:CreateWindow(Config)
                     end
                 }
 
-                -- 返回控制方法（可选）
                 local self = {}
                 function self.SetColor(newColor, newAlpha)
                     color = newColor
