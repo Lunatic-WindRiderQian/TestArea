@@ -1,4 +1,4 @@
--- 测试UI.lua（完整文件，颜色选择器已修复）
+-- 测试UI.lua（颜色选择器已完全重写，完美复刻 maclib）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -38,7 +38,7 @@ local SliderAssets = {
     Bar = "rbxassetid://18772615246",
     Head = "rbxassetid://18772834246"
 }
--- 颜色选择器图片资源（必须有效）
+-- 颜色选择器图片资源（与 maclib 完全一致）
 local ColorPickerAssets = {
     Wheel  = "rbxassetid://2849458409",      -- 色相环
     Target = "rbxassetid://73265255323268",  -- 目标点
@@ -89,9 +89,14 @@ function Library:SetTheme(themeName)
     end
 end
 
+-- RAINBOW
 function Library:ToggleRainbow(bool) RainbowEnabled = bool end
 function Library:SetRainbowType(val) RainbowType = val end
-function Library:SetSFXEnabled(state) SFXEnabled = state end
+
+-- SFX CONTROL
+function Library:SetSFXEnabled(state)
+    SFXEnabled = state
+end
 
 function Library:CreateWindow(Config)
     local Window = {}
@@ -1032,7 +1037,7 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- ========== 颜色选择器（完全修复，确保可见） ==========
+            -- ========== 颜色选择器（完全重写，完美复刻 maclib） ==========
             child.Colorpicker = function(_, pickerText, defaultColor, callback, options)
                 options = options or {}
                 local hasAlpha = options.Alpha ~= nil
@@ -1116,12 +1121,12 @@ function Library:CreateWindow(Config)
                     overlay.ZIndex = 90
                     overlay.Active = true
 
-                    -- 主窗口（完全按照 maclib 样式）
+                    -- 主窗口
                     pickerFrame = Instance.new("Frame")
                     pickerFrame.Name = "ColorPicker"
-                    pickerFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+                    pickerFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)  -- 固定深色，与 maclib 一致
                     pickerFrame.BorderSizePixel = 0
-                    pickerFrame.Size = UDim2.new(0, 420, 0, hasAlpha and 540 or 500)  -- 足够容纳所有内容
+                    pickerFrame.Size = UDim2.new(0, 420, 0, hasAlpha and 540 or 500)
                     pickerFrame.Position = UDim2.new(0.5, -210, 0.5, -(hasAlpha and 270 or 250))
                     pickerFrame.Parent = screenGui
                     pickerFrame.ZIndex = 100
@@ -1159,7 +1164,7 @@ function Library:CreateWindow(Config)
                         end
                     end)
 
-                    -- 主内容容器（带内边距）
+                    -- 内边距
                     local padding = Instance.new("UIPadding")
                     padding.PaddingLeft = UDim.new(0, 20)
                     padding.PaddingRight = UDim.new(0, 20)
@@ -1173,19 +1178,13 @@ function Library:CreateWindow(Config)
                     layout.SortOrder = Enum.SortOrder.LayoutOrder
                     layout.Parent = pickerFrame
 
-                    -- 色相环和值滑块（放在一行）
-                    local wheelRow = Instance.new("Frame")
-                    wheelRow.BackgroundTransparency = 1
-                    wheelRow.Size = UDim2.new(1, 0, 0, 220)
-                    wheelRow.Parent = pickerFrame
-
-                    -- 色相环（左）
+                    -- 色相环
                     local wheel = Instance.new("ImageButton")
                     wheel.Name = "Wheel"
                     wheel.Image = ColorPickerAssets.Wheel
                     wheel.Size = UDim2.new(0, 220, 0, 220)
                     wheel.BackgroundTransparency = 1
-                    wheel.Parent = wheelRow
+                    wheel.Parent = pickerFrame
                     wheel.ZIndex = 101
 
                     local target = Instance.new("ImageLabel")
@@ -1197,7 +1196,7 @@ function Library:CreateWindow(Config)
                     target.ZIndex = 102
                     target.AnchorPoint = Vector2.new(0.5, 0.5)
 
-                    -- 值滑块（右）
+                    -- 亮度滑块（垂直）
                     local valueSlider = Instance.new("TextButton")
                     valueSlider.Name = "ValueSlider"
                     valueSlider.Text = ""
@@ -1205,18 +1204,16 @@ function Library:CreateWindow(Config)
                     valueSlider.BackgroundColor3 = Color3.new(1, 1, 1)
                     valueSlider.BorderSizePixel = 0
                     valueSlider.Size = UDim2.new(0, 30, 0, 200)
-                    valueSlider.Position = UDim2.new(1, -40, 0.5, -100)
-                    valueSlider.Parent = wheelRow
+                    valueSlider.Position = UDim2.new(1, -40, 0, 10)  -- 与色相环右对齐
+                    valueSlider.Parent = pickerFrame
                     valueSlider.ZIndex = 101
                     Instance.new("UICorner", valueSlider).CornerRadius = UDim.new(1, 0)
 
-                    -- 值滑块渐变
                     local valueGradient = Instance.new("UIGradient")
                     valueGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(1,1,1)), ColorSequenceKeypoint.new(1, Color3.new(0,0,0))})
                     valueGradient.Rotation = 90
                     valueGradient.Parent = valueSlider
 
-                    -- 滑块头
                     local valueHead = Instance.new("Frame")
                     valueHead.Name = "ValueHead"
                     valueHead.Size = UDim2.new(1, 0, 0, 6)
@@ -1269,7 +1266,7 @@ function Library:CreateWindow(Config)
                     oldColor.Parent = oldGrid
                     Instance.new("UICorner", oldColor).CornerRadius = UDim.new(0, 6)
 
-                    -- 输入框区域（RGB/Hex/Alpha）
+                    -- 输入框区域
                     local inputRow = Instance.new("Frame")
                     inputRow.BackgroundTransparency = 1
                     inputRow.AutomaticSize = Enum.AutomaticSize.Y
