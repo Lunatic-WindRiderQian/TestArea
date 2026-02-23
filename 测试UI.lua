@@ -6,6 +6,7 @@ local SoundService = game:GetService("SoundService")
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService") 
 local TextService = game:GetService("TextService")
+local ContentProvider = game:GetService("ContentProvider")
 local LocalPlayer = Players.LocalPlayer
 
 local Library = {}
@@ -43,6 +44,19 @@ local ColorPickerAssets = {
     Target = "rbxassetid://73265255323268",
     Grid = "rbxassetid://121484455191370"
 }
+
+-- 预加载所有图片资源
+ContentProvider:PreloadAsync({
+    ToggleAssets.Bg,
+    ToggleAssets.Head,
+    SliderAssets.Bar,
+    SliderAssets.Head,
+    ColorPickerAssets.Wheel,
+    ColorPickerAssets.Target,
+    ColorPickerAssets.Grid,
+    "rbxassetid://10709791437",  -- 按钮箭头
+    "rbxassetid://18865373378",  -- 下拉图标
+})
 
 local function PlaySound(id)
     if not SFXEnabled then return end
@@ -1125,7 +1139,7 @@ function Library:CreateWindow(Config)
                 return self
             end
 
-            -- ==================== Colorpicker (移植自 maclib，已修复点击) ====================
+            -- ==================== Colorpicker (移植自 maclib，点击整行打开) ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil  -- 是否启用透明度
@@ -1152,8 +1166,8 @@ function Library:CreateWindow(Config)
                 Title.Parent = Main
                 AddToRegistry(Title, "TextColor3", "Text")
 
-                -- 右侧颜色预览块（改为 ImageButton 以捕获点击）
-                local PreviewBg = Instance.new("ImageButton")
+                -- 右侧颜色预览块（ImageLabel 即可，因为点击由 Main 处理）
+                local PreviewBg = Instance.new("ImageLabel")
                 PreviewBg.Name = "ColorPreviewBg"
                 PreviewBg.Image = ColorPickerAssets.Grid
                 PreviewBg.ScaleType = Enum.ScaleType.Tile
@@ -1161,7 +1175,6 @@ function Library:CreateWindow(Config)
                 PreviewBg.Size = UDim2.new(0, 30, 0, 20)
                 PreviewBg.Position = UDim2.new(1, -40, 0.5, -10)
                 PreviewBg.BackgroundTransparency = 1
-                PreviewBg.AutoButtonColor = false  -- 避免自带点击效果
                 PreviewBg.Parent = Main
                 -- 圆角
                 local previewCorner = Instance.new("UICorner")
@@ -1174,7 +1187,6 @@ function Library:CreateWindow(Config)
                 PreviewColor.BackgroundColor3 = Color
                 PreviewColor.BackgroundTransparency = Alpha
                 PreviewColor.BorderSizePixel = 0
-                PreviewColor.HitTestTransparency = 1  -- 点击穿透，确保事件传递到 PreviewBg
                 PreviewColor.Parent = PreviewBg
                 Instance.new("UICorner", PreviewColor).CornerRadius = UDim.new(0, 6)
 
@@ -1184,7 +1196,7 @@ function Library:CreateWindow(Config)
                 previewStroke.Parent = PreviewBg
                 AddToRegistry(previewStroke, "Color", "Stroke")
 
-                -- 点击预览块打开颜色选择器
+                -- 点击整行打开颜色选择器
                 local colorPickerOpen = false
                 local colorPickerGui, colorPickerFrame, prompt
 
@@ -1542,8 +1554,8 @@ function Library:CreateWindow(Config)
                     end)
                 end
 
-                -- 点击预览块打开
-                PreviewBg.MouseButton1Click:Connect(openColorPicker)
+                -- 点击整行打开
+                Main.MouseButton1Click:Connect(openColorPicker)
 
                 -- 注册配置对象
                 ConfigObjects[pickerText] = {
