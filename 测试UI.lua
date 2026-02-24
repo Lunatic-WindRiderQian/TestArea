@@ -817,7 +817,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 全新重写的 ColorPicker ====================
+            -- ==================== 全新重写的 ColorPicker（支持手机触屏） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -1192,7 +1192,7 @@ function Library:CreateWindow(Config)
                         end
                     end
 
-                    -- 拖拽事件
+                    -- 拖拽事件（支持鼠标和触屏）
                     local wheelDragging = false
                     wheel.InputBegan:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
