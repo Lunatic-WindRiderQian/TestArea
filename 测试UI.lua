@@ -817,7 +817,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 全新重写的 ColorPicker（支持手机触屏） ====================
+            -- ==================== 全新重写的 ColorPicker（支持手机触屏，尺寸缩小） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -893,12 +893,12 @@ function Library:CreateWindow(Config)
                     overlay.Parent = canvas
                     canvas.GroupTransparency = 0
 
-                    -- 选择器主框（宽度 380，高度自动）
+                    -- 选择器主框（宽度 300，高度自动）
                     local prompt = Instance.new("Frame")
                     prompt.Name = "ColorPickerPrompt"
                     prompt.AnchorPoint = Vector2.new(0.5, 0.5)
                     prompt.Position = UDim2.new(0.5, 0, 0.5, 0)
-                    prompt.Size = UDim2.fromOffset(380, 0)
+                    prompt.Size = UDim2.fromOffset(300, 0)
                     prompt.AutomaticSize = Enum.AutomaticSize.Y
                     prompt.BackgroundColor3 = CurrentTheme.Main
                     prompt.BorderSizePixel = 0
@@ -909,31 +909,31 @@ function Library:CreateWindow(Config)
 
                     -- 内部布局
                     local list = Instance.new("UIListLayout")
-                    list.Padding = UDim.new(0, 10)
+                    list.Padding = UDim.new(0, 8)
                     list.HorizontalAlignment = Enum.HorizontalAlignment.Center
                     list.SortOrder = Enum.SortOrder.LayoutOrder
                     list.Parent = prompt
 
                     local padding = Instance.new("UIPadding")
-                    padding.PaddingBottom = UDim.new(0, 20)
-                    padding.PaddingLeft = UDim.new(0, 20)
-                    padding.PaddingRight = UDim.new(0, 20)
-                    padding.PaddingTop = UDim.new(0, 20)
+                    padding.PaddingBottom = UDim.new(0, 15)
+                    padding.PaddingLeft = UDim.new(0, 15)
+                    padding.PaddingRight = UDim.new(0, 15)
+                    padding.PaddingTop = UDim.new(0, 15)
                     padding.Parent = prompt
 
-                    -- 颜色轮 + 输入区（高度 200 匹配轮子）
+                    -- 颜色轮 + 输入区（高度 150 匹配轮子）
                     local wheelRow = Instance.new("Frame")
-                    wheelRow.Size = UDim2.new(1, 0, 0, 200)
+                    wheelRow.Size = UDim2.new(1, 0, 0, 150)
                     wheelRow.BackgroundTransparency = 1
                     wheelRow.Parent = prompt
 
-                    -- 颜色轮（200x200）
+                    -- 颜色轮（150x150）
                     local wheel = Instance.new("ImageButton")
                     wheel.Name = "ColorWheel"
                     wheel.Image = ColorPickerAssets.Wheel
                     wheel.AutoButtonColor = false
-                    wheel.Size = UDim2.fromOffset(200, 200)
-                    wheel.Position = UDim2.new(0, 0, 0.5, -100)
+                    wheel.Size = UDim2.fromOffset(150, 150)
+                    wheel.Position = UDim2.new(0, 0, 0.5, -75)
                     wheel.BackgroundTransparency = 1
                     wheel.Parent = wheelRow
 
@@ -941,54 +941,54 @@ function Library:CreateWindow(Config)
                     target.Name = "Target"
                     target.Image = ColorPickerAssets.Target
                     target.AnchorPoint = Vector2.new(0.5, 0.5)
-                    target.Size = UDim2.fromOffset(22, 22)
+                    target.Size = UDim2.fromOffset(18, 18)  -- 稍微缩小
                     target.BackgroundTransparency = 1
                     target.Parent = wheel
                     target.Position = UDim2.new(0.5, 0, 0.5, 0)
 
-                    -- 右侧输入区（宽度 140）
+                    -- 右侧输入区（宽度 120）
                     local inputs = Instance.new("Frame")
-                    inputs.Size = UDim2.new(0, 140, 1, 0)
-                    inputs.Position = UDim2.new(1, -140, 0, 0)
+                    inputs.Size = UDim2.new(0, 120, 1, 0)
+                    inputs.Position = UDim2.new(1, -120, 0, 0)
                     inputs.BackgroundTransparency = 1
                     inputs.Parent = wheelRow
 
                     local inputList = Instance.new("UIListLayout")
-                    inputList.Padding = UDim.new(0, 5)
+                    inputList.Padding = UDim.new(0, 4)
                     inputList.SortOrder = Enum.SortOrder.LayoutOrder
                     inputList.Parent = inputs
 
-                    -- 创建输入行
+                    -- 创建输入行（标签宽度 30，输入框宽度自适应）
                     local function createInputRow(labelText, defaultText)
                         local row = Instance.new("Frame")
-                        row.Size = UDim2.new(1, 0, 0, 30)
+                        row.Size = UDim2.new(1, 0, 0, 24)  -- 行高降低
                         row.BackgroundTransparency = 1
                         row.Parent = inputs
 
                         local label = Instance.new("TextLabel")
-                        label.Size = UDim2.new(0, 35, 1, 0)
+                        label.Size = UDim2.new(0, 30, 1, 0)
                         label.Text = labelText
                         label.TextColor3 = CurrentTheme.Text
                         label.BackgroundTransparency = 1
                         label.Font = Enum.Font.GothamBold
-                        label.TextSize = 13
+                        label.TextSize = 12
                         label.TextXAlignment = Enum.TextXAlignment.Left
                         label.Parent = row
                         AddToRegistry(label, "TextColor3", "Text")
 
                         local box = Instance.new("TextBox")
-                        box.Size = UDim2.new(1, -40, 0, 25)
-                        box.Position = UDim2.new(0, 40, 0.5, -12.5)
+                        box.Size = UDim2.new(1, -35, 0, 20)  -- 宽度减去标签宽度
+                        box.Position = UDim2.new(0, 35, 0.5, -10)
                         box.Text = defaultText
                         box.TextColor3 = CurrentTheme.Accent
                         box.BackgroundColor3 = CurrentTheme.Main
                         box.BackgroundTransparency = 0.2
                         box.BorderSizePixel = 0
                         box.Font = Enum.Font.Gotham
-                        box.TextSize = 13
+                        box.TextSize = 11
                         box.Parent = row
 
-                        local boxCorner = Instance.new("UICorner"); boxCorner.CornerRadius = UDim.new(0, 5); boxCorner.Parent = box
+                        local boxCorner = Instance.new("UICorner"); boxCorner.CornerRadius = UDim.new(0, 4); boxCorner.Parent = box
                         local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = Color3.fromRGB(255,255,255); boxStroke.Transparency = 0.9; boxStroke.Parent = box
                         return box
                     end
@@ -999,26 +999,26 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块
+                    -- 亮度滑块（行高降低）
                     local valueSliderRow = Instance.new("Frame")
-                    valueSliderRow.Size = UDim2.new(1, 0, 0, 20)
+                    valueSliderRow.Size = UDim2.new(1, 0, 0, 18)
                     valueSliderRow.BackgroundTransparency = 1
                     valueSliderRow.Parent = prompt
 
                     local valueLabel = Instance.new("TextLabel")
-                    valueLabel.Size = UDim2.new(0, 35, 1, 0)
+                    valueLabel.Size = UDim2.new(0, 30, 1, 0)
                     valueLabel.Text = "V"
                     valueLabel.TextColor3 = CurrentTheme.Text
                     valueLabel.BackgroundTransparency = 1
                     valueLabel.Font = Enum.Font.GothamBold
-                    valueLabel.TextSize = 13
+                    valueLabel.TextSize = 12
                     valueLabel.TextXAlignment = Enum.TextXAlignment.Left
                     valueLabel.Parent = valueSliderRow
                     AddToRegistry(valueLabel, "TextColor3", "Text")
 
                     local valueSlider = Instance.new("Frame")
-                    valueSlider.Size = UDim2.new(1, -45, 0, 10)
-                    valueSlider.Position = UDim2.new(0, 40, 0.5, -5)
+                    valueSlider.Size = UDim2.new(1, -40, 0, 8)  -- 滑块高度降低
+                    valueSlider.Position = UDim2.new(0, 35, 0.5, -4)
                     valueSlider.BackgroundColor3 = Color3.new(1,1,1)
                     valueSlider.BackgroundTransparency = 0.2
                     valueSlider.Parent = valueSliderRow
@@ -1030,22 +1030,22 @@ function Library:CreateWindow(Config)
                     valueGradient.Parent = valueSlider
 
                     local valueThumb = Instance.new("Frame")
-                    valueThumb.Size = UDim2.new(0, 12, 0, 12)
+                    valueThumb.Size = UDim2.new(0, 10, 0, 10)  -- 滑块头缩小
                     valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
                     valueThumb.Position = UDim2.new(1, 0, 0.5, 0)
                     valueThumb.BackgroundColor3 = Color3.new(1,1,1)
                     valueThumb.Parent = valueSlider
                     Instance.new("UICorner", valueThumb).CornerRadius = UDim.new(1,0)
 
-                    -- 新旧颜色对比
+                    -- 新旧颜色对比（高度降低）
                     local colorWells = Instance.new("Frame")
-                    colorWells.Size = UDim2.new(1, 0, 0, 40)
+                    colorWells.Size = UDim2.new(1, 0, 0, 30)
                     colorWells.BackgroundTransparency = 1
                     colorWells.Parent = prompt
 
                     local gridLayout = Instance.new("UIGridLayout")
                     gridLayout.CellSize = UDim2.new(0.5, -5, 1, 0)
-                    gridLayout.CellPadding = UDim2.new(0, 10, 0, 0)
+                    gridLayout.CellPadding = UDim2.new(0, 8, 0, 0)
                     gridLayout.Parent = colorWells
 
                     local newColorWell = Instance.new("ImageLabel")
@@ -1061,7 +1061,7 @@ function Library:CreateWindow(Config)
                     newColorInner.BackgroundTransparency = Alpha
                     newColorInner.BorderSizePixel = 0
                     newColorInner.Parent = newColorWell
-                    Instance.new("UICorner", newColorInner).CornerRadius = UDim.new(0,6)
+                    Instance.new("UICorner", newColorInner).CornerRadius = UDim.new(0,4)
 
                     local oldColorWell = Instance.new("ImageLabel")
                     oldColorWell.Image = ColorPickerAssets.Grid
@@ -1076,37 +1076,37 @@ function Library:CreateWindow(Config)
                     oldColorInner.BackgroundTransparency = Alpha
                     oldColorInner.BorderSizePixel = 0
                     oldColorInner.Parent = oldColorWell
-                    Instance.new("UICorner", oldColorInner).CornerRadius = UDim.new(0,6)
+                    Instance.new("UICorner", oldColorInner).CornerRadius = UDim.new(0,4)
 
-                    -- 确认/取消按钮
+                    -- 确认/取消按钮（高度降低）
                     local buttonRow = Instance.new("Frame")
-                    buttonRow.Size = UDim2.new(1, 0, 0, 35)
+                    buttonRow.Size = UDim2.new(1, 0, 0, 28)
                     buttonRow.BackgroundTransparency = 1
                     buttonRow.Parent = prompt
 
                     local confirm = Instance.new("TextButton")
-                    confirm.Size = UDim2.new(0.5, -5, 1, 0)
+                    confirm.Size = UDim2.new(0.5, -4, 1, 0)
                     confirm.Position = UDim2.new(0, 0, 0, 0)
                     confirm.Text = "Confirm"
                     confirm.Font = Enum.Font.GothamBold
-                    confirm.TextSize = 14
+                    confirm.TextSize = 12
                     confirm.BackgroundColor3 = CurrentTheme.Accent
                     confirm.TextColor3 = CurrentTheme.Text
                     confirm.Parent = buttonRow
-                    Instance.new("UICorner", confirm).CornerRadius = UDim.new(0,6)
+                    Instance.new("UICorner", confirm).CornerRadius = UDim.new(0,5)
 
                     local cancel = Instance.new("TextButton")
-                    cancel.Size = UDim2.new(0.5, -5, 1, 0)
-                    cancel.Position = UDim2.new(0.5, 5, 0, 0)
+                    cancel.Size = UDim2.new(0.5, -4, 1, 0)
+                    cancel.Position = UDim2.new(0.5, 4, 0, 0)
                     cancel.Text = "Cancel"
                     cancel.Font = Enum.Font.GothamBold
-                    cancel.TextSize = 14
+                    cancel.TextSize = 12
                     cancel.BackgroundColor3 = CurrentTheme.Main
                     cancel.TextColor3 = CurrentTheme.Text
                     cancel.Parent = buttonRow
-                    Instance.new("UICorner", cancel).CornerRadius = UDim.new(0,6)
+                    Instance.new("UICorner", cancel).CornerRadius = UDim.new(0,5)
 
-                    -- 颜色选择逻辑
+                    -- 颜色选择逻辑（保持不变，但需要调整靶心和滑块位置公式以适配新尺寸）
                     local hue, saturation, value = Color3.toHSV(Color)
                     if not hue then hue = 0; saturation = 0; value = 1 end
 
