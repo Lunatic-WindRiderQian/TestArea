@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（亮度滑块增大触摸区域，修复手机触屏） ====================
+            -- ==================== 颜色选择器（亮度滑块尺寸恢复18×18，修复ZIndex触摸问题） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -887,17 +887,15 @@ function Library:CreateWindow(Config)
                     canvas.ZIndex = 200
                     canvas.Parent = ScreenGui
 
-                    -- 遮罩背景
+                    -- 遮罩背景（ZIndex 较低）
                     local overlay = Instance.new("Frame")
                     overlay.Size = UDim2.new(1, 0, 1, 0)
                     overlay.BackgroundColor3 = Color3.new(0,0,0)
                     overlay.BackgroundTransparency = 0.5
+                    overlay.ZIndex = 1  -- 确保遮罩在底层
                     overlay.Parent = canvas
                     
-                    -- 确保遮罩可见
-                    canvas.GroupTransparency = 0
-
-                    -- 选择器主框（宽度 340，高度自动）
+                    -- 选择器主框（ZIndex 较高）
                     local prompt = Instance.new("Frame")
                     prompt.Name = "ColorPickerPrompt"
                     prompt.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -906,7 +904,11 @@ function Library:CreateWindow(Config)
                     prompt.AutomaticSize = Enum.AutomaticSize.Y
                     prompt.BackgroundColor3 = CurrentTheme.Main
                     prompt.BorderSizePixel = 0
+                    prompt.ZIndex = 2  -- 确保在遮罩上层
                     prompt.Parent = canvas
+
+                    -- 确保遮罩可见
+                    canvas.GroupTransparency = 0
 
                     local promptCorner = Instance.new("UICorner"); promptCorner.CornerRadius = UDim.new(0, 10); promptCorner.Parent = prompt
                     local promptStroke = Instance.new("UIStroke"); promptStroke.Thickness = 2; promptStroke.Parent = prompt; AddToRegistry(promptStroke, "Color", "Stroke")
@@ -1003,9 +1005,9 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块（增大触摸区域，左边距20，滑块头24x24）
+                    -- 亮度滑块（尺寸恢复18×18，左边距20）
                     local valueSliderRow = Instance.new("Frame")
-                    valueSliderRow.Size = UDim2.new(1, 0, 0, 32)  -- 行高增加到32
+                    valueSliderRow.Size = UDim2.new(1, 0, 0, 28)  -- 行高28
                     valueSliderRow.BackgroundTransparency = 1
                     valueSliderRow.Parent = prompt
 
@@ -1022,8 +1024,8 @@ function Library:CreateWindow(Config)
 
                     -- 轨道：左边距20，右边距20
                     local valueSlider = Instance.new("Frame")
-                    valueSlider.Size = UDim2.new(1, -40, 0, 14)  -- 轨道高度增加到14
-                    valueSlider.Position = UDim2.new(0, 20, 0.5, -7)  -- 左边距20
+                    valueSlider.Size = UDim2.new(1, -40, 0, 12)  -- 轨道高度12
+                    valueSlider.Position = UDim2.new(0, 20, 0.5, -6)  -- 左边距20
                     valueSlider.BackgroundColor3 = Color3.new(1,1,1)
                     valueSlider.BackgroundTransparency = 0.2
                     valueSlider.Parent = valueSliderRow
@@ -1037,13 +1039,14 @@ function Library:CreateWindow(Config)
                     valueGradient.Rotation = 180
                     valueGradient.Parent = valueSlider
 
-                    -- 滑块头（白色圆点，24x24，方便触摸）
+                    -- 滑块头（白色圆点，18×18）
                     local valueThumb = Instance.new("ImageButton")
-                    valueThumb.Size = UDim2.new(0, 24, 0, 24)
+                    valueThumb.Size = UDim2.new(0, 18, 0, 18)
                     valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
                     valueThumb.Position = UDim2.new(1, 0, 0.5, 0)
                     valueThumb.BackgroundColor3 = Color3.new(1,1,1)
                     valueThumb.AutoButtonColor = false
+                    valueThumb.ZIndex = 3  -- 确保滑块头在prompt内最高
                     valueThumb.Parent = valueSlider
                     Instance.new("UICorner", valueThumb).CornerRadius = UDim.new(1,0)
 
@@ -1167,7 +1170,7 @@ function Library:CreateWindow(Config)
                         updateColorFromHSV()
                     end
 
-                    -- 从鼠标位置更新亮度（修复版：基于滑块头中心点）
+                    -- 从鼠标位置更新亮度（基于滑块头中心点）
                     local function updateValueFromMouse(mouseX)
                         local sliderX = valueSlider.AbsolutePosition.X
                         local sliderW = valueSlider.AbsoluteSize.X
