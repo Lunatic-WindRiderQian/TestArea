@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（修复亮度滑块触屏问题） ====================
+            -- ==================== 颜色选择器（亮度滑块加宽） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -943,7 +943,7 @@ function Library:CreateWindow(Config)
                     target.Name = "Target"
                     target.Image = ColorPickerAssets.Target
                     target.AnchorPoint = Vector2.new(0.5, 0.5)
-                    target.Size = UDim2.fromOffset(20, 20)  -- 稍微放大
+                    target.Size = UDim2.fromOffset(20, 20)
                     target.BackgroundTransparency = 1
                     target.Parent = wheel
                     target.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -963,7 +963,7 @@ function Library:CreateWindow(Config)
                     -- 创建输入行（标签宽度 30，输入框宽度自适应）
                     local function createInputRow(labelText, defaultText)
                         local row = Instance.new("Frame")
-                        row.Size = UDim2.new(1, 0, 0, 26)  -- 行高略增
+                        row.Size = UDim2.new(1, 0, 0, 26)
                         row.BackgroundTransparency = 1
                         row.Parent = inputs
 
@@ -979,7 +979,7 @@ function Library:CreateWindow(Config)
                         AddToRegistry(label, "TextColor3", "Text")
 
                         local box = Instance.new("TextBox")
-                        box.Size = UDim2.new(1, -35, 0, 22)  -- 高度略增
+                        box.Size = UDim2.new(1, -35, 0, 22)
                         box.Position = UDim2.new(0, 35, 0.5, -11)
                         box.Text = defaultText
                         box.TextColor3 = CurrentTheme.Accent
@@ -1001,9 +1001,9 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块（行高略增）
+                    -- 亮度滑块（加宽轨道，增大滑块头）
                     local valueSliderRow = Instance.new("Frame")
-                    valueSliderRow.Size = UDim2.new(1, 0, 0, 20)
+                    valueSliderRow.Size = UDim2.new(1, 0, 0, 24)  -- 增加行高
                     valueSliderRow.BackgroundTransparency = 1
                     valueSliderRow.Parent = prompt
 
@@ -1018,9 +1018,10 @@ function Library:CreateWindow(Config)
                     valueLabel.Parent = valueSliderRow
                     AddToRegistry(valueLabel, "TextColor3", "Text")
 
+                    -- 轨道宽度增大（减少左右边距）
                     local valueSlider = Instance.new("Frame")
-                    valueSlider.Size = UDim2.new(1, -40, 0, 9)  -- 滑块高度略增
-                    valueSlider.Position = UDim2.new(0, 35, 0.5, -4.5)
+                    valueSlider.Size = UDim2.new(1, -20, 0, 10)  -- 原为 (1, -40, 0, 9)，现在左右边距从40减到20
+                    valueSlider.Position = UDim2.new(0, 30, 0.5, -5)  -- 左边距从35改为30以匹配标签宽度
                     valueSlider.BackgroundColor3 = Color3.new(1,1,1)
                     valueSlider.BackgroundTransparency = 0.2
                     valueSlider.Parent = valueSliderRow
@@ -1031,9 +1032,9 @@ function Library:CreateWindow(Config)
                     valueGradient.Rotation = 180
                     valueGradient.Parent = valueSlider
 
-                    -- 将滑块头从 Frame 改为 ImageButton，确保可交互
+                    -- 滑块头增大
                     local valueThumb = Instance.new("ImageButton")
-                    valueThumb.Size = UDim2.new(0, 11, 0, 11)  -- 滑块头略大
+                    valueThumb.Size = UDim2.new(0, 14, 0, 14)  -- 原为 11x11
                     valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
                     valueThumb.Position = UDim2.new(1, 0, 0.5, 0)
                     valueThumb.BackgroundColor3 = Color3.new(1,1,1)
