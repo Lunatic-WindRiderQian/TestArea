@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（亮度滑块完全按照 maclib.lua 重写） ====================
+            -- ==================== 颜色选择器（亮度滑块拖动逻辑修复） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -1005,7 +1005,7 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块（完全按照 maclib.lua 实现）
+                    -- 亮度滑块（尺寸18×18，左边距20，拖动逻辑修复）
                     local valueSliderRow = Instance.new("Frame")
                     valueSliderRow.Size = UDim2.new(1, 0, 0, 28)  -- 行高28
                     valueSliderRow.BackgroundTransparency = 1
@@ -1039,11 +1039,11 @@ function Library:CreateWindow(Config)
                     valueGradient.Rotation = 180
                     valueGradient.Parent = valueSlider
 
-                    -- 滑块头（白色圆点，用 Frame，尺寸18×18）
+                    -- 滑块头（白色圆点，尺寸18×18，锚点(0.5,0.5)）
                     local valueThumb = Instance.new("Frame")
                     valueThumb.Size = UDim2.new(0, 18, 0, 18)
                     valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
-                    valueThumb.Position = UDim2.new(1, 0, 0.5, 0)
+                    valueThumb.Position = UDim2.new(1, 0, 0.5, 0)  -- 初始位于最右端
                     valueThumb.BackgroundColor3 = Color3.new(1,1,1)
                     valueThumb.Parent = valueSlider
                     Instance.new("UICorner", valueThumb).CornerRadius = UDim.new(1,0)
@@ -1144,10 +1144,12 @@ function Library:CreateWindow(Config)
                         valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
                     end
 
-                    -- 更新滑块位置（基于左边缘）
+                    -- 更新滑块位置（基于左边缘，但滑块头锚点为中心，需要补偿半宽）
                     local function updateSliderPosition()
-                        local cX = (1 - value) * (valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X)
-                        valueThumb.Position = UDim2.new(0, cX, 0.5, 0)
+                        local cX = (1 - value) * (valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X)  -- 左边缘位置
+                        -- 将左边缘转换为中心点位置
+                        local centerX = cX + valueThumb.AbsoluteSize.X / 2
+                        valueThumb.Position = UDim2.new(0, centerX, 0.5, 0)
                     end
 
                     -- 从鼠标位置更新色相和饱和度
@@ -1168,12 +1170,19 @@ function Library:CreateWindow(Config)
                         updateColorFromHSV()
                     end
 
-                    -- 从鼠标位置更新亮度（maclib 左边缘算法）
+                    -- 从鼠标位置更新亮度（maclib 左边缘算法，转换为中心点）
                     local function UpdateSlide(iX)
                         local rX = iX - valueSlider.AbsolutePosition.X
-                        local cX = math.clamp(rX, 0, valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X)
-                        valueThumb.Position = UDim2.new(0, cX, 0.5, 0)
-                        value = 1 - (cX / (valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X))
+                        local thumbW = valueThumb.AbsoluteSize.X
+                        -- 允许的左边缘范围
+                        local minLeft = 0
+                        local maxLeft = valueSlider.AbsoluteSize.X - thumbW
+                        -- 根据鼠标位置计算左边缘（鼠标位置相对于滑块左边缘，但鼠标可能点在滑块头上，我们直接用鼠标位置）
+                        local left = math.clamp(rX - thumbW/2, minLeft, maxLeft)  -- 鼠标点到滑块头中心，左边缘 = 鼠标X - 半宽
+                        -- 转换为中心点
+                        local centerX = left + thumbW/2
+                        valueThumb.Position = UDim2.new(0, centerX, 0.5, 0)
+                        value = 1 - left / (valueSlider.AbsoluteSize.X - thumbW)
                         updateColorFromHSV()
                     end
 
