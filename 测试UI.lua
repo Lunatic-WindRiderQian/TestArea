@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（亮度滑块加宽） ====================
+            -- ==================== 颜色选择器（亮度滑块加长，点击选择器内部不关闭） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -1001,9 +1001,9 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块（加宽轨道，增大滑块头）
+                    -- 亮度滑块（进一步加长，增大滑块头）
                     local valueSliderRow = Instance.new("Frame")
-                    valueSliderRow.Size = UDim2.new(1, 0, 0, 24)  -- 增加行高
+                    valueSliderRow.Size = UDim2.new(1, 0, 0, 26)  -- 行高增加
                     valueSliderRow.BackgroundTransparency = 1
                     valueSliderRow.Parent = prompt
 
@@ -1018,10 +1018,10 @@ function Library:CreateWindow(Config)
                     valueLabel.Parent = valueSliderRow
                     AddToRegistry(valueLabel, "TextColor3", "Text")
 
-                    -- 轨道宽度增大（减少左右边距）
+                    -- 轨道宽度最大化（左右边距从20减到10）
                     local valueSlider = Instance.new("Frame")
-                    valueSlider.Size = UDim2.new(1, -20, 0, 10)  -- 原为 (1, -40, 0, 9)，现在左右边距从40减到20
-                    valueSlider.Position = UDim2.new(0, 30, 0.5, -5)  -- 左边距从35改为30以匹配标签宽度
+                    valueSlider.Size = UDim2.new(1, -10, 0, 10)  -- 原为 (1, -40, 0, 9) -> 现在 (1, -10, 0, 10)
+                    valueSlider.Position = UDim2.new(0, 30, 0.5, -5)  -- 左边距保持30
                     valueSlider.BackgroundColor3 = Color3.new(1,1,1)
                     valueSlider.BackgroundTransparency = 0.2
                     valueSlider.Parent = valueSliderRow
@@ -1032,9 +1032,9 @@ function Library:CreateWindow(Config)
                     valueGradient.Rotation = 180
                     valueGradient.Parent = valueSlider
 
-                    -- 滑块头增大
+                    -- 滑块头增大到16x16
                     local valueThumb = Instance.new("ImageButton")
-                    valueThumb.Size = UDim2.new(0, 14, 0, 14)  -- 原为 11x11
+                    valueThumb.Size = UDim2.new(0, 16, 0, 16)  -- 原为 11x11，现 16x16
                     valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
                     valueThumb.Position = UDim2.new(1, 0, 0.5, 0)
                     valueThumb.BackgroundColor3 = Color3.new(1,1,1)
@@ -1042,7 +1042,7 @@ function Library:CreateWindow(Config)
                     valueThumb.Parent = valueSlider
                     Instance.new("UICorner", valueThumb).CornerRadius = UDim.new(1,0)
 
-                    -- 新旧颜色对比（高度略增）
+                    -- 新旧颜色对比
                     local colorWells = Instance.new("Frame")
                     colorWells.Size = UDim2.new(1, 0, 0, 32)
                     colorWells.BackgroundTransparency = 1
@@ -1083,7 +1083,7 @@ function Library:CreateWindow(Config)
                     oldColorInner.Parent = oldColorWell
                     Instance.new("UICorner", oldColorInner).CornerRadius = UDim.new(0,4)
 
-                    -- 确认/取消按钮（高度略增）
+                    -- 确认/取消按钮
                     local buttonRow = Instance.new("Frame")
                     buttonRow.Size = UDim2.new(1, 0, 0, 30)
                     buttonRow.BackgroundTransparency = 1
