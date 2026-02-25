@@ -116,7 +116,7 @@ function Library:CreateWindow(Config)
     ScreenGui.Name = "M0dznLib_V1.2"
     ScreenGui.Parent = CoreGui
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    ScreenGui.ScreenInsets = Enum.ScreenInsets.None  -- 确保全屏覆盖
+    ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
     local MainFrame = Instance.new("Frame")
@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（亮度滑块加长，点击选择器内部不关闭） ====================
+            -- ==================== 颜色选择器（亮度滑块完全参考 maclib，遮罩修复） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -878,7 +878,7 @@ function Library:CreateWindow(Config)
                     if colorPickerOpen then return end
                     colorPickerOpen = true
 
-                    -- 创建遮罩 CanvasGroup（确保全屏）
+                    -- 创建遮罩 CanvasGroup
                     local canvas = Instance.new("CanvasGroup")
                     canvas.Name = "ColorPickerCanvas"
                     canvas.Size = UDim2.new(1, 0, 1, 0)
@@ -887,12 +887,14 @@ function Library:CreateWindow(Config)
                     canvas.ZIndex = 200
                     canvas.Parent = ScreenGui
 
-                    -- 遮罩背景（全屏半黑）
+                    -- 遮罩背景
                     local overlay = Instance.new("Frame")
                     overlay.Size = UDim2.new(1, 0, 1, 0)
                     overlay.BackgroundColor3 = Color3.new(0,0,0)
                     overlay.BackgroundTransparency = 0.5
                     overlay.Parent = canvas
+                    
+                    -- 确保遮罩可见
                     canvas.GroupTransparency = 0
 
                     -- 选择器主框（宽度 340，高度自动）
@@ -1001,9 +1003,9 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块（进一步加长，增大滑块头）
+                    -- 亮度滑块（完全参考 maclib）
                     local valueSliderRow = Instance.new("Frame")
-                    valueSliderRow.Size = UDim2.new(1, 0, 0, 26)  -- 行高增加
+                    valueSliderRow.Size = UDim2.new(1, 0, 0, 26)  -- 行高
                     valueSliderRow.BackgroundTransparency = 1
                     valueSliderRow.Parent = prompt
 
@@ -1018,23 +1020,26 @@ function Library:CreateWindow(Config)
                     valueLabel.Parent = valueSliderRow
                     AddToRegistry(valueLabel, "TextColor3", "Text")
 
-                    -- 轨道宽度最大化（左右边距从20减到10）
+                    -- 轨道（带渐变）
                     local valueSlider = Instance.new("Frame")
-                    valueSlider.Size = UDim2.new(1, -10, 0, 10)  -- 原为 (1, -40, 0, 9) -> 现在 (1, -10, 0, 10)
-                    valueSlider.Position = UDim2.new(0, 30, 0.5, -5)  -- 左边距保持30
+                    valueSlider.Size = UDim2.new(1, -35, 0, 10)  -- 减掉标签宽度
+                    valueSlider.Position = UDim2.new(0, 35, 0.5, -5)
                     valueSlider.BackgroundColor3 = Color3.new(1,1,1)
                     valueSlider.BackgroundTransparency = 0.2
                     valueSlider.Parent = valueSliderRow
                     Instance.new("UICorner", valueSlider).CornerRadius = UDim.new(1,0)
 
                     local valueGradient = Instance.new("UIGradient")
-                    valueGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0,0,0)), ColorSequenceKeypoint.new(1, Color3.new(1,1,1))})
+                    valueGradient.Color = ColorSequence.new({
+                        ColorSequenceKeypoint.new(0, Color3.new(0,0,0)),
+                        ColorSequenceKeypoint.new(1, Color3.new(1,1,1))
+                    })
                     valueGradient.Rotation = 180
                     valueGradient.Parent = valueSlider
 
-                    -- 滑块头增大到16x16
+                    -- 滑块头（白色圆点）
                     local valueThumb = Instance.new("ImageButton")
-                    valueThumb.Size = UDim2.new(0, 16, 0, 16)  -- 原为 11x11，现 16x16
+                    valueThumb.Size = UDim2.new(0, 14, 0, 14)  -- 大小适中
                     valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
                     valueThumb.Position = UDim2.new(1, 0, 0.5, 0)
                     valueThumb.BackgroundColor3 = Color3.new(1,1,1)
