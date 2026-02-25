@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（亮度滑块尺寸恢复18×18，修复ZIndex触摸问题） ====================
+            -- ==================== 颜色选择器（亮度滑块完全按照 maclib.lua 重写） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -892,7 +892,7 @@ function Library:CreateWindow(Config)
                     overlay.Size = UDim2.new(1, 0, 1, 0)
                     overlay.BackgroundColor3 = Color3.new(0,0,0)
                     overlay.BackgroundTransparency = 0.5
-                    overlay.ZIndex = 1  -- 确保遮罩在底层
+                    overlay.ZIndex = 1
                     overlay.Parent = canvas
                     
                     -- 选择器主框（ZIndex 较高）
@@ -904,7 +904,7 @@ function Library:CreateWindow(Config)
                     prompt.AutomaticSize = Enum.AutomaticSize.Y
                     prompt.BackgroundColor3 = CurrentTheme.Main
                     prompt.BorderSizePixel = 0
-                    prompt.ZIndex = 2  -- 确保在遮罩上层
+                    prompt.ZIndex = 2
                     prompt.Parent = canvas
 
                     -- 确保遮罩可见
@@ -1005,7 +1005,7 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块（尺寸恢复18×18，左边距20）
+                    -- 亮度滑块（完全按照 maclib.lua 实现）
                     local valueSliderRow = Instance.new("Frame")
                     valueSliderRow.Size = UDim2.new(1, 0, 0, 28)  -- 行高28
                     valueSliderRow.BackgroundTransparency = 1
@@ -1022,7 +1022,7 @@ function Library:CreateWindow(Config)
                     valueLabel.Parent = valueSliderRow
                     AddToRegistry(valueLabel, "TextColor3", "Text")
 
-                    -- 轨道：左边距20，右边距20
+                    -- 轨道（带渐变）
                     local valueSlider = Instance.new("Frame")
                     valueSlider.Size = UDim2.new(1, -40, 0, 12)  -- 轨道高度12
                     valueSlider.Position = UDim2.new(0, 20, 0.5, -6)  -- 左边距20
@@ -1039,14 +1039,12 @@ function Library:CreateWindow(Config)
                     valueGradient.Rotation = 180
                     valueGradient.Parent = valueSlider
 
-                    -- 滑块头（白色圆点，18×18）
-                    local valueThumb = Instance.new("ImageButton")
+                    -- 滑块头（白色圆点，用 Frame，尺寸18×18）
+                    local valueThumb = Instance.new("Frame")
                     valueThumb.Size = UDim2.new(0, 18, 0, 18)
                     valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
                     valueThumb.Position = UDim2.new(1, 0, 0.5, 0)
                     valueThumb.BackgroundColor3 = Color3.new(1,1,1)
-                    valueThumb.AutoButtonColor = false
-                    valueThumb.ZIndex = 3  -- 确保滑块头在prompt内最高
                     valueThumb.Parent = valueSlider
                     Instance.new("UICorner", valueThumb).CornerRadius = UDim.new(1,0)
 
@@ -1146,7 +1144,7 @@ function Library:CreateWindow(Config)
                         valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
                     end
 
-                    -- 更新滑块位置
+                    -- 更新滑块位置（基于左边缘）
                     local function updateSliderPosition()
                         local cX = (1 - value) * (valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X)
                         valueThumb.Position = UDim2.new(0, cX, 0.5, 0)
@@ -1163,29 +1161,19 @@ function Library:CreateWindow(Config)
                             dx = dx / dist * r
                             dy = dy / dist * r
                         end
-                        local phi = math.atan2(-dy, dx)  -- 注意符号，使 0° 在右侧顺时针
+                        local phi = math.atan2(-dy, dx)
                         hue = (phi + math.pi) / (2 * math.pi)
                         saturation = math.min(dist / r, 1)
                         updateWheelPosition()
                         updateColorFromHSV()
                     end
 
-                    -- 从鼠标位置更新亮度（基于滑块头中心点）
-                    local function updateValueFromMouse(mouseX)
-                        local sliderX = valueSlider.AbsolutePosition.X
-                        local sliderW = valueSlider.AbsoluteSize.X
-                        local thumbW = valueThumb.AbsoluteSize.X
-                        
-                        -- 鼠标相对于轨道左边缘的距离
-                        local relativeX = mouseX - sliderX
-                        -- 滑块头中心允许的范围：[thumbW/2, sliderW - thumbW/2]
-                        local centerX = math.clamp(relativeX, thumbW/2, sliderW - thumbW/2)
-                        -- 计算左边缘位置
-                        local left = centerX - thumbW/2
-                        -- 更新亮度值 (左边缘 0 对应 value=1，左边缘最大对应 value=0)
-                        value = 1 - left / (sliderW - thumbW)
-                        -- 直接设置滑块头位置
-                        valueThumb.Position = UDim2.new(0, left, 0.5, 0)
+                    -- 从鼠标位置更新亮度（maclib 左边缘算法）
+                    local function UpdateSlide(iX)
+                        local rX = iX - valueSlider.AbsolutePosition.X
+                        local cX = math.clamp(rX, 0, valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X)
+                        valueThumb.Position = UDim2.new(0, cX, 0.5, 0)
+                        value = 1 - (cX / (valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X))
                         updateColorFromHSV()
                     end
 
@@ -1231,7 +1219,7 @@ function Library:CreateWindow(Config)
                     valueThumb.InputBegan:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                             valueDragging = true
-                            updateValueFromMouse(input.Position.X)
+                            UpdateSlide(input.Position.X)
                         end
                     end)
                     valueThumb.InputEnded:Connect(function(input)
@@ -1244,7 +1232,7 @@ function Library:CreateWindow(Config)
                         if wheelDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                             updateHueSatFromMouse(input.Position.X, input.Position.Y)
                         elseif valueDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                            updateValueFromMouse(input.Position.X)
+                            UpdateSlide(input.Position.X)
                         end
                     end)
 
