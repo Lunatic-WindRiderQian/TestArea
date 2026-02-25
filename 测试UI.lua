@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（亮度滑块完全参考 maclib，遮罩修复） ====================
+            -- ==================== 颜色选择器（亮度滑块加宽，遮罩点击外部关闭） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -1003,9 +1003,9 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块（完全参考 maclib）
+                    -- 亮度滑块（完全参考 maclib，进一步加宽）
                     local valueSliderRow = Instance.new("Frame")
-                    valueSliderRow.Size = UDim2.new(1, 0, 0, 26)  -- 行高
+                    valueSliderRow.Size = UDim2.new(1, 0, 0, 28)  -- 行高增加到28
                     valueSliderRow.BackgroundTransparency = 1
                     valueSliderRow.Parent = prompt
 
@@ -1020,10 +1020,10 @@ function Library:CreateWindow(Config)
                     valueLabel.Parent = valueSliderRow
                     AddToRegistry(valueLabel, "TextColor3", "Text")
 
-                    -- 轨道（带渐变）
+                    -- 轨道（更宽）
                     local valueSlider = Instance.new("Frame")
-                    valueSlider.Size = UDim2.new(1, -35, 0, 10)  -- 减掉标签宽度
-                    valueSlider.Position = UDim2.new(0, 35, 0.5, -5)
+                    valueSlider.Size = UDim2.new(1, -20, 0, 12)  -- 原为 (1, -35, 0, 10) -> 现在 (1, -20, 0, 12)
+                    valueSlider.Position = UDim2.new(0, 35, 0.5, -6)  -- 左边距保持35，垂直居中偏移-6
                     valueSlider.BackgroundColor3 = Color3.new(1,1,1)
                     valueSlider.BackgroundTransparency = 0.2
                     valueSlider.Parent = valueSliderRow
@@ -1037,9 +1037,9 @@ function Library:CreateWindow(Config)
                     valueGradient.Rotation = 180
                     valueGradient.Parent = valueSlider
 
-                    -- 滑块头（白色圆点）
+                    -- 滑块头（更大）
                     local valueThumb = Instance.new("ImageButton")
-                    valueThumb.Size = UDim2.new(0, 14, 0, 14)  -- 大小适中
+                    valueThumb.Size = UDim2.new(0, 18, 0, 18)  -- 原为14，现18
                     valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
                     valueThumb.Position = UDim2.new(1, 0, 0.5, 0)
                     valueThumb.BackgroundColor3 = Color3.new(1,1,1)
