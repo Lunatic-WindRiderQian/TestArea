@@ -115,7 +115,8 @@ function Library:CreateWindow(Config)
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "M0dznLib_V1.2"
     ScreenGui.Parent = CoreGui
-    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling 
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.ScreenInsets = Enum.ScreenInsets.None  -- 确保全屏覆盖
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
     local MainFrame = Instance.new("Frame")
@@ -877,7 +878,7 @@ function Library:CreateWindow(Config)
                     if colorPickerOpen then return end
                     colorPickerOpen = true
 
-                    -- 创建遮罩
+                    -- 创建遮罩 CanvasGroup（确保全屏）
                     local canvas = Instance.new("CanvasGroup")
                     canvas.Name = "ColorPickerCanvas"
                     canvas.Size = UDim2.new(1, 0, 1, 0)
@@ -886,6 +887,7 @@ function Library:CreateWindow(Config)
                     canvas.ZIndex = 200
                     canvas.Parent = ScreenGui
 
+                    -- 遮罩背景（全屏半黑）
                     local overlay = Instance.new("Frame")
                     overlay.Size = UDim2.new(1, 0, 1, 0)
                     overlay.BackgroundColor3 = Color3.new(0,0,0)
