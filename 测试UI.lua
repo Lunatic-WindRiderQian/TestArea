@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（亮度滑块加宽，遮罩点击外部关闭） ====================
+            -- ==================== 颜色选择器（亮度滑块位置左移，拖动范围修复） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -1003,9 +1003,9 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块（完全参考 maclib，进一步加宽）
+                    -- 亮度滑块（左移左边距，修复拖动范围）
                     local valueSliderRow = Instance.new("Frame")
-                    valueSliderRow.Size = UDim2.new(1, 0, 0, 28)  -- 行高增加到28
+                    valueSliderRow.Size = UDim2.new(1, 0, 0, 28)  -- 行高28
                     valueSliderRow.BackgroundTransparency = 1
                     valueSliderRow.Parent = prompt
 
@@ -1020,10 +1020,10 @@ function Library:CreateWindow(Config)
                     valueLabel.Parent = valueSliderRow
                     AddToRegistry(valueLabel, "TextColor3", "Text")
 
-                    -- 轨道（更宽）
+                    -- 轨道：左边距从35减到25，使滑块整体左移
                     local valueSlider = Instance.new("Frame")
-                    valueSlider.Size = UDim2.new(1, -20, 0, 12)  -- 原为 (1, -35, 0, 10) -> 现在 (1, -20, 0, 12)
-                    valueSlider.Position = UDim2.new(0, 35, 0.5, -6)  -- 左边距保持35，垂直居中偏移-6
+                    valueSlider.Size = UDim2.new(1, -20, 0, 12)  -- 宽度不变，右边距20
+                    valueSlider.Position = UDim2.new(0, 25, 0.5, -6)  -- 左边距25，垂直居中偏移-6
                     valueSlider.BackgroundColor3 = Color3.new(1,1,1)
                     valueSlider.BackgroundTransparency = 0.2
                     valueSlider.Parent = valueSliderRow
@@ -1037,9 +1037,9 @@ function Library:CreateWindow(Config)
                     valueGradient.Rotation = 180
                     valueGradient.Parent = valueSlider
 
-                    -- 滑块头（更大）
+                    -- 滑块头
                     local valueThumb = Instance.new("ImageButton")
-                    valueThumb.Size = UDim2.new(0, 18, 0, 18)  -- 原为14，现18
+                    valueThumb.Size = UDim2.new(0, 18, 0, 18)
                     valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
                     valueThumb.Position = UDim2.new(1, 0, 0.5, 0)
                     valueThumb.BackgroundColor3 = Color3.new(1,1,1)
@@ -1167,13 +1167,16 @@ function Library:CreateWindow(Config)
                         updateColorFromHSV()
                     end
 
-                    -- 从鼠标位置更新亮度
+                    -- 修复后的亮度更新函数：正确映射鼠标位置到滑块左边距
                     local function updateValueFromMouse(mouseX)
                         local sliderX = valueSlider.AbsolutePosition.X
                         local sliderW = valueSlider.AbsoluteSize.X
                         local thumbW = valueThumb.AbsoluteSize.X
-                        local rel = math.clamp((mouseX - sliderX) / sliderW, 0, 1)
-                        value = 1 - rel
+                        -- 鼠标相对于轨道左边缘的位置
+                        local relativeX = mouseX - sliderX
+                        -- 限制范围：确保滑块头中心在轨道内，左边距范围 0 到 sliderW - thumbW
+                        local targetLeft = math.clamp(relativeX - thumbW / 2, 0, sliderW - thumbW)
+                        value = 1 - targetLeft / (sliderW - thumbW)
                         updateSliderPosition()
                         updateColorFromHSV()
                     end
