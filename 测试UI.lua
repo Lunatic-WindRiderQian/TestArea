@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（亮度滑块位置左移，拖动范围修复） ====================
+            -- ==================== 颜色选择器（亮度滑块完全修复） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -1003,7 +1003,7 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块（左移左边距，修复拖动范围）
+                    -- 亮度滑块（位置左移，拖动逻辑完全修复）
                     local valueSliderRow = Instance.new("Frame")
                     valueSliderRow.Size = UDim2.new(1, 0, 0, 28)  -- 行高28
                     valueSliderRow.BackgroundTransparency = 1
@@ -1020,9 +1020,9 @@ function Library:CreateWindow(Config)
                     valueLabel.Parent = valueSliderRow
                     AddToRegistry(valueLabel, "TextColor3", "Text")
 
-                    -- 轨道：左边距从35减到25，使滑块整体左移
+                    -- 轨道：左边距25，使滑块整体左移
                     local valueSlider = Instance.new("Frame")
-                    valueSlider.Size = UDim2.new(1, -20, 0, 12)  -- 宽度不变，右边距20
+                    valueSlider.Size = UDim2.new(1, -20, 0, 12)  -- 宽度：右边距20
                     valueSlider.Position = UDim2.new(0, 25, 0.5, -6)  -- 左边距25，垂直居中偏移-6
                     valueSlider.BackgroundColor3 = Color3.new(1,1,1)
                     valueSlider.BackgroundTransparency = 0.2
@@ -1037,7 +1037,7 @@ function Library:CreateWindow(Config)
                     valueGradient.Rotation = 180
                     valueGradient.Parent = valueSlider
 
-                    -- 滑块头
+                    -- 滑块头（白色圆点，可拖动）
                     local valueThumb = Instance.new("ImageButton")
                     valueThumb.Size = UDim2.new(0, 18, 0, 18)
                     valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -1167,17 +1167,22 @@ function Library:CreateWindow(Config)
                         updateColorFromHSV()
                     end
 
-                    -- 修复后的亮度更新函数：正确映射鼠标位置到滑块左边距
+                    -- 从鼠标位置更新亮度（修复版：基于滑块头中心点）
                     local function updateValueFromMouse(mouseX)
                         local sliderX = valueSlider.AbsolutePosition.X
                         local sliderW = valueSlider.AbsoluteSize.X
                         local thumbW = valueThumb.AbsoluteSize.X
-                        -- 鼠标相对于轨道左边缘的位置
+                        
+                        -- 鼠标相对于轨道左边缘的距离
                         local relativeX = mouseX - sliderX
-                        -- 限制范围：确保滑块头中心在轨道内，左边距范围 0 到 sliderW - thumbW
-                        local targetLeft = math.clamp(relativeX - thumbW / 2, 0, sliderW - thumbW)
-                        value = 1 - targetLeft / (sliderW - thumbW)
-                        updateSliderPosition()
+                        -- 滑块头中心允许的范围：[thumbW/2, sliderW - thumbW/2]
+                        local centerX = math.clamp(relativeX, thumbW/2, sliderW - thumbW/2)
+                        -- 计算左边缘位置
+                        local left = centerX - thumbW/2
+                        -- 更新亮度值 (左边缘 0 对应 value=1，左边缘最大对应 value=0)
+                        value = 1 - left / (sliderW - thumbW)
+                        -- 直接设置滑块头位置
+                        valueThumb.Position = UDim2.new(0, left, 0.5, 0)
                         updateColorFromHSV()
                     end
 
