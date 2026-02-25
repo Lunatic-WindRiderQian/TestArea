@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 全新重写的 ColorPicker（支持手机触屏，尺寸缩小） ====================
+            -- ==================== 颜色选择器（尺寸稍微放大） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -895,12 +895,12 @@ function Library:CreateWindow(Config)
                     overlay.Parent = canvas
                     canvas.GroupTransparency = 0
 
-                    -- 选择器主框（宽度 300，高度自动）
+                    -- 选择器主框（宽度 340，高度自动）
                     local prompt = Instance.new("Frame")
                     prompt.Name = "ColorPickerPrompt"
                     prompt.AnchorPoint = Vector2.new(0.5, 0.5)
                     prompt.Position = UDim2.new(0.5, 0, 0.5, 0)
-                    prompt.Size = UDim2.fromOffset(300, 0)
+                    prompt.Size = UDim2.fromOffset(340, 0)
                     prompt.AutomaticSize = Enum.AutomaticSize.Y
                     prompt.BackgroundColor3 = CurrentTheme.Main
                     prompt.BorderSizePixel = 0
@@ -923,19 +923,19 @@ function Library:CreateWindow(Config)
                     padding.PaddingTop = UDim.new(0, 15)
                     padding.Parent = prompt
 
-                    -- 颜色轮 + 输入区（高度 150 匹配轮子）
+                    -- 颜色轮 + 输入区（高度 170 匹配轮子）
                     local wheelRow = Instance.new("Frame")
-                    wheelRow.Size = UDim2.new(1, 0, 0, 150)
+                    wheelRow.Size = UDim2.new(1, 0, 0, 170)
                     wheelRow.BackgroundTransparency = 1
                     wheelRow.Parent = prompt
 
-                    -- 颜色轮（150x150）
+                    -- 颜色轮（170x170）
                     local wheel = Instance.new("ImageButton")
                     wheel.Name = "ColorWheel"
                     wheel.Image = ColorPickerAssets.Wheel
                     wheel.AutoButtonColor = false
-                    wheel.Size = UDim2.fromOffset(150, 150)
-                    wheel.Position = UDim2.new(0, 0, 0.5, -75)
+                    wheel.Size = UDim2.fromOffset(170, 170)
+                    wheel.Position = UDim2.new(0, 0, 0.5, -85)
                     wheel.BackgroundTransparency = 1
                     wheel.Parent = wheelRow
 
@@ -943,15 +943,15 @@ function Library:CreateWindow(Config)
                     target.Name = "Target"
                     target.Image = ColorPickerAssets.Target
                     target.AnchorPoint = Vector2.new(0.5, 0.5)
-                    target.Size = UDim2.fromOffset(18, 18)  -- 稍微缩小
+                    target.Size = UDim2.fromOffset(20, 20)  -- 稍微放大
                     target.BackgroundTransparency = 1
                     target.Parent = wheel
                     target.Position = UDim2.new(0.5, 0, 0.5, 0)
 
-                    -- 右侧输入区（宽度 120）
+                    -- 右侧输入区（宽度 140）
                     local inputs = Instance.new("Frame")
-                    inputs.Size = UDim2.new(0, 120, 1, 0)
-                    inputs.Position = UDim2.new(1, -120, 0, 0)
+                    inputs.Size = UDim2.new(0, 140, 1, 0)
+                    inputs.Position = UDim2.new(1, -140, 0, 0)
                     inputs.BackgroundTransparency = 1
                     inputs.Parent = wheelRow
 
@@ -963,7 +963,7 @@ function Library:CreateWindow(Config)
                     -- 创建输入行（标签宽度 30，输入框宽度自适应）
                     local function createInputRow(labelText, defaultText)
                         local row = Instance.new("Frame")
-                        row.Size = UDim2.new(1, 0, 0, 24)  -- 行高降低
+                        row.Size = UDim2.new(1, 0, 0, 26)  -- 行高略增
                         row.BackgroundTransparency = 1
                         row.Parent = inputs
 
@@ -979,8 +979,8 @@ function Library:CreateWindow(Config)
                         AddToRegistry(label, "TextColor3", "Text")
 
                         local box = Instance.new("TextBox")
-                        box.Size = UDim2.new(1, -35, 0, 20)  -- 宽度减去标签宽度
-                        box.Position = UDim2.new(0, 35, 0.5, -10)
+                        box.Size = UDim2.new(1, -35, 0, 22)  -- 高度略增
+                        box.Position = UDim2.new(0, 35, 0.5, -11)
                         box.Text = defaultText
                         box.TextColor3 = CurrentTheme.Accent
                         box.BackgroundColor3 = CurrentTheme.Main
@@ -1001,9 +1001,9 @@ function Library:CreateWindow(Config)
                     local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                     local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                    -- 亮度滑块（行高降低）
+                    -- 亮度滑块（行高略增）
                     local valueSliderRow = Instance.new("Frame")
-                    valueSliderRow.Size = UDim2.new(1, 0, 0, 18)
+                    valueSliderRow.Size = UDim2.new(1, 0, 0, 20)
                     valueSliderRow.BackgroundTransparency = 1
                     valueSliderRow.Parent = prompt
 
@@ -1019,8 +1019,8 @@ function Library:CreateWindow(Config)
                     AddToRegistry(valueLabel, "TextColor3", "Text")
 
                     local valueSlider = Instance.new("Frame")
-                    valueSlider.Size = UDim2.new(1, -40, 0, 8)  -- 滑块高度降低
-                    valueSlider.Position = UDim2.new(0, 35, 0.5, -4)
+                    valueSlider.Size = UDim2.new(1, -40, 0, 9)  -- 滑块高度略增
+                    valueSlider.Position = UDim2.new(0, 35, 0.5, -4.5)
                     valueSlider.BackgroundColor3 = Color3.new(1,1,1)
                     valueSlider.BackgroundTransparency = 0.2
                     valueSlider.Parent = valueSliderRow
@@ -1032,16 +1032,16 @@ function Library:CreateWindow(Config)
                     valueGradient.Parent = valueSlider
 
                     local valueThumb = Instance.new("Frame")
-                    valueThumb.Size = UDim2.new(0, 10, 0, 10)  -- 滑块头缩小
+                    valueThumb.Size = UDim2.new(0, 11, 0, 11)  -- 滑块头略大
                     valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
                     valueThumb.Position = UDim2.new(1, 0, 0.5, 0)
                     valueThumb.BackgroundColor3 = Color3.new(1,1,1)
                     valueThumb.Parent = valueSlider
                     Instance.new("UICorner", valueThumb).CornerRadius = UDim.new(1,0)
 
-                    -- 新旧颜色对比（高度降低）
+                    -- 新旧颜色对比（高度略增）
                     local colorWells = Instance.new("Frame")
-                    colorWells.Size = UDim2.new(1, 0, 0, 30)
+                    colorWells.Size = UDim2.new(1, 0, 0, 32)
                     colorWells.BackgroundTransparency = 1
                     colorWells.Parent = prompt
 
@@ -1080,9 +1080,9 @@ function Library:CreateWindow(Config)
                     oldColorInner.Parent = oldColorWell
                     Instance.new("UICorner", oldColorInner).CornerRadius = UDim.new(0,4)
 
-                    -- 确认/取消按钮（高度降低）
+                    -- 确认/取消按钮（高度略增）
                     local buttonRow = Instance.new("Frame")
-                    buttonRow.Size = UDim2.new(1, 0, 0, 28)
+                    buttonRow.Size = UDim2.new(1, 0, 0, 30)
                     buttonRow.BackgroundTransparency = 1
                     buttonRow.Parent = prompt
 
@@ -1108,7 +1108,7 @@ function Library:CreateWindow(Config)
                     cancel.Parent = buttonRow
                     Instance.new("UICorner", cancel).CornerRadius = UDim.new(0,5)
 
-                    -- 颜色选择逻辑（保持不变，但需要调整靶心和滑块位置公式以适配新尺寸）
+                    -- 颜色选择逻辑
                     local hue, saturation, value = Color3.toHSV(Color)
                     if not hue then hue = 0; saturation = 0; value = 1 end
 
