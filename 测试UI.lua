@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（修复颜色轮靶心偏移） ====================
+            -- ==================== 颜色选择器（修复取消时颜色不同步） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -877,6 +877,10 @@ function Library:CreateWindow(Config)
                 local function openColorPicker()
                     if colorPickerOpen then return end
                     colorPickerOpen = true
+
+                    -- 保存初始颜色，用于取消时恢复
+                    local initialColor = Color
+                    local initialAlpha = Alpha
 
                     -- 创建遮罩 CanvasGroup
                     local canvas = Instance.new("CanvasGroup")
@@ -1134,18 +1138,18 @@ function Library:CreateWindow(Config)
                         hexBox.Text = string.format("#%02X%02X%02X", math.floor(c.R*255+0.5), math.floor(c.G*255+0.5), math.floor(c.B*255+0.5))
                     end
 
-                    -- 计算轮子上靶心的位置（使用与鼠标一致的坐标：dx右为正，dy下为正）
+                    -- 计算轮子上靶心的位置（与鼠标一致）
                     local function updateWheelPosition()
                         local r = wheel.AbsoluteSize.X / 2
                         local phi = hue * 2 * math.pi
                         local len = saturation * r
                         local dx = len * math.cos(phi)
                         local dy = -len * math.sin(phi)  -- 下为正
-                        target.Position = UDim2.new(0.5, dx, 0.5, dy)  -- 直接用dy（下为正）
+                        target.Position = UDim2.new(0.5, dx, 0.5, dy)
                         valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
                     end
 
-                    -- 从鼠标位置更新色相和饱和度（并直接更新靶心位置）
+                    -- 从鼠标位置更新色相和饱和度
                     local function updateHueSatFromMouse(mouseX, mouseY)
                         local center = wheel.AbsolutePosition + wheel.AbsoluteSize / 2
                         local dx = mouseX - center.X
@@ -1156,12 +1160,10 @@ function Library:CreateWindow(Config)
                             dx = dx / dist * r
                             dy = dy / dist * r
                         end
-                        -- 直接设置靶心位置，保持与鼠标一致
                         target.Position = UDim2.new(0.5, dx, 0.5, dy)
 
-                        -- 计算hue和saturation
-                        local phi = math.atan2(-dy, dx)  -- 注意：-dy将屏幕坐标转换为数学坐标（y向上）
-                        hue = (phi + math.pi) / (2 * math.pi)  -- 映射到0~1，红色在左侧（phi=π）
+                        local phi = math.atan2(-dy, dx)
+                        hue = (phi + math.pi) / (2 * math.pi)
                         saturation = math.min(dist / r, 1)
                         updateColorFromHSV()
                         valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
@@ -1172,9 +1174,7 @@ function Library:CreateWindow(Config)
                         local sliderX = valueSlider.AbsolutePosition.X
                         local sliderW = valueSlider.AbsoluteSize.X
                         local thumbW = valueThumb.AbsoluteSize.X
-                        -- 计算鼠标相对于滑块左边缘的距离
                         local relativeX = iX - sliderX
-                        -- 滑块头左边缘范围
                         local left = math.clamp(relativeX - thumbW/2, 0, sliderW - thumbW)
                         valueThumb.Position = UDim2.new(0, left + thumbW/2, 0.5, 0)
                         value = 1 - left / (sliderW - thumbW)
@@ -1276,12 +1276,18 @@ function Library:CreateWindow(Config)
                     end)
 
                     cancel.MouseButton1Click:Connect(function()
+                        -- 恢复预览颜色为初始值
+                        PreviewColor.BackgroundColor3 = initialColor
+                        PreviewColor.BackgroundTransparency = initialAlpha
                         canvas:Destroy()
                         colorPickerOpen = false
                     end)
 
                     overlay.InputBegan:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                            -- 恢复预览颜色为初始值
+                            PreviewColor.BackgroundColor3 = initialColor
+                            PreviewColor.BackgroundTransparency = initialAlpha
                             canvas:Destroy()
                             colorPickerOpen = false
                         end
