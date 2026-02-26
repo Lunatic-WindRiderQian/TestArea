@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（删除 Cancel 按钮，增大颜色对比块圆角） ====================
+            -- ==================== 颜色选择器（修复靶心偏移） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -1104,7 +1104,7 @@ function Library:CreateWindow(Config)
                     oldInnerCorner.CornerRadius = UDim.new(0, 12)
                     oldInnerCorner.Parent = oldColorInner
 
-                    -- 确认按钮（删除 Cancel 按钮）
+                    -- 确认按钮（全宽）
                     local buttonRow = Instance.new("Frame")
                     buttonRow.Size = UDim2.new(1, 0, 0, 30)
                     buttonRow.BackgroundTransparency = 1
@@ -1137,14 +1137,15 @@ function Library:CreateWindow(Config)
                         hexBox.Text = string.format("#%02X%02X%02X", math.floor(c.R*255+0.5), math.floor(c.G*255+0.5), math.floor(c.B*255+0.5))
                     end
 
-                    -- 计算轮子上靶心的位置（使用与鼠标一致的坐标：dx右为正，dy下为正）
+                    -- 计算轮子上靶心的位置（使用与鼠标一致的映射）
                     local function updateWheelPosition()
                         local r = wheel.AbsoluteSize.X / 2
-                        local phi = hue * 2 * math.pi
+                        -- 从 hue 反推角度：hue = (phi + pi) / (2pi)  => phi = hue * 2pi - pi
+                        local phi = hue * 2 * math.pi - math.pi
                         local len = saturation * r
                         local dx = len * math.cos(phi)
                         local dy = -len * math.sin(phi)  -- 下为正
-                        target.Position = UDim2.new(0.5, dx, 0.5, dy)  -- 直接用dy（下为正）
+                        target.Position = UDim2.new(0.5, dx, 0.5, dy)
                         valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
                     end
 
