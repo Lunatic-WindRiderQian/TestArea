@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（修复取消时轮子和滑块不同步） ====================
+            -- ==================== 颜色选择器（删除 Cancel 按钮，增大颜色对比块圆角） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -877,12 +877,6 @@ function Library:CreateWindow(Config)
                 local function openColorPicker()
                     if colorPickerOpen then return end
                     colorPickerOpen = true
-
-                    -- 保存初始颜色和HSV
-                    local initialColor = Color
-                    local initialAlpha = Alpha
-                    local initialHue, initialSat, initialVal = Color3.toHSV(initialColor)
-                    if not initialHue then initialHue = 0; initialSat = 0; initialVal = 1 end
 
                     -- 创建遮罩 CanvasGroup
                     local canvas = Instance.new("CanvasGroup")
@@ -1055,7 +1049,7 @@ function Library:CreateWindow(Config)
                     valueThumb.Parent = valueSlider
                     Instance.new("UICorner", valueThumb).CornerRadius = UDim.new(1,0)
 
-                    -- 新旧颜色对比
+                    -- 新旧颜色对比（圆角加大）
                     local colorWells = Instance.new("Frame")
                     colorWells.Size = UDim2.new(1, 0, 0, 32)
                     colorWells.BackgroundTransparency = 1
@@ -1066,12 +1060,17 @@ function Library:CreateWindow(Config)
                     gridLayout.CellPadding = UDim2.new(0, 8, 0, 0)
                     gridLayout.Parent = colorWells
 
+                    -- 新颜色块（网格背景 + 颜色层）
                     local newColorWell = Instance.new("ImageLabel")
                     newColorWell.Image = ColorPickerAssets.Grid
                     newColorWell.ScaleType = Enum.ScaleType.Tile
                     newColorWell.TileSize = UDim2.fromOffset(20,20)
                     newColorWell.BackgroundTransparency = 1
                     newColorWell.Parent = colorWells
+                    -- 添加较大圆角
+                    local newWellCorner = Instance.new("UICorner")
+                    newWellCorner.CornerRadius = UDim.new(0, 12)
+                    newWellCorner.Parent = newColorWell
 
                     local newColorInner = Instance.new("Frame")
                     newColorInner.Size = UDim2.new(1,0,1,0)
@@ -1079,14 +1078,21 @@ function Library:CreateWindow(Config)
                     newColorInner.BackgroundTransparency = Alpha
                     newColorInner.BorderSizePixel = 0
                     newColorInner.Parent = newColorWell
-                    Instance.new("UICorner", newColorInner).CornerRadius = UDim.new(0,4)
+                    -- 内层颜色块也加圆角
+                    local newInnerCorner = Instance.new("UICorner")
+                    newInnerCorner.CornerRadius = UDim.new(0, 12)
+                    newInnerCorner.Parent = newColorInner
 
+                    -- 旧颜色块
                     local oldColorWell = Instance.new("ImageLabel")
                     oldColorWell.Image = ColorPickerAssets.Grid
                     oldColorWell.ScaleType = Enum.ScaleType.Tile
                     oldColorWell.TileSize = UDim2.fromOffset(20,20)
                     oldColorWell.BackgroundTransparency = 1
                     oldColorWell.Parent = colorWells
+                    local oldWellCorner = Instance.new("UICorner")
+                    oldWellCorner.CornerRadius = UDim.new(0, 12)
+                    oldWellCorner.Parent = oldColorWell
 
                     local oldColorInner = Instance.new("Frame")
                     oldColorInner.Size = UDim2.new(1,0,1,0)
@@ -1094,16 +1100,18 @@ function Library:CreateWindow(Config)
                     oldColorInner.BackgroundTransparency = Alpha
                     oldColorInner.BorderSizePixel = 0
                     oldColorInner.Parent = oldColorWell
-                    Instance.new("UICorner", oldColorInner).CornerRadius = UDim.new(0,4)
+                    local oldInnerCorner = Instance.new("UICorner")
+                    oldInnerCorner.CornerRadius = UDim.new(0, 12)
+                    oldInnerCorner.Parent = oldColorInner
 
-                    -- 确认/取消按钮
+                    -- 确认按钮（删除 Cancel 按钮）
                     local buttonRow = Instance.new("Frame")
                     buttonRow.Size = UDim2.new(1, 0, 0, 30)
                     buttonRow.BackgroundTransparency = 1
                     buttonRow.Parent = prompt
 
                     local confirm = Instance.new("TextButton")
-                    confirm.Size = UDim2.new(0.5, -4, 1, 0)
+                    confirm.Size = UDim2.new(1, 0, 1, 0)  -- 全宽
                     confirm.Position = UDim2.new(0, 0, 0, 0)
                     confirm.Text = "Confirm"
                     confirm.Font = Enum.Font.GothamBold
@@ -1111,18 +1119,7 @@ function Library:CreateWindow(Config)
                     confirm.BackgroundColor3 = CurrentTheme.Accent
                     confirm.TextColor3 = CurrentTheme.Text
                     confirm.Parent = buttonRow
-                    Instance.new("UICorner", confirm).CornerRadius = UDim.new(0,5)
-
-                    local cancel = Instance.new("TextButton")
-                    cancel.Size = UDim2.new(0.5, -4, 1, 0)
-                    cancel.Position = UDim2.new(0.5, 4, 0, 0)
-                    cancel.Text = "Cancel"
-                    cancel.Font = Enum.Font.GothamBold
-                    cancel.TextSize = 12
-                    cancel.BackgroundColor3 = CurrentTheme.Main
-                    cancel.TextColor3 = CurrentTheme.Text
-                    cancel.Parent = buttonRow
-                    Instance.new("UICorner", cancel).CornerRadius = UDim.new(0,5)
+                    Instance.new("UICorner", confirm).CornerRadius = UDim.new(0, 5)
 
                     -- 颜色选择逻辑
                     local hue, saturation, value = Color3.toHSV(Color)
@@ -1140,18 +1137,18 @@ function Library:CreateWindow(Config)
                         hexBox.Text = string.format("#%02X%02X%02X", math.floor(c.R*255+0.5), math.floor(c.G*255+0.5), math.floor(c.B*255+0.5))
                     end
 
-                    -- 计算轮子上靶心的位置（与鼠标一致）
+                    -- 计算轮子上靶心的位置（使用与鼠标一致的坐标：dx右为正，dy下为正）
                     local function updateWheelPosition()
                         local r = wheel.AbsoluteSize.X / 2
                         local phi = hue * 2 * math.pi
                         local len = saturation * r
                         local dx = len * math.cos(phi)
                         local dy = -len * math.sin(phi)  -- 下为正
-                        target.Position = UDim2.new(0.5, dx, 0.5, dy)
+                        target.Position = UDim2.new(0.5, dx, 0.5, dy)  -- 直接用dy（下为正）
                         valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
                     end
 
-                    -- 从鼠标位置更新色相和饱和度
+                    -- 从鼠标位置更新色相和饱和度（并直接更新靶心位置）
                     local function updateHueSatFromMouse(mouseX, mouseY)
                         local center = wheel.AbsolutePosition + wheel.AbsoluteSize / 2
                         local dx = mouseX - center.X
@@ -1162,10 +1159,12 @@ function Library:CreateWindow(Config)
                             dx = dx / dist * r
                             dy = dy / dist * r
                         end
+                        -- 直接设置靶心位置，保持与鼠标一致
                         target.Position = UDim2.new(0.5, dx, 0.5, dy)
 
-                        local phi = math.atan2(-dy, dx)
-                        hue = (phi + math.pi) / (2 * math.pi)
+                        -- 计算hue和saturation
+                        local phi = math.atan2(-dy, dx)  -- 注意：-dy将屏幕坐标转换为数学坐标（y向上）
+                        hue = (phi + math.pi) / (2 * math.pi)  -- 映射到0~1，红色在左侧（phi=π）
                         saturation = math.min(dist / r, 1)
                         updateColorFromHSV()
                         valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
@@ -1176,7 +1175,9 @@ function Library:CreateWindow(Config)
                         local sliderX = valueSlider.AbsolutePosition.X
                         local sliderW = valueSlider.AbsoluteSize.X
                         local thumbW = valueThumb.AbsoluteSize.X
+                        -- 计算鼠标相对于滑块左边缘的距离
                         local relativeX = iX - sliderX
+                        -- 滑块头左边缘范围
                         local left = math.clamp(relativeX - thumbW/2, 0, sliderW - thumbW)
                         valueThumb.Position = UDim2.new(0, left + thumbW/2, 0.5, 0)
                         value = 1 - left / (sliderW - thumbW)
@@ -1277,25 +1278,8 @@ function Library:CreateWindow(Config)
                         colorPickerOpen = false
                     end)
 
-                    cancel.MouseButton1Click:Connect(function()
-                        -- 恢复HSV和预览颜色
-                        hue, saturation, value = initialHue, initialSat, initialVal
-                        Alpha = initialAlpha
-                        updateWheelPosition()
-                        updateSliderPosition()
-                        updateColorFromHSV()
-                        canvas:Destroy()
-                        colorPickerOpen = false
-                    end)
-
                     overlay.InputBegan:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                            -- 恢复HSV和预览颜色
-                            hue, saturation, value = initialHue, initialSat, initialVal
-                            Alpha = initialAlpha
-                            updateWheelPosition()
-                            updateSliderPosition()
-                            updateColorFromHSV()
                             canvas:Destroy()
                             colorPickerOpen = false
                         end
