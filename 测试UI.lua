@@ -818,7 +818,7 @@ function Library:CreateWindow(Config)
                 local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
             end
 
-            -- ==================== 颜色选择器（修复取消时颜色不同步） ====================
+            -- ==================== 颜色选择器（修复取消时轮子和滑块不同步） ====================
             child.Colorpicker = function(_, pickerText, default, callback, options)
                 options = options or {}
                 local isAlpha = options.Alpha ~= nil
@@ -878,9 +878,11 @@ function Library:CreateWindow(Config)
                     if colorPickerOpen then return end
                     colorPickerOpen = true
 
-                    -- 保存初始颜色，用于取消时恢复
+                    -- 保存初始颜色和HSV
                     local initialColor = Color
                     local initialAlpha = Alpha
+                    local initialHue, initialSat, initialVal = Color3.toHSV(initialColor)
+                    if not initialHue then initialHue = 0; initialSat = 0; initialVal = 1 end
 
                     -- 创建遮罩 CanvasGroup
                     local canvas = Instance.new("CanvasGroup")
@@ -1276,18 +1278,24 @@ function Library:CreateWindow(Config)
                     end)
 
                     cancel.MouseButton1Click:Connect(function()
-                        -- 恢复预览颜色为初始值
-                        PreviewColor.BackgroundColor3 = initialColor
-                        PreviewColor.BackgroundTransparency = initialAlpha
+                        -- 恢复HSV和预览颜色
+                        hue, saturation, value = initialHue, initialSat, initialVal
+                        Alpha = initialAlpha
+                        updateWheelPosition()
+                        updateSliderPosition()
+                        updateColorFromHSV()
                         canvas:Destroy()
                         colorPickerOpen = false
                     end)
 
                     overlay.InputBegan:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                            -- 恢复预览颜色为初始值
-                            PreviewColor.BackgroundColor3 = initialColor
-                            PreviewColor.BackgroundTransparency = initialAlpha
+                            -- 恢复HSV和预览颜色
+                            hue, saturation, value = initialHue, initialSat, initialVal
+                            Alpha = initialAlpha
+                            updateWheelPosition()
+                            updateSliderPosition()
+                            updateColorFromHSV()
                             canvas:Destroy()
                             colorPickerOpen = false
                         end
