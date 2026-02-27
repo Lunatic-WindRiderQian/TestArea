@@ -282,7 +282,7 @@ function Library:CreateWindow(Config)
 
     local firstTab = true
 
-    -- ==================== 可折叠区域创建函数（提取自原 Elements:Section） ====================
+    -- ==================== 可折叠区域创建函数 ====================
     local function createSection(parent, text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
 
@@ -734,7 +734,7 @@ function Library:CreateWindow(Config)
             local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
         end
 
-        -- ==================== 颜色选择器（颜色轮左移） ====================
+        -- ==================== 颜色选择器 ====================
         child.Colorpicker = function(_, pickerText, default, callback, options)
             options = options or {}
             local isAlpha = options.Alpha ~= nil
@@ -803,7 +803,7 @@ function Library:CreateWindow(Config)
                 canvas.ZIndex = 200
                 canvas.Parent = ScreenGui
 
-                -- 遮罩背景（ZIndex 较低）
+                -- 遮罩背景
                 local overlay = Instance.new("Frame")
                 overlay.Size = UDim2.new(1, 0, 1, 0)
                 overlay.BackgroundColor3 = Color3.new(0,0,0)
@@ -811,7 +811,7 @@ function Library:CreateWindow(Config)
                 overlay.ZIndex = 1
                 overlay.Parent = canvas
                 
-                -- 选择器主框（ZIndex 较高）
+                -- 选择器主框
                 local prompt = Instance.new("Frame")
                 prompt.Name = "ColorPickerPrompt"
                 prompt.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -823,7 +823,6 @@ function Library:CreateWindow(Config)
                 prompt.ZIndex = 2
                 prompt.Parent = canvas
 
-                -- 确保遮罩可见
                 canvas.GroupTransparency = 0
 
                 local promptCorner = Instance.new("UICorner"); promptCorner.CornerRadius = UDim.new(0, 10); promptCorner.Parent = prompt
@@ -843,13 +842,13 @@ function Library:CreateWindow(Config)
                 padding.PaddingTop = UDim.new(0, 15)
                 padding.Parent = prompt
 
-                -- 颜色轮 + 输入区（高度 170 匹配轮子）
+                -- 颜色轮 + 输入区
                 local wheelRow = Instance.new("Frame")
                 wheelRow.Size = UDim2.new(1, 0, 0, 170)
                 wheelRow.BackgroundTransparency = 1
                 wheelRow.Parent = prompt
 
-                -- 颜色轮（170x170）
+                -- 颜色轮
                 local wheel = Instance.new("ImageButton")
                 wheel.Name = "ColorWheel"
                 wheel.Image = ColorPickerAssets.Wheel
@@ -868,7 +867,7 @@ function Library:CreateWindow(Config)
                 target.Parent = wheel
                 target.Position = UDim2.new(0.5, 0, 0.5, 0)
 
-                -- 右侧输入区（宽度 140）
+                -- 右侧输入区
                 local inputs = Instance.new("Frame")
                 inputs.Size = UDim2.new(0, 140, 1, 0)
                 inputs.Position = UDim2.new(1, -140, 0, 0)
@@ -880,7 +879,6 @@ function Library:CreateWindow(Config)
                 inputList.SortOrder = Enum.SortOrder.LayoutOrder
                 inputList.Parent = inputs
 
-                -- 创建输入行（标签宽度 30，输入框宽度自适应）
                 local function createInputRow(labelText, defaultText)
                     local row = Instance.new("Frame")
                     row.Size = UDim2.new(1, 0, 0, 26)
@@ -921,7 +919,7 @@ function Library:CreateWindow(Config)
                 local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                 local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                -- 亮度滑块（尺寸18×18，左边距20，拖动逻辑正确）
+                -- 亮度滑块
                 local valueSliderRow = Instance.new("Frame")
                 valueSliderRow.Size = UDim2.new(1, 0, 0, 28)
                 valueSliderRow.BackgroundTransparency = 1
@@ -938,7 +936,6 @@ function Library:CreateWindow(Config)
                 valueLabel.Parent = valueSliderRow
                 AddToRegistry(valueLabel, "TextColor3", "Text")
 
-                -- 轨道（带渐变）
                 local valueSlider = Instance.new("Frame")
                 valueSlider.Size = UDim2.new(1, -40, 0, 12)
                 valueSlider.Position = UDim2.new(0, 20, 0.5, -6)
@@ -955,7 +952,6 @@ function Library:CreateWindow(Config)
                 valueGradient.Rotation = 180
                 valueGradient.Parent = valueSlider
 
-                -- 滑块头（ImageButton，白色圆点，尺寸18×18，锚点(0.5,0.5)）
                 local valueThumb = Instance.new("ImageButton")
                 valueThumb.Size = UDim2.new(0, 18, 0, 18)
                 valueThumb.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -965,7 +961,7 @@ function Library:CreateWindow(Config)
                 valueThumb.Parent = valueSlider
                 Instance.new("UICorner", valueThumb).CornerRadius = UDim.new(1,0)
 
-                -- 新旧颜色对比（圆角加大）
+                -- 新旧颜色对比
                 local colorWells = Instance.new("Frame")
                 colorWells.Size = UDim2.new(1, 0, 0, 32)
                 colorWells.BackgroundTransparency = 1
@@ -976,7 +972,7 @@ function Library:CreateWindow(Config)
                 gridLayout.CellPadding = UDim2.new(0, 8, 0, 0)
                 gridLayout.Parent = colorWells
 
-                -- 新颜色块（网格背景 + 颜色层）
+                -- 新颜色块
                 local newColorWell = Instance.new("ImageLabel")
                 newColorWell.Image = ColorPickerAssets.Grid
                 newColorWell.ScaleType = Enum.ScaleType.Tile
@@ -1018,7 +1014,7 @@ function Library:CreateWindow(Config)
                 oldInnerCorner.CornerRadius = UDim.new(0, 12)
                 oldInnerCorner.Parent = oldColorInner
 
-                -- 确认按钮（全宽）
+                -- 确认按钮
                 local buttonRow = Instance.new("Frame")
                 buttonRow.Size = UDim2.new(1, 0, 0, 30)
                 buttonRow.BackgroundTransparency = 1
@@ -1051,7 +1047,6 @@ function Library:CreateWindow(Config)
                     hexBox.Text = string.format("#%02X%02X%02X", math.floor(c.R*255+0.5), math.floor(c.G*255+0.5), math.floor(c.B*255+0.5))
                 end
 
-                -- 计算轮子上靶心的位置（使用与鼠标一致的映射）
                 local function updateWheelPosition()
                     local r = wheel.AbsoluteSize.X / 2
                     local phi = hue * 2 * math.pi - math.pi
@@ -1062,7 +1057,6 @@ function Library:CreateWindow(Config)
                     valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
                 end
 
-                -- 从鼠标位置更新色相和饱和度（并直接更新靶心位置）
                 local function updateHueSatFromMouse(mouseX, mouseY)
                     local center = wheel.AbsolutePosition + wheel.AbsoluteSize / 2
                     local dx = mouseX - center.X
@@ -1082,7 +1076,6 @@ function Library:CreateWindow(Config)
                     valueSlider.BackgroundColor3 = Color3.fromHSV(hue, saturation, 1)
                 end
 
-                -- 从鼠标位置更新亮度
                 local function UpdateSlide(iX)
                     local sliderX = valueSlider.AbsolutePosition.X
                     local sliderW = valueSlider.AbsoluteSize.X
@@ -1094,7 +1087,6 @@ function Library:CreateWindow(Config)
                     updateColorFromHSV()
                 end
 
-                -- 从 RGB 输入更新
                 local function updateFromRGB()
                     local r = tonumber(redBox.Text) or 0; local g = tonumber(greenBox.Text) or 0; local b = tonumber(blueBox.Text) or 0
                     r = math.clamp(r,0,255)/255; g = math.clamp(g,0,255)/255; b = math.clamp(b,0,255)/255
@@ -1105,7 +1097,6 @@ function Library:CreateWindow(Config)
                     updateColorFromHSV()
                 end
 
-                -- 更新滑块位置（基于value）
                 local function updateSliderPosition()
                     local left = (1 - value) * (valueSlider.AbsoluteSize.X - valueThumb.AbsoluteSize.X)
                     valueThumb.Position = UDim2.new(0, left + valueThumb.AbsoluteSize.X/2, 0.5, 0)
@@ -1124,7 +1115,6 @@ function Library:CreateWindow(Config)
                     end
                 end
 
-                -- 拖拽事件（支持鼠标和触屏）
                 local wheelDragging = false
                 wheel.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -1159,7 +1149,6 @@ function Library:CreateWindow(Config)
                     end
                 end)
 
-                -- 输入框焦点处理
                 local function onFocusEnter(box) local t = box.Text; box.Text = ""; box.PlaceholderText = t end
                 redBox.Focused:Connect(function() onFocusEnter(redBox) end)
                 greenBox.Focused:Connect(function() onFocusEnter(greenBox) end)
@@ -1195,7 +1184,6 @@ function Library:CreateWindow(Config)
                     end
                 end)
 
-                -- 初始化位置（延迟一帧确保尺寸已计算）
                 RunService.RenderStepped:Wait()
                 updateWheelPosition()
                 updateSliderPosition()
@@ -1231,7 +1219,7 @@ function Library:CreateWindow(Config)
             return self
         end
 
-        -- ==================== 新增 Label ====================
+        -- ==================== Label ====================
         child.Label = function(_, labelText)
             local LabelFrame = Instance.new("Frame")
             LabelFrame.Size = UDim2.new(1, 0, 0, 35)
@@ -1257,7 +1245,7 @@ function Library:CreateWindow(Config)
             return self
         end
 
-        -- ==================== 新增 SubLabel ====================
+        -- ==================== SubLabel ====================
         child.SubLabel = function(_, subLabelText)
             local SubLabelFrame = Instance.new("Frame")
             SubLabelFrame.Size = UDim2.new(1, 0, 0, 35)
@@ -1284,7 +1272,7 @@ function Library:CreateWindow(Config)
             return self
         end
 
-        -- ==================== 新增 Paragraph ====================
+        -- ==================== Paragraph ====================
         child.Paragraph = function(_, headerText, bodyText)
             local ParaFrame = Instance.new("Frame")
             ParaFrame.Size = UDim2.new(1, 0, 0, 0)
@@ -1336,12 +1324,10 @@ function Library:CreateWindow(Config)
             return self
         end
 
-        -- ==========================================================================
-
         return child
     end
 
-    -- ==================== 普通单列标签（已添加 ScrollingDirection） ====================
+    -- ==================== 普通单列标签 ====================
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -1387,19 +1373,38 @@ function Library:CreateWindow(Config)
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
 
+        -- 创建滚动页面
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
         Page.ScrollBarThickness = 2
-        Page.ScrollingDirection = Enum.ScrollingDirection.Y  -- 仅垂直滚动
+        Page.ScrollingDirection = Enum.ScrollingDirection.Y
         Page.Visible = false
         Page.Parent = PageContainer
-        
+
+        -- 创建内容容器（用于避免滚动条遮挡）
+        local ContentHolder = Instance.new("Frame")
+        ContentHolder.Name = "Content"
+        ContentHolder.Size = UDim2.new(1, 0, 0, 0)
+        ContentHolder.AutomaticSize = Enum.AutomaticSize.Y
+        ContentHolder.BackgroundTransparency = 1
+        ContentHolder.Parent = Page
+
+        local HolderPadding = Instance.new("UIPadding")
+        HolderPadding.PaddingRight = UDim.new(0, 2) -- 滚动条厚度
+        HolderPadding.Parent = ContentHolder
+
         local PageList = Instance.new("UIListLayout")
         PageList.Padding = UDim.new(0, 6)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
-        PageList.Parent = Page
-        PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() Page.CanvasSize = UDim2.new(0,0,0, PageList.AbsoluteContentSize.Y + 10) end)
+        PageList.Parent = ContentHolder
+
+        -- 更新画布高度
+        local function updateCanvas()
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
+        end
+        PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+        task.spawn(function() task.wait(); updateCanvas() end)
 
         TabBtn.MouseButton1Click:Connect(function()
             PlaySound(Sounds.Tab) 
@@ -1430,15 +1435,14 @@ function Library:CreateWindow(Config)
         if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
         local Elements = {}
-
         function Elements:Section(text, icons, defaultOpen)
-            return createSection(Page, text, icons, defaultOpen)
+            return createSection(ContentHolder, text, icons, defaultOpen)
         end
 
         return Elements
     end
 
-    -- ==================== 新增双窗口标签（左右列独立滚动，无横向滚动） ====================
+    -- ==================== 双窗口标签 ====================
     function Window:DualTab(name, icon)
         -- 创建标签按钮（与普通 Tab 相同）
         local TabBtn = Instance.new("TextButton")
@@ -1485,14 +1489,14 @@ function Library:CreateWindow(Config)
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
 
-        -- 创建页面容器（Frame，不滚动，用于放置左右列）
+        -- 创建页面容器
         local PageFrame = Instance.new("Frame")
         PageFrame.Size = UDim2.new(1, 0, 1, 0)
         PageFrame.BackgroundTransparency = 1
         PageFrame.Visible = false
         PageFrame.Parent = PageContainer
 
-        -- 创建一个水平布局容器，用于放置左右列，自动处理宽度
+        -- 左右列容器（水平布局）
         local Columns = Instance.new("Frame")
         Columns.Size = UDim2.new(1, 0, 1, 0)
         Columns.BackgroundTransparency = 1
@@ -1500,7 +1504,7 @@ function Library:CreateWindow(Config)
 
         local ColumnsLayout = Instance.new("UIListLayout")
         ColumnsLayout.FillDirection = Enum.FillDirection.Horizontal
-        ColumnsLayout.Padding = UDim.new(0, 10)  -- 左右列间距
+        ColumnsLayout.Padding = UDim.new(0, 10)
         ColumnsLayout.SortOrder = Enum.SortOrder.LayoutOrder
         ColumnsLayout.Parent = Columns
 
@@ -1509,40 +1513,63 @@ function Library:CreateWindow(Config)
         ColumnsPadding.PaddingRight = UDim.new(0, 5)
         ColumnsPadding.Parent = Columns
 
-        -- 左列（ScrollingFrame，仅垂直滚动）
+        -- 左列（ScrollingFrame）
         local LeftColumn = Instance.new("ScrollingFrame")
         LeftColumn.Name = "LeftColumn"
-        LeftColumn.Size = UDim2.new(0.5, -5, 1, 0)  -- 宽度一半减去间距
+        LeftColumn.Size = UDim2.new(0.5, -5, 1, 0)
         LeftColumn.BackgroundTransparency = 1
-        LeftColumn.ScrollingDirection = Enum.ScrollingDirection.Y  -- 仅垂直滚动
+        LeftColumn.ScrollingDirection = Enum.ScrollingDirection.Y
         LeftColumn.ScrollBarThickness = 2
         LeftColumn.BottomImage = ""
         LeftColumn.TopImage = ""
         LeftColumn.Parent = Columns
 
-        -- 右列（ScrollingFrame，仅垂直滚动）
+        -- 左列内容容器
+        local LeftHolder = Instance.new("Frame")
+        LeftHolder.Name = "Content"
+        LeftHolder.Size = UDim2.new(1, 0, 0, 0)
+        LeftHolder.AutomaticSize = Enum.AutomaticSize.Y
+        LeftHolder.BackgroundTransparency = 1
+        LeftHolder.Parent = LeftColumn
+
+        local LeftHolderPadding = Instance.new("UIPadding")
+        LeftHolderPadding.PaddingRight = UDim.new(0, 2)
+        LeftHolderPadding.Parent = LeftHolder
+
+        local LeftList = Instance.new("UIListLayout")
+        LeftList.Padding = UDim.new(0, 6)
+        LeftList.SortOrder = Enum.SortOrder.LayoutOrder
+        LeftList.Parent = LeftHolder
+
+        -- 右列（ScrollingFrame）
         local RightColumn = Instance.new("ScrollingFrame")
         RightColumn.Name = "RightColumn"
         RightColumn.Size = UDim2.new(0.5, -5, 1, 0)
         RightColumn.BackgroundTransparency = 1
-        RightColumn.ScrollingDirection = Enum.ScrollingDirection.Y  -- 仅垂直滚动
+        RightColumn.ScrollingDirection = Enum.ScrollingDirection.Y
         RightColumn.ScrollBarThickness = 2
         RightColumn.BottomImage = ""
         RightColumn.TopImage = ""
         RightColumn.Parent = Columns
 
-        -- 为左右列添加 UIListLayout 来排列元素
-        local LeftList = Instance.new("UIListLayout")
-        LeftList.Padding = UDim.new(0, 6)
-        LeftList.SortOrder = Enum.SortOrder.LayoutOrder
-        LeftList.Parent = LeftColumn
+        -- 右列内容容器
+        local RightHolder = Instance.new("Frame")
+        RightHolder.Name = "Content"
+        RightHolder.Size = UDim2.new(1, 0, 0, 0)
+        RightHolder.AutomaticSize = Enum.AutomaticSize.Y
+        RightHolder.BackgroundTransparency = 1
+        RightHolder.Parent = RightColumn
+
+        local RightHolderPadding = Instance.new("UIPadding")
+        RightHolderPadding.PaddingRight = UDim.new(0, 2)
+        RightHolderPadding.Parent = RightHolder
 
         local RightList = Instance.new("UIListLayout")
         RightList.Padding = UDim.new(0, 6)
         RightList.SortOrder = Enum.SortOrder.LayoutOrder
-        RightList.Parent = RightColumn
+        RightList.Parent = RightHolder
 
-        -- 监听内容变化，更新 CanvasSize（仅Y轴）
+        -- 更新画布
         local function updateLeftCanvas()
             LeftColumn.CanvasSize = UDim2.new(0, 0, 0, LeftList.AbsoluteContentSize.Y + 10)
         end
@@ -1556,9 +1583,7 @@ function Library:CreateWindow(Config)
         -- 标签切换逻辑
         TabBtn.MouseButton1Click:Connect(function()
             PlaySound(Sounds.Tab)
-            for _, v in pairs(PageContainer:GetChildren()) do
-                v.Visible = false
-            end
+            for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
             for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
                     Tween(v, {BackgroundTransparency = 1})
@@ -1588,8 +1613,8 @@ function Library:CreateWindow(Config)
 
         local DualElements = {}
         function DualElements:section(side, text, icons, defaultOpen)
-            local parent = side == "Left" and LeftColumn or RightColumn
-            return createSection(parent, text, icons, defaultOpen)
+            local holder = side == "Left" and LeftHolder or RightHolder
+            return createSection(holder, text, icons, defaultOpen)
         end
 
         return DualElements
