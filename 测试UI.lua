@@ -1323,6 +1323,115 @@ function Library:CreateWindow(Config)
                 end
                 return self
             end
+
+            -- ==================== 新增 Label ====================
+            child.Label = function(_, labelText)
+                local LabelFrame = Instance.new("Frame")
+                LabelFrame.Size = UDim2.new(1, 0, 0, 35)
+                LabelFrame.Parent = contentContainer
+                Instance.new("UICorner", LabelFrame).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(LabelFrame, "BackgroundColor3", "Top")
+
+                local TextLabel = Instance.new("TextLabel")
+                TextLabel.Size = UDim2.new(1, -20, 1, 0)
+                TextLabel.Position = UDim2.new(0, 10, 0, 0)
+                TextLabel.BackgroundTransparency = 1
+                TextLabel.Font = Enum.Font.Gotham
+                TextLabel.Text = labelText
+                TextLabel.TextSize = 14
+                TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+                TextLabel.TextTruncate = Enum.TextTruncate.AtEnd  -- 超长截断
+                TextLabel.Parent = LabelFrame
+                AddToRegistry(TextLabel, "TextColor3", "Text")
+
+                local self = {}
+                function self.UpdateText(newText) TextLabel.Text = newText end
+                function self.SetVisible(state) LabelFrame.Visible = state end
+                return self
+            end
+
+            -- ==================== 新增 SubLabel ====================
+            child.SubLabel = function(_, subLabelText)
+                local SubLabelFrame = Instance.new("Frame")
+                SubLabelFrame.Size = UDim2.new(1, 0, 0, 35)
+                SubLabelFrame.Parent = contentContainer
+                Instance.new("UICorner", SubLabelFrame).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(SubLabelFrame, "BackgroundColor3", "Top")
+
+                local TextLabel = Instance.new("TextLabel")
+                TextLabel.Size = UDim2.new(1, -20, 1, 0)
+                TextLabel.Position = UDim2.new(0, 10, 0, 0)
+                TextLabel.BackgroundTransparency = 1
+                TextLabel.Font = Enum.Font.Gotham
+                TextLabel.Text = subLabelText
+                TextLabel.TextSize = 12
+                TextLabel.TextTransparency = 0.5  -- 半透明
+                TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+                TextLabel.TextTruncate = Enum.TextTruncate.AtEnd
+                TextLabel.Parent = SubLabelFrame
+                AddToRegistry(TextLabel, "TextColor3", "Text")
+
+                local self = {}
+                function self.UpdateText(newText) TextLabel.Text = newText end
+                function self.SetVisible(state) SubLabelFrame.Visible = state end
+                return self
+            end
+
+            -- ==================== 新增 Paragraph ====================
+            child.Paragraph = function(_, headerText, bodyText)
+                local ParaFrame = Instance.new("Frame")
+                ParaFrame.Size = UDim2.new(1, 0, 0, 0)  -- 初始高度0，自动调整
+                ParaFrame.AutomaticSize = Enum.AutomaticSize.Y  -- 自动高度
+                ParaFrame.Parent = contentContainer
+                Instance.new("UICorner", ParaFrame).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(ParaFrame, "BackgroundColor3", "Top")
+
+                local Padding = Instance.new("UIPadding")
+                Padding.PaddingLeft = UDim.new(0, 10)
+                Padding.PaddingRight = UDim.new(0, 10)
+                Padding.PaddingTop = UDim.new(0, 10)
+                Padding.PaddingBottom = UDim.new(0, 10)
+                Padding.Parent = ParaFrame
+
+                local Layout = Instance.new("UIListLayout")
+                Layout.Padding = UDim.new(0, 5)
+                Layout.SortOrder = Enum.SortOrder.LayoutOrder
+                Layout.Parent = ParaFrame
+
+                local HeaderLabel = Instance.new("TextLabel")
+                HeaderLabel.Size = UDim2.new(1, 0, 0, 0)
+                HeaderLabel.AutomaticSize = Enum.AutomaticSize.Y
+                HeaderLabel.BackgroundTransparency = 1
+                HeaderLabel.Font = Enum.Font.GothamBold
+                HeaderLabel.Text = headerText
+                HeaderLabel.TextSize = 16
+                HeaderLabel.TextXAlignment = Enum.TextXAlignment.Left
+                HeaderLabel.TextWrapped = true
+                HeaderLabel.Parent = ParaFrame
+                AddToRegistry(HeaderLabel, "TextColor3", "Accent")
+
+                local BodyLabel = Instance.new("TextLabel")
+                BodyLabel.Size = UDim2.new(1, 0, 0, 0)
+                BodyLabel.AutomaticSize = Enum.AutomaticSize.Y
+                BodyLabel.BackgroundTransparency = 1
+                BodyLabel.Font = Enum.Font.Gotham
+                BodyLabel.Text = bodyText
+                BodyLabel.TextSize = 13
+                BodyLabel.TextXAlignment = Enum.TextXAlignment.Left
+                BodyLabel.TextWrapped = true
+                BodyLabel.Parent = ParaFrame
+                AddToRegistry(BodyLabel, "TextColor3", "Text")
+
+                -- 监听布局变化，确保 Canvas 更新（实际上 AutomaticSize 会自动调整 ParaFrame 大小，但需要让父容器（Section的contentContainer）重新计算布局）
+                -- 由于 ParaFrame 父级是 contentContainer，而 contentContainer 的父级 Page 使用 UIListLayout，ParaFrame 的 AutomaticSize 会触发父级重新布局，所以无需额外代码。
+
+                local self = {}
+                function self.UpdateHeader(newHeader) HeaderLabel.Text = newHeader end
+                function self.UpdateBody(newBody) BodyLabel.Text = newBody end
+                function self.SetVisible(state) ParaFrame.Visible = state end
+                return self
+            end
+
             -- ==========================================================================
 
             return child
