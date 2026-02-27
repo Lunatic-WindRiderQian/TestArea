@@ -1444,13 +1444,10 @@ function Library:CreateWindow(Config)
             return createSection(Page, text, icons, defaultOpen)
         end
 
-        -- 其他元素方法（Button, Toggle 等）已经在 child 中定义，但这里 Elements 本身也需要包含这些方法？
-        -- 实际上在原有代码中，Elements 只有 Section 方法，而 Button 等是在 Section 内部通过 child 创建的。所以这里只提供 Section 方法即可。
-
         return Elements
     end
 
-    -- ==================== 新增双窗口标签 ====================
+    -- ==================== 新增双窗口标签（左右列独立滚动） ====================
     function Window:DualTab(name, icon)
         -- 创建标签按钮（与普通 Tab 相同）
         local TabBtn = Instance.new("TextButton")
@@ -1497,95 +1494,82 @@ function Library:CreateWindow(Config)
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
 
-        -- 创建页面（ScrollingFrame）并添加左右列
-        local Page = Instance.new("ScrollingFrame")
-        Page.Size = UDim2.new(1, 0, 1, 0)
-        Page.BackgroundTransparency = 1
-        Page.ScrollBarThickness = 2
-        Page.Visible = false
-        Page.Parent = PageContainer
+        -- 创建页面容器（Frame，不滚动，用于放置左右列）
+        local PageFrame = Instance.new("Frame")
+        PageFrame.Size = UDim2.new(1, 0, 1, 0)
+        PageFrame.BackgroundTransparency = 1
+        PageFrame.Visible = false
+        PageFrame.Parent = PageContainer
 
-        -- 创建一个水平布局容器，用于放置左右列
-        local Columns = Instance.new("Frame")
-        Columns.Size = UDim2.new(1, 0, 0, 0)
-        Columns.AutomaticSize = Enum.AutomaticSize.Y
-        Columns.BackgroundTransparency = 1
-        Columns.Parent = Page
-
-        local ColumnsLayout = Instance.new("UIListLayout")
-        ColumnsLayout.FillDirection = Enum.FillDirection.Horizontal
-        ColumnsLayout.Padding = UDim.new(0, 10) -- 左右列间距
-        ColumnsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        ColumnsLayout.Parent = Columns
-
-        local ColumnsPadding = Instance.new("UIPadding")
-        ColumnsPadding.PaddingLeft = UDim.new(0, 5)
-        ColumnsPadding.PaddingRight = UDim.new(0, 5)
-        ColumnsPadding.Parent = Columns
-
-        -- 左列
-        local LeftColumn = Instance.new("Frame")
+        -- 创建左右列（均为 ScrollingFrame）
+        local LeftColumn = Instance.new("ScrollingFrame")
         LeftColumn.Name = "LeftColumn"
-        LeftColumn.Size = UDim2.new(0.5, -5, 0, 0) -- 宽度一半减去部分间距
-        LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
+        LeftColumn.Size = UDim2.new(0.5, -5, 1, 0)  -- 宽度一半，减去5（留出中间10像素间隙的一半）
+        LeftColumn.Position = UDim2.new(0, 0, 0, 0)
         LeftColumn.BackgroundTransparency = 1
-        LeftColumn.Parent = Columns
+        LeftColumn.ScrollBarThickness = 2
+        LeftColumn.BottomImage = ""
+        LeftColumn.TopImage = ""
+        LeftColumn.Parent = PageFrame
 
+        local RightColumn = Instance.new("ScrollingFrame")
+        RightColumn.Name = "RightColumn"
+        RightColumn.Size = UDim2.new(0.5, -5, 1, 0)
+        RightColumn.Position = UDim2.new(0.5, 5, 0, 0)  -- 位置偏移到中间
+        RightColumn.BackgroundTransparency = 1
+        RightColumn.ScrollBarThickness = 2
+        RightColumn.BottomImage = ""
+        RightColumn.TopImage = ""
+        RightColumn.Parent = PageFrame
+
+        -- 为左右列添加 UIListLayout 来排列元素
         local LeftList = Instance.new("UIListLayout")
         LeftList.Padding = UDim.new(0, 6)
         LeftList.SortOrder = Enum.SortOrder.LayoutOrder
         LeftList.Parent = LeftColumn
-
-        -- 右列
-        local RightColumn = Instance.new("Frame")
-        RightColumn.Name = "RightColumn"
-        RightColumn.Size = UDim2.new(0.5, -5, 0, 0)
-        RightColumn.AutomaticSize = Enum.AutomaticSize.Y
-        RightColumn.BackgroundTransparency = 1
-        RightColumn.Parent = Columns
 
         local RightList = Instance.new("UIListLayout")
         RightList.Padding = UDim.new(0, 6)
         RightList.SortOrder = Enum.SortOrder.LayoutOrder
         RightList.Parent = RightColumn
 
-        -- 监听左右列内容变化，更新 CanvasSize
-        local function updateCanvasSize()
-            local leftHeight = LeftList.AbsoluteContentSize.Y
-            local rightHeight = RightList.AbsoluteContentSize.Y
-            local maxHeight = math.max(leftHeight, rightHeight)
-            -- 设置 CanvasSize 为 Columns 的高度（因为 Columns 是自动高度，其实际高度由左右列的最大高度决定）
-            Page.CanvasSize = UDim2.new(0, 0, 0, Columns.AbsoluteSize.Y + 10)
+        -- 监听内容变化，更新 CanvasSize
+        local function updateLeftCanvas()
+            LeftColumn.CanvasSize = UDim2.new(0, 0, 0, LeftList.AbsoluteContentSize.Y + 10)
         end
+        local function updateRightCanvas()
+            RightColumn.CanvasSize = UDim2.new(0, 0, 0, RightList.AbsoluteContentSize.Y + 10)
+        end
+        LeftList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateLeftCanvas)
+        RightList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightCanvas)
+        task.spawn(function() task.wait(); updateLeftCanvas(); updateRightCanvas() end)
 
-        LeftList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
-        RightList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
-        -- 初始更新
-        task.spawn(function() task.wait() updateCanvasSize() end)
-
-        -- 标签切换逻辑（与普通 Tab 相同）
+        -- 标签切换逻辑
         TabBtn.MouseButton1Click:Connect(function()
             PlaySound(Sounds.Tab)
-            for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
-            for _, v in pairs(TabContainer:GetChildren()) do if v:IsA("TextButton") then 
-                Tween(v, {BackgroundTransparency = 1})
-                local content = v:FindFirstChild("ContentFrame")
-                if content then
-                    local textLabel = content:FindFirstChildOfClass("TextLabel")
-                    if textLabel then
-                        Tween(textLabel, {TextColor3 = Color3.fromRGB(150,150,150)})
+            for _, v in pairs(PageContainer:GetChildren()) do
+                v.Visible = false
+            end
+            for _, v in pairs(TabContainer:GetChildren()) do
+                if v:IsA("TextButton") then
+                    Tween(v, {BackgroundTransparency = 1})
+                    local content = v:FindFirstChild("ContentFrame")
+                    if content then
+                        local textLabel = content:FindFirstChildOfClass("TextLabel")
+                        if textLabel then
+                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150,150,150)})
+                        end
                     end
                 end
-            end end
-            Page.Visible = true
+            end
+            PageFrame.Visible = true
             Tween(TabBtn, {BackgroundTransparency = 0.9, BackgroundColor3 = CurrentTheme.Accent})
             Tween(TabText, {TextColor3 = CurrentTheme.Text})
         end)
 
-        -- 如果这是第一个标签，默认显示
-        if firstTab then 
+        if firstTab then
             firstTab = false
-            Page.Visible = true
+            PageFrame.Visible = true
             Tween(TabBtn, {BackgroundTransparency = 0.9, BackgroundColor3 = CurrentTheme.Accent})
             Tween(TabText, {TextColor3 = CurrentTheme.Text})
         end
@@ -1593,7 +1577,6 @@ function Library:CreateWindow(Config)
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
         if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
-        -- 定义返回的对象，包含 section 方法（可指定左右）
         local DualElements = {}
         function DualElements:section(side, text, icons, defaultOpen)
             local parent = side == "Left" and LeftColumn or RightColumn
