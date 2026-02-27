@@ -16,17 +16,17 @@ local SFXEnabled = true
 local Registry = {} 
 local ConfigObjects = {} 
 
--- SFX
+-- SFX (仅保留 Notification 音效)
 local Sounds = {
-    Hover = "rbxassetid://4510086912",
-    Click = "rbxassetid://4510086561",
-    ToggleOn = "rbxassetid://4510087425",
-    ToggleOff = "rbxassetid://4510087425",
-    Slide = "rbxassetid://4510087798",
-    Notification = "rbxassetid://4590657391",
-    Back = "rbxassetid://4510087236",
-    Error = "rbxassetid://4510087545",
-    Tab = "rbxassetid://4510087056" 
+    Hover = "",          -- 已删除
+    Click = "",          -- 已删除
+    ToggleOn = "",       -- 已删除
+    ToggleOff = "",      -- 已删除
+    Slide = "",          -- 已删除
+    Notification = "rbxassetid://4590657391",  -- 保留
+    Back = "",           -- 已删除
+    Error = "",          -- 已删除
+    Tab = ""             -- 已删除
 }
 
 -- 图片资源
@@ -58,6 +58,7 @@ ContentProvider:PreloadAsync({
 
 local function PlaySound(id)
     if not SFXEnabled then return end
+    if id == nil or id == "" then return end  -- 空 ID 不播放
     task.spawn(function()
         local s = Instance.new("Sound")
         s.SoundId = id
