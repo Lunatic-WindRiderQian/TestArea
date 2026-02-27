@@ -121,7 +121,7 @@ function Library:CreateWindow(Config)
 
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0) 
-    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 20)  -- 下移20
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)  -- 位置居中
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
@@ -242,8 +242,8 @@ function Library:CreateWindow(Config)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
-    -- 窗口展开动画（宽度450，高度280）
-    Tween(MainFrame, {Size = UDim2.new(0, 450, 0, 280)}, 0.6)
+    -- 窗口展开动画（宽度500，高度340）
+    Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 340)}, 0.6)
 
     local dragging, dragInput, dragStart, startPos
     Topbar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; dragStart = input.Position; startPos = MainFrame.Position end end)
@@ -261,7 +261,7 @@ function Library:CreateWindow(Config)
             MainFrame.Visible = not MainFrame.Visible
             if MainFrame.Visible then 
                 MainFrame.Size = UDim2.new(0,0,0,0)
-                Tween(MainFrame, {Size = UDim2.new(0, 450, 0, 280)}, 0.4)
+                Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 340)}, 0.4)
             end
         end
     end)
