@@ -262,8 +262,8 @@ function Library:CreateWindow(Config)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
-    -- 窗口展开动画（宽度500，高度299）
-    Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
+    -- 窗口展开动画（宽度500，高度304）
+    Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 304)}, 0.6)
 
     local dragging, dragInput, dragStart, startPos
     Topbar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; dragStart = input.Position; startPos = MainFrame.Position end end)
@@ -281,7 +281,7 @@ function Library:CreateWindow(Config)
             MainFrame.Visible = not MainFrame.Visible
             if MainFrame.Visible then 
                 MainFrame.Size = UDim2.new(0,0,0,0)
-                Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.4)
+                Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 304)}, 0.4)
             end
         end
     end)
