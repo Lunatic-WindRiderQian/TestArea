@@ -273,10 +273,10 @@ function Library:CreateWindow(Config)
     TopLayout.Padding = UDim.new(0, 10)
     TopLayout.Parent = TopContent
 
-    -- 左侧容器（图标 + 标题区）
+    -- 左侧容器（图标 + 标题区）自动宽度
     local LeftContainer = Instance.new("Frame")
     LeftContainer.BackgroundTransparency = 1
-    LeftContainer.Size = UDim2.new(0, 0, 1, 0)  -- 宽度自适应
+    LeftContainer.Size = UDim2.new(0, 0, 1, 0)
     LeftContainer.AutomaticSize = Enum.AutomaticSize.X
     LeftContainer.Parent = TopContent
 
@@ -328,7 +328,7 @@ function Library:CreateWindow(Config)
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextSize = 16
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.Size = UDim2.new(0, 0, 0, 20)  -- 宽度自动
+    TitleLabel.Size = UDim2.new(0, 0, 0, 20)
     TitleLabel.AutomaticSize = Enum.AutomaticSize.X
     TitleLabel.Parent = TitleArea
     AddToRegistry(TitleLabel, "TextColor3", "Text")
@@ -348,9 +348,9 @@ function Library:CreateWindow(Config)
         AddToRegistry(SubtitleLabel, "TextColor3", "Text")
     end
 
-    -- ==================== 搜索框（从苹果.lua移植） ====================
+    -- ==================== 搜索框（宽度160，短一些） ====================
     local SearchContainer = Instance.new("Frame")
-    SearchContainer.Size = UDim2.new(0, 225, 1, 0)  -- 固定宽度225，高度填满
+    SearchContainer.Size = UDim2.new(0, 160, 1, 0)  -- 固定宽度160
     SearchContainer.BackgroundTransparency = 1
     SearchContainer.Parent = TopContent
 
@@ -358,9 +358,9 @@ function Library:CreateWindow(Config)
     SearchFrame.Name = "SearchFrame"
     SearchFrame.Size = UDim2.new(1, 0, 0, 34)
     SearchFrame.Position = UDim2.new(0, 0, 0.5, -17)  -- 垂直居中
-    SearchFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)  -- 临时，将被主题覆盖
+    SearchFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     SearchFrame.Parent = SearchContainer
-    AddToRegistry(SearchFrame, "BackgroundColor3", "Top")  -- 使用Top色
+    AddToRegistry(SearchFrame, "BackgroundColor3", "Top")
 
     local SearchCorner = Instance.new("UICorner")
     SearchCorner.CornerRadius = UDim.new(0, 9)
@@ -375,7 +375,7 @@ function Library:CreateWindow(Config)
     SearchIcon.Position = UDim2.new(0.04, 0, 0.5, -10)  -- 靠左垂直居中
     SearchIcon.Size = UDim2.new(0, 20, 0, 20)
     SearchIcon.Image = "rbxassetid://2804603863"
-    SearchIcon.ImageColor3 = Color3.fromRGB(95, 95, 95)  -- 临时
+    SearchIcon.ImageColor3 = Color3.fromRGB(95, 95, 95)
     SearchIcon.ScaleType = Enum.ScaleType.Fit
     SearchIcon.Parent = SearchFrame
     AddToRegistry(SearchIcon, "ImageColor3", "Text")
@@ -392,7 +392,7 @@ function Library:CreateWindow(Config)
     SearchTextBox.PlaceholderText = "Search"
     SearchTextBox.PlaceholderColor3 = Color3.fromRGB(95, 95, 95)
     SearchTextBox.Text = ""
-    SearchTextBox.TextColor3 = Color3.fromRGB(95, 95, 95)  -- 临时
+    SearchTextBox.TextColor3 = Color3.fromRGB(95, 95, 95)
     SearchTextBox.TextSize = 16
     SearchTextBox.TextXAlignment = Enum.TextXAlignment.Left
     AddToRegistry(SearchTextBox, "TextColor3", "Text")
@@ -402,7 +402,7 @@ function Library:CreateWindow(Config)
         SearchTextBox:CaptureFocus()
     end)
 
-    -- ==================== 窗口控制按钮组 ====================
+    -- ==================== 窗口控制按钮组（固定宽度94，靠右） ====================
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
     ButtonGroup.Size = UDim2.new(0, 94, 1, 0)  -- 固定宽度94
@@ -636,18 +636,18 @@ function Library:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- ==================== 搜索框过滤功能 ====================
+    -- ==================== 搜索框过滤功能（修复） ====================
     local function filterTabs()
         local inputText = string.upper(SearchTextBox.Text)
         for _, child in pairs(TabContainer:GetChildren()) do
             if child:IsA("TextButton") then
-                local tabTextLabel = child:FindFirstChild("ContentFrame"):FindFirstChildOfClass("TextLabel")
-                if tabTextLabel then
-                    local tabName = string.upper(tabTextLabel.Text)
-                    if inputText == "" or string.find(tabName, inputText, 1, true) then
-                        child.Visible = true
-                    else
-                        child.Visible = false
+                local contentFrame = child:FindFirstChild("ContentFrame")
+                if contentFrame then
+                    local tabTextLabel = contentFrame:FindFirstChildOfClass("TextLabel")
+                    if tabTextLabel then
+                        local tabName = string.upper(tabTextLabel.Text)
+                        -- 显示/隐藏
+                        child.Visible = (inputText == "" or string.find(tabName, inputText, 1, true) ~= nil)
                     end
                 end
             end
