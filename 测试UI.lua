@@ -108,7 +108,7 @@ function Library:SetSFXEnabled(state) SFXEnabled = state end
 function Library:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "M0dzn UI"
-    local Subtitle = Config.Subtitle  -- 新增副标题
+    local Subtitle = Config.Subtitle
     local Keybind = Config.Keybind 
     local IconAsset = Config.Icon  -- 可选：窗口图标 AssetId（数字或完整字符串）
     
@@ -124,7 +124,7 @@ function Library:CreateWindow(Config)
 
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0) 
-    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)  -- 位置居中
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
@@ -176,11 +176,10 @@ function Library:CreateWindow(Config)
         end
     end)
 
-    -- 根据是否有副标题决定顶部栏高度（有副标题时高度为45）
     local topbarHeight = Subtitle and 45 or 40
 
     local Topbar = Instance.new("Frame")
-    Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)  -- 动态高度
+    Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)
     Topbar.Parent = MainFrame
     Instance.new("UICorner", Topbar).CornerRadius = UDim.new(0, 10)
     AddToRegistry(Topbar, "BackgroundColor3", "Top")
@@ -192,34 +191,34 @@ function Library:CreateWindow(Config)
     Fix.Parent = Topbar
     AddToRegistry(Fix, "BackgroundColor3", "Top")
 
-    -- ==================== 添加窗口图标（样式与标签页图标一致） ====================
+    -- ==================== 添加窗口图标（已增大至36x36） ====================
     if IconAsset then
-        -- 处理 AssetId 格式（数字转完整字符串）
         if tonumber(IconAsset) then
             IconAsset = "rbxassetid://" .. IconAsset
         end
     else
-        IconAsset = "rbxassetid://78229538488090"  -- 默认齿轮图标（已修改为指定ID）
+        IconAsset = "rbxassetid://78229538488090"  -- 默认图标
     end
 
     local Icon = Instance.new("ImageLabel")
     Icon.Name = "WindowIcon"
-    Icon.Size = UDim2.new(0, 28, 0, 28)
-    Icon.Position = UDim2.new(0, 10, 0.5, -14)  -- 垂直居中
+    -- [!] 图标尺寸从28x28改为36x36
+    Icon.Size = UDim2.new(0, 36, 0, 36)
+    Icon.Position = UDim2.new(0, 10, 0.5, -18)  -- 垂直居中偏移 -18
     Icon.BackgroundTransparency = 1
     Icon.Image = IconAsset
     Icon.Parent = Topbar
-    AddToRegistry(Icon, "ImageColor3", "Text")  -- 颜色随主题文字色
+    AddToRegistry(Icon, "ImageColor3", "Text")
 
     local iconCorner = Instance.new("UICorner")
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- ==================== 添加窗口控制按钮（关闭、最小化、切换大小） ====================
+    -- ==================== 添加窗口控制按钮（文本已修改） ====================
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
     ButtonGroup.Size = UDim2.new(0, 94, 1, 0)  -- 三个按钮 28*3 + 间距5*2 = 94
-    ButtonGroup.Position = UDim2.new(1, -104, 0, 0)  -- 右边距10
+    ButtonGroup.Position = UDim2.new(1, -104, 0, 0)
     ButtonGroup.BackgroundTransparency = 1
     ButtonGroup.Parent = Topbar
 
@@ -234,30 +233,30 @@ function Library:CreateWindow(Config)
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
 
-    -- 最小化（隐藏）按钮
+    -- 最小化按钮（文本改为 "—"）
     local MinimizeBtn = Instance.new("TextButton")
     MinimizeBtn.Size = UDim2.new(0, 28, 0, 28)
-    MinimizeBtn.Text = "−"
+    MinimizeBtn.Text = "—"  -- [!] 原为 "−"
     MinimizeBtn.Font = Enum.Font.GothamBold
     MinimizeBtn.TextSize = 20
     MinimizeBtn.BackgroundTransparency = 1
     MinimizeBtn.TextColor3 = Color3.new(1,1,1)
     MinimizeBtn.Parent = ButtonGroup
 
-    -- 切换大小按钮（500x299 ⇄ 800x500）
+    -- 切换大小按钮（文本改为 "口"）
     local ResizeBtn = Instance.new("TextButton")
     ResizeBtn.Size = UDim2.new(0, 28, 0, 28)
-    ResizeBtn.Text = "□"
+    ResizeBtn.Text = "口"  -- [!] 原为 "□"
     ResizeBtn.Font = Enum.Font.GothamBold
     ResizeBtn.TextSize = 20
     ResizeBtn.BackgroundTransparency = 1
     ResizeBtn.TextColor3 = Color3.new(1,1,1)
     ResizeBtn.Parent = ButtonGroup
 
-    -- 关闭按钮
+    -- 关闭按钮（文本改为 "X"）
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Size = UDim2.new(0, 28, 0, 28)
-    CloseBtn.Text = "×"
+    CloseBtn.Text = "X"  -- [!] 原为 "×"
     CloseBtn.Font = Enum.Font.GothamBold
     CloseBtn.TextSize = 20
     CloseBtn.BackgroundTransparency = 1
@@ -290,12 +289,25 @@ function Library:CreateWindow(Config)
         MainFrame.Visible = false
     end)
 
-    local isLarge = false
+    -- [!] 切换大小按钮改为最大化/还原功能
+    local isMaximized = false
+    local originalSize, originalPosition  -- 保存原始大小和位置
     ResizeBtn.MouseButton1Click:Connect(function()
         PlaySound(Sounds.Click)
-        isLarge = not isLarge
-        local targetSize = isLarge and UDim2.new(0, 800, 0, 500) or UDim2.new(0, 500, 0, 299)
-        Tween(MainFrame, {Size = targetSize}, 0.4)
+        if not isMaximized then
+            -- 保存当前状态
+            originalSize = MainFrame.Size
+            originalPosition = MainFrame.Position
+            -- 最大化：离各边20像素，居中
+            local maxSize = UDim2.new(1, -40, 1, -40)  -- 留出边距
+            local maxPos = UDim2.new(0.5, 0, 0.5, 0)  -- 位置仍居中
+            Tween(MainFrame, {Size = maxSize, Position = maxPos}, 0.4)
+            isMaximized = true
+        else
+            -- 还原
+            Tween(MainFrame, {Size = originalSize, Position = originalPosition}, 0.4)
+            isMaximized = false
+        end
     end)
 
     -- ==================== 标题和副标题（位置已调整，避开左边图标和右边按钮） ====================
@@ -309,11 +321,9 @@ function Library:CreateWindow(Config)
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
     if Subtitle then
-        -- 有副标题：标题靠上，副标题在下
         TitleLabel.Size = UDim2.new(1, -180, 0, 20)   -- 左边留出图标位置(50)，右边留出按钮组(114)，余量180
         TitleLabel.Position = UDim2.new(0, 50, 0, 5)
 
-        -- 创建副标题
         local SubtitleLabel = Instance.new("TextLabel")
         SubtitleLabel.Text = Subtitle
         SubtitleLabel.Size = UDim2.new(1, -180, 0, 15)
@@ -321,20 +331,19 @@ function Library:CreateWindow(Config)
         SubtitleLabel.BackgroundTransparency = 1
         SubtitleLabel.Font = Enum.Font.Gotham
         SubtitleLabel.TextSize = 12
-        SubtitleLabel.TextTransparency = 0.4  -- 半透明效果
+        SubtitleLabel.TextTransparency = 0.4
         SubtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
         SubtitleLabel.Parent = Topbar
         AddToRegistry(SubtitleLabel, "TextColor3", "Text")
     else
-        -- 无副标题：标题垂直居中
         TitleLabel.Size = UDim2.new(1, -180, 1, 0)
         TitleLabel.Position = UDim2.new(0, 50, 0, 0)
     end
 
-    -- 内容容器（根据顶部栏高度调整位置和大小）
+    -- 内容容器
     local Content = Instance.new("Frame")
-    Content.Size = UDim2.new(1, -20, 1, -(topbarHeight + 15))  -- 原为 -55，对应 40+15
-    Content.Position = UDim2.new(0, 10, 0, topbarHeight + 5)    -- 原为 45，对应 40+5
+    Content.Size = UDim2.new(1, -20, 1, -(topbarHeight + 15))
+    Content.Position = UDim2.new(0, 10, 0, topbarHeight + 5)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
@@ -377,7 +386,7 @@ function Library:CreateWindow(Config)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
-    -- 窗口展开动画（宽度500，高度299）
+    -- 初始窗口展开动画（大小500x299）
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
     local dragging, dragInput, dragStart, startPos
@@ -413,7 +422,7 @@ function Library:CreateWindow(Config)
 
     function Window:SetKeybind(key) Keybind = key end
     function Window:Destroy() ScreenGui:Destroy() end
-    function Window:SetSubtitle(newSubtitle)  -- 新增方法
+    function Window:SetSubtitle(newSubtitle)
         for _, child in ipairs(Topbar:GetChildren()) do
             if child:IsA("TextLabel") and child ~= TitleLabel then
                 child.Text = newSubtitle
@@ -464,20 +473,19 @@ function Library:CreateWindow(Config)
         titleBar.Parent = sectionFrame
 
         local iconLabel = Instance.new("ImageLabel")
-        iconLabel.Size = UDim2.new(0, 28, 0, 28)  -- [!] 从 24x24 增大到 28x28
-        iconLabel.Position = UDim2.new(0, 5, 0.5, -14)  -- 调整位置使垂直居中
+        iconLabel.Size = UDim2.new(0, 28, 0, 28)
+        iconLabel.Position = UDim2.new(0, 5, 0.5, -14)
         iconLabel.BackgroundTransparency = 1
         iconLabel.Image = defaultOpen and iconOpen or iconClosed
         iconLabel.Parent = titleBar
-        -- [!] 添加圆角矩形效果 (圆角半径 8)
         local iconCorner = Instance.new("UICorner")
         iconCorner.CornerRadius = UDim.new(0, 8)
         iconCorner.Parent = iconLabel
 
         local textLabel = Instance.new("TextLabel")
         textLabel.Text = text
-        textLabel.Size = UDim2.new(1, -38, 1, 0)  -- 左边距调整 (原34 + 4)
-        textLabel.Position = UDim2.new(0, 38, 0, 0)  -- 图标28+边距5+间隔=38
+        textLabel.Size = UDim2.new(1, -38, 1, 0)
+        textLabel.Position = UDim2.new(0, 38, 0, 0)
         textLabel.BackgroundTransparency = 1
         textLabel.Font = Enum.Font.GothamBold
         textLabel.TextSize = 20
