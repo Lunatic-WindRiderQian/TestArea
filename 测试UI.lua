@@ -175,8 +175,8 @@ function Library:CreateWindow(Config)
         end
     end)
 
-    -- 顶部栏固定高度 60（标题在上，副标题在下）
-    local topbarHeight = 60
+    -- 顶部栏固定高度 45（标题在上，副标题在下紧凑布局）
+    local topbarHeight = 45
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)
     Topbar.Parent = MainFrame
@@ -190,11 +190,11 @@ function Library:CreateWindow(Config)
     Fix.Parent = Topbar
     AddToRegistry(Fix, "BackgroundColor3", "Top")
 
-    -- 标题（位于顶部栏上部，距离顶部5）
+    -- 标题（位于顶部栏上部，距离顶部2）
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Text = Title
     TitleLabel.Size = UDim2.new(1, -20, 0, 20)
-    TitleLabel.Position = UDim2.new(0, 15, 0, 5)
+    TitleLabel.Position = UDim2.new(0, 15, 0, 2)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextSize = 16
@@ -202,11 +202,11 @@ function Library:CreateWindow(Config)
     TitleLabel.Parent = Topbar
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
-    -- 副标题（位于标题下方，距离顶部28）
+    -- 副标题（位于标题下方，距离顶部22）
     local SubtitleLabel = Instance.new("TextLabel")
     SubtitleLabel.Text = Subtitle
     SubtitleLabel.Size = UDim2.new(1, -20, 0, 18)
-    SubtitleLabel.Position = UDim2.new(0, 15, 0, 28)
+    SubtitleLabel.Position = UDim2.new(0, 15, 0, 22)
     SubtitleLabel.BackgroundTransparency = 1
     SubtitleLabel.Font = Enum.Font.Gotham
     SubtitleLabel.TextSize = 12
