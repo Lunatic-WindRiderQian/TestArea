@@ -175,8 +175,8 @@ function Library:CreateWindow(Config)
         end
     end)
 
-    -- 顶部栏高度 60（固定，容纳标题和副标题）
-    local topbarHeight = 60
+    -- 顶部栏固定高度 45（标题在上，副标题在下紧凑布局）
+    local topbarHeight = 45
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)
     Topbar.Parent = MainFrame
@@ -190,11 +190,11 @@ function Library:CreateWindow(Config)
     Fix.Parent = Topbar
     AddToRegistry(Fix, "BackgroundColor3", "Top")
 
-    -- 标题（位于顶部栏上部，距离顶部5）
+    -- 标题（位于顶部栏上部，距离顶部2）
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Text = Title
     TitleLabel.Size = UDim2.new(1, -20, 0, 20)
-    TitleLabel.Position = UDim2.new(0, 15, 0, 5)
+    TitleLabel.Position = UDim2.new(0, 15, 0, 2)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextSize = 16
@@ -202,11 +202,11 @@ function Library:CreateWindow(Config)
     TitleLabel.Parent = Topbar
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
-    -- 副标题（位于标题下方，距离顶部28）
+    -- 副标题（位于标题下方，距离顶部22）
     local SubtitleLabel = Instance.new("TextLabel")
     SubtitleLabel.Text = Subtitle
     SubtitleLabel.Size = UDim2.new(1, -20, 0, 18)
-    SubtitleLabel.Position = UDim2.new(0, 15, 0, 28)
+    SubtitleLabel.Position = UDim2.new(0, 15, 0, 22)
     SubtitleLabel.BackgroundTransparency = 1
     SubtitleLabel.Font = Enum.Font.Gotham
     SubtitleLabel.TextSize = 12
@@ -223,9 +223,8 @@ function Library:CreateWindow(Config)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
-    -- 左侧导航栏优化：TabContainer 占满 ProfileFrame 上方的所有空间
     local TabContainer = Instance.new("ScrollingFrame")
-    TabContainer.Size = UDim2.new(0, 140, 1, -35)   -- 高度 = Content高度 - 35
+    TabContainer.Size = UDim2.new(0, 140, 0.85, 0)
     TabContainer.BackgroundTransparency = 1
     TabContainer.ScrollBarThickness = 0
     TabContainer.Parent = Content
@@ -236,7 +235,7 @@ function Library:CreateWindow(Config)
 
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 35)
-    ProfileFrame.Position = UDim2.new(0, 0, 1, 0)   -- 底部对齐
+    ProfileFrame.Position = UDim2.new(0, 0, 1, -35)
     ProfileFrame.BackgroundTransparency = 1
     ProfileFrame.Parent = Content
     
@@ -263,8 +262,8 @@ function Library:CreateWindow(Config)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
-    -- 窗口展开动画（宽度500，高度299，与原始一致）
-    Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
+    -- 窗口展开动画（宽度500，高度304）
+    Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 304)}, 0.6)
 
     local dragging, dragInput, dragStart, startPos
     Topbar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; dragStart = input.Position; startPos = MainFrame.Position end end)
@@ -282,7 +281,7 @@ function Library:CreateWindow(Config)
             MainFrame.Visible = not MainFrame.Visible
             if MainFrame.Visible then 
                 MainFrame.Size = UDim2.new(0,0,0,0)
-                Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.4)
+                Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 304)}, 0.4)
             end
         end
     end)
@@ -300,7 +299,7 @@ function Library:CreateWindow(Config)
     function Window:SetKeybind(key) Keybind = key end
     function Window:Destroy() ScreenGui:Destroy() end
 
-    -- 动态更新副标题
+    -- 动态更新副标题（仅文本，不改变高度）
     function Window:UpdateSubtitle(newSubtitle)
         Subtitle = newSubtitle or ""
         SubtitleLabel.Text = Subtitle
@@ -349,12 +348,12 @@ function Library:CreateWindow(Config)
         titleBar.Parent = sectionFrame
 
         local iconLabel = Instance.new("ImageLabel")
-        iconLabel.Size = UDim2.new(0, 28, 0, 28)  -- 从 24x24 增大到 28x28
+        iconLabel.Size = UDim2.new(0, 28, 0, 28)  -- [!] 从 24x24 增大到 28x28
         iconLabel.Position = UDim2.new(0, 5, 0.5, -14)  -- 调整位置使垂直居中
         iconLabel.BackgroundTransparency = 1
         iconLabel.Image = defaultOpen and iconOpen or iconClosed
         iconLabel.Parent = titleBar
-        -- 添加圆角矩形效果 (圆角半径 8)
+        -- [!] 添加圆角矩形效果 (圆角半径 8)
         local iconCorner = Instance.new("UICorner")
         iconCorner.CornerRadius = UDim.new(0, 8)
         iconCorner.Parent = iconLabel
@@ -1386,7 +1385,7 @@ function Library:CreateWindow(Config)
 
         if icon then
             local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 28, 0, 28)  -- 从 24x24 增大到 28x28
+            TabIcon.Size = UDim2.new(0, 28, 0, 28)  -- [!] 从 24x24 增大到 28x28
             TabIcon.BackgroundTransparency = 1
             if tonumber(icon) then
                 TabIcon.Image = "rbxassetid://" .. icon
@@ -1395,7 +1394,7 @@ function Library:CreateWindow(Config)
             end
             TabIcon.Parent = ContentFrame
             AddToRegistry(TabIcon, "ImageColor3", "Text")
-            -- 添加圆角矩形效果 (圆角半径 8)
+            -- [!] 添加圆角矩形效果 (圆角半径 8)
             local iconCorner = Instance.new("UICorner")
             iconCorner.CornerRadius = UDim.new(0, 8)
             iconCorner.Parent = TabIcon
@@ -1511,7 +1510,7 @@ function Library:CreateWindow(Config)
 
         if icon then
             local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 28, 0, 28)  -- 从 24x24 增大到 28x28
+            TabIcon.Size = UDim2.new(0, 28, 0, 28)  -- [!] 从 24x24 增大到 28x28
             TabIcon.BackgroundTransparency = 1
             if tonumber(icon) then
                 TabIcon.Image = "rbxassetid://" .. icon
@@ -1520,7 +1519,7 @@ function Library:CreateWindow(Config)
             end
             TabIcon.Parent = ContentFrame
             AddToRegistry(TabIcon, "ImageColor3", "Text")
-            -- 添加圆角矩形效果 (圆角半径 8)
+            -- [!] 添加圆角矩形效果 (圆角半径 8)
             local iconCorner = Instance.new("UICorner")
             iconCorner.CornerRadius = UDim.new(0, 8)
             iconCorner.Parent = TabIcon
