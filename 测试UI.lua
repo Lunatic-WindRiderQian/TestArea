@@ -223,8 +223,9 @@ function Library:CreateWindow(Config)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
+    -- 左侧导航栏：TabContainer 占满 ProfileFrame 上方的所有空间
     local TabContainer = Instance.new("ScrollingFrame")
-    TabContainer.Size = UDim2.new(0, 140, 0.85, 0)
+    TabContainer.Size = UDim2.new(0, 140, 1, -35)   -- 高度 = Content高度 - 35
     TabContainer.BackgroundTransparency = 1
     TabContainer.ScrollBarThickness = 0
     TabContainer.Parent = Content
@@ -235,7 +236,7 @@ function Library:CreateWindow(Config)
 
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 35)
-    ProfileFrame.Position = UDim2.new(0, 0, 1, -35)
+    ProfileFrame.Position = UDim2.new(0, 0, 1, 0)   -- 底部对齐，紧贴Content底部
     ProfileFrame.BackgroundTransparency = 1
     ProfileFrame.Parent = Content
     
