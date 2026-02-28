@@ -110,6 +110,7 @@ function Library:CreateWindow(Config)
     local Title = Config.Title or "M0dzn UI"
     local Subtitle = Config.Subtitle  -- 新增副标题
     local Keybind = Config.Keybind 
+    local IconAsset = Config.Icon  -- 可选：窗口图标 AssetId（数字或完整字符串）
     
     Window.RootFolder = Title 
     Window.ConfigFolder = Title.."/Config"
@@ -191,6 +192,113 @@ function Library:CreateWindow(Config)
     Fix.Parent = Topbar
     AddToRegistry(Fix, "BackgroundColor3", "Top")
 
+    -- ==================== 添加窗口图标（样式与标签页图标一致） ====================
+    if IconAsset then
+        -- 处理 AssetId 格式（数字转完整字符串）
+        if tonumber(IconAsset) then
+            IconAsset = "rbxassetid://" .. IconAsset
+        end
+    else
+        IconAsset = "rbxassetid://6031091004"  -- 默认齿轮图标
+    end
+
+    local Icon = Instance.new("ImageLabel")
+    Icon.Name = "WindowIcon"
+    Icon.Size = UDim2.new(0, 28, 0, 28)
+    Icon.Position = UDim2.new(0, 10, 0.5, -14)  -- 垂直居中
+    Icon.BackgroundTransparency = 1
+    Icon.Image = IconAsset
+    Icon.Parent = Topbar
+    AddToRegistry(Icon, "ImageColor3", "Text")  -- 颜色随主题文字色
+
+    local iconCorner = Instance.new("UICorner")
+    iconCorner.CornerRadius = UDim.new(0, 8)
+    iconCorner.Parent = Icon
+
+    -- ==================== 添加窗口控制按钮（关闭、最小化、切换大小） ====================
+    local ButtonGroup = Instance.new("Frame")
+    ButtonGroup.Name = "WindowButtons"
+    ButtonGroup.Size = UDim2.new(0, 94, 1, 0)  -- 三个按钮 28*3 + 间距5*2 = 94
+    ButtonGroup.Position = UDim2.new(1, -104, 0, 0)  -- 右边距10
+    ButtonGroup.BackgroundTransparency = 1
+    ButtonGroup.Parent = Topbar
+
+    local ButtonLayout = Instance.new("UIListLayout")
+    ButtonLayout.FillDirection = Enum.FillDirection.Horizontal
+    ButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    ButtonLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    ButtonLayout.Padding = UDim.new(0, 5)
+    ButtonLayout.Parent = ButtonGroup
+
+    local ButtonPadding = Instance.new("UIPadding")
+    ButtonPadding.PaddingRight = UDim.new(0, 10)
+    ButtonPadding.Parent = ButtonGroup
+
+    -- 关闭按钮
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+    CloseBtn.Text = "×"
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.TextSize = 20
+    CloseBtn.BackgroundTransparency = 1
+    CloseBtn.TextColor3 = Color3.new(1,1,1)
+    CloseBtn.Parent = ButtonGroup
+
+    -- 最小化（隐藏）按钮
+    local MinimizeBtn = Instance.new("TextButton")
+    MinimizeBtn.Size = UDim2.new(0, 28, 0, 28)
+    MinimizeBtn.Text = "−"
+    MinimizeBtn.Font = Enum.Font.GothamBold
+    MinimizeBtn.TextSize = 20
+    MinimizeBtn.BackgroundTransparency = 1
+    MinimizeBtn.TextColor3 = Color3.new(1,1,1)
+    MinimizeBtn.Parent = ButtonGroup
+
+    -- 切换大小按钮（500x299 ⇄ 800x500）
+    local ResizeBtn = Instance.new("TextButton")
+    ResizeBtn.Size = UDim2.new(0, 28, 0, 28)
+    ResizeBtn.Text = "□"
+    ResizeBtn.Font = Enum.Font.GothamBold
+    ResizeBtn.TextSize = 20
+    ResizeBtn.BackgroundTransparency = 1
+    ResizeBtn.TextColor3 = Color3.new(1,1,1)
+    ResizeBtn.Parent = ButtonGroup
+
+    -- 悬停效果
+    local function onBtnHover(btn)
+        Tween(btn, {TextColor3 = CurrentTheme.Accent}, 0.2)
+    end
+    local function onBtnLeave(btn)
+        Tween(btn, {TextColor3 = Color3.new(1,1,1)}, 0.2)
+    end
+
+    CloseBtn.MouseEnter:Connect(function() onBtnHover(CloseBtn) end)
+    CloseBtn.MouseLeave:Connect(function() onBtnLeave(CloseBtn) end)
+    MinimizeBtn.MouseEnter:Connect(function() onBtnHover(MinimizeBtn) end)
+    MinimizeBtn.MouseLeave:Connect(function() onBtnLeave(MinimizeBtn) end)
+    ResizeBtn.MouseEnter:Connect(function() onBtnHover(ResizeBtn) end)
+    ResizeBtn.MouseLeave:Connect(function() onBtnLeave(ResizeBtn) end)
+
+    -- 点击功能
+    CloseBtn.MouseButton1Click:Connect(function()
+        PlaySound(Sounds.Click)
+        ScreenGui:Destroy()
+    end)
+
+    MinimizeBtn.MouseButton1Click:Connect(function()
+        PlaySound(Sounds.Click)
+        MainFrame.Visible = false
+    end)
+
+    local isLarge = false
+    ResizeBtn.MouseButton1Click:Connect(function()
+        PlaySound(Sounds.Click)
+        isLarge = not isLarge
+        local targetSize = isLarge and UDim2.new(0, 800, 0, 500) or UDim2.new(0, 500, 0, 299)
+        Tween(MainFrame, {Size = targetSize}, 0.4)
+    end)
+
+    -- ==================== 标题和副标题（位置已调整，避开左边图标和右边按钮） ====================
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Text = Title
     TitleLabel.BackgroundTransparency = 1
@@ -202,14 +310,14 @@ function Library:CreateWindow(Config)
 
     if Subtitle then
         -- 有副标题：标题靠上，副标题在下
-        TitleLabel.Size = UDim2.new(1, -20, 0, 20)
-        TitleLabel.Position = UDim2.new(0, 15, 0, 5)
+        TitleLabel.Size = UDim2.new(1, -180, 0, 20)   -- 左边留出图标位置(50)，右边留出按钮组(114)，余量180
+        TitleLabel.Position = UDim2.new(0, 50, 0, 5)
 
         -- 创建副标题
         local SubtitleLabel = Instance.new("TextLabel")
         SubtitleLabel.Text = Subtitle
-        SubtitleLabel.Size = UDim2.new(1, -20, 0, 15)
-        SubtitleLabel.Position = UDim2.new(0, 15, 0, 25)
+        SubtitleLabel.Size = UDim2.new(1, -180, 0, 15)
+        SubtitleLabel.Position = UDim2.new(0, 50, 0, 25)
         SubtitleLabel.BackgroundTransparency = 1
         SubtitleLabel.Font = Enum.Font.Gotham
         SubtitleLabel.TextSize = 12
@@ -218,9 +326,9 @@ function Library:CreateWindow(Config)
         SubtitleLabel.Parent = Topbar
         AddToRegistry(SubtitleLabel, "TextColor3", "Text")
     else
-        -- 无副标题：标题垂直居中（原样式）
-        TitleLabel.Size = UDim2.new(1, -20, 1, 0)
-        TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+        -- 无副标题：标题垂直居中
+        TitleLabel.Size = UDim2.new(1, -180, 1, 0)
+        TitleLabel.Position = UDim2.new(0, 50, 0, 0)
     end
 
     -- 内容容器（根据顶部栏高度调整位置和大小）
