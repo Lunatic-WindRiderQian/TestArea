@@ -377,7 +377,48 @@ function Library:CreateWindow(Config)
         end
     end)
 
-    -- ==================== 标题和副标题（位置已调整，避开左边图标和右边按钮） ====================
+    -- ==================== 搜索框 ====================
+    local searchBoxWidth = 180
+    local searchBoxSpacing = 5
+    local iconLeft = 10
+    local iconSize = 36
+    local searchBoxX = iconLeft + iconSize + searchBoxSpacing
+    local titleX = searchBoxX + searchBoxWidth + searchBoxSpacing
+    local rightReserved = 109  -- 按钮组预留 (94宽度 + 10右边距 + 5间距)
+
+    -- 创建搜索框
+    local searchFrame = Instance.new("Frame")
+    searchFrame.Name = "SearchFrame"
+    searchFrame.Size = UDim2.new(0, searchBoxWidth, 0, 30)
+    searchFrame.Position = UDim2.new(0, searchBoxX, 0.5, -15)
+    searchFrame.BackgroundColor3 = CurrentTheme.Top
+    searchFrame.BackgroundTransparency = 0.2
+    searchFrame.Parent = Topbar
+    Instance.new("UICorner", searchFrame).CornerRadius = UDim.new(0, 8)
+
+    local searchIcon = Instance.new("ImageButton")
+    searchIcon.Name = "SearchIcon"
+    searchIcon.Size = UDim2.new(0, 24, 0, 24)
+    searchIcon.Position = UDim2.new(0, 5, 0.5, -12)
+    searchIcon.BackgroundTransparency = 1
+    searchIcon.Image = "rbxassetid://2804603863"
+    searchIcon.ImageColor3 = CurrentTheme.Text
+    searchIcon.Parent = searchFrame
+
+    local searchTextBox = Instance.new("TextBox")
+    searchTextBox.Name = "SearchBox"
+    searchTextBox.Size = UDim2.new(1, -34, 1, 0)
+    searchTextBox.Position = UDim2.new(0, 30, 0, 0)
+    searchTextBox.BackgroundTransparency = 1
+    searchTextBox.Font = Enum.Font.Gotham
+    searchTextBox.TextSize = 14
+    searchTextBox.TextColor3 = CurrentTheme.Text
+    searchTextBox.PlaceholderText = "Search"
+    searchTextBox.PlaceholderColor3 = CurrentTheme.Text:lerp(Color3.new(1,1,1), 0.5)
+    searchTextBox.ClearTextOnFocus = false
+    searchTextBox.Parent = searchFrame
+
+    -- ==================== 标题和副标题（位置已调整，避开左边图标、搜索框和右边按钮） ====================
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Text = Title
     TitleLabel.BackgroundTransparency = 1
@@ -388,13 +429,13 @@ function Library:CreateWindow(Config)
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
     if Subtitle then
-        TitleLabel.Size = UDim2.new(1, -180, 0, 20)   -- 左边留出图标位置(50)，右边留出按钮组(114)，余量180
-        TitleLabel.Position = UDim2.new(0, 50, 0, 5)
+        TitleLabel.Size = UDim2.new(1, -(titleX + rightReserved), 0, 20)
+        TitleLabel.Position = UDim2.new(0, titleX, 0, 5)
 
         local SubtitleLabel = Instance.new("TextLabel")
         SubtitleLabel.Text = Subtitle
-        SubtitleLabel.Size = UDim2.new(1, -180, 0, 15)
-        SubtitleLabel.Position = UDim2.new(0, 50, 0, 25)
+        SubtitleLabel.Size = UDim2.new(1, -(titleX + rightReserved), 0, 15)
+        SubtitleLabel.Position = UDim2.new(0, titleX, 0, 25)
         SubtitleLabel.BackgroundTransparency = 1
         SubtitleLabel.Font = Enum.Font.Gotham
         SubtitleLabel.TextSize = 12
@@ -403,9 +444,40 @@ function Library:CreateWindow(Config)
         SubtitleLabel.Parent = Topbar
         AddToRegistry(SubtitleLabel, "TextColor3", "Text")
     else
-        TitleLabel.Size = UDim2.new(1, -180, 1, 0)
-        TitleLabel.Position = UDim2.new(0, 50, 0, 0)
+        TitleLabel.Size = UDim2.new(1, -(titleX + rightReserved), 1, 0)
+        TitleLabel.Position = UDim2.new(0, titleX, 0, 0)
     end
+
+    -- 点击图标聚焦
+    searchIcon.MouseButton1Click:Connect(function()
+        searchTextBox:CaptureFocus()
+    end)
+
+    -- 过滤标签
+    local function filterTabs(searchText)
+        searchText = searchText:lower()
+        for _, btn in ipairs(TabContainer:GetChildren()) do
+            if btn:IsA("TextButton") then
+                local content = btn:FindFirstChild("ContentFrame")
+                if content then
+                    local textLabel = content:FindFirstChildOfClass("TextLabel")
+                    if textLabel then
+                        local btnText = textLabel.Text:lower()
+                        btn.Visible = #searchText == 0 or btnText:find(searchText, 1, true) ~= nil
+                    end
+                end
+            end
+        end
+    end
+
+    searchTextBox.Changed:Connect(function(prop)
+        if prop == "Text" then
+            filterTabs(searchTextBox.Text)
+        end
+    end)
+
+    -- 初始化显示全部
+    filterTabs("")
 
     -- 内容容器
     local Content = Instance.new("Frame")
