@@ -156,6 +156,23 @@ function Library:SetRainbowType(val) RainbowType = val end
 function Library:SetSFXEnabled(state) SFXEnabled = state end
 
 function Library:CreateWindow(Config)
+    -- ==================== 新增：销毁已存在的同名窗口 ====================
+    local guiName = "M0dznLib_V1.2"  -- 与后面创建的 ScreenGui 名称一致
+    -- 尝试在 CoreGui 或 gethui 返回的容器中查找并销毁
+    local parentContainer = CoreGui
+    if syn and syn.protect_gui then
+        -- 对于支持 syn.protect_gui 的环境，旧窗口可能也在 CoreGui 中
+        parentContainer = CoreGui
+    elseif gethui then
+        parentContainer = gethui()
+    end
+    
+    local existingGui = parentContainer:FindFirstChild(guiName)
+    if existingGui and existingGui:IsA("ScreenGui") then
+        existingGui:Destroy()
+    end
+    -- ==================== 结束新增 ====================
+
     local Window = {}
     local Title = Config.Title or "M0dzn UI"
     local Subtitle = Config.Subtitle
