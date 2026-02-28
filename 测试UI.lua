@@ -1343,10 +1343,15 @@ function Library:CreateWindow(Config)
 
         local Layout = Instance.new("UIListLayout")
         Layout.FillDirection = Enum.FillDirection.Horizontal
-        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left   -- 改为左对齐
         Layout.VerticalAlignment = Enum.VerticalAlignment.Center
         Layout.Padding = UDim.new(0, 5)
         Layout.Parent = ContentFrame
+
+        -- 添加左边距
+        local Padding = Instance.new("UIPadding")
+        Padding.PaddingLeft = UDim.new(0, 10)
+        Padding.Parent = ContentFrame
 
         if icon then
             local TabIcon = Instance.new("ImageLabel")
@@ -1459,10 +1464,15 @@ function Library:CreateWindow(Config)
 
         local Layout = Instance.new("UIListLayout")
         Layout.FillDirection = Enum.FillDirection.Horizontal
-        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left   -- 改为左对齐
         Layout.VerticalAlignment = Enum.VerticalAlignment.Center
         Layout.Padding = UDim.new(0, 5)
         Layout.Parent = ContentFrame
+
+        -- 添加左边距
+        local Padding = Instance.new("UIPadding")
+        Padding.PaddingLeft = UDim.new(0, 10)
+        Padding.Parent = ContentFrame
 
         if icon then
             local TabIcon = Instance.new("ImageLabel")
