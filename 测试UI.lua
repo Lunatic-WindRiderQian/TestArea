@@ -16,6 +16,56 @@ local SFXEnabled = true
 local Registry = {} 
 local ConfigObjects = {} 
 
+-- ==================== 悬浮窗特效函数（从原UI.lua移植） ====================
+local function startNeonFlowEffect(object, property, speed)
+    speed = speed or 0.008
+    local hue = 0
+    local connection
+    connection = RunService.Heartbeat:Connect(function()
+        if not object or not object.Parent then
+            connection:Disconnect()
+            return
+        end
+        hue = (hue + speed) % 1
+        local r = math.sin(hue * 3 + 0) * 0.3 + 0.7
+        local g = math.sin(hue * 3 + 2) * 0.1
+        local b = math.sin(hue * 3 + 4) * 0.1
+        object[property] = Color3.new(r, g, b)
+    end)
+    return connection
+end
+
+local function createPulseGlow(object)
+    local connection
+    local isRunning = true
+    connection = RunService.Heartbeat:Connect(function()
+        if not object or not object.Parent or not isRunning then
+            if connection then
+                connection:Disconnect()
+            end
+            return
+        end
+        local alpha = 0.5 + math.sin(tick() * 3) * 0.3
+        if object:IsA("UIStroke") then
+            object.Transparency = alpha
+        elseif object:IsA("Frame") or object:IsA("TextButton") then
+            object.BackgroundTransparency = alpha
+        end
+    end)
+    return {
+        Disconnect = function()
+            isRunning = false
+            if connection then
+                connection:Disconnect()
+                connection = nil
+            end
+        end,
+        IsRunning = function()
+            return isRunning and object and object.Parent
+        end
+    }
+end
+
 -- SFX (仅保留 Notification 音效)
 local Sounds = {
     Hover = "",          -- 已删除
@@ -389,6 +439,7 @@ function Library:CreateWindow(Config)
     -- 初始窗口展开动画（大小500x299）
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
+    -- 拖动逻辑（仅顶部栏可拖动）
     local dragging, dragInput, dragStart, startPos
     Topbar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; dragStart = input.Position; startPos = MainFrame.Position end end)
     Topbar.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end end)
@@ -400,15 +451,73 @@ function Library:CreateWindow(Config)
             MainFrame.Position = MainFrame.Position:Lerp(target, 0.2)
         end
     end)
+
+    -- ==================== 定义主窗口显示/隐藏函数（带展开动画） ====================
+    local function toggleMainFrame()
+        if MainFrame.Visible then
+            -- 隐藏时直接隐藏
+            MainFrame.Visible = false
+        else
+            -- 显示时先缩小再展开
+            MainFrame.Size = UDim2.new(0,0,0,0)
+            MainFrame.Visible = true
+            Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.4)
+        end
+    end
+
+    -- ==================== 快捷键控制 ====================
     UserInputService.InputBegan:Connect(function(input, gpe)
         if not gpe and Keybind and input.KeyCode == Keybind then
-            MainFrame.Visible = not MainFrame.Visible
-            if MainFrame.Visible then 
-                MainFrame.Size = UDim2.new(0,0,0,0)
-                Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.4)
-            end
+            toggleMainFrame()
         end
     end)
+
+    -- ==================== 悬浮窗按钮（从原UI.lua移植） ====================
+    local OpenButton = Instance.new("ImageButton")
+    OpenButton.Name = "FloatingOpenButton"
+    OpenButton.Parent = ScreenGui
+    OpenButton.BackgroundColor3 = CurrentTheme.Accent
+    OpenButton.BackgroundTransparency = 0.85
+    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)  -- 右上角
+    OpenButton.Size = UDim2.new(0, 40, 0, 40)
+    OpenButton.Active = true
+    OpenButton.Draggable = true  -- 允许拖动
+    OpenButton.Image = "rbxassetid://84830962019412"  -- 图标
+    OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    OpenButton.ImageTransparency = 0.15
+    OpenButton.ZIndex = 10  -- 确保在顶层
+
+    -- 圆角
+    local openCorner = Instance.new("UICorner")
+    openCorner.CornerRadius = UDim.new(0, 8)
+    openCorner.Parent = OpenButton
+
+    -- 描边
+    local openStroke = Instance.new("UIStroke")
+    openStroke.Parent = OpenButton
+    openStroke.Color = Color3.fromRGB(180, 180, 180)
+    openStroke.Thickness = 1.2
+    openStroke.Transparency = 0.4
+
+    -- 特效（霓虹流动 + 脉动）
+    startNeonFlowEffect(OpenButton, "BackgroundColor3", 0.012)
+    createPulseGlow(openStroke)
+
+    -- 点击事件：切换主窗口显示
+    OpenButton.MouseButton1Click:Connect(function()
+        PlaySound(Sounds.Click)
+        toggleMainFrame()
+    end)
+
+    -- 监听主窗口可见性变化，自动隐藏/显示悬浮窗
+    MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+        OpenButton.Visible = not MainFrame.Visible
+    end)
+
+    -- 初始化：主窗口默认可见（动画后），悬浮窗隐藏
+    OpenButton.Visible = false
+
+    -- 窗口其他部分保持不变...
 
     function Window:Notification(text)
         task.spawn(function()
