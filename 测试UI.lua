@@ -108,7 +108,7 @@ function Library:SetSFXEnabled(state) SFXEnabled = state end
 function Library:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "M0dzn UI"
-    local Subtitle = Config.Subtitle or ""  -- 新增副标题参数
+    local Subtitle = Config.Subtitle or ""   -- 新增副标题参数
     local Keybind = Config.Keybind 
     
     Window.RootFolder = Title 
@@ -123,7 +123,7 @@ function Library:CreateWindow(Config)
 
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0) 
-    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)  -- 位置居中
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
@@ -199,28 +199,59 @@ function Library:CreateWindow(Config)
     TitleLabel.Parent = Topbar
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
-    -- 创建副标题栏（位于 Topbar 下方）
-    local SubtitleBar = Instance.new("Frame")
-    SubtitleBar.Size = UDim2.new(1, -20, 0, 20)          -- 左右留边距10
-    SubtitleBar.Position = UDim2.new(0, 10, 0, 40)       -- 紧贴Topbar下方
-    SubtitleBar.BackgroundTransparency = 1
-    SubtitleBar.Parent = MainFrame
-    SubtitleBar.Visible = #Subtitle > 0                  -- 无内容时隐藏
+    -- 判断是否需要副标题
+    local hasSubtitle = Subtitle ~= nil and Subtitle ~= ""
+    local topbarHeight = 40
+    local subtitleBarHeight = 45
+    local bottomPadding = 10  -- 底部留白
+    local contentYOffset, contentYSizeOffset
 
-    local SubtitleLabel = Instance.new("TextLabel")
-    SubtitleLabel.Size = UDim2.new(1, 0, 1, 0)
-    SubtitleLabel.BackgroundTransparency = 1
-    SubtitleLabel.Font = Enum.Font.Gotham
-    SubtitleLabel.Text = Subtitle
-    SubtitleLabel.TextSize = 12
-    SubtitleLabel.TextTransparency = 0.7
-    SubtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    SubtitleLabel.Parent = SubtitleBar
-    AddToRegistry(SubtitleLabel, "TextColor3", "Text")   -- 注册主题色
+    if hasSubtitle then
+        contentYOffset = topbarHeight + subtitleBarHeight
+        contentYSizeOffset = -(contentYOffset + bottomPadding)
+    else
+        contentYOffset = topbarHeight
+        contentYSizeOffset = -55  -- 原值，对应顶部40+底部15？实际是40+5？但保持原逻辑
+    end
+
+    -- 副标题栏（如果启用）
+    if hasSubtitle then
+        local SubtitleBar = Instance.new("Frame")
+        SubtitleBar.Size = UDim2.new(1, 0, 0, subtitleBarHeight)
+        SubtitleBar.Position = UDim2.new(0, 0, 0, topbarHeight)
+        SubtitleBar.BackgroundColor3 = CurrentTheme.Top  -- 跟随主题顶部颜色
+        SubtitleBar.BorderSizePixel = 0
+        SubtitleBar.Parent = MainFrame
+        AddToRegistry(SubtitleBar, "BackgroundColor3", "Top")
+
+        -- 分割线（底部）
+        local divider = Instance.new("Frame")
+        divider.Size = UDim2.new(1, 0, 0, 1)
+        divider.Position = UDim2.new(0, 0, 1, -1)
+        divider.BackgroundColor3 = CurrentTheme.Stroke
+        divider.BorderSizePixel = 0
+        divider.Parent = SubtitleBar
+        AddToRegistry(divider, "BackgroundColor3", "Stroke")
+
+        -- 副标题文本
+        local SubtitleLabel = Instance.new("TextLabel")
+        SubtitleLabel.Text = Subtitle
+        SubtitleLabel.Size = UDim2.new(1, -20, 1, 0)
+        SubtitleLabel.Position = UDim2.new(0, 10, 0, 0)
+        SubtitleLabel.BackgroundTransparency = 1
+        SubtitleLabel.Font = Enum.Font.GothamMedium
+        SubtitleLabel.TextSize = 12
+        SubtitleLabel.TextTransparency = 0.7
+        SubtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        SubtitleLabel.TextYAlignment = Enum.TextYAlignment.Center
+        SubtitleLabel.TextTruncate = Enum.TextTruncate.AtEnd
+        SubtitleLabel.Parent = SubtitleBar
+        AddToRegistry(SubtitleLabel, "TextColor3", "Text")
+    end
 
     local Content = Instance.new("Frame")
-    Content.Size = UDim2.new(1, -20, 1, -(55 + (SubtitleBar.Visible and 20 or 0)))  -- 动态调整高度
-    Content.Position = UDim2.new(0, 10, 0, 45 + (SubtitleBar.Visible and 20 or 0))  -- 动态调整Y坐标
+    Content.Size = UDim2.new(1, -20, 1, contentYSizeOffset)
+    Content.Position = UDim2.new(0, 10, 0, contentYOffset)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
@@ -299,15 +330,6 @@ function Library:CreateWindow(Config)
 
     function Window:SetKeybind(key) Keybind = key end
     function Window:Destroy() ScreenGui:Destroy() end
-
-    -- 新增更新副标题的方法
-    function Window:SetSubtitle(newText)
-        SubtitleLabel.Text = newText or ""
-        SubtitleBar.Visible = #(newText or "") > 0
-        local subtitleHeight = SubtitleBar.Visible and 20 or 0
-        Content.Position = UDim2.new(0, 10, 0, 45 + subtitleHeight)
-        Content.Size = UDim2.new(1, -20, 1, -(55 + subtitleHeight))
-    end
 
     local firstTab = true
 
