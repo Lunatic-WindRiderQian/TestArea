@@ -175,8 +175,8 @@ function Library:CreateWindow(Config)
         end
     end)
 
-    -- 根据是否有副标题决定顶部栏高度
-    local topbarHeight = Subtitle and 60 or 40
+    -- 根据是否有副标题决定顶部栏高度（有副标题时高度为50）
+    local topbarHeight = Subtitle and 50 or 40
 
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)  -- 动态高度
