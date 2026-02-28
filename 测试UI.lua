@@ -191,7 +191,7 @@ function Library:CreateWindow(Config)
     Fix.Parent = Topbar
     AddToRegistry(Fix, "BackgroundColor3", "Top")
 
-    -- ==================== 添加窗口图标（已增大至36x36） ====================
+    -- 窗口图标
     if IconAsset then
         if tonumber(IconAsset) then
             IconAsset = "rbxassetid://" .. IconAsset
@@ -202,9 +202,8 @@ function Library:CreateWindow(Config)
 
     local Icon = Instance.new("ImageLabel")
     Icon.Name = "WindowIcon"
-    -- [!] 图标尺寸从28x28改为36x36
     Icon.Size = UDim2.new(0, 36, 0, 36)
-    Icon.Position = UDim2.new(0, 10, 0.5, -18)  -- 垂直居中偏移 -18
+    Icon.Position = UDim2.new(0, 10, 0.5, -18)
     Icon.BackgroundTransparency = 1
     Icon.Image = IconAsset
     Icon.Parent = Topbar
@@ -214,10 +213,10 @@ function Library:CreateWindow(Config)
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- ==================== 添加窗口控制按钮（文本已修改） ====================
+    -- 窗口控制按钮组
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
-    ButtonGroup.Size = UDim2.new(0, 94, 1, 0)  -- 三个按钮 28*3 + 间距5*2 = 94
+    ButtonGroup.Size = UDim2.new(0, 94, 1, 0)
     ButtonGroup.Position = UDim2.new(1, -104, 0, 0)
     ButtonGroup.BackgroundTransparency = 1
     ButtonGroup.Parent = Topbar
@@ -233,30 +232,30 @@ function Library:CreateWindow(Config)
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
 
-    -- 最小化按钮（文本改为 "—"）
+    -- 最小化按钮
     local MinimizeBtn = Instance.new("TextButton")
     MinimizeBtn.Size = UDim2.new(0, 28, 0, 28)
-    MinimizeBtn.Text = "—"  -- [!] 原为 "−"
+    MinimizeBtn.Text = "—"
     MinimizeBtn.Font = Enum.Font.GothamBold
     MinimizeBtn.TextSize = 20
     MinimizeBtn.BackgroundTransparency = 1
     MinimizeBtn.TextColor3 = Color3.new(1,1,1)
     MinimizeBtn.Parent = ButtonGroup
 
-    -- 切换大小按钮（文本改为 "口"）
-    local ResizeBtn = Instance.new("TextButton")
-    ResizeBtn.Size = UDim2.new(0, 28, 0, 28)
-    ResizeBtn.Text = "口"  -- [!] 原为 "□"
-    ResizeBtn.Font = Enum.Font.GothamBold
-    ResizeBtn.TextSize = 20
-    ResizeBtn.BackgroundTransparency = 1
-    ResizeBtn.TextColor3 = Color3.new(1,1,1)
-    ResizeBtn.Parent = ButtonGroup
+    -- 调整大小模式切换按钮（原最大化/还原）
+    local ResizeModeBtn = Instance.new("TextButton")
+    ResizeModeBtn.Size = UDim2.new(0, 28, 0, 28)
+    ResizeModeBtn.Text = "口"
+    ResizeModeBtn.Font = Enum.Font.GothamBold
+    ResizeModeBtn.TextSize = 20
+    ResizeModeBtn.BackgroundTransparency = 1
+    ResizeModeBtn.TextColor3 = Color3.new(1,1,1)
+    ResizeModeBtn.Parent = ButtonGroup
 
-    -- 关闭按钮（文本改为 "X"）
+    -- 关闭按钮
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Size = UDim2.new(0, 28, 0, 28)
-    CloseBtn.Text = "X"  -- [!] 原为 "×"
+    CloseBtn.Text = "X"
     CloseBtn.Font = Enum.Font.GothamBold
     CloseBtn.TextSize = 20
     CloseBtn.BackgroundTransparency = 1
@@ -275,42 +274,177 @@ function Library:CreateWindow(Config)
     CloseBtn.MouseLeave:Connect(function() onBtnLeave(CloseBtn) end)
     MinimizeBtn.MouseEnter:Connect(function() onBtnHover(MinimizeBtn) end)
     MinimizeBtn.MouseLeave:Connect(function() onBtnLeave(MinimizeBtn) end)
-    ResizeBtn.MouseEnter:Connect(function() onBtnHover(ResizeBtn) end)
-    ResizeBtn.MouseLeave:Connect(function() onBtnLeave(ResizeBtn) end)
+    ResizeModeBtn.MouseEnter:Connect(function() onBtnHover(ResizeModeBtn) end)
+    ResizeModeBtn.MouseLeave:Connect(function() onBtnLeave(ResizeModeBtn) end)
 
-    -- 点击功能
+    -- 关闭功能
     CloseBtn.MouseButton1Click:Connect(function()
         PlaySound(Sounds.Click)
         ScreenGui:Destroy()
     end)
 
+    -- 最小化功能
     MinimizeBtn.MouseButton1Click:Connect(function()
         PlaySound(Sounds.Click)
         MainFrame.Visible = false
     end)
 
-    -- [!] 切换大小按钮改为最大化/还原功能
-    local isMaximized = false
-    local originalSize, originalPosition  -- 保存原始大小和位置
-    ResizeBtn.MouseButton1Click:Connect(function()
-        PlaySound(Sounds.Click)
-        if not isMaximized then
-            -- 保存当前状态
-            originalSize = MainFrame.Size
-            originalPosition = MainFrame.Position
-            -- 最大化：离各边20像素，居中
-            local maxSize = UDim2.new(1, -40, 1, -40)  -- 留出边距
-            local maxPos = UDim2.new(0.5, 0, 0.5, 0)  -- 位置仍居中
-            Tween(MainFrame, {Size = maxSize, Position = maxPos}, 0.4)
-            isMaximized = true
-        else
-            -- 还原
-            Tween(MainFrame, {Size = originalSize, Position = originalPosition}, 0.4)
-            isMaximized = false
+    -- ==================== 调整大小模式 ====================
+    local resizeBars = {}  -- 存储四个调整条
+    local minSize = Vector2.new(500, 299)  -- 最小尺寸
+
+    -- 创建四个调整条（上、下、左、右）
+    local function createResizeBars()
+        -- 上边条
+        local barTop = Instance.new("Frame")
+        barTop.Size = UDim2.new(1, 0, 0, 6)
+        barTop.Position = UDim2.new(0, 0, 0, -3)  -- 一半在窗口外一半在内
+        barTop.BackgroundColor3 = Color3.new(1, 1, 1)
+        barTop.BackgroundTransparency = 0.5
+        barTop.ZIndex = 100
+        barTop.Visible = false
+        barTop.Parent = MainFrame
+        Instance.new("UICorner", barTop).CornerRadius = UDim.new(0, 3)
+
+        -- 下边条
+        local barBottom = Instance.new("Frame")
+        barBottom.Size = UDim2.new(1, 0, 0, 6)
+        barBottom.Position = UDim2.new(0, 0, 1, -3)
+        barBottom.BackgroundColor3 = Color3.new(1, 1, 1)
+        barBottom.BackgroundTransparency = 0.5
+        barBottom.ZIndex = 100
+        barBottom.Visible = false
+        barBottom.Parent = MainFrame
+        Instance.new("UICorner", barBottom).CornerRadius = UDim.new(0, 3)
+
+        -- 左边条
+        local barLeft = Instance.new("Frame")
+        barLeft.Size = UDim2.new(0, 6, 1, 0)
+        barLeft.Position = UDim2.new(0, -3, 0, 0)
+        barLeft.BackgroundColor3 = Color3.new(1, 1, 1)
+        barLeft.BackgroundTransparency = 0.5
+        barLeft.ZIndex = 100
+        barLeft.Visible = false
+        barLeft.Parent = MainFrame
+        Instance.new("UICorner", barLeft).CornerRadius = UDim.new(0, 3)
+
+        -- 右边条
+        local barRight = Instance.new("Frame")
+        barRight.Size = UDim2.new(0, 6, 1, 0)
+        barRight.Position = UDim2.new(1, -3, 0, 0)
+        barRight.BackgroundColor3 = Color3.new(1, 1, 1)
+        barRight.BackgroundTransparency = 0.5
+        barRight.ZIndex = 100
+        barRight.Visible = false
+        barRight.Parent = MainFrame
+        Instance.new("UICorner", barRight).CornerRadius = UDim.new(0, 3)
+
+        -- 存储条
+        resizeBars = {top = barTop, bottom = barBottom, left = barLeft, right = barRight}
+
+        -- 悬停效果：透明度降低
+        for _, bar in pairs(resizeBars) do
+            bar.MouseEnter:Connect(function()
+                Tween(bar, {BackgroundTransparency = 0.2}, 0.2)
+            end)
+            bar.MouseLeave:Connect(function()
+                Tween(bar, {BackgroundTransparency = 0.5}, 0.2)
+            end)
         end
+
+        -- 拖拽逻辑
+        local function startDrag(bar, axis, edge)
+            local startPos = UserInputService:GetMouseLocation()
+            local frameSize = MainFrame.Size
+            local framePos = MainFrame.Position
+            local frameAbsPos = MainFrame.AbsolutePosition
+            local frameAbsSize = MainFrame.AbsoluteSize
+
+            local connectionMove
+            local connectionEnd
+
+            connectionMove = UserInputService.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement then
+                    local delta = input.Position - startPos
+                    local newSize = frameSize
+                    local newPos = framePos
+
+                    if axis == "vertical" then
+                        if edge == "top" then
+                            -- 上边：改变Y位置和高度
+                            local newHeight = math.max(minSize.Y, frameSize.Y.Offset - delta.Y)
+                            local deltaY = newHeight - frameSize.Y.Offset
+                            newPos = UDim2.new(framePos.X.Scale, framePos.X.Offset, framePos.Y.Scale, framePos.Y.Offset - deltaY)
+                            newSize = UDim2.new(frameSize.X.Scale, frameSize.X.Offset, frameSize.Y.Scale, newHeight)
+                        elseif edge == "bottom" then
+                            -- 下边：只改变高度
+                            local newHeight = math.max(minSize.Y, frameSize.Y.Offset + delta.Y)
+                            newSize = UDim2.new(frameSize.X.Scale, frameSize.X.Offset, frameSize.Y.Scale, newHeight)
+                        end
+                    elseif axis == "horizontal" then
+                        if edge == "left" then
+                            -- 左边：改变X位置和宽度
+                            local newWidth = math.max(minSize.X, frameSize.X.Offset - delta.X)
+                            local deltaX = newWidth - frameSize.X.Offset
+                            newPos = UDim2.new(framePos.X.Scale, framePos.X.Offset - deltaX, framePos.Y.Scale, framePos.Y.Offset)
+                            newSize = UDim2.new(frameSize.X.Scale, newWidth, frameSize.Y.Scale, frameSize.Y.Offset)
+                        elseif edge == "right" then
+                            -- 右边：只改变宽度
+                            local newWidth = math.max(minSize.X, frameSize.X.Offset + delta.X)
+                            newSize = UDim2.new(frameSize.X.Scale, newWidth, frameSize.Y.Scale, frameSize.Y.Offset)
+                        end
+                    end
+
+                    MainFrame.Size = newSize
+                    MainFrame.Position = newPos
+                end
+            end)
+
+            connectionEnd = UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    connectionMove:Disconnect()
+                    connectionEnd:Disconnect()
+                end
+            end)
+        end
+
+        -- 为每个条绑定拖拽
+        barTop.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                startDrag(barTop, "vertical", "top")
+            end
+        end)
+        barBottom.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                startDrag(barBottom, "vertical", "bottom")
+            end
+        end)
+        barLeft.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                startDrag(barLeft, "horizontal", "left")
+            end
+        end)
+        barRight.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                startDrag(barRight, "horizontal", "right")
+            end
+        end)
+    end
+
+    createResizeBars()  -- 创建条（初始隐藏）
+
+    -- 切换调整大小模式
+    local resizeModeActive = false
+    ResizeModeBtn.MouseButton1Click:Connect(function()
+        PlaySound(Sounds.Click)
+        resizeModeActive = not resizeModeActive
+        for _, bar in pairs(resizeBars) do
+            bar.Visible = resizeModeActive
+        end
+        -- 可在此处改变按钮图标（可选）
     end)
 
-    -- ==================== 标题和副标题（位置已调整，避开左边图标和右边按钮） ====================
+    -- 标题和副标题
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Text = Title
     TitleLabel.BackgroundTransparency = 1
@@ -321,7 +455,7 @@ function Library:CreateWindow(Config)
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
     if Subtitle then
-        TitleLabel.Size = UDim2.new(1, -180, 0, 20)   -- 左边留出图标位置(50)，右边留出按钮组(114)，余量180
+        TitleLabel.Size = UDim2.new(1, -180, 0, 20)
         TitleLabel.Position = UDim2.new(0, 50, 0, 5)
 
         local SubtitleLabel = Instance.new("TextLabel")
@@ -386,7 +520,7 @@ function Library:CreateWindow(Config)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
-    -- 初始窗口展开动画（大小500x299）
+    -- 窗口展开动画
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
     local dragging, dragInput, dragStart, startPos
