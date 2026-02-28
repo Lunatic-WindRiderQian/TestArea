@@ -11,7 +11,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local Library = {}
 local RainbowEnabled = false
-local RainbowType = "Animated/Cycling Rainbow" 
+local RainbowType = "动态循环彩虹"                -- 默认值改为中文
 local SFXEnabled = true
 local Registry = {} 
 local ConfigObjects = {} 
@@ -119,17 +119,17 @@ local function PlaySound(id)
     end)
 end
 
--- THEMES
+-- THEMES (键名改为中文)
 local Themes = {
-    Dark   = {Main = Color3.fromRGB(25, 25, 25), Top = Color3.fromRGB(35, 35, 35), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(114, 137, 218), Stroke = Color3.fromRGB(60, 60, 60)},
-    White  = {Main = Color3.fromRGB(240, 240, 240), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(25, 25, 25), Accent = Color3.fromRGB(0, 120, 215), Stroke = Color3.fromRGB(200, 200, 200)},
-    Purple = {Main = Color3.fromRGB(30, 25, 35), Top = Color3.fromRGB(40, 30, 45), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(170, 0, 255), Stroke = Color3.fromRGB(80, 40, 80)},
-    Blue   = {Main = Color3.fromRGB(20, 25, 40), Top = Color3.fromRGB(30, 35, 50), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(50, 100, 255), Stroke = Color3.fromRGB(40, 50, 80)},
-    Red    = {Main = Color3.fromRGB(35, 20, 20), Top = Color3.fromRGB(45, 25, 25), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(230, 50, 50), Stroke = Color3.fromRGB(80, 40, 40)},
-    Yellow = {Main = Color3.fromRGB(35, 35, 20), Top = Color3.fromRGB(45, 45, 25), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(230, 200, 50), Stroke = Color3.fromRGB(80, 80, 40)},
-    Green  = {Main = Color3.fromRGB(20, 35, 20), Top = Color3.fromRGB(25, 45, 25), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(50, 200, 100), Stroke = Color3.fromRGB(40, 80, 40)},
+    深色   = {Main = Color3.fromRGB(25, 25, 25), Top = Color3.fromRGB(35, 35, 35), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(114, 137, 218), Stroke = Color3.fromRGB(60, 60, 60)},
+    白色  = {Main = Color3.fromRGB(240, 240, 240), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(25, 25, 25), Accent = Color3.fromRGB(0, 120, 215), Stroke = Color3.fromRGB(200, 200, 200)},
+    紫色 = {Main = Color3.fromRGB(30, 25, 35), Top = Color3.fromRGB(40, 30, 45), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(170, 0, 255), Stroke = Color3.fromRGB(80, 40, 80)},
+    蓝色   = {Main = Color3.fromRGB(20, 25, 40), Top = Color3.fromRGB(30, 35, 50), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(50, 100, 255), Stroke = Color3.fromRGB(40, 50, 80)},
+    红色    = {Main = Color3.fromRGB(35, 20, 20), Top = Color3.fromRGB(45, 25, 25), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(230, 50, 50), Stroke = Color3.fromRGB(80, 40, 40)},
+    黄色 = {Main = Color3.fromRGB(35, 35, 20), Top = Color3.fromRGB(45, 45, 25), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(230, 200, 50), Stroke = Color3.fromRGB(80, 80, 40)},
+    绿色  = {Main = Color3.fromRGB(20, 35, 20), Top = Color3.fromRGB(25, 45, 25), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(50, 200, 100), Stroke = Color3.fromRGB(40, 80, 40)},
 }
-local CurrentTheme = Themes.Dark
+local CurrentTheme = Themes.深色
 
 local function AddToRegistry(obj, prop, themeIndex)
     table.insert(Registry, {Object = obj, Property = prop, Type = themeIndex})
@@ -140,7 +140,7 @@ local function Tween(obj, props, time)
     TweenService:Create(obj, TweenInfo.new(time or 0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), props):Play()
 end
 
-function Library:SetTheme(themeName)
+function Library:SetTheme(themeName)   -- themeName 应为中文，如 "深色"
     if Themes[themeName] then
         CurrentTheme = Themes[themeName]
         for _, reg in pairs(Registry) do
@@ -152,7 +152,7 @@ function Library:SetTheme(themeName)
 end
 
 function Library:ToggleRainbow(bool) RainbowEnabled = bool end
-function Library:SetRainbowType(val) RainbowType = val end
+function Library:SetRainbowType(val) RainbowType = val end   -- val 应为中文类型名称
 function Library:SetSFXEnabled(state) SFXEnabled = state end
 
 function Library:CreateWindow(Config)
@@ -195,27 +195,28 @@ function Library:CreateWindow(Config)
         while ScreenGui.Parent do
             if RainbowEnabled then
                 local t = tick()
-                if RainbowType == "Linear Gradient (Solid Rainbow)" then
+                -- 所有彩虹类型名称已改为中文
+                if RainbowType == "线性渐变（纯彩虹）" then
                     Gradient.Enabled = true; Gradient.Rotation = 0
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)), ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255,255,0)),ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0,255,255)),ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0,0,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))})
                     Stroke.Color = Color3.new(1,1,1)
-                elseif RainbowType == "Animated/Cycling Rainbow" then
+                elseif RainbowType == "动态循环彩虹" then
                     Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Smooth Fading Gradient" then
+                elseif RainbowType == "平滑渐变" then
                     Gradient.Enabled = true; rot = rot + 2; Gradient.Rotation = rot
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,0))}); Stroke.Color = Color3.new(1,1,1)
-                elseif RainbowType == "Step/Band Rainbow" then
+                elseif RainbowType == "阶梯彩虹" then
                     Gradient.Enabled = false; local step = math.floor((t % 2) * 4) / 4; Stroke.Color = Color3.fromHSV(step, 1, 1)
-                elseif RainbowType == "Rainbow Pulse" then
+                elseif RainbowType == "彩虹脉冲" then
                     Gradient.Enabled = false; local pulse = (math.sin(t * 3) + 1) / 2; Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
-                elseif RainbowType == "Radial Rainbow" then
+                elseif RainbowType == "径向彩虹" then
                     Gradient.Enabled = true; rot = rot + 5; Gradient.Rotation = rot
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))}); Stroke.Color = Color3.new(1,1,1)
-                elseif RainbowType == "Neon/Glowing Rainbow" then
+                elseif RainbowType == "霓虹发光" then
                     Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1) 
-                elseif RainbowType == "Pastel Rainbow" then
+                elseif RainbowType == "柔和彩虹" then
                     Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
-                elseif RainbowType == "Vertical/Horizontal Fade" then
+                elseif RainbowType == "垂直/水平渐变" then
                     Gradient.Enabled = true; Gradient.Rotation = 90; local c = Color3.fromHSV(t % 5/5, 1, 1); local c2 = Color3.fromHSV((t+1) % 5/5, 1, 1); Gradient.Color = ColorSequence.new(c, c2); Stroke.Color = Color3.new(1,1,1)
                 end
             else
