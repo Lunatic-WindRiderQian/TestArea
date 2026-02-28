@@ -322,20 +322,20 @@ function Library:CreateWindow(Config)
         titleBar.Parent = sectionFrame
 
         local iconLabel = Instance.new("ImageLabel")
-        iconLabel.Size = UDim2.new(0, 24, 0, 24)  -- 保持 24x24
-        iconLabel.Position = UDim2.new(0, 5, 0.5, -12)
+        iconLabel.Size = UDim2.new(0, 28, 0, 28)  -- [!] 从 24x24 增大到 28x28
+        iconLabel.Position = UDim2.new(0, 5, 0.5, -14)  -- 调整位置使垂直居中
         iconLabel.BackgroundTransparency = 1
         iconLabel.Image = defaultOpen and iconOpen or iconClosed
         iconLabel.Parent = titleBar
-        -- [!] 添加圆角使其变为正圆形
+        -- [!] 添加圆角矩形效果 (圆角半径 8)
         local iconCorner = Instance.new("UICorner")
-        iconCorner.CornerRadius = UDim.new(1, 0)  -- 完全圆形
+        iconCorner.CornerRadius = UDim.new(0, 8)
         iconCorner.Parent = iconLabel
 
         local textLabel = Instance.new("TextLabel")
         textLabel.Text = text
-        textLabel.Size = UDim2.new(1, -34, 1, 0)
-        textLabel.Position = UDim2.new(0, 34, 0, 0)
+        textLabel.Size = UDim2.new(1, -38, 1, 0)  -- 左边距调整 (原34 + 4)
+        textLabel.Position = UDim2.new(0, 38, 0, 0)  -- 图标28+边距5+间隔=38
         textLabel.BackgroundTransparency = 1
         textLabel.Font = Enum.Font.GothamBold
         textLabel.TextSize = 20
@@ -1347,7 +1347,7 @@ function Library:CreateWindow(Config)
 
         local Layout = Instance.new("UIListLayout")
         Layout.FillDirection = Enum.FillDirection.Horizontal
-        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left   -- 改为左对齐
+        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
         Layout.VerticalAlignment = Enum.VerticalAlignment.Center
         Layout.Padding = UDim.new(0, 5)
         Layout.Parent = ContentFrame
@@ -1359,7 +1359,7 @@ function Library:CreateWindow(Config)
 
         if icon then
             local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 24, 0, 24)  -- [!] 从 20x20 增大到 24x24
+            TabIcon.Size = UDim2.new(0, 28, 0, 28)  -- [!] 从 24x24 增大到 28x28
             TabIcon.BackgroundTransparency = 1
             if tonumber(icon) then
                 TabIcon.Image = "rbxassetid://" .. icon
@@ -1368,9 +1368,9 @@ function Library:CreateWindow(Config)
             end
             TabIcon.Parent = ContentFrame
             AddToRegistry(TabIcon, "ImageColor3", "Text")
-            -- [!] 添加圆角使其变为正圆形
+            -- [!] 添加圆角矩形效果 (圆角半径 8)
             local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(1, 0)
+            iconCorner.CornerRadius = UDim.new(0, 8)
             iconCorner.Parent = TabIcon
         end
 
@@ -1472,7 +1472,7 @@ function Library:CreateWindow(Config)
 
         local Layout = Instance.new("UIListLayout")
         Layout.FillDirection = Enum.FillDirection.Horizontal
-        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left   -- 改为左对齐
+        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
         Layout.VerticalAlignment = Enum.VerticalAlignment.Center
         Layout.Padding = UDim.new(0, 5)
         Layout.Parent = ContentFrame
@@ -1484,7 +1484,7 @@ function Library:CreateWindow(Config)
 
         if icon then
             local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 24, 0, 24)  -- [!] 从 20x20 增大到 24x24
+            TabIcon.Size = UDim2.new(0, 28, 0, 28)  -- [!] 从 24x24 增大到 28x28
             TabIcon.BackgroundTransparency = 1
             if tonumber(icon) then
                 TabIcon.Image = "rbxassetid://" .. icon
@@ -1493,9 +1493,9 @@ function Library:CreateWindow(Config)
             end
             TabIcon.Parent = ContentFrame
             AddToRegistry(TabIcon, "ImageColor3", "Text")
-            -- [!] 添加圆角使其变为正圆形
+            -- [!] 添加圆角矩形效果 (圆角半径 8)
             local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(1, 0)
+            iconCorner.CornerRadius = UDim.new(0, 8)
             iconCorner.Parent = TabIcon
         end
 
