@@ -322,11 +322,15 @@ function Library:CreateWindow(Config)
         titleBar.Parent = sectionFrame
 
         local iconLabel = Instance.new("ImageLabel")
-        iconLabel.Size = UDim2.new(0, 24, 0, 24)
+        iconLabel.Size = UDim2.new(0, 24, 0, 24)  -- 保持 24x24
         iconLabel.Position = UDim2.new(0, 5, 0.5, -12)
         iconLabel.BackgroundTransparency = 1
         iconLabel.Image = defaultOpen and iconOpen or iconClosed
         iconLabel.Parent = titleBar
+        -- [!] 添加圆角使其变为正圆形
+        local iconCorner = Instance.new("UICorner")
+        iconCorner.CornerRadius = UDim.new(1, 0)  -- 完全圆形
+        iconCorner.Parent = iconLabel
 
         local textLabel = Instance.new("TextLabel")
         textLabel.Text = text
@@ -1355,7 +1359,7 @@ function Library:CreateWindow(Config)
 
         if icon then
             local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 20, 0, 20)
+            TabIcon.Size = UDim2.new(0, 24, 0, 24)  -- [!] 从 20x20 增大到 24x24
             TabIcon.BackgroundTransparency = 1
             if tonumber(icon) then
                 TabIcon.Image = "rbxassetid://" .. icon
@@ -1364,6 +1368,10 @@ function Library:CreateWindow(Config)
             end
             TabIcon.Parent = ContentFrame
             AddToRegistry(TabIcon, "ImageColor3", "Text")
+            -- [!] 添加圆角使其变为正圆形
+            local iconCorner = Instance.new("UICorner")
+            iconCorner.CornerRadius = UDim.new(1, 0)
+            iconCorner.Parent = TabIcon
         end
 
         local TabText = Instance.new("TextLabel")
@@ -1476,7 +1484,7 @@ function Library:CreateWindow(Config)
 
         if icon then
             local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 20, 0, 20)
+            TabIcon.Size = UDim2.new(0, 24, 0, 24)  -- [!] 从 20x20 增大到 24x24
             TabIcon.BackgroundTransparency = 1
             if tonumber(icon) then
                 TabIcon.Image = "rbxassetid://" .. icon
@@ -1485,6 +1493,10 @@ function Library:CreateWindow(Config)
             end
             TabIcon.Parent = ContentFrame
             AddToRegistry(TabIcon, "ImageColor3", "Text")
+            -- [!] 添加圆角使其变为正圆形
+            local iconCorner = Instance.new("UICorner")
+            iconCorner.CornerRadius = UDim.new(1, 0)
+            iconCorner.Parent = TabIcon
         end
 
         local TabText = Instance.new("TextLabel")
