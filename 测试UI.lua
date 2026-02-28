@@ -199,7 +199,7 @@ function Library:CreateWindow(Config)
             IconAsset = "rbxassetid://" .. IconAsset
         end
     else
-        IconAsset = "rbxassetid://6031091004"  -- 默认齿轮图标
+        IconAsset = "rbxassetid://78229538488090"  -- 默认齿轮图标（已修改为指定ID）
     end
 
     local Icon = Instance.new("ImageLabel")
@@ -234,16 +234,6 @@ function Library:CreateWindow(Config)
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
 
-    -- 关闭按钮
-    local CloseBtn = Instance.new("TextButton")
-    CloseBtn.Size = UDim2.new(0, 28, 0, 28)
-    CloseBtn.Text = "×"
-    CloseBtn.Font = Enum.Font.GothamBold
-    CloseBtn.TextSize = 20
-    CloseBtn.BackgroundTransparency = 1
-    CloseBtn.TextColor3 = Color3.new(1,1,1)
-    CloseBtn.Parent = ButtonGroup
-
     -- 最小化（隐藏）按钮
     local MinimizeBtn = Instance.new("TextButton")
     MinimizeBtn.Size = UDim2.new(0, 28, 0, 28)
@@ -263,6 +253,16 @@ function Library:CreateWindow(Config)
     ResizeBtn.BackgroundTransparency = 1
     ResizeBtn.TextColor3 = Color3.new(1,1,1)
     ResizeBtn.Parent = ButtonGroup
+
+    -- 关闭按钮
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+    CloseBtn.Text = "×"
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.TextSize = 20
+    CloseBtn.BackgroundTransparency = 1
+    CloseBtn.TextColor3 = Color3.new(1,1,1)
+    CloseBtn.Parent = ButtonGroup
 
     -- 悬停效果
     local function onBtnHover(btn)
