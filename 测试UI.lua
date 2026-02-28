@@ -108,6 +108,7 @@ function Library:SetSFXEnabled(state) SFXEnabled = state end
 function Library:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "M0dzn UI"
+    local Subtitle = Config.Subtitle or ""  -- [!] 新增副标题参数
     local Keybind = Config.Keybind 
     
     Window.RootFolder = Title 
@@ -174,8 +175,13 @@ function Library:CreateWindow(Config)
         end
     end)
 
+    -- [!] 根据是否有副标题决定顶部栏高度
+    local hasSubtitle = Subtitle and #Subtitle > 0
+    local topbarHeight = hasSubtitle and 60 or 40
+    local contentYOffset = topbarHeight + 5  -- 保持 5 像素间隙
+
     local Topbar = Instance.new("Frame")
-    Topbar.Size = UDim2.new(1, 0, 0, 40)
+    Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)
     Topbar.Parent = MainFrame
     Instance.new("UICorner", Topbar).CornerRadius = UDim.new(0, 10)
     AddToRegistry(Topbar, "BackgroundColor3", "Top")
@@ -189,8 +195,8 @@ function Library:CreateWindow(Config)
 
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Text = Title
-    TitleLabel.Size = UDim2.new(1, -20, 1, 0)
-    TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+    TitleLabel.Size = UDim2.new(1, -20, 0, 20)  -- [!] 调整高度为20，留出空间给副标题
+    TitleLabel.Position = UDim2.new(0, 15, 0, 5)  -- [!] 上移，距离顶部5
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextSize = 16
@@ -198,9 +204,23 @@ function Library:CreateWindow(Config)
     TitleLabel.Parent = Topbar
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
+    -- [!] 创建副标题标签
+    local SubtitleLabel = Instance.new("TextLabel")
+    SubtitleLabel.Text = Subtitle
+    SubtitleLabel.Size = UDim2.new(1, -20, 0, 18)
+    SubtitleLabel.Position = UDim2.new(0, 15, 0, 28)  -- 位于标题下方
+    SubtitleLabel.BackgroundTransparency = 1
+    SubtitleLabel.Font = Enum.Font.Gotham
+    SubtitleLabel.TextSize = 12
+    SubtitleLabel.TextTransparency = 0.5  -- 透明度 0.5
+    SubtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    SubtitleLabel.Visible = hasSubtitle  -- 无副标题时隐藏
+    SubtitleLabel.Parent = Topbar
+    AddToRegistry(SubtitleLabel, "TextColor3", "Text")  -- 跟随主题文本颜色
+
     local Content = Instance.new("Frame")
-    Content.Size = UDim2.new(1, -20, 1, -55)
-    Content.Position = UDim2.new(0, 10, 0, 45)
+    Content.Size = UDim2.new(1, -20, 1, - (topbarHeight + 5))  -- [!] 动态调整内容区域大小
+    Content.Position = UDim2.new(0, 10, 0, contentYOffset)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
@@ -279,6 +299,26 @@ function Library:CreateWindow(Config)
 
     function Window:SetKeybind(key) Keybind = key end
     function Window:Destroy() ScreenGui:Destroy() end
+
+    -- [!] 动态更新副标题的方法
+    local currentTopbarHeight = topbarHeight
+    function Window:UpdateSubtitle(newSubtitle)
+        Subtitle = newSubtitle or ""
+        SubtitleLabel.Text = Subtitle
+        local newHasSubtitle = #Subtitle > 0
+        local newHeight = newHasSubtitle and 60 or 40
+        if newHeight ~= currentTopbarHeight then
+            -- 显示/隐藏副标题标签
+            SubtitleLabel.Visible = newHasSubtitle
+            -- 动画调整高度
+            Tween(Topbar, {Size = UDim2.new(1, 0, 0, newHeight)}, 0.3)
+            Tween(Content, {
+                Size = UDim2.new(1, -20, 1, - (newHeight + 5)),
+                Position = UDim2.new(0, 10, 0, newHeight + 5)
+            }, 0.3)
+            currentTopbarHeight = newHeight
+        end
+    end
 
     local firstTab = true
 
