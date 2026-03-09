@@ -1,22 +1,27 @@
+--[[
+    FengUI (Enhanced) - 基于 Fenglib 修改
+    新增：Image 组件（从 HawkLib 移植）
+    使用方法见文末
+]]
+
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local SoundService = game:GetService("SoundService")
 local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService") 
+local HttpService = game:GetService("HttpService")
 local TextService = game:GetService("TextService")
 local ContentProvider = game:GetService("ContentProvider")
 local LocalPlayer = Players.LocalPlayer
 
-local Library = {}
+local Fenglib = {}
 local RainbowEnabled = false
-local RainbowType = "Animated/Cycling Rainbow" 
+local RainbowType = "Animated/Cycling Rainbow"
 local SFXEnabled = true
-local Registry = {} 
-local ConfigObjects = {} 
+local Registry = {}
+local ConfigObjects = {}
 
--- ==================== 悬浮窗特效函数（从原UI.lua移植） ====================
 local function startNeonFlowEffect(object, property, speed)
     speed = speed or 0.008
     local hue = 0
@@ -66,20 +71,18 @@ local function createPulseGlow(object)
     }
 end
 
--- SFX (仅保留 Notification 音效)
 local Sounds = {
-    Hover = "",          -- 已删除
-    Click = "",          -- 已删除
-    ToggleOn = "",       -- 已删除
-    ToggleOff = "",      -- 已删除
-    Slide = "",          -- 已删除
-    Notification = "rbxassetid://4590657391",  -- 保留
-    Back = "",           -- 已删除
-    Error = "",          -- 已删除
-    Tab = ""             -- 已删除
+    Hover = "",
+    Click = "",
+    ToggleOn = "",
+    ToggleOff = "",
+    Slide = "",
+    Notification = "rbxassetid://4590657391",
+    Back = "",
+    Error = "",
+    Tab = ""
 }
 
--- 图片资源
 local ToggleAssets = {
     Bg = "rbxassetid://18772190202",
     Head = "rbxassetid://18772309008"
@@ -108,7 +111,7 @@ ContentProvider:PreloadAsync({
 
 local function PlaySound(id)
     if not SFXEnabled then return end
-    if id == nil or id == "" then return end  -- 空 ID 不播放
+    if id == nil or id == "" then return end
     task.spawn(function()
         local s = Instance.new("Sound")
         s.SoundId = id
@@ -119,7 +122,6 @@ local function PlaySound(id)
     end)
 end
 
--- THEMES
 local Themes = {
     Dark   = {Main = Color3.fromRGB(25, 25, 25), Top = Color3.fromRGB(35, 35, 35), Text = Color3.fromRGB(255, 255, 255), Accent = Color3.fromRGB(114, 137, 218), Stroke = Color3.fromRGB(60, 60, 60)},
     White  = {Main = Color3.fromRGB(240, 240, 240), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(25, 25, 25), Accent = Color3.fromRGB(0, 120, 215), Stroke = Color3.fromRGB(200, 200, 200)},
@@ -140,7 +142,7 @@ local function Tween(obj, props, time)
     TweenService:Create(obj, TweenInfo.new(time or 0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), props):Play()
 end
 
-function Library:SetTheme(themeName)
+function Fenglib:SetTheme(themeName)
     if Themes[themeName] then
         CurrentTheme = Themes[themeName]
         for _, reg in pairs(Registry) do
@@ -151,46 +153,29 @@ function Library:SetTheme(themeName)
     end
 end
 
-function Library:ToggleRainbow(bool) RainbowEnabled = bool end
-function Library:SetRainbowType(val) RainbowType = val end
-function Library:SetSFXEnabled(state) SFXEnabled = state end
+function Fenglib:ToggleRainbow(bool) RainbowEnabled = bool end
+function Fenglib:SetRainbowType(val) RainbowType = val end
+function Fenglib:SetSFXEnabled(state) SFXEnabled = state end
 
-function Library:CreateWindow(Config)
-    -- ==================== 新增：销毁已存在的同名窗口 ====================
-    local guiName = "M0dznLib_V1.2"  -- 与后面创建的 ScreenGui 名称一致
-    -- 尝试在 CoreGui 或 gethui 返回的容器中查找并销毁
-    local parentContainer = CoreGui
-    if syn and syn.protect_gui then
-        -- 对于支持 syn.protect_gui 的环境，旧窗口可能也在 CoreGui 中
-        parentContainer = CoreGui
-    elseif gethui then
-        parentContainer = gethui()
-    end
-    
-    local existingGui = parentContainer:FindFirstChild(guiName)
-    if existingGui and existingGui:IsA("ScreenGui") then
-        existingGui:Destroy()
-    end
-    -- ==================== 结束新增 ====================
-
+function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "M0dzn UI"
     local Subtitle = Config.Subtitle
-    local Keybind = Config.Keybind 
-    local IconAsset = Config.Icon  -- 可选：窗口图标 AssetId（数字或完整字符串）
-    
-    Window.RootFolder = Title 
+    local Keybind = Config.Keybind
+    local IconAsset = Config.Icon
+
+    Window.RootFolder = Title
     Window.ConfigFolder = Title.."/Config"
 
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "M0dznLib_V1.2"
+    ScreenGui.Name = "FengYu-133"
     ScreenGui.Parent = CoreGui
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 0, 0, 0) 
+    MainFrame.Size = UDim2.new(0, 0, 0, 0)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = true
@@ -229,7 +214,7 @@ function Library:CreateWindow(Config)
                     Gradient.Enabled = true; rot = rot + 5; Gradient.Rotation = rot
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))}); Stroke.Color = Color3.new(1,1,1)
                 elseif RainbowType == "Neon/Glowing Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1) 
+                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1)
                 elseif RainbowType == "Pastel Rainbow" then
                     Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
                 elseif RainbowType == "Vertical/Horizontal Fade" then
@@ -258,156 +243,33 @@ function Library:CreateWindow(Config)
     Fix.Parent = Topbar
     AddToRegistry(Fix, "BackgroundColor3", "Top")
 
-    -- ==================== 重构顶部栏为水平布局 ====================
-    local TopContent = Instance.new("Frame")
-    TopContent.Size = UDim2.new(1, -20, 1, 0)  -- 左右留10边距
-    TopContent.Position = UDim2.new(0, 10, 0, 0)
-    TopContent.BackgroundTransparency = 1
-    TopContent.Parent = Topbar
-
-    local TopLayout = Instance.new("UIListLayout")
-    TopLayout.FillDirection = Enum.FillDirection.Horizontal
-    TopLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-    TopLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    TopLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    TopLayout.Padding = UDim.new(0, 10)
-    TopLayout.Parent = TopContent
-
-    -- 左侧容器（图标 + 标题区）自动宽度
-    local LeftContainer = Instance.new("Frame")
-    LeftContainer.BackgroundTransparency = 1
-    LeftContainer.Size = UDim2.new(0, 0, 1, 0)
-    LeftContainer.AutomaticSize = Enum.AutomaticSize.X
-    LeftContainer.Parent = TopContent
-
-    local LeftLayout = Instance.new("UIListLayout")
-    LeftLayout.FillDirection = Enum.FillDirection.Horizontal
-    LeftLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    LeftLayout.Padding = UDim.new(0, 5)
-    LeftLayout.Parent = LeftContainer
-
-    -- 窗口图标
     if IconAsset then
         if tonumber(IconAsset) then
             IconAsset = "rbxassetid://" .. IconAsset
         end
     else
-        IconAsset = "rbxassetid://78229538488090"  -- 默认图标
+        IconAsset = "rbxassetid://78229538488090"
     end
 
     local Icon = Instance.new("ImageLabel")
     Icon.Name = "WindowIcon"
     Icon.Size = UDim2.new(0, 36, 0, 36)
+    Icon.Position = UDim2.new(0, 10, 0.5, -18)
     Icon.BackgroundTransparency = 1
     Icon.Image = IconAsset
-    Icon.Parent = LeftContainer
+    Icon.Parent = Topbar
     AddToRegistry(Icon, "ImageColor3", "Text")
 
     local iconCorner = Instance.new("UICorner")
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- 标题区域（垂直排列标题和副标题）
-    local TitleArea = Instance.new("Frame")
-    TitleArea.BackgroundTransparency = 1
-    TitleArea.Size = UDim2.new(0, 0, 1, 0)
-    TitleArea.AutomaticSize = Enum.AutomaticSize.X
-    TitleArea.Parent = LeftContainer
-
-    local TitleLayout = Instance.new("UIListLayout")
-    TitleLayout.FillDirection = Enum.FillDirection.Vertical
-    TitleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-    TitleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    TitleLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    TitleLayout.Parent = TitleArea
-
-    local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Text = Title
-    TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Font = Enum.Font.GothamBold
-    TitleLabel.TextSize = 16
-    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.Size = UDim2.new(0, 0, 0, 20)
-    TitleLabel.AutomaticSize = Enum.AutomaticSize.X
-    TitleLabel.Parent = TitleArea
-    AddToRegistry(TitleLabel, "TextColor3", "Text")
-
-    local SubtitleLabel = nil
-    if Subtitle then
-        SubtitleLabel = Instance.new("TextLabel")
-        SubtitleLabel.Text = Subtitle
-        SubtitleLabel.Size = UDim2.new(0, 0, 0, 15)
-        SubtitleLabel.AutomaticSize = Enum.AutomaticSize.X
-        SubtitleLabel.BackgroundTransparency = 1
-        SubtitleLabel.Font = Enum.Font.Gotham
-        SubtitleLabel.TextSize = 12
-        SubtitleLabel.TextTransparency = 0.4
-        SubtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        SubtitleLabel.Parent = TitleArea
-        AddToRegistry(SubtitleLabel, "TextColor3", "Text")
-    end
-
-    -- ==================== 搜索框（宽度160，短一些） ====================
-    local SearchContainer = Instance.new("Frame")
-    SearchContainer.Size = UDim2.new(0, 160, 1, 0)  -- 固定宽度160
-    SearchContainer.BackgroundTransparency = 1
-    SearchContainer.Parent = TopContent
-
-    local SearchFrame = Instance.new("Frame")
-    SearchFrame.Name = "SearchFrame"
-    SearchFrame.Size = UDim2.new(1, 0, 0, 34)
-    SearchFrame.Position = UDim2.new(0, 0, 0.5, -17)  -- 垂直居中
-    SearchFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SearchFrame.Parent = SearchContainer
-    AddToRegistry(SearchFrame, "BackgroundColor3", "Top")
-
-    local SearchCorner = Instance.new("UICorner")
-    SearchCorner.CornerRadius = UDim.new(0, 9)
-    SearchCorner.Parent = SearchFrame
-
-    local SearchIcon = Instance.new("ImageButton")
-    SearchIcon.Name = "SearchIcon"
-    SearchIcon.Parent = SearchFrame
-    SearchIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SearchIcon.BackgroundTransparency = 1
-    SearchIcon.BorderColor3 = Color3.fromRGB(27, 42, 53)
-    SearchIcon.Position = UDim2.new(0.04, 0, 0.5, -10)  -- 靠左垂直居中
-    SearchIcon.Size = UDim2.new(0, 20, 0, 20)
-    SearchIcon.Image = "rbxassetid://2804603863"
-    SearchIcon.ImageColor3 = Color3.fromRGB(95, 95, 95)
-    SearchIcon.ScaleType = Enum.ScaleType.Fit
-    SearchIcon.Parent = SearchFrame
-    AddToRegistry(SearchIcon, "ImageColor3", "Text")
-
-    local SearchTextBox = Instance.new("TextBox")
-    SearchTextBox.Name = "SearchTextBox"
-    SearchTextBox.Parent = SearchFrame
-    SearchTextBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SearchTextBox.BackgroundTransparency = 1
-    SearchTextBox.ClipsDescendants = true
-    SearchTextBox.Position = UDim2.new(0.15, 0, 0, 0)
-    SearchTextBox.Size = UDim2.new(0.85, -10, 1, 0)
-    SearchTextBox.Font = Enum.Font.Gotham
-    SearchTextBox.PlaceholderText = "Search"
-    SearchTextBox.PlaceholderColor3 = Color3.fromRGB(95, 95, 95)
-    SearchTextBox.Text = ""
-    SearchTextBox.TextColor3 = Color3.fromRGB(95, 95, 95)
-    SearchTextBox.TextSize = 16
-    SearchTextBox.TextXAlignment = Enum.TextXAlignment.Left
-    AddToRegistry(SearchTextBox, "TextColor3", "Text")
-    AddToRegistry(SearchTextBox, "PlaceholderColor3", "Text")
-
-    SearchIcon.MouseButton1Click:Connect(function()
-        SearchTextBox:CaptureFocus()
-    end)
-
-    -- ==================== 窗口控制按钮组（固定宽度94，靠右） ====================
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
-    ButtonGroup.Size = UDim2.new(0, 94, 1, 0)  -- 固定宽度94
+    ButtonGroup.Size = UDim2.new(0, 94, 1, 0)
+    ButtonGroup.Position = UDim2.new(1, -104, 0, 0)
     ButtonGroup.BackgroundTransparency = 1
-    ButtonGroup.Parent = TopContent
+    ButtonGroup.Parent = Topbar
 
     local ButtonLayout = Instance.new("UIListLayout")
     ButtonLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -417,10 +279,9 @@ function Library:CreateWindow(Config)
     ButtonLayout.Parent = ButtonGroup
 
     local ButtonPadding = Instance.new("UIPadding")
-    ButtonPadding.PaddingRight = UDim.new(0, 0)
+    ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
 
-    -- 最小化按钮
     local MinimizeBtn = Instance.new("TextButton")
     MinimizeBtn.Size = UDim2.new(0, 28, 0, 28)
     MinimizeBtn.Text = "—"
@@ -430,7 +291,6 @@ function Library:CreateWindow(Config)
     MinimizeBtn.TextColor3 = Color3.new(1,1,1)
     MinimizeBtn.Parent = ButtonGroup
 
-    -- 切换大小按钮
     local ResizeBtn = Instance.new("TextButton")
     ResizeBtn.Size = UDim2.new(0, 28, 0, 28)
     ResizeBtn.Text = "口"
@@ -440,7 +300,6 @@ function Library:CreateWindow(Config)
     ResizeBtn.TextColor3 = Color3.new(1,1,1)
     ResizeBtn.Parent = ButtonGroup
 
-    -- 关闭按钮
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Size = UDim2.new(0, 28, 0, 28)
     CloseBtn.Text = "X"
@@ -450,7 +309,6 @@ function Library:CreateWindow(Config)
     CloseBtn.TextColor3 = Color3.new(1,1,1)
     CloseBtn.Parent = ButtonGroup
 
-    -- 悬停效果
     local function onBtnHover(btn)
         Tween(btn, {TextColor3 = CurrentTheme.Accent}, 0.2)
     end
@@ -465,7 +323,6 @@ function Library:CreateWindow(Config)
     ResizeBtn.MouseEnter:Connect(function() onBtnHover(ResizeBtn) end)
     ResizeBtn.MouseLeave:Connect(function() onBtnLeave(ResizeBtn) end)
 
-    -- 点击功能
     CloseBtn.MouseButton1Click:Connect(function()
         PlaySound(Sounds.Click)
         ScreenGui:Destroy()
@@ -493,7 +350,35 @@ function Library:CreateWindow(Config)
         end
     end)
 
-    -- 内容容器
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Text = Title
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.TextSize = 16
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.Parent = Topbar
+    AddToRegistry(TitleLabel, "TextColor3", "Text")
+
+    if Subtitle then
+        TitleLabel.Size = UDim2.new(1, -180, 0, 20)
+        TitleLabel.Position = UDim2.new(0, 50, 0, 5)
+
+        local SubtitleLabel = Instance.new("TextLabel")
+        SubtitleLabel.Text = Subtitle
+        SubtitleLabel.Size = UDim2.new(1, -180, 0, 15)
+        SubtitleLabel.Position = UDim2.new(0, 50, 0, 25)
+        SubtitleLabel.BackgroundTransparency = 1
+        SubtitleLabel.Font = Enum.Font.Gotham
+        SubtitleLabel.TextSize = 12
+        SubtitleLabel.TextTransparency = 0.4
+        SubtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        SubtitleLabel.Parent = Topbar
+        AddToRegistry(SubtitleLabel, "TextColor3", "Text")
+    else
+        TitleLabel.Size = UDim2.new(1, -180, 1, 0)
+        TitleLabel.Position = UDim2.new(0, 50, 0, 0)
+    end
+
     local Content = Instance.new("Frame")
     Content.Size = UDim2.new(1, -20, 1, -(topbarHeight + 15))
     Content.Position = UDim2.new(0, 10, 0, topbarHeight + 5)
@@ -515,7 +400,7 @@ function Library:CreateWindow(Config)
     ProfileFrame.Position = UDim2.new(0, 0, 1, -35)
     ProfileFrame.BackgroundTransparency = 1
     ProfileFrame.Parent = Content
-    
+
     local Avatar = Instance.new("ImageLabel")
     Avatar.Size = UDim2.new(0, 30, 0, 30)
     Avatar.Position = UDim2.new(0, 0, 0.5, -15)
@@ -523,7 +408,7 @@ function Library:CreateWindow(Config)
     Avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
     Avatar.Parent = ProfileFrame
     Instance.new("UICorner", Avatar).CornerRadius = UDim.new(1,0)
-    
+
     local DispName = Instance.new("TextLabel"); DispName.Text = LocalPlayer.DisplayName; DispName.Size = UDim2.new(1, -35, 0, 15); DispName.Position = UDim2.new(0, 35, 0, 2); DispName.BackgroundTransparency = 1; DispName.Font = Enum.Font.GothamBold; DispName.TextSize = 12; DispName.TextXAlignment = Enum.TextXAlignment.Left; DispName.Parent = ProfileFrame; AddToRegistry(DispName, "TextColor3", "Text")
     local UsrName = Instance.new("TextLabel"); UsrName.Text = "@"..LocalPlayer.Name; UsrName.Size = UDim2.new(1, -35, 0, 15); UsrName.Position = UDim2.new(0, 35, 0, 16); UsrName.BackgroundTransparency = 1; UsrName.Font = Enum.Font.Gotham; UsrName.TextSize = 11; UsrName.TextTransparency = 0.4; UsrName.TextXAlignment = Enum.TextXAlignment.Left; UsrName.Parent = ProfileFrame; AddToRegistry(UsrName, "TextColor3", "Text")
 
@@ -539,10 +424,8 @@ function Library:CreateWindow(Config)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
-    -- 初始窗口展开动画
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
-    -- ==================== 修复的拖动逻辑 ====================
     local dragging = false
     local dragInput, dragStart, startPos
 
@@ -579,7 +462,6 @@ function Library:CreateWindow(Config)
         end
     end)
 
-    -- ==================== 定义主窗口显示/隐藏函数 ====================
     local function toggleMainFrame()
         if MainFrame.Visible then
             MainFrame.Visible = false
@@ -590,14 +472,12 @@ function Library:CreateWindow(Config)
         end
     end
 
-    -- ==================== 快捷键控制 ====================
     UserInputService.InputBegan:Connect(function(input, gpe)
         if not gpe and Keybind and input.KeyCode == Keybind then
             toggleMainFrame()
         end
     end)
 
-    -- ==================== 悬浮窗按钮 ====================
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
@@ -636,36 +516,6 @@ function Library:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- ==================== 搜索框过滤功能（修复） ====================
-    local function filterTabs()
-        local inputText = string.upper(SearchTextBox.Text)
-        for _, child in pairs(TabContainer:GetChildren()) do
-            if child:IsA("TextButton") then
-                local contentFrame = child:FindFirstChild("ContentFrame")
-                if contentFrame then
-                    local tabTextLabel = contentFrame:FindFirstChildOfClass("TextLabel")
-                    if tabTextLabel then
-                        local tabName = string.upper(tabTextLabel.Text)
-                        -- 显示/隐藏
-                        child.Visible = (inputText == "" or string.find(tabName, inputText, 1, true) ~= nil)
-                    end
-                end
-            end
-        end
-    end
-
-    SearchTextBox:GetPropertyChangedSignal("Text"):Connect(filterTabs)
-    SearchTextBox.Focused:Connect(filterTabs)
-    SearchTextBox.FocusLost:Connect(function()
-        -- 失去焦点时，如果文本为空则显示所有
-        if SearchTextBox.Text == "" then
-            filterTabs()
-        end
-    end)
-
-    -- 初始显示所有
-    filterTabs()
-
     function Window:Notification(text)
         task.spawn(function()
             PlaySound(Sounds.Notification)
@@ -679,14 +529,16 @@ function Library:CreateWindow(Config)
     function Window:SetKeybind(key) Keybind = key end
     function Window:Destroy() ScreenGui:Destroy() end
     function Window:SetSubtitle(newSubtitle)
-        if SubtitleLabel then
-            SubtitleLabel.Text = newSubtitle
+        for _, child in ipairs(Topbar:GetChildren()) do
+            if child:IsA("TextLabel") and child ~= TitleLabel then
+                child.Text = newSubtitle
+                break
+            end
         end
     end
 
     local firstTab = true
 
-    -- ==================== 可折叠区域创建函数 ====================
     local function createSection(parent, text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
 
@@ -1141,14 +993,12 @@ function Library:CreateWindow(Config)
             local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
         end
 
-        -- ==================== 颜色选择器 ====================
         child.Colorpicker = function(_, pickerText, default, callback, options)
             options = options or {}
             local isAlpha = options.Alpha ~= nil
             local Color = default or Color3.new(1,1,1)
             local Alpha = isAlpha and options.Alpha or 0
 
-            -- 主容器
             local Main = Instance.new("TextButton")
             Main.Size = UDim2.new(1, 0, 0, 35)
             Main.Text = ""
@@ -1195,13 +1045,11 @@ function Library:CreateWindow(Config)
             previewStroke.Parent = PreviewBg
             AddToRegistry(previewStroke, "Color", "Stroke")
 
-            -- 打开选择器
             local colorPickerOpen = false
             local function openColorPicker()
                 if colorPickerOpen then return end
                 colorPickerOpen = true
 
-                -- 创建遮罩 CanvasGroup
                 local canvas = Instance.new("CanvasGroup")
                 canvas.Name = "ColorPickerCanvas"
                 canvas.Size = UDim2.new(1, 0, 1, 0)
@@ -1210,15 +1058,13 @@ function Library:CreateWindow(Config)
                 canvas.ZIndex = 200
                 canvas.Parent = ScreenGui
 
-                -- 遮罩背景
                 local overlay = Instance.new("Frame")
                 overlay.Size = UDim2.new(1, 0, 1, 0)
                 overlay.BackgroundColor3 = Color3.new(0,0,0)
                 overlay.BackgroundTransparency = 0.5
                 overlay.ZIndex = 1
                 overlay.Parent = canvas
-                
-                -- 选择器主框
+
                 local prompt = Instance.new("Frame")
                 prompt.Name = "ColorPickerPrompt"
                 prompt.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -1235,7 +1081,6 @@ function Library:CreateWindow(Config)
                 local promptCorner = Instance.new("UICorner"); promptCorner.CornerRadius = UDim.new(0, 10); promptCorner.Parent = prompt
                 local promptStroke = Instance.new("UIStroke"); promptStroke.Thickness = 2; promptStroke.Parent = prompt; AddToRegistry(promptStroke, "Color", "Stroke")
 
-                -- 内部布局
                 local list = Instance.new("UIListLayout")
                 list.Padding = UDim.new(0, 8)
                 list.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -1249,13 +1094,11 @@ function Library:CreateWindow(Config)
                 padding.PaddingTop = UDim.new(0, 15)
                 padding.Parent = prompt
 
-                -- 颜色轮 + 输入区
                 local wheelRow = Instance.new("Frame")
                 wheelRow.Size = UDim2.new(1, 0, 0, 170)
                 wheelRow.BackgroundTransparency = 1
                 wheelRow.Parent = prompt
 
-                -- 颜色轮
                 local wheel = Instance.new("ImageButton")
                 wheel.Name = "ColorWheel"
                 wheel.Image = ColorPickerAssets.Wheel
@@ -1274,7 +1117,6 @@ function Library:CreateWindow(Config)
                 target.Parent = wheel
                 target.Position = UDim2.new(0.5, 0, 0.5, 0)
 
-                -- 右侧输入区
                 local inputs = Instance.new("Frame")
                 inputs.Size = UDim2.new(0, 140, 1, 0)
                 inputs.Position = UDim2.new(1, -140, 0, 0)
@@ -1326,7 +1168,6 @@ function Library:CreateWindow(Config)
                 local alphaBox = isAlpha and createInputRow("A", tostring(Alpha)) or nil
                 local hexBox = createInputRow("Hex", string.format("#%02X%02X%02X", math.floor(Color.R*255+0.5), math.floor(Color.G*255+0.5), math.floor(Color.B*255+0.5)))
 
-                -- 亮度滑块
                 local valueSliderRow = Instance.new("Frame")
                 valueSliderRow.Size = UDim2.new(1, 0, 0, 28)
                 valueSliderRow.BackgroundTransparency = 1
@@ -1368,7 +1209,6 @@ function Library:CreateWindow(Config)
                 valueThumb.Parent = valueSlider
                 Instance.new("UICorner", valueThumb).CornerRadius = UDim.new(1,0)
 
-                -- 新旧颜色对比
                 local colorWells = Instance.new("Frame")
                 colorWells.Size = UDim2.new(1, 0, 0, 32)
                 colorWells.BackgroundTransparency = 1
@@ -1379,7 +1219,6 @@ function Library:CreateWindow(Config)
                 gridLayout.CellPadding = UDim2.new(0, 8, 0, 0)
                 gridLayout.Parent = colorWells
 
-                -- 新颜色块
                 local newColorWell = Instance.new("ImageLabel")
                 newColorWell.Image = ColorPickerAssets.Grid
                 newColorWell.ScaleType = Enum.ScaleType.Tile
@@ -1400,7 +1239,6 @@ function Library:CreateWindow(Config)
                 newInnerCorner.CornerRadius = UDim.new(0, 12)
                 newInnerCorner.Parent = newColorInner
 
-                -- 旧颜色块
                 local oldColorWell = Instance.new("ImageLabel")
                 oldColorWell.Image = ColorPickerAssets.Grid
                 oldColorWell.ScaleType = Enum.ScaleType.Tile
@@ -1421,7 +1259,6 @@ function Library:CreateWindow(Config)
                 oldInnerCorner.CornerRadius = UDim.new(0, 12)
                 oldInnerCorner.Parent = oldColorInner
 
-                -- 确认按钮
                 local buttonRow = Instance.new("Frame")
                 buttonRow.Size = UDim2.new(1, 0, 0, 30)
                 buttonRow.BackgroundTransparency = 1
@@ -1438,7 +1275,6 @@ function Library:CreateWindow(Config)
                 confirm.Parent = buttonRow
                 Instance.new("UICorner", confirm).CornerRadius = UDim.new(0, 5)
 
-                -- 颜色选择逻辑
                 local hue, saturation, value = Color3.toHSV(Color)
                 if not hue then hue = 0; saturation = 0; value = 1 end
 
@@ -1626,7 +1462,6 @@ function Library:CreateWindow(Config)
             return self
         end
 
-        -- ==================== Label ====================
         child.Label = function(_, labelText)
             local LabelFrame = Instance.new("Frame")
             LabelFrame.Size = UDim2.new(1, 0, 0, 35)
@@ -1652,7 +1487,6 @@ function Library:CreateWindow(Config)
             return self
         end
 
-        -- ==================== SubLabel ====================
         child.SubLabel = function(_, subLabelText)
             local SubLabelFrame = Instance.new("Frame")
             SubLabelFrame.Size = UDim2.new(1, 0, 0, 35)
@@ -1679,7 +1513,6 @@ function Library:CreateWindow(Config)
             return self
         end
 
-        -- ==================== Paragraph ====================
         child.Paragraph = function(_, headerText, bodyText)
             local ParaFrame = Instance.new("Frame")
             ParaFrame.Size = UDim2.new(1, 0, 0, 0)
@@ -1731,10 +1564,51 @@ function Library:CreateWindow(Config)
             return self
         end
 
+        -- ========== 新增 Image 组件（从 HawkLib 移植） ==========
+        child.Image = function(_, imageId, options)
+            options = options or {}
+            local size = options.Size or UDim2.new(1, -20, 0, 100)  -- 默认宽度填充，高度100
+            local position = options.Position or UDim2.new(0, 10, 0, 0)
+            local color = options.Color or Color3.new(1,1,1)
+            local transparency = options.Transparency or 0
+            local cornerRadius = options.CornerRadius or UDim.new(0, 0)
+            local scaleType = options.ScaleType or Enum.ScaleType.Fit
+            local imageId = imageId or ""
+
+            local ImageFrame = Instance.new("Frame")
+            ImageFrame.Size = size
+            ImageFrame.Position = position
+            ImageFrame.BackgroundTransparency = 1
+            ImageFrame.Parent = contentContainer
+
+            local ImageLabel = Instance.new("ImageLabel")
+            ImageLabel.Size = UDim2.new(1,0,1,0)
+            ImageLabel.BackgroundTransparency = 1
+            ImageLabel.Image = imageId
+            ImageLabel.ImageColor3 = color
+            ImageLabel.ImageTransparency = transparency
+            ImageLabel.ScaleType = scaleType
+            ImageLabel.Parent = ImageFrame
+
+            if cornerRadius ~= UDim.new(0,0) then
+                local corner = Instance.new("UICorner")
+                corner.CornerRadius = cornerRadius
+                corner.Parent = ImageLabel
+            end
+
+            -- 返回控制方法
+            local self = {}
+            function self.UpdateImage(newId) ImageLabel.Image = newId end
+            function self.SetVisible(state) ImageFrame.Visible = state end
+            function self.SetColor(newColor) ImageLabel.ImageColor3 = newColor end
+            function self.SetTransparency(newTrans) ImageLabel.ImageTransparency = newTrans end
+            return self
+        end
+        -- =====================================================
+
         return child
     end
 
-    -- ==================== 普通单列标签 ====================
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -1755,14 +1629,13 @@ function Library:CreateWindow(Config)
         Layout.Padding = UDim.new(0, 5)
         Layout.Parent = ContentFrame
 
-        -- 添加左边距
         local Padding = Instance.new("UIPadding")
         Padding.PaddingLeft = UDim.new(0, 10)
         Padding.Parent = ContentFrame
 
         if icon then
             local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 28, 0, 28)  -- [!] 从 24x24 增大到 28x28
+            TabIcon.Size = UDim2.new(0, 28, 0, 28)
             TabIcon.BackgroundTransparency = 1
             if tonumber(icon) then
                 TabIcon.Image = "rbxassetid://" .. icon
@@ -1771,7 +1644,6 @@ function Library:CreateWindow(Config)
             end
             TabIcon.Parent = ContentFrame
             AddToRegistry(TabIcon, "ImageColor3", "Text")
-            -- [!] 添加圆角矩形效果 (圆角半径 8)
             local iconCorner = Instance.new("UICorner")
             iconCorner.CornerRadius = UDim.new(0, 8)
             iconCorner.Parent = TabIcon
@@ -1789,7 +1661,6 @@ function Library:CreateWindow(Config)
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
 
-        -- 创建滚动页面
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
@@ -1798,7 +1669,6 @@ function Library:CreateWindow(Config)
         Page.Visible = false
         Page.Parent = PageContainer
 
-        -- 创建内容容器（用于避免滚动条遮挡）
         local ContentHolder = Instance.new("Frame")
         ContentHolder.Name = "Content"
         ContentHolder.Size = UDim2.new(1, 0, 0, 0)
@@ -1807,7 +1677,7 @@ function Library:CreateWindow(Config)
         ContentHolder.Parent = Page
 
         local HolderPadding = Instance.new("UIPadding")
-        HolderPadding.PaddingRight = UDim.new(0, 2) -- 滚动条厚度
+        HolderPadding.PaddingRight = UDim.new(0, 2)
         HolderPadding.Parent = ContentHolder
 
         local PageList = Instance.new("UIListLayout")
@@ -1815,7 +1685,6 @@ function Library:CreateWindow(Config)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
         PageList.Parent = ContentHolder
 
-        -- 更新画布高度
         local function updateCanvas()
             Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
         end
@@ -1823,9 +1692,9 @@ function Library:CreateWindow(Config)
         task.spawn(function() task.wait(); updateCanvas() end)
 
         TabBtn.MouseButton1Click:Connect(function()
-            PlaySound(Sounds.Tab) 
+            PlaySound(Sounds.Tab)
             for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
-            for _, v in pairs(TabContainer:GetChildren()) do if v:IsA("TextButton") then 
+            for _, v in pairs(TabContainer:GetChildren()) do if v:IsA("TextButton") then
                 Tween(v, {BackgroundTransparency = 1})
                 local content = v:FindFirstChild("ContentFrame")
                 if content then
@@ -1840,7 +1709,7 @@ function Library:CreateWindow(Config)
             Tween(TabText, {TextColor3 = CurrentTheme.Text})
         end)
 
-        if firstTab then 
+        if firstTab then
             firstTab = false
             Page.Visible = true
             Tween(TabBtn, {BackgroundTransparency = 0.9, BackgroundColor3 = CurrentTheme.Accent})
@@ -1858,9 +1727,7 @@ function Library:CreateWindow(Config)
         return Elements
     end
 
-    -- ==================== 双窗口标签 ====================
     function Window:DualTab(name, icon)
-        -- 创建标签按钮（与普通 Tab 相同）
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
         TabBtn.BackgroundTransparency = 1
@@ -1880,14 +1747,13 @@ function Library:CreateWindow(Config)
         Layout.Padding = UDim.new(0, 5)
         Layout.Parent = ContentFrame
 
-        -- 添加左边距
         local Padding = Instance.new("UIPadding")
         Padding.PaddingLeft = UDim.new(0, 10)
         Padding.Parent = ContentFrame
 
         if icon then
             local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 28, 0, 28)  -- [!] 从 24x24 增大到 28x28
+            TabIcon.Size = UDim2.new(0, 28, 0, 28)
             TabIcon.BackgroundTransparency = 1
             if tonumber(icon) then
                 TabIcon.Image = "rbxassetid://" .. icon
@@ -1896,7 +1762,6 @@ function Library:CreateWindow(Config)
             end
             TabIcon.Parent = ContentFrame
             AddToRegistry(TabIcon, "ImageColor3", "Text")
-            -- [!] 添加圆角矩形效果 (圆角半径 8)
             local iconCorner = Instance.new("UICorner")
             iconCorner.CornerRadius = UDim.new(0, 8)
             iconCorner.Parent = TabIcon
@@ -1914,14 +1779,12 @@ function Library:CreateWindow(Config)
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
 
-        -- 创建页面容器
         local PageFrame = Instance.new("Frame")
         PageFrame.Size = UDim2.new(1, 0, 1, 0)
         PageFrame.BackgroundTransparency = 1
         PageFrame.Visible = false
         PageFrame.Parent = PageContainer
 
-        -- 左右列容器（水平布局）
         local Columns = Instance.new("Frame")
         Columns.Size = UDim2.new(1, 0, 1, 0)
         Columns.BackgroundTransparency = 1
@@ -1938,7 +1801,6 @@ function Library:CreateWindow(Config)
         ColumnsPadding.PaddingRight = UDim.new(0, 5)
         ColumnsPadding.Parent = Columns
 
-        -- 左列（ScrollingFrame）
         local LeftColumn = Instance.new("ScrollingFrame")
         LeftColumn.Name = "LeftColumn"
         LeftColumn.Size = UDim2.new(0.5, -5, 1, 0)
@@ -1949,7 +1811,6 @@ function Library:CreateWindow(Config)
         LeftColumn.TopImage = ""
         LeftColumn.Parent = Columns
 
-        -- 左列内容容器
         local LeftHolder = Instance.new("Frame")
         LeftHolder.Name = "Content"
         LeftHolder.Size = UDim2.new(1, 0, 0, 0)
@@ -1966,7 +1827,6 @@ function Library:CreateWindow(Config)
         LeftList.SortOrder = Enum.SortOrder.LayoutOrder
         LeftList.Parent = LeftHolder
 
-        -- 右列（ScrollingFrame）
         local RightColumn = Instance.new("ScrollingFrame")
         RightColumn.Name = "RightColumn"
         RightColumn.Size = UDim2.new(0.5, -5, 1, 0)
@@ -1977,7 +1837,6 @@ function Library:CreateWindow(Config)
         RightColumn.TopImage = ""
         RightColumn.Parent = Columns
 
-        -- 右列内容容器
         local RightHolder = Instance.new("Frame")
         RightHolder.Name = "Content"
         RightHolder.Size = UDim2.new(1, 0, 0, 0)
@@ -1994,7 +1853,6 @@ function Library:CreateWindow(Config)
         RightList.SortOrder = Enum.SortOrder.LayoutOrder
         RightList.Parent = RightHolder
 
-        -- 更新画布
         local function updateLeftCanvas()
             LeftColumn.CanvasSize = UDim2.new(0, 0, 0, LeftList.AbsoluteContentSize.Y + 10)
         end
@@ -2005,7 +1863,6 @@ function Library:CreateWindow(Config)
         RightList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightCanvas)
         task.spawn(function() task.wait(); updateLeftCanvas(); updateRightCanvas() end)
 
-        -- 标签切换逻辑
         TabBtn.MouseButton1Click:Connect(function()
             PlaySound(Sounds.Tab)
             for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
@@ -2048,5 +1905,5 @@ function Library:CreateWindow(Config)
     return Window
 end
 
-function Library:SetSFXEnabled(state) SFXEnabled = state end
-return Library
+function Fenglib:SetSFXEnabled(state) SFXEnabled = state end
+return Fenglib
