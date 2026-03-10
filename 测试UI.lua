@@ -1556,7 +1556,7 @@ function Fenglib:CreateWindow(Config)
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
         -- 存储当前活动的 Tween，用于取消
-        TabBtn._currentTweens = {}  -- 可以存储多个 Tween（背景和文字）
+        TabBtn._currentTweens = {}
 
         local ContentFrame = Instance.new("Frame")
         ContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -1655,7 +1655,10 @@ function Fenglib:CreateWindow(Config)
                         local textLabel = content:FindFirstChildOfClass("TextLabel")
                         if textLabel then
                             -- 取消文字 Tween
-                            if textLabel._currentTween then textLabel._currentTween:Cancel() end
+                            if textLabel._currentTween then
+                                textLabel._currentTween:Cancel()
+                                textLabel._currentTween = nil
+                            end
                             if v == TabBtn then
                                 -- 当前按钮：激活样式（动画）
                                 local t1 = Tween(v, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
@@ -1681,7 +1684,7 @@ function Fenglib:CreateWindow(Config)
         if firstTab then 
             firstTab = false
             Page.Visible = true
-            -- 设置初始激活样式（无动画）
+            -- 设置初始激活样式（瞬间，无动画）
             TabBtn.BackgroundTransparency = 0.05
             TabBtn.BackgroundColor3 = CurrentTheme.Top
             local content = TabBtn:FindFirstChild("ContentFrame")
@@ -1859,7 +1862,10 @@ function Fenglib:CreateWindow(Config)
                     if content then
                         local textLabel = content:FindFirstChildOfClass("TextLabel")
                         if textLabel then
-                            if textLabel._currentTween then textLabel._currentTween:Cancel() end
+                            if textLabel._currentTween then
+                                textLabel._currentTween:Cancel()
+                                textLabel._currentTween = nil
+                            end
                             if v == TabBtn then
                                 local t1 = Tween(v, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
                                 local t2 = Tween(textLabel, {TextColor3 = CurrentTheme.Accent})
