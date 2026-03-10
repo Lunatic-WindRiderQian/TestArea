@@ -29,7 +29,7 @@ local Sounds = {
     Tab = "rbxassetid://4510087056" 
 }
 
--- 资产（保持原样，可自行替换）
+-- 资产
 local ToggleAssets = {
     Bg = "rbxassetid://18772190202",
     Head = "rbxassetid://18772309008"
@@ -234,7 +234,7 @@ function Fenglib:CreateWindow(Config)
 
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)
-    Topbar.BackgroundTransparency = 1  -- 顶部透明，让文字悬浮
+    Topbar.BackgroundTransparency = 1  -- 顶部透明
     Topbar.Parent = MainFrame
 
     if IconAsset then
@@ -385,14 +385,14 @@ function Fenglib:CreateWindow(Config)
     TabContainer.ScrollBarThickness = 0
     TabContainer.Parent = Content
     local TabList = Instance.new("UIListLayout")
-    TabList.Padding = UDim.new(0, 8)  -- 增加间距
+    TabList.Padding = UDim.new(0, 8)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Parent = TabContainer
 
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
     ProfileFrame.Position = UDim2.new(0, 0, 1, -40)
-    ProfileFrame.BackgroundTransparency = 0.05  -- 卡片背景
+    ProfileFrame.BackgroundTransparency = 0.05
     ProfileFrame.Parent = Content
     local profileCorner = Instance.new("UICorner")
     profileCorner.CornerRadius = UDim.new(0, 10)
@@ -443,7 +443,7 @@ function Fenglib:CreateWindow(Config)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
-    Tween(MainFrame, {Size = UDim2.new(0, 640, 0, 420)}, 0.7)  -- 调大窗口
+    Tween(MainFrame, {Size = UDim2.new(0, 640, 0, 420)}, 0.7)
 
     local dragging = false
     local dragInput, dragStart, startPos
@@ -631,7 +631,7 @@ function Fenglib:CreateWindow(Config)
         contentContainer.Parent = sectionFrame
 
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 8)  -- Bento间距
+        contentLayout.Padding = UDim.new(0, 8)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentContainer
 
@@ -911,7 +911,6 @@ function Fenglib:CreateWindow(Config)
                     Container.Visible = true
                     local targetHeight = #options * 36
                     Tween(Container, {Size = UDim2.new(1,0,0, targetHeight)}, 0.4); Tween(Icon, {Rotation = 180}, 0.4)
-                    tween.Completed:Connect(function() updateSectionHeight(false) end)
                 else
                     Tween(Container, {Size = UDim2.new(1,0,0, 0)}, 0.3); Tween(Icon, {Rotation = 0}, 0.3)
                     task.wait(0.3); Container.Visible = false; updateSectionHeight(false)
@@ -1618,7 +1617,7 @@ function Fenglib:CreateWindow(Config)
         HolderPadding.Parent = ContentHolder
 
         local PageList = Instance.new("UIListLayout")
-        PageList.Padding = UDim.new(0, 10)  -- Bento间距
+        PageList.Padding = UDim.new(0, 10)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
         PageList.Parent = ContentHolder
 
@@ -1629,19 +1628,31 @@ function Fenglib:CreateWindow(Config)
         task.spawn(function() task.wait(); updateCanvas() end)
 
         TabBtn.MouseButton1Click:Connect(function()
-            PlaySound(Sounds.Tab) 
-            for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
-            for _, v in pairs(TabContainer:GetChildren()) do if v:IsA("TextButton") then 
-                Tween(v, {BackgroundTransparency = 1})
-                local content = v:FindFirstChild("ContentFrame")
-                if content then
-                    local textLabel = content:FindFirstChildOfClass("TextLabel")
-                    if textLabel then
-                        Tween(textLabel, {TextColor3 = Color3.fromRGB(150,150,150)})
+            PlaySound(Sounds.Tab)
+
+            -- 隐藏所有页面
+            for _, v in pairs(PageContainer:GetChildren()) do
+                v.Visible = false
+            end
+
+            -- 立即重置所有 Tab 按钮的状态（无动画）
+            for _, v in pairs(TabContainer:GetChildren()) do
+                if v:IsA("TextButton") then
+                    v.BackgroundTransparency = 1
+                    local content = v:FindFirstChild("ContentFrame")
+                    if content then
+                        local textLabel = content:FindFirstChildOfClass("TextLabel")
+                        if textLabel then
+                            textLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+                        end
                     end
                 end
-            end end
+            end
+
+            -- 显示当前页面
             Page.Visible = true
+
+            -- 仅对当前按钮做平滑动画
             Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
             Tween(TabText, {TextColor3 = CurrentTheme.Accent})
         end)
@@ -1799,20 +1810,30 @@ function Fenglib:CreateWindow(Config)
 
         TabBtn.MouseButton1Click:Connect(function()
             PlaySound(Sounds.Tab)
-            for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
+
+            -- 隐藏所有页面
+            for _, v in pairs(PageContainer:GetChildren()) do
+                v.Visible = false
+            end
+
+            -- 重置所有 Tab 按钮状态
             for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
-                    Tween(v, {BackgroundTransparency = 1})
+                    v.BackgroundTransparency = 1
                     local content = v:FindFirstChild("ContentFrame")
                     if content then
                         local textLabel = content:FindFirstChildOfClass("TextLabel")
                         if textLabel then
-                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150,150,150)})
+                            textLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
                         end
                     end
                 end
             end
+
+            -- 显示当前双栏页面
             PageFrame.Visible = true
+
+            -- 动画当前按钮
             Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
             Tween(TabText, {TextColor3 = CurrentTheme.Accent})
         end)
