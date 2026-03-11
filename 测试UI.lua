@@ -16,7 +16,7 @@ local SFXEnabled = true
 local Registry = {} 
 local ConfigObjects = {} 
 
--- 辅助特效（保留）
+-- 辅助特效（保留原样）
 local function startNeonFlowEffect(object, property, speed)
     speed = speed or 0.008
     local hue = 0
@@ -66,20 +66,20 @@ local function createPulseGlow(object)
     }
 end
 
--- 音效（使用通知.lua的ID）
+-- 音效：仅保留通知音频
 local Sounds = {
-    Hover = "rbxassetid://4510086912",
-    Click = "rbxassetid://4510086561",
-    ToggleOn = "rbxassetid://4510087425",
-    ToggleOff = "rbxassetid://4510087425",
-    Slide = "rbxassetid://4510087798",
-    Notification = "rbxassetid://4590657391",
-    Back = "rbxassetid://4510087236",
-    Error = "rbxassetid://4510087545",
-    Tab = "rbxassetid://4510087056"
+    Hover = "",          
+    Click = "",          
+    ToggleOn = "",       
+    ToggleOff = "",      
+    Slide = "",          
+    Notification = "rbxassetid://4590657391",  -- 仅保留通知音效
+    Back = "",           
+    Error = "",          
+    Tab = ""             
 }
 
--- 图片资产（保留原UI.lua的图片ID，但开关/滑块已改用Frame实现，图片可选）
+-- 图片资产（保留原样，用于开关、滑块、取色器等）
 local ToggleAssets = {
     Bg = "rbxassetid://18772190202",
     Head = "rbxassetid://18772309008"
@@ -112,7 +112,7 @@ local function PlaySound(id)
     task.spawn(function()
         local s = Instance.new("Sound")
         s.SoundId = id
-        s.Volume = 0.5
+        s.Volume = 1
         s.Parent = SoundService
         s:Play()
         game.Debris:AddItem(s, 2)
@@ -136,7 +136,7 @@ local function AddToRegistry(obj, prop, themeIndex)
     obj[prop] = CurrentTheme[themeIndex]
 end
 
--- 动画：0.45s Quint 缓动（Bento风格）
+-- 动画时间延长至0.45s，缓动改为Quint（Bento风格）
 local function Tween(obj, props, time)
     TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
@@ -157,7 +157,7 @@ function Fenglib:SetRainbowType(val) RainbowType = val end
 function Fenglib:SetSFXEnabled(state) SFXEnabled = state end
 
 -- ==============================
--- 创建窗口（Bento样式）
+-- 创建窗口（Bento风格界面）
 -- ==============================
 function Fenglib:CreateWindow(Config)
     local Window = {}
@@ -168,7 +168,6 @@ function Fenglib:CreateWindow(Config)
     
     Window.RootFolder = Title 
     Window.ConfigFolder = Title.."/Config"
-    Window.CurrentConfig = ""
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "FengYu-Bento"
@@ -182,14 +181,13 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = true
-    MainFrame.BackgroundTransparency = 0.05
+    MainFrame.BackgroundTransparency = 0.05   -- 半透明背景
     MainFrame.Parent = ScreenGui
-    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)  -- 大圆角
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
     local Stroke = Instance.new("UIStroke")
-    Stroke.Thickness = 1
-    Stroke.Transparency = 0.4
+    Stroke.Thickness = 2
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
@@ -197,7 +195,7 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- 彩虹边框动画（原逻辑）
+    -- 彩虹边框动画（原样保留）
     task.spawn(function()
         local rot = 0
         while ScreenGui.Parent do
@@ -208,23 +206,23 @@ function Fenglib:CreateWindow(Config)
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)), ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255,255,0)),ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0,255,255)),ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0,0,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))})
                     Stroke.Color = Color3.new(1,1,1)
                 elseif RainbowType == "Animated/Cycling Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.8, 1)
+                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Smooth Fading Gradient" then
-                    Gradient.Enabled = true; rot = rot + 1.5; Gradient.Rotation = rot
+                    Gradient.Enabled = true; rot = rot + 2; Gradient.Rotation = rot
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,0))}); Stroke.Color = Color3.new(1,1,1)
                 elseif RainbowType == "Step/Band Rainbow" then
-                    Gradient.Enabled = false; local step = math.floor((t % 2) * 4) / 4; Stroke.Color = Color3.fromHSV(step, 0.8, 1)
+                    Gradient.Enabled = false; local step = math.floor((t % 2) * 4) / 4; Stroke.Color = Color3.fromHSV(step, 1, 1)
                 elseif RainbowType == "Rainbow Pulse" then
-                    Gradient.Enabled = false; local pulse = (math.sin(t * 2) + 1) / 2; Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
+                    Gradient.Enabled = false; local pulse = (math.sin(t * 3) + 1) / 2; Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
                 elseif RainbowType == "Radial Rainbow" then
-                    Gradient.Enabled = true; rot = rot + 2; Gradient.Rotation = rot
+                    Gradient.Enabled = true; rot = rot + 5; Gradient.Rotation = rot
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))}); Stroke.Color = Color3.new(1,1,1)
                 elseif RainbowType == "Neon/Glowing Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.6, 1)
+                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1) 
                 elseif RainbowType == "Pastel Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.3, 1)
+                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
                 elseif RainbowType == "Vertical/Horizontal Fade" then
-                    Gradient.Enabled = true; Gradient.Rotation = 90; local c = Color3.fromHSV(t % 5/5, 0.8, 1); local c2 = Color3.fromHSV((t+1) % 5/5, 0.8, 1); Gradient.Color = ColorSequence.new(c, c2); Stroke.Color = Color3.new(1,1,1)
+                    Gradient.Enabled = true; Gradient.Rotation = 90; local c = Color3.fromHSV(t % 5/5, 1, 1); local c2 = Color3.fromHSV((t+1) % 5/5, 1, 1); Gradient.Color = ColorSequence.new(c, c2); Stroke.Color = Color3.new(1,1,1)
                 end
             else
                 Gradient.Enabled = false
@@ -234,15 +232,37 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    local topbarHeight = Subtitle and 50 or 45
+    local topbarHeight = Subtitle and 45 or 40
 
-    -- 顶部栏（透明）
+    -- 顶部栏（完全透明）
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)
     Topbar.BackgroundTransparency = 1
     Topbar.Parent = MainFrame
 
-    -- 窗口按钮
+    -- 窗口图标
+    if IconAsset then
+        if tonumber(IconAsset) then
+            IconAsset = "rbxassetid://" .. IconAsset
+        end
+    else
+        IconAsset = "rbxassetid://78229538488090"  
+    end
+
+    local Icon = Instance.new("ImageLabel")
+    Icon.Name = "WindowIcon"
+    Icon.Size = UDim2.new(0, 32, 0, 32)
+    Icon.Position = UDim2.new(0, 10, 0.5, -16)  
+    Icon.BackgroundTransparency = 1
+    Icon.Image = IconAsset
+    Icon.Parent = Topbar
+    AddToRegistry(Icon, "ImageColor3", "Text")
+
+    local iconCorner = Instance.new("UICorner")
+    iconCorner.CornerRadius = UDim.new(0, 8)
+    iconCorner.Parent = Icon
+
+    -- 窗口控制按钮
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
     ButtonGroup.Size = UDim2.new(0, 94, 1, 0)  
@@ -329,27 +349,6 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 图标
-    if IconAsset then
-        if tonumber(IconAsset) then
-            IconAsset = "rbxassetid://" .. IconAsset
-        end
-    else
-        IconAsset = "rbxassetid://78229538488090"  
-    end
-
-    local Icon = Instance.new("ImageLabel")
-    Icon.Name = "WindowIcon"
-    Icon.Size = UDim2.new(0, 32, 0, 32)
-    Icon.Position = UDim2.new(0, 10, 0.5, -16)  
-    Icon.BackgroundTransparency = 1
-    Icon.Image = IconAsset
-    Icon.Parent = Topbar
-    AddToRegistry(Icon, "ImageColor3", "Text")
-    local iconCorner = Instance.new("UICorner")
-    iconCorner.CornerRadius = UDim.new(0, 8)
-    iconCorner.Parent = Icon
-
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Text = Title
     TitleLabel.BackgroundTransparency = 1
@@ -393,11 +392,11 @@ function Fenglib:CreateWindow(Config)
     TabContainer.ScrollBarThickness = 0
     TabContainer.Parent = Content
     local TabList = Instance.new("UIListLayout")
-    TabList.Padding = UDim.new(0, 8)
+    TabList.Padding = UDim.new(0, 8)  -- 增大间距
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Parent = TabContainer
 
-    -- 底部用户卡片
+    -- 底部用户卡片（Bento风格）
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
     ProfileFrame.Position = UDim2.new(0, 0, 1, -40)
@@ -508,7 +507,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 悬浮打开按钮
+    -- 悬浮打开按钮（保留）
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
@@ -547,7 +546,7 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- 通知系统
+    -- 通知系统（Bento风格）
     function Window:Notification(text)
         task.spawn(function()
             PlaySound(Sounds.Notification)
@@ -674,7 +673,7 @@ function Fenglib:CreateWindow(Config)
         contentContainer.Parent = sectionFrame
 
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 8)
+        contentLayout.Padding = UDim.new(0, 8)   -- 内部间距增大
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentContainer
 
@@ -720,13 +719,13 @@ function Fenglib:CreateWindow(Config)
         -- 按钮
         child.Button = function(_, btnText, callback)
             local Btn = Instance.new("TextButton")
-            Btn.Size = UDim2.new(1, 0, 0, 42)
+            Btn.Size = UDim2.new(1, 0, 0, 42)   -- 高度增加
             Btn.Text = ""
             Btn.Font = Enum.Font.Gotham
             Btn.TextSize = 14
             Btn.Parent = contentContainer
             Btn.BackgroundTransparency = 0.05
-            Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 12)
+            Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 12)   -- 大圆角
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
             local TextLabel = Instance.new("TextLabel")
@@ -773,7 +772,7 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 开关（Frame实现）
+        -- 开关（保留图片实现，仅调整颜色）
         child.Toggle = function(_, toggleText, default, callback)
             local Enabled = default or false
 
@@ -796,29 +795,31 @@ function Fenglib:CreateWindow(Config)
             Title.Parent = Btn
             AddToRegistry(Title, "TextColor3", "Text")
 
-            -- 开关背景
-            local Switch = Instance.new("Frame")
+            -- 开关背景图片
+            local Switch = Instance.new("ImageLabel")
             Switch.Size = UDim2.new(0, 40, 0, 20)
             Switch.Position = UDim2.new(1, -50, 0.5, -10)
-            Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(50, 50, 55)
+            Switch.BackgroundTransparency = 1
+            Switch.Image = ToggleAssets.Bg
+            Switch.ImageColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
             Switch.Parent = Btn
-            Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
 
-            -- 滑块
-            local Dot = Instance.new("Frame")
+            local Dot = Instance.new("ImageLabel")
             Dot.Size = UDim2.new(0, 16, 0, 16)
-            Dot.BackgroundColor3 = Color3.new(1, 1, 1)
+            Dot.BackgroundTransparency = 1
+            Dot.Image = ToggleAssets.Head
+            Dot.ImageColor3 = Color3.new(1, 1, 1)
+            Dot.AnchorPoint = Vector2.new(0.5, 0.5)
             Dot.Parent = Switch
-            Dot.Position = Enabled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-            Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
+            Dot.Position = Enabled and UDim2.new(1, -8, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
 
             local function Update()
                 if Enabled then PlaySound(Sounds.ToggleOn) else PlaySound(Sounds.ToggleOff) end
 
-                local targetColor = Enabled and CurrentTheme.Accent or Color3.fromRGB(50, 50, 55)
-                Tween(Switch, {BackgroundColor3 = targetColor}, 0.2)
+                local targetColor = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
+                Tween(Switch, {ImageColor3 = targetColor}, 0.2)
 
-                local targetPos = Enabled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+                local targetPos = Enabled and UDim2.new(1, -8, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
                 Tween(Dot, {Position = targetPos}, 0.2)
 
                 ConfigObjects[toggleText].Value = Enabled
@@ -836,14 +837,14 @@ function Fenglib:CreateWindow(Config)
                 Value = Enabled,
                 Set = function(val)
                     Enabled = val
-                    Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(50, 50, 55)
-                    Dot.Position = Enabled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+                    Switch.ImageColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)
+                    Dot.Position = Enabled and UDim2.new(1, -8, 0.5, 0) or UDim2.new(0, 8, 0.5, 0)
                     callback(Enabled)
                 end
             }
         end
 
-        -- 滑块（Frame实现）
+        -- 滑块（保留图片实现）
         child.Slider = function(_, sliderText, min, max, default, callback, options)
             options = options or {}
             local Val = default or min
@@ -873,39 +874,52 @@ function Fenglib:CreateWindow(Config)
 
             local NumBox = Instance.new("TextBox")
             NumBox.Name = "SliderValue"
-            NumBox.Font = Enum.Font.GothamMedium
+            NumBox.FontFace = Font.new("rbxassetid://12187365364")
             NumBox.Text = tostring(Val)
-            NumBox.TextColor3 = CurrentTheme.Accent
+            NumBox.TextColor3 = Color3.fromRGB(255, 255, 255)
             NumBox.TextSize = 12
             NumBox.TextTransparency = 0.1
             NumBox.TextXAlignment = Enum.TextXAlignment.Center
-            NumBox.BackgroundColor3 = CurrentTheme.Main
-            NumBox.BackgroundTransparency = 0.1
+            NumBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            NumBox.BackgroundTransparency = 0.95
+            NumBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
             NumBox.BorderSizePixel = 0
-            NumBox.Size = UDim2.fromOffset(50, 24)
+            NumBox.Size = UDim2.fromOffset(41, 21)
             NumBox.AnchorPoint = Vector2.new(1, 0.5)
             NumBox.Position = UDim2.new(1, 0, 0.5, 0)
             NumBox.ClipsDescendants = true
             NumBox.Parent = TopRow
 
-            local boxCorner = Instance.new("UICorner"); boxCorner.CornerRadius = UDim.new(0, 6); boxCorner.Parent = NumBox
-            local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = CurrentTheme.Stroke; boxStroke.Transparency = 0.6; boxStroke.Parent = NumBox
+            local boxCorner = Instance.new("UICorner"); boxCorner.CornerRadius = UDim.new(0, 4); boxCorner.Parent = NumBox
+            local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = Color3.fromRGB(255, 255, 255); boxStroke.Transparency = 0.9; boxStroke.Parent = NumBox
+            local boxPadding = Instance.new("UIPadding"); boxPadding.PaddingLeft = UDim.new(0, 2); boxPadding.PaddingRight = UDim.new(0, 2); boxPadding.Parent = NumBox
 
-            -- 滑条轨道
-            local SliderBar = Instance.new("Frame")
+            -- 滑条图片
+            local SliderBar = Instance.new("ImageLabel")
             SliderBar.Name = "SliderBar"
-            SliderBar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-            SliderBar.Size = UDim2.new(1, -20, 0, 4)
-            SliderBar.Position = UDim2.new(0, 10, 0, 45)
+            SliderBar.Image = SliderAssets.Bar
+            SliderBar.ImageColor3 = Color3.fromRGB(87, 86, 86)
+            SliderBar.BackgroundTransparency = 1
+            SliderBar.Size = UDim2.new(1, -20, 0, 3)
+            SliderBar.Position = UDim2.new(0, 10, 0, 40)
             SliderBar.Parent = Frame
-            Instance.new("UICorner", SliderBar).CornerRadius = UDim.new(1, 0)
 
-            local Fill = Instance.new("Frame")
-            Fill.Name = "Fill"
-            Fill.BackgroundColor3 = CurrentTheme.Accent
-            Fill.Size = UDim2.new((Val - min) / (max - min), 0, 1, 0)
-            Fill.Parent = SliderBar
-            Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
+            local SliderHead = Instance.new("ImageButton")
+            SliderHead.Name = "SliderHead"
+            SliderHead.Image = SliderAssets.Head
+            SliderHead.AnchorPoint = Vector2.new(0.5, 0.5)
+            SliderHead.BackgroundTransparency = 1
+            SliderHead.Size = UDim2.fromOffset(16, 16)
+            SliderHead.Parent = SliderBar
+            local initPosX = (Val - min) / (max - min)
+            SliderHead.Position = UDim2.new(initPosX, 0, 0.5, 0)
+
+            local DisplayMethods = {
+                Value = function(sv, p) return p and string.format("%."..p.."f", sv) or tostring(math.round(sv*100)/100) end,
+                Percent = function(sv, p) local perc = (sv-min)/(max-min)*100; return (p and string.format("%."..p.."f", perc) or tostring(math.round(perc))).."%" end,
+            }
+            local displayMethod = DisplayMethods[options.DisplayMethod] or DisplayMethods.Value
+            local precision = options.Precision
 
             local function SetValue(input, ignorecallback)
                 local posXScale
@@ -917,22 +931,22 @@ function Fenglib:CreateWindow(Config)
                 else
                     posXScale = (input - min) / (max - min)
                 end
-                Fill.Size = UDim2.new(posXScale, 0, 1, 0)
+                SliderHead.Position = UDim2.new(posXScale, 0, 0.5, 0)
                 local newValue = min + posXScale * (max - min)
                 Val = newValue
-                NumBox.Text = tostring(math.floor(newValue * 100) / 100)
+                NumBox.Text = displayMethod(newValue, precision)
                 if not ignorecallback then task.spawn(function() if callback then callback(newValue) end end) end
                 if ConfigObjects[sliderText] then ConfigObjects[sliderText].Value = newValue end
             end
             SetValue(Val, true)
 
             local dragging = false
-            SliderBar.InputBegan:Connect(function(input)
+            SliderHead.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     dragging = true; PlaySound(Sounds.Slide); SetValue(input)
                 end
             end)
-            UserInputService.InputEnded:Connect(function(input)
+            SliderHead.InputEnded:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
             end)
             UserInputService.InputChanged:Connect(function(input)
@@ -942,6 +956,7 @@ function Fenglib:CreateWindow(Config)
             NumBox.FocusLost:Connect(function()
                 local v = tonumber(NumBox.Text:match("%d+%.?%d*"))
                 if v then
+                    if options.DisplayMethod == "Percent" then v = min + (v/100)*(max-min) end
                     SetValue(math.clamp(v, min, max), false)
                 else SetValue(Val, true) end
             end)
@@ -1113,162 +1128,68 @@ function Fenglib:CreateWindow(Config)
 
             local BinderBox = Instance.new("TextBox")
             BinderBox.Name = "BinderBox"
-            BinderBox.Font = Enum.Font.GothamMedium
+            BinderBox.Font = Enum.Font.GothamBold
             BinderBox.Text = Key.Name
-            BinderBox.TextColor3 = CurrentTheme.Accent
+            BinderBox.TextColor3 = Color3.fromRGB(255,255,255)
             BinderBox.TextSize = 13
+            BinderBox.TextTransparency = 0.1
             BinderBox.PlaceholderText = "..."
-            BinderBox.BackgroundTransparency = 0.1
+            BinderBox.BackgroundTransparency = 0.2
             BinderBox.BorderSizePixel = 0
-            BinderBox.Size = UDim2.new(0, 80, 0, 26)
-            BinderBox.Position = UDim2.new(1, -95, 0.5, -13)
+            BinderBox.Size = UDim2.new(0,80,0,24)
+            BinderBox.Position = UDim2.new(1,-90,0.5,-12)
             BinderBox.Parent = Btn
-            Instance.new("UICorner", BinderBox).CornerRadius = UDim.new(0, 6)
+            Instance.new("UICorner", BinderBox).CornerRadius = UDim.new(0,5)
             AddToRegistry(BinderBox, "BackgroundColor3", "Main")
             AddToRegistry(BinderBox, "TextColor3", "Accent")
 
-            local boxStroke = Instance.new("UIStroke")
-            boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-            boxStroke.Color = CurrentTheme.Stroke
-            boxStroke.Transparency = 0.6
-            boxStroke.Parent = BinderBox
-
-            local isBinding = false
-            local focused = false
-
-            Btn.MouseButton1Click:Connect(function()
-                PlaySound(Sounds.Click)
-                BinderBox:CaptureFocus()
-            end)
-
-            BinderBox.Focused:Connect(function()
-                focused = true
-                isBinding = true
-                BinderBox.Text = ""
-                BinderBox.PlaceholderText = "..."
-            end)
-
-            BinderBox.FocusLost:Connect(function()
-                focused = false
-                isBinding = false
-                BinderBox.Text = Key.Name
-                BinderBox.PlaceholderText = ""
-            end)
-
+            local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = Color3.fromRGB(255,255,255); boxStroke.Transparency = 0.9; boxStroke.Parent = BinderBox
+            local isBinding = false; local focused = false
+            Btn.MouseButton1Click:Connect(function() PlaySound(Sounds.Click); BinderBox:CaptureFocus() end)
+            BinderBox.Focused:Connect(function() focused = true; isBinding = true; BinderBox.Text = ""; BinderBox.PlaceholderText = "..." end)
+            BinderBox.FocusLost:Connect(function() focused = false; isBinding = false; BinderBox.Text = Key.Name; BinderBox.PlaceholderText = "" end)
             UserInputService.InputBegan:Connect(function(input, gpe)
                 if gpe then return end
                 if focused and isBinding then
                     local newKey
-                    if input.UserInputType == Enum.UserInputType.Keyboard then
-                        newKey = input.KeyCode
-                    elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
-                        newKey = input.UserInputType
-                    end
+                    if input.UserInputType == Enum.UserInputType.Keyboard then newKey = input.KeyCode
+                    elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then newKey = input.UserInputType end
                     if newKey and newKey.Name ~= "Unknown" then
-                        Key = newKey
-                        BinderBox.Text = Key.Name
-                        callback(Key)
-                        Window:Notification("Keybind: " .. Key.Name)
+                        Key = newKey; BinderBox.Text = Key.Name; callback(Key); Window:Notification("Keybind: " .. Key.Name)
                         ConfigObjects[keyText].Value = Key.Name
                     end
                     BinderBox:ReleaseFocus()
                 end
             end)
-
             ConfigObjects[keyText] = {Type = "Keybind", Value = Key.Name, Set = function(val) Key = Enum.KeyCode[val] or Key; BinderBox.Text = Key.Name; callback(Key) end}
-
-            local self = {}
-            function self.UpdateText(newText) Title.Text = newText end
-            function self.SetVisible(state) Btn.Visible = state end
-            return self
+            local self = {}; function self.UpdateText(newText) Title.Text = newText end; function self.SetVisible(state) Btn.Visible = state end; return self
         end
 
-        -- 输入框（带字符过滤）
+        -- 输入框
         child.Input = function(_, inputText, default, callback, options)
             options = options or {}
-            local placeholder = options.placeholder or ""
-            local acceptedCharacters = options.acceptedCharacters or "All"
-            local characterLimit = options.characterLimit
-            local onChanged = options.onChanged
-
-            local InputFrame = Instance.new("Frame")
-            InputFrame.Size = UDim2.new(1, 0, 0, 42)
-            InputFrame.Parent = contentContainer
-            InputFrame.BackgroundTransparency = 0.05
-            Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 12)
-            AddToRegistry(InputFrame, "BackgroundColor3", "Top")
-
-            local NameLbl = Instance.new("TextLabel")
-            NameLbl.Text = inputText
-            NameLbl.Size = UDim2.new(0.6,0,1,0)
-            NameLbl.Position = UDim2.new(0,15,0,0)
-            NameLbl.TextXAlignment = Enum.TextXAlignment.Left
-            NameLbl.Font = Enum.Font.GothamMedium
-            NameLbl.TextSize = 13
-            NameLbl.BackgroundTransparency = 1
-            NameLbl.Parent = InputFrame
-            AddToRegistry(NameLbl, "TextColor3", "Text")
-
-            local InputBox = Instance.new("TextBox")
-            InputBox.Text = tostring(default or "")
-            InputBox.PlaceholderText = placeholder
-            InputBox.Size = UDim2.new(0.3,0,0,28)
-            InputBox.Position = UDim2.new(0.7,-10,0.5,-14)
-            InputBox.Font = Enum.Font.GothamMedium
-            InputBox.TextSize = 12
-            InputBox.TextXAlignment = Enum.TextXAlignment.Center
-            InputBox.ClearTextOnFocus = false
-            InputBox.Parent = InputFrame
-            InputBox.BackgroundTransparency = 0.1
-            Instance.new("UICorner", InputBox).CornerRadius = UDim.new(0,6)
-            AddToRegistry(InputBox, "BackgroundColor3", "Main")
-            AddToRegistry(InputBox, "TextColor3", "Text")
-
-            local boxStroke = Instance.new("UIStroke")
-            boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-            boxStroke.Color = CurrentTheme.Stroke
-            boxStroke.Transparency = 0.6
-            boxStroke.Parent = InputBox
-
+            local placeholder = options.placeholder or ""; local acceptedCharacters = options.acceptedCharacters or "All"; local characterLimit = options.characterLimit; local onChanged = options.onChanged
+            local InputFrame = Instance.new("Frame"); InputFrame.Size = UDim2.new(1, 0, 0, 42); InputFrame.Parent = contentContainer; InputFrame.BackgroundTransparency = 0.05; Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 12); AddToRegistry(InputFrame, "BackgroundColor3", "Top")
+            local NameLbl = Instance.new("TextLabel"); NameLbl.Text = inputText; NameLbl.Size = UDim2.new(0.6,0,1,0); NameLbl.Position = UDim2.new(0,15,0,0); NameLbl.TextXAlignment = Enum.TextXAlignment.Left; NameLbl.Font = Enum.Font.GothamMedium; NameLbl.TextSize = 13; NameLbl.BackgroundTransparency = 1; NameLbl.Parent = InputFrame; AddToRegistry(NameLbl, "TextColor3", "Text")
+            local InputBox = Instance.new("TextBox"); InputBox.Text = tostring(default or ""); InputBox.PlaceholderText = placeholder; InputBox.Size = UDim2.new(0.3,0,0,28); InputBox.Position = UDim2.new(0.7,-10,0.5,-14); InputBox.Font = Enum.Font.GothamBold; InputBox.TextSize = 13; InputBox.TextXAlignment = Enum.TextXAlignment.Center; InputBox.ClearTextOnFocus = false; InputBox.Parent = InputFrame
+            local boxCorner = Instance.new("UICorner"); boxCorner.CornerRadius = UDim.new(0,6); boxCorner.Parent = InputBox
+            AddToRegistry(InputBox, "BackgroundColor3", "Main"); AddToRegistry(InputBox, "TextColor3", "Accent")
+            local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = CurrentTheme.Stroke; boxStroke.Transparency = 0.6; boxStroke.Parent = InputBox
             local function filterText(text)
                 if characterLimit then text = text:sub(1,characterLimit) end
-                if type(acceptedCharacters)=="function" then
-                    return acceptedCharacters(text)
-                elseif acceptedCharacters=="Numeric" then
-                    return text:gsub("[^%d-]",""):gsub("-(.*)",function(m) return m:gsub("-","") end)
-                elseif acceptedCharacters=="Alphabetic" then
-                    return text:gsub("[^a-zA-Z]","")
-                elseif acceptedCharacters=="AlphaNumeric" then
-                    return text:gsub("[^a-zA-Z0-9]","")
-                else
-                    return text
-                end
+                if type(acceptedCharacters)=="function" then return acceptedCharacters(text)
+                elseif acceptedCharacters=="Numeric" then return text:gsub("[^%d-]",""):gsub("-(.*)",function(m) return m:gsub("-","") end)
+                elseif acceptedCharacters=="Alphabetic" then return text:gsub("[^a-zA-Z]","")
+                elseif acceptedCharacters=="AlphaNumeric" then return text:gsub("[^a-zA-Z0-9]","")
+                else return text end
             end
-
-            InputBox:GetPropertyChangedSignal("Text"):Connect(function()
-                local filtered = filterText(InputBox.Text)
-                if filtered~=InputBox.Text then InputBox.Text=filtered end
-                if onChanged then onChanged(filtered) end
-            end)
-
-            InputBox.FocusLost:Connect(function()
-                local text = InputBox.Text
-                local filtered = filterText(text)
-                if filtered~=text then InputBox.Text = filtered; text = filtered end
-                if callback then callback(text) end
-            end)
-
+            InputBox:GetPropertyChangedSignal("Text"):Connect(function() local filtered = filterText(InputBox.Text); if filtered~=InputBox.Text then InputBox.Text=filtered end; if onChanged then onChanged(filtered) end end)
+            InputBox.FocusLost:Connect(function() local text = InputBox.Text; local filtered = filterText(text); if filtered~=text then InputBox.Text = filtered; text = filtered end; if callback then callback(text) end end)
             ConfigObjects[inputText] = {Type = "Input", Value = InputBox.Text, Set = function(val) InputBox.Text = tostring(val) end}
-
-            local self = {}
-            function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end
-            function self.GetText() return InputBox.Text end
-            function self.SetVisible(state) InputFrame.Visible = state end
-            function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end
-            return self
+            local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
         end
 
-        -- 颜色选择器（完整实现，仅修改样式）
+        -- 颜色选择器（完整实现，仅调整弹出窗口样式）
         child.Colorpicker = function(_, pickerText, default, callback, options)
             options = options or {}
             local isAlpha = options.Alpha ~= nil
@@ -1294,7 +1215,6 @@ function Fenglib:CreateWindow(Config)
             Title.Parent = Main
             AddToRegistry(Title, "TextColor3", "Text")
 
-            -- 颜色预览（带网格背景）
             local PreviewBg = Instance.new("ImageLabel")
             PreviewBg.Name = "ColorPreviewBg"
             PreviewBg.Image = ColorPickerAssets.Grid
@@ -1930,7 +1850,7 @@ function Fenglib:CreateWindow(Config)
         HolderPadding.Parent = ContentHolder
 
         local PageList = Instance.new("UIListLayout")
-        PageList.Padding = UDim.new(0, 10)
+        PageList.Padding = UDim.new(0, 10)   -- Bento间距
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
         PageList.Parent = ContentHolder
 
@@ -2157,7 +2077,6 @@ function Fenglib:CreateWindow(Config)
         return DualElements
     end
 
-    -- 内置配置标签页（可选，可手动添加）
     return Window
 end
 
