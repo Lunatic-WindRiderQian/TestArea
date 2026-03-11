@@ -135,11 +135,9 @@ local function AddToRegistry(obj, prop, themeIndex)
     obj[prop] = CurrentTheme[themeIndex]
 end
 
--- 通知风格的缓动：0.45秒，Quint Out，并返回 Tween 对象以便取消
+-- 通知风格的缓动：0.45秒，Quint Out
 local function Tween(obj, props, time)
-    local tween = TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props)
-    tween:Play()
-    return tween
+    TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
 
 function Fenglib:SetTheme(themeName)
@@ -236,7 +234,7 @@ function Fenglib:CreateWindow(Config)
 
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)
-    Topbar.BackgroundTransparency = 1  -- 顶部透明
+    Topbar.BackgroundTransparency = 1  -- 顶部透明，让文字悬浮
     Topbar.Parent = MainFrame
 
     if IconAsset then
@@ -387,14 +385,14 @@ function Fenglib:CreateWindow(Config)
     TabContainer.ScrollBarThickness = 0
     TabContainer.Parent = Content
     local TabList = Instance.new("UIListLayout")
-    TabList.Padding = UDim.new(0, 8)
+    TabList.Padding = UDim.new(0, 8)  -- 增加间距
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Parent = TabContainer
 
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
     ProfileFrame.Position = UDim2.new(0, 0, 1, -40)
-    ProfileFrame.BackgroundTransparency = 0.05
+    ProfileFrame.BackgroundTransparency = 0.05  -- 卡片背景
     ProfileFrame.Parent = Content
     local profileCorner = Instance.new("UICorner")
     profileCorner.CornerRadius = UDim.new(0, 10)
@@ -445,7 +443,7 @@ function Fenglib:CreateWindow(Config)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
-    Tween(MainFrame, {Size = UDim2.new(0, 640, 0, 420)}, 0.7)
+    Tween(MainFrame, {Size = UDim2.new(0, 640, 0, 420)}, 0.7)  -- 调大窗口
 
     local dragging = false
     local dragInput, dragStart, startPos
@@ -633,7 +631,7 @@ function Fenglib:CreateWindow(Config)
         contentContainer.Parent = sectionFrame
 
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 8)
+        contentLayout.Padding = UDim.new(0, 8)  -- Bento间距
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentContainer
 
@@ -1555,9 +1553,6 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Parent = TabContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
-        -- 存储当前活动的 Tween，用于取消
-        TabBtn._currentTweens = {}
-
         local ContentFrame = Instance.new("Frame")
         ContentFrame.Size = UDim2.new(1, 0, 1, 0)
         ContentFrame.BackgroundTransparency = 1
@@ -1622,7 +1617,7 @@ function Fenglib:CreateWindow(Config)
         HolderPadding.Parent = ContentHolder
 
         local PageList = Instance.new("UIListLayout")
-        PageList.Padding = UDim.new(0, 10)
+        PageList.Padding = UDim.new(0, 10)  -- Bento间距
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
         PageList.Parent = ContentHolder
 
@@ -1634,66 +1629,40 @@ function Fenglib:CreateWindow(Config)
 
         TabBtn.MouseButton1Click:Connect(function()
             PlaySound(Sounds.Tab)
-
-            -- 隐藏所有页面
-            for _, v in pairs(PageContainer:GetChildren()) do
-                v.Visible = false
-            end
-
-            -- 取消所有按钮的旧动画，并启动新动画
+            for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
             for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
-                    -- 取消该按钮上的所有 Tween
-                    if v._currentTweens then
-                        for _, tw in ipairs(v._currentTweens) do
-                            if tw then tw:Cancel() end
-                        end
-                        v._currentTweens = {}
-                    end
+                    -- 取消按钮上的所有动画
+                    for _, t in ipairs(TweenService:GetTweens(v)) do t:Cancel() end
+                    Tween(v, {BackgroundTransparency = 1})
+
                     local content = v:FindFirstChild("ContentFrame")
                     if content then
                         local textLabel = content:FindFirstChildOfClass("TextLabel")
                         if textLabel then
-                            -- 取消文字 Tween
-                            if textLabel._currentTween then
-                                textLabel._currentTween:Cancel()
-                                textLabel._currentTween = nil
-                            end
-                            if v == TabBtn then
-                                -- 当前按钮：激活样式（动画）
-                                local t1 = Tween(v, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
-                                local t2 = Tween(textLabel, {TextColor3 = CurrentTheme.Accent})
-                                v._currentTweens = {t1}
-                                textLabel._currentTween = t2
-                            else
-                                -- 其他按钮：非激活样式（动画）
-                                local t1 = Tween(v, {BackgroundTransparency = 1})
-                                local t2 = Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 150)})
-                                v._currentTweens = {t1}
-                                textLabel._currentTween = t2
-                            end
+                            -- 取消文本标签上的所有动画
+                            for _, t in ipairs(TweenService:GetTweens(textLabel)) do t:Cancel() end
+                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150,150,150)})
                         end
                     end
                 end
             end
-
-            -- 显示当前页面
             Page.Visible = true
+
+            -- 取消当前按钮及其文本标签的动画
+            for _, t in ipairs(TweenService:GetTweens(TabBtn)) do t:Cancel() end
+            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
+
+            for _, t in ipairs(TweenService:GetTweens(TabText)) do t:Cancel() end
+            Tween(TabText, {TextColor3 = CurrentTheme.Accent})
         end)
 
         if firstTab then 
             firstTab = false
             Page.Visible = true
-            -- 设置初始激活样式（瞬间，无动画）
             TabBtn.BackgroundTransparency = 0.05
             TabBtn.BackgroundColor3 = CurrentTheme.Top
-            local content = TabBtn:FindFirstChild("ContentFrame")
-            if content then
-                local textLabel = content:FindFirstChildOfClass("TextLabel")
-                if textLabel then
-                    textLabel.TextColor3 = CurrentTheme.Accent
-                end
-            end
+            TabText.TextColor3 = CurrentTheme.Accent
         end
 
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
@@ -1714,8 +1683,6 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Text = ""
         TabBtn.Parent = TabContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-
-        TabBtn._currentTweens = {}
 
         local ContentFrame = Instance.new("Frame")
         ContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -1843,46 +1810,32 @@ function Fenglib:CreateWindow(Config)
 
         TabBtn.MouseButton1Click:Connect(function()
             PlaySound(Sounds.Tab)
-
-            -- 隐藏所有页面
-            for _, v in pairs(PageContainer:GetChildren()) do
-                v.Visible = false
-            end
-
-            -- 取消所有按钮的旧动画，并启动新动画
+            for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
             for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
-                    if v._currentTweens then
-                        for _, tw in ipairs(v._currentTweens) do
-                            if tw then tw:Cancel() end
-                        end
-                        v._currentTweens = {}
-                    end
+                    -- 取消按钮上的所有动画
+                    for _, t in ipairs(TweenService:GetTweens(v)) do t:Cancel() end
+                    Tween(v, {BackgroundTransparency = 1})
+
                     local content = v:FindFirstChild("ContentFrame")
                     if content then
                         local textLabel = content:FindFirstChildOfClass("TextLabel")
                         if textLabel then
-                            if textLabel._currentTween then
-                                textLabel._currentTween:Cancel()
-                                textLabel._currentTween = nil
-                            end
-                            if v == TabBtn then
-                                local t1 = Tween(v, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
-                                local t2 = Tween(textLabel, {TextColor3 = CurrentTheme.Accent})
-                                v._currentTweens = {t1}
-                                textLabel._currentTween = t2
-                            else
-                                local t1 = Tween(v, {BackgroundTransparency = 1})
-                                local t2 = Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 150)})
-                                v._currentTweens = {t1}
-                                textLabel._currentTween = t2
-                            end
+                            -- 取消文本标签上的所有动画
+                            for _, t in ipairs(TweenService:GetTweens(textLabel)) do t:Cancel() end
+                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150,150,150)})
                         end
                     end
                 end
             end
-
             PageFrame.Visible = true
+
+            -- 取消当前按钮及其文本标签的动画
+            for _, t in ipairs(TweenService:GetTweens(TabBtn)) do t:Cancel() end
+            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
+
+            for _, t in ipairs(TweenService:GetTweens(TabText)) do t:Cancel() end
+            Tween(TabText, {TextColor3 = CurrentTheme.Accent})
         end)
 
         if firstTab then
@@ -1890,13 +1843,7 @@ function Fenglib:CreateWindow(Config)
             PageFrame.Visible = true
             TabBtn.BackgroundTransparency = 0.05
             TabBtn.BackgroundColor3 = CurrentTheme.Top
-            local content = TabBtn:FindFirstChild("ContentFrame")
-            if content then
-                local textLabel = content:FindFirstChildOfClass("TextLabel")
-                if textLabel then
-                    textLabel.TextColor3 = CurrentTheme.Accent
-                end
-            end
+            TabText.TextColor3 = CurrentTheme.Accent
         end
 
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
