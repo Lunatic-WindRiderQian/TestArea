@@ -86,7 +86,7 @@ local SliderAssets = {
     Head = "rbxassetid://18772834246"
 }
 local ColorPickerAssets = {
-    Wheel = "rbxassetid://2849458409",
+    Wheel = "rbxassetid://146282548",  -- 稳定可用的色相轮资源
     Target = "rbxassetid://73265255323268",
     Grid = "rbxassetid://121484455191370"
 }
@@ -230,7 +230,6 @@ function Fenglib:CreateWindow(Config)
     Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)
     Topbar.BackgroundTransparency = 1   -- transparent like notification.lua
     Topbar.Parent = MainFrame
-    -- No UICorner on Topbar (transparent)
 
     if IconAsset then
         if tonumber(IconAsset) then
@@ -829,6 +828,7 @@ function Fenglib:CreateWindow(Config)
             SliderBar.Size = UDim2.new(1, -20, 0, 3)
             SliderBar.Position = UDim2.new(0, 10, 0, 40)
             SliderBar.Parent = Frame
+            SliderBar.ImageTransparency = 0.05   -- subtle transparency
 
             local SliderHead = Instance.new("ImageButton")
             SliderHead.Name = "SliderHead"
@@ -915,6 +915,7 @@ function Fenglib:CreateWindow(Config)
                 for _,v in pairs(Container:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
                 for _, opt in pairs(newOpts) do
                     local O = Instance.new("TextButton"); O.Size = UDim2.new(1,0,0,30); O.Text = opt; O.TextColor3 = Color3.fromRGB(150,150,150); O.Font = Enum.Font.GothamMedium; O.TextSize = 13; O.BackgroundTransparency = 1; O.Parent = Container
+                    O.BackgroundTransparency = 0.05   -- 半透明选项
                     O.MouseButton1Click:Connect(function() Select(opt) end)
                 end
             end
@@ -1022,6 +1023,7 @@ function Fenglib:CreateWindow(Config)
             PreviewBg.Position = UDim2.new(1, -40, 0.5, -10)
             PreviewBg.BackgroundTransparency = 1
             PreviewBg.Parent = Main
+            PreviewBg.ImageTransparency = 0.05   -- subtle
 
             local previewCorner = Instance.new("UICorner")
             previewCorner.CornerRadius = UDim.new(0, 6)
