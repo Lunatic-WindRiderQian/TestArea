@@ -79,7 +79,7 @@ local Sounds = {
     Tab = ""             
 }
 
--- 图片资产
+-- 图片资产（保留原样，用于开关、滑块、取色器等）
 local ToggleAssets = {
     Bg = "rbxassetid://18772190202",
     Head = "rbxassetid://18772309008"
@@ -119,7 +119,7 @@ local function PlaySound(id)
     end)
 end
 
--- Bento 主题
+-- Bento 风格主题（取自通知.lua）
 local Themes = {
     Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48)},
     White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225)},
@@ -136,6 +136,7 @@ local function AddToRegistry(obj, prop, themeIndex)
     obj[prop] = CurrentTheme[themeIndex]
 end
 
+-- 动画时间延长至0.45s，缓动改为Quint（Bento风格）
 local function Tween(obj, props, time)
     TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
@@ -156,7 +157,7 @@ function Fenglib:SetRainbowType(val) RainbowType = val end
 function Fenglib:SetSFXEnabled(state) SFXEnabled = state end
 
 -- ==============================
--- 创建窗口（Bento风格，窗口大小500x299，Tab图标恢复原样）
+-- 创建窗口（Bento风格，窗口大小500x299，Tab图标恢复原样，按钮改为WindUI风格）
 -- ==============================
 function Fenglib:CreateWindow(Config)
     local Window = {}
@@ -233,6 +234,7 @@ function Fenglib:CreateWindow(Config)
 
     local topbarHeight = Subtitle and 45 or 40
 
+    -- 顶部栏（完全透明）
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)
     Topbar.BackgroundTransparency = 1
@@ -260,11 +262,11 @@ function Fenglib:CreateWindow(Config)
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- 窗口控制按钮
+    -- ========== WindUI 风格窗口控制按钮 ==========
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
-    ButtonGroup.Size = UDim2.new(0, 94, 1, 0)  
-    ButtonGroup.Position = UDim2.new(1, -104, 0, 0)
+    ButtonGroup.Size = UDim2.new(0, 118, 1, 0)  -- 宽度适应三个36按钮+间距
+    ButtonGroup.Position = UDim2.new(1, -128, 0, 0)
     ButtonGroup.BackgroundTransparency = 1
     ButtonGroup.Parent = Topbar
 
@@ -279,66 +281,50 @@ function Fenglib:CreateWindow(Config)
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
 
-    local MinimizeBtn = Instance.new("TextButton")
-    MinimizeBtn.Size = UDim2.new(0, 28, 0, 28)
-    MinimizeBtn.Text = "—"  
-    MinimizeBtn.Font = Enum.Font.GothamBold
-    MinimizeBtn.TextSize = 20
-    MinimizeBtn.BackgroundTransparency = 1
-    MinimizeBtn.TextColor3 = CurrentTheme.Text
-    MinimizeBtn.Parent = ButtonGroup
-
-    local ResizeBtn = Instance.new("TextButton")
-    ResizeBtn.Size = UDim2.new(0, 28, 0, 28)
-    ResizeBtn.Text = "□"  
-    ResizeBtn.Font = Enum.Font.GothamBold
-    ResizeBtn.TextSize = 18
-    ResizeBtn.BackgroundTransparency = 1
-    ResizeBtn.TextColor3 = CurrentTheme.Text
-    ResizeBtn.Parent = ButtonGroup
-
-    local CloseBtn = Instance.new("TextButton")
-    CloseBtn.Size = UDim2.new(0, 28, 0, 28)
-    CloseBtn.Text = "✕"  
-    CloseBtn.Font = Enum.Font.GothamBold
-    CloseBtn.TextSize = 18
-    CloseBtn.BackgroundTransparency = 1
-    CloseBtn.TextColor3 = CurrentTheme.Text
-    CloseBtn.Parent = ButtonGroup
-
-    local function onBtnHover(btn)
-        Tween(btn, {TextColor3 = CurrentTheme.Accent}, 0.2)
-    end
-    local function onBtnLeave(btn)
-        Tween(btn, {TextColor3 = CurrentTheme.Text}, 0.2)
+    local function createWindowButton(text, callback)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 36, 0, 36)
+        btn.Text = text
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 20
+        btn.BackgroundTransparency = 0.95
+        btn.BackgroundColor3 = Color3.new(1, 1, 1)  -- 白色半透明背景
+        btn.TextColor3 = Color3.new(1, 1, 1)        -- 白色文字
+        btn.Parent = ButtonGroup
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 9)
+        corner.Parent = btn
+        
+        local function onHover()
+            Tween(btn, {BackgroundTransparency = 0.8}, 0.2)
+        end
+        local function onLeave()
+            Tween(btn, {BackgroundTransparency = 0.95}, 0.2)
+        end
+        
+        btn.MouseEnter:Connect(onHover)
+        btn.MouseLeave:Connect(onLeave)
+        btn.MouseButton1Click:Connect(function()
+            PlaySound(Sounds.Click)
+            callback()
+        end)
+        
+        return btn
     end
 
-    CloseBtn.MouseEnter:Connect(function() onBtnHover(CloseBtn) end)
-    CloseBtn.MouseLeave:Connect(function() onBtnLeave(CloseBtn) end)
-    MinimizeBtn.MouseEnter:Connect(function() onBtnHover(MinimizeBtn) end)
-    MinimizeBtn.MouseLeave:Connect(function() onBtnLeave(MinimizeBtn) end)
-    ResizeBtn.MouseEnter:Connect(function() onBtnHover(ResizeBtn) end)
-    ResizeBtn.MouseLeave:Connect(function() onBtnLeave(ResizeBtn) end)
-
-    CloseBtn.MouseButton1Click:Connect(function()
-        PlaySound(Sounds.Click)
-        ScreenGui:Destroy()
-    end)
-
-    MinimizeBtn.MouseButton1Click:Connect(function()
-        PlaySound(Sounds.Click)
+    local MinimizeBtn = createWindowButton("—", function()
         MainFrame.Visible = false
     end)
 
     local isMaximized = false
     local originalSize, originalPosition  
-    ResizeBtn.MouseButton1Click:Connect(function()
-        PlaySound(Sounds.Click)
+    local ResizeBtn = createWindowButton("□", function()
         if not isMaximized then
             originalSize = MainFrame.Size
             originalPosition = MainFrame.Position
-            local maxSize = UDim2.new(1, -40, 1, -40)  
-            local maxPos = UDim2.new(0.5, 0, 0.5, 0)  
+            local maxSize = UDim2.new(1, -40, 1, -40)
+            local maxPos = UDim2.new(0.5, 0, 0.5, 0)
             Tween(MainFrame, {Size = maxSize, Position = maxPos}, 0.4)
             isMaximized = true
         else
@@ -346,6 +332,12 @@ function Fenglib:CreateWindow(Config)
             isMaximized = false
         end
     end)
+
+    local CloseBtn = createWindowButton("✕", function()
+        ScreenGui:Destroy()
+    end)
+
+    -- ============================================
 
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Text = Title
@@ -505,7 +497,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 悬浮打开按钮
+    -- 悬浮打开按钮（保留）
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
@@ -544,7 +536,7 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- 通知系统
+    -- 通知系统（Bento风格）
     function Window:Notification(text)
         task.spawn(function()
             PlaySound(Sounds.Notification)
@@ -770,7 +762,7 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 开关
+        -- 开关（保留图片实现）
         child.Toggle = function(_, toggleText, default, callback)
             local Enabled = default or false
 
@@ -793,6 +785,7 @@ function Fenglib:CreateWindow(Config)
             Title.Parent = Btn
             AddToRegistry(Title, "TextColor3", "Text")
 
+            -- 开关背景图片
             local Switch = Instance.new("ImageLabel")
             Switch.Size = UDim2.new(0, 40, 0, 20)
             Switch.Position = UDim2.new(1, -50, 0.5, -10)
@@ -841,7 +834,7 @@ function Fenglib:CreateWindow(Config)
             }
         end
 
-        -- 滑块
+        -- 滑块（保留图片实现）
         child.Slider = function(_, sliderText, min, max, default, callback, options)
             options = options or {}
             local Val = default or min
@@ -891,6 +884,7 @@ function Fenglib:CreateWindow(Config)
             local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = Color3.fromRGB(255, 255, 255); boxStroke.Transparency = 0.9; boxStroke.Parent = NumBox
             local boxPadding = Instance.new("UIPadding"); boxPadding.PaddingLeft = UDim.new(0, 2); boxPadding.PaddingRight = UDim.new(0, 2); boxPadding.Parent = NumBox
 
+            -- 滑条图片
             local SliderBar = Instance.new("ImageLabel")
             SliderBar.Name = "SliderBar"
             SliderBar.Image = SliderAssets.Bar
@@ -1007,9 +1001,7 @@ function Fenglib:CreateWindow(Config)
             ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
-        -- ==============================
-        -- 下拉菜单（修正高度计算，避免空白）
-        -- ==============================
+        -- 下拉菜单（修正高度计算）
         child.Dropdown = function(_, dropText, options, callback)
             local Dropped = false
             local Btn = Instance.new("TextButton")
