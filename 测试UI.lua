@@ -157,7 +157,7 @@ function Fenglib:SetRainbowType(val) RainbowType = val end
 function Fenglib:SetSFXEnabled(state) SFXEnabled = state end
 
 -- ==============================
--- 创建窗口（Bento风格，窗口大小500x299，Tab图标恢复原样，按钮改为WindUI风格）
+-- 创建窗口（Bento风格，窗口大小500x299，Tab图标恢复原样，按钮改为WindUI风格图片图标）
 -- ==============================
 function Fenglib:CreateWindow(Config)
     local Window = {}
@@ -262,7 +262,7 @@ function Fenglib:CreateWindow(Config)
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- ========== WindUI 风格窗口控制按钮 ==========
+    -- ========== WindUI 风格窗口控制按钮（图片图标） ==========
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
     ButtonGroup.Size = UDim2.new(0, 118, 1, 0)  -- 宽度适应三个36按钮+间距
@@ -281,45 +281,51 @@ function Fenglib:CreateWindow(Config)
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
 
-    local function createWindowButton(text, callback)
+    local function createWindowButton(iconAsset, callback)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, 36, 0, 36)
-        btn.Text = text
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 20
+        btn.Text = ""
         btn.BackgroundTransparency = 0.95
-        btn.BackgroundColor3 = Color3.new(1, 1, 1)  -- 白色半透明背景
-        btn.TextColor3 = Color3.new(1, 1, 1)        -- 白色文字
+        btn.BackgroundColor3 = Color3.new(1, 1, 1)
         btn.Parent = ButtonGroup
-        
+
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, 9)
         corner.Parent = btn
-        
+
+        local icon = Instance.new("ImageLabel")
+        icon.Size = UDim2.new(0, 18, 0, 18)
+        icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+        icon.AnchorPoint = Vector2.new(0.5, 0.5)
+        icon.BackgroundTransparency = 1
+        icon.Image = iconAsset
+        icon.ImageColor3 = Color3.new(1, 1, 1)
+        icon.Parent = btn
+
         local function onHover()
             Tween(btn, {BackgroundTransparency = 0.8}, 0.2)
         end
         local function onLeave()
             Tween(btn, {BackgroundTransparency = 0.95}, 0.2)
         end
-        
+
         btn.MouseEnter:Connect(onHover)
         btn.MouseLeave:Connect(onLeave)
         btn.MouseButton1Click:Connect(function()
             PlaySound(Sounds.Click)
             callback()
         end)
-        
+
         return btn
     end
 
-    local MinimizeBtn = createWindowButton("—", function()
+    local MinimizeBtn = createWindowButton("rbxassetid://6031091004", function()
         MainFrame.Visible = false
     end)
 
     local isMaximized = false
     local originalSize, originalPosition  
-    local ResizeBtn = createWindowButton("□", function()
+    local ResizeBtn = createWindowButton("rbxassetid://18865373378", function()
         if not isMaximized then
             originalSize = MainFrame.Size
             originalPosition = MainFrame.Position
@@ -333,7 +339,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    local CloseBtn = createWindowButton("✕", function()
+    local CloseBtn = createWindowButton("rbxassetid://9431747129", function()
         ScreenGui:Destroy()
     end)
 
