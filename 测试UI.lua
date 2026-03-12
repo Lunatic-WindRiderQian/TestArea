@@ -447,7 +447,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    local CloseBtn = createTextButton("✕", function()
+    local CloseBtn = createTextButton("X", function()
         ScreenGui:Destroy()
     end)
 
