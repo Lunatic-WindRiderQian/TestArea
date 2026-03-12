@@ -157,7 +157,7 @@ function Fenglib:SetRainbowType(val) RainbowType = val end
 function Fenglib:SetSFXEnabled(state) SFXEnabled = state end
 
 -- ==============================
--- 创建窗口（Bento风格，窗口大小500x299，Tab图标恢复原样，按钮改为WindUI风格图片图标）
+-- 创建窗口（Bento风格，窗口大小500x299，Tab图标恢复原样，按钮完全模仿WindUI样式）
 -- ==============================
 function Fenglib:CreateWindow(Config)
     local Window = {}
@@ -262,10 +262,10 @@ function Fenglib:CreateWindow(Config)
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- ========== WindUI 风格窗口控制按钮（图片图标） ==========
+    -- ========== WindUI 风格窗口控制按钮（完全模仿 WindUI 样式） ==========
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
-    ButtonGroup.Size = UDim2.new(0, 118, 1, 0)  -- 宽度适应三个36按钮+间距
+    ButtonGroup.Size = UDim2.new(0, 118, 1, 0)
     ButtonGroup.Position = UDim2.new(1, -128, 0, 0)
     ButtonGroup.BackgroundTransparency = 1
     ButtonGroup.Parent = Topbar
@@ -281,18 +281,63 @@ function Fenglib:CreateWindow(Config)
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
 
+    -- 辅助函数：创建圆角图片框（模仿 WindUI 的 NewRoundFrame）
+    local function NewRoundFrame(radius, imageType, properties, children)
+        local frame = Instance.new("ImageLabel")
+        frame.BackgroundTransparency = 1
+        frame.Image = imageType == "Squircle" and "rbxassetid://80999662900595" or
+                      imageType == "SquircleOutline" and "rbxassetid://117788349049947" or
+                      imageType == "SquircleOutline2" and "rbxassetid://117817408534198" or
+                      "rbxassetid://80999662900595"
+        frame.ScaleType = Enum.ScaleType.Slice
+        frame.SliceCenter = Rect.new(256, 256, 256, 256)
+        frame.SliceScale = radius / 256
+        for prop, val in pairs(properties or {}) do
+            frame[prop] = val
+        end
+        for _, child in ipairs(children or {}) do
+            child.Parent = frame
+        end
+        return frame
+    end
+
     local function createWindowButton(iconAsset, callback)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, 36, 0, 36)
         btn.Text = ""
-        btn.BackgroundTransparency = 0.95
-        btn.BackgroundColor3 = Color3.new(1, 1, 1)
+        btn.BackgroundTransparency = 1
         btn.Parent = ButtonGroup
 
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 9)
-        corner.Parent = btn
+        -- 按钮背景（圆角矩形）
+        local bg = NewRoundFrame(9, "Squircle", {
+            Size = UDim2.new(1, 0, 1, 0),
+            ImageTransparency = 0.95,
+            ImageColor3 = Color3.new(1, 1, 1),
+            Parent = btn
+        })
 
+        -- 渐变边框
+        local outline = NewRoundFrame(9, "SquircleOutline", {
+            Size = UDim2.new(1, 0, 1, 0),
+            ImageTransparency = 1,
+            ImageColor3 = Color3.new(1, 1, 1),
+            Parent = btn
+        })
+        local gradient = Instance.new("UIGradient")
+        gradient.Rotation = 45
+        gradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 255, 255))
+        })
+        gradient.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0.0, 0.1),
+            NumberSequenceKeypoint.new(0.5, 1),
+            NumberSequenceKeypoint.new(1.0, 0.1)
+        })
+        gradient.Parent = outline
+
+        -- 图标
         local icon = Instance.new("ImageLabel")
         icon.Size = UDim2.new(0, 18, 0, 18)
         icon.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -303,10 +348,12 @@ function Fenglib:CreateWindow(Config)
         icon.Parent = btn
 
         local function onHover()
-            Tween(btn, {BackgroundTransparency = 0.8}, 0.2)
+            Tween(bg, {ImageTransparency = 0.8}, 0.2)
+            Tween(outline, {ImageTransparency = 0.75}, 0.2)
         end
         local function onLeave()
-            Tween(btn, {BackgroundTransparency = 0.95}, 0.2)
+            Tween(bg, {ImageTransparency = 0.95}, 0.2)
+            Tween(outline, {ImageTransparency = 1}, 0.2)
         end
 
         btn.MouseEnter:Connect(onHover)
@@ -319,7 +366,7 @@ function Fenglib:CreateWindow(Config)
         return btn
     end
 
-    -- 使用标准的 WindUI 图标 ID
+    -- 使用正确的 WindUI 图标 ID
     local MinimizeBtn = createWindowButton("rbxassetid://6031090995", function()  -- 减号
         MainFrame.Visible = false
     end)
