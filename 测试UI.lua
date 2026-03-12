@@ -427,7 +427,7 @@ function Fenglib:CreateWindow(Config)
     end
 
     -- 创建按钮
-    local MinimizeBtn = createTextButton("—", function()
+    local MinimizeBtn = createTextButton("-", function()
         MainFrame.Visible = false
     end)
 
