@@ -319,13 +319,14 @@ function Fenglib:CreateWindow(Config)
         return btn
     end
 
-    local MinimizeBtn = createWindowButton("rbxassetid://6031091004", function()
+    -- 使用标准的 WindUI 图标 ID
+    local MinimizeBtn = createWindowButton("rbxassetid://6031090995", function()  -- 减号
         MainFrame.Visible = false
     end)
 
     local isMaximized = false
     local originalSize, originalPosition  
-    local ResizeBtn = createWindowButton("rbxassetid://18865373378", function()
+    local ResizeBtn = createWindowButton("rbxassetid://6031091005", function()  -- 方框
         if not isMaximized then
             originalSize = MainFrame.Size
             originalPosition = MainFrame.Position
@@ -339,7 +340,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    local CloseBtn = createWindowButton("rbxassetid://9431747129", function()
+    local CloseBtn = createWindowButton("rbxassetid://6031090998", function()  -- X
         ScreenGui:Destroy()
     end)
 
