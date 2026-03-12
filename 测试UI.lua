@@ -157,7 +157,7 @@ function Fenglib:SetRainbowType(val) RainbowType = val end
 function Fenglib:SetSFXEnabled(state) SFXEnabled = state end
 
 -- ==============================
--- 创建窗口（Bento风格，窗口大小500x299，Tab图标恢复原样，按钮完全模仿WindUI样式）
+-- 创建窗口（Bento风格，窗口大小500x299，Tab图标恢复原样，最小化和关闭用文字，最大化用图标）
 -- ==============================
 function Fenglib:CreateWindow(Config)
     local Window = {}
@@ -262,7 +262,7 @@ function Fenglib:CreateWindow(Config)
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- ========== WindUI 风格窗口控制按钮（完全模仿 WindUI 样式） ==========
+    -- ========== WindUI 风格窗口控制按钮（最小化和关闭用文字，最大化用图标） ==========
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
     ButtonGroup.Size = UDim2.new(0, 118, 1, 0)
@@ -301,14 +301,74 @@ function Fenglib:CreateWindow(Config)
         return frame
     end
 
-    local function createWindowButton(iconAsset, callback)
+    -- 创建文字按钮
+    local function createTextButton(textSymbol, callback)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 36, 0, 36)
+        btn.Text = textSymbol
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 20
+        btn.TextColor3 = Color3.new(1, 1, 1)
+        btn.BackgroundTransparency = 1
+        btn.Parent = ButtonGroup
+
+        -- 背景圆角矩形
+        local bg = NewRoundFrame(9, "Squircle", {
+            Size = UDim2.new(1, 0, 1, 0),
+            ImageTransparency = 0.95,
+            ImageColor3 = Color3.new(1, 1, 1),
+            Parent = btn
+        })
+
+        -- 渐变边框
+        local outline = NewRoundFrame(9, "SquircleOutline", {
+            Size = UDim2.new(1, 0, 1, 0),
+            ImageTransparency = 1,
+            ImageColor3 = Color3.new(1, 1, 1),
+            Parent = btn
+        })
+        local gradient = Instance.new("UIGradient")
+        gradient.Rotation = 45
+        gradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 255, 255))
+        })
+        gradient.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0.0, 0.1),
+            NumberSequenceKeypoint.new(0.5, 1),
+            NumberSequenceKeypoint.new(1.0, 0.1)
+        })
+        gradient.Parent = outline
+
+        local function onHover()
+            Tween(bg, {ImageTransparency = 0.8}, 0.2)
+            Tween(outline, {ImageTransparency = 0.75}, 0.2)
+        end
+        local function onLeave()
+            Tween(bg, {ImageTransparency = 0.95}, 0.2)
+            Tween(outline, {ImageTransparency = 1}, 0.2)
+        end
+
+        btn.MouseEnter:Connect(onHover)
+        btn.MouseLeave:Connect(onLeave)
+        btn.MouseButton1Click:Connect(function()
+            PlaySound(Sounds.Click)
+            callback()
+        end)
+
+        return btn
+    end
+
+    -- 创建图标按钮
+    local function createIconButton(iconAsset, callback)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, 36, 0, 36)
         btn.Text = ""
         btn.BackgroundTransparency = 1
         btn.Parent = ButtonGroup
 
-        -- 按钮背景（圆角矩形）
+        -- 背景圆角矩形
         local bg = NewRoundFrame(9, "Squircle", {
             Size = UDim2.new(1, 0, 1, 0),
             ImageTransparency = 0.95,
@@ -366,14 +426,14 @@ function Fenglib:CreateWindow(Config)
         return btn
     end
 
-    -- 使用正确的 WindUI 图标 ID
-    local MinimizeBtn = createWindowButton("rbxassetid://6031090995", function()  -- 减号
+    -- 创建按钮
+    local MinimizeBtn = createTextButton("—", function()
         MainFrame.Visible = false
     end)
 
     local isMaximized = false
     local originalSize, originalPosition  
-    local ResizeBtn = createWindowButton("rbxassetid://6031091005", function()  -- 方框
+    local ResizeBtn = createIconButton("rbxassetid://6031090998", function()  -- 最大化使用图标
         if not isMaximized then
             originalSize = MainFrame.Size
             originalPosition = MainFrame.Position
@@ -387,7 +447,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    local CloseBtn = createWindowButton("rbxassetid://6031090998", function()  -- X
+    local CloseBtn = createTextButton("✕", function()
         ScreenGui:Destroy()
     end)
 
