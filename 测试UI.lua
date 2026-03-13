@@ -432,10 +432,10 @@ function Fenglib:CreateWindow(Config)
         MainFrame.Visible = false
     end)
 
-    local resizerVisible = true  -- 手柄初始可见
+    local resizerVisible = false  -- 手柄初始隐藏且禁用
     local MaximizeBtn = createIconButton("rbxassetid://6031090998", function()  -- 使用最大化图标
         resizerVisible = not resizerVisible
-        Resizer.Visible = resizerVisible  -- Resizer 是右下角手柄的变量名
+        Resizer.Visible = resizerVisible  -- 控制手柄显示/隐藏，隐藏时无法交互
     end)
 
     local CloseBtn = createTextButton("X", function()
@@ -561,7 +561,7 @@ function Fenglib:CreateWindow(Config)
     Resizer.ImageRectSize = Vector2.new(36, 36)
     Resizer.ImageColor3 = CurrentTheme.Accent
     Resizer.ZIndex = 10  -- 确保在最上层
-    Resizer.Visible = resizerVisible  -- 初始状态与变量一致
+    Resizer.Visible = resizerVisible  -- 初始状态隐藏
 
     local isResizing = false
     local resizeStart = Vector2.new(0,0)
