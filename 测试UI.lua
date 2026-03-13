@@ -561,7 +561,7 @@ function Fenglib:CreateWindow(Config)
     Resizer.ImageRectSize = Vector2.new(36, 36)
     Resizer.ImageColor3 = CurrentTheme.Accent
     Resizer.ZIndex = 10  -- 确保在最上层
-    Resizer.Visible = resizerVisible  -- 初始状态隐藏
+    Resizer.Visible = resizerVisible  -- 初始状态与变量一致
 
     local isResizing = false
     local resizeStart = Vector2.new(0,0)
