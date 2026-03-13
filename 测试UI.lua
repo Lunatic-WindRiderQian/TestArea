@@ -427,21 +427,6 @@ function Fenglib:CreateWindow(Config)
         return btn
     end
 
-    -- 创建按钮
-    local MinimizeBtn = createTextButton("-", function()
-        MainFrame.Visible = false
-    end)
-
-    local resizerVisible = false  -- 手柄初始隐藏且禁用
-    local MaximizeBtn = createIconButton("rbxassetid://6031090998", function()  -- 使用最大化图标
-        resizerVisible = not resizerVisible
-        Resizer.Visible = resizerVisible  -- 控制手柄显示/隐藏，隐藏时无法交互
-    end)
-
-    local CloseBtn = createTextButton("X", function()
-        ScreenGui:Destroy()
-    end)
-
     -- ============================================
 
     local TitleLabel = Instance.new("TextLabel")
@@ -561,7 +546,6 @@ function Fenglib:CreateWindow(Config)
     Resizer.ImageRectSize = Vector2.new(36, 36)
     Resizer.ImageColor3 = CurrentTheme.Accent
     Resizer.ZIndex = 10  -- 确保在最上层
-    Resizer.Visible = resizerVisible  -- 初始状态与变量一致
 
     local isResizing = false
     local resizeStart = Vector2.new(0,0)
@@ -591,6 +575,25 @@ function Fenglib:CreateWindow(Config)
     end)
 
     -- ==============================
+    -- 窗口控制按钮（放在 Resizer 定义之后，确保回调中能访问 Resizer）
+    -- ==============================
+    local MinimizeBtn = createTextButton("-", function()
+        MainFrame.Visible = false
+    end)
+
+    local resizerVisible = false  -- 手柄初始隐藏且禁用
+    Resizer.Visible = resizerVisible  -- 同步初始状态
+
+    local MaximizeBtn = createIconButton("rbxassetid://6031090998", function()  -- 使用最大化图标
+        resizerVisible = not resizerVisible
+        Resizer.Visible = resizerVisible  -- 控制手柄显示/隐藏，隐藏时无法交互
+    end)
+
+    local CloseBtn = createTextButton("X", function()
+        ScreenGui:Destroy()
+    end)
+
+    -- ============================================
 
     -- 窗口打开动画（尺寸从0渐变为当前大小）
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)  -- 初始打开大小
