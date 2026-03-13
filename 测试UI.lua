@@ -104,6 +104,7 @@ ContentProvider:PreloadAsync({
     ColorPickerAssets.Grid,
     "rbxassetid://10709791437",
     "rbxassetid://18865373378",
+    "rbxassetid://3926307971",  -- 调整大小手柄图标
 })
 
 local function PlaySound(id)
@@ -157,7 +158,7 @@ function Fenglib:SetRainbowType(val) RainbowType = val end
 function Fenglib:SetSFXEnabled(state) SFXEnabled = state end
 
 -- ==============================
--- 创建窗口（Bento风格，窗口大小500x299，Tab图标恢复原样，最小化和关闭用文字，最大化用图标）
+-- 创建窗口（Bento风格，窗口大小500x299，最小化和关闭用文字，右下角可调整大小）
 -- ==============================
 function Fenglib:CreateWindow(Config)
     local Window = {}
@@ -262,11 +263,11 @@ function Fenglib:CreateWindow(Config)
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- ========== WindUI 风格窗口控制按钮（最小化和关闭用文字，最大化用图标） ==========
+    -- ========== WindUI 风格窗口控制按钮（最小化和关闭用文字，移除了最大化按钮，替换为右下角调整大小手柄） ==========
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
-    ButtonGroup.Size = UDim2.new(0, 118, 1, 0)
-    ButtonGroup.Position = UDim2.new(1, -128, 0, 0)
+    ButtonGroup.Size = UDim2.new(0, 87, 1, 0)  -- 两个按钮宽度 36+5+36 = 77，加上右边距10，总共87
+    ButtonGroup.Position = UDim2.new(1, -97, 0, 0)  -- 87+10 = 97
     ButtonGroup.BackgroundTransparency = 1
     ButtonGroup.Parent = Topbar
 
@@ -360,91 +361,9 @@ function Fenglib:CreateWindow(Config)
         return btn
     end
 
-    -- 创建图标按钮
-    local function createIconButton(iconAsset, callback)
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 36, 0, 36)
-        btn.Text = ""
-        btn.BackgroundTransparency = 1
-        btn.Parent = ButtonGroup
-
-        -- 背景圆角矩形
-        local bg = NewRoundFrame(9, "Squircle", {
-            Size = UDim2.new(1, 0, 1, 0),
-            ImageTransparency = 0.95,
-            ImageColor3 = Color3.new(1, 1, 1),
-            Parent = btn
-        })
-
-        -- 渐变边框
-        local outline = NewRoundFrame(9, "SquircleOutline", {
-            Size = UDim2.new(1, 0, 1, 0),
-            ImageTransparency = 1,
-            ImageColor3 = Color3.new(1, 1, 1),
-            Parent = btn
-        })
-        local gradient = Instance.new("UIGradient")
-        gradient.Rotation = 45
-        gradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 255, 255))
-        })
-        gradient.Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0.0, 0.1),
-            NumberSequenceKeypoint.new(0.5, 1),
-            NumberSequenceKeypoint.new(1.0, 0.1)
-        })
-        gradient.Parent = outline
-
-        -- 图标
-        local icon = Instance.new("ImageLabel")
-        icon.Size = UDim2.new(0, 18, 0, 18)
-        icon.Position = UDim2.new(0.5, 0, 0.5, 0)
-        icon.AnchorPoint = Vector2.new(0.5, 0.5)
-        icon.BackgroundTransparency = 1
-        icon.Image = iconAsset
-        icon.ImageColor3 = Color3.new(1, 1, 1)
-        icon.Parent = btn
-
-        local function onHover()
-            Tween(bg, {ImageTransparency = 0.8}, 0.2)
-            Tween(outline, {ImageTransparency = 0.75}, 0.2)
-        end
-        local function onLeave()
-            Tween(bg, {ImageTransparency = 0.95}, 0.2)
-            Tween(outline, {ImageTransparency = 1}, 0.2)
-        end
-
-        btn.MouseEnter:Connect(onHover)
-        btn.MouseLeave:Connect(onLeave)
-        btn.MouseButton1Click:Connect(function()
-            PlaySound(Sounds.Click)
-            callback()
-        end)
-
-        return btn
-    end
-
-    -- 创建按钮
+    -- 创建按钮：最小化 和 关闭
     local MinimizeBtn = createTextButton("-", function()
         MainFrame.Visible = false
-    end)
-
-    local isMaximized = false
-    local originalSize, originalPosition  
-    local ResizeBtn = createIconButton("rbxassetid://6031090998", function()  -- 最大化使用图标
-        if not isMaximized then
-            originalSize = MainFrame.Size
-            originalPosition = MainFrame.Position
-            local maxSize = UDim2.new(1, -40, 1, -40)
-            local maxPos = UDim2.new(0.5, 0, 0.5, 0)
-            Tween(MainFrame, {Size = maxSize, Position = maxPos}, 0.4)
-            isMaximized = true
-        else
-            Tween(MainFrame, {Size = originalSize, Position = originalPosition}, 0.4)
-            isMaximized = false
-        end
     end)
 
     local CloseBtn = createTextButton("X", function()
@@ -555,8 +474,53 @@ function Fenglib:CreateWindow(Config)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
-    -- 窗口打开动画（尺寸500x299）
-    Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
+    -- ==============================
+    -- 右下角调整大小手柄（仿 ui(1).lua）
+    -- ==============================
+    local Resizer = Instance.new("ImageButton")
+    Resizer.Name = "WindowResizer"
+    Resizer.Parent = MainFrame
+    Resizer.BackgroundTransparency = 1
+    Resizer.Position = UDim2.new(1, -20, 1, -20)
+    Resizer.Size = UDim2.new(0, 20, 0, 20)
+    Resizer.AnchorPoint = Vector2.new(1, 1)
+    Resizer.Image = "rbxassetid://3926307971"
+    Resizer.ImageRectOffset = Vector2.new(204, 364)
+    Resizer.ImageRectSize = Vector2.new(36, 36)
+    Resizer.ImageColor3 = CurrentTheme.Accent
+    Resizer.ZIndex = 10  -- 确保在最上层
+
+    local isResizing = false
+    local resizeStart = Vector2.new(0,0)
+    local startSize = UDim2.new(0,0,0,0)
+
+    Resizer.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isResizing = true
+            resizeStart = input.Position
+            startSize = MainFrame.Size
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - resizeStart
+            local newWidth = math.max(400, startSize.X.Offset + delta.X)   -- 最小宽度400
+            local newHeight = math.max(250, startSize.Y.Offset + delta.Y) -- 最小高度250
+            MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isResizing = false
+        end
+    end)
+
+    -- ==============================
+
+    -- 窗口打开动画（尺寸从0渐变为当前大小）
+    Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)  -- 初始打开大小
 
     -- 拖动逻辑
     local dragging = false
@@ -599,9 +563,10 @@ function Fenglib:CreateWindow(Config)
         if MainFrame.Visible then
             MainFrame.Visible = false
         else
+            local targetSize = MainFrame.Size  -- 保留当前大小（可能是调整后的）
             MainFrame.Size = UDim2.new(0,0,0,0)
             MainFrame.Visible = true
-            Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.5)
+            Tween(MainFrame, {Size = targetSize}, 0.5)
         end
     end
 
