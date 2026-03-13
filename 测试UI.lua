@@ -532,20 +532,27 @@ function Fenglib:CreateWindow(Config)
     PageContainer.Parent = Content
 
     -- ==============================
-    -- 右下角调整大小手柄（仿 ui(1).lua）
+    -- 右下角调整大小手柄（改为白色半透明边框，距边缘5像素）
     -- ==============================
-    local Resizer = Instance.new("ImageButton")
+    local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
     Resizer.BackgroundTransparency = 1
-    Resizer.Position = UDim2.new(1, -20, 1, -20)
+    Resizer.Position = UDim2.new(1, -5, 1, -5)
     Resizer.Size = UDim2.new(0, 20, 0, 20)
     Resizer.AnchorPoint = Vector2.new(1, 1)
-    Resizer.Image = "rbxassetid://3926307971"
-    Resizer.ImageRectOffset = Vector2.new(204, 364)
-    Resizer.ImageRectSize = Vector2.new(36, 36)
-    Resizer.ImageColor3 = CurrentTheme.Accent
-    Resizer.ZIndex = 10  -- 确保在最上层
+    Resizer.Text = ""
+    Resizer.ZIndex = 10
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 2
+    stroke.Color = Color3.new(1, 1, 1)
+    stroke.Transparency = 0.5
+    stroke.Parent = Resizer
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = Resizer
 
     local isResizing = false
     local resizeStart = Vector2.new(0,0)
