@@ -158,7 +158,7 @@ function Fenglib:SetRainbowType(val) RainbowType = val end
 function Fenglib:SetSFXEnabled(state) SFXEnabled = state end
 
 -- ==============================
--- 创建窗口（Bento风格，窗口大小500x299，最小化和关闭用文字，右下角可调整大小）
+-- 创建窗口（Bento风格，窗口大小500x299，最小化和关闭用文字，最大化图标控制右下角手柄）
 -- ==============================
 function Fenglib:CreateWindow(Config)
     local Window = {}
@@ -263,11 +263,11 @@ function Fenglib:CreateWindow(Config)
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- ========== WindUI 风格窗口控制按钮（最小化和关闭用文字，移除了最大化按钮，替换为右下角调整大小手柄） ==========
+    -- ========== WindUI 风格窗口控制按钮（最小化、最大化（控制手柄）、关闭） ==========
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
-    ButtonGroup.Size = UDim2.new(0, 87, 1, 0)  -- 两个按钮宽度 36+5+36 = 77，加上右边距10，总共87
-    ButtonGroup.Position = UDim2.new(1, -97, 0, 0)  -- 87+10 = 97
+    ButtonGroup.Size = UDim2.new(0, 128, 1, 0)  -- 三个按钮宽度 36*3+5*2 = 118，加上右边距10，总共128
+    ButtonGroup.Position = UDim2.new(1, -138, 0, 0)  -- 128+10 = 138
     ButtonGroup.BackgroundTransparency = 1
     ButtonGroup.Parent = Topbar
 
@@ -302,7 +302,7 @@ function Fenglib:CreateWindow(Config)
         return frame
     end
 
-    -- 创建文字按钮
+    -- 创建文字按钮（用于最小化和关闭）
     local function createTextButton(textSymbol, callback)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, 36, 0, 36)
@@ -361,9 +361,81 @@ function Fenglib:CreateWindow(Config)
         return btn
     end
 
-    -- 创建按钮：最小化 和 关闭
+    -- 创建图标按钮（用于最大化，控制手柄显示/隐藏）
+    local function createIconButton(iconAsset, callback)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 36, 0, 36)
+        btn.Text = ""
+        btn.BackgroundTransparency = 1
+        btn.Parent = ButtonGroup
+
+        -- 背景圆角矩形
+        local bg = NewRoundFrame(9, "Squircle", {
+            Size = UDim2.new(1, 0, 1, 0),
+            ImageTransparency = 0.95,
+            ImageColor3 = Color3.new(1, 1, 1),
+            Parent = btn
+        })
+
+        -- 渐变边框
+        local outline = NewRoundFrame(9, "SquircleOutline", {
+            Size = UDim2.new(1, 0, 1, 0),
+            ImageTransparency = 1,
+            ImageColor3 = Color3.new(1, 1, 1),
+            Parent = btn
+        })
+        local gradient = Instance.new("UIGradient")
+        gradient.Rotation = 45
+        gradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 255, 255))
+        })
+        gradient.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0.0, 0.1),
+            NumberSequenceKeypoint.new(0.5, 1),
+            NumberSequenceKeypoint.new(1.0, 0.1)
+        })
+        gradient.Parent = outline
+
+        -- 图标
+        local icon = Instance.new("ImageLabel")
+        icon.Size = UDim2.new(0, 18, 0, 18)
+        icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+        icon.AnchorPoint = Vector2.new(0.5, 0.5)
+        icon.BackgroundTransparency = 1
+        icon.Image = iconAsset
+        icon.ImageColor3 = Color3.new(1, 1, 1)
+        icon.Parent = btn
+
+        local function onHover()
+            Tween(bg, {ImageTransparency = 0.8}, 0.2)
+            Tween(outline, {ImageTransparency = 0.75}, 0.2)
+        end
+        local function onLeave()
+            Tween(bg, {ImageTransparency = 0.95}, 0.2)
+            Tween(outline, {ImageTransparency = 1}, 0.2)
+        end
+
+        btn.MouseEnter:Connect(onHover)
+        btn.MouseLeave:Connect(onLeave)
+        btn.MouseButton1Click:Connect(function()
+            PlaySound(Sounds.Click)
+            callback()
+        end)
+
+        return btn
+    end
+
+    -- 创建按钮
     local MinimizeBtn = createTextButton("-", function()
         MainFrame.Visible = false
+    end)
+
+    local resizerVisible = true  -- 手柄初始可见
+    local MaximizeBtn = createIconButton("rbxassetid://6031090998", function()  -- 使用最大化图标
+        resizerVisible = not resizerVisible
+        Resizer.Visible = resizerVisible  -- Resizer 是右下角手柄的变量名
     end)
 
     local CloseBtn = createTextButton("X", function()
@@ -489,6 +561,7 @@ function Fenglib:CreateWindow(Config)
     Resizer.ImageRectSize = Vector2.new(36, 36)
     Resizer.ImageColor3 = CurrentTheme.Accent
     Resizer.ZIndex = 10  -- 确保在最上层
+    Resizer.Visible = resizerVisible  -- 初始状态与变量一致
 
     local isResizing = false
     local resizeStart = Vector2.new(0,0)
