@@ -532,23 +532,22 @@ function Fenglib:CreateWindow(Config)
     PageContainer.Parent = Content
 
     -- ==============================
-    -- 右下角调整大小手柄（增强可见性：白色不透明边框，半透明背景，尺寸24x24，位于窗口外部5像素，默认隐藏）
+    -- 右下角调整大小手柄（纯白色边框，无填充，位于窗口外部5像素，默认隐藏）
     -- ==============================
     MainFrame.ClipsDescendants = false  -- 允许子元素超出窗口范围
 
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
-    Resizer.BackgroundTransparency = 0.8  -- 半透明背景，更易察觉
-    Resizer.BackgroundColor3 = Color3.new(1, 1, 1)
+    Resizer.BackgroundTransparency = 1  -- 完全透明，只有边框
     Resizer.Position = UDim2.new(1, 5, 1, 5)  -- 锚点右下角，向右下偏移5像素（外部）
-    Resizer.Size = UDim2.new(0, 24, 0, 24)  -- 稍微增大尺寸
+    Resizer.Size = UDim2.new(0, 24, 0, 24)  -- 24x24 方便点击
     Resizer.AnchorPoint = Vector2.new(1, 1)
     Resizer.Text = ""
-    Resizer.ZIndex = 30  -- 提高层级，确保不被覆盖
+    Resizer.ZIndex = 30
     Resizer.Visible = false  -- 默认隐藏
 
-    -- 白色不透明边框，更明显
+    -- 白色不透明边框
     local stroke = Instance.new("UIStroke")
     stroke.Thickness = 4
     stroke.Color = Color3.new(1, 1, 1)
@@ -594,7 +593,7 @@ function Fenglib:CreateWindow(Config)
         MainFrame.Visible = false
     end)
 
-    local resizerVisible = false  -- 手柄初始隐藏
+    local resizerVisible = false
     Resizer.Visible = resizerVisible
 
     local MaximizeBtn = createIconButton("rbxassetid://6031090998", function()
