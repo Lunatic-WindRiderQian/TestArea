@@ -181,7 +181,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Size = UDim2.new(0, 0, 0, 0) 
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    MainFrame.ClipsDescendants = true
+    MainFrame.ClipsDescendants = false  -- 允许子元素超出窗口范围（用于外部调整手柄）
     MainFrame.BackgroundTransparency = 0.05
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
@@ -532,17 +532,19 @@ function Fenglib:CreateWindow(Config)
     PageContainer.Parent = Content
 
     -- ==============================
-    -- 右下角调整大小手柄（白色半透明边框，距边缘5像素，默认显示）
+    -- 右下角调整大小手柄（白色半透明边框，距窗口外部5像素）
     -- ==============================
+    MainFrame.ClipsDescendants = false  -- 允许子元素超出窗口范围
+
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
     Resizer.BackgroundTransparency = 1
-    Resizer.Position = UDim2.new(1, -5, 1, -5)
+    Resizer.Position = UDim2.new(1, 5, 1, 5)  -- 锚点右下角，向右下偏移5像素（外部）
     Resizer.Size = UDim2.new(0, 20, 0, 20)
     Resizer.AnchorPoint = Vector2.new(1, 1)
     Resizer.Text = ""
-    Resizer.ZIndex = 10
+    Resizer.ZIndex = 20  -- 提高层级，确保不被覆盖
     Resizer.Visible = true
 
     -- 白色半透明边框
