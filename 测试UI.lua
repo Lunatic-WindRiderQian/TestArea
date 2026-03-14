@@ -158,7 +158,7 @@ function Fenglib:SetRainbowType(val) RainbowType = val end
 function Fenglib:SetSFXEnabled(state) SFXEnabled = state end
 
 -- ==============================
--- 创建窗口（Bento风格，窗口大小500x299，最小化和关闭用文字，最大化图标保留但无功能）
+-- 创建窗口（Bento风格，窗口大小500x299，最小化和关闭用文字，最大化图标控制右下角手柄）
 -- ==============================
 function Fenglib:CreateWindow(Config)
     local Window = {}
@@ -263,7 +263,7 @@ function Fenglib:CreateWindow(Config)
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- ========== WindUI 风格窗口控制按钮（最小化、最大化（无功能）、关闭） ==========
+    -- ========== WindUI 风格窗口控制按钮（最小化、最大化（控制手柄）、关闭） ==========
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
     ButtonGroup.Size = UDim2.new(0, 128, 1, 0)  -- 三个按钮宽度 36*3+5*2 = 118，加上右边距10，总共128
@@ -361,7 +361,7 @@ function Fenglib:CreateWindow(Config)
         return btn
     end
 
-    -- 创建图标按钮（用于最大化，现在无功能）
+    -- 创建图标按钮（用于最大化，控制手柄显示/隐藏）
     local function createIconButton(iconAsset, callback)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, 36, 0, 36)
@@ -532,7 +532,7 @@ function Fenglib:CreateWindow(Config)
     PageContainer.Parent = Content
 
     -- ==============================
-    -- 右下角调整大小手柄（白色半透明边框，距窗口外部5像素）
+    -- 右下角调整大小手柄（白色半透明边框，距窗口外部5像素，默认隐藏，由最大化按钮控制）
     -- ==============================
     MainFrame.ClipsDescendants = false  -- 允许子元素超出窗口范围
 
@@ -544,8 +544,8 @@ function Fenglib:CreateWindow(Config)
     Resizer.Size = UDim2.new(0, 20, 0, 20)
     Resizer.AnchorPoint = Vector2.new(1, 1)
     Resizer.Text = ""
-    Resizer.ZIndex = 20  -- 提高层级，确保不被覆盖
-    Resizer.Visible = true
+    Resizer.ZIndex = 20
+    Resizer.Visible = false  -- 默认隐藏
 
     -- 白色半透明边框
     local stroke = Instance.new("UIStroke")
@@ -593,9 +593,12 @@ function Fenglib:CreateWindow(Config)
         MainFrame.Visible = false
     end)
 
-    -- 最大化按钮（原用于控制手柄，现无功能）
+    local resizerVisible = false  -- 手柄初始隐藏
+    Resizer.Visible = resizerVisible
+
     local MaximizeBtn = createIconButton("rbxassetid://6031090998", function()
-        -- 无操作，保留按钮但功能移除
+        resizerVisible = not resizerVisible
+        Resizer.Visible = resizerVisible
     end)
 
     local CloseBtn = createTextButton("X", function()
