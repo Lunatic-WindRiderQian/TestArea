@@ -1906,6 +1906,9 @@ function Fenglib:CreateWindow(Config)
         return DualElements
     end
 
+    -- 【关键修改】将 ConfigObjects 挂载到 Window 对象上，供外部保存/加载使用
+    Window.ConfigObjects = ConfigObjects
+
     return Window
 end
 
