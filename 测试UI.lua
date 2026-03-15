@@ -1804,7 +1804,7 @@ function Fenglib:CreateWindow(Config)
     end
 
     -- ==============================
-    -- 普通标签页
+    -- 普通标签页（动画已替换为M0DZN风格）
     -- ==============================
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
@@ -1813,6 +1813,16 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Text = ""
         TabBtn.Parent = TabContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
+
+        -- 左侧指示条（M0DZN风格）
+        local TabBar = Instance.new("Frame")
+        TabBar.Size = UDim2.new(0, 3, 0.65, 0)
+        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
+        TabBar.BackgroundTransparency = 1
+        TabBar.BorderSizePixel = 0
+        TabBar.Parent = TabBtn
+        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
+        AddToRegistry(TabBar, "BackgroundColor3", "Accent")
 
         local ContentFrame = Instance.new("Frame")
         ContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -1852,10 +1862,22 @@ function Fenglib:CreateWindow(Config)
         TabText.BackgroundTransparency = 1
         TabText.Font = Enum.Font.GothamMedium
         TabText.Text = name
-        TabText.TextColor3 = Color3.fromRGB(150, 150, 150)
+        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)  -- 未选中灰色
         TabText.TextSize = 14
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
+
+        -- 鼠标悬停效果（M0DZN风格）
+        TabBtn.MouseEnter:Connect(function()
+            if TabBar.BackgroundTransparency ~= 0 then
+                Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
+            end
+        end)
+        TabBtn.MouseLeave:Connect(function()
+            if TabBar.BackgroundTransparency ~= 0 then
+                Tween(TabText, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
+            end
+        end)
 
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
@@ -1888,30 +1910,45 @@ function Fenglib:CreateWindow(Config)
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         task.spawn(function() task.wait(); updateCanvas() end)
 
+        -- 点击动画（M0DZN风格）
         TabBtn.MouseButton1Click:Connect(function()
-            for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
+            -- 隐藏所有页面
+            for _, v in pairs(PageContainer:GetChildren()) do
+                v.Visible = false
+            end
+            -- 将所有标签按钮重置为未选中状态
             for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
-                    Tween(v, {BackgroundTransparency = 1})
+                    Tween(v, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})  -- 背景恢复透明
+                    -- 查找按钮内的文字标签和指示条
                     local content = v:FindFirstChild("ContentFrame")
                     if content then
                         local textLabel = content:FindFirstChildOfClass("TextLabel")
                         if textLabel then
-                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150,150,150)})
+                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
                         end
+                    end
+                    local bar = v:FindFirstChildOfClass("Frame")  -- 即左侧指示条
+                    if bar then
+                        Tween(bar, {BackgroundTransparency = 1})
                     end
                 end
             end
+            -- 显示当前页面
             Page.Visible = true
+            -- 设置当前按钮为选中状态
             Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
             Tween(TabText, {TextColor3 = CurrentTheme.Text})
+            Tween(TabBar, {BackgroundTransparency = 0})
         end)
 
         if firstTab then
             firstTab = false
             Page.Visible = true
-            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
-            Tween(TabText, {TextColor3 = CurrentTheme.Text})
+            TabBtn.BackgroundTransparency = 0.05
+            TabBtn.BackgroundColor3 = CurrentTheme.Top
+            TabText.TextColor3 = CurrentTheme.Text
+            TabBar.BackgroundTransparency = 0
         end
 
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
@@ -1926,7 +1963,7 @@ function Fenglib:CreateWindow(Config)
     end
 
     -- ==============================
-    -- 双列标签页
+    -- 双列标签页（动画已替换为M0DZN风格）
     -- ==============================
     function Window:DualTab(name, icon)
         local TabBtn = Instance.new("TextButton")
@@ -1935,6 +1972,16 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Text = ""
         TabBtn.Parent = TabContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
+
+        -- 左侧指示条（M0DZN风格）
+        local TabBar = Instance.new("Frame")
+        TabBar.Size = UDim2.new(0, 3, 0.65, 0)
+        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
+        TabBar.BackgroundTransparency = 1
+        TabBar.BorderSizePixel = 0
+        TabBar.Parent = TabBtn
+        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
+        AddToRegistry(TabBar, "BackgroundColor3", "Accent")
 
         local ContentFrame = Instance.new("Frame")
         ContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -1974,10 +2021,22 @@ function Fenglib:CreateWindow(Config)
         TabText.BackgroundTransparency = 1
         TabText.Font = Enum.Font.GothamMedium
         TabText.Text = name
-        TabText.TextColor3 = Color3.fromRGB(150,150,150)
+        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)
         TabText.TextSize = 14
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
+
+        -- 鼠标悬停效果
+        TabBtn.MouseEnter:Connect(function()
+            if TabBar.BackgroundTransparency ~= 0 then
+                Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
+            end
+        end)
+        TabBtn.MouseLeave:Connect(function()
+            if TabBar.BackgroundTransparency ~= 0 then
+                Tween(TabText, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
+            end
+        end)
 
         local PageFrame = Instance.new("Frame")
         PageFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2065,30 +2124,40 @@ function Fenglib:CreateWindow(Config)
         RightList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightCanvas)
         task.spawn(function() task.wait(); updateLeftCanvas(); updateRightCanvas() end)
 
+        -- 点击动画（M0DZN风格）
         TabBtn.MouseButton1Click:Connect(function()
-            for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
+            for _, v in pairs(PageContainer:GetChildren()) do
+                v.Visible = false
+            end
             for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
-                    Tween(v, {BackgroundTransparency = 1})
+                    Tween(v, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})
                     local content = v:FindFirstChild("ContentFrame")
                     if content then
                         local textLabel = content:FindFirstChildOfClass("TextLabel")
                         if textLabel then
-                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150,150,150)})
+                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
                         end
+                    end
+                    local bar = v:FindFirstChildOfClass("Frame")
+                    if bar then
+                        Tween(bar, {BackgroundTransparency = 1})
                     end
                 end
             end
             PageFrame.Visible = true
             Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
             Tween(TabText, {TextColor3 = CurrentTheme.Text})
+            Tween(TabBar, {BackgroundTransparency = 0})
         end)
 
         if firstTab then
             firstTab = false
             PageFrame.Visible = true
-            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
-            Tween(TabText, {TextColor3 = CurrentTheme.Text})
+            TabBtn.BackgroundTransparency = 0.05
+            TabBtn.BackgroundColor3 = CurrentTheme.Top
+            TabText.TextColor3 = CurrentTheme.Text
+            TabBar.BackgroundTransparency = 0
         end
 
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
