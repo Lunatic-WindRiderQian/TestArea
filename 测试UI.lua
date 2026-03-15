@@ -1293,11 +1293,12 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 颜色选择器 (Colorpicker) - 完整替换为 M0DZN 实现
+        -- 颜色选择器 - 完整 M0DZN 实现（修复点击问题）
         child.Colorpicker = function(_, pickerText, default, callback)
             local Color = default or Color3.fromRGB(255,255,255)
             local h, s, v = Color3.toHSV(Color)
 
+            -- 主容器 Tile
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentContainer
@@ -1305,12 +1306,14 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 12)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
+            -- 可点击区域（覆盖整个 Tile）
             local ClickBtn = Instance.new("TextButton")
             ClickBtn.Size = UDim2.new(1, 0, 1, 0)
             ClickBtn.BackgroundTransparency = 1
             ClickBtn.Text = ""
             ClickBtn.Parent = Tile
 
+            -- 标题
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = pickerText
             TitleLbl.Size = UDim2.new(0.7, 0, 1, 0)
@@ -1322,6 +1325,7 @@ function Fenglib:CreateWindow(Config)
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
+            -- 当前颜色预览色块
             local Swatch = Instance.new("Frame")
             Swatch.Size = UDim2.new(0, 32, 0, 22)
             Swatch.Position = UDim2.new(1, -46, 0.5, -11)
@@ -1334,7 +1338,7 @@ function Fenglib:CreateWindow(Config)
             SwStroke.Parent = Swatch
             AddToRegistry(SwStroke, "Color", "Stroke")
 
-            -- 颜色选择器面板（浮动在 ScreenGui 上）
+            -- 弹出面板（放在 ScreenGui 顶层）
             local Panel = Instance.new("Frame")
             Panel.Size = UDim2.new(0, 0, 0, 0)
             Panel.Visible = false
@@ -1353,6 +1357,7 @@ function Fenglib:CreateWindow(Config)
 
             local pickerOpen = false
 
+            -- 色相-饱和度选择区
             local SVBox = Instance.new("ImageLabel")
             SVBox.Size = UDim2.new(0, 200, 0, 150)
             SVBox.Position = UDim2.new(0, 10, 0, 10)
@@ -1374,6 +1379,7 @@ function Fenglib:CreateWindow(Config)
             DotStroke.Color = Color3.fromRGB(80, 80, 80)
             DotStroke.Parent = SVDot
 
+            -- 色相条
             local HueBar = Instance.new("Frame")
             HueBar.Size = UDim2.new(0, 20, 0, 150)
             HueBar.Position = UDim2.new(1, -40, 0, 10)
@@ -1404,6 +1410,7 @@ function Fenglib:CreateWindow(Config)
             HueDot.Parent = HueBar
             Instance.new("UICorner", HueDot).CornerRadius = UDim.new(1, 0)
 
+            -- RGB 输入行
             local RGBRow = Instance.new("Frame")
             RGBRow.Size = UDim2.new(1, -20, 0, 28)
             RGBRow.Position = UDim2.new(0, 10, 0, 170)
@@ -1491,6 +1498,7 @@ function Fenglib:CreateWindow(Config)
             GBox.FocusLost:Connect(OnRGBInput)
             BBox.FocusLost:Connect(OnRGBInput)
 
+            -- 拖动事件
             local svDragging = false
             local SVBtn = Instance.new("TextButton")
             SVBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -1542,12 +1550,13 @@ function Fenglib:CreateWindow(Config)
                 end
             end)
 
+            -- 点击主按钮打开/关闭面板
             ClickBtn.MouseButton1Click:Connect(function()
                 pickerOpen = not pickerOpen
                 if pickerOpen then
-                    Panel.Position = UDim2.new(0.5, -150, 0.5, -100)
                     Panel.Visible = true
                     Tween(Panel, {Size = UDim2.new(0, 300, 0, 220)}, 0.32)
+                    Panel.Position = UDim2.new(0.5, -150, 0.5, -110) -- 居中
                 else
                     Tween(Panel, {Size = UDim2.new(0, 0, 0, 0)}, 0.28)
                     task.wait(0.3)
