@@ -977,7 +977,7 @@ function Fenglib:CreateWindow(Config)
             local Num = Instance.new("TextBox")
             Num.Text = tostring(Val)
             Num.Size = UDim2.new(0, numW, 0, 22)
-            Num.Position = UDim2.new(1, -(numW + 10), 0, unlimited and 10 or 9)
+            Num.Position = UDim2.new(1, -(numW + 10), 0, unlimited and 11 or 9)
             Num.BackgroundTransparency = 0.08
             Num.Font = Enum.Font.GothamBold
             Num.TextSize = 12
@@ -1293,7 +1293,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 颜色选择器 - 完整 M0DZN 实现（修复点击问题）
+        -- 颜色选择器 - 完整 M0DZN 实现（移植自 M0DZN.lua，保留测试 UI 弹出面板风格）
         child.Colorpicker = function(_, pickerText, default, callback)
             local Color = default or Color3.fromRGB(255,255,255)
             local h, s, v = Color3.toHSV(Color)
