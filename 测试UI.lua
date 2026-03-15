@@ -824,7 +824,7 @@ function Fenglib:CreateWindow(Config)
 
         local child = {}
 
-        -- 按钮
+        -- 按钮 (Button) - 替换为 M0DZN 风格，移除图标动画，仅保留背景透明度变化
         child.Button = function(_, btnText, callback)
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
@@ -847,6 +847,7 @@ function Fenglib:CreateWindow(Config)
             TextLabel.Parent = Btn
             AddToRegistry(TextLabel, "TextColor3", "Text")
 
+            -- 保留箭头图标，但移除悬停动画
             local Icon = Instance.new("ImageLabel")
             Icon.Size = UDim2.new(0, 15, 0, 15)
             Icon.Position = UDim2.new(1, -25, 0.5, -7.5)
@@ -856,19 +857,17 @@ function Fenglib:CreateWindow(Config)
             Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Text")
 
-            local function onHover()
-                Tween(Icon, {ImageTransparency = 0}, 0.2)
-            end
-            local function onLeave()
-                Tween(Icon, {ImageTransparency = 0.5}, 0.2)
-            end
-
-            Btn.MouseEnter:Connect(onHover)
-            Btn.MouseLeave:Connect(onLeave)
+            -- 悬停仅改变背景透明度 (M0DZN风格)
+            Btn.MouseEnter:Connect(function()
+                Tween(Btn, {BackgroundTransparency = 0.00}, 0.18)
+            end)
+            Btn.MouseLeave:Connect(function()
+                Tween(Btn, {BackgroundTransparency = 0.05}, 0.18)
+            end)
 
             Btn.MouseButton1Click:Connect(function()
-                Tween(Btn, {Size = UDim2.new(0.97, 0, 0, 38)}, 0.15)
-                task.wait(0.15)
+                Tween(Btn, {Size = UDim2.new(0.97, 0, 0, 38)}, 0.1)
+                task.wait(0.1)
                 Tween(Btn, {Size = UDim2.new(1, 0, 0, 42)}, 0.15)
                 callback()
             end)
@@ -879,7 +878,7 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 开关 (Toggle) - M0DZN 实现
+        -- 开关 (Toggle) - 已来自 M0DZN
         child.Toggle = function(_, toggleText, default, callback)
             local Enabled = default or false
 
@@ -951,7 +950,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 滑块 (Slider) - M0DZN 实现（支持无限模式）
+        -- 滑块 (Slider) - 已来自 M0DZN
         child.Slider = function(_, sliderText, min, max, default, callback, options)
             options = options or {}
             local unlimited = (min == nil and max == nil)
@@ -1113,11 +1112,10 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 下拉菜单 (Dropdown) - 整合UI.lua的核心实现（保留测试UI样式）
+        -- 下拉菜单 (Dropdown) - 替换为 M0DZN 实现，移除 InternalNotif
         child.Dropdown = function(_, dropText, options, callback)
             local Dropped = false
             local Selected = options[1] or ""
-            local optionsCount = #options
 
             -- 主按钮
             local Btn = Instance.new("TextButton")
@@ -1201,7 +1199,6 @@ function Fenglib:CreateWindow(Config)
                     if v:IsA("TextButton") then v:Destroy() end
                 end
 
-                optionsCount = #newOpts
                 for _, opt in pairs(newOpts) do
                     local O = Instance.new("TextButton")
                     O.Size = UDim2.new(1, 0, 0, 34)
@@ -1239,7 +1236,7 @@ function Fenglib:CreateWindow(Config)
                 Dropped = not Dropped
                 if Dropped then
                     Container.Visible = true
-                    local targetHeight = optionsCount * 34
+                    local targetHeight = #Container:GetChildren() * 34
                     Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.32)
                     Tween(Icon, {Rotation = 180}, 0.32)
                 else
@@ -1263,7 +1260,7 @@ function Fenglib:CreateWindow(Config)
             return {Refresh = RefreshOptions, Reset = ResetDropdown}
         end
 
-        -- 快捷键 (Keybind) - M0DZN 实现
+        -- 快捷键 (Keybind) - 已来自 M0DZN
         child.Keybind = function(_, keyText, default, callback)
             local Key = default or Enum.KeyCode.M
             local Tile = Instance.new("Frame")
@@ -1322,7 +1319,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 颜色选择器 (ColorPicker) - 从M0DZN移植
+        -- 颜色选择器 (ColorPicker) - 已来自 M0DZN
         child.ColorPicker = function(_, text, default, callback)
             local Color = default or Color3.fromRGB(255, 255, 255)
             local h, s, v = Color3.toHSV(Color)
@@ -1621,19 +1618,19 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 文本输入框
+        -- 文本输入框 (Textbox) - 替换为 M0DZN 实现
         child.Textbox = function(_, boxText, placeholder, callback)
             local Frame = Instance.new("Frame")
-            Frame.Size = UDim2.new(1,0,0,70)
+            Frame.Size = UDim2.new(1, 0, 0, 70)
             Frame.Parent = contentContainer
             Frame.BackgroundTransparency = 0.05
-            Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,12)
+            Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 12)
             AddToRegistry(Frame, "BackgroundColor3", "Top")
 
             local Lbl = Instance.new("TextLabel")
             Lbl.Text = boxText
-            Lbl.Size = UDim2.new(1,0,0,20)
-            Lbl.Position = UDim2.new(0,15,0,10)
+            Lbl.Size = UDim2.new(1, 0, 0, 20)
+            Lbl.Position = UDim2.new(0, 15, 0, 10)
             Lbl.BackgroundTransparency = 1
             Lbl.Font = Enum.Font.GothamMedium
             Lbl.TextSize = 13
@@ -1642,25 +1639,29 @@ function Fenglib:CreateWindow(Config)
             AddToRegistry(Lbl, "TextColor3", "Text")
 
             local Box = Instance.new("TextBox")
-            Box.Size = UDim2.new(1,-30,0,28)
-            Box.Position = UDim2.new(0,15,0,35)
+            Box.Size = UDim2.new(1, -30, 0, 28)
+            Box.Position = UDim2.new(0, 15, 0, 35)
             Box.Text = ""
             Box.PlaceholderText = placeholder
             Box.Font = Enum.Font.GothamMedium
             Box.TextSize = 12
             Box.Parent = Frame
             Box.BackgroundTransparency = 0.1
-            Instance.new("UICorner", Box).CornerRadius = UDim.new(0,6)
+            Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 6)
             AddToRegistry(Box, "BackgroundColor3", "Main")
             AddToRegistry(Box, "TextColor3", "Text")
 
-            local boxStroke = Instance.new("UIStroke")
-            boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-            boxStroke.Color = CurrentTheme.Stroke
-            boxStroke.Transparency = 0.6
-            boxStroke.Parent = Box
+            local BoxStroke = Instance.new("UIStroke")
+            BoxStroke.Thickness = 1
+            BoxStroke.Transparency = 0.75
+            BoxStroke.Parent = Box
+            AddToRegistry(BoxStroke, "Color", "Stroke")
 
+            Box.Focused:Connect(function()
+                Tween(BoxStroke, {Transparency = 0.2}, 0.15)
+            end)
             Box.FocusLost:Connect(function()
+                Tween(BoxStroke, {Transparency = 0.75}, 0.15)
                 ConfigObjects[boxText].Value = Box.Text
                 callback(Box.Text)
             end)
@@ -1668,7 +1669,7 @@ function Fenglib:CreateWindow(Config)
             ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
-        -- 输入框（带选项，例如字符限制、接受类型等）- 你的 Input 元素
+        -- 输入框（带选项，例如字符限制、接受类型等）- 保留，无动画
         child.Input = function(_, inputText, default, callback, options)
             options = options or {}
             local placeholder = options.placeholder or ""; local acceptedCharacters = options.acceptedCharacters or "All"; local characterLimit = options.characterLimit; local onChanged = options.onChanged
@@ -1692,7 +1693,7 @@ function Fenglib:CreateWindow(Config)
             local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
         end
 
-        -- 普通标签
+        -- 普通标签 - 无动画
         child.Label = function(_, labelText)
             local LabelFrame = Instance.new("Frame")
             LabelFrame.Size = UDim2.new(1, 0, 0, 42)
@@ -1719,7 +1720,7 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 副标签
+        -- 副标签 - 无动画
         child.SubLabel = function(_, subLabelText)
             local SubLabelFrame = Instance.new("Frame")
             SubLabelFrame.Size = UDim2.new(1, 0, 0, 42)
@@ -1747,7 +1748,7 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 段落
+        -- 段落 - 无动画
         child.Paragraph = function(_, headerText, bodyText)
             local ParaFrame = Instance.new("Frame")
             ParaFrame.Size = UDim2.new(1, 0, 0, 0)
