@@ -1293,9 +1293,8 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 颜色选择器 (Colorpicker) - M0DZN 实现
-        child.Colorpicker = function(_, pickerText, default, callback, options)
-            options = options or {}
+        -- 颜色选择器 (Colorpicker) - 完整替换为 M0DZN 实现
+        child.Colorpicker = function(_, pickerText, default, callback)
             local Color = default or Color3.fromRGB(255,255,255)
             local h, s, v = Color3.toHSV(Color)
 
@@ -1621,7 +1620,7 @@ function Fenglib:CreateWindow(Config)
             ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
-        -- 输入框（带选项，例如字符限制、接受类型等）
+        -- 输入框（带选项，例如字符限制、接受类型等）- 你的 Input 元素
         child.Input = function(_, inputText, default, callback, options)
             options = options or {}
             local placeholder = options.placeholder or ""; local acceptedCharacters = options.acceptedCharacters or "All"; local characterLimit = options.characterLimit; local onChanged = options.onChanged
