@@ -1113,24 +1113,22 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 下拉菜单 (Dropdown) - M0DZN 实现
+        -- 下拉菜单 (Dropdown) - 整合UI.lua的核心实现（保留测试UI样式）
         child.Dropdown = function(_, dropText, options, callback)
             local Dropped = false
             local Selected = options[1] or ""
+            local optionsCount = #options
 
-            local Tile = Instance.new("Frame")
-            Tile.Size = UDim2.new(1, 0, 0, 42)
-            Tile.Parent = contentContainer
-            Tile.BackgroundTransparency = 0.05
-            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 12)
-            AddToRegistry(Tile, "BackgroundColor3", "Top")
-
+            -- 主按钮
             local Btn = Instance.new("TextButton")
-            Btn.Size = UDim2.new(1, 0, 1, 0)
-            Btn.BackgroundTransparency = 1
+            Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Text = ""
-            Btn.Parent = Tile
+            Btn.BackgroundTransparency = 0.05
+            Btn.Parent = contentContainer
+            Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 12)
+            AddToRegistry(Btn, "BackgroundColor3", "Top")
 
+            -- 标签
             local Lbl = Instance.new("TextLabel")
             Lbl.Text = dropText
             Lbl.Size = UDim2.new(1, -40, 1, 0)
@@ -1139,17 +1137,19 @@ function Fenglib:CreateWindow(Config)
             Lbl.Font = Enum.Font.GothamMedium
             Lbl.TextSize = 13
             Lbl.TextXAlignment = Enum.TextXAlignment.Left
-            Lbl.Parent = Tile
+            Lbl.Parent = Btn
             AddToRegistry(Lbl, "TextColor3", "Text")
 
+            -- 箭头图标
             local Icon = Instance.new("ImageLabel")
             Icon.Image = "rbxassetid://6031091004"
             Icon.Size = UDim2.new(0, 16, 0, 16)
             Icon.Position = UDim2.new(1, -28, 0.5, -8)
             Icon.BackgroundTransparency = 1
-            Icon.Parent = Tile
+            Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Accent")
 
+            -- 下拉选项容器
             local Container = Instance.new("Frame")
             Container.Size = UDim2.new(1, 0, 0, 0)
             Container.Visible = false
@@ -1159,34 +1159,49 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 12)
             AddToRegistry(Container, "BackgroundColor3", "Top")
 
+            -- 容器描边
             local CSt = Instance.new("UIStroke")
             CSt.Thickness = 1
             CSt.Transparency = 0.65
             CSt.Parent = Container
             AddToRegistry(CSt, "Color", "Accent")
 
+            -- 选项布局
             local List = Instance.new("UIListLayout")
             List.SortOrder = Enum.SortOrder.LayoutOrder
             List.Parent = Container
 
-            ConfigObjects[dropText] = {Type = "Dropdown", Value = Selected, Set = function(val) Select(val) end, Refresh = RefreshOptions, Reset = ResetDropdown}
+            -- 配置对象
+            ConfigObjects[dropText] = {
+                Type = "Dropdown",
+                Value = Selected,
+                Set = function(val) Select(val) end,
+                Refresh = RefreshOptions,
+                Reset = ResetDropdown
+            }
 
+            -- 选择某个选项
             local function Select(opt)
                 Dropped = false
                 Selected = opt
                 Lbl.Text = dropText .. "   —   " .. opt
                 ConfigObjects[dropText].Value = opt
                 callback(opt)
+
                 Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
                 Tween(Icon, {Rotation = 0}, 0.28)
                 task.wait(0.3)
                 Container.Visible = false
+                updateSectionHeight(false)
             end
 
+            -- 刷新选项列表
             local function RefreshOptions(newOpts)
                 for _, v in pairs(Container:GetChildren()) do
                     if v:IsA("TextButton") then v:Destroy() end
                 end
+
+                optionsCount = #newOpts
                 for _, opt in pairs(newOpts) do
                     local O = Instance.new("TextButton")
                     O.Size = UDim2.new(1, 0, 0, 34)
@@ -1197,28 +1212,35 @@ function Fenglib:CreateWindow(Config)
                     O.BackgroundTransparency = 1
                     O.Parent = Container
                     O.TextColor3 = CurrentTheme.Text
-                    O.MouseButton1Click:Connect(function() Select(opt) end)
+
                     O.MouseEnter:Connect(function() Tween(O, {TextColor3 = CurrentTheme.Accent}, 0.15) end)
                     O.MouseLeave:Connect(function() Tween(O, {TextColor3 = CurrentTheme.Text}, 0.15) end)
+
+                    O.MouseButton1Click:Connect(function() Select(opt) end)
                 end
             end
             RefreshOptions(options)
 
+            -- 重置下拉菜单
             local function ResetDropdown()
                 Dropped = false
                 Selected = options[1] or ""
                 Lbl.Text = dropText
                 ConfigObjects[dropText].Value = Selected
+
                 Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
                 Tween(Icon, {Rotation = 0}, 0.2)
                 task.delay(0.22, function() Container.Visible = false end)
+                updateSectionHeight(false)
             end
 
+            -- 点击主按钮切换下拉状态
             Btn.MouseButton1Click:Connect(function()
                 Dropped = not Dropped
                 if Dropped then
                     Container.Visible = true
-                    Tween(Container, {Size = UDim2.new(1, 0, 0, #Container:GetChildren() * 34)}, 0.32)
+                    local targetHeight = optionsCount * 34
+                    Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.32)
                     Tween(Icon, {Rotation = 180}, 0.32)
                 else
                     Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
@@ -1226,8 +1248,10 @@ function Fenglib:CreateWindow(Config)
                     task.wait(0.3)
                     Container.Visible = false
                 end
+                updateSectionHeight(false)
             end)
 
+            -- 主题变更时更新选项文字颜色
             table.insert(ThemeListeners, function()
                 for _, O in pairs(Container:GetChildren()) do
                     if O:IsA("TextButton") then
