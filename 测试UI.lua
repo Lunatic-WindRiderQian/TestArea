@@ -1805,7 +1805,7 @@ function Fenglib:CreateWindow(Config)
     end
 
     -- ==============================
-    -- 普通标签页（动画已替换为M0DZN风格）
+    -- 普通标签页（动画已替换为M0DZN风格，修复指示条bug）
     -- ==============================
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
@@ -1815,8 +1815,9 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Parent = TabContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
-        -- 左侧指示条（M0DZN风格）
+        -- 左侧指示条（M0DZN风格）- 命名为 "TabBar"
         local TabBar = Instance.new("Frame")
+        TabBar.Name = "TabBar"  -- 添加名称以便后续查找
         TabBar.Size = UDim2.new(0, 3, 0.65, 0)
         TabBar.Position = UDim2.new(0, 0, 0.175, 0)
         TabBar.BackgroundTransparency = 1
@@ -1868,7 +1869,7 @@ function Fenglib:CreateWindow(Config)
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
 
-        -- 鼠标悬停效果（M0DZN风格）
+        -- 鼠标悬停效果（M0DZN风格）- 只有未选中时改变文字颜色
         TabBtn.MouseEnter:Connect(function()
             if TabBar.BackgroundTransparency ~= 0 then
                 Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
@@ -1911,7 +1912,7 @@ function Fenglib:CreateWindow(Config)
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         task.spawn(function() task.wait(); updateCanvas() end)
 
-        -- 点击动画（M0DZN风格）
+        -- 点击动画（M0DZN风格）- 修复：只操作指示条，不操作ContentFrame
         TabBtn.MouseButton1Click:Connect(function()
             -- 隐藏所有页面
             for _, v in pairs(PageContainer:GetChildren()) do
@@ -1920,34 +1921,35 @@ function Fenglib:CreateWindow(Config)
             -- 将所有标签按钮重置为未选中状态
             for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
-                    Tween(v, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})  -- 背景恢复透明
-                    -- 查找按钮内的文字标签和指示条
+                    -- 重置背景透明度（背景透明）
+                    Tween(v, {BackgroundTransparency = 1}, 0.15)
+                    -- 查找文字标签并恢复灰色
                     local content = v:FindFirstChild("ContentFrame")
                     if content then
                         local textLabel = content:FindFirstChildOfClass("TextLabel")
                         if textLabel then
-                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
+                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
                         end
                     end
-                    local bar = v:FindFirstChildOfClass("Frame")  -- 即左侧指示条
+                    -- 通过名称查找指示条并隐藏
+                    local bar = v:FindFirstChild("TabBar")
                     if bar then
-                        Tween(bar, {BackgroundTransparency = 1})
+                        Tween(bar, {BackgroundTransparency = 1}, 0.15)
                     end
                 end
             end
             -- 显示当前页面
             Page.Visible = true
             -- 设置当前按钮为选中状态
-            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
-            Tween(TabText, {TextColor3 = CurrentTheme.Text})
-            Tween(TabBar, {BackgroundTransparency = 0})
+            Tween(TabBtn, {BackgroundTransparency = 0.05}, 0.15)
+            Tween(TabText, {TextColor3 = CurrentTheme.Text}, 0.15)
+            Tween(TabBar, {BackgroundTransparency = 0}, 0.15)
         end)
 
         if firstTab then
             firstTab = false
             Page.Visible = true
             TabBtn.BackgroundTransparency = 0.05
-            TabBtn.BackgroundColor3 = CurrentTheme.Top
             TabText.TextColor3 = CurrentTheme.Text
             TabBar.BackgroundTransparency = 0
         end
@@ -1964,7 +1966,7 @@ function Fenglib:CreateWindow(Config)
     end
 
     -- ==============================
-    -- 双列标签页（动画已替换为M0DZN风格）
+    -- 双列标签页（同样修复）
     -- ==============================
     function Window:DualTab(name, icon)
         local TabBtn = Instance.new("TextButton")
@@ -1974,8 +1976,9 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Parent = TabContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
-        -- 左侧指示条（M0DZN风格）
+        -- 左侧指示条（M0DZN风格）- 命名为 "TabBar"
         local TabBar = Instance.new("Frame")
+        TabBar.Name = "TabBar"
         TabBar.Size = UDim2.new(0, 3, 0.65, 0)
         TabBar.Position = UDim2.new(0, 0, 0.175, 0)
         TabBar.BackgroundTransparency = 1
@@ -2027,7 +2030,7 @@ function Fenglib:CreateWindow(Config)
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
 
-        -- 鼠标悬停效果
+        -- 鼠标悬停效果（M0DZN风格）
         TabBtn.MouseEnter:Connect(function()
             if TabBar.BackgroundTransparency ~= 0 then
                 Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
@@ -2125,38 +2128,37 @@ function Fenglib:CreateWindow(Config)
         RightList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightCanvas)
         task.spawn(function() task.wait(); updateLeftCanvas(); updateRightCanvas() end)
 
-        -- 点击动画（M0DZN风格）
+        -- 点击动画（M0DZN风格）- 修复：只操作指示条
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
             end
             for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
-                    Tween(v, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})
+                    Tween(v, {BackgroundTransparency = 1}, 0.15)
                     local content = v:FindFirstChild("ContentFrame")
                     if content then
                         local textLabel = content:FindFirstChildOfClass("TextLabel")
                         if textLabel then
-                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
+                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
                         end
                     end
-                    local bar = v:FindFirstChildOfClass("Frame")
+                    local bar = v:FindFirstChild("TabBar")
                     if bar then
-                        Tween(bar, {BackgroundTransparency = 1})
+                        Tween(bar, {BackgroundTransparency = 1}, 0.15)
                     end
                 end
             end
             PageFrame.Visible = true
-            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
-            Tween(TabText, {TextColor3 = CurrentTheme.Text})
-            Tween(TabBar, {BackgroundTransparency = 0})
+            Tween(TabBtn, {BackgroundTransparency = 0.05}, 0.15)
+            Tween(TabText, {TextColor3 = CurrentTheme.Text}, 0.15)
+            Tween(TabBar, {BackgroundTransparency = 0}, 0.15)
         end)
 
         if firstTab then
             firstTab = false
             PageFrame.Visible = true
             TabBtn.BackgroundTransparency = 0.05
-            TabBtn.BackgroundColor3 = CurrentTheme.Top
             TabText.TextColor3 = CurrentTheme.Text
             TabBar.BackgroundTransparency = 0
         end
