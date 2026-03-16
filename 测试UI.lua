@@ -1319,7 +1319,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 颜色选择器 (ColorPicker) - 修复版
+        -- 颜色选择器 (ColorPicker) - 修复：添加对象有效性检查
         child.ColorPicker = function(_, text, default, callback)
             local Color = default or Color3.fromRGB(255, 255, 255)
             local h, s, v = Color3.toHSV(Color)
@@ -1497,7 +1497,12 @@ function Fenglib:CreateWindow(Config)
             local GBox = MakeRGBBox("G", 0.33)
             local BBox = MakeRGBBox("B", 0.66)
 
+            -- ApplyColor 函数：添加对象有效性检查
             local function ApplyColor()
+                -- 检查所有用到的UI对象是否仍然有效
+                if not (Swatch and Swatch.Parent and SVBox and SVBox.Parent and RBox and RBox.Parent and GBox and GBox.Parent and BBox and BBox.Parent) then
+                    return
+                end
                 Color = Color3.fromHSV(h, s, v)
                 Swatch.BackgroundColor3 = Color
                 SVBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
@@ -1521,15 +1526,18 @@ function Fenglib:CreateWindow(Config)
                 ApplyColor()
             end
 
-            RBox.FocusLost:Connect(OnRGBInput)
-            GBox.FocusLost:Connect(OnRGBInput)
-            BBox.FocusLost:Connect(OnRGBInput)
+            RBox.FocusLost:Connect(function()
+                if RBox and RBox.Parent then OnRGBInput() end
+            end)
+            GBox.FocusLost:Connect(function()
+                if GBox and GBox.Parent then OnRGBInput() end
+            end)
+            BBox.FocusLost:Connect(function()
+                if BBox and BBox.Parent then OnRGBInput() end
+            end)
 
-            -- 拖动交互（修复：添加对象有效性检查）
+            -- 拖动交互
             local svDragging = false
-            local hueDragging = false
-
-            -- 饱和度-明度拖动按钮
             local SVBtn = Instance.new("TextButton")
             SVBtn.Size = UDim2.new(1, 0, 1, 0)
             SVBtn.BackgroundTransparency = 1
@@ -1538,21 +1546,35 @@ function Fenglib:CreateWindow(Config)
             SVBtn.Parent = SVBox
 
             SVBtn.InputBegan:Connect(function(i)
+                if SVBox and SVBox.Visible then
+                    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                        svDragging = true
+                    end
+                end
+            end)
+
+            UserInputService.InputEnded:Connect(function(i)
                 if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                    svDragging = true
-                    -- 立即执行一次拖动，避免点击无反应
-                    if SVBox and SVBox.AbsoluteSize.X > 0 then
+                    svDragging = false
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(i)
+                if svDragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                    if SVBox and SVBox.Visible and SVBox.AbsoluteSize.X > 0 then
                         local x = clamp((i.Position.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X, 0, 1)
                         local y = clamp((i.Position.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y, 0, 1)
                         s = x
                         v = 1 - y
                         SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
                         ApplyColor()
+                    else
+                        svDragging = false
                     end
                 end
             end)
 
-            -- 色相拖动按钮
+            local hueDragging = false
             local HueBtn = Instance.new("TextButton")
             HueBtn.Size = UDim2.new(1, 0, 1, 0)
             HueBtn.BackgroundTransparency = 1
@@ -1561,35 +1583,22 @@ function Fenglib:CreateWindow(Config)
             HueBtn.Parent = HueBar
 
             HueBtn.InputBegan:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                    hueDragging = true
-                    if HueBar and HueBar.AbsoluteSize.Y > 0 then
-                        local y = clamp((i.Position.Y - HueBar.AbsolutePosition.Y) / HueBar.AbsoluteSize.Y, 0, 1)
-                        h = y
-                        HueDot.Position = UDim2.new(0.5, 0, h, 0)
-                        ApplyColor()
+                if HueBar and HueBar.Visible then
+                    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                        hueDragging = true
                     end
                 end
             end)
 
-            -- 全局输入变化监听（添加有效性检查）
-            local inputConnection
-            inputConnection = UserInputService.InputChanged:Connect(function(i)
-                -- 仅当拖动标志为真且对象仍然有效时才处理
-                if svDragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                    if SVBox and SVBox.Visible and SVBox.Parent and SVBox.AbsoluteSize.X > 0 then
-                        local x = clamp((i.Position.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X, 0, 1)
-                        local y = clamp((i.Position.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y, 0, 1)
-                        s = x
-                        v = 1 - y
-                        SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
-                        ApplyColor()
-                    else
-                        -- 如果对象无效，强制结束拖动
-                        svDragging = false
-                    end
-                elseif hueDragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                    if HueBar and HueBar.Visible and HueBar.Parent and HueBar.AbsoluteSize.Y > 0 then
+            UserInputService.InputEnded:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    hueDragging = false
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(i)
+                if hueDragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                    if HueBar and HueBar.Visible and HueBar.AbsoluteSize.Y > 0 then
                         local y = clamp((i.Position.Y - HueBar.AbsolutePosition.Y) / HueBar.AbsoluteSize.Y, 0, 1)
                         h = y
                         HueDot.Position = UDim2.new(0.5, 0, h, 0)
@@ -1597,15 +1606,6 @@ function Fenglib:CreateWindow(Config)
                     else
                         hueDragging = false
                     end
-                end
-            end)
-
-            -- 输入结束全局监听
-            local endConnection
-            endConnection = UserInputService.InputEnded:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                    svDragging = false
-                    hueDragging = false
                 end
             end)
 
@@ -1636,17 +1636,8 @@ function Fenglib:CreateWindow(Config)
                 end
             }
 
-            -- 当面板被隐藏或销毁时断开连接（避免内存泄漏）
-            Panel.AncestryChanged:Connect(function()
-                if not Panel.Parent then
-                    if inputConnection then inputConnection:Disconnect() end
-                    if endConnection then endConnection:Disconnect() end
-                end
-            end)
-
-            -- 主题监听（可选）
             table.insert(ThemeListeners, function()
-                -- 主题切换时无需额外操作
+                -- 主题切换时无需额外操作，已通过AddToRegistry自动更新
             end)
         end
 
