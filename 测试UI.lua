@@ -1050,13 +1050,13 @@ function Fenglib:CreateWindow(Config)
 
             local function Update(newVal)
                 if min ~= nil and max ~= nil then
-                    newVal = math.clamp(math.floor(newVal), min, max)
+                    newVal = clamp(newVal, min, max)
                 elseif min ~= nil then
-                    newVal = math.max(math.floor(newVal), min)
+                    newVal = math.max(newVal, min)
                 elseif max ~= nil then
-                    newVal = math.min(math.floor(newVal), max)
+                    newVal = math.min(newVal, max)
                 else
-                    newVal = math.floor(newVal)
+                    newVal = newVal
                 end
                 Val = newVal
                 Num.Text = tostring(Val)
@@ -1112,7 +1112,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 下拉菜单 (Dropdown) - 替换为 M0DZN 实现，移除 InternalNotif
+        -- 下拉菜单 (Dropdown) - 替换为 UI.lua 实现（无音效，适配测试UI.lua）
         child.Dropdown = function(_, dropText, options, callback)
             local Dropped = false
             local Selected = options[1] or ""
@@ -1126,7 +1126,7 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 12)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
-            -- 标签
+            -- 标签（初始不显示选中项）
             local Lbl = Instance.new("TextLabel")
             Lbl.Text = dropText
             Lbl.Size = UDim2.new(1, -40, 1, 0)
@@ -1138,11 +1138,11 @@ function Fenglib:CreateWindow(Config)
             Lbl.Parent = Btn
             AddToRegistry(Lbl, "TextColor3", "Text")
 
-            -- 箭头图标
+            -- 箭头图标（UI.lua 所用 ID）
             local Icon = Instance.new("ImageLabel")
-            Icon.Image = "rbxassetid://6031091004"
-            Icon.Size = UDim2.new(0, 16, 0, 16)
-            Icon.Position = UDim2.new(1, -28, 0.5, -8)
+            Icon.Image = "rbxassetid://18865373378"
+            Icon.Size = UDim2.new(0, 20, 0, 20)
+            Icon.Position = UDim2.new(1, -30, 0.5, -10)
             Icon.BackgroundTransparency = 1
             Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Accent")
@@ -1152,8 +1152,8 @@ function Fenglib:CreateWindow(Config)
             Container.Size = UDim2.new(1, 0, 0, 0)
             Container.Visible = false
             Container.ClipsDescendants = true
+            Container.ZIndex = 10
             Container.Parent = contentContainer
-            Container.BackgroundTransparency = 0.05
             Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 12)
             AddToRegistry(Container, "BackgroundColor3", "Top")
 
@@ -1182,7 +1182,7 @@ function Fenglib:CreateWindow(Config)
             local function Select(opt)
                 Dropped = false
                 Selected = opt
-                Lbl.Text = dropText .. "   —   " .. opt
+                Lbl.Text = dropText .. ": " .. opt
                 ConfigObjects[dropText].Value = opt
                 callback(opt)
 
@@ -1208,27 +1208,39 @@ function Fenglib:CreateWindow(Config)
                     O.TextSize = 12
                     O.BackgroundTransparency = 1
                     O.Parent = Container
-                    O.TextColor3 = CurrentTheme.Text
+                    O.TextColor3 = CurrentTheme.Text  -- 跟随主题
 
-                    O.MouseEnter:Connect(function() Tween(O, {TextColor3 = CurrentTheme.Accent}, 0.15) end)
-                    O.MouseLeave:Connect(function() Tween(O, {TextColor3 = CurrentTheme.Text}, 0.15) end)
+                    -- 悬停效果
+                    O.MouseEnter:Connect(function()
+                        Tween(O, {TextColor3 = CurrentTheme.Accent}, 0.15)
+                    end)
+                    O.MouseLeave:Connect(function()
+                        Tween(O, {TextColor3 = CurrentTheme.Text}, 0.15)
+                    end)
 
                     O.MouseButton1Click:Connect(function() Select(opt) end)
+                end
+
+                -- 如果当前打开，更新容器高度
+                if Dropped then
+                    local targetHeight = #newOpts * 34
+                    Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
                 end
             end
             RefreshOptions(options)
 
-            -- 重置下拉菜单
+            -- 重置下拉菜单（选择第一个选项）
             local function ResetDropdown()
-                Dropped = false
-                Selected = options[1] or ""
-                Lbl.Text = dropText
-                ConfigObjects[dropText].Value = Selected
-
-                Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
-                Tween(Icon, {Rotation = 0}, 0.2)
-                task.delay(0.22, function() Container.Visible = false end)
-                updateSectionHeight(false)
+                if #options > 0 then
+                    Select(options[1])
+                else
+                    Dropped = false
+                    Lbl.Text = dropText
+                    Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
+                    Tween(Icon, {Rotation = 0}, 0.2)
+                    task.delay(0.22, function() Container.Visible = false end)
+                    updateSectionHeight(false)
+                end
             end
 
             -- 点击主按钮切换下拉状态
@@ -1500,304 +1512,6 @@ function Fenglib:CreateWindow(Config)
             function self.UpdateBody(newBody) BodyLabel.Text = newBody end
             function self.SetVisible(state) ParaFrame.Visible = state end
             return self
-        end
-
-        -- ================= 颜色选择器 =================
-        child.ColorPicker = function(_, pickerText, defaultColor, callback)
-            local Color = defaultColor or Color3.new(1,1,1)
-            local h, s, v = Color:ToHSV()
-
-            -- 主磁贴
-            local Tile = Instance.new("Frame")
-            Tile.Size = UDim2.new(1, 0, 0, 42)
-            Tile.Parent = contentContainer
-            Tile.BackgroundTransparency = 0.05
-            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 12)
-            AddToRegistry(Tile, "BackgroundColor3", "Top")
-
-            -- 左侧指示条
-            local AccentBar = Instance.new("Frame")
-            AccentBar.Size = UDim2.new(0, 3, 0.65, 0)
-            AccentBar.Position = UDim2.new(0, 0, 0.175, 0)
-            AccentBar.BorderSizePixel = 0
-            AccentBar.Parent = Tile
-            Instance.new("UICorner", AccentBar).CornerRadius = UDim.new(1, 0)
-            AddToRegistry(AccentBar, "BackgroundColor3", "Accent")
-
-            -- 标题
-            local TitleLbl = Instance.new("TextLabel")
-            TitleLbl.Text = pickerText
-            TitleLbl.Size = UDim2.new(0.7, 0, 1, 0)
-            TitleLbl.Position = UDim2.new(0, 15, 0, 0)
-            TitleLbl.BackgroundTransparency = 1
-            TitleLbl.Font = Enum.Font.GothamMedium
-            TitleLbl.TextSize = 13
-            TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-            TitleLbl.Parent = Tile
-            AddToRegistry(TitleLbl, "TextColor3", "Text")
-
-            -- 色块
-            local Swatch = Instance.new("Frame")
-            Swatch.Size = UDim2.new(0, 32, 0, 22)
-            Swatch.Position = UDim2.new(1, -46, 0.5, -11)
-            Swatch.BackgroundColor3 = Color
-            Swatch.Parent = Tile
-            Instance.new("UICorner", Swatch).CornerRadius = UDim.new(0, 6)
-            local SwStroke = Instance.new("UIStroke")
-            SwStroke.Thickness = 1
-            SwStroke.Transparency = 0.6
-            SwStroke.Parent = Swatch
-            AddToRegistry(SwStroke, "Color", "Stroke")
-
-            -- 点击按钮
-            local ClickBtn = Instance.new("TextButton")
-            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
-            ClickBtn.BackgroundTransparency = 1
-            ClickBtn.Text = ""
-            ClickBtn.Parent = Tile
-
-            -- 面板
-            local Panel = Instance.new("Frame")
-            Panel.Size = UDim2.new(1, 0, 0, 0)
-            Panel.Visible = false
-            Panel.ClipsDescendants = true
-            Panel.Parent = contentContainer
-            Panel.BackgroundTransparency = 0.05
-            Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 12)
-            AddToRegistry(Panel, "BackgroundColor3", "Top")
-            local PSt = Instance.new("UIStroke")
-            PSt.Thickness = 1
-            PSt.Transparency = 0.65
-            PSt.Parent = Panel
-            AddToRegistry(PSt, "Color", "Accent")
-
-            -- SV框
-            local SVBox = Instance.new("ImageLabel")
-            SVBox.Size = UDim2.new(1, -52, 0, 110)
-            SVBox.Position = UDim2.new(0, 10, 0, 10)
-            SVBox.Image = "rbxassetid://4155801252"
-            SVBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
-            SVBox.Parent = Panel
-            Instance.new("UICorner", SVBox).CornerRadius = UDim.new(0, 6)
-
-            local SVDot = Instance.new("Frame")
-            SVDot.Size = UDim2.new(0, 10, 0, 10)
-            SVDot.AnchorPoint = Vector2.new(0.5, 0.5)
-            SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
-            SVDot.BackgroundColor3 = Color3.new(1, 1, 1)
-            SVDot.ZIndex = 2
-            SVDot.Parent = SVBox
-            Instance.new("UICorner", SVDot).CornerRadius = UDim.new(1, 0)
-            local DotStroke = Instance.new("UIStroke")
-            DotStroke.Thickness = 1.5
-            DotStroke.Color = Color3.fromRGB(80, 80, 80)
-            DotStroke.Parent = SVDot
-
-            -- 色相条
-            local HueBar = Instance.new("Frame")
-            HueBar.Size = UDim2.new(0, 16, 0, 110)
-            HueBar.Position = UDim2.new(1, -30, 0, 10)
-            HueBar.BackgroundColor3 = Color3.new(1,1,1)
-            HueBar.BorderSizePixel = 0
-            HueBar.Parent = Panel
-            Instance.new("UICorner", HueBar).CornerRadius = UDim.new(0, 6)
-
-            local HueGradient = Instance.new("UIGradient")
-            HueGradient.Rotation = 90
-            HueGradient.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0,    Color3.fromRGB(255, 0,   0)),
-                ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
-                ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0,   255, 0)),
-                ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0,   255, 255)),
-                ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0,   0,   255)),
-                ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0,   255)),
-                ColorSequenceKeypoint.new(1,    Color3.fromRGB(255, 0,   0)),
-            })
-            HueGradient.Parent = HueBar
-
-            local HueDot = Instance.new("Frame")
-            HueDot.Size = UDim2.new(1, 6, 0, 4)
-            HueDot.AnchorPoint = Vector2.new(0.5, 0.5)
-            HueDot.Position = UDim2.new(0.5, 0, h, 0)
-            HueDot.BackgroundColor3 = Color3.new(1,1,1)
-            HueDot.ZIndex = 2
-            HueDot.Parent = HueBar
-            Instance.new("UICorner", HueDot).CornerRadius = UDim.new(1, 0)
-
-            -- RGB输入行
-            local RGBRow = Instance.new("Frame")
-            RGBRow.Size = UDim2.new(1, -20, 0, 28)
-            RGBRow.Position = UDim2.new(0, 10, 0, 128)
-            RGBRow.BackgroundTransparency = 1
-            RGBRow.Parent = Panel
-
-            local function MakeRGBBox(label, xPos)
-                local Holder = Instance.new("Frame")
-                Holder.Size = UDim2.new(0.33, -4, 1, 0)
-                Holder.Position = UDim2.new(xPos, 2, 0, 0)
-                Holder.BackgroundTransparency = 0.08
-                Holder.Parent = RGBRow
-                Instance.new("UICorner", Holder).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(Holder, "BackgroundColor3", "Main")
-                local HolderStroke = Instance.new("UIStroke")
-                HolderStroke.Thickness = 1; HolderStroke.Transparency = 0.75; HolderStroke.Parent = Holder
-                AddToRegistry(HolderStroke, "Color", "Stroke")
-                local Prefix = Instance.new("TextLabel")
-                Prefix.Text = label .. ":"
-                Prefix.Size = UDim2.new(0, 20, 1, 0)
-                Prefix.Position = UDim2.new(0, 4, 0, 0)
-                Prefix.BackgroundTransparency = 1
-                Prefix.Font = Enum.Font.GothamBold
-                Prefix.TextSize = 10
-                Prefix.TextXAlignment = Enum.TextXAlignment.Left
-                Prefix.Parent = Holder
-                AddToRegistry(Prefix, "TextColor3", "Accent")
-                local Box = Instance.new("TextBox")
-                Box.Size = UDim2.new(1, -26, 1, 0)
-                Box.Position = UDim2.new(0, 22, 0, 0)
-                Box.Text = "0"
-                Box.BackgroundTransparency = 1
-                Box.Font = Enum.Font.GothamMedium
-                Box.TextSize = 11
-                Box.TextXAlignment = Enum.TextXAlignment.Left
-                Box.Parent = Holder
-                AddToRegistry(Box, "TextColor3", "Text")
-                Box.Focused:Connect(function()
-                    Tween(HolderStroke, {Transparency = 0.15}, 0.15)
-                end)
-                Box.FocusLost:Connect(function()
-                    Tween(HolderStroke, {Transparency = 0.75}, 0.15)
-                end)
-                return Box
-            end
-
-            local RBox = MakeRGBBox("R", 0)
-            local GBox = MakeRGBBox("G", 0.33)
-            local BBox = MakeRGBBox("B", 0.66)
-
-            local function ApplyColor()
-                Color = Color3.fromHSV(h, s, v)
-                Swatch.BackgroundColor3 = Color
-                SVBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
-                RBox.Text = tostring(math.floor(Color.R * 255))
-                GBox.Text = tostring(math.floor(Color.G * 255))
-                BBox.Text = tostring(math.floor(Color.B * 255))
-                ConfigObjects[pickerText].Value = {R = Color.R, G = Color.G, B = Color.B}
-                callback(Color)
-            end
-            ApplyColor()
-
-            local function OnRGBInput()
-                local r = clamp(tonumber(RBox.Text) or 0, 0, 255)
-                local g = clamp(tonumber(GBox.Text) or 0, 0, 255)
-                local b = clamp(tonumber(BBox.Text) or 0, 0, 255)
-                Color = Color3.fromRGB(r, g, b)
-                h, s, v = Color:ToHSV()
-                SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
-                HueDot.Position = UDim2.new(0.5, 0, h, 0)
-                SVBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
-                Swatch.BackgroundColor3 = Color
-                ConfigObjects[pickerText].Value = {R = Color.R, G = Color.G, B = Color.B}
-                callback(Color)
-            end
-            RBox.FocusLost:Connect(OnRGBInput)
-            GBox.FocusLost:Connect(OnRGBInput)
-            BBox.FocusLost:Connect(OnRGBInput)
-
-            -- 拖动逻辑
-            local svDragging = false
-            local SVBtn = Instance.new("TextButton")
-            SVBtn.Size = UDim2.new(1, 0, 1, 0)
-            SVBtn.BackgroundTransparency = 1
-            SVBtn.Text = ""
-            SVBtn.ZIndex = 3
-            SVBtn.Parent = SVBox
-            SVBtn.InputBegan:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                    svDragging = true
-                end
-            end)
-            UserInputService.InputEnded:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                    if svDragging then
-                        svDragging = false
-                    end
-                end
-            end)
-            UserInputService.InputChanged:Connect(function(i)
-                if svDragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                    s = clamp((i.Position.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X, 0, 1)
-                    v = 1 - clamp((i.Position.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y, 0, 1)
-                    SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
-                    ApplyColor()
-                end
-            end)
-
-            local hueDragging = false
-            local HueBtn = Instance.new("TextButton")
-            HueBtn.Size = UDim2.new(1, 0, 1, 0)
-            HueBtn.BackgroundTransparency = 1
-            HueBtn.Text = ""
-            HueBtn.ZIndex = 3
-            HueBtn.Parent = HueBar
-            HueBtn.InputBegan:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                    hueDragging = true
-                end
-            end)
-            UserInputService.InputEnded:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                    if hueDragging then
-                        hueDragging = false
-                    end
-                end
-            end)
-            UserInputService.InputChanged:Connect(function(i)
-                if hueDragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                    h = clamp((i.Position.Y - HueBar.AbsolutePosition.Y) / HueBar.AbsoluteSize.Y, 0, 1)
-                    HueDot.Position = UDim2.new(0.5, 0, h, 0)
-                    ApplyColor()
-                end
-            end)
-
-            -- 点击切换面板
-            local pickerOpen = false
-            ClickBtn.MouseButton1Click:Connect(function()
-                pickerOpen = not pickerOpen
-                if pickerOpen then
-                    Panel.Visible = true
-                    Tween(Panel, {Size = UDim2.new(1, 0, 0, 166)}, 0.32)
-                else
-                    Tween(Panel, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
-                    task.wait(0.3)
-                    Panel.Visible = false
-                end
-                updateSectionHeight(false)
-            end)
-
-            -- 配置对象
-            ConfigObjects[pickerText] = {
-                Type = "ColorPicker",
-                Value = {R = Color.R, G = Color.G, B = Color.B},
-                Set = function(val)
-                    if type(val) == "table" then
-                        Color = Color3.new(val.R, val.G, val.B)
-                        h, s, v = Color:ToHSV()
-                        SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
-                        HueDot.Position = UDim2.new(0.5, 0, h, 0)
-                        RBox.Text = tostring(math.floor(Color.R * 255))
-                        GBox.Text = tostring(math.floor(Color.G * 255))
-                        BBox.Text = tostring(math.floor(Color.B * 255))
-                        ApplyColor()
-                    end
-                end
-            }
-
-            -- 主题监听
-            table.insert(ThemeListeners, function()
-                -- 标题颜色、左侧指示条、RGB输入框文字颜色等由 AddToRegistry 自动处理
-                -- 这里不需要额外操作
-            end)
         end
 
         return child
