@@ -1319,35 +1319,47 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 颜色选择器 (ColorPicker) - 修复：添加对象有效性检查
+        -- 颜色选择器 (ColorPicker) - 替换为 M0DZN 核心实现
         child.ColorPicker = function(_, text, default, callback)
             local Color = default or Color3.fromRGB(255, 255, 255)
             local h, s, v = Color3.toHSV(Color)
 
-            -- 主按钮框架
+            -- 主按钮框架 (Tile)
             local Tile = Instance.new("Frame")
-            Tile.Size = UDim2.new(1, 0, 0, 42)
-            Tile.Parent = contentContainer
+            Tile.Size = UDim2.new(1, 0, 0, 44)
             Tile.BackgroundTransparency = 0.05
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 12)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
+            Tile.Parent = contentContainer
 
-            local TileStroke = Instance.new("UIStroke")
-            TileStroke.Thickness = 1
-            TileStroke.Transparency = 0.75
-            TileStroke.Parent = Tile
-            AddToRegistry(TileStroke, "Color", "Stroke")
+            -- 左侧指示条
+            local AccentBar = Instance.new("Frame")
+            AccentBar.Size = UDim2.new(0, 3, 0.55, 0)
+            AccentBar.Position = UDim2.new(0, 0, 0.225, 0)
+            AccentBar.BorderSizePixel = 0
+            AccentBar.Parent = Tile
+            Instance.new("UICorner", AccentBar).CornerRadius = UDim.new(1, 0)
+            AddToRegistry(AccentBar, "BackgroundColor3", "Accent")
 
+            -- 描边
+            local Stroke = Instance.new("UIStroke")
+            Stroke.Thickness = 1
+            Stroke.Transparency = 0.82
+            Stroke.Parent = Tile
+            AddToRegistry(Stroke, "Color", "Stroke")
+
+            -- 点击按钮覆盖层
             local ClickBtn = Instance.new("TextButton")
             ClickBtn.Size = UDim2.new(1, 0, 1, 0)
             ClickBtn.BackgroundTransparency = 1
             ClickBtn.Text = ""
             ClickBtn.Parent = Tile
 
+            -- 标题
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = text
             TitleLbl.Size = UDim2.new(0.7, 0, 1, 0)
-            TitleLbl.Position = UDim2.new(0, 15, 0, 0)
+            TitleLbl.Position = UDim2.new(0, 16, 0, 0)
             TitleLbl.BackgroundTransparency = 1
             TitleLbl.Font = Enum.Font.GothamMedium
             TitleLbl.TextSize = 13
@@ -1355,30 +1367,28 @@ function Fenglib:CreateWindow(Config)
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 颜色预览方块
+            -- 预览方块
             local Swatch = Instance.new("Frame")
             Swatch.Size = UDim2.new(0, 32, 0, 22)
             Swatch.Position = UDim2.new(1, -46, 0.5, -11)
             Swatch.BackgroundColor3 = Color
             Swatch.Parent = Tile
             Instance.new("UICorner", Swatch).CornerRadius = UDim.new(0, 6)
-
             local SwStroke = Instance.new("UIStroke")
             SwStroke.Thickness = 1
             SwStroke.Transparency = 0.6
             SwStroke.Parent = Swatch
             AddToRegistry(SwStroke, "Color", "Stroke")
 
-            -- 展开面板
+            -- 展开面板 (Panel)
             local Panel = Instance.new("Frame")
             Panel.Size = UDim2.new(1, 0, 0, 0)
             Panel.Visible = false
             Panel.ClipsDescendants = true
             Panel.Parent = contentContainer
-            Panel.BackgroundTransparency = 0.05
             Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 12)
+            Panel.BackgroundTransparency = 0.05
             AddToRegistry(Panel, "BackgroundColor3", "Top")
-
             local PStroke = Instance.new("UIStroke")
             PStroke.Thickness = 1
             PStroke.Transparency = 0.65
@@ -1402,7 +1412,6 @@ function Fenglib:CreateWindow(Config)
             SVDot.ZIndex = 2
             SVDot.Parent = SVBox
             Instance.new("UICorner", SVDot).CornerRadius = UDim.new(1, 0)
-
             local DotStroke = Instance.new("UIStroke")
             DotStroke.Thickness = 1.5
             DotStroke.Color = Color3.fromRGB(80, 80, 80)
@@ -1439,7 +1448,7 @@ function Fenglib:CreateWindow(Config)
             HueDot.Parent = HueBar
             Instance.new("UICorner", HueDot).CornerRadius = UDim.new(1, 0)
 
-            -- RGB输入框行
+            -- RGB 输入行
             local RGBRow = Instance.new("Frame")
             RGBRow.Size = UDim2.new(1, -20, 0, 28)
             RGBRow.Position = UDim2.new(0, 10, 0, 128)
@@ -1450,7 +1459,7 @@ function Fenglib:CreateWindow(Config)
                 local Holder = Instance.new("Frame")
                 Holder.Size = UDim2.new(0.33, -4, 1, 0)
                 Holder.Position = UDim2.new(xPos, 2, 0, 0)
-                Holder.BackgroundTransparency = 0.1
+                Holder.BackgroundTransparency = 0.08
                 Holder.Parent = RGBRow
                 Instance.new("UICorner", Holder).CornerRadius = UDim.new(0, 6)
                 AddToRegistry(Holder, "BackgroundColor3", "Main")
@@ -1497,21 +1506,14 @@ function Fenglib:CreateWindow(Config)
             local GBox = MakeRGBBox("G", 0.33)
             local BBox = MakeRGBBox("B", 0.66)
 
-            -- ApplyColor 函数：添加对象有效性检查
             local function ApplyColor()
-                -- 检查所有用到的UI对象是否仍然有效
-                if not (Swatch and Swatch.Parent and SVBox and SVBox.Parent and RBox and RBox.Parent and GBox and GBox.Parent and BBox and BBox.Parent) then
-                    return
-                end
                 Color = Color3.fromHSV(h, s, v)
                 Swatch.BackgroundColor3 = Color
                 SVBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
                 RBox.Text = tostring(math.floor(Color.R * 255))
                 GBox.Text = tostring(math.floor(Color.G * 255))
                 BBox.Text = tostring(math.floor(Color.B * 255))
-                if ConfigObjects[text] then
-                    ConfigObjects[text].Value = {R = Color.R, G = Color.G, B = Color.B}
-                end
+                ConfigObjects[text].Value = {R = Color.R, G = Color.G, B = Color.B}
                 callback(Color)
             end
 
@@ -1526,17 +1528,11 @@ function Fenglib:CreateWindow(Config)
                 ApplyColor()
             end
 
-            RBox.FocusLost:Connect(function()
-                if RBox and RBox.Parent then OnRGBInput() end
-            end)
-            GBox.FocusLost:Connect(function()
-                if GBox and GBox.Parent then OnRGBInput() end
-            end)
-            BBox.FocusLost:Connect(function()
-                if BBox and BBox.Parent then OnRGBInput() end
-            end)
+            RBox.FocusLost:Connect(OnRGBInput)
+            GBox.FocusLost:Connect(OnRGBInput)
+            BBox.FocusLost:Connect(OnRGBInput)
 
-            -- 拖动交互
+            -- SV拖动
             local svDragging = false
             local SVBtn = Instance.new("TextButton")
             SVBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -1546,34 +1542,35 @@ function Fenglib:CreateWindow(Config)
             SVBtn.Parent = SVBox
 
             SVBtn.InputBegan:Connect(function(i)
-                if SVBox and SVBox.Visible then
-                    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                        svDragging = true
-                    end
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    svDragging = true
                 end
             end)
 
             UserInputService.InputEnded:Connect(function(i)
                 if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                    svDragging = false
+                    if svDragging then
+                        svDragging = false
+                        local r = math.floor(Color.R * 255)
+                        local g = math.floor(Color.G * 255)
+                        local b = math.floor(Color.B * 255)
+                        Window:Notification(text .. ": " .. r .. ", " .. g .. ", " .. b)
+                    end
                 end
             end)
 
             UserInputService.InputChanged:Connect(function(i)
                 if svDragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                    if SVBox and SVBox.Visible and SVBox.AbsoluteSize.X > 0 then
-                        local x = clamp((i.Position.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X, 0, 1)
-                        local y = clamp((i.Position.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y, 0, 1)
-                        s = x
-                        v = 1 - y
-                        SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
-                        ApplyColor()
-                    else
-                        svDragging = false
-                    end
+                    local x = clamp((i.Position.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X, 0, 1)
+                    local y = clamp((i.Position.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y, 0, 1)
+                    s = x
+                    v = 1 - y
+                    SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
+                    ApplyColor()
                 end
             end)
 
+            -- 色相拖动
             local hueDragging = false
             local HueBtn = Instance.new("TextButton")
             HueBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -1583,36 +1580,37 @@ function Fenglib:CreateWindow(Config)
             HueBtn.Parent = HueBar
 
             HueBtn.InputBegan:Connect(function(i)
-                if HueBar and HueBar.Visible then
-                    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                        hueDragging = true
-                    end
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    hueDragging = true
                 end
             end)
 
             UserInputService.InputEnded:Connect(function(i)
                 if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                    hueDragging = false
+                    if hueDragging then
+                        hueDragging = false
+                        local r = math.floor(Color.R * 255)
+                        local g = math.floor(Color.G * 255)
+                        local b = math.floor(Color.B * 255)
+                        Window:Notification(text .. ": " .. r .. ", " .. g .. ", " .. b)
+                    end
                 end
             end)
 
             UserInputService.InputChanged:Connect(function(i)
                 if hueDragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                    if HueBar and HueBar.Visible and HueBar.AbsoluteSize.Y > 0 then
-                        local y = clamp((i.Position.Y - HueBar.AbsolutePosition.Y) / HueBar.AbsoluteSize.Y, 0, 1)
-                        h = y
-                        HueDot.Position = UDim2.new(0.5, 0, h, 0)
-                        ApplyColor()
-                    else
-                        hueDragging = false
-                    end
+                    local y = clamp((i.Position.Y - HueBar.AbsolutePosition.Y) / HueBar.AbsoluteSize.Y, 0, 1)
+                    h = y
+                    HueDot.Position = UDim2.new(0.5, 0, h, 0)
+                    ApplyColor()
                 end
             end)
 
-            local open = false
+            -- 展开/折叠
+            local pickerOpen = false
             ClickBtn.MouseButton1Click:Connect(function()
-                open = not open
-                if open then
+                pickerOpen = not pickerOpen
+                if pickerOpen then
                     Panel.Visible = true
                     Tween(Panel, {Size = UDim2.new(1, 0, 0, 166)}, 0.32)
                 else
@@ -1622,6 +1620,7 @@ function Fenglib:CreateWindow(Config)
                 end
             end)
 
+            -- 配置对象
             ConfigObjects[text] = {
                 Type = "ColorPicker",
                 Value = {R = Color.R, G = Color.G, B = Color.B},
@@ -1631,13 +1630,17 @@ function Fenglib:CreateWindow(Config)
                         h, s, v = Color3.toHSV(Color)
                         SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
                         HueDot.Position = UDim2.new(0.5, 0, h, 0)
+                        RBox.Text = tostring(math.floor(Color.R * 255))
+                        GBox.Text = tostring(math.floor(Color.G * 255))
+                        BBox.Text = tostring(math.floor(Color.B * 255))
                         ApplyColor()
                     end
                 end
             }
 
+            -- 主题监听
             table.insert(ThemeListeners, function()
-                -- 主题切换时无需额外操作，已通过AddToRegistry自动更新
+                -- 主题变更时，已通过 AddToRegistry 自动更新
             end)
         end
 
