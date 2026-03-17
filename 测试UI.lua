@@ -1,4 +1,4 @@
--- 文件完整内容（已修正下拉高度问题，并替换通知为样式化通知，通知位置已修复）
+-- 文件完整内容（已修正下拉高度问题，并替换通知为样式化通知，通知位置已修正）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -682,12 +682,12 @@ function Fenglib:CreateWindow(Config)
         local color = colors[notifType] or colors.Info
         local icon = icons[notifType] or icons.Info
 
-        -- 创建通知容器，宽度 220
+        -- 创建通知容器，宽度 220，初始位置在屏幕外右侧
         local notifHolder = Instance.new("Frame")
         notifHolder.Name = "Notification"
         notifHolder.Size = UDim2.new(0, 220, 0, 0)
         notifHolder.AutomaticSize = Enum.AutomaticSize.Y
-        notifHolder.Position = UDim2.new(1, -20, 1, -60)
+        notifHolder.Position = UDim2.new(1, 20, 1, -60)  -- 屏幕外右侧
         notifHolder.AnchorPoint = Vector2.new(1, 1)
         notifHolder.BackgroundColor3 = CurrentTheme.Main
         notifHolder.BackgroundTransparency = 0.05
@@ -762,9 +762,10 @@ function Fenglib:CreateWindow(Config)
         line.BorderSizePixel = 0
         line.Parent = content
 
-        -- 入场动画
-        Tween(notifHolder, {Position = UDim2.new(1, -240, 1, -60)}, 0.5)  -- 根据宽度 220 微调
+        -- 入场动画：从屏幕外滑入目标位置 (1, -20, 1, -60)
+        Tween(notifHolder, {Position = UDim2.new(1, -20, 1, -60)}, 0.5)
         task.wait(3)
+        -- 出场动画：滑出屏幕外右侧
         Tween(notifHolder, {Position = UDim2.new(1, 20, 1, -60)}, 0.4)
         task.wait(0.4)
         notifHolder:Destroy()
