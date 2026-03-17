@@ -1,4 +1,4 @@
--- 文件完整内容（已修正下拉高度问题，并替换通知为样式化通知）
+-- 文件完整内容（已修正下拉高度问题，并替换通知为样式化通知，通知位置已修复）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -660,13 +660,15 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Visible = false
 
     -- ============================================================
-    -- 通知系统（已替换为通知.lua 的样式化实现）
+    -- 通知系统（样式化，已修正位置与尺寸）
     -- ============================================================
     function Window:Notification(text, title, notifType)
         title = title or "通知"
         notifType = notifType or "Info"
 
-        -- 定义颜色和图标（与通知.lua保持一致）
+        -- 确保忽略系统界面嵌入，使右下角定位准确
+        ScreenGui.IgnoreGuiInset = true
+
         local colors = {
             Error = Color3.fromRGB(229, 51, 51),
             Info = Color3.fromRGB(77, 163, 255),
@@ -680,10 +682,10 @@ function Fenglib:CreateWindow(Config)
         local color = colors[notifType] or colors.Info
         local icon = icons[notifType] or icons.Info
 
-        -- 创建通知容器
+        -- 创建通知容器，宽度 220
         local notifHolder = Instance.new("Frame")
         notifHolder.Name = "Notification"
-        notifHolder.Size = UDim2.new(0, 250, 0, 0)
+        notifHolder.Size = UDim2.new(0, 220, 0, 0)
         notifHolder.AutomaticSize = Enum.AutomaticSize.Y
         notifHolder.Position = UDim2.new(1, -20, 1, -60)
         notifHolder.AnchorPoint = Vector2.new(1, 1)
@@ -698,7 +700,7 @@ function Fenglib:CreateWindow(Config)
         outerStroke.Color = CurrentTheme.Stroke
         outerStroke.Parent = notifHolder
 
-        -- 内描边（简化：纯色，透明度稍高）
+        -- 内描边
         local innerStroke = Instance.new("UIStroke")
         innerStroke.Thickness = 1
         innerStroke.Color = CurrentTheme.Stroke:lerp(Color3.new(1,1,1), 0.3)
@@ -707,12 +709,12 @@ function Fenglib:CreateWindow(Config)
 
         -- 内容布局
         local content = Instance.new("Frame")
-        content.Size = UDim2.new(1, -30, 1, -20)
-        content.Position = UDim2.new(0, 15, 0, 10)
+        content.Size = UDim2.new(1, -24, 1, -20)
+        content.Position = UDim2.new(0, 12, 0, 10)
         content.BackgroundTransparency = 1
         content.Parent = notifHolder
 
-        -- 标题行（带图标）
+        -- 标题行
         local titleFrame = Instance.new("Frame")
         titleFrame.Size = UDim2.new(1, 0, 0, 25)
         titleFrame.BackgroundTransparency = 1
@@ -760,8 +762,8 @@ function Fenglib:CreateWindow(Config)
         line.BorderSizePixel = 0
         line.Parent = content
 
-        -- 自动消失动画
-        Tween(notifHolder, {Position = UDim2.new(1, -270, 1, -60)}, 0.5)
+        -- 入场动画
+        Tween(notifHolder, {Position = UDim2.new(1, -240, 1, -60)}, 0.5)  -- 根据宽度 220 微调
         task.wait(3)
         Tween(notifHolder, {Position = UDim2.new(1, 20, 1, -60)}, 0.4)
         task.wait(0.4)
