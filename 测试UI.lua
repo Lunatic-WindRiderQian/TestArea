@@ -1,3 +1,4 @@
+-- 文件完整内容（已修正下拉高度问题）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -1243,12 +1244,19 @@ function Fenglib:CreateWindow(Config)
                 end
             end
 
-            -- 点击主按钮切换下拉状态
+            -- 点击主按钮切换下拉状态（修正高度计算，排除UIListLayout）
             Btn.MouseButton1Click:Connect(function()
                 Dropped = not Dropped
                 if Dropped then
                     Container.Visible = true
-                    local targetHeight = #Container:GetChildren() * 34
+                    -- 计算实际按钮数量（排除UIListLayout）
+                    local buttonCount = 0
+                    for _, child in pairs(Container:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            buttonCount = buttonCount + 1
+                        end
+                    end
+                    local targetHeight = buttonCount * 34
                     Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.32)
                     Tween(Icon, {Rotation = 180}, 0.32)
                 else
