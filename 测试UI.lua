@@ -1,22 +1,18 @@
--- 文件完整内容（已集成 M0DZN 配置与设置）
+-- 文件完整内容（已修正下拉高度问题，并替换通知为样式化通知）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
+local HttpService = game:GetService("HttpService") 
 local TextService = game:GetService("TextService")
 local LocalPlayer = Players.LocalPlayer
 
 local Fenglib = {}
-Fenglib.Flags = {}
-Fenglib._loading = false
-
 local RainbowEnabled = false
-local RainbowType = "Animated/Cycling Rainbow"
-local RainbowSpeed = 1.0
-local Registry = {}
-local ConfigObjects = {}
+local RainbowType = "Animated/Cycling Rainbow" 
+local Registry = {} 
+local ConfigObjects = {} 
 local ThemeListeners = {}
 
 -- 辅助工具函数
@@ -74,10 +70,10 @@ local function createPulseGlow(object)
     }
 end
 
--- Bento 风格主题（合并 M0DZN 主题）
+-- Bento 风格主题
 local Themes = {
     Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48)},
-    Light  = {Main = Color3.fromRGB(235, 235, 238), Top = Color3.fromRGB(245, 245, 248), Text = Color3.fromRGB(30, 30, 35), Accent = Color3.fromRGB(110, 110, 120), Stroke = Color3.fromRGB(200, 200, 205)},
+    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225)},
     Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(160, 90, 255), Stroke = Color3.fromRGB(50, 45, 60)},
     Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(70, 130, 255), Stroke = Color3.fromRGB(45, 55, 75)},
     Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(60, 40, 40)},
@@ -111,257 +107,6 @@ end
 
 function Fenglib:ToggleRainbow(bool) RainbowEnabled = bool end
 function Fenglib:SetRainbowType(val) RainbowType = val end
-function Fenglib:SetRainbowSpeed(val) RainbowSpeed = clamp(tonumber(val) or 1, 0.1, 10) end
-
--- 配置保存/加载
-function Fenglib:SaveConfig(configName, configFolder)
-    local ok, err = pcall(function()
-        if not isfolder(configFolder) then makefolder(configFolder) end
-        local data = {}
-        for flag, val in pairs(self.Flags) do
-            data[flag] = val
-        end
-        writefile(configFolder .. "/" .. configName .. ".json", HttpService:JSONEncode(data))
-    end)
-    return ok
-end
-
-function Fenglib:LoadConfig(path)
-    if not pcall(isfile, path) then return false end
-    local exists = false
-    pcall(function() exists = isfile(path) end)
-    if not exists then return false end
-
-    local ok, data = pcall(function()
-        return HttpService:JSONDecode(readfile(path))
-    end)
-    if not ok or type(data) ~= "table" then return false end
-
-    self._loading = true
-    for flag, val in pairs(data) do
-        self.Flags[flag] = val
-        if ConfigObjects[flag] and ConfigObjects[flag].Set then
-            pcall(function() ConfigObjects[flag].Set(val) end)
-        end
-    end
-    self._loading = false
-
-    return true
-end
-
--- 通知系统
-local ActiveNotifs = {}
-
-local function SpawnNotif(title, body, notifType, source)
-    task.spawn(function()
-        if source == "scripter" then
-            for i = #ActiveNotifs, 1, -1 do
-                local entry = ActiveNotifs[i]
-                if entry.source == "internal" and entry.kill then
-                    entry.kill()
-                end
-            end
-        end
-
-        if body and not notifType and (body == "success" or body == "warning" or body == "error" or body == "info") then
-            notifType = body
-            body = nil
-        end
-
-        local typeColor = Color3.fromRGB(185, 185, 190)
-        if notifType == "success" then typeColor = Color3.fromRGB(45, 210, 90)
-        elseif notifType == "warning" then typeColor = Color3.fromRGB(230, 190, 25)
-        elseif notifType == "error"   then typeColor = Color3.fromRGB(215, 50, 50)
-        elseif notifType == "info"    then typeColor = Color3.fromRGB(0, 210, 220)
-        end
-
-        local nW = 300
-        local nH = 76
-        local padX = 16; local padY = 10
-        local barH = 3
-
-        local vp = workspace.CurrentCamera.ViewportSize
-        local startX = vp.X + 20
-
-        local Notif = Instance.new("Frame")
-        Notif.ZIndex = 100
-        Notif.Size = UDim2.new(0, nW, 0, nH)
-        Notif.Position = UDim2.new(0, startX, 0, 0)
-        Notif.BackgroundTransparency = 1
-        Notif.Parent = (syn and syn.protect_gui and CoreGui) or gethui and gethui() or CoreGui
-        Instance.new("UICorner", Notif).CornerRadius = UDim.new(0, 12)
-        Notif.ClipsDescendants = true
-        Notif.BackgroundColor3 = CurrentTheme.Top
-
-        local NBar = Instance.new("Frame")
-        NBar.Size = UDim2.new(0, 4, 1, -12)
-        NBar.Position = UDim2.new(0, 6, 0, 6)
-        NBar.BackgroundColor3 = typeColor; NBar.BorderSizePixel = 0; NBar.ZIndex = 102; NBar.Parent = Notif
-        Instance.new("UICorner", NBar).CornerRadius = UDim.new(0, 3)
-
-        local NStroke = Instance.new("UIStroke")
-        NStroke.Thickness = 1; NStroke.Transparency = 0.55; NStroke.Color = typeColor; NStroke.Parent = Notif
-
-        local NTitle = Instance.new("TextLabel")
-        NTitle.ZIndex = 101; NTitle.Text = title or ""
-        NTitle.Size = UDim2.new(1, -68, 0, 18)
-        NTitle.Position = UDim2.new(0, padX+8, 0, padY)
-        NTitle.BackgroundTransparency = 1; NTitle.Parent = Notif
-        NTitle.Font = Enum.Font.GothamBold
-        NTitle.TextSize = 13
-        NTitle.TextXAlignment = Enum.TextXAlignment.Left
-        NTitle.TextColor3 = CurrentTheme.Text
-
-        local NTimer = Instance.new("TextLabel")
-        NTimer.ZIndex = 101; NTimer.Text = "3.0s"
-        NTimer.Size = UDim2.new(0, 46, 0, 18)
-        NTimer.Position = UDim2.new(1, -52, 0, padY)
-        NTimer.BackgroundTransparency = 1; NTimer.Parent = Notif
-        NTimer.Font = Enum.Font.GothamBold
-        NTimer.TextSize = 11
-        NTimer.TextXAlignment = Enum.TextXAlignment.Right
-        NTimer.TextColor3 = typeColor
-
-        local NText = Instance.new("TextLabel")
-        NText.ZIndex = 101; NText.Text = body or ""
-        NText.Size = UDim2.new(1, -40, 0, 18)
-        NText.Position = UDim2.new(0, padX+8, 0, padY + 22)
-        NText.BackgroundTransparency = 1; NText.Parent = Notif
-        NText.Font = Enum.Font.GothamMedium
-        NText.TextSize = 11
-        NText.TextXAlignment = Enum.TextXAlignment.Left
-        NText.TextTransparency = body and body ~= "" and 0.3 or 1
-        NText.TextColor3 = CurrentTheme.Text
-
-        local NBadge = Instance.new("TextLabel")
-        NBadge.ZIndex = 102
-        NBadge.Text = notifType and (notifType:sub(1,1):upper()..notifType:sub(2)) or "Notif"
-        NBadge.Size = UDim2.new(0, 52, 0, 16)
-        NBadge.Position = UDim2.new(1, -60, 0, padY + 22)
-        NBadge.BackgroundColor3 = typeColor; NBadge.BackgroundTransparency = 0.75
-        NBadge.Parent = Notif
-        NBadge.Font = Enum.Font.GothamBold
-        NBadge.TextSize = 9
-        NBadge.TextColor3 = typeColor
-        Instance.new("UICorner", NBadge).CornerRadius = UDim.new(1, 0)
-
-        local NProgress = Instance.new("Frame")
-        NProgress.Size = UDim2.new(1, 0, 0, barH)
-        NProgress.Position = UDim2.new(0, 0, 1, -barH)
-        NProgress.BorderSizePixel = 0; NProgress.BackgroundColor3 = typeColor
-        NProgress.ZIndex = 101; NProgress.Parent = Notif
-        Instance.new("UICorner", NProgress).CornerRadius = UDim.new(1, 0)
-
-        NTitle.TextTransparency = 1
-        NText.TextTransparency = 1
-        NTimer.TextTransparency = 1
-        NBar.BackgroundTransparency = 1
-        NStroke.Transparency = 1
-
-        local killed = false
-        local entry = {frame = Notif, source = source, kill = nil}
-
-        entry.kill = function()
-            if killed then return end
-            killed = true
-            for i, e in ipairs(ActiveNotifs) do
-                if e.frame == Notif then table.remove(ActiveNotifs, i); break end
-            end
-            Tween(Notif, {BackgroundTransparency = 1}, 0.15)
-            Tween(NTitle, {TextTransparency = 1}, 0.15)
-            Tween(NText, {TextTransparency = 1}, 0.15)
-            Tween(NTimer, {TextTransparency = 1}, 0.15)
-            Tween(NBadge, {TextTransparency = 1, BackgroundTransparency = 1}, 0.15)
-            Tween(NBar, {BackgroundTransparency = 1}, 0.15)
-            task.delay(0.2, function()
-                local vpr = workspace.CurrentCamera.ViewportSize
-                Tween(Notif, {Position = UDim2.new(0, vpr.X + 20, 0, Notif.Position.Y.Offset)}, 0.2)
-                task.delay(0.25, function() pcall(function() Notif:Destroy() end) end)
-            end)
-            task.delay(0.05, function()
-                local vpr = workspace.CurrentCamera.ViewportSize
-                local margin = 14
-                local yBot = vpr.Y - margin
-                for i = #ActiveNotifs, 1, -1 do
-                    local e = ActiveNotifs[i]
-                    yBot = yBot - nH
-                    Tween(e.frame, {Position = UDim2.new(0, vpr.X - nW - margin, 0, yBot)}, 0.25)
-                    yBot = yBot - 10
-                end
-            end)
-        end
-
-        table.insert(ActiveNotifs, entry)
-
-        local function RepositionAll()
-            local vpr = workspace.CurrentCamera.ViewportSize
-            local margin = 14
-            local yBot = vpr.Y - margin
-            for i = #ActiveNotifs, 1, -1 do
-                local e = ActiveNotifs[i]
-                yBot = yBot - nH
-                local nx = math.clamp(vpr.X - nW - margin, margin, vpr.X - nW - margin)
-                Tween(e.frame, {Position = UDim2.new(0, nx, 0, yBot)}, 0.3)
-                yBot = yBot - 10
-            end
-        end
-        RepositionAll()
-        Tween(Notif, {BackgroundTransparency = 0.06}, 0.3)
-        task.wait(0.2)
-        if killed then return end
-        Tween(NTitle, {TextTransparency = 0}, 0.2)
-        Tween(NText, {TextTransparency = body and body ~= "" and 0.3 or 1}, 0.2)
-        Tween(NTimer, {TextTransparency = 0}, 0.2)
-        Tween(NBar, {BackgroundTransparency = 0}, 0.2)
-        Tween(NStroke, {Transparency = 0.55}, 0.2)
-        Tween(NProgress, {Size = UDim2.new(0, 0, 0, barH)}, 3)
-
-        local timeLeft = 3.0
-        local countConn
-        countConn = RunService.Heartbeat:Connect(function(dt)
-            if killed then countConn:Disconnect(); return end
-            timeLeft = timeLeft - dt
-            if timeLeft <= 0 then
-                NTimer.Text = "0.0s"
-                countConn:Disconnect()
-            else
-                NTimer.Text = string.format("%.1fs", timeLeft)
-            end
-        end)
-
-        task.wait(3)
-        if killed then return end
-        countConn:Disconnect()
-        for i, e in ipairs(ActiveNotifs) do
-            if e.frame == Notif then table.remove(ActiveNotifs, i); break end
-        end
-        local vpr = workspace.CurrentCamera.ViewportSize
-        local margin = 14
-        local yBot = vpr.Y - margin
-        for i = #ActiveNotifs, 1, -1 do
-            local e = ActiveNotifs[i]
-            yBot = yBot - nH
-            local nx = vpr.X - nW - margin
-            Tween(e.frame, {Position = UDim2.new(0, nx, 0, yBot)}, 0.3)
-            yBot = yBot - 10
-        end
-        Tween(NTitle, {TextTransparency = 1}, 0.15)
-        Tween(NText, {TextTransparency = 1}, 0.15)
-        Tween(NTimer, {TextTransparency = 1}, 0.15)
-        Tween(NBadge, {TextTransparency = 1, BackgroundTransparency = 1}, 0.15)
-        Tween(NBar, {BackgroundTransparency = 1}, 0.15)
-        task.wait(0.1)
-        local vpr2 = workspace.CurrentCamera.ViewportSize
-        Tween(Notif, {Position = UDim2.new(0, vpr2.X + 20, 0, Notif.Position.Y.Offset), BackgroundTransparency = 1}, 0.25)
-        task.wait(0.3)
-        pcall(function() Notif:Destroy() end)
-    end)
-end
-
-local function InternalNotif(title, body, notifType)
-    if Fenglib._loading then return end
-    SpawnNotif(title, body, notifType, "internal")
-end
 
 -- ==============================
 -- 创建窗口（Bento风格）
@@ -370,12 +115,11 @@ function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "M0dzn UI"
     local Subtitle = Config.Subtitle
-    local Keybind = Config.Keybind
-    local IconAsset = Config.Icon
-
-    Window.RootFolder = Title
+    local Keybind = Config.Keybind 
+    local IconAsset = Config.Icon  
+    
+    Window.RootFolder = Title 
     Window.ConfigFolder = Title.."/Config"
-    Window.CurrentConfig = ""
 
     -- 处理自定义主题
     if Config.Theme then
@@ -411,7 +155,7 @@ function Fenglib:CreateWindow(Config)
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 0, 0, 0)
+    MainFrame.Size = UDim2.new(0, 0, 0, 0) 
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = false
@@ -429,7 +173,7 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- 彩虹边框动画（加入速度控制）
+    -- 彩虹边框动画
     task.spawn(function()
         local rot = 0
         while ScreenGui.Parent do
@@ -440,23 +184,23 @@ function Fenglib:CreateWindow(Config)
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)), ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255,255,0)),ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0,255,255)),ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0,0,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))})
                     Stroke.Color = Color3.new(1,1,1)
                 elseif RainbowType == "Animated/Cycling Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t * RainbowSpeed % 5 / 5, 1, 1)
+                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Smooth Fading Gradient" then
-                    Gradient.Enabled = true; rot = rot + 2 * RainbowSpeed; Gradient.Rotation = rot
+                    Gradient.Enabled = true; rot = rot + 2; Gradient.Rotation = rot
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,0))}); Stroke.Color = Color3.new(1,1,1)
                 elseif RainbowType == "Step/Band Rainbow" then
-                    Gradient.Enabled = false; local step = math.floor((t * RainbowSpeed % 2) * 4) / 4; Stroke.Color = Color3.fromHSV(step, 1, 1)
+                    Gradient.Enabled = false; local step = math.floor((t % 2) * 4) / 4; Stroke.Color = Color3.fromHSV(step, 1, 1)
                 elseif RainbowType == "Rainbow Pulse" then
-                    Gradient.Enabled = false; local pulse = (math.sin(t * RainbowSpeed * 3) + 1) / 2; Stroke.Color = Color3.fromHSV(t * RainbowSpeed % 5 / 5, pulse, 1)
+                    Gradient.Enabled = false; local pulse = (math.sin(t * 3) + 1) / 2; Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
                 elseif RainbowType == "Radial Rainbow" then
-                    Gradient.Enabled = true; rot = rot + 5 * RainbowSpeed; Gradient.Rotation = rot
+                    Gradient.Enabled = true; rot = rot + 5; Gradient.Rotation = rot
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))}); Stroke.Color = Color3.new(1,1,1)
                 elseif RainbowType == "Neon/Glowing Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t * RainbowSpeed % 2 / 2, 0.8, 1)
+                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1) 
                 elseif RainbowType == "Pastel Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t * RainbowSpeed % 5 / 5, 0.4, 1)
+                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
                 elseif RainbowType == "Vertical/Horizontal Fade" then
-                    Gradient.Enabled = true; Gradient.Rotation = 90; local c = Color3.fromHSV(t * RainbowSpeed % 5/5, 1, 1); local c2 = Color3.fromHSV((t+1) * RainbowSpeed % 5/5, 1, 1); Gradient.Color = ColorSequence.new(c, c2); Stroke.Color = Color3.new(1,1,1)
+                    Gradient.Enabled = true; Gradient.Rotation = 90; local c = Color3.fromHSV(t % 5/5, 1, 1); local c2 = Color3.fromHSV((t+1) % 5/5, 1, 1); Gradient.Color = ColorSequence.new(c, c2); Stroke.Color = Color3.new(1,1,1)
                 end
             else
                 Gradient.Enabled = false
@@ -480,13 +224,13 @@ function Fenglib:CreateWindow(Config)
             IconAsset = "rbxassetid://" .. IconAsset
         end
     else
-        IconAsset = "rbxassetid://78229538488090"
+        IconAsset = "rbxassetid://78229538488090"  
     end
 
     local Icon = Instance.new("ImageLabel")
     Icon.Name = "WindowIcon"
     Icon.Size = UDim2.new(0, 32, 0, 32)
-    Icon.Position = UDim2.new(0, 10, 0.5, -16)
+    Icon.Position = UDim2.new(0, 10, 0.5, -16)  
     Icon.BackgroundTransparency = 1
     Icon.Image = IconAsset
     Icon.Parent = Topbar
@@ -659,7 +403,7 @@ function Fenglib:CreateWindow(Config)
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
     if Subtitle then
-        TitleLabel.Size = UDim2.new(1, -180, 0, 20)
+        TitleLabel.Size = UDim2.new(1, -180, 0, 20)   
         TitleLabel.Position = UDim2.new(0, 50, 0, 5)
 
         local SubtitleLabel = Instance.new("TextLabel")
@@ -704,7 +448,7 @@ function Fenglib:CreateWindow(Config)
     ProfileFrame.Parent = Content
     Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
     AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
-
+    
     local Avatar = Instance.new("ImageLabel")
     Avatar.Size = UDim2.new(0, 26, 0, 26)
     Avatar.Position = UDim2.new(0, 8, 0.5, -13)
@@ -712,7 +456,7 @@ function Fenglib:CreateWindow(Config)
     Avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
     Avatar.Parent = ProfileFrame
     Instance.new("UICorner", Avatar).CornerRadius = UDim.new(1,0)
-
+    
     local DispName = Instance.new("TextLabel")
     DispName.Text = LocalPlayer.DisplayName
     DispName.Size = UDim2.new(1, -45, 0, 15)
@@ -883,14 +627,14 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Parent = ScreenGui
     OpenButton.BackgroundColor3 = CurrentTheme.Accent
     OpenButton.BackgroundTransparency = 0.85
-    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)
+    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)  
     OpenButton.Size = UDim2.new(0, 40, 0, 40)
     OpenButton.Active = true
-    OpenButton.Draggable = true
-    OpenButton.Image = "rbxassetid://84830962019412"
+    OpenButton.Draggable = true  
+    OpenButton.Image = "rbxassetid://84830962019412"  
     OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
     OpenButton.ImageTransparency = 0.15
-    OpenButton.ZIndex = 10
+    OpenButton.ZIndex = 10  
 
     local openCorner = Instance.new("UICorner")
     openCorner.CornerRadius = UDim.new(0, 8)
@@ -915,9 +659,113 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- 通知系统（外部调用）
-    function Window:Notification(title, body, notifType)
-        SpawnNotif(title, body, notifType, "scripter")
+    -- ============================================================
+    -- 通知系统（已替换为通知.lua 的样式化实现）
+    -- ============================================================
+    function Window:Notification(text, title, notifType)
+        title = title or "通知"
+        notifType = notifType or "Info"
+
+        -- 定义颜色和图标（与通知.lua保持一致）
+        local colors = {
+            Error = Color3.fromRGB(229, 51, 51),
+            Info = Color3.fromRGB(77, 163, 255),
+            Success = Color3.fromRGB(60, 179, 113)
+        }
+        local icons = {
+            Success = "rbxassetid://120659272678891",
+            Error = "rbxassetid://89180847534855",
+            Info = "rbxassetid://75441143875602"
+        }
+        local color = colors[notifType] or colors.Info
+        local icon = icons[notifType] or icons.Info
+
+        -- 创建通知容器
+        local notifHolder = Instance.new("Frame")
+        notifHolder.Name = "Notification"
+        notifHolder.Size = UDim2.new(0, 250, 0, 0)
+        notifHolder.AutomaticSize = Enum.AutomaticSize.Y
+        notifHolder.Position = UDim2.new(1, -20, 1, -60)
+        notifHolder.AnchorPoint = Vector2.new(1, 1)
+        notifHolder.BackgroundColor3 = CurrentTheme.Main
+        notifHolder.BackgroundTransparency = 0.05
+        notifHolder.Parent = ScreenGui
+        Instance.new("UICorner", notifHolder).CornerRadius = UDim.new(0, 20)
+
+        -- 外描边
+        local outerStroke = Instance.new("UIStroke")
+        outerStroke.Thickness = 0.5
+        outerStroke.Color = CurrentTheme.Stroke
+        outerStroke.Parent = notifHolder
+
+        -- 内描边（简化：纯色，透明度稍高）
+        local innerStroke = Instance.new("UIStroke")
+        innerStroke.Thickness = 1
+        innerStroke.Color = CurrentTheme.Stroke:lerp(Color3.new(1,1,1), 0.3)
+        innerStroke.Transparency = 0.7
+        innerStroke.Parent = notifHolder
+
+        -- 内容布局
+        local content = Instance.new("Frame")
+        content.Size = UDim2.new(1, -30, 1, -20)
+        content.Position = UDim2.new(0, 15, 0, 10)
+        content.BackgroundTransparency = 1
+        content.Parent = notifHolder
+
+        -- 标题行（带图标）
+        local titleFrame = Instance.new("Frame")
+        titleFrame.Size = UDim2.new(1, 0, 0, 25)
+        titleFrame.BackgroundTransparency = 1
+        titleFrame.Parent = content
+
+        local iconLabel = Instance.new("ImageLabel")
+        iconLabel.Image = icon
+        iconLabel.Size = UDim2.new(0, 15, 0, 15)
+        iconLabel.Position = UDim2.new(0, 0, 0.5, -7.5)
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.ImageColor3 = color
+        iconLabel.Parent = titleFrame
+
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Text = title
+        titleLabel.Size = UDim2.new(1, -20, 1, 0)
+        titleLabel.Position = UDim2.new(0, 20, 0, 0)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.TextSize = 14
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.TextColor3 = CurrentTheme.Text
+        titleLabel.Parent = titleFrame
+
+        -- 描述文本
+        local descLabel = Instance.new("TextLabel")
+        descLabel.Text = text
+        descLabel.Size = UDim2.new(1, -15, 0, 0)
+        descLabel.AutomaticSize = Enum.AutomaticSize.Y
+        descLabel.Position = UDim2.new(0, 0, 0, 30)
+        descLabel.BackgroundTransparency = 1
+        descLabel.Font = Enum.Font.GothamMedium
+        descLabel.TextSize = 12
+        descLabel.TextColor3 = CurrentTheme.Text:lerp(Color3.new(1,1,1), 0.3)
+        descLabel.TextWrapped = true
+        descLabel.TextXAlignment = Enum.TextXAlignment.Left
+        descLabel.Parent = content
+
+        -- 左侧装饰线
+        local line = Instance.new("Frame")
+        line.Size = UDim2.new(0, 3, 1, -6)
+        line.Position = UDim2.new(0, -8, 0, 3)
+        line.BackgroundColor3 = color
+        line.BackgroundTransparency = 0.3
+        line.BorderSizePixel = 0
+        line.Parent = content
+
+        -- 自动消失动画
+        Tween(notifHolder, {Position = UDim2.new(1, -270, 1, -60)}, 0.5)
+        task.wait(3)
+        Tween(notifHolder, {Position = UDim2.new(1, 20, 1, -60)}, 0.4)
+        task.wait(0.4)
+        notifHolder:Destroy()
     end
 
     function Window:SetKeybind(key) Keybind = key end
@@ -1050,8 +898,8 @@ function Fenglib:CreateWindow(Config)
 
         local child = {}
 
-        -- 按钮 (Button) - 加入通知和Flags
-        child.Button = function(_, btnText, callback, silent)
+        -- 按钮 (Button) - 替换为 M0DZN 风格，移除图标动画，仅保留背景透明度变化
+        child.Button = function(_, btnText, callback)
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Text = ""
@@ -1073,6 +921,7 @@ function Fenglib:CreateWindow(Config)
             TextLabel.Parent = Btn
             AddToRegistry(TextLabel, "TextColor3", "Text")
 
+            -- 保留箭头图标，但移除悬停动画
             local Icon = Instance.new("ImageLabel")
             Icon.Size = UDim2.new(0, 15, 0, 15)
             Icon.Position = UDim2.new(1, -25, 0.5, -7.5)
@@ -1082,6 +931,7 @@ function Fenglib:CreateWindow(Config)
             Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Text")
 
+            -- 悬停仅改变背景透明度 (M0DZN风格)
             Btn.MouseEnter:Connect(function()
                 Tween(Btn, {BackgroundTransparency = 0.00}, 0.18)
             end)
@@ -1093,9 +943,6 @@ function Fenglib:CreateWindow(Config)
                 Tween(Btn, {Size = UDim2.new(0.97, 0, 0, 38)}, 0.1)
                 task.wait(0.1)
                 Tween(Btn, {Size = UDim2.new(1, 0, 0, 42)}, 0.15)
-                if not silent then
-                    InternalNotif(btnText, "Activate", "success")
-                end
                 callback()
             end)
 
@@ -1105,7 +952,7 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 开关 (Toggle) - 加入Flags和通知
+        -- 开关 (Toggle) - 已来自 M0DZN
         child.Toggle = function(_, toggleText, default, callback)
             local Enabled = default or false
 
@@ -1153,30 +1000,22 @@ function Fenglib:CreateWindow(Config)
             Dot.Parent = Switch
             Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
-            Fenglib.Flags[toggleText] = Enabled
             ConfigObjects[toggleText] = {Type = "Toggle", Value = Enabled, Set = function(val)
                 Enabled = val
                 Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
                 Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-                Fenglib.Flags[toggleText] = Enabled
                 callback(Enabled)
             end}
 
             local function Update()
                 Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke})
                 Tween(Dot, {Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)})
-                Fenglib.Flags[toggleText] = Enabled
                 ConfigObjects[toggleText].Value = Enabled
                 callback(Enabled)
             end
 
             ClickBtn.MouseButton1Click:Connect(function()
                 Enabled = not Enabled
-                if Enabled then
-                    InternalNotif(toggleText, "Enable", "success")
-                else
-                    InternalNotif(toggleText, "Disable", nil)
-                end
                 Update()
             end)
 
@@ -1185,7 +1024,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 滑块 (Slider) - 加入Flags和通知
+        -- 滑块 (Slider) - 已来自 M0DZN
         child.Slider = function(_, sliderText, min, max, default, callback, options)
             options = options or {}
             local unlimited = (min == nil and max == nil)
@@ -1281,7 +1120,6 @@ function Fenglib:CreateWindow(Config)
                 Bar.Parent = Track
             end
 
-            Fenglib.Flags[sliderText] = Val
             ConfigObjects[sliderText] = {Type = "Slider", Value = Val, Set = function(val) Update(tonumber(val) or Val) end}
 
             local function Update(newVal)
@@ -1296,7 +1134,6 @@ function Fenglib:CreateWindow(Config)
                 end
                 Val = newVal
                 Num.Text = tostring(Val)
-                Fenglib.Flags[sliderText] = Val
                 ConfigObjects[sliderText].Value = Val
                 if Track and Fill and Knob and min ~= nil and max ~= nil and max ~= min then
                     local p = (Val - min) / (max - min)
@@ -1332,10 +1169,7 @@ function Fenglib:CreateWindow(Config)
                 end)
                 UserInputService.InputEnded:Connect(function(i)
                     if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                        if sliding then
-                            sliding = false
-                            InternalNotif(sliderText, tostring(Val), "info")
-                        end
+                        sliding = false
                     end
                 end)
                 UserInputService.InputChanged:Connect(function(i)
@@ -1352,11 +1186,12 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 下拉菜单 (Dropdown) - 加入Flags和通知
-        child.Dropdown = function(_, dropText, options, callback, silent)
+        -- 下拉菜单 (Dropdown) - 替换为 UI.lua 实现（无音效，适配测试UI.lua）
+        child.Dropdown = function(_, dropText, options, callback)
             local Dropped = false
             local Selected = options[1] or ""
 
+            -- 主按钮
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Text = ""
@@ -1365,6 +1200,7 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 12)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
+            -- 标签（初始不显示选中项）
             local Lbl = Instance.new("TextLabel")
             Lbl.Text = dropText
             Lbl.Size = UDim2.new(1, -40, 1, 0)
@@ -1376,6 +1212,7 @@ function Fenglib:CreateWindow(Config)
             Lbl.Parent = Btn
             AddToRegistry(Lbl, "TextColor3", "Text")
 
+            -- 箭头图标（UI.lua 所用 ID）
             local Icon = Instance.new("ImageLabel")
             Icon.Image = "rbxassetid://18865373378"
             Icon.Size = UDim2.new(0, 20, 0, 20)
@@ -1384,6 +1221,7 @@ function Fenglib:CreateWindow(Config)
             Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Accent")
 
+            -- 下拉选项容器
             local Container = Instance.new("Frame")
             Container.Size = UDim2.new(1, 0, 0, 0)
             Container.Visible = false
@@ -1393,17 +1231,19 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 12)
             AddToRegistry(Container, "BackgroundColor3", "Top")
 
+            -- 容器描边
             local CSt = Instance.new("UIStroke")
             CSt.Thickness = 1
             CSt.Transparency = 0.65
             CSt.Parent = Container
             AddToRegistry(CSt, "Color", "Accent")
 
+            -- 选项布局
             local List = Instance.new("UIListLayout")
             List.SortOrder = Enum.SortOrder.LayoutOrder
             List.Parent = Container
 
-            Fenglib.Flags[dropText] = Selected
+            -- 配置对象
             ConfigObjects[dropText] = {
                 Type = "Dropdown",
                 Value = Selected,
@@ -1412,15 +1252,12 @@ function Fenglib:CreateWindow(Config)
                 Reset = ResetDropdown
             }
 
+            -- 选择某个选项
             local function Select(opt)
                 Dropped = false
                 Selected = opt
                 Lbl.Text = dropText .. ": " .. opt
-                Fenglib.Flags[dropText] = opt
                 ConfigObjects[dropText].Value = opt
-                if not silent then
-                    InternalNotif(dropText, opt, "info")
-                end
                 callback(opt)
 
                 Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
@@ -1430,6 +1267,7 @@ function Fenglib:CreateWindow(Config)
                 updateSectionHeight(false)
             end
 
+            -- 刷新选项列表
             local function RefreshOptions(newOpts)
                 for _, v in pairs(Container:GetChildren()) do
                     if v:IsA("TextButton") then v:Destroy() end
@@ -1444,8 +1282,9 @@ function Fenglib:CreateWindow(Config)
                     O.TextSize = 12
                     O.BackgroundTransparency = 1
                     O.Parent = Container
-                    O.TextColor3 = CurrentTheme.Text
+                    O.TextColor3 = CurrentTheme.Text  -- 跟随主题
 
+                    -- 悬停效果
                     O.MouseEnter:Connect(function()
                         Tween(O, {TextColor3 = CurrentTheme.Accent}, 0.15)
                     end)
@@ -1456,6 +1295,7 @@ function Fenglib:CreateWindow(Config)
                     O.MouseButton1Click:Connect(function() Select(opt) end)
                 end
 
+                -- 如果当前打开，更新容器高度
                 if Dropped then
                     local targetHeight = #newOpts * 34
                     Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
@@ -1463,6 +1303,7 @@ function Fenglib:CreateWindow(Config)
             end
             RefreshOptions(options)
 
+            -- 重置下拉菜单（选择第一个选项）
             local function ResetDropdown()
                 if #options > 0 then
                     Select(options[1])
@@ -1476,10 +1317,12 @@ function Fenglib:CreateWindow(Config)
                 end
             end
 
+            -- 点击主按钮切换下拉状态（修正高度计算，排除UIListLayout）
             Btn.MouseButton1Click:Connect(function()
                 Dropped = not Dropped
                 if Dropped then
                     Container.Visible = true
+                    -- 计算实际按钮数量（排除UIListLayout）
                     local buttonCount = 0
                     for _, child in pairs(Container:GetChildren()) do
                         if child:IsA("TextButton") then
@@ -1498,6 +1341,7 @@ function Fenglib:CreateWindow(Config)
                 updateSectionHeight(false)
             end)
 
+            -- 主题变更时更新选项文字颜色
             table.insert(ThemeListeners, function()
                 for _, O in pairs(Container:GetChildren()) do
                     if O:IsA("TextButton") then
@@ -1509,7 +1353,7 @@ function Fenglib:CreateWindow(Config)
             return {Refresh = RefreshOptions, Reset = ResetDropdown}
         end
 
-        -- 快捷键 (Keybind) - 加入Flags和通知
+        -- 快捷键 (Keybind) - 已来自 M0DZN
         child.Keybind = function(_, keyText, default, callback)
             local Key = default or Enum.KeyCode.M
             local Tile = Instance.new("Frame")
@@ -1548,11 +1392,9 @@ function Fenglib:CreateWindow(Config)
             AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
             AddToRegistry(KeyLabel, "TextColor3", "Accent")
 
-            Fenglib.Flags[keyText] = Key.Name
             ConfigObjects[keyText] = {Type = "Keybind", Value = Key.Name, Set = function(val)
                 Key = Enum.KeyCode[val] or Key
                 KeyLabel.Text = Key.Name
-                Fenglib.Flags[keyText] = Key.Name
                 callback(Key)
             end}
 
@@ -1562,9 +1404,7 @@ function Fenglib:CreateWindow(Config)
                 if input.KeyCode.Name ~= "Unknown" then
                     Key = input.KeyCode
                     KeyLabel.Text = Key.Name
-                    Fenglib.Flags[keyText] = Key.Name
                     ConfigObjects[keyText].Value = Key.Name
-                    InternalNotif(keyText, Key.Name, "info")
                     callback(Key)
                 else
                     KeyLabel.Text = Key.Name
@@ -1572,8 +1412,8 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 文本输入框 (Textbox) - 加入Flags和通知
-        child.Textbox = function(_, boxText, placeholder, callback, silent)
+        -- 文本输入框 (Textbox) - 替换为 M0DZN 实现
+        child.Textbox = function(_, boxText, placeholder, callback)
             local Frame = Instance.new("Frame")
             Frame.Size = UDim2.new(1, 0, 0, 70)
             Frame.Parent = contentContainer
@@ -1611,25 +1451,19 @@ function Fenglib:CreateWindow(Config)
             BoxStroke.Parent = Box
             AddToRegistry(BoxStroke, "Color", "Stroke")
 
-            Fenglib.Flags[boxText] = ""
-            ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; Fenglib.Flags[boxText] = val; callback(val) end}
-
             Box.Focused:Connect(function()
                 Tween(BoxStroke, {Transparency = 0.2}, 0.15)
             end)
             Box.FocusLost:Connect(function()
                 Tween(BoxStroke, {Transparency = 0.75}, 0.15)
-                local text = Box.Text
-                Fenglib.Flags[boxText] = text
-                ConfigObjects[boxText].Value = text
-                if not silent and text ~= "" then
-                    InternalNotif(boxText, text, "info")
-                end
-                callback(text)
+                ConfigObjects[boxText].Value = Box.Text
+                callback(Box.Text)
             end)
+
+            ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
-        -- 输入框（带选项） - 加入Flags
+        -- 输入框（带选项，例如字符限制、接受类型等）- 保留，无动画
         child.Input = function(_, inputText, default, callback, options)
             options = options or {}
             local placeholder = options.placeholder or ""; local acceptedCharacters = options.acceptedCharacters or "All"; local characterLimit = options.characterLimit; local onChanged = options.onChanged
@@ -1648,12 +1482,12 @@ function Fenglib:CreateWindow(Config)
                 else return text end
             end
             InputBox:GetPropertyChangedSignal("Text"):Connect(function() local filtered = filterText(InputBox.Text); if filtered~=InputBox.Text then InputBox.Text=filtered end; if onChanged then onChanged(filtered) end end)
-            InputBox.FocusLost:Connect(function() local text = InputBox.Text; local filtered = filterText(text); if filtered~=text then InputBox.Text = filtered; text = filtered end; Fenglib.Flags[inputText] = text; ConfigObjects[inputText].Value = text; if callback then callback(text) end end)
-            ConfigObjects[inputText] = {Type = "Input", Value = InputBox.Text, Set = function(val) InputBox.Text = tostring(val); Fenglib.Flags[inputText] = val end}
-            local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text; Fenglib.Flags[inputText] = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
+            InputBox.FocusLost:Connect(function() local text = InputBox.Text; local filtered = filterText(text); if filtered~=text then InputBox.Text = filtered; text = filtered end; if callback then callback(text) end end)
+            ConfigObjects[inputText] = {Type = "Input", Value = InputBox.Text, Set = function(val) InputBox.Text = tostring(val) end}
+            local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
         end
 
-        -- 普通标签 - 保留（无交互）
+        -- 普通标签 - 无动画
         child.Label = function(_, labelText)
             local LabelFrame = Instance.new("Frame")
             LabelFrame.Size = UDim2.new(1, 0, 0, 42)
@@ -1680,7 +1514,7 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 副标签 - 保留
+        -- 副标签 - 无动画
         child.SubLabel = function(_, subLabelText)
             local SubLabelFrame = Instance.new("Frame")
             SubLabelFrame.Size = UDim2.new(1, 0, 0, 42)
@@ -1708,7 +1542,7 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 段落 - 保留
+        -- 段落 - 无动画
         child.Paragraph = function(_, headerText, bodyText)
             local ParaFrame = Instance.new("Frame")
             ParaFrame.Size = UDim2.new(1, 0, 0, 0)
@@ -1765,7 +1599,7 @@ function Fenglib:CreateWindow(Config)
     end
 
     -- ==============================
-    -- 普通标签页
+    -- 普通标签页（动画已替换为M0DZN风格，并添加选中状态修复）
     -- ==============================
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
@@ -1775,8 +1609,10 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Parent = TabContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
+        -- 添加选中状态标志
         TabBtn.Selected = false
 
+        -- 左侧指示条（M0DZN风格）
         local TabBar = Instance.new("Frame")
         TabBar.Size = UDim2.new(0, 3, 0.65, 0)
         TabBar.Position = UDim2.new(0, 0, 0.175, 0)
@@ -1825,11 +1661,12 @@ function Fenglib:CreateWindow(Config)
         TabText.BackgroundTransparency = 1
         TabText.Font = Enum.Font.GothamMedium
         TabText.Text = name
-        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)
+        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)  -- 未选中灰色
         TabText.TextSize = 14
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
 
+        -- 鼠标悬停效果（M0DZN风格）：仅当按钮未选中时生效
         TabBtn.MouseEnter:Connect(function()
             if not TabBtn.Selected then
                 Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
@@ -1872,10 +1709,13 @@ function Fenglib:CreateWindow(Config)
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         task.spawn(function() task.wait(); updateCanvas() end)
 
+        -- 点击动画（M0DZN风格）
         TabBtn.MouseButton1Click:Connect(function()
+            -- 隐藏所有页面
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
             end
+            -- 将所有标签按钮重置为未选中状态
             for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
                     v.Selected = false
@@ -1887,13 +1727,15 @@ function Fenglib:CreateWindow(Config)
                             Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
                         end
                     end
-                    local bar = v:FindFirstChildOfClass("Frame")
+                    local bar = v:FindFirstChildOfClass("Frame")  -- 即左侧指示条
                     if bar then
                         Tween(bar, {BackgroundTransparency = 1})
                     end
                 end
             end
+            -- 显示当前页面
             Page.Visible = true
+            -- 设置当前按钮为选中状态
             TabBtn.Selected = true
             Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
             Tween(TabText, {TextColor3 = CurrentTheme.Text})
@@ -1922,7 +1764,7 @@ function Fenglib:CreateWindow(Config)
     end
 
     -- ==============================
-    -- 双列标签页
+    -- 双列标签页（动画已替换为M0DZN风格，并添加选中状态修复）
     -- ==============================
     function Window:DualTab(name, icon)
         local TabBtn = Instance.new("TextButton")
@@ -1932,8 +1774,10 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Parent = TabContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
+        -- 添加选中状态标志
         TabBtn.Selected = false
 
+        -- 左侧指示条（M0DZN风格）
         local TabBar = Instance.new("Frame")
         TabBar.Size = UDim2.new(0, 3, 0.65, 0)
         TabBar.Position = UDim2.new(0, 0, 0.175, 0)
@@ -1987,6 +1831,7 @@ function Fenglib:CreateWindow(Config)
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
 
+        -- 鼠标悬停效果：仅当按钮未选中时生效
         TabBtn.MouseEnter:Connect(function()
             if not TabBtn.Selected then
                 Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
@@ -2084,6 +1929,7 @@ function Fenglib:CreateWindow(Config)
         RightList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightCanvas)
         task.spawn(function() task.wait(); updateLeftCanvas(); updateRightCanvas() end)
 
+        -- 点击动画（M0DZN风格）
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
@@ -2133,111 +1979,6 @@ function Fenglib:CreateWindow(Config)
 
         return DualElements
     end
-
-    -- ==============================
-    -- 内置 Config 标签页
-    -- ==============================
-    local ConfigTab = Window:Tab("Config")
-    ConfigTab:Section("manage configs", nil, true)
-    local ConfigName = ""
-    ConfigTab:Textbox("Config Name", "enter a name here", function(val) ConfigName = val end, true)
-    local ConfigList = {}
-    local Dropdown = ConfigTab:Dropdown("Select Config", {"None"}, function(val) Window.CurrentConfig = val end, true)
-    local ConfigPaths = {}
-
-    local function RefreshConfigs()
-        pcall(function()
-            if not isfolder(Window.RootFolder) then makefolder(Window.RootFolder) end
-            if not isfolder(Window.ConfigFolder) then makefolder(Window.ConfigFolder) end
-        end)
-        ConfigList = {"None"}
-        ConfigPaths = {}
-        pcall(function()
-            for _, file in pairs(listfiles(Window.ConfigFolder)) do
-                local name = file
-                name = name:gsub(".*[\/\\]", "")
-                name = name:gsub("%.json$", "")
-                if name ~= "" then
-                    table.insert(ConfigList, name)
-                    ConfigPaths[name] = file
-                end
-            end
-        end)
-        Dropdown.Refresh(ConfigList)
-    end
-
-    ConfigTab:Button("Refresh List", function() RefreshConfigs() end, true)
-    ConfigTab:Button("Save Config", function()
-        if ConfigName == "" then return end
-        Fenglib:SaveConfig(ConfigName, Window.ConfigFolder)
-        RefreshConfigs()
-    end, true)
-
-    ConfigTab:Button("Load Config", function()
-        if Window.CurrentConfig == "" or Window.CurrentConfig == "None" then return end
-        local name = Window.CurrentConfig
-        local path = ConfigPaths[name] or (Window.ConfigFolder .. "/" .. name .. ".json")
-        SpawnNotif("Loading " .. name .. " Config", nil, nil, "internal")
-        local ok = Fenglib:LoadConfig(path)
-        if ok then
-            SpawnNotif(name .. " Config Loaded", nil, "success", "internal")
-        else
-            SpawnNotif("Failed to load " .. name, nil, "error", "internal")
-        end
-    end, true)
-
-    ConfigTab:Button("Delete Config", function()
-        if Window.CurrentConfig == "" or Window.CurrentConfig == "None" then return end
-        local name = Window.CurrentConfig
-        local paths = {
-            ConfigPaths[name],
-            Window.ConfigFolder .. "/" .. name .. ".json",
-            Window.ConfigFolder .. "\\" .. name .. ".json",
-        }
-        pcall(function()
-            for _, path in ipairs(paths) do
-                if path and isfile(path) then
-                    delfile(path)
-                    break
-                end
-            end
-        end)
-        Window.CurrentConfig = ""
-        task.wait(0.05)
-        RefreshConfigs()
-        if ConfigObjects["Select Config"] and ConfigObjects["Select Config"].Reset then
-            ConfigObjects["Select Config"].Reset()
-        end
-    end, true)
-
-    -- ==============================
-    -- 内置 Settings 标签页
-    -- ==============================
-    local Settings = Window:Tab("Settings")
-    Settings:Section("appearance", nil, true)
-    Settings:Toggle("Rainbow Edge", false, function(v) Fenglib:ToggleRainbow(v) end)
-    Settings:Slider("Rainbow Speed", 0.1, 10, 1, function(v) Fenglib:SetRainbowSpeed(v) end)
-    Settings:Dropdown("Rainbow Type", {
-        "Linear Gradient (Solid Rainbow)", "Animated/Cycling Rainbow", "Smooth Fading Gradient",
-        "Step/Band Rainbow", "Rainbow Pulse", "Radial Rainbow", "Neon/Glowing Rainbow",
-        "Pastel Rainbow", "Vertical/Horizontal Fade"
-    }, function(val) Fenglib:SetRainbowType(val) end, true)
-
-    local builtinThemes = {"Dark", "Light", "Purple", "Blue", "Red", "Yellow", "Green"}
-    local themeList = {}
-    for _, n in ipairs(builtinThemes) do table.insert(themeList, n) end
-    for name, _ in pairs(Themes) do
-        local isBuiltin = false
-        for _, b in ipairs(builtinThemes) do if b == name then isBuiltin = true; break end end
-        if not isBuiltin then table.insert(themeList, name) end
-    end
-    Settings:Dropdown("Theme", themeList, function(v) Fenglib:SetTheme(v) end, true)
-
-    Settings:Keybind("Menu Keybind", Keybind or Enum.KeyCode.M, function(v) Window:SetKeybind(v) end)
-
-    Settings:Button("Unload UI", function() Window:Unload() end, true)
-
-    RefreshConfigs()
 
     return Window
 end
