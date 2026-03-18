@@ -1,4 +1,4 @@
--- 文件完整内容（已修正下拉高度问题，并替换通知为样式化通知，恢复首次样式化版本大小和位置）
+-- 文件完整内容（已修正下拉高度问题）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -659,116 +659,101 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- ============================================================
-    -- 通知系统（样式化，已恢复至首次样式化版本：内边距12/10，标题14，描述12，位置右下角）
-    -- ============================================================
-    function Window:Notification(text, title, notifType)
-        title = title or "通知"
-        notifType = notifType or "Info"
+    -- ==============================
+    -- 新通知系统（替换原有简单通知）
+    -- ==============================
+    function Window:Notification(text)
+        task.spawn(function()
+            local Notif = Instance.new("Frame")
+            Notif.ZIndex = 200
+            Notif.Size = UDim2.new(0, 280, 0, 0)  -- 宽度固定，高度自动
+            Notif.Position = UDim2.new(1, 20, 1, -60)  -- 初始位置（右侧外）
+            Notif.AnchorPoint = Vector2.new(1, 1)
+            Notif.BackgroundTransparency = 0.05
+            Notif.BackgroundColor3 = CurrentTheme.Top
+            Notif.AutomaticSize = Enum.AutomaticSize.Y
+            Notif.Parent = ScreenGui
+            Instance.new("UICorner", Notif).CornerRadius = UDim.new(0, 16)
 
-        -- 确保忽略系统界面嵌入，使右下角定位准确
-        ScreenGui.IgnoreGuiInset = true
+            -- 描边
+            local NStroke = Instance.new("UIStroke")
+            NStroke.Thickness = 1
+            NStroke.Transparency = 0.6
+            NStroke.Color = CurrentTheme.Stroke
+            NStroke.Parent = Notif
 
-        local colors = {
-            Error = Color3.fromRGB(229, 51, 51),
-            Info = Color3.fromRGB(77, 163, 255),
-            Success = Color3.fromRGB(60, 179, 113)
-        }
-        local icons = {
-            Success = "rbxassetid://120659272678891",
-            Error = "rbxassetid://89180847534855",
-            Info = "rbxassetid://75441143875602"
-        }
-        local color = colors[notifType] or colors.Info
-        local icon = icons[notifType] or icons.Info
+            -- 内边距
+            local Padding = Instance.new("UIPadding")
+            Padding.PaddingTop = UDim.new(0, 10)
+            Padding.PaddingBottom = UDim.new(0, 10)
+            Padding.PaddingLeft = UDim.new(0, 12)
+            Padding.PaddingRight = UDim.new(0, 12)
+            Padding.Parent = Notif
 
-        -- 创建通知容器，宽度220，初始在屏幕外右侧
-        local notifHolder = Instance.new("Frame")
-        notifHolder.Name = "Notification"
-        notifHolder.Size = UDim2.new(0, 220, 0, 0)
-        notifHolder.AutomaticSize = Enum.AutomaticSize.Y
-        notifHolder.Position = UDim2.new(1, 20, 1, -60)  -- 屏幕外右侧
-        notifHolder.AnchorPoint = Vector2.new(1, 1)
-        notifHolder.BackgroundColor3 = CurrentTheme.Main
-        notifHolder.BackgroundTransparency = 0.05
-        notifHolder.Parent = ScreenGui
-        Instance.new("UICorner", notifHolder).CornerRadius = UDim.new(0, 20)
+            -- 水平布局（图标 + 文本 + 关闭按钮）
+            local Layout = Instance.new("UIListLayout")
+            Layout.FillDirection = Enum.FillDirection.Horizontal
+            Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+            Layout.VerticalAlignment = Enum.VerticalAlignment.Center
+            Layout.Padding = UDim.new(0, 8)
+            Layout.Parent = Notif
 
-        -- 外描边
-        local outerStroke = Instance.new("UIStroke")
-        outerStroke.Thickness = 0.5
-        outerStroke.Color = CurrentTheme.Stroke
-        outerStroke.Parent = notifHolder
+            -- 图标（Info 样式）
+            local Icon = Instance.new("ImageLabel")
+            Icon.Size = UDim2.new(0, 20, 0, 20)
+            Icon.BackgroundTransparency = 1
+            Icon.Image = "rbxassetid://75441143875602"  -- Info 图标
+            Icon.ImageColor3 = CurrentTheme.Accent
+            Icon.Parent = Notif
 
-        -- 内描边
-        local innerStroke = Instance.new("UIStroke")
-        innerStroke.Thickness = 1
-        innerStroke.Color = CurrentTheme.Stroke:lerp(Color3.new(1,1,1), 0.3)
-        innerStroke.Transparency = 0.7
-        innerStroke.Parent = notifHolder
+            -- 文本标签（自动换行，自动高度）
+            local TextLabel = Instance.new("TextLabel")
+            TextLabel.Size = UDim2.new(0, 204, 0, 0)  -- 宽度固定，高度自动
+            TextLabel.AutomaticSize = Enum.AutomaticSize.Y
+            TextLabel.BackgroundTransparency = 1
+            TextLabel.Font = Enum.Font.GothamMedium
+            TextLabel.Text = text
+            TextLabel.TextSize = 13
+            TextLabel.TextWrapped = true
+            TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+            TextLabel.TextColor3 = CurrentTheme.Text
+            TextLabel.Parent = Notif
 
-        -- 内容布局（左右12，上下10）
-        local content = Instance.new("Frame")
-        content.Size = UDim2.new(1, -24, 1, -20)
-        content.Position = UDim2.new(0, 12, 0, 10)
-        content.BackgroundTransparency = 1
-        content.Parent = notifHolder
+            -- 关闭按钮（叉）
+            local CloseBtn = Instance.new("ImageButton")
+            CloseBtn.Size = UDim2.new(0, 16, 0, 16)
+            CloseBtn.BackgroundTransparency = 1
+            CloseBtn.Image = "rbxassetid://103624613466093"
+            CloseBtn.ImageColor3 = CurrentTheme.Text
+            CloseBtn.Parent = Notif
 
-        -- 标题行（高度25）
-        local titleFrame = Instance.new("Frame")
-        titleFrame.Size = UDim2.new(1, 0, 0, 25)
-        titleFrame.BackgroundTransparency = 1
-        titleFrame.Parent = content
+            -- 点击关闭
+            local closeConnection
+            closeConnection = CloseBtn.MouseButton1Click:Connect(function()
+                if closeConnection then closeConnection:Disconnect() end
+                Tween(Notif, {Position = UDim2.new(1, 20, 1, -60), ImageTransparency = 1}, 0.4)
+                task.wait(0.4)
+                Notif:Destroy()
+            end)
 
-        local iconLabel = Instance.new("ImageLabel")
-        iconLabel.Image = icon
-        iconLabel.Size = UDim2.new(0, 15, 0, 15)
-        iconLabel.Position = UDim2.new(0, 0, 0.5, -7.5)
-        iconLabel.BackgroundTransparency = 1
-        iconLabel.ImageColor3 = color
-        iconLabel.Parent = titleFrame
+            -- 滑入动画
+            Tween(Notif, {Position = UDim2.new(1, -300, 1, -60)}, 0.5)
 
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Text = title
-        titleLabel.Size = UDim2.new(1, -20, 1, 0)
-        titleLabel.Position = UDim2.new(0, 20, 0, 0)
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.Font = Enum.Font.GothamBold
-        titleLabel.TextSize = 14
-        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        titleLabel.TextColor3 = CurrentTheme.Text
-        titleLabel.Parent = titleFrame
+            -- 自动关闭定时器
+            local delayThread = task.delay(5, function()
+                if Notif and Notif.Parent then
+                    if closeConnection then closeConnection:Disconnect() end
+                    Tween(Notif, {Position = UDim2.new(1, 20, 1, -60), ImageTransparency = 1}, 0.4)
+                    task.wait(0.4)
+                    Notif:Destroy()
+                end
+            end)
 
-        -- 描述文本（Y=30，字体12）
-        local descLabel = Instance.new("TextLabel")
-        descLabel.Text = text
-        descLabel.Size = UDim2.new(1, -15, 0, 0)
-        descLabel.AutomaticSize = Enum.AutomaticSize.Y
-        descLabel.Position = UDim2.new(0, 0, 0, 30)
-        descLabel.BackgroundTransparency = 1
-        descLabel.Font = Enum.Font.GothamMedium
-        descLabel.TextSize = 12
-        descLabel.TextColor3 = CurrentTheme.Text:lerp(Color3.new(1,1,1), 0.3)
-        descLabel.TextWrapped = true
-        descLabel.TextXAlignment = Enum.TextXAlignment.Left
-        descLabel.Parent = content
-
-        -- 左侧装饰线
-        local line = Instance.new("Frame")
-        line.Size = UDim2.new(0, 3, 1, -6)
-        line.Position = UDim2.new(0, -8, 0, 3)
-        line.BackgroundColor3 = color
-        line.BackgroundTransparency = 0.3
-        line.BorderSizePixel = 0
-        line.Parent = content
-
-        -- 入场动画：从屏幕外右侧滑入到屏幕右下角
-        Tween(notifHolder, {Position = UDim2.new(1, -20, 1, -60)}, 0.5)
-        task.wait(3)
-        -- 出场动画：滑出屏幕外右侧
-        Tween(notifHolder, {Position = UDim2.new(1, 20, 1, -60)}, 0.4)
-        task.wait(0.4)
-        notifHolder:Destroy()
+            -- 如果提前关闭，取消定时器
+            CloseBtn.MouseButton1Click:Connect(function()
+                task.cancel(delayThread)
+            end)
+        end)
     end
 
     function Window:SetKeybind(key) Keybind = key end
