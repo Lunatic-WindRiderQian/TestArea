@@ -1,4 +1,4 @@
--- 文件完整内容（已修正下拉高度问题，并替换通知系统为完整搬运版）
+-- 文件完整内容（已修正下拉高度问题，并替换通知系统为完整搬运版，颜色适配主题）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -681,10 +681,10 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Visible = false
 
     -- ==============================
-    -- 通知系统（完整搬运自通知.lua）
+    -- 通知系统（完整搬运自通知.lua，颜色适配主题）
     -- ==============================
     function Window:Notification(config)
-        -- 兼容字符串调用（原简单通知）
+        -- 兼容字符串调用
         if type(config) == "string" then
             config = {
                 Title = "Notification",
@@ -714,6 +714,11 @@ function Fenglib:CreateWindow(Config)
 
         local accentColor = colors[notifType] or colors.Info
 
+        -- 使用当前主题颜色
+        local bgColor = CurrentTheme.Top
+        local strokeColor = CurrentTheme.Stroke
+        local textColor = CurrentTheme.Text
+
         -- 根容器（用于缩放动画）
         local notifRoot = Instance.new("Frame")
         notifRoot.Name = "NotificationRoot"
@@ -727,15 +732,16 @@ function Fenglib:CreateWindow(Config)
         main.Name = "Main"
         main.Size = UDim2.new(0, 250, 0, 0)
         main.AutomaticSize = Enum.AutomaticSize.Y
-        main.BackgroundColor3 = Color3.new(1,1,1)
+        main.BackgroundColor3 = bgColor
+        main.BackgroundTransparency = 0.05  -- 匹配窗口元素的透明度
         main.AnchorPoint = Vector2.new(1, 0.5)
-        main.Position = UDim2.new(1, -2, 0.5, 0)  -- 右对齐，留出2px边距
+        main.Position = UDim2.new(1, -2, 0.5, 0)
         main.Parent = notifRoot
 
-        -- 背景渐变
+        -- 背景渐变（使用主题色）
         local bgGradient = Instance.new("UIGradient")
-        bgGradient.Color = ColorSequence.new(Color3.new(1,1,1))
-        bgGradient.Transparency = NumberSequence.new(0.1)
+        bgGradient.Color = ColorSequence.new(bgColor)
+        bgGradient.Transparency = NumberSequence.new(0.1)  -- 轻微渐变
         bgGradient.Parent = main
 
         -- 圆角
@@ -746,24 +752,16 @@ function Fenglib:CreateWindow(Config)
         -- 内描边
         local innerStroke = Instance.new("UIStroke")
         innerStroke.Thickness = 1
-        innerStroke.Color = Color3.new(1,1,1)
+        innerStroke.Color = strokeColor
+        innerStroke.Transparency = 0.5
         innerStroke.Parent = main
-
-        local innerGradient = Instance.new("UIGradient")
-        innerGradient.Color = ColorSequence.new(Color3.new(1,1,1))
-        innerGradient.Transparency = NumberSequence.new(0.5)
-        innerGradient.Parent = innerStroke
 
         -- 外描边
         local outerStroke = Instance.new("UIStroke")
         outerStroke.Thickness = 0.5
-        outerStroke.Color = Color3.new(1,1,1)
+        outerStroke.Color = strokeColor
+        outerStroke.Transparency = 0.3
         outerStroke.Parent = main
-
-        local outerGradient = Instance.new("UIGradient")
-        outerGradient.Color = ColorSequence.new(Color3.new(1,1,1))
-        outerGradient.Transparency = NumberSequence.new(0.3)
-        outerGradient.Parent = outerStroke
 
         -- 关闭图标
         local closeImg = Instance.new("ImageLabel")
@@ -773,10 +771,10 @@ function Fenglib:CreateWindow(Config)
         closeImg.Position = UDim2.new(1, -15, 0, 15)
         closeImg.AnchorPoint = Vector2.new(1, 0)
         closeImg.BackgroundTransparency = 1
-        closeImg.ImageColor3 = Color3.new(1,1,1)
+        closeImg.ImageColor3 = textColor  -- 使用主题文本色
         closeImg.Parent = main
 
-        -- 透明点击按钮（覆盖整个主框）
+        -- 透明点击按钮
         local closeBtn = Instance.new("TextButton")
         closeBtn.Name = "Interact"
         closeBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -784,10 +782,10 @@ function Fenglib:CreateWindow(Config)
         closeBtn.Text = ""
         closeBtn.Parent = main
 
-        -- 内容容器（标题、描述区域）
+        -- 内容容器
         local content = Instance.new("Frame")
         content.Name = "Content"
-        content.Size = UDim2.new(1, -65, 1, 0)  -- 右侧缩进65，左侧缩进35
+        content.Size = UDim2.new(1, -65, 1, 0)
         content.Position = UDim2.new(0, 35, 0, 0)
         content.BackgroundTransparency = 1
         content.AutomaticSize = Enum.AutomaticSize.Y
@@ -802,7 +800,7 @@ function Fenglib:CreateWindow(Config)
         iconImg.AnchorPoint = Vector2.new(0.5, 0.5)
         iconImg.BackgroundTransparency = 1
         iconImg.ImageColor3 = accentColor
-        iconImg.Parent = content  -- 稍后会移到标题内
+        iconImg.Parent = content
 
         -- 标题
         local titleLbl = Instance.new("TextLabel")
@@ -813,12 +811,12 @@ function Fenglib:CreateWindow(Config)
         titleLbl.BackgroundTransparency = 1
         titleLbl.Font = Enum.Font.GothamBold
         titleLbl.TextSize = 14
-        titleLbl.TextColor3 = Color3.new(1,1,1)
+        titleLbl.TextColor3 = textColor
         titleLbl.TextXAlignment = Enum.TextXAlignment.Left
         titleLbl.RichText = true
         titleLbl.Parent = content
 
-        -- 将图标移到标题内
+        -- 将图标移到标题内（作为子级，保持相对位置）
         iconImg.Parent = titleLbl
 
         -- 描述
@@ -830,12 +828,12 @@ function Fenglib:CreateWindow(Config)
         descLbl.BackgroundTransparency = 1
         descLbl.Font = Enum.Font.Gotham
         descLbl.TextSize = 12
-        descLbl.TextColor3 = Color3.new(0.9,0.9,0.9)
+        descLbl.TextColor3 = textColor
         descLbl.TextXAlignment = Enum.TextXAlignment.Left
         descLbl.RichText = true
         descLbl.Parent = content
 
-        -- 左侧彩色竖线（放在描述旁边）
+        -- 左侧彩色竖线
         local line = Instance.new("Frame")
         line.Name = "Line"
         line.Size = UDim2.new(0, 3, 1, 3)
@@ -856,15 +854,15 @@ function Fenglib:CreateWindow(Config)
         contentPadding.PaddingBottom = UDim.new(0, 16)
         contentPadding.Parent = content
 
-        -- 等待一帧使GUI完成布局，获取主框实际尺寸
+        -- 等待一帧获取实际尺寸
         RunService.Heartbeat:Wait()
         local mainSize = main.AbsoluteSize
         local targetWidth = mainSize.X + 2
         local targetHeight = mainSize.Y + 2
 
-        -- 入场动画：根容器从0扩大到目标大小
+        -- 入场动画
         Tween(notifRoot, {Size = UDim2.new(0, targetWidth, 0, targetHeight)}, 0.3)
-        Tween(notifRoot, {BackgroundTransparency = 0}, 0.3)  -- 同时淡入
+        Tween(notifRoot, {BackgroundTransparency = 0}, 0.3)
 
         -- 关闭函数
         local function destroyNotif()
@@ -879,7 +877,7 @@ function Fenglib:CreateWindow(Config)
         closeBtn.MouseButton1Click:Connect(destroyNotif)
         closeImg.MouseButton1Click:Connect(destroyNotif)
 
-        -- 自动关闭定时器
+        -- 自动关闭
         task.delay(duration, function()
             if notifRoot and notifRoot.Parent then
                 destroyNotif()
