@@ -1,4 +1,4 @@
--- 文件完整内容（已修正下拉高度问题）
+-- 文件完整内容（已替换通知系统）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -660,14 +660,34 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Visible = false
 
     -- ==============================
-    -- 新通知系统（替换原有简单通知）
+    -- 新通知系统（替换原有简单通知，样式来自通知.lua，位置大小采用测试UI.lua）
     -- ==============================
-    function Window:Notification(text)
+    function Window:Notification(text, notifType, duration)
+        notifType = notifType or "Info"
+        duration = duration or 5
+
+        -- 图标资源（来自通知.lua）
+        local Icons = {
+            Success = "rbxassetid://120659272678891",
+            Error   = "rbxassetid://89180847534855",
+            Info    = "rbxassetid://75441143875602",
+        }
+        local CloseIcon = "rbxassetid://103624613466093"
+
+        -- 颜色映射
+        local Colors = {
+            Success = Color3.fromRGB(60, 179, 113),
+            Error   = Color3.fromRGB(229, 51, 51),
+            Info    = Color3.fromRGB(77, 163, 255),
+        }
+        local iconColor = Colors[notifType] or Colors.Info
+
         task.spawn(function()
+            -- 主框架（自动高度，右下角定位）
             local Notif = Instance.new("Frame")
             Notif.ZIndex = 200
             Notif.Size = UDim2.new(0, 280, 0, 0)  -- 宽度固定，高度自动
-            Notif.Position = UDim2.new(1, 20, 1, -60)  -- 初始位置（右侧外）
+            Notif.Position = UDim2.new(1, 20, 1, -60)  -- 初始在屏幕外右侧
             Notif.AnchorPoint = Vector2.new(1, 1)
             Notif.BackgroundTransparency = 0.05
             Notif.BackgroundColor3 = CurrentTheme.Top
@@ -675,7 +695,7 @@ function Fenglib:CreateWindow(Config)
             Notif.Parent = ScreenGui
             Instance.new("UICorner", Notif).CornerRadius = UDim.new(0, 16)
 
-            -- 描边
+            -- 描边（简化，仅保留一个）
             local NStroke = Instance.new("UIStroke")
             NStroke.Thickness = 1
             NStroke.Transparency = 0.6
@@ -698,12 +718,12 @@ function Fenglib:CreateWindow(Config)
             Layout.Padding = UDim.new(0, 8)
             Layout.Parent = Notif
 
-            -- 图标（Info 样式）
+            -- 图标
             local Icon = Instance.new("ImageLabel")
             Icon.Size = UDim2.new(0, 20, 0, 20)
             Icon.BackgroundTransparency = 1
-            Icon.Image = "rbxassetid://75441143875602"  -- Info 图标
-            Icon.ImageColor3 = CurrentTheme.Accent
+            Icon.Image = Icons[notifType] or Icons.Info
+            Icon.ImageColor3 = iconColor
             Icon.Parent = Notif
 
             -- 文本标签（自动换行，自动高度）
@@ -719,11 +739,11 @@ function Fenglib:CreateWindow(Config)
             TextLabel.TextColor3 = CurrentTheme.Text
             TextLabel.Parent = Notif
 
-            -- 关闭按钮（叉）
+            -- 关闭按钮
             local CloseBtn = Instance.new("ImageButton")
             CloseBtn.Size = UDim2.new(0, 16, 0, 16)
             CloseBtn.BackgroundTransparency = 1
-            CloseBtn.Image = "rbxassetid://103624613466093"
+            CloseBtn.Image = CloseIcon
             CloseBtn.ImageColor3 = CurrentTheme.Text
             CloseBtn.Parent = Notif
 
@@ -740,7 +760,7 @@ function Fenglib:CreateWindow(Config)
             Tween(Notif, {Position = UDim2.new(1, -300, 1, -60)}, 0.5)
 
             -- 自动关闭定时器
-            local delayThread = task.delay(5, function()
+            local delayThread = task.delay(duration, function()
                 if Notif and Notif.Parent then
                     if closeConnection then closeConnection:Disconnect() end
                     Tween(Notif, {Position = UDim2.new(1, 20, 1, -60), ImageTransparency = 1}, 0.4)
