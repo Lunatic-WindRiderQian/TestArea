@@ -1,4 +1,4 @@
--- 文件完整内容（已修正下拉高度问题，并替换通知为样式化通知，通知尺寸恢复为首次样式化版本）
+-- 文件完整内容（已修正下拉高度问题，并替换通知为样式化通知，恢复首次样式化版本大小和位置）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -660,7 +660,7 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Visible = false
 
     -- ============================================================
-    -- 通知系统（样式化，已恢复至首次样式化版本大小：标题14、描述12、内边距10）
+    -- 通知系统（样式化，已恢复至首次样式化版本：内边距12/10，标题14，描述12，位置右下角）
     -- ============================================================
     function Window:Notification(text, title, notifType)
         title = title or "通知"
@@ -682,7 +682,7 @@ function Fenglib:CreateWindow(Config)
         local color = colors[notifType] or colors.Info
         local icon = icons[notifType] or icons.Info
 
-        -- 创建通知容器，宽度 220，初始位置在屏幕外右侧
+        -- 创建通知容器，宽度220，初始在屏幕外右侧
         local notifHolder = Instance.new("Frame")
         notifHolder.Name = "Notification"
         notifHolder.Size = UDim2.new(0, 220, 0, 0)
@@ -707,9 +707,9 @@ function Fenglib:CreateWindow(Config)
         innerStroke.Transparency = 0.7
         innerStroke.Parent = notifHolder
 
-        -- 内容布局（恢复为首次样式化版本：左右12，上下10）
+        -- 内容布局（左右12，上下10）
         local content = Instance.new("Frame")
-        content.Size = UDim2.new(1, -24, 1, -20)  -- 左右12，上下10
+        content.Size = UDim2.new(1, -24, 1, -20)
         content.Position = UDim2.new(0, 12, 0, 10)
         content.BackgroundTransparency = 1
         content.Parent = notifHolder
@@ -739,7 +739,7 @@ function Fenglib:CreateWindow(Config)
         titleLabel.TextColor3 = CurrentTheme.Text
         titleLabel.Parent = titleFrame
 
-        -- 描述文本（垂直位置Y=30，字体12）
+        -- 描述文本（Y=30，字体12）
         local descLabel = Instance.new("TextLabel")
         descLabel.Text = text
         descLabel.Size = UDim2.new(1, -15, 0, 0)
@@ -753,7 +753,7 @@ function Fenglib:CreateWindow(Config)
         descLabel.TextXAlignment = Enum.TextXAlignment.Left
         descLabel.Parent = content
 
-        -- 左侧装饰线（高度1,-6，位置Y=3）
+        -- 左侧装饰线
         local line = Instance.new("Frame")
         line.Size = UDim2.new(0, 3, 1, -6)
         line.Position = UDim2.new(0, -8, 0, 3)
@@ -762,7 +762,7 @@ function Fenglib:CreateWindow(Config)
         line.BorderSizePixel = 0
         line.Parent = content
 
-        -- 入场动画：从屏幕外滑入目标位置 (1, -20, 1, -60)
+        -- 入场动画：从屏幕外右侧滑入到屏幕右下角
         Tween(notifHolder, {Position = UDim2.new(1, -20, 1, -60)}, 0.5)
         task.wait(3)
         -- 出场动画：滑出屏幕外右侧
