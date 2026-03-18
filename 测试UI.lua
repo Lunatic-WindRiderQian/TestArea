@@ -1,4 +1,4 @@
--- 文件完整内容（已修正下拉高度问题，并替换通知系统为完整搬运版，颜色适配主题）
+-- 文件完整内容（已修正下拉高度问题，通知系统适配主题，无白色边框）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -681,7 +681,7 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Visible = false
 
     -- ==============================
-    -- 通知系统（完整搬运自通知.lua，颜色适配主题）
+    -- 通知系统（适配主题，无白色边框）
     -- ==============================
     function Window:Notification(config)
         -- 兼容字符串调用
@@ -714,11 +714,6 @@ function Fenglib:CreateWindow(Config)
 
         local accentColor = colors[notifType] or colors.Info
 
-        -- 使用当前主题颜色
-        local bgColor = CurrentTheme.Top
-        local strokeColor = CurrentTheme.Stroke
-        local textColor = CurrentTheme.Text
-
         -- 根容器（用于缩放动画）
         local notifRoot = Instance.new("Frame")
         notifRoot.Name = "NotificationRoot"
@@ -727,41 +722,21 @@ function Fenglib:CreateWindow(Config)
         notifRoot.ClipsDescendants = true
         notifRoot.Parent = NotificationHolder
 
-        -- 主内容框（固定宽度，高度自动）
+        -- 主内容框（固定宽度，高度自动，无描边）
         local main = Instance.new("Frame")
         main.Name = "Main"
         main.Size = UDim2.new(0, 250, 0, 0)
         main.AutomaticSize = Enum.AutomaticSize.Y
-        main.BackgroundColor3 = bgColor
-        main.BackgroundTransparency = 0.05  -- 匹配窗口元素的透明度
+        main.BackgroundColor3 = CurrentTheme.Top
+        main.BackgroundTransparency = 0.05
         main.AnchorPoint = Vector2.new(1, 0.5)
         main.Position = UDim2.new(1, -2, 0.5, 0)
         main.Parent = notifRoot
-
-        -- 背景渐变（使用主题色）
-        local bgGradient = Instance.new("UIGradient")
-        bgGradient.Color = ColorSequence.new(bgColor)
-        bgGradient.Transparency = NumberSequence.new(0.1)  -- 轻微渐变
-        bgGradient.Parent = main
 
         -- 圆角
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, 20)
         corner.Parent = main
-
-        -- 内描边
-        local innerStroke = Instance.new("UIStroke")
-        innerStroke.Thickness = 1
-        innerStroke.Color = strokeColor
-        innerStroke.Transparency = 0.5
-        innerStroke.Parent = main
-
-        -- 外描边
-        local outerStroke = Instance.new("UIStroke")
-        outerStroke.Thickness = 0.5
-        outerStroke.Color = strokeColor
-        outerStroke.Transparency = 0.3
-        outerStroke.Parent = main
 
         -- 关闭图标
         local closeImg = Instance.new("ImageLabel")
@@ -771,7 +746,7 @@ function Fenglib:CreateWindow(Config)
         closeImg.Position = UDim2.new(1, -15, 0, 15)
         closeImg.AnchorPoint = Vector2.new(1, 0)
         closeImg.BackgroundTransparency = 1
-        closeImg.ImageColor3 = textColor  -- 使用主题文本色
+        closeImg.ImageColor3 = CurrentTheme.Text
         closeImg.Parent = main
 
         -- 透明点击按钮
@@ -811,7 +786,7 @@ function Fenglib:CreateWindow(Config)
         titleLbl.BackgroundTransparency = 1
         titleLbl.Font = Enum.Font.GothamBold
         titleLbl.TextSize = 14
-        titleLbl.TextColor3 = textColor
+        titleLbl.TextColor3 = CurrentTheme.Text
         titleLbl.TextXAlignment = Enum.TextXAlignment.Left
         titleLbl.RichText = true
         titleLbl.Parent = content
@@ -828,7 +803,7 @@ function Fenglib:CreateWindow(Config)
         descLbl.BackgroundTransparency = 1
         descLbl.Font = Enum.Font.Gotham
         descLbl.TextSize = 12
-        descLbl.TextColor3 = textColor
+        descLbl.TextColor3 = CurrentTheme.Text
         descLbl.TextXAlignment = Enum.TextXAlignment.Left
         descLbl.RichText = true
         descLbl.Parent = content
@@ -864,8 +839,27 @@ function Fenglib:CreateWindow(Config)
         Tween(notifRoot, {Size = UDim2.new(0, targetWidth, 0, targetHeight)}, 0.3)
         Tween(notifRoot, {BackgroundTransparency = 0}, 0.3)
 
-        -- 关闭函数
+        -- 主题更新函数
+        local function updateTheme()
+            main.BackgroundColor3 = CurrentTheme.Top
+            titleLbl.TextColor3 = CurrentTheme.Text
+            descLbl.TextColor3 = CurrentTheme.Text
+            closeImg.ImageColor3 = CurrentTheme.Text
+            -- 图标和竖线颜色保持不变（使用类型颜色）
+        end
+
+        -- 添加到主题监听器
+        table.insert(ThemeListeners, updateTheme)
+
+        -- 关闭函数（同时从监听器中移除）
         local function destroyNotif()
+            -- 从 ThemeListeners 中移除
+            for i, fn in ipairs(ThemeListeners) do
+                if fn == updateTheme then
+                    table.remove(ThemeListeners, i)
+                    break
+                end
+            end
             Tween(notifRoot, {Size = UDim2.new(0, 0, 0, 0)}, 0.25)
             Tween(notifRoot, {BackgroundTransparency = 1}, 0.25)
             task.wait(0.26)
