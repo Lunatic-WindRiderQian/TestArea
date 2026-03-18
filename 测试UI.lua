@@ -1,4 +1,4 @@
--- 文件完整内容（已修正下拉高度问题，并替换通知为样式化通知，通知高度进一步减小）
+-- 文件完整内容（已修正下拉高度问题，并替换通知为样式化通知，通知尺寸恢复为首次样式化版本）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -660,7 +660,7 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Visible = false
 
     -- ============================================================
-    -- 通知系统（样式化，已修正位置，高度进一步减小）
+    -- 通知系统（样式化，已恢复至首次样式化版本大小：标题14、描述12、内边距10）
     -- ============================================================
     function Window:Notification(text, title, notifType)
         title = title or "通知"
@@ -707,23 +707,23 @@ function Fenglib:CreateWindow(Config)
         innerStroke.Transparency = 0.7
         innerStroke.Parent = notifHolder
 
-        -- 内容布局（进一步减小内边距，上下各5）
+        -- 内容布局（恢复为首次样式化版本：左右12，上下10）
         local content = Instance.new("Frame")
-        content.Size = UDim2.new(1, -20, 1, -10)  -- 左右10，上下5
-        content.Position = UDim2.new(0, 10, 0, 5)
+        content.Size = UDim2.new(1, -24, 1, -20)  -- 左右12，上下10
+        content.Position = UDim2.new(0, 12, 0, 10)
         content.BackgroundTransparency = 1
         content.Parent = notifHolder
 
-        -- 标题行（高度再减小）
+        -- 标题行（高度25）
         local titleFrame = Instance.new("Frame")
-        titleFrame.Size = UDim2.new(1, 0, 0, 18)  -- 从22减到18
+        titleFrame.Size = UDim2.new(1, 0, 0, 25)
         titleFrame.BackgroundTransparency = 1
         titleFrame.Parent = content
 
         local iconLabel = Instance.new("ImageLabel")
         iconLabel.Image = icon
-        iconLabel.Size = UDim2.new(0, 14, 0, 14)  -- 图标稍微缩小（15→14）
-        iconLabel.Position = UDim2.new(0, 0, 0.5, -7)
+        iconLabel.Size = UDim2.new(0, 15, 0, 15)
+        iconLabel.Position = UDim2.new(0, 0, 0.5, -7.5)
         iconLabel.BackgroundTransparency = 1
         iconLabel.ImageColor3 = color
         iconLabel.Parent = titleFrame
@@ -731,32 +731,32 @@ function Fenglib:CreateWindow(Config)
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Text = title
         titleLabel.Size = UDim2.new(1, -20, 1, 0)
-        titleLabel.Position = UDim2.new(0, 18, 0, 0)  -- 调整偏移
+        titleLabel.Position = UDim2.new(0, 20, 0, 0)
         titleLabel.BackgroundTransparency = 1
         titleLabel.Font = Enum.Font.GothamBold
-        titleLabel.TextSize = 12  -- 从13减到12
+        titleLabel.TextSize = 14
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
         titleLabel.TextColor3 = CurrentTheme.Text
         titleLabel.Parent = titleFrame
 
-        -- 描述文本（垂直位置再减小，字体再缩小）
+        -- 描述文本（垂直位置Y=30，字体12）
         local descLabel = Instance.new("TextLabel")
         descLabel.Text = text
         descLabel.Size = UDim2.new(1, -15, 0, 0)
         descLabel.AutomaticSize = Enum.AutomaticSize.Y
-        descLabel.Position = UDim2.new(0, 0, 0, 20)  -- 从25减到20
+        descLabel.Position = UDim2.new(0, 0, 0, 30)
         descLabel.BackgroundTransparency = 1
         descLabel.Font = Enum.Font.GothamMedium
-        descLabel.TextSize = 10  -- 从11减到10
+        descLabel.TextSize = 12
         descLabel.TextColor3 = CurrentTheme.Text:lerp(Color3.new(1,1,1), 0.3)
         descLabel.TextWrapped = true
         descLabel.TextXAlignment = Enum.TextXAlignment.Left
         descLabel.Parent = content
 
-        -- 左侧装饰线（位置微调）
+        -- 左侧装饰线（高度1,-6，位置Y=3）
         local line = Instance.new("Frame")
-        line.Size = UDim2.new(0, 3, 1, -2)  -- 高度减去2
-        line.Position = UDim2.new(0, -8, 0, 1)  -- 从Y=2改为1
+        line.Size = UDim2.new(0, 3, 1, -6)
+        line.Position = UDim2.new(0, -8, 0, 3)
         line.BackgroundColor3 = color
         line.BackgroundTransparency = 0.3
         line.BorderSizePixel = 0
