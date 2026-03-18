@@ -730,7 +730,7 @@ function Fenglib:CreateWindow(Config)
         main.BackgroundColor3 = CurrentTheme.Top
         main.BackgroundTransparency = 0.05
         main.AnchorPoint = Vector2.new(1, 0.5)
-        main.Position = UDim2.new(1, -2, 0.5, 0)
+        main.Position = UDim2.new(1, 0, 0.5, 0)  -- 右对齐，不留边距
         main.Parent = notifRoot
 
         -- 圆角
@@ -832,11 +832,9 @@ function Fenglib:CreateWindow(Config)
         -- 等待一帧获取实际尺寸
         RunService.Heartbeat:Wait()
         local mainSize = main.AbsoluteSize
-        local targetWidth = mainSize.X + 2
-        local targetHeight = mainSize.Y + 2
 
-        -- 入场动画
-        Tween(notifRoot, {Size = UDim2.new(0, targetWidth, 0, targetHeight)}, 0.3)
+        -- 入场动画：根容器大小直接等于主框大小
+        Tween(notifRoot, {Size = UDim2.new(0, mainSize.X, 0, mainSize.Y)}, 0.3)
         Tween(notifRoot, {BackgroundTransparency = 0}, 0.3)
 
         -- 主题更新函数
