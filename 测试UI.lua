@@ -885,7 +885,7 @@ function Fenglib:CreateWindow(Config)
         end
 
         closeBtn.MouseButton1Click:Connect(destroy)
-        closeImg.MouseButton1Click:Connect(destroy)
+        -- 已修复：删除 closeImg.MouseButton1Click 连接，因为 closeBtn 已覆盖整个区域
 
         -- 计算中间显示时间（总时间减去入场和出场动画）
         local showTime = math.max(0, totalTime - 0.3 - 0.25)
