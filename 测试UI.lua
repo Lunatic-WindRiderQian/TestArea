@@ -1,4 +1,4 @@
--- 文件完整内容（已修正下拉高度问题，重写通知系统，无任何白色边框，修复自动消失问题）
+-- 文件完整内容（已修正下拉高度问题，重写通知系统，无任何白色边框，Duration精确控制总时间）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -683,7 +683,7 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Visible = false
 
     -- ==============================
-    -- 通知系统（重写，无边框，修复自动消失问题）
+    -- 通知系统（重写，无边框，Duration 精确控制总时间）
     -- ==============================
     function Window:Notification(config)
         -- 兼容字符串调用
@@ -698,7 +698,7 @@ function Fenglib:CreateWindow(Config)
 
         local title = config.Title or "Notification"
         local description = config.Description or ""
-        local duration = config.Duration or 5
+        local totalTime = config.Duration or 5  -- 总时间（包括入场和出场动画）
         local notifType = config.Type or "Info"
 
         -- 类型颜色和图标
@@ -841,7 +841,7 @@ function Fenglib:CreateWindow(Config)
         RunService.Heartbeat:Wait()
         local mainSize = main.AbsoluteSize
 
-        -- 入场动画
+        -- 入场动画（0.3秒）
         Tween(root, {Size = UDim2.new(0, mainSize.X, 0, mainSize.Y)}, 0.3)
 
         -- 主题更新函数
@@ -856,8 +856,14 @@ function Fenglib:CreateWindow(Config)
         -- 添加到主题监听器
         table.insert(ThemeListeners, updateTheme)
 
-        -- 关闭函数（使用 Tween.Completed 确保动画完成后销毁）
+        -- 防重复关闭标志
+        local isDestroying = false
+
+        -- 关闭函数（播放缩小动画，完成后销毁）
         local function destroy()
+            if isDestroying then return end
+            isDestroying = true
+
             -- 从监听器中移除
             for i, fn in ipairs(ThemeListeners) do
                 if fn == updateTheme then
@@ -866,7 +872,7 @@ function Fenglib:CreateWindow(Config)
                 end
             end
 
-            -- 播放缩小动画，完成后销毁
+            -- 播放缩小动画（0.25秒），完成后销毁
             local shrink = TweenService:Create(root, TweenInfo.new(0.25), {Size = UDim2.new(0, 0, 0, 0)})
             shrink.Completed:Connect(function()
                 if root and root.Parent then
@@ -879,8 +885,16 @@ function Fenglib:CreateWindow(Config)
         closeBtn.MouseButton1Click:Connect(destroy)
         closeImg.MouseButton1Click:Connect(destroy)
 
-        -- 自动关闭（duration 秒后开始缩小，总消失时间 = duration + 0.25）
-        task.delay(duration, destroy)
+        -- 计算中间显示时间（总时间减去入场和出场动画）
+        local showTime = math.max(0, totalTime - 0.3 - 0.25)
+
+        -- 自动关闭：延迟 showTime 秒后开始缩小，总消失时间 = totalTime
+        if showTime > 0 then
+            task.delay(showTime, destroy)
+        else
+            -- 如果总时间太短，入场动画后立即开始缩小
+            task.delay(0.3, destroy)
+        end
     end
 
     function Window:SetKeybind(key) Keybind = key end
