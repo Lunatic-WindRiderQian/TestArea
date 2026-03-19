@@ -1,4 +1,4 @@
--- 文件完整内容（已修正下拉高度问题，通知系统适配主题，无白色边框）
+-- 文件完整内容（已修正下拉高度问题，通知系统适配主题，彻底移除所有白色边框）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -161,6 +161,7 @@ function Fenglib:CreateWindow(Config)
     NotificationHolder.Position = UDim2.new(1, -20, 1, -20)
     NotificationHolder.AnchorPoint = Vector2.new(1, 1)
     NotificationHolder.BackgroundTransparency = 1
+    NotificationHolder.BorderSizePixel = 0
     NotificationHolder.Parent = ScreenGui
 
     local HolderList = Instance.new("UIListLayout")
@@ -681,7 +682,7 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Visible = false
 
     -- ==============================
-    -- 通知系统（适配主题，无白色边框）
+    -- 通知系统（适配主题，无任何白色边框）
     -- ==============================
     function Window:Notification(config)
         -- 兼容字符串调用
@@ -714,21 +715,23 @@ function Fenglib:CreateWindow(Config)
 
         local accentColor = colors[notifType] or colors.Info
 
-        -- 根容器（用于缩放动画）
+        -- 根容器（用于缩放动画，彻底透明无边框）
         local notifRoot = Instance.new("Frame")
         notifRoot.Name = "NotificationRoot"
         notifRoot.Size = UDim2.new(0, 0, 0, 0)
         notifRoot.BackgroundTransparency = 1
+        notifRoot.BorderSizePixel = 0
         notifRoot.ClipsDescendants = true
         notifRoot.Parent = NotificationHolder
 
-        -- 主内容框（固定宽度，高度自动，无描边）
+        -- 主内容框（固定宽度，高度自动，无描边无边框）
         local main = Instance.new("Frame")
         main.Name = "Main"
         main.Size = UDim2.new(0, 250, 0, 0)
         main.AutomaticSize = Enum.AutomaticSize.Y
         main.BackgroundColor3 = CurrentTheme.Top
         main.BackgroundTransparency = 0.05
+        main.BorderSizePixel = 0
         main.AnchorPoint = Vector2.new(1, 0.5)
         main.Position = UDim2.new(1, 0, 0.5, 0)  -- 右对齐，不留边距
         main.Parent = notifRoot
@@ -746,6 +749,7 @@ function Fenglib:CreateWindow(Config)
         closeImg.Position = UDim2.new(1, -15, 0, 15)
         closeImg.AnchorPoint = Vector2.new(1, 0)
         closeImg.BackgroundTransparency = 1
+        closeImg.BorderSizePixel = 0
         closeImg.ImageColor3 = CurrentTheme.Text
         closeImg.Parent = main
 
@@ -754,6 +758,7 @@ function Fenglib:CreateWindow(Config)
         closeBtn.Name = "Interact"
         closeBtn.Size = UDim2.new(1, 0, 1, 0)
         closeBtn.BackgroundTransparency = 1
+        closeBtn.BorderSizePixel = 0
         closeBtn.Text = ""
         closeBtn.Parent = main
 
@@ -763,6 +768,7 @@ function Fenglib:CreateWindow(Config)
         content.Size = UDim2.new(1, -65, 1, 0)
         content.Position = UDim2.new(0, 35, 0, 0)
         content.BackgroundTransparency = 1
+        content.BorderSizePixel = 0
         content.AutomaticSize = Enum.AutomaticSize.Y
         content.Parent = main
 
@@ -774,6 +780,7 @@ function Fenglib:CreateWindow(Config)
         iconImg.Position = UDim2.new(0, -15, 0.5, 0)
         iconImg.AnchorPoint = Vector2.new(0.5, 0.5)
         iconImg.BackgroundTransparency = 1
+        iconImg.BorderSizePixel = 0
         iconImg.ImageColor3 = accentColor
         iconImg.Parent = content
 
@@ -784,6 +791,7 @@ function Fenglib:CreateWindow(Config)
         titleLbl.Size = UDim2.new(1, 0, 0, 10)
         titleLbl.AutomaticSize = Enum.AutomaticSize.Y
         titleLbl.BackgroundTransparency = 1
+        titleLbl.BorderSizePixel = 0
         titleLbl.Font = Enum.Font.GothamBold
         titleLbl.TextSize = 14
         titleLbl.TextColor3 = CurrentTheme.Text
@@ -801,6 +809,7 @@ function Fenglib:CreateWindow(Config)
         descLbl.Size = UDim2.new(1, 0, 0, 5)
         descLbl.AutomaticSize = Enum.AutomaticSize.Y
         descLbl.BackgroundTransparency = 1
+        descLbl.BorderSizePixel = 0
         descLbl.Font = Enum.Font.Gotham
         descLbl.TextSize = 12
         descLbl.TextColor3 = CurrentTheme.Text
@@ -816,6 +825,7 @@ function Fenglib:CreateWindow(Config)
         line.AnchorPoint = Vector2.new(0.5, 0.5)
         line.BackgroundColor3 = accentColor
         line.BackgroundTransparency = 0.7
+        line.BorderSizePixel = 0
         line.Parent = descLbl
 
         -- 内容布局
