@@ -1,4 +1,4 @@
--- 文件完整内容（已修正下拉高度问题，通知系统适配主题，彻底移除所有白色边框）
+-- 文件完整内容（已修正下拉高度问题，重写通知系统，无任何白色边框）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -154,10 +154,10 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
-    -- 通知容器（右下角堆叠）
+    -- 通知容器（右下角堆叠，完全透明无边框）
     local NotificationHolder = Instance.new("Frame")
     NotificationHolder.Name = "NotificationHolder"
-    NotificationHolder.Size = UDim2.new(0, 300, 0, 0)
+    NotificationHolder.Size = UDim2.new(0, 300, 1, 0)
     NotificationHolder.Position = UDim2.new(1, -20, 1, -20)
     NotificationHolder.AnchorPoint = Vector2.new(1, 1)
     NotificationHolder.BackgroundTransparency = 1
@@ -682,7 +682,7 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Visible = false
 
     -- ==============================
-    -- 通知系统（适配主题，无任何白色边框）
+    -- 通知系统（重写，完全无边框）
     -- ==============================
     function Window:Notification(config)
         -- 兼容字符串调用
@@ -700,31 +700,31 @@ function Fenglib:CreateWindow(Config)
         local duration = config.Duration or 5
         local notifType = config.Type or "Info"
 
-        -- 颜色和图标定义
-        local colors = {
-            Success = Color3.fromRGB(60, 179, 113),  -- #3CB371
-            Error   = Color3.fromRGB(229, 51, 51),   -- #E53333
-            Info    = Color3.fromRGB(77, 163, 255)   -- #4DA3FF
+        -- 类型颜色和图标
+        local typeColors = {
+            Success = Color3.fromRGB(60, 179, 113),
+            Error   = Color3.fromRGB(229, 51, 51),
+            Info    = Color3.fromRGB(77, 163, 255)
         }
-        local icons = {
+        local typeIcons = {
             Success = "rbxassetid://120659272678891",
             Error   = "rbxassetid://89180847534855",
             Info    = "rbxassetid://75441143875602"
         }
         local closeIcon = "rbxassetid://103624613466093"
 
-        local accentColor = colors[notifType] or colors.Info
+        local accentColor = typeColors[notifType] or typeColors.Info
 
-        -- 根容器（用于缩放动画，彻底透明无边框）
-        local notifRoot = Instance.new("Frame")
-        notifRoot.Name = "NotificationRoot"
-        notifRoot.Size = UDim2.new(0, 0, 0, 0)
-        notifRoot.BackgroundTransparency = 1
-        notifRoot.BorderSizePixel = 0
-        notifRoot.ClipsDescendants = true
-        notifRoot.Parent = NotificationHolder
+        -- 根容器（用于缩放动画，完全透明）
+        local root = Instance.new("Frame")
+        root.Name = "NotificationRoot"
+        root.Size = UDim2.new(0, 0, 0, 0)
+        root.BackgroundTransparency = 1
+        root.BorderSizePixel = 0
+        root.ClipsDescendants = true
+        root.Parent = NotificationHolder
 
-        -- 主内容框（固定宽度，高度自动，无描边无边框）
+        -- 主内容框（实际显示）
         local main = Instance.new("Frame")
         main.Name = "Main"
         main.Size = UDim2.new(0, 250, 0, 0)
@@ -732,18 +732,16 @@ function Fenglib:CreateWindow(Config)
         main.BackgroundColor3 = CurrentTheme.Top
         main.BackgroundTransparency = 0.05
         main.BorderSizePixel = 0
-        main.AnchorPoint = Vector2.new(1, 0.5)
-        main.Position = UDim2.new(1, 0, 0.5, 0)  -- 右对齐，不留边距
-        main.Parent = notifRoot
+        main.Parent = root
 
         -- 圆角
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, 20)
         corner.Parent = main
 
-        -- 关闭图标
+        -- 关闭按钮（图片 + 点击区域）
         local closeImg = Instance.new("ImageLabel")
-        closeImg.Name = "Close"
+        closeImg.Name = "CloseIcon"
         closeImg.Image = closeIcon
         closeImg.Size = UDim2.new(0, 8, 0, 8)
         closeImg.Position = UDim2.new(1, -15, 0, 15)
@@ -753,9 +751,8 @@ function Fenglib:CreateWindow(Config)
         closeImg.ImageColor3 = CurrentTheme.Text
         closeImg.Parent = main
 
-        -- 透明点击按钮
         local closeBtn = Instance.new("TextButton")
-        closeBtn.Name = "Interact"
+        closeBtn.Name = "CloseButton"
         closeBtn.Size = UDim2.new(1, 0, 1, 0)
         closeBtn.BackgroundTransparency = 1
         closeBtn.BorderSizePixel = 0
@@ -773,16 +770,16 @@ function Fenglib:CreateWindow(Config)
         content.Parent = main
 
         -- 图标（放在标题左侧）
-        local iconImg = Instance.new("ImageLabel")
-        iconImg.Name = "Icon"
-        iconImg.Image = icons[notifType]
-        iconImg.Size = UDim2.new(0, 15, 0, 15)
-        iconImg.Position = UDim2.new(0, -15, 0.5, 0)
-        iconImg.AnchorPoint = Vector2.new(0.5, 0.5)
-        iconImg.BackgroundTransparency = 1
-        iconImg.BorderSizePixel = 0
-        iconImg.ImageColor3 = accentColor
-        iconImg.Parent = content
+        local icon = Instance.new("ImageLabel")
+        icon.Name = "TypeIcon"
+        icon.Image = typeIcons[notifType]
+        icon.Size = UDim2.new(0, 15, 0, 15)
+        icon.Position = UDim2.new(0, -15, 0.5, 0)
+        icon.AnchorPoint = Vector2.new(0.5, 0.5)
+        icon.BackgroundTransparency = 1
+        icon.BorderSizePixel = 0
+        icon.ImageColor3 = accentColor
+        icon.Parent = content
 
         -- 标题
         local titleLbl = Instance.new("TextLabel")
@@ -799,8 +796,8 @@ function Fenglib:CreateWindow(Config)
         titleLbl.RichText = true
         titleLbl.Parent = content
 
-        -- 将图标移到标题内（作为子级，保持相对位置）
-        iconImg.Parent = titleLbl
+        -- 将图标移动到标题内
+        icon.Parent = titleLbl
 
         -- 描述
         local descLbl = Instance.new("TextLabel")
@@ -817,7 +814,7 @@ function Fenglib:CreateWindow(Config)
         descLbl.RichText = true
         descLbl.Parent = content
 
-        -- 左侧彩色竖线
+        -- 左侧竖线
         local line = Instance.new("Frame")
         line.Name = "Line"
         line.Size = UDim2.new(0, 3, 1, 3)
@@ -829,23 +826,22 @@ function Fenglib:CreateWindow(Config)
         line.Parent = descLbl
 
         -- 内容布局
-        local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 0)
-        contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        contentLayout.Parent = content
+        local layout = Instance.new("UIListLayout")
+        layout.Padding = UDim.new(0, 0)
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Parent = content
 
-        local contentPadding = Instance.new("UIPadding")
-        contentPadding.PaddingTop = UDim.new(0, 14)
-        contentPadding.PaddingBottom = UDim.new(0, 16)
-        contentPadding.Parent = content
+        local padding = Instance.new("UIPadding")
+        padding.PaddingTop = UDim.new(0, 14)
+        padding.PaddingBottom = UDim.new(0, 16)
+        padding.Parent = content
 
         -- 等待一帧获取实际尺寸
         RunService.Heartbeat:Wait()
         local mainSize = main.AbsoluteSize
 
-        -- 入场动画：根容器大小直接等于主框大小
-        Tween(notifRoot, {Size = UDim2.new(0, mainSize.X, 0, mainSize.Y)}, 0.3)
-        Tween(notifRoot, {BackgroundTransparency = 0}, 0.3)
+        -- 入场动画
+        Tween(root, {Size = UDim2.new(0, mainSize.X, 0, mainSize.Y)}, 0.3)
 
         -- 主题更新函数
         local function updateTheme()
@@ -853,38 +849,33 @@ function Fenglib:CreateWindow(Config)
             titleLbl.TextColor3 = CurrentTheme.Text
             descLbl.TextColor3 = CurrentTheme.Text
             closeImg.ImageColor3 = CurrentTheme.Text
-            -- 图标和竖线颜色保持不变（使用类型颜色）
+            -- 图标和竖线保持类型颜色不变
         end
 
         -- 添加到主题监听器
         table.insert(ThemeListeners, updateTheme)
 
-        -- 关闭函数（同时从监听器中移除）
-        local function destroyNotif()
-            -- 从 ThemeListeners 中移除
+        -- 关闭函数
+        local function destroy()
+            -- 从监听器中移除
             for i, fn in ipairs(ThemeListeners) do
                 if fn == updateTheme then
                     table.remove(ThemeListeners, i)
                     break
                 end
             end
-            Tween(notifRoot, {Size = UDim2.new(0, 0, 0, 0)}, 0.25)
-            Tween(notifRoot, {BackgroundTransparency = 1}, 0.25)
+            Tween(root, {Size = UDim2.new(0, 0, 0, 0)}, 0.25)
             task.wait(0.26)
-            if notifRoot and notifRoot.Parent then
-                notifRoot:Destroy()
+            if root and root.Parent then
+                root:Destroy()
             end
         end
 
-        closeBtn.MouseButton1Click:Connect(destroyNotif)
-        closeImg.MouseButton1Click:Connect(destroyNotif)
+        closeBtn.MouseButton1Click:Connect(destroy)
+        closeImg.MouseButton1Click:Connect(destroy)
 
         -- 自动关闭
-        task.delay(duration, function()
-            if notifRoot and notifRoot.Parent then
-                destroyNotif()
-            end
-        end)
+        task.delay(duration, destroy)
     end
 
     function Window:SetKeybind(key) Keybind = key end
