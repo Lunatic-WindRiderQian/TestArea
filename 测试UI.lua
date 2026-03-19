@@ -1,4 +1,4 @@
--- 文件完整内容（已修正下拉高度问题，重写通知系统，无任何白色边框）
+-- 文件完整内容（已修正下拉高度问题，重写通知系统，无任何白色边框，修复自动消失问题）
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -154,10 +154,11 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
-    -- 通知容器（右下角堆叠，完全透明无边框）
+    -- 通知容器（右下角堆叠，自动调整高度）
     local NotificationHolder = Instance.new("Frame")
     NotificationHolder.Name = "NotificationHolder"
-    NotificationHolder.Size = UDim2.new(0, 300, 1, 0)
+    NotificationHolder.Size = UDim2.new(0, 300, 0, 0)
+    NotificationHolder.AutomaticSize = Enum.AutomaticSize.Y
     NotificationHolder.Position = UDim2.new(1, -20, 1, -20)
     NotificationHolder.AnchorPoint = Vector2.new(1, 1)
     NotificationHolder.BackgroundTransparency = 1
@@ -682,7 +683,7 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Visible = false
 
     -- ==============================
-    -- 通知系统（重写，完全无边框）
+    -- 通知系统（重写，无边框，修复自动消失问题）
     -- ==============================
     function Window:Notification(config)
         -- 兼容字符串调用
@@ -855,7 +856,7 @@ function Fenglib:CreateWindow(Config)
         -- 添加到主题监听器
         table.insert(ThemeListeners, updateTheme)
 
-        -- 关闭函数
+        -- 关闭函数（使用 Tween.Completed 确保动画完成后销毁）
         local function destroy()
             -- 从监听器中移除
             for i, fn in ipairs(ThemeListeners) do
@@ -864,17 +865,21 @@ function Fenglib:CreateWindow(Config)
                     break
                 end
             end
-            Tween(root, {Size = UDim2.new(0, 0, 0, 0)}, 0.25)
-            task.wait(0.26)
-            if root and root.Parent then
-                root:Destroy()
-            end
+
+            -- 播放缩小动画，完成后销毁
+            local shrink = TweenService:Create(root, TweenInfo.new(0.25), {Size = UDim2.new(0, 0, 0, 0)})
+            shrink.Completed:Connect(function()
+                if root and root.Parent then
+                    root:Destroy()
+                end
+            end)
+            shrink:Play()
         end
 
         closeBtn.MouseButton1Click:Connect(destroy)
         closeImg.MouseButton1Click:Connect(destroy)
 
-        -- 自动关闭
+        -- 自动关闭（duration 秒后开始缩小，总消失时间 = duration + 0.25）
         task.delay(duration, destroy)
     end
 
