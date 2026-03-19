@@ -164,6 +164,8 @@ function Fenglib:CreateWindow(Config)
     NotificationHolder.BackgroundTransparency = 1
     NotificationHolder.BorderSizePixel = 0
     NotificationHolder.Parent = ScreenGui
+    -- 确保通知显示在最上层
+    NotificationHolder.ZIndex = 100
 
     local HolderList = Instance.new("UIListLayout")
     HolderList.HorizontalAlignment = Enum.HorizontalAlignment.Right
