@@ -682,259 +682,220 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
--- ==============================
--- 通知系统（重写，参考通知.lua 样式，无 Fusion，纯 Tween）
--- ==============================
-function Window:Notification(config)
-    -- 兼容字符串调用
-    if type(config) == "string" then
-        config = {
-            Title = "Notification",
-            Description = config,
-            Duration = 5,
-            Type = "Info"
-        }
-    end
-
-    local title = config.Title or "Notification"
-    local description = config.Description or ""
-    local totalTime = config.Duration or 5
-    local notifType = config.Type or "Info"
-
-    -- 类型颜色和图标（与通知.lua 一致）
-    local typeColors = {
-        Success = Color3.fromRGB(60, 179, 113),
-        Error   = Color3.fromRGB(229, 51, 51),
-        Info    = Color3.fromRGB(77, 163, 255)
-    }
-    local typeIcons = {
-        Success = "rbxassetid://120659272678891",
-        Error   = "rbxassetid://89180847534855",
-        Info    = "rbxassetid://75441143875602"
-    }
-    local closeIcon = "rbxassetid://103624613466093"
-    local accentColor = typeColors[notifType] or typeColors.Info
-
-    -- 根容器（缩放动画用）
-    local root = Instance.new("Frame")
-    root.Name = "NotificationRoot"
-    root.Size = UDim2.new(0, 0, 0, 0)
-    root.BackgroundTransparency = 1
-    root.BorderSizePixel = 0
-    root.ClipsDescendants = true
-    root.Parent = NotificationHolder
-
-    -- 主内容框（实际显示）
-    local main = Instance.new("Frame")
-    main.Name = "Main"
-    main.Size = UDim2.new(0, 250, 0, 0)
-    main.AutomaticSize = Enum.AutomaticSize.Y
-    main.BackgroundColor3 = CurrentTheme.Top
-    main.BackgroundTransparency = 0.05  -- 微透明，模仿玻璃质感
-    main.BorderSizePixel = 0
-    main.Parent = root
-
-    -- 圆角
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 20)
-    corner.Parent = main
-
-    -- 背景渐变（模仿通知.lua 的光感）
-    local gradient = Instance.new("UIGradient")
-    gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),  -- 白色高光
-        ColorSequenceKeypoint.new(1, Color3.new(0.9, 0.9, 0.9))
-    })
-    gradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.85),
-        NumberSequenceKeypoint.new(1, 0.95)
-    })
-    gradient.Rotation = 45
-    gradient.Parent = main
-
-    -- 内描边（较粗）
-    local innerStroke = Instance.new("UIStroke")
-    innerStroke.Thickness = 1
-    innerStroke.Color = Color3.new(1, 1, 1)
-    innerStroke.Transparency = 0.7
-    innerStroke.Parent = main
-    local innerGrad = Instance.new("UIGradient")
-    innerGrad.Color = ColorSequence.new(Color3.new(1, 1, 1))
-    innerGrad.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.2),
-        NumberSequenceKeypoint.new(0.5, 0.8),
-        NumberSequenceKeypoint.new(1, 0.2)
-    })
-    innerGrad.Rotation = 45
-    innerGrad.Parent = innerStroke
-
-    -- 外描边（较细）
-    local outerStroke = Instance.new("UIStroke")
-    outerStroke.Thickness = 0.5
-    outerStroke.Color = Color3.new(1, 1, 1)
-    outerStroke.Transparency = 0.5
-    outerStroke.Parent = main
-    local outerGrad = Instance.new("UIGradient")
-    outerGrad.Color = ColorSequence.new(Color3.new(1, 1, 1))
-    outerGrad.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.4),
-        NumberSequenceKeypoint.new(0.5, 0.9),
-        NumberSequenceKeypoint.new(1, 0.4)
-    })
-    outerGrad.Rotation = 45
-    outerGrad.Parent = outerStroke
-
-    -- 关闭按钮图标
-    local closeImg = Instance.new("ImageLabel")
-    closeImg.Name = "CloseIcon"
-    closeImg.Image = closeIcon
-    closeImg.Size = UDim2.new(0, 8, 0, 8)
-    closeImg.Position = UDim2.new(1, -15, 0, 15)
-    closeImg.AnchorPoint = Vector2.new(1, 0)
-    closeImg.BackgroundTransparency = 1
-    closeImg.BorderSizePixel = 0
-    closeImg.ImageColor3 = CurrentTheme.Text
-    closeImg.Parent = main
-
-    -- 关闭按钮点击区域
-    local closeBtn = Instance.new("TextButton")
-    closeBtn.Name = "CloseButton"
-    closeBtn.Size = UDim2.new(1, 0, 1, 0)
-    closeBtn.BackgroundTransparency = 1
-    closeBtn.BorderSizePixel = 0
-    closeBtn.Text = ""
-    closeBtn.Parent = main
-
-    -- 内容容器
-    local content = Instance.new("Frame")
-    content.Name = "Content"
-    content.Size = UDim2.new(1, -65, 1, 0)
-    content.Position = UDim2.new(0, 35, 0, 0)
-    content.BackgroundTransparency = 1
-    content.BorderSizePixel = 0
-    content.AutomaticSize = Enum.AutomaticSize.Y
-    content.Parent = main
-
-    -- 标题（带图标）
-    local titleLbl = Instance.new("TextLabel")
-    titleLbl.Name = "Title"
-    titleLbl.Text = title
-    titleLbl.Size = UDim2.new(1, 0, 0, 10)
-    titleLbl.AutomaticSize = Enum.AutomaticSize.Y
-    titleLbl.BackgroundTransparency = 1
-    titleLbl.BorderSizePixel = 0
-    titleLbl.Font = Enum.Font.GothamBold
-    titleLbl.TextSize = 14
-    titleLbl.TextColor3 = CurrentTheme.Text
-    titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-    titleLbl.RichText = true
-    titleLbl.Parent = content
-
-    -- 标题左侧图标
-    local icon = Instance.new("ImageLabel")
-    icon.Name = "TypeIcon"
-    icon.Image = typeIcons[notifType]
-    icon.Size = UDim2.new(0, 15, 0, 15)
-    icon.Position = UDim2.new(0, -15, 0.5, 0)
-    icon.AnchorPoint = Vector2.new(0.5, 0.5)
-    icon.BackgroundTransparency = 1
-    icon.BorderSizePixel = 0
-    icon.ImageColor3 = accentColor
-    icon.Parent = titleLbl
-
-    -- 描述
-    local descLbl = Instance.new("TextLabel")
-    descLbl.Name = "Description"
-    descLbl.Text = description
-    descLbl.Size = UDim2.new(1, 0, 0, 5)
-    descLbl.AutomaticSize = Enum.AutomaticSize.Y
-    descLbl.BackgroundTransparency = 1
-    descLbl.BorderSizePixel = 0
-    descLbl.Font = Enum.Font.Gotham
-    descLbl.TextSize = 12
-    descLbl.TextColor3 = CurrentTheme.Text
-    descLbl.TextXAlignment = Enum.TextXAlignment.Left
-    descLbl.RichText = true
-    descLbl.Parent = content
-
-    -- 描述左侧竖线
-    local line = Instance.new("Frame")
-    line.Name = "Line"
-    line.Size = UDim2.new(0, 3, 1, 3)
-    line.Position = UDim2.new(0, -15, 0.5, 0)
-    line.AnchorPoint = Vector2.new(0.5, 0.5)
-    line.BackgroundColor3 = accentColor
-    line.BackgroundTransparency = 0.7
-    line.BorderSizePixel = 0
-    line.Parent = descLbl
-
-    -- 内容布局
-    local layout = Instance.new("UIListLayout")
-    layout.Padding = UDim.new(0, 0)
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Parent = content
-
-    local padding = Instance.new("UIPadding")
-    padding.PaddingTop = UDim.new(0, 14)
-    padding.PaddingBottom = UDim.new(0, 16)
-    padding.Parent = content
-
-    -- 等待一帧获取实际尺寸
-    RunService.Heartbeat:Wait()
-    local mainSize = main.AbsoluteSize
-
-    -- 入场动画（0.3秒）
-    Tween(root, {Size = UDim2.new(0, mainSize.X, 0, mainSize.Y)}, 0.3)
-
-    -- 主题更新函数
-    local function updateTheme()
-        main.BackgroundColor3 = CurrentTheme.Top
-        titleLbl.TextColor3 = CurrentTheme.Text
-        descLbl.TextColor3 = CurrentTheme.Text
-        closeImg.ImageColor3 = CurrentTheme.Text
-        -- 渐变和描边颜色保持不变（白色系）
-    end
-
-    -- 添加到主题监听器
-    table.insert(ThemeListeners, updateTheme)
-
-    -- 防重复关闭标志
-    local isDestroying = false
-
-    -- 关闭函数
-    local function destroy()
-        if isDestroying then return end
-        isDestroying = true
-
-        -- 从监听器中移除
-        for i, fn in ipairs(ThemeListeners) do
-            if fn == updateTheme then
-                table.remove(ThemeListeners, i)
-                break
-            end
+    -- ==============================
+    -- 通知系统（重写，无边框，Duration 精确控制总时间）
+    -- ==============================
+    function Window:Notification(config)
+        -- 兼容字符串调用
+        if type(config) == "string" then
+            config = {
+                Title = "Notification",
+                Description = config,
+                Duration = 5,
+                Type = "Info"
+            }
         end
 
-        -- 播放缩小动画
-        local shrink = TweenService:Create(root, TweenInfo.new(0.25), {Size = UDim2.new(0, 0, 0, 0)})
-        shrink.Completed:Connect(function()
-            if root and root.Parent then
-                root:Destroy()
+        local title = config.Title or "Notification"
+        local description = config.Description or ""
+        local totalTime = config.Duration or 5  -- 总时间（包括入场和出场动画）
+        local notifType = config.Type or "Info"
+
+        -- 类型颜色和图标
+        local typeColors = {
+            Success = Color3.fromRGB(60, 179, 113),
+            Error   = Color3.fromRGB(229, 51, 51),
+            Info    = Color3.fromRGB(77, 163, 255)
+        }
+        local typeIcons = {
+            Success = "rbxassetid://120659272678891",
+            Error   = "rbxassetid://89180847534855",
+            Info    = "rbxassetid://75441143875602"
+        }
+        local closeIcon = "rbxassetid://103624613466093"
+
+        local accentColor = typeColors[notifType] or typeColors.Info
+
+        -- 根容器（用于缩放动画，完全透明）
+        local root = Instance.new("Frame")
+        root.Name = "NotificationRoot"
+        root.Size = UDim2.new(0, 0, 0, 0)
+        root.BackgroundTransparency = 1
+        root.BorderSizePixel = 0
+        root.ClipsDescendants = true
+        root.Parent = NotificationHolder
+
+        -- 主内容框（实际显示）
+        local main = Instance.new("Frame")
+        main.Name = "Main"
+        main.Size = UDim2.new(0, 250, 0, 0)
+        main.AutomaticSize = Enum.AutomaticSize.Y
+        main.BackgroundColor3 = CurrentTheme.Top
+        main.BackgroundTransparency = 0.05
+        main.BorderSizePixel = 0
+        main.Parent = root
+
+        -- 圆角
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 20)
+        corner.Parent = main
+
+        -- 关闭按钮（图片 + 点击区域）
+        local closeImg = Instance.new("ImageLabel")
+        closeImg.Name = "CloseIcon"
+        closeImg.Image = closeIcon
+        closeImg.Size = UDim2.new(0, 8, 0, 8)
+        closeImg.Position = UDim2.new(1, -15, 0, 15)
+        closeImg.AnchorPoint = Vector2.new(1, 0)
+        closeImg.BackgroundTransparency = 1
+        closeImg.BorderSizePixel = 0
+        closeImg.ImageColor3 = CurrentTheme.Text
+        closeImg.Parent = main
+
+        local closeBtn = Instance.new("TextButton")
+        closeBtn.Name = "CloseButton"
+        closeBtn.Size = UDim2.new(1, 0, 1, 0)
+        closeBtn.BackgroundTransparency = 1
+        closeBtn.BorderSizePixel = 0
+        closeBtn.Text = ""
+        closeBtn.Parent = main
+
+        -- 内容容器
+        local content = Instance.new("Frame")
+        content.Name = "Content"
+        content.Size = UDim2.new(1, -65, 1, 0)
+        content.Position = UDim2.new(0, 35, 0, 0)
+        content.BackgroundTransparency = 1
+        content.BorderSizePixel = 0
+        content.AutomaticSize = Enum.AutomaticSize.Y
+        content.Parent = main
+
+        -- 图标（放在标题左侧）
+        local icon = Instance.new("ImageLabel")
+        icon.Name = "TypeIcon"
+        icon.Image = typeIcons[notifType]
+        icon.Size = UDim2.new(0, 15, 0, 15)
+        icon.Position = UDim2.new(0, -15, 0.5, 0)
+        icon.AnchorPoint = Vector2.new(0.5, 0.5)
+        icon.BackgroundTransparency = 1
+        icon.BorderSizePixel = 0
+        icon.ImageColor3 = accentColor
+        icon.Parent = content
+
+        -- 标题
+        local titleLbl = Instance.new("TextLabel")
+        titleLbl.Name = "Title"
+        titleLbl.Text = title
+        titleLbl.Size = UDim2.new(1, 0, 0, 10)
+        titleLbl.AutomaticSize = Enum.AutomaticSize.Y
+        titleLbl.BackgroundTransparency = 1
+        titleLbl.BorderSizePixel = 0
+        titleLbl.Font = Enum.Font.GothamBold
+        titleLbl.TextSize = 14
+        titleLbl.TextColor3 = CurrentTheme.Text
+        titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+        titleLbl.RichText = true
+        titleLbl.Parent = content
+
+        -- 将图标移动到标题内
+        icon.Parent = titleLbl
+
+        -- 描述
+        local descLbl = Instance.new("TextLabel")
+        descLbl.Name = "Description"
+        descLbl.Text = description
+        descLbl.Size = UDim2.new(1, 0, 0, 5)
+        descLbl.AutomaticSize = Enum.AutomaticSize.Y
+        descLbl.BackgroundTransparency = 1
+        descLbl.BorderSizePixel = 0
+        descLbl.Font = Enum.Font.Gotham
+        descLbl.TextSize = 12
+        descLbl.TextColor3 = CurrentTheme.Text
+        descLbl.TextXAlignment = Enum.TextXAlignment.Left
+        descLbl.RichText = true
+        descLbl.Parent = content
+
+        -- 左侧竖线
+        local line = Instance.new("Frame")
+        line.Name = "Line"
+        line.Size = UDim2.new(0, 3, 1, 3)
+        line.Position = UDim2.new(0, -15, 0.5, 0)
+        line.AnchorPoint = Vector2.new(0.5, 0.5)
+        line.BackgroundColor3 = accentColor
+        line.BackgroundTransparency = 0.7
+        line.BorderSizePixel = 0
+        line.Parent = descLbl
+
+        -- 内容布局
+        local layout = Instance.new("UIListLayout")
+        layout.Padding = UDim.new(0, 0)
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Parent = content
+
+        local padding = Instance.new("UIPadding")
+        padding.PaddingTop = UDim.new(0, 14)
+        padding.PaddingBottom = UDim.new(0, 16)
+        padding.Parent = content
+
+        -- 等待一帧获取实际尺寸
+        RunService.Heartbeat:Wait()
+        local mainSize = main.AbsoluteSize
+
+        -- 入场动画（0.3秒）
+        Tween(root, {Size = UDim2.new(0, mainSize.X, 0, mainSize.Y)}, 0.3)
+
+        -- 主题更新函数
+        local function updateTheme()
+            main.BackgroundColor3 = CurrentTheme.Top
+            titleLbl.TextColor3 = CurrentTheme.Text
+            descLbl.TextColor3 = CurrentTheme.Text
+            closeImg.ImageColor3 = CurrentTheme.Text
+            -- 图标和竖线保持类型颜色不变
+        end
+
+        -- 添加到主题监听器
+        table.insert(ThemeListeners, updateTheme)
+
+        -- 防重复关闭标志
+        local isDestroying = false
+
+        -- 关闭函数（播放缩小动画，完成后销毁）
+        local function destroy()
+            if isDestroying then return end
+            isDestroying = true
+
+            -- 从监听器中移除
+            for i, fn in ipairs(ThemeListeners) do
+                if fn == updateTheme then
+                    table.remove(ThemeListeners, i)
+                    break
+                end
             end
-        end)
-        shrink:Play()
-    end
 
-    closeBtn.MouseButton1Click:Connect(destroy)
-    closeImg.MouseButton1Click:Connect(destroy)
+            -- 播放缩小动画（0.25秒），完成后销毁
+            local shrink = TweenService:Create(root, TweenInfo.new(0.25), {Size = UDim2.new(0, 0, 0, 0)})
+            shrink.Completed:Connect(function()
+                if root and root.Parent then
+                    root:Destroy()
+                end
+            end)
+            shrink:Play()
+        end
 
-    -- 自动关闭：总时间减去入场和出场动画
-    local showTime = math.max(0, totalTime - 0.3 - 0.25)
-    if showTime > 0 then
-        task.delay(showTime, destroy)
-    else
-        task.delay(0.3, destroy)
+        closeBtn.MouseButton1Click:Connect(destroy)
+        closeImg.MouseButton1Click:Connect(destroy)
+
+        -- 计算中间显示时间（总时间减去入场和出场动画）
+        local showTime = math.max(0, totalTime - 0.3 - 0.25)
+
+        -- 自动关闭：延迟 showTime 秒后开始缩小，总消失时间 = totalTime
+        if showTime > 0 then
+            task.delay(showTime, destroy)
+        else
+            -- 如果总时间太短，入场动画后立即开始缩小
+            task.delay(0.3, destroy)
+        end
     end
-end
 
     function Window:SetKeybind(key) Keybind = key end
     function Window:Destroy() ScreenGui:Destroy() end
