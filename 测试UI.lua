@@ -2152,16 +2152,16 @@ function Fenglib:CreateWindow(Config)
     end
 
     -- ==============================
-    -- 新 Settings 和 Config 标签页（来自 M0DZN.lua）
+    -- 新 Settings 和 Config 标签页（来自 M0DZN.lua，修正为在 Section 内创建元素）
     -- ==============================
     local ConfigTab = Window:Tab("Config")
-    ConfigTab:Section("manage configs")
+    local configSection = ConfigTab:Section("manage configs")
 
     local ConfigName = ""
-    ConfigTab:Textbox("Config Name", "enter a name here", function(val) ConfigName = val end)
+    configSection:Textbox("Config Name", "enter a name here", function(val) ConfigName = val end)
 
     local ConfigList = {}
-    local Dropdown = ConfigTab:Dropdown("Select Config", {"None"}, function(val) Window.CurrentConfig = val end)
+    local Dropdown = configSection:Dropdown("Select Config", {"None"}, function(val) Window.CurrentConfig = val end)
 
     local ConfigPaths = {}
 
@@ -2186,14 +2186,14 @@ function Fenglib:CreateWindow(Config)
         Dropdown.Refresh(ConfigList)
     end
 
-    ConfigTab:Button("Refresh List", function() RefreshConfigs() end)
-    ConfigTab:Button("Save Config", function()
+    configSection:Button("Refresh List", function() RefreshConfigs() end)
+    configSection:Button("Save Config", function()
         if ConfigName == "" then return end
         Fenglib:SaveConfig(ConfigName, Window.ConfigFolder)
         RefreshConfigs()
     end)
 
-    ConfigTab:Button("Load Config", function()
+    configSection:Button("Load Config", function()
         if Window.CurrentConfig == "" or Window.CurrentConfig == "None" then return end
 
         local name = Window.CurrentConfig
@@ -2210,7 +2210,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    ConfigTab:Button("Delete Config", function()
+    configSection:Button("Delete Config", function()
         if Window.CurrentConfig == "" or Window.CurrentConfig == "None" then return end
         local name = Window.CurrentConfig
         local paths = {
@@ -2235,12 +2235,12 @@ function Fenglib:CreateWindow(Config)
     end)
 
     local Settings = Window:Tab("Settings")
-    Settings:Section("appearance")
-    Settings:Toggle("Rainbow Edge", false, function(v) Fenglib:ToggleRainbow(v) end)
-    Settings:Slider("Rainbow Speed", 0, 10, 1, function(v)
+    local appearanceSection = Settings:Section("appearance")
+    appearanceSection:Toggle("Rainbow Edge", false, function(v) Fenglib:ToggleRainbow(v) end)
+    appearanceSection:Slider("Rainbow Speed", 0, 10, 1, function(v)
         Fenglib:SetRainbowSpeed(v)
     end)
-    Settings:Dropdown("Rainbow Type", {"Linear Gradient (Solid Rainbow)", "Animated/Cycling Rainbow", "Smooth Fading Gradient", "Step/Band Rainbow", "Rainbow Pulse", "Radial Rainbow", "Neon/Glowing Rainbow", "Pastel Rainbow", "Vertical/Horizontal Fade"}, function(val) Fenglib:SetRainbowType(val) end)
+    appearanceSection:Dropdown("Rainbow Type", {"Linear Gradient (Solid Rainbow)", "Animated/Cycling Rainbow", "Smooth Fading Gradient", "Step/Band Rainbow", "Rainbow Pulse", "Radial Rainbow", "Neon/Glowing Rainbow", "Pastel Rainbow", "Vertical/Horizontal Fade"}, function(val) Fenglib:SetRainbowType(val) end)
     local builtinThemes = {"Red", "Dark", "Light", "Purple", "Blue", "Yellow", "Green"}
     local themeList = {}
     for _, n in ipairs(builtinThemes) do table.insert(themeList, n) end
@@ -2249,9 +2249,9 @@ function Fenglib:CreateWindow(Config)
         for _, b in ipairs(builtinThemes) do if b == name then isBuiltin = true; break end end
         if not isBuiltin then table.insert(themeList, name) end
     end
-    local ThemeDropdown = Settings:Dropdown("Theme", themeList, function(v) Fenglib:SetTheme(v) end)
-    Settings:Keybind("Menu Keybind", Keybind or Enum.KeyCode.M, function(v) Window:SetKeybind(v) end)
-    Settings:Button("Unload UI", function() Window:Destroy() end)
+    local ThemeDropdown = appearanceSection:Dropdown("Theme", themeList, function(v) Fenglib:SetTheme(v) end)
+    appearanceSection:Keybind("Menu Keybind", Keybind or Enum.KeyCode.M, function(v) Window:SetKeybind(v) end)
+    appearanceSection:Button("Unload UI", function() Window:Destroy() end)
 
     RefreshConfigs()
 
