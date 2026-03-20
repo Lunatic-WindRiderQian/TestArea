@@ -1,4 +1,5 @@
 -- 文件完整内容（已修正下拉高度问题，重写通知系统，无任何白色边框，Duration精确控制总时间）
+-- 移除了自动创建的 Config 和 Settings 标签页，可在主脚本中手动添加
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -2151,109 +2152,9 @@ function Fenglib:CreateWindow(Config)
         return DualElements
     end
 
-    -- ==============================
-    -- 新 Settings 和 Config 标签页（来自 M0DZN.lua，修正为在 Section 内创建元素）
-    -- ==============================
-    local ConfigTab = Window:Tab("Config")
-    local configSection = ConfigTab:Section("manage configs")
-
-    local ConfigName = ""
-    configSection:Textbox("Config Name", "enter a name here", function(val) ConfigName = val end)
-
-    local ConfigList = {}
-    local Dropdown = configSection:Dropdown("Select Config", {"None"}, function(val) Window.CurrentConfig = val end)
-
-    local ConfigPaths = {}
-
-    local function RefreshConfigs()
-        pcall(function()
-            if not isfolder(Window.RootFolder) then makefolder(Window.RootFolder) end
-            if not isfolder(Window.ConfigFolder) then makefolder(Window.ConfigFolder) end
-        end)
-        ConfigList = {"None"}
-        ConfigPaths = {}
-        pcall(function()
-            for _, file in pairs(listfiles(Window.ConfigFolder)) do
-                local name = file
-                name = name:gsub(".*[\/]", "")
-                name = name:gsub("%.json$", "")
-                if name ~= "" then
-                    table.insert(ConfigList, name)
-                    ConfigPaths[name] = file
-                end
-            end
-        end)
-        Dropdown.Refresh(ConfigList)
-    end
-
-    configSection:Button("Refresh List", function() RefreshConfigs() end)
-    configSection:Button("Save Config", function()
-        if ConfigName == "" then return end
-        Fenglib:SaveConfig(ConfigName, Window.ConfigFolder)
-        RefreshConfigs()
-    end)
-
-    configSection:Button("Load Config", function()
-        if Window.CurrentConfig == "" or Window.CurrentConfig == "None" then return end
-
-        local name = Window.CurrentConfig
-        local path = ConfigPaths[name] or (Window.ConfigFolder .. "/" .. name .. ".json")
-
-        Window:Notification("Loading " .. name .. " Config", nil, "info")
-
-        local ok = Fenglib:LoadConfig(path)
-
-        if ok then
-            Window:Notification(name .. " Config Loaded", nil, "success")
-        else
-            Window:Notification("Failed to load " .. name, nil, "error")
-        end
-    end)
-
-    configSection:Button("Delete Config", function()
-        if Window.CurrentConfig == "" or Window.CurrentConfig == "None" then return end
-        local name = Window.CurrentConfig
-        local paths = {
-            ConfigPaths[name],
-            Window.ConfigFolder .. "/" .. name .. ".json",
-            Window.ConfigFolder .. "\\" .. name .. ".json",
-        }
-        pcall(function()
-            for _, path in ipairs(paths) do
-                if path and isfile(path) then
-                    delfile(path)
-                    break
-                end
-            end
-        end)
-        Window.CurrentConfig = ""
-        task.wait(0.05)
-        RefreshConfigs()
-        if ConfigObjects["Select Config"] and ConfigObjects["Select Config"].Reset then
-            ConfigObjects["Select Config"].Reset()
-        end
-    end)
-
-    local Settings = Window:Tab("Settings")
-    local appearanceSection = Settings:Section("appearance")
-    appearanceSection:Toggle("Rainbow Edge", false, function(v) Fenglib:ToggleRainbow(v) end)
-    appearanceSection:Slider("Rainbow Speed", 0, 10, 1, function(v)
-        Fenglib:SetRainbowSpeed(v)
-    end)
-    appearanceSection:Dropdown("Rainbow Type", {"Linear Gradient (Solid Rainbow)", "Animated/Cycling Rainbow", "Smooth Fading Gradient", "Step/Band Rainbow", "Rainbow Pulse", "Radial Rainbow", "Neon/Glowing Rainbow", "Pastel Rainbow", "Vertical/Horizontal Fade"}, function(val) Fenglib:SetRainbowType(val) end)
-    local builtinThemes = {"Red", "Dark", "Light", "Purple", "Blue", "Yellow", "Green"}
-    local themeList = {}
-    for _, n in ipairs(builtinThemes) do table.insert(themeList, n) end
-    for name, _ in pairs(Themes) do
-        local isBuiltin = false
-        for _, b in ipairs(builtinThemes) do if b == name then isBuiltin = true; break end end
-        if not isBuiltin then table.insert(themeList, name) end
-    end
-    local ThemeDropdown = appearanceSection:Dropdown("Theme", themeList, function(v) Fenglib:SetTheme(v) end)
-    appearanceSection:Keybind("Menu Keybind", Keybind or Enum.KeyCode.M, function(v) Window:SetKeybind(v) end)
-    appearanceSection:Button("Unload UI", function() Window:Destroy() end)
-
-    RefreshConfigs()
+    -- ========== 已移除自动创建的 Config 和 Settings 标签页 ==========
+    -- 请在主脚本中手动添加它们
+    -- =============================================================
 
     return Window
 end
