@@ -1,5 +1,3 @@
--- 文件完整内容（已修正下拉高度问题，重写通知系统，无任何白色边框，Duration精确控制总时间）
--- 移除了自动创建的 Config 和 Settings 标签页，可在主脚本中手动添加
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -17,12 +15,10 @@ local Registry = {}
 local ConfigObjects = {} 
 local ThemeListeners = {}
 
--- 辅助工具函数
 local function clamp(value, min, max)
     return math.max(min, math.min(max, value))
 end
 
--- 辅助特效（保留）
 local function startNeonFlowEffect(object, property, speed)
     speed = speed or 0.008
     local hue = 0
@@ -72,7 +68,6 @@ local function createPulseGlow(object)
     }
 end
 
--- Bento 风格主题
 local Themes = {
     Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48)},
     White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225)},
@@ -111,7 +106,6 @@ function Fenglib:ToggleRainbow(bool) RainbowEnabled = bool end
 function Fenglib:SetRainbowType(val) RainbowType = val end
 function Fenglib:SetRainbowSpeed(val) RainbowSpeed = clamp(tonumber(val) or 1, 0.1, 10) end
 
--- 配置保存与加载
 function Fenglib:SaveConfig(configName, configFolder)
     local ok, err = pcall(function()
         if not isfolder(configFolder) then makefolder(configFolder) end
@@ -146,12 +140,9 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- ==============================
--- 创建窗口（Bento风格）
--- ==============================
 function Fenglib:CreateWindow(Config)
     local Window = {}
-    local Title = Config.Title or "M0dzn UI"
+    local Title = Config.Title or "FengY3"
     local Subtitle = Config.Subtitle
     local Keybind = Config.Keybind 
     local IconAsset = Config.Icon  
@@ -160,7 +151,6 @@ function Fenglib:CreateWindow(Config)
     Window.ConfigFolder = Title.."/Config"
     Window.CurrentConfig = ""
 
-    -- 处理自定义主题
     if Config.Theme then
         if type(Config.Theme) == "string" then
             if Themes[Config.Theme] then
@@ -193,7 +183,6 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
-    -- 通知容器（右下角堆叠，自动调整高度）
     local NotificationHolder = Instance.new("Frame")
     NotificationHolder.Name = "NotificationHolder"
     NotificationHolder.Size = UDim2.new(0, 300, 0, 0)
@@ -203,7 +192,6 @@ function Fenglib:CreateWindow(Config)
     NotificationHolder.BackgroundTransparency = 1
     NotificationHolder.BorderSizePixel = 0
     NotificationHolder.Parent = ScreenGui
-    -- 确保通知显示在最上层
     NotificationHolder.ZIndex = 100
 
     local HolderList = Instance.new("UIListLayout")
@@ -237,7 +225,6 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- 彩虹边框动画（加入速度控制）
     task.spawn(function()
         local rot = 0
         while ScreenGui.Parent do
@@ -276,13 +263,11 @@ function Fenglib:CreateWindow(Config)
 
     local topbarHeight = Subtitle and 45 or 40
 
-    -- 顶部栏
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)
     Topbar.BackgroundTransparency = 1
     Topbar.Parent = MainFrame
 
-    -- 窗口图标
     if IconAsset then
         if tonumber(IconAsset) then
             IconAsset = "rbxassetid://" .. IconAsset
@@ -304,7 +289,6 @@ function Fenglib:CreateWindow(Config)
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- 窗口控制按钮区域
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
     ButtonGroup.Size = UDim2.new(0, 128, 1, 0)
@@ -323,7 +307,6 @@ function Fenglib:CreateWindow(Config)
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
 
-    -- 辅助函数：创建圆角图片框
     local function NewRoundFrame(radius, imageType, properties, children)
         local frame = Instance.new("ImageLabel")
         frame.BackgroundTransparency = 1
@@ -343,7 +326,6 @@ function Fenglib:CreateWindow(Config)
         return frame
     end
 
-    -- 创建文字按钮（最小化/关闭）
     local function createTextButton(textSymbol, callback)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, 36, 0, 36)
@@ -397,7 +379,6 @@ function Fenglib:CreateWindow(Config)
         return btn
     end
 
-    -- 创建图标按钮（最大化/手柄）
     local function createIconButton(iconAsset, callback)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, 36, 0, 36)
@@ -486,14 +467,12 @@ function Fenglib:CreateWindow(Config)
         TitleLabel.Position = UDim2.new(0, 50, 0, 0)
     end
 
-    -- 内容区
     local Content = Instance.new("Frame")
     Content.Size = UDim2.new(1, -20, 1, -(topbarHeight + 15))
     Content.Position = UDim2.new(0, 10, 0, topbarHeight + 5)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
-    -- 左侧标签栏
     local TabContainer = Instance.new("ScrollingFrame")
     TabContainer.Size = UDim2.new(0, 140, 0.85, 0)
     TabContainer.BackgroundTransparency = 1
@@ -504,7 +483,6 @@ function Fenglib:CreateWindow(Config)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Parent = TabContainer
 
-    -- 底部用户卡片
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
     ProfileFrame.Position = UDim2.new(0, 0, 1, -40)
@@ -544,7 +522,6 @@ function Fenglib:CreateWindow(Config)
     UsrName.Parent = ProfileFrame
     AddToRegistry(UsrName, "TextColor3", "Text")
 
-    -- 分隔线
     local Line = Instance.new("Frame")
     Line.Size = UDim2.new(0, 1, 1, 0)
     Line.Position = UDim2.new(0, 150, 0, 0)
@@ -552,14 +529,12 @@ function Fenglib:CreateWindow(Config)
     Line.Parent = Content
     AddToRegistry(Line, "BackgroundColor3", "Stroke")
 
-    -- 右侧页面容器
     local PageContainer = Instance.new("Frame")
     PageContainer.Size = UDim2.new(1, -165, 1, 0)
     PageContainer.Position = UDim2.new(0, 160, 0, 0)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
-    -- 右下角调整大小手柄
     MainFrame.ClipsDescendants = false
 
     local Resizer = Instance.new("TextButton")
@@ -611,7 +586,6 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 窗口控制按钮
     local MinimizeBtn = createTextButton("-", function()
         MainFrame.Visible = false
     end)
@@ -628,10 +602,8 @@ function Fenglib:CreateWindow(Config)
         ScreenGui:Destroy()
     end)
 
-    -- 窗口打开动画
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
-    -- 拖动逻辑
     local dragging = false
     local dragInput, dragStart, startPos
 
@@ -685,7 +657,6 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 悬浮打开按钮
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
@@ -723,13 +694,7 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- ==============================
-    -- 通知系统（重写，无边框，Duration 精确控制总时间）
-    -- 修改为接受三个参数：标题、描述、类型（可选），总时长默认3秒
-    -- ==============================
     function Window:Notification(titleText, descText, notifType, duration)
-        -- 兼容旧调用：如果第一个参数是表，仍按原方式处理（可选保留，此处仅保留新参数方式）
-        -- 此处按新写法实现，忽略表参数（可根据需求决定是否保留兼容）
         notifType = notifType or "Info"
         duration = duration or 3
         local config = {
@@ -741,10 +706,9 @@ function Fenglib:CreateWindow(Config)
 
         local title = config.Title or "Notification"
         local description = config.Description or ""
-        local totalTime = config.Duration or 3  -- 总时间（包括入场和出场动画）
+        local totalTime = config.Duration or 3
         local notifType = config.Type or "Info"
 
-        -- 类型颜色和图标
         local typeColors = {
             Success = Color3.fromRGB(60, 179, 113),
             Error   = Color3.fromRGB(229, 51, 51),
@@ -759,7 +723,6 @@ function Fenglib:CreateWindow(Config)
 
         local accentColor = typeColors[notifType] or typeColors.Info
 
-        -- 根容器（用于缩放动画，完全透明）
         local root = Instance.new("Frame")
         root.Name = "NotificationRoot"
         root.Size = UDim2.new(0, 0, 0, 0)
@@ -768,7 +731,6 @@ function Fenglib:CreateWindow(Config)
         root.ClipsDescendants = true
         root.Parent = NotificationHolder
 
-        -- 主内容框（实际显示）
         local main = Instance.new("Frame")
         main.Name = "Main"
         main.Size = UDim2.new(0, 250, 0, 0)
@@ -778,12 +740,10 @@ function Fenglib:CreateWindow(Config)
         main.BorderSizePixel = 0
         main.Parent = root
 
-        -- 圆角
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, 20)
         corner.Parent = main
 
-        -- 关闭按钮（图片 + 点击区域）
         local closeImg = Instance.new("ImageLabel")
         closeImg.Name = "CloseIcon"
         closeImg.Image = closeIcon
@@ -803,7 +763,6 @@ function Fenglib:CreateWindow(Config)
         closeBtn.Text = ""
         closeBtn.Parent = main
 
-        -- 内容容器
         local content = Instance.new("Frame")
         content.Name = "Content"
         content.Size = UDim2.new(1, -65, 1, 0)
@@ -813,7 +772,6 @@ function Fenglib:CreateWindow(Config)
         content.AutomaticSize = Enum.AutomaticSize.Y
         content.Parent = main
 
-        -- 图标（放在标题左侧）
         local icon = Instance.new("ImageLabel")
         icon.Name = "TypeIcon"
         icon.Image = typeIcons[notifType]
@@ -825,7 +783,6 @@ function Fenglib:CreateWindow(Config)
         icon.ImageColor3 = accentColor
         icon.Parent = content
 
-        -- 标题
         local titleLbl = Instance.new("TextLabel")
         titleLbl.Name = "Title"
         titleLbl.Text = title
@@ -840,10 +797,8 @@ function Fenglib:CreateWindow(Config)
         titleLbl.RichText = true
         titleLbl.Parent = content
 
-        -- 将图标移动到标题内
         icon.Parent = titleLbl
 
-        -- 描述
         local descLbl = Instance.new("TextLabel")
         descLbl.Name = "Description"
         descLbl.Text = description
@@ -858,7 +813,6 @@ function Fenglib:CreateWindow(Config)
         descLbl.RichText = true
         descLbl.Parent = content
 
-        -- 左侧竖线
         local line = Instance.new("Frame")
         line.Name = "Line"
         line.Size = UDim2.new(0, 3, 1, 3)
@@ -869,7 +823,6 @@ function Fenglib:CreateWindow(Config)
         line.BorderSizePixel = 0
         line.Parent = descLbl
 
-        -- 内容布局
         local layout = Instance.new("UIListLayout")
         layout.Padding = UDim.new(0, 0)
         layout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -880,34 +833,26 @@ function Fenglib:CreateWindow(Config)
         padding.PaddingBottom = UDim.new(0, 16)
         padding.Parent = content
 
-        -- 等待一帧获取实际尺寸
         RunService.Heartbeat:Wait()
         local mainSize = main.AbsoluteSize
 
-        -- 入场动画（0.3秒）
         Tween(root, {Size = UDim2.new(0, mainSize.X, 0, mainSize.Y)}, 0.3)
 
-        -- 主题更新函数
         local function updateTheme()
             main.BackgroundColor3 = CurrentTheme.Top
             titleLbl.TextColor3 = CurrentTheme.Text
             descLbl.TextColor3 = CurrentTheme.Text
             closeImg.ImageColor3 = CurrentTheme.Text
-            -- 图标和竖线保持类型颜色不变
         end
 
-        -- 添加到主题监听器
         table.insert(ThemeListeners, updateTheme)
 
-        -- 防重复关闭标志
         local isDestroying = false
 
-        -- 关闭函数（播放缩小动画，完成后销毁）
         local function destroy()
             if isDestroying then return end
             isDestroying = true
 
-            -- 从监听器中移除
             for i, fn in ipairs(ThemeListeners) do
                 if fn == updateTheme then
                     table.remove(ThemeListeners, i)
@@ -915,7 +860,6 @@ function Fenglib:CreateWindow(Config)
                 end
             end
 
-            -- 播放缩小动画（0.25秒），完成后销毁
             local shrink = TweenService:Create(root, TweenInfo.new(0.25), {Size = UDim2.new(0, 0, 0, 0)})
             shrink.Completed:Connect(function()
                 if root and root.Parent then
@@ -926,16 +870,12 @@ function Fenglib:CreateWindow(Config)
         end
 
         closeBtn.MouseButton1Click:Connect(destroy)
-        -- 已修复：删除 closeImg.MouseButton1Click 连接，因为 closeBtn 已覆盖整个区域
 
-        -- 计算中间显示时间（总时间减去入场和出场动画）
         local showTime = math.max(0, totalTime - 0.3 - 0.25)
 
-        -- 自动关闭：延迟 showTime 秒后开始缩小，总消失时间 = totalTime
         if showTime > 0 then
             task.delay(showTime, destroy)
         else
-            -- 如果总时间太短，入场动画后立即开始缩小
             task.delay(0.3, destroy)
         end
     end
@@ -953,9 +893,6 @@ function Fenglib:CreateWindow(Config)
 
     local firstTab = true
 
-    -- ==============================
-    -- 折叠区块生成器（Bento样式）
-    -- ==============================
     local function createSection(parent, text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
 
@@ -1070,7 +1007,6 @@ function Fenglib:CreateWindow(Config)
 
         local child = {}
 
-        -- 按钮 (Button) - 替换为 M0DZN 风格，移除图标动画，仅保留背景透明度变化
         child.Button = function(_, btnText, callback)
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
@@ -1093,7 +1029,6 @@ function Fenglib:CreateWindow(Config)
             TextLabel.Parent = Btn
             AddToRegistry(TextLabel, "TextColor3", "Text")
 
-            -- 保留箭头图标，但移除悬停动画
             local Icon = Instance.new("ImageLabel")
             Icon.Size = UDim2.new(0, 15, 0, 15)
             Icon.Position = UDim2.new(1, -25, 0.5, -7.5)
@@ -1103,7 +1038,6 @@ function Fenglib:CreateWindow(Config)
             Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Text")
 
-            -- 悬停仅改变背景透明度 (M0DZN风格)
             Btn.MouseEnter:Connect(function()
                 Tween(Btn, {BackgroundTransparency = 0.00}, 0.18)
             end)
@@ -1124,7 +1058,6 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 开关 (Toggle) - 已来自 M0DZN
         child.Toggle = function(_, toggleText, default, callback)
             local Enabled = default or false
 
@@ -1196,7 +1129,6 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 滑块 (Slider) - 已来自 M0DZN
         child.Slider = function(_, sliderText, min, max, default, callback, options)
             options = options or {}
             local unlimited = (min == nil and max == nil)
@@ -1358,12 +1290,10 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 下拉菜单 (Dropdown) - 替换为 UI.lua 实现（无音效，适配测试UI.lua）
         child.Dropdown = function(_, dropText, options, callback)
             local Dropped = false
             local Selected = options[1] or ""
 
-            -- 主按钮
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Text = ""
@@ -1372,7 +1302,6 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 12)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
-            -- 标签（初始不显示选中项）
             local Lbl = Instance.new("TextLabel")
             Lbl.Text = dropText
             Lbl.Size = UDim2.new(1, -40, 1, 0)
@@ -1384,7 +1313,6 @@ function Fenglib:CreateWindow(Config)
             Lbl.Parent = Btn
             AddToRegistry(Lbl, "TextColor3", "Text")
 
-            -- 箭头图标（UI.lua 所用 ID）
             local Icon = Instance.new("ImageLabel")
             Icon.Image = "rbxassetid://18865373378"
             Icon.Size = UDim2.new(0, 20, 0, 20)
@@ -1393,7 +1321,6 @@ function Fenglib:CreateWindow(Config)
             Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Accent")
 
-            -- 下拉选项容器
             local Container = Instance.new("Frame")
             Container.Size = UDim2.new(1, 0, 0, 0)
             Container.Visible = false
@@ -1403,19 +1330,16 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 12)
             AddToRegistry(Container, "BackgroundColor3", "Top")
 
-            -- 容器描边
             local CSt = Instance.new("UIStroke")
             CSt.Thickness = 1
             CSt.Transparency = 0.65
             CSt.Parent = Container
             AddToRegistry(CSt, "Color", "Accent")
 
-            -- 选项布局
             local List = Instance.new("UIListLayout")
             List.SortOrder = Enum.SortOrder.LayoutOrder
             List.Parent = Container
 
-            -- 配置对象
             ConfigObjects[dropText] = {
                 Type = "Dropdown",
                 Value = Selected,
@@ -1424,7 +1348,6 @@ function Fenglib:CreateWindow(Config)
                 Reset = ResetDropdown
             }
 
-            -- 选择某个选项
             local function Select(opt)
                 Dropped = false
                 Selected = opt
@@ -1439,7 +1362,6 @@ function Fenglib:CreateWindow(Config)
                 updateSectionHeight(false)
             end
 
-            -- 刷新选项列表
             local function RefreshOptions(newOpts)
                 for _, v in pairs(Container:GetChildren()) do
                     if v:IsA("TextButton") then v:Destroy() end
@@ -1454,9 +1376,8 @@ function Fenglib:CreateWindow(Config)
                     O.TextSize = 12
                     O.BackgroundTransparency = 1
                     O.Parent = Container
-                    O.TextColor3 = CurrentTheme.Text  -- 跟随主题
+                    O.TextColor3 = CurrentTheme.Text
 
-                    -- 悬停效果
                     O.MouseEnter:Connect(function()
                         Tween(O, {TextColor3 = CurrentTheme.Accent}, 0.15)
                     end)
@@ -1467,7 +1388,6 @@ function Fenglib:CreateWindow(Config)
                     O.MouseButton1Click:Connect(function() Select(opt) end)
                 end
 
-                -- 如果当前打开，更新容器高度
                 if Dropped then
                     local targetHeight = #newOpts * 34
                     Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
@@ -1475,7 +1395,6 @@ function Fenglib:CreateWindow(Config)
             end
             RefreshOptions(options)
 
-            -- 重置下拉菜单（选择第一个选项）
             local function ResetDropdown()
                 if #options > 0 then
                     Select(options[1])
@@ -1489,12 +1408,10 @@ function Fenglib:CreateWindow(Config)
                 end
             end
 
-            -- 点击主按钮切换下拉状态（修正高度计算，排除UIListLayout）
             Btn.MouseButton1Click:Connect(function()
                 Dropped = not Dropped
                 if Dropped then
                     Container.Visible = true
-                    -- 计算实际按钮数量（排除UIListLayout）
                     local buttonCount = 0
                     for _, child in pairs(Container:GetChildren()) do
                         if child:IsA("TextButton") then
@@ -1513,7 +1430,6 @@ function Fenglib:CreateWindow(Config)
                 updateSectionHeight(false)
             end)
 
-            -- 主题变更时更新选项文字颜色
             table.insert(ThemeListeners, function()
                 for _, O in pairs(Container:GetChildren()) do
                     if O:IsA("TextButton") then
@@ -1525,7 +1441,6 @@ function Fenglib:CreateWindow(Config)
             return {Refresh = RefreshOptions, Reset = ResetDropdown}
         end
 
-        -- 快捷键 (Keybind) - 已来自 M0DZN
         child.Keybind = function(_, keyText, default, callback)
             local Key = default or Enum.KeyCode.M
             local Tile = Instance.new("Frame")
@@ -1584,7 +1499,6 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 文本输入框 (Textbox) - 替换为 M0DZN 实现
         child.Textbox = function(_, boxText, placeholder, callback)
             local Frame = Instance.new("Frame")
             Frame.Size = UDim2.new(1, 0, 0, 70)
@@ -1635,7 +1549,6 @@ function Fenglib:CreateWindow(Config)
             ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
-        -- 输入框（带选项，例如字符限制、接受类型等）- 保留，无动画
         child.Input = function(_, inputText, default, callback, options)
             options = options or {}
             local placeholder = options.placeholder or ""; local acceptedCharacters = options.acceptedCharacters or "All"; local characterLimit = options.characterLimit; local onChanged = options.onChanged
@@ -1659,7 +1572,6 @@ function Fenglib:CreateWindow(Config)
             local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
         end
 
-        -- 普通标签 - 无动画
         child.Label = function(_, labelText)
             local LabelFrame = Instance.new("Frame")
             LabelFrame.Size = UDim2.new(1, 0, 0, 42)
@@ -1686,7 +1598,6 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 副标签 - 无动画
         child.SubLabel = function(_, subLabelText)
             local SubLabelFrame = Instance.new("Frame")
             SubLabelFrame.Size = UDim2.new(1, 0, 0, 42)
@@ -1714,7 +1625,6 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 段落 - 无动画
         child.Paragraph = function(_, headerText, bodyText)
             local ParaFrame = Instance.new("Frame")
             ParaFrame.Size = UDim2.new(1, 0, 0, 0)
@@ -1767,12 +1677,321 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
+        -- ColorPicker element (ported from M0DZN)
+        child.ColorPicker = function(_, pickerText, default, callback)
+            local Color = default or Color3.fromRGB(255, 255, 255)
+            local h, s, v = Color3.toHSV(Color)
+
+            -- Tile (main row)
+            local Tile = Instance.new("Frame")
+            Tile.Size = UDim2.new(1, 0, 0, 44)
+            Tile.Parent = contentContainer
+            Tile.BackgroundTransparency = 0.05
+            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 12)
+            AddToRegistry(Tile, "BackgroundColor3", "Top")
+
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = ""
+            ClickBtn.Parent = Tile
+
+            local TitleLbl = Instance.new("TextLabel")
+            TitleLbl.Text = pickerText
+            TitleLbl.Size = UDim2.new(0.7, 0, 1, 0)
+            TitleLbl.Position = UDim2.new(0, 15, 0, 0)
+            TitleLbl.BackgroundTransparency = 1
+            TitleLbl.Font = Enum.Font.GothamMedium
+            TitleLbl.TextSize = 13
+            TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+            TitleLbl.Parent = Tile
+            AddToRegistry(TitleLbl, "TextColor3", "Text")
+
+            local Swatch = Instance.new("Frame")
+            Swatch.Size = UDim2.new(0, 32, 0, 22)
+            Swatch.Position = UDim2.new(1, -46, 0.5, -11)
+            Swatch.BackgroundColor3 = Color
+            Swatch.Parent = Tile
+            Instance.new("UICorner", Swatch).CornerRadius = UDim.new(0, 6)
+            local SwStroke = Instance.new("UIStroke")
+            SwStroke.Thickness = 1
+            SwStroke.Transparency = 0.6
+            SwStroke.Parent = Swatch
+            AddToRegistry(SwStroke, "Color", "Stroke")
+
+            -- Panel (collapsible color picker)
+            local Panel = Instance.new("Frame")
+            Panel.Size = UDim2.new(1, 0, 0, 0)
+            Panel.Visible = false
+            Panel.ClipsDescendants = true
+            Panel.Parent = contentContainer
+            Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 12)
+            AddToRegistry(Panel, "BackgroundColor3", "Top")
+
+            local PSt = Instance.new("UIStroke")
+            PSt.Thickness = 1
+            PSt.Transparency = 0.65
+            PSt.Parent = Panel
+            AddToRegistry(PSt, "Color", "Accent")
+
+            -- SV Box (saturation/value)
+            local SVBox = Instance.new("ImageLabel")
+            SVBox.Size = UDim2.new(1, -52, 0, 110)
+            SVBox.Position = UDim2.new(0, 10, 0, 10)
+            SVBox.Image = "rbxassetid://4155801252"
+            SVBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+            SVBox.Parent = Panel
+            Instance.new("UICorner", SVBox).CornerRadius = UDim.new(0, 6)
+
+            local SVDot = Instance.new("Frame")
+            SVDot.Size = UDim2.new(0, 10, 0, 10)
+            SVDot.AnchorPoint = Vector2.new(0.5, 0.5)
+            SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
+            SVDot.BackgroundColor3 = Color3.new(1, 1, 1)
+            SVDot.ZIndex = 2
+            SVDot.Parent = SVBox
+            Instance.new("UICorner", SVDot).CornerRadius = UDim.new(1, 0)
+            local DotStroke = Instance.new("UIStroke")
+            DotStroke.Thickness = 1.5
+            DotStroke.Color = Color3.fromRGB(80, 80, 80)
+            DotStroke.Parent = SVDot
+
+            -- Hue Bar
+            local HueBar = Instance.new("Frame")
+            HueBar.Size = UDim2.new(0, 16, 0, 110)
+            HueBar.Position = UDim2.new(1, -30, 0, 10)
+            HueBar.BackgroundColor3 = Color3.new(1, 1, 1)
+            HueBar.BorderSizePixel = 0
+            HueBar.Parent = Panel
+            Instance.new("UICorner", HueBar).CornerRadius = UDim.new(0, 6)
+
+            local HueGradient = Instance.new("UIGradient")
+            HueGradient.Rotation = 90
+            HueGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0,    Color3.fromRGB(255, 0,   0)),
+                ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+                ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0,   255, 0)),
+                ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0,   255, 255)),
+                ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0,   0,   255)),
+                ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0,   255)),
+                ColorSequenceKeypoint.new(1,    Color3.fromRGB(255, 0,   0)),
+            })
+            HueGradient.Parent = HueBar
+
+            local HueDot = Instance.new("Frame")
+            HueDot.Size = UDim2.new(1, 6, 0, 4)
+            HueDot.AnchorPoint = Vector2.new(0.5, 0.5)
+            HueDot.Position = UDim2.new(0.5, 0, h, 0)
+            HueDot.BackgroundColor3 = Color3.new(1, 1, 1)
+            HueDot.ZIndex = 2
+            HueDot.Parent = HueBar
+            Instance.new("UICorner", HueDot).CornerRadius = UDim.new(1, 0)
+
+            -- RGB Input Row
+            local RGBRow = Instance.new("Frame")
+            RGBRow.Size = UDim2.new(1, -20, 0, 28)
+            RGBRow.Position = UDim2.new(0, 10, 0, 128)
+            RGBRow.BackgroundTransparency = 1
+            RGBRow.Parent = Panel
+
+            local function MakeRGBBox(label, xPos)
+                local Holder = Instance.new("Frame")
+                Holder.Size = UDim2.new(0.33, -4, 1, 0)
+                Holder.Position = UDim2.new(xPos, 2, 0, 0)
+                Holder.BackgroundTransparency = 0.08
+                Holder.Parent = RGBRow
+                Instance.new("UICorner", Holder).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(Holder, "BackgroundColor3", "Main")
+
+                local HolderStroke = Instance.new("UIStroke")
+                HolderStroke.Thickness = 1
+                HolderStroke.Transparency = 0.75
+                HolderStroke.Parent = Holder
+                AddToRegistry(HolderStroke, "Color", "Stroke")
+
+                local Prefix = Instance.new("TextLabel")
+                Prefix.Text = label .. ":"
+                Prefix.Size = UDim2.new(0, 20, 1, 0)
+                Prefix.Position = UDim2.new(0, 4, 0, 0)
+                Prefix.BackgroundTransparency = 1
+                Prefix.Font = Enum.Font.GothamBold
+                Prefix.TextSize = 10
+                Prefix.TextXAlignment = Enum.TextXAlignment.Left
+                Prefix.Parent = Holder
+                AddToRegistry(Prefix, "TextColor3", "Accent")
+
+                local Box = Instance.new("TextBox")
+                Box.Size = UDim2.new(1, -26, 1, 0)
+                Box.Position = UDim2.new(0, 22, 0, 0)
+                Box.Text = "0"
+                Box.BackgroundTransparency = 1
+                Box.Font = Enum.Font.GothamMedium
+                Box.TextSize = 11
+                Box.TextXAlignment = Enum.TextXAlignment.Left
+                Box.Parent = Holder
+                AddToRegistry(Box, "TextColor3", "Text")
+
+                Box.Focused:Connect(function()
+                    Tween(HolderStroke, {Transparency = 0.15}, 0.15)
+                end)
+                Box.FocusLost:Connect(function()
+                    Tween(HolderStroke, {Transparency = 0.75}, 0.15)
+                end)
+
+                return Box
+            end
+
+            local RBox = MakeRGBBox("R", 0)
+            local GBox = MakeRGBBox("G", 0.33)
+            local BBox = MakeRGBBox("B", 0.66)
+
+            local function ApplyColor()
+                Color = Color3.fromHSV(h, s, v)
+                Swatch.BackgroundColor3 = Color
+                SVBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+                RBox.Text = tostring(math.floor(Color.R * 255))
+                GBox.Text = tostring(math.floor(Color.G * 255))
+                BBox.Text = tostring(math.floor(Color.B * 255))
+                ConfigObjects[pickerText].Value = {R = Color.R, G = Color.G, B = Color.B}
+                callback(Color)
+            end
+
+            local function OnRGBInput()
+                local r = math.clamp(tonumber(RBox.Text) or 0, 0, 255)
+                local g = math.clamp(tonumber(GBox.Text) or 0, 0, 255)
+                local b = math.clamp(tonumber(BBox.Text) or 0, 0, 255)
+                Color = Color3.fromRGB(r, g, b)
+                h, s, v = Color3.toHSV(Color)
+                SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
+                HueDot.Position = UDim2.new(0.5, 0, h, 0)
+                SVBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+                Swatch.BackgroundColor3 = Color
+                ConfigObjects[pickerText].Value = {R = Color.R, G = Color.G, B = Color.B}
+                callback(Color)
+            end
+
+            RBox.FocusLost:Connect(OnRGBInput)
+            GBox.FocusLost:Connect(OnRGBInput)
+            BBox.FocusLost:Connect(OnRGBInput)
+
+            -- SV dragging
+            local svDragging = false
+            local SVBtn = Instance.new("TextButton")
+            SVBtn.Size = UDim2.new(1, 0, 1, 0)
+            SVBtn.BackgroundTransparency = 1
+            SVBtn.Text = ""
+            SVBtn.ZIndex = 3
+            SVBtn.Parent = SVBox
+            SVBtn.InputBegan:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    svDragging = true
+                end
+            end)
+            UserInputService.InputEnded:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    if svDragging then
+                        svDragging = false
+                        local r = math.floor(Color.R * 255)
+                        local g = math.floor(Color.G * 255)
+                        local b = math.floor(Color.B * 255)
+                        Window:Notification(pickerText, r .. ", " .. g .. ", " .. b, "Info", 1.5)
+                    end
+                end
+            end)
+            UserInputService.InputChanged:Connect(function(i)
+                if svDragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                    s = clamp((i.Position.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X, 0, 1)
+                    v = 1 - clamp((i.Position.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y, 0, 1)
+                    SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
+                    ApplyColor()
+                end
+            end)
+
+            -- Hue dragging
+            local hueDragging = false
+            local HueBtn = Instance.new("TextButton")
+            HueBtn.Size = UDim2.new(1, 0, 1, 0)
+            HueBtn.BackgroundTransparency = 1
+            HueBtn.Text = ""
+            HueBtn.ZIndex = 3
+            HueBtn.Parent = HueBar
+            HueBtn.InputBegan:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    hueDragging = true
+                end
+            end)
+            UserInputService.InputEnded:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    if hueDragging then
+                        hueDragging = false
+                        local r = math.floor(Color.R * 255)
+                        local g = math.floor(Color.G * 255)
+                        local b = math.floor(Color.B * 255)
+                        Window:Notification(pickerText, r .. ", " .. g .. ", " .. b, "Info", 1.5)
+                    end
+                end
+            end)
+            UserInputService.InputChanged:Connect(function(i)
+                if hueDragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                    h = clamp((i.Position.Y - HueBar.AbsolutePosition.Y) / HueBar.AbsoluteSize.Y, 0, 1)
+                    HueDot.Position = UDim2.new(0.5, 0, h, 0)
+                    ApplyColor()
+                end
+            end)
+
+            local pickerOpen = false
+            ClickBtn.MouseButton1Click:Connect(function()
+                pickerOpen = not pickerOpen
+                if pickerOpen then
+                    Panel.Visible = true
+                    Tween(Panel, {Size = UDim2.new(1, 0, 0, 166)}, 0.32)
+                else
+                    Tween(Panel, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
+                    task.wait(0.3)
+                    Panel.Visible = false
+                end
+                -- Force layout update
+                updateSectionHeight(false)
+            end)
+
+            -- Register in ConfigObjects
+            ConfigObjects[pickerText] = {
+                Type = "ColorPicker",
+                Value = {R = Color.R, G = Color.G, B = Color.B},
+                Set = function(val)
+                    if type(val) == "table" then
+                        Color = Color3.new(val.R, val.G, val.B)
+                        h, s, v = Color3.toHSV(Color)
+                        SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
+                        HueDot.Position = UDim2.new(0.5, 0, h, 0)
+                        RBox.Text = tostring(math.floor(Color.R * 255))
+                        GBox.Text = tostring(math.floor(Color.G * 255))
+                        BBox.Text = tostring(math.floor(Color.B * 255))
+                        ApplyColor()
+                    elseif type(val) == "userdata" and val.ClassName == "Color3" then
+                        Color = val
+                        h, s, v = Color3.toHSV(Color)
+                        SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
+                        HueDot.Position = UDim2.new(0.5, 0, h, 0)
+                        RBox.Text = tostring(math.floor(Color.R * 255))
+                        GBox.Text = tostring(math.floor(Color.G * 255))
+                        BBox.Text = tostring(math.floor(Color.B * 255))
+                        ApplyColor()
+                    end
+                end
+            }
+
+            -- Theme update for dynamic elements
+            table.insert(ThemeListeners, function()
+                -- No extra dynamic theme updates needed here because all sub-elements are already registered
+                -- but we refresh the swatch border
+                SwStroke.Color = CurrentTheme.Stroke
+            end)
+        end
+
         return child
     end
 
-    -- ==============================
-    -- 普通标签页（动画已替换为M0DZN风格，并添加选中状态修复）
-    -- ==============================
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -1781,175 +2000,8 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Parent = TabContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
-        -- 添加选中状态标志
         TabBtn.Selected = false
 
-        -- 左侧指示条（M0DZN风格）
-        local TabBar = Instance.new("Frame")
-        TabBar.Size = UDim2.new(0, 3, 0.65, 0)
-        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
-        TabBar.BackgroundTransparency = 1
-        TabBar.BorderSizePixel = 0
-        TabBar.Parent = TabBtn
-        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
-        AddToRegistry(TabBar, "BackgroundColor3", "Accent")
-
-        local ContentFrame = Instance.new("Frame")
-        ContentFrame.Name = "ContentFrame"
-        ContentFrame.Size = UDim2.new(1, 0, 1, 0)
-        ContentFrame.BackgroundTransparency = 1
-        ContentFrame.Parent = TabBtn
-
-        local Layout = Instance.new("UIListLayout")
-        Layout.FillDirection = Enum.FillDirection.Horizontal
-        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-        Layout.Padding = UDim.new(0, 5)
-        Layout.Parent = ContentFrame
-
-        local Padding = Instance.new("UIPadding")
-        Padding.PaddingLeft = UDim.new(0, 10)
-        Padding.Parent = ContentFrame
-
-        if icon then
-            local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 28, 0, 28)
-            TabIcon.BackgroundTransparency = 1
-            if tonumber(icon) then
-                TabIcon.Image = "rbxassetid://" .. icon
-            else
-                TabIcon.Image = icon
-            end
-            TabIcon.Parent = ContentFrame
-            AddToRegistry(TabIcon, "ImageColor3", "Text")
-            local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 8)
-            iconCorner.Parent = TabIcon
-        end
-
-        local TabText = Instance.new("TextLabel")
-        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
-        TabText.Size = UDim2.new(0, textWidth, 1, 0)
-        TabText.BackgroundTransparency = 1
-        TabText.Font = Enum.Font.GothamMedium
-        TabText.Text = name
-        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)  -- 未选中灰色
-        TabText.TextSize = 14
-        TabText.TextXAlignment = Enum.TextXAlignment.Left
-        TabText.Parent = ContentFrame
-
-        -- 鼠标悬停效果（M0DZN风格）：仅当按钮未选中时生效
-        TabBtn.MouseEnter:Connect(function()
-            if not TabBtn.Selected then
-                Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
-            end
-        end)
-        TabBtn.MouseLeave:Connect(function()
-            if not TabBtn.Selected then
-                Tween(TabText, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
-            end
-        end)
-
-        local Page = Instance.new("ScrollingFrame")
-        Page.Size = UDim2.new(1, 0, 1, 0)
-        Page.BackgroundTransparency = 1
-        Page.ScrollBarThickness = 2
-        Page.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
-        Page.ScrollingDirection = Enum.ScrollingDirection.Y
-        Page.Visible = false
-        Page.Parent = PageContainer
-
-        local ContentHolder = Instance.new("Frame")
-        ContentHolder.Name = "Content"
-        ContentHolder.Size = UDim2.new(1, 0, 0, 0)
-        ContentHolder.AutomaticSize = Enum.AutomaticSize.Y
-        ContentHolder.BackgroundTransparency = 1
-        ContentHolder.Parent = Page
-
-        local HolderPadding = Instance.new("UIPadding")
-        HolderPadding.PaddingRight = UDim.new(0, 2)
-        HolderPadding.Parent = ContentHolder
-
-        local PageList = Instance.new("UIListLayout")
-        PageList.Padding = UDim.new(0, 10)
-        PageList.SortOrder = Enum.SortOrder.LayoutOrder
-        PageList.Parent = ContentHolder
-
-        local function updateCanvas()
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
-        end
-        PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
-        task.spawn(function() task.wait(); updateCanvas() end)
-
-        -- 点击动画（M0DZN风格）
-        TabBtn.MouseButton1Click:Connect(function()
-            -- 隐藏所有页面
-            for _, v in pairs(PageContainer:GetChildren()) do
-                v.Visible = false
-            end
-            -- 将所有标签按钮重置为未选中状态
-            for _, v in pairs(TabContainer:GetChildren()) do
-                if v:IsA("TextButton") then
-                    v.Selected = false
-                    Tween(v, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})
-                    local content = v:FindFirstChild("ContentFrame")
-                    if content then
-                        local textLabel = content:FindFirstChildOfClass("TextLabel")
-                        if textLabel then
-                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
-                        end
-                    end
-                    local bar = v:FindFirstChildOfClass("Frame")  -- 即左侧指示条
-                    if bar then
-                        Tween(bar, {BackgroundTransparency = 1})
-                    end
-                end
-            end
-            -- 显示当前页面
-            Page.Visible = true
-            -- 设置当前按钮为选中状态
-            TabBtn.Selected = true
-            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
-            Tween(TabText, {TextColor3 = CurrentTheme.Text})
-            Tween(TabBar, {BackgroundTransparency = 0})
-        end)
-
-        if firstTab then
-            firstTab = false
-            Page.Visible = true
-            TabBtn.Selected = true
-            TabBtn.BackgroundTransparency = 0.05
-            TabBtn.BackgroundColor3 = CurrentTheme.Top
-            TabText.TextColor3 = CurrentTheme.Text
-            TabBar.BackgroundTransparency = 0
-        end
-
-        if name == "Config" then TabBtn.LayoutOrder = 99998 end
-        if name == "Settings" then TabBtn.LayoutOrder = 99999 end
-
-        local Elements = {}
-        function Elements:Section(text, icons, defaultOpen)
-            return createSection(ContentHolder, text, icons, defaultOpen)
-        end
-
-        return Elements
-    end
-
-    -- ==============================
-    -- 双列标签页（动画已替换为M0DZN风格，并添加选中状态修复）
-    -- ==============================
-    function Window:DualTab(name, icon)
-        local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(1, 0, 0, 32)
-        TabBtn.BackgroundTransparency = 1
-        TabBtn.Text = ""
-        TabBtn.Parent = TabContainer
-        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-
-        -- 添加选中状态标志
-        TabBtn.Selected = false
-
-        -- 左侧指示条（M0DZN风格）
         local TabBar = Instance.new("Frame")
         TabBar.Size = UDim2.new(0, 3, 0.65, 0)
         TabBar.Position = UDim2.new(0, 0, 0.175, 0)
@@ -2003,7 +2055,166 @@ function Fenglib:CreateWindow(Config)
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
 
-        -- 鼠标悬停效果：仅当按钮未选中时生效
+        TabBtn.MouseEnter:Connect(function()
+            if not TabBtn.Selected then
+                Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
+            end
+        end)
+        TabBtn.MouseLeave:Connect(function()
+            if not TabBtn.Selected then
+                Tween(TabText, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
+            end
+        end)
+
+        local Page = Instance.new("ScrollingFrame")
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.BackgroundTransparency = 1
+        Page.ScrollBarThickness = 2
+        Page.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
+        Page.ScrollingDirection = Enum.ScrollingDirection.Y
+        Page.Visible = false
+        Page.Parent = PageContainer
+
+        local ContentHolder = Instance.new("Frame")
+        ContentHolder.Name = "Content"
+        ContentHolder.Size = UDim2.new(1, 0, 0, 0)
+        ContentHolder.AutomaticSize = Enum.AutomaticSize.Y
+        ContentHolder.BackgroundTransparency = 1
+        ContentHolder.Parent = Page
+
+        local HolderPadding = Instance.new("UIPadding")
+        HolderPadding.PaddingRight = UDim.new(0, 2)
+        HolderPadding.Parent = ContentHolder
+
+        local PageList = Instance.new("UIListLayout")
+        PageList.Padding = UDim.new(0, 10)
+        PageList.SortOrder = Enum.SortOrder.LayoutOrder
+        PageList.Parent = ContentHolder
+
+        local function updateCanvas()
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
+        end
+        PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+        task.spawn(function() task.wait(); updateCanvas() end)
+
+        TabBtn.MouseButton1Click:Connect(function()
+            for _, v in pairs(PageContainer:GetChildren()) do
+                v.Visible = false
+            end
+            for _, v in pairs(TabContainer:GetChildren()) do
+                if v:IsA("TextButton") then
+                    v.Selected = false
+                    Tween(v, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})
+                    local content = v:FindFirstChild("ContentFrame")
+                    if content then
+                        local textLabel = content:FindFirstChildOfClass("TextLabel")
+                        if textLabel then
+                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
+                        end
+                    end
+                    local bar = v:FindFirstChildOfClass("Frame")
+                    if bar then
+                        Tween(bar, {BackgroundTransparency = 1})
+                    end
+                end
+            end
+            Page.Visible = true
+            TabBtn.Selected = true
+            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
+            Tween(TabText, {TextColor3 = CurrentTheme.Text})
+            Tween(TabBar, {BackgroundTransparency = 0})
+        end)
+
+        if firstTab then
+            firstTab = false
+            Page.Visible = true
+            TabBtn.Selected = true
+            TabBtn.BackgroundTransparency = 0.05
+            TabBtn.BackgroundColor3 = CurrentTheme.Top
+            TabText.TextColor3 = CurrentTheme.Text
+            TabBar.BackgroundTransparency = 0
+        end
+
+        if name == "Config" then TabBtn.LayoutOrder = 99998 end
+        if name == "Settings" then TabBtn.LayoutOrder = 99999 end
+
+        local Elements = {}
+        function Elements:Section(text, icons, defaultOpen)
+            return createSection(ContentHolder, text, icons, defaultOpen)
+        end
+
+        -- Expose the ColorPicker method on the Elements object
+        Elements.ColorPicker = function(_, pickerText, default, callback)
+            local section = createSection(ContentHolder, pickerText, nil, true)
+            return section.ColorPicker(pickerText, default, callback)
+        end
+
+        return Elements
+    end
+
+    function Window:DualTab(name, icon)
+        local TabBtn = Instance.new("TextButton")
+        TabBtn.Size = UDim2.new(1, 0, 0, 32)
+        TabBtn.BackgroundTransparency = 1
+        TabBtn.Text = ""
+        TabBtn.Parent = TabContainer
+        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
+
+        TabBtn.Selected = false
+
+        local TabBar = Instance.new("Frame")
+        TabBar.Size = UDim2.new(0, 3, 0.65, 0)
+        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
+        TabBar.BackgroundTransparency = 1
+        TabBar.BorderSizePixel = 0
+        TabBar.Parent = TabBtn
+        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
+        AddToRegistry(TabBar, "BackgroundColor3", "Accent")
+
+        local ContentFrame = Instance.new("Frame")
+        ContentFrame.Name = "ContentFrame"
+        ContentFrame.Size = UDim2.new(1, 0, 1, 0)
+        ContentFrame.BackgroundTransparency = 1
+        ContentFrame.Parent = TabBtn
+
+        local Layout = Instance.new("UIListLayout")
+        Layout.FillDirection = Enum.FillDirection.Horizontal
+        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        Layout.VerticalAlignment = Enum.VerticalAlignment.Center
+        Layout.Padding = UDim.new(0, 5)
+        Layout.Parent = ContentFrame
+
+        local Padding = Instance.new("UIPadding")
+        Padding.PaddingLeft = UDim.new(0, 10)
+        Padding.Parent = ContentFrame
+
+        if icon then
+            local TabIcon = Instance.new("ImageLabel")
+            TabIcon.Size = UDim2.new(0, 28, 0, 28)
+            TabIcon.BackgroundTransparency = 1
+            if tonumber(icon) then
+                TabIcon.Image = "rbxassetid://" .. icon
+            else
+                TabIcon.Image = icon
+            end
+            TabIcon.Parent = ContentFrame
+            AddToRegistry(TabIcon, "ImageColor3", "Text")
+            local iconCorner = Instance.new("UICorner")
+            iconCorner.CornerRadius = UDim.new(0, 8)
+            iconCorner.Parent = TabIcon
+        end
+
+        local TabText = Instance.new("TextLabel")
+        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
+        TabText.Size = UDim2.new(0, textWidth, 1, 0)
+        TabText.BackgroundTransparency = 1
+        TabText.Font = Enum.Font.GothamMedium
+        TabText.Text = name
+        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)
+        TabText.TextSize = 14
+        TabText.TextXAlignment = Enum.TextXAlignment.Left
+        TabText.Parent = ContentFrame
+
         TabBtn.MouseEnter:Connect(function()
             if not TabBtn.Selected then
                 Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
@@ -2101,7 +2312,6 @@ function Fenglib:CreateWindow(Config)
         RightList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightCanvas)
         task.spawn(function() task.wait(); updateLeftCanvas(); updateRightCanvas() end)
 
-        -- 点击动画（M0DZN风格）
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
@@ -2151,10 +2361,6 @@ function Fenglib:CreateWindow(Config)
 
         return DualElements
     end
-
-    -- ========== 已移除自动创建的 Config 和 Settings 标签页 ==========
-    -- 请在主脚本中手动添加它们
-    -- =============================================================
 
     return Window
 end
