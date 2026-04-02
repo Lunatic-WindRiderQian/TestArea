@@ -892,6 +892,7 @@ function Fenglib:CreateWindow(Config)
     end
 
     local firstTab = true
+    local controlCounter = 0  -- 用于生成全局唯一的控件ID，解决同名控件冲突
 
     local function createSection(parent, text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
@@ -1060,6 +1061,8 @@ function Fenglib:CreateWindow(Config)
 
         child.Toggle = function(_, toggleText, default, callback)
             local Enabled = default or false
+            controlCounter = controlCounter + 1
+            local controlId = toggleText .. "_" .. tostring(controlCounter)
 
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
@@ -1105,7 +1108,7 @@ function Fenglib:CreateWindow(Config)
             Dot.Parent = Switch
             Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
-            ConfigObjects[toggleText] = {Type = "Toggle", Value = Enabled, Set = function(val)
+            ConfigObjects[controlId] = {Type = "Toggle", Value = Enabled, Set = function(val)
                 Enabled = val
                 Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
                 Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
@@ -1115,7 +1118,7 @@ function Fenglib:CreateWindow(Config)
             local function Update()
                 Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke})
                 Tween(Dot, {Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)})
-                ConfigObjects[toggleText].Value = Enabled
+                ConfigObjects[controlId].Value = Enabled
                 callback(Enabled)
             end
 
@@ -1135,6 +1138,8 @@ function Fenglib:CreateWindow(Config)
             min = tonumber(min)
             max = tonumber(max)
             local Val = tonumber(default) or (min or 0)
+            controlCounter = controlCounter + 1
+            local controlId = sliderText .. "_" .. tostring(controlCounter)
 
             local tileH = unlimited and 42 or 60
             local Tile = Instance.new("Frame")
@@ -1224,7 +1229,7 @@ function Fenglib:CreateWindow(Config)
                 Bar.Parent = Track
             end
 
-            ConfigObjects[sliderText] = {Type = "Slider", Value = Val, Set = function(val) Update(tonumber(val) or Val) end}
+            ConfigObjects[controlId] = {Type = "Slider", Value = Val, Set = function(val) Update(tonumber(val) or Val) end}
 
             local function Update(newVal)
                 if min ~= nil and max ~= nil then
@@ -1238,7 +1243,7 @@ function Fenglib:CreateWindow(Config)
                 end
                 Val = newVal
                 Num.Text = tostring(Val)
-                ConfigObjects[sliderText].Value = Val
+                ConfigObjects[controlId].Value = Val
                 if Track and Fill and Knob and min ~= nil and max ~= nil and max ~= min then
                     local p = (Val - min) / (max - min)
                     Tween(Fill, {Size = UDim2.new(p, 0, 1, 0)}, 0.16)
@@ -1293,6 +1298,8 @@ function Fenglib:CreateWindow(Config)
         child.Dropdown = function(_, dropText, options, callback)
             local Dropped = false
             local Selected = options[1] or ""
+            controlCounter = controlCounter + 1
+            local controlId = dropText .. "_" .. tostring(controlCounter)
 
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
@@ -1340,7 +1347,7 @@ function Fenglib:CreateWindow(Config)
             List.SortOrder = Enum.SortOrder.LayoutOrder
             List.Parent = Container
 
-            ConfigObjects[dropText] = {
+            ConfigObjects[controlId] = {
                 Type = "Dropdown",
                 Value = Selected,
                 Set = function(val) Select(val) end,
@@ -1352,7 +1359,7 @@ function Fenglib:CreateWindow(Config)
                 Dropped = false
                 Selected = opt
                 Lbl.Text = dropText .. ": " .. opt
-                ConfigObjects[dropText].Value = opt
+                ConfigObjects[controlId].Value = opt
                 callback(opt)
 
                 Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
@@ -1443,6 +1450,9 @@ function Fenglib:CreateWindow(Config)
 
         child.Keybind = function(_, keyText, default, callback)
             local Key = default or Enum.KeyCode.M
+            controlCounter = controlCounter + 1
+            local controlId = keyText .. "_" .. tostring(controlCounter)
+
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentContainer
@@ -1479,7 +1489,7 @@ function Fenglib:CreateWindow(Config)
             AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
             AddToRegistry(KeyLabel, "TextColor3", "Accent")
 
-            ConfigObjects[keyText] = {Type = "Keybind", Value = Key.Name, Set = function(val)
+            ConfigObjects[controlId] = {Type = "Keybind", Value = Key.Name, Set = function(val)
                 Key = Enum.KeyCode[val] or Key
                 KeyLabel.Text = Key.Name
                 callback(Key)
@@ -1491,7 +1501,7 @@ function Fenglib:CreateWindow(Config)
                 if input.KeyCode.Name ~= "Unknown" then
                     Key = input.KeyCode
                     KeyLabel.Text = Key.Name
-                    ConfigObjects[keyText].Value = Key.Name
+                    ConfigObjects[controlId].Value = Key.Name
                     callback(Key)
                 else
                     KeyLabel.Text = Key.Name
@@ -1500,6 +1510,9 @@ function Fenglib:CreateWindow(Config)
         end
 
         child.Textbox = function(_, boxText, placeholder, callback)
+            controlCounter = controlCounter + 1
+            local controlId = boxText .. "_" .. tostring(controlCounter)
+
             local Frame = Instance.new("Frame")
             Frame.Size = UDim2.new(1, 0, 0, 70)
             Frame.Parent = contentContainer
@@ -1542,16 +1555,19 @@ function Fenglib:CreateWindow(Config)
             end)
             Box.FocusLost:Connect(function()
                 Tween(BoxStroke, {Transparency = 0.75}, 0.15)
-                ConfigObjects[boxText].Value = Box.Text
+                ConfigObjects[controlId].Value = Box.Text
                 callback(Box.Text)
             end)
 
-            ConfigObjects[boxText] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
+            ConfigObjects[controlId] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
         child.Input = function(_, inputText, default, callback, options)
             options = options or {}
             local placeholder = options.placeholder or ""; local acceptedCharacters = options.acceptedCharacters or "All"; local characterLimit = options.characterLimit; local onChanged = options.onChanged
+            controlCounter = controlCounter + 1
+            local controlId = inputText .. "_" .. tostring(controlCounter)
+
             local InputFrame = Instance.new("Frame"); InputFrame.Size = UDim2.new(1, 0, 0, 42); InputFrame.Parent = contentContainer; InputFrame.BackgroundTransparency = 0.05; Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 12); AddToRegistry(InputFrame, "BackgroundColor3", "Top")
             local NameLbl = Instance.new("TextLabel"); NameLbl.Text = inputText; NameLbl.Size = UDim2.new(0.6,0,1,0); NameLbl.Position = UDim2.new(0,15,0,0); NameLbl.TextXAlignment = Enum.TextXAlignment.Left; NameLbl.Font = Enum.Font.GothamMedium; NameLbl.TextSize = 13; NameLbl.BackgroundTransparency = 1; NameLbl.Parent = InputFrame; AddToRegistry(NameLbl, "TextColor3", "Text")
             local InputBox = Instance.new("TextBox"); InputBox.Text = tostring(default or ""); InputBox.PlaceholderText = placeholder; InputBox.Size = UDim2.new(0.3,0,0,28); InputBox.Position = UDim2.new(0.7,-10,0.5,-14); InputBox.Font = Enum.Font.GothamBold; InputBox.TextSize = 13; InputBox.TextXAlignment = Enum.TextXAlignment.Center; InputBox.ClearTextOnFocus = false; InputBox.Parent = InputFrame
@@ -1567,9 +1583,20 @@ function Fenglib:CreateWindow(Config)
                 else return text end
             end
             InputBox:GetPropertyChangedSignal("Text"):Connect(function() local filtered = filterText(InputBox.Text); if filtered~=InputBox.Text then InputBox.Text=filtered end; if onChanged then onChanged(filtered) end end)
-            InputBox.FocusLost:Connect(function() local text = InputBox.Text; local filtered = filterText(text); if filtered~=text then InputBox.Text = filtered; text = filtered end; if callback then callback(text) end end)
-            ConfigObjects[inputText] = {Type = "Input", Value = InputBox.Text, Set = function(val) InputBox.Text = tostring(val) end}
-            local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[inputText].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
+            InputBox.FocusLost:Connect(function()
+                local text = InputBox.Text
+                local filtered = filterText(text)
+                if filtered~=text then
+                    InputBox.Text = filtered
+                    text = filtered
+                end
+                if ConfigObjects[controlId] then
+                    ConfigObjects[controlId].Value = text
+                end
+                if callback then callback(text) end
+            end)
+            ConfigObjects[controlId] = {Type = "Input", Value = InputBox.Text, Set = function(val) InputBox.Text = tostring(val) end}
+            local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[controlId].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
         end
 
         child.Label = function(_, labelText)
@@ -1677,12 +1704,12 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- ColorPicker element (ported from M0DZN)
         child.ColorPicker = function(_, pickerText, default, callback)
             local Color = default or Color3.fromRGB(255, 255, 255)
             local h, s, v = Color3.toHSV(Color)
+            controlCounter = controlCounter + 1
+            local controlId = pickerText .. "_" .. tostring(controlCounter)
 
-            -- Tile (main row)
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 44)
             Tile.Parent = contentContainer
@@ -1719,7 +1746,6 @@ function Fenglib:CreateWindow(Config)
             SwStroke.Parent = Swatch
             AddToRegistry(SwStroke, "Color", "Stroke")
 
-            -- Panel (collapsible color picker)
             local Panel = Instance.new("Frame")
             Panel.Size = UDim2.new(1, 0, 0, 0)
             Panel.Visible = false
@@ -1734,7 +1760,6 @@ function Fenglib:CreateWindow(Config)
             PSt.Parent = Panel
             AddToRegistry(PSt, "Color", "Accent")
 
-            -- SV Box (saturation/value)
             local SVBox = Instance.new("ImageLabel")
             SVBox.Size = UDim2.new(1, -52, 0, 110)
             SVBox.Position = UDim2.new(0, 10, 0, 10)
@@ -1756,7 +1781,6 @@ function Fenglib:CreateWindow(Config)
             DotStroke.Color = Color3.fromRGB(80, 80, 80)
             DotStroke.Parent = SVDot
 
-            -- Hue Bar
             local HueBar = Instance.new("Frame")
             HueBar.Size = UDim2.new(0, 16, 0, 110)
             HueBar.Position = UDim2.new(1, -30, 0, 10)
@@ -1787,7 +1811,6 @@ function Fenglib:CreateWindow(Config)
             HueDot.Parent = HueBar
             Instance.new("UICorner", HueDot).CornerRadius = UDim.new(1, 0)
 
-            -- RGB Input Row
             local RGBRow = Instance.new("Frame")
             RGBRow.Size = UDim2.new(1, -20, 0, 28)
             RGBRow.Position = UDim2.new(0, 10, 0, 128)
@@ -1852,7 +1875,7 @@ function Fenglib:CreateWindow(Config)
                 RBox.Text = tostring(math.floor(Color.R * 255))
                 GBox.Text = tostring(math.floor(Color.G * 255))
                 BBox.Text = tostring(math.floor(Color.B * 255))
-                ConfigObjects[pickerText].Value = {R = Color.R, G = Color.G, B = Color.B}
+                ConfigObjects[controlId].Value = {R = Color.R, G = Color.G, B = Color.B}
                 callback(Color)
             end
 
@@ -1866,7 +1889,7 @@ function Fenglib:CreateWindow(Config)
                 HueDot.Position = UDim2.new(0.5, 0, h, 0)
                 SVBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
                 Swatch.BackgroundColor3 = Color
-                ConfigObjects[pickerText].Value = {R = Color.R, G = Color.G, B = Color.B}
+                ConfigObjects[controlId].Value = {R = Color.R, G = Color.G, B = Color.B}
                 callback(Color)
             end
 
@@ -1874,7 +1897,6 @@ function Fenglib:CreateWindow(Config)
             GBox.FocusLost:Connect(OnRGBInput)
             BBox.FocusLost:Connect(OnRGBInput)
 
-            -- SV dragging
             local svDragging = false
             local SVBtn = Instance.new("TextButton")
             SVBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -1907,7 +1929,6 @@ function Fenglib:CreateWindow(Config)
                 end
             end)
 
-            -- Hue dragging
             local hueDragging = false
             local HueBtn = Instance.new("TextButton")
             HueBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -1950,12 +1971,10 @@ function Fenglib:CreateWindow(Config)
                     task.wait(0.3)
                     Panel.Visible = false
                 end
-                -- Force layout update
                 updateSectionHeight(false)
             end)
 
-            -- Register in ConfigObjects
-            ConfigObjects[pickerText] = {
+            ConfigObjects[controlId] = {
                 Type = "ColorPicker",
                 Value = {R = Color.R, G = Color.G, B = Color.B},
                 Set = function(val)
@@ -1981,10 +2000,7 @@ function Fenglib:CreateWindow(Config)
                 end
             }
 
-            -- Theme update for dynamic elements
             table.insert(ThemeListeners, function()
-                -- No extra dynamic theme updates needed here because all sub-elements are already registered
-                -- but we refresh the swatch border
                 SwStroke.Color = CurrentTheme.Stroke
             end)
         end
@@ -2143,7 +2159,6 @@ function Fenglib:CreateWindow(Config)
             return createSection(ContentHolder, text, icons, defaultOpen)
         end
 
-        -- Expose the ColorPicker method on the Elements object
         Elements.ColorPicker = function(_, pickerText, default, callback)
             local section = createSection(ContentHolder, pickerText, nil, true)
             return section.ColorPicker(pickerText, default, callback)
