@@ -111,10 +111,17 @@ function Fenglib:SaveConfig(configName, configFolder)
         if not isfolder(configFolder) then makefolder(configFolder) end
         local data = {}
         for flag, obj in pairs(ConfigObjects) do
-            data[flag] = obj.Value
+            -- FIX: 确保 value 存在且不为 nil
+            if obj and obj.Value ~= nil then
+                data[flag] = obj.Value
+            end
         end
-        writefile(configFolder .. "/" .. configName .. ".json", HttpService:JSONEncode(data))
+        local json = HttpService:JSONEncode(data)
+        writefile(configFolder .. "/" .. configName .. ".json", json)
     end)
+    if not ok then
+        warn("SaveConfig error:", err)
+    end
     return ok
 end
 
@@ -892,9 +899,9 @@ function Fenglib:CreateWindow(Config)
     end
 
     local firstTab = true
+    local controlCounter = 0
 
-    -- 基于路径的创建函数，sectionPath 格式：Tab名/Section名 或 DualTab名/Left(Side)/Section名
-    local function createSection(parent, text, icons, defaultOpen, sectionPath)
+    local function createSection(parent, text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
 
         local function formatAssetId(id)
@@ -1061,7 +1068,8 @@ function Fenglib:CreateWindow(Config)
 
         child.Toggle = function(_, toggleText, default, callback)
             local Enabled = default or false
-            local controlId = (sectionPath or "root") .. "/Toggle_" .. toggleText
+            controlCounter = controlCounter + 1
+            local controlId = toggleText .. "_" .. tostring(controlCounter)
 
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
@@ -1137,7 +1145,8 @@ function Fenglib:CreateWindow(Config)
             min = tonumber(min)
             max = tonumber(max)
             local Val = tonumber(default) or (min or 0)
-            local controlId = (sectionPath or "root") .. "/Slider_" .. sliderText
+            controlCounter = controlCounter + 1
+            local controlId = sliderText .. "_" .. tostring(controlCounter)
 
             local tileH = unlimited and 42 or 60
             local Tile = Instance.new("Frame")
@@ -1227,8 +1236,7 @@ function Fenglib:CreateWindow(Config)
                 Bar.Parent = Track
             end
 
-            ConfigObjects[controlId] = {Type = "Slider", Value = Val, Set = function(val) Update(tonumber(val) or Val) end}
-
+            -- 先定义 Update，再注册 ConfigObjects，确保闭包捕获最新的 controlId
             local function Update(newVal)
                 if min ~= nil and max ~= nil then
                     newVal = clamp(newVal, min, max)
@@ -1241,7 +1249,10 @@ function Fenglib:CreateWindow(Config)
                 end
                 Val = newVal
                 Num.Text = tostring(Val)
-                ConfigObjects[controlId].Value = Val
+                -- FIX: 确保 ConfigObjects 中的值同步
+                if ConfigObjects[controlId] then
+                    ConfigObjects[controlId].Value = Val
+                end
                 if Track and Fill and Knob and min ~= nil and max ~= nil and max ~= min then
                     local p = (Val - min) / (max - min)
                     Tween(Fill, {Size = UDim2.new(p, 0, 1, 0)}, 0.16)
@@ -1249,6 +1260,8 @@ function Fenglib:CreateWindow(Config)
                 end
                 callback(Val)
             end
+
+            ConfigObjects[controlId] = {Type = "Slider", Value = Val, Set = function(val) Update(tonumber(val) or Val) end}
 
             local function Drag(input)
                 if not Track or min == nil or max == nil or max == min then return end
@@ -1296,7 +1309,8 @@ function Fenglib:CreateWindow(Config)
         child.Dropdown = function(_, dropText, options, callback)
             local Dropped = false
             local Selected = options[1] or ""
-            local controlId = (sectionPath or "root") .. "/Dropdown_" .. dropText
+            controlCounter = controlCounter + 1
+            local controlId = dropText .. "_" .. tostring(controlCounter)
 
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
@@ -1344,19 +1358,14 @@ function Fenglib:CreateWindow(Config)
             List.SortOrder = Enum.SortOrder.LayoutOrder
             List.Parent = Container
 
-            ConfigObjects[controlId] = {
-                Type = "Dropdown",
-                Value = Selected,
-                Set = function(val) Select(val) end,
-                Refresh = RefreshOptions,
-                Reset = ResetDropdown
-            }
-
             local function Select(opt)
                 Dropped = false
                 Selected = opt
                 Lbl.Text = dropText .. ": " .. opt
-                ConfigObjects[controlId].Value = opt
+                -- FIX: 立即更新 ConfigObjects 中的值
+                if ConfigObjects[controlId] then
+                    ConfigObjects[controlId].Value = opt
+                end
                 callback(opt)
 
                 Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
@@ -1434,6 +1443,14 @@ function Fenglib:CreateWindow(Config)
                 updateSectionHeight(false)
             end)
 
+            ConfigObjects[controlId] = {
+                Type = "Dropdown",
+                Value = Selected,
+                Set = function(val) Select(val) end,
+                Refresh = RefreshOptions,
+                Reset = ResetDropdown
+            }
+
             table.insert(ThemeListeners, function()
                 for _, O in pairs(Container:GetChildren()) do
                     if O:IsA("TextButton") then
@@ -1447,7 +1464,8 @@ function Fenglib:CreateWindow(Config)
 
         child.Keybind = function(_, keyText, default, callback)
             local Key = default or Enum.KeyCode.M
-            local controlId = (sectionPath or "root") .. "/Keybind_" .. keyText
+            controlCounter = controlCounter + 1
+            local controlId = keyText .. "_" .. tostring(controlCounter)
 
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
@@ -1506,7 +1524,8 @@ function Fenglib:CreateWindow(Config)
         end
 
         child.Textbox = function(_, boxText, placeholder, callback)
-            local controlId = (sectionPath or "root") .. "/Textbox_" .. boxText
+            controlCounter = controlCounter + 1
+            local controlId = boxText .. "_" .. tostring(controlCounter)
 
             local Frame = Instance.new("Frame")
             Frame.Size = UDim2.new(1, 0, 0, 70)
@@ -1560,7 +1579,8 @@ function Fenglib:CreateWindow(Config)
         child.Input = function(_, inputText, default, callback, options)
             options = options or {}
             local placeholder = options.placeholder or ""; local acceptedCharacters = options.acceptedCharacters or "All"; local characterLimit = options.characterLimit; local onChanged = options.onChanged
-            local controlId = (sectionPath or "root") .. "/Input_" .. inputText
+            controlCounter = controlCounter + 1
+            local controlId = inputText .. "_" .. tostring(controlCounter)
 
             local InputFrame = Instance.new("Frame"); InputFrame.Size = UDim2.new(1, 0, 0, 42); InputFrame.Parent = contentContainer; InputFrame.BackgroundTransparency = 0.05; Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 12); AddToRegistry(InputFrame, "BackgroundColor3", "Top")
             local NameLbl = Instance.new("TextLabel"); NameLbl.Text = inputText; NameLbl.Size = UDim2.new(0.6,0,1,0); NameLbl.Position = UDim2.new(0,15,0,0); NameLbl.TextXAlignment = Enum.TextXAlignment.Left; NameLbl.Font = Enum.Font.GothamMedium; NameLbl.TextSize = 13; NameLbl.BackgroundTransparency = 1; NameLbl.Parent = InputFrame; AddToRegistry(NameLbl, "TextColor3", "Text")
@@ -1701,7 +1721,8 @@ function Fenglib:CreateWindow(Config)
         child.ColorPicker = function(_, pickerText, default, callback)
             local Color = default or Color3.fromRGB(255, 255, 255)
             local h, s, v = Color3.toHSV(Color)
-            local controlId = (sectionPath or "root") .. "/ColorPicker_" .. pickerText
+            controlCounter = controlCounter + 1
+            local controlId = pickerText .. "_" .. tostring(controlCounter)
 
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 44)
@@ -2149,12 +2170,11 @@ function Fenglib:CreateWindow(Config)
 
         local Elements = {}
         function Elements:Section(text, icons, defaultOpen)
-            local path = name .. "/" .. text
-            return createSection(ContentHolder, text, icons, defaultOpen, path)
+            return createSection(ContentHolder, text, icons, defaultOpen)
         end
 
         Elements.ColorPicker = function(_, pickerText, default, callback)
-            local section = createSection(ContentHolder, pickerText, nil, true, name .. "/" .. pickerText)
+            local section = createSection(ContentHolder, pickerText, nil, true)
             return section.ColorPicker(pickerText, default, callback)
         end
 
@@ -2365,8 +2385,7 @@ function Fenglib:CreateWindow(Config)
         local DualElements = {}
         function DualElements:section(side, text, icons, defaultOpen)
             local holder = side == "Left" and LeftHolder or RightHolder
-            local path = name .. "/" .. side .. "/" .. text
-            return createSection(holder, text, icons, defaultOpen, path)
+            return createSection(holder, text, icons, defaultOpen)
         end
 
         return DualElements
