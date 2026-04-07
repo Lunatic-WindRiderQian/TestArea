@@ -297,8 +297,8 @@ function Fenglib:CreateWindow(Config)
 
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
-    ButtonGroup.Size = UDim2.new(0, 180, 1, 0)
-    ButtonGroup.Position = UDim2.new(1, -190, 0, 0)
+    ButtonGroup.Size = UDim2.new(0, 180, 1, 0)      -- 加宽以容纳四个按钮
+    ButtonGroup.Position = UDim2.new(1, -190, 0, 0) -- 调整偏移
     ButtonGroup.BackgroundTransparency = 1
     ButtonGroup.Parent = Topbar
 
@@ -608,7 +608,8 @@ function Fenglib:CreateWindow(Config)
         ScreenGui:Destroy()
     end)
 
-    -- ========== 投影仪模式 ==========
+    -- ========== 投影仪模式（修正屏幕朝向） ==========
+    -- 初始化投影仪相关变量
     Window._ProjectorModeEnabled = false
     Window._ProjectorObjects = nil
     Window._ProjectorSettings = {
@@ -619,6 +620,7 @@ function Fenglib:CreateWindow(Config)
         autoSize = true
     }
 
+    -- 辅助函数：按压效果
     local function addPressEffect(button)
         local originalSize = button.Size
         local originalPos = button.Position
@@ -642,6 +644,7 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
+    -- 根据UI实际大小自动调整投影屏幕的世界尺寸
     function Window:UpdateProjectorSizeFromUI()
         if not Window._ProjectorModeEnabled or not Window._ProjectorObjects then return end
         local mainFrame = Window._ProjectorObjects.SurfaceGui:FindFirstChild("FengYu-Bento")
@@ -666,6 +669,7 @@ function Fenglib:CreateWindow(Config)
         height = height or Window._ProjectorSettings.height
         transparency = transparency or Window._ProjectorSettings.transparency
         
+        -- 创建投影屏幕Part
         local projectorScreen = Instance.new("Part")
         projectorScreen.Name = "FengYu_ProjectorScreen"
         projectorScreen.Anchored = true
@@ -678,6 +682,7 @@ function Fenglib:CreateWindow(Config)
         projectorScreen.TopSurface = Enum.SurfaceType.Smooth
         projectorScreen.BottomSurface = Enum.SurfaceType.Smooth
         
+        -- 添加边框光效
         local selectionBox = Instance.new("SelectionBox")
         selectionBox.Adornee = projectorScreen
         selectionBox.Color3 = CurrentTheme.Accent
@@ -688,6 +693,7 @@ function Fenglib:CreateWindow(Config)
         if syn and syn.protect_gui then syn.protect_gui(projectorScreen) end
         projectorScreen.Parent = workspace
         
+        -- 创建SurfaceGui
         local surfaceGui = Instance.new("SurfaceGui")
         surfaceGui.Name = "ProjectorUI"
         surfaceGui.ResetOnSpawn = false
@@ -700,6 +706,7 @@ function Fenglib:CreateWindow(Config)
         surfaceGui.Adornee = projectorScreen
         surfaceGui.Parent = projectorScreen
         
+        -- 保存原UI内容（MainFrame及所有子元素，但保留OpenButton和NotificationHolder在ScreenGui）
         local originalChildren = {}
         for _, child in ipairs(ScreenGui:GetChildren()) do
             if child ~= OpenButton and child ~= NotificationHolder then
@@ -711,49 +718,50 @@ function Fenglib:CreateWindow(Config)
             child.Parent = surfaceGui
         end
         
+        -- 记录MainFrame原始大小和位置，用于恢复
         Window._savedMainFrameSize = MainFrame.Size
         Window._savedMainFramePos = MainFrame.Position
         
+        -- 调整UI大小以适应投影屏幕（稍微放大便于阅读）
         MainFrame.Size = UDim2.new(0, 600, 0, 400)
         MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         
+        -- 为所有按钮添加按压效果
         addPressEffectToAll(surfaceGui)
         
+        -- 添加环境光源
         local pointLight = Instance.new("PointLight")
         pointLight.Brightness = 2.5
         pointLight.Range = 20
         pointLight.Color = CurrentTheme.Accent
         pointLight.Parent = projectorScreen
         
-        -- 修复：让屏幕始终面向玩家相机（Camera）
+        -- 屏幕位置和朝向更新（固定在角色前方，屏幕正面朝向玩家）
         local function updateScreenPosition()
             local character = LocalPlayer.Character
             if not character then return end
             local rootPart = character:FindFirstChild("HumanoidRootPart")
             if not rootPart then return end
             
+            -- 获取角色前向向量（水平方向，用于计算位置）
             local forward = rootPart.CFrame.LookVector
             forward = Vector3.new(forward.X, 0, forward.Z).Unit
+            
+            -- 计算屏幕位置：角色前方指定距离，并抬高一点到视线高度
             local targetPos = rootPart.Position + forward * distance
-            targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
+            targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z) -- 视线高度
             
-            -- 获取当前相机位置
-            local camera = workspace.CurrentCamera
-            if not camera then return end
-            local cameraPos = camera.CFrame.Position
+            -- 修正朝向：让屏幕正面（+Z）指向玩家角色
+            -- 使用 CFrame.lookAt 使屏幕的 Z 轴指向玩家，同时保持屏幕竖直（up 为 (0,1,0)）
+            local directionToPlayer = (rootPart.Position - targetPos).Unit
+            local screenCF = CFrame.lookAt(targetPos, targetPos + directionToPlayer, Vector3.new(0,1,0))
             
-            -- 计算从屏幕指向相机的方向（屏幕正面应朝向相机）
-            local toCamera = (cameraPos - targetPos).Unit
-            local up = Vector3.new(0, 1, 0)
-            local right = toCamera:Cross(up).Unit
-            local realUp = right:Cross(toCamera).Unit
-            
-            local screenCF = CFrame.fromMatrix(targetPos, right, realUp)
             projectorScreen.CFrame = screenCF
         end
         
         updateScreenPosition()
         
+        -- 每帧更新位置（跟随角色移动和旋转）
         local updateConnection
         updateConnection = RunService.RenderStepped:Connect(function()
             if not projectorScreen.Parent then
@@ -763,15 +771,18 @@ function Fenglib:CreateWindow(Config)
             updateScreenPosition()
         end)
         
+        -- 自动适配屏幕尺寸（当UI大小变化时）
         local sizeConnection
         sizeConnection = MainFrame:GetPropertyChangedSignal("Size"):Connect(function()
             if Window._ProjectorSettings.autoSize then
                 Window:UpdateProjectorSizeFromUI()
             end
         end)
+        -- 立即适配一次
         task.wait(0.1)
         Window:UpdateProjectorSizeFromUI()
         
+        -- 存储投影仪对象
         Window._ProjectorModeEnabled = true
         Window._ProjectorObjects = {
             Screen = projectorScreen,
@@ -806,6 +817,7 @@ function Fenglib:CreateWindow(Config)
             end
         end
         
+        -- 恢复原UI大小和位置
         if Window._savedMainFrameSize then
             MainFrame.Size = Window._savedMainFrameSize
             MainFrame.Position = Window._savedMainFramePos
@@ -826,11 +838,11 @@ function Fenglib:CreateWindow(Config)
             Window:Notification("投影仪模式", "已关闭投影仪效果，UI返回屏幕", "Info", 2)
         else
             SwitchToProjectorMode()
-            Window:Notification("投影仪模式", "UI已投射到面前屏幕，屏幕始终面向玩家", "Success", 2)
+            Window:Notification("投影仪模式", "UI已投射到面前屏幕，屏幕固定跟随角色", "Success", 2)
         end
     end
     
-    -- 投影仪切换按钮（图标ID已改为12684119225）
+    -- 添加投影仪切换按钮（图标ID已改为12684119225）
     local Toggle3DBtn = createIconButton("rbxassetid://12684119225", function()
         ToggleProjectorMode()
     end)
@@ -855,6 +867,7 @@ function Fenglib:CreateWindow(Config)
         btnTooltip.Visible = false
     end)
 
+    -- 投影仪设置API
     function Window:SetProjectorDistance(distance)
         distance = clamp(distance, 3, 15)
         Window._ProjectorSettings.distance = distance
@@ -866,15 +879,9 @@ function Fenglib:CreateWindow(Config)
                 forward = Vector3.new(forward.X, 0, forward.Z).Unit
                 local targetPos = rootPart.Position + forward * distance
                 targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
-                local camera = workspace.CurrentCamera
-                if camera then
-                    local cameraPos = camera.CFrame.Position
-                    local toCamera = (cameraPos - targetPos).Unit
-                    local up = Vector3.new(0, 1, 0)
-                    local right = toCamera:Cross(up).Unit
-                    local realUp = right:Cross(toCamera).Unit
-                    Window._ProjectorObjects.Screen.CFrame = CFrame.fromMatrix(targetPos, right, realUp)
-                end
+                local directionToPlayer = (rootPart.Position - targetPos).Unit
+                local screenCF = CFrame.lookAt(targetPos, targetPos + directionToPlayer, Vector3.new(0,1,0))
+                Window._ProjectorObjects.Screen.CFrame = screenCF
             end
         end
     end
@@ -928,16 +935,10 @@ function Fenglib:CreateWindow(Config)
                     forward = Vector3.new(forward.X, 0, forward.Z).Unit
                     local targetPos = rootPart.Position + forward * Window._ProjectorSettings.distance
                     targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
-                    local camera = workspace.CurrentCamera
-                    if camera then
-                        local cameraPos = camera.CFrame.Position
-                        local toCamera = (cameraPos - targetPos).Unit
-                        local up = Vector3.new(0, 1, 0)
-                        local right = toCamera:Cross(up).Unit
-                        local realUp = right:Cross(toCamera).Unit
-                        Window._ProjectorObjects.Screen.CFrame = CFrame.fromMatrix(targetPos, right, realUp)
-                        Window:Notification("投影仪", "屏幕位置已刷新", "Success", 1)
-                    end
+                    local directionToPlayer = (rootPart.Position - targetPos).Unit
+                    local screenCF = CFrame.lookAt(targetPos, targetPos + directionToPlayer, Vector3.new(0,1,0))
+                    Window._ProjectorObjects.Screen.CFrame = screenCF
+                    Window:Notification("投影仪", "屏幕位置已刷新", "Success", 1)
                 end
             end
         end)
@@ -958,7 +959,7 @@ function Fenglib:CreateWindow(Config)
     function Window:IsProjectorMode()
         return Window._ProjectorModeEnabled
     end
-    -- ========== 投影仪模式结束 ==========
+    -- ========== 投影仪模式移植结束 ==========
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
