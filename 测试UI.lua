@@ -627,7 +627,9 @@ function Fenglib:CreateWindow(Config)
 
     function Window:UpdateProjectorSizeFromUI()
         if not Window._ProjectorModeEnabled or not Window._ProjectorObjects then return end
-        local mainFrame = Window._ProjectorObjects.SurfaceGui:FindFirstChild("FengYu-Bento")
+        local surfaceGui = Window._ProjectorObjects.SurfaceGui
+        if not surfaceGui then return end
+        local mainFrame = surfaceGui:FindFirstChild("FengYu-Bento")
         if not mainFrame then return end
         local absSize = mainFrame.AbsoluteSize
         if absSize.X <= 0 or absSize.Y <= 0 then return end
@@ -708,7 +710,7 @@ function Fenglib:CreateWindow(Config)
         pointLight.Color = CurrentTheme.Accent
         pointLight.Parent = projectorScreen
         
-        -- FIXED: 修复屏幕倾斜 - 使屏幕始终垂直于地面，正面水平朝向玩家
+        -- 修复屏幕倾斜：使屏幕始终垂直于地面，正面水平朝向玩家
         local function updateScreenPosition()
             local character = LocalPlayer.Character
             if not character then return end
@@ -745,6 +747,9 @@ function Fenglib:CreateWindow(Config)
         end)
         task.wait(0.1)
         Window:UpdateProjectorSizeFromUI()
+        
+        -- 显示窗口缩放按钮（投影仪模式下强制可见）
+        Resizer.Visible = true
         
         Window._ProjectorModeEnabled = true
         Window._ProjectorObjects = {
@@ -787,6 +792,9 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Size = UDim2.new(0, 500, 0, 299)
             MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         end
+        
+        -- 恢复缩放按钮的可见性（根据原状态）
+        Resizer.Visible = resizerVisible
         
         Window._ProjectorModeEnabled = false
         Window._ProjectorObjects = nil
@@ -1144,7 +1152,6 @@ function Fenglib:CreateWindow(Config)
                 forward = Vector3.new(forward.X, 0, forward.Z).Unit
                 local targetPos = rootPart.Position + forward * distance
                 targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
-                -- FIXED: 修复屏幕倾斜
                 local lookAtPoint = Vector3.new(rootPart.Position.X, targetPos.Y, rootPart.Position.Z)
                 local screenCF = CFrame.lookAt(targetPos, lookAtPoint, Vector3.new(0, 1, 0))
                 Window._ProjectorObjects.Screen.CFrame = screenCF
@@ -1191,6 +1198,16 @@ function Fenglib:CreateWindow(Config)
                 Window:UpdateProjectorSizeFromUI()
             end
             Window:Notification("投影仪", "已开启自动适配UI大小", "Success", 1)
+        end)
+        -- 新增：UI窗口缩放滑块，允许用户直接调整窗口大小
+        section:Slider("UI窗口缩放", 0.5, 2, 1, function(val)
+            if not Window._ProjectorModeEnabled then return end
+            local baseWidth = 600
+            local baseHeight = 400
+            local newWidth = baseWidth * val
+            local newHeight = baseHeight * val
+            MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+            -- sizeConnection 会自动调用 UpdateProjectorSizeFromUI
         end)
         section:Button("刷新屏幕位置", function()
             if Window._ProjectorModeEnabled and Window._ProjectorObjects and Window._ProjectorObjects.Screen then
