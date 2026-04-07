@@ -678,7 +678,8 @@ function Fenglib:CreateWindow(Config)
         surfaceGui.ResetOnSpawn = false
         surfaceGui.Face = Enum.NormalId.Front
         surfaceGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-        surfaceGui.CanvasSize = Vector2.new(800, 600)
+        -- 增大 CanvasSize 以容纳更大的 UI 窗口
+        surfaceGui.CanvasSize = Vector2.new(1200, 900)
         surfaceGui.ClipsDescendants = true
         surfaceGui.AlwaysOnTop = true
         surfaceGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -696,10 +697,16 @@ function Fenglib:CreateWindow(Config)
             child.Parent = surfaceGui
         end
         
+        -- 保存当前窗口大小和位置
         Window._savedMainFrameSize = MainFrame.Size
         Window._savedMainFramePos = MainFrame.Position
         
-        MainFrame.Size = UDim2.new(0, 600, 0, 400)
+        -- 不强制改变大小，使用当前大小，但确保不小于 800x600 以便完整显示内容
+        local currentWidth = MainFrame.Size.X.Offset
+        local currentHeight = MainFrame.Size.Y.Offset
+        if currentWidth < 800 then currentWidth = 800 end
+        if currentHeight < 600 then currentHeight = 600 end
+        MainFrame.Size = UDim2.new(0, currentWidth, 0, currentHeight)
         MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         
         addPressEffectToAll(surfaceGui)
@@ -789,7 +796,7 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Size = Window._savedMainFrameSize
             MainFrame.Position = Window._savedMainFramePos
         else
-            MainFrame.Size = UDim2.new(0, 500, 0, 299)
+            MainFrame.Size = UDim2.new(0, 800, 0, 600)
             MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         end
         
@@ -852,7 +859,7 @@ function Fenglib:CreateWindow(Config)
         ScreenGui:Destroy()
     end)
 
-    Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
+    Tween(MainFrame, {Size = UDim2.new(0, 800, 0, 600)}, 0.6)
 
     local dragging = false
     local dragInput, dragStart, startPos
@@ -1199,15 +1206,13 @@ function Fenglib:CreateWindow(Config)
             end
             Window:Notification("投影仪", "已开启自动适配UI大小", "Success", 1)
         end)
-        -- 新增：UI窗口缩放滑块，允许用户直接调整窗口大小
         section:Slider("UI窗口缩放", 0.5, 2, 1, function(val)
             if not Window._ProjectorModeEnabled then return end
-            local baseWidth = 600
-            local baseHeight = 400
+            local baseWidth = 800
+            local baseHeight = 600
             local newWidth = baseWidth * val
             local newHeight = baseHeight * val
             MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
-            -- sizeConnection 会自动调用 UpdateProjectorSizeFromUI
         end)
         section:Button("刷新屏幕位置", function()
             if Window._ProjectorModeEnabled and Window._ProjectorObjects and Window._ProjectorObjects.Screen then
