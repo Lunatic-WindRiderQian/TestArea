@@ -592,7 +592,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- ========== 投影仪模式 ==========
+    -- ========== 投影仪模式（朝向改回原始逻辑，屏幕正面朝前，保持竖直） ==========
     Window._ProjectorModeEnabled = false
     Window._ProjectorObjects = nil
     Window._ProjectorSettings = {
@@ -709,6 +709,7 @@ function Fenglib:CreateWindow(Config)
         pointLight.Color = CurrentTheme.Accent
         pointLight.Parent = projectorScreen
         
+        -- 原始朝向逻辑：屏幕正面朝向角色前方（即背对玩家），保持竖直
         local function updateScreenPosition()
             local character = LocalPlayer.Character
             if not character then return end
@@ -720,11 +721,9 @@ function Fenglib:CreateWindow(Config)
             local targetPos = rootPart.Position + forward * distance
             targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
             
-            -- 屏幕正面指向玩家，保持竖直
-            local forwardToPlayer = (rootPart.Position - targetPos).Unit
             local up = Vector3.new(0, 1, 0)
-            local right = up:Cross(forwardToPlayer).Unit
-            local realUp = forwardToPlayer:Cross(right).Unit
+            local right = forward:Cross(up).Unit
+            local realUp = right:Cross(forward).Unit
             local screenCF = CFrame.fromMatrix(targetPos, right, realUp)
             
             projectorScreen.CFrame = screenCF
@@ -808,7 +807,7 @@ function Fenglib:CreateWindow(Config)
         end
     end
     
-    -- 创建按钮：先创建投影仪按钮（最左边），再创建最小化、最大化、关闭
+    -- 创建按钮：投影仪按钮放在最左边
     local Toggle3DBtn = createIconButton("rbxassetid://12684119225", function()
         ToggleProjectorMode()
     end)
@@ -1139,7 +1138,7 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- 投影仪设置API
+    -- 投影仪设置API（保持与原始逻辑一致）
     function Window:SetProjectorDistance(distance)
         distance = clamp(distance, 3, 15)
         Window._ProjectorSettings.distance = distance
@@ -1151,10 +1150,9 @@ function Fenglib:CreateWindow(Config)
                 forward = Vector3.new(forward.X, 0, forward.Z).Unit
                 local targetPos = rootPart.Position + forward * distance
                 targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
-                local forwardToPlayer = (rootPart.Position - targetPos).Unit
                 local up = Vector3.new(0, 1, 0)
-                local right = up:Cross(forwardToPlayer).Unit
-                local realUp = forwardToPlayer:Cross(right).Unit
+                local right = forward:Cross(up).Unit
+                local realUp = right:Cross(forward).Unit
                 local screenCF = CFrame.fromMatrix(targetPos, right, realUp)
                 Window._ProjectorObjects.Screen.CFrame = screenCF
             end
@@ -1210,10 +1208,9 @@ function Fenglib:CreateWindow(Config)
                     forward = Vector3.new(forward.X, 0, forward.Z).Unit
                     local targetPos = rootPart.Position + forward * Window._ProjectorSettings.distance
                     targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
-                    local forwardToPlayer = (rootPart.Position - targetPos).Unit
                     local up = Vector3.new(0, 1, 0)
-                    local right = up:Cross(forwardToPlayer).Unit
-                    local realUp = forwardToPlayer:Cross(right).Unit
+                    local right = forward:Cross(up).Unit
+                    local realUp = right:Cross(forward).Unit
                     local screenCF = CFrame.fromMatrix(targetPos, right, realUp)
                     Window._ProjectorObjects.Screen.CFrame = screenCF
                     Window:Notification("投影仪", "屏幕位置已刷新", "Success", 1)
