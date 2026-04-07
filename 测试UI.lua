@@ -608,7 +608,7 @@ function Fenglib:CreateWindow(Config)
         ScreenGui:Destroy()
     end)
 
-    -- ========== 投影仪模式（修正屏幕朝向） ==========
+    -- ========== 投影仪模式（修正屏幕朝向+垂直偏移可调） ==========
     -- 初始化投影仪相关变量
     Window._ProjectorModeEnabled = false
     Window._ProjectorObjects = nil
@@ -617,7 +617,8 @@ function Fenglib:CreateWindow(Config)
         width = 8,
         height = 6,
         transparency = 0.3,
-        autoSize = true
+        autoSize = true,
+        verticalOffset = 1.0      -- 默认垂直偏移（角色腰部高度，之前1.2偏高，改为1.0）
     }
 
     -- 辅助函数：按压效果
@@ -661,13 +662,14 @@ function Fenglib:CreateWindow(Config)
         Window._ProjectorSettings.height = targetHeight
     end
 
-    local function SwitchToProjectorMode(distance, width, height, transparency)
+    local function SwitchToProjectorMode(distance, width, height, transparency, verticalOffset)
         if Window._ProjectorModeEnabled then return end
         
         distance = distance or Window._ProjectorSettings.distance
         width = width or Window._ProjectorSettings.width
         height = height or Window._ProjectorSettings.height
         transparency = transparency or Window._ProjectorSettings.transparency
+        verticalOffset = verticalOffset or Window._ProjectorSettings.verticalOffset
         
         -- 创建投影屏幕Part
         local projectorScreen = Instance.new("Part")
@@ -747,12 +749,11 @@ function Fenglib:CreateWindow(Config)
             local forward = rootPart.CFrame.LookVector
             forward = Vector3.new(forward.X, 0, forward.Z).Unit
             
-            -- 计算屏幕位置：角色前方指定距离，并抬高一点到视线高度
+            -- 计算屏幕位置：角色前方指定距离，垂直偏移使用可调值
             local targetPos = rootPart.Position + forward * distance
-            targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z) -- 视线高度
+            targetPos = Vector3.new(targetPos.X, targetPos.Y + verticalOffset, targetPos.Z)
             
             -- 修正朝向：让屏幕正面（+Z）指向玩家角色
-            -- 使用 CFrame.lookAt 使屏幕的 Z 轴指向玩家，同时保持屏幕竖直（up 为 (0,1,0)）
             local directionToPlayer = (rootPart.Position - targetPos).Unit
             local screenCF = CFrame.lookAt(targetPos, targetPos + directionToPlayer, Vector3.new(0,1,0))
             
@@ -878,7 +879,7 @@ function Fenglib:CreateWindow(Config)
                 local forward = rootPart.CFrame.LookVector
                 forward = Vector3.new(forward.X, 0, forward.Z).Unit
                 local targetPos = rootPart.Position + forward * distance
-                targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
+                targetPos = Vector3.new(targetPos.X, targetPos.Y + Window._ProjectorSettings.verticalOffset, targetPos.Z)
                 local directionToPlayer = (rootPart.Position - targetPos).Unit
                 local screenCF = CFrame.lookAt(targetPos, targetPos + directionToPlayer, Vector3.new(0,1,0))
                 Window._ProjectorObjects.Screen.CFrame = screenCF
@@ -905,6 +906,24 @@ function Fenglib:CreateWindow(Config)
         end
     end
     
+    function Window:SetProjectorVerticalOffset(offset)
+        offset = clamp(offset, 0.5, 2.0)
+        Window._ProjectorSettings.verticalOffset = offset
+        if Window._ProjectorModeEnabled and Window._ProjectorObjects and Window._ProjectorObjects.Screen then
+            local character = LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                local rootPart = character.HumanoidRootPart
+                local forward = rootPart.CFrame.LookVector
+                forward = Vector3.new(forward.X, 0, forward.Z).Unit
+                local targetPos = rootPart.Position + forward * Window._ProjectorSettings.distance
+                targetPos = Vector3.new(targetPos.X, targetPos.Y + offset, targetPos.Z)
+                local directionToPlayer = (rootPart.Position - targetPos).Unit
+                local screenCF = CFrame.lookAt(targetPos, targetPos + directionToPlayer, Vector3.new(0,1,0))
+                Window._ProjectorObjects.Screen.CFrame = screenCF
+            end
+        end
+    end
+    
     function Window:CreateProjectorSettingsTab(parentTab)
         local section = parentTab:Section("📽️ 投影仪设置")
         section:Slider("投影距离", 3, 15, Window._ProjectorSettings.distance, function(val)
@@ -918,6 +937,9 @@ function Fenglib:CreateWindow(Config)
         end)
         section:Slider("屏幕透明度", 0, 0.8, Window._ProjectorSettings.transparency, function(val)
             Window:SetProjectorTransparency(val)
+        end)
+        section:Slider("垂直偏移", 0.5, 2.0, Window._ProjectorSettings.verticalOffset, function(val)
+            Window:SetProjectorVerticalOffset(val)
         end)
         section:Button("自动适配UI大小", function()
             Window._ProjectorSettings.autoSize = true
@@ -934,7 +956,7 @@ function Fenglib:CreateWindow(Config)
                     local forward = rootPart.CFrame.LookVector
                     forward = Vector3.new(forward.X, 0, forward.Z).Unit
                     local targetPos = rootPart.Position + forward * Window._ProjectorSettings.distance
-                    targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
+                    targetPos = Vector3.new(targetPos.X, targetPos.Y + Window._ProjectorSettings.verticalOffset, targetPos.Z)
                     local directionToPlayer = (rootPart.Position - targetPos).Unit
                     local screenCF = CFrame.lookAt(targetPos, targetPos + directionToPlayer, Vector3.new(0,1,0))
                     Window._ProjectorObjects.Screen.CFrame = screenCF
@@ -944,8 +966,8 @@ function Fenglib:CreateWindow(Config)
         end)
     end
     
-    function Window:EnableProjectorMode(distance, width, height, transparency)
-        return SwitchToProjectorMode(distance, width, height, transparency)
+    function Window:EnableProjectorMode(distance, width, height, transparency, verticalOffset)
+        return SwitchToProjectorMode(distance, width, height, transparency, verticalOffset)
     end
     
     function Window:DisableProjectorMode()
