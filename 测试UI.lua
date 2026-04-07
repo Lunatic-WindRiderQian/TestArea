@@ -297,8 +297,8 @@ function Fenglib:CreateWindow(Config)
 
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
-    ButtonGroup.Size = UDim2.new(0, 180, 1, 0)      -- 加宽以容纳四个按钮
-    ButtonGroup.Position = UDim2.new(1, -190, 0, 0) -- 调整偏移
+    ButtonGroup.Size = UDim2.new(0, 180, 1, 0)
+    ButtonGroup.Position = UDim2.new(1, -190, 0, 0)
     ButtonGroup.BackgroundTransparency = 1
     ButtonGroup.Parent = Topbar
 
@@ -736,25 +736,25 @@ function Fenglib:CreateWindow(Config)
         pointLight.Color = CurrentTheme.Accent
         pointLight.Parent = projectorScreen
         
-        -- 屏幕位置和朝向更新（固定在角色前方，面向角色面对的方向，不跟随相机）
+        -- 屏幕位置和朝向更新（固定在角色前方，屏幕正面正对玩家）
         local function updateScreenPosition()
             local character = LocalPlayer.Character
             if not character then return end
             local rootPart = character:FindFirstChild("HumanoidRootPart")
             if not rootPart then return end
             
-            -- 获取角色前向向量（水平方向，保持屏幕竖直）
+            -- 计算屏幕位置：角色前方指定距离，视线高度
             local forward = rootPart.CFrame.LookVector
             forward = Vector3.new(forward.X, 0, forward.Z).Unit
-            
-            -- 计算屏幕位置：角色前方指定距离，并抬高一点到视线高度
             local targetPos = rootPart.Position + forward * distance
-            targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z) -- 视线高度
+            targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
             
-            -- 构建屏幕的CFrame：屏幕正面（Front）朝向角色前方，保持竖直
+            -- 让屏幕正面朝向玩家：屏幕的 look 方向应为从屏幕指向玩家的方向
+            local lookDir = (rootPart.Position - targetPos).Unit
+            -- 保持屏幕竖直向上
             local up = Vector3.new(0, 1, 0)
-            local right = forward:Cross(up).Unit
-            local realUp = right:Cross(forward).Unit
+            local right = up:Cross(lookDir).Unit
+            local realUp = lookDir:Cross(right).Unit
             local screenCF = CFrame.fromMatrix(targetPos, right, realUp)
             
             projectorScreen.CFrame = screenCF
@@ -839,12 +839,12 @@ function Fenglib:CreateWindow(Config)
             Window:Notification("投影仪模式", "已关闭投影仪效果，UI返回屏幕", "Info", 2)
         else
             SwitchToProjectorMode()
-            Window:Notification("投影仪模式", "UI已投射到面前屏幕，屏幕固定跟随角色", "Success", 2)
+            Window:Notification("投影仪模式", "UI已投射到面前屏幕，屏幕正面正对玩家", "Success", 2)
         end
     end
     
-    -- 添加投影仪切换按钮（图标ID已改为12684119292）
-    local Toggle3DBtn = createIconButton("rbxassetid://12684119292", function()
+    -- 添加投影仪切换按钮（图标ID已改为12684119225）
+    local Toggle3DBtn = createIconButton("rbxassetid://12684119225", function()
         ToggleProjectorMode()
     end)
     
@@ -880,9 +880,10 @@ function Fenglib:CreateWindow(Config)
                 forward = Vector3.new(forward.X, 0, forward.Z).Unit
                 local targetPos = rootPart.Position + forward * distance
                 targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
+                local lookDir = (rootPart.Position - targetPos).Unit
                 local up = Vector3.new(0, 1, 0)
-                local right = forward:Cross(up).Unit
-                local realUp = right:Cross(forward).Unit
+                local right = up:Cross(lookDir).Unit
+                local realUp = lookDir:Cross(right).Unit
                 Window._ProjectorObjects.Screen.CFrame = CFrame.fromMatrix(targetPos, right, realUp)
             end
         end
@@ -937,9 +938,10 @@ function Fenglib:CreateWindow(Config)
                     forward = Vector3.new(forward.X, 0, forward.Z).Unit
                     local targetPos = rootPart.Position + forward * Window._ProjectorSettings.distance
                     targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
+                    local lookDir = (rootPart.Position - targetPos).Unit
                     local up = Vector3.new(0, 1, 0)
-                    local right = forward:Cross(up).Unit
-                    local realUp = right:Cross(forward).Unit
+                    local right = up:Cross(lookDir).Unit
+                    local realUp = lookDir:Cross(right).Unit
                     Window._ProjectorObjects.Screen.CFrame = CFrame.fromMatrix(targetPos, right, realUp)
                     Window:Notification("投影仪", "屏幕位置已刷新", "Success", 1)
                 end
