@@ -1983,103 +1983,6 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 新增：左侧图标 + 右侧文字组件（可选副标题和点击回调）
-        child.IconLabel = function(_, iconAsset, mainText, subText, callback)
-            local hasSub = subText and subText ~= ""
-            local frameHeight = hasSub and 58 or 48
-
-            local Container = Instance.new("Frame")
-            Container.Size = UDim2.new(1, 0, 0, frameHeight)
-            Container.BackgroundTransparency = 0.05
-            Container.Parent = contentContainer
-            Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 12)
-            AddToRegistry(Container, "BackgroundColor3", "Top")
-
-            -- 图标（左侧）
-            local Icon = Instance.new("ImageLabel")
-            Icon.Size = UDim2.new(0, 32, 0, 32)
-            Icon.Position = UDim2.new(0, 12, 0.5, -16)
-            Icon.BackgroundTransparency = 1
-            if tonumber(iconAsset) then
-                Icon.Image = "rbxassetid://" .. iconAsset
-            else
-                Icon.Image = iconAsset or "rbxassetid://78229538488090"  -- 默认图标
-            end
-            Icon.Parent = Container
-            AddToRegistry(Icon, "ImageColor3", "Text")
-
-            -- 主标题
-            local Title = Instance.new("TextLabel")
-            Title.Size = UDim2.new(1, -60, 0, hasSub and 20 or 28)
-            Title.Position = UDim2.new(0, 52, 0, hasSub and 8 or 10)
-            Title.BackgroundTransparency = 1
-            Title.Font = Enum.Font.GothamMedium
-            Title.Text = mainText
-            Title.TextSize = 14
-            Title.TextXAlignment = Enum.TextXAlignment.Left
-            Title.Parent = Container
-            AddToRegistry(Title, "TextColor3", "Text")
-
-            -- 副标题（可选）
-            local Sub = nil
-            if hasSub then
-                Sub = Instance.new("TextLabel")
-                Sub.Size = UDim2.new(1, -60, 0, 18)
-                Sub.Position = UDim2.new(0, 52, 0, 30)
-                Sub.BackgroundTransparency = 1
-                Sub.Font = Enum.Font.Gotham
-                Sub.Text = subText
-                Sub.TextSize = 12
-                Sub.TextTransparency = 0.5
-                Sub.TextXAlignment = Enum.TextXAlignment.Left
-                Sub.Parent = Container
-                AddToRegistry(Sub, "TextColor3", "Text")
-            end
-
-            -- 可点击按钮区域（整个条目都可点击）
-            local ClickBtn = Instance.new("TextButton")
-            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
-            ClickBtn.BackgroundTransparency = 1
-            ClickBtn.Text = ""
-            ClickBtn.Parent = Container
-
-            -- 悬停效果
-            local function onHover()
-                Tween(Container, {BackgroundTransparency = 0.00}, 0.18)
-            end
-            local function onLeave()
-                Tween(Container, {BackgroundTransparency = 0.05}, 0.18)
-            end
-            Container.MouseEnter:Connect(onHover)
-            Container.MouseLeave:Connect(onLeave)
-
-            -- 点击动画 + 回调
-            ClickBtn.MouseButton1Click:Connect(function()
-                Tween(Container, {Size = UDim2.new(0.97, 0, 0, frameHeight)}, 0.08)
-                task.wait(0.08)
-                Tween(Container, {Size = UDim2.new(1, 0, 0, frameHeight)}, 0.12)
-                if callback then callback() end
-            end)
-
-            -- 提供更新方法
-            local self = {}
-            function self.UpdateText(newMain, newSub)
-                Title.Text = newMain
-                if Sub then Sub.Text = newSub or "" end
-            end
-            function self.UpdateIcon(newIcon)
-                if tonumber(newIcon) then
-                    Icon.Image = "rbxassetid://" .. newIcon
-                else
-                    Icon.Image = newIcon
-                end
-            end
-            function self.SetVisible(state)
-                Container.Visible = state
-            end
-            return self
-        end
-
         child.SubLabel = function(_, subLabelText)
             local SubLabelFrame = Instance.new("Frame")
             SubLabelFrame.Size = UDim2.new(1, 0, 0, 42)
@@ -2459,6 +2362,220 @@ function Fenglib:CreateWindow(Config)
                 SwStroke.Color = CurrentTheme.Stroke
             end)
         end
+
+        -- ========== 新增 Image 组件 ==========
+        child.Image = function(_, config)
+            config = config or {}
+            local title = config.Title or "Image"
+            local subtitle = config.Subtitle or ""
+            local description = config.Description or {}
+            if type(description) == "string" then
+                description = {description}
+            end
+            local iconAsset = config.Icon or config.ImageLink or ""
+            local iconColor = config.IconColor or CurrentTheme.Text
+            local callback = config.Callback or function() end
+            local strokeColor = config.StrokeColor or CurrentTheme.Stroke
+
+            -- 格式化图标地址
+            local function formatIcon(asset)
+                if type(asset) == "number" then
+                    return "rbxassetid://" .. tostring(asset)
+                elseif type(asset) == "string" then
+                    if tonumber(asset) then
+                        return "rbxassetid://" .. asset
+                    elseif asset:match("^rbxassetid://") then
+                        return asset
+                    elseif asset:match("^http") then
+                        return asset
+                    else
+                        return "rbxassetid://" .. asset
+                    end
+                end
+                return "rbxassetid://78229538488090"
+            end
+
+            local imageFrame = Instance.new("Frame")
+            imageFrame.Size = UDim2.new(1, 0, 0, 0)
+            imageFrame.AutomaticSize = Enum.AutomaticSize.Y
+            imageFrame.Parent = contentContainer
+            imageFrame.BackgroundTransparency = 0.05
+            Instance.new("UICorner", imageFrame).CornerRadius = UDim.new(0, 12)
+            AddToRegistry(imageFrame, "BackgroundColor3", "Top")
+
+            -- 可选描边
+            local imgStroke = Instance.new("UIStroke")
+            imgStroke.Thickness = 1
+            imgStroke.Transparency = 0.6
+            imgStroke.Color = strokeColor
+            imgStroke.Parent = imageFrame
+            AddToRegistry(imgStroke, "Color", "Stroke")
+
+            -- 内边距
+            local padding = Instance.new("UIPadding")
+            padding.PaddingLeft = UDim.new(0, 10)
+            padding.PaddingRight = UDim.new(0, 10)
+            padding.PaddingTop = UDim.new(0, 8)
+            padding.PaddingBottom = UDim.new(0, 8)
+            padding.Parent = imageFrame
+
+            -- 水平布局容器
+            local horizontal = Instance.new("Frame")
+            horizontal.Size = UDim2.new(1, 0, 1, 0)
+            horizontal.BackgroundTransparency = 1
+            horizontal.Parent = imageFrame
+
+            -- 左侧图标
+            local iconImg = Instance.new("ImageLabel")
+            iconImg.Size = UDim2.new(0, 42, 0, 42)
+            iconImg.Position = UDim2.new(0, 0, 0, 0)
+            iconImg.BackgroundTransparency = 1
+            iconImg.Image = formatIcon(iconAsset)
+            iconImg.ImageColor3 = iconColor
+            iconImg.Parent = horizontal
+            local iconCorner = Instance.new("UICorner")
+            iconCorner.CornerRadius = UDim.new(0, 8)
+            iconCorner.Parent = iconImg
+
+            -- 右侧文字容器
+            local textContainer = Instance.new("Frame")
+            textContainer.Size = UDim2.new(1, -54, 1, 0)
+            textContainer.Position = UDim2.new(0, 54, 0, 0)
+            textContainer.BackgroundTransparency = 1
+            textContainer.AutomaticSize = Enum.AutomaticSize.Y
+            textContainer.Parent = horizontal
+
+            local textLayout = Instance.new("UIListLayout")
+            textLayout.Padding = UDim.new(0, 4)
+            textLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            textLayout.Parent = textContainer
+
+            -- 标题
+            local titleLabel = Instance.new("TextLabel")
+            titleLabel.Size = UDim2.new(1, 0, 0, 0)
+            titleLabel.AutomaticSize = Enum.AutomaticSize.Y
+            titleLabel.BackgroundTransparency = 1
+            titleLabel.Font = Enum.Font.GothamBold
+            titleLabel.Text = title
+            titleLabel.TextSize = 14
+            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            titleLabel.TextWrapped = true
+            titleLabel.Parent = textContainer
+            AddToRegistry(titleLabel, "TextColor3", "Text")
+
+            -- 副标题（可选）
+            local subtitleLabel = nil
+            if subtitle ~= "" then
+                subtitleLabel = Instance.new("TextLabel")
+                subtitleLabel.Size = UDim2.new(1, 0, 0, 0)
+                subtitleLabel.AutomaticSize = Enum.AutomaticSize.Y
+                subtitleLabel.BackgroundTransparency = 1
+                subtitleLabel.Font = Enum.Font.Gotham
+                subtitleLabel.Text = subtitle
+                subtitleLabel.TextSize = 12
+                subtitleLabel.TextTransparency = 0.5
+                subtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+                subtitleLabel.TextWrapped = true
+                subtitleLabel.Parent = textContainer
+                AddToRegistry(subtitleLabel, "TextColor3", "Text")
+            end
+
+            -- 描述列表
+            local descLabels = {}
+            for _, line in ipairs(description) do
+                local descLabel = Instance.new("TextLabel")
+                descLabel.Size = UDim2.new(1, 0, 0, 0)
+                descLabel.AutomaticSize = Enum.AutomaticSize.Y
+                descLabel.BackgroundTransparency = 1
+                descLabel.Font = Enum.Font.Gotham
+                descLabel.Text = line
+                descLabel.TextSize = 12
+                descLabel.TextTransparency = 0.3
+                descLabel.TextXAlignment = Enum.TextXAlignment.Left
+                descLabel.TextWrapped = true
+                descLabel.Parent = textContainer
+                AddToRegistry(descLabel, "TextColor3", "Text")
+                table.insert(descLabels, descLabel)
+            end
+
+            -- 点击区域
+            local clickBtn = Instance.new("TextButton")
+            clickBtn.Size = UDim2.new(1, 0, 1, 0)
+            clickBtn.BackgroundTransparency = 1
+            clickBtn.Text = ""
+            clickBtn.Parent = imageFrame
+            clickBtn.MouseButton1Click:Connect(callback)
+
+            -- 悬停效果
+            local function onEnter()
+                Tween(imageFrame, {BackgroundTransparency = 0.00}, 0.18)
+            end
+            local function onLeave()
+                Tween(imageFrame, {BackgroundTransparency = 0.05}, 0.18)
+            end
+            clickBtn.MouseEnter:Connect(onEnter)
+            clickBtn.MouseLeave:Connect(onLeave)
+
+            -- 更新内容的方法
+            local self = {}
+            function self.UpdateTitle(newTitle)
+                titleLabel.Text = newTitle
+            end
+            function self.UpdateSubtitle(newSubtitle)
+                if subtitleLabel then
+                    subtitleLabel.Text = newSubtitle
+                elseif newSubtitle ~= "" then
+                    subtitleLabel = Instance.new("TextLabel")
+                    subtitleLabel.Size = UDim2.new(1, 0, 0, 0)
+                    subtitleLabel.AutomaticSize = Enum.AutomaticSize.Y
+                    subtitleLabel.BackgroundTransparency = 1
+                    subtitleLabel.Font = Enum.Font.Gotham
+                    subtitleLabel.Text = newSubtitle
+                    subtitleLabel.TextSize = 12
+                    subtitleLabel.TextTransparency = 0.5
+                    subtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+                    subtitleLabel.TextWrapped = true
+                    subtitleLabel.Parent = textContainer
+                    AddToRegistry(subtitleLabel, "TextColor3", "Text")
+                    textLayout:Arrange()
+                end
+            end
+            function self.UpdateDescription(newDesc)
+                for _, lbl in ipairs(descLabels) do
+                    lbl:Destroy()
+                end
+                descLabels = {}
+                if type(newDesc) == "string" then newDesc = {newDesc} end
+                for _, line in ipairs(newDesc) do
+                    local descLabel = Instance.new("TextLabel")
+                    descLabel.Size = UDim2.new(1, 0, 0, 0)
+                    descLabel.AutomaticSize = Enum.AutomaticSize.Y
+                    descLabel.BackgroundTransparency = 1
+                    descLabel.Font = Enum.Font.Gotham
+                    descLabel.Text = line
+                    descLabel.TextSize = 12
+                    descLabel.TextTransparency = 0.3
+                    descLabel.TextXAlignment = Enum.TextXAlignment.Left
+                    descLabel.TextWrapped = true
+                    descLabel.Parent = textContainer
+                    AddToRegistry(descLabel, "TextColor3", "Text")
+                    table.insert(descLabels, descLabel)
+                end
+                textLayout:Arrange()
+            end
+            function self.SetIcon(newIcon, newColor)
+                iconImg.Image = formatIcon(newIcon)
+                if newColor then
+                    iconImg.ImageColor3 = newColor
+                end
+            end
+            function self.SetVisible(state)
+                imageFrame.Visible = state
+            end
+
+            return self
+        end
+        -- ========== Image 组件结束 ==========
 
         return child
     end
