@@ -2062,19 +2062,24 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
-        -- 新增 ImageWithText 组件
+        -- 新增 ImageWithText 组件 (修改版：图片完整显示，文字更大，第一段纯白其余半灰)
         child.ImageWithText = function(_, imageAsset, paragraphs, options)
             options = options or {}
             local imageWidth = options.imageWidth or 100
             local imageCornerRadius = options.imageCornerRadius or 12
-            local imageScaleType = options.imageScaleType or Enum.ScaleType.Fit
+            local imageScaleType = options.imageScaleType or Enum.ScaleType.Fit   -- 改为 Fit 保证完整显示
             local imageBackgroundTransparency = options.imageBackgroundTransparency or 0
             local spacing = options.spacing or 10
+            local textSize = options.textSize or 16          -- 文字更大，默认16
+            local firstTextColor = options.firstTextColor or Color3.new(1,1,1)    -- 纯白
+            local otherTextColor = options.otherTextColor or Color3.new(1,1,1)    -- 白色基底
+            local otherTextTransparency = options.otherTextTransparency or 0.5    -- 半灰效果
 
             local container = Instance.new("Frame")
             container.Size = UDim2.new(1, 0, 0, 0)
             container.AutomaticSize = Enum.AutomaticSize.Y
             container.BackgroundTransparency = 0.05
+            container.ClipsDescendants = false        -- 确保图片不被裁剪
             container.Parent = contentContainer
             Instance.new("UICorner", container).CornerRadius = UDim.new(0, 12)
             AddToRegistry(container, "BackgroundColor3", "Top")
@@ -2085,14 +2090,13 @@ function Fenglib:CreateWindow(Config)
             leftImage.BackgroundTransparency = imageBackgroundTransparency
             leftImage.Image = imageAsset
             leftImage.ScaleType = imageScaleType
+            leftImage.ClipsDescendants = false        -- 图片自身不裁剪
             leftImage.Parent = container
             if imageCornerRadius > 0 then
                 local imgCorner = Instance.new("UICorner")
                 imgCorner.CornerRadius = UDim.new(0, imageCornerRadius)
                 imgCorner.Parent = leftImage
             end
-            -- 保持图片原色，不注册主题（可选）
-            -- 可添加边框
             if options.imageStroke then
                 local imgStroke = Instance.new("UIStroke")
                 imgStroke.Thickness = options.imageStrokeThickness or 1
@@ -2110,7 +2114,7 @@ function Fenglib:CreateWindow(Config)
             textContainer.Parent = container
 
             local textLayout = Instance.new("UIListLayout")
-            textLayout.Padding = UDim.new(0, 10)
+            textLayout.Padding = UDim.new(0, 12)
             textLayout.SortOrder = Enum.SortOrder.LayoutOrder
             textLayout.Parent = textContainer
 
@@ -2120,18 +2124,27 @@ function Fenglib:CreateWindow(Config)
             textPadding.PaddingRight = UDim.new(0, 12)
             textPadding.Parent = textContainer
 
-            -- 添加段落
-            for _, paraText in ipairs(paragraphs) do
+            -- 添加段落，控制第一段纯白，其余半灰
+            for idx, paraText in ipairs(paragraphs) do
                 local paraLabel = Instance.new("TextLabel")
                 paraLabel.Size = UDim2.new(1, 0, 0, 0)
                 paraLabel.AutomaticSize = Enum.AutomaticSize.Y
                 paraLabel.BackgroundTransparency = 1
                 paraLabel.Font = Enum.Font.Gotham
                 paraLabel.Text = paraText
-                paraLabel.TextSize = 13
+                paraLabel.TextSize = textSize
                 paraLabel.TextWrapped = true
                 paraLabel.TextXAlignment = Enum.TextXAlignment.Left
                 paraLabel.Parent = textContainer
+                -- 第一段纯白，其余半灰
+                if idx == 1 then
+                    paraLabel.TextColor3 = firstTextColor
+                    paraLabel.TextTransparency = 0
+                else
+                    paraLabel.TextColor3 = otherTextColor
+                    paraLabel.TextTransparency = otherTextTransparency
+                end
+                -- 仍然注册主题监听，但透明度已固定，不影响
                 AddToRegistry(paraLabel, "TextColor3", "Text")
             end
 
@@ -2147,17 +2160,24 @@ function Fenglib:CreateWindow(Config)
                         child:Destroy()
                     end
                 end
-                for _, paraText in ipairs(newParagraphs) do
+                for idx, paraText in ipairs(newParagraphs) do
                     local paraLabel = Instance.new("TextLabel")
                     paraLabel.Size = UDim2.new(1, 0, 0, 0)
                     paraLabel.AutomaticSize = Enum.AutomaticSize.Y
                     paraLabel.BackgroundTransparency = 1
                     paraLabel.Font = Enum.Font.Gotham
                     paraLabel.Text = paraText
-                    paraLabel.TextSize = 13
+                    paraLabel.TextSize = textSize
                     paraLabel.TextWrapped = true
                     paraLabel.TextXAlignment = Enum.TextXAlignment.Left
                     paraLabel.Parent = textContainer
+                    if idx == 1 then
+                        paraLabel.TextColor3 = firstTextColor
+                        paraLabel.TextTransparency = 0
+                    else
+                        paraLabel.TextColor3 = otherTextColor
+                        paraLabel.TextTransparency = otherTextTransparency
+                    end
                     AddToRegistry(paraLabel, "TextColor3", "Text")
                 end
             end
