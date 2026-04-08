@@ -829,12 +829,11 @@ function Fenglib:CreateWindow(Config)
         MainFrame.Visible = false
     end)
     
-    -- 为最小化按钮添加 tooltip
+    -- 为最小化按钮添加 tooltip（位置与投影仪按钮相同）
     local minimizeTooltip = Instance.new("TextLabel")
     minimizeTooltip.Text = "最小化"
     minimizeTooltip.Size = UDim2.new(0, 70, 0, 20)
-    minimizeTooltip.Position = UDim2.new(0.5, 0, -0.5, -10)
-    minimizeTooltip.AnchorPoint = Vector2.new(0.5, 1)
+    minimizeTooltip.Position = UDim2.new(1, -110, 0.5, -10)
     minimizeTooltip.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
     minimizeTooltip.BackgroundTransparency = 0.2
     minimizeTooltip.Font = Enum.Font.Gotham
@@ -859,12 +858,11 @@ function Fenglib:CreateWindow(Config)
         Resizer.Visible = resizerVisible
     end)
     
-    -- 为最大化/调整大小按钮添加 tooltip
+    -- 为最大化/调整大小按钮添加 tooltip（位置与投影仪按钮相同）
     local maximizeTooltip = Instance.new("TextLabel")
     maximizeTooltip.Text = "显示/隐藏调整大小手柄"
     maximizeTooltip.Size = UDim2.new(0, 130, 0, 20)
-    maximizeTooltip.Position = UDim2.new(0.5, 0, -0.5, -10)
-    maximizeTooltip.AnchorPoint = Vector2.new(0.5, 1)
+    maximizeTooltip.Position = UDim2.new(1, -110, 0.5, -10)
     maximizeTooltip.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
     maximizeTooltip.BackgroundTransparency = 0.2
     maximizeTooltip.Font = Enum.Font.Gotham
@@ -885,12 +883,11 @@ function Fenglib:CreateWindow(Config)
         ScreenGui:Destroy()
     end)
     
-    -- 为关闭按钮添加 tooltip
+    -- 为关闭按钮添加 tooltip（位置与投影仪按钮相同）
     local closeTooltip = Instance.new("TextLabel")
     closeTooltip.Text = "关闭"
     closeTooltip.Size = UDim2.new(0, 50, 0, 20)
-    closeTooltip.Position = UDim2.new(0.5, 0, -0.5, -10)
-    closeTooltip.AnchorPoint = Vector2.new(0.5, 1)
+    closeTooltip.Position = UDim2.new(1, -110, 0.5, -10)
     closeTooltip.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
     closeTooltip.BackgroundTransparency = 0.2
     closeTooltip.Font = Enum.Font.Gotham
