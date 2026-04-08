@@ -2363,14 +2363,13 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- ========== 新增 ImageText 组件（图片铺满卡片，四段文本，点击删除） ==========
+        -- ========== 新增 ImageText 组件（左侧图片容器占满卡片高度，右侧最多4行文本，点击删除） ==========
         child.ImageText = function(_, imageAsset, textLines, options)
             options = options or {}
-            -- textLines 可以是一个字符串数组，最多显示4个段落（每段一行）
+            -- 文本行（最多4行）
             if type(textLines) == "string" then
                 textLines = {textLines}
             end
-            -- 确保最多显示4行
             local maxLines = math.min(#textLines, 4)
             local lines = {}
             for i = 1, maxLines do
@@ -2378,44 +2377,44 @@ function Fenglib:CreateWindow(Config)
             end
             local fontSize = options.fontSize or 13
             local lineHeight = options.lineHeight or 1.2
-            local textColor = options.textColor or Color3.fromRGB(255, 255, 255)  -- 默认白色文字
-            local backgroundColor = options.backgroundColor or Color3.fromRGB(0, 0, 0)  -- 半透明遮罩颜色
-            local backgroundTransparency = options.backgroundTransparency or 0.5
-            local onClick = options.onClick  -- 可选，点击删除前执行的回调
+            local textColor = options.textColor or Color3.fromRGB(40, 40, 45)
+            local imageWidth = options.imageWidth or 70  -- 左侧图片宽度
+            local onClick = options.onClick
             
-            -- 卡片高度：根据行数自动计算
             local singleLineHeight = fontSize * lineHeight
             local totalTextHeight = maxLines * singleLineHeight
-            local cardHeight = totalTextHeight + 24  -- 上下各12px内边距
+            local cardHeight = totalTextHeight + 24  -- 上下内边距各12
             local cardWidth = 1  -- 占满父容器宽度
             
             local Container = Instance.new("Frame")
             Container.Size = UDim2.new(1, 0, 0, cardHeight)
-            Container.BackgroundTransparency = 1
+            Container.BackgroundTransparency = 0.05
             Container.ClipsDescendants = true
             Container.Parent = contentContainer
+            Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 12)
+            AddToRegistry(Container, "BackgroundColor3", "Top")
             
-            -- 背景图片（铺满整个卡片）
-            local BackgroundImage = Instance.new("ImageLabel")
-            BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
-            BackgroundImage.Position = UDim2.new(0, 0, 0, 0)
-            BackgroundImage.BackgroundTransparency = 1
-            BackgroundImage.Image = (type(imageAsset) == "number" and "rbxassetid://"..imageAsset) or imageAsset or ""
-            BackgroundImage.ScaleType = Enum.ScaleType.Crop  -- 图片裁剪以铺满
-            BackgroundImage.Parent = Container
+            -- 左侧图片容器（占满卡片竖直方向）
+            local ImageContainer = Instance.new("Frame")
+            ImageContainer.Size = UDim2.new(0, imageWidth, 1, 0)
+            ImageContainer.BackgroundTransparency = 0.08
+            ImageContainer.Parent = Container
+            -- 左侧图片圆角（只左上左下）
+            local imgCorner = Instance.new("UICorner")
+            imgCorner.CornerRadius = UDim.new(0, 12)
+            imgCorner.Parent = ImageContainer
             
-            -- 半透明遮罩（让文字更清晰）
-            local Overlay = Instance.new("Frame")
-            Overlay.Size = UDim2.new(1, 0, 1, 0)
-            Overlay.BackgroundColor3 = backgroundColor
-            Overlay.BackgroundTransparency = backgroundTransparency
-            Overlay.BorderSizePixel = 0
-            Overlay.Parent = Container
+            local ImageLabel = Instance.new("ImageLabel")
+            ImageLabel.Size = UDim2.new(1, 0, 1, 0)
+            ImageLabel.BackgroundTransparency = 1
+            ImageLabel.Image = (type(imageAsset) == "number" and "rbxassetid://"..imageAsset) or imageAsset or ""
+            ImageLabel.ScaleType = Enum.ScaleType.Crop
+            ImageLabel.Parent = ImageContainer
             
-            -- 文字容器（垂直排列四行）
+            -- 右侧文本容器
             local TextContainer = Instance.new("Frame")
-            TextContainer.Size = UDim2.new(1, -24, 1, -24)  -- 左右上下内边距12
-            TextContainer.Position = UDim2.new(0, 12, 0, 12)
+            TextContainer.Size = UDim2.new(1, -imageWidth - 12, 1, -24)  -- 右侧留出内边距
+            TextContainer.Position = UDim2.new(0, imageWidth + 12, 0, 12)
             TextContainer.BackgroundTransparency = 1
             TextContainer.Parent = Container
             
@@ -2423,17 +2422,15 @@ function Fenglib:CreateWindow(Config)
             TextLayout.FillDirection = Enum.FillDirection.Vertical
             TextLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
             TextLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-            TextLayout.Padding = UDim.new(0, 4)  -- 行间距4
+            TextLayout.Padding = UDim.new(0, 4)
             TextLayout.Parent = TextContainer
             
-            -- 创建每一行文本
             local TextLabels = {}
             for i = 1, maxLines do
-                local lineText = lines[i] or ""
                 local label = Instance.new("TextLabel")
                 label.Size = UDim2.new(1, 0, 0, singleLineHeight)
                 label.BackgroundTransparency = 1
-                label.Text = lineText
+                label.Text = lines[i]
                 label.TextColor3 = textColor
                 label.Font = Enum.Font.GothamMedium
                 label.TextSize = fontSize
@@ -2445,34 +2442,24 @@ function Fenglib:CreateWindow(Config)
                 TextLabels[i] = label
             end
             
-            -- 圆角
-            local Corner = Instance.new("UICorner")
-            Corner.CornerRadius = UDim.new(0, 12)
-            Corner.Parent = Container
-            
-            -- 点击删除功能
-            local ClickDetector = Instance.new("TextButton")
-            ClickDetector.Size = UDim2.new(1, 0, 1, 0)
-            ClickDetector.BackgroundTransparency = 1
-            ClickDetector.Text = ""
-            ClickDetector.Parent = Container
-            ClickDetector.MouseButton1Click:Connect(function()
-                if onClick then
-                    pcall(onClick, Container)  -- 回调传入卡片本身
-                end
-                Container:Destroy()  -- 删除卡片，布局自动更新
+            -- 点击删除
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = ""
+            ClickBtn.Parent = Container
+            ClickBtn.MouseButton1Click:Connect(function()
+                if onClick then pcall(onClick, Container) end
+                Container:Destroy()
             end)
             
-            -- 返回控制方法
             local self = {}
             function self.UpdateImage(newImage)
                 local img = (type(newImage) == "number" and "rbxassetid://"..newImage) or newImage
-                BackgroundImage.Image = img or ""
+                ImageLabel.Image = img or ""
             end
             function self.UpdateTextLines(newLines)
-                if type(newLines) == "string" then
-                    newLines = {newLines}
-                end
+                if type(newLines) == "string" then newLines = {newLines} end
                 local newMax = math.min(#newLines, 4)
                 for i = 1, 4 do
                     if TextLabels[i] then
@@ -2484,7 +2471,6 @@ function Fenglib:CreateWindow(Config)
                         end
                     end
                 end
-                -- 重新计算卡片高度
                 local visibleCount = 0
                 for i = 1, newMax do
                     if TextLabels[i] and TextLabels[i].Visible then visibleCount = visibleCount + 1 end
