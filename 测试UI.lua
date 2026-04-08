@@ -1983,6 +1983,103 @@ function Fenglib:CreateWindow(Config)
             return self
         end
 
+        -- 新增：左侧图标 + 右侧文字组件（可选副标题和点击回调）
+        child.IconLabel = function(_, iconAsset, mainText, subText, callback)
+            local hasSub = subText and subText ~= ""
+            local frameHeight = hasSub and 58 or 48
+
+            local Container = Instance.new("Frame")
+            Container.Size = UDim2.new(1, 0, 0, frameHeight)
+            Container.BackgroundTransparency = 0.05
+            Container.Parent = contentContainer
+            Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 12)
+            AddToRegistry(Container, "BackgroundColor3", "Top")
+
+            -- 图标（左侧）
+            local Icon = Instance.new("ImageLabel")
+            Icon.Size = UDim2.new(0, 32, 0, 32)
+            Icon.Position = UDim2.new(0, 12, 0.5, -16)
+            Icon.BackgroundTransparency = 1
+            if tonumber(iconAsset) then
+                Icon.Image = "rbxassetid://" .. iconAsset
+            else
+                Icon.Image = iconAsset or "rbxassetid://78229538488090"  -- 默认图标
+            end
+            Icon.Parent = Container
+            AddToRegistry(Icon, "ImageColor3", "Text")
+
+            -- 主标题
+            local Title = Instance.new("TextLabel")
+            Title.Size = UDim2.new(1, -60, 0, hasSub and 20 or 28)
+            Title.Position = UDim2.new(0, 52, 0, hasSub and 8 or 10)
+            Title.BackgroundTransparency = 1
+            Title.Font = Enum.Font.GothamMedium
+            Title.Text = mainText
+            Title.TextSize = 14
+            Title.TextXAlignment = Enum.TextXAlignment.Left
+            Title.Parent = Container
+            AddToRegistry(Title, "TextColor3", "Text")
+
+            -- 副标题（可选）
+            local Sub = nil
+            if hasSub then
+                Sub = Instance.new("TextLabel")
+                Sub.Size = UDim2.new(1, -60, 0, 18)
+                Sub.Position = UDim2.new(0, 52, 0, 30)
+                Sub.BackgroundTransparency = 1
+                Sub.Font = Enum.Font.Gotham
+                Sub.Text = subText
+                Sub.TextSize = 12
+                Sub.TextTransparency = 0.5
+                Sub.TextXAlignment = Enum.TextXAlignment.Left
+                Sub.Parent = Container
+                AddToRegistry(Sub, "TextColor3", "Text")
+            end
+
+            -- 可点击按钮区域（整个条目都可点击）
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = ""
+            ClickBtn.Parent = Container
+
+            -- 悬停效果
+            local function onHover()
+                Tween(Container, {BackgroundTransparency = 0.00}, 0.18)
+            end
+            local function onLeave()
+                Tween(Container, {BackgroundTransparency = 0.05}, 0.18)
+            end
+            Container.MouseEnter:Connect(onHover)
+            Container.MouseLeave:Connect(onLeave)
+
+            -- 点击动画 + 回调
+            ClickBtn.MouseButton1Click:Connect(function()
+                Tween(Container, {Size = UDim2.new(0.97, 0, 0, frameHeight)}, 0.08)
+                task.wait(0.08)
+                Tween(Container, {Size = UDim2.new(1, 0, 0, frameHeight)}, 0.12)
+                if callback then callback() end
+            end)
+
+            -- 提供更新方法
+            local self = {}
+            function self.UpdateText(newMain, newSub)
+                Title.Text = newMain
+                if Sub then Sub.Text = newSub or "" end
+            end
+            function self.UpdateIcon(newIcon)
+                if tonumber(newIcon) then
+                    Icon.Image = "rbxassetid://" .. newIcon
+                else
+                    Icon.Image = newIcon
+                end
+            end
+            function self.SetVisible(state)
+                Container.Visible = state
+            end
+            return self
+        end
+
         child.SubLabel = function(_, subLabelText)
             local SubLabelFrame = Instance.new("Frame")
             SubLabelFrame.Size = UDim2.new(1, 0, 0, 42)
@@ -2059,131 +2156,6 @@ function Fenglib:CreateWindow(Config)
             function self.UpdateHeader(newHeader) HeaderLabel.Text = newHeader end
             function self.UpdateBody(newBody) BodyLabel.Text = newBody end
             function self.SetVisible(state) ParaFrame.Visible = state end
-            return self
-        end
-
-        -- 新增 ImageWithText 组件 (修改版：图片完整显示，文字更大，第一段纯白其余半灰)
-        child.ImageWithText = function(_, imageAsset, paragraphs, options)
-            options = options or {}
-            local imageWidth = options.imageWidth or 100
-            local imageCornerRadius = options.imageCornerRadius or 12
-            local imageScaleType = options.imageScaleType or Enum.ScaleType.Fit   -- 改为 Fit 保证完整显示
-            local imageBackgroundTransparency = options.imageBackgroundTransparency or 0
-            local spacing = options.spacing or 10
-            local textSize = options.textSize or 16          -- 文字更大，默认16
-            local firstTextColor = options.firstTextColor or Color3.new(1,1,1)    -- 纯白
-            local otherTextColor = options.otherTextColor or Color3.new(1,1,1)    -- 白色基底
-            local otherTextTransparency = options.otherTextTransparency or 0.5    -- 半灰效果
-
-            local container = Instance.new("Frame")
-            container.Size = UDim2.new(1, 0, 0, 0)
-            container.AutomaticSize = Enum.AutomaticSize.Y
-            container.BackgroundTransparency = 0.05
-            container.ClipsDescendants = false        -- 确保图片不被裁剪
-            container.Parent = contentContainer
-            Instance.new("UICorner", container).CornerRadius = UDim.new(0, 12)
-            AddToRegistry(container, "BackgroundColor3", "Top")
-
-            -- 左侧图片容器
-            local leftImage = Instance.new("ImageLabel")
-            leftImage.Size = UDim2.new(0, imageWidth, 1, 0)
-            leftImage.BackgroundTransparency = imageBackgroundTransparency
-            leftImage.Image = imageAsset
-            leftImage.ScaleType = imageScaleType
-            leftImage.ClipsDescendants = false        -- 图片自身不裁剪
-            leftImage.Parent = container
-            if imageCornerRadius > 0 then
-                local imgCorner = Instance.new("UICorner")
-                imgCorner.CornerRadius = UDim.new(0, imageCornerRadius)
-                imgCorner.Parent = leftImage
-            end
-            if options.imageStroke then
-                local imgStroke = Instance.new("UIStroke")
-                imgStroke.Thickness = options.imageStrokeThickness or 1
-                imgStroke.Transparency = options.imageStrokeTransparency or 0.5
-                imgStroke.Parent = leftImage
-                AddToRegistry(imgStroke, "Color", "Stroke")
-            end
-
-            -- 右侧文本区域
-            local textContainer = Instance.new("Frame")
-            textContainer.Size = UDim2.new(1, -(imageWidth + spacing), 0, 0)
-            textContainer.Position = UDim2.new(0, imageWidth + spacing, 0, 0)
-            textContainer.AutomaticSize = Enum.AutomaticSize.Y
-            textContainer.BackgroundTransparency = 1
-            textContainer.Parent = container
-
-            local textLayout = Instance.new("UIListLayout")
-            textLayout.Padding = UDim.new(0, 12)
-            textLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            textLayout.Parent = textContainer
-
-            local textPadding = Instance.new("UIPadding")
-            textPadding.PaddingTop = UDim.new(0, 12)
-            textPadding.PaddingBottom = UDim.new(0, 12)
-            textPadding.PaddingRight = UDim.new(0, 12)
-            textPadding.Parent = textContainer
-
-            -- 添加段落，控制第一段纯白，其余半灰
-            for idx, paraText in ipairs(paragraphs) do
-                local paraLabel = Instance.new("TextLabel")
-                paraLabel.Size = UDim2.new(1, 0, 0, 0)
-                paraLabel.AutomaticSize = Enum.AutomaticSize.Y
-                paraLabel.BackgroundTransparency = 1
-                paraLabel.Font = Enum.Font.Gotham
-                paraLabel.Text = paraText
-                paraLabel.TextSize = textSize
-                paraLabel.TextWrapped = true
-                paraLabel.TextXAlignment = Enum.TextXAlignment.Left
-                paraLabel.Parent = textContainer
-                -- 第一段纯白，其余半灰
-                if idx == 1 then
-                    paraLabel.TextColor3 = firstTextColor
-                    paraLabel.TextTransparency = 0
-                else
-                    paraLabel.TextColor3 = otherTextColor
-                    paraLabel.TextTransparency = otherTextTransparency
-                end
-                -- 仍然注册主题监听，但透明度已固定，不影响
-                AddToRegistry(paraLabel, "TextColor3", "Text")
-            end
-
-            -- 动态更新接口
-            local self = {}
-            function self.UpdateImage(newAsset)
-                leftImage.Image = newAsset
-            end
-            function self.UpdateParagraphs(newParagraphs)
-                -- 清除现有文本子项
-                for _, child in ipairs(textContainer:GetChildren()) do
-                    if child:IsA("TextLabel") then
-                        child:Destroy()
-                    end
-                end
-                for idx, paraText in ipairs(newParagraphs) do
-                    local paraLabel = Instance.new("TextLabel")
-                    paraLabel.Size = UDim2.new(1, 0, 0, 0)
-                    paraLabel.AutomaticSize = Enum.AutomaticSize.Y
-                    paraLabel.BackgroundTransparency = 1
-                    paraLabel.Font = Enum.Font.Gotham
-                    paraLabel.Text = paraText
-                    paraLabel.TextSize = textSize
-                    paraLabel.TextWrapped = true
-                    paraLabel.TextXAlignment = Enum.TextXAlignment.Left
-                    paraLabel.Parent = textContainer
-                    if idx == 1 then
-                        paraLabel.TextColor3 = firstTextColor
-                        paraLabel.TextTransparency = 0
-                    else
-                        paraLabel.TextColor3 = otherTextColor
-                        paraLabel.TextTransparency = otherTextTransparency
-                    end
-                    AddToRegistry(paraLabel, "TextColor3", "Text")
-                end
-            end
-            function self.SetVisible(state)
-                container.Visible = state
-            end
             return self
         end
 
