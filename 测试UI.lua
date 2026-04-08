@@ -595,9 +595,9 @@ function Fenglib:CreateWindow(Config)
     Window._ProjectorModeEnabled = false
     Window._ProjectorObjects = nil
     Window._ProjectorSettings = {
-        distance = 8,        -- 从5增加到8
-        width = 16,          -- 从8增加到16
-        height = 10,         -- 从6增加到10
+        distance = 8,
+        width = 12,          -- 调小宽度 (原16)
+        height = 8,          -- 调小高度 (原10)
         transparency = 0.3,
         autoSize = true
     }
@@ -634,7 +634,6 @@ function Fenglib:CreateWindow(Config)
         local aspect = absSize.X / absSize.Y
         local targetHeight = Window._ProjectorSettings.height
         local targetWidth = targetHeight * aspect
-        -- 放宽限制：宽度最大24，高度最大16
         targetWidth = clamp(targetWidth, 4, 24)
         targetHeight = clamp(targetHeight, 3, 16)
         Window._ProjectorObjects.Screen.Size = Vector3.new(targetWidth, targetHeight, 0.1)
@@ -677,7 +676,7 @@ function Fenglib:CreateWindow(Config)
         surfaceGui.ResetOnSpawn = false
         surfaceGui.Face = Enum.NormalId.Front
         surfaceGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-        surfaceGui.CanvasSize = Vector2.new(1600, 1200)   -- 提高分辨率
+        surfaceGui.CanvasSize = Vector2.new(1600, 1200)
         surfaceGui.ClipsDescendants = true
         surfaceGui.AlwaysOnTop = true
         surfaceGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -856,7 +855,9 @@ function Fenglib:CreateWindow(Config)
         MainFrame.Position = MainFrame.Position:Lerp(target, 0.2)
     end
 
+    -- 投影仪模式下禁止拖动：在事件中检查标志
     Topbar.InputBegan:Connect(function(input)
+        if Window._ProjectorModeEnabled then return end  -- 投影仪模式禁止拖动
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
@@ -865,6 +866,7 @@ function Fenglib:CreateWindow(Config)
     end)
 
     Topbar.InputChanged:Connect(function(input)
+        if Window._ProjectorModeEnabled then return end  -- 投影仪模式禁止拖动
         if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and dragging then
             dragInput = input
         end
@@ -1135,7 +1137,7 @@ function Fenglib:CreateWindow(Config)
     end
 
     function Window:SetProjectorDistance(distance)
-        distance = clamp(distance, 3, 20)  -- 范围扩大到3~20
+        distance = clamp(distance, 3, 20)
         Window._ProjectorSettings.distance = distance
         if Window._ProjectorModeEnabled and Window._ProjectorObjects and Window._ProjectorObjects.Screen then
             local character = LocalPlayer.Character
@@ -1153,8 +1155,8 @@ function Fenglib:CreateWindow(Config)
     end
     
     function Window:SetProjectorSize(width, height)
-        width = clamp(width, 4, 24)   -- 最大宽度24
-        height = clamp(height, 3, 16) -- 最大高度16
+        width = clamp(width, 4, 24)
+        height = clamp(height, 3, 16)
         Window._ProjectorSettings.width = width
         Window._ProjectorSettings.height = height
         Window._ProjectorSettings.autoSize = false
