@@ -2363,7 +2363,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- ========== 新增 Image 组件 ==========
+        -- ========== 新增 Image 组件 (图标已增大至 64x64) ==========
         child.Image = function(_, config)
             config = config or {}
             local title = config.Title or "Image"
@@ -2413,10 +2413,10 @@ function Fenglib:CreateWindow(Config)
 
             -- 内边距
             local padding = Instance.new("UIPadding")
-            padding.PaddingLeft = UDim.new(0, 10)
-            padding.PaddingRight = UDim.new(0, 10)
-            padding.PaddingTop = UDim.new(0, 8)
-            padding.PaddingBottom = UDim.new(0, 8)
+            padding.PaddingLeft = UDim.new(0, 12)
+            padding.PaddingRight = UDim.new(0, 12)
+            padding.PaddingTop = UDim.new(0, 12)
+            padding.PaddingBottom = UDim.new(0, 12)
             padding.Parent = imageFrame
 
             -- 水平布局容器
@@ -2425,28 +2425,28 @@ function Fenglib:CreateWindow(Config)
             horizontal.BackgroundTransparency = 1
             horizontal.Parent = imageFrame
 
-            -- 左侧图标
+            -- 左侧图标 (尺寸增大为 64x64)
             local iconImg = Instance.new("ImageLabel")
-            iconImg.Size = UDim2.new(0, 42, 0, 42)
+            iconImg.Size = UDim2.new(0, 64, 0, 64)
             iconImg.Position = UDim2.new(0, 0, 0, 0)
             iconImg.BackgroundTransparency = 1
             iconImg.Image = formatIcon(iconAsset)
             iconImg.ImageColor3 = iconColor
             iconImg.Parent = horizontal
             local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 8)
+            iconCorner.CornerRadius = UDim.new(0, 12)
             iconCorner.Parent = iconImg
 
-            -- 右侧文字容器
+            -- 右侧文字容器 (位置和宽度相应调整)
             local textContainer = Instance.new("Frame")
-            textContainer.Size = UDim2.new(1, -54, 1, 0)
-            textContainer.Position = UDim2.new(0, 54, 0, 0)
+            textContainer.Size = UDim2.new(1, -76, 1, 0)   -- 减去图标宽度+间距 (64 + 12)
+            textContainer.Position = UDim2.new(0, 76, 0, 0)
             textContainer.BackgroundTransparency = 1
             textContainer.AutomaticSize = Enum.AutomaticSize.Y
             textContainer.Parent = horizontal
 
             local textLayout = Instance.new("UIListLayout")
-            textLayout.Padding = UDim.new(0, 4)
+            textLayout.Padding = UDim.new(0, 6)
             textLayout.SortOrder = Enum.SortOrder.LayoutOrder
             textLayout.Parent = textContainer
 
@@ -2457,7 +2457,7 @@ function Fenglib:CreateWindow(Config)
             titleLabel.BackgroundTransparency = 1
             titleLabel.Font = Enum.Font.GothamBold
             titleLabel.Text = title
-            titleLabel.TextSize = 14
+            titleLabel.TextSize = 15
             titleLabel.TextXAlignment = Enum.TextXAlignment.Left
             titleLabel.TextWrapped = true
             titleLabel.Parent = textContainer
