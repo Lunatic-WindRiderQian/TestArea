@@ -2363,77 +2363,134 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- ========== 新增 ImageText 组件 ==========
-        child.ImageText = function(_, imageAsset, textContent, options)
+        -- ========== 新增 ImageText 组件（图片铺满卡片，四段文本，点击删除） ==========
+        child.ImageText = function(_, imageAsset, textLines, options)
             options = options or {}
-            local maxLines = options.maxLines or 4
-            local onClick = options.onClick
-            local imageSize = options.imageSize or 48
+            -- textLines 可以是一个字符串数组，最多显示4个段落（每段一行）
+            if type(textLines) == "string" then
+                textLines = {textLines}
+            end
+            -- 确保最多显示4行
+            local maxLines = math.min(#textLines, 4)
+            local lines = {}
+            for i = 1, maxLines do
+                lines[i] = textLines[i] or ""
+            end
             local fontSize = options.fontSize or 13
             local lineHeight = options.lineHeight or 1.2
-            local textHeight = math.floor(fontSize * lineHeight * maxLines)
-
+            local textColor = options.textColor or Color3.fromRGB(255, 255, 255)  -- 默认白色文字
+            local backgroundColor = options.backgroundColor or Color3.fromRGB(0, 0, 0)  -- 半透明遮罩颜色
+            local backgroundTransparency = options.backgroundTransparency or 0.5
+            local onClick = options.onClick  -- 可选，点击删除前执行的回调
+            
+            -- 卡片高度：根据行数自动计算
+            local singleLineHeight = fontSize * lineHeight
+            local totalTextHeight = maxLines * singleLineHeight
+            local cardHeight = totalTextHeight + 24  -- 上下各12px内边距
+            local cardWidth = 1  -- 占满父容器宽度
+            
             local Container = Instance.new("Frame")
-            Container.Size = UDim2.new(1, 0, 0, textHeight + 20)
-            Container.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            Container.BackgroundTransparency = 0.5
-            Container.BorderSizePixel = 0
+            Container.Size = UDim2.new(1, 0, 0, cardHeight)
+            Container.BackgroundTransparency = 1
             Container.ClipsDescendants = true
             Container.Parent = contentContainer
-            Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 12)
-
-            local Stroke = Instance.new("UIStroke")
-            Stroke.Thickness = 1
-            Stroke.Color = Color3.fromRGB(200, 200, 200)
-            Stroke.Transparency = 0.6
-            Stroke.Parent = Container
-
-            local ImageLabel = Instance.new("ImageLabel")
-            ImageLabel.Size = UDim2.new(0, imageSize, 0, imageSize)
-            ImageLabel.Position = UDim2.new(0, 12, 0.5, -imageSize/2)
-            ImageLabel.BackgroundTransparency = 1
-            ImageLabel.Image = (type(imageAsset) == "number" and "rbxassetid://"..imageAsset) or imageAsset or ""
-            ImageLabel.Parent = Container
-            local imgCorner = Instance.new("UICorner")
-            imgCorner.CornerRadius = UDim.new(0, 8)
-            imgCorner.Parent = ImageLabel
-            local imgStroke = Instance.new("UIStroke")
-            imgStroke.Thickness = 1
-            imgStroke.Color = Color3.fromRGB(220, 220, 220)
-            imgStroke.Transparency = 0.5
-            imgStroke.Parent = ImageLabel
-
-            local TextLabel = Instance.new("TextLabel")
-            TextLabel.Size = UDim2.new(1, -(imageSize + 30), 0, textHeight)
-            TextLabel.Position = UDim2.new(0, imageSize + 20, 0.5, -textHeight/2)
-            TextLabel.BackgroundTransparency = 1
-            TextLabel.Text = textContent or ""
-            TextLabel.TextColor3 = Color3.fromRGB(40, 40, 45)
-            TextLabel.Font = Enum.Font.GothamMedium
-            TextLabel.TextSize = fontSize
-            TextLabel.TextWrapped = true
-            TextLabel.TextTruncate = Enum.TextTruncate.AtEnd
-            TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-            TextLabel.TextYAlignment = Enum.TextYAlignment.Top
-            TextLabel.LineHeight = lineHeight
-            TextLabel.Parent = Container
-
-            if onClick then
-                local ClickBtn = Instance.new("TextButton")
-                ClickBtn.Size = UDim2.new(1, 0, 1, 0)
-                ClickBtn.BackgroundTransparency = 1
-                ClickBtn.Text = ""
-                ClickBtn.Parent = Container
-                ClickBtn.MouseButton1Click:Connect(onClick)
+            
+            -- 背景图片（铺满整个卡片）
+            local BackgroundImage = Instance.new("ImageLabel")
+            BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
+            BackgroundImage.Position = UDim2.new(0, 0, 0, 0)
+            BackgroundImage.BackgroundTransparency = 1
+            BackgroundImage.Image = (type(imageAsset) == "number" and "rbxassetid://"..imageAsset) or imageAsset or ""
+            BackgroundImage.ScaleType = Enum.ScaleType.Crop  -- 图片裁剪以铺满
+            BackgroundImage.Parent = Container
+            
+            -- 半透明遮罩（让文字更清晰）
+            local Overlay = Instance.new("Frame")
+            Overlay.Size = UDim2.new(1, 0, 1, 0)
+            Overlay.BackgroundColor3 = backgroundColor
+            Overlay.BackgroundTransparency = backgroundTransparency
+            Overlay.BorderSizePixel = 0
+            Overlay.Parent = Container
+            
+            -- 文字容器（垂直排列四行）
+            local TextContainer = Instance.new("Frame")
+            TextContainer.Size = UDim2.new(1, -24, 1, -24)  -- 左右上下内边距12
+            TextContainer.Position = UDim2.new(0, 12, 0, 12)
+            TextContainer.BackgroundTransparency = 1
+            TextContainer.Parent = Container
+            
+            local TextLayout = Instance.new("UIListLayout")
+            TextLayout.FillDirection = Enum.FillDirection.Vertical
+            TextLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+            TextLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+            TextLayout.Padding = UDim.new(0, 4)  -- 行间距4
+            TextLayout.Parent = TextContainer
+            
+            -- 创建每一行文本
+            local TextLabels = {}
+            for i = 1, maxLines do
+                local lineText = lines[i] or ""
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(1, 0, 0, singleLineHeight)
+                label.BackgroundTransparency = 1
+                label.Text = lineText
+                label.TextColor3 = textColor
+                label.Font = Enum.Font.GothamMedium
+                label.TextSize = fontSize
+                label.TextXAlignment = Enum.TextXAlignment.Left
+                label.TextYAlignment = Enum.TextYAlignment.Top
+                label.TextWrapped = true
+                label.TextTruncate = Enum.TextTruncate.AtEnd
+                label.Parent = TextContainer
+                TextLabels[i] = label
             end
-
+            
+            -- 圆角
+            local Corner = Instance.new("UICorner")
+            Corner.CornerRadius = UDim.new(0, 12)
+            Corner.Parent = Container
+            
+            -- 点击删除功能
+            local ClickDetector = Instance.new("TextButton")
+            ClickDetector.Size = UDim2.new(1, 0, 1, 0)
+            ClickDetector.BackgroundTransparency = 1
+            ClickDetector.Text = ""
+            ClickDetector.Parent = Container
+            ClickDetector.MouseButton1Click:Connect(function()
+                if onClick then
+                    pcall(onClick, Container)  -- 回调传入卡片本身
+                end
+                Container:Destroy()  -- 删除卡片，布局自动更新
+            end)
+            
+            -- 返回控制方法
             local self = {}
             function self.UpdateImage(newImage)
                 local img = (type(newImage) == "number" and "rbxassetid://"..newImage) or newImage
-                ImageLabel.Image = img or ""
+                BackgroundImage.Image = img or ""
             end
-            function self.UpdateText(newText)
-                TextLabel.Text = newText or ""
+            function self.UpdateTextLines(newLines)
+                if type(newLines) == "string" then
+                    newLines = {newLines}
+                end
+                local newMax = math.min(#newLines, 4)
+                for i = 1, 4 do
+                    if TextLabels[i] then
+                        if i <= newMax then
+                            TextLabels[i].Text = newLines[i] or ""
+                            TextLabels[i].Visible = true
+                        else
+                            TextLabels[i].Visible = false
+                        end
+                    end
+                end
+                -- 重新计算卡片高度
+                local visibleCount = 0
+                for i = 1, newMax do
+                    if TextLabels[i] and TextLabels[i].Visible then visibleCount = visibleCount + 1 end
+                end
+                local newHeight = visibleCount * singleLineHeight + 24
+                Container.Size = UDim2.new(1, 0, 0, newHeight)
             end
             function self.SetVisible(visible)
                 Container.Visible = visible
