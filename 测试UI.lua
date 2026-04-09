@@ -790,6 +790,15 @@ function Fenglib:CreateWindow(Config)
         
         Window._ProjectorModeEnabled = false
         Window._ProjectorObjects = nil
+
+        -- ========== 修复2D模式拖拽失效 ==========
+        dragging = false                      -- 强制重置拖拽状态
+        dragStart = Vector2.new()
+        windowStartPos = UDim2.new()
+        mouseOffset = Vector2.new()
+        -- 强制刷新布局，确保 Topbar 的输入区域正常
+        local _ = Topbar.AbsolutePosition
+        -- ======================================
         
         return true
     end
@@ -806,6 +815,7 @@ function Fenglib:CreateWindow(Config)
         ToggleProjectorMode()
     end)
     
+    -- 缩小按钮：投影仪模式下直接退出3D，否则隐藏窗口
     local MinimizeBtn = createTextButton("-", function()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
@@ -822,6 +832,7 @@ function Fenglib:CreateWindow(Config)
         Resizer.Visible = resizerVisible
     end)
     
+    -- 关闭按钮：先退出投影仪模式（若处于3D），再销毁GUI
     local CloseBtn = createTextButton("X", function()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
@@ -831,34 +842,38 @@ function Fenglib:CreateWindow(Config)
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
-    -- ========== 正确的窗口拖拽逻辑（基于绝对位置，无跳变） ==========
+    -- ========== 修复后的主窗口拖拽逻辑（实时跟随，无延迟） ==========
     local dragging = false
     local dragStart = Vector2.new()
-    local windowStartAbsPos = Vector2.new()
+    local windowStartPos = UDim2.new()
+    local mouseOffset = Vector2.new()
 
     Topbar.InputBegan:Connect(function(input)
         if Window._ProjectorModeEnabled then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
-            windowStartAbsPos = MainFrame.AbsolutePosition   -- 记录绝对位置
-            input.StopPropagation()
+            windowStartPos = MainFrame.Position
+            -- 计算鼠标相对于窗口左上角的偏移（像素）
+            local absPos = MainFrame.AbsolutePosition
+            mouseOffset = input.Position - absPos
         end
     end)
 
     UserInputService.InputChanged:Connect(function(input)
         if not dragging then return end
         if input.UserInputType == Enum.UserInputType.MouseMovement then
+            -- 直接计算新位置（无 Lerp 延迟）
             local delta = input.Position - dragStart
-            local newX = windowStartAbsPos.X + delta.X
-            local newY = windowStartAbsPos.Y + delta.Y
-
-            -- 边界限制
+            local newX = windowStartPos.X.Offset + delta.X
+            local newY = windowStartPos.Y.Offset + delta.Y
+            
+            -- 可选：边界限制（防止拖出屏幕）
             local screenSize = Camera.ViewportSize
             local windowSize = MainFrame.AbsoluteSize
-            newX = clamp(newX, -windowSize.X + 50, screenSize.X - 50)
-            newY = clamp(newY, 0, screenSize.Y - 50)
-
+            newX = math.clamp(newX, -windowSize.X + 50, screenSize.X - 50)
+            newY = math.clamp(newY, 0, screenSize.Y - 50)
+            
             MainFrame.Position = UDim2.new(0, newX, 0, newY)
         end
     end)
@@ -901,6 +916,7 @@ function Fenglib:CreateWindow(Config)
     OpenButton.ImageTransparency = 0.15
     OpenButton.ZIndex = 10  
 
+    -- 阻止 OpenButton 的鼠标事件冒泡，避免拖拽时误移动主窗口
     OpenButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             input.StopPropagation()
@@ -2298,7 +2314,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- Image 组件
+        -- ========== Image 组件 (图标尺寸 80x80) ==========
         child.Image = function(_, config)
             config = config or {}
             local title = config.Title or "Image"
@@ -2356,6 +2372,7 @@ function Fenglib:CreateWindow(Config)
             horizontal.BackgroundTransparency = 1
             horizontal.Parent = imageFrame
 
+            -- 左侧图标 80x80
             local iconImg = Instance.new("ImageLabel")
             iconImg.Size = UDim2.new(0, 80, 0, 80)
             iconImg.Position = UDim2.new(0, 0, 0, 0)
@@ -2367,8 +2384,9 @@ function Fenglib:CreateWindow(Config)
             iconCorner.CornerRadius = UDim.new(0, 12)
             iconCorner.Parent = iconImg
 
+            -- 右侧文字容器
             local textContainer = Instance.new("Frame")
-            textContainer.Size = UDim2.new(1, -92, 1, 0)
+            textContainer.Size = UDim2.new(1, -92, 1, 0)   -- 80 + 12间距
             textContainer.Position = UDim2.new(0, 92, 0, 0)
             textContainer.BackgroundTransparency = 1
             textContainer.AutomaticSize = Enum.AutomaticSize.Y
@@ -2498,6 +2516,7 @@ function Fenglib:CreateWindow(Config)
 
             return self
         end
+        -- ========== Image 组件结束 ==========
 
         return child
     end
