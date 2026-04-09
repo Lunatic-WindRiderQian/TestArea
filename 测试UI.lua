@@ -805,48 +805,8 @@ function Fenglib:CreateWindow(Config)
         ToggleProjectorMode()
     end)
     
-    local btnTooltip = Instance.new("TextLabel")
-    btnTooltip.Text = "切换3D框架模式"
-    btnTooltip.Size = UDim2.new(0, 100, 0, 20)
-    btnTooltip.Position = UDim2.new(1, -110, 0.5, -10)
-    btnTooltip.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-    btnTooltip.BackgroundTransparency = 0.2
-    btnTooltip.Font = Enum.Font.Gotham
-    btnTooltip.TextSize = 10
-    btnTooltip.TextColor3 = Color3.new(1, 1, 1)
-    btnTooltip.Visible = false
-    btnTooltip.Parent = Toggle3DBtn
-    Instance.new("UICorner", btnTooltip).CornerRadius = UDim.new(0, 4)
-    
-    Toggle3DBtn.MouseEnter:Connect(function()
-        btnTooltip.Visible = true
-    end)
-    Toggle3DBtn.MouseLeave:Connect(function()
-        btnTooltip.Visible = false
-    end)
-    
     local MinimizeBtn = createTextButton("-", function()
         MainFrame.Visible = false
-    end)
-    
-    local minimizeTooltip = Instance.new("TextLabel")
-    minimizeTooltip.Text = "切换最小化按钮"
-    minimizeTooltip.Size = UDim2.new(0, 70, 0, 20)
-    minimizeTooltip.Position = UDim2.new(1, -110, 0.5, -10)
-    minimizeTooltip.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-    minimizeTooltip.BackgroundTransparency = 0.2
-    minimizeTooltip.Font = Enum.Font.Gotham
-    minimizeTooltip.TextSize = 10
-    minimizeTooltip.TextColor3 = Color3.new(1, 1, 1)
-    minimizeTooltip.Visible = false
-    minimizeTooltip.Parent = MinimizeBtn
-    Instance.new("UICorner", minimizeTooltip).CornerRadius = UDim.new(0, 4)
-    
-    MinimizeBtn.MouseEnter:Connect(function()
-        minimizeTooltip.Visible = true
-    end)
-    MinimizeBtn.MouseLeave:Connect(function()
-        minimizeTooltip.Visible = false
     end)
     
     local resizerVisible = false
@@ -857,48 +817,8 @@ function Fenglib:CreateWindow(Config)
         Resizer.Visible = resizerVisible
     end)
     
-    local maximizeTooltip = Instance.new("TextLabel")
-    maximizeTooltip.Text = "显示/隐藏调整界面大小"
-    maximizeTooltip.Size = UDim2.new(0, 130, 0, 20)
-    maximizeTooltip.Position = UDim2.new(1, -110, 0.5, -10)
-    maximizeTooltip.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-    maximizeTooltip.BackgroundTransparency = 0.2
-    maximizeTooltip.Font = Enum.Font.Gotham
-    maximizeTooltip.TextSize = 10
-    maximizeTooltip.TextColor3 = Color3.new(1, 1, 1)
-    maximizeTooltip.Visible = false
-    maximizeTooltip.Parent = MaximizeBtn
-    Instance.new("UICorner", maximizeTooltip).CornerRadius = UDim.new(0, 4)
-    
-    MaximizeBtn.MouseEnter:Connect(function()
-        maximizeTooltip.Visible = true
-    end)
-    MaximizeBtn.MouseLeave:Connect(function()
-        maximizeTooltip.Visible = false
-    end)
-    
     local CloseBtn = createTextButton("X", function()
         ScreenGui:Destroy()
-    end)
-    
-    local closeTooltip = Instance.new("TextLabel")
-    closeTooltip.Text = "关闭脚本"
-    closeTooltip.Size = UDim2.new(0, 50, 0, 20)
-    closeTooltip.Position = UDim2.new(1, -110, 0.5, -10)
-    closeTooltip.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-    closeTooltip.BackgroundTransparency = 0.2
-    closeTooltip.Font = Enum.Font.Gotham
-    closeTooltip.TextSize = 10
-    closeTooltip.TextColor3 = Color3.new(1, 1, 1)
-    closeTooltip.Visible = false
-    closeTooltip.Parent = CloseBtn
-    Instance.new("UICorner", closeTooltip).CornerRadius = UDim.new(0, 4)
-    
-    CloseBtn.MouseEnter:Connect(function()
-        closeTooltip.Visible = true
-    end)
-    CloseBtn.MouseLeave:Connect(function()
-        closeTooltip.Visible = false
     end)
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
