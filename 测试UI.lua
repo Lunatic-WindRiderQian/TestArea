@@ -755,6 +755,9 @@ function Fenglib:CreateWindow(Config)
             SelectionBox = selectionBox
         }
         
+        -- 修复1: 3D模式下隐藏悬浮按钮
+        OpenButton.Visible = false
+        
         return true
     end
     
@@ -790,6 +793,9 @@ function Fenglib:CreateWindow(Config)
         Window._ProjectorModeEnabled = false
         Window._ProjectorObjects = nil
         
+        -- 修复1续: 退出3D后恢复悬浮按钮的可见性（根据主窗口状态）
+        OpenButton.Visible = not MainFrame.Visible
+        
         return true
     end
     
@@ -805,10 +811,11 @@ function Fenglib:CreateWindow(Config)
         ToggleProjectorMode()
     end)
     
-    -- 缩小按钮：投影仪模式下直接退出3D，否则隐藏窗口
+    -- 修复2: 最小化按钮在3D模式下先退出再隐藏主窗口
     local MinimizeBtn = createTextButton("-", function()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
+            MainFrame.Visible = false
         else
             MainFrame.Visible = false
         end
@@ -892,7 +899,9 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Parent = ScreenGui
     OpenButton.BackgroundColor3 = CurrentTheme.Accent
     OpenButton.BackgroundTransparency = 0.85
-    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)  
+    -- 修复3: 设置锚点并调整初始位置，优化拖拽体验
+    OpenButton.AnchorPoint = Vector2.new(0.5, 0.5)
+    OpenButton.Position = UDim2.new(0.92, 0, 0.05, 0)
     OpenButton.Size = UDim2.new(0, 40, 0, 40)
     OpenButton.Active = true
     OpenButton.Draggable = true  
