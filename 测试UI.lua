@@ -793,9 +793,7 @@ function Fenglib:CreateWindow(Config)
 
         -- ========== 修复2D模式拖拽失效 ==========
         dragging = false                      -- 强制重置拖拽状态
-        dragStart = Vector2.new()
-        windowStartPos = UDim2.new()
-        mouseOffset = Vector2.new()
+        dragOffset = Vector2.new()
         -- 强制刷新布局，确保 Topbar 的输入区域正常
         local _ = Topbar.AbsolutePosition
         -- ======================================
@@ -842,47 +840,60 @@ function Fenglib:CreateWindow(Config)
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
-    -- ========== 修复后的主窗口拖拽逻辑（实时跟随，无延迟） ==========
+    -- ========== 全新拖拽系统（支持鼠标 + 触摸，正确处理 AnchorPoint） ==========
     local dragging = false
-    local dragStart = Vector2.new()
-    local windowStartPos = UDim2.new()
-    local mouseOffset = Vector2.new()
-
-    Topbar.InputBegan:Connect(function(input)
+    local dragOffset = Vector2.new()   -- 鼠标/触摸点相对于窗口左上角的偏移（像素）
+    
+    local function getWindowTopLeft()
+        -- 因为 MainFrame.AnchorPoint = (0.5, 0.5)
+        -- 窗口左上角屏幕坐标 = AbsolutePosition
+        return MainFrame.AbsolutePosition
+    end
+    
+    local function setWindowPositionFromInput(inputPos)
+        local newTopLeft = inputPos - dragOffset
+        local screenSize = Camera.ViewportSize
+        local windowSize = MainFrame.AbsoluteSize
+        newTopLeft = Vector2.new(
+            math.clamp(newTopLeft.X, -windowSize.X + 50, screenSize.X - 50),
+            math.clamp(newTopLeft.Y, 0, screenSize.Y - 50)
+        )
+        -- 根据 AnchorPoint (0.5,0.5) 计算新的 Position
+        local anchorOffset = windowSize * 0.5
+        local newPosOffset = newTopLeft + anchorOffset
+        MainFrame.Position = UDim2.new(0, newPosOffset.X, 0, newPosOffset.Y)
+    end
+    
+    -- 开始拖拽（鼠标或触摸）
+    local function startDrag(input)
         if Window._ProjectorModeEnabled then return end
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
-            dragStart = input.Position
-            windowStartPos = MainFrame.Position
-            -- 计算鼠标相对于窗口左上角的偏移（像素）
-            local absPos = MainFrame.AbsolutePosition
-            mouseOffset = input.Position - absPos
+            local windowTopLeft = getWindowTopLeft()
+            dragOffset = input.Position - windowTopLeft
+            input.StopPropagation()
         end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
+    end
+    
+    -- 移动拖拽
+    local function onDragMove(input)
         if not dragging then return end
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            -- 直接计算新位置（无 Lerp 延迟）
-            local delta = input.Position - dragStart
-            local newX = windowStartPos.X.Offset + delta.X
-            local newY = windowStartPos.Y.Offset + delta.Y
-            
-            -- 可选：边界限制（防止拖出屏幕）
-            local screenSize = Camera.ViewportSize
-            local windowSize = MainFrame.AbsoluteSize
-            newX = math.clamp(newX, -windowSize.X + 50, screenSize.X - 50)
-            newY = math.clamp(newY, 0, screenSize.Y - 50)
-            
-            MainFrame.Position = UDim2.new(0, newX, 0, newY)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            setWindowPositionFromInput(input.Position)
         end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    end
+    
+    -- 结束拖拽
+    local function endDrag(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
         end
-    end)
+    end
+    
+    -- 绑定到 Topbar（可拖拽区域）
+    Topbar.InputBegan:Connect(startDrag)
+    UserInputService.InputChanged:Connect(onDragMove)
+    UserInputService.InputEnded:Connect(endDrag)
     -- ============================================================
 
     local function toggleMainFrame()
@@ -918,7 +929,7 @@ function Fenglib:CreateWindow(Config)
 
     -- 阻止 OpenButton 的鼠标事件冒泡，避免拖拽时误移动主窗口
     OpenButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             input.StopPropagation()
         end
     end)
