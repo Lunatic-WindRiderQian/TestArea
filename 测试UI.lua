@@ -745,6 +745,10 @@ function Fenglib:CreateWindow(Config)
         task.wait(0.1)
         Window:UpdateProjectorSizeFromUI()
         
+        -- 投影仪模式下禁用调整大小手柄
+        Resizer.Visible = false
+        MaximizeBtn.Visible = false
+        
         Window._ProjectorModeEnabled = true
         Window._ProjectorObjects = {
             Screen = projectorScreen,
@@ -787,6 +791,10 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         end
         
+        -- 恢复调整大小手柄的显示状态（根据之前的 resizerVisible 变量）
+        Resizer.Visible = resizerVisible
+        MaximizeBtn.Visible = true
+        
         Window._ProjectorModeEnabled = false
         Window._ProjectorObjects = nil
         
@@ -806,7 +814,11 @@ function Fenglib:CreateWindow(Config)
     end)
     
     local MinimizeBtn = createTextButton("-", function()
-        MainFrame.Visible = false
+        if Window._ProjectorModeEnabled then
+            ToggleProjectorMode()
+        else
+            MainFrame.Visible = false
+        end
     end)
     
     local resizerVisible = false
