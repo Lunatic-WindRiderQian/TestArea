@@ -641,6 +641,32 @@ function Fenglib:CreateWindow(Config)
         Window._ProjectorSettings.height = targetHeight
     end
 
+    -- ========== 提前创建窗口按钮，以便在投影仪模式函数中使用 ==========
+    local resizerVisible = false
+    Resizer.Visible = resizerVisible
+
+    local Toggle3DBtn = createIconButton("rbxassetid://12684119225", function()
+        ToggleProjectorMode()
+    end)
+    
+    local MinimizeBtn = createTextButton("-", function()
+        if Window._ProjectorModeEnabled then
+            ToggleProjectorMode()
+        else
+            MainFrame.Visible = false
+        end
+    end)
+    
+    local MaximizeBtn = createIconButton("rbxassetid://6031090998", function()
+        resizerVisible = not resizerVisible
+        Resizer.Visible = resizerVisible
+    end)
+    
+    local CloseBtn = createTextButton("X", function()
+        ScreenGui:Destroy()
+    end)
+    -- ========== 窗口按钮创建结束 ==========
+
     local function SwitchToProjectorMode(distance, width, height, transparency)
         if Window._ProjectorModeEnabled then return end
         
@@ -791,7 +817,7 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         end
         
-        -- 恢复调整大小手柄的显示状态（根据之前的 resizerVisible 变量）
+        -- 恢复调整大小手柄的显示状态
         Resizer.Visible = resizerVisible
         MaximizeBtn.Visible = true
         
@@ -808,30 +834,6 @@ function Fenglib:CreateWindow(Config)
             SwitchToProjectorMode()
         end
     end
-    
-    local Toggle3DBtn = createIconButton("rbxassetid://12684119225", function()
-        ToggleProjectorMode()
-    end)
-    
-    local MinimizeBtn = createTextButton("-", function()
-        if Window._ProjectorModeEnabled then
-            ToggleProjectorMode()
-        else
-            MainFrame.Visible = false
-        end
-    end)
-    
-    local resizerVisible = false
-    Resizer.Visible = resizerVisible
-    
-    local MaximizeBtn = createIconButton("rbxassetid://6031090998", function()
-        resizerVisible = not resizerVisible
-        Resizer.Visible = resizerVisible
-    end)
-    
-    local CloseBtn = createTextButton("X", function()
-        ScreenGui:Destroy()
-    end)
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
