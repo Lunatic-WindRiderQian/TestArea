@@ -838,7 +838,7 @@ function Fenglib:CreateWindow(Config)
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
-    -- ========== 全新拖拽系统（支持鼠标+触摸，修复Vector3错误） ==========
+    -- ========== 全新拖拽系统（支持鼠标+触摸，修复Vector3和StopPropagation错误） ==========
     local dragging = false
     local dragOffset = Vector2.new()
     
@@ -875,7 +875,8 @@ function Fenglib:CreateWindow(Config)
                 inputPos = Vector2.new(inputPos.X, inputPos.Y)
             end
             dragOffset = inputPos - windowTopLeft
-            input.StopPropagation()
+            -- 兼容性处理：某些环境没有 StopPropagation 方法
+            pcall(function() input:StopPropagation() end)
         end
     end
     
@@ -928,9 +929,10 @@ function Fenglib:CreateWindow(Config)
     OpenButton.ImageTransparency = 0.15
     OpenButton.ZIndex = 10  
 
+    -- 兼容性：使用 pcall 保护 StopPropagation
     OpenButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            input.StopPropagation()
+            pcall(function() input:StopPropagation() end)
         end
     end)
 
