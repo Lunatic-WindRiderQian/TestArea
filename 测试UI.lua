@@ -831,18 +831,18 @@ function Fenglib:CreateWindow(Config)
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
+    -- ========== 正确的窗口拖拽逻辑（基于绝对位置，无跳变） ==========
     local dragging = false
     local dragStart = Vector2.new()
-    local windowStartPos = UDim2.new()
-    local mouseOffset = Vector2.new()
+    local windowStartAbsPos = Vector2.new()
 
     Topbar.InputBegan:Connect(function(input)
         if Window._ProjectorModeEnabled then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
-            windowStartPos = MainFrame.Position
-            mouseOffset = input.Position - MainFrame.AbsolutePosition
+            windowStartAbsPos = MainFrame.AbsolutePosition   -- 记录绝对位置
+            input.StopPropagation()
         end
     end)
 
@@ -850,14 +850,15 @@ function Fenglib:CreateWindow(Config)
         if not dragging then return end
         if input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
-            local newX = windowStartPos.X.Offset + delta.X
-            local newY = windowStartPos.Y.Offset + delta.Y
-            
+            local newX = windowStartAbsPos.X + delta.X
+            local newY = windowStartAbsPos.Y + delta.Y
+
+            -- 边界限制
             local screenSize = Camera.ViewportSize
             local windowSize = MainFrame.AbsoluteSize
-            newX = math.clamp(newX, -windowSize.X + 50, screenSize.X - 50)
-            newY = math.clamp(newY, 0, screenSize.Y - 50)
-            
+            newX = clamp(newX, -windowSize.X + 50, screenSize.X - 50)
+            newY = clamp(newY, 0, screenSize.Y - 50)
+
             MainFrame.Position = UDim2.new(0, newX, 0, newY)
         end
     end)
@@ -867,6 +868,7 @@ function Fenglib:CreateWindow(Config)
             dragging = false
         end
     end)
+    -- ============================================================
 
     local function toggleMainFrame()
         if MainFrame.Visible then
@@ -2296,7 +2298,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- ========== Image 组件（底部带三个可自定义颜色按钮） ==========
+        -- Image 组件
         child.Image = function(_, config)
             config = config or {}
             local title = config.Title or "Image"
@@ -2309,14 +2311,6 @@ function Fenglib:CreateWindow(Config)
             local iconColor = config.IconColor or CurrentTheme.Text
             local callback = config.Callback or function() end
             local strokeColor = config.StrokeColor or CurrentTheme.Stroke
-
-            -- 按钮配置：最多取前三个
-            local buttons = config.Buttons or {}
-            local maxButtons = 3
-            local actualButtons = {}
-            for i = 1, math.min(#buttons, maxButtons) do
-                actualButtons[i] = buttons[i]
-            end
 
             local function formatIcon(asset)
                 if type(asset) == "number" then
@@ -2335,7 +2329,6 @@ function Fenglib:CreateWindow(Config)
                 return "rbxassetid://78229538488090"
             end
 
-            -- 外层容器（整个卡片）
             local imageFrame = Instance.new("Frame")
             imageFrame.Size = UDim2.new(1, 0, 0, 0)
             imageFrame.AutomaticSize = Enum.AutomaticSize.Y
@@ -2358,26 +2351,11 @@ function Fenglib:CreateWindow(Config)
             padding.PaddingBottom = UDim.new(0, 12)
             padding.Parent = imageFrame
 
-            -- 垂直布局：先放“图标+文字”区域，再放按钮区域
-            local mainLayout = Instance.new("UIListLayout")
-            mainLayout.FillDirection = Enum.FillDirection.Vertical
-            mainLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            mainLayout.Padding = UDim.new(0, 12)  -- 与按钮区域的间距
-            mainLayout.Parent = imageFrame
-
-            -- 上半部分：图标 + 右侧文字
-            local topArea = Instance.new("Frame")
-            topArea.Size = UDim2.new(1, 0, 0, 0)
-            topArea.AutomaticSize = Enum.AutomaticSize.Y
-            topArea.BackgroundTransparency = 1
-            topArea.Parent = imageFrame
-
             local horizontal = Instance.new("Frame")
             horizontal.Size = UDim2.new(1, 0, 1, 0)
             horizontal.BackgroundTransparency = 1
-            horizontal.Parent = topArea
+            horizontal.Parent = imageFrame
 
-            -- 左侧图标 80x80
             local iconImg = Instance.new("ImageLabel")
             iconImg.Size = UDim2.new(0, 80, 0, 80)
             iconImg.Position = UDim2.new(0, 0, 0, 0)
@@ -2389,7 +2367,6 @@ function Fenglib:CreateWindow(Config)
             iconCorner.CornerRadius = UDim.new(0, 12)
             iconCorner.Parent = iconImg
 
-            -- 右侧文字容器
             local textContainer = Instance.new("Frame")
             textContainer.Size = UDim2.new(1, -92, 1, 0)
             textContainer.Position = UDim2.new(0, 92, 0, 0)
@@ -2402,7 +2379,6 @@ function Fenglib:CreateWindow(Config)
             textLayout.SortOrder = Enum.SortOrder.LayoutOrder
             textLayout.Parent = textContainer
 
-            -- 标题
             local titleLabel = Instance.new("TextLabel")
             titleLabel.Size = UDim2.new(1, 0, 0, 0)
             titleLabel.AutomaticSize = Enum.AutomaticSize.Y
@@ -2415,7 +2391,6 @@ function Fenglib:CreateWindow(Config)
             titleLabel.Parent = textContainer
             AddToRegistry(titleLabel, "TextColor3", "Text")
 
-            -- 副标题
             local subtitleLabel = nil
             if subtitle ~= "" then
                 subtitleLabel = Instance.new("TextLabel")
@@ -2432,7 +2407,6 @@ function Fenglib:CreateWindow(Config)
                 AddToRegistry(subtitleLabel, "TextColor3", "Text")
             end
 
-            -- 描述行
             local descLabels = {}
             for _, line in ipairs(description) do
                 local descLabel = Instance.new("TextLabel")
@@ -2450,128 +2424,13 @@ function Fenglib:CreateWindow(Config)
                 table.insert(descLabels, descLabel)
             end
 
-            -- 下半部分：按钮区域（仅当有按钮时创建）
-            local buttonsContainer = nil
-            local buttonObjects = {}
-
-            if #actualButtons > 0 then
-                buttonsContainer = Instance.new("Frame")
-                buttonsContainer.Size = UDim2.new(1, 0, 0, 0)
-                buttonsContainer.AutomaticSize = Enum.AutomaticSize.Y
-                buttonsContainer.BackgroundTransparency = 1
-                buttonsContainer.Parent = imageFrame
-
-                local buttonLayout = Instance.new("UIListLayout")
-                buttonLayout.FillDirection = Enum.FillDirection.Horizontal
-                buttonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center  -- 居中对齐
-                buttonLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-                buttonLayout.Padding = UDim.new(0, 12)
-                buttonLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                buttonLayout.Parent = buttonsContainer
-
-                -- 辅助函数：创建单个按钮
-                local function createActionButton(btnData, index)
-                    local btn = Instance.new("TextButton")
-                    btn.Text = btnData.text or "Button"
-                    btn.Font = Enum.Font.GothamMedium
-                    btn.TextSize = 13
-                    btn.AutoButtonColor = false
-                    btn.Size = UDim2.new(0, 0, 0, 34)
-                    btn.AutomaticSize = Enum.AutomaticSize.X
-                    btn.Parent = buttonsContainer
-
-                    -- 背景与圆角
-                    local btnCorner = Instance.new("UICorner")
-                    btnCorner.CornerRadius = UDim.new(0, 8)
-                    btnCorner.Parent = btn
-
-                    -- 内边距
-                    local btnPadding = Instance.new("UIPadding")
-                    btnPadding.PaddingLeft = UDim.new(0, 12)
-                    btnPadding.PaddingRight = UDim.new(0, 12)
-                    btnPadding.Parent = btn
-
-                    -- 颜色自定义
-                    local customBg = btnData.bgColor
-                    local customText = btnData.textColor
-                    local defaultBgColor = CurrentTheme.Top
-                    local defaultTextColor = CurrentTheme.Text
-
-                    if customBg then
-                        btn.BackgroundColor3 = (type(customBg) == "table" and Color3.fromRGB(customBg[1], customBg[2], customBg[3])) or customBg
-                        btn.BackgroundTransparency = 0.1
-                    else
-                        btn.BackgroundColor3 = defaultBgColor
-                        btn.BackgroundTransparency = 0.1
-                    end
-                    if customText then
-                        btn.TextColor3 = (type(customText) == "table" and Color3.fromRGB(customText[1], customText[2], customText[3])) or customText
-                    else
-                        btn.TextColor3 = defaultTextColor
-                    end
-
-                    -- 悬停效果
-                    btn.MouseEnter:Connect(function()
-                        Tween(btn, {BackgroundTransparency = 0.02}, 0.18)
-                    end)
-                    btn.MouseLeave:Connect(function()
-                        Tween(btn, {BackgroundTransparency = 0.1}, 0.18)
-                    end)
-
-                    -- 点击效果
-                    local originalSize = btn.Size
-                    local originalPos = btn.Position
-                    btn.MouseButton1Down:Connect(function()
-                        Tween(btn, {Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset * 0.95, originalSize.Y.Scale, originalSize.Y.Offset * 0.95), Position = UDim2.new(originalPos.X.Scale, originalPos.X.Offset + 2, originalPos.Y.Scale, originalPos.Y.Offset + 2)}, 0.05)
-                    end)
-                    btn.MouseButton1Up:Connect(function()
-                        Tween(btn, {Size = originalSize, Position = originalPos}, 0.1)
-                    end)
-                    btn.MouseLeave:Connect(function()
-                        Tween(btn, {Size = originalSize, Position = originalPos}, 0.1)
-                    end)
-
-                    -- 点击回调
-                    btn.MouseButton1Click:Connect(function()
-                        if btnData.callback then
-                            btnData.callback()
-                        end
-                    end)
-
-                    -- 主题更新（仅当未自定义颜色时）
-                    local themeListener = function()
-                        if not customBg then
-                            btn.BackgroundColor3 = CurrentTheme.Top
-                        end
-                        if not customText then
-                            btn.TextColor3 = CurrentTheme.Text
-                        end
-                    end
-                    table.insert(ThemeListeners, themeListener)
-
-                    table.insert(buttonObjects, {
-                        instance = btn,
-                        customBg = customBg,
-                        customText = customText,
-                        themeListener = themeListener,
-                        callback = btnData.callback
-                    })
-                end
-
-                for i, btnData in ipairs(actualButtons) do
-                    createActionButton(btnData, i)
-                end
-            end
-
-            -- 整个卡片的点击区域（覆盖图标+文字区域，但不覆盖按钮区域）
             local clickBtn = Instance.new("TextButton")
             clickBtn.Size = UDim2.new(1, 0, 1, 0)
             clickBtn.BackgroundTransparency = 1
             clickBtn.Text = ""
-            clickBtn.Parent = topArea   -- 只覆盖上半部分
+            clickBtn.Parent = imageFrame
             clickBtn.MouseButton1Click:Connect(callback)
 
-            -- 悬停效果作用于整个卡片
             local function onEnter()
                 Tween(imageFrame, {BackgroundTransparency = 0.00}, 0.18)
             end
@@ -2581,14 +2440,6 @@ function Fenglib:CreateWindow(Config)
             clickBtn.MouseEnter:Connect(onEnter)
             clickBtn.MouseLeave:Connect(onLeave)
 
-            -- 阻止按钮点击冒泡到卡片
-            if buttonsContainer then
-                buttonsContainer.MouseButton1Click:Connect(function(input)
-                    input.StopPropagation()
-                end)
-            end
-
-            -- 返回操作接口
             local self = {}
             function self.UpdateTitle(newTitle)
                 titleLabel.Text = newTitle
@@ -2645,47 +2496,8 @@ function Fenglib:CreateWindow(Config)
                 imageFrame.Visible = state
             end
 
-            -- 按钮操作
-            function self.UpdateButtonText(index, newText)
-                if buttonObjects[index] then
-                    buttonObjects[index].instance.Text = newText
-                end
-            end
-            function self.UpdateButtonCallback(index, newCallback)
-                if buttonObjects[index] then
-                    buttonObjects[index].callback = newCallback
-                    -- 重新绑定点击（简单覆盖，原连接会保留但无影响，因为 callback 已替换）
-                    local btn = buttonObjects[index].instance
-                    btn.MouseButton1Click:Connect(function()
-                        if newCallback then newCallback() end
-                    end)
-                end
-            end
-            function self.UpdateButtonColor(index, bgColor, textColor)
-                if buttonObjects[index] then
-                    local info = buttonObjects[index]
-                    if bgColor then
-                        info.customBg = bgColor
-                        local c = (type(bgColor) == "table" and Color3.fromRGB(bgColor[1], bgColor[2], bgColor[3])) or bgColor
-                        info.instance.BackgroundColor3 = c
-                        info.instance.BackgroundTransparency = 0.1
-                    end
-                    if textColor then
-                        info.customText = textColor
-                        local c = (type(textColor) == "table" and Color3.fromRGB(textColor[1], textColor[2], textColor[3])) or textColor
-                        info.instance.TextColor3 = c
-                    end
-                end
-            end
-            function self.SetButtonsVisible(visible)
-                if buttonsContainer then
-                    buttonsContainer.Visible = visible
-                end
-            end
-
             return self
         end
-        -- ========== Image 组件结束 ==========
 
         return child
     end
