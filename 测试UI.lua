@@ -2363,7 +2363,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- ========== 新增 Image 组件 (图标已增大至 64x64) ==========
+        -- ========== Image 组件 (图标尺寸 80x80) ==========
         child.Image = function(_, config)
             config = config or {}
             local title = config.Title or "Image"
@@ -2377,7 +2377,6 @@ function Fenglib:CreateWindow(Config)
             local callback = config.Callback or function() end
             local strokeColor = config.StrokeColor or CurrentTheme.Stroke
 
-            -- 格式化图标地址
             local function formatIcon(asset)
                 if type(asset) == "number" then
                     return "rbxassetid://" .. tostring(asset)
@@ -2403,7 +2402,6 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", imageFrame).CornerRadius = UDim.new(0, 12)
             AddToRegistry(imageFrame, "BackgroundColor3", "Top")
 
-            -- 可选描边
             local imgStroke = Instance.new("UIStroke")
             imgStroke.Thickness = 1
             imgStroke.Transparency = 0.6
@@ -2411,7 +2409,6 @@ function Fenglib:CreateWindow(Config)
             imgStroke.Parent = imageFrame
             AddToRegistry(imgStroke, "Color", "Stroke")
 
-            -- 内边距
             local padding = Instance.new("UIPadding")
             padding.PaddingLeft = UDim.new(0, 12)
             padding.PaddingRight = UDim.new(0, 12)
@@ -2419,15 +2416,14 @@ function Fenglib:CreateWindow(Config)
             padding.PaddingBottom = UDim.new(0, 12)
             padding.Parent = imageFrame
 
-            -- 水平布局容器
             local horizontal = Instance.new("Frame")
             horizontal.Size = UDim2.new(1, 0, 1, 0)
             horizontal.BackgroundTransparency = 1
             horizontal.Parent = imageFrame
 
-            -- 左侧图标 (尺寸增大为 64x64)
+            -- 左侧图标 80x80
             local iconImg = Instance.new("ImageLabel")
-            iconImg.Size = UDim2.new(0, 64, 0, 64)
+            iconImg.Size = UDim2.new(0, 80, 0, 80)
             iconImg.Position = UDim2.new(0, 0, 0, 0)
             iconImg.BackgroundTransparency = 1
             iconImg.Image = formatIcon(iconAsset)
@@ -2437,10 +2433,10 @@ function Fenglib:CreateWindow(Config)
             iconCorner.CornerRadius = UDim.new(0, 12)
             iconCorner.Parent = iconImg
 
-            -- 右侧文字容器 (位置和宽度相应调整)
+            -- 右侧文字容器
             local textContainer = Instance.new("Frame")
-            textContainer.Size = UDim2.new(1, -76, 1, 0)   -- 减去图标宽度+间距 (64 + 12)
-            textContainer.Position = UDim2.new(0, 76, 0, 0)
+            textContainer.Size = UDim2.new(1, -92, 1, 0)   -- 80 + 12间距
+            textContainer.Position = UDim2.new(0, 92, 0, 0)
             textContainer.BackgroundTransparency = 1
             textContainer.AutomaticSize = Enum.AutomaticSize.Y
             textContainer.Parent = horizontal
@@ -2450,7 +2446,6 @@ function Fenglib:CreateWindow(Config)
             textLayout.SortOrder = Enum.SortOrder.LayoutOrder
             textLayout.Parent = textContainer
 
-            -- 标题
             local titleLabel = Instance.new("TextLabel")
             titleLabel.Size = UDim2.new(1, 0, 0, 0)
             titleLabel.AutomaticSize = Enum.AutomaticSize.Y
@@ -2463,7 +2458,6 @@ function Fenglib:CreateWindow(Config)
             titleLabel.Parent = textContainer
             AddToRegistry(titleLabel, "TextColor3", "Text")
 
-            -- 副标题（可选）
             local subtitleLabel = nil
             if subtitle ~= "" then
                 subtitleLabel = Instance.new("TextLabel")
@@ -2480,7 +2474,6 @@ function Fenglib:CreateWindow(Config)
                 AddToRegistry(subtitleLabel, "TextColor3", "Text")
             end
 
-            -- 描述列表
             local descLabels = {}
             for _, line in ipairs(description) do
                 local descLabel = Instance.new("TextLabel")
@@ -2498,7 +2491,6 @@ function Fenglib:CreateWindow(Config)
                 table.insert(descLabels, descLabel)
             end
 
-            -- 点击区域
             local clickBtn = Instance.new("TextButton")
             clickBtn.Size = UDim2.new(1, 0, 1, 0)
             clickBtn.BackgroundTransparency = 1
@@ -2506,7 +2498,6 @@ function Fenglib:CreateWindow(Config)
             clickBtn.Parent = imageFrame
             clickBtn.MouseButton1Click:Connect(callback)
 
-            -- 悬停效果
             local function onEnter()
                 Tween(imageFrame, {BackgroundTransparency = 0.00}, 0.18)
             end
@@ -2516,7 +2507,6 @@ function Fenglib:CreateWindow(Config)
             clickBtn.MouseEnter:Connect(onEnter)
             clickBtn.MouseLeave:Connect(onLeave)
 
-            -- 更新内容的方法
             local self = {}
             function self.UpdateTitle(newTitle)
                 titleLabel.Text = newTitle
