@@ -745,12 +745,6 @@ function Fenglib:CreateWindow(Config)
         task.wait(0.1)
         Window:UpdateProjectorSizeFromUI()
         
-        -- 投影仪模式下禁用大小调整手柄并保存当前状态
-        if Window._savedResizerVisible == nil then
-            Window._savedResizerVisible = Resizer.Visible
-        end
-        Resizer.Visible = false
-        
         Window._ProjectorModeEnabled = true
         Window._ProjectorObjects = {
             Screen = projectorScreen,
@@ -793,12 +787,6 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         end
         
-        -- 恢复大小调整手柄的可见性
-        if Window._savedResizerVisible ~= nil then
-            Resizer.Visible = Window._savedResizerVisible
-            Window._savedResizerVisible = nil
-        end
-        
         Window._ProjectorModeEnabled = false
         Window._ProjectorObjects = nil
         
@@ -817,7 +805,7 @@ function Fenglib:CreateWindow(Config)
         ToggleProjectorMode()
     end)
     
-    -- 修改缩小按钮：投影仪模式下切换3D/2D，否则隐藏窗口
+    -- 缩小按钮：投影仪模式下切换2D/3D，否则隐藏窗口
     local MinimizeBtn = createTextButton("-", function()
         if Window._ProjectorModeEnabled then
             ToggleProjectorMode()
@@ -834,7 +822,7 @@ function Fenglib:CreateWindow(Config)
         Resizer.Visible = resizerVisible
     end)
     
-    -- 修改关闭按钮：投影仪模式下先退出3D再销毁GUI
+    -- 关闭按钮：先退出投影仪模式（若处于3D），再销毁GUI
     local CloseBtn = createTextButton("X", function()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
