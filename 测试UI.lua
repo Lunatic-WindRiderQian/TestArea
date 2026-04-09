@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService") 
 local TextService = game:GetService("TextService")
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
 local Fenglib = {}
 local RainbowEnabled = false
@@ -755,9 +756,6 @@ function Fenglib:CreateWindow(Config)
             SelectionBox = selectionBox
         }
         
-        -- 修复1: 3D模式下隐藏悬浮按钮
-        OpenButton.Visible = false
-        
         return true
     end
     
@@ -793,9 +791,6 @@ function Fenglib:CreateWindow(Config)
         Window._ProjectorModeEnabled = false
         Window._ProjectorObjects = nil
         
-        -- 修复1续: 退出3D后恢复悬浮按钮的可见性（根据主窗口状态）
-        OpenButton.Visible = not MainFrame.Visible
-        
         return true
     end
     
@@ -811,11 +806,10 @@ function Fenglib:CreateWindow(Config)
         ToggleProjectorMode()
     end)
     
-    -- 修复2: 最小化按钮在3D模式下先退出再隐藏主窗口
+    -- 缩小按钮：投影仪模式下直接退出3D，否则隐藏窗口
     local MinimizeBtn = createTextButton("-", function()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
-            MainFrame.Visible = false
         else
             MainFrame.Visible = false
         end
@@ -839,43 +833,48 @@ function Fenglib:CreateWindow(Config)
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
+    -- ========== 修复后的主窗口拖拽逻辑（实时跟随，无延迟） ==========
     local dragging = false
-    local dragInput, dragStart, startPos
-
-    local function updateDrag(input)
-        local delta = input.Position - dragStart
-        local target = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        MainFrame.Position = MainFrame.Position:Lerp(target, 0.2)
-    end
+    local dragStart = Vector2.new()
+    local windowStartPos = UDim2.new()
+    local mouseOffset = Vector2.new()
 
     Topbar.InputBegan:Connect(function(input)
         if Window._ProjectorModeEnabled then return end
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
-            startPos = MainFrame.Position
+            windowStartPos = MainFrame.Position
+            -- 计算鼠标相对于窗口左上角的偏移（像素）
+            local absPos = MainFrame.AbsolutePosition
+            mouseOffset = input.Position - absPos
         end
     end)
 
-    Topbar.InputChanged:Connect(function(input)
-        if Window._ProjectorModeEnabled then return end
-        if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and dragging then
-            dragInput = input
+    UserInputService.InputChanged:Connect(function(input)
+        if not dragging then return end
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            -- 直接计算新位置（无 Lerp 延迟）
+            local delta = input.Position - dragStart
+            local newX = windowStartPos.X.Offset + delta.X
+            local newY = windowStartPos.Y.Offset + delta.Y
+            
+            -- 可选：边界限制（防止拖出屏幕）
+            local screenSize = Camera.ViewportSize
+            local windowSize = MainFrame.AbsoluteSize
+            newX = math.clamp(newX, -windowSize.X + 50, screenSize.X - 50)
+            newY = math.clamp(newY, 0, screenSize.Y - 50)
+            
+            MainFrame.Position = UDim2.new(0, newX, 0, newY)
         end
     end)
 
     UserInputService.InputEnded:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and dragging then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
-            dragInput = nil
         end
     end)
-
-    RunService.RenderStepped:Connect(function()
-        if dragging and dragInput then
-            updateDrag(dragInput)
-        end
-    end)
+    -- ============================================================
 
     local function toggleMainFrame()
         if MainFrame.Visible then
@@ -899,9 +898,7 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Parent = ScreenGui
     OpenButton.BackgroundColor3 = CurrentTheme.Accent
     OpenButton.BackgroundTransparency = 0.85
-    -- 修复3: 设置锚点并调整初始位置，优化拖拽体验
-    OpenButton.AnchorPoint = Vector2.new(0.5, 0.5)
-    OpenButton.Position = UDim2.new(0.92, 0, 0.05, 0)
+    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)  
     OpenButton.Size = UDim2.new(0, 40, 0, 40)
     OpenButton.Active = true
     OpenButton.Draggable = true  
@@ -909,6 +906,13 @@ function Fenglib:CreateWindow(Config)
     OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
     OpenButton.ImageTransparency = 0.15
     OpenButton.ZIndex = 10  
+
+    -- 阻止 OpenButton 的鼠标事件冒泡，避免拖拽时误移动主窗口
+    OpenButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            input.StopPropagation()
+        end
+    end)
 
     local openCorner = Instance.new("UICorner")
     openCorner.CornerRadius = UDim.new(0, 8)
