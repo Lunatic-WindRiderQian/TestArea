@@ -791,12 +791,10 @@ function Fenglib:CreateWindow(Config)
         Window._ProjectorModeEnabled = false
         Window._ProjectorObjects = nil
 
-        -- ========== 修复2D模式拖拽失效 ==========
-        dragging = false                      -- 强制重置拖拽状态
+        -- 修复2D模式拖拽失效
+        dragging = false
         dragOffset = Vector2.new()
-        -- 强制刷新布局，确保 Topbar 的输入区域正常
         local _ = Topbar.AbsolutePosition
-        -- ======================================
         
         return true
     end
@@ -840,42 +838,47 @@ function Fenglib:CreateWindow(Config)
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
-    -- ========== 全新拖拽系统（支持鼠标 + 触摸，正确处理 AnchorPoint） ==========
+    -- ========== 全新拖拽系统（支持鼠标+触摸，修复Vector3错误） ==========
     local dragging = false
-    local dragOffset = Vector2.new()   -- 鼠标/触摸点相对于窗口左上角的偏移（像素）
+    local dragOffset = Vector2.new()
     
     local function getWindowTopLeft()
-        -- 因为 MainFrame.AnchorPoint = (0.5, 0.5)
-        -- 窗口左上角屏幕坐标 = AbsolutePosition
-        return MainFrame.AbsolutePosition
+        local pos = MainFrame.AbsolutePosition
+        return Vector2.new(pos.X, pos.Y)
     end
     
     local function setWindowPositionFromInput(inputPos)
-        local newTopLeft = inputPos - dragOffset
+        -- 确保 inputPos 是 Vector2
+        local pos2D = inputPos
+        if typeof(inputPos) == "Vector3" then
+            pos2D = Vector2.new(inputPos.X, inputPos.Y)
+        end
+        local newTopLeft = pos2D - dragOffset
         local screenSize = Camera.ViewportSize
         local windowSize = MainFrame.AbsoluteSize
         newTopLeft = Vector2.new(
             math.clamp(newTopLeft.X, -windowSize.X + 50, screenSize.X - 50),
             math.clamp(newTopLeft.Y, 0, screenSize.Y - 50)
         )
-        -- 根据 AnchorPoint (0.5,0.5) 计算新的 Position
         local anchorOffset = windowSize * 0.5
         local newPosOffset = newTopLeft + anchorOffset
         MainFrame.Position = UDim2.new(0, newPosOffset.X, 0, newPosOffset.Y)
     end
     
-    -- 开始拖拽（鼠标或触摸）
     local function startDrag(input)
         if Window._ProjectorModeEnabled then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             local windowTopLeft = getWindowTopLeft()
-            dragOffset = input.Position - windowTopLeft
+            local inputPos = input.Position
+            if typeof(inputPos) == "Vector3" then
+                inputPos = Vector2.new(inputPos.X, inputPos.Y)
+            end
+            dragOffset = inputPos - windowTopLeft
             input.StopPropagation()
         end
     end
     
-    -- 移动拖拽
     local function onDragMove(input)
         if not dragging then return end
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
@@ -883,14 +886,12 @@ function Fenglib:CreateWindow(Config)
         end
     end
     
-    -- 结束拖拽
     local function endDrag(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
         end
     end
     
-    -- 绑定到 Topbar（可拖拽区域）
     Topbar.InputBegan:Connect(startDrag)
     UserInputService.InputChanged:Connect(onDragMove)
     UserInputService.InputEnded:Connect(endDrag)
@@ -927,7 +928,6 @@ function Fenglib:CreateWindow(Config)
     OpenButton.ImageTransparency = 0.15
     OpenButton.ZIndex = 10  
 
-    -- 阻止 OpenButton 的鼠标事件冒泡，避免拖拽时误移动主窗口
     OpenButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             input.StopPropagation()
