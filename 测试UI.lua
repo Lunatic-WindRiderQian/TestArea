@@ -805,10 +805,10 @@ function Fenglib:CreateWindow(Config)
         ToggleProjectorMode()
     end)
     
-    -- 缩小按钮：投影仪模式下切换2D/3D，否则隐藏窗口
+    -- 缩小按钮：投影仪模式下直接退出3D，否则隐藏窗口
     local MinimizeBtn = createTextButton("-", function()
         if Window._ProjectorModeEnabled then
-            ToggleProjectorMode()
+            SwitchTo2DMode()
         else
             MainFrame.Visible = false
         end
