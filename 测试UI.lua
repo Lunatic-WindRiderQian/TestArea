@@ -2305,7 +2305,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- ========== Image 组件 (图标尺寸 80x80) ==========
+        -- ========== Image 组件 (图标 + 可选按钮区域) ==========
         child.Image = function(_, config)
             config = config or {}
             local title = config.Title or "Image"
@@ -2318,6 +2318,7 @@ function Fenglib:CreateWindow(Config)
             local iconColor = config.IconColor or CurrentTheme.Text
             local callback = config.Callback or function() end
             local strokeColor = config.StrokeColor or CurrentTheme.Stroke
+            local buttons = config.Buttons  -- 新增按钮配置：数组，每个元素包含 text, callback, color, textColor
 
             local function formatIcon(asset)
                 if type(asset) == "number" then
@@ -2336,6 +2337,7 @@ function Fenglib:CreateWindow(Config)
                 return "rbxassetid://78229538488090"
             end
 
+            -- 主容器
             local imageFrame = Instance.new("Frame")
             imageFrame.Size = UDim2.new(1, 0, 0, 0)
             imageFrame.AutomaticSize = Enum.AutomaticSize.Y
@@ -2358,15 +2360,30 @@ function Fenglib:CreateWindow(Config)
             padding.PaddingBottom = UDim.new(0, 12)
             padding.Parent = imageFrame
 
+            -- 垂直布局（使内容与按钮上下排列）
+            local vLayout = Instance.new("UIListLayout")
+            vLayout.FillDirection = Enum.FillDirection.Vertical
+            vLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            vLayout.Padding = UDim.new(0, 8)
+            vLayout.Parent = imageFrame
+
+            -- 水平区域（图标 + 文字）
             local horizontal = Instance.new("Frame")
-            horizontal.Size = UDim2.new(1, 0, 1, 0)
+            horizontal.Size = UDim2.new(1, 0, 0, 0)
+            horizontal.AutomaticSize = Enum.AutomaticSize.Y
             horizontal.BackgroundTransparency = 1
+            horizontal.LayoutOrder = 1
             horizontal.Parent = imageFrame
 
-            -- 左侧图标 80x80
+            local hLayout = Instance.new("UIListLayout")
+            hLayout.FillDirection = Enum.FillDirection.Horizontal
+            hLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+            hLayout.Padding = UDim.new(0, 12)
+            hLayout.Parent = horizontal
+
+            -- 图标
             local iconImg = Instance.new("ImageLabel")
             iconImg.Size = UDim2.new(0, 80, 0, 80)
-            iconImg.Position = UDim2.new(0, 0, 0, 0)
             iconImg.BackgroundTransparency = 1
             iconImg.Image = formatIcon(iconAsset)
             iconImg.ImageColor3 = iconColor
@@ -2375,12 +2392,11 @@ function Fenglib:CreateWindow(Config)
             iconCorner.CornerRadius = UDim.new(0, 12)
             iconCorner.Parent = iconImg
 
-            -- 右侧文字容器
+            -- 文字容器
             local textContainer = Instance.new("Frame")
-            textContainer.Size = UDim2.new(1, -92, 1, 0)   -- 80 + 12间距
-            textContainer.Position = UDim2.new(0, 92, 0, 0)
-            textContainer.BackgroundTransparency = 1
+            textContainer.Size = UDim2.new(1, -92, 0, 0)
             textContainer.AutomaticSize = Enum.AutomaticSize.Y
+            textContainer.BackgroundTransparency = 1
             textContainer.Parent = horizontal
 
             local textLayout = Instance.new("UIListLayout")
@@ -2388,6 +2404,7 @@ function Fenglib:CreateWindow(Config)
             textLayout.SortOrder = Enum.SortOrder.LayoutOrder
             textLayout.Parent = textContainer
 
+            -- 标题
             local titleLabel = Instance.new("TextLabel")
             titleLabel.Size = UDim2.new(1, 0, 0, 0)
             titleLabel.AutomaticSize = Enum.AutomaticSize.Y
@@ -2400,6 +2417,7 @@ function Fenglib:CreateWindow(Config)
             titleLabel.Parent = textContainer
             AddToRegistry(titleLabel, "TextColor3", "Text")
 
+            -- 副标题
             local subtitleLabel = nil
             if subtitle ~= "" then
                 subtitleLabel = Instance.new("TextLabel")
@@ -2416,6 +2434,7 @@ function Fenglib:CreateWindow(Config)
                 AddToRegistry(subtitleLabel, "TextColor3", "Text")
             end
 
+            -- 描述行
             local descLabels = {}
             for _, line in ipairs(description) do
                 local descLabel = Instance.new("TextLabel")
@@ -2433,13 +2452,13 @@ function Fenglib:CreateWindow(Config)
                 table.insert(descLabels, descLabel)
             end
 
+            -- 整体点击区域（保持原有功能）
             local clickBtn = Instance.new("TextButton")
             clickBtn.Size = UDim2.new(1, 0, 1, 0)
             clickBtn.BackgroundTransparency = 1
             clickBtn.Text = ""
             clickBtn.Parent = imageFrame
             clickBtn.MouseButton1Click:Connect(callback)
-
             local function onEnter()
                 Tween(imageFrame, {BackgroundTransparency = 0.00}, 0.18)
             end
@@ -2449,6 +2468,78 @@ function Fenglib:CreateWindow(Config)
             clickBtn.MouseEnter:Connect(onEnter)
             clickBtn.MouseLeave:Connect(onLeave)
 
+            -- ========== 按钮区域（新增） ==========
+            if buttons and type(buttons) == "table" and #buttons > 0 then
+                local btnContainer = Instance.new("Frame")
+                btnContainer.Size = UDim2.new(1, 0, 0, 0)
+                btnContainer.AutomaticSize = Enum.AutomaticSize.Y
+                btnContainer.BackgroundTransparency = 1
+                btnContainer.LayoutOrder = 2
+                btnContainer.Parent = imageFrame
+
+                local btnPadding = Instance.new("UIPadding")
+                btnPadding.PaddingTop = UDim.new(0, 4)   -- 与上面内容的间距
+                btnPadding.Parent = btnContainer
+
+                -- 使用 GridLayout 实现等宽按钮
+                local grid = Instance.new("UIGridLayout")
+                grid.CellSize = UDim2.new(1 / #buttons, 0, 0, 32)
+                grid.CellPadding = UDim2.new(0, 8, 0, 0)
+                grid.FillDirection = Enum.FillDirection.Horizontal
+                grid.SortOrder = Enum.SortOrder.LayoutOrder
+                grid.FillDirectionMaxCells = #buttons
+                grid.Parent = btnContainer
+
+                for i, btnData in ipairs(buttons) do
+                    local button = Instance.new("TextButton")
+                    button.Text = btnData.text or "Button"
+                    button.Font = Enum.Font.GothamMedium
+                    button.TextSize = 12
+                    button.TextColor3 = btnData.textColor or Color3.new(1, 1, 1)
+                    button.AutoButtonColor = false
+                    button.BackgroundTransparency = 0.1
+                    -- 背景色：用户自定义则固定，否则使用主题强调色
+                    local bgColor = btnData.color
+                    if type(bgColor) == "table" then
+                        bgColor = Color3.fromRGB(bgColor[1] or 0, bgColor[2] or 0, bgColor[3] or 0)
+                    end
+                    button.BackgroundColor3 = bgColor or CurrentTheme.Accent
+                    local btnCorner = Instance.new("UICorner")
+                    btnCorner.CornerRadius = UDim.new(0, 6)
+                    btnCorner.Parent = button
+
+                    -- 悬停效果
+                    button.MouseEnter:Connect(function()
+                        Tween(button, {BackgroundTransparency = 0}, 0.15)
+                    end)
+                    button.MouseLeave:Connect(function()
+                        Tween(button, {BackgroundTransparency = 0.1}, 0.15)
+                    end)
+
+                    -- 点击动效（复用库内置效果）
+                    addPressEffect(button)
+
+                    -- 点击回调
+                    button.MouseButton1Click:Connect(function()
+                        if btnData.callback then
+                            btnData.callback()
+                        end
+                    end)
+
+                    button.LayoutOrder = i
+                    button.Parent = btnContainer
+
+                    -- 如果未指定固定颜色，跟随主题变化
+                    if not btnData.color then
+                        table.insert(ThemeListeners, function()
+                            button.BackgroundColor3 = CurrentTheme.Accent
+                        end)
+                    end
+                end
+            end
+            -- ====================================
+
+            -- 返回可更新组件的方法（保持原有接口）
             local self = {}
             function self.UpdateTitle(newTitle)
                 titleLabel.Text = newTitle
@@ -2504,7 +2595,6 @@ function Fenglib:CreateWindow(Config)
             function self.SetVisible(state)
                 imageFrame.Visible = state
             end
-
             return self
         end
         -- ========== Image 组件结束 ==========
