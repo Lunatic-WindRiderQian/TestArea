@@ -793,7 +793,7 @@ function Fenglib:CreateWindow(Config)
 
         -- 修复2D模式拖拽失效
         dragging = false
-        dragOffset = Vector2.new()
+        dragOffsetFromCenter = Vector2.new()
         local _ = Topbar.AbsolutePosition
         
         return true
@@ -838,44 +838,26 @@ function Fenglib:CreateWindow(Config)
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
-    -- ========== 全新拖拽系统（支持鼠标+触摸，修复Vector3和StopPropagation错误） ==========
+    -- ========== 全新拖拽系统（基于窗口中心，支持鼠标+触摸，修复位置偏移问题） ==========
     local dragging = false
-    local dragOffset = Vector2.new()
+    local dragOffsetFromCenter = Vector2.new()   -- 鼠标位置相对于窗口中心的偏移
     
-    local function getWindowTopLeft()
-        local pos = MainFrame.AbsolutePosition
-        return Vector2.new(pos.X, pos.Y)
-    end
-    
-    local function setWindowPositionFromInput(inputPos)
-        -- 确保 inputPos 是 Vector2
-        local pos2D = inputPos
-        if typeof(inputPos) == "Vector3" then
-            pos2D = Vector2.new(inputPos.X, inputPos.Y)
+    local function getMousePosition(input)
+        local pos = input.Position
+        if typeof(pos) == "Vector3" then
+            return Vector2.new(pos.X, pos.Y)
         end
-        local newTopLeft = pos2D - dragOffset
-        local screenSize = Camera.ViewportSize
-        local windowSize = MainFrame.AbsoluteSize
-        newTopLeft = Vector2.new(
-            math.clamp(newTopLeft.X, -windowSize.X + 50, screenSize.X - 50),
-            math.clamp(newTopLeft.Y, 0, screenSize.Y - 50)
-        )
-        local anchorOffset = windowSize * 0.5
-        local newPosOffset = newTopLeft + anchorOffset
-        MainFrame.Position = UDim2.new(0, newPosOffset.X, 0, newPosOffset.Y)
+        return pos
     end
     
     local function startDrag(input)
         if Window._ProjectorModeEnabled then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
-            local windowTopLeft = getWindowTopLeft()
-            local inputPos = input.Position
-            if typeof(inputPos) == "Vector3" then
-                inputPos = Vector2.new(inputPos.X, inputPos.Y)
-            end
-            dragOffset = inputPos - windowTopLeft
-            -- 兼容性处理：某些环境没有 StopPropagation 方法
+            local mousePos = getMousePosition(input)
+            -- 获取窗口中心点（像素坐标）
+            local windowCenter = MainFrame.AbsolutePosition + MainFrame.AbsoluteSize / 2
+            dragOffsetFromCenter = mousePos - windowCenter
             pcall(function() input:StopPropagation() end)
         end
     end
@@ -883,7 +865,22 @@ function Fenglib:CreateWindow(Config)
     local function onDragMove(input)
         if not dragging then return end
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            setWindowPositionFromInput(input.Position)
+            local mousePos = getMousePosition(input)
+            local newCenter = mousePos - dragOffsetFromCenter
+            
+            -- 边界限制（防止窗口拖出屏幕）
+            local screenSize = Camera.ViewportSize
+            local windowSize = MainFrame.AbsoluteSize
+            local minX = windowSize.X / 2
+            local maxX = screenSize.X - windowSize.X / 2
+            local minY = windowSize.Y / 2
+            local maxY = screenSize.Y - windowSize.Y / 2
+            newCenter = Vector2.new(
+                math.clamp(newCenter.X, minX, maxX),
+                math.clamp(newCenter.Y, minY, maxY)
+            )
+            
+            MainFrame.Position = UDim2.new(0, newCenter.X, 0, newCenter.Y)
         end
     end
     
@@ -929,7 +926,6 @@ function Fenglib:CreateWindow(Config)
     OpenButton.ImageTransparency = 0.15
     OpenButton.ZIndex = 10  
 
-    -- 兼容性：使用 pcall 保护 StopPropagation
     OpenButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             pcall(function() input:StopPropagation() end)
