@@ -791,10 +791,10 @@ function Fenglib:CreateWindow(Config)
         Window._ProjectorModeEnabled = false
         Window._ProjectorObjects = nil
 
-        -- 修复2D模式拖拽失效
+        -- 重置拖拽状态
         dragging = false
-        dragOffsetFromCenter = Vector2.new()
-        local _ = Topbar.AbsolutePosition
+        dragStartPos = nil
+        dragStartWindowPos = nil
         
         return true
     end
@@ -838,11 +838,12 @@ function Fenglib:CreateWindow(Config)
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
-    -- ========== 全新拖拽系统（基于窗口中心，支持鼠标+触摸，修复位置偏移问题） ==========
+    -- ========== 全新拖拽系统（基于原始位置增量，支持手机，无边界限制） ==========
     local dragging = false
-    local dragOffsetFromCenter = Vector2.new()   -- 鼠标位置相对于窗口中心的偏移
+    local dragStartPos = nil          -- 按下时的鼠标/触摸屏幕坐标（Vector2）
+    local dragStartWindowPos = nil    -- 按下时的 MainFrame.Position（UDim2，保持原始格式）
     
-    local function getMousePosition(input)
+    local function getInputPosition(input)
         local pos = input.Position
         if typeof(pos) == "Vector3" then
             return Vector2.new(pos.X, pos.Y)
@@ -854,10 +855,8 @@ function Fenglib:CreateWindow(Config)
         if Window._ProjectorModeEnabled then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
-            local mousePos = getMousePosition(input)
-            -- 获取窗口中心点（像素坐标）
-            local windowCenter = MainFrame.AbsolutePosition + MainFrame.AbsoluteSize / 2
-            dragOffsetFromCenter = mousePos - windowCenter
+            dragStartPos = getInputPosition(input)
+            dragStartWindowPos = MainFrame.Position  -- 保存原始的 UDim2 位置
             pcall(function() input:StopPropagation() end)
         end
     end
@@ -865,28 +864,25 @@ function Fenglib:CreateWindow(Config)
     local function onDragMove(input)
         if not dragging then return end
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            local mousePos = getMousePosition(input)
-            local newCenter = mousePos - dragOffsetFromCenter
+            local currentPos = getInputPosition(input)
+            local delta = currentPos - dragStartPos   -- 像素增量
             
-            -- 边界限制（防止窗口拖出屏幕）
-            local screenSize = Camera.ViewportSize
-            local windowSize = MainFrame.AbsoluteSize
-            local minX = windowSize.X / 2
-            local maxX = screenSize.X - windowSize.X / 2
-            local minY = windowSize.Y / 2
-            local maxY = screenSize.Y - windowSize.Y / 2
-            newCenter = Vector2.new(
-                math.clamp(newCenter.X, minX, maxX),
-                math.clamp(newCenter.Y, minY, maxY)
+            -- 根据原始位置和增量计算新位置（直接修改 Offset）
+            local newPos = UDim2.new(
+                dragStartWindowPos.X.Scale,
+                dragStartWindowPos.X.Offset + delta.X,
+                dragStartWindowPos.Y.Scale,
+                dragStartWindowPos.Y.Offset + delta.Y
             )
-            
-            MainFrame.Position = UDim2.new(0, newCenter.X, 0, newCenter.Y)
+            MainFrame.Position = newPos
         end
     end
     
     local function endDrag(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
+            dragStartPos = nil
+            dragStartWindowPos = nil
         end
     end
     
