@@ -1290,16 +1290,29 @@ function Fenglib:CreateWindow(Config)
         local currentContentTween, currentSectionTween
         local open = defaultOpen
 
-        local function updateCanvasOfParent()
-            local currentParent = sectionFrame.Parent
-            while currentParent and not (currentParent:IsA("ScrollingFrame") and currentParent:FindFirstChild("Content") == sectionFrame.Parent) do
-                currentParent = currentParent.Parent
+        -- Helper: find the nearest ScrollingFrame ancestor that contains a UIListLayout (or just the ScrollingFrame itself)
+        local function findParentScrollFrame()
+            local current = sectionFrame.Parent
+            while current do
+                if current:IsA("ScrollingFrame") then
+                    -- check if this ScrollingFrame is the one that contains the UIListLayout where sections are placed
+                    local layout = current:FindFirstChildWhichIsA("UIListLayout")
+                    if layout and layout.Parent == current then
+                        return current
+                    end
+                end
+                current = current.Parent
             end
-            if currentParent and currentParent:IsA("ScrollingFrame") then
-                local listLayout = sectionFrame.Parent:FindFirstChildWhichIsA("UIListLayout")
-                if listLayout then
-                    local totalHeight = listLayout.AbsoluteContentSize.Y + 10
-                    currentParent.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+            return nil
+        end
+
+        local function updateParentCanvas()
+            local scrollFrame = findParentScrollFrame()
+            if scrollFrame then
+                local layout = scrollFrame:FindFirstChildWhichIsA("UIListLayout")
+                if layout then
+                    local totalHeight = layout.AbsoluteContentSize.Y + 20 -- add padding
+                    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
                 end
             end
         end
@@ -1316,10 +1329,10 @@ function Fenglib:CreateWindow(Config)
             currentSectionTween:Play()
             if not instant then
                 currentSectionTween.Completed:Connect(function()
-                    updateCanvasOfParent()
+                    updateParentCanvas()
                 end)
             else
-                updateCanvasOfParent()
+                updateParentCanvas()
             end
         end
 
