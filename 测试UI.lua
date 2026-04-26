@@ -1229,11 +1229,11 @@ function Fenglib:CreateWindow(Config)
         -- Section background: solid card from second file
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 36)
-        sectionFrame.BackgroundTransparency = 0 -- solid background
+        sectionFrame.BackgroundTransparency = 0
         sectionFrame.Parent = parent
         sectionFrame.ClipsDescendants = true
         Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0, 12)
-        AddToRegistry(sectionFrame, "BackgroundColor3", "Element") -- use Element color for solid card
+        AddToRegistry(sectionFrame, "BackgroundColor3", "Element")
 
         local titleBar = Instance.new("Frame")
         titleBar.Size = UDim2.new(1, 0, 0, 36)
@@ -1275,7 +1275,6 @@ function Fenglib:CreateWindow(Config)
         contentContainer.ClipsDescendants = true
         contentContainer.Parent = sectionFrame
 
-        -- Add padding inside content container for better spacing (like second file)
         local contentPadding = Instance.new("UIPadding")
         contentPadding.PaddingLeft = UDim.new(0, 5)
         contentPadding.PaddingRight = UDim.new(0, 5)
@@ -1291,6 +1290,20 @@ function Fenglib:CreateWindow(Config)
         local currentContentTween, currentSectionTween
         local open = defaultOpen
 
+        local function updateCanvasOfParent()
+            local currentParent = sectionFrame.Parent
+            while currentParent and not (currentParent:IsA("ScrollingFrame") and currentParent:FindFirstChild("Content") == sectionFrame.Parent) do
+                currentParent = currentParent.Parent
+            end
+            if currentParent and currentParent:IsA("ScrollingFrame") then
+                local listLayout = sectionFrame.Parent:FindFirstChildWhichIsA("UIListLayout")
+                if listLayout then
+                    local totalHeight = listLayout.AbsoluteContentSize.Y + 10
+                    currentParent.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+                end
+            end
+        end
+
         local function updateSectionHeight(instant)
             local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
             local targetSectionHeight = 36 + targetContentHeight
@@ -1301,6 +1314,13 @@ function Fenglib:CreateWindow(Config)
             currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
             currentContentTween:Play()
             currentSectionTween:Play()
+            if not instant then
+                currentSectionTween.Completed:Connect(function()
+                    updateCanvasOfParent()
+                end)
+            else
+                updateCanvasOfParent()
+            end
         end
 
         task.spawn(function()
