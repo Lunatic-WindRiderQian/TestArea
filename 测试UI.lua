@@ -1291,8 +1291,14 @@ function Fenglib:CreateWindow(Config)
         local currentContentTween, currentSectionTween
         local open = defaultOpen
 
+        -- 修复：计算内容高度时包含 UIPadding 的上下边距
         local function updateSectionHeight(instant)
-            local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
+            local targetContentHeight = 0
+            if open then
+                local paddingTop = contentPadding and contentPadding.PaddingTop.Offset or 0
+                local paddingBottom = contentPadding and contentPadding.PaddingBottom.Offset or 0
+                targetContentHeight = contentLayout.AbsoluteContentSize.Y + paddingTop + paddingBottom
+            end
             local targetSectionHeight = 36 + targetContentHeight
             if currentContentTween then currentContentTween:Cancel() end
             if currentSectionTween then currentSectionTween:Cancel() end
@@ -1301,22 +1307,6 @@ function Fenglib:CreateWindow(Config)
             currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
             currentContentTween:Play()
             currentSectionTween:Play()
-            
-            -- After the animation, force refresh the outer ScrollingFrame canvas
-            if not instant then
-                currentSectionTween.Completed:Connect(function()
-                    local scroll = contentContainer
-                    while scroll and not scroll:IsA("ScrollingFrame") do
-                        scroll = scroll.Parent
-                    end
-                    if scroll and scroll.CanvasSize then
-                        local layout = contentContainer.Parent:FindFirstChildOfClass("UIListLayout")
-                        if layout then
-                            layout:GetPropertyChangedSignal("AbsoluteContentSize"):Wait()
-                        end
-                    end
-                end)
-            end
         end
 
         task.spawn(function()
@@ -2636,7 +2626,6 @@ function Fenglib:CreateWindow(Config)
 
         local HolderPadding = Instance.new("UIPadding")
         HolderPadding.PaddingRight = UDim.new(0, 2)
-        HolderPadding.PaddingBottom = UDim.new(0, 20)   -- added bottom padding
         HolderPadding.Parent = ContentHolder
 
         local PageList = Instance.new("UIListLayout")
@@ -2645,14 +2634,7 @@ function Fenglib:CreateWindow(Config)
         PageList.Parent = ContentHolder
 
         local function updateCanvas()
-            local bottomPadding = 0
-            for _, pad in ipairs(ContentHolder:GetChildren()) do
-                if pad:IsA("UIPadding") and pad.PaddingBottom then
-                    bottomPadding = pad.PaddingBottom.Offset
-                    break
-                end
-            end
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + bottomPadding + 10)
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
         end
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         task.spawn(function() task.wait(); updateCanvas() end)
@@ -2827,7 +2809,6 @@ function Fenglib:CreateWindow(Config)
 
         local LeftHolderPadding = Instance.new("UIPadding")
         LeftHolderPadding.PaddingRight = UDim.new(0, 2)
-        LeftHolderPadding.PaddingBottom = UDim.new(0, 20)   -- added bottom padding
         LeftHolderPadding.Parent = LeftHolder
 
         local LeftList = Instance.new("UIListLayout")
@@ -2855,7 +2836,6 @@ function Fenglib:CreateWindow(Config)
 
         local RightHolderPadding = Instance.new("UIPadding")
         RightHolderPadding.PaddingRight = UDim.new(0, 2)
-        RightHolderPadding.PaddingBottom = UDim.new(0, 20)   -- added bottom padding
         RightHolderPadding.Parent = RightHolder
 
         local RightList = Instance.new("UIListLayout")
@@ -2864,24 +2844,10 @@ function Fenglib:CreateWindow(Config)
         RightList.Parent = RightHolder
 
         local function updateLeftCanvas()
-            local bottomPadding = 0
-            for _, pad in ipairs(LeftHolder:GetChildren()) do
-                if pad:IsA("UIPadding") and pad.PaddingBottom then
-                    bottomPadding = pad.PaddingBottom.Offset
-                    break
-                end
-            end
-            LeftColumn.CanvasSize = UDim2.new(0, 0, 0, LeftList.AbsoluteContentSize.Y + bottomPadding + 10)
+            LeftColumn.CanvasSize = UDim2.new(0, 0, 0, LeftList.AbsoluteContentSize.Y + 10)
         end
         local function updateRightCanvas()
-            local bottomPadding = 0
-            for _, pad in ipairs(RightHolder:GetChildren()) do
-                if pad:IsA("UIPadding") and pad.PaddingBottom then
-                    bottomPadding = pad.PaddingBottom.Offset
-                    break
-                end
-            end
-            RightColumn.CanvasSize = UDim2.new(0, 0, 0, RightList.AbsoluteContentSize.Y + bottomPadding + 10)
+            RightColumn.CanvasSize = UDim2.new(0, 0, 0, RightList.AbsoluteContentSize.Y + 10)
         end
         LeftList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateLeftCanvas)
         RightList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightCanvas)
