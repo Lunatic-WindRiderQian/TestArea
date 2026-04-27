@@ -1229,11 +1229,11 @@ function Fenglib:CreateWindow(Config)
         -- Section background: solid card from second file
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 36)
-        sectionFrame.BackgroundTransparency = 0
+        sectionFrame.BackgroundTransparency = 0 -- solid background
         sectionFrame.Parent = parent
         sectionFrame.ClipsDescendants = true
         Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0, 12)
-        AddToRegistry(sectionFrame, "BackgroundColor3", "Element")
+        AddToRegistry(sectionFrame, "BackgroundColor3", "Element") -- use Element color for solid card
 
         local titleBar = Instance.new("Frame")
         titleBar.Size = UDim2.new(1, 0, 0, 36)
@@ -1275,6 +1275,7 @@ function Fenglib:CreateWindow(Config)
         contentContainer.ClipsDescendants = true
         contentContainer.Parent = sectionFrame
 
+        -- Add padding inside content container for better spacing (like second file)
         local contentPadding = Instance.new("UIPadding")
         contentPadding.PaddingLeft = UDim.new(0, 5)
         contentPadding.PaddingRight = UDim.new(0, 5)
@@ -1290,33 +1291,6 @@ function Fenglib:CreateWindow(Config)
         local currentContentTween, currentSectionTween
         local open = defaultOpen
 
-        -- Helper: find the nearest ScrollingFrame ancestor that contains a UIListLayout (or just the ScrollingFrame itself)
-        local function findParentScrollFrame()
-            local current = sectionFrame.Parent
-            while current do
-                if current:IsA("ScrollingFrame") then
-                    -- check if this ScrollingFrame is the one that contains the UIListLayout where sections are placed
-                    local layout = current:FindFirstChildWhichIsA("UIListLayout")
-                    if layout and layout.Parent == current then
-                        return current
-                    end
-                end
-                current = current.Parent
-            end
-            return nil
-        end
-
-        local function updateParentCanvas()
-            local scrollFrame = findParentScrollFrame()
-            if scrollFrame then
-                local layout = scrollFrame:FindFirstChildWhichIsA("UIListLayout")
-                if layout then
-                    local totalHeight = layout.AbsoluteContentSize.Y + 20 -- add padding
-                    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
-                end
-            end
-        end
-
         local function updateSectionHeight(instant)
             local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
             local targetSectionHeight = 36 + targetContentHeight
@@ -1327,12 +1301,21 @@ function Fenglib:CreateWindow(Config)
             currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
             currentContentTween:Play()
             currentSectionTween:Play()
+            
+            -- After the animation, force refresh the outer ScrollingFrame canvas
             if not instant then
                 currentSectionTween.Completed:Connect(function()
-                    updateParentCanvas()
+                    local scroll = contentContainer
+                    while scroll and not scroll:IsA("ScrollingFrame") do
+                        scroll = scroll.Parent
+                    end
+                    if scroll and scroll.CanvasSize then
+                        local layout = contentContainer.Parent:FindFirstChildOfClass("UIListLayout")
+                        if layout then
+                            layout:GetPropertyChangedSignal("AbsoluteContentSize"):Wait()
+                        end
+                    end
                 end)
-            else
-                updateParentCanvas()
             end
         end
 
@@ -2653,6 +2636,7 @@ function Fenglib:CreateWindow(Config)
 
         local HolderPadding = Instance.new("UIPadding")
         HolderPadding.PaddingRight = UDim.new(0, 2)
+        HolderPadding.PaddingBottom = UDim.new(0, 20)   -- added bottom padding
         HolderPadding.Parent = ContentHolder
 
         local PageList = Instance.new("UIListLayout")
@@ -2661,7 +2645,14 @@ function Fenglib:CreateWindow(Config)
         PageList.Parent = ContentHolder
 
         local function updateCanvas()
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
+            local bottomPadding = 0
+            for _, pad in ipairs(ContentHolder:GetChildren()) do
+                if pad:IsA("UIPadding") and pad.PaddingBottom then
+                    bottomPadding = pad.PaddingBottom.Offset
+                    break
+                end
+            end
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + bottomPadding + 10)
         end
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         task.spawn(function() task.wait(); updateCanvas() end)
@@ -2836,6 +2827,7 @@ function Fenglib:CreateWindow(Config)
 
         local LeftHolderPadding = Instance.new("UIPadding")
         LeftHolderPadding.PaddingRight = UDim.new(0, 2)
+        LeftHolderPadding.PaddingBottom = UDim.new(0, 20)   -- added bottom padding
         LeftHolderPadding.Parent = LeftHolder
 
         local LeftList = Instance.new("UIListLayout")
@@ -2863,6 +2855,7 @@ function Fenglib:CreateWindow(Config)
 
         local RightHolderPadding = Instance.new("UIPadding")
         RightHolderPadding.PaddingRight = UDim.new(0, 2)
+        RightHolderPadding.PaddingBottom = UDim.new(0, 20)   -- added bottom padding
         RightHolderPadding.Parent = RightHolder
 
         local RightList = Instance.new("UIListLayout")
@@ -2871,10 +2864,24 @@ function Fenglib:CreateWindow(Config)
         RightList.Parent = RightHolder
 
         local function updateLeftCanvas()
-            LeftColumn.CanvasSize = UDim2.new(0, 0, 0, LeftList.AbsoluteContentSize.Y + 10)
+            local bottomPadding = 0
+            for _, pad in ipairs(LeftHolder:GetChildren()) do
+                if pad:IsA("UIPadding") and pad.PaddingBottom then
+                    bottomPadding = pad.PaddingBottom.Offset
+                    break
+                end
+            end
+            LeftColumn.CanvasSize = UDim2.new(0, 0, 0, LeftList.AbsoluteContentSize.Y + bottomPadding + 10)
         end
         local function updateRightCanvas()
-            RightColumn.CanvasSize = UDim2.new(0, 0, 0, RightList.AbsoluteContentSize.Y + 10)
+            local bottomPadding = 0
+            for _, pad in ipairs(RightHolder:GetChildren()) do
+                if pad:IsA("UIPadding") and pad.PaddingBottom then
+                    bottomPadding = pad.PaddingBottom.Offset
+                    break
+                end
+            end
+            RightColumn.CanvasSize = UDim2.new(0, 0, 0, RightList.AbsoluteContentSize.Y + bottomPadding + 10)
         end
         LeftList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateLeftCanvas)
         RightList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightCanvas)
