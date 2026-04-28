@@ -16,243 +16,6 @@ local Registry = {}
 local ConfigObjects = {} 
 local ThemeListeners = {}
 
--- ================= 颜色配置（从第一个文件搬运）=================
-local Theme = {
-    Background = Color3.fromRGB(20, 20, 28),
-    Sidebar    = Color3.fromRGB(25, 25, 35),
-    Element    = Color3.fromRGB(32, 32, 42),
-    Text       = Color3.fromRGB(245, 245, 255),
-    TextDim    = Color3.fromRGB(160, 160, 180),
-    Accent1    = Color3.fromRGB(140, 20, 255), 
-    Accent2    = Color3.fromRGB(255, 50, 180)
-}
-
-local ThemePresets = {
-    ["Eternal (Default)"] = {
-        Background = Color3.fromRGB(20, 20, 28), 
-        Sidebar = Color3.fromRGB(25, 25, 35), 
-        Element = Color3.fromRGB(32, 32, 42),
-        Text = Color3.fromRGB(245, 245, 255), 
-        TextDim = Color3.fromRGB(160, 160, 180),
-        Accent1 = Color3.fromRGB(140, 20, 255), 
-        Accent2 = Color3.fromRGB(255, 50, 180)
-    },
-    ["Ocean Breeze"] = {
-        Background = Color3.fromRGB(10, 20, 30), 
-        Sidebar = Color3.fromRGB(15, 25, 40), 
-        Element = Color3.fromRGB(20, 35, 55),
-        Text = Color3.fromRGB(240, 250, 255), 
-        TextDim = Color3.fromRGB(140, 160, 180),
-        Accent1 = Color3.fromRGB(0, 190, 255), 
-        Accent2 = Color3.fromRGB(0, 100, 255)
-    },
-    ["Toxic Nature"] = {
-        Background = Color3.fromRGB(20, 25, 20), 
-        Sidebar = Color3.fromRGB(25, 35, 25), 
-        Element = Color3.fromRGB(35, 45, 35),
-        Text = Color3.fromRGB(240, 255, 240), 
-        TextDim = Color3.fromRGB(150, 180, 150),
-        Accent1 = Color3.fromRGB(100, 255, 50), 
-        Accent2 = Color3.fromRGB(50, 180, 0)
-    },
-    ["Blood Moon"] = {
-        Background = Color3.fromRGB(25, 10, 10), 
-        Sidebar = Color3.fromRGB(35, 15, 15), 
-        Element = Color3.fromRGB(45, 20, 20),
-        Text = Color3.fromRGB(255, 240, 240), 
-        TextDim = Color3.fromRGB(180, 140, 140),
-        Accent1 = Color3.fromRGB(255, 50, 50), 
-        Accent2 = Color3.fromRGB(180, 0, 0)
-    },
-    ["Midnight Sky"] = {
-        Background = Color3.fromRGB(15, 15, 20), 
-        Sidebar = Color3.fromRGB(25, 25, 30), 
-        Element = Color3.fromRGB(35, 35, 45),
-        Text = Color3.fromRGB(255, 255, 255), 
-        TextDim = Color3.fromRGB(160, 160, 170),
-        Accent1 = Color3.fromRGB(100, 100, 255), 
-        Accent2 = Color3.fromRGB(180, 180, 255)
-    },
-    ["Cotton Candy"] = {
-        Background = Color3.fromRGB(30, 20, 30), 
-        Sidebar = Color3.fromRGB(40, 25, 40), 
-        Element = Color3.fromRGB(50, 35, 50),
-        Text = Color3.fromRGB(255, 245, 255), 
-        TextDim = Color3.fromRGB(200, 160, 200),
-        Accent1 = Color3.fromRGB(255, 100, 200), 
-        Accent2 = Color3.fromRGB(100, 200, 255)
-    },
-    ["Sunset Dunes"] = {
-        Background = Color3.fromRGB(30, 20, 15), 
-        Sidebar = Color3.fromRGB(40, 25, 20), 
-        Element = Color3.fromRGB(55, 35, 25),
-        Text = Color3.fromRGB(255, 245, 235), 
-        TextDim = Color3.fromRGB(200, 170, 150),
-        Accent1 = Color3.fromRGB(255, 150, 50), 
-        Accent2 = Color3.fromRGB(255, 100, 0)
-    },
-    ["Arctic Frost"] = {
-        Background = Color3.fromRGB(20, 25, 30), 
-        Sidebar = Color3.fromRGB(25, 35, 40), 
-        Element = Color3.fromRGB(35, 45, 55),
-        Text = Color3.fromRGB(240, 250, 255), 
-        TextDim = Color3.fromRGB(180, 200, 220),
-        Accent1 = Color3.fromRGB(100, 220, 255), 
-        Accent2 = Color3.fromRGB(50, 150, 255)
-    },
-    ["Cyberpunk Neon"] = {
-        Background = Color3.fromRGB(10, 5, 20), 
-        Sidebar = Color3.fromRGB(15, 10, 30), 
-        Element = Color3.fromRGB(25, 15, 40),
-        Text = Color3.fromRGB(255, 255, 255), 
-        TextDim = Color3.fromRGB(180, 180, 220),
-        Accent1 = Color3.fromRGB(255, 0, 255), 
-        Accent2 = Color3.fromRGB(0, 255, 255)
-    },
-    ["Forest Guardian"] = {
-        Background = Color3.fromRGB(15, 25, 20), 
-        Sidebar = Color3.fromRGB(20, 35, 25), 
-        Element = Color3.fromRGB(30, 45, 35),
-        Text = Color3.fromRGB(230, 255, 240), 
-        TextDim = Color3.fromRGB(160, 200, 170),
-        Accent1 = Color3.fromRGB(80, 220, 120), 
-        Accent2 = Color3.fromRGB(40, 180, 100)
-    },
-    ["Royal Purple"] = {
-        Background = Color3.fromRGB(25, 15, 35), 
-        Sidebar = Color3.fromRGB(35, 20, 50), 
-        Element = Color3.fromRGB(45, 30, 65),
-        Text = Color3.fromRGB(255, 245, 255), 
-        TextDim = Color3.fromRGB(200, 180, 220),
-        Accent1 = Color3.fromRGB(180, 80, 255), 
-        Accent2 = Color3.fromRGB(140, 40, 220)
-    },
-    ["Golden Hour"] = {
-        Background = Color3.fromRGB(30, 25, 15), 
-        Sidebar = Color3.fromRGB(40, 30, 20), 
-        Element = Color3.fromRGB(55, 40, 25),
-        Text = Color3.fromRGB(255, 250, 235), 
-        TextDim = Color3.fromRGB(220, 200, 160),
-        Accent1 = Color3.fromRGB(255, 200, 50), 
-        Accent2 = Color3.fromRGB(220, 160, 30)
-    },
-    ["Abyssal Deep"] = {
-        Background = Color3.fromRGB(5, 10, 20), 
-        Sidebar = Color3.fromRGB(10, 15, 30), 
-        Element = Color3.fromRGB(15, 25, 45),
-        Text = Color3.fromRGB(230, 240, 255), 
-        TextDim = Color3.fromRGB(150, 170, 200),
-        Accent1 = Color3.fromRGB(0, 150, 200), 
-        Accent2 = Color3.fromRGB(0, 100, 150)
-    },
-    ["Crimson Dawn"] = {
-        Background = Color3.fromRGB(30, 10, 15), 
-        Sidebar = Color3.fromRGB(40, 15, 20), 
-        Element = Color3.fromRGB(55, 20, 25),
-        Text = Color3.fromRGB(255, 235, 240), 
-        TextDim = Color3.fromRGB(220, 160, 170),
-        Accent1 = Color3.fromRGB(255, 60, 80), 
-        Accent2 = Color3.fromRGB(200, 30, 50)
-    },
-    ["Matrix Green"] = {
-        Background = Color3.fromRGB(5, 15, 10), 
-        Sidebar = Color3.fromRGB(10, 25, 15), 
-        Element = Color3.fromRGB(15, 35, 20),
-        Text = Color3.fromRGB(220, 255, 220), 
-        TextDim = Color3.fromRGB(150, 220, 150),
-        Accent1 = Color3.fromRGB(0, 255, 100), 
-        Accent2 = Color3.fromRGB(0, 180, 70)
-    },
-    ["Pastel Dream"] = {
-        Background = Color3.fromRGB(240, 235, 245), 
-        Sidebar = Color3.fromRGB(245, 240, 250), 
-        Element = Color3.fromRGB(250, 245, 255),
-        Text = Color3.fromRGB(40, 35, 50), 
-        TextDim = Color3.fromRGB(120, 110, 140),
-        Accent1 = Color3.fromRGB(255, 150, 200), 
-        Accent2 = Color3.fromRGB(150, 200, 255)
-    },
-    ["Industrial Gray"] = {
-        Background = Color3.fromRGB(35, 35, 40), 
-        Sidebar = Color3.fromRGB(45, 45, 50), 
-        Element = Color3.fromRGB(55, 55, 60),
-        Text = Color3.fromRGB(240, 240, 245), 
-        TextDim = Color3.fromRGB(180, 180, 190),
-        Accent1 = Color3.fromRGB(255, 100, 50), 
-        Accent2 = Color3.fromRGB(200, 150, 50)
-    },
-    ["Solar Flare"] = {
-        Background = Color3.fromRGB(40, 25, 10), 
-        Sidebar = Color3.fromRGB(50, 30, 15), 
-        Element = Color3.fromRGB(65, 40, 20),
-        Text = Color3.fromRGB(255, 250, 240), 
-        TextDim = Color3.fromRGB(220, 200, 170),
-        Accent1 = Color3.fromRGB(255, 180, 50), 
-        Accent2 = Color3.fromRGB(255, 120, 30)
-    },
-    ["Twilight Zone"] = {
-        Background = Color3.fromRGB(20, 15, 30), 
-        Sidebar = Color3.fromRGB(30, 20, 40), 
-        Element = Color3.fromRGB(40, 30, 55),
-        Text = Color3.fromRGB(245, 240, 255), 
-        TextDim = Color3.fromRGB(180, 170, 200),
-        Accent1 = Color3.fromRGB(180, 100, 255), 
-        Accent2 = Color3.fromRGB(100, 200, 255)
-    },
-    ["Mono Chrome"] = {
-        Background = Color3.fromRGB(20, 20, 20), 
-        Sidebar = Color3.fromRGB(30, 30, 30), 
-        Element = Color3.fromRGB(40, 40, 40),
-        Text = Color3.fromRGB(255, 255, 255), 
-        TextDim = Color3.fromRGB(180, 180, 180),
-        Accent1 = Color3.fromRGB(255, 255, 255), 
-        Accent2 = Color3.fromRGB(200, 200, 200)
-    },
-}
-
--- 映射为原UI需要的字段（Main, Top, Text, Accent, Stroke, Element），并自动计算Stroke（Sidebar混合Background）
-local CurrentTheme = {
-    Main = Color3.fromRGB(20,20,28),
-    Top = Color3.fromRGB(25,25,35),
-    Text = Color3.fromRGB(245,245,255),
-    Accent = Color3.fromRGB(140,20,255),
-    Stroke = Color3.fromRGB(40,40,48),
-    Element = Color3.fromRGB(32,32,42)
-}
-
-local function computeStroke(bg, sidebar)
-    -- 取两者中间色，略深一点作为边框
-    return Color3.new(
-        (bg.R + sidebar.R) / 2.5,
-        (bg.G + sidebar.G) / 2.5,
-        (bg.B + sidebar.B) / 2.5
-    )
-end
-
-function Fenglib:SetTheme(themeName)
-    local preset = ThemePresets[themeName]
-    if not preset then return end
-    -- 更新CurrentTheme各字段
-    CurrentTheme.Main = preset.Background
-    CurrentTheme.Top = preset.Sidebar
-    CurrentTheme.Text = preset.Text
-    CurrentTheme.Accent = preset.Accent1
-    CurrentTheme.Element = preset.Element
-    CurrentTheme.Stroke = computeStroke(preset.Background, preset.Sidebar)
-    -- 触发所有已注册UI元素的颜色更新
-    for _, r in pairs(Registry) do
-        if r.Object and r.Object.Parent then
-            TweenService:Create(r.Object, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {[r.Property] = CurrentTheme[r.Type]}):Play()
-        end
-    end
-    for _, fn in pairs(ThemeListeners) do
-        pcall(fn)
-    end
-end
--- 默认加载Eternal主题
-Fenglib:SetTheme("Eternal (Default)")
-
--- ============== 原有辅助函数 ==============
 local function clamp(value, min, max)
     return math.max(min, math.min(max, value))
 end
@@ -306,6 +69,18 @@ local function createPulseGlow(object)
     }
 end
 
+-- 全新现代配色方案
+local Themes = {
+    Dark   = {Main = Color3.fromRGB(18, 18, 22), Top = Color3.fromRGB(28, 28, 34), Text = Color3.fromRGB(235, 235, 245), Accent = Color3.fromRGB(94, 129, 255), Stroke = Color3.fromRGB(55, 55, 65), Element = Color3.fromRGB(38, 38, 46)},
+    White  = {Main = Color3.fromRGB(248, 248, 250), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(30, 30, 40), Accent = Color3.fromRGB(0, 110, 230), Stroke = Color3.fromRGB(225, 225, 235), Element = Color3.fromRGB(240, 240, 248)},
+    Purple = {Main = Color3.fromRGB(22, 18, 28), Top = Color3.fromRGB(32, 28, 40), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(170, 100, 255), Stroke = Color3.fromRGB(60, 55, 75), Element = Color3.fromRGB(42, 36, 54)},
+    Blue   = {Main = Color3.fromRGB(16, 20, 32), Top = Color3.fromRGB(28, 34, 48), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(55, 65, 85), Element = Color3.fromRGB(32, 40, 58)},
+    Red    = {Main = Color3.fromRGB(30, 18, 18), Top = Color3.fromRGB(42, 28, 28), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 100, 100), Stroke = Color3.fromRGB(70, 50, 50), Element = Color3.fromRGB(56, 38, 38)},
+    Yellow = {Main = Color3.fromRGB(34, 34, 18), Top = Color3.fromRGB(46, 46, 28), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(255, 210, 90), Stroke = Color3.fromRGB(75, 75, 55), Element = Color3.fromRGB(58, 56, 36)},
+    Green  = {Main = Color3.fromRGB(16, 28, 20), Top = Color3.fromRGB(26, 40, 30), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(70, 230, 140), Stroke = Color3.fromRGB(50, 70, 60), Element = Color3.fromRGB(36, 54, 42)},
+}
+local CurrentTheme = Themes.Dark
+
 local function AddToRegistry(obj, prop, themeKey)
     table.insert(Registry, {Object = obj, Property = prop, Type = themeKey})
     obj[prop] = CurrentTheme[themeKey]
@@ -313,6 +88,20 @@ end
 
 local function Tween(obj, props, time)
     TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
+end
+
+function Fenglib:SetTheme(themeName)
+    if Themes[themeName] then
+        CurrentTheme = Themes[themeName]
+        for _, r in pairs(Registry) do
+            if r.Object then
+                Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]})
+            end
+        end
+        for _, fn in pairs(ThemeListeners) do
+            pcall(fn)
+        end
+    end
 end
 
 function Fenglib:ToggleRainbow(bool) RainbowEnabled = bool end
@@ -370,6 +159,32 @@ function Fenglib:CreateWindow(Config)
     Window.ConfigFolder = Title.."/Config"
     Window.CurrentConfig = ""
 
+    if Config.Theme then
+        if type(Config.Theme) == "string" then
+            if Themes[Config.Theme] then
+                CurrentTheme = Themes[Config.Theme]
+            end
+        elseif type(Config.Theme) == "table" then
+            local t = Config.Theme
+            local function toC3(v)
+                if type(v) == "table" then return Color3.fromRGB(v[1] or 0, v[2] or 0, v[3] or 0)
+                elseif type(v) == "userdata" then return v
+                else return Color3.new(0,0,0) end
+            end
+            local customTheme = {
+                Main   = t.Main   and toC3(t.Main)   or CurrentTheme.Main,
+                Top    = t.Top    and toC3(t.Top)    or CurrentTheme.Top,
+                Text   = t.Text   and toC3(t.Text)   or CurrentTheme.Text,
+                Accent = t.Accent and toC3(t.Accent) or CurrentTheme.Accent,
+                Stroke = t.Stroke and toC3(t.Stroke) or CurrentTheme.Stroke,
+                Element = t.Element and toC3(t.Element) or CurrentTheme.Element,
+            }
+            local customName = t.Name or "Custom"
+            Themes[customName] = customTheme
+            CurrentTheme = customTheme
+        end
+    end
+
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "FengYu-Bento"
     ScreenGui.Parent = CoreGui
@@ -377,9 +192,10 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
+    -- 通知容器 (右下角，更精致)
     local NotificationHolder = Instance.new("Frame")
     NotificationHolder.Name = "NotificationHolder"
-    NotificationHolder.Size = UDim2.new(0, 300, 0, 0)
+    NotificationHolder.Size = UDim2.new(0, 320, 0, 0)
     NotificationHolder.AutomaticSize = Enum.AutomaticSize.Y
     NotificationHolder.Position = UDim2.new(1, -20, 1, -20)
     NotificationHolder.AnchorPoint = Vector2.new(1, 1)
@@ -392,28 +208,46 @@ function Fenglib:CreateWindow(Config)
     HolderList.HorizontalAlignment = Enum.HorizontalAlignment.Right
     HolderList.VerticalAlignment = Enum.VerticalAlignment.Bottom
     HolderList.SortOrder = Enum.SortOrder.LayoutOrder
-    HolderList.Padding = UDim.new(0, 5)
+    HolderList.Padding = UDim.new(0, 8)
     HolderList.Parent = NotificationHolder
 
     local HolderPadding = Instance.new("UIPadding")
-    HolderPadding.PaddingRight = UDim.new(0, 5)
-    HolderPadding.PaddingBottom = UDim.new(0, 5)
+    HolderPadding.PaddingRight = UDim.new(0, 8)
+    HolderPadding.PaddingBottom = UDim.new(0, 8)
     HolderPadding.Parent = NotificationHolder
 
+    -- 主窗口 (更大圆角 + 精致阴影)
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0) 
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = false
-    MainFrame.BackgroundTransparency = 0.05
+    MainFrame.BackgroundTransparency = 0
     MainFrame.Parent = ScreenGui
-    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
+    local mainCorner = Instance.new("UICorner")
+    mainCorner.CornerRadius = UDim.new(0, 20)
+    mainCorner.Parent = MainFrame
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
+    -- 更高级的边框效果（双层边框感）
     local Stroke = Instance.new("UIStroke")
-    Stroke.Thickness = 2
+    Stroke.Thickness = 1.5
+    Stroke.Transparency = 0.5
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
+
+    local Shadow = Instance.new("Frame")
+    Shadow.Name = "Shadow"
+    Shadow.Size = UDim2.new(1, 8, 1, 8)
+    Shadow.Position = UDim2.new(0, -4, 0, -4)
+    Shadow.BackgroundColor3 = Color3.new(0,0,0)
+    Shadow.BackgroundTransparency = 0.7
+    Shadow.BorderSizePixel = 0
+    Shadow.ZIndex = -1
+    Shadow.Parent = MainFrame
+    local shadowCorner = Instance.new("UICorner")
+    shadowCorner.CornerRadius = UDim.new(0, 24)
+    shadowCorner.Parent = Shadow
 
     local Gradient = Instance.new("UIGradient")
     Gradient.Parent = Stroke
@@ -455,7 +289,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    local topbarHeight = Subtitle and 45 or 40
+    local topbarHeight = Subtitle and 52 or 46
 
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)
@@ -472,21 +306,21 @@ function Fenglib:CreateWindow(Config)
 
     local Icon = Instance.new("ImageLabel")
     Icon.Name = "WindowIcon"
-    Icon.Size = UDim2.new(0, 32, 0, 32)
-    Icon.Position = UDim2.new(0, 10, 0.5, -16)  
+    Icon.Size = UDim2.new(0, 34, 0, 34)
+    Icon.Position = UDim2.new(0, 14, 0.5, -17)  
     Icon.BackgroundTransparency = 1
     Icon.Image = IconAsset
     Icon.Parent = Topbar
     AddToRegistry(Icon, "ImageColor3", "Text")
 
     local iconCorner = Instance.new("UICorner")
-    iconCorner.CornerRadius = UDim.new(0, 8)
+    iconCorner.CornerRadius = UDim.new(0, 10)
     iconCorner.Parent = Icon
 
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
-    ButtonGroup.Size = UDim2.new(0, 180, 1, 0)
-    ButtonGroup.Position = UDim2.new(1, -190, 0, 0)
+    ButtonGroup.Size = UDim2.new(0, 190, 1, 0)
+    ButtonGroup.Position = UDim2.new(1, -200, 0, 0)
     ButtonGroup.BackgroundTransparency = 1
     ButtonGroup.Parent = Topbar
 
@@ -494,11 +328,11 @@ function Fenglib:CreateWindow(Config)
     ButtonLayout.FillDirection = Enum.FillDirection.Horizontal
     ButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
     ButtonLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    ButtonLayout.Padding = UDim.new(0, 5)
+    ButtonLayout.Padding = UDim.new(0, 8)
     ButtonLayout.Parent = ButtonGroup
 
     local ButtonPadding = Instance.new("UIPadding")
-    ButtonPadding.PaddingRight = UDim.new(0, 10)
+    ButtonPadding.PaddingRight = UDim.new(0, 12)
     ButtonPadding.Parent = ButtonGroup
 
     local function NewRoundFrame(radius, imageType, properties, children)
@@ -522,22 +356,22 @@ function Fenglib:CreateWindow(Config)
 
     local function createTextButton(textSymbol, callback)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 36, 0, 36)
+        btn.Size = UDim2.new(0, 38, 0, 38)
         btn.Text = textSymbol
         btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 20
+        btn.TextSize = 22
         btn.TextColor3 = Color3.new(1, 1, 1)
         btn.BackgroundTransparency = 1
         btn.Parent = ButtonGroup
 
-        local bg = NewRoundFrame(9, "Squircle", {
+        local bg = NewRoundFrame(10, "Squircle", {
             Size = UDim2.new(1, 0, 1, 0),
-            ImageTransparency = 0.95,
+            ImageTransparency = 0.92,
             ImageColor3 = Color3.new(1, 1, 1),
             Parent = btn
         })
 
-        local outline = NewRoundFrame(9, "SquircleOutline", {
+        local outline = NewRoundFrame(10, "SquircleOutline", {
             Size = UDim2.new(1, 0, 1, 0),
             ImageTransparency = 1,
             ImageColor3 = Color3.new(1, 1, 1),
@@ -545,11 +379,7 @@ function Fenglib:CreateWindow(Config)
         })
         local gradient = Instance.new("UIGradient")
         gradient.Rotation = 45
-        gradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 255, 255))
-        })
+        gradient.Color = ColorSequence.new(Color3.new(1,1,1))
         gradient.Transparency = NumberSequence.new({
             NumberSequenceKeypoint.new(0.0, 0.1),
             NumberSequenceKeypoint.new(0.5, 1),
@@ -558,11 +388,11 @@ function Fenglib:CreateWindow(Config)
         gradient.Parent = outline
 
         local function onHover()
-            Tween(bg, {ImageTransparency = 0.8}, 0.2)
-            Tween(outline, {ImageTransparency = 0.75}, 0.2)
+            Tween(bg, {ImageTransparency = 0.7}, 0.2)
+            Tween(outline, {ImageTransparency = 0.6}, 0.2)
         end
         local function onLeave()
-            Tween(bg, {ImageTransparency = 0.95}, 0.2)
+            Tween(bg, {ImageTransparency = 0.92}, 0.2)
             Tween(outline, {ImageTransparency = 1}, 0.2)
         end
 
@@ -575,19 +405,19 @@ function Fenglib:CreateWindow(Config)
 
     local function createIconButton(iconAsset, callback)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 36, 0, 36)
+        btn.Size = UDim2.new(0, 38, 0, 38)
         btn.Text = ""
         btn.BackgroundTransparency = 1
         btn.Parent = ButtonGroup
 
-        local bg = NewRoundFrame(9, "Squircle", {
+        local bg = NewRoundFrame(10, "Squircle", {
             Size = UDim2.new(1, 0, 1, 0),
-            ImageTransparency = 0.95,
+            ImageTransparency = 0.92,
             ImageColor3 = Color3.new(1, 1, 1),
             Parent = btn
         })
 
-        local outline = NewRoundFrame(9, "SquircleOutline", {
+        local outline = NewRoundFrame(10, "SquircleOutline", {
             Size = UDim2.new(1, 0, 1, 0),
             ImageTransparency = 1,
             ImageColor3 = Color3.new(1, 1, 1),
@@ -595,11 +425,7 @@ function Fenglib:CreateWindow(Config)
         })
         local gradient = Instance.new("UIGradient")
         gradient.Rotation = 45
-        gradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 255, 255))
-        })
+        gradient.Color = ColorSequence.new(Color3.new(1,1,1))
         gradient.Transparency = NumberSequence.new({
             NumberSequenceKeypoint.new(0.0, 0.1),
             NumberSequenceKeypoint.new(0.5, 1),
@@ -608,7 +434,7 @@ function Fenglib:CreateWindow(Config)
         gradient.Parent = outline
 
         local icon = Instance.new("ImageLabel")
-        icon.Size = UDim2.new(0, 18, 0, 18)
+        icon.Size = UDim2.new(0, 20, 0, 20)
         icon.Position = UDim2.new(0.5, 0, 0.5, 0)
         icon.AnchorPoint = Vector2.new(0.5, 0.5)
         icon.BackgroundTransparency = 1
@@ -617,11 +443,11 @@ function Fenglib:CreateWindow(Config)
         icon.Parent = btn
 
         local function onHover()
-            Tween(bg, {ImageTransparency = 0.8}, 0.2)
-            Tween(outline, {ImageTransparency = 0.75}, 0.2)
+            Tween(bg, {ImageTransparency = 0.7}, 0.2)
+            Tween(outline, {ImageTransparency = 0.6}, 0.2)
         end
         local function onLeave()
-            Tween(bg, {ImageTransparency = 0.95}, 0.2)
+            Tween(bg, {ImageTransparency = 0.92}, 0.2)
             Tween(outline, {ImageTransparency = 1}, 0.2)
         end
 
@@ -636,96 +462,100 @@ function Fenglib:CreateWindow(Config)
     TitleLabel.Text = Title
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Font = Enum.Font.GothamBold
-    TitleLabel.TextSize = 16
+    TitleLabel.TextSize = 17
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Parent = Topbar
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
     if Subtitle then
-        TitleLabel.Size = UDim2.new(1, -180, 0, 20)   
-        TitleLabel.Position = UDim2.new(0, 50, 0, 5)
+        TitleLabel.Size = UDim2.new(1, -190, 0, 22)   
+        TitleLabel.Position = UDim2.new(0, 58, 0, 6)
 
         local SubtitleLabel = Instance.new("TextLabel")
         SubtitleLabel.Text = Subtitle
-        SubtitleLabel.Size = UDim2.new(1, -180, 0, 15)
-        SubtitleLabel.Position = UDim2.new(0, 50, 0, 25)
+        SubtitleLabel.Size = UDim2.new(1, -190, 0, 16)
+        SubtitleLabel.Position = UDim2.new(0, 58, 0, 28)
         SubtitleLabel.BackgroundTransparency = 1
         SubtitleLabel.Font = Enum.Font.GothamMedium
         SubtitleLabel.TextSize = 12
-        SubtitleLabel.TextTransparency = 0.4
+        SubtitleLabel.TextTransparency = 0.45
         SubtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
         SubtitleLabel.Parent = Topbar
         AddToRegistry(SubtitleLabel, "TextColor3", "Text")
     else
-        TitleLabel.Size = UDim2.new(1, -180, 1, 0)
-        TitleLabel.Position = UDim2.new(0, 50, 0, 0)
+        TitleLabel.Size = UDim2.new(1, -190, 1, 0)
+        TitleLabel.Position = UDim2.new(0, 58, 0, 0)
     end
 
     local Content = Instance.new("Frame")
-    Content.Size = UDim2.new(1, -20, 1, -(topbarHeight + 15))
-    Content.Position = UDim2.new(0, 10, 0, topbarHeight + 5)
+    Content.Size = UDim2.new(1, -24, 1, -(topbarHeight + 18))
+    Content.Position = UDim2.new(0, 12, 0, topbarHeight + 8)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
     local TabContainer = Instance.new("ScrollingFrame")
-    TabContainer.Size = UDim2.new(0, 140, 0.85, 0)
+    TabContainer.Size = UDim2.new(0, 150, 0.85, 0)
     TabContainer.BackgroundTransparency = 1
     TabContainer.ScrollBarThickness = 0
     TabContainer.Parent = Content
     local TabList = Instance.new("UIListLayout")
-    TabList.Padding = UDim.new(0, 8)
+    TabList.Padding = UDim.new(0, 10)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Parent = TabContainer
 
     local ProfileFrame = Instance.new("Frame")
-    ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
-    ProfileFrame.Position = UDim2.new(0, 0, 1, -40)
-    ProfileFrame.BackgroundTransparency = 0.05
+    ProfileFrame.Size = UDim2.new(0, 150, 0, 48)
+    ProfileFrame.Position = UDim2.new(0, 0, 1, -52)
+    ProfileFrame.BackgroundTransparency = 0.08
     ProfileFrame.Parent = Content
-    Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
-    AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
+    local profCorner = Instance.new("UICorner")
+    profCorner.CornerRadius = UDim.new(0, 14)
+    profCorner.Parent = ProfileFrame
+    AddToRegistry(ProfileFrame, "BackgroundColor3", "Element")
     
     local Avatar = Instance.new("ImageLabel")
-    Avatar.Size = UDim2.new(0, 26, 0, 26)
-    Avatar.Position = UDim2.new(0, 8, 0.5, -13)
+    Avatar.Size = UDim2.new(0, 32, 0, 32)
+    Avatar.Position = UDim2.new(0, 8, 0.5, -16)
     Avatar.BackgroundColor3 = Color3.fromRGB(20,20,20)
     Avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
     Avatar.Parent = ProfileFrame
-    Instance.new("UICorner", Avatar).CornerRadius = UDim.new(1,0)
+    local avatarCorner = Instance.new("UICorner")
+    avatarCorner.CornerRadius = UDim.new(1,0)
+    avatarCorner.Parent = Avatar
     
     local DispName = Instance.new("TextLabel")
     DispName.Text = LocalPlayer.DisplayName
-    DispName.Size = UDim2.new(1, -45, 0, 15)
-    DispName.Position = UDim2.new(0, 40, 0, 5)
+    DispName.Size = UDim2.new(1, -48, 0, 18)
+    DispName.Position = UDim2.new(0, 46, 0, 6)
     DispName.BackgroundTransparency = 1
-    DispName.Font = Enum.Font.GothamMedium
-    DispName.TextSize = 11
+    DispName.Font = Enum.Font.GothamBold
+    DispName.TextSize = 12
     DispName.TextXAlignment = Enum.TextXAlignment.Left
     DispName.Parent = ProfileFrame
     AddToRegistry(DispName, "TextColor3", "Text")
 
     local UsrName = Instance.new("TextLabel")
     UsrName.Text = "@"..LocalPlayer.Name
-    UsrName.Size = UDim2.new(1, -45, 0, 15)
-    UsrName.Position = UDim2.new(0, 40, 0, 19)
+    UsrName.Size = UDim2.new(1, -48, 0, 16)
+    UsrName.Position = UDim2.new(0, 46, 0, 24)
     UsrName.BackgroundTransparency = 1
     UsrName.Font = Enum.Font.Gotham
     UsrName.TextSize = 10
-    UsrName.TextTransparency = 0.5
+    UsrName.TextTransparency = 0.55
     UsrName.TextXAlignment = Enum.TextXAlignment.Left
     UsrName.Parent = ProfileFrame
     AddToRegistry(UsrName, "TextColor3", "Text")
 
     local Line = Instance.new("Frame")
-    Line.Size = UDim2.new(0, 1, 1, 0)
-    Line.Position = UDim2.new(0, 150, 0, 0)
-    Line.BackgroundTransparency = 0.8
+    Line.Size = UDim2.new(0, 1.5, 1, -16)
+    Line.Position = UDim2.new(0, 160, 0, 8)
+    Line.BackgroundTransparency = 0.4
     Line.Parent = Content
     AddToRegistry(Line, "BackgroundColor3", "Stroke")
 
     local PageContainer = Instance.new("Frame")
-    PageContainer.Size = UDim2.new(1, -165, 1, 0)
-    PageContainer.Position = UDim2.new(0, 160, 0, 0)
+    PageContainer.Size = UDim2.new(1, -175, 1, 0)
+    PageContainer.Position = UDim2.new(0, 172, 0, 0)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
@@ -734,7 +564,7 @@ function Fenglib:CreateWindow(Config)
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
-    Resizer.BackgroundTransparency = 0.8
+    Resizer.BackgroundTransparency = 0.7
     Resizer.BackgroundColor3 = Color3.new(1, 1, 1)
     Resizer.Position = UDim2.new(1, 5, 1, 5)
     Resizer.Size = UDim2.new(0, 24, 0, 24)
@@ -746,11 +576,11 @@ function Fenglib:CreateWindow(Config)
     local stroke = Instance.new("UIStroke")
     stroke.Thickness = 4
     stroke.Color = Color3.new(1, 1, 1)
-    stroke.Transparency = 0
+    stroke.Transparency = 0.3
     stroke.Parent = Resizer
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
+    corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = Resizer
 
     local isResizing = false
@@ -768,8 +598,8 @@ function Fenglib:CreateWindow(Config)
     UserInputService.InputChanged:Connect(function(input)
         if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - resizeStart
-            local newWidth = math.max(400, startSize.X.Offset + delta.X)
-            local newHeight = math.max(250, startSize.Y.Offset + delta.Y)
+            local newWidth = math.max(450, startSize.X.Offset + delta.X)
+            local newHeight = math.max(320, startSize.Y.Offset + delta.Y)
             MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
         end
     end)
@@ -786,7 +616,7 @@ function Fenglib:CreateWindow(Config)
         distance = 8,
         width = 12,
         height = 8,
-        transparency = 0.3,
+        transparency = 0.25,
         autoSize = true
     }
 
@@ -794,7 +624,7 @@ function Fenglib:CreateWindow(Config)
         local originalSize = button.Size
         local originalPos = button.Position
         button.MouseButton1Down:Connect(function()
-            Tween(button, {Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset * 0.95, originalSize.Y.Scale, originalSize.Y.Offset * 0.95), Position = UDim2.new(originalPos.X.Scale, originalPos.X.Offset + 2, originalPos.Y.Scale, originalPos.Y.Offset + 2)}, 0.05)
+            Tween(button, {Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset * 0.96, originalSize.Y.Scale, originalSize.Y.Offset * 0.96), Position = UDim2.new(originalPos.X.Scale, originalPos.X.Offset + 1, originalPos.Y.Scale, originalPos.Y.Offset + 1)}, 0.05)
         end)
         button.MouseButton1Up:Connect(function()
             Tween(button, {Size = originalSize, Position = originalPos}, 0.1)
@@ -853,7 +683,7 @@ function Fenglib:CreateWindow(Config)
         selectionBox.Adornee = projectorScreen
         selectionBox.Color3 = CurrentTheme.Accent
         selectionBox.LineThickness = 0.08
-        selectionBox.Transparency = 0.4
+        selectionBox.Transparency = 0.35
         selectionBox.Parent = projectorScreen
         
         if syn and syn.protect_gui then syn.protect_gui(projectorScreen) end
@@ -885,7 +715,7 @@ function Fenglib:CreateWindow(Config)
         Window._savedMainFrameSize = MainFrame.Size
         Window._savedMainFramePos = MainFrame.Position
         
-        MainFrame.Size = UDim2.new(0, 600, 0, 400)
+        MainFrame.Size = UDim2.new(0, 680, 0, 480)
         MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         
         addPressEffectToAll(surfaceGui)
@@ -971,7 +801,7 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Size = Window._savedMainFrameSize
             MainFrame.Position = Window._savedMainFramePos
         else
-            MainFrame.Size = UDim2.new(0, 500, 0, 299)
+            MainFrame.Size = UDim2.new(0, 560, 0, 340)
             MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         end
         
@@ -997,7 +827,7 @@ function Fenglib:CreateWindow(Config)
         ToggleProjectorMode()
     end)
     
-    local MinimizeBtn = createTextButton("-", function()
+    local MinimizeBtn = createTextButton("−", function()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
         else
@@ -1013,14 +843,14 @@ function Fenglib:CreateWindow(Config)
         Resizer.Visible = resizerVisible
     end)
     
-    local CloseBtn = createTextButton("X", function()
+    local CloseBtn = createTextButton("✕", function()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
         end
         ScreenGui:Destroy()
     end)
 
-    Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
+    Tween(MainFrame, {Size = UDim2.new(0, 560, 0, 340)}, 0.6)
 
     local dragging = false
     local dragStartPos = nil
@@ -1089,18 +919,19 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
+    -- 现代化悬浮按钮
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
     OpenButton.BackgroundColor3 = CurrentTheme.Accent
-    OpenButton.BackgroundTransparency = 0.85
-    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)  
-    OpenButton.Size = UDim2.new(0, 40, 0, 40)
+    OpenButton.BackgroundTransparency = 0.15
+    OpenButton.Position = UDim2.new(0.92, 0, 0.03, 0)  
+    OpenButton.Size = UDim2.new(0, 48, 0, 48)
     OpenButton.Active = true
     OpenButton.Draggable = true  
     OpenButton.Image = "rbxassetid://84830962019412"  
     OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    OpenButton.ImageTransparency = 0.15
+    OpenButton.ImageTransparency = 0.1
     OpenButton.ZIndex = 10  
 
     OpenButton.InputBegan:Connect(function(input)
@@ -1110,14 +941,14 @@ function Fenglib:CreateWindow(Config)
     end)
 
     local openCorner = Instance.new("UICorner")
-    openCorner.CornerRadius = UDim.new(0, 8)
+    openCorner.CornerRadius = UDim.new(0, 14)
     openCorner.Parent = OpenButton
 
     local openStroke = Instance.new("UIStroke")
     openStroke.Parent = OpenButton
-    openStroke.Color = Color3.fromRGB(180, 180, 180)
-    openStroke.Thickness = 1.2
-    openStroke.Transparency = 0.4
+    openStroke.Color = Color3.fromRGB(220, 220, 240)
+    openStroke.Thickness = 1.5
+    openStroke.Transparency = 0.5
 
     startNeonFlowEffect(OpenButton, "BackgroundColor3", 0.012)
     createPulseGlow(openStroke)
@@ -1148,9 +979,9 @@ function Fenglib:CreateWindow(Config)
         local notifType = config.Type or "Info"
 
         local typeColors = {
-            Success = Color3.fromRGB(60, 179, 113),
-            Error   = Color3.fromRGB(229, 51, 51),
-            Info    = Color3.fromRGB(77, 163, 255)
+            Success = Color3.fromRGB(80, 210, 140),
+            Error   = Color3.fromRGB(245, 85, 85),
+            Info    = Color3.fromRGB(90, 150, 255)
         }
         local typeIcons = {
             Success = "rbxassetid://120659272678891",
@@ -1171,22 +1002,26 @@ function Fenglib:CreateWindow(Config)
 
         local main = Instance.new("Frame")
         main.Name = "Main"
-        main.Size = UDim2.new(0, 250, 0, 0)
+        main.Size = UDim2.new(0, 300, 0, 0)
         main.AutomaticSize = Enum.AutomaticSize.Y
         main.BackgroundColor3 = CurrentTheme.Top
-        main.BackgroundTransparency = 0.05
+        main.BackgroundTransparency = 0
         main.BorderSizePixel = 0
         main.Parent = root
-
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 20)
-        corner.Parent = main
+        local mainCorner = Instance.new("UICorner")
+        mainCorner.CornerRadius = UDim.new(0, 16)
+        mainCorner.Parent = main
+        local mainStroke = Instance.new("UIStroke")
+        mainStroke.Thickness = 1
+        mainStroke.Transparency = 0.5
+        mainStroke.Parent = main
+        AddToRegistry(mainStroke, "Color", "Stroke")
 
         local closeImg = Instance.new("ImageLabel")
         closeImg.Name = "CloseIcon"
         closeImg.Image = closeIcon
-        closeImg.Size = UDim2.new(0, 8, 0, 8)
-        closeImg.Position = UDim2.new(1, -15, 0, 15)
+        closeImg.Size = UDim2.new(0, 10, 0, 10)
+        closeImg.Position = UDim2.new(1, -16, 0, 16)
         closeImg.AnchorPoint = Vector2.new(1, 0)
         closeImg.BackgroundTransparency = 1
         closeImg.BorderSizePixel = 0
@@ -1203,8 +1038,8 @@ function Fenglib:CreateWindow(Config)
 
         local content = Instance.new("Frame")
         content.Name = "Content"
-        content.Size = UDim2.new(1, -65, 1, 0)
-        content.Position = UDim2.new(0, 35, 0, 0)
+        content.Size = UDim2.new(1, -70, 1, 0)
+        content.Position = UDim2.new(0, 40, 0, 0)
         content.BackgroundTransparency = 1
         content.BorderSizePixel = 0
         content.AutomaticSize = Enum.AutomaticSize.Y
@@ -1213,8 +1048,8 @@ function Fenglib:CreateWindow(Config)
         local icon = Instance.new("ImageLabel")
         icon.Name = "TypeIcon"
         icon.Image = typeIcons[notifType]
-        icon.Size = UDim2.new(0, 15, 0, 15)
-        icon.Position = UDim2.new(0, -15, 0.5, 0)
+        icon.Size = UDim2.new(0, 18, 0, 18)
+        icon.Position = UDim2.new(0, -20, 0.5, 0)
         icon.AnchorPoint = Vector2.new(0.5, 0.5)
         icon.BackgroundTransparency = 1
         icon.BorderSizePixel = 0
@@ -1224,12 +1059,12 @@ function Fenglib:CreateWindow(Config)
         local titleLbl = Instance.new("TextLabel")
         titleLbl.Name = "Title"
         titleLbl.Text = title
-        titleLbl.Size = UDim2.new(1, 0, 0, 10)
+        titleLbl.Size = UDim2.new(1, 0, 0, 12)
         titleLbl.AutomaticSize = Enum.AutomaticSize.Y
         titleLbl.BackgroundTransparency = 1
         titleLbl.BorderSizePixel = 0
         titleLbl.Font = Enum.Font.GothamBold
-        titleLbl.TextSize = 14
+        titleLbl.TextSize = 15
         titleLbl.TextColor3 = CurrentTheme.Text
         titleLbl.TextXAlignment = Enum.TextXAlignment.Left
         titleLbl.RichText = true
@@ -1240,7 +1075,7 @@ function Fenglib:CreateWindow(Config)
         local descLbl = Instance.new("TextLabel")
         descLbl.Name = "Description"
         descLbl.Text = description
-        descLbl.Size = UDim2.new(1, 0, 0, 5)
+        descLbl.Size = UDim2.new(1, 0, 0, 8)
         descLbl.AutomaticSize = Enum.AutomaticSize.Y
         descLbl.BackgroundTransparency = 1
         descLbl.BorderSizePixel = 0
@@ -1253,22 +1088,22 @@ function Fenglib:CreateWindow(Config)
 
         local line = Instance.new("Frame")
         line.Name = "Line"
-        line.Size = UDim2.new(0, 3, 1, 3)
-        line.Position = UDim2.new(0, -15, 0.5, 0)
+        line.Size = UDim2.new(0, 4, 1, -12)
+        line.Position = UDim2.new(0, -18, 0.5, 0)
         line.AnchorPoint = Vector2.new(0.5, 0.5)
         line.BackgroundColor3 = accentColor
-        line.BackgroundTransparency = 0.7
+        line.BackgroundTransparency = 0.2
         line.BorderSizePixel = 0
         line.Parent = descLbl
 
         local layout = Instance.new("UIListLayout")
-        layout.Padding = UDim.new(0, 0)
+        layout.Padding = UDim.new(0, 6)
         layout.SortOrder = Enum.SortOrder.LayoutOrder
         layout.Parent = content
 
         local padding = Instance.new("UIPadding")
-        padding.PaddingTop = UDim.new(0, 14)
-        padding.PaddingBottom = UDim.new(0, 16)
+        padding.PaddingTop = UDim.new(0, 12)
+        padding.PaddingBottom = UDim.new(0, 14)
         padding.Parent = content
 
         RunService.Heartbeat:Wait()
@@ -1281,6 +1116,7 @@ function Fenglib:CreateWindow(Config)
             titleLbl.TextColor3 = CurrentTheme.Text
             descLbl.TextColor3 = CurrentTheme.Text
             closeImg.ImageColor3 = CurrentTheme.Text
+            mainStroke.Color = CurrentTheme.Stroke
         end
 
         table.insert(ThemeListeners, updateTheme)
@@ -1385,6 +1221,7 @@ function Fenglib:CreateWindow(Config)
     local firstTab = true
     local controlCounter = 0
 
+    -- 更美观的Section (卡片风格)
     local function createSection(parent, text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
 
@@ -1412,22 +1249,30 @@ function Fenglib:CreateWindow(Config)
             iconClosed = defaultIcon
         end
 
+        -- 卡片背景
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(1, 0, 0, 36)
-        sectionFrame.BackgroundTransparency = 0
+        sectionFrame.Size = UDim2.new(1, 0, 0, 44)
+        sectionFrame.BackgroundTransparency = 0.06
         sectionFrame.Parent = parent
         sectionFrame.ClipsDescendants = true
-        Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0, 12)
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 14)
+        corner.Parent = sectionFrame
         AddToRegistry(sectionFrame, "BackgroundColor3", "Element")
+        local sectionStroke = Instance.new("UIStroke")
+        sectionStroke.Thickness = 1
+        sectionStroke.Transparency = 0.7
+        sectionStroke.Parent = sectionFrame
+        AddToRegistry(sectionStroke, "Color", "Stroke")
 
         local titleBar = Instance.new("Frame")
-        titleBar.Size = UDim2.new(1, 0, 0, 36)
+        titleBar.Size = UDim2.new(1, 0, 0, 44)
         titleBar.BackgroundTransparency = 1
         titleBar.Parent = sectionFrame
 
         local iconLabel = Instance.new("ImageLabel")
-        iconLabel.Size = UDim2.new(0, 28, 0, 28)
-        iconLabel.Position = UDim2.new(0, 5, 0.5, -14)
+        iconLabel.Size = UDim2.new(0, 30, 0, 30)
+        iconLabel.Position = UDim2.new(0, 10, 0.5, -15)
         iconLabel.BackgroundTransparency = 1
         iconLabel.Image = defaultOpen and iconOpen or iconClosed
         iconLabel.Parent = titleBar
@@ -1438,11 +1283,11 @@ function Fenglib:CreateWindow(Config)
 
         local textLabel = Instance.new("TextLabel")
         textLabel.Text = text
-        textLabel.Size = UDim2.new(1, -38, 1, 0)
-        textLabel.Position = UDim2.new(0, 38, 0, 0)
+        textLabel.Size = UDim2.new(1, -50, 1, 0)
+        textLabel.Position = UDim2.new(0, 50, 0, 0)
         textLabel.BackgroundTransparency = 1
         textLabel.Font = Enum.Font.GothamBold
-        textLabel.TextSize = 14
+        textLabel.TextSize = 15
         textLabel.TextXAlignment = Enum.TextXAlignment.Left
         textLabel.Parent = titleBar
         AddToRegistry(textLabel, "TextColor3", "Accent")
@@ -1455,16 +1300,16 @@ function Fenglib:CreateWindow(Config)
 
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, 0, 0, 0)
-        contentContainer.Position = UDim2.new(0, 0, 0, 36)
+        contentContainer.Position = UDim2.new(0, 0, 0, 44)
         contentContainer.BackgroundTransparency = 1
         contentContainer.ClipsDescendants = true
         contentContainer.Parent = sectionFrame
 
         local contentPadding = Instance.new("UIPadding")
-        contentPadding.PaddingLeft = UDim.new(0, 5)
-        contentPadding.PaddingRight = UDim.new(0, 5)
-        contentPadding.PaddingTop = UDim.new(0, 5)
-        contentPadding.PaddingBottom = UDim.new(0, 5)
+        contentPadding.PaddingLeft = UDim.new(0, 10)
+        contentPadding.PaddingRight = UDim.new(0, 10)
+        contentPadding.PaddingTop = UDim.new(0, 8)
+        contentPadding.PaddingBottom = UDim.new(0, 12)
         contentPadding.Parent = contentContainer
 
         local contentLayout = Instance.new("UIListLayout")
@@ -1482,10 +1327,10 @@ function Fenglib:CreateWindow(Config)
                 local paddingBottom = contentPadding and contentPadding.PaddingBottom.Offset or 0
                 targetContentHeight = contentLayout.AbsoluteContentSize.Y + paddingTop + paddingBottom
             end
-            local targetSectionHeight = 36 + targetContentHeight
+            local targetSectionHeight = 44 + targetContentHeight
             if currentContentTween then currentContentTween:Cancel() end
             if currentSectionTween then currentSectionTween:Cancel() end
-            local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            local tweenInfo = TweenInfo.new(instant and 0 or 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
             currentContentTween = TweenService:Create(contentContainer, tweenInfo, {Size = UDim2.new(1, 0, 0, targetContentHeight)})
             currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
             currentContentTween:Play()
@@ -1515,18 +1360,20 @@ function Fenglib:CreateWindow(Config)
 
         child.Button = function(_, btnText, callback)
             local Btn = Instance.new("TextButton")
-            Btn.Size = UDim2.new(1, 0, 0, 42)
+            Btn.Size = UDim2.new(1, 0, 0, 44)
             Btn.Text = ""
             Btn.Font = Enum.Font.Gotham
             Btn.TextSize = 14
             Btn.Parent = contentContainer
-            Btn.BackgroundTransparency = 0.05
-            Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 12)
+            Btn.BackgroundTransparency = 0.08
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 12)
+            corner.Parent = Btn
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
             local TextLabel = Instance.new("TextLabel")
-            TextLabel.Size = UDim2.new(1, -30, 1, 0)
-            TextLabel.Position = UDim2.new(0, 10, 0, 0)
+            TextLabel.Size = UDim2.new(1, -40, 1, 0)
+            TextLabel.Position = UDim2.new(0, 14, 0, 0)
             TextLabel.BackgroundTransparency = 1
             TextLabel.Font = Enum.Font.GothamMedium
             TextLabel.Text = btnText
@@ -1536,25 +1383,25 @@ function Fenglib:CreateWindow(Config)
             AddToRegistry(TextLabel, "TextColor3", "Text")
 
             local Icon = Instance.new("ImageLabel")
-            Icon.Size = UDim2.new(0, 15, 0, 15)
-            Icon.Position = UDim2.new(1, -25, 0.5, -7.5)
+            Icon.Size = UDim2.new(0, 16, 0, 16)
+            Icon.Position = UDim2.new(1, -28, 0.5, -8)
             Icon.BackgroundTransparency = 1
             Icon.Image = "rbxassetid://10709791437"
-            Icon.ImageTransparency = 0.5
+            Icon.ImageTransparency = 0.6
             Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Text")
 
             Btn.MouseEnter:Connect(function()
-                Tween(Btn, {BackgroundTransparency = 0.00}, 0.18)
+                Tween(Btn, {BackgroundTransparency = 0}, 0.18)
             end)
             Btn.MouseLeave:Connect(function()
-                Tween(Btn, {BackgroundTransparency = 0.05}, 0.18)
+                Tween(Btn, {BackgroundTransparency = 0.08}, 0.18)
             end)
 
             Btn.MouseButton1Click:Connect(function()
-                Tween(Btn, {Size = UDim2.new(0.97, 0, 0, 38)}, 0.1)
-                task.wait(0.1)
-                Tween(Btn, {Size = UDim2.new(1, 0, 0, 42)}, 0.15)
+                Tween(Btn, {Size = UDim2.new(0.97, 0, 0, 40)}, 0.08)
+                task.wait(0.08)
+                Tween(Btn, {Size = UDim2.new(1, 0, 0, 44)}, 0.12)
                 callback()
             end)
 
@@ -1570,10 +1417,12 @@ function Fenglib:CreateWindow(Config)
             local controlId = toggleText .. "_" .. tostring(controlCounter)
 
             local Tile = Instance.new("Frame")
-            Tile.Size = UDim2.new(1, 0, 0, 42)
+            Tile.Size = UDim2.new(1, 0, 0, 44)
             Tile.Parent = contentContainer
-            Tile.BackgroundTransparency = 0.05
-            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 12)
+            Tile.BackgroundTransparency = 0.08
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 12)
+            corner.Parent = Tile
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
             local ClickBtn = Instance.new("TextButton")
@@ -1585,7 +1434,7 @@ function Fenglib:CreateWindow(Config)
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = toggleText
             TitleLbl.Size = UDim2.new(0.7, 0, 1, 0)
-            TitleLbl.Position = UDim2.new(0, 15, 0, 0)
+            TitleLbl.Position = UDim2.new(0, 16, 0, 0)
             TitleLbl.BackgroundTransparency = 1
             TitleLbl.Font = Enum.Font.GothamMedium
             TitleLbl.TextSize = 13
@@ -1594,35 +1443,39 @@ function Fenglib:CreateWindow(Config)
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
             local Switch = Instance.new("Frame")
-            Switch.Size = UDim2.new(0, 42, 0, 22)
-            Switch.Position = UDim2.new(1, -56, 0.5, -11)
+            Switch.Size = UDim2.new(0, 48, 0, 24)
+            Switch.Position = UDim2.new(1, -60, 0.5, -12)
             Switch.Parent = Tile
-            Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
+            local switchCorner = Instance.new("UICorner")
+            switchCorner.CornerRadius = UDim.new(1, 0)
+            switchCorner.Parent = Switch
             Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
 
             local SwStroke = Instance.new("UIStroke")
             SwStroke.Thickness = 1
-            SwStroke.Transparency = 0.6
+            SwStroke.Transparency = 0.5
             SwStroke.Parent = Switch
             AddToRegistry(SwStroke, "Color", "Stroke")
 
             local Dot = Instance.new("Frame")
-            Dot.Size = UDim2.new(0, 16, 0, 16)
-            Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+            Dot.Size = UDim2.new(0, 18, 0, 18)
+            Dot.Position = Enabled and UDim2.new(1, -23, 0.5, -9) or UDim2.new(0, 5, 0.5, -9)
             Dot.BackgroundColor3 = Color3.new(1, 1, 1)
             Dot.Parent = Switch
-            Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
+            local dotCorner = Instance.new("UICorner")
+            dotCorner.CornerRadius = UDim.new(1, 0)
+            dotCorner.Parent = Dot
 
             ConfigObjects[controlId] = {Type = "Toggle", Value = Enabled, Set = function(val)
                 Enabled = val
                 Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-                Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+                Dot.Position = Enabled and UDim2.new(1, -23, 0.5, -9) or UDim2.new(0, 5, 0.5, -9)
                 callback(Enabled)
             end}
 
             local function Update()
                 Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke})
-                Tween(Dot, {Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)})
+                Tween(Dot, {Position = Enabled and UDim2.new(1, -23, 0.5, -9) or UDim2.new(0, 5, 0.5, -9)})
                 ConfigObjects[controlId].Value = Enabled
                 callback(Enabled)
             end
@@ -1646,18 +1499,20 @@ function Fenglib:CreateWindow(Config)
             controlCounter = controlCounter + 1
             local controlId = sliderText .. "_" .. tostring(controlCounter)
 
-            local tileH = unlimited and 42 or 60
+            local tileH = unlimited and 44 or 64
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, tileH)
             Tile.Parent = contentContainer
-            Tile.BackgroundTransparency = 0.05
-            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 12)
+            Tile.BackgroundTransparency = 0.08
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 12)
+            corner.Parent = Tile
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = sliderText
-            TitleLbl.Size = UDim2.new(1, -30, 0, 20)
-            TitleLbl.Position = UDim2.new(0, 15, 0, unlimited and 11 or 10)
+            TitleLbl.Size = UDim2.new(1, -40, 0, 22)
+            TitleLbl.Position = UDim2.new(0, 16, 0, unlimited and 12 or 10)
             TitleLbl.BackgroundTransparency = 1
             TitleLbl.Font = Enum.Font.GothamMedium
             TitleLbl.TextSize = 13
@@ -1665,23 +1520,25 @@ function Fenglib:CreateWindow(Config)
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            local numW = unlimited and 72 or 52
+            local numW = unlimited and 80 or 60
             local Num = Instance.new("TextBox")
             Num.Text = tostring(Val)
-            Num.Size = UDim2.new(0, numW, 0, 22)
-            Num.Position = UDim2.new(1, -(numW + 10), 0, unlimited and 10 or 9)
-            Num.BackgroundTransparency = 0.08
+            Num.Size = UDim2.new(0, numW, 0, 28)
+            Num.Position = UDim2.new(1, -(numW + 12), 0, unlimited and 10 or 9)
+            Num.BackgroundTransparency = 0.1
             Num.Font = Enum.Font.GothamBold
-            Num.TextSize = 12
+            Num.TextSize = 13
             Num.TextXAlignment = Enum.TextXAlignment.Center
             Num.Parent = Tile
             Num.ClearTextOnFocus = false
-            Instance.new("UICorner", Num).CornerRadius = UDim.new(0, 6)
+            local numCorner = Instance.new("UICorner")
+            numCorner.CornerRadius = UDim.new(0, 8)
+            numCorner.Parent = Num
             AddToRegistry(Num, "BackgroundColor3", "Main")
             AddToRegistry(Num, "TextColor3", "Accent")
             local NumStroke = Instance.new("UIStroke")
             NumStroke.Thickness = 1
-            NumStroke.Transparency = 0.75
+            NumStroke.Transparency = 0.7
             NumStroke.Parent = Num
             AddToRegistry(NumStroke, "Color", "Stroke")
             Num.Focused:Connect(function() Tween(NumStroke, {Transparency = 0.2}, 0.15) end)
@@ -1689,12 +1546,12 @@ function Fenglib:CreateWindow(Config)
             if unlimited then
                 local HintLbl = Instance.new("TextLabel")
                 HintLbl.Text = "∞"
-                HintLbl.Size = UDim2.new(0, 14, 0, 14)
-                HintLbl.Position = UDim2.new(1, -(numW + 10) - 16, 0, 18)
+                HintLbl.Size = UDim2.new(0, 16, 0, 16)
+                HintLbl.Position = UDim2.new(1, -(numW + 12) - 18, 0, 20)
                 HintLbl.BackgroundTransparency = 1
                 HintLbl.Font = Enum.Font.GothamBold
-                HintLbl.TextSize = 11
-                HintLbl.TextTransparency = 0.4
+                HintLbl.TextSize = 12
+                HintLbl.TextTransparency = 0.45
                 HintLbl.Parent = Tile
                 AddToRegistry(HintLbl, "TextColor3", "Accent")
             end
@@ -1702,32 +1559,38 @@ function Fenglib:CreateWindow(Config)
             local Track, Fill, Knob, Bar
             if not unlimited then
                 Track = Instance.new("Frame")
-                Track.Size = UDim2.new(1, -30, 0, 5)
-                Track.Position = UDim2.new(0, 15, 0, 44)
+                Track.Size = UDim2.new(1, -32, 0, 6)
+                Track.Position = UDim2.new(0, 16, 0, 48)
                 Track.BorderSizePixel = 0
                 Track.Parent = Tile
-                Instance.new("UICorner", Track).CornerRadius = UDim.new(1, 0)
+                local trackCorner = Instance.new("UICorner")
+                trackCorner.CornerRadius = UDim.new(1, 0)
+                trackCorner.Parent = Track
                 AddToRegistry(Track, "BackgroundColor3", "Stroke")
 
                 local initP = (min and max and max ~= min) and ((Val - min) / (max - min)) or 0
                 Fill = Instance.new("Frame")
                 Fill.Size = UDim2.new(initP, 0, 1, 0)
                 Fill.Parent = Track
-                Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
+                local fillCorner = Instance.new("UICorner")
+                fillCorner.CornerRadius = UDim.new(1, 0)
+                fillCorner.Parent = Fill
                 AddToRegistry(Fill, "BackgroundColor3", "Accent")
 
                 Knob = Instance.new("Frame")
-                Knob.Size = UDim2.new(0, 12, 0, 12)
+                Knob.Size = UDim2.new(0, 16, 0, 16)
                 Knob.AnchorPoint = Vector2.new(0.5, 0.5)
                 Knob.Position = UDim2.new(initP, 0, 0.5, 0)
                 Knob.BackgroundColor3 = Color3.new(1, 1, 1)
                 Knob.ZIndex = 2
                 Knob.Parent = Track
-                Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
+                local knobCorner = Instance.new("UICorner")
+                knobCorner.CornerRadius = UDim.new(1, 0)
+                knobCorner.Parent = Knob
 
                 Bar = Instance.new("TextButton")
-                Bar.Size = UDim2.new(1, 0, 0, 18)
-                Bar.Position = UDim2.new(0, 0, 0.5, -9)
+                Bar.Size = UDim2.new(1, 0, 0, 22)
+                Bar.Position = UDim2.new(0, 0, 0.5, -11)
                 Bar.BackgroundTransparency = 1
                 Bar.Text = ""
                 Bar.ZIndex = 3
@@ -1766,7 +1629,7 @@ function Fenglib:CreateWindow(Config)
             end
 
             Num.FocusLost:Connect(function()
-                Tween(NumStroke, {Transparency = 0.75}, 0.15)
+                Tween(NumStroke, {Transparency = 0.7}, 0.15)
                 local typed = tonumber(Num.Text)
                 if typed then
                     Update(typed)
@@ -1809,17 +1672,19 @@ function Fenglib:CreateWindow(Config)
             local controlId = dropText .. "_" .. tostring(controlCounter)
 
             local Btn = Instance.new("TextButton")
-            Btn.Size = UDim2.new(1, 0, 0, 42)
+            Btn.Size = UDim2.new(1, 0, 0, 44)
             Btn.Text = ""
-            Btn.BackgroundTransparency = 0.05
+            Btn.BackgroundTransparency = 0.08
             Btn.Parent = contentContainer
-            Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 12)
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 12)
+            corner.Parent = Btn
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
             local Lbl = Instance.new("TextLabel")
             Lbl.Text = dropText
-            Lbl.Size = UDim2.new(1, -40, 1, 0)
-            Lbl.Position = UDim2.new(0, 15, 0, 0)
+            Lbl.Size = UDim2.new(1, -45, 1, 0)
+            Lbl.Position = UDim2.new(0, 16, 0, 0)
             Lbl.BackgroundTransparency = 1
             Lbl.Font = Enum.Font.GothamMedium
             Lbl.TextSize = 13
@@ -1841,12 +1706,14 @@ function Fenglib:CreateWindow(Config)
             Container.ClipsDescendants = true
             Container.ZIndex = 10
             Container.Parent = contentContainer
-            Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 12)
+            local containerCorner = Instance.new("UICorner")
+            containerCorner.CornerRadius = UDim.new(0, 12)
+            containerCorner.Parent = Container
             AddToRegistry(Container, "BackgroundColor3", "Top")
 
             local CSt = Instance.new("UIStroke")
             CSt.Thickness = 1
-            CSt.Transparency = 0.65
+            CSt.Transparency = 0.6
             CSt.Parent = Container
             AddToRegistry(CSt, "Color", "Accent")
 
@@ -1877,7 +1744,7 @@ function Fenglib:CreateWindow(Config)
 
                 for _, opt in pairs(newOpts) do
                     local O = Instance.new("TextButton")
-                    O.Size = UDim2.new(1, 0, 0, 34)
+                    O.Size = UDim2.new(1, 0, 0, 36)
                     O.Text = "   " .. opt
                     O.TextXAlignment = Enum.TextXAlignment.Left
                     O.Font = Enum.Font.GothamMedium
@@ -1897,7 +1764,7 @@ function Fenglib:CreateWindow(Config)
                 end
 
                 if Dropped then
-                    local targetHeight = #newOpts * 34
+                    local targetHeight = #newOpts * 36
                     Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
                 end
             end
@@ -1926,7 +1793,7 @@ function Fenglib:CreateWindow(Config)
                             buttonCount = buttonCount + 1
                         end
                     end
-                    local targetHeight = buttonCount * 34
+                    local targetHeight = buttonCount * 36
                     Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.32)
                     Tween(Icon, {Rotation = 180}, 0.32)
                 else
@@ -1963,10 +1830,12 @@ function Fenglib:CreateWindow(Config)
             local controlId = keyText .. "_" .. tostring(controlCounter)
 
             local Tile = Instance.new("Frame")
-            Tile.Size = UDim2.new(1, 0, 0, 42)
+            Tile.Size = UDim2.new(1, 0, 0, 44)
             Tile.Parent = contentContainer
-            Tile.BackgroundTransparency = 0.05
-            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 12)
+            Tile.BackgroundTransparency = 0.08
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 12)
+            corner.Parent = Tile
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
             local ClickBtn = Instance.new("TextButton")
@@ -1978,7 +1847,7 @@ function Fenglib:CreateWindow(Config)
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = keyText
             TitleLbl.Size = UDim2.new(0.6, 0, 1, 0)
-            TitleLbl.Position = UDim2.new(0, 15, 0, 0)
+            TitleLbl.Position = UDim2.new(0, 16, 0, 0)
             TitleLbl.BackgroundTransparency = 1
             TitleLbl.Font = Enum.Font.GothamMedium
             TitleLbl.TextSize = 13
@@ -1988,13 +1857,15 @@ function Fenglib:CreateWindow(Config)
 
             local KeyLabel = Instance.new("TextLabel")
             KeyLabel.Text = Key.Name
-            KeyLabel.Size = UDim2.new(0, 86, 0, 28)
-            KeyLabel.Position = UDim2.new(1, -100, 0.5, -14)
+            KeyLabel.Size = UDim2.new(0, 90, 0, 32)
+            KeyLabel.Position = UDim2.new(1, -105, 0.5, -16)
             KeyLabel.Font = Enum.Font.GothamMedium
-            KeyLabel.TextSize = 11
+            KeyLabel.TextSize = 12
             KeyLabel.Parent = Tile
-            KeyLabel.BackgroundTransparency = 0.1
-            Instance.new("UICorner", KeyLabel).CornerRadius = UDim.new(0, 8)
+            KeyLabel.BackgroundTransparency = 0.12
+            local keyCorner = Instance.new("UICorner")
+            keyCorner.CornerRadius = UDim.new(0, 8)
+            keyCorner.Parent = KeyLabel
             AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
             AddToRegistry(KeyLabel, "TextColor3", "Accent")
 
@@ -2023,16 +1894,18 @@ function Fenglib:CreateWindow(Config)
             local controlId = boxText .. "_" .. tostring(controlCounter)
 
             local Frame = Instance.new("Frame")
-            Frame.Size = UDim2.new(1, 0, 0, 70)
+            Frame.Size = UDim2.new(1, 0, 0, 74)
             Frame.Parent = contentContainer
-            Frame.BackgroundTransparency = 0.05
-            Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 12)
+            Frame.BackgroundTransparency = 0.08
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 12)
+            corner.Parent = Frame
             AddToRegistry(Frame, "BackgroundColor3", "Top")
 
             local Lbl = Instance.new("TextLabel")
             Lbl.Text = boxText
-            Lbl.Size = UDim2.new(1, 0, 0, 20)
-            Lbl.Position = UDim2.new(0, 15, 0, 10)
+            Lbl.Size = UDim2.new(1, 0, 0, 22)
+            Lbl.Position = UDim2.new(0, 16, 0, 10)
             Lbl.BackgroundTransparency = 1
             Lbl.Font = Enum.Font.GothamMedium
             Lbl.TextSize = 13
@@ -2041,21 +1914,23 @@ function Fenglib:CreateWindow(Config)
             AddToRegistry(Lbl, "TextColor3", "Text")
 
             local Box = Instance.new("TextBox")
-            Box.Size = UDim2.new(1, -30, 0, 28)
-            Box.Position = UDim2.new(0, 15, 0, 35)
+            Box.Size = UDim2.new(1, -32, 0, 32)
+            Box.Position = UDim2.new(0, 16, 0, 36)
             Box.Text = ""
             Box.PlaceholderText = placeholder
             Box.Font = Enum.Font.GothamMedium
             Box.TextSize = 12
             Box.Parent = Frame
             Box.BackgroundTransparency = 0.1
-            Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 6)
+            local boxCorner = Instance.new("UICorner")
+            boxCorner.CornerRadius = UDim.new(0, 8)
+            boxCorner.Parent = Box
             AddToRegistry(Box, "BackgroundColor3", "Main")
             AddToRegistry(Box, "TextColor3", "Text")
 
             local BoxStroke = Instance.new("UIStroke")
             BoxStroke.Thickness = 1
-            BoxStroke.Transparency = 0.75
+            BoxStroke.Transparency = 0.7
             BoxStroke.Parent = Box
             AddToRegistry(BoxStroke, "Color", "Stroke")
 
@@ -2063,7 +1938,7 @@ function Fenglib:CreateWindow(Config)
                 Tween(BoxStroke, {Transparency = 0.2}, 0.15)
             end)
             Box.FocusLost:Connect(function()
-                Tween(BoxStroke, {Transparency = 0.75}, 0.15)
+                Tween(BoxStroke, {Transparency = 0.7}, 0.15)
                 ConfigObjects[controlId].Value = Box.Text
                 callback(Box.Text)
             end)
@@ -2077,10 +1952,10 @@ function Fenglib:CreateWindow(Config)
             controlCounter = controlCounter + 1
             local controlId = inputText .. "_" .. tostring(controlCounter)
 
-            local InputFrame = Instance.new("Frame"); InputFrame.Size = UDim2.new(1, 0, 0, 42); InputFrame.Parent = contentContainer; InputFrame.BackgroundTransparency = 0.05; Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 12); AddToRegistry(InputFrame, "BackgroundColor3", "Top")
-            local NameLbl = Instance.new("TextLabel"); NameLbl.Text = inputText; NameLbl.Size = UDim2.new(0.6,0,1,0); NameLbl.Position = UDim2.new(0,15,0,0); NameLbl.TextXAlignment = Enum.TextXAlignment.Left; NameLbl.Font = Enum.Font.GothamMedium; NameLbl.TextSize = 13; NameLbl.BackgroundTransparency = 1; NameLbl.Parent = InputFrame; AddToRegistry(NameLbl, "TextColor3", "Text")
-            local InputBox = Instance.new("TextBox"); InputBox.Text = tostring(default or ""); InputBox.PlaceholderText = placeholder; InputBox.Size = UDim2.new(0.3,0,0,28); InputBox.Position = UDim2.new(0.7,-10,0.5,-14); InputBox.Font = Enum.Font.GothamBold; InputBox.TextSize = 13; InputBox.TextXAlignment = Enum.TextXAlignment.Center; InputBox.ClearTextOnFocus = false; InputBox.Parent = InputFrame
-            local boxCorner = Instance.new("UICorner"); boxCorner.CornerRadius = UDim.new(0,6); boxCorner.Parent = InputBox
+            local InputFrame = Instance.new("Frame"); InputFrame.Size = UDim2.new(1, 0, 0, 46); InputFrame.Parent = contentContainer; InputFrame.BackgroundTransparency = 0.08; local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(0, 12); corner.Parent = InputFrame; AddToRegistry(InputFrame, "BackgroundColor3", "Top")
+            local NameLbl = Instance.new("TextLabel"); NameLbl.Text = inputText; NameLbl.Size = UDim2.new(0.6,0,1,0); NameLbl.Position = UDim2.new(0,16,0,0); NameLbl.TextXAlignment = Enum.TextXAlignment.Left; NameLbl.Font = Enum.Font.GothamMedium; NameLbl.TextSize = 13; NameLbl.BackgroundTransparency = 1; NameLbl.Parent = InputFrame; AddToRegistry(NameLbl, "TextColor3", "Text")
+            local InputBox = Instance.new("TextBox"); InputBox.Text = tostring(default or ""); InputBox.PlaceholderText = placeholder; InputBox.Size = UDim2.new(0.35,0,0,32); InputBox.Position = UDim2.new(0.65,-10,0.5,-16); InputBox.Font = Enum.Font.GothamBold; InputBox.TextSize = 13; InputBox.TextXAlignment = Enum.TextXAlignment.Center; InputBox.ClearTextOnFocus = false; InputBox.Parent = InputFrame
+            local boxCorner = Instance.new("UICorner"); boxCorner.CornerRadius = UDim.new(0, 8); boxCorner.Parent = InputBox
             AddToRegistry(InputBox, "BackgroundColor3", "Main"); AddToRegistry(InputBox, "TextColor3", "Accent")
             local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = CurrentTheme.Stroke; boxStroke.Transparency = 0.6; boxStroke.Parent = InputBox
             local function filterText(text)
@@ -2110,15 +1985,17 @@ function Fenglib:CreateWindow(Config)
 
         child.Label = function(_, labelText)
             local LabelFrame = Instance.new("Frame")
-            LabelFrame.Size = UDim2.new(1, 0, 0, 42)
+            LabelFrame.Size = UDim2.new(1, 0, 0, 44)
             LabelFrame.Parent = contentContainer
-            LabelFrame.BackgroundTransparency = 0.05
-            Instance.new("UICorner", LabelFrame).CornerRadius = UDim.new(0, 12)
+            LabelFrame.BackgroundTransparency = 0.08
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 12)
+            corner.Parent = LabelFrame
             AddToRegistry(LabelFrame, "BackgroundColor3", "Top")
 
             local TextLabel = Instance.new("TextLabel")
             TextLabel.Size = UDim2.new(1, -20, 1, 0)
-            TextLabel.Position = UDim2.new(0, 10, 0, 0)
+            TextLabel.Position = UDim2.new(0, 16, 0, 0)
             TextLabel.BackgroundTransparency = 1
             TextLabel.Font = Enum.Font.GothamMedium
             TextLabel.Text = labelText
@@ -2136,20 +2013,22 @@ function Fenglib:CreateWindow(Config)
 
         child.SubLabel = function(_, subLabelText)
             local SubLabelFrame = Instance.new("Frame")
-            SubLabelFrame.Size = UDim2.new(1, 0, 0, 42)
+            SubLabelFrame.Size = UDim2.new(1, 0, 0, 44)
             SubLabelFrame.Parent = contentContainer
-            SubLabelFrame.BackgroundTransparency = 0.05
-            Instance.new("UICorner", SubLabelFrame).CornerRadius = UDim.new(0, 12)
+            SubLabelFrame.BackgroundTransparency = 0.08
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 12)
+            corner.Parent = SubLabelFrame
             AddToRegistry(SubLabelFrame, "BackgroundColor3", "Top")
 
             local TextLabel = Instance.new("TextLabel")
             TextLabel.Size = UDim2.new(1, -20, 1, 0)
-            TextLabel.Position = UDim2.new(0, 10, 0, 0)
+            TextLabel.Position = UDim2.new(0, 16, 0, 0)
             TextLabel.BackgroundTransparency = 1
             TextLabel.Font = Enum.Font.Gotham
             TextLabel.Text = subLabelText
             TextLabel.TextSize = 12
-            TextLabel.TextTransparency = 0.5
+            TextLabel.TextTransparency = 0.55
             TextLabel.TextXAlignment = Enum.TextXAlignment.Left
             TextLabel.TextTruncate = Enum.TextTruncate.AtEnd
             TextLabel.Parent = SubLabelFrame
@@ -2166,19 +2045,21 @@ function Fenglib:CreateWindow(Config)
             ParaFrame.Size = UDim2.new(1, 0, 0, 0)
             ParaFrame.AutomaticSize = Enum.AutomaticSize.Y
             ParaFrame.Parent = contentContainer
-            ParaFrame.BackgroundTransparency = 0.05
-            Instance.new("UICorner", ParaFrame).CornerRadius = UDim.new(0, 12)
+            ParaFrame.BackgroundTransparency = 0.08
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 12)
+            corner.Parent = ParaFrame
             AddToRegistry(ParaFrame, "BackgroundColor3", "Top")
 
             local Padding = Instance.new("UIPadding")
-            Padding.PaddingLeft = UDim.new(0, 12)
-            Padding.PaddingRight = UDim.new(0, 12)
+            Padding.PaddingLeft = UDim.new(0, 16)
+            Padding.PaddingRight = UDim.new(0, 16)
             Padding.PaddingTop = UDim.new(0, 12)
             Padding.PaddingBottom = UDim.new(0, 12)
             Padding.Parent = ParaFrame
 
             local Layout = Instance.new("UIListLayout")
-            Layout.Padding = UDim.new(0, 5)
+            Layout.Padding = UDim.new(0, 8)
             Layout.SortOrder = Enum.SortOrder.LayoutOrder
             Layout.Parent = ParaFrame
 
@@ -2188,7 +2069,7 @@ function Fenglib:CreateWindow(Config)
             HeaderLabel.BackgroundTransparency = 1
             HeaderLabel.Font = Enum.Font.GothamBold
             HeaderLabel.Text = headerText
-            HeaderLabel.TextSize = 14
+            HeaderLabel.TextSize = 15
             HeaderLabel.TextXAlignment = Enum.TextXAlignment.Left
             HeaderLabel.TextWrapped = true
             HeaderLabel.Parent = ParaFrame
@@ -2200,7 +2081,7 @@ function Fenglib:CreateWindow(Config)
             BodyLabel.BackgroundTransparency = 1
             BodyLabel.Font = Enum.Font.Gotham
             BodyLabel.Text = bodyText
-            BodyLabel.TextSize = 13
+            BodyLabel.TextSize = 12
             BodyLabel.TextXAlignment = Enum.TextXAlignment.Left
             BodyLabel.TextWrapped = true
             BodyLabel.Parent = ParaFrame
@@ -2220,10 +2101,12 @@ function Fenglib:CreateWindow(Config)
             local controlId = pickerText .. "_" .. tostring(controlCounter)
 
             local Tile = Instance.new("Frame")
-            Tile.Size = UDim2.new(1, 0, 0, 44)
+            Tile.Size = UDim2.new(1, 0, 0, 48)
             Tile.Parent = contentContainer
-            Tile.BackgroundTransparency = 0.05
-            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 12)
+            Tile.BackgroundTransparency = 0.08
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 12)
+            corner.Parent = Tile
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
             local ClickBtn = Instance.new("TextButton")
@@ -2235,7 +2118,7 @@ function Fenglib:CreateWindow(Config)
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = pickerText
             TitleLbl.Size = UDim2.new(0.7, 0, 1, 0)
-            TitleLbl.Position = UDim2.new(0, 15, 0, 0)
+            TitleLbl.Position = UDim2.new(0, 16, 0, 0)
             TitleLbl.BackgroundTransparency = 1
             TitleLbl.Font = Enum.Font.GothamMedium
             TitleLbl.TextSize = 13
@@ -2244,14 +2127,16 @@ function Fenglib:CreateWindow(Config)
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
             local Swatch = Instance.new("Frame")
-            Swatch.Size = UDim2.new(0, 32, 0, 22)
-            Swatch.Position = UDim2.new(1, -46, 0.5, -11)
+            Swatch.Size = UDim2.new(0, 36, 0, 26)
+            Swatch.Position = UDim2.new(1, -50, 0.5, -13)
             Swatch.BackgroundColor3 = Color
             Swatch.Parent = Tile
-            Instance.new("UICorner", Swatch).CornerRadius = UDim.new(0, 6)
+            local swatchCorner = Instance.new("UICorner")
+            swatchCorner.CornerRadius = UDim.new(0, 8)
+            swatchCorner.Parent = Swatch
             local SwStroke = Instance.new("UIStroke")
             SwStroke.Thickness = 1
-            SwStroke.Transparency = 0.6
+            SwStroke.Transparency = 0.55
             SwStroke.Parent = Swatch
             AddToRegistry(SwStroke, "Color", "Stroke")
 
@@ -2260,7 +2145,9 @@ function Fenglib:CreateWindow(Config)
             Panel.Visible = false
             Panel.ClipsDescendants = true
             Panel.Parent = contentContainer
-            Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 12)
+            local panelCorner = Instance.new("UICorner")
+            panelCorner.CornerRadius = UDim.new(0, 12)
+            panelCorner.Parent = Panel
             AddToRegistry(Panel, "BackgroundColor3", "Top")
 
             local PSt = Instance.new("UIStroke")
@@ -2270,33 +2157,39 @@ function Fenglib:CreateWindow(Config)
             AddToRegistry(PSt, "Color", "Accent")
 
             local SVBox = Instance.new("ImageLabel")
-            SVBox.Size = UDim2.new(1, -52, 0, 110)
-            SVBox.Position = UDim2.new(0, 10, 0, 10)
+            SVBox.Size = UDim2.new(1, -52, 0, 120)
+            SVBox.Position = UDim2.new(0, 12, 0, 12)
             SVBox.Image = "rbxassetid://4155801252"
             SVBox.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
             SVBox.Parent = Panel
-            Instance.new("UICorner", SVBox).CornerRadius = UDim.new(0, 6)
+            local svCorner = Instance.new("UICorner")
+            svCorner.CornerRadius = UDim.new(0, 8)
+            svCorner.Parent = SVBox
 
             local SVDot = Instance.new("Frame")
-            SVDot.Size = UDim2.new(0, 10, 0, 10)
+            SVDot.Size = UDim2.new(0, 12, 0, 12)
             SVDot.AnchorPoint = Vector2.new(0.5, 0.5)
             SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
             SVDot.BackgroundColor3 = Color3.new(1, 1, 1)
             SVDot.ZIndex = 2
             SVDot.Parent = SVBox
-            Instance.new("UICorner", SVDot).CornerRadius = UDim.new(1, 0)
+            local dotCorner = Instance.new("UICorner")
+            dotCorner.CornerRadius = UDim.new(1, 0)
+            dotCorner.Parent = SVDot
             local DotStroke = Instance.new("UIStroke")
             DotStroke.Thickness = 1.5
-            DotStroke.Color = Color3.fromRGB(80, 80, 80)
+            DotStroke.Color = Color3.fromRGB(60, 60, 60)
             DotStroke.Parent = SVDot
 
             local HueBar = Instance.new("Frame")
-            HueBar.Size = UDim2.new(0, 16, 0, 110)
-            HueBar.Position = UDim2.new(1, -30, 0, 10)
+            HueBar.Size = UDim2.new(0, 18, 0, 120)
+            HueBar.Position = UDim2.new(1, -32, 0, 12)
             HueBar.BackgroundColor3 = Color3.new(1, 1, 1)
             HueBar.BorderSizePixel = 0
             HueBar.Parent = Panel
-            Instance.new("UICorner", HueBar).CornerRadius = UDim.new(0, 6)
+            local hueCorner = Instance.new("UICorner")
+            hueCorner.CornerRadius = UDim.new(0, 8)
+            hueCorner.Parent = HueBar
 
             local HueGradient = Instance.new("UIGradient")
             HueGradient.Rotation = 90
@@ -2312,62 +2205,66 @@ function Fenglib:CreateWindow(Config)
             HueGradient.Parent = HueBar
 
             local HueDot = Instance.new("Frame")
-            HueDot.Size = UDim2.new(1, 6, 0, 4)
+            HueDot.Size = UDim2.new(1, 4, 0, 6)
             HueDot.AnchorPoint = Vector2.new(0.5, 0.5)
             HueDot.Position = UDim2.new(0.5, 0, h, 0)
             HueDot.BackgroundColor3 = Color3.new(1, 1, 1)
             HueDot.ZIndex = 2
             HueDot.Parent = HueBar
-            Instance.new("UICorner", HueDot).CornerRadius = UDim.new(1, 0)
+            local hdotCorner = Instance.new("UICorner")
+            hdotCorner.CornerRadius = UDim.new(1, 0)
+            hdotCorner.Parent = HueDot
 
             local RGBRow = Instance.new("Frame")
-            RGBRow.Size = UDim2.new(1, -20, 0, 28)
-            RGBRow.Position = UDim2.new(0, 10, 0, 128)
+            RGBRow.Size = UDim2.new(1, -24, 0, 32)
+            RGBRow.Position = UDim2.new(0, 12, 0, 142)
             RGBRow.BackgroundTransparency = 1
             RGBRow.Parent = Panel
 
             local function MakeRGBBox(label, xPos)
                 local Holder = Instance.new("Frame")
-                Holder.Size = UDim2.new(0.33, -4, 1, 0)
-                Holder.Position = UDim2.new(xPos, 2, 0, 0)
-                Holder.BackgroundTransparency = 0.08
+                Holder.Size = UDim2.new(0.33, -6, 1, 0)
+                Holder.Position = UDim2.new(xPos, 4, 0, 0)
+                Holder.BackgroundTransparency = 0.1
                 Holder.Parent = RGBRow
-                Instance.new("UICorner", Holder).CornerRadius = UDim.new(0, 6)
+                local holderCorner = Instance.new("UICorner")
+                holderCorner.CornerRadius = UDim.new(0, 8)
+                holderCorner.Parent = Holder
                 AddToRegistry(Holder, "BackgroundColor3", "Main")
 
                 local HolderStroke = Instance.new("UIStroke")
                 HolderStroke.Thickness = 1
-                HolderStroke.Transparency = 0.75
+                HolderStroke.Transparency = 0.7
                 HolderStroke.Parent = Holder
                 AddToRegistry(HolderStroke, "Color", "Stroke")
 
                 local Prefix = Instance.new("TextLabel")
                 Prefix.Text = label .. ":"
-                Prefix.Size = UDim2.new(0, 20, 1, 0)
-                Prefix.Position = UDim2.new(0, 4, 0, 0)
+                Prefix.Size = UDim2.new(0, 22, 1, 0)
+                Prefix.Position = UDim2.new(0, 6, 0, 0)
                 Prefix.BackgroundTransparency = 1
                 Prefix.Font = Enum.Font.GothamBold
-                Prefix.TextSize = 10
+                Prefix.TextSize = 11
                 Prefix.TextXAlignment = Enum.TextXAlignment.Left
                 Prefix.Parent = Holder
                 AddToRegistry(Prefix, "TextColor3", "Accent")
 
                 local Box = Instance.new("TextBox")
-                Box.Size = UDim2.new(1, -26, 1, 0)
-                Box.Position = UDim2.new(0, 22, 0, 0)
+                Box.Size = UDim2.new(1, -28, 1, 0)
+                Box.Position = UDim2.new(0, 24, 0, 0)
                 Box.Text = "0"
                 Box.BackgroundTransparency = 1
                 Box.Font = Enum.Font.GothamMedium
-                Box.TextSize = 11
+                Box.TextSize = 12
                 Box.TextXAlignment = Enum.TextXAlignment.Left
                 Box.Parent = Holder
                 AddToRegistry(Box, "TextColor3", "Text")
 
                 Box.Focused:Connect(function()
-                    Tween(HolderStroke, {Transparency = 0.15}, 0.15)
+                    Tween(HolderStroke, {Transparency = 0.2}, 0.15)
                 end)
                 Box.FocusLost:Connect(function()
-                    Tween(HolderStroke, {Transparency = 0.75}, 0.15)
+                    Tween(HolderStroke, {Transparency = 0.7}, 0.15)
                 end)
 
                 return Box
@@ -2474,7 +2371,7 @@ function Fenglib:CreateWindow(Config)
                 pickerOpen = not pickerOpen
                 if pickerOpen then
                     Panel.Visible = true
-                    Tween(Panel, {Size = UDim2.new(1, 0, 0, 166)}, 0.32)
+                    Tween(Panel, {Size = UDim2.new(1, 0, 0, 190)}, 0.32)
                 else
                     Tween(Panel, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
                     task.wait(0.3)
@@ -2548,22 +2445,24 @@ function Fenglib:CreateWindow(Config)
             imageFrame.Size = UDim2.new(1, 0, 0, 0)
             imageFrame.AutomaticSize = Enum.AutomaticSize.Y
             imageFrame.Parent = contentContainer
-            imageFrame.BackgroundTransparency = 0.05
-            Instance.new("UICorner", imageFrame).CornerRadius = UDim.new(0, 12)
+            imageFrame.BackgroundTransparency = 0.08
+            local frameCorner = Instance.new("UICorner")
+            frameCorner.CornerRadius = UDim.new(0, 12)
+            frameCorner.Parent = imageFrame
             AddToRegistry(imageFrame, "BackgroundColor3", "Top")
 
             local imgStroke = Instance.new("UIStroke")
             imgStroke.Thickness = 1
-            imgStroke.Transparency = 0.6
+            imgStroke.Transparency = 0.65
             imgStroke.Color = strokeColor
             imgStroke.Parent = imageFrame
             AddToRegistry(imgStroke, "Color", "Stroke")
 
             local padding = Instance.new("UIPadding")
-            padding.PaddingLeft = UDim.new(0, 12)
-            padding.PaddingRight = UDim.new(0, 12)
-            padding.PaddingTop = UDim.new(0, 12)
-            padding.PaddingBottom = UDim.new(0, 12)
+            padding.PaddingLeft = UDim.new(0, 14)
+            padding.PaddingRight = UDim.new(0, 14)
+            padding.PaddingTop = UDim.new(0, 14)
+            padding.PaddingBottom = UDim.new(0, 14)
             padding.Parent = imageFrame
 
             local horizontal = Instance.new("Frame")
@@ -2615,7 +2514,7 @@ function Fenglib:CreateWindow(Config)
                 subtitleLabel.Font = Enum.Font.Gotham
                 subtitleLabel.Text = subtitle
                 subtitleLabel.TextSize = 12
-                subtitleLabel.TextTransparency = 0.5
+                subtitleLabel.TextTransparency = 0.55
                 subtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
                 subtitleLabel.TextWrapped = true
                 subtitleLabel.Parent = textContainer
@@ -2631,7 +2530,7 @@ function Fenglib:CreateWindow(Config)
                 descLabel.Font = Enum.Font.Gotham
                 descLabel.Text = line
                 descLabel.TextSize = 12
-                descLabel.TextTransparency = 0.3
+                descLabel.TextTransparency = 0.4
                 descLabel.TextXAlignment = Enum.TextXAlignment.Left
                 descLabel.TextWrapped = true
                 descLabel.Parent = textContainer
@@ -2647,10 +2546,10 @@ function Fenglib:CreateWindow(Config)
             clickBtn.MouseButton1Click:Connect(callback)
 
             local function onEnter()
-                Tween(imageFrame, {BackgroundTransparency = 0.00}, 0.18)
+                Tween(imageFrame, {BackgroundTransparency = 0}, 0.18)
             end
             local function onLeave()
-                Tween(imageFrame, {BackgroundTransparency = 0.05}, 0.18)
+                Tween(imageFrame, {BackgroundTransparency = 0.08}, 0.18)
             end
             clickBtn.MouseEnter:Connect(onEnter)
             clickBtn.MouseLeave:Connect(onLeave)
@@ -2670,7 +2569,7 @@ function Fenglib:CreateWindow(Config)
                     subtitleLabel.Font = Enum.Font.Gotham
                     subtitleLabel.Text = newSubtitle
                     subtitleLabel.TextSize = 12
-                    subtitleLabel.TextTransparency = 0.5
+                    subtitleLabel.TextTransparency = 0.55
                     subtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
                     subtitleLabel.TextWrapped = true
                     subtitleLabel.Parent = textContainer
@@ -2692,7 +2591,7 @@ function Fenglib:CreateWindow(Config)
                     descLabel.Font = Enum.Font.Gotham
                     descLabel.Text = line
                     descLabel.TextSize = 12
-                    descLabel.TextTransparency = 0.3
+                    descLabel.TextTransparency = 0.4
                     descLabel.TextXAlignment = Enum.TextXAlignment.Left
                     descLabel.TextWrapped = true
                     descLabel.Parent = textContainer
@@ -2719,21 +2618,26 @@ function Fenglib:CreateWindow(Config)
 
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(1, 0, 0, 32)
+        TabBtn.Size = UDim2.new(1, 0, 0, 38)
         TabBtn.BackgroundTransparency = 1
         TabBtn.Text = ""
         TabBtn.Parent = TabContainer
-        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 12)
+        corner.Parent = TabBtn
 
         TabBtn.Selected = false
 
+        -- 改为下划线指示器
         local TabBar = Instance.new("Frame")
-        TabBar.Size = UDim2.new(0, 3, 0.65, 0)
-        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
+        TabBar.Size = UDim2.new(0.6, 0, 0, 2.5)
+        TabBar.Position = UDim2.new(0.2, 0, 1, -6)
         TabBar.BackgroundTransparency = 1
         TabBar.BorderSizePixel = 0
         TabBar.Parent = TabBtn
-        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
+        local barCorner = Instance.new("UICorner")
+        barCorner.CornerRadius = UDim.new(1, 0)
+        barCorner.Parent = TabBar
         AddToRegistry(TabBar, "BackgroundColor3", "Accent")
 
         local ContentFrame = Instance.new("Frame")
@@ -2746,11 +2650,11 @@ function Fenglib:CreateWindow(Config)
         Layout.FillDirection = Enum.FillDirection.Horizontal
         Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
         Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-        Layout.Padding = UDim.new(0, 5)
+        Layout.Padding = UDim.new(0, 8)
         Layout.Parent = ContentFrame
 
         local Padding = Instance.new("UIPadding")
-        Padding.PaddingLeft = UDim.new(0, 10)
+        Padding.PaddingLeft = UDim.new(0, 12)
         Padding.Parent = ContentFrame
 
         if icon then
@@ -2770,32 +2674,32 @@ function Fenglib:CreateWindow(Config)
         end
 
         local TabText = Instance.new("TextLabel")
-        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
+        local textWidth = TextService:GetTextSize(name, 15, Enum.Font.GothamMedium, Vector2.new(200, 38)).X
         TabText.Size = UDim2.new(0, textWidth, 1, 0)
         TabText.BackgroundTransparency = 1
         TabText.Font = Enum.Font.GothamMedium
         TabText.Text = name
-        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)
-        TabText.TextSize = 14
+        TabText.TextColor3 = Color3.fromRGB(145, 145, 155)
+        TabText.TextSize = 15
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
 
         TabBtn.MouseEnter:Connect(function()
             if not TabBtn.Selected then
-                Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
+                Tween(TabText, {TextColor3 = Color3.fromRGB(175, 175, 185)}, 0.2)
             end
         end)
         TabBtn.MouseLeave:Connect(function()
             if not TabBtn.Selected then
-                Tween(TabText, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
+                Tween(TabText, {TextColor3 = Color3.fromRGB(145, 145, 155)}, 0.2)
             end
         end)
 
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
-        Page.ScrollBarThickness = 2
-        Page.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
+        Page.ScrollBarThickness = 4
+        Page.ScrollBarImageColor3 = Color3.fromRGB(80,80,90)
         Page.ScrollingDirection = Enum.ScrollingDirection.Y
         Page.Visible = false
         Page.Parent = PageContainer
@@ -2812,12 +2716,12 @@ function Fenglib:CreateWindow(Config)
         HolderPadding.Parent = ContentHolder
 
         local PageList = Instance.new("UIListLayout")
-        PageList.Padding = UDim.new(0, 10)
+        PageList.Padding = UDim.new(0, 12)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
         PageList.Parent = ContentHolder
 
         local function updateCanvas()
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 12)
         end
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         task.spawn(function() task.wait(); updateCanvas() end)
@@ -2829,12 +2733,12 @@ function Fenglib:CreateWindow(Config)
             for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
                     v.Selected = false
-                    Tween(v, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})
+                    Tween(v, {BackgroundTransparency = 1})
                     local content = v:FindFirstChild("ContentFrame")
                     if content then
                         local textLabel = content:FindFirstChildOfClass("TextLabel")
                         if textLabel then
-                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
+                            Tween(textLabel, {TextColor3 = Color3.fromRGB(145, 145, 155)})
                         end
                     end
                     local bar = v:FindFirstChildOfClass("Frame")
@@ -2845,7 +2749,7 @@ function Fenglib:CreateWindow(Config)
             end
             Page.Visible = true
             TabBtn.Selected = true
-            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
+            Tween(TabBtn, {BackgroundTransparency = 0.06, BackgroundColor3 = CurrentTheme.Element})
             Tween(TabText, {TextColor3 = CurrentTheme.Text})
             Tween(TabBar, {BackgroundTransparency = 0})
         end)
@@ -2854,8 +2758,8 @@ function Fenglib:CreateWindow(Config)
             firstTab = false
             Page.Visible = true
             TabBtn.Selected = true
-            TabBtn.BackgroundTransparency = 0.05
-            TabBtn.BackgroundColor3 = CurrentTheme.Top
+            TabBtn.BackgroundTransparency = 0.06
+            TabBtn.BackgroundColor3 = CurrentTheme.Element
             TabText.TextColor3 = CurrentTheme.Text
             TabBar.BackgroundTransparency = 0
         end
@@ -2878,21 +2782,25 @@ function Fenglib:CreateWindow(Config)
 
     function Window:DualTab(name, icon)
         local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(1, 0, 0, 32)
+        TabBtn.Size = UDim2.new(1, 0, 0, 38)
         TabBtn.BackgroundTransparency = 1
         TabBtn.Text = ""
         TabBtn.Parent = TabContainer
-        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 12)
+        corner.Parent = TabBtn
 
         TabBtn.Selected = false
 
         local TabBar = Instance.new("Frame")
-        TabBar.Size = UDim2.new(0, 3, 0.65, 0)
-        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
+        TabBar.Size = UDim2.new(0.6, 0, 0, 2.5)
+        TabBar.Position = UDim2.new(0.2, 0, 1, -6)
         TabBar.BackgroundTransparency = 1
         TabBar.BorderSizePixel = 0
         TabBar.Parent = TabBtn
-        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
+        local barCorner = Instance.new("UICorner")
+        barCorner.CornerRadius = UDim.new(1, 0)
+        barCorner.Parent = TabBar
         AddToRegistry(TabBar, "BackgroundColor3", "Accent")
 
         local ContentFrame = Instance.new("Frame")
@@ -2905,11 +2813,11 @@ function Fenglib:CreateWindow(Config)
         Layout.FillDirection = Enum.FillDirection.Horizontal
         Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
         Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-        Layout.Padding = UDim.new(0, 5)
+        Layout.Padding = UDim.new(0, 8)
         Layout.Parent = ContentFrame
 
         local Padding = Instance.new("UIPadding")
-        Padding.PaddingLeft = UDim.new(0, 10)
+        Padding.PaddingLeft = UDim.new(0, 12)
         Padding.Parent = ContentFrame
 
         if icon then
@@ -2929,24 +2837,24 @@ function Fenglib:CreateWindow(Config)
         end
 
         local TabText = Instance.new("TextLabel")
-        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
+        local textWidth = TextService:GetTextSize(name, 15, Enum.Font.GothamMedium, Vector2.new(200, 38)).X
         TabText.Size = UDim2.new(0, textWidth, 1, 0)
         TabText.BackgroundTransparency = 1
         TabText.Font = Enum.Font.GothamMedium
         TabText.Text = name
-        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)
-        TabText.TextSize = 14
+        TabText.TextColor3 = Color3.fromRGB(145, 145, 155)
+        TabText.TextSize = 15
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
 
         TabBtn.MouseEnter:Connect(function()
             if not TabBtn.Selected then
-                Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
+                Tween(TabText, {TextColor3 = Color3.fromRGB(175, 175, 185)}, 0.2)
             end
         end)
         TabBtn.MouseLeave:Connect(function()
             if not TabBtn.Selected then
-                Tween(TabText, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
+                Tween(TabText, {TextColor3 = Color3.fromRGB(145, 145, 155)}, 0.2)
             end
         end)
 
@@ -2963,22 +2871,22 @@ function Fenglib:CreateWindow(Config)
 
         local ColumnsLayout = Instance.new("UIListLayout")
         ColumnsLayout.FillDirection = Enum.FillDirection.Horizontal
-        ColumnsLayout.Padding = UDim.new(0, 10)
+        ColumnsLayout.Padding = UDim.new(0, 12)
         ColumnsLayout.SortOrder = Enum.SortOrder.LayoutOrder
         ColumnsLayout.Parent = Columns
 
         local ColumnsPadding = Instance.new("UIPadding")
-        ColumnsPadding.PaddingLeft = UDim.new(0, 5)
-        ColumnsPadding.PaddingRight = UDim.new(0, 5)
+        ColumnsPadding.PaddingLeft = UDim.new(0, 6)
+        ColumnsPadding.PaddingRight = UDim.new(0, 6)
         ColumnsPadding.Parent = Columns
 
         local LeftColumn = Instance.new("ScrollingFrame")
         LeftColumn.Name = "LeftColumn"
-        LeftColumn.Size = UDim2.new(0.5, -5, 1, 0)
+        LeftColumn.Size = UDim2.new(0.5, -6, 1, 0)
         LeftColumn.BackgroundTransparency = 1
         LeftColumn.ScrollingDirection = Enum.ScrollingDirection.Y
-        LeftColumn.ScrollBarThickness = 2
-        LeftColumn.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
+        LeftColumn.ScrollBarThickness = 4
+        LeftColumn.ScrollBarImageColor3 = Color3.fromRGB(80,80,90)
         LeftColumn.BottomImage = ""
         LeftColumn.TopImage = ""
         LeftColumn.Parent = Columns
@@ -2995,17 +2903,17 @@ function Fenglib:CreateWindow(Config)
         LeftHolderPadding.Parent = LeftHolder
 
         local LeftList = Instance.new("UIListLayout")
-        LeftList.Padding = UDim.new(0, 10)
+        LeftList.Padding = UDim.new(0, 12)
         LeftList.SortOrder = Enum.SortOrder.LayoutOrder
         LeftList.Parent = LeftHolder
 
         local RightColumn = Instance.new("ScrollingFrame")
         RightColumn.Name = "RightColumn"
-        RightColumn.Size = UDim2.new(0.5, -5, 1, 0)
+        RightColumn.Size = UDim2.new(0.5, -6, 1, 0)
         RightColumn.BackgroundTransparency = 1
         RightColumn.ScrollingDirection = Enum.ScrollingDirection.Y
-        RightColumn.ScrollBarThickness = 2
-        RightColumn.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
+        RightColumn.ScrollBarThickness = 4
+        RightColumn.ScrollBarImageColor3 = Color3.fromRGB(80,80,90)
         RightColumn.BottomImage = ""
         RightColumn.TopImage = ""
         RightColumn.Parent = Columns
@@ -3022,15 +2930,15 @@ function Fenglib:CreateWindow(Config)
         RightHolderPadding.Parent = RightHolder
 
         local RightList = Instance.new("UIListLayout")
-        RightList.Padding = UDim.new(0, 10)
+        RightList.Padding = UDim.new(0, 12)
         RightList.SortOrder = Enum.SortOrder.LayoutOrder
         RightList.Parent = RightHolder
 
         local function updateLeftCanvas()
-            LeftColumn.CanvasSize = UDim2.new(0, 0, 0, LeftList.AbsoluteContentSize.Y + 10)
+            LeftColumn.CanvasSize = UDim2.new(0, 0, 0, LeftList.AbsoluteContentSize.Y + 12)
         end
         local function updateRightCanvas()
-            RightColumn.CanvasSize = UDim2.new(0, 0, 0, RightList.AbsoluteContentSize.Y + 10)
+            RightColumn.CanvasSize = UDim2.new(0, 0, 0, RightList.AbsoluteContentSize.Y + 12)
         end
         LeftList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateLeftCanvas)
         RightList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightCanvas)
@@ -3043,12 +2951,12 @@ function Fenglib:CreateWindow(Config)
             for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
                     v.Selected = false
-                    Tween(v, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})
+                    Tween(v, {BackgroundTransparency = 1})
                     local content = v:FindFirstChild("ContentFrame")
                     if content then
                         local textLabel = content:FindFirstChildOfClass("TextLabel")
                         if textLabel then
-                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
+                            Tween(textLabel, {TextColor3 = Color3.fromRGB(145, 145, 155)})
                         end
                     end
                     local bar = v:FindFirstChildOfClass("Frame")
@@ -3059,7 +2967,7 @@ function Fenglib:CreateWindow(Config)
             end
             PageFrame.Visible = true
             TabBtn.Selected = true
-            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
+            Tween(TabBtn, {BackgroundTransparency = 0.06, BackgroundColor3 = CurrentTheme.Element})
             Tween(TabText, {TextColor3 = CurrentTheme.Text})
             Tween(TabBar, {BackgroundTransparency = 0})
         end)
@@ -3068,8 +2976,8 @@ function Fenglib:CreateWindow(Config)
             firstTab = false
             PageFrame.Visible = true
             TabBtn.Selected = true
-            TabBtn.BackgroundTransparency = 0.05
-            TabBtn.BackgroundColor3 = CurrentTheme.Top
+            TabBtn.BackgroundTransparency = 0.06
+            TabBtn.BackgroundColor3 = CurrentTheme.Element
             TabText.TextColor3 = CurrentTheme.Text
             TabBar.BackgroundTransparency = 0
         end
