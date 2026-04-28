@@ -216,7 +216,7 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.PaddingBottom = UDim.new(0, 8)
     HolderPadding.Parent = NotificationHolder
 
-    -- 主窗口 (小尺寸)
+    -- 主窗口
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0) 
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -615,7 +615,7 @@ function Fenglib:CreateWindow(Config)
         distance = 8,
         width = 12,
         height = 8,
-        transparency = 0.25,
+        transparency = 0.3,      -- 与原文件一致
         autoSize = true
     }
 
@@ -682,7 +682,7 @@ function Fenglib:CreateWindow(Config)
         selectionBox.Adornee = projectorScreen
         selectionBox.Color3 = CurrentTheme.Accent
         selectionBox.LineThickness = 0.08
-        selectionBox.Transparency = 0.35
+        selectionBox.Transparency = 0.4   -- 与原文件一致
         selectionBox.Parent = projectorScreen
         
         if syn and syn.protect_gui then syn.protect_gui(projectorScreen) end
@@ -714,7 +714,8 @@ function Fenglib:CreateWindow(Config)
         Window._savedMainFrameSize = MainFrame.Size
         Window._savedMainFramePos = MainFrame.Position
         
-        MainFrame.Size = UDim2.new(0, 680, 0, 480)
+        -- 与原文件一致：投影时窗口大小 600x400
+        MainFrame.Size = UDim2.new(0, 600, 0, 400)
         MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         
         addPressEffectToAll(surfaceGui)
@@ -800,7 +801,6 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Size = Window._savedMainFrameSize
             MainFrame.Position = Window._savedMainFramePos
         else
-            -- 窗口默认尺寸调小
             MainFrame.Size = UDim2.new(0, 500, 0, 299)
             MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         end
@@ -850,7 +850,6 @@ function Fenglib:CreateWindow(Config)
         ScreenGui:Destroy()
     end)
 
-    -- 窗口初始尺寸调小
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
     local dragging = false
@@ -920,14 +919,14 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 悬浮按钮 (恢复原大小 40x40，位置靠上)
+    -- 悬浮按钮（原大小 40x40，位置靠上）
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
     OpenButton.BackgroundColor3 = CurrentTheme.Accent
     OpenButton.BackgroundTransparency = 0.15
-    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)   -- 恢复原始 Y 坐标
-    OpenButton.Size = UDim2.new(0, 40, 0, 40)          -- 恢复原始大小
+    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)
+    OpenButton.Size = UDim2.new(0, 40, 0, 40)
     OpenButton.Active = true
     OpenButton.Draggable = true  
     OpenButton.Image = "rbxassetid://84830962019412"  
@@ -1222,7 +1221,7 @@ function Fenglib:CreateWindow(Config)
     local firstTab = true
     local controlCounter = 0
 
-    -- 更美观的Section (卡片风格)
+    -- 创建卡片 Section（视觉优化版）
     local function createSection(parent, text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
 
@@ -1250,7 +1249,6 @@ function Fenglib:CreateWindow(Config)
             iconClosed = defaultIcon
         end
 
-        -- 卡片背景
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 44)
         sectionFrame.BackgroundTransparency = 0.06
@@ -2630,7 +2628,6 @@ function Fenglib:CreateWindow(Config)
 
         TabBtn.Selected = false
 
-        -- 左侧竖条指示器（改回原版位置）
         local TabBar = Instance.new("Frame")
         TabBar.Size = UDim2.new(0, 3, 0.65, 0)
         TabBar.Position = UDim2.new(0, 0, 0.175, 0)
@@ -2794,7 +2791,6 @@ function Fenglib:CreateWindow(Config)
 
         TabBtn.Selected = false
 
-        -- 左侧竖条指示器
         local TabBar = Instance.new("Frame")
         TabBar.Size = UDim2.new(0, 3, 0.65, 0)
         TabBar.Position = UDim2.new(0, 0, 0.175, 0)
