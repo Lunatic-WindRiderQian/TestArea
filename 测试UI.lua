@@ -615,7 +615,7 @@ function Fenglib:CreateWindow(Config)
         distance = 8,
         width = 12,
         height = 8,
-        transparency = 0.3,      -- 与原文件一致
+        transparency = 0.3,
         autoSize = true
     }
 
@@ -682,7 +682,7 @@ function Fenglib:CreateWindow(Config)
         selectionBox.Adornee = projectorScreen
         selectionBox.Color3 = CurrentTheme.Accent
         selectionBox.LineThickness = 0.08
-        selectionBox.Transparency = 0.4   -- 与原文件一致
+        selectionBox.Transparency = 0.4
         selectionBox.Parent = projectorScreen
         
         if syn and syn.protect_gui then syn.protect_gui(projectorScreen) end
@@ -714,7 +714,6 @@ function Fenglib:CreateWindow(Config)
         Window._savedMainFrameSize = MainFrame.Size
         Window._savedMainFramePos = MainFrame.Position
         
-        -- 与原文件一致：投影时窗口大小 600x400
         MainFrame.Size = UDim2.new(0, 600, 0, 400)
         MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         
@@ -919,19 +918,19 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 悬浮按钮（原大小 40x40，位置靠上）
+    -- 悬浮按钮（完全恢复原文件样式）
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
     OpenButton.BackgroundColor3 = CurrentTheme.Accent
-    OpenButton.BackgroundTransparency = 0.15
+    OpenButton.BackgroundTransparency = 0.85
     OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)
     OpenButton.Size = UDim2.new(0, 40, 0, 40)
     OpenButton.Active = true
     OpenButton.Draggable = true  
     OpenButton.Image = "rbxassetid://84830962019412"  
     OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    OpenButton.ImageTransparency = 0.1
+    OpenButton.ImageTransparency = 0.15
     OpenButton.ZIndex = 10  
 
     OpenButton.InputBegan:Connect(function(input)
@@ -941,14 +940,14 @@ function Fenglib:CreateWindow(Config)
     end)
 
     local openCorner = Instance.new("UICorner")
-    openCorner.CornerRadius = UDim.new(0, 12)
+    openCorner.CornerRadius = UDim.new(0, 8)
     openCorner.Parent = OpenButton
 
     local openStroke = Instance.new("UIStroke")
     openStroke.Parent = OpenButton
-    openStroke.Color = Color3.fromRGB(220, 220, 240)
-    openStroke.Thickness = 1.5
-    openStroke.Transparency = 0.5
+    openStroke.Color = Color3.fromRGB(180, 180, 180)
+    openStroke.Thickness = 1.2
+    openStroke.Transparency = 0.4
 
     startNeonFlowEffect(OpenButton, "BackgroundColor3", 0.012)
     createPulseGlow(openStroke)
