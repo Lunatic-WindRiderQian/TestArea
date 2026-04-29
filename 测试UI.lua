@@ -682,7 +682,7 @@ function Fenglib:CreateWindow(Config)
         selectionBox.Adornee = projectorScreen
         selectionBox.Color3 = CurrentTheme.Accent
         selectionBox.LineThickness = 0.08
-        selectionBox.Transparency = 0.4
+        selectionBox.Transparency = 0.35
         selectionBox.Parent = projectorScreen
         
         if syn and syn.protect_gui then syn.protect_gui(projectorScreen) end
@@ -918,19 +918,18 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 悬浮按钮（完全恢复原文件样式）
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
     OpenButton.BackgroundColor3 = CurrentTheme.Accent
-    OpenButton.BackgroundTransparency = 0.85
+    OpenButton.BackgroundTransparency = 0.15
     OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)
     OpenButton.Size = UDim2.new(0, 40, 0, 40)
     OpenButton.Active = true
     OpenButton.Draggable = true  
     OpenButton.Image = "rbxassetid://84830962019412"  
     OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    OpenButton.ImageTransparency = 0.15
+    OpenButton.ImageTransparency = 0.1
     OpenButton.ZIndex = 10  
 
     OpenButton.InputBegan:Connect(function(input)
@@ -940,14 +939,14 @@ function Fenglib:CreateWindow(Config)
     end)
 
     local openCorner = Instance.new("UICorner")
-    openCorner.CornerRadius = UDim.new(0, 8)
+    openCorner.CornerRadius = UDim.new(0, 12)
     openCorner.Parent = OpenButton
 
     local openStroke = Instance.new("UIStroke")
     openStroke.Parent = OpenButton
-    openStroke.Color = Color3.fromRGB(180, 180, 180)
-    openStroke.Thickness = 1.2
-    openStroke.Transparency = 0.4
+    openStroke.Color = Color3.fromRGB(220, 220, 240)
+    openStroke.Thickness = 1.5
+    openStroke.Transparency = 0.5
 
     startNeonFlowEffect(OpenButton, "BackgroundColor3", 0.012)
     createPulseGlow(openStroke)
@@ -1220,7 +1219,7 @@ function Fenglib:CreateWindow(Config)
     local firstTab = true
     local controlCounter = 0
 
-    -- 创建卡片 Section（视觉优化版）
+    -- 创建 Section 的辅助函数（卡片风格）
     local function createSection(parent, text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
 
@@ -2614,7 +2613,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- Tab 按钮（左侧竖条指示器）
+    -- 普通Tab（左侧竖条指示器）
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 38)
@@ -2778,6 +2777,7 @@ function Fenglib:CreateWindow(Config)
         return Elements
     end
 
+    -- 双栏Tab（左侧竖条指示器）
     function Window:DualTab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 38)
