@@ -560,10 +560,11 @@ function Fenglib:CreateWindow(Config)
 
     MainFrame.ClipsDescendants = false
 
+    -- Resizer（完全恢复原文件设置）
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
-    Resizer.BackgroundTransparency = 0.7
+    Resizer.BackgroundTransparency = 0.8
     Resizer.BackgroundColor3 = Color3.new(1, 1, 1)
     Resizer.Position = UDim2.new(1, 5, 1, 5)
     Resizer.Size = UDim2.new(0, 24, 0, 24)
@@ -575,11 +576,11 @@ function Fenglib:CreateWindow(Config)
     local stroke = Instance.new("UIStroke")
     stroke.Thickness = 4
     stroke.Color = Color3.new(1, 1, 1)
-    stroke.Transparency = 0.3
+    stroke.Transparency = 0
     stroke.Parent = Resizer
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
+    corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = Resizer
 
     local isResizing = false
@@ -597,8 +598,8 @@ function Fenglib:CreateWindow(Config)
     UserInputService.InputChanged:Connect(function(input)
         if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - resizeStart
-            local newWidth = math.max(450, startSize.X.Offset + delta.X)
-            local newHeight = math.max(320, startSize.Y.Offset + delta.Y)
+            local newWidth = math.max(400, startSize.X.Offset + delta.X)
+            local newHeight = math.max(250, startSize.Y.Offset + delta.Y)
             MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
         end
     end)
