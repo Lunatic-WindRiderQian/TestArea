@@ -216,6 +216,78 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.PaddingBottom = UDim.new(0, 8)
     HolderPadding.Parent = NotificationHolder
 
+    -- ==================== 左右侧光效渲染 ====================
+    -- 左侧光效
+    local LeftGlow = Instance.new("Frame")
+    LeftGlow.Name = "LeftGlow"
+    LeftGlow.Size = UDim2.new(0, 1, 1, -40)
+    LeftGlow.Position = UDim2.new(0, 8, 0, 20)
+    LeftGlow.BackgroundColor3 = CurrentTheme.Accent
+    LeftGlow.BackgroundTransparency = 0.85
+    LeftGlow.BorderSizePixel = 0
+    LeftGlow.ZIndex = 0
+    LeftGlow.Parent = ScreenGui
+
+    local leftGlowGradient = Instance.new("UIGradient")
+    leftGlowGradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.0),
+        NumberSequenceKeypoint.new(0.3, 0.7),
+        NumberSequenceKeypoint.new(1, 1.0)
+    })
+    leftGlowGradient.Parent = LeftGlow
+
+    -- 右侧光效
+    local RightGlow = Instance.new("Frame")
+    RightGlow.Name = "RightGlow"
+    RightGlow.Size = UDim2.new(0, 1, 1, -40)
+    RightGlow.Position = UDim2.new(1, -9, 0, 20)
+    RightGlow.BackgroundColor3 = CurrentTheme.Accent
+    RightGlow.BackgroundTransparency = 0.85
+    RightGlow.BorderSizePixel = 0
+    RightGlow.ZIndex = 0
+    RightGlow.Parent = ScreenGui
+
+    local rightGlowGradient = Instance.new("UIGradient")
+    rightGlowGradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 1.0),
+        NumberSequenceKeypoint.new(0.7, 0.7),
+        NumberSequenceKeypoint.new(1, 0.0)
+    })
+    rightGlowGradient.Parent = RightGlow
+
+    -- 光效动画
+    task.spawn(function()
+        while ScreenGui.Parent do
+            local t = tick()
+            local glowAlpha = 0.82 + math.sin(t * 1.5) * 0.08
+            LeftGlow.BackgroundTransparency = glowAlpha
+            RightGlow.BackgroundTransparency = glowAlpha
+            
+            if RainbowEnabled then
+                local hue = (t * 0.3) % 1
+                local glowColor = Color3.fromHSV(hue, 0.6, 1)
+                LeftGlow.BackgroundColor3 = glowColor
+                RightGlow.BackgroundColor3 = glowColor
+            else
+                LeftGlow.BackgroundColor3 = CurrentTheme.Accent
+                RightGlow.BackgroundColor3 = CurrentTheme.Accent
+            end
+            
+            -- 调整光效位置跟随主窗口
+            if MainFrame and MainFrame.Parent then
+                local mainPos = MainFrame.Position
+                local mainSize = MainFrame.Size
+                LeftGlow.Position = UDim2.new(mainPos.X.Scale, mainPos.X.Offset - mainSize.X.Offset/2 + 4, mainPos.Y.Scale, mainPos.Y.Offset - mainSize.Y.Offset/2 + 20)
+                LeftGlow.Size = UDim2.new(0, 1, 0, mainSize.Y.Offset - 40)
+                RightGlow.Position = UDim2.new(mainPos.X.Scale, mainPos.X.Offset + mainSize.X.Offset/2 - 5, mainPos.Y.Scale, mainPos.Y.Offset - mainSize.Y.Offset/2 + 20)
+                RightGlow.Size = UDim2.new(0, 1, 0, mainSize.Y.Offset - 40)
+            end
+            
+            RunService.RenderStepped:Wait()
+        end
+    end)
+    -- ==================== 光效渲染结束 ====================
+
     -- 主窗口
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0) 
