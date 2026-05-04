@@ -216,78 +216,6 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.PaddingBottom = UDim.new(0, 8)
     HolderPadding.Parent = NotificationHolder
 
-    -- ==================== 左右侧光效渲染 ====================
-    -- 左侧光效
-    local LeftGlow = Instance.new("Frame")
-    LeftGlow.Name = "LeftGlow"
-    LeftGlow.Size = UDim2.new(0, 1, 1, -40)
-    LeftGlow.Position = UDim2.new(0, 8, 0, 20)
-    LeftGlow.BackgroundColor3 = CurrentTheme.Accent
-    LeftGlow.BackgroundTransparency = 0.85
-    LeftGlow.BorderSizePixel = 0
-    LeftGlow.ZIndex = 0
-    LeftGlow.Parent = ScreenGui
-
-    local leftGlowGradient = Instance.new("UIGradient")
-    leftGlowGradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.0),
-        NumberSequenceKeypoint.new(0.3, 0.7),
-        NumberSequenceKeypoint.new(1, 1.0)
-    })
-    leftGlowGradient.Parent = LeftGlow
-
-    -- 右侧光效
-    local RightGlow = Instance.new("Frame")
-    RightGlow.Name = "RightGlow"
-    RightGlow.Size = UDim2.new(0, 1, 1, -40)
-    RightGlow.Position = UDim2.new(1, -9, 0, 20)
-    RightGlow.BackgroundColor3 = CurrentTheme.Accent
-    RightGlow.BackgroundTransparency = 0.85
-    RightGlow.BorderSizePixel = 0
-    RightGlow.ZIndex = 0
-    RightGlow.Parent = ScreenGui
-
-    local rightGlowGradient = Instance.new("UIGradient")
-    rightGlowGradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 1.0),
-        NumberSequenceKeypoint.new(0.7, 0.7),
-        NumberSequenceKeypoint.new(1, 0.0)
-    })
-    rightGlowGradient.Parent = RightGlow
-
-    -- 光效动画
-    task.spawn(function()
-        while ScreenGui.Parent do
-            local t = tick()
-            local glowAlpha = 0.82 + math.sin(t * 1.5) * 0.08
-            LeftGlow.BackgroundTransparency = glowAlpha
-            RightGlow.BackgroundTransparency = glowAlpha
-            
-            if RainbowEnabled then
-                local hue = (t * 0.3) % 1
-                local glowColor = Color3.fromHSV(hue, 0.6, 1)
-                LeftGlow.BackgroundColor3 = glowColor
-                RightGlow.BackgroundColor3 = glowColor
-            else
-                LeftGlow.BackgroundColor3 = CurrentTheme.Accent
-                RightGlow.BackgroundColor3 = CurrentTheme.Accent
-            end
-            
-            -- 调整光效位置跟随主窗口
-            if MainFrame and MainFrame.Parent then
-                local mainPos = MainFrame.Position
-                local mainSize = MainFrame.Size
-                LeftGlow.Position = UDim2.new(mainPos.X.Scale, mainPos.X.Offset - mainSize.X.Offset/2 + 4, mainPos.Y.Scale, mainPos.Y.Offset - mainSize.Y.Offset/2 + 20)
-                LeftGlow.Size = UDim2.new(0, 1, 0, mainSize.Y.Offset - 40)
-                RightGlow.Position = UDim2.new(mainPos.X.Scale, mainPos.X.Offset + mainSize.X.Offset/2 - 5, mainPos.Y.Scale, mainPos.Y.Offset - mainSize.Y.Offset/2 + 20)
-                RightGlow.Size = UDim2.new(0, 1, 0, mainSize.Y.Offset - 40)
-            end
-            
-            RunService.RenderStepped:Wait()
-        end
-    end)
-    -- ==================== 光效渲染结束 ====================
-
     -- 主窗口
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0) 
@@ -681,6 +609,152 @@ function Fenglib:CreateWindow(Config)
             isResizing = false
         end
     end)
+
+    -- ========== 高级左右闪光特效 (BEGIN) ==========
+    local GlowSettings = {
+        enabled = true,
+        mode = "sweep",        -- "sweep" 扫光 / "breath" 呼吸
+        color = CurrentTheme.Accent,
+        width = 8,             -- 光带宽度(px)
+        speed = 1.0,
+    }
+
+    local LeftGlow = Instance.new("Frame")
+    LeftGlow.Name = "LeftGlow"
+    LeftGlow.Parent = MainFrame
+    LeftGlow.BackgroundColor3 = Color3.new(1,1,1)
+    LeftGlow.BackgroundTransparency = 0
+    LeftGlow.BorderSizePixel = 0
+    LeftGlow.ZIndex = 2
+
+    local RightGlow = Instance.new("Frame")
+    RightGlow.Name = "RightGlow"
+    RightGlow.Parent = MainFrame
+    RightGlow.BackgroundColor3 = Color3.new(1,1,1)
+    RightGlow.BackgroundTransparency = 0
+    RightGlow.BorderSizePixel = 0
+    RightGlow.ZIndex = 2
+
+    local function updateGlowSize()
+        if not MainFrame or not MainFrame.Parent then return end
+        local width = MainFrame.AbsoluteSize.X
+        local height = MainFrame.AbsoluteSize.Y
+        if width <= 0 or height <= 0 then return end
+        
+        local glowWidth = GlowSettings.width
+        local cornerRadius = 20  -- 与主窗口圆角一致
+        
+        LeftGlow.Size = UDim2.new(0, glowWidth, 0, height - cornerRadius*2)
+        LeftGlow.Position = UDim2.new(0, 0, 0, cornerRadius)
+        RightGlow.Size = UDim2.new(0, glowWidth, 0, height - cornerRadius*2)
+        RightGlow.Position = UDim2.new(1, -glowWidth, 0, cornerRadius)
+    end
+
+    -- 添加圆角和渐变
+    local function styleGlow(frame)
+        local glowCorner = Instance.new("UICorner")
+        glowCorner.CornerRadius = UDim.new(0, 4)
+        glowCorner.Parent = frame
+        
+        local gradient = Instance.new("UIGradient")
+        gradient.Rotation = 90
+        gradient.Enabled = true
+        gradient.Parent = frame
+        
+        local stroke = Instance.new("UIStroke")
+        stroke.Thickness = 0.5
+        stroke.Transparency = 0.8
+        stroke.Color = Color3.new(1,1,1)
+        stroke.Parent = frame
+        
+        return gradient
+    end
+
+    local leftGrad = styleGlow(LeftGlow)
+    local rightGrad = styleGlow(RightGlow)
+
+    -- 动画循环
+    local glowConnection
+    local time = 0
+
+    local function startGlowAnimation()
+        if glowConnection then glowConnection:Disconnect() end
+        glowConnection = RunService.Heartbeat:Connect(function(dt)
+            if not GlowSettings.enabled then 
+                LeftGlow.Visible = false
+                RightGlow.Visible = false
+                return 
+            end
+            LeftGlow.Visible = true
+            RightGlow.Visible = true
+            
+            time = time + dt * GlowSettings.speed
+            
+            local alpha1, alpha2
+            if GlowSettings.mode == "sweep" then
+                -- 扫光模式：利用渐变偏移制造上下流动感
+                local offset = (time % 2) / 2
+                local keypoints = {
+                    NumberSequenceKeypoint.new(0, 0),
+                    NumberSequenceKeypoint.new(offset, 0.7),
+                    NumberSequenceKeypoint.new(offset + 0.3, 0),
+                    NumberSequenceKeypoint.new(1, 0)
+                }
+                leftGrad.Transparency = NumberSequence.new(keypoints)
+                rightGrad.Transparency = NumberSequence.new(keypoints)
+                leftGrad.Color = ColorSequence.new(GlowSettings.color)
+                rightGrad.Color = ColorSequence.new(GlowSettings.color)
+            else
+                -- 呼吸光模式：整体透明度正弦变化
+                local breath = (math.sin(time * 2) + 1) / 2  -- 0..1
+                local alpha = breath * 0.6
+                leftGrad.Transparency = NumberSequence.new(alpha)
+                rightGrad.Transparency = NumberSequence.new(alpha)
+                leftGrad.Color = ColorSequence.new(GlowSettings.color)
+                rightGrad.Color = ColorSequence.new(GlowSettings.color)
+            end
+        end)
+    end
+
+    -- 监听窗口大小变化
+    MainFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateGlowSize)
+    MainFrame:GetPropertyChangedSignal("Position"):Connect(updateGlowSize)
+    updateGlowSize()
+    startGlowAnimation()
+
+    -- 提供给Window的控制方法
+    function Window:SetGlowEnabled(enabled)
+        GlowSettings.enabled = enabled
+        if not enabled then
+            LeftGlow.Visible = false
+            RightGlow.Visible = false
+        else
+            LeftGlow.Visible = true
+            RightGlow.Visible = true
+        end
+    end
+
+    function Window:SetGlowMode(mode)   -- "sweep" or "breath"
+        if mode == "sweep" or mode == "breath" then
+            GlowSettings.mode = mode
+        end
+    end
+
+    function Window:SetGlowColor(color)
+        GlowSettings.color = color
+        leftGrad.Color = ColorSequence.new(color)
+        rightGrad.Color = ColorSequence.new(color)
+    end
+
+    function Window:SetGlowWidth(width)
+        GlowSettings.width = clamp(width, 4, 30)
+        updateGlowSize()
+    end
+
+    function Window:SetGlowSpeed(speed)
+        GlowSettings.speed = clamp(speed, 0.2, 3)
+    end
+    -- ========== 高级左右闪光特效 (END) ==========
 
     Window._ProjectorModeEnabled = false
     Window._ProjectorObjects = nil
@@ -1288,6 +1362,15 @@ function Fenglib:CreateWindow(Config)
     function Window:IsProjectorMode()
         return Window._ProjectorModeEnabled
     end
+
+    -- 主题变更时同步光颜色
+    table.insert(ThemeListeners, function()
+        if GlowSettings.enabled then
+            GlowSettings.color = CurrentTheme.Accent
+            leftGrad.Color = ColorSequence.new(CurrentTheme.Accent)
+            rightGrad.Color = ColorSequence.new(CurrentTheme.Accent)
+        end
+    end)
 
     local firstTab = true
     local controlCounter = 0
