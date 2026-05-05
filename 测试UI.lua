@@ -1,9 +1,3 @@
---[[
-   Fenglib - 现代 UI 库
-   支持：主题、彩虹边框、投影模式、子页面（SubPage）、各种控件
-   删除了 DualTab 双窗口模式，增加了 SubPage 功能（从 Arcae 库迁移并适配）
---]]
-
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -153,7 +147,6 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- 主要窗口创建函数
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "FengY3"
@@ -239,7 +232,6 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- 彩虹边框动画（保持不变）
     task.spawn(function()
         local rot = 0
         while ScreenGui.Parent do
@@ -1216,7 +1208,6 @@ function Fenglib:CreateWindow(Config)
     local firstTab = true
     local controlCounter = 0
 
-    -- 创建 Section 的函数（与之前相同）
     local function createSection(parent, text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
 
@@ -2535,7 +2526,9 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- 改造 Tab 方法，支持 SubPage，且不自动创建默认页
+    -- ========================
+    -- 原有的简单 Tab（没有子页面标签栏，直接放内容）
+    -- ========================
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2610,7 +2603,7 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        -- 每个 Tab 拥有独立的内容区域
+        -- 简单页面（只有一个滚动区域，无子页面标签栏）
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
@@ -2620,238 +2613,28 @@ function Fenglib:CreateWindow(Config)
         Page.Visible = false
         Page.Parent = PageContainer
 
-        -- 子页面系统（仅在调用 SubPage 后激活）
-        local subPages = {}          -- 存储所有子页面对象（每个子页面包含按钮和滚动框）
-        local activeSubPage = nil    -- 当前激活的子页面滚动框
-        local subPageBar = nil       -- 子页面标签栏，延迟创建
-        local subPageContainer = nil -- 子页面内容容器
-        local isSubPageMode = false  -- 是否已经启用了子页面模式
-        local legacyContentHolder = nil -- 用于单页面模式的直接内容容器
+        local ContentHolder = Instance.new("Frame")
+        ContentHolder.Name = "Content"
+        ContentHolder.Size = UDim2.new(1, 0, 0, 0)
+        ContentHolder.AutomaticSize = Enum.AutomaticSize.Y
+        ContentHolder.BackgroundTransparency = 1
+        ContentHolder.Parent = Page
 
-        -- 单页面模式的直接内容容器（传统模式）
-        local function createLegacyContent()
-            local holder = Instance.new("Frame")
-            holder.Size = UDim2.new(1, 0, 0, 0)
-            holder.AutomaticSize = Enum.AutomaticSize.Y
-            holder.BackgroundTransparency = 1
-            holder.Parent = Page
+        local HolderPadding = Instance.new("UIPadding")
+        HolderPadding.PaddingRight = UDim.new(0, 2)
+        HolderPadding.Parent = ContentHolder
 
-            local uiList = Instance.new("UIListLayout")
-            uiList.Padding = UDim.new(0, 10)
-            uiList.SortOrder = Enum.SortOrder.LayoutOrder
-            uiList.Parent = holder
+        local PageList = Instance.new("UIListLayout")
+        PageList.Padding = UDim.new(0, 10)
+        PageList.SortOrder = Enum.SortOrder.LayoutOrder
+        PageList.Parent = ContentHolder
 
-            local function updateCanvas()
-                Page.CanvasSize = UDim2.new(0, 0, 0, uiList.AbsoluteContentSize.Y + 10)
-            end
-            uiList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
-            task.spawn(updateCanvas)
-
-            return holder, uiList
+        local function updateCanvas()
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
         end
+        PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+        task.spawn(function() task.wait(); updateCanvas() end)
 
-        legacyContentHolder, _ = createLegacyContent()
-
-        -- 创建子页面系统（懒加载，首次调用 SubPage 时初始化）
-        local function initSubPageMode()
-            if isSubPageMode then return end
-            isSubPageMode = true
-
-            -- 隐藏传统内容容器
-            legacyContentHolder.Visible = false
-
-            -- 创建子页面标签栏和容器
-            subPageBar = Instance.new("Frame")
-            subPageBar.Name = "SubPageBar"
-            subPageBar.Size = UDim2.new(1, 0, 0, 40)
-            subPageBar.BackgroundTransparency = 1
-            subPageBar.Parent = Page
-
-            local subPageLayout = Instance.new("UIListLayout")
-            subPageLayout.FillDirection = Enum.FillDirection.Horizontal
-            subPageLayout.Padding = UDim.new(0, 6)
-            subPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            subPageLayout.Parent = subPageBar
-
-            local subPagePadding = Instance.new("UIPadding")
-            subPagePadding.PaddingLeft = UDim.new(0, 10)
-            subPagePadding.Parent = subPageBar
-
-            subPageContainer = Instance.new("Frame")
-            subPageContainer.Name = "SubPageContainer"
-            subPageContainer.Size = UDim2.new(1, 0, 1, -40)
-            subPageContainer.Position = UDim2.new(0, 0, 0, 40)
-            subPageContainer.BackgroundTransparency = 1
-            subPageContainer.Parent = Page
-
-            -- 迁移已存在的传统控件到第一个子页面（如果存在）
-            local existingChildren = {}
-            for _, child in ipairs(legacyContentHolder:GetChildren()) do
-                if child:IsA("Frame") and child ~= legacyContentHolder:FindFirstChild("UIListLayout") and child ~= legacyContentHolder:FindFirstChild("UIPadding") then
-                    table.insert(existingChildren, child)
-                end
-            end
-            if #existingChildren > 0 then
-                -- 先创建一个默认的第一个子页面
-                local firstSub = createSubPageInternal("Main")
-                for _, child in ipairs(existingChildren) do
-                    child.Parent = firstSub.contentHolder
-                end
-                -- 重新调整第一个子页面的布局
-                firstSub:refreshLayout()
-            end
-        end
-
-        -- 内部创建子页面（不控制模式切换）
-        local function createSubPageInternal(subName)
-            if not isSubPageMode then
-                initSubPageMode()
-            end
-
-            -- 标签按钮
-            local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(0, 0, 1, 0)
-            btn.AutomaticSize = Enum.AutomaticSize.X
-            btn.Text = subName
-            btn.Font = Enum.Font.GothamMedium
-            btn.TextSize = 14
-            btn.TextColor3 = Color3.fromRGB(150,150,158)
-            btn.BackgroundTransparency = 1
-            btn.AutoButtonColor = false
-            btn.Parent = subPageBar
-            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
-            AddToRegistry(btn, "TextColor3", "Text")
-
-            -- 子页面滚动框
-            local subFrame = Instance.new("ScrollingFrame")
-            subFrame.Size = UDim2.new(1, 0, 1, 0)
-            subFrame.BackgroundTransparency = 1
-            subFrame.ScrollBarThickness = 2
-            subFrame.ScrollingDirection = Enum.ScrollingDirection.Y
-            subFrame.Visible = false
-            subFrame.Parent = subPageContainer
-
-            local contentHolder = Instance.new("Frame")
-            contentHolder.Name = "Content"
-            contentHolder.Size = UDim2.new(1, 0, 0, 0)
-            contentHolder.AutomaticSize = Enum.AutomaticSize.Y
-            contentHolder.BackgroundTransparency = 1
-            contentHolder.Parent = subFrame
-
-            local uiList = Instance.new("UIListLayout")
-            uiList.Padding = UDim.new(0, 10)
-            uiList.SortOrder = Enum.SortOrder.LayoutOrder
-            uiList.Parent = contentHolder
-
-            local function updateCanvas()
-                subFrame.CanvasSize = UDim2.new(0, 0, 0, uiList.AbsoluteContentSize.Y + 10)
-            end
-            uiList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
-            task.spawn(updateCanvas)
-
-            -- 切换激活
-            local function activate()
-                if activeSubPage == subFrame then return end
-                if activeSubPage then activeSubPage.Visible = false end
-                subFrame.Visible = true
-                activeSubPage = subFrame
-                -- 更新按钮样式
-                for _, child in ipairs(subPageBar:GetChildren()) do
-                    if child:IsA("TextButton") then
-                        Tween(child, {TextColor3 = (child == btn) and CurrentTheme.Text or Color3.fromRGB(150,150,158)}, 0.2)
-                        Tween(child, {BackgroundTransparency = (child == btn) and 0.05 or 1}, 0.2)
-                    end
-                end
-            end
-
-            btn.MouseButton1Click:Connect(activate)
-
-            -- 返回子页面操作对象
-            local subObj = {}
-            function subObj:Section(text, icons, defaultOpen)
-                return createSection(contentHolder, text, icons, defaultOpen)
-            end
-            -- 将所有控件方法代理到子页面
-            for methodName, method in pairs(createSection(contentHolder, "", nil, true)) do
-                if type(method) == "function" and methodName ~= "Section" then
-                    subObj[methodName] = method
-                end
-            end
-
-            local pageData = {
-                btn = btn,
-                frame = subFrame,
-                contentHolder = contentHolder,
-                uiList = uiList,
-                activate = activate,
-                refreshLayout = function()
-                    updateCanvas()
-                end
-            }
-            table.insert(subPages, pageData)
-            if #subPages == 1 then
-                activate()
-            end
-            return subObj
-        end
-
-        -- 返回给用户的 Elements 对象
-        local Elements = {}
-
-        -- SubPage 方法：切换到子页面模式并创建一个新子页面
-        function Elements:SubPage(subName)
-            return createSubPageInternal(subName)
-        end
-
-        -- 以下方法在子页面模式未激活时，添加到传统内容容器；子页面模式激活后，默认添加到当前激活的子页面（如果没有子页面则创建一个默认的）
-        local function getCurrentTarget()
-            if isSubPageMode then
-                if #subPages == 0 then
-                    -- 没有子页面时自动创建一个默认的
-                    return createSubPageInternal("Main")
-                else
-                    -- 找到当前激活的子页面对象
-                    for _, sp in ipairs(subPages) do
-                        if sp.frame == activeSubPage then
-                            -- 返回一个代理对象，使得调用 Section 等方法直接作用于该子页面的 contentHolder
-                            local proxy = {}
-                            for methodName, method in pairs(createSection(sp.contentHolder, "", nil, true)) do
-                                proxy[methodName] = method
-                            end
-                            return proxy
-                        end
-                    end
-                    -- 理论上不会到这里，回退到第一个
-                    local proxy = {}
-                    for methodName, method in pairs(createSection(subPages[1].contentHolder, "", nil, true)) do
-                        proxy[methodName] = method
-                    end
-                    return proxy
-                end
-            else
-                -- 传统模式，直接使用 legacyContentHolder 的 createSection
-                return createSection(legacyContentHolder, "", nil, true)
-            end
-        end
-
-        -- 代理所有常规方法
-        Elements.Section = function(_, text, icons, defaultOpen)
-            return getCurrentTarget():Section(text, icons, defaultOpen)
-        end
-        Elements.Toggle = function(_, ...) return getCurrentTarget().Toggle(...) end
-        Elements.Button = function(_, ...) return getCurrentTarget().Button(...) end
-        Elements.Slider = function(_, ...) return getCurrentTarget().Slider(...) end
-        Elements.Dropdown = function(_, ...) return getCurrentTarget().Dropdown(...) end
-        Elements.Keybind = function(_, ...) return getCurrentTarget().Keybind(...) end
-        Elements.Textbox = function(_, ...) return getCurrentTarget().Textbox(...) end
-        Elements.Input = function(_, ...) return getCurrentTarget().Input(...) end
-        Elements.Label = function(_, ...) return getCurrentTarget().Label(...) end
-        Elements.SubLabel = function(_, ...) return getCurrentTarget().SubLabel(...) end
-        Elements.Paragraph = function(_, ...) return getCurrentTarget().Paragraph(...) end
-        Elements.ColorPicker = function(_, ...) return getCurrentTarget().ColorPicker(...) end
-        Elements.Image = function(_, ...) return getCurrentTarget().Image(...) end
-
-        -- Tab 切换逻辑（保持不变）
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
@@ -2893,10 +2676,264 @@ function Fenglib:CreateWindow(Config)
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
         if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
+        local Elements = {}
+        function Elements:Section(text, icons, defaultOpen)
+            return createSection(ContentHolder, text, icons, defaultOpen)
+        end
+        Elements.Toggle = function(_, ...) return createSection(ContentHolder, "", nil, true).Toggle(...) end
+        Elements.Button = function(_, ...) return createSection(ContentHolder, "", nil, true).Button(...) end
+        Elements.Slider = function(_, ...) return createSection(ContentHolder, "", nil, true).Slider(...) end
+        Elements.Dropdown = function(_, ...) return createSection(ContentHolder, "", nil, true).Dropdown(...) end
+        Elements.Keybind = function(_, ...) return createSection(ContentHolder, "", nil, true).Keybind(...) end
+        Elements.Textbox = function(_, ...) return createSection(ContentHolder, "", nil, true).Textbox(...) end
+        Elements.Input = function(_, ...) return createSection(ContentHolder, "", nil, true).Input(...) end
+        Elements.Label = function(_, ...) return createSection(ContentHolder, "", nil, true).Label(...) end
+        Elements.SubLabel = function(_, ...) return createSection(ContentHolder, "", nil, true).SubLabel(...) end
+        Elements.Paragraph = function(_, ...) return createSection(ContentHolder, "", nil, true).Paragraph(...) end
+        Elements.ColorPicker = function(_, ...) return createSection(ContentHolder, "", nil, true).ColorPicker(...) end
+        Elements.Image = function(_, ...) return createSection(ContentHolder, "", nil, true).Image(...) end
+
         return Elements
     end
 
-    -- 已删除 DualTab 方法
+    -- ========================
+    -- 新增的 pageTab（支持子页面标签栏）
+    -- ========================
+    function Window:pageTab(name, icon)
+        local TabBtn = Instance.new("TextButton")
+        TabBtn.Size = UDim2.new(1, 0, 0, 32)
+        TabBtn.BackgroundTransparency = 1
+        TabBtn.Text = ""
+        TabBtn.Parent = TabContainer
+        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
+
+        TabBtn.Selected = false
+
+        local TabBar = Instance.new("Frame")
+        TabBar.Size = UDim2.new(0, 3, 0.65, 0)
+        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
+        TabBar.BackgroundTransparency = 1
+        TabBar.BorderSizePixel = 0
+        TabBar.Parent = TabBtn
+        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
+        AddToRegistry(TabBar, "BackgroundColor3", "Accent")
+
+        local ContentFrame = Instance.new("Frame")
+        ContentFrame.Name = "ContentFrame"
+        ContentFrame.Size = UDim2.new(1, 0, 1, 0)
+        ContentFrame.BackgroundTransparency = 1
+        ContentFrame.Parent = TabBtn
+
+        local Layout = Instance.new("UIListLayout")
+        Layout.FillDirection = Enum.FillDirection.Horizontal
+        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        Layout.VerticalAlignment = Enum.VerticalAlignment.Center
+        Layout.Padding = UDim.new(0, 5)
+        Layout.Parent = ContentFrame
+
+        local Padding = Instance.new("UIPadding")
+        Padding.PaddingLeft = UDim.new(0, 10)
+        Padding.Parent = ContentFrame
+
+        if icon then
+            local TabIcon = Instance.new("ImageLabel")
+            TabIcon.Size = UDim2.new(0, 28, 0, 28)
+            TabIcon.BackgroundTransparency = 1
+            if tonumber(icon) then
+                TabIcon.Image = "rbxassetid://" .. icon
+            else
+                TabIcon.Image = icon
+            end
+            TabIcon.Parent = ContentFrame
+            AddToRegistry(TabIcon, "ImageColor3", "Text")
+            local iconCorner = Instance.new("UICorner")
+            iconCorner.CornerRadius = UDim.new(0, 8)
+            iconCorner.Parent = TabIcon
+        end
+
+        local TabText = Instance.new("TextLabel")
+        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
+        TabText.Size = UDim2.new(0, textWidth, 1, 0)
+        TabText.BackgroundTransparency = 1
+        TabText.Font = Enum.Font.GothamMedium
+        TabText.Text = name
+        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)
+        TabText.TextSize = 14
+        TabText.TextXAlignment = Enum.TextXAlignment.Left
+        TabText.Parent = ContentFrame
+
+        TabBtn.MouseEnter:Connect(function()
+            if not TabBtn.Selected then
+                Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
+            end
+        end)
+        TabBtn.MouseLeave:Connect(function()
+            if not TabBtn.Selected then
+                Tween(TabText, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
+            end
+        end)
+
+        -- 子页面容器
+        local Page = Instance.new("Frame")   -- 注意这里不是 ScrollingFrame，因为子页面内部有自己的滚动
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.BackgroundTransparency = 1
+        Page.Visible = false
+        Page.Parent = PageContainer
+
+        -- 子页面标签栏
+        local SubPageBar = Instance.new("Frame")
+        SubPageBar.Name = "SubPageBar"
+        SubPageBar.Size = UDim2.new(1, 0, 0, 40)
+        SubPageBar.BackgroundTransparency = 1
+        SubPageBar.Parent = Page
+
+        local SubPageLayout = Instance.new("UIListLayout")
+        SubPageLayout.FillDirection = Enum.FillDirection.Horizontal
+        SubPageLayout.Padding = UDim.new(0, 6)
+        SubPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        SubPageLayout.Parent = SubPageBar
+
+        local SubPagePadding = Instance.new("UIPadding")
+        SubPagePadding.PaddingLeft = UDim.new(0, 10)
+        SubPagePadding.Parent = SubPageBar
+
+        -- 子页面内容容器（切换时显示不同的 ScrollingFrame）
+        local SubPageContainer = Instance.new("Frame")
+        SubPageContainer.Name = "SubPageContainer"
+        SubPageContainer.Size = UDim2.new(1, 0, 1, -40)
+        SubPageContainer.Position = UDim2.new(0, 0, 0, 40)
+        SubPageContainer.BackgroundTransparency = 1
+        SubPageContainer.Parent = Page
+
+        local subPages = {}
+        local activeSubPage = nil
+
+        -- 创建子页面
+        local function createSubPage(subName)
+            -- 标签按钮
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(0, 0, 1, 0)
+            btn.AutomaticSize = Enum.AutomaticSize.X
+            btn.Text = subName
+            btn.Font = Enum.Font.GothamMedium
+            btn.TextSize = 14
+            btn.TextColor3 = Color3.fromRGB(150,150,158)
+            btn.BackgroundTransparency = 1
+            btn.AutoButtonColor = false
+            btn.Parent = SubPageBar
+            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+            AddToRegistry(btn, "TextColor3", "Text")
+
+            -- 子页面滚动框
+            local subFrame = Instance.new("ScrollingFrame")
+            subFrame.Size = UDim2.new(1, 0, 1, 0)
+            subFrame.BackgroundTransparency = 1
+            subFrame.ScrollBarThickness = 2
+            subFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+            subFrame.Visible = false
+            subFrame.Parent = SubPageContainer
+
+            local contentHolder = Instance.new("Frame")
+            contentHolder.Name = "Content"
+            contentHolder.Size = UDim2.new(1, 0, 0, 0)
+            contentHolder.AutomaticSize = Enum.AutomaticSize.Y
+            contentHolder.BackgroundTransparency = 1
+            contentHolder.Parent = subFrame
+
+            local uiList = Instance.new("UIListLayout")
+            uiList.Padding = UDim.new(0, 10)
+            uiList.SortOrder = Enum.SortOrder.LayoutOrder
+            uiList.Parent = contentHolder
+
+            local function updateCanvas()
+                subFrame.CanvasSize = UDim2.new(0, 0, 0, uiList.AbsoluteContentSize.Y + 10)
+            end
+            uiList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+            task.spawn(updateCanvas)
+
+            -- 切换子页面
+            local function activate()
+                if activeSubPage == subFrame then return end
+                if activeSubPage then activeSubPage.Visible = false end
+                subFrame.Visible = true
+                activeSubPage = subFrame
+                -- 更新按钮样式
+                for _, child in ipairs(SubPageBar:GetChildren()) do
+                    if child:IsA("TextButton") then
+                        Tween(child, {TextColor3 = (child == btn) and CurrentTheme.Text or Color3.fromRGB(150,150,158)}, 0.2)
+                        Tween(child, {BackgroundTransparency = (child == btn) and 0.05 or 1}, 0.2)
+                    end
+                end
+            end
+
+            btn.MouseButton1Click:Connect(activate)
+
+            -- 子页面 API 对象
+            local subPageObj = {}
+            function subPageObj:Section(text, icons, defaultOpen)
+                return createSection(contentHolder, text, icons, defaultOpen)
+            end
+            -- 代理所有控件方法
+            for methodName, method in pairs(createSection(contentHolder, "", nil, true)) do
+                if type(method) == "function" and methodName ~= "Section" then
+                    subPageObj[methodName] = method
+                end
+            end
+
+            table.insert(subPages, subFrame)
+            if #subPages == 1 then activate() end
+            return subPageObj
+        end
+
+        -- Tab 的切换逻辑
+        TabBtn.MouseButton1Click:Connect(function()
+            for _, v in pairs(PageContainer:GetChildren()) do
+                v.Visible = false
+            end
+            for _, v in pairs(TabContainer:GetChildren()) do
+                if v:IsA("TextButton") then
+                    v.Selected = false
+                    Tween(v, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})
+                    local content = v:FindFirstChild("ContentFrame")
+                    if content then
+                        local textLabel = content:FindFirstChildOfClass("TextLabel")
+                        if textLabel then
+                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
+                        end
+                    end
+                    local bar = v:FindFirstChildOfClass("Frame")
+                    if bar then
+                        Tween(bar, {BackgroundTransparency = 1})
+                    end
+                end
+            end
+            Page.Visible = true
+            TabBtn.Selected = true
+            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
+            Tween(TabText, {TextColor3 = CurrentTheme.Text})
+            Tween(TabBar, {BackgroundTransparency = 0})
+        end)
+
+        if firstTab then
+            firstTab = false
+            Page.Visible = true
+            TabBtn.Selected = true
+            TabBtn.BackgroundTransparency = 0.05
+            TabBtn.BackgroundColor3 = CurrentTheme.Top
+            TabText.TextColor3 = CurrentTheme.Text
+            TabBar.BackgroundTransparency = 0
+        end
+
+        if name == "Config" then TabBtn.LayoutOrder = 99998 end
+        if name == "Settings" then TabBtn.LayoutOrder = 99999 end
+
+        local Elements = {}
+        function Elements:SubPage(subName)
+            return createSubPage(subName)
+        end
+
+        return Elements
+    end
 
     return Window
 end
