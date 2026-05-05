@@ -1,3 +1,11 @@
+--[[
+    修改说明：
+    1. 删除了 Window:DualTab 整个方法
+    2. 为 Tab 增加了可选的子页面（SubPage）支持，且仅在用户主动调用 :SubPage 时才启用子页面模式
+    3. 若从未调用 :SubPage，则保持传统单页模式，所有控件添加到一个主滚动框内
+    4. 子页面模式借鉴 Arcae.lua 的设计，但完全适配 Fenglib 的主题和动画系统
+--]]
+
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -2526,7 +2534,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- 改造 Window:Tab 添加 SubPage 支持
+    -- 改造 Window:Tab，支持可选的子页面，且仅在用户主动调用 :SubPage 时才启用子页面模式
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2601,47 +2609,97 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        -- 每个 Tab 拥有独立的子页面系统
-        local Page = Instance.new("ScrollingFrame")
-        Page.Size = UDim2.new(1, 0, 1, 0)
-        Page.BackgroundTransparency = 1
-        Page.ScrollBarThickness = 2
-        Page.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
-        Page.ScrollingDirection = Enum.ScrollingDirection.Y
-        Page.Visible = false
-        Page.Parent = PageContainer
+        -- 容器：用于放置 Tab 的内容（可能是一个传统滚动框，也可能是子页面结构）
+        local TabPageContainer = Instance.new("Frame")
+        TabPageContainer.Size = UDim2.new(1, 0, 1, 0)
+        TabPageContainer.BackgroundTransparency = 1
+        TabPageContainer.Parent = PageContainer
 
-        -- 子页面标签栏
-        local SubPageBar = Instance.new("Frame")
-        SubPageBar.Name = "SubPageBar"
-        SubPageBar.Size = UDim2.new(1, 0, 0, 40)
-        SubPageBar.BackgroundTransparency = 1
-        SubPageBar.Parent = Page
+        -- 传统模式：直接一个可滚动的内容区域
+        local MainScrolling = Instance.new("ScrollingFrame")
+        MainScrolling.Size = UDim2.new(1, 0, 1, 0)
+        MainScrolling.BackgroundTransparency = 1
+        MainScrolling.ScrollBarThickness = 2
+        MainScrolling.ScrollingDirection = Enum.ScrollingDirection.Y
+        MainScrolling.Visible = true
+        MainScrolling.Parent = TabPageContainer
 
-        local SubPageLayout = Instance.new("UIListLayout")
-        SubPageLayout.FillDirection = Enum.FillDirection.Horizontal
-        SubPageLayout.Padding = UDim.new(0, 6)
-        SubPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        SubPageLayout.Parent = SubPageBar
+        local MainContentHolder = Instance.new("Frame")
+        MainContentHolder.Name = "Content"
+        MainContentHolder.Size = UDim2.new(1, 0, 0, 0)
+        MainContentHolder.AutomaticSize = Enum.AutomaticSize.Y
+        MainContentHolder.BackgroundTransparency = 1
+        MainContentHolder.Parent = MainScrolling
 
-        local SubPagePadding = Instance.new("UIPadding")
-        SubPagePadding.PaddingLeft = UDim.new(0, 10)
-        SubPagePadding.Parent = SubPageBar
+        local MainUiList = Instance.new("UIListLayout")
+        MainUiList.Padding = UDim.new(0, 10)
+        MainUiList.SortOrder = Enum.SortOrder.LayoutOrder
+        MainUiList.Parent = MainContentHolder
 
-        -- 子页面内容容器
-        local SubPageContainer = Instance.new("Frame")
-        SubPageContainer.Name = "SubPageContainer"
-        SubPageContainer.Size = UDim2.new(1, 0, 1, -40)
-        SubPageContainer.Position = UDim2.new(0, 0, 0, 40)
-        SubPageContainer.BackgroundTransparency = 1
-        SubPageContainer.Parent = Page
+        local function updateMainCanvas()
+            MainScrolling.CanvasSize = UDim2.new(0, 0, 0, MainUiList.AbsoluteContentSize.Y + 10)
+        end
+        MainUiList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateMainCanvas)
+        task.spawn(updateMainCanvas)
 
-        local subPages = {}           -- 存储所有子页面的滚动框
+        -- 子页面模式相关变量（仅当用户调用 :SubPage 时才会初始化）
+        local subPageBar = nil
+        local subPageContainer = nil
+        local subPages = {}        -- 存储子页面的滚动框
         local activeSubPage = nil
-        local defaultSubPage = nil    -- 用于向后兼容
+        local subPageModeActive = false   -- 是否已切换到子页面模式
+        local subPageObjects = {}   -- 存储子页面 API 对象，供 :SubPage 返回
 
-        -- 创建子页面（类似 Arcae 的 SubPage）
-        local function createSubPage(subName, subIcon)
+        -- 切换到子页面模式（将传统模式隐藏，创建子页面结构，并迁移已有控件到第一个子页面）
+        local function enableSubPageMode()
+            if subPageModeActive then return end
+            subPageModeActive = true
+
+            -- 隐藏传统滚动框
+            MainScrolling.Visible = false
+
+            -- 创建子页面标签栏容器
+            subPageBar = Instance.new("Frame")
+            subPageBar.Name = "SubPageBar"
+            subPageBar.Size = UDim2.new(1, 0, 0, 40)
+            subPageBar.BackgroundTransparency = 1
+            subPageBar.Parent = TabPageContainer
+
+            local subPageLayout = Instance.new("UIListLayout")
+            subPageLayout.FillDirection = Enum.FillDirection.Horizontal
+            subPageLayout.Padding = UDim.new(0, 6)
+            subPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            subPageLayout.Parent = subPageBar
+
+            local subPagePadding = Instance.new("UIPadding")
+            subPagePadding.PaddingLeft = UDim.new(0, 10)
+            subPagePadding.Parent = subPageBar
+
+            -- 创建子页面内容容器
+            subPageContainer = Instance.new("Frame")
+            subPageContainer.Name = "SubPageContainer"
+            subPageContainer.Size = UDim2.new(1, 0, 1, -40)
+            subPageContainer.Position = UDim2.new(0, 0, 0, 40)
+            subPageContainer.BackgroundTransparency = 1
+            subPageContainer.Parent = TabPageContainer
+
+            -- 将传统模式中已有的控件迁移到第一个子页面
+            local firstSub = createSubPageInternal("Main")
+            -- 迁移内容：遍历 MainContentHolder 下的控件，重新设置 Parent 到 firstSub 的内容容器
+            for _, child in ipairs(MainContentHolder:GetChildren()) do
+                if child:IsA("Frame") and child:FindFirstChild("Content") then
+                    -- 这是 Section 等生成的 Frame，需要将其移动到新的 Content 容器中
+                    child.Parent = firstSub.ContentHolder
+                end
+            end
+            -- 重新布局
+            if firstSub.UiList then
+                firstSub.UiList:Arrange()
+            end
+        end
+
+        -- 创建一个内部子页面（返回子页面的相关组件）
+        local function createSubPageInternal(subName)
             -- 标签按钮
             local btn = Instance.new("TextButton")
             btn.Size = UDim2.new(0, 0, 1, 0)
@@ -2652,7 +2710,7 @@ function Fenglib:CreateWindow(Config)
             btn.TextColor3 = Color3.fromRGB(150,150,158)
             btn.BackgroundTransparency = 1
             btn.AutoButtonColor = false
-            btn.Parent = SubPageBar
+            btn.Parent = subPageBar
             Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(btn, "TextColor3", "Text")
 
@@ -2663,7 +2721,7 @@ function Fenglib:CreateWindow(Config)
             subFrame.ScrollBarThickness = 2
             subFrame.ScrollingDirection = Enum.ScrollingDirection.Y
             subFrame.Visible = false
-            subFrame.Parent = SubPageContainer
+            subFrame.Parent = subPageContainer
 
             local contentHolder = Instance.new("Frame")
             contentHolder.Name = "Content"
@@ -2683,14 +2741,13 @@ function Fenglib:CreateWindow(Config)
             uiList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
             task.spawn(updateCanvas)
 
-            -- 切换子页面
+            -- 切换激活
             local function activate()
                 if activeSubPage == subFrame then return end
                 if activeSubPage then activeSubPage.Visible = false end
                 subFrame.Visible = true
                 activeSubPage = subFrame
-                -- 更新按钮样式
-                for _, child in ipairs(SubPageBar:GetChildren()) do
+                for _, child in ipairs(subPageBar:GetChildren()) do
                     if child:IsA("TextButton") then
                         Tween(child, {TextColor3 = (child == btn) and CurrentTheme.Text or Color3.fromRGB(150,150,158)}, 0.2)
                         Tween(child, {BackgroundTransparency = (child == btn) and 0.05 or 1}, 0.2)
@@ -2700,56 +2757,65 @@ function Fenglib:CreateWindow(Config)
 
             btn.MouseButton1Click:Connect(activate)
 
-            -- 子页面 API 对象
-            local subPageObj = {}
-            function subPageObj:Section(text, icons, defaultOpen)
+            -- 子页面 API 对象（与 createSection 返回的结构一致）
+            local api = {}
+            api.ContentHolder = contentHolder
+            api.UiList = uiList
+            function api:Section(text, icons, defaultOpen)
                 return createSection(contentHolder, text, icons, defaultOpen)
             end
-            -- 暴露所有原生控件方法（通过代理）
+            -- 代理其他控件方法
             for methodName, method in pairs(createSection(contentHolder, "", nil, true)) do
                 if type(method) == "function" and methodName ~= "Section" then
-                    subPageObj[methodName] = method
+                    api[methodName] = method
                 end
             end
 
             table.insert(subPages, subFrame)
             if #subPages == 1 then activate() end
-            return subPageObj
+            return api
         end
 
-        -- 向后兼容：如果不显式调用 SubPage，则自动创建一个名为 "Main" 的默认子页面
-        local defaultSubPageObj = nil
-
-        local function ensureDefaultSubPage()
-            if not defaultSubPageObj then
-                defaultSubPageObj = createSubPage("Main")
-            end
-            return defaultSubPageObj
-        end
-
-        -- 返回的 Elements 对象
+        -- 对外暴露的 Elements 对象
         local Elements = {}
-        function Elements:SubPage(subName)
-            return createSubPage(subName)
-        end
-        -- 原有方法代理到默认子页面
-        Elements.Section = function(_, text, icons, defaultOpen)
-            return ensureDefaultSubPage():Section(text, icons, defaultOpen)
-        end
-        Elements.Toggle = function(_, ...) return ensureDefaultSubPage().Toggle(...) end
-        Elements.Button = function(_, ...) return ensureDefaultSubPage().Button(...) end
-        Elements.Slider = function(_, ...) return ensureDefaultSubPage().Slider(...) end
-        Elements.Dropdown = function(_, ...) return ensureDefaultSubPage().Dropdown(...) end
-        Elements.Keybind = function(_, ...) return ensureDefaultSubPage().Keybind(...) end
-        Elements.Textbox = function(_, ...) return ensureDefaultSubPage().Textbox(...) end
-        Elements.Input = function(_, ...) return ensureDefaultSubPage().Input(...) end
-        Elements.Label = function(_, ...) return ensureDefaultSubPage().Label(...) end
-        Elements.SubLabel = function(_, ...) return ensureDefaultSubPage().SubLabel(...) end
-        Elements.Paragraph = function(_, ...) return ensureDefaultSubPage().Paragraph(...) end
-        Elements.ColorPicker = function(_, ...) return ensureDefaultSubPage().ColorPicker(...) end
-        Elements.Image = function(_, ...) return ensureDefaultSubPage().Image(...) end
 
-        -- Tab 切换逻辑
+        -- 用户调用 :SubPage 时，激活子页面模式并返回子页面 API
+        function Elements:SubPage(subName)
+            if not subPageModeActive then
+                enableSubPageMode()
+            end
+            local subApi = createSubPageInternal(subName or "Untitled")
+            table.insert(subPageObjects, subApi)
+            return subApi
+        end
+
+        -- 向后兼容：如果用户从未调用 SubPage，则所有控件直接添加到传统模式的主滚动框
+        -- 我们将所有控件方法代理到 MainContentHolder 下的 createSection
+        local defaultSectionObj = nil
+        local function getDefaultSection()
+            if not defaultSectionObj then
+                defaultSectionObj = createSection(MainContentHolder, "", nil, true)
+            end
+            return defaultSectionObj
+        end
+
+        Elements.Section = function(_, text, icons, defaultOpen)
+            return getDefaultSection():Section(text, icons, defaultOpen)
+        end
+        Elements.Toggle = function(_, ...) return getDefaultSection().Toggle(...) end
+        Elements.Button = function(_, ...) return getDefaultSection().Button(...) end
+        Elements.Slider = function(_, ...) return getDefaultSection().Slider(...) end
+        Elements.Dropdown = function(_, ...) return getDefaultSection().Dropdown(...) end
+        Elements.Keybind = function(_, ...) return getDefaultSection().Keybind(...) end
+        Elements.Textbox = function(_, ...) return getDefaultSection().Textbox(...) end
+        Elements.Input = function(_, ...) return getDefaultSection().Input(...) end
+        Elements.Label = function(_, ...) return getDefaultSection().Label(...) end
+        Elements.SubLabel = function(_, ...) return getDefaultSection().SubLabel(...) end
+        Elements.Paragraph = function(_, ...) return getDefaultSection().Paragraph(...) end
+        Elements.ColorPicker = function(_, ...) return getDefaultSection().ColorPicker(...) end
+        Elements.Image = function(_, ...) return getDefaultSection().Image(...) end
+
+        -- Tab 切换逻辑（与其他 Tab 保持一致）
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
@@ -2771,7 +2837,7 @@ function Fenglib:CreateWindow(Config)
                     end
                 end
             end
-            Page.Visible = true
+            TabPageContainer.Visible = true
             TabBtn.Selected = true
             Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
             Tween(TabText, {TextColor3 = CurrentTheme.Text})
@@ -2780,7 +2846,7 @@ function Fenglib:CreateWindow(Config)
 
         if firstTab then
             firstTab = false
-            Page.Visible = true
+            TabPageContainer.Visible = true
             TabBtn.Selected = true
             TabBtn.BackgroundTransparency = 0.05
             TabBtn.BackgroundColor3 = CurrentTheme.Top
@@ -2794,7 +2860,7 @@ function Fenglib:CreateWindow(Config)
         return Elements
     end
 
-    -- 删除 DualTab 方法（原 Window:DualTab 已移除）
+    -- 注意：DualTab 方法已被移除，不再存在
 
     return Window
 end
