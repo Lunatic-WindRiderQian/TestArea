@@ -485,10 +485,18 @@ function Fenglib:CreateWindow(Config)
     TabContainer.BackgroundTransparency = 1
     TabContainer.ScrollBarThickness = 0
     TabContainer.Parent = Content
+    
     local TabList = Instance.new("UIListLayout")
     TabList.Padding = UDim.new(0, 8)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Parent = TabContainer
+    
+    -- 修复：监听 TabList 的 AbsoluteContentSize 变化，动态更新 TabContainer 的 CanvasSize
+    local function updateTabCanvas()
+        TabContainer.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y)
+    end
+    TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
+    task.spawn(updateTabCanvas)
 
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
@@ -2673,216 +2681,6 @@ function Fenglib:CreateWindow(Config)
         end
 
         return Elements
-    end
-
-    function Window:DualTab(name, icon)
-        local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(1, 0, 0, 32)
-        TabBtn.BackgroundTransparency = 1
-        TabBtn.Text = ""
-        TabBtn.Parent = TabContainer
-        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-
-        TabBtn.Selected = false
-
-        local TabBar = Instance.new("Frame")
-        TabBar.Size = UDim2.new(0, 3, 0.65, 0)
-        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
-        TabBar.BackgroundTransparency = 1
-        TabBar.BorderSizePixel = 0
-        TabBar.Parent = TabBtn
-        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
-        AddToRegistry(TabBar, "BackgroundColor3", "Accent")
-
-        local ContentFrame = Instance.new("Frame")
-        ContentFrame.Name = "ContentFrame"
-        ContentFrame.Size = UDim2.new(1, 0, 1, 0)
-        ContentFrame.BackgroundTransparency = 1
-        ContentFrame.Parent = TabBtn
-
-        local Layout = Instance.new("UIListLayout")
-        Layout.FillDirection = Enum.FillDirection.Horizontal
-        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-        Layout.Padding = UDim.new(0, 5)
-        Layout.Parent = ContentFrame
-
-        local Padding = Instance.new("UIPadding")
-        Padding.PaddingLeft = UDim.new(0, 10)
-        Padding.Parent = ContentFrame
-
-        if icon then
-            local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 28, 0, 28)
-            TabIcon.BackgroundTransparency = 1
-            if tonumber(icon) then
-                TabIcon.Image = "rbxassetid://" .. icon
-            else
-                TabIcon.Image = icon
-            end
-            TabIcon.Parent = ContentFrame
-            AddToRegistry(TabIcon, "ImageColor3", "Text")
-            local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 8)
-            iconCorner.Parent = TabIcon
-        end
-
-        local TabText = Instance.new("TextLabel")
-        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
-        TabText.Size = UDim2.new(0, textWidth, 1, 0)
-        TabText.BackgroundTransparency = 1
-        TabText.Font = Enum.Font.GothamMedium
-        TabText.Text = name
-        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)
-        TabText.TextSize = 14
-        TabText.TextXAlignment = Enum.TextXAlignment.Left
-        TabText.Parent = ContentFrame
-
-        TabBtn.MouseEnter:Connect(function()
-            if not TabBtn.Selected then
-                Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
-            end
-        end)
-        TabBtn.MouseLeave:Connect(function()
-            if not TabBtn.Selected then
-                Tween(TabText, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
-            end
-        end)
-
-        local PageFrame = Instance.new("Frame")
-        PageFrame.Size = UDim2.new(1, 0, 1, 0)
-        PageFrame.BackgroundTransparency = 1
-        PageFrame.Visible = false
-        PageFrame.Parent = PageContainer
-
-        local Columns = Instance.new("Frame")
-        Columns.Size = UDim2.new(1, 0, 1, 0)
-        Columns.BackgroundTransparency = 1
-        Columns.Parent = PageFrame
-
-        local ColumnsLayout = Instance.new("UIListLayout")
-        ColumnsLayout.FillDirection = Enum.FillDirection.Horizontal
-        ColumnsLayout.Padding = UDim.new(0, 10)
-        ColumnsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        ColumnsLayout.Parent = Columns
-
-        local ColumnsPadding = Instance.new("UIPadding")
-        ColumnsPadding.PaddingLeft = UDim.new(0, 5)
-        ColumnsPadding.PaddingRight = UDim.new(0, 5)
-        ColumnsPadding.Parent = Columns
-
-        local LeftColumn = Instance.new("ScrollingFrame")
-        LeftColumn.Name = "LeftColumn"
-        LeftColumn.Size = UDim2.new(0.5, -5, 1, 0)
-        LeftColumn.BackgroundTransparency = 1
-        LeftColumn.ScrollingDirection = Enum.ScrollingDirection.Y
-        LeftColumn.ScrollBarThickness = 2
-        LeftColumn.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
-        LeftColumn.BottomImage = ""
-        LeftColumn.TopImage = ""
-        LeftColumn.Parent = Columns
-
-        local LeftHolder = Instance.new("Frame")
-        LeftHolder.Name = "Content"
-        LeftHolder.Size = UDim2.new(1, 0, 0, 0)
-        LeftHolder.AutomaticSize = Enum.AutomaticSize.Y
-        LeftHolder.BackgroundTransparency = 1
-        LeftHolder.Parent = LeftColumn
-
-        local LeftHolderPadding = Instance.new("UIPadding")
-        LeftHolderPadding.PaddingRight = UDim.new(0, 2)
-        LeftHolderPadding.Parent = LeftHolder
-
-        local LeftList = Instance.new("UIListLayout")
-        LeftList.Padding = UDim.new(0, 10)
-        LeftList.SortOrder = Enum.SortOrder.LayoutOrder
-        LeftList.Parent = LeftHolder
-
-        local RightColumn = Instance.new("ScrollingFrame")
-        RightColumn.Name = "RightColumn"
-        RightColumn.Size = UDim2.new(0.5, -5, 1, 0)
-        RightColumn.BackgroundTransparency = 1
-        RightColumn.ScrollingDirection = Enum.ScrollingDirection.Y
-        RightColumn.ScrollBarThickness = 2
-        RightColumn.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
-        RightColumn.BottomImage = ""
-        RightColumn.TopImage = ""
-        RightColumn.Parent = Columns
-
-        local RightHolder = Instance.new("Frame")
-        RightHolder.Name = "Content"
-        RightHolder.Size = UDim2.new(1, 0, 0, 0)
-        RightHolder.AutomaticSize = Enum.AutomaticSize.Y
-        RightHolder.BackgroundTransparency = 1
-        RightHolder.Parent = RightColumn
-
-        local RightHolderPadding = Instance.new("UIPadding")
-        RightHolderPadding.PaddingRight = UDim.new(0, 2)
-        RightHolderPadding.Parent = RightHolder
-
-        local RightList = Instance.new("UIListLayout")
-        RightList.Padding = UDim.new(0, 10)
-        RightList.SortOrder = Enum.SortOrder.LayoutOrder
-        RightList.Parent = RightHolder
-
-        local function updateLeftCanvas()
-            LeftColumn.CanvasSize = UDim2.new(0, 0, 0, LeftList.AbsoluteContentSize.Y + 10)
-        end
-        local function updateRightCanvas()
-            RightColumn.CanvasSize = UDim2.new(0, 0, 0, RightList.AbsoluteContentSize.Y + 10)
-        end
-        LeftList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateLeftCanvas)
-        RightList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRightCanvas)
-        task.spawn(function() task.wait(); updateLeftCanvas(); updateRightCanvas() end)
-
-        TabBtn.MouseButton1Click:Connect(function()
-            for _, v in pairs(PageContainer:GetChildren()) do
-                v.Visible = false
-            end
-            for _, v in pairs(TabContainer:GetChildren()) do
-                if v:IsA("TextButton") then
-                    v.Selected = false
-                    Tween(v, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})
-                    local content = v:FindFirstChild("ContentFrame")
-                    if content then
-                        local textLabel = content:FindFirstChildOfClass("TextLabel")
-                        if textLabel then
-                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
-                        end
-                    end
-                    local bar = v:FindFirstChildOfClass("Frame")
-                    if bar then
-                        Tween(bar, {BackgroundTransparency = 1})
-                    end
-                end
-            end
-            PageFrame.Visible = true
-            TabBtn.Selected = true
-            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
-            Tween(TabText, {TextColor3 = CurrentTheme.Text})
-            Tween(TabBar, {BackgroundTransparency = 0})
-        end)
-
-        if firstTab then
-            firstTab = false
-            PageFrame.Visible = true
-            TabBtn.Selected = true
-            TabBtn.BackgroundTransparency = 0.05
-            TabBtn.BackgroundColor3 = CurrentTheme.Top
-            TabText.TextColor3 = CurrentTheme.Text
-            TabBar.BackgroundTransparency = 0
-        end
-
-        if name == "Config" then TabBtn.LayoutOrder = 99998 end
-        if name == "Settings" then TabBtn.LayoutOrder = 99999 end
-
-        local DualElements = {}
-        function DualElements:section(side, text, icons, defaultOpen)
-            local holder = side == "Left" and LeftHolder or RightHolder
-            return createSection(holder, text, icons, defaultOpen)
-        end
-
-        return DualElements
     end
 
     return Window
