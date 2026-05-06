@@ -2516,7 +2516,322 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- 获取控件构建器（用于普通Tab和SubPage）
+    -- ========== 全新的 SubPage 实现 ==========
+    -- 用于存储所有 PageTab 及其子页面状态
+    local pageTabList = {}          -- 记录所有 PageTab 对象
+    local currentPageTab = nil      -- 当前激活的 PageTab
+
+    -- 定义 PageTab 元表
+    local PageTabMeta = {}
+    PageTabMeta.__index = PageTabMeta
+
+    -- 创建新的 PageTab（支持子页面）
+    function Window:PageTab(name, icon)
+        local pageTabObj = setmetatable({}, PageTabMeta)
+        pageTabObj._name = name
+        pageTabObj._icon = icon
+        pageTabObj._subPages = {}          -- 存储子页面对象
+        pageTabObj._currentSubPage = nil   -- 当前激活的子页面
+        pageTabObj._tabButton = nil
+        pageTabObj._pageFrame = nil
+        pageTabObj._subPageBar = nil
+        pageTabObj._subPageContainer = nil
+
+        -- 创建页面容器（ScrollingFrame，包含子页面头部栏 + 内容区域）
+        local pageFrame = Instance.new("ScrollingFrame")
+        pageFrame.Size = UDim2.new(1, 0, 1, 0)
+        pageFrame.BackgroundTransparency = 1
+        pageFrame.ScrollBarThickness = 2
+        pageFrame.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
+        pageFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+        pageFrame.Visible = false
+        pageFrame.Parent = PageContainer
+        pageTabObj._pageFrame = pageFrame
+
+        -- 子页面头部栏（水平按钮列表）
+        local subPageBar = Instance.new("Frame")
+        subPageBar.Size = UDim2.new(1, 0, 0, 38)
+        subPageBar.BackgroundTransparency = 1
+        subPageBar.Parent = pageFrame
+
+        local subPageList = Instance.new("UIListLayout")
+        subPageList.FillDirection = Enum.FillDirection.Horizontal
+        subPageList.Padding = UDim.new(0, 8)
+        subPageList.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        subPageList.VerticalAlignment = Enum.VerticalAlignment.Center
+        subPageList.Parent = subPageBar
+
+        local subPagePadding = Instance.new("UIPadding")
+        subPagePadding.PaddingLeft = UDim.new(0, 10)
+        subPagePadding.Parent = subPageBar
+        pageTabObj._subPageBar = subPageBar
+
+        -- 子页面内容容器（用于放置各个子页面的滚动区域）
+        local subPageContainer = Instance.new("Frame)
+        subPageContainer.Size = UDim2.new(1, 0, 1, -38)
+        subPageContainer.Position = UDim2.new(0, 0, 0, 38)
+        subPageContainer.BackgroundTransparency = 1
+        subPageContainer.Parent = pageFrame
+        pageTabObj._subPageContainer = subPageContainer
+
+        -- 左侧主标签按钮
+        local tabBtn = Instance.new("TextButton")
+        tabBtn.Size = UDim2.new(1, 0, 0, 32)
+        tabBtn.BackgroundTransparency = 1
+        tabBtn.Text = ""
+        tabBtn.Parent = TabContainer
+        Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 10)
+
+        local tabBar = Instance.new("Frame")
+        tabBar.Size = UDim2.new(0, 3, 0.65, 0)
+        tabBar.Position = UDim2.new(0, 0, 0.175, 0)
+        tabBar.BackgroundTransparency = 1
+        tabBar.BorderSizePixel = 0
+        tabBar.Parent = tabBtn
+        Instance.new("UICorner", tabBar).CornerRadius = UDim.new(1, 0)
+        AddToRegistry(tabBar, "BackgroundColor3", "Accent")
+
+        local contentFrame = Instance.new("Frame")
+        contentFrame.Name = "ContentFrame"
+        contentFrame.Size = UDim2.new(1, 0, 1, 0)
+        contentFrame.BackgroundTransparency = 1
+        contentFrame.Parent = tabBtn
+
+        local layout = Instance.new("UIListLayout")
+        layout.FillDirection = Enum.FillDirection.Horizontal
+        layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        layout.VerticalAlignment = Enum.VerticalAlignment.Center
+        layout.Padding = UDim.new(0, 5)
+        layout.Parent = contentFrame
+
+        local padding = Instance.new("UIPadding")
+        padding.PaddingLeft = UDim.new(0, 10)
+        padding.Parent = contentFrame
+
+        if icon then
+            local tabIcon = Instance.new("ImageLabel")
+            tabIcon.Size = UDim2.new(0, 28, 0, 28)
+            tabIcon.BackgroundTransparency = 1
+            if tonumber(icon) then
+                tabIcon.Image = "rbxassetid://" .. icon
+            else
+                tabIcon.Image = icon
+            end
+            tabIcon.Parent = contentFrame
+            AddToRegistry(tabIcon, "ImageColor3", "Text")
+            local iconCorner = Instance.new("UICorner")
+            iconCorner.CornerRadius = UDim.new(0, 8)
+            iconCorner.Parent = tabIcon
+        end
+
+        local tabText = Instance.new("TextLabel")
+        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
+        tabText.Size = UDim2.new(0, textWidth, 1, 0)
+        tabText.BackgroundTransparency = 1
+        tabText.Font = Enum.Font.GothamMedium
+        tabText.Text = name
+        tabText.TextColor3 = Color3.fromRGB(150, 150, 158)
+        tabText.TextSize = 14
+        tabText.TextXAlignment = Enum.TextXAlignment.Left
+        tabText.Parent = contentFrame
+
+        -- 标签按钮交互
+        tabBtn.MouseEnter:Connect(function()
+            if currentPageTab ~= pageTabObj then
+                Tween(tabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
+            end
+        end)
+        tabBtn.MouseLeave:Connect(function()
+            if currentPageTab ~= pageTabObj then
+                Tween(tabText, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
+            end
+        end)
+
+        tabBtn.MouseButton1Click:Connect(function()
+            if currentPageTab == pageTabObj then return end
+            -- 隐藏其他 PageTab
+            for _, pt in ipairs(pageTabList) do
+                if pt._pageFrame then
+                    pt._pageFrame.Visible = false
+                end
+                if pt._tabButton then
+                    Tween(pt._tabButton, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})
+                    local content = pt._tabButton:FindFirstChild("ContentFrame")
+                    if content then
+                        local textLabel = content:FindFirstChildOfClass("TextLabel")
+                        if textLabel then
+                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
+                        end
+                    end
+                    local bar = pt._tabButton:FindFirstChildOfClass("Frame")
+                    if bar then
+                        Tween(bar, {BackgroundTransparency = 1})
+                    end
+                end
+            end
+            currentPageTab = pageTabObj
+            pageFrame.Visible = true
+            Tween(tabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
+            Tween(tabText, {TextColor3 = CurrentTheme.Text})
+            Tween(tabBar, {BackgroundTransparency = 0})
+            -- 如果当前没有选中任何子页面，则选中第一个
+            if pageTabObj._currentSubPage == nil and #pageTabObj._subPages > 0 then
+                pageTabObj._subPages[1]:_activate()
+            end
+        end)
+
+        pageTabObj._tabButton = tabBtn
+        pageTabObj._tabText = tabText
+        pageTabObj._tabBar = tabBar
+
+        -- 如果这是第一个 PageTab，自动激活
+        if #pageTabList == 0 then
+            tabBtn.MouseButton1Click:Fire()
+        end
+
+        table.insert(pageTabList, pageTabObj)
+
+        -- 返回用于创建子页面的对象
+        local subPageCreator = {
+            SubPage = function(self, subName)
+                local subPageObj = {}
+                subPageObj._name = subName
+                subPageObj._parentPageTab = pageTabObj
+                subPageObj._container = nil
+                subPageObj._scrollFrame = nil
+                subPageObj._button = nil
+                subPageObj._active = false
+
+                -- 创建子页面按钮
+                local subBtn = Instance.new("TextButton")
+                subBtn.Size = UDim2.new(0, 0, 0, 32)
+                subBtn.AutomaticSize = Enum.AutomaticSize.X
+                subBtn.BackgroundTransparency = 1
+                subBtn.Text = ""
+                subBtn.Parent = subPageBar
+
+                local bgFrame = Instance.new("Frame")
+                bgFrame.Size = UDim2.new(1, 0, 1, 0)
+                bgFrame.BackgroundTransparency = 0.05
+                bgFrame.Parent = subBtn
+                Instance.new("UICorner", bgFrame).CornerRadius = UDim.new(0, 8)
+                AddToRegistry(bgFrame, "BackgroundColor3", "Top")
+
+                local bgStroke = Instance.new("UIStroke")
+                bgStroke.Thickness = 1
+                bgStroke.Transparency = 0.6
+                bgStroke.Parent = bgFrame
+                AddToRegistry(bgStroke, "Color", "Stroke")
+
+                local subText = Instance.new("TextLabel")
+                subText.Size = UDim2.new(1, -20, 1, 0)
+                subText.Position = UDim2.new(0, 10, 0, 0)
+                subText.BackgroundTransparency = 1
+                subText.Font = Enum.Font.GothamMedium
+                subText.Text = subName
+                subText.TextSize = 13
+                subText.TextColor3 = Color3.fromRGB(180, 180, 188)
+                subText.TextXAlignment = Enum.TextXAlignment.Left
+                subText.Parent = bgFrame
+                AddToRegistry(subText, "TextColor3", "Text")
+
+                local activeBar = Instance.new("Frame")
+                activeBar.Size = UDim2.new(0, 0, 0, 2)
+                activeBar.Position = UDim2.new(0, 10, 1, -2)
+                activeBar.BackgroundColor3 = CurrentTheme.Accent
+                activeBar.BorderSizePixel = 0
+                activeBar.Parent = bgFrame
+                activeBar.Visible = false
+
+                -- 创建子页面滚动区域
+                local subScroll = Instance.new("ScrollingFrame")
+                subScroll.Size = UDim2.new(1, 0, 1, 0)
+                subScroll.BackgroundTransparency = 1
+                subScroll.ScrollBarThickness = 2
+                subScroll.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
+                subScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+                subScroll.Visible = false
+                subScroll.Parent = subPageContainer
+
+                local contentHolder = Instance.new("Frame")
+                contentHolder.Name = "Content"
+                contentHolder.Size = UDim2.new(1, 0, 0, 0)
+                contentHolder.AutomaticSize = Enum.AutomaticSize.Y
+                contentHolder.BackgroundTransparency = 1
+                contentHolder.Parent = subScroll
+
+                local holderPadding = Instance.new("UIPadding")
+                holderPadding.PaddingRight = UDim.new(0, 2)
+                holderPadding.PaddingTop = UDim.new(0, 10)
+                holderPadding.PaddingBottom = UDim.new(0, 10)
+                holderPadding.Parent = contentHolder
+
+                local pageList = Instance.new("UIListLayout")
+                pageList.Padding = UDim.new(0, 10)
+                pageList.SortOrder = Enum.SortOrder.LayoutOrder
+                pageList.Parent = contentHolder
+
+                local function updateCanvas()
+                    subScroll.CanvasSize = UDim2.new(0, 0, 0, pageList.AbsoluteContentSize.Y + 10)
+                end
+                pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+                task.spawn(function() task.wait(); updateCanvas() end)
+
+                subPageObj._container = subScroll
+                subPageObj._scrollFrame = subScroll
+                subPageObj._button = subBtn
+                subPageObj._bgFrame = bgFrame
+                subPageObj._subText = subText
+                subPageObj._activeBar = activeBar
+
+                -- 激活函数
+                function subPageObj:_activate()
+                    if subPageObj._active then return end
+                    -- 停用同 PageTab 的其他子页面
+                    for _, sp in ipairs(pageTabObj._subPages) do
+                        if sp ~= subPageObj and sp._container then
+                            sp._container.Visible = false
+                            sp._active = false
+                            if sp._bgFrame then
+                                Tween(sp._bgFrame, {BackgroundTransparency = 0.05})
+                            end
+                            if sp._subText then
+                                Tween(sp._subText, {TextColor3 = Color3.fromRGB(180, 180, 188)})
+                            end
+                            if sp._activeBar then
+                                sp._activeBar.Visible = false
+                            end
+                        end
+                    end
+                    subPageObj._container.Visible = true
+                    subPageObj._active = true
+                    Tween(subPageObj._bgFrame, {BackgroundTransparency = 0.1})
+                    Tween(subPageObj._subText, {TextColor3 = CurrentTheme.Text})
+                    subPageObj._activeBar.Visible = true
+                    Tween(subPageObj._activeBar, {Size = UDim2.new(1, -20, 0, 2)})
+                    pageTabObj._currentSubPage = subPageObj
+                end
+
+                subBtn.MouseButton1Click:Connect(function()
+                    subPageObj:_activate()
+                end)
+
+                -- 如果是该 PageTab 的第一个子页面，自动激活
+                if #pageTabObj._subPages == 0 and currentPageTab == pageTabObj then
+                    subPageObj:_activate()
+                end
+
+                table.insert(pageTabObj._subPages, subPageObj)
+
+                -- 返回控件构建器（Section, ColorPicker 等）
+                return makeElementsBuilder(contentHolder)
+            end
+        }
+
+        return subPageCreator
+    end
+
+    -- 辅助函数：为给定的内容容器提供控件构建器
     local function makeElementsBuilder(parentContainer)
         return {
             Section = function(_, text, icons, defaultOpen)
@@ -2529,113 +2844,113 @@ function Fenglib:CreateWindow(Config)
         }
     end
 
-    -- 原有的Tab方法（保持不变）
+    -- 原有 Tab 方法保持不变（不支持子页面，向后兼容）
     function Window:Tab(name, icon)
-        local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(1, 0, 0, 32)
-        TabBtn.BackgroundTransparency = 1
-        TabBtn.Text = ""
-        TabBtn.Parent = TabContainer
-        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
+        local tabBtn = Instance.new("TextButton")
+        tabBtn.Size = UDim2.new(1, 0, 0, 32)
+        tabBtn.BackgroundTransparency = 1
+        tabBtn.Text = ""
+        tabBtn.Parent = TabContainer
+        Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 10)
 
-        TabBtn.Selected = false
+        tabBtn.Selected = false
 
-        local TabBar = Instance.new("Frame")
-        TabBar.Size = UDim2.new(0, 3, 0.65, 0)
-        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
-        TabBar.BackgroundTransparency = 1
-        TabBar.BorderSizePixel = 0
-        TabBar.Parent = TabBtn
-        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
-        AddToRegistry(TabBar, "BackgroundColor3", "Accent")
+        local tabBar = Instance.new("Frame")
+        tabBar.Size = UDim2.new(0, 3, 0.65, 0)
+        tabBar.Position = UDim2.new(0, 0, 0.175, 0)
+        tabBar.BackgroundTransparency = 1
+        tabBar.BorderSizePixel = 0
+        tabBar.Parent = tabBtn
+        Instance.new("UICorner", tabBar).CornerRadius = UDim.new(1, 0)
+        AddToRegistry(tabBar, "BackgroundColor3", "Accent")
 
-        local ContentFrame = Instance.new("Frame")
-        ContentFrame.Name = "ContentFrame"
-        ContentFrame.Size = UDim2.new(1, 0, 1, 0)
-        ContentFrame.BackgroundTransparency = 1
-        ContentFrame.Parent = TabBtn
+        local contentFrame = Instance.new("Frame")
+        contentFrame.Name = "ContentFrame"
+        contentFrame.Size = UDim2.new(1, 0, 1, 0)
+        contentFrame.BackgroundTransparency = 1
+        contentFrame.Parent = tabBtn
 
-        local Layout = Instance.new("UIListLayout")
-        Layout.FillDirection = Enum.FillDirection.Horizontal
-        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-        Layout.Padding = UDim.new(0, 5)
-        Layout.Parent = ContentFrame
+        local layout = Instance.new("UIListLayout")
+        layout.FillDirection = Enum.FillDirection.Horizontal
+        layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        layout.VerticalAlignment = Enum.VerticalAlignment.Center
+        layout.Padding = UDim.new(0, 5)
+        layout.Parent = contentFrame
 
-        local Padding = Instance.new("UIPadding")
-        Padding.PaddingLeft = UDim.new(0, 10)
-        Padding.Parent = ContentFrame
+        local padding = Instance.new("UIPadding")
+        padding.PaddingLeft = UDim.new(0, 10)
+        padding.Parent = contentFrame
 
         if icon then
-            local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 28, 0, 28)
-            TabIcon.BackgroundTransparency = 1
+            local tabIcon = Instance.new("ImageLabel")
+            tabIcon.Size = UDim2.new(0, 28, 0, 28)
+            tabIcon.BackgroundTransparency = 1
             if tonumber(icon) then
-                TabIcon.Image = "rbxassetid://" .. icon
+                tabIcon.Image = "rbxassetid://" .. icon
             else
-                TabIcon.Image = icon
+                tabIcon.Image = icon
             end
-            TabIcon.Parent = ContentFrame
-            AddToRegistry(TabIcon, "ImageColor3", "Text")
+            tabIcon.Parent = contentFrame
+            AddToRegistry(tabIcon, "ImageColor3", "Text")
             local iconCorner = Instance.new("UICorner")
             iconCorner.CornerRadius = UDim.new(0, 8)
-            iconCorner.Parent = TabIcon
+            iconCorner.Parent = tabIcon
         end
 
-        local TabText = Instance.new("TextLabel")
+        local tabText = Instance.new("TextLabel")
         local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
-        TabText.Size = UDim2.new(0, textWidth, 1, 0)
-        TabText.BackgroundTransparency = 1
-        TabText.Font = Enum.Font.GothamMedium
-        TabText.Text = name
-        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)
-        TabText.TextSize = 14
-        TabText.TextXAlignment = Enum.TextXAlignment.Left
-        TabText.Parent = ContentFrame
+        tabText.Size = UDim2.new(0, textWidth, 1, 0)
+        tabText.BackgroundTransparency = 1
+        tabText.Font = Enum.Font.GothamMedium
+        tabText.Text = name
+        tabText.TextColor3 = Color3.fromRGB(150, 150, 158)
+        tabText.TextSize = 14
+        tabText.TextXAlignment = Enum.TextXAlignment.Left
+        tabText.Parent = contentFrame
 
-        TabBtn.MouseEnter:Connect(function()
-            if not TabBtn.Selected then
-                Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
+        tabBtn.MouseEnter:Connect(function()
+            if not tabBtn.Selected then
+                Tween(tabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
             end
         end)
-        TabBtn.MouseLeave:Connect(function()
-            if not TabBtn.Selected then
-                Tween(TabText, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
+        tabBtn.MouseLeave:Connect(function()
+            if not tabBtn.Selected then
+                Tween(tabText, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
             end
         end)
 
-        local Page = Instance.new("ScrollingFrame")
-        Page.Size = UDim2.new(1, 0, 1, 0)
-        Page.BackgroundTransparency = 1
-        Page.ScrollBarThickness = 2
-        Page.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
-        Page.ScrollingDirection = Enum.ScrollingDirection.Y
-        Page.Visible = false
-        Page.Parent = PageContainer
+        local page = Instance.new("ScrollingFrame")
+        page.Size = UDim2.new(1, 0, 1, 0)
+        page.BackgroundTransparency = 1
+        page.ScrollBarThickness = 2
+        page.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
+        page.ScrollingDirection = Enum.ScrollingDirection.Y
+        page.Visible = false
+        page.Parent = PageContainer
 
-        local ContentHolder = Instance.new("Frame")
-        ContentHolder.Name = "Content"
-        ContentHolder.Size = UDim2.new(1, 0, 0, 0)
-        ContentHolder.AutomaticSize = Enum.AutomaticSize.Y
-        ContentHolder.BackgroundTransparency = 1
-        ContentHolder.Parent = Page
+        local contentHolder = Instance.new("Frame")
+        contentHolder.Name = "Content"
+        contentHolder.Size = UDim2.new(1, 0, 0, 0)
+        contentHolder.AutomaticSize = Enum.AutomaticSize.Y
+        contentHolder.BackgroundTransparency = 1
+        contentHolder.Parent = page
 
-        local HolderPadding = Instance.new("UIPadding")
-        HolderPadding.PaddingRight = UDim.new(0, 2)
-        HolderPadding.Parent = ContentHolder
+        local holderPadding = Instance.new("UIPadding")
+        holderPadding.PaddingRight = UDim.new(0, 2)
+        holderPadding.Parent = contentHolder
 
-        local PageList = Instance.new("UIListLayout")
-        PageList.Padding = UDim.new(0, 10)
-        PageList.SortOrder = Enum.SortOrder.LayoutOrder
-        PageList.Parent = ContentHolder
+        local pageList = Instance.new("UIListLayout")
+        pageList.Padding = UDim.new(0, 10)
+        pageList.SortOrder = Enum.SortOrder.LayoutOrder
+        pageList.Parent = contentHolder
 
         local function updateCanvas()
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
+            page.CanvasSize = UDim2.new(0, 0, 0, pageList.AbsoluteContentSize.Y + 10)
         end
-        PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+        pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         task.spawn(function() task.wait(); updateCanvas() end)
 
-        TabBtn.MouseButton1Click:Connect(function()
+        tabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
             end
@@ -2656,296 +2971,27 @@ function Fenglib:CreateWindow(Config)
                     end
                 end
             end
-            Page.Visible = true
-            TabBtn.Selected = true
-            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
-            Tween(TabText, {TextColor3 = CurrentTheme.Text})
-            Tween(TabBar, {BackgroundTransparency = 0})
+            page.Visible = true
+            tabBtn.Selected = true
+            Tween(tabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
+            Tween(tabText, {TextColor3 = CurrentTheme.Text})
+            Tween(tabBar, {BackgroundTransparency = 0})
         end)
 
         if firstTab then
             firstTab = false
-            Page.Visible = true
-            TabBtn.Selected = true
-            TabBtn.BackgroundTransparency = 0.05
-            TabBtn.BackgroundColor3 = CurrentTheme.Top
-            TabText.TextColor3 = CurrentTheme.Text
-            TabBar.BackgroundTransparency = 0
+            page.Visible = true
+            tabBtn.Selected = true
+            tabBtn.BackgroundTransparency = 0.05
+            tabBtn.BackgroundColor3 = CurrentTheme.Top
+            tabText.TextColor3 = CurrentTheme.Text
+            tabBar.BackgroundTransparency = 0
         end
 
-        if name == "Config" then TabBtn.LayoutOrder = 99998 end
-        if name == "Settings" then TabBtn.LayoutOrder = 99999 end
+        if name == "Config" then tabBtn.LayoutOrder = 99998 end
+        if name == "Settings" then tabBtn.LayoutOrder = 99999 end
 
-        return makeElementsBuilder(ContentHolder)
-    end
-
-    -- 新增：支持 SubPage 的页面标签
-    function Window:PageTab(name, icon)
-        local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(1, 0, 0, 32)
-        TabBtn.BackgroundTransparency = 1
-        TabBtn.Text = ""
-        TabBtn.Parent = TabContainer
-        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-
-        TabBtn.Selected = false
-
-        local TabBar = Instance.new("Frame")
-        TabBar.Size = UDim2.new(0, 3, 0.65, 0)
-        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
-        TabBar.BackgroundTransparency = 1
-        TabBar.BorderSizePixel = 0
-        TabBar.Parent = TabBtn
-        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
-        AddToRegistry(TabBar, "BackgroundColor3", "Accent")
-
-        local ContentFrame = Instance.new("Frame")
-        ContentFrame.Name = "ContentFrame"
-        ContentFrame.Size = UDim2.new(1, 0, 1, 0)
-        ContentFrame.BackgroundTransparency = 1
-        ContentFrame.Parent = TabBtn
-
-        local Layout = Instance.new("UIListLayout")
-        Layout.FillDirection = Enum.FillDirection.Horizontal
-        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-        Layout.Padding = UDim.new(0, 5)
-        Layout.Parent = ContentFrame
-
-        local Padding = Instance.new("UIPadding")
-        Padding.PaddingLeft = UDim.new(0, 10)
-        Padding.Parent = ContentFrame
-
-        if icon then
-            local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 28, 0, 28)
-            TabIcon.BackgroundTransparency = 1
-            if tonumber(icon) then
-                TabIcon.Image = "rbxassetid://" .. icon
-            else
-                TabIcon.Image = icon
-            end
-            TabIcon.Parent = ContentFrame
-            AddToRegistry(TabIcon, "ImageColor3", "Text")
-            local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 8)
-            iconCorner.Parent = TabIcon
-        end
-
-        local TabText = Instance.new("TextLabel")
-        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
-        TabText.Size = UDim2.new(0, textWidth, 1, 0)
-        TabText.BackgroundTransparency = 1
-        TabText.Font = Enum.Font.GothamMedium
-        TabText.Text = name
-        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)
-        TabText.TextSize = 14
-        TabText.TextXAlignment = Enum.TextXAlignment.Left
-        TabText.Parent = ContentFrame
-
-        TabBtn.MouseEnter:Connect(function()
-            if not TabBtn.Selected then
-                Tween(TabText, {TextColor3 = Color3.fromRGB(180, 180, 188)}, 0.15)
-            end
-        end)
-        TabBtn.MouseLeave:Connect(function()
-            if not TabBtn.Selected then
-                Tween(TabText, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.15)
-            end
-        end)
-
-        -- 创建支持 SubPage 的页面容器
-        local Page = Instance.new("ScrollingFrame")
-        Page.Size = UDim2.new(1, 0, 1, 0)
-        Page.BackgroundTransparency = 1
-        Page.ScrollBarThickness = 2
-        Page.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
-        Page.ScrollingDirection = Enum.ScrollingDirection.Y
-        Page.Visible = false
-        Page.Parent = PageContainer
-
-        -- 子页面头部栏
-        local SubPageBar = Instance.new("Frame")
-        SubPageBar.Size = UDim2.new(1, 0, 0, 38)
-        SubPageBar.BackgroundTransparency = 1
-        SubPageBar.Parent = Page
-
-        local SubPageList = Instance.new("UIListLayout")
-        SubPageList.FillDirection = Enum.FillDirection.Horizontal
-        SubPageList.Padding = UDim.new(0, 8)
-        SubPageList.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        SubPageList.VerticalAlignment = Enum.VerticalAlignment.Center
-        SubPageList.Parent = SubPageBar
-
-        local SubPagePadding = Instance.new("UIPadding")
-        SubPagePadding.PaddingLeft = UDim.new(0, 10)
-        SubPagePadding.Parent = SubPageBar
-
-        -- 子页面内容容器
-        local SubPageContainer = Instance.new("Frame")
-        SubPageContainer.Size = UDim2.new(1, 0, 1, -38)
-        SubPageContainer.Position = UDim2.new(0, 0, 0, 38)
-        SubPageContainer.BackgroundTransparency = 1
-        SubPageContainer.Parent = Page
-
-        -- 存储所有子页面
-        local subPages = {}
-        local currentSubPage = nil
-
-        -- 子页面对象生成器
-        local function createSubPage(subName, subIcon)
-            local SubBtn = Instance.new("TextButton")
-            SubBtn.Size = UDim2.new(0, 0, 0, 32)
-            SubBtn.AutomaticSize = Enum.AutomaticSize.X
-            SubBtn.BackgroundTransparency = 1
-            SubBtn.Text = ""
-            SubBtn.Parent = SubPageList
-
-            local BgFrame = Instance.new("Frame")
-            BgFrame.Size = UDim2.new(1, 0, 1, 0)
-            BgFrame.BackgroundTransparency = 0.05
-            BgFrame.Parent = SubBtn
-            Instance.new("UICorner", BgFrame).CornerRadius = UDim.new(0, 8)
-            AddToRegistry(BgFrame, "BackgroundColor3", "Top")
-
-            local BgStroke = Instance.new("UIStroke")
-            BgStroke.Thickness = 1
-            BgStroke.Transparency = 0.6
-            BgStroke.Parent = BgFrame
-            AddToRegistry(BgStroke, "Color", "Stroke")
-
-            local SubText = Instance.new("TextLabel")
-            SubText.Size = UDim2.new(1, -20, 1, 0)
-            SubText.Position = UDim2.new(0, 10, 0, 0)
-            SubText.BackgroundTransparency = 1
-            SubText.Font = Enum.Font.GothamMedium
-            SubText.Text = subName
-            SubText.TextSize = 13
-            SubText.TextColor3 = Color3.fromRGB(180, 180, 188)
-            SubText.TextXAlignment = Enum.TextXAlignment.Left
-            SubText.Parent = BgFrame
-            AddToRegistry(SubText, "TextColor3", "Text")
-
-            local activeBar = Instance.new("Frame")
-            activeBar.Size = UDim2.new(0, 0, 0, 2)
-            activeBar.Position = UDim2.new(0, 10, 1, -2)
-            activeBar.BackgroundColor3 = CurrentTheme.Accent
-            activeBar.BorderSizePixel = 0
-            activeBar.Parent = BgFrame
-            activeBar.Visible = false
-
-            local subContainer = Instance.new("ScrollingFrame")
-            subContainer.Size = UDim2.new(1, 0, 1, 0)
-            subContainer.BackgroundTransparency = 1
-            subContainer.ScrollBarThickness = 2
-            subContainer.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
-            subContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-            subContainer.Visible = false
-            subContainer.Parent = SubPageContainer
-
-            local ContentHolder = Instance.new("Frame")
-            ContentHolder.Name = "Content"
-            ContentHolder.Size = UDim2.new(1, 0, 0, 0)
-            ContentHolder.AutomaticSize = Enum.AutomaticSize.Y
-            ContentHolder.BackgroundTransparency = 1
-            ContentHolder.Parent = subContainer
-
-            local HolderPadding = Instance.new("UIPadding")
-            HolderPadding.PaddingRight = UDim.new(0, 2)
-            HolderPadding.PaddingTop = UDim.new(0, 10)
-            HolderPadding.PaddingBottom = UDim.new(0, 10)
-            HolderPadding.Parent = ContentHolder
-
-            local PageList = Instance.new("UIListLayout")
-            PageList.Padding = UDim.new(0, 10)
-            PageList.SortOrder = Enum.SortOrder.LayoutOrder
-            PageList.Parent = ContentHolder
-
-            local function updateCanvas()
-                subContainer.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
-            end
-            PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
-            task.spawn(function() task.wait(); updateCanvas() end)
-
-            SubBtn.MouseButton1Click:Connect(function()
-                if currentSubPage then
-                    currentSubPage.container.Visible = false
-                    local prevBtn = currentSubPage.button
-                    if prevBtn and prevBtn:FindFirstChild("BgFrame") then
-                        local prevBg = prevBtn.BgFrame
-                        prevBg.BackgroundTransparency = 0.05
-                        local prevText = prevBg:FindFirstChildOfClass("TextLabel")
-                        if prevText then
-                            Tween(prevText, {TextColor3 = Color3.fromRGB(180, 180, 188)})
-                        end
-                        local bar = prevBg:FindFirstChild("activeBar")
-                        if bar then bar.Visible = false end
-                    end
-                end
-                currentSubPage = { button = SubBtn, container = subContainer, name = subName }
-                subContainer.Visible = true
-                BgFrame.BackgroundTransparency = 0.1
-                Tween(SubText, {TextColor3 = CurrentTheme.Text})
-                activeBar.Visible = true
-                activeBar:TweenSize(UDim2.new(1, -20, 0, 2), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2)
-            end)
-
-            -- 如果是第一个子页面，自动激活
-            if #subPages == 0 then
-                SubBtn.MouseButton1Click:Fire()
-            end
-
-            local subPageObj = makeElementsBuilder(ContentHolder)
-            subPageObj._container = subContainer
-            subPageObj._button = SubBtn
-            table.insert(subPages, { button = SubBtn, container = subContainer, name = subName, obj = subPageObj })
-            return subPageObj
-        end
-
-        -- 标签页切换逻辑
-        TabBtn.MouseButton1Click:Connect(function()
-            for _, v in pairs(PageContainer:GetChildren()) do
-                v.Visible = false
-            end
-            for _, v in pairs(TabContainer:GetChildren()) do
-                if v:IsA("TextButton") then
-                    v.Selected = false
-                    Tween(v, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})
-                    local content = v:FindFirstChild("ContentFrame")
-                    if content then
-                        local textLabel = content:FindFirstChildOfClass("TextLabel")
-                        if textLabel then
-                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
-                        end
-                    end
-                    local bar = v:FindFirstChildOfClass("Frame")
-                    if bar then
-                        Tween(bar, {BackgroundTransparency = 1})
-                    end
-                end
-            end
-            Page.Visible = true
-            TabBtn.Selected = true
-            Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
-            Tween(TabText, {TextColor3 = CurrentTheme.Text})
-            Tween(TabBar, {BackgroundTransparency = 0})
-        end)
-
-        if firstTab then
-            firstTab = false
-            Page.Visible = true
-            TabBtn.Selected = true
-            TabBtn.BackgroundTransparency = 0.05
-            TabBtn.BackgroundColor3 = CurrentTheme.Top
-            TabText.TextColor3 = CurrentTheme.Text
-            TabBar.BackgroundTransparency = 0
-        end
-
-        -- 返回 PageTab 对象，包含 SubPage 方法
-        local pageTabObj = {
-            SubPage = createSubPage
-        }
-        return pageTabObj
+        return makeElementsBuilder(contentHolder)
     end
 
     return Window
