@@ -2516,7 +2516,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- ==================== 完全重写的 pageTab（自动大小，保证显示）====================
+    -- ==================== 修复后的 pageTab（子页面显示正常）====================
     function Window:pageTab(name, icon)
         local PageTabBtn = Instance.new("TextButton")
         PageTabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2593,7 +2593,7 @@ function Fenglib:CreateWindow(Config)
         PageTabPage.Visible = false
         PageTabPage.Parent = PageContainer
 
-        -- 子选项卡区域（自动横向滚动）
+        -- 子选项卡区域（横向滚动）
         local SubTabScroll = Instance.new("ScrollingFrame")
         SubTabScroll.Size = UDim2.new(1, 0, 0, 32)
         SubTabScroll.BackgroundTransparency = 1
@@ -2651,15 +2651,15 @@ function Fenglib:CreateWindow(Config)
         local pageTabObj = {}
 
         function pageTabObj:SubPage(subName, subIcon)
+            -- 子选项卡按钮（固定宽度 80，保证可见）
             local SubBtn = Instance.new("TextButton")
+            SubBtn.BackgroundColor3 = CurrentTheme.Top
             SubBtn.BackgroundTransparency = 1
             SubBtn.Text = ""
             SubBtn.Parent = SubTabScroll
             Instance.new("UICorner", SubBtn).CornerRadius = UDim.new(0, 8)
             SubBtn.Selected = false
-            -- 按钮宽度自适应
-            SubBtn.AutomaticSize = Enum.AutomaticSize.X
-            SubBtn.Size = UDim2.new(0, 0, 0, 30)
+            SubBtn.Size = UDim2.new(0, 80, 0, 30)
 
             local SubBtnContent = Instance.new("Frame")
             SubBtnContent.Size = UDim2.new(1, 0, 1, 0)
@@ -2700,7 +2700,7 @@ function Fenglib:CreateWindow(Config)
             SubText.TextSize = 13
             SubText.TextColor3 = Color3.fromRGB(150, 150, 158)
             SubText.Parent = SubBtnContent
-            SubText.Size = UDim2.new(0, TextService:GetTextSize(subName, 13, Enum.Font.GothamMedium, Vector2.new(200, 30)).X, 1, 0)
+            SubText.Size = UDim2.new(1, -20, 1, 0)
 
             -- 子页面内容 ScrollingFrame
             local SubPageFrame = Instance.new("ScrollingFrame")
