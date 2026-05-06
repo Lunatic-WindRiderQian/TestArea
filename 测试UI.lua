@@ -2518,7 +2518,6 @@ function Fenglib:CreateWindow(Config)
 
     -- ==================== 新增 pageTab 功能 ====================
     function Window:pageTab(name, icon)
-        -- 创建一级 PageTab 按钮（与普通 Tab 外观一致）
         local PageTabBtn = Instance.new("TextButton")
         PageTabBtn.Size = UDim2.new(1, 0, 0, 32)
         PageTabBtn.BackgroundTransparency = 1
@@ -2588,14 +2587,12 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        -- 创建该 PageTab 对应的 Page（内部包含子选项卡和子页面容器）
         local PageTabPage = Instance.new("Frame")
         PageTabPage.Size = UDim2.new(1, 0, 1, 0)
         PageTabPage.BackgroundTransparency = 1
         PageTabPage.Visible = false
         PageTabPage.Parent = PageContainer
 
-        -- 子选项卡横向滚动条
         local SubTabScroll = Instance.new("ScrollingFrame")
         SubTabScroll.Size = UDim2.new(1, 0, 0, 34)
         SubTabScroll.BackgroundTransparency = 1
@@ -2614,17 +2611,14 @@ function Fenglib:CreateWindow(Config)
         SubTabPadding.PaddingRight = UDim.new(0, 8)
         SubTabPadding.Parent = SubTabScroll
 
-        -- 子页面内容区
         local SubPageContainer = Instance.new("Frame")
         SubPageContainer.Size = UDim2.new(1, 0, 1, -34)
         SubPageContainer.Position = UDim2.new(0, 0, 0, 34)
         SubPageContainer.BackgroundTransparency = 1
         SubPageContainer.Parent = PageTabPage
 
-        -- 存储子页的列表
         local SubPagesList = {}
 
-        -- 点击 PageTab 按钮时的切换逻辑
         PageTabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
@@ -2656,9 +2650,8 @@ function Fenglib:CreateWindow(Config)
         local pageTabObj = {}
 
         function pageTabObj:SubPage(subName, subIcon)
-            -- 创建子选项卡按钮
             local SubBtn = Instance.new("TextButton")
-            SubBtn.Size = UDim2.new(0, 0, 0, 30) -- 宽度稍后计算
+            SubBtn.Size = UDim2.new(0, 0, 0, 30)
             SubBtn.BackgroundTransparency = 1
             SubBtn.Text = ""
             SubBtn.Parent = SubTabScroll
@@ -2704,12 +2697,12 @@ function Fenglib:CreateWindow(Config)
             SubText.TextSize = 13
             SubText.TextColor3 = Color3.fromRGB(150, 150, 158)
             SubText.Parent = SubBtnContent
-            SubText.Size = UDim2.new(0, TextService:GetTextSize(subName, 13, Enum.Font.GothamMedium, Vector2.new(200, 30)).X, 1, 0)
+            local textWidth = TextService:GetTextSize(subName, 13, Enum.Font.GothamMedium, Vector2.new(200, 30)).X
+            SubText.Size = UDim2.new(0, textWidth, 1, 0)
 
-            -- 动态调整按钮宽度
-            SubBtn.Size = UDim2.new(0, SubText.AbsoluteSize.X + 24 + (subIcon and 22 or 0), 0, 30)
+            -- 修正点：使用 SubText.Size.X.Offset 代替绝对尺寸
+            SubBtn.Size = UDim2.new(0, SubText.Size.X.Offset + 24 + (subIcon and 22 or 0), 0, 30)
 
-            -- 子页面对应的内容帧
             local SubPageFrame = Instance.new("ScrollingFrame")
             SubPageFrame.Size = UDim2.new(1, 0, 1, 0)
             SubPageFrame.BackgroundTransparency = 1
@@ -2730,29 +2723,24 @@ function Fenglib:CreateWindow(Config)
             SubPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
             SubPageLayout.Parent = SubContentHolder
 
-            -- Canvas 高度自适应
-            local SubCanvasUpdater
-            SubCanvasUpdater = SubPageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            SubPageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                 SubPageFrame.CanvasSize = UDim2.new(0, 0, 0, SubPageLayout.AbsoluteContentSize.Y + 10)
             end)
 
-            -- 提供 Section 方法的 Elements 表
             local SubElements = {}
             function SubElements:Section(text, icons, defaultOpen)
                 return createSection(SubContentHolder, text, icons, defaultOpen)
             end
 
-            -- 保存子页数据
             local subData = {btn = SubBtn, frame = SubPageFrame, elements = SubElements}
             table.insert(SubPagesList, subData)
 
-            -- 子选项卡点击切换
             SubBtn.MouseButton1Click:Connect(function()
                 for _, d in ipairs(SubPagesList) do
                     d.frame.Visible = false
                     d.btn.Selected = false
                     Tween(d.btn, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})
-                    local subContent = d.btn:FindFirstChild("Frame") -- SubBtnContent
+                    local subContent = d.btn:FindFirstChild("Frame")
                     if subContent then
                         local subTextLabel = subContent:FindFirstChildOfClass("TextLabel")
                         if subTextLabel then
@@ -2766,7 +2754,6 @@ function Fenglib:CreateWindow(Config)
                 Tween(SubText, {TextColor3 = CurrentTheme.Text})
             end)
 
-            -- 如果是第一个子页，默认显示
             if #SubPagesList == 1 then
                 SubPageFrame.Visible = true
                 SubBtn.Selected = true
