@@ -29,7 +29,9 @@ local function startNeonFlowEffect(object, property, speed)
             connection:Disconnect()
             return
         end
-        hue = (hue + speed) % 1
+        -- 确保 hue 是数字
+        hue = (hue or 0) + speed
+        hue = hue % 1
         local r = math.sin(hue * 3 + 0) * 0.3 + 0.7
         local g = math.sin(hue * 3 + 2) * 0.1
         local b = math.sin(hue * 3 + 4) * 0.1
@@ -147,7 +149,7 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- 全局控件创建器（从原createSection中提取的核心逻辑）
+-- 全局控件创建器
 local function createSectionInContainer(parentContainer, text, icons, defaultOpen)
     if defaultOpen == nil then defaultOpen = true end
 
@@ -315,7 +317,9 @@ local function createSectionInContainer(parentContainer, text, icons, defaultOpe
 
     child.Toggle = function(_, toggleText, default, callback)
         local Enabled = default or false
-        controlCounter = controlCounter + 1
+        if not Fenglib._loading then
+            controlCounter = controlCounter + 1
+        end
         local controlId = toggleText .. "_" .. tostring(controlCounter)
 
         local Tile = Instance.new("Frame")
@@ -392,7 +396,9 @@ local function createSectionInContainer(parentContainer, text, icons, defaultOpe
         min = tonumber(min)
         max = tonumber(max)
         local Val = tonumber(default) or (min or 0)
-        controlCounter = controlCounter + 1
+        if not Fenglib._loading then
+            controlCounter = controlCounter + 1
+        end
         local controlId = sliderText .. "_" .. tostring(controlCounter)
 
         local tileH = unlimited and 42 or 60
@@ -490,8 +496,6 @@ local function createSectionInContainer(parentContainer, text, icons, defaultOpe
                 newVal = math.max(newVal, min)
             elseif max ~= nil then
                 newVal = math.min(newVal, max)
-            else
-                newVal = newVal
             end
             Val = newVal
             Num.Text = tostring(Val)
@@ -509,8 +513,12 @@ local function createSectionInContainer(parentContainer, text, icons, defaultOpe
         ConfigObjects[controlId] = {Type = "Slider", Value = Val, Set = function(val) Update(tonumber(val) or Val) end}
 
         local function Drag(input)
-            if not Track or min == nil or max == nil or max == min then return end
-            local p = clamp((input.Position.X - Track.AbsolutePosition.X) / Track.AbsoluteSize.X, 0, 1)
+            if not Track or not Track.AbsolutePosition or not Track.AbsoluteSize then return end
+            if min == nil or max == nil or max == min then return end
+            local trackPos = Track.AbsolutePosition.X
+            local trackSize = Track.AbsoluteSize.X
+            if trackSize == 0 then return end
+            local p = clamp((input.Position.X - trackPos) / trackSize, 0, 1)
             Update(min + (max - min) * p)
         end
 
@@ -554,7 +562,9 @@ local function createSectionInContainer(parentContainer, text, icons, defaultOpe
     child.Dropdown = function(_, dropText, options, callback)
         local Dropped = false
         local Selected = options[1] or ""
-        controlCounter = controlCounter + 1
+        if not Fenglib._loading then
+            controlCounter = controlCounter + 1
+        end
         local controlId = dropText .. "_" .. tostring(controlCounter)
 
         local Btn = Instance.new("TextButton")
@@ -708,7 +718,9 @@ local function createSectionInContainer(parentContainer, text, icons, defaultOpe
 
     child.Keybind = function(_, keyText, default, callback)
         local Key = default or Enum.KeyCode.M
-        controlCounter = controlCounter + 1
+        if not Fenglib._loading then
+            controlCounter = controlCounter + 1
+        end
         local controlId = keyText .. "_" .. tostring(controlCounter)
 
         local Tile = Instance.new("Frame")
@@ -768,7 +780,9 @@ local function createSectionInContainer(parentContainer, text, icons, defaultOpe
     end
 
     child.Textbox = function(_, boxText, placeholder, callback)
-        controlCounter = controlCounter + 1
+        if not Fenglib._loading then
+            controlCounter = controlCounter + 1
+        end
         local controlId = boxText .. "_" .. tostring(controlCounter)
 
         local Frame = Instance.new("Frame")
@@ -823,7 +837,9 @@ local function createSectionInContainer(parentContainer, text, icons, defaultOpe
     child.Input = function(_, inputText, default, callback, options)
         options = options or {}
         local placeholder = options.placeholder or ""; local acceptedCharacters = options.acceptedCharacters or "All"; local characterLimit = options.characterLimit; local onChanged = options.onChanged
-        controlCounter = controlCounter + 1
+        if not Fenglib._loading then
+            controlCounter = controlCounter + 1
+        end
         local controlId = inputText .. "_" .. tostring(controlCounter)
 
         local InputFrame = Instance.new("Frame"); InputFrame.Size = UDim2.new(1, 0, 0, 42); InputFrame.Parent = contentContainer; InputFrame.BackgroundTransparency = 0.05; Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 12); AddToRegistry(InputFrame, "BackgroundColor3", "Top")
@@ -965,7 +981,9 @@ local function createSectionInContainer(parentContainer, text, icons, defaultOpe
     child.ColorPicker = function(_, pickerText, default, callback)
         local Color = default or Color3.fromRGB(255, 255, 255)
         local h, s, v = Color3.toHSV(Color)
-        controlCounter = controlCounter + 1
+        if not Fenglib._loading then
+            controlCounter = controlCounter + 1
+        end
         local controlId = pickerText .. "_" .. tostring(controlCounter)
 
         local Tile = Instance.new("Frame")
@@ -1174,16 +1192,22 @@ local function createSectionInContainer(parentContainer, text, icons, defaultOpe
                     local r = math.floor(Color.R * 255)
                     local g = math.floor(Color.G * 255)
                     local b = math.floor(Color.B * 255)
-                    Window:Notification(pickerText, r .. ", " .. g .. ", " .. b, "Info", 1.5)
+                    if Window and Window.Notification then
+                        Window:Notification(pickerText, r .. ", " .. g .. ", " .. b, "Info", 1.5)
+                    end
                 end
             end
         end)
         UserInputService.InputChanged:Connect(function(i)
             if svDragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                s = clamp((i.Position.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X, 0, 1)
-                v = 1 - clamp((i.Position.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y, 0, 1)
-                SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
-                ApplyColor()
+                local svAbsPos = SVBox.AbsolutePosition
+                local svAbsSize = SVBox.AbsoluteSize
+                if svAbsPos and svAbsSize and svAbsSize.X > 0 and svAbsSize.Y > 0 then
+                    s = clamp((i.Position.X - svAbsPos.X) / svAbsSize.X, 0, 1)
+                    v = 1 - clamp((i.Position.Y - svAbsPos.Y) / svAbsSize.Y, 0, 1)
+                    SVDot.Position = UDim2.new(s, 0, 1 - v, 0)
+                    ApplyColor()
+                end
             end
         end)
 
@@ -1206,15 +1230,21 @@ local function createSectionInContainer(parentContainer, text, icons, defaultOpe
                     local r = math.floor(Color.R * 255)
                     local g = math.floor(Color.G * 255)
                     local b = math.floor(Color.B * 255)
-                    Window:Notification(pickerText, r .. ", " .. g .. ", " .. b, "Info", 1.5)
+                    if Window and Window.Notification then
+                        Window:Notification(pickerText, r .. ", " .. g .. ", " .. b, "Info", 1.5)
+                    end
                 end
             end
         end)
         UserInputService.InputChanged:Connect(function(i)
             if hueDragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                h = clamp((i.Position.Y - HueBar.AbsolutePosition.Y) / HueBar.AbsoluteSize.Y, 0, 1)
-                HueDot.Position = UDim2.new(0.5, 0, h, 0)
-                ApplyColor()
+                local hueAbsPos = HueBar.AbsolutePosition
+                local hueAbsSize = HueBar.AbsoluteSize
+                if hueAbsPos and hueAbsSize and hueAbsSize.Y > 0 then
+                    h = clamp((i.Position.Y - hueAbsPos.Y) / hueAbsSize.Y, 0, 1)
+                    HueDot.Position = UDim2.new(0.5, 0, h, 0)
+                    ApplyColor()
+                end
             end
         end)
 
@@ -2180,6 +2210,7 @@ function Fenglib:CreateWindow(Config)
         if not dragging then return end
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             local currentPos = getInputPosition(input)
+            if not dragStartPos then return end
             local delta = currentPos - dragStartPos
             
             local newPos = UDim2.new(
@@ -2620,11 +2651,6 @@ function Fenglib:CreateWindow(Config)
         local subPageBar = nil       -- 子页面切换栏
         local subPageContainer = nil -- 存放所有子页面内容的容器
 
-        -- 获取默认的Section创建器（针对ContentHolder）
-        local function getDefaultSectionCreator()
-            return createSectionInContainer(ContentHolder, text, icons, defaultOpen)
-        end
-
         -- 子页面对象
         local SubPageObject = {}
         SubPageObject.__index = SubPageObject
@@ -2696,10 +2722,11 @@ function Fenglib:CreateWindow(Config)
             subList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSubCanvas)
             task.spawn(function() task.wait(); updateSubCanvas() end)
 
-            -- 创建切换按钮
+            -- 创建切换按钮，不使用 AutomaticSize 以避免 nil 错误，手动计算宽度
+            local btnTextBounds = TextService:GetTextSize(subName, 12, Enum.Font.GothamMedium, Vector2.new(1000, 30))
+            local btnWidth = btnTextBounds.X + 16  -- 左右内边距各 8
             local subBtn = Instance.new("TextButton")
-            subBtn.Size = UDim2.new(0, 0, 1, 0)
-            subBtn.AutomaticSize = Enum.AutomaticSize.X
+            subBtn.Size = UDim2.new(0, btnWidth, 1, -4)
             subBtn.Text = subName
             subBtn.Font = Enum.Font.GothamMedium
             subBtn.TextSize = 12
@@ -2763,9 +2790,6 @@ function Fenglib:CreateWindow(Config)
         local tabObj = {
             _tabName = name,
             _subPageMode = false,
-            _defaultSectionCreator = function(text, icons, defaultOpen)
-                return createSectionInContainer(ContentHolder, text, icons, defaultOpen)
-            end
         }
 
         -- 原有 Section 方法（仅在非子页面模式下有效）
