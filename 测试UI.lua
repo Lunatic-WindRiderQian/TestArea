@@ -2516,7 +2516,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- ==================== 新增 pageTab 功能 ====================
+    -- ==================== 完全重写的 pageTab（自动大小，保证显示）====================
     function Window:pageTab(name, icon)
         local PageTabBtn = Instance.new("TextButton")
         PageTabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2567,15 +2567,13 @@ function Fenglib:CreateWindow(Config)
         end
 
         local TabText = Instance.new("TextLabel")
-        local textW = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
-        TabText.Size = UDim2.new(0, textW, 1, 0)
+        TabText.Text = name
         TabText.BackgroundTransparency = 1
         TabText.Font = Enum.Font.GothamMedium
-        TabText.Text = name
-        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)
         TabText.TextSize = 14
-        TabText.TextXAlignment = Enum.TextXAlignment.Left
+        TabText.TextColor3 = Color3.fromRGB(150, 150, 158)
         TabText.Parent = ContentFrame
+        TabText.Size = UDim2.new(0, TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X, 1, 0)
 
         PageTabBtn.MouseEnter:Connect(function()
             if not PageTabBtn.Selected then
@@ -2588,12 +2586,14 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
+        -- 右侧主容器
         local PageTabPage = Instance.new("Frame")
         PageTabPage.Size = UDim2.new(1, 0, 1, 0)
         PageTabPage.BackgroundTransparency = 1
         PageTabPage.Visible = false
         PageTabPage.Parent = PageContainer
 
+        -- 子选项卡区域（自动横向滚动）
         local SubTabScroll = Instance.new("ScrollingFrame")
         SubTabScroll.Size = UDim2.new(1, 0, 0, 32)
         SubTabScroll.BackgroundTransparency = 1
@@ -2612,6 +2612,7 @@ function Fenglib:CreateWindow(Config)
         SubTabPadding.PaddingRight = UDim.new(0, 8)
         SubTabPadding.Parent = SubTabScroll
 
+        -- 子页面内容区
         local SubPageContainer = Instance.new("Frame")
         SubPageContainer.Size = UDim2.new(1, 0, 1, -32)
         SubPageContainer.Position = UDim2.new(0, 0, 0, 32)
@@ -2620,6 +2621,7 @@ function Fenglib:CreateWindow(Config)
 
         local SubPagesList = {}
 
+        -- 左侧标签点击
         PageTabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
@@ -2628,12 +2630,10 @@ function Fenglib:CreateWindow(Config)
                 if v:IsA("TextButton") then
                     v.Selected = false
                     Tween(v, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top})
-                    local content = v:FindFirstChild("ContentFrame")
-                    if content then
-                        local textLabel = content:FindFirstChildOfClass("TextLabel")
-                        if textLabel then
-                            Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)})
-                        end
+                    local cf = v:FindFirstChild("ContentFrame")
+                    if cf then
+                        local tl = cf:FindFirstChildOfClass("TextLabel")
+                        if tl then Tween(tl, {TextColor3 = Color3.fromRGB(150, 150, 158)}) end
                     end
                     local bar = v:FindFirstChildOfClass("Frame")
                     if bar and bar ~= TabBar then
@@ -2657,6 +2657,9 @@ function Fenglib:CreateWindow(Config)
             SubBtn.Parent = SubTabScroll
             Instance.new("UICorner", SubBtn).CornerRadius = UDim.new(0, 8)
             SubBtn.Selected = false
+            -- 按钮宽度自适应
+            SubBtn.AutomaticSize = Enum.AutomaticSize.X
+            SubBtn.Size = UDim2.new(0, 0, 0, 30)
 
             local SubBtnContent = Instance.new("Frame")
             SubBtnContent.Size = UDim2.new(1, 0, 1, 0)
@@ -2697,12 +2700,9 @@ function Fenglib:CreateWindow(Config)
             SubText.TextSize = 13
             SubText.TextColor3 = Color3.fromRGB(150, 150, 158)
             SubText.Parent = SubBtnContent
-            local textWidth = TextService:GetTextSize(subName, 13, Enum.Font.GothamMedium, Vector2.new(200, 30)).X
-            SubText.Size = UDim2.new(0, textWidth, 1, 0)
+            SubText.Size = UDim2.new(0, TextService:GetTextSize(subName, 13, Enum.Font.GothamMedium, Vector2.new(200, 30)).X, 1, 0)
 
-            -- 使用 textWidth 直接计算按钮宽度，避免 AbsoluteSize 为 0
-            SubBtn.Size = UDim2.new(0, textWidth + 24 + (subIcon and 22 or 0), 0, 30)
-
+            -- 子页面内容 ScrollingFrame
             local SubPageFrame = Instance.new("ScrollingFrame")
             SubPageFrame.Size = UDim2.new(1, 0, 1, 0)
             SubPageFrame.BackgroundTransparency = 1
@@ -2732,7 +2732,7 @@ function Fenglib:CreateWindow(Config)
                 return createSection(SubContentHolder, text, icons, defaultOpen)
             end
 
-            local subData = {btn = SubBtn, frame = SubPageFrame, elements = SubElements}
+            local subData = {btn = SubBtn, frame = SubPageFrame}
             table.insert(SubPagesList, subData)
 
             SubBtn.MouseButton1Click:Connect(function()
@@ -2766,7 +2766,7 @@ function Fenglib:CreateWindow(Config)
 
         return pageTabObj
     end
-    -- ==================== pageTab 功能结束 ====================
+    -- ==================== pageTab 结束 ====================
 
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
