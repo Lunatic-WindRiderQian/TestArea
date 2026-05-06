@@ -2567,7 +2567,8 @@ function Fenglib:CreateWindow(Config)
         end
 
         local TabText = Instance.new("TextLabel")
-        TabText.Size = UDim2.new(0, TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X, 1, 0)
+        local textW = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
+        TabText.Size = UDim2.new(0, textW, 1, 0)
         TabText.BackgroundTransparency = 1
         TabText.Font = Enum.Font.GothamMedium
         TabText.Text = name
@@ -2594,7 +2595,7 @@ function Fenglib:CreateWindow(Config)
         PageTabPage.Parent = PageContainer
 
         local SubTabScroll = Instance.new("ScrollingFrame")
-        SubTabScroll.Size = UDim2.new(1, 0, 0, 34)
+        SubTabScroll.Size = UDim2.new(1, 0, 0, 32)
         SubTabScroll.BackgroundTransparency = 1
         SubTabScroll.ScrollBarThickness = 0
         SubTabScroll.Parent = PageTabPage
@@ -2612,8 +2613,8 @@ function Fenglib:CreateWindow(Config)
         SubTabPadding.Parent = SubTabScroll
 
         local SubPageContainer = Instance.new("Frame")
-        SubPageContainer.Size = UDim2.new(1, 0, 1, -34)
-        SubPageContainer.Position = UDim2.new(0, 0, 0, 34)
+        SubPageContainer.Size = UDim2.new(1, 0, 1, -32)
+        SubPageContainer.Position = UDim2.new(0, 0, 0, 32)
         SubPageContainer.BackgroundTransparency = 1
         SubPageContainer.Parent = PageTabPage
 
@@ -2651,7 +2652,6 @@ function Fenglib:CreateWindow(Config)
 
         function pageTabObj:SubPage(subName, subIcon)
             local SubBtn = Instance.new("TextButton")
-            SubBtn.Size = UDim2.new(0, 0, 0, 30)
             SubBtn.BackgroundTransparency = 1
             SubBtn.Text = ""
             SubBtn.Parent = SubTabScroll
@@ -2700,8 +2700,8 @@ function Fenglib:CreateWindow(Config)
             local textWidth = TextService:GetTextSize(subName, 13, Enum.Font.GothamMedium, Vector2.new(200, 30)).X
             SubText.Size = UDim2.new(0, textWidth, 1, 0)
 
-            -- 修正点：使用 SubText.Size.X.Offset 代替绝对尺寸
-            SubBtn.Size = UDim2.new(0, SubText.Size.X.Offset + 24 + (subIcon and 22 or 0), 0, 30)
+            -- 使用 textWidth 直接计算按钮宽度，避免 AbsoluteSize 为 0
+            SubBtn.Size = UDim2.new(0, textWidth + 24 + (subIcon and 22 or 0), 0, 30)
 
             local SubPageFrame = Instance.new("ScrollingFrame")
             SubPageFrame.Size = UDim2.new(1, 0, 1, 0)
