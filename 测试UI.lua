@@ -2524,7 +2524,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- ==================== 修正后的 Window:Tab 方法（解决子页面与Section重合） ====================
+    -- ==================== 修正后的 Window:Tab 方法（子页面切换按钮选中时显示外框） ====================
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2698,23 +2698,31 @@ function Fenglib:CreateWindow(Config)
         SubPageBar:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
         task.spawn(updateSubPageContainerHeight)
 
-        -- 切换子页面
+        -- 切换子页面（修改：控制外框显隐）
         local function switchToSubPage(subPageData)
             if currentSubPage == subPageData then return end
             for _, sp in ipairs(subPages) do
                 sp.contentFrame.Visible = false
                 if sp.button then
                     Tween(sp.button, {BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(100, 100, 100)})
+                    -- 隐藏外框
+                    if sp.stroke then
+                        Tween(sp.stroke, {Transparency = 1}, 0.2)
+                    end
                 end
             end
             subPageData.contentFrame.Visible = true
             if subPageData.button then
                 Tween(subPageData.button, {BackgroundTransparency = 0.1, TextColor3 = CurrentTheme.Accent})
+                -- 显示外框（透明度 0.5）
+                if subPageData.stroke then
+                    Tween(subPageData.stroke, {Transparency = 0.5}, 0.2)
+                end
             end
             currentSubPage = subPageData
         end
 
-        -- 添加子页面
+        -- 添加子页面（修改：按钮添加外框，初始透明）
         local function addSubPage(subPageName, subPageIcon)
             -- 按钮
             local btn = Instance.new("TextButton")
@@ -2735,20 +2743,20 @@ function Fenglib:CreateWindow(Config)
             btnPadding.PaddingRight = UDim.new(0, 12)
             btnPadding.Parent = btn
 
-            -- 为按钮添加外框
+            -- 为按钮添加外框（初始不可见）
             local btnStroke = Instance.new("UIStroke")
             btnStroke.Thickness = 1.2
             btnStroke.Color = CurrentTheme.Stroke
-            btnStroke.Transparency = 0.5
+            btnStroke.Transparency = 1  -- 初始不可见
             btnStroke.Parent = btn
 
             -- 主题监听：外框颜色跟随主题变化
-            local function updateBtnStroke()
+            local function updateBtnStrokeColor()
                 if btnStroke then
                     btnStroke.Color = CurrentTheme.Stroke
                 end
             end
-            table.insert(ThemeListeners, updateBtnStroke)
+            table.insert(ThemeListeners, updateBtnStrokeColor)
 
             if subPageIcon then
                 local iconImg = Instance.new("ImageLabel")
@@ -2792,7 +2800,8 @@ function Fenglib:CreateWindow(Config)
                 button = btn,
                 contentFrame = subPageFrame,
                 contentHolder = content,
-                layout = layout
+                layout = layout,
+                stroke = btnStroke
             }
             table.insert(subPages, subPageData)
 
@@ -2809,6 +2818,7 @@ function Fenglib:CreateWindow(Config)
             end)
 
             if #subPages == 1 then
+                -- 第一个子页面，默认选中并显示外框
                 switchToSubPage(subPageData)
             end
 
