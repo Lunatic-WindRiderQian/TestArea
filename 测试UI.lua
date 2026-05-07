@@ -3,17 +3,17 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService") 
+local HttpService = game:GetService("HttpService")
 local TextService = game:GetService("TextService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 local Fenglib = {}
 local RainbowEnabled = false
-local RainbowType = "Animated/Cycling Rainbow" 
+local RainbowType = "Animated/Cycling Rainbow"
 local RainbowSpeed = 1.0
-local Registry = {} 
-local ConfigObjects = {} 
+local Registry = {}
+local ConfigObjects = {}
 local ThemeListeners = {}
 
 local function clamp(value, min, max)
@@ -151,10 +151,10 @@ function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "FengY3"
     local Subtitle = Config.Subtitle
-    local Keybind = Config.Keybind 
-    local IconAsset = Config.Icon  
-    
-    Window.RootFolder = Title 
+    local Keybind = Config.Keybind
+    local IconAsset = Config.Icon
+
+    Window.RootFolder = Title
     Window.ConfigFolder = Title.."/Config"
     Window.CurrentConfig = ""
 
@@ -214,7 +214,7 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.Parent = NotificationHolder
 
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 0, 0, 0) 
+    MainFrame.Size = UDim2.new(0, 0, 0, 0)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = false
@@ -254,7 +254,7 @@ function Fenglib:CreateWindow(Config)
                     Gradient.Enabled = true; rot = rot + 5; Gradient.Rotation = rot
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))}); Stroke.Color = Color3.new(1,1,1)
                 elseif RainbowType == "Neon/Glowing Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1) 
+                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1)
                 elseif RainbowType == "Pastel Rainbow" then
                     Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
                 elseif RainbowType == "Vertical/Horizontal Fade" then
@@ -280,13 +280,13 @@ function Fenglib:CreateWindow(Config)
             IconAsset = "rbxassetid://" .. IconAsset
         end
     else
-        IconAsset = "rbxassetid://78229538488090"  
+        IconAsset = "rbxassetid://78229538488090"
     end
 
     local Icon = Instance.new("ImageLabel")
     Icon.Name = "WindowIcon"
     Icon.Size = UDim2.new(0, 32, 0, 32)
-    Icon.Position = UDim2.new(0, 10, 0.5, -16)  
+    Icon.Position = UDim2.new(0, 10, 0.5, -16)
     Icon.BackgroundTransparency = 1
     Icon.Image = IconAsset
     Icon.Parent = Topbar
@@ -455,7 +455,7 @@ function Fenglib:CreateWindow(Config)
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
     if Subtitle then
-        TitleLabel.Size = UDim2.new(1, -180, 0, 20)   
+        TitleLabel.Size = UDim2.new(1, -180, 0, 20)
         TitleLabel.Position = UDim2.new(0, 50, 0, 5)
 
         local SubtitleLabel = Instance.new("TextLabel")
@@ -486,12 +486,12 @@ function Fenglib:CreateWindow(Config)
     TabContainer.ScrollBarThickness = 4
     TabContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     TabContainer.Parent = Content
-    
+
     local TabList = Instance.new("UIListLayout")
     TabList.Padding = UDim.new(0, 8)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Parent = TabContainer
-    
+
     local function updateTabCanvas()
         TabContainer.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y)
     end
@@ -505,7 +505,7 @@ function Fenglib:CreateWindow(Config)
     ProfileFrame.Parent = Content
     Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
     AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
-    
+
     local Avatar = Instance.new("ImageLabel")
     Avatar.Size = UDim2.new(0, 26, 0, 26)
     Avatar.Position = UDim2.new(0, 8, 0.5, -13)
@@ -513,7 +513,7 @@ function Fenglib:CreateWindow(Config)
     Avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
     Avatar.Parent = ProfileFrame
     Instance.new("UICorner", Avatar).CornerRadius = UDim.new(1,0)
-    
+
     local DispName = Instance.new("TextLabel")
     DispName.Text = LocalPlayer.DisplayName
     DispName.Size = UDim2.new(1, -45, 0, 15)
@@ -652,12 +652,12 @@ function Fenglib:CreateWindow(Config)
 
     local function SwitchToProjectorMode(distance, width, height, transparency)
         if Window._ProjectorModeEnabled then return end
-        
+
         distance = distance or Window._ProjectorSettings.distance
         width = width or Window._ProjectorSettings.width
         height = height or Window._ProjectorSettings.height
         transparency = transparency or Window._ProjectorSettings.transparency
-        
+
         local projectorScreen = Instance.new("Part")
         projectorScreen.Name = "FengYu_ProjectorScreen"
         projectorScreen.Anchored = true
@@ -669,17 +669,17 @@ function Fenglib:CreateWindow(Config)
         projectorScreen.Material = Enum.Material.SmoothPlastic
         projectorScreen.TopSurface = Enum.SurfaceType.Smooth
         projectorScreen.BottomSurface = Enum.SurfaceType.Smooth
-        
+
         local selectionBox = Instance.new("SelectionBox")
         selectionBox.Adornee = projectorScreen
         selectionBox.Color3 = CurrentTheme.Accent
         selectionBox.LineThickness = 0.08
         selectionBox.Transparency = 0.4
         selectionBox.Parent = projectorScreen
-        
+
         if syn and syn.protect_gui then syn.protect_gui(projectorScreen) end
         projectorScreen.Parent = workspace
-        
+
         local surfaceGui = Instance.new("SurfaceGui")
         surfaceGui.Name = "ProjectorUI"
         surfaceGui.ResetOnSpawn = false
@@ -691,51 +691,51 @@ function Fenglib:CreateWindow(Config)
         surfaceGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
         surfaceGui.Adornee = projectorScreen
         surfaceGui.Parent = projectorScreen
-        
+
         local originalChildren = {}
         for _, child in ipairs(ScreenGui:GetChildren()) do
             if child ~= OpenButton and child ~= NotificationHolder then
                 originalChildren[#originalChildren + 1] = child
             end
         end
-        
+
         for _, child in ipairs(originalChildren) do
             child.Parent = surfaceGui
         end
-        
+
         Window._savedMainFrameSize = MainFrame.Size
         Window._savedMainFramePos = MainFrame.Position
-        
+
         MainFrame.Size = UDim2.new(0, 600, 0, 400)
         MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-        
+
         addPressEffectToAll(surfaceGui)
-        
+
         local pointLight = Instance.new("PointLight")
         pointLight.Brightness = 2.5
         pointLight.Range = 20
         pointLight.Color = CurrentTheme.Accent
         pointLight.Parent = projectorScreen
-        
+
         local function updateScreenPosition()
             local character = LocalPlayer.Character
             if not character then return end
             local rootPart = character:FindFirstChild("HumanoidRootPart")
             if not rootPart then return end
-            
+
             local forward = rootPart.CFrame.LookVector
             forward = Vector3.new(forward.X, 0, forward.Z).Unit
             local targetPos = rootPart.Position + forward * distance
             targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
-            
+
             local lookAtPoint = Vector3.new(rootPart.Position.X, targetPos.Y, rootPart.Position.Z)
             local screenCF = CFrame.lookAt(targetPos, lookAtPoint, Vector3.new(0, 1, 0))
-            
+
             projectorScreen.CFrame = screenCF
         end
-        
+
         updateScreenPosition()
-        
+
         local updateConnection
         updateConnection = RunService.RenderStepped:Connect(function()
             if not projectorScreen.Parent then
@@ -744,7 +744,7 @@ function Fenglib:CreateWindow(Config)
             end
             updateScreenPosition()
         end)
-        
+
         local sizeConnection
         sizeConnection = MainFrame:GetPropertyChangedSignal("Size"):Connect(function()
             if Window._ProjectorSettings.autoSize then
@@ -753,7 +753,7 @@ function Fenglib:CreateWindow(Config)
         end)
         task.wait(0.1)
         Window:UpdateProjectorSizeFromUI()
-        
+
         Window._ProjectorModeEnabled = true
         Window._ProjectorObjects = {
             Screen = projectorScreen,
@@ -763,13 +763,13 @@ function Fenglib:CreateWindow(Config)
             Light = pointLight,
             SelectionBox = selectionBox
         }
-        
+
         return true
     end
-    
+
     local function SwitchTo2DMode()
         if not Window._ProjectorModeEnabled then return end
-        
+
         if Window._ProjectorObjects then
             if Window._ProjectorObjects.UpdateConnection then
                 Window._ProjectorObjects.UpdateConnection:Disconnect()
@@ -787,7 +787,7 @@ function Fenglib:CreateWindow(Config)
                 Window._ProjectorObjects.Screen:Destroy()
             end
         end
-        
+
         if Window._savedMainFrameSize then
             MainFrame.Size = Window._savedMainFrameSize
             MainFrame.Position = Window._savedMainFramePos
@@ -795,17 +795,17 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Size = UDim2.new(0, 500, 0, 299)
             MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         end
-        
+
         Window._ProjectorModeEnabled = false
         Window._ProjectorObjects = nil
 
         dragging = false
         dragStartPos = nil
         dragStartWindowPos = nil
-        
+
         return true
     end
-    
+
     local function ToggleProjectorMode()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
@@ -813,11 +813,11 @@ function Fenglib:CreateWindow(Config)
             SwitchToProjectorMode()
         end
     end
-    
+
     local Toggle3DBtn = createIconButton("rbxassetid://12684119225", function()
         ToggleProjectorMode()
     end)
-    
+
     local MinimizeBtn = createTextButton("-", function()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
@@ -825,15 +825,15 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Visible = false
         end
     end)
-    
+
     local resizerVisible = false
     Resizer.Visible = resizerVisible
-    
+
     local MaximizeBtn = createIconButton("rbxassetid://6031090998", function()
         resizerVisible = not resizerVisible
         Resizer.Visible = resizerVisible
     end)
-    
+
     local CloseBtn = createTextButton("X", function()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
@@ -846,7 +846,7 @@ function Fenglib:CreateWindow(Config)
     local dragging = false
     local dragStartPos = nil
     local dragStartWindowPos = nil
-    
+
     local function getInputPosition(input)
         local pos = input.Position
         if typeof(pos) == "Vector3" then
@@ -854,7 +854,7 @@ function Fenglib:CreateWindow(Config)
         end
         return pos
     end
-    
+
     local function startDrag(input)
         if Window._ProjectorModeEnabled then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -864,13 +864,13 @@ function Fenglib:CreateWindow(Config)
             pcall(function() input:StopPropagation() end)
         end
     end
-    
+
     local function onDragMove(input)
         if not dragging then return end
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             local currentPos = getInputPosition(input)
             local delta = currentPos - dragStartPos
-            
+
             local newPos = UDim2.new(
                 dragStartWindowPos.X.Scale,
                 dragStartWindowPos.X.Offset + delta.X,
@@ -880,7 +880,7 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Position = newPos
         end
     end
-    
+
     local function endDrag(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
@@ -888,7 +888,7 @@ function Fenglib:CreateWindow(Config)
             dragStartWindowPos = nil
         end
     end
-    
+
     Topbar.InputBegan:Connect(startDrag)
     UserInputService.InputChanged:Connect(onDragMove)
     UserInputService.InputEnded:Connect(endDrag)
@@ -915,14 +915,14 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Parent = ScreenGui
     OpenButton.BackgroundColor3 = CurrentTheme.Accent
     OpenButton.BackgroundTransparency = 0.85
-    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)  
+    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)
     OpenButton.Size = UDim2.new(0, 40, 0, 40)
     OpenButton.Active = true
-    OpenButton.Draggable = true  
-    OpenButton.Image = "rbxassetid://84830962019412"  
+    OpenButton.Draggable = true
+    OpenButton.Image = "rbxassetid://84830962019412"
     OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
     OpenButton.ImageTransparency = 0.15
-    OpenButton.ZIndex = 10  
+    OpenButton.ZIndex = 10
 
     OpenButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -1167,7 +1167,7 @@ function Fenglib:CreateWindow(Config)
             end
         end
     end
-    
+
     function Window:SetProjectorSize(width, height)
         width = clamp(width, 4, 24)
         height = clamp(height, 3, 16)
@@ -1178,7 +1178,7 @@ function Fenglib:CreateWindow(Config)
             Window._ProjectorObjects.Screen.Size = Vector3.new(width, height, 0.1)
         end
     end
-    
+
     function Window:SetProjectorTransparency(transparency)
         transparency = clamp(transparency, 0, 0.8)
         Window._ProjectorSettings.transparency = transparency
@@ -1186,19 +1186,19 @@ function Fenglib:CreateWindow(Config)
             Window._ProjectorObjects.Screen.Transparency = transparency
         end
     end
-    
+
     function Window:EnableProjectorMode(distance, width, height, transparency)
         return SwitchToProjectorMode(distance, width, height, transparency)
     end
-    
+
     function Window:DisableProjectorMode()
         return SwitchTo2DMode()
     end
-    
+
     function Window:ToggleProjectorMode()
         return ToggleProjectorMode()
     end
-    
+
     function Window:IsProjectorMode()
         return Window._ProjectorModeEnabled
     end
@@ -2524,7 +2524,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- ========== 支持子页面的 Tab 实现 ==========
+    -- ========== 支持子页面的 Tab 实现（已修复重叠问题） ==========
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2640,12 +2640,17 @@ function Fenglib:CreateWindow(Config)
         SubPageBarPadding.PaddingLeft = UDim.new(0, 5)
         SubPageBarPadding.Parent = SubPageBar
 
-        -- 子页面内容容器
+        -- 子页面内容容器（带 UIListLayout 自动垂直排列）
         local SubPageContainer = Instance.new("Frame")
         SubPageContainer.Size = UDim2.new(1, 0, 0, 0)
         SubPageContainer.AutomaticSize = Enum.AutomaticSize.Y
         SubPageContainer.BackgroundTransparency = 1
         SubPageContainer.Parent = PageContent
+
+        local SubPageContainerLayout = Instance.new("UIListLayout")
+        SubPageContainerLayout.Padding = UDim.new(0, 0)  -- 无间距，子页面紧密排列
+        SubPageContainerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        SubPageContainerLayout.Parent = SubPageContainer
 
         -- 默认子页面（向后兼容）
         local DefaultSubPageFrame = Instance.new("Frame")
@@ -2653,6 +2658,7 @@ function Fenglib:CreateWindow(Config)
         DefaultSubPageFrame.Size = UDim2.new(1, 0, 0, 0)
         DefaultSubPageFrame.AutomaticSize = Enum.AutomaticSize.Y
         DefaultSubPageFrame.BackgroundTransparency = 1
+        DefaultSubPageFrame.Visible = true
         DefaultSubPageFrame.Parent = SubPageContainer
 
         local DefaultLayout = Instance.new("UIListLayout")
@@ -2674,6 +2680,8 @@ function Fenglib:CreateWindow(Config)
             end
             DefaultSubPageFrame.Visible = (sp == nil)
             currentSubPage = sp
+            -- 等待布局更新后刷新滚动区域
+            task.wait()
             updatePageCanvas()
         end
 
@@ -2712,6 +2720,7 @@ function Fenglib:CreateWindow(Config)
                 btn.Text = "  " .. subPageName
             end
 
+            -- 子页面内容 Frame（自动高度，内部用 UIListLayout 排列 Section）
             local frame = Instance.new("Frame")
             frame.Size = UDim2.new(1, 0, 0, 0)
             frame.AutomaticSize = Enum.AutomaticSize.Y
@@ -2735,7 +2744,7 @@ function Fenglib:CreateWindow(Config)
                 switchToSubPage(spData)
             end
 
-            -- 返回用于添加控件的 Elements
+            -- 返回用于添加控件的 Elements 对象
             local Elements = {}
             Elements.Section = function(_, text, icons, defaultOpen)
                 return createSection(frame, text, icons, defaultOpen)
@@ -2756,7 +2765,7 @@ function Fenglib:CreateWindow(Config)
             return Elements
         end
 
-        -- 向后兼容：默认子页面提供的 API（未使用 SubPage 时）
+        -- 向后兼容：默认子页面提供的 API
         local defaultElements = {}
         defaultElements.Section = function(_, text, icons, defaultOpen)
             return createSection(DefaultSubPageFrame, text, icons, defaultOpen)
@@ -2806,7 +2815,6 @@ function Fenglib:CreateWindow(Config)
             Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
             Tween(TabText, {TextColor3 = CurrentTheme.Text})
             Tween(TabBar, {BackgroundTransparency = 0})
-            -- 刷新滚动区域
             updatePageCanvas()
         end)
 
