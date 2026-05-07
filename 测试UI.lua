@@ -3,17 +3,17 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
+local HttpService = game:GetService("HttpService") 
 local TextService = game:GetService("TextService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 local Fenglib = {}
 local RainbowEnabled = false
-local RainbowType = "Animated/Cycling Rainbow"
+local RainbowType = "Animated/Cycling Rainbow" 
 local RainbowSpeed = 1.0
-local Registry = {}
-local ConfigObjects = {}
+local Registry = {} 
+local ConfigObjects = {} 
 local ThemeListeners = {}
 
 local function clamp(value, min, max)
@@ -151,10 +151,10 @@ function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "FengY3"
     local Subtitle = Config.Subtitle
-    local Keybind = Config.Keybind
-    local IconAsset = Config.Icon
-
-    Window.RootFolder = Title
+    local Keybind = Config.Keybind 
+    local IconAsset = Config.Icon  
+    
+    Window.RootFolder = Title 
     Window.ConfigFolder = Title.."/Config"
     Window.CurrentConfig = ""
 
@@ -214,7 +214,7 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.Parent = NotificationHolder
 
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 0, 0, 0)
+    MainFrame.Size = UDim2.new(0, 0, 0, 0) 
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = false
@@ -254,7 +254,7 @@ function Fenglib:CreateWindow(Config)
                     Gradient.Enabled = true; rot = rot + 5; Gradient.Rotation = rot
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))}); Stroke.Color = Color3.new(1,1,1)
                 elseif RainbowType == "Neon/Glowing Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1)
+                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1) 
                 elseif RainbowType == "Pastel Rainbow" then
                     Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
                 elseif RainbowType == "Vertical/Horizontal Fade" then
@@ -280,13 +280,13 @@ function Fenglib:CreateWindow(Config)
             IconAsset = "rbxassetid://" .. IconAsset
         end
     else
-        IconAsset = "rbxassetid://78229538488090"
+        IconAsset = "rbxassetid://78229538488090"  
     end
 
     local Icon = Instance.new("ImageLabel")
     Icon.Name = "WindowIcon"
     Icon.Size = UDim2.new(0, 32, 0, 32)
-    Icon.Position = UDim2.new(0, 10, 0.5, -16)
+    Icon.Position = UDim2.new(0, 10, 0.5, -16)  
     Icon.BackgroundTransparency = 1
     Icon.Image = IconAsset
     Icon.Parent = Topbar
@@ -455,7 +455,7 @@ function Fenglib:CreateWindow(Config)
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
     if Subtitle then
-        TitleLabel.Size = UDim2.new(1, -180, 0, 20)
+        TitleLabel.Size = UDim2.new(1, -180, 0, 20)   
         TitleLabel.Position = UDim2.new(0, 50, 0, 5)
 
         local SubtitleLabel = Instance.new("TextLabel")
@@ -486,12 +486,12 @@ function Fenglib:CreateWindow(Config)
     TabContainer.ScrollBarThickness = 4
     TabContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     TabContainer.Parent = Content
-
+    
     local TabList = Instance.new("UIListLayout")
     TabList.Padding = UDim.new(0, 8)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Parent = TabContainer
-
+    
     local function updateTabCanvas()
         TabContainer.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y)
     end
@@ -505,7 +505,7 @@ function Fenglib:CreateWindow(Config)
     ProfileFrame.Parent = Content
     Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
     AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
-
+    
     local Avatar = Instance.new("ImageLabel")
     Avatar.Size = UDim2.new(0, 26, 0, 26)
     Avatar.Position = UDim2.new(0, 8, 0.5, -13)
@@ -513,7 +513,7 @@ function Fenglib:CreateWindow(Config)
     Avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
     Avatar.Parent = ProfileFrame
     Instance.new("UICorner", Avatar).CornerRadius = UDim.new(1,0)
-
+    
     local DispName = Instance.new("TextLabel")
     DispName.Text = LocalPlayer.DisplayName
     DispName.Size = UDim2.new(1, -45, 0, 15)
@@ -652,12 +652,12 @@ function Fenglib:CreateWindow(Config)
 
     local function SwitchToProjectorMode(distance, width, height, transparency)
         if Window._ProjectorModeEnabled then return end
-
+        
         distance = distance or Window._ProjectorSettings.distance
         width = width or Window._ProjectorSettings.width
         height = height or Window._ProjectorSettings.height
         transparency = transparency or Window._ProjectorSettings.transparency
-
+        
         local projectorScreen = Instance.new("Part")
         projectorScreen.Name = "FengYu_ProjectorScreen"
         projectorScreen.Anchored = true
@@ -669,17 +669,17 @@ function Fenglib:CreateWindow(Config)
         projectorScreen.Material = Enum.Material.SmoothPlastic
         projectorScreen.TopSurface = Enum.SurfaceType.Smooth
         projectorScreen.BottomSurface = Enum.SurfaceType.Smooth
-
+        
         local selectionBox = Instance.new("SelectionBox")
         selectionBox.Adornee = projectorScreen
         selectionBox.Color3 = CurrentTheme.Accent
         selectionBox.LineThickness = 0.08
         selectionBox.Transparency = 0.4
         selectionBox.Parent = projectorScreen
-
+        
         if syn and syn.protect_gui then syn.protect_gui(projectorScreen) end
         projectorScreen.Parent = workspace
-
+        
         local surfaceGui = Instance.new("SurfaceGui")
         surfaceGui.Name = "ProjectorUI"
         surfaceGui.ResetOnSpawn = false
@@ -691,51 +691,51 @@ function Fenglib:CreateWindow(Config)
         surfaceGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
         surfaceGui.Adornee = projectorScreen
         surfaceGui.Parent = projectorScreen
-
+        
         local originalChildren = {}
         for _, child in ipairs(ScreenGui:GetChildren()) do
             if child ~= OpenButton and child ~= NotificationHolder then
                 originalChildren[#originalChildren + 1] = child
             end
         end
-
+        
         for _, child in ipairs(originalChildren) do
             child.Parent = surfaceGui
         end
-
+        
         Window._savedMainFrameSize = MainFrame.Size
         Window._savedMainFramePos = MainFrame.Position
-
+        
         MainFrame.Size = UDim2.new(0, 600, 0, 400)
         MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-
+        
         addPressEffectToAll(surfaceGui)
-
+        
         local pointLight = Instance.new("PointLight")
         pointLight.Brightness = 2.5
         pointLight.Range = 20
         pointLight.Color = CurrentTheme.Accent
         pointLight.Parent = projectorScreen
-
+        
         local function updateScreenPosition()
             local character = LocalPlayer.Character
             if not character then return end
             local rootPart = character:FindFirstChild("HumanoidRootPart")
             if not rootPart then return end
-
+            
             local forward = rootPart.CFrame.LookVector
             forward = Vector3.new(forward.X, 0, forward.Z).Unit
             local targetPos = rootPart.Position + forward * distance
             targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
-
+            
             local lookAtPoint = Vector3.new(rootPart.Position.X, targetPos.Y, rootPart.Position.Z)
             local screenCF = CFrame.lookAt(targetPos, lookAtPoint, Vector3.new(0, 1, 0))
-
+            
             projectorScreen.CFrame = screenCF
         end
-
+        
         updateScreenPosition()
-
+        
         local updateConnection
         updateConnection = RunService.RenderStepped:Connect(function()
             if not projectorScreen.Parent then
@@ -744,7 +744,7 @@ function Fenglib:CreateWindow(Config)
             end
             updateScreenPosition()
         end)
-
+        
         local sizeConnection
         sizeConnection = MainFrame:GetPropertyChangedSignal("Size"):Connect(function()
             if Window._ProjectorSettings.autoSize then
@@ -753,7 +753,7 @@ function Fenglib:CreateWindow(Config)
         end)
         task.wait(0.1)
         Window:UpdateProjectorSizeFromUI()
-
+        
         Window._ProjectorModeEnabled = true
         Window._ProjectorObjects = {
             Screen = projectorScreen,
@@ -763,13 +763,13 @@ function Fenglib:CreateWindow(Config)
             Light = pointLight,
             SelectionBox = selectionBox
         }
-
+        
         return true
     end
-
+    
     local function SwitchTo2DMode()
         if not Window._ProjectorModeEnabled then return end
-
+        
         if Window._ProjectorObjects then
             if Window._ProjectorObjects.UpdateConnection then
                 Window._ProjectorObjects.UpdateConnection:Disconnect()
@@ -787,7 +787,7 @@ function Fenglib:CreateWindow(Config)
                 Window._ProjectorObjects.Screen:Destroy()
             end
         end
-
+        
         if Window._savedMainFrameSize then
             MainFrame.Size = Window._savedMainFrameSize
             MainFrame.Position = Window._savedMainFramePos
@@ -795,17 +795,17 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Size = UDim2.new(0, 500, 0, 299)
             MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         end
-
+        
         Window._ProjectorModeEnabled = false
         Window._ProjectorObjects = nil
 
         dragging = false
         dragStartPos = nil
         dragStartWindowPos = nil
-
+        
         return true
     end
-
+    
     local function ToggleProjectorMode()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
@@ -813,11 +813,11 @@ function Fenglib:CreateWindow(Config)
             SwitchToProjectorMode()
         end
     end
-
+    
     local Toggle3DBtn = createIconButton("rbxassetid://12684119225", function()
         ToggleProjectorMode()
     end)
-
+    
     local MinimizeBtn = createTextButton("-", function()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
@@ -825,15 +825,15 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Visible = false
         end
     end)
-
+    
     local resizerVisible = false
     Resizer.Visible = resizerVisible
-
+    
     local MaximizeBtn = createIconButton("rbxassetid://6031090998", function()
         resizerVisible = not resizerVisible
         Resizer.Visible = resizerVisible
     end)
-
+    
     local CloseBtn = createTextButton("X", function()
         if Window._ProjectorModeEnabled then
             SwitchTo2DMode()
@@ -846,7 +846,7 @@ function Fenglib:CreateWindow(Config)
     local dragging = false
     local dragStartPos = nil
     local dragStartWindowPos = nil
-
+    
     local function getInputPosition(input)
         local pos = input.Position
         if typeof(pos) == "Vector3" then
@@ -854,7 +854,7 @@ function Fenglib:CreateWindow(Config)
         end
         return pos
     end
-
+    
     local function startDrag(input)
         if Window._ProjectorModeEnabled then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -864,13 +864,13 @@ function Fenglib:CreateWindow(Config)
             pcall(function() input:StopPropagation() end)
         end
     end
-
+    
     local function onDragMove(input)
         if not dragging then return end
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             local currentPos = getInputPosition(input)
             local delta = currentPos - dragStartPos
-
+            
             local newPos = UDim2.new(
                 dragStartWindowPos.X.Scale,
                 dragStartWindowPos.X.Offset + delta.X,
@@ -880,7 +880,7 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Position = newPos
         end
     end
-
+    
     local function endDrag(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
@@ -888,7 +888,7 @@ function Fenglib:CreateWindow(Config)
             dragStartWindowPos = nil
         end
     end
-
+    
     Topbar.InputBegan:Connect(startDrag)
     UserInputService.InputChanged:Connect(onDragMove)
     UserInputService.InputEnded:Connect(endDrag)
@@ -915,14 +915,14 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Parent = ScreenGui
     OpenButton.BackgroundColor3 = CurrentTheme.Accent
     OpenButton.BackgroundTransparency = 0.85
-    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)
+    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)  
     OpenButton.Size = UDim2.new(0, 40, 0, 40)
     OpenButton.Active = true
-    OpenButton.Draggable = true
-    OpenButton.Image = "rbxassetid://84830962019412"
+    OpenButton.Draggable = true  
+    OpenButton.Image = "rbxassetid://84830962019412"  
     OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
     OpenButton.ImageTransparency = 0.15
-    OpenButton.ZIndex = 10
+    OpenButton.ZIndex = 10  
 
     OpenButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -1167,7 +1167,7 @@ function Fenglib:CreateWindow(Config)
             end
         end
     end
-
+    
     function Window:SetProjectorSize(width, height)
         width = clamp(width, 4, 24)
         height = clamp(height, 3, 16)
@@ -1178,7 +1178,7 @@ function Fenglib:CreateWindow(Config)
             Window._ProjectorObjects.Screen.Size = Vector3.new(width, height, 0.1)
         end
     end
-
+    
     function Window:SetProjectorTransparency(transparency)
         transparency = clamp(transparency, 0, 0.8)
         Window._ProjectorSettings.transparency = transparency
@@ -1186,25 +1186,68 @@ function Fenglib:CreateWindow(Config)
             Window._ProjectorObjects.Screen.Transparency = transparency
         end
     end
-
+    
     function Window:EnableProjectorMode(distance, width, height, transparency)
         return SwitchToProjectorMode(distance, width, height, transparency)
     end
-
+    
     function Window:DisableProjectorMode()
         return SwitchTo2DMode()
     end
-
+    
     function Window:ToggleProjectorMode()
         return ToggleProjectorMode()
     end
-
+    
     function Window:IsProjectorMode()
         return Window._ProjectorModeEnabled
     end
 
     local firstTab = true
     local controlCounter = 0
+
+    -- ==================== SubPage 支持 ====================
+    -- 为每个 Tab 创建一个子页面管理器
+    -- 每个 Tab 的 Page（ScrollingFrame）内部结构：
+    --   - SubPageBar: 横向按钮栏（仅当有多个子页面时显示）
+    --   - SubPageContainer: 用于放置各个子页面的内容（每个子页面是一个独立的 ScrollingFrame）
+    --   - 默认有一个名为 "Main" 的子页面（当未使用 SubPage 时，所有控件添加到此页面）
+    local function createSubPageManager(parentPage, parentScrollingFrame)
+        -- parentPage: 左侧 Tab 对应的 Page 容器（原本是 ScrollingFrame，我们将其作为子页面的容器）
+        -- 但为了保留原有的 Scroll 行为，我们需要将 parentPage 变成一个普通 Frame，内部放子页面切换栏和多个子页面 ScrollingFrame
+        -- 由于原代码中 Page 已经是 ScrollingFrame，我们将其改为普通 Frame，然后内部放一个用于滚动的 ScrollingFrame？不，这样会破坏原有结构。
+        -- 更好的方式：保持 Page 为 ScrollingFrame，但内部放一个 ContentHolder（原来的 ContentHolder），然后 ContentHolder 内部放子页面切换栏和子页面内容。
+        -- 实际上原代码 Page 内部有一个 ContentHolder (Frame with UIListLayout)，所有 Section 直接添加到这个 ContentHolder。
+        -- 我们现在需要在这个 ContentHolder 内添加：
+        --   1. 一个可选的 SubPageBar (Frame with UIListLayout 横向)
+        --   2. 一个 Stack 容器，里面放置多个子页面内容 Frame (每个子页面是一个 ScrollingFrame，独立滚动)
+        -- 为了兼容性，如果用户从未调用 SubPage，则我们不显示 SubPageBar，并且所有控件仍添加到原来的 ContentHolder（但需要改为添加到默认子页面的内容区）
+        -- 由于原来的 ContentHolder 是自动大小，我们需要重新组织。
+        
+        -- 设计方案：
+        -- 在 Page (ScrollingFrame) 中，不再直接使用原来的 ContentHolder，而是创建一个新的结构：
+        --   - SubPageBar (Frame) - 横向按钮栏，自动大小，仅当子页面数量>1时显示
+        --   - ContentStack (Frame) - 自动大小，包含多个子页面 Frame
+        -- 每个子页面 Frame 是一个 ScrollingFrame，内部有自己的 ContentHolder (UIListLayout)
+        -- 原来的 ContentHolder 将被移除，但为了兼容，所有现有的 Section 添加逻辑需要重定向到默认子页面。
+        
+        -- 由于修改较大，且需要保持原 API 不变，我们采用以下方法：
+        -- 在 Tab 创建时，我们仍然创建原来的 ContentHolder（叫做 MainContent），但 MainContent 被隐藏。
+        -- 同时创建 SubPage 系统。如果用户调用了 SubPage，则隐藏 MainContent，显示子页面系统；否则使用 MainContent。
+        -- 这样做改动最小，但是会重复代码。另外 ThemeListeners 等注册不受影响。
+        
+        -- 更简洁：直接在原有 ContentHolder 中插入 SubPage 系统，但是需要调整顺序。由于 ContentHolder 是 UIListLayout，我们可以动态插入。
+        -- 但 SubPageBar 应该在所有 Section 之上，因此我们可以在 ContentHolder 的第一个位置插入 SubPageBar（如果需要）。
+        -- 而每个子页面的内容则不能使用 UIListLayout 自动排列（因为需要切换可见性）。我们可以将子页面内容放在一个单独的 Frame 中，该 Frame 不参与 UIListLayout。
+        
+        -- 最终实现方案：
+        -- 1. 在 Page 中除了原有的 ContentHolder（用于向后兼容）外，新增一个 SubPageSystemFrame，位置覆盖 ContentHolder，但默认不可见。
+        -- 2. 当用户首次调用 SubPage 时，隐藏原有的 ContentHolder，显示 SubPageSystemFrame，并动态创建子页面。
+        -- 3. 原有的 Section 方法需要根据是否启用了 SubPage 来决定添加到哪个容器。
+        
+        -- 为了代码清晰，我们将在 Tab 函数中实现这个逻辑。
+    end
+    -- ==================================================
 
     local function createSection(parent, text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
@@ -2524,7 +2567,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- ========== 支持子页面的 Tab 实现（已修复重叠问题） ==========
+    -- ==================== 修改后的 Window:Tab 方法 ====================
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2599,35 +2642,35 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        -- 外层滚动页面
+        -- ========== 修改点：创建支持 SubPage 的页面容器 ==========
+        -- 每个 Tab 对应一个 Page (ScrollingFrame)
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
-        Page.ScrollBarThickness = 4
+        Page.ScrollBarThickness = 2
+        Page.ScrollBarImageColor3 = Color3.fromRGB(80,80,85)
         Page.ScrollingDirection = Enum.ScrollingDirection.Y
         Page.Visible = false
         Page.Parent = PageContainer
 
-        -- 内容容器（自动高度）
+        -- 创建一个内部容器，用于放置子页面切换栏和子页面内容
         local PageContent = Instance.new("Frame")
         PageContent.Size = UDim2.new(1, 0, 0, 0)
         PageContent.AutomaticSize = Enum.AutomaticSize.Y
         PageContent.BackgroundTransparency = 1
         PageContent.Parent = Page
 
-        -- 更新外层 CanvasSize
-        local function updatePageCanvas()
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageContent.AbsoluteSize.Y + 10)
-        end
-        PageContent:GetPropertyChangedSignal("AbsoluteSize"):Connect(updatePageCanvas)
-        task.spawn(updatePageCanvas)
+        local PageList = Instance.new("UIListLayout")
+        PageList.Padding = UDim.new(0, 10)
+        PageList.SortOrder = Enum.SortOrder.LayoutOrder
+        PageList.Parent = PageContent
 
-        -- 子页面切换栏
+        -- 子页面切换栏（横向按钮列表）
         local SubPageBar = Instance.new("Frame")
         SubPageBar.Size = UDim2.new(1, 0, 0, 0)
         SubPageBar.AutomaticSize = Enum.AutomaticSize.Y
         SubPageBar.BackgroundTransparency = 1
-        SubPageBar.Visible = false
+        SubPageBar.Visible = false  -- 默认隐藏，只有创建子页面后才显示
         SubPageBar.Parent = PageContent
 
         local SubPageBarLayout = Instance.new("UIListLayout")
@@ -2640,57 +2683,69 @@ function Fenglib:CreateWindow(Config)
         SubPageBarPadding.PaddingLeft = UDim.new(0, 5)
         SubPageBarPadding.Parent = SubPageBar
 
-        -- 子页面内容容器（带 UIListLayout 自动垂直排列）
+        -- 子页面内容容器（多个 ScrollingFrame 叠加，通过可见性切换）
         local SubPageContainer = Instance.new("Frame")
         SubPageContainer.Size = UDim2.new(1, 0, 0, 0)
         SubPageContainer.AutomaticSize = Enum.AutomaticSize.Y
         SubPageContainer.BackgroundTransparency = 1
         SubPageContainer.Parent = PageContent
 
-        local SubPageContainerLayout = Instance.new("UIListLayout")
-        SubPageContainerLayout.Padding = UDim.new(0, 0)  -- 无间距，子页面紧密排列
-        SubPageContainerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        SubPageContainerLayout.Parent = SubPageContainer
+        -- 默认子页面（用于向后兼容，不显示切换栏）
+        local DefaultSubPage = Instance.new("ScrollingFrame")
+        DefaultSubPage.Name = "__DefaultSubPage"
+        DefaultSubPage.Size = UDim2.new(1, 0, 0, 0)
+        DefaultSubPage.AutomaticSize = Enum.AutomaticSize.Y
+        DefaultSubPage.BackgroundTransparency = 1
+        DefaultSubPage.ScrollBarThickness = 0
+        DefaultSubPage.ScrollingDirection = Enum.ScrollingDirection.Y
+        DefaultSubPage.CanvasSize = UDim2.new(0, 0, 0, 0)
+        DefaultSubPage.Parent = SubPageContainer
 
-        -- 默认子页面（向后兼容）
-        local DefaultSubPageFrame = Instance.new("Frame")
-        DefaultSubPageFrame.Name = "__DefaultSubPage"
-        DefaultSubPageFrame.Size = UDim2.new(1, 0, 0, 0)
-        DefaultSubPageFrame.AutomaticSize = Enum.AutomaticSize.Y
-        DefaultSubPageFrame.BackgroundTransparency = 1
-        DefaultSubPageFrame.Visible = true
-        DefaultSubPageFrame.Parent = SubPageContainer
+        local DefaultContent = Instance.new("Frame")
+        DefaultContent.Size = UDim2.new(1, 0, 0, 0)
+        DefaultContent.AutomaticSize = Enum.AutomaticSize.Y
+        DefaultContent.BackgroundTransparency = 1
+        DefaultContent.Parent = DefaultSubPage
 
         local DefaultLayout = Instance.new("UIListLayout")
         DefaultLayout.Padding = UDim.new(0, 10)
         DefaultLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        DefaultLayout.Parent = DefaultSubPageFrame
+        DefaultLayout.Parent = DefaultContent
 
-        -- 子页面列表
-        local subPages = {}  -- { name, button, frame }
+        local function updateDefaultCanvas()
+            DefaultSubPage.CanvasSize = UDim2.new(0, 0, 0, DefaultLayout.AbsoluteContentSize.Y + 10)
+        end
+        DefaultLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateDefaultCanvas)
+        task.spawn(updateDefaultCanvas)
+
+        -- 记录子页面列表
+        local subPages = {}   -- { name, pageFrame, button, contentFrame }
         local currentSubPage = nil
 
-        local function switchToSubPage(sp)
-            if currentSubPage == sp then return end
-            for _, s in ipairs(subPages) do
-                s.frame.Visible = (s == sp)
-                if s.button then
-                    Tween(s.button, { BackgroundTransparency = (s == sp) and 0.1 or 1, TextColor3 = (s == sp) and CurrentTheme.Accent or Color3.fromRGB(100,100,100) })
+        -- 切换子页面
+        local function switchToSubPage(subPageData)
+            if currentSubPage == subPageData then return end
+            -- 隐藏所有子页面内容
+            for _, sp in ipairs(subPages) do
+                sp.contentFrame.Visible = false
+                if sp.button then
+                    Tween(sp.button, {BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(100, 100, 100)})
                 end
             end
-            DefaultSubPageFrame.Visible = (sp == nil)
-            currentSubPage = sp
-            -- 等待布局更新后刷新滚动区域
+            -- 显示选中的子页面
+            subPageData.contentFrame.Visible = true
+            if subPageData.button then
+                Tween(subPageData.button, {BackgroundTransparency = 0.1, TextColor3 = CurrentTheme.Accent})
+            end
+            currentSubPage = subPageData
+            -- 刷新父滚动区域的 CanvasSize
             task.wait()
-            updatePageCanvas()
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageContent.AbsoluteSize.Y + 10)
         end
 
+        -- 创建新子页面
         local function addSubPage(subPageName, subPageIcon)
-            if #subPages == 0 then
-                DefaultSubPageFrame.Visible = false
-                SubPageBar.Visible = true
-            end
-
+            -- 创建子页面按钮
             local btn = Instance.new("TextButton")
             btn.Size = UDim2.new(0, 0, 0, 32)
             btn.AutomaticSize = Enum.AutomaticSize.X
@@ -2698,7 +2753,7 @@ function Fenglib:CreateWindow(Config)
             btn.Font = Enum.Font.GothamMedium
             btn.TextSize = 14
             btn.BackgroundTransparency = 1
-            btn.TextColor3 = Color3.fromRGB(100,100,100)
+            btn.TextColor3 = Color3.fromRGB(100, 100, 100)
             btn.AutoButtonColor = false
             btn.Parent = SubPageBar
             local btnCorner = Instance.new("UICorner")
@@ -2709,86 +2764,225 @@ function Fenglib:CreateWindow(Config)
             btnPadding.PaddingRight = UDim.new(0, 12)
             btnPadding.Parent = btn
 
+            -- 可选图标
             if subPageIcon then
                 local iconImg = Instance.new("ImageLabel")
                 iconImg.Size = UDim2.new(0, 16, 0, 16)
                 iconImg.Position = UDim2.new(0, 8, 0.5, -8)
                 iconImg.BackgroundTransparency = 1
                 iconImg.Image = subPageIcon
-                iconImg.ImageColor3 = Color3.fromRGB(100,100,100)
+                iconImg.ImageColor3 = Color3.fromRGB(100, 100, 100)
                 iconImg.Parent = btn
                 btn.Text = "  " .. subPageName
+                -- 调整文本位置
+                local textLabel = btn:FindFirstChildOfClass("TextLabel") or Instance.new("TextLabel")
+                -- 简单起见，不深入处理，直接使用文本偏移
             end
 
-            -- 子页面内容 Frame（自动高度，内部用 UIListLayout 排列 Section）
-            local frame = Instance.new("Frame")
-            frame.Size = UDim2.new(1, 0, 0, 0)
-            frame.AutomaticSize = Enum.AutomaticSize.Y
-            frame.BackgroundTransparency = 1
-            frame.Visible = false
-            frame.Parent = SubPageContainer
+            -- 创建子页面内容 ScrollingFrame
+            local subPageFrame = Instance.new("ScrollingFrame")
+            subPageFrame.Size = UDim2.new(1, 0, 0, 0)
+            subPageFrame.AutomaticSize = Enum.AutomaticSize.Y
+            subPageFrame.BackgroundTransparency = 1
+            subPageFrame.ScrollBarThickness = 0
+            subPageFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+            subPageFrame.Visible = false  -- 初始隐藏
+            subPageFrame.Parent = SubPageContainer
+
+            local content = Instance.new("Frame")
+            content.Size = UDim2.new(1, 0, 0, 0)
+            content.AutomaticSize = Enum.AutomaticSize.Y
+            content.BackgroundTransparency = 1
+            content.Parent = subPageFrame
 
             local layout = Instance.new("UIListLayout")
             layout.Padding = UDim.new(0, 10)
             layout.SortOrder = Enum.SortOrder.LayoutOrder
-            layout.Parent = frame
+            layout.Parent = content
 
-            local spData = { name = subPageName, button = btn, frame = frame }
-            table.insert(subPages, spData)
+            local function updateCanvas()
+                subPageFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+            end
+            layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+            task.spawn(updateCanvas)
 
+            local subPageData = {
+                name = subPageName,
+                button = btn,
+                contentFrame = subPageFrame,
+                contentHolder = content,
+                layout = layout
+            }
+            table.insert(subPages, subPageData)
+
+            -- 显示子页面切换栏
+            SubPageBar.Visible = true
+            -- 调整 SubPageBar 的高度
+            local function updateBarHeight()
+                SubPageBar.Size = UDim2.new(1, 0, 0, SubPageBarLayout.AbsoluteContentSize.Y + 8)
+            end
+            SubPageBarLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateBarHeight)
+            task.spawn(updateBarHeight)
+
+            -- 按钮点击事件
             btn.MouseButton1Click:Connect(function()
-                switchToSubPage(spData)
+                switchToSubPage(subPageData)
             end)
 
+            -- 如果这是第一个子页面，默认选中
             if #subPages == 1 then
-                switchToSubPage(spData)
+                switchToSubPage(subPageData)
             end
 
-            -- 返回用于添加控件的 Elements 对象
+            -- 返回一个对象，提供 Section 等方法（这些方法会将控件添加到该子页面的 content）
             local Elements = {}
+            -- 复用 createSection 函数，但 parent 指定为 subPageData.contentHolder
             Elements.Section = function(_, text, icons, defaultOpen)
-                return createSection(frame, text, icons, defaultOpen)
+                return createSection(subPageData.contentHolder, text, icons, defaultOpen)
             end
-            local function inlineSec() return createSection(frame, "", nil, true) end
-            Elements.Button = function(_, btnText, cb) return inlineSec().Button(btnText, cb) end
-            Elements.Toggle = function(_, text, def, cb) return inlineSec().Toggle(text, def, cb) end
-            Elements.Slider = function(_, text, min, max, def, cb, opts) return inlineSec().Slider(text, min, max, def, cb, opts) end
-            Elements.Dropdown = function(_, text, opts, cb) return inlineSec().Dropdown(text, opts, cb) end
-            Elements.Keybind = function(_, text, def, cb) return inlineSec().Keybind(text, def, cb) end
-            Elements.Textbox = function(_, text, pl, cb) return inlineSec().Textbox(text, pl, cb) end
-            Elements.Input = function(_, text, def, cb, opts) return inlineSec().Input(text, def, cb, opts) end
-            Elements.Label = function(_, text) return inlineSec().Label(text) end
-            Elements.SubLabel = function(_, text) return inlineSec().SubLabel(text) end
-            Elements.Paragraph = function(_, header, body) return inlineSec().Paragraph(header, body) end
-            Elements.ColorPicker = function(_, text, def, cb) return inlineSec().ColorPicker(text, def, cb) end
-            Elements.Image = function(_, cfg) return inlineSec().Image(cfg) end
+            -- 直接添加控件的方法（兼容原 Elements 的其他方法，例如 ColorPicker, Button 等）
+            -- 为了简化，我们可以让 Elements 本身就是一个函数，但为了 API 一致，实现每个方法
+            -- 实际上 createSection 已经返回了一个包含所有控件方法的表，我们可以直接暴露一个创建 Section 的方法，
+            -- 如果需要直接添加单个控件而不使用 Section，可以再实现，但原库中所有控件都是通过 Section 创建的。
+            -- 为了完全兼容，我们为 Elements 提供与原来相同的所有方法，这些方法内部创建一个隐式 Section（名称随意）。
+            -- 但为了简单，我们可以要求用户使用 SubPage:Section() 来组织控件，这符合原始设计（子页面内也需要 Section 分组）。
+            -- 原来没有 SubPage 时，用户直接调用 Tab:Section() 创建分组。现在有了 SubPage，建议用户调用 SubPage:Section()。
+            -- 因此 Elements 只需要提供 Section 方法即可，其他方法（Button, Toggle, Slider 等）通过 Section 来创建。
+            -- 但为了保持灵活性，我们也提供直接创建控件的快捷方法，它们会创建一个无标题的 Section。
+            local function createInlineSection(parent)
+                local inlineSection = createSection(parent, "", nil, true)
+                return inlineSection
+            end
+            Elements.Button = function(_, btnText, callback)
+                local sec = createInlineSection(subPageData.contentHolder)
+                return sec.Button(btnText, callback)
+            end
+            Elements.Toggle = function(_, toggleText, default, callback)
+                local sec = createInlineSection(subPageData.contentHolder)
+                return sec.Toggle(toggleText, default, callback)
+            end
+            Elements.Slider = function(_, sliderText, min, max, default, callback, options)
+                local sec = createInlineSection(subPageData.contentHolder)
+                return sec.Slider(sliderText, min, max, default, callback, options)
+            end
+            Elements.Dropdown = function(_, dropText, options, callback)
+                local sec = createInlineSection(subPageData.contentHolder)
+                return sec.Dropdown(dropText, options, callback)
+            end
+            Elements.Keybind = function(_, keyText, default, callback)
+                local sec = createInlineSection(subPageData.contentHolder)
+                return sec.Keybind(keyText, default, callback)
+            end
+            Elements.Textbox = function(_, boxText, placeholder, callback)
+                local sec = createInlineSection(subPageData.contentHolder)
+                return sec.Textbox(boxText, placeholder, callback)
+            end
+            Elements.Input = function(_, inputText, default, callback, options)
+                local sec = createInlineSection(subPageData.contentHolder)
+                return sec.Input(inputText, default, callback, options)
+            end
+            Elements.Label = function(_, labelText)
+                local sec = createInlineSection(subPageData.contentHolder)
+                return sec.Label(labelText)
+            end
+            Elements.SubLabel = function(_, subLabelText)
+                local sec = createInlineSection(subPageData.contentHolder)
+                return sec.SubLabel(subLabelText)
+            end
+            Elements.Paragraph = function(_, headerText, bodyText)
+                local sec = createInlineSection(subPageData.contentHolder)
+                return sec.Paragraph(headerText, bodyText)
+            end
+            Elements.ColorPicker = function(_, pickerText, default, callback)
+                local sec = createInlineSection(subPageData.contentHolder)
+                return sec.ColorPicker(pickerText, default, callback)
+            end
+            Elements.Image = function(_, config)
+                local sec = createInlineSection(subPageData.contentHolder)
+                return sec.Image(config)
+            end
+
             return Elements
         end
 
-        -- 向后兼容：默认子页面提供的 API
-        local defaultElements = {}
-        defaultElements.Section = function(_, text, icons, defaultOpen)
-            return createSection(DefaultSubPageFrame, text, icons, defaultOpen)
+        -- 提供 SubPage 方法，供外部调用
+        local TabElements = {}
+        TabElements.SubPage = function(_, subPageName, subPageIcon)
+            return addSubPage(subPageName, subPageIcon)
         end
-        local function defaultInline() return createSection(DefaultSubPageFrame, "", nil, true) end
-        defaultElements.Button    = function(_, btnText, cb) return defaultInline().Button(btnText, cb) end
-        defaultElements.Toggle    = function(_, text, def, cb) return defaultInline().Toggle(text, def, cb) end
-        defaultElements.Slider    = function(_, text, min, max, def, cb, opts) return defaultInline().Slider(text, min, max, def, cb, opts) end
-        defaultElements.Dropdown  = function(_, text, opts, cb) return defaultInline().Dropdown(text, opts, cb) end
-        defaultElements.Keybind   = function(_, text, def, cb) return defaultInline().Keybind(text, def, cb) end
-        defaultElements.Textbox   = function(_, text, pl, cb) return defaultInline().Textbox(text, pl, cb) end
-        defaultElements.Input     = function(_, text, def, cb, opts) return defaultInline().Input(text, def, cb, opts) end
-        defaultElements.Label     = function(_, text) return defaultInline().Label(text) end
-        defaultElements.SubLabel  = function(_, text) return defaultInline().SubLabel(text) end
-        defaultElements.Paragraph = function(_, header, body) return defaultInline().Paragraph(header, body) end
-        defaultElements.ColorPicker = function(_, text, def, cb) return defaultInline().ColorPicker(text, def, cb) end
-        defaultElements.Image     = function(_, cfg) return defaultInline().Image(cfg) end
+        -- 向后兼容：如果没有使用 SubPage，则所有控件默认添加到默认子页面
+        -- 为了兼容，我们让 TabElements 也拥有 Section 等方法，这些方法将控件添加到默认子页面
+        -- 并且默认子页面不显示切换栏
+        local function getDefaultElements()
+            local defaultElements = {}
+            defaultElements.Section = function(_, text, icons, defaultOpen)
+                return createSection(DefaultContent, text, icons, defaultOpen)
+            end
+            -- 同样提供快捷方法（添加一个无标题的 Section）
+            local function createInlineDefaultSection()
+                return createSection(DefaultContent, "", nil, true)
+            end
+            defaultElements.Button = function(_, btnText, callback)
+                return createInlineDefaultSection().Button(btnText, callback)
+            end
+            defaultElements.Toggle = function(_, toggleText, default, callback)
+                return createInlineDefaultSection().Toggle(toggleText, default, callback)
+            end
+            defaultElements.Slider = function(_, sliderText, min, max, default, callback, options)
+                return createInlineDefaultSection().Slider(sliderText, min, max, default, callback, options)
+            end
+            defaultElements.Dropdown = function(_, dropText, options, callback)
+                return createInlineDefaultSection().Dropdown(dropText, options, callback)
+            end
+            defaultElements.Keybind = function(_, keyText, default, callback)
+                return createInlineDefaultSection().Keybind(keyText, default, callback)
+            end
+            defaultElements.Textbox = function(_, boxText, placeholder, callback)
+                return createInlineDefaultSection().Textbox(boxText, placeholder, callback)
+            end
+            defaultElements.Input = function(_, inputText, default, callback, options)
+                return createInlineDefaultSection().Input(inputText, default, callback, options)
+            end
+            defaultElements.Label = function(_, labelText)
+                return createInlineDefaultSection().Label(labelText)
+            end
+            defaultElements.SubLabel = function(_, subLabelText)
+                return createInlineDefaultSection().SubLabel(subLabelText)
+            end
+            defaultElements.Paragraph = function(_, headerText, bodyText)
+                return createInlineDefaultSection().Paragraph(headerText, bodyText)
+            end
+            defaultElements.ColorPicker = function(_, pickerText, default, callback)
+                return createInlineDefaultSection().ColorPicker(pickerText, default, callback)
+            end
+            defaultElements.Image = function(_, config)
+                return createInlineDefaultSection().Image(config)
+            end
+            return defaultElements
+        end
 
-        local TabApi = {}
-        for k, v in pairs(defaultElements) do TabApi[k] = v end
-        TabApi.SubPage = function(_, name, icon) return addSubPage(name, icon) end
+        -- 设置默认子页面可见
+        DefaultSubPage.Visible = true
+        -- 将默认元素的创建函数绑定到 TabElements 上
+        for k, v in pairs(getDefaultElements()) do
+            TabElements[k] = v
+        end
+        -- 但要注意，如果用户调用了 SubPage，我们不应再使用默认子页面。为了简单，我们允许混用：如果用户调用了 SubPage，默认子页面仍然存在但被隐藏？为了更好的体验，一旦用户调用了 SubPage，我们就隐藏默认子页面，并显示子页面切换栏。
+        -- 修改 addSubPage 函数，在创建第一个子页面时隐藏默认子页面
+        local originalAddSubPage = addSubPage
+        addSubPage = function(subPageName, subPageIcon)
+            -- 如果是第一次创建子页面，隐藏默认子页面
+            if #subPages == 0 then
+                DefaultSubPage.Visible = false
+            end
+            return originalAddSubPage(subPageName, subPageIcon)
+        end
+        -- 重新绑定
+        TabElements.SubPage = function(_, subPageName, subPageIcon)
+            return addSubPage(subPageName, subPageIcon)
+        end
 
-        -- 切换 Tab 的逻辑
+        -- 页面切换逻辑（与原来相同）
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
@@ -2815,7 +3009,6 @@ function Fenglib:CreateWindow(Config)
             Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
             Tween(TabText, {TextColor3 = CurrentTheme.Text})
             Tween(TabBar, {BackgroundTransparency = 0})
-            updatePageCanvas()
         end)
 
         if firstTab then
@@ -2831,7 +3024,7 @@ function Fenglib:CreateWindow(Config)
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
         if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
-        return TabApi
+        return TabElements
     end
 
     return Window
