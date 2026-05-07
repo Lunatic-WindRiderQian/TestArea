@@ -2524,7 +2524,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- ==================== 修正后的 Window:Tab 方法（解决子页面与Section重合） ====================
+    -- ==================== Tab 方法：子页面加外框，内部透明，边框跟随主题 ====================
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2599,7 +2599,7 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        -- 页面容器 (外层 ScrollView，禁用滚动)
+        -- 页面容器（外层不可滚动）
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
@@ -2608,7 +2608,7 @@ function Fenglib:CreateWindow(Config)
         Page.Visible = false
         Page.Parent = PageContainer
 
-        -- 内部主布局 (垂直排列)
+        -- 内部布局容器
         local PageContent = Instance.new("Frame")
         PageContent.Size = UDim2.new(1, 0, 1, 0)
         PageContent.BackgroundTransparency = 1
@@ -2637,14 +2637,14 @@ function Fenglib:CreateWindow(Config)
         SubPageBarPadding.PaddingLeft = UDim.new(0, 5)
         SubPageBarPadding.Parent = SubPageBar
 
-        -- 子页面内容容器 (固定高度区域)
+        -- 子页面内容容器（固定高度）
         local SubPageContainer = Instance.new("Frame")
         SubPageContainer.Size = UDim2.new(1, 0, 0, 0)
         SubPageContainer.BackgroundTransparency = 1
         SubPageContainer.ClipsDescendants = true
         SubPageContainer.Parent = PageContent
 
-        -- 默认子页面 (单页面模式)
+        -- 默认子页面（单页面模式，带外框）
         local DefaultSubPage = Instance.new("ScrollingFrame")
         DefaultSubPage.Name = "__DefaultSubPage"
         DefaultSubPage.Size = UDim2.new(1, 0, 1, 0)
@@ -2653,6 +2653,16 @@ function Fenglib:CreateWindow(Config)
         DefaultSubPage.ScrollingDirection = Enum.ScrollingDirection.Y
         DefaultSubPage.CanvasSize = UDim2.new(0, 0, 0, 0)
         DefaultSubPage.Parent = SubPageContainer
+
+        -- 为默认子页面添加外框（光标）
+        local defaultBorder = Instance.new("UIStroke")
+        defaultBorder.Thickness = 1.5
+        defaultBorder.Color = CurrentTheme.Accent
+        defaultBorder.Transparency = 0.3
+        defaultBorder.Parent = DefaultSubPage
+        table.insert(ThemeListeners, function()
+            defaultBorder.Color = CurrentTheme.Accent
+        end)
 
         local DefaultContent = Instance.new("Frame")
         DefaultContent.Size = UDim2.new(1, 0, 0, 0)
@@ -2675,14 +2685,13 @@ function Fenglib:CreateWindow(Config)
         local subPages = {}
         local currentSubPage = nil
 
-        -- 更新子页面容器高度：减去子页面切换栏高度
+        -- 更新子页面容器高度
         local function updateSubPageContainerHeight()
             local pageHeight = Page.AbsoluteSize.Y
             if pageHeight == 0 then return end
             local subBarHeight = (SubPageBar.Visible and SubPageBar.AbsoluteSize.Y) or 0
             local containerHeight = math.max(0, pageHeight - subBarHeight)
             SubPageContainer.Size = UDim2.new(1, 0, 0, containerHeight)
-            -- 调整所有子页面的大小填满容器
             for _, sp in ipairs(subPages) do
                 if sp.contentFrame then
                     sp.contentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2714,7 +2723,7 @@ function Fenglib:CreateWindow(Config)
             currentSubPage = subPageData
         end
 
-        -- 添加子页面
+        -- 添加子页面（带外框）
         local function addSubPage(subPageName, subPageIcon)
             -- 按钮
             local btn = Instance.new("TextButton")
@@ -2755,6 +2764,16 @@ function Fenglib:CreateWindow(Config)
             subPageFrame.Visible = false
             subPageFrame.Parent = SubPageContainer
 
+            -- 为子页面添加外框
+            local border = Instance.new("UIStroke")
+            border.Thickness = 1.5
+            border.Color = CurrentTheme.Accent
+            border.Transparency = 0.3
+            border.Parent = subPageFrame
+            table.insert(ThemeListeners, function()
+                border.Color = CurrentTheme.Accent
+            end)
+
             local content = Instance.new("Frame")
             content.Size = UDim2.new(1, 0, 0, 0)
             content.AutomaticSize = Enum.AutomaticSize.Y
@@ -2781,7 +2800,6 @@ function Fenglib:CreateWindow(Config)
             }
             table.insert(subPages, subPageData)
 
-            -- 显示切换栏
             SubPageBar.Visible = true
             local function updateBarHeight()
                 SubPageBar.Size = UDim2.new(1, 0, 0, SubPageBarLayout.AbsoluteContentSize.Y + 8)
@@ -2822,7 +2840,7 @@ function Fenglib:CreateWindow(Config)
             return Elements
         end
 
-        -- 向后兼容：默认子页面（无切换栏）
+        -- 向后兼容默认子页面接口
         local function getDefaultElements()
             local defaultElements = {}
             local function createInlineDefaultSection()
