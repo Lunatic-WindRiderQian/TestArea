@@ -2723,7 +2723,7 @@ function Fenglib:CreateWindow(Config)
             btn.Text = subPageName
             btn.Font = Enum.Font.GothamMedium
             btn.TextSize = 14
-            btn.BackgroundTransparency = 1
+            btn.BackgroundTransparency = 1  -- 完全透明
             btn.TextColor3 = Color3.fromRGB(100, 100, 100)
             btn.AutoButtonColor = false
             btn.Parent = SubPageBar
@@ -2735,17 +2735,14 @@ function Fenglib:CreateWindow(Config)
             btnPadding.PaddingRight = UDim.new(0, 12)
             btnPadding.Parent = btn
 
-            -- 为按钮添加外框（UIStroke）
+            -- 为按钮添加外框
             local btnStroke = Instance.new("UIStroke")
             btnStroke.Thickness = 1.2
             btnStroke.Color = CurrentTheme.Stroke
             btnStroke.Transparency = 0.5
             btnStroke.Parent = btn
 
-            -- 按钮背景透明（已是透明，显式确保）
-            btn.BackgroundTransparency = 1
-
-            -- 主题监听：边框颜色跟随主题变化
+            -- 主题监听：外框颜色跟随主题变化
             local function updateBtnStroke()
                 if btnStroke then
                     btnStroke.Color = CurrentTheme.Stroke
@@ -2764,7 +2761,7 @@ function Fenglib:CreateWindow(Config)
                 btn.Text = "  " .. subPageName
             end
 
-            -- 子页面滚动区域
+            -- 子页面滚动区域（无外框）
             local subPageFrame = Instance.new("ScrollingFrame")
             subPageFrame.Size = UDim2.new(1, 0, 1, 0)
             subPageFrame.BackgroundTransparency = 1
@@ -2772,21 +2769,6 @@ function Fenglib:CreateWindow(Config)
             subPageFrame.ScrollingDirection = Enum.ScrollingDirection.Y
             subPageFrame.Visible = false
             subPageFrame.Parent = SubPageContainer
-
-            -- 为子页面滚动容器添加外框（可选，不需要可删除以下5行）
-            local containerStroke = Instance.new("UIStroke")
-            containerStroke.Thickness = 1.2
-            containerStroke.Color = CurrentTheme.Stroke
-            containerStroke.Transparency = 0.5
-            containerStroke.Parent = subPageFrame
-            local containerCorner = Instance.new("UICorner")
-            containerCorner.CornerRadius = UDim.new(0, 12)
-            containerCorner.Parent = subPageFrame
-            subPageFrame.BackgroundTransparency = 1
-            local function updateContainerStroke()
-                if containerStroke then containerStroke.Color = CurrentTheme.Stroke end
-            end
-            table.insert(ThemeListeners, updateContainerStroke)
 
             local content = Instance.new("Frame")
             content.Size = UDim2.new(1, 0, 0, 0)
