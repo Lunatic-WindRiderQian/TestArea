@@ -2755,6 +2755,28 @@ function Fenglib:CreateWindow(Config)
             subPageFrame.Visible = false
             subPageFrame.Parent = SubPageContainer
 
+            -- ===== 为子页面滚动容器添加外框 (圆角 + 边框) =====
+            local subPageStroke = Instance.new("UIStroke")
+            subPageStroke.Thickness = 1.2
+            subPageStroke.Color = CurrentTheme.Stroke
+            subPageStroke.Transparency = 0.5
+            subPageStroke.Parent = subPageFrame
+
+            local subPageCorner = Instance.new("UICorner")
+            subPageCorner.CornerRadius = UDim.new(0, 12)
+            subPageCorner.Parent = subPageFrame
+
+            subPageFrame.BackgroundTransparency = 1  -- 确保透明
+
+            -- 注册主题监听，外框颜色跟随主题变化
+            local function updateSubPageStroke()
+                if subPageStroke then
+                    subPageStroke.Color = CurrentTheme.Stroke
+                end
+            end
+            table.insert(ThemeListeners, updateSubPageStroke)
+            -- ============================================
+
             local content = Instance.new("Frame")
             content.Size = UDim2.new(1, 0, 0, 0)
             content.AutomaticSize = Enum.AutomaticSize.Y
