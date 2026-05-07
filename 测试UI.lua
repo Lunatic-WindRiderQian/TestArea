@@ -2524,7 +2524,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- ==================== 修正后的 Window:Tab 方法（子页面滚动独立） ====================
+    -- ==================== 修正后的 Window:Tab 方法（解决子页面与Section重合） ====================
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2599,16 +2599,16 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        -- 页面容器（ScrollingFrame，但我们将禁用其滚动，完全交给子页面）
+        -- 页面容器 (外层 ScrollView，禁用滚动)
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
         Page.ScrollBarThickness = 0
-        Page.ScrollingEnabled = false          -- 禁用外层滚动
+        Page.ScrollingEnabled = false
         Page.Visible = false
         Page.Parent = PageContainer
 
-        -- 内部布局容器（垂直排列：子页面切换栏 + 子页面内容区）
+        -- 内部主布局 (垂直排列)
         local PageContent = Instance.new("Frame")
         PageContent.Size = UDim2.new(1, 0, 1, 0)
         PageContent.BackgroundTransparency = 1
@@ -2619,7 +2619,7 @@ function Fenglib:CreateWindow(Config)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
         PageList.Parent = PageContent
 
-        -- 子页面切换栏（横向）
+        -- 子页面切换栏
         local SubPageBar = Instance.new("Frame")
         SubPageBar.Size = UDim2.new(1, 0, 0, 0)
         SubPageBar.AutomaticSize = Enum.AutomaticSize.Y
@@ -2637,14 +2637,14 @@ function Fenglib:CreateWindow(Config)
         SubPageBarPadding.PaddingLeft = UDim.new(0, 5)
         SubPageBarPadding.Parent = SubPageBar
 
-        -- 子页面内容容器（固定高度，给内部 ScrollingFrame 提供滚动区域）
+        -- 子页面内容容器 (固定高度区域)
         local SubPageContainer = Instance.new("Frame")
         SubPageContainer.Size = UDim2.new(1, 0, 0, 0)
         SubPageContainer.BackgroundTransparency = 1
         SubPageContainer.ClipsDescendants = true
         SubPageContainer.Parent = PageContent
 
-        -- 默认子页面（无子页面切换栏时使用）
+        -- 默认子页面 (单页面模式)
         local DefaultSubPage = Instance.new("ScrollingFrame")
         DefaultSubPage.Name = "__DefaultSubPage"
         DefaultSubPage.Size = UDim2.new(1, 0, 1, 0)
@@ -2675,14 +2675,14 @@ function Fenglib:CreateWindow(Config)
         local subPages = {}
         local currentSubPage = nil
 
-        -- 更新 SubPageContainer 的高度（减去子页面切换栏占用的高度）
+        -- 更新子页面容器高度：减去子页面切换栏高度
         local function updateSubPageContainerHeight()
             local pageHeight = Page.AbsoluteSize.Y
             if pageHeight == 0 then return end
             local subBarHeight = (SubPageBar.Visible and SubPageBar.AbsoluteSize.Y) or 0
             local containerHeight = math.max(0, pageHeight - subBarHeight)
             SubPageContainer.Size = UDim2.new(1, 0, 0, containerHeight)
-            -- 同时调整所有子页面及默认子页面的大小
+            -- 调整所有子页面的大小填满容器
             for _, sp in ipairs(subPages) do
                 if sp.contentFrame then
                     sp.contentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2714,9 +2714,9 @@ function Fenglib:CreateWindow(Config)
             currentSubPage = subPageData
         end
 
-        -- 添加新子页面
+        -- 添加子页面
         local function addSubPage(subPageName, subPageIcon)
-            -- 创建按钮
+            -- 按钮
             local btn = Instance.new("TextButton")
             btn.Size = UDim2.new(0, 0, 0, 32)
             btn.AutomaticSize = Enum.AutomaticSize.X
@@ -2746,7 +2746,7 @@ function Fenglib:CreateWindow(Config)
                 btn.Text = "  " .. subPageName
             end
 
-            -- 创建子页面滚动区域
+            -- 子页面滚动区域
             local subPageFrame = Instance.new("ScrollingFrame")
             subPageFrame.Size = UDim2.new(1, 0, 1, 0)
             subPageFrame.BackgroundTransparency = 1
@@ -2781,7 +2781,7 @@ function Fenglib:CreateWindow(Config)
             }
             table.insert(subPages, subPageData)
 
-            -- 显示切换栏，并自动调整高度
+            -- 显示切换栏
             SubPageBar.Visible = true
             local function updateBarHeight()
                 SubPageBar.Size = UDim2.new(1, 0, 0, SubPageBarLayout.AbsoluteContentSize.Y + 8)
@@ -2797,11 +2797,10 @@ function Fenglib:CreateWindow(Config)
                 switchToSubPage(subPageData)
             end
 
-            -- 返回用于添加控件的元素表
+            -- 返回控件添加接口
             local Elements = {}
             local function createInlineSection(parent)
-                local inlineSection = createSection(parent, "", nil, true)
-                return inlineSection
+                return createSection(parent, "", nil, true)
             end
 
             Elements.Section = function(_, text, icons, defaultOpen)
@@ -2823,7 +2822,7 @@ function Fenglib:CreateWindow(Config)
             return Elements
         end
 
-        -- 向后兼容：没有子页面时使用默认子页面（无切换栏）
+        -- 向后兼容：默认子页面（无切换栏）
         local function getDefaultElements()
             local defaultElements = {}
             local function createInlineDefaultSection()
@@ -2849,7 +2848,6 @@ function Fenglib:CreateWindow(Config)
 
         local TabElements = getDefaultElements()
         TabElements.SubPage = function(_, subPageName, subPageIcon)
-            -- 首次调用 SubPage 时隐藏默认子页面，并重新计算高度
             if #subPages == 0 then
                 DefaultSubPage.Visible = false
                 updateSubPageContainerHeight()
@@ -2857,7 +2855,7 @@ function Fenglib:CreateWindow(Config)
             return addSubPage(subPageName, subPageIcon)
         end
 
-        -- 页面切换逻辑
+        -- Tab 点击切换
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
