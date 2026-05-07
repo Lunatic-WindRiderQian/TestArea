@@ -483,7 +483,8 @@ function Fenglib:CreateWindow(Config)
     local TabContainer = Instance.new("ScrollingFrame")
     TabContainer.Size = UDim2.new(0, 140, 0.85, 0)
     TabContainer.BackgroundTransparency = 1
-    TabContainer.ScrollBarThickness = 0
+    TabContainer.ScrollBarThickness = 4          -- 显示滚动条，可改为0隐藏
+    TabContainer.ScrollingDirection = Enum.ScrollingDirection.Y  -- 仅允许垂直滚动
     TabContainer.Parent = Content
     
     local TabList = Instance.new("UIListLayout")
@@ -491,7 +492,7 @@ function Fenglib:CreateWindow(Config)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Parent = TabContainer
     
-    -- 修复：监听 TabList 的 AbsoluteContentSize 变化，动态更新 TabContainer 的 CanvasSize
+    -- 动态更新CanvasSize，始终只设置Y方向
     local function updateTabCanvas()
         TabContainer.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y)
     end
