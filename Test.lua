@@ -2524,7 +2524,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- Window:Tab 方法（子页面横向滚动，切换按钮栏固定）
+    -- Window:Tab 方法（子页面滚动独立）
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2603,16 +2603,9 @@ function Fenglib:CreateWindow(Config)
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
         Page.ScrollBarThickness = 0
-        Page.ScrollingEnabled = false   -- 关键：禁用整个页面滚动，保证按钮栏固定
+        Page.ScrollingEnabled = false
         Page.Visible = false
         Page.Parent = PageContainer
-
-        -- 阻止滚轮冒泡到 Page（防止意外垂直滚动）
-        Page.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseWheel then
-                input:StopPropagation()
-            end
-        end)
 
         local PageContent = Instance.new("Frame")
         PageContent.Size = UDim2.new(1, 0, 1, 0)
@@ -2648,13 +2641,12 @@ function Fenglib:CreateWindow(Config)
         SubPageContainer.ClipsDescendants = true
         SubPageContainer.Parent = PageContent
 
-        -- 默认子页面（无分页时使用），改为水平滚动
         local DefaultSubPage = Instance.new("ScrollingFrame")
         DefaultSubPage.Name = "__DefaultSubPage"
         DefaultSubPage.Size = UDim2.new(1, 0, 1, 0)
         DefaultSubPage.BackgroundTransparency = 1
         DefaultSubPage.ScrollBarThickness = 4
-        DefaultSubPage.ScrollingDirection = Enum.ScrollingDirection.X   -- 水平滚动
+        DefaultSubPage.ScrollingDirection = Enum.ScrollingDirection.Y
         DefaultSubPage.CanvasSize = UDim2.new(0, 0, 0, 0)
         DefaultSubPage.Parent = SubPageContainer
 
@@ -2664,6 +2656,7 @@ function Fenglib:CreateWindow(Config)
         DefaultContent.BackgroundTransparency = 1
         DefaultContent.Parent = DefaultSubPage
 
+        -- 添加右侧内边距，避免内容被右侧边框遮挡
         local defaultPadding = Instance.new("UIPadding")
         defaultPadding.PaddingRight = UDim.new(0, 12)
         defaultPadding.Parent = DefaultContent
@@ -2671,19 +2664,12 @@ function Fenglib:CreateWindow(Config)
         local DefaultLayout = Instance.new("UIListLayout")
         DefaultLayout.Padding = UDim.new(0, 10)
         DefaultLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        DefaultLayout.Parent = DefaultContent   -- 保持纵向排列，只是滚动条横向
+        DefaultLayout.Parent = DefaultContent
 
         local function updateDefaultCanvas()
-            -- 防止递归：先获取当前画布宽度，若相同则跳过
-            local newWidth = DefaultLayout.AbsoluteContentSize.X + 20
-            local currentWidth = DefaultSubPage.CanvasSize.X.Offset
-            if math.abs(newWidth - currentWidth) > 0.1 then
-                DefaultSubPage.CanvasSize = UDim2.new(0, newWidth, 0, 0)
-            end
+            DefaultSubPage.CanvasSize = UDim2.new(0, 0, 0, DefaultLayout.AbsoluteContentSize.Y + 10)
         end
-        DefaultLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            task.defer(updateDefaultCanvas)  -- 延迟到下一帧，避免重入
-        end)
+        DefaultLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateDefaultCanvas)
         task.spawn(updateDefaultCanvas)
 
         local subPages = {}
@@ -2781,7 +2767,7 @@ function Fenglib:CreateWindow(Config)
             subPageFrame.Size = UDim2.new(1, 0, 1, 0)
             subPageFrame.BackgroundTransparency = 1
             subPageFrame.ScrollBarThickness = 4
-            subPageFrame.ScrollingDirection = Enum.ScrollingDirection.X   -- 水平滚动
+            subPageFrame.ScrollingDirection = Enum.ScrollingDirection.Y
             subPageFrame.Visible = false
             subPageFrame.Parent = SubPageContainer
 
@@ -2791,6 +2777,7 @@ function Fenglib:CreateWindow(Config)
             content.BackgroundTransparency = 1
             content.Parent = subPageFrame
 
+            -- 为子页面内容添加右侧内边距
             local subPadding = Instance.new("UIPadding")
             subPadding.PaddingRight = UDim.new(0, 12)
             subPadding.Parent = content
@@ -2798,18 +2785,12 @@ function Fenglib:CreateWindow(Config)
             local layout = Instance.new("UIListLayout")
             layout.Padding = UDim.new(0, 10)
             layout.SortOrder = Enum.SortOrder.LayoutOrder
-            layout.Parent = content   -- 纵向排列，滚动条横向
+            layout.Parent = content
 
             local function updateCanvas()
-                local newWidth = layout.AbsoluteContentSize.X + 20
-                local currentWidth = subPageFrame.CanvasSize.X.Offset
-                if math.abs(newWidth - currentWidth) > 0.1 then
-                    subPageFrame.CanvasSize = UDim2.new(0, newWidth, 0, 0)
-                end
+                subPageFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
             end
-            layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                task.defer(updateCanvas)
-            end)
+            layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
             task.spawn(updateCanvas)
 
             local subPageData = {
