@@ -2689,19 +2689,18 @@ function Fenglib:CreateWindow(Config)
         SubPageBar:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
         task.spawn(updateSubPageContainerHeight)
 
-        -- 修改后的子页面切换函数：支持外框和文本/图标颜色随主题更新
+        -- 切换子页面（使用命名 UIStroke）
         local function switchToSubPage(subPageData)
             if currentSubPage == subPageData then return end
             for _, sp in ipairs(subPages) do
                 sp.contentFrame.Visible = false
                 if sp.button then
-                    -- 清除外框（透明）
-                    if sp.button.stroke then
-                        sp.button.stroke.Transparency = 1
+                    -- 获取外框
+                    local btnStroke = sp.button:FindFirstChild("SubPageStroke")
+                    if btnStroke then
+                        btnStroke.Transparency = 1
                     end
-                    -- 恢复文本颜色为默认灰色
                     sp.button.TextColor3 = Color3.fromRGB(100, 100, 100)
-                    -- 如果有图标，图标颜色也恢复灰色
                     if sp.button.iconImage then
                         sp.button.iconImage.ImageColor3 = Color3.fromRGB(100, 100, 100)
                     end
@@ -2709,15 +2708,12 @@ function Fenglib:CreateWindow(Config)
             end
             subPageData.contentFrame.Visible = true
             if subPageData.button then
-                -- 显示外框（透明度0）
-                if subPageData.button.stroke then
-                    subPageData.button.stroke.Transparency = 0
-                    -- 确保外框颜色与当前主题一致
-                    subPageData.button.stroke.Color = CurrentTheme.Accent
+                local btnStroke = subPageData.button:FindFirstChild("SubPageStroke")
+                if btnStroke then
+                    btnStroke.Transparency = 0
+                    btnStroke.Color = CurrentTheme.Accent
                 end
-                -- 文本颜色为主题强调色
                 subPageData.button.TextColor3 = CurrentTheme.Accent
-                -- 如果有图标，图标颜色也为主题强调色
                 if subPageData.button.iconImage then
                     subPageData.button.iconImage.ImageColor3 = CurrentTheme.Accent
                 end
@@ -2725,7 +2721,7 @@ function Fenglib:CreateWindow(Config)
             currentSubPage = subPageData
         end
 
-        -- 添加子页面（每个子页面按钮有一个外框 UIStroke）
+        -- 添加子页面（使用命名 UIStroke，避免自定义属性冲突）
         local function addSubPage(subPageName, subPageIcon)
             local btn = Instance.new("TextButton")
             btn.Size = UDim2.new(0, 0, 0, 32)
@@ -2745,13 +2741,13 @@ function Fenglib:CreateWindow(Config)
             btnPadding.PaddingRight = UDim.new(0, 12)
             btnPadding.Parent = btn
 
-            -- 添加外框 UIStroke，默认透明
+            -- 添加外框并命名，初始完全透明
             local btnStroke = Instance.new("UIStroke")
+            btnStroke.Name = "SubPageStroke"
             btnStroke.Thickness = 1.5
             btnStroke.Color = CurrentTheme.Accent
-            btnStroke.Transparency = 1   -- 默认完全透明
+            btnStroke.Transparency = 1
             btnStroke.Parent = btn
-            btn.stroke = btnStroke  -- 存储到按钮用于快速访问
 
             local iconImg = nil
             if subPageIcon then
@@ -2815,20 +2811,18 @@ function Fenglib:CreateWindow(Config)
                 switchToSubPage(subPageData)
             end
 
-            -- 主题监听：当主题变化时，更新当前选中按钮的外框颜色和文本/图标颜色
+            -- 主题监听：更新外框颜色（选中的按钮会额外更新文本/图标颜色）
             local themeListener = function()
+                local strokeObj = btn:FindFirstChild("SubPageStroke")
+                if strokeObj then
+                    strokeObj.Color = CurrentTheme.Accent
+                end
                 if currentSubPage == subPageData then
-                    if btn.stroke then
-                        btn.stroke.Color = CurrentTheme.Accent
-                    end
                     btn.TextColor3 = CurrentTheme.Accent
                     if btn.iconImage then
                         btn.iconImage.ImageColor3 = CurrentTheme.Accent
                     end
                 else
-                    if btn.stroke then
-                        btn.stroke.Color = CurrentTheme.Accent  -- 颜色随主题，但透明度保持1（不可见）
-                    end
                     btn.TextColor3 = Color3.fromRGB(100, 100, 100)
                     if btn.iconImage then
                         btn.iconImage.ImageColor3 = Color3.fromRGB(100, 100, 100)
