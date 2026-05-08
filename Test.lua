@@ -2524,6 +2524,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
+    -- ==================== 修正后的 Window:Tab 方法（子页面滚动独立） ====================
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2598,14 +2599,16 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
+        -- 页面容器（ScrollingFrame，但我们将禁用其滚动，完全交给子页面）
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
         Page.ScrollBarThickness = 0
-        Page.ScrollingEnabled = false
+        Page.ScrollingEnabled = false          -- 禁用外层滚动
         Page.Visible = false
         Page.Parent = PageContainer
 
+        -- 内部布局容器（垂直排列：子页面切换栏 + 子页面内容区）
         local PageContent = Instance.new("Frame")
         PageContent.Size = UDim2.new(1, 0, 1, 0)
         PageContent.BackgroundTransparency = 1
@@ -2616,6 +2619,7 @@ function Fenglib:CreateWindow(Config)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
         PageList.Parent = PageContent
 
+        -- 子页面切换栏（横向）
         local SubPageBar = Instance.new("Frame")
         SubPageBar.Size = UDim2.new(1, 0, 0, 0)
         SubPageBar.AutomaticSize = Enum.AutomaticSize.Y
@@ -2633,12 +2637,14 @@ function Fenglib:CreateWindow(Config)
         SubPageBarPadding.PaddingLeft = UDim.new(0, 5)
         SubPageBarPadding.Parent = SubPageBar
 
+        -- 子页面内容容器（固定高度，给内部 ScrollingFrame 提供滚动区域）
         local SubPageContainer = Instance.new("Frame")
         SubPageContainer.Size = UDim2.new(1, 0, 0, 0)
         SubPageContainer.BackgroundTransparency = 1
         SubPageContainer.ClipsDescendants = true
         SubPageContainer.Parent = PageContent
 
+        -- 默认子页面（无子页面切换栏时使用）
         local DefaultSubPage = Instance.new("ScrollingFrame")
         DefaultSubPage.Name = "__DefaultSubPage"
         DefaultSubPage.Size = UDim2.new(1, 0, 1, 0)
@@ -2665,15 +2671,18 @@ function Fenglib:CreateWindow(Config)
         DefaultLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateDefaultCanvas)
         task.spawn(updateDefaultCanvas)
 
+        -- 子页面列表
         local subPages = {}
         local currentSubPage = nil
 
+        -- 更新 SubPageContainer 的高度（减去子页面切换栏占用的高度）
         local function updateSubPageContainerHeight()
             local pageHeight = Page.AbsoluteSize.Y
             if pageHeight == 0 then return end
             local subBarHeight = (SubPageBar.Visible and SubPageBar.AbsoluteSize.Y) or 0
             local containerHeight = math.max(0, pageHeight - subBarHeight)
             SubPageContainer.Size = UDim2.new(1, 0, 0, containerHeight)
+            -- 同时调整所有子页面及默认子页面的尺寸
             for _, sp in ipairs(subPages) do
                 if sp.contentFrame then
                     sp.contentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2689,35 +2698,33 @@ function Fenglib:CreateWindow(Config)
         SubPageBar:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
         task.spawn(updateSubPageContainerHeight)
 
-        -- 切换子页面核心逻辑（完全没有自定义字段）
+        -- 切换子页面
         local function switchToSubPage(subPageData)
             if currentSubPage == subPageData then return end
             for _, sp in ipairs(subPages) do
                 sp.contentFrame.Visible = false
                 if sp.button then
-                    local strokeObj = sp.button:FindFirstChild("SubPageStroke")
-                    if strokeObj then strokeObj.Transparency = 1 end
+                    sp.button.BackgroundTransparency = 1
                     sp.button.TextColor3 = Color3.fromRGB(100, 100, 100)
-                    local iconObj = sp.button:FindFirstChild("TabIcon")
-                    if iconObj then iconObj.ImageColor3 = Color3.fromRGB(100, 100, 100) end
+                    if sp.stroke then
+                        sp.stroke.Transparency = 1
+                    end
                 end
             end
             subPageData.contentFrame.Visible = true
             if subPageData.button then
-                local strokeObj = subPageData.button:FindFirstChild("SubPageStroke")
-                if strokeObj then
-                    strokeObj.Transparency = 0
-                    strokeObj.Color = CurrentTheme.Accent
-                end
+                subPageData.button.BackgroundTransparency = 1
                 subPageData.button.TextColor3 = CurrentTheme.Accent
-                local iconObj = subPageData.button:FindFirstChild("TabIcon")
-                if iconObj then iconObj.ImageColor3 = CurrentTheme.Accent end
+                if subPageData.stroke then
+                    subPageData.stroke.Transparency = 0
+                end
             end
             currentSubPage = subPageData
         end
 
-        -- 添加一个新的子页面
+        -- 添加新子页面
         local function addSubPage(subPageName, subPageIcon)
+            -- 创建按钮
             local btn = Instance.new("TextButton")
             btn.Size = UDim2.new(0, 0, 0, 32)
             btn.AutomaticSize = Enum.AutomaticSize.X
@@ -2736,17 +2743,16 @@ function Fenglib:CreateWindow(Config)
             btnPadding.PaddingRight = UDim.new(0, 12)
             btnPadding.Parent = btn
 
-            -- 外框（初始透明）
+            -- 添加外框（默认透明）
             local btnStroke = Instance.new("UIStroke")
-            btnStroke.Name = "SubPageStroke"
             btnStroke.Thickness = 1.5
             btnStroke.Color = CurrentTheme.Accent
             btnStroke.Transparency = 1
+            btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
             btnStroke.Parent = btn
 
             if subPageIcon then
                 local iconImg = Instance.new("ImageLabel")
-                iconImg.Name = "TabIcon"
                 iconImg.Size = UDim2.new(0, 16, 0, 16)
                 iconImg.Position = UDim2.new(0, 8, 0.5, -8)
                 iconImg.BackgroundTransparency = 1
@@ -2756,6 +2762,15 @@ function Fenglib:CreateWindow(Config)
                 btn.Text = "  " .. subPageName
             end
 
+            -- 主题更新时同步外框颜色
+            local themeUpdate = function()
+                if btnStroke and btnStroke.Parent then
+                    btnStroke.Color = CurrentTheme.Accent
+                end
+            end
+            table.insert(ThemeListeners, themeUpdate)
+
+            -- 创建子页面滚动区域
             local subPageFrame = Instance.new("ScrollingFrame")
             subPageFrame.Size = UDim2.new(1, 0, 1, 0)
             subPageFrame.BackgroundTransparency = 1
@@ -2786,10 +2801,12 @@ function Fenglib:CreateWindow(Config)
                 button = btn,
                 contentFrame = subPageFrame,
                 contentHolder = content,
-                layout = layout
+                layout = layout,
+                stroke = btnStroke
             }
             table.insert(subPages, subPageData)
 
+            -- 显示切换栏，并自动调整高度
             SubPageBar.Visible = true
             local function updateBarHeight()
                 SubPageBar.Size = UDim2.new(1, 0, 0, SubPageBarLayout.AbsoluteContentSize.Y + 8)
@@ -2805,28 +2822,11 @@ function Fenglib:CreateWindow(Config)
                 switchToSubPage(subPageData)
             end
 
-            -- 主题变化监听
-            local themeListener = function()
-                local strokeObj = btn:FindFirstChild("SubPageStroke")
-                if strokeObj then
-                    strokeObj.Color = CurrentTheme.Accent
-                end
-                if currentSubPage == subPageData then
-                    btn.TextColor3 = CurrentTheme.Accent
-                    local iconObj = btn:FindFirstChild("TabIcon")
-                    if iconObj then iconObj.ImageColor3 = CurrentTheme.Accent end
-                else
-                    btn.TextColor3 = Color3.fromRGB(100, 100, 100)
-                    local iconObj = btn:FindFirstChild("TabIcon")
-                    if iconObj then iconObj.ImageColor3 = Color3.fromRGB(100, 100, 100) end
-                end
-            end
-            table.insert(ThemeListeners, themeListener)
-
-            -- 返回给用户的 API
+            -- 返回用于添加控件的元素表
             local Elements = {}
             local function createInlineSection(parent)
-                return createSection(parent, "", nil, true)
+                local inlineSection = createSection(parent, "", nil, true)
+                return inlineSection
             end
 
             Elements.Section = function(_, text, icons, defaultOpen)
@@ -2848,7 +2848,7 @@ function Fenglib:CreateWindow(Config)
             return Elements
         end
 
-        -- 默认子页面（无子页面时使用）
+        -- 向后兼容：没有子页面时使用默认子页面（无切换栏）
         local function getDefaultElements()
             local defaultElements = {}
             local function createInlineDefaultSection()
@@ -2874,6 +2874,7 @@ function Fenglib:CreateWindow(Config)
 
         local TabElements = getDefaultElements()
         TabElements.SubPage = function(_, subPageName, subPageIcon)
+            -- 首次调用 SubPage 时隐藏默认子页面，并重新计算高度
             if #subPages == 0 then
                 DefaultSubPage.Visible = false
                 updateSubPageContainerHeight()
@@ -2881,7 +2882,7 @@ function Fenglib:CreateWindow(Config)
             return addSubPage(subPageName, subPageIcon)
         end
 
-        -- 选项卡点击切换
+        -- 页面切换逻辑
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
