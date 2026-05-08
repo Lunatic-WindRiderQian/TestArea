@@ -2627,15 +2627,17 @@ function Fenglib:CreateWindow(Config)
         SubPageBar.Visible = false
         SubPageBar.Parent = PageContent
 
+        -- 为切换栏添加上边距，使按钮整体往下一点
+        local SubPageBarPadding = Instance.new("UIPadding")
+        SubPageBarPadding.PaddingLeft = UDim.new(0, 5)
+        SubPageBarPadding.PaddingTop = UDim.new(0, 8)   -- 往下移 8 像素
+        SubPageBarPadding.Parent = SubPageBar
+
         local SubPageBarLayout = Instance.new("UIListLayout")
         SubPageBarLayout.FillDirection = Enum.FillDirection.Horizontal
         SubPageBarLayout.Padding = UDim.new(0, 8)
         SubPageBarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
         SubPageBarLayout.Parent = SubPageBar
-
-        local SubPageBarPadding = Instance.new("UIPadding")
-        SubPageBarPadding.PaddingLeft = UDim.new(0, 5)
-        SubPageBarPadding.Parent = SubPageBar
 
         -- 子页面内容容器（固定高度，给内部 ScrollingFrame 提供滚动区域）
         local SubPageContainer = Instance.new("Frame")
