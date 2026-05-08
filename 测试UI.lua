@@ -2689,20 +2689,19 @@ function Fenglib:CreateWindow(Config)
         SubPageBar:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
         task.spawn(updateSubPageContainerHeight)
 
-        -- 切换子页面（使用命名 UIStroke）
         local function switchToSubPage(subPageData)
             if currentSubPage == subPageData then return end
             for _, sp in ipairs(subPages) do
                 sp.contentFrame.Visible = false
                 if sp.button then
-                    -- 获取外框
                     local btnStroke = sp.button:FindFirstChild("SubPageStroke")
                     if btnStroke then
                         btnStroke.Transparency = 1
                     end
                     sp.button.TextColor3 = Color3.fromRGB(100, 100, 100)
-                    if sp.button.iconImage then
-                        sp.button.iconImage.ImageColor3 = Color3.fromRGB(100, 100, 100)
+                    local iconImg = sp.button:FindFirstChild("TabIcon")
+                    if iconImg and iconImg:IsA("ImageLabel") then
+                        iconImg.ImageColor3 = Color3.fromRGB(100, 100, 100)
                     end
                 end
             end
@@ -2714,14 +2713,14 @@ function Fenglib:CreateWindow(Config)
                     btnStroke.Color = CurrentTheme.Accent
                 end
                 subPageData.button.TextColor3 = CurrentTheme.Accent
-                if subPageData.button.iconImage then
-                    subPageData.button.iconImage.ImageColor3 = CurrentTheme.Accent
+                local iconImg = subPageData.button:FindFirstChild("TabIcon")
+                if iconImg and iconImg:IsA("ImageLabel") then
+                    iconImg.ImageColor3 = CurrentTheme.Accent
                 end
             end
             currentSubPage = subPageData
         end
 
-        -- 添加子页面（使用命名 UIStroke，避免自定义属性冲突）
         local function addSubPage(subPageName, subPageIcon)
             local btn = Instance.new("TextButton")
             btn.Size = UDim2.new(0, 0, 0, 32)
@@ -2741,7 +2740,6 @@ function Fenglib:CreateWindow(Config)
             btnPadding.PaddingRight = UDim.new(0, 12)
             btnPadding.Parent = btn
 
-            -- 添加外框并命名，初始完全透明
             local btnStroke = Instance.new("UIStroke")
             btnStroke.Name = "SubPageStroke"
             btnStroke.Thickness = 1.5
@@ -2749,9 +2747,9 @@ function Fenglib:CreateWindow(Config)
             btnStroke.Transparency = 1
             btnStroke.Parent = btn
 
-            local iconImg = nil
             if subPageIcon then
-                iconImg = Instance.new("ImageLabel")
+                local iconImg = Instance.new("ImageLabel")
+                iconImg.Name = "TabIcon"
                 iconImg.Size = UDim2.new(0, 16, 0, 16)
                 iconImg.Position = UDim2.new(0, 8, 0.5, -8)
                 iconImg.BackgroundTransparency = 1
@@ -2759,7 +2757,6 @@ function Fenglib:CreateWindow(Config)
                 iconImg.ImageColor3 = Color3.fromRGB(100, 100, 100)
                 iconImg.Parent = btn
                 btn.Text = "  " .. subPageName
-                btn.iconImage = iconImg
             end
 
             local subPageFrame = Instance.new("ScrollingFrame")
@@ -2811,7 +2808,6 @@ function Fenglib:CreateWindow(Config)
                 switchToSubPage(subPageData)
             end
 
-            -- 主题监听：更新外框颜色（选中的按钮会额外更新文本/图标颜色）
             local themeListener = function()
                 local strokeObj = btn:FindFirstChild("SubPageStroke")
                 if strokeObj then
@@ -2819,13 +2815,15 @@ function Fenglib:CreateWindow(Config)
                 end
                 if currentSubPage == subPageData then
                     btn.TextColor3 = CurrentTheme.Accent
-                    if btn.iconImage then
-                        btn.iconImage.ImageColor3 = CurrentTheme.Accent
+                    local iconImg = btn:FindFirstChild("TabIcon")
+                    if iconImg and iconImg:IsA("ImageLabel") then
+                        iconImg.ImageColor3 = CurrentTheme.Accent
                     end
                 else
                     btn.TextColor3 = Color3.fromRGB(100, 100, 100)
-                    if btn.iconImage then
-                        btn.iconImage.ImageColor3 = Color3.fromRGB(100, 100, 100)
+                    local iconImg = btn:FindFirstChild("TabIcon")
+                    if iconImg and iconImg:IsA("ImageLabel") then
+                        iconImg.ImageColor3 = Color3.fromRGB(100, 100, 100)
                     end
                 end
             end
