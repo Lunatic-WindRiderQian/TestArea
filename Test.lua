@@ -2617,23 +2617,35 @@ function Fenglib:CreateWindow(Config)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
         PageList.Parent = PageContent
 
+        -- ==================== 子页切换区域：改用 ScrollingFrame 实现水平滚动 ====================
+        local SubPageBarScroll = Instance.new("ScrollingFrame")
+        SubPageBarScroll.Size = UDim2.new(1, 0, 0, 36)          -- 高度固定，宽度占满
+        SubPageBarScroll.Position = UDim2.new(0, 0, 0, 0)
+        SubPageBarScroll.BackgroundTransparency = 1
+        SubPageBarScroll.ScrollBarThickness = 3                  -- 滚动条宽度
+        SubPageBarScroll.ScrollingDirection = Enum.ScrollingDirection.X  -- 水平滚动
+        SubPageBarScroll.AutomaticCanvasSize = Enum.AutomaticSize.X      -- 画布宽度自动扩展
+        SubPageBarScroll.CanvasSize = UDim2.new(0, 0, 0, 36)     -- 高度固定
+        SubPageBarScroll.Visible = false
+        SubPageBarScroll.Parent = PageContent
+
+        -- 内部 Frame 用于放置按钮
         local SubPageBar = Instance.new("Frame")
-        SubPageBar.Size = UDim2.new(1, 0, 0, 0)
-        SubPageBar.AutomaticSize = Enum.AutomaticSize.Y
+        SubPageBar.Size = UDim2.new(1, 0, 1, 0)                 -- 高度跟随 ScrollingFrame
         SubPageBar.BackgroundTransparency = 1
-        SubPageBar.Visible = false
-        SubPageBar.Parent = PageContent
+        SubPageBar.Parent = SubPageBarScroll
 
         local SubPageBarPadding = Instance.new("UIPadding")
         SubPageBarPadding.PaddingLeft = UDim.new(0, 5)
-        SubPageBarPadding.PaddingTop = UDim.new(0, 8)
         SubPageBarPadding.Parent = SubPageBar
 
         local SubPageBarLayout = Instance.new("UIListLayout")
         SubPageBarLayout.FillDirection = Enum.FillDirection.Horizontal
+        SubPageBarLayout.VerticalAlignment = Enum.VerticalAlignment.Center  -- 按钮垂直居中
         SubPageBarLayout.Padding = UDim.new(0, 8)
         SubPageBarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
         SubPageBarLayout.Parent = SubPageBar
+        -- ===================================================================================
 
         local SubPageContainer = Instance.new("Frame")
         SubPageContainer.Size = UDim2.new(1, 0, 0, 0)
@@ -2678,7 +2690,7 @@ function Fenglib:CreateWindow(Config)
         local function updateSubPageContainerHeight()
             local pageHeight = Page.AbsoluteSize.Y
             if pageHeight == 0 then return end
-            local subBarHeight = (SubPageBar.Visible and SubPageBar.AbsoluteSize.Y) or 0
+            local subBarHeight = (SubPageBarScroll.Visible and SubPageBarScroll.AbsoluteSize.Y) or 0
             local containerHeight = math.max(0, pageHeight - subBarHeight)
             SubPageContainer.Size = UDim2.new(1, 0, 0, containerHeight)
             for _, sp in ipairs(subPages) do
@@ -2692,8 +2704,8 @@ function Fenglib:CreateWindow(Config)
         end
 
         Page:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
-        SubPageBar:GetPropertyChangedSignal("Visible"):Connect(updateSubPageContainerHeight)
-        SubPageBar:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
+        SubPageBarScroll:GetPropertyChangedSignal("Visible"):Connect(updateSubPageContainerHeight)
+        SubPageBarScroll:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
         task.spawn(updateSubPageContainerHeight)
 
         local function switchToSubPage(subPageData)
@@ -2803,12 +2815,7 @@ function Fenglib:CreateWindow(Config)
             }
             table.insert(subPages, subPageData)
 
-            SubPageBar.Visible = true
-            local function updateBarHeight()
-                SubPageBar.Size = UDim2.new(1, 0, 0, SubPageBarLayout.AbsoluteContentSize.Y + 8)
-            end
-            SubPageBarLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateBarHeight)
-            task.spawn(updateBarHeight)
+            SubPageBarScroll.Visible = true
 
             btn.MouseButton1Click:Connect(function()
                 switchToSubPage(subPageData)
