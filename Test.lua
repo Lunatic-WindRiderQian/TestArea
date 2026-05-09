@@ -2617,21 +2617,20 @@ function Fenglib:CreateWindow(Config)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
         PageList.Parent = PageContent
 
-        -- ==================== 子页切换区域：改用 ScrollingFrame 实现水平滚动 ====================
+        -- 子页切换区域：水平滚动但隐藏滚动条
         local SubPageBarScroll = Instance.new("ScrollingFrame")
-        SubPageBarScroll.Size = UDim2.new(1, 0, 0, 36)          -- 高度固定，宽度占满
+        SubPageBarScroll.Size = UDim2.new(1, 0, 0, 36)
         SubPageBarScroll.Position = UDim2.new(0, 0, 0, 0)
         SubPageBarScroll.BackgroundTransparency = 1
-        SubPageBarScroll.ScrollBarThickness = 3                  -- 滚动条宽度
-        SubPageBarScroll.ScrollingDirection = Enum.ScrollingDirection.X  -- 水平滚动
-        SubPageBarScroll.AutomaticCanvasSize = Enum.AutomaticSize.X      -- 画布宽度自动扩展
-        SubPageBarScroll.CanvasSize = UDim2.new(0, 0, 0, 36)     -- 高度固定
+        SubPageBarScroll.ScrollBarThickness = 0   -- 滚动条隐藏
+        SubPageBarScroll.ScrollingDirection = Enum.ScrollingDirection.X
+        SubPageBarScroll.AutomaticCanvasSize = Enum.AutomaticSize.X
+        SubPageBarScroll.CanvasSize = UDim2.new(0, 0, 0, 36)
         SubPageBarScroll.Visible = false
         SubPageBarScroll.Parent = PageContent
 
-        -- 内部 Frame 用于放置按钮
         local SubPageBar = Instance.new("Frame")
-        SubPageBar.Size = UDim2.new(1, 0, 1, 0)                 -- 高度跟随 ScrollingFrame
+        SubPageBar.Size = UDim2.new(1, 0, 1, 0)
         SubPageBar.BackgroundTransparency = 1
         SubPageBar.Parent = SubPageBarScroll
 
@@ -2641,11 +2640,10 @@ function Fenglib:CreateWindow(Config)
 
         local SubPageBarLayout = Instance.new("UIListLayout")
         SubPageBarLayout.FillDirection = Enum.FillDirection.Horizontal
-        SubPageBarLayout.VerticalAlignment = Enum.VerticalAlignment.Center  -- 按钮垂直居中
+        SubPageBarLayout.VerticalAlignment = Enum.VerticalAlignment.Center
         SubPageBarLayout.Padding = UDim.new(0, 8)
         SubPageBarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
         SubPageBarLayout.Parent = SubPageBar
-        -- ===================================================================================
 
         local SubPageContainer = Instance.new("Frame")
         SubPageContainer.Size = UDim2.new(1, 0, 0, 0)
@@ -2668,7 +2666,6 @@ function Fenglib:CreateWindow(Config)
         DefaultContent.BackgroundTransparency = 1
         DefaultContent.Parent = DefaultSubPage
 
-        -- 添加右侧内边距，避免内容被右侧边框遮挡
         local defaultPadding = Instance.new("UIPadding")
         defaultPadding.PaddingRight = UDim.new(0, 12)
         defaultPadding.Parent = DefaultContent
@@ -2789,7 +2786,6 @@ function Fenglib:CreateWindow(Config)
             content.BackgroundTransparency = 1
             content.Parent = subPageFrame
 
-            -- 为子页面内容添加右侧内边距
             local subPadding = Instance.new("UIPadding")
             subPadding.PaddingRight = UDim.new(0, 12)
             subPadding.Parent = content
