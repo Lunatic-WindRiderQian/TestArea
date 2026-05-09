@@ -2524,7 +2524,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- Window:Tab 方法（子页面滚动独立）
+    -- Window:Tab 方法（子页面滚动独立 + 切换按钮横向滚动 + 修复 subPages 为 nil）
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2612,26 +2612,19 @@ function Fenglib:CreateWindow(Config)
         PageContent.BackgroundTransparency = 1
         PageContent.Parent = Page
 
-        local PageList = Instance.new("UIListLayout")
-        PageList.Padding = UDim.new(0, 10)
-        PageList.SortOrder = Enum.SortOrder.LayoutOrder
-        PageList.Parent = PageContent
-
-        -- ================= 修改开始：子页面切换按钮横向滚动 =================
-        -- 创建一个横向滚动区域（固定顶部，按钮水平滚动）
+        -- 横向滚动区域（固定顶部，用于子页面切换按钮）
         local SubPageScrollFrame = Instance.new("ScrollingFrame")
         SubPageScrollFrame.Size = UDim2.new(1, 0, 0, 0)        -- 高度由内容撑开
         SubPageScrollFrame.AutomaticSize = Enum.AutomaticSize.Y
         SubPageScrollFrame.ScrollBarThickness = 4
         SubPageScrollFrame.ScrollingDirection = Enum.ScrollingDirection.X
-        SubPageScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)   -- 动态更新
+        SubPageScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
         SubPageScrollFrame.BackgroundTransparency = 1
         SubPageScrollFrame.BorderSizePixel = 0
         SubPageScrollFrame.Parent = PageContent
 
-        -- 内部真正放置按钮的容器（水平排列，宽度自动扩展）
         local SubPageBar = Instance.new("Frame")
-        SubPageBar.Size = UDim2.new(0, 0, 1, 0)                -- 宽度自动，高度占满
+        SubPageBar.Size = UDim2.new(0, 0, 1, 0)
         SubPageBar.AutomaticSize = Enum.AutomaticSize.X
         SubPageBar.BackgroundTransparency = 1
         SubPageBar.Parent = SubPageScrollFrame
@@ -2649,51 +2642,30 @@ function Fenglib:CreateWindow(Config)
         SubPageBarLayout.VerticalAlignment = Enum.VerticalAlignment.Center
         SubPageBarLayout.Parent = SubPageBar
 
-        -- 实时更新横向 Canvas 宽度
         local function updateSubPageScrollCanvas()
             SubPageScrollFrame.CanvasSize = UDim2.new(0, SubPageBar.AbsoluteSize.X, 0, 0)
         end
         SubPageBar:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageScrollCanvas)
         task.spawn(updateSubPageScrollCanvas)
 
-        -- 子页面内容容器（占用剩余空间）
+        -- 子页面内容容器
         local SubPageContainer = Instance.new("Frame")
         SubPageContainer.Size = UDim2.new(1, 0, 0, 0)
         SubPageContainer.BackgroundTransparency = 1
         SubPageContainer.ClipsDescendants = true
         SubPageContainer.Parent = PageContent
 
-        -- 修改高度更新函数
-        local function updateSubPageContainerHeight()
-            local pageHeight = Page.AbsoluteSize.Y
-            if pageHeight == 0 then return end
-            local subBarHeight = (SubPageScrollFrame.Visible and SubPageScrollFrame.AbsoluteSize.Y) or 0
-            local containerHeight = math.max(0, pageHeight - subBarHeight)
-            SubPageContainer.Size = UDim2.new(1, 0, 0, containerHeight)
-
-            for _, sp in ipairs(subPages) do
-                if sp.contentFrame then
-                    sp.contentFrame.Size = UDim2.new(1, 0, 1, 0)
-                end
-            end
-            if DefaultSubPage then
-                DefaultSubPage.Size = UDim2.new(1, 0, 1, 0)
-            end
-        end
-
-        Page:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
-        SubPageScrollFrame:GetPropertyChangedSignal("Visible"):Connect(updateSubPageContainerHeight)
-        SubPageScrollFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
-        task.spawn(updateSubPageContainerHeight)
-
-        local subPages = {}
-        local currentSubPage = nil
-
+        -- 默认子页面（无 SubPage 时使用）
         local DefaultSubPage = Instance.new("ScrollingFrame")
         DefaultSubPage.Name = "__DefaultSubPage"
         DefaultSubPage.Size = UDim2.new(1, 0, 1, 0)
         DefaultSubPage.BackgroundTransparency = 1
-        DefaultSubPage.ScrollBarThickness = 4
+        DefaultSubPage.ScrollBarThickness = 6
+        DefaultSubPage.ScrollBarImageColor3 = CurrentTheme.Accent
+        DefaultSubPage.ScrollBarColor = CurrentTheme.Accent
+        DefaultSubPage.MidImageColor3 = CurrentTheme.Accent
+        DefaultSubPage.AutoHideScrollBar = true
+        DefaultSubPage.ElasticBehavior = Enum.ElasticBehavior.Always
         DefaultSubPage.ScrollingDirection = Enum.ScrollingDirection.Y
         DefaultSubPage.CanvasSize = UDim2.new(0, 0, 0, 0)
         DefaultSubPage.Visible = true
@@ -2715,10 +2687,43 @@ function Fenglib:CreateWindow(Config)
         DefaultLayout.Parent = DefaultContent
 
         local function updateDefaultCanvas()
-            DefaultSubPage.CanvasSize = UDim2.new(0, 0, 0, DefaultLayout.AbsoluteContentSize.Y + 10)
+            DefaultSubPage.CanvasSize = UDim2.new(0, 0, 0, DefaultLayout.AbsoluteContentSize.Y + 20)
         end
         DefaultLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateDefaultCanvas)
         task.spawn(updateDefaultCanvas)
+
+        table.insert(ThemeListeners, function()
+            DefaultSubPage.ScrollBarImageColor3 = CurrentTheme.Accent
+            DefaultSubPage.ScrollBarColor = CurrentTheme.Accent
+            DefaultSubPage.MidImageColor3 = CurrentTheme.Accent
+        end)
+
+        -- 子页面列表（必须先定义）
+        local subPages = {}
+        local currentSubPage = nil
+
+        -- 高度更新函数（现在 subPages 已经定义）
+        local function updateSubPageContainerHeight()
+            local pageHeight = Page.AbsoluteSize.Y
+            if pageHeight == 0 then return end
+            local subBarHeight = (SubPageScrollFrame.Visible and SubPageScrollFrame.AbsoluteSize.Y) or 0
+            local containerHeight = math.max(0, pageHeight - subBarHeight)
+            SubPageContainer.Size = UDim2.new(1, 0, 0, containerHeight)
+
+            for _, sp in ipairs(subPages) do
+                if sp.contentFrame then
+                    sp.contentFrame.Size = UDim2.new(1, 0, 1, 0)
+                end
+            end
+            if DefaultSubPage then
+                DefaultSubPage.Size = UDim2.new(1, 0, 1, 0)
+            end
+        end
+
+        Page:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
+        SubPageScrollFrame:GetPropertyChangedSignal("Visible"):Connect(updateSubPageContainerHeight)
+        SubPageScrollFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
+        task.spawn(updateSubPageContainerHeight)
 
         local function switchToSubPage(subPageData)
             if currentSubPage == subPageData then return end
@@ -2754,9 +2759,11 @@ function Fenglib:CreateWindow(Config)
             btn.TextColor3 = Color3.fromRGB(100, 100, 100)
             btn.AutoButtonColor = false
             btn.Parent = SubPageBar
+
             local btnCorner = Instance.new("UICorner")
             btnCorner.CornerRadius = UDim.new(0, 8)
             btnCorner.Parent = btn
+
             local btnPadding = Instance.new("UIPadding")
             btnPadding.PaddingLeft = UDim.new(0, 12)
             btnPadding.PaddingRight = UDim.new(0, 12)
@@ -2787,10 +2794,16 @@ function Fenglib:CreateWindow(Config)
             end
             table.insert(ThemeListeners, themeUpdate)
 
+            -- 创建子页面滚动区域
             local subPageFrame = Instance.new("ScrollingFrame")
             subPageFrame.Size = UDim2.new(1, 0, 1, 0)
             subPageFrame.BackgroundTransparency = 1
-            subPageFrame.ScrollBarThickness = 4
+            subPageFrame.ScrollBarThickness = 6
+            subPageFrame.ScrollBarImageColor3 = CurrentTheme.Accent
+            subPageFrame.ScrollBarColor = CurrentTheme.Accent
+            subPageFrame.MidImageColor3 = CurrentTheme.Accent
+            subPageFrame.AutoHideScrollBar = true
+            subPageFrame.ElasticBehavior = Enum.ElasticBehavior.Always
             subPageFrame.ScrollingDirection = Enum.ScrollingDirection.Y
             subPageFrame.Visible = false
             subPageFrame.Parent = SubPageContainer
@@ -2811,10 +2824,16 @@ function Fenglib:CreateWindow(Config)
             layout.Parent = content
 
             local function updateCanvas()
-                subPageFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+                subPageFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)
             end
             layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
             task.spawn(updateCanvas)
+
+            table.insert(ThemeListeners, function()
+                subPageFrame.ScrollBarImageColor3 = CurrentTheme.Accent
+                subPageFrame.ScrollBarColor = CurrentTheme.Accent
+                subPageFrame.MidImageColor3 = CurrentTheme.Accent
+            end)
 
             local subPageData = {
                 name = subPageName,
@@ -2834,6 +2853,9 @@ function Fenglib:CreateWindow(Config)
             task.spawn(updateBarHeight)
 
             btn.MouseButton1Click:Connect(function()
+                if #subPages > 0 then
+                    DefaultSubPage.Visible = false
+                end
                 switchToSubPage(subPageData)
             end)
 
@@ -2842,10 +2864,10 @@ function Fenglib:CreateWindow(Config)
                 switchToSubPage(subPageData)
             end
 
+            -- 返回子页面元素构造器
             local Elements = {}
             local function createInlineSection(parent)
-                local inlineSection = createSection(parent, "", nil, true)
-                return inlineSection
+                return createSection(parent, "", nil, true)
             end
 
             Elements.Section = function(_, text, icons, defaultOpen)
@@ -2867,6 +2889,7 @@ function Fenglib:CreateWindow(Config)
             return Elements
         end
 
+        -- 默认元素构造器（无子页面时）
         local function getDefaultElements()
             local defaultElements = {}
             local function createInlineDefaultSection()
@@ -2895,6 +2918,7 @@ function Fenglib:CreateWindow(Config)
             return addSubPage(subPageName, subPageIcon)
         end
 
+        -- 选项卡点击事件
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do
                 v.Visible = false
