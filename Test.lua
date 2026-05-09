@@ -2524,7 +2524,7 @@ function Fenglib:CreateWindow(Config)
         return child
     end
 
-    -- Window:Tab 方法（子页面滚动独立 + 切换按钮横向滚动 + 修复 subPages 为 nil）
+    -- Window:Tab 方法（子页面滚动独立 + 切换按钮横向滚动 + 修复无效属性）
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2662,8 +2662,6 @@ function Fenglib:CreateWindow(Config)
         DefaultSubPage.BackgroundTransparency = 1
         DefaultSubPage.ScrollBarThickness = 6
         DefaultSubPage.ScrollBarImageColor3 = CurrentTheme.Accent
-        DefaultSubPage.ScrollBarColor = CurrentTheme.Accent
-        DefaultSubPage.MidImageColor3 = CurrentTheme.Accent
         DefaultSubPage.AutoHideScrollBar = true
         DefaultSubPage.ElasticBehavior = Enum.ElasticBehavior.Always
         DefaultSubPage.ScrollingDirection = Enum.ScrollingDirection.Y
@@ -2694,8 +2692,6 @@ function Fenglib:CreateWindow(Config)
 
         table.insert(ThemeListeners, function()
             DefaultSubPage.ScrollBarImageColor3 = CurrentTheme.Accent
-            DefaultSubPage.ScrollBarColor = CurrentTheme.Accent
-            DefaultSubPage.MidImageColor3 = CurrentTheme.Accent
         end)
 
         -- 子页面列表（必须先定义）
@@ -2800,8 +2796,6 @@ function Fenglib:CreateWindow(Config)
             subPageFrame.BackgroundTransparency = 1
             subPageFrame.ScrollBarThickness = 6
             subPageFrame.ScrollBarImageColor3 = CurrentTheme.Accent
-            subPageFrame.ScrollBarColor = CurrentTheme.Accent
-            subPageFrame.MidImageColor3 = CurrentTheme.Accent
             subPageFrame.AutoHideScrollBar = true
             subPageFrame.ElasticBehavior = Enum.ElasticBehavior.Always
             subPageFrame.ScrollingDirection = Enum.ScrollingDirection.Y
@@ -2831,8 +2825,6 @@ function Fenglib:CreateWindow(Config)
 
             table.insert(ThemeListeners, function()
                 subPageFrame.ScrollBarImageColor3 = CurrentTheme.Accent
-                subPageFrame.ScrollBarColor = CurrentTheme.Accent
-                subPageFrame.MidImageColor3 = CurrentTheme.Accent
             end)
 
             local subPageData = {
