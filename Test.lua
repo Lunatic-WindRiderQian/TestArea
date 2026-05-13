@@ -1048,8 +1048,8 @@ function Fenglib:CreateWindow(Config)
         CardsGridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         CardsGridLayout.VerticalAlignment = Enum.VerticalAlignment.Top
         CardsGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        CardsGridLayout.CellPadding = UDim.new(0, 10)
-        CardsGridLayout.CellSize = UDim2.new(0, 200, 0, 110)  -- 临时，稍后动态调整
+        CardsGridLayout.CellPadding = UDim2.new(0, 10, 0, 10)   -- 修正：UDim2
+        CardsGridLayout.CellSize = UDim2.new(0, 200, 0, 110)    -- 临时，稍后动态调整
 
         local gridPadding = Instance.new("UIPadding")
         gridPadding.PaddingLeft = UDim.new(0, 10)
