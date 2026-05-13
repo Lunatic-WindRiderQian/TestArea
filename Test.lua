@@ -95,8 +95,10 @@ function Fenglib:SetTheme(themeName)
                 Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]})
             end
         end
-        for _, fn in pairs(ThemeListeners) do
-            pcall(fn)
+        if ThemeListeners then
+            for _, fn in pairs(ThemeListeners) do
+                pcall(fn)
+            end
         end
     end
 end
@@ -343,7 +345,7 @@ local function createSection(parent, text, icons, defaultOpen)
             callback(Enabled)
         end
         ClickBtn.MouseButton1Click:Connect(function() Enabled = not Enabled; Update() end)
-        table.insert(ThemeListeners, function() Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke}) end)
+        table.insert(ThemeListeners, function() if Switch then Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke}) end end)
     end
     child.Slider = function(_, sliderText, min, max, default, callback, options)
         options = options or {}
@@ -474,7 +476,7 @@ local function createSection(parent, text, icons, defaultOpen)
         table.insert(ThemeListeners, function()
             if Fill then Fill.BackgroundColor3 = CurrentTheme.Accent end
             if Track then Track.BackgroundColor3 = CurrentTheme.Stroke end
-            Num.TextColor3 = CurrentTheme.Accent
+            if Num then Num.TextColor3 = CurrentTheme.Accent end
         end)
     end
     child.Dropdown = function(_, dropText, options, callback)
@@ -1462,13 +1464,15 @@ function Fenglib:CreateWindow(Config)
         BackButton.ZIndex = 10
         BackButton.MouseButton1Click:Connect(function()
             -- 隐藏当前卡片界面，显示卡片列表
-            for _, cardUI in pairs(cardUIList) do
-                if cardUI.frame.Visible then
-                    cardUI.frame.Visible = false
-                    break
+            if cardUIList then
+                for _, cardUI in pairs(cardUIList) do
+                    if cardUI.frame.Visible then
+                        cardUI.frame.Visible = false
+                        break
+                    end
                 end
             end
-            CardsScroll.Visible = true
+            if CardsScroll then CardsScroll.Visible = true end
             BackButton.Visible = false
             digitalParticleExplosion(BackButton)
         end)
@@ -2080,10 +2084,12 @@ function Fenglib:CreateWindow(Config)
         local function destroy()
             if isDestroying then return end
             isDestroying = true
-            for i, fn in ipairs(ThemeListeners) do
-                if fn == updateTheme then
-                    table.remove(ThemeListeners, i)
-                    break
+            if ThemeListeners then
+                for i, fn in ipairs(ThemeListeners) do
+                    if fn == updateTheme then
+                        table.remove(ThemeListeners, i)
+                        break
+                    end
                 end
             end
             local shrink = TweenService:Create(root, TweenInfo.new(0.25), {Size = UDim2.new(0,0,0,0)})
@@ -2481,7 +2487,7 @@ function Fenglib:CreateWindow(Config)
         task.spawn(refreshGridLayout)
 
     else
-        -- ========== 原有选项卡模式（保持不变） ==========
+        -- ========== 原有选项卡模式 ==========
         local TabContainer = Instance.new("ScrollingFrame")
         TabContainer.Size = UDim2.new(0, 140, 0.85, 0)
         TabContainer.BackgroundTransparency = 1
