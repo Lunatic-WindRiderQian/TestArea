@@ -142,7 +142,6 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- 粒子特效
 local function digitalParticleExplosion(obj)
     if not obj or not obj.Parent then return end
     task.spawn(function()
@@ -169,7 +168,7 @@ local function digitalParticleExplosion(obj)
     end)
 end
 
--- 通用创建 Section 的函数（供卡片模式和普通模式共用）
+-- 通用 createSection (供卡片模式和普通模式共用)
 local function createSection(parent, text, icons, defaultOpen)
     defaultOpen = (defaultOpen == nil) and true or defaultOpen
     local function formatAssetId(id)
@@ -1286,7 +1285,7 @@ function Fenglib:CreateWindow(Config)
     local Subtitle = Config.Subtitle
     local Keybind = Config.Keybind
     local IconAsset = Config.Icon
-    local useCardMode = Config.Card == true   -- 卡片模式开关
+    local useCardMode = Config.Card == true
 
     Window.RootFolder = Title
     Window.ConfigFolder = Title.."/Config"
@@ -1445,6 +1444,35 @@ function Fenglib:CreateWindow(Config)
     local ButtonPadding = Instance.new("UIPadding")
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
+
+    -- 创建返回按钮（仅在卡片模式且进入卡片后显示）
+    local BackButton = nil
+    if useCardMode then
+        BackButton = Instance.new("TextButton")
+        BackButton.Name = "BackToCardsButton"
+        BackButton.Size = UDim2.new(0, 30, 0, 30)
+        BackButton.Position = UDim2.new(0, 50, 0.5, -15)
+        BackButton.Text = "←"
+        BackButton.Font = Enum.Font.GothamBold
+        BackButton.TextSize = 20
+        BackButton.TextColor3 = CurrentTheme.Text
+        BackButton.BackgroundTransparency = 1
+        BackButton.Visible = false
+        BackButton.Parent = Topbar
+        BackButton.ZIndex = 10
+        BackButton.MouseButton1Click:Connect(function()
+            -- 隐藏当前卡片界面，显示卡片列表
+            for _, cardUI in pairs(cardUIList) do
+                if cardUI.frame.Visible then
+                    cardUI.frame.Visible = false
+                    break
+                end
+            end
+            CardsScroll.Visible = true
+            BackButton.Visible = false
+            digitalParticleExplosion(BackButton)
+        end)
+    end
 
     local function NewRoundFrame(radius, imageType, properties, children)
         local frame = Instance.new("ImageLabel")
@@ -1618,7 +1646,6 @@ function Fenglib:CreateWindow(Config)
             local newHeight = math.max(250, startSize.Y.Offset + delta.Y)
             MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
             if useCardMode then
-                -- 刷新卡片网格布局
                 local cardsGrid = Content:FindFirstChild("CardsGrid")
                 if cardsGrid and cardsGrid.Parent then
                     local layout = cardsGrid:FindFirstChildOfClass("UIGridLayout")
@@ -1919,7 +1946,6 @@ function Fenglib:CreateWindow(Config)
     MainFrame:GetPropertyChangedSignal("Visible"):Connect(function() OpenButton.Visible = not MainFrame.Visible end)
     OpenButton.Visible = false
 
-    -- 通知系统
     function Window:Notification(titleText, descText, notifType, duration)
         notifType = notifType or "Info"
         duration = duration or 3
@@ -2121,7 +2147,6 @@ function Fenglib:CreateWindow(Config)
 
     -- ========== 卡片模式 ==========
     if useCardMode then
-        -- 卡片滚动区域
         local CardsScroll = Instance.new("ScrollingFrame")
         CardsScroll.Name = "CardsScroll"
         CardsScroll.Size = UDim2.new(1, 0, 1, 0)
@@ -2154,10 +2179,8 @@ function Fenglib:CreateWindow(Config)
         gridPadding.PaddingBottom = UDim.new(0, 10)
         gridPadding.Parent = CardsGridContainer
 
-        -- 存储每个卡片的专属界面数据
         local cardUIList = {}
 
-        -- 创建卡片专属界面（侧边栏 + 内容区）
         local function createCardUI(cardId)
             if cardUIList[cardId] then return cardUIList[cardId] end
 
@@ -2194,25 +2217,6 @@ function Fenglib:CreateWindow(Config)
             SidePadding.PaddingRight = UDim.new(0, 8)
             SidePadding.Parent = SideBar
 
-            -- 返回按钮
-            local BackBtn = Instance.new("TextButton")
-            BackBtn.Size = UDim2.new(1, 0, 0, 32)
-            BackBtn.Text = "← 返回"
-            BackBtn.Font = Enum.Font.GothamBold
-            BackBtn.TextSize = 12
-            BackBtn.BackgroundColor3 = CurrentTheme.Top
-            BackBtn.BackgroundTransparency = 0.2
-            BackBtn.Parent = SideBar
-            local backCorner = Instance.new("UICorner")
-            backCorner.CornerRadius = UDim.new(0, 8)
-            backCorner.Parent = BackBtn
-            AddToRegistry(BackBtn, "TextColor3", "Text")
-            BackBtn.MouseButton1Click:Connect(function()
-                cardFrame.Visible = false
-                CardsScroll.Visible = true
-                digitalParticleExplosion(BackBtn)
-            end)
-
             -- 页面容器
             local PageContainer = Instance.new("Frame")
             PageContainer.Name = "PageContainer"
@@ -2221,16 +2225,11 @@ function Fenglib:CreateWindow(Config)
             PageContainer.BackgroundTransparency = 1
             PageContainer.Parent = cardFrame
 
-            -- 存储此卡片的所有选项卡
             local tabs = {}
             local tabIndex = 0
 
-            -- 创建选项卡
             local function createTab(tabName, tabIcon, isDual)
                 tabIndex = tabIndex + 1
-                local tabId = tabName .. "_" .. tostring(tabIndex)
-
-                -- 侧边栏按钮
                 local TabBtn = Instance.new("TextButton")
                 TabBtn.Size = UDim2.new(1, 0, 0, 36)
                 TabBtn.BackgroundTransparency = 1
@@ -2274,7 +2273,6 @@ function Fenglib:CreateWindow(Config)
                 activeBar.BackgroundTransparency = 1
                 activeBar.Parent = BtnContent
 
-                -- 页面内容
                 local Page = Instance.new("ScrollingFrame")
                 Page.Size = UDim2.new(1, 0, 1, 0)
                 Page.BackgroundTransparency = 1
@@ -2304,7 +2302,6 @@ function Fenglib:CreateWindow(Config)
                 local tabData = { button = TabBtn, page = Page, content = ContentFrame, layout = ContentLayout, activeBar = activeBar }
                 table.insert(tabs, tabData)
 
-                -- 切换函数
                 local function selectTab()
                     for _, t in ipairs(tabs) do
                         t.page.Visible = false
@@ -2324,7 +2321,6 @@ function Fenglib:CreateWindow(Config)
                     selectTab()
                 end
 
-                -- 返回用于添加控件的对象
                 local elements = {}
                 elements.Section = function(_, text, icons, defaultOpen)
                     return createSection(ContentFrame, text, icons, defaultOpen)
@@ -2351,16 +2347,13 @@ function Fenglib:CreateWindow(Config)
                 pageContainer = PageContainer,
                 Tab = function(_, tabName, tabIcon) return createTab(tabName, tabIcon, false) end,
                 DualTab = function(_, tabName, tabIcon) return createTab(tabName, tabIcon, true) end,
-                backBtn = BackBtn
             }
             cardUIList[cardId] = cardUI
             return cardUI
         end
 
-        -- 卡片列表
         local cardList = {}
 
-        -- 添加卡片的方法
         function Window:card(mainText, subText, imageId, callback)
             imageId = imageId or "78229538488090"
             if tonumber(imageId) then imageId = "rbxassetid://" .. imageId end
@@ -2385,7 +2378,6 @@ function Fenglib:CreateWindow(Config)
             cardStroke.Transparency = 0.5
             cardStroke.Parent = cardFrame
 
-            -- 左侧图片
             local leftImage = Instance.new("ImageLabel")
             leftImage.Size = UDim2.new(0, 70, 0, 70)
             leftImage.Position = UDim2.new(0, 12, 0.5, -35)
@@ -2397,7 +2389,6 @@ function Fenglib:CreateWindow(Config)
             imgCorner.CornerRadius = UDim.new(0, 8)
             imgCorner.Parent = leftImage
 
-            -- 右侧文本
             local textContainer = Instance.new("Frame")
             textContainer.Size = UDim2.new(1, -94, 0, 70)
             textContainer.Position = UDim2.new(0, 82, 0.5, -35)
@@ -2435,17 +2426,16 @@ function Fenglib:CreateWindow(Config)
             clickBtn.Text = ""
             clickBtn.Parent = cardFrame
 
-            -- 创建该卡片的专属界面
             local cardUI = createCardUI(cardId)
 
             clickBtn.MouseButton1Click:Connect(function()
                 digitalParticleExplosion(cardFrame)
                 CardsScroll.Visible = false
                 cardUI.frame.Visible = true
+                if BackButton then BackButton.Visible = true end
                 if callback then callback(cardUI) end
             end)
 
-            -- 悬浮动画
             local function onHover()
                 Tween(cardFrame, {BackgroundTransparency = 0}, 0.2)
                 Tween(cardStroke, {Transparency = 0.2, Thickness = 2}, 0.2)
@@ -2459,7 +2449,6 @@ function Fenglib:CreateWindow(Config)
             clickBtn.MouseEnter:Connect(onHover)
             clickBtn.MouseLeave:Connect(onLeave)
 
-            -- 返回卡片控制对象
             local cardControl = {
                 Tab = function(_, tabName, tabIcon) return cardUI.Tab(tabName, tabIcon) end,
                 DualTab = function(_, tabName, tabIcon) return cardUI.DualTab(tabName, tabIcon) end,
@@ -2480,7 +2469,6 @@ function Fenglib:CreateWindow(Config)
             return cardControl
         end
 
-        -- 刷新卡片网格布局
         local function refreshGridLayout()
             local containerWidth = CardsGridContainer.AbsoluteSize.X
             if containerWidth <= 0 then return end
@@ -2493,7 +2481,7 @@ function Fenglib:CreateWindow(Config)
         task.spawn(refreshGridLayout)
 
     else
-        -- ========== 原有选项卡模式 ==========
+        -- ========== 原有选项卡模式（保持不变） ==========
         local TabContainer = Instance.new("ScrollingFrame")
         TabContainer.Size = UDim2.new(0, 140, 0.85, 0)
         TabContainer.BackgroundTransparency = 1
