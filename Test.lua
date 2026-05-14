@@ -2572,15 +2572,15 @@ function Fenglib:CreateWindow(Config)
         return Window._ProjectorModeEnabled
     end
 
-    -- ==================== CARD MODE ====================
+    -- ==================== CARD MODE (重写版) ====================
     if isCardMode then
-        -- Hide classic elements
+        -- 隐藏经典元素
         TabContainer.Visible = false
         Line.Visible = false
         PageContainer.Visible = false
         ProfileFrame.Visible = false
 
-        -- Create cards container
+        -- 卡片容器
         local cardsContainer = Instance.new("Frame")
         cardsContainer.Name = "CardsContainer"
         cardsContainer.Size = UDim2.new(1, 0, 1, 0)
@@ -2625,9 +2625,9 @@ function Fenglib:CreateWindow(Config)
             BackButton.MouseButton1Click:Connect(showCardList)
         end
 
-        -- Card creation method
+        -- 卡片创建函数
         function Window:Card(name, description, icon)
-            -- Card button
+            -- 卡片按钮
             local cardBtn = Instance.new("TextButton")
             cardBtn.Name = "Card_" .. name
             cardBtn.Size = UDim2.new(0, 100, 0, 100)
@@ -2696,7 +2696,7 @@ function Fenglib:CreateWindow(Config)
                 Tween(cardIcon, {Size = UDim2.new(0, 40, 0, 40), Rotation = 0}, 0.2)
             end)
 
-            -- Card content panel (right side)
+            -- 卡片内容面板
             local cardContentFrame = Instance.new("Frame")
             cardContentFrame.Name = "CardContent_" .. name
             cardContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2704,11 +2704,7 @@ function Fenglib:CreateWindow(Config)
             cardContentFrame.Visible = false
             cardContentFrame.Parent = Content
 
-            -- Store tabs data for this card
-            cardContentFrame._tabsData = {}
-            cardContentFrame._currentTab = nil
-
-            -- Sidebar for tabs
+            -- 左侧边栏（Tab 按钮）
             local sideBar = Instance.new("ScrollingFrame")
             sideBar.Size = UDim2.new(0, 140, 1, 0)
             sideBar.BackgroundTransparency = 1
@@ -2727,16 +2723,20 @@ function Fenglib:CreateWindow(Config)
             sideBarLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSidebarCanvas)
             task.spawn(updateSidebarCanvas)
 
-            -- Right container for tab pages
+            -- 右侧页面容器
             local rightPageContainer = Instance.new("Frame")
             rightPageContainer.Size = UDim2.new(1, -155, 1, 0)
             rightPageContainer.Position = UDim2.new(0, 150, 0, 0)
             rightPageContainer.BackgroundTransparency = 1
             rightPageContainer.Parent = cardContentFrame
 
+            -- 存储 Tab 数据
+            local tabsData = {}
+            local currentTab = nil
+
             local function switchCardTab(tabName)
-                if cardContentFrame._currentTab == tabName then return end
-                for tName, data in pairs(cardContentFrame._tabsData) do
+                if currentTab == tabName then return end
+                for tName, data in pairs(tabsData) do
                     if data.pageFrame then data.pageFrame.Visible = false end
                     if data.button then
                         Tween(data.button, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top}, 0.2)
@@ -2748,10 +2748,10 @@ function Fenglib:CreateWindow(Config)
                         end
                     end
                 end
-                local newData = cardContentFrame._tabsData[tabName]
+                local newData = tabsData[tabName]
                 if newData then
                     newData.pageFrame.Visible = true
-                    cardContentFrame._currentTab = tabName
+                    currentTab = tabName
                     if newData.button then
                         Tween(newData.button, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
                         if newData.textLabel then
@@ -2764,10 +2764,10 @@ function Fenglib:CreateWindow(Config)
                 end
             end
 
-            -- Tab creator for card content (fully featured with Section and SubPage)
+            -- 返回的卡片对象，直接定义 Tab 方法
             local cardObj = {}
             function cardObj:Tab(tabName, tabIcon)
-                -- Tab button in sidebar
+                -- 创建侧边栏按钮
                 local tabBtn = Instance.new("TextButton")
                 tabBtn.Size = UDim2.new(1, 0, 0, 32)
                 tabBtn.BackgroundTransparency = 1
@@ -2823,7 +2823,7 @@ function Fenglib:CreateWindow(Config)
                 textLabel.TextXAlignment = Enum.TextXAlignment.Left
                 textLabel.Parent = contentFrame
 
-                -- Right page (ScrollingFrame with SubPage system)
+                -- 右侧页面（ScrollingFrame）
                 local page = Instance.new("ScrollingFrame")
                 page.Size = UDim2.new(1, 0, 1, 0)
                 page.BackgroundTransparency = 1
@@ -2832,7 +2832,7 @@ function Fenglib:CreateWindow(Config)
                 page.Visible = false
                 page.Parent = rightPageContainer
 
-                -- Build page internal structure
+                -- 页面内容结构（与经典模式完全一致）
                 local PageContent = Instance.new("Frame")
                 PageContent.Size = UDim2.new(1, 0, 1, 0)
                 PageContent.BackgroundTransparency = 1
@@ -3046,7 +3046,7 @@ function Fenglib:CreateWindow(Config)
                         switchToSubPage(subPageData)
                     end
 
-                    -- Return elements for this subpage
+                    -- 子页面元素构建器
                     local Elements = {}
                     local createSection = createSectionBuilder(content, content, 330, 1)
                     Elements.Section = function(_, text, icons, defaultOpen) return createSection(text, icons, defaultOpen) end
@@ -3065,7 +3065,7 @@ function Fenglib:CreateWindow(Config)
                     return Elements
                 end
 
-                -- Default tab elements (no subpage)
+                -- 默认 Tab 元素（无子页面）
                 local function getDefaultElements()
                     local defaultElements = {}
                     local createSection = createSectionBuilder(DefaultContent, DefaultContent, 330, 1)
@@ -3094,8 +3094,8 @@ function Fenglib:CreateWindow(Config)
                     return addSubPage(subPageName, subPageIcon)
                 end
 
-                -- Store tab data
-                cardContentFrame._tabsData[tabName] = {
+                -- 存储 Tab 数据
+                tabsData[tabName] = {
                     button = tabBtn,
                     pageFrame = page,
                     tabBar = tabBar,
@@ -3106,14 +3106,14 @@ function Fenglib:CreateWindow(Config)
                     switchCardTab(tabName)
                 end)
 
-                if next(cardContentFrame._tabsData) == tabName then
+                if next(tabsData) == tabName then
                     switchCardTab(tabName)
                 end
 
                 return TabElements
             end
 
-            -- Store card info
+            -- 存储卡片信息
             cardContents[name] = {
                 contentFrame = cardContentFrame,
                 cardButton = cardBtn
@@ -3126,16 +3126,14 @@ function Fenglib:CreateWindow(Config)
             return cardObj
         end
 
-        -- Disable classic Tab method in card mode
+        -- 禁用经典 Tab 方法
         Window.Tab = function()
             warn("卡片模式下请使用 Window:Card(...):Tab(...)")
             return {}
         end
     else
-        -- Classic mode: fully featured Tab method (as in original UI.lua)
+        -- 经典模式（保持不变）
         local firstTab = true
-        local controlCounter = 0
-
         function Window:Tab(name, icon)
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(1, 0, 0, 32)
