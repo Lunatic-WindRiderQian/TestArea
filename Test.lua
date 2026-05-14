@@ -1450,7 +1450,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     return createSection
 end
 
--- Main CreateWindow function
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "FengY3"
@@ -3122,7 +3121,12 @@ function Fenglib:CreateWindow(Config)
                 showCardContent(name)
             end)
 
-            return { Tab = cardContentFrame.Tab }
+            -- Return card object with correct Tab binding
+            local cardObj = {}
+            function cardObj:Tab(tabName, tabIcon)
+                return cardContentFrame:Tab(tabName, tabIcon)
+            end
+            return cardObj
         end
 
         -- Disable classic Tab method in card mode
