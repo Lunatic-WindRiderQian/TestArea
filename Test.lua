@@ -2704,6 +2704,10 @@ function Fenglib:CreateWindow(Config)
             cardContentFrame.Visible = false
             cardContentFrame.Parent = Content
 
+            -- Store tabs data for this card
+            cardContentFrame._tabsData = {}
+            cardContentFrame._currentTab = nil
+
             -- Sidebar for tabs
             local sideBar = Instance.new("ScrollingFrame")
             sideBar.Size = UDim2.new(0, 140, 1, 0)
@@ -2730,12 +2734,9 @@ function Fenglib:CreateWindow(Config)
             rightPageContainer.BackgroundTransparency = 1
             rightPageContainer.Parent = cardContentFrame
 
-            local tabsData = {}
-            local currentTab = nil
-
             local function switchCardTab(tabName)
-                if currentTab == tabName then return end
-                for tName, data in pairs(tabsData) do
+                if cardContentFrame._currentTab == tabName then return end
+                for tName, data in pairs(cardContentFrame._tabsData) do
                     if data.pageFrame then data.pageFrame.Visible = false end
                     if data.button then
                         Tween(data.button, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top}, 0.2)
@@ -2747,10 +2748,10 @@ function Fenglib:CreateWindow(Config)
                         end
                     end
                 end
-                local newData = tabsData[tabName]
+                local newData = cardContentFrame._tabsData[tabName]
                 if newData then
                     newData.pageFrame.Visible = true
-                    currentTab = tabName
+                    cardContentFrame._currentTab = tabName
                     if newData.button then
                         Tween(newData.button, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
                         if newData.textLabel then
@@ -2764,7 +2765,8 @@ function Fenglib:CreateWindow(Config)
             end
 
             -- Tab creator for card content (fully featured with Section and SubPage)
-            function cardContentFrame:Tab(tabName, tabIcon)
+            local cardObj = {}
+            function cardObj:Tab(tabName, tabIcon)
                 -- Tab button in sidebar
                 local tabBtn = Instance.new("TextButton")
                 tabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2830,7 +2832,7 @@ function Fenglib:CreateWindow(Config)
                 page.Visible = false
                 page.Parent = rightPageContainer
 
-                -- Build page internal structure (same as classic Tab)
+                -- Build page internal structure
                 local PageContent = Instance.new("Frame")
                 PageContent.Size = UDim2.new(1, 0, 1, 0)
                 PageContent.BackgroundTransparency = 1
@@ -3044,7 +3046,7 @@ function Fenglib:CreateWindow(Config)
                         switchToSubPage(subPageData)
                     end
 
-                    -- Return elements for this subpage (using section builder)
+                    -- Return elements for this subpage
                     local Elements = {}
                     local createSection = createSectionBuilder(content, content, 330, 1)
                     Elements.Section = function(_, text, icons, defaultOpen) return createSection(text, icons, defaultOpen) end
@@ -3093,7 +3095,7 @@ function Fenglib:CreateWindow(Config)
                 end
 
                 -- Store tab data
-                tabsData[tabName] = {
+                cardContentFrame._tabsData[tabName] = {
                     button = tabBtn,
                     pageFrame = page,
                     tabBar = tabBar,
@@ -3104,7 +3106,7 @@ function Fenglib:CreateWindow(Config)
                     switchCardTab(tabName)
                 end)
 
-                if next(tabsData) == tabName then
+                if next(cardContentFrame._tabsData) == tabName then
                     switchCardTab(tabName)
                 end
 
@@ -3121,11 +3123,6 @@ function Fenglib:CreateWindow(Config)
                 showCardContent(name)
             end)
 
-            -- Return card object with correct Tab binding
-            local cardObj = {}
-            function cardObj:Tab(tabName, tabIcon)
-                return cardContentFrame:Tab(tabName, tabIcon)
-            end
             return cardObj
         end
 
