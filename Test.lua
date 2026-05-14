@@ -147,7 +147,7 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- Helper for building section elements (used both by classic tabs and card tabs)
+-- Helper for creating section elements (used in both classic and card mode)
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
@@ -614,15 +614,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Tween(Icon, {Rotation = 0}, 0.28)
                 task.wait(0.3)
                 Container.Visible = false
-                if parent == contentContainer then
-                    local layout = parent:FindFirstChildOfClass("UIListLayout")
-                    if layout then
-                        local sectionFrame = Btn.Parent.Parent
-                        if sectionFrame and sectionFrame:IsA("Frame") and sectionFrame.Parent == parent then
-                            -- force layout update
-                        end
-                    end
-                end
             end
 
             local function RefreshOptions(newOpts)
@@ -1171,10 +1162,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
                     if svDragging then
                         svDragging = false
-                        local r = math.floor(Color.R * 255)
-                        local g = math.floor(Color.G * 255)
-                        local b = math.floor(Color.B * 255)
-                        -- optional notification
                     end
                 end
             end)
@@ -1463,6 +1450,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     return createSection
 end
 
+-- Main CreateWindow function
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "FengY3"
@@ -1470,7 +1458,7 @@ function Fenglib:CreateWindow(Config)
     local Keybind = Config.Keybind 
     local IconAsset = Config.Icon  
     local isCardMode = Config.Card == true
-    
+
     Window.RootFolder = Title 
     Window.ConfigFolder = Title.."/Config"
     Window.CurrentConfig = ""
@@ -1797,7 +1785,7 @@ function Fenglib:CreateWindow(Config)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
-    -- Classic UI elements (TabContainer, PageContainer, etc.)
+    -- Classic UI components (will be hidden in card mode)
     local TabContainer = Instance.new("ScrollingFrame")
     TabContainer.Size = UDim2.new(0, 140, 0.85, 0)
     TabContainer.BackgroundTransparency = 1
@@ -2131,13 +2119,8 @@ function Fenglib:CreateWindow(Config)
             SwitchToProjectorMode()
         end
     end
-    
-    -- Order of buttons in ButtonGroup (from left to right):
-    -- 1. BackButton (only in card mode) -> inserted before projector button
-    -- 2. ProjectorMode button
-    -- 3. Minimize button
-    -- 4. Resize toggle button
-    -- 5. Close button
+
+    -- Top bar buttons (projector, minimize, maximize, close)
     local Toggle3DBtn = createIconButton("rbxassetid://12684119225", function()
         ToggleProjectorMode()
     end)
@@ -2165,13 +2148,10 @@ function Fenglib:CreateWindow(Config)
         ScreenGui:Destroy()
     end)
 
-    -- Back button for card mode (initially hidden if card mode not active)
+    -- Back button (only for card mode, placed leftmost)
     local BackButton = nil
-    local backButtonVisible = false
     if isCardMode then
-        BackButton = createIconButton("rbxassetid://6031090998", function() end) -- temporary, reassign later
-        -- move it to be before Toggle3DBtn: we need to reorder children. Since creation order determines layout order, we insert after existing buttons? Actually we need BackButton to be leftmost in ButtonGroup.
-        -- Simpler: destroy the existing BackButton we just created and create it again as first child.
+        BackButton = createIconButton("rbxassetid://7733764800", function() end)
         BackButton:Destroy()
         BackButton = Instance.new("TextButton")
         BackButton.Size = UDim2.new(0, 36, 0, 36)
@@ -2208,7 +2188,7 @@ function Fenglib:CreateWindow(Config)
         icon.Position = UDim2.new(0.5, 0, 0.5, 0)
         icon.AnchorPoint = Vector2.new(0.5, 0.5)
         icon.BackgroundTransparency = 1
-        icon.Image = "rbxassetid://6031090998"  -- back arrow icon
+        icon.Image = "rbxassetid://7733764800"
         icon.ImageColor3 = Color3.new(1, 1, 1)
         icon.Parent = BackButton
         local function onHover()
@@ -2221,15 +2201,13 @@ function Fenglib:CreateWindow(Config)
         end
         BackButton.MouseEnter:Connect(onHover)
         BackButton.MouseLeave:Connect(onLeave)
-        -- reorder to be first child
-        BackButton:SetAttribute("IsBackButton", true)
+        BackButton.Visible = false
         BackButton.LayoutOrder = -1
         for _, child in ipairs(ButtonGroup:GetChildren()) do
             if child:IsA("TextButton") and child ~= BackButton then
                 child.LayoutOrder = 1
             end
         end
-        BackButton.Visible = false
     end
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
@@ -2344,7 +2322,7 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- Notification method remains unchanged
+    -- Notification system (kept as original)
     function Window:Notification(titleText, descText, notifType, duration)
         notifType = notifType or "Info"
         duration = duration or 3
@@ -2595,20 +2573,16 @@ function Fenglib:CreateWindow(Config)
         return Window._ProjectorModeEnabled
     end
 
-    -- ==================== CARD MODE LOGIC ====================
-    local cardsContainer = nil
-    local cardContents = {} -- cardName -> {cardButton, contentFrame, sideBarFrame, tabContainerFrame, tabsList}
-    local currentActiveCard = nil
-
+    -- ==================== CARD MODE ====================
     if isCardMode then
-        -- Hide classic tab elements
+        -- Hide classic elements
         TabContainer.Visible = false
         Line.Visible = false
         PageContainer.Visible = false
-        ProfileFrame.Visible = false  -- optional, hide profile area in card mode
+        ProfileFrame.Visible = false
 
-        -- Create Cards Container
-        cardsContainer = Instance.new("Frame")
+        -- Create cards container
+        local cardsContainer = Instance.new("Frame")
         cardsContainer.Name = "CardsContainer"
         cardsContainer.Size = UDim2.new(1, 0, 1, 0)
         cardsContainer.BackgroundTransparency = 1
@@ -2622,46 +2596,39 @@ function Fenglib:CreateWindow(Config)
         cardsGrid.SortOrder = Enum.SortOrder.LayoutOrder
         cardsGrid.Parent = cardsContainer
 
-        -- Function to show card list
+        local cardContents = {}
+        local currentActiveCard = nil
+
         local function showCardList()
-            for _, content in pairs(cardContents) do
-                if content.contentFrame then
-                    content.contentFrame.Visible = false
-                end
+            for _, info in pairs(cardContents) do
+                if info.contentFrame then info.contentFrame.Visible = false end
             end
             cardsContainer.Visible = true
             if BackButton then BackButton.Visible = false end
             currentActiveCard = nil
         end
 
-        -- Function to show specific card content
         local function showCardContent(cardName)
             if currentActiveCard == cardName then return end
-            if currentActiveCard and cardContents[currentActiveCard] and cardContents[currentActiveCard].contentFrame then
+            if currentActiveCard and cardContents[currentActiveCard] then
                 cardContents[currentActiveCard].contentFrame.Visible = false
             end
             cardsContainer.Visible = false
-            local cardData = cardContents[cardName]
-            if cardData and cardData.contentFrame then
-                cardData.contentFrame.Visible = true
+            local info = cardContents[cardName]
+            if info then
+                info.contentFrame.Visible = true
                 currentActiveCard = cardName
                 if BackButton then BackButton.Visible = true end
             end
         end
 
-        -- Back button functionality
         if BackButton then
-            BackButton.MouseButton1Click:Connect(function()
-                if currentActiveCard then
-                    showCardList()
-                end
-            end)
+            BackButton.MouseButton1Click:Connect(showCardList)
         end
 
-        -- Window:Card method
+        -- Card creation method
         function Window:Card(name, description, icon)
-            local cardName = name
-            -- Create card button
+            -- Card button
             local cardBtn = Instance.new("TextButton")
             cardBtn.Name = "Card_" .. name
             cardBtn.Size = UDim2.new(0, 100, 0, 100)
@@ -2715,11 +2682,10 @@ function Fenglib:CreateWindow(Config)
             cardDesc.Size = UDim2.new(0.8, 0, 0, 15)
             cardDesc.Font = Enum.Font.Gotham
             cardDesc.Text = description or ""
-            cardDesc.TextColor3 = CurrentTheme.SecondaryTextColor or Color3.fromRGB(180,190,210)
+            cardDesc.TextColor3 = Color3.fromRGB(180, 190, 210)
             cardDesc.TextSize = 10
             cardDesc.TextWrapped = true
 
-            -- Hover effects
             cardBtn.MouseEnter:Connect(function()
                 Tween(cardBtn, {BackgroundTransparency = 0.1, Size = UDim2.new(0, 105, 0, 105)}, 0.2)
                 Tween(cardGlow, {Thickness = 3, Transparency = 0.4}, 0.2)
@@ -2731,7 +2697,7 @@ function Fenglib:CreateWindow(Config)
                 Tween(cardIcon, {Size = UDim2.new(0, 40, 0, 40), Rotation = 0}, 0.2)
             end)
 
-            -- Create card content area (hidden initially)
+            -- Card content panel (right side)
             local cardContentFrame = Instance.new("Frame")
             cardContentFrame.Name = "CardContent_" .. name
             cardContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2758,48 +2724,49 @@ function Fenglib:CreateWindow(Config)
             sideBarLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSidebarCanvas)
             task.spawn(updateSidebarCanvas)
 
-            -- Right side container for tab pages
-            local rightContainer = Instance.new("Frame")
-            rightContainer.Size = UDim2.new(1, -155, 1, 0)
-            rightContainer.Position = UDim2.new(0, 150, 0, 0)
-            rightContainer.BackgroundTransparency = 1
-            rightContainer.Parent = cardContentFrame
+            -- Right container for tab pages
+            local rightPageContainer = Instance.new("Frame")
+            rightPageContainer.Size = UDim2.new(1, -155, 1, 0)
+            rightPageContainer.Position = UDim2.new(0, 150, 0, 0)
+            rightPageContainer.BackgroundTransparency = 1
+            rightPageContainer.Parent = cardContentFrame
 
-            local tabPages = {} -- tabName -> {pageFrame, button}
-            local currentTabPage = nil
+            local tabsData = {}
+            local currentTab = nil
 
-            local function switchTab(tabName)
-                if currentTabPage == tabName then return end
-                for tName, data in pairs(tabPages) do
-                    if data.pageFrame then
-                        data.pageFrame.Visible = false
-                    end
+            local function switchCardTab(tabName)
+                if currentTab == tabName then return end
+                for tName, data in pairs(tabsData) do
+                    if data.pageFrame then data.pageFrame.Visible = false end
                     if data.button then
-                        -- reset button style
                         Tween(data.button, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top}, 0.2)
-                        local textLabel = data.button:FindFirstChildOfClass("TextLabel")
-                        if textLabel then Tween(textLabel, {TextColor3 = Color3.fromRGB(150,150,158)}, 0.2) end
-                        local bar = data.button:FindFirstChildOfClass("Frame")
-                        if bar then Tween(bar, {BackgroundTransparency = 1}, 0.2) end
+                        if data.textLabel then
+                            Tween(data.textLabel, {TextColor3 = Color3.fromRGB(150,150,158)}, 0.2)
+                        end
+                        if data.tabBar then
+                            Tween(data.tabBar, {BackgroundTransparency = 1}, 0.2)
+                        end
                     end
                 end
-                local tabData = tabPages[tabName]
-                if tabData then
-                    tabData.pageFrame.Visible = true
-                    currentTabPage = tabName
-                    if tabData.button then
-                        Tween(tabData.button, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
-                        local textLabel = tabData.button:FindFirstChildOfClass("TextLabel")
-                        if textLabel then Tween(textLabel, {TextColor3 = CurrentTheme.Text}, 0.2) end
-                        local bar = tabData.button:FindFirstChildOfClass("Frame")
-                        if bar then Tween(bar, {BackgroundTransparency = 0}, 0.2) end
+                local newData = tabsData[tabName]
+                if newData then
+                    newData.pageFrame.Visible = true
+                    currentTab = tabName
+                    if newData.button then
+                        Tween(newData.button, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
+                        if newData.textLabel then
+                            Tween(newData.textLabel, {TextColor3 = CurrentTheme.Text}, 0.2)
+                        end
+                        if newData.tabBar then
+                            Tween(newData.tabBar, {BackgroundTransparency = 0}, 0.2)
+                        end
                     end
                 end
             end
 
-            -- Card:Tab method
-            local function addTab(tabName, tabIcon)
-                -- Create tab button in sidebar
+            -- Tab creator for card content (fully featured with Section and SubPage)
+            function cardContentFrame:Tab(tabName, tabIcon)
+                -- Tab button in sidebar
                 local tabBtn = Instance.new("TextButton")
                 tabBtn.Size = UDim2.new(1, 0, 0, 32)
                 tabBtn.BackgroundTransparency = 1
@@ -2839,9 +2806,9 @@ function Fenglib:CreateWindow(Config)
                     iconImg.Image = tabIcon
                     iconImg.Parent = contentFrame
                     AddToRegistry(iconImg, "ImageColor3", "Text")
-                    local iconCorner = Instance.new("UICorner")
-                    iconCorner.CornerRadius = UDim.new(0, 8)
-                    iconCorner.Parent = iconImg
+                    local ic = Instance.new("UICorner")
+                    ic.CornerRadius = UDim.new(0, 8)
+                    ic.Parent = iconImg
                 end
 
                 local textLabel = Instance.new("TextLabel")
@@ -2855,101 +2822,316 @@ function Fenglib:CreateWindow(Config)
                 textLabel.TextXAlignment = Enum.TextXAlignment.Left
                 textLabel.Parent = contentFrame
 
-                -- Create page container for this tab
-                local pageFrame = Instance.new("ScrollingFrame")
-                pageFrame.Size = UDim2.new(1, 0, 1, 0)
-                pageFrame.BackgroundTransparency = 1
-                pageFrame.ScrollBarThickness = 4
-                pageFrame.ScrollingDirection = Enum.ScrollingDirection.Y
-                pageFrame.Visible = false
-                pageFrame.Parent = rightContainer
+                -- Right page (ScrollingFrame with SubPage system)
+                local page = Instance.new("ScrollingFrame")
+                page.Size = UDim2.new(1, 0, 1, 0)
+                page.BackgroundTransparency = 1
+                page.ScrollBarThickness = 0
+                page.ScrollingEnabled = false
+                page.Visible = false
+                page.Parent = rightPageContainer
 
-                local pageContent = Instance.new("Frame")
-                pageContent.Size = UDim2.new(1, 0, 0, 0)
-                pageContent.AutomaticSize = Enum.AutomaticSize.Y
-                pageContent.BackgroundTransparency = 1
-                pageContent.Parent = pageFrame
+                -- Build page internal structure (same as classic Tab)
+                local PageContent = Instance.new("Frame")
+                PageContent.Size = UDim2.new(1, 0, 1, 0)
+                PageContent.BackgroundTransparency = 1
+                PageContent.Parent = page
 
-                local pageLayout = Instance.new("UIListLayout")
-                pageLayout.Padding = UDim.new(0, 10)
-                pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                pageLayout.Parent = pageContent
+                local PageList = Instance.new("UIListLayout")
+                PageList.Padding = UDim.new(0, 10)
+                PageList.SortOrder = Enum.SortOrder.LayoutOrder
+                PageList.Parent = PageContent
 
-                local function updateCanvas()
-                    pageFrame.CanvasSize = UDim2.new(0, 0, 0, pageLayout.AbsoluteContentSize.Y + 10)
+                local SubPageBarScroll = Instance.new("ScrollingFrame")
+                SubPageBarScroll.Size = UDim2.new(1, 0, 0, 36)
+                SubPageBarScroll.Position = UDim2.new(0, 0, 0, 0)
+                SubPageBarScroll.BackgroundTransparency = 1
+                SubPageBarScroll.ScrollBarThickness = 0
+                SubPageBarScroll.ScrollingDirection = Enum.ScrollingDirection.X
+                SubPageBarScroll.AutomaticCanvasSize = Enum.AutomaticSize.X
+                SubPageBarScroll.CanvasSize = UDim2.new(0, 0, 0, 36)
+                SubPageBarScroll.Visible = false
+                SubPageBarScroll.Parent = PageContent
+
+                local SubPageBar = Instance.new("Frame")
+                SubPageBar.Size = UDim2.new(1, 0, 1, 0)
+                SubPageBar.BackgroundTransparency = 1
+                SubPageBar.Parent = SubPageBarScroll
+
+                local SubPageBarPadding = Instance.new("UIPadding")
+                SubPageBarPadding.PaddingLeft = UDim.new(0, 5)
+                SubPageBarPadding.Parent = SubPageBar
+
+                local SubPageBarLayout = Instance.new("UIListLayout")
+                SubPageBarLayout.FillDirection = Enum.FillDirection.Horizontal
+                SubPageBarLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+                SubPageBarLayout.Padding = UDim.new(0, 8)
+                SubPageBarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+                SubPageBarLayout.Parent = SubPageBar
+
+                local SubPageContainer = Instance.new("Frame")
+                SubPageContainer.Size = UDim2.new(1, 0, 0, 0)
+                SubPageContainer.BackgroundTransparency = 1
+                SubPageContainer.ClipsDescendants = true
+                SubPageContainer.Parent = PageContent
+
+                local DefaultSubPage = Instance.new("ScrollingFrame")
+                DefaultSubPage.Name = "__DefaultSubPage"
+                DefaultSubPage.Size = UDim2.new(1, 0, 1, 0)
+                DefaultSubPage.BackgroundTransparency = 1
+                DefaultSubPage.ScrollBarThickness = 4
+                DefaultSubPage.ScrollingDirection = Enum.ScrollingDirection.Y
+                DefaultSubPage.CanvasSize = UDim2.new(0, 0, 0, 0)
+                DefaultSubPage.Parent = SubPageContainer
+
+                local DefaultContent = Instance.new("Frame")
+                DefaultContent.Size = UDim2.new(1, 0, 0, 0)
+                DefaultContent.AutomaticSize = Enum.AutomaticSize.Y
+                DefaultContent.BackgroundTransparency = 1
+                DefaultContent.Parent = DefaultSubPage
+
+                local defaultPadding = Instance.new("UIPadding")
+                defaultPadding.PaddingRight = UDim.new(0, 12)
+                defaultPadding.Parent = DefaultContent
+
+                local DefaultLayout = Instance.new("UIListLayout")
+                DefaultLayout.Padding = UDim.new(0, 10)
+                DefaultLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                DefaultLayout.Parent = DefaultContent
+
+                local function updateDefaultCanvas()
+                    DefaultSubPage.CanvasSize = UDim2.new(0, 0, 0, DefaultLayout.AbsoluteContentSize.Y + 10)
                 end
-                pageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
-                task.spawn(updateCanvas)
+                DefaultLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateDefaultCanvas)
+                task.spawn(updateDefaultCanvas)
+
+                local subPages = {}
+                local currentSubPage = nil
+
+                local function updateSubPageContainerHeight()
+                    local pageHeight = page.AbsoluteSize.Y
+                    if pageHeight == 0 then return end
+                    local subBarHeight = (SubPageBarScroll.Visible and SubPageBarScroll.AbsoluteSize.Y) or 0
+                    local containerHeight = math.max(0, pageHeight - subBarHeight)
+                    SubPageContainer.Size = UDim2.new(1, 0, 0, containerHeight)
+                    for _, sp in ipairs(subPages) do
+                        if sp.contentFrame then
+                            sp.contentFrame.Size = UDim2.new(1, 0, 1, 0)
+                        end
+                    end
+                    if DefaultSubPage then
+                        DefaultSubPage.Size = UDim2.new(1, 0, 1, 0)
+                    end
+                end
+
+                page:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
+                SubPageBarScroll:GetPropertyChangedSignal("Visible"):Connect(updateSubPageContainerHeight)
+                SubPageBarScroll:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSubPageContainerHeight)
+                task.spawn(updateSubPageContainerHeight)
+
+                local function switchToSubPage(subPageData)
+                    if currentSubPage == subPageData then return end
+                    for _, sp in ipairs(subPages) do
+                        sp.contentFrame.Visible = false
+                        if sp.button then
+                            sp.button.BackgroundTransparency = 1
+                            sp.button.TextColor3 = Color3.fromRGB(100, 100, 100)
+                            if sp.stroke then
+                                sp.stroke.Transparency = 1
+                            end
+                        end
+                    end
+                    subPageData.contentFrame.Visible = true
+                    if subPageData.button then
+                        subPageData.button.BackgroundTransparency = 1
+                        subPageData.button.TextColor3 = CurrentTheme.Accent
+                        if subPageData.stroke then
+                            subPageData.stroke.Transparency = 0
+                        end
+                    end
+                    currentSubPage = subPageData
+                end
+
+                local function addSubPage(subPageName, subPageIcon)
+                    local btn = Instance.new("TextButton")
+                    btn.Size = UDim2.new(0, 0, 0, 32)
+                    btn.AutomaticSize = Enum.AutomaticSize.X
+                    btn.Text = subPageName
+                    btn.Font = Enum.Font.GothamMedium
+                    btn.TextSize = 14
+                    btn.BackgroundTransparency = 1
+                    btn.TextColor3 = Color3.fromRGB(100, 100, 100)
+                    btn.AutoButtonColor = false
+                    btn.Parent = SubPageBar
+                    local btnCorner = Instance.new("UICorner")
+                    btnCorner.CornerRadius = UDim.new(0, 8)
+                    btnCorner.Parent = btn
+                    local btnPadding = Instance.new("UIPadding")
+                    btnPadding.PaddingLeft = UDim.new(0, 12)
+                    btnPadding.PaddingRight = UDim.new(0, 12)
+                    btnPadding.Parent = btn
+
+                    local btnStroke = Instance.new("UIStroke")
+                    btnStroke.Thickness = 1.5
+                    btnStroke.Color = CurrentTheme.Accent
+                    btnStroke.Transparency = 1
+                    btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                    btnStroke.Parent = btn
+
+                    if subPageIcon then
+                        local iconImg = Instance.new("ImageLabel")
+                        iconImg.Size = UDim2.new(0, 16, 0, 16)
+                        iconImg.Position = UDim2.new(0, 8, 0.5, -8)
+                        iconImg.BackgroundTransparency = 1
+                        iconImg.Image = subPageIcon
+                        iconImg.ImageColor3 = Color3.fromRGB(100, 100, 100)
+                        iconImg.Parent = btn
+                        btn.Text = "  " .. subPageName
+                    end
+
+                    local themeUpdate = function()
+                        if btnStroke and btnStroke.Parent then
+                            btnStroke.Color = CurrentTheme.Accent
+                        end
+                    end
+                    table.insert(ThemeListeners, themeUpdate)
+
+                    local subPageFrame = Instance.new("ScrollingFrame")
+                    subPageFrame.Size = UDim2.new(1, 0, 1, 0)
+                    subPageFrame.BackgroundTransparency = 1
+                    subPageFrame.ScrollBarThickness = 4
+                    subPageFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+                    subPageFrame.Visible = false
+                    subPageFrame.Parent = SubPageContainer
+
+                    local content = Instance.new("Frame")
+                    content.Size = UDim2.new(1, 0, 0, 0)
+                    content.AutomaticSize = Enum.AutomaticSize.Y
+                    content.BackgroundTransparency = 1
+                    content.Parent = subPageFrame
+
+                    local subPadding = Instance.new("UIPadding")
+                    subPadding.PaddingRight = UDim.new(0, 12)
+                    subPadding.Parent = content
+
+                    local layout = Instance.new("UIListLayout")
+                    layout.Padding = UDim.new(0, 10)
+                    layout.SortOrder = Enum.SortOrder.LayoutOrder
+                    layout.Parent = content
+
+                    local function updateCanvas()
+                        subPageFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+                    end
+                    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+                    task.spawn(updateCanvas)
+
+                    local subPageData = {
+                        name = subPageName,
+                        button = btn,
+                        contentFrame = subPageFrame,
+                        contentHolder = content,
+                        layout = layout,
+                        stroke = btnStroke
+                    }
+                    table.insert(subPages, subPageData)
+
+                    SubPageBarScroll.Visible = true
+
+                    btn.MouseButton1Click:Connect(function()
+                        switchToSubPage(subPageData)
+                    end)
+
+                    if #subPages == 1 then
+                        switchToSubPage(subPageData)
+                    end
+
+                    -- Return elements for this subpage (using section builder)
+                    local Elements = {}
+                    local createSection = createSectionBuilder(content, content, 330, 1)
+                    Elements.Section = function(_, text, icons, defaultOpen) return createSection(text, icons, defaultOpen) end
+                    Elements.Button   = function(_, btnText, callback) return createSection("", nil, true).Button(btnText, callback) end
+                    Elements.Toggle   = function(_, toggleText, default, callback) return createSection("", nil, true).Toggle(toggleText, default, callback) end
+                    Elements.Slider   = function(_, sliderText, min, max, default, callback, options) return createSection("", nil, true).Slider(sliderText, min, max, default, callback, options) end
+                    Elements.Dropdown = function(_, dropText, options, callback) return createSection("", nil, true).Dropdown(dropText, options, callback) end
+                    Elements.Keybind  = function(_, keyText, default, callback) return createSection("", nil, true).Keybind(keyText, default, callback) end
+                    Elements.Textbox  = function(_, boxText, placeholder, callback) return createSection("", nil, true).Textbox(boxText, placeholder, callback) end
+                    Elements.Input    = function(_, inputText, default, callback, options) return createSection("", nil, true).Input(inputText, default, callback, options) end
+                    Elements.Label    = function(_, labelText) return createSection("", nil, true).Label(labelText) end
+                    Elements.SubLabel = function(_, subLabelText) return createSection("", nil, true).SubLabel(subLabelText) end
+                    Elements.Paragraph= function(_, headerText, bodyText) return createSection("", nil, true).Paragraph(headerText, bodyText) end
+                    Elements.ColorPicker= function(_, pickerText, default, callback) return createSection("", nil, true).ColorPicker(pickerText, default, callback) end
+                    Elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
+                    return Elements
+                end
+
+                -- Default tab elements (no subpage)
+                local function getDefaultElements()
+                    local defaultElements = {}
+                    local createSection = createSectionBuilder(DefaultContent, DefaultContent, 330, 1)
+                    defaultElements.Section = function(_, text, icons, defaultOpen) return createSection(text, icons, defaultOpen) end
+                    defaultElements.Button   = function(_, btnText, callback) return createSection("", nil, true).Button(btnText, callback) end
+                    defaultElements.Toggle   = function(_, toggleText, default, callback) return createSection("", nil, true).Toggle(toggleText, default, callback) end
+                    defaultElements.Slider   = function(_, sliderText, min, max, default, callback, options) return createSection("", nil, true).Slider(sliderText, min, max, default, callback, options) end
+                    defaultElements.Dropdown = function(_, dropText, options, callback) return createSection("", nil, true).Dropdown(dropText, options, callback) end
+                    defaultElements.Keybind  = function(_, keyText, default, callback) return createSection("", nil, true).Keybind(keyText, default, callback) end
+                    defaultElements.Textbox  = function(_, boxText, placeholder, callback) return createSection("", nil, true).Textbox(boxText, placeholder, callback) end
+                    defaultElements.Input    = function(_, inputText, default, callback, options) return createSection("", nil, true).Input(inputText, default, callback, options) end
+                    defaultElements.Label    = function(_, labelText) return createSection("", nil, true).Label(labelText) end
+                    defaultElements.SubLabel = function(_, subLabelText) return createSection("", nil, true).SubLabel(subLabelText) end
+                    defaultElements.Paragraph= function(_, headerText, bodyText) return createSection("", nil, true).Paragraph(headerText, bodyText) end
+                    defaultElements.ColorPicker= function(_, pickerText, default, callback) return createSection("", nil, true).ColorPicker(pickerText, default, callback) end
+                    defaultElements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
+                    return defaultElements
+                end
+
+                local TabElements = getDefaultElements()
+                TabElements.SubPage = function(_, subPageName, subPageIcon)
+                    if #subPages == 0 then
+                        DefaultSubPage.Visible = false
+                        updateSubPageContainerHeight()
+                    end
+                    return addSubPage(subPageName, subPageIcon)
+                end
 
                 -- Store tab data
-                tabPages[tabName] = {
+                tabsData[tabName] = {
                     button = tabBtn,
-                    pageFrame = pageFrame,
-                    pageContent = pageContent,
-                    pageLayout = pageLayout,
+                    pageFrame = page,
                     tabBar = tabBar,
                     textLabel = textLabel
                 }
 
-                -- Click handler
                 tabBtn.MouseButton1Click:Connect(function()
-                    switchTab(tabName)
+                    switchCardTab(tabName)
                 end)
 
-                -- If first tab, activate it
-                local count = 0
-                for _ in pairs(tabPages) do count = count + 1 end
-                if count == 1 then
-                    switchTab(tabName)
+                if next(tabsData) == tabName then
+                    switchCardTab(tabName)
                 end
 
-                -- Return element builder for this tab (using the same section system)
-                local createSection = createSectionBuilder(pageContent, pageContent, 330, 1) -- width 330 for standard
-                local elements = {}
-                elements.Section = function(_, text, icons, defaultOpen) return createSection(text, icons, defaultOpen) end
-                elements.Button   = function(_, btnText, callback) return createSection("", nil, true).Button(btnText, callback) end
-                elements.Toggle   = function(_, toggleText, default, callback) return createSection("", nil, true).Toggle(toggleText, default, callback) end
-                elements.Slider   = function(_, sliderText, min, max, default, callback, options) return createSection("", nil, true).Slider(sliderText, min, max, default, callback, options) end
-                elements.Dropdown = function(_, dropText, options, callback) return createSection("", nil, true).Dropdown(dropText, options, callback) end
-                elements.Keybind  = function(_, keyText, default, callback) return createSection("", nil, true).Keybind(keyText, default, callback) end
-                elements.Textbox  = function(_, boxText, placeholder, callback) return createSection("", nil, true).Textbox(boxText, placeholder, callback) end
-                elements.Input    = function(_, inputText, default, callback, options) return createSection("", nil, true).Input(inputText, default, callback, options) end
-                elements.Label    = function(_, labelText) return createSection("", nil, true).Label(labelText) end
-                elements.SubLabel = function(_, subLabelText) return createSection("", nil, true).SubLabel(subLabelText) end
-                elements.Paragraph= function(_, headerText, bodyText) return createSection("", nil, true).Paragraph(headerText, bodyText) end
-                elements.ColorPicker= function(_, pickerText, default, callback) return createSection("", nil, true).ColorPicker(pickerText, default, callback) end
-                elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
-                return elements
+                return TabElements
             end
 
-            -- Store for later use
+            -- Store card info
             cardContents[name] = {
-                cardButton = cardBtn,
                 contentFrame = cardContentFrame,
-                sideBar = sideBar,
-                rightContainer = rightContainer,
-                tabPages = tabPages,
-                addTab = addTab
+                cardButton = cardBtn
             }
 
             cardBtn.MouseButton1Click:Connect(function()
                 showCardContent(name)
             end)
 
-            local cardObj = {}
-            cardObj.Tab = function(_, tabName, tabIcon)
-                return addTab(tabName, tabIcon)
-            end
-            return cardObj
+            return { Tab = cardContentFrame.Tab }
         end
 
-        -- Override Window:Tab to warn in card mode
+        -- Disable classic Tab method in card mode
         Window.Tab = function()
-            warn("Card mode is enabled. Use Window:Card(...):Tab(...) instead.")
+            warn("卡片模式下请使用 Window:Card(...):Tab(...)")
             return {}
         end
     else
-        -- Classic mode: keep original Tab method
+        -- Classic mode: fully featured Tab method (as in original UI.lua)
         local firstTab = true
         local controlCounter = 0
 
@@ -3249,50 +3431,39 @@ function Fenglib:CreateWindow(Config)
                 end
 
                 local Elements = {}
-                local function createInlineSection(parent)
-                    local inlineSection = createSection(parent, "", nil, true)
-                    return inlineSection
-                end
-
-                Elements.Section = function(_, text, icons, defaultOpen)
-                    return createSection(subPageData.contentHolder, text, icons, defaultOpen)
-                end
-                Elements.Button   = function(_, btnText, callback) return createInlineSection(subPageData.contentHolder).Button(btnText, callback) end
-                Elements.Toggle   = function(_, toggleText, default, callback) return createInlineSection(subPageData.contentHolder).Toggle(toggleText, default, callback) end
-                Elements.Slider   = function(_, sliderText, min, max, default, callback, options) return createInlineSection(subPageData.contentHolder).Slider(sliderText, min, max, default, callback, options) end
-                Elements.Dropdown = function(_, dropText, options, callback) return createInlineSection(subPageData.contentHolder).Dropdown(dropText, options, callback) end
-                Elements.Keybind  = function(_, keyText, default, callback) return createInlineSection(subPageData.contentHolder).Keybind(keyText, default, callback) end
-                Elements.Textbox  = function(_, boxText, placeholder, callback) return createInlineSection(subPageData.contentHolder).Textbox(boxText, placeholder, callback) end
-                Elements.Input    = function(_, inputText, default, callback, options) return createInlineSection(subPageData.contentHolder).Input(inputText, default, callback, options) end
-                Elements.Label    = function(_, labelText) return createInlineSection(subPageData.contentHolder).Label(labelText) end
-                Elements.SubLabel = function(_, subLabelText) return createInlineSection(subPageData.contentHolder).SubLabel(subLabelText) end
-                Elements.Paragraph= function(_, headerText, bodyText) return createInlineSection(subPageData.contentHolder).Paragraph(headerText, bodyText) end
-                Elements.ColorPicker= function(_, pickerText, default, callback) return createInlineSection(subPageData.contentHolder).ColorPicker(pickerText, default, callback) end
-                Elements.Image    = function(_, config) return createInlineSection(subPageData.contentHolder).Image(config) end
-
+                local createSection = createSectionBuilder(content, content, 330, 1)
+                Elements.Section = function(_, text, icons, defaultOpen) return createSection(text, icons, defaultOpen) end
+                Elements.Button   = function(_, btnText, callback) return createSection("", nil, true).Button(btnText, callback) end
+                Elements.Toggle   = function(_, toggleText, default, callback) return createSection("", nil, true).Toggle(toggleText, default, callback) end
+                Elements.Slider   = function(_, sliderText, min, max, default, callback, options) return createSection("", nil, true).Slider(sliderText, min, max, default, callback, options) end
+                Elements.Dropdown = function(_, dropText, options, callback) return createSection("", nil, true).Dropdown(dropText, options, callback) end
+                Elements.Keybind  = function(_, keyText, default, callback) return createSection("", nil, true).Keybind(keyText, default, callback) end
+                Elements.Textbox  = function(_, boxText, placeholder, callback) return createSection("", nil, true).Textbox(boxText, placeholder, callback) end
+                Elements.Input    = function(_, inputText, default, callback, options) return createSection("", nil, true).Input(inputText, default, callback, options) end
+                Elements.Label    = function(_, labelText) return createSection("", nil, true).Label(labelText) end
+                Elements.SubLabel = function(_, subLabelText) return createSection("", nil, true).SubLabel(subLabelText) end
+                Elements.Paragraph= function(_, headerText, bodyText) return createSection("", nil, true).Paragraph(headerText, bodyText) end
+                Elements.ColorPicker= function(_, pickerText, default, callback) return createSection("", nil, true).ColorPicker(pickerText, default, callback) end
+                Elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
                 return Elements
             end
 
             local function getDefaultElements()
                 local defaultElements = {}
-                local function createInlineDefaultSection()
-                    return createSection(DefaultContent, "", nil, true)
-                end
-                defaultElements.Section = function(_, text, icons, defaultOpen)
-                    return createSection(DefaultContent, text, icons, defaultOpen)
-                end
-                defaultElements.Button   = function(_, btnText, callback) return createInlineDefaultSection().Button(btnText, callback) end
-                defaultElements.Toggle   = function(_, toggleText, default, callback) return createInlineDefaultSection().Toggle(toggleText, default, callback) end
-                defaultElements.Slider   = function(_, sliderText, min, max, default, callback, options) return createInlineDefaultSection().Slider(sliderText, min, max, default, callback, options) end
-                defaultElements.Dropdown = function(_, dropText, options, callback) return createInlineDefaultSection().Dropdown(dropText, options, callback) end
-                defaultElements.Keybind  = function(_, keyText, default, callback) return createInlineDefaultSection().Keybind(keyText, default, callback) end
-                defaultElements.Textbox  = function(_, boxText, placeholder, callback) return createInlineDefaultSection().Textbox(boxText, placeholder, callback) end
-                defaultElements.Input    = function(_, inputText, default, callback, options) return createInlineDefaultSection().Input(inputText, default, callback, options) end
-                defaultElements.Label    = function(_, labelText) return createInlineDefaultSection().Label(labelText) end
-                defaultElements.SubLabel = function(_, subLabelText) return createInlineDefaultSection().SubLabel(subLabelText) end
-                defaultElements.Paragraph= function(_, headerText, bodyText) return createInlineDefaultSection().Paragraph(headerText, bodyText) end
-                defaultElements.ColorPicker= function(_, pickerText, default, callback) return createInlineDefaultSection().ColorPicker(pickerText, default, callback) end
-                defaultElements.Image    = function(_, config) return createInlineDefaultSection().Image(config) end
+                local createSection = createSectionBuilder(DefaultContent, DefaultContent, 330, 1)
+                defaultElements.Section = function(_, text, icons, defaultOpen) return createSection(text, icons, defaultOpen) end
+                defaultElements.Button   = function(_, btnText, callback) return createSection("", nil, true).Button(btnText, callback) end
+                defaultElements.Toggle   = function(_, toggleText, default, callback) return createSection("", nil, true).Toggle(toggleText, default, callback) end
+                defaultElements.Slider   = function(_, sliderText, min, max, default, callback, options) return createSection("", nil, true).Slider(sliderText, min, max, default, callback, options) end
+                defaultElements.Dropdown = function(_, dropText, options, callback) return createSection("", nil, true).Dropdown(dropText, options, callback) end
+                defaultElements.Keybind  = function(_, keyText, default, callback) return createSection("", nil, true).Keybind(keyText, default, callback) end
+                defaultElements.Textbox  = function(_, boxText, placeholder, callback) return createSection("", nil, true).Textbox(boxText, placeholder, callback) end
+                defaultElements.Input    = function(_, inputText, default, callback, options) return createSection("", nil, true).Input(inputText, default, callback, options) end
+                defaultElements.Label    = function(_, labelText) return createSection("", nil, true).Label(labelText) end
+                defaultElements.SubLabel = function(_, subLabelText) return createSection("", nil, true).SubLabel(subLabelText) end
+                defaultElements.Paragraph= function(_, headerText, bodyText) return createSection("", nil, true).Paragraph(headerText, bodyText) end
+                defaultElements.ColorPicker= function(_, pickerText, default, callback) return createSection("", nil, true).ColorPicker(pickerText, default, callback) end
+                defaultElements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
                 return defaultElements
             end
 
