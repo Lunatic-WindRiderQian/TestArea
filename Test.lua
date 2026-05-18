@@ -2572,7 +2572,7 @@ function Fenglib:CreateWindow(Config)
         return Window._ProjectorModeEnabled
     end
 
-    -- ==================== CARD MODE (重写版) ====================
+    -- ==================== CARD MODE (完全重写，确保UI与经典模式一致) ====================
     if isCardMode then
         -- 隐藏经典元素
         TabContainer.Visible = false
@@ -2581,19 +2581,27 @@ function Fenglib:CreateWindow(Config)
         ProfileFrame.Visible = false
 
         -- 卡片容器
-        local cardsContainer = Instance.new("Frame")
+        local cardsContainer = Instance.new("ScrollingFrame")
         cardsContainer.Name = "CardsContainer"
         cardsContainer.Size = UDim2.new(1, 0, 1, 0)
         cardsContainer.BackgroundTransparency = 1
+        cardsContainer.ScrollBarThickness = 4
+        cardsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
         cardsContainer.Parent = Content
 
-        local cardsGrid = Instance.new("UIGridLayout")
-        cardsGrid.CellSize = UDim2.new(0, 100, 0, 100)
-        cardsGrid.CellPadding = UDim2.new(0, 10, 0, 10)
-        cardsGrid.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        cardsGrid.VerticalAlignment = Enum.VerticalAlignment.Center
-        cardsGrid.SortOrder = Enum.SortOrder.LayoutOrder
-        cardsGrid.Parent = cardsContainer
+        local cardsLayout = Instance.new("UIGridLayout")
+        cardsLayout.CellSize = UDim2.new(0, 100, 0, 100)
+        cardsLayout.CellPadding = UDim2.new(0, 15, 0, 15)
+        cardsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        cardsLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+        cardsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        cardsLayout.Parent = cardsContainer
+
+        local function updateCardsCanvas()
+            cardsContainer.CanvasSize = UDim2.new(0, 0, 0, cardsLayout.AbsoluteContentSize.Y + 20)
+        end
+        cardsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCardsCanvas)
+        task.spawn(updateCardsCanvas)
 
         local cardContents = {}
         local currentActiveCard = nil
@@ -2696,7 +2704,7 @@ function Fenglib:CreateWindow(Config)
                 Tween(cardIcon, {Size = UDim2.new(0, 40, 0, 40), Rotation = 0}, 0.2)
             end)
 
-            -- 卡片内容面板
+            -- 卡片内容面板（完全模仿经典模式的布局）
             local cardContentFrame = Instance.new("Frame")
             cardContentFrame.Name = "CardContent_" .. name
             cardContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2704,7 +2712,7 @@ function Fenglib:CreateWindow(Config)
             cardContentFrame.Visible = false
             cardContentFrame.Parent = Content
 
-            -- 左侧边栏（Tab 按钮）
+            -- 左侧边栏（模仿经典 TabContainer）
             local sideBar = Instance.new("ScrollingFrame")
             sideBar.Size = UDim2.new(0, 140, 1, 0)
             sideBar.BackgroundTransparency = 1
@@ -2723,7 +2731,7 @@ function Fenglib:CreateWindow(Config)
             sideBarLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSidebarCanvas)
             task.spawn(updateSidebarCanvas)
 
-            -- 右侧页面容器
+            -- 右侧页面容器（模仿经典 PageContainer）
             local rightPageContainer = Instance.new("Frame")
             rightPageContainer.Size = UDim2.new(1, -155, 1, 0)
             rightPageContainer.Position = UDim2.new(0, 150, 0, 0)
@@ -2734,6 +2742,7 @@ function Fenglib:CreateWindow(Config)
             local tabsData = {}
             local currentTab = nil
 
+            -- 切换 Tab 函数
             local function switchCardTab(tabName)
                 if currentTab == tabName then return end
                 for tName, data in pairs(tabsData) do
@@ -2764,7 +2773,7 @@ function Fenglib:CreateWindow(Config)
                 end
             end
 
-            -- 返回的卡片对象，直接定义 Tab 方法
+            -- 返回的卡片对象
             local cardObj = {}
             function cardObj:Tab(tabName, tabIcon)
                 -- 创建侧边栏按钮
@@ -2823,7 +2832,7 @@ function Fenglib:CreateWindow(Config)
                 textLabel.TextXAlignment = Enum.TextXAlignment.Left
                 textLabel.Parent = contentFrame
 
-                -- 右侧页面（ScrollingFrame）
+                -- 右侧页面（完全复制经典模式的 ScrollingFrame 结构）
                 local page = Instance.new("ScrollingFrame")
                 page.Size = UDim2.new(1, 0, 1, 0)
                 page.BackgroundTransparency = 1
@@ -2832,7 +2841,6 @@ function Fenglib:CreateWindow(Config)
                 page.Visible = false
                 page.Parent = rightPageContainer
 
-                -- 页面内容结构（与经典模式完全一致）
                 local PageContent = Instance.new("Frame")
                 PageContent.Size = UDim2.new(1, 0, 1, 0)
                 PageContent.BackgroundTransparency = 1
@@ -3046,7 +3054,6 @@ function Fenglib:CreateWindow(Config)
                         switchToSubPage(subPageData)
                     end
 
-                    -- 子页面元素构建器
                     local Elements = {}
                     local createSection = createSectionBuilder(content, content, 330, 1)
                     Elements.Section = function(_, text, icons, defaultOpen) return createSection(text, icons, defaultOpen) end
@@ -3065,7 +3072,6 @@ function Fenglib:CreateWindow(Config)
                     return Elements
                 end
 
-                -- 默认 Tab 元素（无子页面）
                 local function getDefaultElements()
                     local defaultElements = {}
                     local createSection = createSectionBuilder(DefaultContent, DefaultContent, 330, 1)
