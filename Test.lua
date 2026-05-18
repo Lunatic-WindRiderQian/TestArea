@@ -2572,15 +2572,13 @@ function Fenglib:CreateWindow(Config)
         return Window._ProjectorModeEnabled
     end
 
-    -- ==================== CARD MODE (重写版，Tab切换逻辑与经典模式完全一致) ====================
+    -- ==================== CARD MODE ====================
     if isCardMode then
-        -- 隐藏经典元素
         TabContainer.Visible = false
         Line.Visible = false
         PageContainer.Visible = false
         ProfileFrame.Visible = false
 
-        -- 卡片容器
         local cardsContainer = Instance.new("ScrollingFrame")
         cardsContainer.Name = "CardsContainer"
         cardsContainer.Size = UDim2.new(1, 0, 1, 0)
@@ -2633,9 +2631,7 @@ function Fenglib:CreateWindow(Config)
             BackButton.MouseButton1Click:Connect(showCardList)
         end
 
-        -- 卡片创建函数
         function Window:Card(name, description, icon)
-            -- 卡片按钮
             local cardBtn = Instance.new("TextButton")
             cardBtn.Name = "Card_" .. name
             cardBtn.Size = UDim2.new(0, 100, 0, 100)
@@ -2704,7 +2700,6 @@ function Fenglib:CreateWindow(Config)
                 Tween(cardIcon, {Size = UDim2.new(0, 40, 0, 40), Rotation = 0}, 0.2)
             end)
 
-            -- 卡片内容面板（左侧侧边栏 + 右侧页面）
             local cardContentFrame = Instance.new("Frame")
             cardContentFrame.Name = "CardContent_" .. name
             cardContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2712,7 +2707,6 @@ function Fenglib:CreateWindow(Config)
             cardContentFrame.Visible = false
             cardContentFrame.Parent = Content
 
-            -- 左侧边栏（模仿经典 TabContainer）
             local sideBar = Instance.new("ScrollingFrame")
             sideBar.Size = UDim2.new(0, 140, 1, 0)
             sideBar.BackgroundTransparency = 1
@@ -2731,17 +2725,44 @@ function Fenglib:CreateWindow(Config)
             sideBarLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSidebarCanvas)
             task.spawn(updateSidebarCanvas)
 
-            -- 右侧页面容器（模仿经典 PageContainer）
             local rightPageContainer = Instance.new("Frame")
             rightPageContainer.Size = UDim2.new(1, -155, 1, 0)
             rightPageContainer.Position = UDim2.new(0, 150, 0, 0)
             rightPageContainer.BackgroundTransparency = 1
             rightPageContainer.Parent = cardContentFrame
 
-            -- 返回的卡片对象
+            local function activateTab(tabBtn, page, textLabel, tabBar)
+                for _, child in ipairs(rightPageContainer:GetChildren()) do
+                    if child:IsA("ScrollingFrame") then
+                        child.Visible = false
+                    end
+                end
+                page.Visible = true
+                for _, btn in ipairs(sideBar:GetChildren()) do
+                    if btn:IsA("TextButton") then
+                        btn.Selected = false
+                        Tween(btn, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top}, 0.2)
+                        local btnContent = btn:FindFirstChild("ContentFrame")
+                        if btnContent then
+                            local txt = btnContent:FindFirstChildOfClass("TextLabel")
+                            if txt then
+                                Tween(txt, {TextColor3 = Color3.fromRGB(150,150,158)}, 0.2)
+                            end
+                        end
+                        local bar = btn:FindFirstChildOfClass("Frame")
+                        if bar then
+                            Tween(bar, {BackgroundTransparency = 1}, 0.2)
+                        end
+                    end
+                end
+                tabBtn.Selected = true
+                Tween(tabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
+                Tween(textLabel, {TextColor3 = CurrentTheme.Text}, 0.2)
+                Tween(tabBar, {BackgroundTransparency = 0}, 0.2)
+            end
+
             local cardObj = {}
             function cardObj:Tab(tabName, tabIcon)
-                -- 创建侧边栏按钮（样式与经典模式完全一致）
                 local tabBtn = Instance.new("TextButton")
                 tabBtn.Size = UDim2.new(1, 0, 0, 32)
                 tabBtn.BackgroundTransparency = 1
@@ -2749,7 +2770,6 @@ function Fenglib:CreateWindow(Config)
                 tabBtn.Parent = sideBar
                 Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 10)
 
-                -- 左侧高亮条
                 local tabBar = Instance.new("Frame")
                 tabBar.Size = UDim2.new(0, 3, 0.65, 0)
                 tabBar.Position = UDim2.new(0, 0, 0.175, 0)
@@ -2759,7 +2779,6 @@ function Fenglib:CreateWindow(Config)
                 Instance.new("UICorner", tabBar).CornerRadius = UDim.new(1, 0)
                 AddToRegistry(tabBar, "BackgroundColor3", "Accent")
 
-                -- 按钮内容（图标+文字）
                 local contentFrame = Instance.new("Frame")
                 contentFrame.Size = UDim2.new(1, 0, 1, 0)
                 contentFrame.BackgroundTransparency = 1
@@ -2799,7 +2818,6 @@ function Fenglib:CreateWindow(Config)
                 textLabel.TextXAlignment = Enum.TextXAlignment.Left
                 textLabel.Parent = contentFrame
 
-                -- 右侧页面（ScrollingFrame，结构与经典模式完全相同）
                 local page = Instance.new("ScrollingFrame")
                 page.Size = UDim2.new(1, 0, 1, 0)
                 page.BackgroundTransparency = 1
@@ -2808,6 +2826,7 @@ function Fenglib:CreateWindow(Config)
                 page.Visible = false
                 page.Parent = rightPageContainer
 
+                -- Page content structure (same as classic mode)
                 local PageContent = Instance.new("Frame")
                 PageContent.Size = UDim2.new(1, 0, 1, 0)
                 PageContent.BackgroundTransparency = 1
@@ -3021,7 +3040,6 @@ function Fenglib:CreateWindow(Config)
                         switchToSubPage(subPageData)
                     end
 
-                    -- 子页面元素构建器
                     local Elements = {}
                     local createSection = createSectionBuilder(content, content, 330, 1)
                     Elements.Section = function(_, text, icons, defaultOpen) return createSection(text, icons, defaultOpen) end
@@ -3068,46 +3086,10 @@ function Fenglib:CreateWindow(Config)
                     return addSubPage(subPageName, subPageIcon)
                 end
 
-                -- **关键：Tab 按钮点击切换逻辑（完全复制经典模式）**
                 tabBtn.MouseButton1Click:Connect(function()
-                    -- 1. 隐藏右侧容器中的所有页面
-                    for _, child in ipairs(rightPageContainer:GetChildren()) do
-                        if child:IsA("ScrollingFrame") then
-                            child.Visible = false
-                        end
-                    end
-                    -- 2. 显示当前页面
-                    page.Visible = true
-                    
-                    -- 3. 更新侧边栏所有按钮的样式（取消高亮）
-                    for _, btn in ipairs(sideBar:GetChildren()) do
-                        if btn:IsA("TextButton") then
-                            btn.Selected = false
-                            Tween(btn, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top}, 0.2)
-                            -- 还原文字颜色
-                            local btnContent = btn:FindFirstChild("ContentFrame")
-                            if btnContent then
-                                local txt = btnContent:FindFirstChildOfClass("TextLabel")
-                                if txt then
-                                    Tween(txt, {TextColor3 = Color3.fromRGB(150,150,158)}, 0.2)
-                                end
-                            end
-                            -- 还原高亮条
-                            local bar = btn:FindFirstChildOfClass("Frame")
-                            if bar then
-                                Tween(bar, {BackgroundTransparency = 1}, 0.2)
-                            end
-                        end
-                    end
-                    
-                    -- 4. 高亮当前按钮
-                    tabBtn.Selected = true
-                    Tween(tabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
-                    Tween(textLabel, {TextColor3 = CurrentTheme.Text}, 0.2)
-                    Tween(tabBar, {BackgroundTransparency = 0}, 0.2)
+                    activateTab(tabBtn, page, textLabel, tabBar)
                 end)
 
-                -- 5. 如果是第一个 Tab，自动激活
                 local isFirst = true
                 for _, existing in ipairs(sideBar:GetChildren()) do
                     if existing:IsA("TextButton") and existing ~= tabBtn then
@@ -3116,14 +3098,12 @@ function Fenglib:CreateWindow(Config)
                     end
                 end
                 if isFirst then
-                    -- 触发点击事件以激活第一个 Tab
-                    tabBtn.MouseButton1Click:Fire()
+                    activateTab(tabBtn, page, textLabel, tabBar)
                 end
 
                 return TabElements
             end
 
-            -- 存储卡片信息
             cardContents[name] = {
                 contentFrame = cardContentFrame,
                 cardButton = cardBtn
@@ -3136,13 +3116,12 @@ function Fenglib:CreateWindow(Config)
             return cardObj
         end
 
-        -- 禁用经典 Tab 方法（避免误用）
         Window.Tab = function()
             warn("卡片模式下请使用 Window:Card(...):Tab(...)")
             return {}
         end
     else
-        -- 经典模式（保持不变）
+        -- Classic mode (unchanged, already correct)
         local firstTab = true
         function Window:Tab(name, icon)
             local TabBtn = Instance.new("TextButton")
