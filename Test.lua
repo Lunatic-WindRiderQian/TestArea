@@ -2760,14 +2760,14 @@ function Fenglib:CreateWindow(Config)
                         end
                         local bar = btn:FindFirstChildOfClass("Frame")
                         if bar then
-                            Tween(bar, {BackgroundTransparency = 1}, 0.2)
+                            Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
                         end
                     end
                 end
                 tabBtn.Selected = true
                 Tween(tabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
                 Tween(textLabel, {TextColor3 = CurrentTheme.Text}, 0.2)
-                Tween(tabBar, {BackgroundTransparency = 0}, 0.2)
+                Tween(tabBar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
             end
 
             local cardObj = {}
@@ -2780,7 +2780,7 @@ function Fenglib:CreateWindow(Config)
                 Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 10)
 
                 local tabBar = Instance.new("Frame")
-                tabBar.Size = UDim2.new(0, 3, 0.65, 0)
+                tabBar.Size = UDim2.new(0, 3, 0, 0)
                 tabBar.Position = UDim2.new(0, 0, 0.175, 0)
                 tabBar.BackgroundTransparency = 1
                 tabBar.BorderSizePixel = 0
@@ -3130,7 +3130,7 @@ function Fenglib:CreateWindow(Config)
             return {}
         end
     else
-        -- Classic mode (unchanged, already correct)
+        -- Classic mode with tab indicator animation
         local firstTab = true
         function Window:Tab(name, icon)
             local TabBtn = Instance.new("TextButton")
@@ -3143,7 +3143,7 @@ function Fenglib:CreateWindow(Config)
             TabBtn.Selected = false
 
             local TabBar = Instance.new("Frame")
-            TabBar.Size = UDim2.new(0, 3, 0.65, 0)
+            TabBar.Size = UDim2.new(0, 3, 0, 0)
             TabBar.Position = UDim2.new(0, 0, 0.175, 0)
             TabBar.BackgroundTransparency = 1
             TabBar.BorderSizePixel = 0
@@ -3490,7 +3490,7 @@ function Fenglib:CreateWindow(Config)
                         end
                         local bar = v:FindFirstChildOfClass("Frame")
                         if bar then
-                            Tween(bar, {BackgroundTransparency = 1})
+                            Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)})
                         end
                     end
                 end
@@ -3498,7 +3498,7 @@ function Fenglib:CreateWindow(Config)
                 TabBtn.Selected = true
                 Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top})
                 Tween(TabText, {TextColor3 = CurrentTheme.Text})
-                Tween(TabBar, {BackgroundTransparency = 0})
+                Tween(TabBar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)})
             end)
 
             if firstTab then
@@ -3509,6 +3509,7 @@ function Fenglib:CreateWindow(Config)
                 TabBtn.BackgroundColor3 = CurrentTheme.Top
                 TabText.TextColor3 = CurrentTheme.Text
                 TabBar.BackgroundTransparency = 0
+                TabBar.Size = UDim2.new(0,3,0.65,0)
             end
 
             if name == "Config" then TabBtn.LayoutOrder = 99998 end
