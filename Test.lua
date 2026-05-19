@@ -2707,6 +2707,15 @@ function Fenglib:CreateWindow(Config)
             cardContentFrame.Visible = false
             cardContentFrame.Parent = Content
 
+            -- 添加分割线（与经典模式完全一致）
+            local cardLine = Instance.new("Frame")
+            cardLine.Name = "CardLine"
+            cardLine.Size = UDim2.new(0, 1, 1, 0)
+            cardLine.Position = UDim2.new(0, 150, 0, 0)
+            cardLine.BackgroundTransparency = 0.8
+            cardLine.Parent = cardContentFrame
+            AddToRegistry(cardLine, "BackgroundColor3", "Stroke")
+
             local sideBar = Instance.new("ScrollingFrame")
             sideBar.Size = UDim2.new(0, 140, 1, 0)
             sideBar.BackgroundTransparency = 1
