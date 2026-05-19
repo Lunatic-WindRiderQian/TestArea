@@ -2572,7 +2572,7 @@ function Fenglib:CreateWindow(Config)
         return Window._ProjectorModeEnabled
     end
 
-    -- ==================== CARD MODE ====================
+    -- ==================== CARD MODE (MODIFIED) ====================
     if isCardMode then
         TabContainer.Visible = false
         Line.Visible = false
@@ -2587,9 +2587,11 @@ function Fenglib:CreateWindow(Config)
         cardsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
         cardsContainer.Parent = Content
 
+        -- 一行两个卡片，横向优先排列
         local cardsLayout = Instance.new("UIGridLayout")
-        cardsLayout.CellSize = UDim2.new(0, 100, 0, 100)
+        cardsLayout.CellSize = UDim2.new(0.5, -20, 0, 100)   -- 宽度占一半减去间距，高度100
         cardsLayout.CellPadding = UDim2.new(0, 15, 0, 15)
+        cardsLayout.FillDirection = Enum.FillDirection.Horizontal
         cardsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         cardsLayout.VerticalAlignment = Enum.VerticalAlignment.Top
         cardsLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -2631,10 +2633,28 @@ function Fenglib:CreateWindow(Config)
             BackButton.MouseButton1Click:Connect(showCardList)
         end
 
+        -- 辅助格式化卡片图标
+        local function formatCardIcon(asset)
+            if type(asset) == "number" then
+                return "rbxassetid://" .. tostring(asset)
+            elseif type(asset) == "string" then
+                if tonumber(asset) then
+                    return "rbxassetid://" .. asset
+                elseif asset:match("^rbxassetid://") then
+                    return asset
+                elseif asset:match("^http") then
+                    return asset
+                else
+                    return "rbxassetid://" .. asset
+                end
+            end
+            return "rbxassetid://84830962019412"
+        end
+
         function Window:Card(name, description, icon)
             local cardBtn = Instance.new("TextButton")
             cardBtn.Name = "Card_" .. name
-            cardBtn.Size = UDim2.new(0, 100, 0, 100)
+            cardBtn.Size = UDim2.new(1, 0, 1, 0)   -- 实际大小由GridLayout决定
             cardBtn.BackgroundColor3 = CurrentTheme.Top
             cardBtn.BackgroundTransparency = 0.2
             cardBtn.AutoButtonColor = false
@@ -2653,53 +2673,84 @@ function Fenglib:CreateWindow(Config)
             startNeonFlowEffect(cardGlow, "Color", 0.008)
             createPulseGlow(cardGlow)
 
+            -- 横向布局容器
+            local horizontalLayout = Instance.new("Frame")
+            horizontalLayout.Size = UDim2.new(1, 0, 1, 0)
+            horizontalLayout.BackgroundTransparency = 1
+            horizontalLayout.Parent = cardBtn
+
+            local padding = Instance.new("UIPadding")
+            padding.PaddingLeft = UDim.new(0, 12)
+            padding.PaddingRight = UDim.new(0, 12)
+            padding.PaddingTop = UDim.new(0, 12)
+            padding.PaddingBottom = UDim.new(0, 12)
+            padding.Parent = horizontalLayout
+
+            -- 左侧图标
             local cardIcon = Instance.new("ImageLabel")
-            cardIcon.Name = "CardIcon"
-            cardIcon.Parent = cardBtn
+            cardIcon.Size = UDim2.new(0, 52, 0, 52)
             cardIcon.BackgroundTransparency = 1
-            cardIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-            cardIcon.Position = UDim2.new(0.5, 0, 0.3, 0)
-            cardIcon.Size = UDim2.new(0, 40, 0, 40)
-            cardIcon.Image = "rbxassetid://" .. tostring(icon or "84830962019412")
-            cardIcon.ImageColor3 = Color3.new(1, 1, 1)
+            cardIcon.Image = formatCardIcon(icon)
+            cardIcon.ImageColor3 = CurrentTheme.Text
+            cardIcon.Parent = horizontalLayout
+            local iconCorner = Instance.new("UICorner")
+            iconCorner.CornerRadius = UDim.new(0, 10)
+            iconCorner.Parent = cardIcon
+            AddToRegistry(cardIcon, "ImageColor3", "Text")
+
+            -- 右侧文本区域
+            local rightFrame = Instance.new("Frame")
+            rightFrame.Size = UDim2.new(1, -64, 1, 0)   -- 减去图标宽度+间距
+            rightFrame.Position = UDim2.new(0, 64, 0, 0)
+            rightFrame.BackgroundTransparency = 1
+            rightFrame.Parent = horizontalLayout
+
+            local textLayout = Instance.new("UIListLayout")
+            textLayout.Padding = UDim.new(0, 4)
+            textLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            textLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            textLayout.Parent = rightFrame
 
             local cardTitle = Instance.new("TextLabel")
-            cardTitle.Name = "CardTitle"
-            cardTitle.Parent = cardBtn
+            cardTitle.Size = UDim2.new(1, 0, 0, 0)
+            cardTitle.AutomaticSize = Enum.AutomaticSize.Y
             cardTitle.BackgroundTransparency = 1
-            cardTitle.AnchorPoint = Vector2.new(0.5, 0.5)
-            cardTitle.Position = UDim2.new(0.5, 0, 0.65, 0)
-            cardTitle.Size = UDim2.new(0.8, 0, 0, 20)
             cardTitle.Font = Enum.Font.GothamBold
             cardTitle.Text = name
             cardTitle.TextColor3 = CurrentTheme.Text
-            cardTitle.TextSize = 12
-            cardTitle.TextScaled = false
+            cardTitle.TextSize = 14
+            cardTitle.TextXAlignment = Enum.TextXAlignment.Left
+            cardTitle.TextTruncate = Enum.TextTruncate.AtEnd
+            cardTitle.Parent = rightFrame
+            AddToRegistry(cardTitle, "TextColor3", "Text")
 
             local cardDesc = Instance.new("TextLabel")
-            cardDesc.Name = "CardDescription"
-            cardDesc.Parent = cardBtn
+            cardDesc.Size = UDim2.new(1, 0, 0, 0)
+            cardDesc.AutomaticSize = Enum.AutomaticSize.Y
             cardDesc.BackgroundTransparency = 1
-            cardDesc.AnchorPoint = Vector2.new(0.5, 0.5)
-            cardDesc.Position = UDim2.new(0.5, 0, 0.85, 0)
-            cardDesc.Size = UDim2.new(0.8, 0, 0, 15)
             cardDesc.Font = Enum.Font.Gotham
             cardDesc.Text = description or ""
             cardDesc.TextColor3 = Color3.fromRGB(180, 190, 210)
-            cardDesc.TextSize = 10
+            cardDesc.TextSize = 12
+            cardDesc.TextXAlignment = Enum.TextXAlignment.Left
             cardDesc.TextWrapped = true
+            cardDesc.TextTruncate = Enum.TextTruncate.AtEnd
+            cardDesc.Parent = rightFrame
+            AddToRegistry(cardDesc, "TextColor3", "Text")
 
+            -- 悬停效果（不缩放卡片尺寸）
             cardBtn.MouseEnter:Connect(function()
-                Tween(cardBtn, {BackgroundTransparency = 0.1, Size = UDim2.new(0, 105, 0, 105)}, 0.2)
+                Tween(cardBtn, {BackgroundTransparency = 0.05}, 0.2)
                 Tween(cardGlow, {Thickness = 3, Transparency = 0.4}, 0.2)
-                Tween(cardIcon, {Size = UDim2.new(0, 45, 0, 45), Rotation = 5}, 0.2)
+                Tween(cardIcon, {Size = UDim2.new(0, 56, 0, 56)}, 0.2)
             end)
             cardBtn.MouseLeave:Connect(function()
-                Tween(cardBtn, {BackgroundTransparency = 0.2, Size = UDim2.new(0, 100, 0, 100)}, 0.2)
+                Tween(cardBtn, {BackgroundTransparency = 0.2}, 0.2)
                 Tween(cardGlow, {Thickness = 2, Transparency = 0.7}, 0.2)
-                Tween(cardIcon, {Size = UDim2.new(0, 40, 0, 40), Rotation = 0}, 0.2)
+                Tween(cardIcon, {Size = UDim2.new(0, 52, 0, 52)}, 0.2)
             end)
 
+            -- 卡片详情页（与经典模式一致）
             local cardContentFrame = Instance.new("Frame")
             cardContentFrame.Name = "CardContent_" .. name
             cardContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2707,7 +2758,6 @@ function Fenglib:CreateWindow(Config)
             cardContentFrame.Visible = false
             cardContentFrame.Parent = Content
 
-            -- 添加分割线（与经典模式完全一致）
             local cardLine = Instance.new("Frame")
             cardLine.Name = "CardLine"
             cardLine.Size = UDim2.new(0, 1, 1, 0)
@@ -2835,7 +2885,7 @@ function Fenglib:CreateWindow(Config)
                 page.Visible = false
                 page.Parent = rightPageContainer
 
-                -- Page content structure (same as classic mode)
+                -- 页面内容结构（与经典模式完全一致，此处复制经典模式中的内容构建）
                 local PageContent = Instance.new("Frame")
                 PageContent.Size = UDim2.new(1, 0, 1, 0)
                 PageContent.BackgroundTransparency = 1
