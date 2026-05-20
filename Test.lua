@@ -2587,9 +2587,9 @@ function Fenglib:CreateWindow(Config)
         cardsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
         cardsContainer.Parent = Content
 
-        -- 一行两个卡片，横向优先排列
+        -- 一行两个卡片，高度减小为 74
         local cardsLayout = Instance.new("UIGridLayout")
-        cardsLayout.CellSize = UDim2.new(0.5, -20, 0, 100)   -- 宽度占一半减去间距，高度100
+        cardsLayout.CellSize = UDim2.new(0.5, -20, 0, 74)   -- 宽度占一半减去间距，高度74
         cardsLayout.CellPadding = UDim2.new(0, 15, 0, 15)
         cardsLayout.FillDirection = Enum.FillDirection.Horizontal
         cardsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -2679,16 +2679,17 @@ function Fenglib:CreateWindow(Config)
             horizontalLayout.BackgroundTransparency = 1
             horizontalLayout.Parent = cardBtn
 
+            -- 内边距适当减小
             local padding = Instance.new("UIPadding")
-            padding.PaddingLeft = UDim.new(0, 12)
-            padding.PaddingRight = UDim.new(0, 12)
-            padding.PaddingTop = UDim.new(0, 12)
-            padding.PaddingBottom = UDim.new(0, 12)
+            padding.PaddingLeft = UDim.new(0, 10)
+            padding.PaddingRight = UDim.new(0, 10)
+            padding.PaddingTop = UDim.new(0, 10)
+            padding.PaddingBottom = UDim.new(0, 10)
             padding.Parent = horizontalLayout
 
-            -- 左侧图标
+            -- 左侧图标（缩小到44x44）
             local cardIcon = Instance.new("ImageLabel")
-            cardIcon.Size = UDim2.new(0, 52, 0, 52)
+            cardIcon.Size = UDim2.new(0, 44, 0, 44)
             cardIcon.BackgroundTransparency = 1
             cardIcon.Image = formatCardIcon(icon)
             cardIcon.ImageColor3 = CurrentTheme.Text
@@ -2700,13 +2701,13 @@ function Fenglib:CreateWindow(Config)
 
             -- 右侧文本区域
             local rightFrame = Instance.new("Frame")
-            rightFrame.Size = UDim2.new(1, -64, 1, 0)   -- 减去图标宽度+间距
-            rightFrame.Position = UDim2.new(0, 64, 0, 0)
+            rightFrame.Size = UDim2.new(1, -54, 1, 0)   -- 减去图标宽度+间距
+            rightFrame.Position = UDim2.new(0, 54, 0, 0)
             rightFrame.BackgroundTransparency = 1
             rightFrame.Parent = horizontalLayout
 
             local textLayout = Instance.new("UIListLayout")
-            textLayout.Padding = UDim.new(0, 4)
+            textLayout.Padding = UDim.new(0, 2)
             textLayout.SortOrder = Enum.SortOrder.LayoutOrder
             textLayout.VerticalAlignment = Enum.VerticalAlignment.Center
             textLayout.Parent = rightFrame
@@ -2718,7 +2719,7 @@ function Fenglib:CreateWindow(Config)
             cardTitle.Font = Enum.Font.GothamBold
             cardTitle.Text = name
             cardTitle.TextColor3 = CurrentTheme.Text
-            cardTitle.TextSize = 14
+            cardTitle.TextSize = 13
             cardTitle.TextXAlignment = Enum.TextXAlignment.Left
             cardTitle.TextTruncate = Enum.TextTruncate.AtEnd
             cardTitle.Parent = rightFrame
@@ -2731,23 +2732,23 @@ function Fenglib:CreateWindow(Config)
             cardDesc.Font = Enum.Font.Gotham
             cardDesc.Text = description or ""
             cardDesc.TextColor3 = Color3.fromRGB(180, 190, 210)
-            cardDesc.TextSize = 12
+            cardDesc.TextSize = 11
             cardDesc.TextXAlignment = Enum.TextXAlignment.Left
             cardDesc.TextWrapped = true
             cardDesc.TextTruncate = Enum.TextTruncate.AtEnd
             cardDesc.Parent = rightFrame
             AddToRegistry(cardDesc, "TextColor3", "Text")
 
-            -- 悬停效果（不缩放卡片尺寸）
+            -- 悬停效果（图标稍微放大）
             cardBtn.MouseEnter:Connect(function()
                 Tween(cardBtn, {BackgroundTransparency = 0.05}, 0.2)
                 Tween(cardGlow, {Thickness = 3, Transparency = 0.4}, 0.2)
-                Tween(cardIcon, {Size = UDim2.new(0, 56, 0, 56)}, 0.2)
+                Tween(cardIcon, {Size = UDim2.new(0, 48, 0, 48)}, 0.2)
             end)
             cardBtn.MouseLeave:Connect(function()
                 Tween(cardBtn, {BackgroundTransparency = 0.2}, 0.2)
                 Tween(cardGlow, {Thickness = 2, Transparency = 0.7}, 0.2)
-                Tween(cardIcon, {Size = UDim2.new(0, 52, 0, 52)}, 0.2)
+                Tween(cardIcon, {Size = UDim2.new(0, 44, 0, 44)}, 0.2)
             end)
 
             -- 卡片详情页（与经典模式一致）
@@ -2885,7 +2886,7 @@ function Fenglib:CreateWindow(Config)
                 page.Visible = false
                 page.Parent = rightPageContainer
 
-                -- 页面内容结构（与经典模式完全一致，此处复制经典模式中的内容构建）
+                -- 页面内容结构（与经典模式完全一致）
                 local PageContent = Instance.new("Frame")
                 PageContent.Size = UDim2.new(1, 0, 1, 0)
                 PageContent.BackgroundTransparency = 1
