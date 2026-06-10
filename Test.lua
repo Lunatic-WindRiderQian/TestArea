@@ -3393,7 +3393,7 @@ local Library do
             return DashPage
         end
 
-        -- ========== SECTION ELEMENTS ==========
+        -- ========== SECTION ELEMENTS (Toggle, Button, Slider, Dropdown, Keybind, Textbox, Listbox, Divider, Input) ==========
         Library.Sections.Toggle = function(self, Data)
             Data = Data or { }
             local Toggle = {
@@ -5762,7 +5762,7 @@ local Library do
             local boxCorner = Instances:Create("UICorner", {Parent = InputBox.Instance, CornerRadius = UDimNew(0, 6)})
             local boxStroke = Instances:Create("UIStroke", {Parent = InputBox.Instance, Thickness = 1, Transparency = 0.6, Color = FromRGB(50,50,50)})
             InputBox:AddToTheme({BackgroundColor3 = "Element", TextColor3 = "Text"})
-            boxStroke:AddToTheme({Color = "Stroke"})
+            boxStroke:AddToTheme({Color = "Outline"})  -- Fixed: changed "Stroke" to "Outline"
             
             local function filterText(text)
                 if Input.CharacterLimit then text = text:sub(1, Input.CharacterLimit) end
