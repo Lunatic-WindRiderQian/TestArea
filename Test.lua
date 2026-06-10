@@ -2681,7 +2681,8 @@ local Library do
                 end
 
                 Library.MainFrame = Items["MainFrame"]
-                Items["MainFrame"]:MakeResizeable(Vector2New(Items["MainFrame"].Instance.AbsoluteSize.X, Items["MainFrame"].Instance.AbsoluteSize.Y), Vector2New(9999, 9999), OriginalSizes)
+                -- Removed the faulty MakeResizeable that caused window drift and touch issues
+                -- Items["MainFrame"]:MakeResizeable(Vector2New(Items["MainFrame"].Instance.AbsoluteSize.X, Items["MainFrame"].Instance.AbsoluteSize.Y), Vector2New(9999, 9999), OriginalSizes)
                 Library:MakeBlurred(Items["MainFrame"], Window)
 
                 -- Visible resize handle: parented to Holder so MainFrame UIScale does not scale the grip.
@@ -2745,6 +2746,7 @@ local Library do
                         end
                     end)
 
+                    -- Fixed resize logic: keep top-left corner fixed
                     Library:Connect(RunService.RenderStepped, function()
                         local mf = Items["MainFrame"].Instance
                         local rc = Items["ResizeCorner"].Instance
@@ -2762,7 +2764,22 @@ local Library do
                         local dy = MousePos.Y - CornerStartMouse.Y
                         local newW = MathClamp(CornerStartSize.X + dx, 400, 9999)
                         local newH = MathClamp(CornerStartSize.Y + dy, 300, 9999)
-                        Items["MainFrame"].Instance.Size = UDim2FromOffset(newW, newH)
+
+                        -- store current top-left absolute position (AnchorPoint is (0.5,0.5))
+                        local oldAbsPos = mf.AbsolutePosition
+                        local leftTopX = oldAbsPos.X
+                        local leftTopY = oldAbsPos.Y
+
+                        mf.Size = UDim2FromOffset(newW, newH)
+
+                        -- reposition to keep top-left corner stationary
+                        local parent = mf.Parent
+                        if parent then
+                            local parentAbsPos = parent.AbsolutePosition
+                            local newPosX = leftTopX - parentAbsPos.X + (mf.AnchorPoint.X * newW)
+                            local newPosY = leftTopY - parentAbsPos.Y + (mf.AnchorPoint.Y * newH)
+                            mf.Position = UDim2FromOffset(newPosX, newPosY)
+                        end
                     end)
                 end
                 
@@ -3352,8 +3369,6 @@ local Library do
                     end
                 end)
             end
-
-            -- FloatingButton: toggle is handled in InputEnded (after MakeDraggable) so drag does not open/close the window.
 
             Window:SetCenter()
             task.wait()
@@ -5397,6 +5412,7 @@ local Library do
                     Size = UDim2New(1, -2, 1, -56),
                     ZIndex = 2,
                     BorderSizePixel = 0,
+                    ClipsDescendants = true,   -- added to prevent overflow
                     BackgroundColor3 = FromRGB(24, 22, 25)
                 })  Items["Background"]:AddToTheme({BackgroundColor3 = "Section Background"})
                 
@@ -5423,7 +5439,8 @@ local Library do
                     Parent = Items["Background"].Instance,
                     Name = "\0",
                     BackgroundTransparency = 1,
-                    Size = UDim2New(0, 0, 10, 0),
+                    Size = UDim2New(1, 0, 1, 0),   -- fill entire Background
+                    Position = UDim2New(0, 0, 0, 0),
                     BorderColor3 = FromRGB(0, 0, 0),
                     AutoButtonColor = false,
                     Visible = false,
@@ -5447,6 +5464,8 @@ local Library do
 
                 Section.Items = Items
             end
+
+            -- Removed dynamic Fade size listener (no longer needed)
 
             function Section:ToggleBackground()
                 Section.IsActive = not Section.IsActive
@@ -5472,12 +5491,6 @@ local Library do
                     Items["Circle"]:Tween(nil, {AnchorPoint = Vector2New(1, 0.5), Position = UDim2New(1, -4, 0.5, 0), BackgroundColor3 = Library.Theme.Text, BackgroundTransparency = 0})
                 end
             end
-
-            Library:Connect(Items["Content"].Instance.Changed, function(Property)
-                if Property == "AbsoluteSize" then
-                    Items["Fade"].Instance.Size = UDim2New(1, 0, 0, Items["Content"].Instance.AbsoluteSize.Y + 10)
-                end
-            end)
 
             function Section:TweenElements(Bool, Debounce)
                 for Index, Value in Section.Elements do
