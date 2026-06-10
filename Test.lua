@@ -545,21 +545,16 @@ local Library do
             end)
         end
 
+        -- FIXED: MakeResizeable without Tween animation to avoid jumping and offset on touch
         Instances.MakeResizeable = function(self, Minimum, Maximum, Window)
-            if not self.Instance then 
-                return
-            end
-
+            if not self.Instance then return end
             local Gui = self.Instance
-
             local Resizing = false 
             local CurrentSide = nil
-
             local StartMouse = nil 
             local StartPosition = nil 
             local StartSize = nil
-            
-            local EdgeThickness = 2
+            local EdgeThickness = IsMobile and 12 or 6   -- larger touch area for mobile
 
             local MakeEdge = function(Name, Position, Size)
                 local Button = Instances:Create("TextButton", {
@@ -573,135 +568,81 @@ local Library do
                     AutoButtonColor = false,
                     Parent = Gui,
                     ZIndex = 99999,
-                })  Button:AddToTheme({BackgroundColor3 = "Accent"})
-
+                })
+                Button:AddToTheme({BackgroundColor3 = "Accent"})
                 return Button
             end
 
             local Edges = {
-                {Button = MakeEdge(
-                    "Left", 
-                    UDim2New(0, 0, 0, 0), 
-                    UDim2New(0, EdgeThickness, 1, 0)), 
-                    Side = "L"
-                },
-
-                {Button = MakeEdge(
-                    "Right", 
-                    UDim2New(1, -EdgeThickness, 0, 0), 
-                    UDim2New(0, EdgeThickness, 1, 0)), 
-                    Side = "R"
-                },
-
-                {Button = MakeEdge(
-                    "Top", UDim2New(0, 0, 0, 0), 
-                    UDim2New(1, 0, 0, EdgeThickness)), 
-                    Side = "T"
-                },
-
-                {Button = MakeEdge(
-                    "Bottom", 
-                    UDim2New(0, 0, 1, -EdgeThickness), 
-                    UDim2New(1, 0, 0, EdgeThickness)), 
-                    Side = "B"
-                },
+                {Button = MakeEdge("Left", UDim2New(0, 0, 0, 0), UDim2New(0, EdgeThickness, 1, 0)), Side = "L"},
+                {Button = MakeEdge("Right", UDim2New(1, -EdgeThickness, 0, 0), UDim2New(0, EdgeThickness, 1, 0)), Side = "R"},
+                {Button = MakeEdge("Top", UDim2New(0, 0, 0, 0), UDim2New(1, 0, 0, EdgeThickness)), Side = "T"},
+                {Button = MakeEdge("Bottom", UDim2New(0, 0, 1, -EdgeThickness), UDim2New(1, 0, 0, EdgeThickness)), Side = "B"},
             }
 
             local BeginResizing = function(Side)
                 Resizing = true 
                 CurrentSide = Side 
-
                 StartMouse = UserInputService:GetMouseLocation()
-
-                -- store offsets, not absolute screen pos
                 StartPosition = Vector2New(Gui.Position.X.Offset, Gui.Position.Y.Offset)
                 StartSize = Vector2New(Gui.Size.X.Offset, Gui.Size.Y.Offset)
-                
-                for Index, Value in Edges do 
-                    Value.Button:Tween(nil, {BackgroundTransparency = (Value.Side == Side) and 0 or 1})
+                for _, v in Edges do 
+                    v.Button:Tween(nil, {BackgroundTransparency = (v.Side == Side) and 0 or 1})
                 end
             end
 
             local EndResizing = function()
                 Resizing = false 
                 CurrentSide = nil
-
-                for Index, Value in Edges do 
-                    Value.Button.Instance.BackgroundTransparency = 1
-                end
+                for _, v in Edges do v.Button.Instance.BackgroundTransparency = 1 end
             end
 
-            for Index, Value in Edges do 
-                Value.Button:Connect("InputBegan", function(Input)
+            for _, v in Edges do 
+                v.Button:Connect("InputBegan", function(Input)
                     if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-                        BeginResizing(Value.Side)
+                        BeginResizing(v.Side)
                     end
                 end)
             end
 
             Library:Connect(UserInputService.InputEnded, function(Input)
-                if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-                    if Resizing then
-                        EndResizing()
-                    end
+                if (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) and Resizing then
+                    EndResizing()
                 end
             end)
 
+            -- Directly set properties without Tween to avoid jumps and offsets
             Library:Connect(RunService.RenderStepped, function()
-                if not Resizing or not CurrentSide then 
-                    return 
-                end
-
+                if not Resizing or not CurrentSide then return end
                 local MouseLocation = UserInputService:GetMouseLocation()
                 local dx = MouseLocation.X - StartMouse.X
                 local dy = MouseLocation.Y - StartMouse.Y
-            
                 local x, y = StartPosition.X, StartPosition.Y
                 local w, h = StartSize.X, StartSize.Y
 
                 if CurrentSide == "L" then
                     x = StartPosition.X + dx
                     w = StartSize.X - dx
-
-                    if Window then
-                        Window.Left.Y = h
-                    end
                 elseif CurrentSide == "R" then
                     w = StartSize.X + dx
-
-                    if Window then
-                        Window.Right.Y = h
-                    end
                 elseif CurrentSide == "T" then
                     y = StartPosition.Y + dy
                     h = StartSize.Y - dy
-
-                    if Window then
-                        Window.Top.X = w
-                    end
                 elseif CurrentSide == "B" then
                     h = StartSize.Y + dy
-
-                    if Window then
-                        Window.Bottom.X = w
-                    end
                 end
-            
+
                 if w < Minimum.X then
-                    if CurrentSide == "L" then
-                        x = x - (Minimum.X - w)
-                    end
+                    if CurrentSide == "L" then x = x - (Minimum.X - w) end
                     w = Minimum.X
                 end
                 if h < Minimum.Y then
-                    if CurrentSide == "T" then
-                        y = y - (Minimum.Y - h)
-                    end
+                    if CurrentSide == "T" then y = y - (Minimum.Y - h) end
                     h = Minimum.Y
                 end
-            
-                self:Tween(TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2FromOffset(x, y)})
-                self:Tween(TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2FromOffset(w, h)})
+
+                Gui.Position = UDim2FromOffset(x, y)
+                Gui.Size = UDim2FromOffset(w, h)
             end)
         end
 
@@ -2681,8 +2622,7 @@ local Library do
                 end
 
                 Library.MainFrame = Items["MainFrame"]
-                -- Removed the faulty MakeResizeable that caused window drift and touch issues
-                -- Items["MainFrame"]:MakeResizeable(Vector2New(Items["MainFrame"].Instance.AbsoluteSize.X, Items["MainFrame"].Instance.AbsoluteSize.Y), Vector2New(9999, 9999), OriginalSizes)
+                Items["MainFrame"]:MakeResizeable(Vector2New(400, 300), Vector2New(9999, 9999))
                 Library:MakeBlurred(Items["MainFrame"], Window)
 
                 -- Visible resize handle: parented to Holder so MainFrame UIScale does not scale the grip.
@@ -2694,7 +2634,7 @@ local Library do
                         Text = "",
                         AnchorPoint = Vector2New(1, 1),
                         Position = UDim2FromOffset(0, 0),
-                        Size = UDim2FromOffset(18, 18),
+                        Size = UDim2FromOffset(24, 24),
                         BackgroundTransparency = 1,
                         BorderSizePixel = 0,
                         ZIndex = 250,
@@ -2746,7 +2686,6 @@ local Library do
                         end
                     end)
 
-                    -- Fixed resize logic: keep top-left corner fixed
                     Library:Connect(RunService.RenderStepped, function()
                         local mf = Items["MainFrame"].Instance
                         local rc = Items["ResizeCorner"].Instance
@@ -2764,22 +2703,7 @@ local Library do
                         local dy = MousePos.Y - CornerStartMouse.Y
                         local newW = MathClamp(CornerStartSize.X + dx, 400, 9999)
                         local newH = MathClamp(CornerStartSize.Y + dy, 300, 9999)
-
-                        -- store current top-left absolute position (AnchorPoint is (0.5,0.5))
-                        local oldAbsPos = mf.AbsolutePosition
-                        local leftTopX = oldAbsPos.X
-                        local leftTopY = oldAbsPos.Y
-
-                        mf.Size = UDim2FromOffset(newW, newH)
-
-                        -- reposition to keep top-left corner stationary
-                        local parent = mf.Parent
-                        if parent then
-                            local parentAbsPos = parent.AbsolutePosition
-                            local newPosX = leftTopX - parentAbsPos.X + (mf.AnchorPoint.X * newW)
-                            local newPosY = leftTopY - parentAbsPos.Y + (mf.AnchorPoint.Y * newH)
-                            mf.Position = UDim2FromOffset(newPosX, newPosY)
-                        end
+                        Items["MainFrame"].Instance.Size = UDim2FromOffset(newW, newH)
                     end)
                 end
                 
@@ -3369,6 +3293,8 @@ local Library do
                     end
                 end)
             end
+
+            -- FloatingButton: toggle is handled in InputEnded (after MakeDraggable) so drag does not open/close the window.
 
             Window:SetCenter()
             task.wait()
@@ -5412,7 +5338,7 @@ local Library do
                     Size = UDim2New(1, -2, 1, -56),
                     ZIndex = 2,
                     BorderSizePixel = 0,
-                    ClipsDescendants = true,   -- added to prevent overflow
+                    ClipsDescendants = true,   -- Fixed: clip overflow content
                     BackgroundColor3 = FromRGB(24, 22, 25)
                 })  Items["Background"]:AddToTheme({BackgroundColor3 = "Section Background"})
                 
@@ -5436,11 +5362,10 @@ local Library do
                 })                
 
                 Items["Fade"] = Instances:Create("TextButton", {
-                    Parent = Items["Background"].Instance,
+                    Parent = Items["Background"].Instance,   -- Fixed: parent to Background directly
                     Name = "\0",
                     BackgroundTransparency = 1,
-                    Size = UDim2New(1, 0, 1, 0),   -- fill entire Background
-                    Position = UDim2New(0, 0, 0, 0),
+                    Size = UDim2New(1, 0, 1, 0),
                     BorderColor3 = FromRGB(0, 0, 0),
                     AutoButtonColor = false,
                     Visible = false,
@@ -5462,10 +5387,22 @@ local Library do
                     PaddingBottom = UDimNew(0, 10)
                 })
 
+                -- Dynamic Fade size based on content height
+                local function updateFadeSize()
+                    local contentHeight = Items["Content"].Instance.AbsoluteSize.Y
+                    if contentHeight > 0 then
+                        Items["Fade"].Instance.Size = UDim2New(1, 0, 0, contentHeight + 10)
+                    end
+                end
+
+                Items["Content"].Instance:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+                    task.wait(0.02)
+                    updateFadeSize()
+                end)
+                updateFadeSize()
+
                 Section.Items = Items
             end
-
-            -- Removed dynamic Fade size listener (no longer needed)
 
             function Section:ToggleBackground()
                 Section.IsActive = not Section.IsActive
@@ -5493,9 +5430,15 @@ local Library do
             end
 
             function Section:TweenElements(Bool, Debounce)
-                for Index, Value in Section.Elements do
-                    Value:RefreshPosition(Bool)
+                if not Bool then
+                    Items["Fade"].Instance.Visible = true
+                    Items["Fade"]:Tween(nil, {BackgroundTransparency = 0.3})
+                else
+                    Items["Fade"]:Tween(nil, {BackgroundTransparency = 1})
+                    task.wait(Library.Tween.Time)
+                    Items["Fade"].Instance.Visible = false
                 end
+                -- additional element tweens (if any) can be added here
             end
 
             Items["Toggle"]:Connect("MouseButton1Down", function()
@@ -8362,88 +8305,88 @@ local Library do
         end
     end
 
-        Library.Sections.Divider = function(self, Label)
-            local Items = {} do
-                Items["Container"] = Instances:Create("Frame", {
-                    Parent = self.Items["Content"].Instance,
+    Library.Sections.Divider = function(self, Label)
+        local Items = {} do
+            Items["Container"] = Instances:Create("Frame", {
+                Parent = self.Items["Content"].Instance,
+                Name = "\0",
+                BackgroundTransparency = 1,
+                Size = UDim2New(1, 0, 0, Label and 22 or 12),
+                BorderSizePixel = 0,
+                ZIndex = 2,
+                BackgroundColor3 = FromRGB(255, 255, 255)
+            })
+
+            if Label and Label ~= "" then
+                Items["LineLeft"] = Instances:Create("Frame", {
+                    Parent = Items["Container"].Instance,
                     Name = "\0",
-                    BackgroundTransparency = 1,
-                    Size = UDim2New(1, 0, 0, Label and 22 or 12),
+                    AnchorPoint = Vector2New(0, 0.5),
+                    Position = UDim2New(0, 0, 0.5, 0),
+                    Size = UDim2New(0.35, -6, 0, 1),
                     BorderSizePixel = 0,
                     ZIndex = 2,
-                    BackgroundColor3 = FromRGB(255, 255, 255)
+                    BackgroundColor3 = FromRGB(38, 36, 44)
                 })
 
-                if Label and Label ~= "" then
-                    Items["LineLeft"] = Instances:Create("Frame", {
-                        Parent = Items["Container"].Instance,
-                        Name = "\0",
-                        AnchorPoint = Vector2New(0, 0.5),
-                        Position = UDim2New(0, 0, 0.5, 0),
-                        Size = UDim2New(0.35, -6, 0, 1),
-                        BorderSizePixel = 0,
-                        ZIndex = 2,
-                        BackgroundColor3 = FromRGB(38, 36, 44)
-                    })
+                Items["LineRight"] = Instances:Create("Frame", {
+                    Parent = Items["Container"].Instance,
+                    Name = "\0",
+                    AnchorPoint = Vector2New(1, 0.5),
+                    Position = UDim2New(1, 0, 0.5, 0),
+                    Size = UDim2New(0.35, -6, 0, 1),
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    BackgroundColor3 = FromRGB(38, 36, 44)
+                })
 
-                    Items["LineRight"] = Instances:Create("Frame", {
-                        Parent = Items["Container"].Instance,
-                        Name = "\0",
-                        AnchorPoint = Vector2New(1, 0.5),
-                        Position = UDim2New(1, 0, 0.5, 0),
-                        Size = UDim2New(0.35, -6, 0, 1),
-                        BorderSizePixel = 0,
-                        ZIndex = 2,
-                        BackgroundColor3 = FromRGB(38, 36, 44)
-                    })
-
-                    Items["Label"] = Instances:Create("TextLabel", {
-                        Parent = Items["Container"].Instance,
-                        Name = "\0",
-                        FontFace = Library.Fonts.Light,
-                        TextColor3 = FromRGB(110, 108, 130),
-                        Text = Label,
-                        AutomaticSize = Enum.AutomaticSize.X,
-                        Size = UDim2New(0, 0, 1, 0),
-                        BackgroundTransparency = 1,
-                        AnchorPoint = Vector2New(0.5, 0.5),
-                        Position = UDim2New(0.5, 0, 0.5, 0),
-                        TextSize = 12,
-                        ZIndex = 3,
-                        BorderSizePixel = 0,
-                        BackgroundColor3 = FromRGB(255, 255, 255)
-                    })
-                else
-                    Items["Line"] = Instances:Create("Frame", {
-                        Parent = Items["Container"].Instance,
-                        Name = "\0",
-                        AnchorPoint = Vector2New(0, 0.5),
-                        Position = UDim2New(0, 0, 0.5, 0),
-                        Size = UDim2New(1, 0, 0, 1),
-                        BorderSizePixel = 0,
-                        ZIndex = 2,
-                        BackgroundColor3 = FromRGB(38, 36, 44)
-                    })
-                end
+                Items["Label"] = Instances:Create("TextLabel", {
+                    Parent = Items["Container"].Instance,
+                    Name = "\0",
+                    FontFace = Library.Fonts.Light,
+                    TextColor3 = FromRGB(110, 108, 130),
+                    Text = Label,
+                    AutomaticSize = Enum.AutomaticSize.X,
+                    Size = UDim2New(0, 0, 1, 0),
+                    BackgroundTransparency = 1,
+                    AnchorPoint = Vector2New(0.5, 0.5),
+                    Position = UDim2New(0.5, 0, 0.5, 0),
+                    TextSize = 12,
+                    ZIndex = 3,
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+            else
+                Items["Line"] = Instances:Create("Frame", {
+                    Parent = Items["Container"].Instance,
+                    Name = "\0",
+                    AnchorPoint = Vector2New(0, 0.5),
+                    Position = UDim2New(0, 0, 0.5, 0),
+                    Size = UDim2New(1, 0, 0, 1),
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    BackgroundColor3 = FromRGB(38, 36, 44)
+                })
             end
-
-            local Divider = {
-                Window = self.Window,
-                Tab = self.Tab,
-                Section = self,
-                Items = Items
-            }
-
-            function Divider:SetVisibility(Bool)
-                Items["Container"].Instance.Visible = Bool
-            end
-
-            function Divider:RefreshPosition(Bool)
-            end
-
-            self.Elements[#self.Elements + 1] = Divider
-            return Divider
         end
+
+        local Divider = {
+            Window = self.Window,
+            Tab = self.Tab,
+            Section = self,
+            Items = Items
+        }
+
+        function Divider:SetVisibility(Bool)
+            Items["Container"].Instance.Visible = Bool
+        end
+
+        function Divider:RefreshPosition(Bool)
+        end
+
+        self.Elements[#self.Elements + 1] = Divider
+        return Divider
+    end
 
     Library.CreateSettingsPage = function(self, Window, KeybindList, Options)
         Options = Options or {}
