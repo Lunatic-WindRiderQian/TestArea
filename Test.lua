@@ -3067,10 +3067,13 @@ local Library do
                 end)
 
                 -- 点击切换右下角调整手柄的可见性
-                Items["ResizeToggleButton"]:Connect("MouseButton1Down", function()
-                    if Resizer then
-                        local newVisible = not Resizer.Instance.Visible
-                        Resizer.Instance.Visible = newVisible
+Items["ResizeToggleButton"]:Connect("MouseButton1Down", function()
+    if Resizer then
+        local newVisible = not Resizer.Instance.Visible
+        Resizer.Instance.Visible = newVisible
+        ToggleIcon:Tween(TweenInfo.new(0.2), {ImageTransparency = newVisible and 0 or 0.3})
+    end
+end)
                         -- 可选：改变按钮图标透明度或颜色以指示状态
                         Tween(ToggleIcon.Instance, TweenInfo.new(0.2), {ImageTransparency = newVisible and 0 or 0.3})
                     end
