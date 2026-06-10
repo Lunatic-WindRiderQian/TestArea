@@ -2001,7 +2001,7 @@ local Library do
             end)
         end
 
-        -- ========== WINDOW FUNCTION (Modified with Topbar drag and new buttons) ==========
+        -- ========== WINDOW FUNCTION (Modified with Topbar drag and new buttons, default size 600x450) ==========
         Library.Window = function(self, Data)
             Data = Data or { }
 
@@ -2027,7 +2027,7 @@ local Library do
                     AnchorPoint = Vector2New(0.5, 0.5),
                     BackgroundTransparency = 0.12,
                     Position = UDim2New(0.5, 0, 0.5, 0),
-                    Size = Data.Size or (IsMobile and UDim2New(0, 520, 0, 420) or UDim2New(0, 940, 0, 730)),
+                    Size = Data.Size or (IsMobile and UDim2New(0, 520, 0, 420) or UDim2New(0, 600, 0, 450)),  -- Changed default to 600x450
                     ZIndex = 2,
                     BorderSizePixel = 0,
                     ClipsDescendants = true,
@@ -3393,7 +3393,7 @@ local Library do
             return DashPage
         end
 
-        -- ========== SECTION ELEMENTS (Toggle, Button, Slider, Dropdown, Keybind, Textbox, Listbox, Divider) ==========
+        -- ========== SECTION ELEMENTS ==========
         Library.Sections.Toggle = function(self, Data)
             Data = Data or { }
             local Toggle = {
@@ -5700,6 +5700,122 @@ local Library do
                 pcall(function() UserInputService.MouseIconEnabled = not on end)
             end
         end
+
+        -- ========== ADD MISSING Input SECTION ==========
+        Library.Sections.Input = function(self, Data)
+            Data = Data or {}
+            local Input = {
+                Window = self.Window,
+                Page = self.Page,
+                Section = self,
+                Name = Data.Name or Data.name or "Input",
+                Flag = Data.Flag or Data.flag or Library:NextFlag(),
+                Default = Data.Default or Data.default or "",
+                Callback = Data.Callback or Data.callback or function() end,
+                Placeholder = Data.Placeholder or Data.placeholder or "",
+                AcceptedCharacters = Data.AcceptedCharacters or Data.acceptedCharacters or "All",
+                CharacterLimit = Data.CharacterLimit or Data.characterLimit,
+                OnChanged = Data.OnChanged or Data.onChanged,
+                Value = ""
+            }
+
+            local Items = {}
+            Items["Container"] = Instances:Create("Frame", {
+                Parent = Input.Section.Items["Content"].Instance,
+                Name = "\0",
+                BackgroundTransparency = 1,
+                Size = UDim2New(1, 0, 0, 42),
+                BorderSizePixel = 0,
+                ZIndex = 2,
+                BackgroundColor3 = FromRGB(255, 255, 255)
+            })
+            local NameLbl = Instances:Create("TextLabel", {
+                Parent = Items["Container"].Instance,
+                Name = "\0",
+                FontFace = Library.Font,
+                TextColor3 = FromRGB(240, 240, 240),
+                Text = Input.Name,
+                Size = UDim2New(0.6, 0, 1, 0),
+                Position = UDim2New(0, 15, 0, 0),
+                TextXAlignment = Enum.TextXAlignment.Left,
+                BackgroundTransparency = 1,
+                TextSize = 14,
+                ZIndex = 2
+            })  NameLbl:AddToTheme({TextColor3 = "Text"})
+            
+            local InputBox = Instances:Create("TextBox", {
+                Parent = Items["Container"].Instance,
+                Name = "\0",
+                FontFace = Library.Font,
+                TextColor3 = FromRGB(240, 240, 240),
+                Text = tostring(Input.Default),
+                PlaceholderText = Input.Placeholder,
+                Size = UDim2New(0.3, 0, 0, 28),
+                Position = UDim2New(0.7, -10, 0.5, -14),
+                Font = Enum.Font.GothamBold,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                ClearTextOnFocus = false,
+                BackgroundColor3 = FromRGB(30, 29, 31),
+                ZIndex = 2
+            })
+            local boxCorner = Instances:Create("UICorner", {Parent = InputBox.Instance, CornerRadius = UDimNew(0, 6)})
+            local boxStroke = Instances:Create("UIStroke", {Parent = InputBox.Instance, Thickness = 1, Transparency = 0.6, Color = FromRGB(50,50,50)})
+            InputBox:AddToTheme({BackgroundColor3 = "Element", TextColor3 = "Text"})
+            boxStroke:AddToTheme({Color = "Stroke"})
+            
+            local function filterText(text)
+                if Input.CharacterLimit then text = text:sub(1, Input.CharacterLimit) end
+                if type(Input.AcceptedCharacters) == "function" then
+                    return Input.AcceptedCharacters(text)
+                elseif Input.AcceptedCharacters == "Numeric" then
+                    return text:gsub("[^%d-]", ""):gsub("-(.*)", function(m) return m:gsub("-","") end)
+                elseif Input.AcceptedCharacters == "Alphabetic" then
+                    return text:gsub("[^a-zA-Z]", "")
+                elseif Input.AcceptedCharacters == "AlphaNumeric" then
+                    return text:gsub("[^a-zA-Z0-9]", "")
+                else
+                    return text
+                end
+            end
+            
+            InputBox:GetPropertyChangedSignal("Text"):Connect(function()
+                local filtered = filterText(InputBox.Instance.Text)
+                if filtered ~= InputBox.Instance.Text then InputBox.Instance.Text = filtered end
+                if Input.OnChanged then Input.OnChanged(filtered) end
+            end)
+            
+            InputBox:Connect("FocusLost", function()
+                local text = InputBox.Instance.Text
+                local filtered = filterText(text)
+                if filtered ~= text then InputBox.Instance.Text = filtered end
+                Input.Value = filtered
+                Library.Flags[Input.Flag] = filtered
+                Input.Callback(filtered)
+            end)
+            
+            function Input:Set(value)
+                InputBox.Instance.Text = tostring(value)
+                Input.Value = tostring(value)
+                Library.Flags[Input.Flag] = tostring(value)
+                Input.Callback(tostring(value))
+            end
+            
+            function Input:Get()
+                return InputBox.Instance.Text
+            end
+            
+            function Input:RefreshPosition(Bool)
+                if Bool then
+                    NameLbl:GetPropertyChangedSignal("AbsolutePosition"):Wait()
+                end
+            end
+            
+            Library.SetFlags[Input.Flag] = function(val) Input:Set(val) end
+            Input.Section.Elements[#Input.Section.Elements+1] = Input
+            return Input
+        end
+
     end
 
     getgenv().Library = Library
