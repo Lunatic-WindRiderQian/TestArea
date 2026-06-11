@@ -4687,7 +4687,6 @@ local Library do
                         BackgroundColor3 = Library.Theme.Text,
                         BackgroundTransparency = 0.6
                     }, true)
-                    contentContainer.Visible = false
                 else
                     fade.Visible = false
                     fade.BackgroundTransparency = 1
@@ -4699,7 +4698,6 @@ local Library do
                         BackgroundColor3 = Library.Theme.Text,
                         BackgroundTransparency = 0
                     }, true)
-                    contentContainer.Visible = true
                 end
                 refreshScrollCanvas()
             end
