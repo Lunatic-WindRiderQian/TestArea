@@ -3286,7 +3286,6 @@ local Library do
             }):AddToTheme({BackgroundColor3 = "Element"})
         end
 
-        -- ========== 完全重写的 Tab 和 Section ==========
         Library.Tab = function(self, Data)
             Data = Data or { }
 
@@ -3391,7 +3390,6 @@ local Library do
                     BackgroundColor3 = FromRGB(255, 255, 255)
                 })  Items["Text"]:AddToTheme({TextColor3 = "Text"})      
                 
-                -- 右侧内容区域：带滚动功能
                 Items["TabContent"] = Instances:Create("CanvasGroup", {
                     Parent = Library.UnusedHolder.Instance,
                     Name = "\0",
@@ -3401,45 +3399,28 @@ local Library do
                     Size = UDim2New(1, 0, 1, 0),
                     BorderColor3 = FromRGB(0, 0, 0),
                     ZIndex = 2,
-                    Position = UDim2New(0, 0, 0, 0),
+                    Position = UDim2New(0, 0, 0, 70),
                     BorderSizePixel = 0,
                     BackgroundColor3 = FromRGB(255, 255, 255)
                 })
                 
-                Items["ScrollingFrame"] = Instances:Create("ScrollingFrame", {
+                Instances:Create("UIListLayout", {
                     Parent = Items["TabContent"].Instance,
-                    Name = "\0",
-                    BackgroundTransparency = 1,
-                    BorderSizePixel = 0,
-                    Size = UDim2New(1, 0, 1, 0),
-                    Position = UDim2New(0, 0, 0, 0),
-                    ScrollBarThickness = 4,
-                    ScrollBarImageColor3 = FromRGB(90, 165, 255),
-                    ScrollBarImageTransparency = 0.5,
-                    AutomaticCanvasSize = Enum.AutomaticSize.Y,
-                    CanvasSize = UDim2New(0, 0, 0, 0),
-                    ClipsDescendants = true,
-                    ZIndex = 2,
-                })
-                Items["ScrollingFrame"]:AddToTheme({ScrollBarImageColor3 = "Accent"})
-                
-                Items["Layout"] = Instances:Create("UIListLayout", {
-                    Parent = Items["ScrollingFrame"].Instance,
                     Name = "\0",
                     FillDirection = Enum.FillDirection.Vertical,
                     SortOrder = Enum.SortOrder.LayoutOrder,
                     Padding = UDimNew(0, 14)
                 })
                 
-                Items["Padding"] = Instances:Create("UIPadding", {
-                    Parent = Items["ScrollingFrame"].Instance,
+                Instances:Create("UIPadding", {
+                    Parent = Items["TabContent"].Instance,
                     Name = "\0",
                     PaddingTop = UDimNew(0, 14),
                     PaddingBottom = UDimNew(0, 14),
                     PaddingRight = UDimNew(0, 14),
                     PaddingLeft = UDimNew(0, 14)
                 })
-                
+
                 Tab.Items = Items
             end
 
@@ -3455,31 +3436,44 @@ local Library do
                 Debounce = false
                 for _, Sec in Tab.Sections do
                     task.spawn(function()
-                        if Sec.TweenElements then Sec:TweenElements(false, true) end
+                        Sec:TweenElements(false, true)
                     end)
                 end
             end
 
             function Tab:Turn(Bool)
-                if Debounce then return end
+                if Debounce then 
+                    return 
+                end
+
                 Tab.Active = Bool 
                 Debounce = true
+
                 local tabFade = TweenInfo.new(0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
                 if Tab.Active then
                     Items["TabContent"].Instance.Visible = true
                     Items["TabContent"].Instance.Parent = Tab.Window.Items["Content"].Instance
                     Items["TabContent"].Instance.GroupTransparency = 1
+                    Items["TabContent"].Instance.Position = UDim2New(0, 0, 0, 28)
+
                     Items["Inactive"]:Tween(nil, {BackgroundTransparency = 0.88})
                     Items["TabIndicator"]:Tween(nil, {BackgroundTransparency = 0})
+
                     for _, Sec in Tab.Sections do
-                        task.spawn(function() if Sec.TweenElements then Sec:TweenElements(false, true) end end)
+                        task.spawn(function()
+                            Sec:TweenElements(false, true)
+                        end)
                     end
-                    local NewTween = Tween:Create(Items["TabContent"].Instance, tabFade, {GroupTransparency = 0}, true)
+
+                    local NewTween = Tween:Create(Items["TabContent"].Instance, tabFade, {GroupTransparency = 0, Position = UDim2New(0, 0, 0, 0)}, true)
                     if NewTween and NewTween.Tween then
                         Library:Connect(NewTween.Tween.Completed, function()
                             Library:Thread(function()
                                 for _, Value in Tab.Sections do
-                                    task.spawn(function() if Value.TweenElements then Value:TweenElements(true) end end)
+                                    task.spawn(function()
+                                        Value:TweenElements(true)
+                                    end)
                                     task.wait(0.055)
                                 end
                                 Debounce = false
@@ -3491,13 +3485,16 @@ local Library do
                 else
                     Items["Inactive"]:Tween(nil, {BackgroundTransparency = 1})
                     Items["TabIndicator"]:Tween(nil, {BackgroundTransparency = 1})
-                    local NewTween = Tween:Create(Items["TabContent"].Instance, tabFade, {GroupTransparency = 1}, true)
+
+                    local NewTween = Tween:Create(Items["TabContent"].Instance, tabFade, {GroupTransparency = 1, Position = UDim2New(0, 0, 0, 36)}, true)
                     if NewTween and NewTween.Tween then
                         Library:Connect(NewTween.Tween.Completed, function()
                             Items["TabContent"].Instance.Visible = false
                             Items["TabContent"].Instance.Parent = Library.UnusedHolder.Instance
                             for Index, Value in Tab.Sections do 
-                                task.spawn(function() if Value.TweenElements then Value:TweenElements(false, true) end end)   
+                                task.spawn(function()
+                                    Value:TweenElements(false, true)
+                                end)   
                             end
                             Debounce = false
                         end)
@@ -3512,9 +3509,13 @@ local Library do
             Items["Inactive"]:Connect("MouseButton1Down", function()
                 local W = Tab.Window
                 local now = tick()
-                if now < (W._tabCooldownUntil or 0) then return end
+                if now < (W._tabCooldownUntil or 0) then
+                    return
+                end
                 for _, Value in Tab.Window.Tabs do 
-                    if Value == Tab and Tab.Active then return end
+                    if Value == Tab and Tab.Active then
+                        return
+                    end
                 end
                 for _, Value in Tab.Window.Tabs do 
                     if Value ~= Tab and Value.InstantDeactivate then
@@ -3533,14 +3534,908 @@ local Library do
             return setmetatable(Tab, Library.Tabs)
         end
 
-        Library.Tabs.Section = function(self, Data)
+        Library.DashboardPage = function(self, Data)
+            Data = Data or {}
+
+            local Window = self
+
+            local DashPage = {
+                Window = Window,
+                Name = Data.Name or "Dashboard",
+                Icon = Data.Icon or "100050851789190",
+                Active = false,
+                Tabs = {},
+                Sections = {},
+                IsDashboard = true,
+                WelcomeText = Data.WelcomeText or "WELCOME TO",
+                HubName = Data.HubName,
+                StatusText = Data.StatusText,
+                Badge = Data.Badge or "PLAYER",
+                Links = Data.Links or {},
+                GameName = Data.GameName or "MY HUB",
+                GameDescription = Data.GameDescription or "Welcome to my hub!",
+                QuickAccess = Data.QuickAccess or {},
+                Stats = Data.Stats or {},
+                Credits = Data.Credits or {}
+            }
+
+            local AddQuickCard
+            local DashItems = {} do
+                DashItems["Inactive"] = Instances:Create("TextButton", {
+                    Parent = Window.Items["LeftTabsScroll"].Instance,
+                    Name = "\0",
+                    FontFace = Library.Font,
+                    TextColor3 = FromRGB(0, 0, 0),
+                    BorderColor3 = FromRGB(0, 0, 0),
+                    Text = "",
+                    AutoButtonColor = false,
+                    BackgroundTransparency = 1,
+                    BorderSizePixel = 0,
+                    Size = UDim2New(1, 0, 0, 54),
+                    ZIndex = 2,
+                    TextSize = 16,
+                    BackgroundColor3 = FromRGB(124, 163, 255)
+                })  DashItems["Inactive"]:AddToTheme({BackgroundColor3 = "Accent"})
+
+                Instances:Create("UICorner", {
+                    Parent = DashItems["Inactive"].Instance,
+                    Name = "\0",
+                    CornerRadius = UDimNew(0, 8)
+                })
+
+                DashItems.Gradient = Instances:Create("UIGradient", {
+                    Parent = DashItems["Inactive"].Instance,
+                    Name = "\0",
+                    Transparency = NumSequence{NumSequenceKeypoint(0, 0.41874998807907104), NumSequenceKeypoint(0.445, 0.78125), NumSequenceKeypoint(0.751, 0.9375), NumSequenceKeypoint(1, 1)}
+                })
+
+                DashItems["TabIndicator"] = Instances:Create("Frame", {
+                    Parent = DashItems["Inactive"].Instance,
+                    Name = "\0",
+                    AnchorPoint = Vector2New(0, 0.5),
+                    Position = UDim2New(0, 10, 0.5, 0),
+                    Size = UDim2New(0, 4, 0, 32),
+                    BorderSizePixel = 0,
+                    BackgroundTransparency = 1,
+                    ZIndex = 4,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })  DashItems["TabIndicator"]:AddToTheme({BackgroundColor3 = "Accent"})
+
+                Instances:Create("UICorner", {
+                    Parent = DashItems["TabIndicator"].Instance,
+                    Name = "\0",
+                    CornerRadius = UDimNew(1, 0)
+                })
+
+                DashItems["Icon"] = Instances:Create("ImageLabel", {
+                    Parent = DashItems["Inactive"].Instance,
+                    Name = "\0",
+                    ImageColor3 = FromRGB(255, 255, 255),
+                    BorderColor3 = FromRGB(0, 0, 0),
+                    Size = UDim2New(0, 24, 0, 24),
+                    AnchorPoint = Vector2New(0, 0.5),
+                    Image = "",
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0, 26, 0.5, 0),
+                    ZIndex = 2,
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })  Library:SetIcon(DashItems["Icon"].Instance, DashPage.Icon)
+
+                Instances:Create("UIGradient", {
+                    Parent = DashItems["Icon"].Instance,
+                    Name = "\0",
+                    Rotation = -115
+                }):AddToTheme({Color = function()
+                    return RGBSequence{RGBSequenceKeypoint(0, Library.Theme.Accent), RGBSequenceKeypoint(1, Library.Theme.AccentGradient)}
+                end})
+
+                DashItems["Text"] = Instances:Create("TextLabel", {
+                    Parent = DashItems["Inactive"].Instance,
+                    Name = "\0",
+                    FontFace = Library.Font,
+                    TextColor3 = FromRGB(240, 240, 240),
+                    BorderColor3 = FromRGB(0, 0, 0),
+                    Text = DashPage.Name,
+                    AutomaticSize = Enum.AutomaticSize.X,
+                    AnchorPoint = Vector2New(0, 0.5),
+                    Size = UDim2New(0, 0, 0, 18),
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0, 60, 0.5, 0),
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    TextSize = 16,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })  DashItems["Text"]:AddToTheme({TextColor3 = "Text"})
+
+                DashItems["Page"] = Instances:Create("CanvasGroup", {
+                    Parent = Library.UnusedHolder.Instance,
+                    Name = "\0",
+                    Visible = false,
+                    GroupTransparency = 1,
+                    BackgroundTransparency = 1,
+                    Size = UDim2New(1, 0, 1, 0),
+                    BorderColor3 = FromRGB(0, 0, 0),
+                    ZIndex = 2,
+                    Position = UDim2New(0, 0, 0, 70),
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                Instances:Create("UIPadding", {
+                    Parent = DashItems["Page"].Instance,
+                    Name = "\0",
+                    PaddingTop = UDimNew(0, 24),
+                    PaddingBottom = UDimNew(0, 24),
+                    PaddingRight = UDimNew(0, 24),
+                    PaddingLeft = UDimNew(0, 24)
+                })
+
+                local AvatarImage = ""
+                pcall(function()
+                    AvatarImage = game.Players:GetUserThumbnailAsync(
+                        LocalPlayer.UserId,
+                        Enum.ThumbnailType.HeadShot,
+                        Enum.ThumbnailSize.Size420x420
+                    )
+                end)
+
+                DashItems["HeroRow"] = Instances:Create("Frame", {
+                    Parent = DashItems["Page"].Instance,
+                    Name = "\0",
+                    BackgroundTransparency = 1,
+                    Size = UDim2New(1, 0, 0, 250),
+                    Position = UDim2New(0, 0, 0, 0),
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                local LeftCol = Instances:Create("Frame", {
+                    Parent = DashItems["HeroRow"].Instance,
+                    Name = "\0",
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0, 0, 0, 0),
+                    Size = UDim2New(0.57, -8, 1, 0),
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                DashItems["WelcomeLabel"] = Instances:Create("TextLabel", {
+                    Parent = LeftCol.Instance,
+                    Name = "\0",
+                    FontFace = Library.Fonts.Light,
+                    TextColor3 = FromRGB(160, 158, 180),
+                    Text = DashPage.WelcomeText,
+                    AutomaticSize = Enum.AutomaticSize.X,
+                    Size = UDim2New(0, 0, 0, 20),
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0, 0, 0, 0),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    TextSize = 14,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                DashItems["HubName"] = Instances:Create("TextLabel", {
+                    Parent = LeftCol.Instance,
+                    Name = "\0",
+                    FontFace = Library.Font,
+                    TextColor3 = FromRGB(255, 255, 255),
+                    Text = DashPage.HubName or Window.Name,
+                    AutomaticSize = Enum.AutomaticSize.X,
+                    Size = UDim2New(0, 0, 0, 54),
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0, 0, 0, 24),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    TextSize = 40,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                Instances:Create("UIGradient", {
+                    Parent = DashItems["HubName"].Instance,
+                    Name = "\0",
+                    Rotation = -90
+                }):AddToTheme({Color = function()
+                    return RGBSequence{RGBSequenceKeypoint(0, Library.Theme.Accent), RGBSequenceKeypoint(1, Library.Theme.AccentGradient)}
+                end})
+
+                DashItems["StatusText"] = Instances:Create("TextLabel", {
+                    Parent = LeftCol.Instance,
+                    Name = "\0",
+                    FontFace = Library.Fonts.Light,
+                    TextColor3 = FromRGB(120, 118, 145),
+                    Text = DashPage.StatusText or Window.SubName,
+                    AutomaticSize = Enum.AutomaticSize.X,
+                    Size = UDim2New(0, 0, 0, 20),
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0, 0, 0, 84),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    TextSize = 15,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                DashItems["LinksRow"] = Instances:Create("Frame", {
+                    Parent = LeftCol.Instance,
+                    Name = "\0",
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0, 0, 0, 116),
+                    Size = UDim2New(1, 0, 0, 42),
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                Instances:Create("UIListLayout", {
+                    Parent = DashItems["LinksRow"].Instance,
+                    Name = "\0",
+                    FillDirection = Enum.FillDirection.Horizontal,
+                    VerticalAlignment = Enum.VerticalAlignment.Center,
+                    Padding = UDimNew(0, 10),
+                    SortOrder = Enum.SortOrder.LayoutOrder
+                })
+
+                for _, link in DashPage.Links do
+                    local linkBtn = Instances:Create("TextButton", {
+                        Parent = DashItems["LinksRow"].Instance,
+                        Name = "\0",
+                        AutoButtonColor = false,
+                        Text = "",
+                        BorderSizePixel = 0,
+                        Size = UDim2New(0, 42, 0, 42),
+                        ZIndex = 3,
+                        BackgroundTransparency = 0.1,
+                        BackgroundColor3 = FromRGB(30, 28, 38)
+                    })  linkBtn:AddToTheme({BackgroundColor3 = "Element"})
+
+                    local linkHoverRing = Instances:Create("Frame", {
+                        Parent = linkBtn.Instance,
+                        Name = "\0",
+                        Active = false,
+                        AnchorPoint = Vector2New(0.5, 0.5),
+                        Position = UDim2New(0.5, 0, 0.5, 0),
+                        Size = UDim2New(1, 10, 1, 10),
+                        BackgroundTransparency = 1,
+                        BorderSizePixel = 0,
+                        ZIndex = 1,
+                        BackgroundColor3 = FromRGB(100, 149, 255)
+                    })
+                    linkHoverRing:AddToTheme({BackgroundColor3 = "Accent"})
+                    Instances:Create("UICorner", {
+                        Parent = linkHoverRing.Instance,
+                        Name = "\0",
+                        CornerRadius = UDimNew(1, 0)
+                    })
+
+                    Instances:Create("UICorner", {
+                        Parent = linkBtn.Instance,
+                        Name = "\0",
+                        CornerRadius = UDimNew(1, 0)
+                    })
+
+                    local linkStroke = Instances:Create("UIStroke", {
+                        Parent = linkBtn.Instance,
+                        Name = "\0",
+                        Thickness = 2.5,
+                        LineJoinMode = Enum.LineJoinMode.Round,
+                        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                        Transparency = 1,
+                    }):AddToTheme({Color = "Accent"})
+
+                    local linkIcon = Instances:Create("ImageLabel", {
+                        Parent = linkBtn.Instance,
+                        Name = "\0",
+                        AnchorPoint = Vector2New(0.5, 0.5),
+                        Position = UDim2New(0.5, 0, 0.5, 0),
+                        Size = UDim2New(0, 24, 0, 24),
+                        BackgroundTransparency = 1,
+                        BorderSizePixel = 0,
+                        ZIndex = 4,
+                        BackgroundColor3 = FromRGB(255, 255, 255)
+                    })
+                    Library:SetIcon(linkIcon.Instance, link.Icon or "link")
+                    Instances:Create("UIGradient", {
+                        Parent = linkIcon.Instance,
+                        Name = "\0",
+                        Rotation = -115
+                    }):AddToTheme({Color = function()
+                        return RGBSequence{RGBSequenceKeypoint(0, Library.Theme.Accent), RGBSequenceKeypoint(1, Library.Theme.AccentGradient)}
+                    end})
+
+                    linkBtn:Connect("MouseButton1Down", function()
+                        if link.Callback then Library:SafeCall(link.Callback) end
+                    end)
+                    linkBtn:OnHover(function()
+                        linkBtn:Tween(TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundTransparency = 0})
+                        linkHoverRing:Tween(TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundTransparency = 0.35})
+                        if linkStroke and linkStroke.Instance then
+                            TweenService:Create(linkStroke.Instance, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {Transparency = 0.06}):Play()
+                        end
+                    end)
+                    linkBtn:OnHoverLeave(function()
+                        linkBtn:Tween(TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundTransparency = 0.1})
+                        linkHoverRing:Tween(TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundTransparency = 1})
+                        if linkStroke and linkStroke.Instance then
+                            TweenService:Create(linkStroke.Instance, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Transparency = 1}):Play()
+                        end
+                    end)
+                    linkBtn:Connect("InputBegan", function(inp)
+                        if inp.UserInputType == Enum.UserInputType.Touch and linkStroke and linkStroke.Instance then
+                            TweenService:Create(linkStroke.Instance, TweenInfo.new(0.15, Enum.EasingStyle.Quart), {Transparency = 0.06}):Play()
+                        end
+                    end)
+                    linkBtn:Connect("InputEnded", function(inp)
+                        if inp.UserInputType == Enum.UserInputType.Touch and linkStroke and linkStroke.Instance then
+                            TweenService:Create(linkStroke.Instance, TweenInfo.new(0.22, Enum.EasingStyle.Quart), {Transparency = 1}):Play()
+                        end
+                    end)
+                    if link.Tooltip then
+                        Library:AttachTooltip(linkBtn.Instance, link.Tooltip)
+                    end
+                end
+
+                do
+                    local d1 = Instances:Create("Frame", {
+                        Parent = LeftCol.Instance,
+                        Name = "\0",
+                        BackgroundColor3 = FromRGB(38, 36, 44),
+                        Position = UDim2New(0, 0, 0, 166),
+                        Size = UDim2New(1, 0, 0, 1),
+                        BorderSizePixel = 0,
+                        ZIndex = 2,
+                        BackgroundTransparency = 0,
+                    })
+                    d1:AddToTheme({BackgroundColor3 = "Outline"})
+                end
+
+                DashItems["GameName"] = Instances:Create("TextLabel", {
+                    Parent = LeftCol.Instance,
+                    Name = "\0",
+                    FontFace = Library.Font,
+                    TextColor3 = FromRGB(245, 244, 255),
+                    Text = DashPage.GameName,
+                    AutomaticSize = Enum.AutomaticSize.X,
+                    Size = UDim2New(0, 0, 0, 36),
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0, 0, 0, 176),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    TextSize = 26,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })  DashItems["GameName"]:AddToTheme({TextColor3 = "Text"})
+
+                DashItems["GameDesc"] = Instances:Create("TextLabel", {
+                    Parent = LeftCol.Instance,
+                    Name = "\0",
+                    FontFace = Library.Fonts.Light,
+                    TextColor3 = FromRGB(120, 118, 148),
+                    Text = DashPage.GameDescription,
+                    Size = UDim2New(1, 0, 0, 56),
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0, 0, 0, 216),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    TextYAlignment = Enum.TextYAlignment.Top,
+                    TextWrapped = true,
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    TextSize = 15,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                do
+                    local d2 = Instances:Create("Frame", {
+                        Parent = LeftCol.Instance,
+                        Name = "\0",
+                        BackgroundColor3 = FromRGB(38, 36, 44),
+                        Position = UDim2New(0, 0, 0, 276),
+                        Size = UDim2New(1, 0, 0, 1),
+                        BorderSizePixel = 0,
+                        ZIndex = 2,
+                        BackgroundTransparency = 0,
+                    })
+                    d2:AddToTheme({BackgroundColor3 = "Outline"})
+                end
+
+                local RightCol = Instances:Create("Frame", {
+                    Parent = DashItems["HeroRow"].Instance,
+                    Name = "\0",
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0.59, 0, 0, 0),
+                    Size = UDim2New(0.41, 0, 1, 0),
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                DashItems["AvatarRing"] = Instances:Create("Frame", {
+                    Parent = RightCol.Instance,
+                    Name = "\0",
+                    AnchorPoint = Vector2New(1, 0),
+                    Position = UDim2New(1, 0, 0, 0),
+                    Size = UDim2New(0, 80, 0, 80),
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    BackgroundColor3 = FromRGB(40, 38, 48)
+                })  DashItems["AvatarRing"]:AddToTheme({BackgroundColor3 = "Element"})
+
+                Instances:Create("UICorner", {
+                    Parent = DashItems["AvatarRing"].Instance,
+                    Name = "\0",
+                    CornerRadius = UDimNew(1, 0)
+                })
+
+                Instances:Create("UIStroke", {
+                    Parent = DashItems["AvatarRing"].Instance,
+                    Name = "\0",
+                    Thickness = 2.5
+                }):AddToTheme({Color = "Accent"})
+
+                DashItems["Avatar"] = Instances:Create("ImageLabel", {
+                    Parent = DashItems["AvatarRing"].Instance,
+                    Name = "\0",
+                    Image = AvatarImage,
+                    AnchorPoint = Vector2New(0.5, 0.5),
+                    Position = UDim2New(0.5, 0, 0.5, 0),
+                    Size = UDim2New(1, -8, 1, -8),
+                    BackgroundTransparency = 1,
+                    BorderSizePixel = 0,
+                    ZIndex = 3,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                Instances:Create("UICorner", {
+                    Parent = DashItems["Avatar"].Instance,
+                    Name = "\0",
+                    CornerRadius = UDimNew(1, 0)
+                })
+
+                DashItems["PlayerName"] = Instances:Create("TextLabel", {
+                    Parent = RightCol.Instance,
+                    Name = "\0",
+                    FontFace = Library.Font,
+                    TextColor3 = FromRGB(225, 223, 240),
+                    Text = LocalPlayer.DisplayName,
+                    AutomaticSize = Enum.AutomaticSize.X,
+                    Size = UDim2New(0, 0, 0, 22),
+                    BackgroundTransparency = 1,
+                    AnchorPoint = Vector2New(1, 0),
+                    Position = UDim2New(1, 0, 0, 88),
+                    TextXAlignment = Enum.TextXAlignment.Right,
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    TextSize = 18,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })  DashItems["PlayerName"]:AddToTheme({TextColor3 = "Text"})
+
+                DashItems["Badge"] = Instances:Create("TextLabel", {
+                    Parent = RightCol.Instance,
+                    Name = "\0",
+                    FontFace = Library.Font,
+                    TextColor3 = FromRGB(255, 255, 255),
+                    Text = " " .. (DashPage.Badge or "PLAYER") .. " ",
+                    AutomaticSize = Enum.AutomaticSize.X,
+                    Size = UDim2New(0, 0, 0, 26),
+                    BackgroundTransparency = 0,
+                    AnchorPoint = Vector2New(1, 0),
+                    Position = UDim2New(1, 0, 0, 118),
+                    TextXAlignment = Enum.TextXAlignment.Center,
+                    BorderSizePixel = 0,
+                    ZIndex = 3,
+                    TextSize = 13,
+                    BackgroundColor3 = FromRGB(100, 140, 255)
+                })  DashItems["Badge"]:AddToTheme({BackgroundColor3 = "Accent"})
+
+                Instances:Create("UICorner", {
+                    Parent = DashItems["Badge"].Instance,
+                    Name = "\0",
+                    CornerRadius = UDimNew(1, 0)
+                })
+
+                DashItems["StatsContainer"] = Instances:Create("Frame", {
+                    Parent = RightCol.Instance,
+                    Name = "\0",
+                    BackgroundTransparency = 1,
+                    AnchorPoint = Vector2New(1, 0),
+                    Position = UDim2New(1, 0, 0, 156),
+                    Size = UDim2New(1, 0, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                Instances:Create("UIListLayout", {
+                    Parent = DashItems["StatsContainer"].Instance,
+                    Name = "\0",
+                    Padding = UDimNew(0, 8),
+                    SortOrder = Enum.SortOrder.LayoutOrder
+                })
+
+                DashItems["StatItems"] = {}
+
+                local function AddStat(Name, GetValue, Icon)
+                    local statFrame = Instances:Create("Frame", {
+                        Parent = DashItems["StatsContainer"].Instance,
+                        Name = "\0",
+                        BackgroundTransparency = 1,
+                        Size = UDim2New(1, 0, 0, 26),
+                        BorderSizePixel = 0,
+                        ZIndex = 2,
+                        BackgroundColor3 = FromRGB(255, 255, 255)
+                    })
+
+                    local statIcon = Instances:Create("ImageLabel", {
+                        Parent = statFrame.Instance,
+                        Name = "\0",
+                        AnchorPoint = Vector2New(0, 0.5),
+                        Position = UDim2New(0, 0, 0.5, 0),
+                        Size = UDim2New(0, 18, 0, 18),
+                        BackgroundTransparency = 1,
+                        BorderSizePixel = 0,
+                        ZIndex = 3,
+                        BackgroundColor3 = FromRGB(255, 255, 255)
+                    })
+                    Library:SetIcon(statIcon.Instance, Icon or "activity")
+                    Instances:Create("UIGradient", {
+                        Parent = statIcon.Instance,
+                        Name = "\0",
+                        Rotation = -115
+                    }):AddToTheme({Color = function()
+                        return RGBSequence{RGBSequenceKeypoint(0, Library.Theme.Accent), RGBSequenceKeypoint(1, Library.Theme.AccentGradient)}
+                    end})
+
+                    Instances:Create("TextLabel", {
+                        Parent = statFrame.Instance,
+                        Name = "\0",
+                        FontFace = Library.Fonts.Light,
+                        TextColor3 = FromRGB(100, 98, 125),
+                        Text = StringLower(Name),
+                        AutomaticSize = Enum.AutomaticSize.X,
+                        Size = UDim2New(0, 0, 1, 0),
+                        BackgroundTransparency = 1,
+                        Position = UDim2New(0, 26, 0, 0),
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        BorderSizePixel = 0,
+                        ZIndex = 2,
+                        TextSize = 14,
+                        BackgroundColor3 = FromRGB(255, 255, 255)
+                    })
+
+                    local statVal = Instances:Create("TextLabel", {
+                        Parent = statFrame.Instance,
+                        Name = "\0",
+                        FontFace = Library.Font,
+                        TextColor3 = FromRGB(215, 215, 235),
+                        Text = "—",
+                        AutomaticSize = Enum.AutomaticSize.X,
+                        Size = UDim2New(0, 0, 1, 0),
+                        BackgroundTransparency = 1,
+                        AnchorPoint = Vector2New(1, 0),
+                        Position = UDim2New(1, 0, 0, 0),
+                        TextXAlignment = Enum.TextXAlignment.Right,
+                        BorderSizePixel = 0,
+                        ZIndex = 2,
+                        TextSize = 14,
+                        BackgroundColor3 = FromRGB(255, 255, 255)
+                    })  statVal:AddToTheme({TextColor3 = "Text"})
+
+                    DashItems["StatItems"][Name] = {
+                        Frame = statFrame,
+                        Value = statVal,
+                        GetValue = GetValue
+                    }
+                end
+
+                for _, StatData in DashPage.Stats do
+                    AddStat(StatData.Name or "Stat", StatData.GetValue, StatData.Icon)
+                end
+
+                if #DashPage.Stats > 0 then
+                    Library:Connect(RunService.Heartbeat, function()
+                        for _, StatInfo in DashItems["StatItems"] do
+                            if StatInfo.GetValue then
+                                local ok, val = pcall(StatInfo.GetValue)
+                                if ok and val ~= nil then
+                                    StatInfo.Value.Instance.Text = tostring(val)
+                                end
+                            end
+                        end
+                    end)
+                end
+
+                DashItems["Sep1"] = Instances:Create("Frame", {
+                    Parent = DashItems["Page"].Instance,
+                    Name = "\0",
+                    BackgroundColor3 = FromRGB(38, 36, 46),
+                    Position = UDim2New(0, 0, 0, 256),
+                    Size = UDim2New(0.59, -12, 0, 1),
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    BackgroundTransparency = 0
+                })  DashItems["Sep1"]:AddToTheme({BackgroundColor3 = "Element"})
+
+                DashItems["QASep"] = Instances:Create("TextLabel", {
+                    Parent = DashItems["Page"].Instance,
+                    Name = "\0",
+                    FontFace = Library.Fonts.Light,
+                    TextColor3 = FromRGB(80, 78, 102),
+                    Text = "QUICK ACCESS",
+                    AutomaticSize = Enum.AutomaticSize.X,
+                    Size = UDim2New(0, 0, 0, 20),
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0, 0, 0, 270),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    TextSize = 13,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                DashItems["QARow"] = Instances:Create("Frame", {
+                    Parent = DashItems["Page"].Instance,
+                    Name = "\0",
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0, 0, 0, 300),
+                    Size = UDim2New(1, 0, 1, -300),
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                Instances:Create("UIListLayout", {
+                    Parent = DashItems["QARow"].Instance,
+                    Name = "\0",
+                    FillDirection = Enum.FillDirection.Horizontal,
+                    Padding = UDimNew(0, 14),
+                    SortOrder = Enum.SortOrder.LayoutOrder
+                })
+
+                DashItems["QACards"] = {}
+
+                AddQuickCard = function(CardData, Index)
+                    local numCards = #DashPage.QuickAccess
+                    local card = Instances:Create("TextButton", {
+                        Parent = DashItems["QARow"].Instance,
+                        Name = "\0",
+                        AutoButtonColor = false,
+                        Text = "",
+                        BackgroundColor3 = FromRGB(22, 21, 26),
+                        BorderSizePixel = 0,
+                        Size = UDim2New(1 / numCards, Index < numCards and -8 or 0, 1, 0),
+                        ZIndex = 2,
+                        BackgroundTransparency = 0
+                    })  card:AddToTheme({BackgroundColor3 = "Section Background 2"})
+
+                    Instances:Create("UICorner", {
+                        Parent = card.Instance,
+                        Name = "\0",
+                        CornerRadius = UDimNew(0, 10)
+                    })
+
+                    local cardStroke = Instances:Create("UIStroke", {
+                        Parent = card.Instance,
+                        Name = "\0",
+                        Color = FromRGB(38, 36, 46),
+                        Thickness = 1,
+                        Transparency = 0
+                    })
+
+                    local cardIcon = Instances:Create("ImageLabel", {
+                        Parent = card.Instance,
+                        Name = "\0",
+                        AnchorPoint = Vector2New(0.5, 0),
+                        Position = UDim2New(0.5, 0, 0, 30),
+                        Size = UDim2New(0, 38, 0, 38),
+                        BackgroundTransparency = 1,
+                        BorderSizePixel = 0,
+                        ZIndex = 3,
+                        BackgroundColor3 = FromRGB(255, 255, 255)
+                    })
+                    Library:SetIcon(cardIcon.Instance, CardData.Icon or "layout-grid")
+                    Instances:Create("UIGradient", {
+                        Parent = cardIcon.Instance,
+                        Name = "\0",
+                        Rotation = -115
+                    }):AddToTheme({Color = function()
+                        return RGBSequence{RGBSequenceKeypoint(0, Library.Theme.Accent), RGBSequenceKeypoint(1, Library.Theme.AccentGradient)}
+                    end})
+
+                    Instances:Create("TextLabel", {
+                        Parent = card.Instance,
+                        Name = "\0",
+                        FontFace = Library.Font,
+                        TextColor3 = FromRGB(225, 224, 240),
+                        Text = CardData.Name or "Tab",
+                        Size = UDim2New(1, -28, 0, 24),
+                        BackgroundTransparency = 1,
+                        AnchorPoint = Vector2New(0.5, 0),
+                        Position = UDim2New(0.5, 0, 0, 76),
+                        TextXAlignment = Enum.TextXAlignment.Center,
+                        BorderSizePixel = 0,
+                        ZIndex = 2,
+                        TextSize = 16,
+                        BackgroundColor3 = FromRGB(255, 255, 255)
+                    })
+
+                    Instances:Create("TextLabel", {
+                        Parent = card.Instance,
+                        Name = "\0",
+                        FontFace = Library.Fonts.Light,
+                        TextColor3 = FromRGB(100, 98, 130),
+                        Text = CardData.Description or "",
+                        Size = UDim2New(1, -28, 0, 48),
+                        BackgroundTransparency = 1,
+                        AnchorPoint = Vector2New(0.5, 0),
+                        Position = UDim2New(0.5, 0, 0, 104),
+                        TextXAlignment = Enum.TextXAlignment.Center,
+                        TextWrapped = true,
+                        BorderSizePixel = 0,
+                        ZIndex = 2,
+                        TextSize = 14,
+                        BackgroundColor3 = FromRGB(255, 255, 255)
+                    })
+
+                    card:OnHover(function()
+                        card:Tween(TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundColor3 = FromRGB(30, 28, 36)})
+                        Tween:Create(cardStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {Color = Library.Theme.Accent, Transparency = 0}, true)
+                    end)
+                    card:OnHoverLeave(function()
+                        card:Tween(TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundColor3 = Library.Theme["Section Background 2"]})
+                        Tween:Create(cardStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {Color = FromRGB(38, 36, 46), Transparency = 0}, true)
+                    end)
+
+                    card:Connect("MouseButton1Down", function()
+                        if type(CardData.Tab) == "table" and CardData.Tab.Turn then
+                            local W = DashPage.Window
+                            local now = tick()
+                            if now < (W._tabCooldownUntil or 0) then return end
+                            local target = CardData.Tab
+                            for _, P in DashPage.Window.Tabs do
+                                if P == target and target.Active then return end
+                            end
+                            for _, P in DashPage.Window.Tabs do
+                                if P ~= target and P.InstantDeactivate then
+                                    P:InstantDeactivate()
+                                end
+                            end
+                            target:Turn(true)
+                            W._tabCooldownUntil = now + (W.TabSwitchCooldownSec or 0.5)
+                        elseif type(CardData.Callback) == "function" then
+                            Library:SafeCall(CardData.Callback)
+                        end
+                    end)
+
+                    DashItems["QACards"][Index] = card
+                end
+
+                for i, CardData in DashPage.QuickAccess do
+                    AddQuickCard(CardData, i)
+                end
+
+                DashPage.Items = DashItems
+            end
+
+            local DashDebounce = false
+
+            function DashPage:InstantDeactivate()
+                DashItems["Inactive"].Instance.BackgroundTransparency = 1
+                DashItems["TabIndicator"].Instance.BackgroundTransparency = 1
+                DashItems["Page"].Instance.Visible = false
+                DashItems["Page"].Instance.Parent = Library.UnusedHolder.Instance
+                DashItems["Page"].Instance.GroupTransparency = 1
+                DashPage.Active = false
+                DashDebounce = false
+            end
+
+            function DashPage:Turn(Bool)
+                if DashDebounce then return end
+                DashPage.Active = Bool
+                DashDebounce = true
+
+                local dti = TweenInfo.new(0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+                if Bool then
+                    DashItems["Page"].Instance.Visible = true
+                    DashItems["Page"].Instance.Parent = DashPage.Window.Items["Content"].Instance
+                    DashItems["Page"].Instance.GroupTransparency = 1
+                    DashItems["Page"].Instance.Position = UDim2New(0, 0, 0, 28)
+
+                    DashItems["Inactive"]:Tween(nil, {BackgroundTransparency = 0.88})
+                    DashItems["TabIndicator"]:Tween(nil, {BackgroundTransparency = 0})
+
+                    local NewTween = Tween:Create(DashItems["Page"].Instance, dti, {GroupTransparency = 0, Position = UDim2New(0, 0, 0, 0)}, true)
+                    if NewTween and NewTween.Tween then
+                        Library:Connect(NewTween.Tween.Completed, function()
+                            DashDebounce = false
+                        end)
+                    else
+                        DashDebounce = false
+                    end
+                else
+                    DashItems["Inactive"]:Tween(nil, {BackgroundTransparency = 1})
+                    DashItems["TabIndicator"]:Tween(nil, {BackgroundTransparency = 1})
+
+                    local NewTween = Tween:Create(DashItems["Page"].Instance, dti, {GroupTransparency = 1, Position = UDim2New(0, 0, 0, 36)}, true)
+                    if NewTween and NewTween.Tween then
+                        Library:Connect(NewTween.Tween.Completed, function()
+                            DashItems["Page"].Instance.Visible = false
+                            DashItems["Page"].Instance.Parent = Library.UnusedHolder.Instance
+                            DashDebounce = false
+                        end)
+                    else
+                        DashItems["Page"].Instance.Visible = false
+                        DashItems["Page"].Instance.Parent = Library.UnusedHolder.Instance
+                        DashDebounce = false
+                    end
+                end
+            end
+
+            function DashPage:SetGameName(Name)
+                DashItems["GameName"].Instance.Text = tostring(Name)
+            end
+
+            function DashPage:SetGameDescription(Desc)
+                DashItems["GameDesc"].Instance.Text = tostring(Desc)
+            end
+
+            function DashPage:SetStat(Name, Value)
+                if DashItems["StatItems"] and DashItems["StatItems"][Name] then
+                    DashItems["StatItems"][Name].Value.Instance.Text = tostring(Value)
+                end
+            end
+
+            function DashPage:AddCard(CardData)
+                local idx = #DashItems["QACards"] + 1
+                TableInsert(DashPage.QuickAccess, CardData)
+                AddQuickCard(CardData, idx)
+                local numCards = #DashPage.QuickAccess
+                for i, card in DashItems["QACards"] do
+                    card.Instance.Size = UDim2New(1 / numCards, i < numCards and -8 or 0, 1, 0)
+                end
+            end
+
+            DashItems["Inactive"]:Connect("MouseButton1Down", function()
+                local W = DashPage.Window
+                local now = tick()
+                if now < (W._tabCooldownUntil or 0) then return end
+                for _, Value in DashPage.Window.Tabs do
+                    if Value == DashPage and DashPage.Active then return end
+                end
+                for _, Value in DashPage.Window.Tabs do
+                    if Value ~= DashPage and Value.InstantDeactivate then
+                        Value:InstantDeactivate()
+                    end
+                end
+                DashPage:Turn(true)
+                W._tabCooldownUntil = now + (W.TabSwitchCooldownSec or 0.5)
+            end)
+
+            if #DashPage.Window.Tabs == 0 then
+                DashPage:Turn(true)
+            end
+
+            TableInsert(DashPage.Window.Tabs, DashPage)
+            return DashPage
+        end
+
+        local function rebuildSection(Tab, Data)
             Data = Data or { }
+
             local Section = {
-                Window = self.Window,
-                Tab = self,
+                Window = Tab.Window,
+                Tab = Tab,
+
                 Name = Data.Name or Data.name or "Section",
                 Description = Data.Description or Data.Description or "",
                 Icon = Data.Icon or Data.icon or "123944728972740",
+
                 Items = { },
                 IsActive = true,
                 Elements = { }
@@ -3548,13 +4443,13 @@ local Library do
 
             local Items = { } do
                 Items["Section"] = Instances:Create("Frame", {
-                    Parent = self.Items["Layout"].Instance,
+                    Parent = Tab.Items["TabContent"].Instance,
                     Name = "\0",
                     BorderColor3 = FromRGB(0, 0, 0),
                     BackgroundTransparency = 0.65,
                     ClipsDescendants = true,
                     BorderSizePixel = 0,
-                    Size = UDim2New(1, 0, 0, 74),
+                    Size = UDim2New(1, 0, 0, 65),
                     ZIndex = 2,
                     LayoutOrder = Data.LayoutOrder or Data.layoutOrder or 0,
                     AutomaticSize = Enum.AutomaticSize.Y,
@@ -3829,17 +4724,26 @@ local Library do
                     BackgroundColor3 = FromRGB(24, 22, 25)
                 })  Items["Background"]:AddToTheme({BackgroundColor3 = "Section Background"})
                 
-                Items["Content"] = Instances:Create("Frame", {
+                -- ======================== 修改开始 ========================
+                -- 将原来的 Content Frame 改为 ScrollingFrame 以支持滚动
+                Items["Content"] = Instances:Create("ScrollingFrame", {
                     Parent = Items["Background"].Instance,
                     Name = "\0",
-                    BorderColor3 = FromRGB(0, 0, 0),
                     BackgroundTransparency = 1,
+                    BorderColor3 = FromRGB(0, 0, 0),
                     Position = UDim2New(0, 18, 0, 22),
                     Size = UDim2New(1, -36, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,           -- 自动高度
+                    AutomaticCanvasSize = Enum.AutomaticSize.Y,     -- 画布自动适应内容
+                    ScrollingDirection = Enum.ScrollingDirection.Y,
+                    ScrollBarThickness = 4,                         -- 滚动条厚度
+                    ScrollBarImageColor3 = Library.Theme.Accent,    -- 滚动条颜色（跟随主题）
                     BorderSizePixel = 0,
-                    AutomaticSize = Enum.AutomaticSize.Y,
-                    BackgroundColor3 = FromRGB(255, 255, 255)
+                    ClipsDescendants = true,
+                    ZIndex = 2,
                 })
+                Items["Content"]:AddToTheme({ScrollBarImageColor3 = "Accent"})
+                -- ======================== 修改结束 ========================
                 
                 Instances:Create("UIListLayout", {
                     Parent = Items["Content"].Instance,
@@ -3847,27 +4751,54 @@ local Library do
                     Padding = UDimNew(0, 10),
                     SortOrder = Enum.SortOrder.LayoutOrder
                 })                
+
+                Items["Fade"] = Instances:Create("TextButton", {
+                    Parent = Items["Background"].Instance,
+                    Name = "\0",
+                    BackgroundTransparency = 1,
+                    Size = UDim2New(0, 0, 10, 0),
+                    BorderColor3 = FromRGB(0, 0, 0),
+                    AutoButtonColor = false,
+                    Visible = false,
+                    Text = "",
+                    ZIndex = 2,
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = FromRGB(24, 22, 25)
+                })  Items["Fade"]:AddToTheme({BackgroundColor3 = "Section Background"})
+                
+                Instances:Create("UICorner", {
+                    Parent = Items["Fade"].Instance,
+                    Name = "\0",
+                    CornerRadius = UDimNew(0, 8)
+                })                
+
+                Instances:Create("UIPadding", {
+                    Parent = Items["Content"].Instance,
+                    Name = "\0",
+                    PaddingBottom = UDimNew(0, 16)
+                })
+
+                Section.Items = Items
             end
 
             function Section:ToggleBackground()
                 Section.IsActive = not Section.IsActive
-                
-                if not Section.IsActive then
-                    Items["Content"].Instance.Visible = false
-                    Items["Background"]:Tween(nil, {BackgroundTransparency = 1})
-                    task.delay(Library.Tween.Time, function()
-                        if not Section.IsActive then
-                            Items["Background"].Instance.Visible = false
-                        end
-                    end)
+
+                if not Section.IsActive then 
+                    Items["Fade"].Instance.Visible = true
+                    Items["Fade"]:Tween(nil, {BackgroundTransparency = 0.3})
+    
                     Items["Gradient"].Instance.Enabled = false
                     Items["Toggle"]:ChangeItemTheme({BackgroundColor3 = "Element"})
                     Items["Toggle"]:Tween(nil, {BackgroundColor3 = Library.Theme.Element})
                     Items["Circle"]:Tween(nil, {AnchorPoint = Vector2New(0, 0.5), Position = UDim2New(0, 6, 0.5, 0), BackgroundColor3 = Library.Theme.Text, BackgroundTransparency = 0.6})
                 else
-                    Items["Background"].Instance.Visible = true
-                    Items["Content"].Instance.Visible = true
-                    Items["Background"]:Tween(nil, {BackgroundTransparency = 0.65})
+                    Items["Fade"]:Tween(nil, {BackgroundTransparency = 1})
+                    task.spawn(function() 
+                        task.wait(Library.Tween.Time)
+                        Items["Fade"].Instance.Visible = false
+                    end)
+
                     Items["Gradient"].Instance.Enabled = true
                     Items["Toggle"]:ChangeItemTheme({BackgroundColor3 = "Text"})
                     Items["Toggle"]:Tween(nil, {BackgroundColor3 = Library.Theme.Text})
@@ -3875,11 +4806,15 @@ local Library do
                 end
             end
 
+            Library:Connect(Items["Content"].Instance.Changed, function(Property)
+                if Property == "AbsoluteSize" then
+                    Items["Fade"].Instance.Size = UDim2New(1, 0, 0, Items["Content"].Instance.AbsoluteSize.Y + 14)
+                end
+            end)
+
             function Section:TweenElements(Bool, Debounce)
                 for Index, Value in Section.Elements do
-                    if Value.RefreshPosition then
-                        Value:RefreshPosition(Bool)
-                    end
+                    Value:RefreshPosition(Bool)
                 end
             end
 
@@ -3888,9 +4823,11 @@ local Library do
             end)
 
             Tab.Sections[Section.Name] = Section
+
             return setmetatable(Section, Library.Sections)
         end
-        -- ========== 重写结束 ==========
+
+        Library.Tabs.Section = rebuildSection
 
         Library.Sections.Toggle = function(self, Data)
             Data = Data or { }
@@ -6747,88 +7684,88 @@ local Library do
         end
     end
 
-    Library.Sections.Divider = function(self, Label)
-        local Items = {} do
-            Items["Container"] = Instances:Create("Frame", {
-                Parent = self.Items["Content"].Instance,
-                Name = "\0",
-                BackgroundTransparency = 1,
-                Size = UDim2New(1, 0, 0, Label and 30 or 16),
-                BorderSizePixel = 0,
-                ZIndex = 2,
-                BackgroundColor3 = FromRGB(255, 255, 255)
-            })
-
-            if Label and Label ~= "" then
-                Items["LineLeft"] = Instances:Create("Frame", {
-                    Parent = Items["Container"].Instance,
+        Library.Sections.Divider = function(self, Label)
+            local Items = {} do
+                Items["Container"] = Instances:Create("Frame", {
+                    Parent = self.Items["Content"].Instance,
                     Name = "\0",
-                    AnchorPoint = Vector2New(0, 0.5),
-                    Position = UDim2New(0, 0, 0.5, 0),
-                    Size = UDim2New(0.35, -6, 0, 1),
-                    BorderSizePixel = 0,
-                    ZIndex = 2,
-                    BackgroundColor3 = FromRGB(38, 36, 44)
-                })
-
-                Items["LineRight"] = Instances:Create("Frame", {
-                    Parent = Items["Container"].Instance,
-                    Name = "\0",
-                    AnchorPoint = Vector2New(1, 0.5),
-                    Position = UDim2New(1, 0, 0.5, 0),
-                    Size = UDim2New(0.35, -6, 0, 1),
-                    BorderSizePixel = 0,
-                    ZIndex = 2,
-                    BackgroundColor3 = FromRGB(38, 36, 44)
-                })
-
-                Items["Label"] = Instances:Create("TextLabel", {
-                    Parent = Items["Container"].Instance,
-                    Name = "\0",
-                    FontFace = Library.Fonts.Light,
-                    TextColor3 = FromRGB(110, 108, 130),
-                    Text = Label,
-                    AutomaticSize = Enum.AutomaticSize.X,
-                    Size = UDim2New(0, 0, 1, 0),
                     BackgroundTransparency = 1,
-                    AnchorPoint = Vector2New(0.5, 0.5),
-                    Position = UDim2New(0.5, 0, 0.5, 0),
-                    TextSize = 14,
-                    ZIndex = 3,
+                    Size = UDim2New(1, 0, 0, Label and 30 or 16),
                     BorderSizePixel = 0,
+                    ZIndex = 2,
                     BackgroundColor3 = FromRGB(255, 255, 255)
                 })
-            else
-                Items["Line"] = Instances:Create("Frame", {
-                    Parent = Items["Container"].Instance,
-                    Name = "\0",
-                    AnchorPoint = Vector2New(0, 0.5),
-                    Position = UDim2New(0, 0, 0.5, 0),
-                    Size = UDim2New(1, 0, 0, 1),
-                    BorderSizePixel = 0,
-                    ZIndex = 2,
-                    BackgroundColor3 = FromRGB(38, 36, 44)
-                })
+
+                if Label and Label ~= "" then
+                    Items["LineLeft"] = Instances:Create("Frame", {
+                        Parent = Items["Container"].Instance,
+                        Name = "\0",
+                        AnchorPoint = Vector2New(0, 0.5),
+                        Position = UDim2New(0, 0, 0.5, 0),
+                        Size = UDim2New(0.35, -6, 0, 1),
+                        BorderSizePixel = 0,
+                        ZIndex = 2,
+                        BackgroundColor3 = FromRGB(38, 36, 44)
+                    })
+
+                    Items["LineRight"] = Instances:Create("Frame", {
+                        Parent = Items["Container"].Instance,
+                        Name = "\0",
+                        AnchorPoint = Vector2New(1, 0.5),
+                        Position = UDim2New(1, 0, 0.5, 0),
+                        Size = UDim2New(0.35, -6, 0, 1),
+                        BorderSizePixel = 0,
+                        ZIndex = 2,
+                        BackgroundColor3 = FromRGB(38, 36, 44)
+                    })
+
+                    Items["Label"] = Instances:Create("TextLabel", {
+                        Parent = Items["Container"].Instance,
+                        Name = "\0",
+                        FontFace = Library.Fonts.Light,
+                        TextColor3 = FromRGB(110, 108, 130),
+                        Text = Label,
+                        AutomaticSize = Enum.AutomaticSize.X,
+                        Size = UDim2New(0, 0, 1, 0),
+                        BackgroundTransparency = 1,
+                        AnchorPoint = Vector2New(0.5, 0.5),
+                        Position = UDim2New(0.5, 0, 0.5, 0),
+                        TextSize = 14,
+                        ZIndex = 3,
+                        BorderSizePixel = 0,
+                        BackgroundColor3 = FromRGB(255, 255, 255)
+                    })
+                else
+                    Items["Line"] = Instances:Create("Frame", {
+                        Parent = Items["Container"].Instance,
+                        Name = "\0",
+                        AnchorPoint = Vector2New(0, 0.5),
+                        Position = UDim2New(0, 0, 0.5, 0),
+                        Size = UDim2New(1, 0, 0, 1),
+                        BorderSizePixel = 0,
+                        ZIndex = 2,
+                        BackgroundColor3 = FromRGB(38, 36, 44)
+                    })
+                end
             end
+
+            local Divider = {
+                Window = self.Window,
+                Tab = self.Tab,
+                Section = self,
+                Items = Items
+            }
+
+            function Divider:SetVisibility(Bool)
+                Items["Container"].Instance.Visible = Bool
+            end
+
+            function Divider:RefreshPosition(Bool)
+            end
+
+            self.Elements[#self.Elements + 1] = Divider
+            return Divider
         end
-
-        local Divider = {
-            Window = self.Window,
-            Tab = self.Tab,
-            Section = self,
-            Items = Items
-        }
-
-        function Divider:SetVisibility(Bool)
-            Items["Container"].Instance.Visible = Bool
-        end
-
-        function Divider:RefreshPosition(Bool)
-        end
-
-        self.Elements[#self.Elements + 1] = Divider
-        return Divider
-    end
 
     Library.CreateSettingsPage = function(self, Window, KeybindList, Options)
         Options = Options or {}
