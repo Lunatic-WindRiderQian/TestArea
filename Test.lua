@@ -4721,36 +4721,45 @@ local Library do
                     Size = UDim2New(1, -2, 1, -75),
                     ZIndex = 2,
                     BorderSizePixel = 0,
+                    ClipsDescendants = true,   -- 确保内容不溢出
                     BackgroundColor3 = FromRGB(24, 22, 25)
                 })  Items["Background"]:AddToTheme({BackgroundColor3 = "Section Background"})
                 
-                -- ======================== 修改开始 ========================
-                -- 将原来的 Content Frame 改为 ScrollingFrame 以支持滚动
+                -- 滚动区域：ScrollingFrame，滚动条靠右，不遮挡控件
                 Items["Content"] = Instances:Create("ScrollingFrame", {
                     Parent = Items["Background"].Instance,
                     Name = "\0",
                     BackgroundTransparency = 1,
                     BorderColor3 = FromRGB(0, 0, 0),
                     Position = UDim2New(0, 18, 0, 22),
-                    Size = UDim2New(1, -36, 0, 0),
-                    AutomaticSize = Enum.AutomaticSize.Y,           -- 自动高度
-                    AutomaticCanvasSize = Enum.AutomaticSize.Y,     -- 画布自动适应内容
+                    Size = UDim2New(1, -42, 0, 0),            -- 右侧留出滚动条空间
+                    AutomaticSize = Enum.AutomaticSize.Y,
+                    AutomaticCanvasSize = Enum.AutomaticSize.Y,
                     ScrollingDirection = Enum.ScrollingDirection.Y,
-                    ScrollBarThickness = 4,                         -- 滚动条厚度
-                    ScrollBarImageColor3 = Library.Theme.Accent,    -- 滚动条颜色（跟随主题）
+                    ScrollBarThickness = 6,                    -- 滚动条厚度
+                    ScrollBarImageColor3 = Library.Theme.Accent,
                     BorderSizePixel = 0,
                     ClipsDescendants = true,
                     ZIndex = 2,
                 })
                 Items["Content"]:AddToTheme({ScrollBarImageColor3 = "Accent"})
-                -- ======================== 修改结束 ========================
                 
-                Instances:Create("UIListLayout", {
+                -- 内容内边距，右侧留出更多空间避免滚动条遮挡控件
+                local contentPadding = Instances:Create("UIPadding", {
+                    Parent = Items["Content"].Instance,
+                    Name = "\0",
+                    PaddingLeft = UDimNew(0, 0),
+                    PaddingRight = UDimNew(0, 10),
+                    PaddingTop = UDimNew(0, 0),
+                    PaddingBottom = UDimNew(0, 16)
+                })
+                
+                local contentLayout = Instances:Create("UIListLayout", {
                     Parent = Items["Content"].Instance,
                     Name = "\0",
                     Padding = UDimNew(0, 10),
                     SortOrder = Enum.SortOrder.LayoutOrder
-                })                
+                })
 
                 Items["Fade"] = Instances:Create("TextButton", {
                     Parent = Items["Background"].Instance,
@@ -4771,12 +4780,6 @@ local Library do
                     Name = "\0",
                     CornerRadius = UDimNew(0, 8)
                 })                
-
-                Instances:Create("UIPadding", {
-                    Parent = Items["Content"].Instance,
-                    Name = "\0",
-                    PaddingBottom = UDimNew(0, 16)
-                })
 
                 Section.Items = Items
             end
