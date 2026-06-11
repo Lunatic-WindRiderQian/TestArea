@@ -545,7 +545,7 @@ local Library do
             end)
         end
 
-        -- MakeResizeable has been removed. Replaced by Resizer in Library.Window.
+        -- MakeResizeable 已删除，替换为右下角手柄（Resizer）
 
         Instances.OnHover = function(self, Function)
             if not self.Instance then 
@@ -2523,89 +2523,63 @@ local Library do
                 end
 
                 Library.MainFrame = Items["MainFrame"]
-                -- MakeResizeable removed, replaced by Resizer below
+                -- 原 MakeResizeable 已删除，替换为右下角手柄 Resizer
                 Library:MakeBlurred(Items["MainFrame"], Window)
 
-                -- ========== 右下角调整手柄（默认隐藏，由控制按钮切换） ==========
-                local Resizer = nil
+                -- ========== 新增：右下角调整手柄（Resizer），从 UI.lua 移植 ==========
                 do
-                    Resizer = Instances:Create("TextButton", {
-                        Parent = Items["MainFrame"].Instance,
-                        Name = "\0",
-                        AutoButtonColor = false,
-                        Text = "",
-                        AnchorPoint = Vector2New(1, 1),
-                        Position = UDim2New(1, -6, 1, -6),
-                        Size = UDim2FromOffset(18, 18),
-                        BackgroundTransparency = 0.85,
-                        BorderSizePixel = 0,
-                        ZIndex = 250,
-                        Visible = false,   -- 默认隐藏
-                        BackgroundColor3 = FromRGB(255, 255, 255)
-                    })
-                    Resizer:AddToTheme({BackgroundColor3 = "Element"})
+                    local Resizer = Instance.new("TextButton")
+                    Resizer.Name = "WindowResizer"
+                    Resizer.Parent = Items["MainFrame"].Instance
+                    Resizer.BackgroundTransparency = 0.8
+                    Resizer.BackgroundColor3 = Color3.new(1, 1, 1)
+                    Resizer.Position = UDim2.new(1, 5, 1, 5)
+                    Resizer.Size = UDim2.new(0, 24, 0, 24)
+                    Resizer.AnchorPoint = Vector2.new(1, 1)
+                    Resizer.Text = ""
+                    Resizer.ZIndex = 30
+                    Resizer.Visible = false
 
-                    local ResizerCorner = Instances:Create("UICorner", {
-                        Parent = Resizer.Instance,
-                        CornerRadius = UDimNew(0, 4)
-                    })
+                    local stroke = Instance.new("UIStroke")
+                    stroke.Thickness = 4
+                    stroke.Color = Color3.new(1, 1, 1)
+                    stroke.Transparency = 0
+                    stroke.Parent = Resizer
 
-                    local ResizerIcon = Instances:Create("ImageLabel", {
-                        Parent = Resizer.Instance,
-                        Name = "\0",
-                        AnchorPoint = Vector2New(0.5, 0.5),
-                        Position = UDim2New(0.5, 0, 0.5, 0),
-                        Size = UDim2New(0, 12, 0, 12),
-                        BackgroundTransparency = 1,
-                        BorderSizePixel = 0,
-                        ZIndex = 9999,
-                        ImageTransparency = 0.4,
-                        BackgroundColor3 = FromRGB(255, 255, 255)
-                    })
-                    Library:SetIcon(ResizerIcon.Instance, "move-diagonal-2")
-                    ResizerIcon:AddToTheme({ImageColor3 = "Text"})
+                    local corner = Instance.new("UICorner")
+                    corner.CornerRadius = UDim.new(0, 6)
+                    corner.Parent = Resizer
 
-                    local Resizing = false
-                    local ResizeStartMouse = nil
-                    local ResizeStartSize = nil
-                    local ResizeStartPos = nil
+                    local isResizing = false
+                    local resizeStart = Vector2.new(0,0)
+                    local startSize = UDim2.new(0,0,0,0)
 
-                    Resizer:OnHover(function()
-                        ResizerIcon:Tween(TweenInfo.new(0.15, Enum.EasingStyle.Quart), {ImageTransparency = 0})
-                    end)
-                    Resizer:OnHoverLeave(function()
-                        if not Resizing then
-                            ResizerIcon:Tween(TweenInfo.new(0.15, Enum.EasingStyle.Quart), {ImageTransparency = 0.4})
+                    Resizer.InputBegan:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                            isResizing = true
+                            resizeStart = input.Position
+                            startSize = Items["MainFrame"].Instance.Size
                         end
                     end)
 
-                    Resizer:Connect("InputBegan", function(Input)
-                        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-                            Resizing = true
-                            ResizeStartMouse = UserInputService:GetMouseLocation()
-                            ResizeStartSize = Vector2New(Items["MainFrame"].Instance.AbsoluteSize.X, Items["MainFrame"].Instance.AbsoluteSize.Y)
-                            ResizeStartPos = Vector2New(Items["MainFrame"].Instance.Position.X.Offset, Items["MainFrame"].Instance.Position.Y.Offset)
+                    UserInputService.InputChanged:Connect(function(input)
+                        if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                            local delta = input.Position - resizeStart
+                            local newWidth = math.max(400, startSize.X.Offset + delta.X)
+                            local newHeight = math.max(250, startSize.Y.Offset + delta.Y)
+                            Items["MainFrame"].Instance.Size = UDim2.new(0, newWidth, 0, newHeight)
                         end
                     end)
 
-                    Library:Connect(UserInputService.InputEnded, function(Input)
-                        if (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) and Resizing then
-                            Resizing = false
-                            ResizerIcon:Tween(TweenInfo.new(0.15, Enum.EasingStyle.Quart), {ImageTransparency = 0.4})
+                    UserInputService.InputEnded:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                            isResizing = false
                         end
                     end)
 
-                    Library:Connect(RunService.RenderStepped, function()
-                        if not Resizing then return end
-                        local MousePos = UserInputService:GetMouseLocation()
-                        local dx = MousePos.X - ResizeStartMouse.X
-                        local dy = MousePos.Y - ResizeStartMouse.Y
-                        local NewW = MathClamp(ResizeStartSize.X + dx, 400, 9999)
-                        local NewH = MathClamp(ResizeStartSize.Y + dy, 300, 9999)
-                        Items["MainFrame"].Instance.Size = UDim2FromOffset(NewW, NewH)
-                    end)
+                    Items["Resizer"] = Resizer
                 end
-                -- ========== 调整手柄结束 ==========
+                -- ========== 结束 Resizer 移植 ==========
 
                 Items["LeftTabs"] = Instances:Create("Frame", {
                     Parent = Items["MainFrame"].Instance,
@@ -2929,7 +2903,90 @@ local Library do
                     CornerRadius = UDimNew(0, WINDOW_CORNER_RADIUS)
                 })
 
-                -- ========== 窗口顶部按钮组 ==========
+                Items["CloseButton"] = Instances:Create("TextButton", {
+                    Parent = Items["MainFrame"].Instance,
+                    Name = "\0",
+                    FontFace = Library.Font,
+                    TextColor3 = FromRGB(0, 0, 0),
+                    BorderColor3 = FromRGB(0, 0, 0),
+                    Text = "",
+                    AutoButtonColor = false,
+                    AnchorPoint = Vector2New(1, 0),
+                    BorderSizePixel = 0,
+                    BackgroundTransparency = 0.20000000298023224,
+                    Position = UDim2New(1, -14, 0, 11),
+                    Size = UDim2New(0, 32, 0, 32),
+                    ZIndex = 2,
+                    TextSize = 14,
+                    BackgroundColor3 = FromRGB(27, 25, 29)
+                })  Items["CloseButton"]:AddToTheme({BackgroundColor3 = "Element"})
+                
+                Instances:Create("UICorner", {
+                    Parent = Items["CloseButton"].Instance,
+                    Name = "\0",
+                    CornerRadius = UDimNew(0, 7)
+                })
+                
+                Items["CloseIcon"] = Instances:Create("ImageLabel", {
+                    Parent = Items["CloseButton"].Instance,
+                    Name = "\0",
+                    ImageColor3 = FromRGB(240, 240, 240),
+                    ImageTransparency = 0.30000001192092896,
+                    BorderColor3 = FromRGB(0, 0, 0),
+                    Size = UDim2New(0, 11, 0, 11),
+                    AnchorPoint = Vector2New(0.5, 0.5),
+                    Image = "rbxassetid://130510492706892",
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0.5, 0, 0.5, 0),
+                    ZIndex = 3,
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })  Items["CloseIcon"]:AddToTheme({ImageColor3 = "Text"})        
+                
+                Items["CloseButton"]:Connect("MouseButton1Down", function()
+                    Library:Unload()
+                end)
+
+                Items["CloseIconAccent"] = Instances:Create("Frame", {
+                    Parent = Items["CloseButton"].Instance,
+                    Name = "\0",
+                    BorderColor3 = FromRGB(0, 0, 0),
+                    AnchorPoint = Vector2New(0.5, 0.5),
+                    BorderSizePixel = 0,
+                    Position = UDim2New(0.5, 0, 0.5, 0),
+                    Size = UDim2New(0, 0, 0, 0),
+                    ZIndex = 2,
+                    BackgroundTransparency = 1,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                Instances:Create("UICorner", {
+                    Parent = Items["CloseIconAccent"].Instance,
+                    Name = "\0",
+                    CornerRadius = UDimNew(0, 7)
+                })
+
+                function Window:SetTransparency()
+                    Items["MainFrame"].Instance.BackgroundTransparency = Library.Flags["BackgroundTransparency"] 
+                    Items["LeftTabs"].Instance.BackgroundTransparency = Library.Flags["BackgroundTransparency"]  
+                    if Items["FloatingButton"] then
+                        local showFloat = Library.Flags["FloatingButtonVisible"] ~= false
+                        Items["FloatingButton"].Instance.Visible = showFloat
+                        if showFloat then
+                            Items["FloatingButton"].Instance.BackgroundTransparency = Library.Flags["BackgroundTransparency"]
+                        end
+                    end
+                end
+
+                Instances:Create("UIGradient", {
+                    Parent = Items["CloseIconAccent"].Instance,
+                    Name = "\0",
+                    Color = RGBSequence{RGBSequenceKeypoint(0, FromRGB(255, 255, 255)), RGBSequenceKeypoint(1, FromRGB(143, 143, 143))},
+                    Rotation = -115
+                }):AddToTheme({Color = function()
+                    return RGBSequence{RGBSequenceKeypoint(0, Library.Theme.Accent), RGBSequenceKeypoint(1, Library.Theme.AccentGradient)}
+                end})
+
                 Items["MinimizeButton"] = Instances:Create("TextButton", {
                     Parent = Items["MainFrame"].Instance,
                     Name = "\0",
@@ -3016,153 +3073,6 @@ local Library do
                     })
                 end)
 
-                -- 新增：手柄显示/隐藏控制按钮（位于最小化按钮与关闭按钮之间）
-                Items["ResizeToggleButton"] = Instances:Create("TextButton", {
-                    Parent = Items["MainFrame"].Instance,
-                    Name = "\0",
-                    FontFace = Library.Font,
-                    TextColor3 = FromRGB(0, 0, 0),
-                    BorderColor3 = FromRGB(0, 0, 0),
-                    Text = "",
-                    AutoButtonColor = false,
-                    AnchorPoint = Vector2New(1, 0),
-                    BorderSizePixel = 0,
-                    BackgroundTransparency = 0.20000000298023224,
-                    Position = UDim2New(1, -98, 0, 11),  -- 位于最小化按钮左侧：-56 是 Min, -98 则在更左
-                    Size = UDim2New(0, 32, 0, 32),
-                    ZIndex = 2,
-                    TextSize = 14,
-                    BackgroundColor3 = FromRGB(27, 25, 29)
-                })  Items["ResizeToggleButton"]:AddToTheme({BackgroundColor3 = "Element"})
-
-                Instances:Create("UICorner", {
-                    Parent = Items["ResizeToggleButton"].Instance,
-                    Name = "\0",
-                    CornerRadius = UDimNew(0, 7)
-                })
-
-                -- 使用原调整手柄中的图片ID
-                local ToggleIcon = Instances:Create("ImageLabel", {
-                    Parent = Items["ResizeToggleButton"].Instance,
-                    Name = "\0",
-                    ImageColor3 = FromRGB(240, 240, 240),
-                    ImageTransparency = 0.3,
-                    BorderColor3 = FromRGB(0, 0, 0),
-                    Size = UDim2New(0, 14, 0, 14),
-                    AnchorPoint = Vector2New(0.5, 0.5),
-                    Image = "rbxassetid://132511743665753",  -- 原调整手柄图片ID
-                    BackgroundTransparency = 1,
-                    Position = UDim2New(0.5, 0, 0.5, 0),
-                    ZIndex = 3,
-                    BorderSizePixel = 0,
-                    BackgroundColor3 = FromRGB(255, 255, 255)
-                })  ToggleIcon:AddToTheme({ImageColor3 = "Text"})
-
-                -- 悬停效果
-                Items["ResizeToggleButton"]:OnHover(function()
-                    ToggleIcon:Tween(TweenInfo.new(Library.Tween.Time + 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0})
-                end)
-                Items["ResizeToggleButton"]:OnHoverLeave(function()
-                    ToggleIcon:Tween(TweenInfo.new(Library.Tween.Time + 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0.3})
-                end)
-
-                -- 点击切换右下角调整手柄的可见性
-Items["ResizeToggleButton"]:Connect("MouseButton1Down", function()
-    if Resizer then
-        local newVisible = not Resizer.Instance.Visible
-        Resizer.Instance.Visible = newVisible
-        ToggleIcon:Tween(TweenInfo.new(0.2), {ImageTransparency = newVisible and 0 or 0.3})
-    end
-end)
-                        -- 可选：改变按钮图标透明度或颜色以指示状态
-                        Tween(ToggleIcon.Instance, TweenInfo.new(0.2), {ImageTransparency = newVisible and 0 or 0.3})
-                    end
-                end)
-
-                Items["CloseButton"] = Instances:Create("TextButton", {
-                    Parent = Items["MainFrame"].Instance,
-                    Name = "\0",
-                    FontFace = Library.Font,
-                    TextColor3 = FromRGB(0, 0, 0),
-                    BorderColor3 = FromRGB(0, 0, 0),
-                    Text = "",
-                    AutoButtonColor = false,
-                    AnchorPoint = Vector2New(1, 0),
-                    BorderSizePixel = 0,
-                    BackgroundTransparency = 0.20000000298023224,
-                    Position = UDim2New(1, -14, 0, 11),
-                    Size = UDim2New(0, 32, 0, 32),
-                    ZIndex = 2,
-                    TextSize = 14,
-                    BackgroundColor3 = FromRGB(27, 25, 29)
-                })  Items["CloseButton"]:AddToTheme({BackgroundColor3 = "Element"})
-                
-                Instances:Create("UICorner", {
-                    Parent = Items["CloseButton"].Instance,
-                    Name = "\0",
-                    CornerRadius = UDimNew(0, 7)
-                })
-                
-                Items["CloseIcon"] = Instances:Create("ImageLabel", {
-                    Parent = Items["CloseButton"].Instance,
-                    Name = "\0",
-                    ImageColor3 = FromRGB(240, 240, 240),
-                    ImageTransparency = 0.30000001192092896,
-                    BorderColor3 = FromRGB(0, 0, 0),
-                    Size = UDim2New(0, 11, 0, 11),
-                    AnchorPoint = Vector2New(0.5, 0.5),
-                    Image = "rbxassetid://130510492706892",
-                    BackgroundTransparency = 1,
-                    Position = UDim2New(0.5, 0, 0.5, 0),
-                    ZIndex = 3,
-                    BorderSizePixel = 0,
-                    BackgroundColor3 = FromRGB(255, 255, 255)
-                })  Items["CloseIcon"]:AddToTheme({ImageColor3 = "Text"})        
-                
-                Items["CloseButton"]:Connect("MouseButton1Down", function()
-                    Library:Unload()
-                end)
-
-                Items["CloseIconAccent"] = Instances:Create("Frame", {
-                    Parent = Items["CloseButton"].Instance,
-                    Name = "\0",
-                    BorderColor3 = FromRGB(0, 0, 0),
-                    AnchorPoint = Vector2New(0.5, 0.5),
-                    BorderSizePixel = 0,
-                    Position = UDim2New(0.5, 0, 0.5, 0),
-                    Size = UDim2New(0, 0, 0, 0),
-                    ZIndex = 2,
-                    BackgroundTransparency = 1,
-                    BackgroundColor3 = FromRGB(255, 255, 255)
-                })
-
-                Instances:Create("UICorner", {
-                    Parent = Items["CloseIconAccent"].Instance,
-                    Name = "\0",
-                    CornerRadius = UDimNew(0, 7)
-                })
-
-                function Window:SetTransparency()
-                    Items["MainFrame"].Instance.BackgroundTransparency = Library.Flags["BackgroundTransparency"] 
-                    Items["LeftTabs"].Instance.BackgroundTransparency = Library.Flags["BackgroundTransparency"]  
-                    if Items["FloatingButton"] then
-                        local showFloat = Library.Flags["FloatingButtonVisible"] ~= false
-                        Items["FloatingButton"].Instance.Visible = showFloat
-                        if showFloat then
-                            Items["FloatingButton"].Instance.BackgroundTransparency = Library.Flags["BackgroundTransparency"]
-                        end
-                    end
-                end
-
-                Instances:Create("UIGradient", {
-                    Parent = Items["CloseIconAccent"].Instance,
-                    Name = "\0",
-                    Color = RGBSequence{RGBSequenceKeypoint(0, FromRGB(255, 255, 255)), RGBSequenceKeypoint(1, FromRGB(143, 143, 143))},
-                    Rotation = -115
-                }):AddToTheme({Color = function()
-                    return RGBSequence{RGBSequenceKeypoint(0, Library.Theme.Accent), RGBSequenceKeypoint(1, Library.Theme.AccentGradient)}
-                end})
-
                 Items["CloseButton"]:OnHover(function()
                     Items["CloseIconAccent"]:Tween(TweenInfo.new(Library.Tween.Time + 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
                         Size = UDim2New(1, 0, 1, 0),
@@ -3176,7 +3086,99 @@ end)
                         BackgroundTransparency = 1
                     })
                 end)
-                
+
+                -- ========== 新增：最大化按钮（控制 Resizer 可见性） ==========
+                Items["MaximizeButton"] = Instances:Create("TextButton", {
+                    Parent = Items["MainFrame"].Instance,
+                    Name = "\0",
+                    FontFace = Library.Font,
+                    TextColor3 = FromRGB(0, 0, 0),
+                    BorderColor3 = FromRGB(0, 0, 0),
+                    Text = "",
+                    AutoButtonColor = false,
+                    AnchorPoint = Vector2New(1, 0),
+                    BorderSizePixel = 0,
+                    BackgroundTransparency = 0.20000000298023224,
+                    Position = UDim2New(1, -98, 0, 11),
+                    Size = UDim2New(0, 32, 0, 32),
+                    ZIndex = 2,
+                    TextSize = 14,
+                    BackgroundColor3 = FromRGB(27, 25, 29)
+                })  Items["MaximizeButton"]:AddToTheme({BackgroundColor3 = "Element"})
+
+                Instances:Create("UICorner", {
+                    Parent = Items["MaximizeButton"].Instance,
+                    Name = "\0",
+                    CornerRadius = UDimNew(0, 7)
+                })
+
+                Items["MaximizeIcon"] = Instances:Create("ImageLabel", {
+                    Parent = Items["MaximizeButton"].Instance,
+                    Name = "\0",
+                    ImageColor3 = FromRGB(240, 240, 240),
+                    ImageTransparency = 0.30000001192092896,
+                    BorderColor3 = FromRGB(0, 0, 0),
+                    Size = UDim2New(0, 14, 0, 14),
+                    AnchorPoint = Vector2New(0.5, 0.5),
+                    Image = "",
+                    BackgroundTransparency = 1,
+                    Position = UDim2New(0.5, 0, 0.5, 0),
+                    ZIndex = 3,
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })  Items["MaximizeIcon"]:AddToTheme({ImageColor3 = "Text"})
+                Library:SetIcon(Items["MaximizeIcon"].Instance, "maximize")
+
+                Items["MaximizeIconAccent"] = Instances:Create("Frame", {
+                    Parent = Items["MaximizeButton"].Instance,
+                    Name = "\0",
+                    BorderColor3 = FromRGB(0, 0, 0),
+                    AnchorPoint = Vector2New(0.5, 0.5),
+                    BorderSizePixel = 0,
+                    Position = UDim2New(0.5, 0, 0.5, 0),
+                    Size = UDim2New(0, 0, 0, 0),
+                    ZIndex = 2,
+                    BackgroundTransparency = 1,
+                    BackgroundColor3 = FromRGB(255, 255, 255)
+                })
+
+                Instances:Create("UICorner", {
+                    Parent = Items["MaximizeIconAccent"].Instance,
+                    Name = "\0",
+                    CornerRadius = UDimNew(0, 7)
+                })
+
+                Instances:Create("UIGradient", {
+                    Parent = Items["MaximizeIconAccent"].Instance,
+                    Name = "\0",
+                    Rotation = -115
+                }):AddToTheme({Color = function()
+                    return RGBSequence{RGBSequenceKeypoint(0, Library.Theme.Accent), RGBSequenceKeypoint(1, Library.Theme.AccentGradient)}
+                end})
+
+                local resizerVisible = false
+                Items["MaximizeButton"]:Connect("MouseButton1Down", function()
+                    resizerVisible = not resizerVisible
+                    if Items["Resizer"] then
+                        Items["Resizer"].Visible = resizerVisible
+                    end
+                end)
+
+                Items["MaximizeButton"]:OnHover(function()
+                    Items["MaximizeIconAccent"]:Tween(TweenInfo.new(Library.Tween.Time + 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                        Size = UDim2New(1, 0, 1, 0),
+                        BackgroundTransparency = 0
+                    })
+                end)
+
+                Items["MaximizeButton"]:OnHoverLeave(function()
+                    Items["MaximizeIconAccent"]:Tween(TweenInfo.new(Library.Tween.Time + 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                        Size = UDim2New(0, 0, 0, 0),
+                        BackgroundTransparency = 1
+                    })
+                end)
+                -- ========== 结束最大化按钮 ==========
+
                 Window.Items = Items
             end
             
@@ -3257,6 +3259,8 @@ end)
                     end
                 end)
             end
+
+            -- FloatingButton: toggle is handled in InputEnded (after MakeDraggable) so drag does not open/close the window.
 
             Window:SetCenter()
             task.wait()
