@@ -545,7 +545,7 @@ local Library do
             end)
         end
 
-        -- MakeResizeable 已删除，替换为右下角手柄（Resizer）
+        -- MakeResizeable 已删除，替换为独立的 Resizer 手柄（见 Window 构建中）
 
         Instances.OnHover = function(self, Function)
             if not self.Instance then 
@@ -1777,7 +1777,6 @@ local Library do
                     end)
 
                     if Data.Section.IsSettings ~= true then
-                        --print("sus")
                         for Index, Value in Library.OpenFrames do 
                             if Value ~= Colorpicker then
                                 Value:SetOpen(false)
@@ -1788,7 +1787,6 @@ local Library do
                     Library.OpenFrames[Colorpicker] = Colorpicker 
                 else
                     if not Data.Section.IsSettings then
-                        --print("sus2")
                         if Library.OpenFrames[Colorpicker] then 
                             Library.OpenFrames[Colorpicker] = nil
                         end
@@ -1925,7 +1923,6 @@ local Library do
             end)
 
             function AddColor(Color)
-                --if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
                     local SaveIndex = #Colorpicker.SavedColors + 1
 
                     local SavedColor = Instances:Create("TextButton", {
@@ -1978,7 +1975,6 @@ local Library do
                     end)
 
                     SavedColor:Tween(nil, {BackgroundTransparency = 0})
-                --end
             end
 
             local Colors = {
@@ -2477,7 +2473,7 @@ local Library do
             local Window = {
                 Name = Data.Name or Data.name or "Window",
                 SubName = Data.SubName or Data.subname or "Fine-tuning for sure wins",
-                Logo = Data.Logo or Data.logo or "1l20959262762131",
+                Logo = Data.Logo or Data.logo or "71327132603456",  -- 修改默认 Logo
 
                 Tabs = { },
                 Items = { },
@@ -2523,63 +2519,92 @@ local Library do
                 end
 
                 Library.MainFrame = Items["MainFrame"]
-                -- 原 MakeResizeable 已删除，替换为右下角手柄 Resizer
                 Library:MakeBlurred(Items["MainFrame"], Window)
 
-                -- ========== 新增：右下角调整手柄（Resizer），从 UI.lua 移植 ==========
+                -- ========== 独立的 Resizer 手柄（原角落手柄样式） ==========
                 do
-                    local Resizer = Instance.new("TextButton")
-                    Resizer.Name = "WindowResizer"
-                    Resizer.Parent = Items["MainFrame"].Instance
-                    Resizer.BackgroundTransparency = 0.8
-                    Resizer.BackgroundColor3 = Color3.new(1, 1, 1)
-                    Resizer.Position = UDim2.new(1, 5, 1, 5)
-                    Resizer.Size = UDim2.new(0, 24, 0, 24)
-                    Resizer.AnchorPoint = Vector2.new(1, 1)
-                    Resizer.Text = ""
-                    Resizer.ZIndex = 30
-                    Resizer.Visible = false
+                    local ResizeCorner = Instances:Create("TextButton", {
+                        Parent = Library.Holder.Instance,
+                        Name = "\0",
+                        AutoButtonColor = false,
+                        Text = "",
+                        AnchorPoint = Vector2New(1, 1),
+                        Position = UDim2FromOffset(0, 0),
+                        Size = UDim2FromOffset(18, 18),
+                        BackgroundTransparency = 0,
+                        BorderSizePixel = 0,
+                        ZIndex = 250,
+                        BackgroundColor3 = Library.Theme.Background  -- 黑色（主框架颜色）
+                    })
 
-                    local stroke = Instance.new("UIStroke")
-                    stroke.Thickness = 4
-                    stroke.Color = Color3.new(1, 1, 1)
-                    stroke.Transparency = 0
-                    stroke.Parent = Resizer
+                    -- 图标
+                    local ResizeIcon = Instances:Create("ImageLabel", {
+                        Parent = ResizeCorner.Instance,
+                        Name = "\0",
+                        AnchorPoint = Vector2New(0.5, 0.5),
+                        Position = UDim2New(0.5, 0, 0.5, 0),
+                        Size = UDim2New(0, 14, 0, 14),
+                        BackgroundTransparency = 1,
+                        BorderSizePixel = 0,
+                        ZIndex = 9999,
+                        ImageTransparency = 0.5,
+                        BackgroundColor3 = FromRGB(255, 255, 255)
+                    })
+                    Library:SetIcon(ResizeIcon.Instance, "move-diagonal-2")  -- 使用原图标
+                    ResizeIcon:AddToTheme({ImageColor3 = "Text"})
 
-                    local corner = Instance.new("UICorner")
-                    corner.CornerRadius = UDim.new(0, 6)
-                    corner.Parent = Resizer
+                    local CornerResizing = false
+                    local CornerStartMouse = nil
+                    local CornerStartSize = nil
+                    local CornerStartPos = nil
 
-                    local isResizing = false
-                    local resizeStart = Vector2.new(0,0)
-                    local startSize = UDim2.new(0,0,0,0)
-
-                    Resizer.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                            isResizing = true
-                            resizeStart = input.Position
-                            startSize = Items["MainFrame"].Instance.Size
+                    ResizeCorner:OnHover(function()
+                        ResizeIcon:Tween(TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {ImageTransparency = 0})
+                    end)
+                    ResizeCorner:OnHoverLeave(function()
+                        if not CornerResizing then
+                            ResizeIcon:Tween(TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {ImageTransparency = 0.5})
                         end
                     end)
 
-                    UserInputService.InputChanged:Connect(function(input)
-                        if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                            local delta = input.Position - resizeStart
-                            local newWidth = math.max(400, startSize.X.Offset + delta.X)
-                            local newHeight = math.max(250, startSize.Y.Offset + delta.Y)
-                            Items["MainFrame"].Instance.Size = UDim2.new(0, newWidth, 0, newHeight)
+                    ResizeCorner:Connect("InputBegan", function(Input)
+                        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                            CornerResizing = true
+                            CornerStartMouse = UserInputService:GetMouseLocation()
+                            CornerStartSize = Vector2New(Items["MainFrame"].Instance.AbsoluteSize.X, Items["MainFrame"].Instance.AbsoluteSize.Y)
+                            CornerStartPos = Vector2New(Items["MainFrame"].Instance.Position.X.Offset, Items["MainFrame"].Instance.Position.Y.Offset)
                         end
                     end)
 
-                    UserInputService.InputEnded:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                            isResizing = false
+                    Library:Connect(UserInputService.InputEnded, function(Input)
+                        if (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) and CornerResizing then
+                            CornerResizing = false
+                            ResizeIcon:Tween(TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {ImageTransparency = 0.5})
                         end
                     end)
 
-                    Items["Resizer"] = Resizer
+                    Library:Connect(RunService.RenderStepped, function()
+                        local mf = Items["MainFrame"].Instance
+                        if mf.Parent then
+                            local mPos = mf.AbsolutePosition
+                            local mSz = mf.AbsoluteSize
+                            local pap = ResizeCorner.Instance.Parent.AbsolutePosition
+                            ResizeCorner.Instance.Position = UDim2FromOffset(mPos.X + mSz.X - 2 - pap.X, mPos.Y + mSz.Y - 2 - pap.Y)
+                        end
+                        if not CornerResizing then
+                            return
+                        end
+                        local MousePos = UserInputService:GetMouseLocation()
+                        local dx = MousePos.X - CornerStartMouse.X
+                        local dy = MousePos.Y - CornerStartMouse.Y
+                        local newW = MathClamp(CornerStartSize.X + dx, 400, 9999)
+                        local newH = MathClamp(CornerStartSize.Y + dy, 300, 9999)
+                        Items["MainFrame"].Instance.Size = UDim2FromOffset(newW, newH)
+                    end)
+
+                    Items["ResizeCorner"] = ResizeCorner
                 end
-                -- ========== 结束 Resizer 移植 ==========
+                -- ========== Resizer 结束 ==========
 
                 Items["LeftTabs"] = Instances:Create("Frame", {
                     Parent = Items["MainFrame"].Instance,
@@ -3087,7 +3112,7 @@ local Library do
                     })
                 end)
 
-                -- ========== 新增：最大化按钮（控制 Resizer 可见性） ==========
+                -- ========== 最大化按钮（控制 ResizeCorner 可见性） ==========
                 Items["MaximizeButton"] = Instances:Create("TextButton", {
                     Parent = Items["MainFrame"].Instance,
                     Name = "\0",
@@ -3159,8 +3184,8 @@ local Library do
                 local resizerVisible = false
                 Items["MaximizeButton"]:Connect("MouseButton1Down", function()
                     resizerVisible = not resizerVisible
-                    if Items["Resizer"] then
-                        Items["Resizer"].Visible = resizerVisible
+                    if Items["ResizeCorner"] then
+                        Items["ResizeCorner"].Instance.Visible = resizerVisible
                     end
                 end)
 
@@ -3259,8 +3284,6 @@ local Library do
                     end
                 end)
             end
-
-            -- FloatingButton: toggle is handled in InputEnded (after MakeDraggable) so drag does not open/close the window.
 
             Window:SetCenter()
             task.wait()
@@ -4613,7 +4636,7 @@ local Library do
                     BackgroundColor3 = FromRGB(255, 255, 255),
                     AnchorPoint = Vector2New(0.5, 0.5),
                     Position = UDim2New(0.5, 0, 0.5, 0)
-                })  --Items["Accent"]:AddToTheme({BackgroundColor3 = "Accent"})
+                })
 
                 Instances:Create("UICorner", {
                     Parent = Items["Accent"].Instance,
