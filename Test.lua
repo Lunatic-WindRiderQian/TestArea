@@ -80,27 +80,46 @@ local Themes = {
 }
 local CurrentTheme = Themes.Dark
 
-local function AddToRegistry(obj, prop, themeKey)
-    table.insert(Registry, {Object = obj, Property = prop, Type = themeKey})
-    obj[prop] = CurrentTheme[themeKey]
+-- 修复：支持函数值以及字符串 key，并自动响应主题切换
+local function AddToRegistry(obj, prop, themeKeyOrValue)
+    if type(themeKeyOrValue) == "function" then
+        -- 动态值：存储函数，并在每次主题变更时重新求值
+        local entry = {Object = obj, Property = prop, Type = nil, DynamicFunc = themeKeyOrValue}
+        table.insert(Registry, entry)
+        obj[prop] = themeKeyOrValue()
+        return
+    elseif type(themeKeyOrValue) == "string" then
+        table.insert(Registry, {Object = obj, Property = prop, Type = themeKeyOrValue})
+        obj[prop] = CurrentTheme[themeKeyOrValue]
+        return
+    else
+        -- 直接赋值（兼容旧用法）
+        obj[prop] = themeKeyOrValue
+    end
 end
 
-local function Tween(obj, props, time)
-    TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
-end
-
+-- 主题切换时更新所有注册项
 function Fenglib:SetTheme(themeName)
     if Themes[themeName] then
         CurrentTheme = Themes[themeName]
         for _, r in pairs(Registry) do
             if r.Object then
-                Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]})
+                if r.DynamicFunc then
+                    r.Object[r.Property] = r.DynamicFunc()
+                elseif r.Type then
+                    Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]})
+                end
             end
         end
         for _, fn in pairs(ThemeListeners) do
             pcall(fn)
         end
     end
+end
+
+-- 保留原 Tween 函数（仅作动画）
+local function Tween(obj, props, time)
+    TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
 
 function Fenglib:ToggleRainbow(bool) RainbowEnabled = bool end
@@ -215,12 +234,8 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         iconLabel.Image = defaultOpen and iconOpen or iconClosed
         iconLabel.Parent = topBg
         local iconGradient = Instance.new("UIGradient")
-        iconGradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-            ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
-        })
-        iconGradient.Parent = iconLabel
         AddToRegistry(iconGradient, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent) end)
+        iconGradient.Parent = iconLabel
 
         -- Title
         local titleLabel = Instance.new("TextLabel")
@@ -1665,12 +1680,8 @@ function Fenglib:CreateWindow(Config)
     Logo.Image = IconAsset
     Logo.Parent = Topbar
     local logoGradient = Instance.new("UIGradient")
-    logoGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-        ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
-    })
-    logoGradient.Parent = Logo
     AddToRegistry(logoGradient, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent) end)
+    logoGradient.Parent = Logo
 
     -- Title
     local TitleLabel = Instance.new("TextLabel")
@@ -1733,13 +1744,8 @@ function Fenglib:CreateWindow(Config)
         btnHover.BackgroundTransparency = 1
         btnHover.Parent = btn
         local hoverGradient = Instance.new("UIGradient")
-        hoverGradient.Rotation = -115
-        hoverGradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-            ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
-        })
-        hoverGradient.Parent = btnHover
         AddToRegistry(hoverGradient, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent) end)
+        hoverGradient.Parent = btnHover
 
         btn.MouseEnter:Connect(function()
             Tween(btn, {BackgroundTransparency = 0}, 0.2)
@@ -2437,12 +2443,8 @@ function Fenglib:CreateWindow(Config)
             end
             TabIcon.Parent = ContentFrame
             local iconGrad = Instance.new("UIGradient")
-            iconGrad.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-                ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
-            })
-            iconGrad.Parent = TabIcon
             AddToRegistry(iconGrad, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent) end)
+            iconGrad.Parent = TabIcon
         end
 
         local TabText = Instance.new("TextLabel")
