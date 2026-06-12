@@ -4425,7 +4425,7 @@ local Library do
             return DashPage
         end
 
-        -- ========== 完全重写的 rebuildSection（修复 GetPropertyChangedSignal 错误） ==========
+        -- 完全重写的 rebuildSection（修复 updateCanvasSize nil 错误）
         local function rebuildSection(Tab, Data)
             Data = Data or { }
 
@@ -4747,20 +4747,20 @@ local Library do
                     PaddingRight = UDimNew(0, 24)
                 })
                 
-                local function updateCanvasSize()
+                -- 将更新函数绑定到 Section 对象上，确保在 ToggleBackground 中可以调用
+                Section._updateCanvasSize = function()
                     local canvasHeight = Items["Canvas"].Instance.AbsoluteSize.Y
-                    if canvasHeight > 0 then
+                    if canvasHeight and canvasHeight > 0 then
                         Items["Scroller"].Instance.CanvasSize = UDim2New(0, 0, 0, canvasHeight)
                     end
                 end
                 
-                -- 修复：使用 Layout.Instance 而不是 Layout 本身
                 local conn
                 if Layout and Layout.Instance then
-                    conn = Layout.Instance:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
+                    conn = Layout.Instance:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(Section._updateCanvasSize)
                 end
-                Library:Connect(Items["Canvas"].Instance:GetPropertyChangedSignal("AbsoluteSize"), updateCanvasSize)
-                task.defer(updateCanvasSize)
+                Library:Connect(Items["Canvas"].Instance:GetPropertyChangedSignal("AbsoluteSize"), Section._updateCanvasSize)
+                task.defer(Section._updateCanvasSize)
                 
                 Items["Fade"] = Instances:Create("TextButton", {
                     Parent = Items["Background"].Instance,
@@ -4817,7 +4817,9 @@ local Library do
                         BackgroundTransparency = 0
                     })
                     Items["Scroller"].Instance.Visible = true
-                    updateCanvasSize()
+                    if Section._updateCanvasSize then
+                        Section._updateCanvasSize()
+                    end
                 end
             end
 
