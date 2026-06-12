@@ -69,27 +69,103 @@ local function createPulseGlow(object)
     }
 end
 
+-- 主题颜色 (metUI 配色)
 local Themes = {
-    Dark   = {Main = Color3.fromRGB(12, 12, 14), Top = Color3.fromRGB(28, 27, 31), Text = Color3.fromRGB(235, 235, 235), Accent = Color3.fromRGB(100, 149, 255), Stroke = Color3.fromRGB(25, 25, 28), Element = Color3.fromRGB(16, 16, 18)},
-    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225), Element = Color3.fromRGB(200, 200, 210)},
-    Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(160, 90, 255), Stroke = Color3.fromRGB(50, 45, 60), Element = Color3.fromRGB(25, 22, 30)},
-    Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(70, 130, 255), Stroke = Color3.fromRGB(45, 55, 75), Element = Color3.fromRGB(20, 28, 40)},
-    Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(60, 40, 40), Element = Color3.fromRGB(30, 18, 18)},
-    Yellow = {Main = Color3.fromRGB(22, 22, 12), Top = Color3.fromRGB(35, 35, 20), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(255, 200, 80), Stroke = Color3.fromRGB(60, 60, 40), Element = Color3.fromRGB(30, 30, 18)},
-    Green  = {Main = Color3.fromRGB(12, 22, 15), Top = Color3.fromRGB(20, 35, 25), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(60, 220, 130), Stroke = Color3.fromRGB(40, 60, 50), Element = Color3.fromRGB(18, 30, 20)},
+    Dark = {
+        Background = Color3.fromRGB(12, 12, 14),
+        Background2 = Color3.fromRGB(10, 10, 12),
+        Text = Color3.fromRGB(235, 235, 235),
+        Outline = Color3.fromRGB(25, 25, 28),
+        SectionTop = Color3.fromRGB(28, 27, 31),
+        SectionBackground = Color3.fromRGB(10, 10, 12),
+        SectionBackground2 = Color3.fromRGB(14, 14, 16),
+        Accent = Color3.fromRGB(100, 149, 255),
+        AccentGradient = Color3.fromRGB(70, 110, 200),
+        Element = Color3.fromRGB(16, 16, 18)
+    },
+    White = {
+        Background = Color3.fromRGB(243, 243, 243),
+        Background2 = Color3.fromRGB(245, 245, 245),
+        Text = Color3.fromRGB(20, 20, 20),
+        Outline = Color3.fromRGB(220, 220, 225),
+        SectionTop = Color3.fromRGB(255, 255, 255),
+        SectionBackground = Color3.fromRGB(240, 240, 245),
+        SectionBackground2 = Color3.fromRGB(235, 235, 240),
+        Accent = Color3.fromRGB(0, 100, 210),
+        AccentGradient = Color3.fromRGB(0, 80, 180),
+        Element = Color3.fromRGB(230, 230, 235)
+    },
+    Purple = {
+        Background = Color3.fromRGB(18, 15, 22),
+        Background2 = Color3.fromRGB(16, 13, 20),
+        Text = Color3.fromRGB(245, 240, 255),
+        Outline = Color3.fromRGB(50, 45, 60),
+        SectionTop = Color3.fromRGB(30, 25, 35),
+        SectionBackground = Color3.fromRGB(16, 13, 20),
+        SectionBackground2 = Color3.fromRGB(20, 17, 25),
+        Accent = Color3.fromRGB(160, 90, 255),
+        AccentGradient = Color3.fromRGB(130, 60, 220),
+        Element = Color3.fromRGB(25, 22, 30)
+    },
+    Blue = {
+        Background = Color3.fromRGB(12, 18, 28),
+        Background2 = Color3.fromRGB(10, 16, 25),
+        Text = Color3.fromRGB(240, 245, 255),
+        Outline = Color3.fromRGB(45, 55, 75),
+        SectionTop = Color3.fromRGB(25, 32, 45),
+        SectionBackground = Color3.fromRGB(10, 16, 25),
+        SectionBackground2 = Color3.fromRGB(15, 22, 35),
+        Accent = Color3.fromRGB(70, 130, 255),
+        AccentGradient = Color3.fromRGB(50, 110, 230),
+        Element = Color3.fromRGB(20, 28, 40)
+    },
+    Red = {
+        Background = Color3.fromRGB(22, 12, 12),
+        Background2 = Color3.fromRGB(20, 10, 10),
+        Text = Color3.fromRGB(255, 240, 240),
+        Outline = Color3.fromRGB(60, 40, 40),
+        SectionTop = Color3.fromRGB(35, 20, 20),
+        SectionBackground = Color3.fromRGB(20, 10, 10),
+        SectionBackground2 = Color3.fromRGB(25, 15, 15),
+        Accent = Color3.fromRGB(255, 80, 80),
+        AccentGradient = Color3.fromRGB(230, 50, 50),
+        Element = Color3.fromRGB(30, 18, 18)
+    },
+    Yellow = {
+        Background = Color3.fromRGB(22, 22, 12),
+        Background2 = Color3.fromRGB(20, 20, 10),
+        Text = Color3.fromRGB(255, 255, 240),
+        Outline = Color3.fromRGB(60, 60, 40),
+        SectionTop = Color3.fromRGB(35, 35, 20),
+        SectionBackground = Color3.fromRGB(20, 20, 10),
+        SectionBackground2 = Color3.fromRGB(25, 25, 15),
+        Accent = Color3.fromRGB(255, 200, 80),
+        AccentGradient = Color3.fromRGB(230, 170, 50),
+        Element = Color3.fromRGB(30, 30, 18)
+    },
+    Green = {
+        Background = Color3.fromRGB(12, 22, 15),
+        Background2 = Color3.fromRGB(10, 20, 13),
+        Text = Color3.fromRGB(240, 255, 245),
+        Outline = Color3.fromRGB(40, 60, 50),
+        SectionTop = Color3.fromRGB(20, 35, 25),
+        SectionBackground = Color3.fromRGB(10, 20, 13),
+        SectionBackground2 = Color3.fromRGB(15, 25, 18),
+        Accent = Color3.fromRGB(60, 220, 130),
+        AccentGradient = Color3.fromRGB(40, 190, 100),
+        Element = Color3.fromRGB(18, 30, 20)
+    }
 }
 local CurrentTheme = Themes.Dark
 
+-- 增强的 AddToRegistry，支持函数动态更新
 local function AddToRegistry(obj, prop, themeKeyOrValue)
     if type(themeKeyOrValue) == "function" then
-        local entry = {Object = obj, Property = prop, Type = nil, DynamicFunc = themeKeyOrValue}
-        table.insert(Registry, entry)
+        table.insert(Registry, {Object = obj, Property = prop, DynamicFunc = themeKeyOrValue})
         obj[prop] = themeKeyOrValue()
-        return
     elseif type(themeKeyOrValue) == "string" then
         table.insert(Registry, {Object = obj, Property = prop, Type = themeKeyOrValue})
         obj[prop] = CurrentTheme[themeKeyOrValue]
-        return
     else
         obj[prop] = themeKeyOrValue
     end
@@ -103,7 +179,7 @@ function Fenglib:SetTheme(themeName)
                 if r.DynamicFunc then
                     r.Object[r.Property] = r.DynamicFunc()
                 elseif r.Type then
-                    Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]})
+                    TweenService:Create(r.Object, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {[r.Property] = CurrentTheme[r.Type]}):Play()
                 end
             end
         end
@@ -114,7 +190,7 @@ function Fenglib:SetTheme(themeName)
 end
 
 local function Tween(obj, props, time)
-    TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
+    TweenService:Create(obj, TweenInfo.new(time or 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
 end
 
 function Fenglib:ToggleRainbow(bool) RainbowEnabled = bool end
@@ -161,7 +237,7 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- MetUI style Section builder (collapsible header with icon, title, description, toggle)
+-- ==================== 完整搬运 metUI.lua 的 Section 生成器 ====================
 local function createMetUISection(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
@@ -190,34 +266,37 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             iconClosed = defaultIcon
         end
 
+        -- Section 外层框架 (metUI)
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 45)
         sectionFrame.BackgroundTransparency = 0.65
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
-        AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
+        AddToRegistry(sectionFrame, "BackgroundColor3", "SectionBackground2")
 
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, 6)
         corner.Parent = sectionFrame
 
+        -- 顶部栏
         local topBar = Instance.new("Frame")
         topBar.Size = UDim2.new(1, 0, 0, 55)
         topBar.BackgroundTransparency = 0.65
         topBar.Parent = sectionFrame
-        AddToRegistry(topBar, "BackgroundColor3", "Stroke")
+        AddToRegistry(topBar, "BackgroundColor3", "Outline")
 
         local topBg = Instance.new("Frame")
         topBg.Size = UDim2.new(1, -2, 1, -2)
         topBg.Position = UDim2.new(0, 1, 0, 1)
         topBg.BackgroundTransparency = 0.65
         topBg.Parent = topBar
-        AddToRegistry(topBg, "BackgroundColor3", "Top")
+        AddToRegistry(topBg, "BackgroundColor3", "SectionTop")
 
         local topCorner = Instance.new("UICorner")
         topCorner.CornerRadius = UDim.new(0, 4)
         topCorner.Parent = topBg
 
+        -- 图标
         local iconLabel = Instance.new("ImageLabel")
         iconLabel.Size = UDim2.new(0, 21, 0, 20)
         iconLabel.Position = UDim2.new(0, 15, 0.5, -10)
@@ -226,9 +305,12 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         iconLabel.Image = defaultOpen and iconOpen or iconClosed
         iconLabel.Parent = topBg
         local iconGradient = Instance.new("UIGradient")
-        AddToRegistry(iconGradient, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent) end)
+        AddToRegistry(iconGradient, "Color", function()
+            return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.AccentGradient)
+        end)
         iconGradient.Parent = iconLabel
 
+        -- 标题
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Text = text
         titleLabel.Size = UDim2.new(0, 0, 0, 15)
@@ -241,8 +323,9 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         titleLabel.Parent = topBg
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
+        -- 描述
         local descLabel = Instance.new("TextLabel")
-        descLabel.Text = icons and type(icons) == "string" and icons or ""
+        descLabel.Text = (type(icons) == "string" and icons) or ""
         descLabel.Size = UDim2.new(0, 0, 0, 15)
         descLabel.Position = UDim2.new(0, 50, 0, 28)
         descLabel.BackgroundTransparency = 1
@@ -254,6 +337,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         descLabel.Parent = topBg
         AddToRegistry(descLabel, "TextColor3", "Text")
 
+        -- 展开/折叠开关 (metUI 圆形滑动样式)
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(0, 26, 0, 16)
         toggleBtn.Position = UDim2.new(1, -15, 0.5, -8)
@@ -261,6 +345,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         toggleBtn.BackgroundTransparency = 1
         toggleBtn.Text = ""
         toggleBtn.Parent = topBar
+
         local toggleFrame = Instance.new("Frame")
         toggleFrame.Size = UDim2.new(1, 0, 1, 0)
         toggleFrame.BackgroundColor3 = CurrentTheme.Text
@@ -269,6 +354,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         local toggleCorner = Instance.new("UICorner")
         toggleCorner.CornerRadius = UDim.new(1, 0)
         toggleCorner.Parent = toggleFrame
+
         local toggleCircle = Instance.new("Frame")
         toggleCircle.Size = UDim2.new(0, 8, 0, 8)
         toggleCircle.Position = defaultOpen and UDim2.new(1, -4, 0.5, -4) or UDim2.new(0, 4, 0.5, -4)
@@ -278,9 +364,11 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         local circleCorner = Instance.new("UICorner")
         circleCorner.CornerRadius = UDim.new(1, 0)
         circleCorner.Parent = toggleCircle
+
         AddToRegistry(toggleFrame, "BackgroundColor3", "Accent")
         AddToRegistry(toggleCircle, "BackgroundColor3", "Text")
 
+        -- 内容容器
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, 0, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 0, 0, 55)
@@ -309,7 +397,6 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         end
 
         task.spawn(function()
-            task.wait()
             updateSectionHeight(true)
         end)
 
@@ -321,13 +408,11 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         end
 
         toggleBtn.MouseButton1Click:Connect(toggle)
-
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            if open then
-                updateSectionHeight(false)
-            end
+            if open then updateSectionHeight(false) end
         end)
 
+        -- 内部控件建造器 (完全按 metUI 样式)
         local child = {}
 
         child.Button = function(_, btnText, callback)
@@ -492,7 +577,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             Num.Parent = Tile
             Num.ClearTextOnFocus = false
             Instance.new("UICorner", Num).CornerRadius = UDim.new(0, 6)
-            AddToRegistry(Num, "BackgroundColor3", "Main")
+            AddToRegistry(Num, "BackgroundColor3", "Background")
             AddToRegistry(Num, "TextColor3", "Accent")
             local NumStroke = Instance.new("UIStroke")
             NumStroke.Thickness = 1
@@ -656,13 +741,13 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             Container.ZIndex = 10
             Container.Parent = contentContainerSection
             Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 6)
-            AddToRegistry(Container, "BackgroundColor3", "Main")
+            AddToRegistry(Container, "BackgroundColor3", "Background")
 
             local CSt = Instance.new("UIStroke")
             CSt.Thickness = 1
             CSt.Transparency = 0.65
             CSt.Parent = Container
-            AddToRegistry(CSt, "Color", "Stroke")
+            AddToRegistry(CSt, "Color", "Outline")
 
             local List = Instance.new("UIListLayout")
             List.SortOrder = Enum.SortOrder.LayoutOrder
@@ -676,7 +761,6 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
                     ConfigObjects[controlId].Value = opt
                 end
                 callback(opt)
-
                 Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
                 Tween(Icon, {Rotation = 0}, 0.28)
                 task.wait(0.3)
@@ -687,7 +771,6 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
                 for _, v in pairs(Container:GetChildren()) do
                     if v:IsA("TextButton") then v:Destroy() end
                 end
-
                 for _, opt in pairs(newOpts) do
                     local O = Instance.new("TextButton")
                     O.Size = UDim2.new(1, 0, 0, 34)
@@ -705,10 +788,8 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
                     O.MouseLeave:Connect(function()
                         Tween(O, {TextColor3 = CurrentTheme.Text}, 0.15)
                     end)
-
                     O.MouseButton1Click:Connect(function() Select(opt) end)
                 end
-
                 if Dropped then
                     local targetHeight = #newOpts * 34
                     Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
@@ -734,9 +815,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
                     Container.Visible = true
                     local buttonCount = 0
                     for _, child in pairs(Container:GetChildren()) do
-                        if child:IsA("TextButton") then
-                            buttonCount = buttonCount + 1
-                        end
+                        if child:IsA("TextButton") then buttonCount = buttonCount + 1 end
                     end
                     local targetHeight = buttonCount * 34
                     Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.32)
@@ -756,12 +835,9 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
                 Refresh = RefreshOptions,
                 Reset = ResetDropdown
             }
-
             table.insert(ThemeListeners, function()
                 for _, O in pairs(Container:GetChildren()) do
-                    if O:IsA("TextButton") then
-                        O.TextColor3 = CurrentTheme.Text
-                    end
+                    if O:IsA("TextButton") then O.TextColor3 = CurrentTheme.Text end
                 end
             end)
 
@@ -805,7 +881,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             KeyLabel.Parent = Tile
             KeyLabel.BackgroundTransparency = 0.1
             Instance.new("UICorner", KeyLabel).CornerRadius = UDim.new(0, 8)
-            AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
+            AddToRegistry(KeyLabel, "BackgroundColor3", "Background")
             AddToRegistry(KeyLabel, "TextColor3", "Accent")
 
             ConfigObjects[controlId] = {Type = "Keybind", Value = Key.Name, Set = function(val)
@@ -859,7 +935,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             Box.Parent = Frame
             Box.BackgroundTransparency = 0.1
             Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 6)
-            AddToRegistry(Box, "BackgroundColor3", "Main")
+            AddToRegistry(Box, "BackgroundColor3", "Background")
             AddToRegistry(Box, "TextColor3", "Text")
 
             local BoxStroke = Instance.new("UIStroke")
@@ -885,35 +961,73 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             local placeholder = options.placeholder or ""; local acceptedCharacters = options.acceptedCharacters or "All"; local characterLimit = options.characterLimit; local onChanged = options.onChanged
             local controlId = inputText .. "_" .. tostring(#Registry)
 
-            local InputFrame = Instance.new("Frame"); InputFrame.Size = UDim2.new(1, 0, 0, 32); InputFrame.Parent = contentContainerSection; InputFrame.BackgroundTransparency = 0.2; Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 4); AddToRegistry(InputFrame, "BackgroundColor3", "Element")
-            local NameLbl = Instance.new("TextLabel"); NameLbl.Text = inputText; NameLbl.Size = UDim2.new(0.6,0,1,0); NameLbl.Position = UDim2.new(0,10,0,0); NameLbl.TextXAlignment = Enum.TextXAlignment.Left; NameLbl.Font = Enum.Font.GothamMedium; NameLbl.TextSize = 13; NameLbl.BackgroundTransparency = 1; NameLbl.Parent = InputFrame; AddToRegistry(NameLbl, "TextColor3", "Text")
-            local InputBox = Instance.new("TextBox"); InputBox.Text = tostring(default or ""); InputBox.PlaceholderText = placeholder; InputBox.Size = UDim2.new(0.3,0,0,28); InputBox.Position = UDim2.new(0.7,-10,0.5,-14); InputBox.Font = Enum.Font.GothamBold; InputBox.TextSize = 13; InputBox.TextXAlignment = Enum.TextXAlignment.Center; InputBox.ClearTextOnFocus = false; InputBox.Parent = InputFrame
-            local boxCorner = Instance.new("UICorner"); boxCorner.CornerRadius = UDim.new(0,6); boxCorner.Parent = InputBox
-            AddToRegistry(InputBox, "BackgroundColor3", "Main"); AddToRegistry(InputBox, "TextColor3", "Accent")
-            local boxStroke = Instance.new("UIStroke"); boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; boxStroke.Color = CurrentTheme.Stroke; boxStroke.Transparency = 0.6; boxStroke.Parent = InputBox
+            local InputFrame = Instance.new("Frame")
+            InputFrame.Size = UDim2.new(1, 0, 0, 32)
+            InputFrame.Parent = contentContainerSection
+            InputFrame.BackgroundTransparency = 0.2
+            Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 4)
+            AddToRegistry(InputFrame, "BackgroundColor3", "Element")
+
+            local NameLbl = Instance.new("TextLabel")
+            NameLbl.Text = inputText
+            NameLbl.Size = UDim2.new(0.6, 0, 1, 0)
+            NameLbl.Position = UDim2.new(0, 10, 0, 0)
+            NameLbl.TextXAlignment = Enum.TextXAlignment.Left
+            NameLbl.Font = Enum.Font.GothamMedium
+            NameLbl.TextSize = 13
+            NameLbl.BackgroundTransparency = 1
+            NameLbl.Parent = InputFrame
+            AddToRegistry(NameLbl, "TextColor3", "Text")
+
+            local InputBox = Instance.new("TextBox")
+            InputBox.Text = tostring(default or "")
+            InputBox.PlaceholderText = placeholder
+            InputBox.Size = UDim2.new(0.3, 0, 0, 28)
+            InputBox.Position = UDim2.new(0.7, -10, 0.5, -14)
+            InputBox.Font = Enum.Font.GothamBold
+            InputBox.TextSize = 13
+            InputBox.TextXAlignment = Enum.TextXAlignment.Center
+            InputBox.ClearTextOnFocus = false
+            InputBox.Parent = InputFrame
+            Instance.new("UICorner", InputBox).CornerRadius = UDim.new(0, 6)
+            AddToRegistry(InputBox, "BackgroundColor3", "Background")
+            AddToRegistry(InputBox, "TextColor3", "Accent")
+
+            local boxStroke = Instance.new("UIStroke")
+            boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            boxStroke.Color = CurrentTheme.Stroke
+            boxStroke.Transparency = 0.6
+            boxStroke.Parent = InputBox
+
             local function filterText(text)
-                if characterLimit then text = text:sub(1,characterLimit) end
-                if type(acceptedCharacters)=="function" then return acceptedCharacters(text)
-                elseif acceptedCharacters=="Numeric" then return text:gsub("[^%d-]",""):gsub("-(.*)",function(m) return m:gsub("-","") end)
-                elseif acceptedCharacters=="Alphabetic" then return text:gsub("[^a-zA-Z]","")
-                elseif acceptedCharacters=="AlphaNumeric" then return text:gsub("[^a-zA-Z0-9]","")
+                if characterLimit then text = text:sub(1, characterLimit) end
+                if type(acceptedCharacters) == "function" then return acceptedCharacters(text)
+                elseif acceptedCharacters == "Numeric" then return text:gsub("[^%d-]", ""):gsub("-(.*)", function(m) return m:gsub("-", "") end)
+                elseif acceptedCharacters == "Alphabetic" then return text:gsub("[^a-zA-Z]", "")
+                elseif acceptedCharacters == "AlphaNumeric" then return text:gsub("[^a-zA-Z0-9]", "")
                 else return text end
             end
-            InputBox:GetPropertyChangedSignal("Text"):Connect(function() local filtered = filterText(InputBox.Text); if filtered~=InputBox.Text then InputBox.Text=filtered end; if onChanged then onChanged(filtered) end end)
+
+            InputBox:GetPropertyChangedSignal("Text"):Connect(function()
+                local filtered = filterText(InputBox.Text)
+                if filtered ~= InputBox.Text then InputBox.Text = filtered end
+                if onChanged then onChanged(filtered) end
+            end)
             InputBox.FocusLost:Connect(function()
                 local text = InputBox.Text
                 local filtered = filterText(text)
-                if filtered~=text then
-                    InputBox.Text = filtered
-                    text = filtered
-                end
-                if ConfigObjects[controlId] then
-                    ConfigObjects[controlId].Value = text
-                end
-                if callback then callback(text) end
+                if filtered ~= text then InputBox.Text = filtered end
+                if ConfigObjects[controlId] then ConfigObjects[controlId].Value = InputBox.Text end
+                if callback then callback(InputBox.Text) end
             end)
+
             ConfigObjects[controlId] = {Type = "Input", Value = InputBox.Text, Set = function(val) InputBox.Text = tostring(val) end}
-            local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[controlId].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
+            local self = {}
+            function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[controlId].Value = InputBox.Text end
+            function self.GetText() return InputBox.Text end
+            function self.SetVisible(state) InputFrame.Visible = state end
+            function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end
+            return self
         end
 
         child.Label = function(_, labelText)
@@ -1068,13 +1182,13 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             Panel.ClipsDescendants = true
             Panel.Parent = contentContainerSection
             Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 6)
-            AddToRegistry(Panel, "BackgroundColor3", "Main")
+            AddToRegistry(Panel, "BackgroundColor3", "Background")
 
             local PSt = Instance.new("UIStroke")
             PSt.Thickness = 1
             PSt.Transparency = 0.65
             PSt.Parent = Panel
-            AddToRegistry(PSt, "Color", "Stroke")
+            AddToRegistry(PSt, "Color", "Outline")
 
             local SVBox = Instance.new("ImageLabel")
             SVBox.Size = UDim2.new(1, -52, 0, 110)
@@ -1140,7 +1254,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
                 Holder.BackgroundTransparency = 0.08
                 Holder.Parent = RGBRow
                 Instance.new("UICorner", Holder).CornerRadius = UDim.new(0, 6)
-                AddToRegistry(Holder, "BackgroundColor3", "Main")
+                AddToRegistry(Holder, "BackgroundColor3", "Background")
 
                 local HolderStroke = Instance.new("UIStroke")
                 HolderStroke.Thickness = 1
@@ -1317,27 +1431,19 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             local title = config.Title or "Image"
             local subtitle = config.Subtitle or ""
             local description = config.Description or {}
-            if type(description) == "string" then
-                description = {description}
-            end
+            if type(description) == "string" then description = {description} end
             local iconAsset = config.Icon or config.ImageLink or ""
             local iconColor = config.IconColor or CurrentTheme.Text
             local callback = config.Callback or function() end
             local strokeColor = config.StrokeColor or CurrentTheme.Stroke
 
             local function formatIcon(asset)
-                if type(asset) == "number" then
-                    return "rbxassetid://" .. tostring(asset)
+                if type(asset) == "number" then return "rbxassetid://" .. tostring(asset)
                 elseif type(asset) == "string" then
-                    if tonumber(asset) then
-                        return "rbxassetid://" .. asset
-                    elseif asset:match("^rbxassetid://") then
-                        return asset
-                    elseif asset:match("^http") then
-                        return asset
-                    else
-                        return "rbxassetid://" .. asset
-                    end
+                    if tonumber(asset) then return "rbxassetid://" .. asset
+                    elseif asset:match("^rbxassetid://") then return asset
+                    elseif asset:match("^http") then return asset
+                    else return "rbxassetid://" .. asset end
                 end
                 return "rbxassetid://78229538488090"
             end
@@ -1454,12 +1560,9 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             clickBtn.MouseLeave:Connect(onLeave)
 
             local self = {}
-            function self.UpdateTitle(newTitle)
-                titleLabel.Text = newTitle
-            end
+            function self.UpdateTitle(newTitle) titleLabel.Text = newTitle end
             function self.UpdateSubtitle(newSubtitle)
-                if subtitleLabel then
-                    subtitleLabel.Text = newSubtitle
+                if subtitleLabel then subtitleLabel.Text = newSubtitle
                 elseif newSubtitle ~= "" then
                     subtitleLabel = Instance.new("TextLabel")
                     subtitleLabel.Size = UDim2.new(1, 0, 0, 0)
@@ -1477,9 +1580,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
                 end
             end
             function self.UpdateDescription(newDesc)
-                for _, lbl in ipairs(descLabels) do
-                    lbl:Destroy()
-                end
+                for _, lbl in ipairs(descLabels) do lbl:Destroy() end
                 descLabels = {}
                 if type(newDesc) == "string" then newDesc = {newDesc} end
                 for _, line in ipairs(newDesc) do
@@ -1501,14 +1602,9 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             end
             function self.SetIcon(newIcon, newColor)
                 iconImg.Image = formatIcon(newIcon)
-                if newColor then
-                    iconImg.ImageColor3 = newColor
-                end
+                if newColor then iconImg.ImageColor3 = newColor end
             end
-            function self.SetVisible(state)
-                imageFrame.Visible = state
-            end
-
+            function self.SetVisible(state) imageFrame.Visible = state end
             return self
         end
 
@@ -1517,6 +1613,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
     return createSection
 end
 
+-- ==================== 主窗口 CreateWindow ====================
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "FengY3"
@@ -1526,14 +1623,12 @@ function Fenglib:CreateWindow(Config)
     local isCardMode = Config.Card == true
 
     Window.RootFolder = Title
-    Window.ConfigFolder = Title.."/Config"
+    Window.ConfigFolder = Title .. "/Config"
     Window.CurrentConfig = ""
 
     if Config.Theme then
         if type(Config.Theme) == "string" then
-            if Themes[Config.Theme] then
-                CurrentTheme = Themes[Config.Theme]
-            end
+            if Themes[Config.Theme] then CurrentTheme = Themes[Config.Theme] end
         elseif type(Config.Theme) == "table" then
             local t = Config.Theme
             local function toC3(v)
@@ -1542,12 +1637,16 @@ function Fenglib:CreateWindow(Config)
                 else return Color3.new(0,0,0) end
             end
             local customTheme = {
-                Main   = t.Main   and toC3(t.Main)   or CurrentTheme.Main,
-                Top    = t.Top    and toC3(t.Top)    or CurrentTheme.Top,
-                Text   = t.Text   and toC3(t.Text)   or CurrentTheme.Text,
+                Background = t.Background and toC3(t.Background) or CurrentTheme.Background,
+                Background2 = t.Background2 and toC3(t.Background2) or CurrentTheme.Background2,
+                Text = t.Text and toC3(t.Text) or CurrentTheme.Text,
+                Outline = t.Outline and toC3(t.Outline) or CurrentTheme.Outline,
+                SectionTop = t.SectionTop and toC3(t.SectionTop) or CurrentTheme.SectionTop,
+                SectionBackground = t.SectionBackground and toC3(t.SectionBackground) or CurrentTheme.SectionBackground,
+                SectionBackground2 = t.SectionBackground2 and toC3(t.SectionBackground2) or CurrentTheme.SectionBackground2,
                 Accent = t.Accent and toC3(t.Accent) or CurrentTheme.Accent,
-                Stroke = t.Stroke and toC3(t.Stroke) or CurrentTheme.Stroke,
-                Element= t.Element and toC3(t.Element) or CurrentTheme.Element,
+                AccentGradient = t.AccentGradient and toC3(t.AccentGradient) or CurrentTheme.AccentGradient,
+                Element = t.Element and toC3(t.Element) or CurrentTheme.Element
             }
             local customName = t.Name or "Custom"
             Themes[customName] = customTheme
@@ -1555,7 +1654,6 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- MetUI style main ScreenGui
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "FengYu-Bento"
     ScreenGui.Parent = CoreGui
@@ -1586,7 +1684,7 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.PaddingBottom = UDim.new(0, 5)
     HolderPadding.Parent = NotificationHolder
 
-    -- Main window frame (MetUI style) - size changed to 500x299
+    -- 主窗口 (metUI 尺寸 500x299)
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 500, 0, 299)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -1595,17 +1693,18 @@ function Fenglib:CreateWindow(Config)
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
-    AddToRegistry(MainFrame, "BackgroundColor3", "Main")
+    AddToRegistry(MainFrame, "BackgroundColor3", "Background")
 
     local MainStroke = Instance.new("UIStroke")
     MainStroke.Thickness = 1
     MainStroke.Parent = MainFrame
-    AddToRegistry(MainStroke, "Color", "Stroke")
+    AddToRegistry(MainStroke, "Color", "Outline")
 
     local Gradient = Instance.new("UIGradient")
     Gradient.Parent = MainStroke
     Gradient.Enabled = false
 
+    -- 彩虹效果 (不变)
     task.spawn(function()
         local rot = 0
         while ScreenGui.Parent do
@@ -1642,18 +1741,15 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- Topbar area (MetUI style)
+    -- 顶部栏
     local topbarHeight = Subtitle and 55 or 55
-
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, topbarHeight)
     Topbar.BackgroundTransparency = 1
     Topbar.Parent = MainFrame
 
     if IconAsset then
-        if tonumber(IconAsset) then
-            IconAsset = "rbxassetid://" .. IconAsset
-        end
+        if tonumber(IconAsset) then IconAsset = "rbxassetid://" .. IconAsset end
     else
         IconAsset = "rbxassetid://78229538488090"
     end
@@ -1665,7 +1761,7 @@ function Fenglib:CreateWindow(Config)
     Logo.Image = IconAsset
     Logo.Parent = Topbar
     local logoGradient = Instance.new("UIGradient")
-    AddToRegistry(logoGradient, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent) end)
+    AddToRegistry(logoGradient, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.AccentGradient) end)
     logoGradient.Parent = Logo
 
     local TitleLabel = Instance.new("TextLabel")
@@ -1695,6 +1791,7 @@ function Fenglib:CreateWindow(Config)
         AddToRegistry(SubtitleLabel, "TextColor3", "Text")
     end
 
+    -- 窗口按钮组
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
     ButtonGroup.Size = UDim2.new(0, 100, 1, 0)
@@ -1726,7 +1823,7 @@ function Fenglib:CreateWindow(Config)
         btnHover.BackgroundTransparency = 1
         btnHover.Parent = btn
         local hoverGradient = Instance.new("UIGradient")
-        AddToRegistry(hoverGradient, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent) end)
+        AddToRegistry(hoverGradient, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.AccentGradient) end)
         hoverGradient.Parent = btnHover
 
         btn.MouseEnter:Connect(function()
@@ -1749,14 +1846,14 @@ function Fenglib:CreateWindow(Config)
         ScreenGui:Destroy()
     end)
 
-    -- Left Tabs Panel (MetUI style) - width reduced to 140
+    -- 左侧 Tab 面板 (metUI 宽度 225，但我们用 140 以匹配原来大小)
     local LeftTabs = Instance.new("Frame")
     LeftTabs.Size = UDim2.new(0, 140, 1, -55)
     LeftTabs.Position = UDim2.new(0, 0, 0, 55)
     LeftTabs.BackgroundTransparency = 0.12
     LeftTabs.Parent = MainFrame
     Instance.new("UICorner", LeftTabs).CornerRadius = UDim.new(0, 14)
-    AddToRegistry(LeftTabs, "BackgroundColor3", "Main")
+    AddToRegistry(LeftTabs, "BackgroundColor3", "Background")
 
     local LeftTabsScroll = Instance.new("ScrollingFrame")
     LeftTabsScroll.Size = UDim2.new(1, -2, 1, -2)
@@ -1767,18 +1864,18 @@ function Fenglib:CreateWindow(Config)
     LeftTabsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
     LeftTabsScroll.Parent = LeftTabs
 
-    local TabList = Instance.new("UIListLayout")
-    TabList.Padding = UDim.new(0, 12)
-    TabList.SortOrder = Enum.SortOrder.LayoutOrder
-    TabList.Parent = LeftTabsScroll
+    local TabListLayout = Instance.new("UIListLayout")
+    TabListLayout.Padding = UDim.new(0, 12)
+    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TabListLayout.Parent = LeftTabsScroll
 
     local function updateTabCanvas()
-        LeftTabsScroll.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y)
+        LeftTabsScroll.CanvasSize = UDim2.new(0, 0, 0, TabListLayout.AbsoluteContentSize.Y)
     end
-    TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
+    TabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- Right Content Panel - width adjusted to 1,-155 (since 140 left + 15 margin = 155)
+    -- 右侧内容区 (宽度 1,-155)
     local Content = Instance.new("Frame")
     Content.Size = UDim2.new(1, -155, 1, -55)
     Content.Position = UDim2.new(0, 140, 0, 55)
@@ -1786,22 +1883,21 @@ function Fenglib:CreateWindow(Config)
     Content.ClipsDescendants = true
     Content.Parent = MainFrame
     Instance.new("UICorner", Content).CornerRadius = UDim.new(0, 14)
-    AddToRegistry(Content, "BackgroundColor3", "Main")
+    AddToRegistry(Content, "BackgroundColor3", "Background")
 
     local PageContainer = Instance.new("Frame")
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
+    -- 窗口拖拽
     local dragging = false
     local dragStartPos = nil
     local dragStartWindowPos = nil
 
     local function getInputPosition(input)
         local pos = input.Position
-        if typeof(pos) == "Vector3" then
-            return Vector2.new(pos.X, pos.Y)
-        end
+        if typeof(pos) == "Vector3" then return Vector2.new(pos.X, pos.Y) end
         return pos
     end
 
@@ -1819,13 +1915,8 @@ function Fenglib:CreateWindow(Config)
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             local currentPos = getInputPosition(input)
             local delta = currentPos - dragStartPos
-
-            local newPos = UDim2.new(
-                dragStartWindowPos.X.Scale,
-                dragStartWindowPos.X.Offset + delta.X,
-                dragStartWindowPos.Y.Scale,
-                dragStartWindowPos.Y.Offset + delta.Y
-            )
+            local newPos = UDim2.new(dragStartWindowPos.X.Scale, dragStartWindowPos.X.Offset + delta.X,
+                                      dragStartWindowPos.Y.Scale, dragStartWindowPos.Y.Offset + delta.Y)
             MainFrame.Position = newPos
         end
     end
@@ -1842,6 +1933,7 @@ function Fenglib:CreateWindow(Config)
     UserInputService.InputChanged:Connect(onDragMove)
     UserInputService.InputEnded:Connect(endDrag)
 
+    -- 调整大小手柄
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
@@ -1888,10 +1980,11 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
+    -- 浮动打开按钮
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
-    OpenButton.BackgroundColor3 = CurrentTheme.Main
+    OpenButton.BackgroundColor3 = CurrentTheme.Background
     OpenButton.BackgroundTransparency = 0.14
     OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)
     OpenButton.Size = UDim2.new(0, 54, 0, 54)
@@ -1913,11 +2006,7 @@ function Fenglib:CreateWindow(Config)
     createPulseGlow(openStroke)
 
     local function toggleMainFrame()
-        if MainFrame.Visible then
-            MainFrame.Visible = false
-        else
-            MainFrame.Visible = true
-        end
+        MainFrame.Visible = not MainFrame.Visible
     end
 
     OpenButton.MouseButton1Click:Connect(toggleMainFrame)
@@ -1926,12 +2015,15 @@ function Fenglib:CreateWindow(Config)
     end)
     OpenButton.Visible = false
 
-    UserInputService.InputBegan:Connect(function(input, gpe)
-        if not gpe and Keybind and input.KeyCode == Keybind then
-            toggleMainFrame()
-        end
-    end)
+    if Keybind then
+        UserInputService.InputBegan:Connect(function(input, gpe)
+            if not gpe and input.KeyCode == Keybind then
+                toggleMainFrame()
+            end
+        end)
+    end
 
+    -- 通知系统 (略，与原一致)
     function Window:Notification(titleText, descText, notifType, duration)
         notifType = notifType or "Info"
         duration = duration or 3
@@ -1973,7 +2065,7 @@ function Fenglib:CreateWindow(Config)
         main.Name = "Main"
         main.Size = UDim2.new(0, 250, 0, 0)
         main.AutomaticSize = Enum.AutomaticSize.Y
-        main.BackgroundColor3 = CurrentTheme.Top
+        main.BackgroundColor3 = CurrentTheme.SectionTop
         main.BackgroundTransparency = 0.05
         main.BorderSizePixel = 0
         main.Parent = root
@@ -2077,7 +2169,7 @@ function Fenglib:CreateWindow(Config)
         Tween(root, {Size = UDim2.new(0, mainSize.X, 0, mainSize.Y)}, 0.3)
 
         local function updateTheme()
-            main.BackgroundColor3 = CurrentTheme.Top
+            main.BackgroundColor3 = CurrentTheme.SectionTop
             titleLbl.TextColor3 = CurrentTheme.Text
             descLbl.TextColor3 = CurrentTheme.Text
             closeImg.ImageColor3 = CurrentTheme.Text
@@ -2129,6 +2221,7 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
+    -- 3D 投影模式 (保持原 API)
     Window._ProjectorModeEnabled = false
     Window._ProjectorObjects = nil
     Window._ProjectorSettings = {
@@ -2370,6 +2463,7 @@ function Fenglib:CreateWindow(Config)
         return Window._ProjectorModeEnabled
     end
 
+    -- Tab 创建 (metUI 样式)
     local firstTab = true
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
@@ -2419,7 +2513,7 @@ function Fenglib:CreateWindow(Config)
             end
             TabIcon.Parent = ContentFrame
             local iconGrad = Instance.new("UIGradient")
-            AddToRegistry(iconGrad, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent) end)
+            AddToRegistry(iconGrad, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.AccentGradient) end)
             iconGrad.Parent = TabIcon
         end
 
