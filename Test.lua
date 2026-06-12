@@ -4425,7 +4425,7 @@ local Library do
             return DashPage
         end
 
-        -- ========== 完全重写的 rebuildSection ==========
+        -- ========== 完全重写的 rebuildSection（修复 GetPropertyChangedSignal 错误） ==========
         local function rebuildSection(Tab, Data)
             Data = Data or { }
 
@@ -4694,7 +4694,6 @@ local Library do
                     CornerRadius = UDimNew(0, 8)
                 })
                 
-                -- === 核心：固定背景 + 滚动视口 ===
                 Items["Background"] = Instances:Create("Frame", {
                     Parent = Items["Section"].Instance,
                     Name = "\0",
@@ -4755,8 +4754,11 @@ local Library do
                     end
                 end
                 
+                -- 修复：使用 Layout.Instance 而不是 Layout 本身
                 local conn
-                conn = Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
+                if Layout and Layout.Instance then
+                    conn = Layout.Instance:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
+                end
                 Library:Connect(Items["Canvas"].Instance:GetPropertyChangedSignal("AbsoluteSize"), updateCanvasSize)
                 task.defer(updateCanvasSize)
                 
