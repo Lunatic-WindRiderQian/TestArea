@@ -4425,7 +4425,6 @@ local Library do
             return DashPage
         end
 
-        -- 重写 Section 构建函数，添加滚动条并修正布局
         local function rebuildSection(Tab, Data)
             Data = Data or { }
 
@@ -4713,7 +4712,6 @@ local Library do
                     CornerRadius = UDimNew(0, 8)
                 })
                 
-                -- 背景容器：负责裁剪溢出内容，并设定相对位置
                 Items["Background"] = Instances:Create("Frame", {
                     Parent = Items["Section"].Instance,
                     Name = "\0",
@@ -4723,44 +4721,36 @@ local Library do
                     Size = UDim2New(1, -2, 1, -75),
                     ZIndex = 2,
                     BorderSizePixel = 0,
-                    ClipsDescendants = true,
                     BackgroundColor3 = FromRGB(24, 22, 25)
                 })  Items["Background"]:AddToTheme({BackgroundColor3 = "Section Background"})
                 
-                -- 滚动区域：占满 Background，滚动条靠右，但内容通过 UIPadding 留出空间
+                -- ======================== 修改开始 ========================
+                -- 将原来的 Content Frame 改为 ScrollingFrame 以支持滚动
                 Items["Content"] = Instances:Create("ScrollingFrame", {
                     Parent = Items["Background"].Instance,
                     Name = "\0",
                     BackgroundTransparency = 1,
                     BorderColor3 = FromRGB(0, 0, 0),
-                    Position = UDim2New(0, 0, 0, 0),
-                    Size = UDim2New(1, 0, 1, 0),
-                    AutomaticCanvasSize = Enum.AutomaticSize.Y,
+                    Position = UDim2New(0, 18, 0, 22),
+                    Size = UDim2New(1, -36, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,           -- 自动高度
+                    AutomaticCanvasSize = Enum.AutomaticSize.Y,     -- 画布自动适应内容
                     ScrollingDirection = Enum.ScrollingDirection.Y,
-                    ScrollBarThickness = 6,
-                    ScrollBarImageColor3 = Library.Theme.Accent,
+                    ScrollBarThickness = 4,                         -- 滚动条厚度
+                    ScrollBarImageColor3 = Library.Theme.Accent,    -- 滚动条颜色（跟随主题）
                     BorderSizePixel = 0,
                     ClipsDescendants = true,
                     ZIndex = 2,
                 })
                 Items["Content"]:AddToTheme({ScrollBarImageColor3 = "Accent"})
-                
-                -- 内边距：左侧 18 保持与原设计一致，右侧 16 为滚动条留出空间，顶部 22 底部 16
-                Instances:Create("UIPadding", {
-                    Parent = Items["Content"].Instance,
-                    Name = "\0",
-                    PaddingLeft = UDimNew(0, 18),
-                    PaddingRight = UDimNew(0, 16),
-                    PaddingTop = UDimNew(0, 22),
-                    PaddingBottom = UDimNew(0, 16)
-                })
+                -- ======================== 修改结束 ========================
                 
                 Instances:Create("UIListLayout", {
                     Parent = Items["Content"].Instance,
                     Name = "\0",
                     Padding = UDimNew(0, 10),
                     SortOrder = Enum.SortOrder.LayoutOrder
-                })
+                })                
 
                 Items["Fade"] = Instances:Create("TextButton", {
                     Parent = Items["Background"].Instance,
@@ -4781,6 +4771,12 @@ local Library do
                     Name = "\0",
                     CornerRadius = UDimNew(0, 8)
                 })                
+
+                Instances:Create("UIPadding", {
+                    Parent = Items["Content"].Instance,
+                    Name = "\0",
+                    PaddingBottom = UDimNew(0, 16)
+                })
 
                 Section.Items = Items
             end
