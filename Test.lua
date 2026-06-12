@@ -80,10 +80,8 @@ local Themes = {
 }
 local CurrentTheme = Themes.Dark
 
--- 修复：支持函数值以及字符串 key，并自动响应主题切换
 local function AddToRegistry(obj, prop, themeKeyOrValue)
     if type(themeKeyOrValue) == "function" then
-        -- 动态值：存储函数，并在每次主题变更时重新求值
         local entry = {Object = obj, Property = prop, Type = nil, DynamicFunc = themeKeyOrValue}
         table.insert(Registry, entry)
         obj[prop] = themeKeyOrValue()
@@ -93,12 +91,10 @@ local function AddToRegistry(obj, prop, themeKeyOrValue)
         obj[prop] = CurrentTheme[themeKeyOrValue]
         return
     else
-        -- 直接赋值（兼容旧用法）
         obj[prop] = themeKeyOrValue
     end
 end
 
--- 主题切换时更新所有注册项
 function Fenglib:SetTheme(themeName)
     if Themes[themeName] then
         CurrentTheme = Themes[themeName]
@@ -117,7 +113,6 @@ function Fenglib:SetTheme(themeName)
     end
 end
 
--- 保留原 Tween 函数（仅作动画）
 local function Tween(obj, props, time)
     TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
@@ -195,7 +190,6 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             iconClosed = defaultIcon
         end
 
-        -- Section frame (MetUI style)
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 45)
         sectionFrame.BackgroundTransparency = 0.65
@@ -207,7 +201,6 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         corner.CornerRadius = UDim.new(0, 6)
         corner.Parent = sectionFrame
 
-        -- Top bar (header)
         local topBar = Instance.new("Frame")
         topBar.Size = UDim2.new(1, 0, 0, 55)
         topBar.BackgroundTransparency = 0.65
@@ -225,7 +218,6 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         topCorner.CornerRadius = UDim.new(0, 4)
         topCorner.Parent = topBg
 
-        -- Icon
         local iconLabel = Instance.new("ImageLabel")
         iconLabel.Size = UDim2.new(0, 21, 0, 20)
         iconLabel.Position = UDim2.new(0, 15, 0.5, -10)
@@ -237,7 +229,6 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         AddToRegistry(iconGradient, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent) end)
         iconGradient.Parent = iconLabel
 
-        -- Title
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Text = text
         titleLabel.Size = UDim2.new(0, 0, 0, 15)
@@ -250,7 +241,6 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         titleLabel.Parent = topBg
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
-        -- Description
         local descLabel = Instance.new("TextLabel")
         descLabel.Text = icons and type(icons) == "string" and icons or ""
         descLabel.Size = UDim2.new(0, 0, 0, 15)
@@ -264,7 +254,6 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         descLabel.Parent = topBg
         AddToRegistry(descLabel, "TextColor3", "Text")
 
-        -- Toggle button (expand/collapse)
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(0, 26, 0, 16)
         toggleBtn.Position = UDim2.new(1, -15, 0.5, -8)
@@ -292,7 +281,6 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         AddToRegistry(toggleFrame, "BackgroundColor3", "Accent")
         AddToRegistry(toggleCircle, "BackgroundColor3", "Text")
 
-        -- Content container
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, 0, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 0, 0, 55)
@@ -340,7 +328,6 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             end
         end)
 
-        -- Internal element builders (MetUI styled)
         local child = {}
 
         child.Button = function(_, btnText, callback)
@@ -1599,9 +1586,9 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.PaddingBottom = UDim.new(0, 5)
     HolderPadding.Parent = NotificationHolder
 
-    -- Main window frame (MetUI style)
+    -- Main window frame (MetUI style) - size changed to 500x299
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 940, 0, 730)
+    MainFrame.Size = UDim2.new(0, 500, 0, 299)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.BackgroundTransparency = 0.12
@@ -1615,7 +1602,6 @@ function Fenglib:CreateWindow(Config)
     MainStroke.Parent = MainFrame
     AddToRegistry(MainStroke, "Color", "Stroke")
 
-    -- Gradient for rainbow effect (optional)
     local Gradient = Instance.new("UIGradient")
     Gradient.Parent = MainStroke
     Gradient.Enabled = false
@@ -1656,7 +1642,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- Topbar area (MetUI style: logo, title, subtitle, buttons)
+    -- Topbar area (MetUI style)
     local topbarHeight = Subtitle and 55 or 55
 
     local Topbar = Instance.new("Frame")
@@ -1664,7 +1650,6 @@ function Fenglib:CreateWindow(Config)
     Topbar.BackgroundTransparency = 1
     Topbar.Parent = MainFrame
 
-    -- Logo
     if IconAsset then
         if tonumber(IconAsset) then
             IconAsset = "rbxassetid://" .. IconAsset
@@ -1683,7 +1668,6 @@ function Fenglib:CreateWindow(Config)
     AddToRegistry(logoGradient, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent) end)
     logoGradient.Parent = Logo
 
-    -- Title
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Text = Title
     TitleLabel.Position = UDim2.new(0, 52, 0, 13)
@@ -1696,7 +1680,6 @@ function Fenglib:CreateWindow(Config)
     TitleLabel.Parent = Topbar
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
-    -- Subtitle
     if Subtitle then
         local SubtitleLabel = Instance.new("TextLabel")
         SubtitleLabel.Text = Subtitle
@@ -1712,7 +1695,6 @@ function Fenglib:CreateWindow(Config)
         AddToRegistry(SubtitleLabel, "TextColor3", "Text")
     end
 
-    -- Window control buttons (MetUI style)
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
     ButtonGroup.Size = UDim2.new(0, 100, 1, 0)
@@ -1767,9 +1749,9 @@ function Fenglib:CreateWindow(Config)
         ScreenGui:Destroy()
     end)
 
-    -- Left Tabs Panel (MetUI style)
+    -- Left Tabs Panel (MetUI style) - width reduced to 140
     local LeftTabs = Instance.new("Frame")
-    LeftTabs.Size = UDim2.new(0, 225, 1, -55)
+    LeftTabs.Size = UDim2.new(0, 140, 1, -55)
     LeftTabs.Position = UDim2.new(0, 0, 0, 55)
     LeftTabs.BackgroundTransparency = 0.12
     LeftTabs.Parent = MainFrame
@@ -1796,10 +1778,10 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- Right Content Panel
+    -- Right Content Panel - width adjusted to 1,-155 (since 140 left + 15 margin = 155)
     local Content = Instance.new("Frame")
-    Content.Size = UDim2.new(1, -225, 1, -55)
-    Content.Position = UDim2.new(0, 225, 0, 55)
+    Content.Size = UDim2.new(1, -155, 1, -55)
+    Content.Position = UDim2.new(0, 140, 0, 55)
     Content.BackgroundTransparency = 0.75
     Content.ClipsDescendants = true
     Content.Parent = MainFrame
@@ -1860,7 +1842,6 @@ function Fenglib:CreateWindow(Config)
     UserInputService.InputChanged:Connect(onDragMove)
     UserInputService.InputEnded:Connect(endDrag)
 
-    -- Resize grip (MetUI style)
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
@@ -1907,7 +1888,6 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- Floating open button (MetUI style)
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
@@ -1946,14 +1926,12 @@ function Fenglib:CreateWindow(Config)
     end)
     OpenButton.Visible = false
 
-    -- Keybind toggle
     UserInputService.InputBegan:Connect(function(input, gpe)
         if not gpe and Keybind and input.KeyCode == Keybind then
             toggleMainFrame()
         end
     end)
 
-    -- Notification system (unchanged)
     function Window:Notification(titleText, descText, notifType, duration)
         notifType = notifType or "Info"
         duration = duration or 3
@@ -2151,7 +2129,6 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- Projector mode (unchanged logic)
     Window._ProjectorModeEnabled = false
     Window._ProjectorObjects = nil
     Window._ProjectorSettings = {
@@ -2393,7 +2370,6 @@ function Fenglib:CreateWindow(Config)
         return Window._ProjectorModeEnabled
     end
 
-    -- Tab creation (MetUI style)
     local firstTab = true
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
@@ -2553,8 +2529,7 @@ function Fenglib:CreateWindow(Config)
         return getElements()
     end
 
-    -- Initial animation
-    Tween(MainFrame, {Size = UDim2.new(0, 940, 0, 730)}, 0.6)
+    Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
     MainFrame.Visible = true
     OpenButton.Visible = false
 
