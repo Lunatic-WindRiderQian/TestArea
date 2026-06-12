@@ -4425,6 +4425,7 @@ local Library do
             return DashPage
         end
 
+        -- 重写 Section 构建函数，添加滚动条并修正布局
         local function rebuildSection(Tab, Data)
             Data = Data or { }
 
@@ -4712,6 +4713,7 @@ local Library do
                     CornerRadius = UDimNew(0, 8)
                 })
                 
+                -- 背景容器：负责裁剪溢出内容，并设定相对位置
                 Items["Background"] = Instances:Create("Frame", {
                     Parent = Items["Section"].Instance,
                     Name = "\0",
@@ -4725,6 +4727,7 @@ local Library do
                     BackgroundColor3 = FromRGB(24, 22, 25)
                 })  Items["Background"]:AddToTheme({BackgroundColor3 = "Section Background"})
                 
+                -- 滚动区域：占满 Background，滚动条靠右，但内容通过 UIPadding 留出空间
                 Items["Content"] = Instances:Create("ScrollingFrame", {
                     Parent = Items["Background"].Instance,
                     Name = "\0",
@@ -4742,6 +4745,7 @@ local Library do
                 })
                 Items["Content"]:AddToTheme({ScrollBarImageColor3 = "Accent"})
                 
+                -- 内边距：左侧 18 保持与原设计一致，右侧 16 为滚动条留出空间，顶部 22 底部 16
                 Instances:Create("UIPadding", {
                     Parent = Items["Content"].Instance,
                     Name = "\0",
