@@ -4723,18 +4723,17 @@ local Library do
                     BackgroundColor3 = FromRGB(24, 22, 25)
                 })  Items["Background"]:AddToTheme({BackgroundColor3 = "Section Background"})
                 
-                -- 修复：ScrollingFrame 高度固定，画布自动扩展，实现滚动而不溢出
+                -- 修复后的 Content ScrollingFrame（滚动条悬浮，不占宽度）
                 Items["Content"] = Instances:Create("ScrollingFrame", {
                     Parent = Items["Background"].Instance,
                     Name = "\0",
                     BackgroundTransparency = 1,
                     BorderColor3 = FromRGB(0, 0, 0),
                     Position = UDim2New(0, 18, 0, 22),
-                    Size = UDim2New(1, -36, 1, -44),            -- 固定填满剩余空间
-                    AutomaticCanvasSize = Enum.AutomaticSize.Y,  -- 画布高度自动适应内容
+                    Size = UDim2New(1, -36, 1, -44),
+                    AutomaticCanvasSize = Enum.AutomaticSize.Y,
                     ScrollingDirection = Enum.ScrollingDirection.Y,
-                    ScrollBarThickness = 4,
-                    ScrollBarImageColor3 = Library.Theme.Accent,
+                    ScrollBarThickness = 0,         -- 滚动条不占宽度，避免内容缩小
                     BorderSizePixel = 0,
                     ClipsDescendants = true,
                     ZIndex = 2,
