@@ -69,7 +69,7 @@ local function createPulseGlow(object)
     }
 end
 
--- 主题颜色 (metUI 配色)
+-- 主题配色（完全对应 metUI.lua）
 local Themes = {
     Dark = {
         Background = Color3.fromRGB(12, 12, 14),
@@ -158,14 +158,19 @@ local Themes = {
 }
 local CurrentTheme = Themes.Dark
 
--- 增强的 AddToRegistry，支持函数动态更新
+-- 增强 AddToRegistry：支持函数（动态值）和字符串（主题键），对无效键输出警告
 local function AddToRegistry(obj, prop, themeKeyOrValue)
     if type(themeKeyOrValue) == "function" then
         table.insert(Registry, {Object = obj, Property = prop, DynamicFunc = themeKeyOrValue})
         obj[prop] = themeKeyOrValue()
     elseif type(themeKeyOrValue) == "string" then
+        local value = CurrentTheme[themeKeyOrValue]
+        if value == nil then
+            warn("AddToRegistry: Invalid theme key '" .. themeKeyOrValue .. "' for property '" .. prop .. "'")
+            return
+        end
         table.insert(Registry, {Object = obj, Property = prop, Type = themeKeyOrValue})
-        obj[prop] = CurrentTheme[themeKeyOrValue]
+        obj[prop] = value
     else
         obj[prop] = themeKeyOrValue
     end
@@ -266,7 +271,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             iconClosed = defaultIcon
         end
 
-        -- Section 外层框架 (metUI)
+        -- Section 外层框架
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 45)
         sectionFrame.BackgroundTransparency = 0.65
@@ -337,7 +342,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
         descLabel.Parent = topBg
         AddToRegistry(descLabel, "TextColor3", "Text")
 
-        -- 展开/折叠开关 (metUI 圆形滑动样式)
+        -- 展开/折叠开关
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(0, 26, 0, 16)
         toggleBtn.Position = UDim2.new(1, -15, 0.5, -8)
@@ -412,7 +417,7 @@ local function createMetUISection(parent, contentContainer, elementWidth, window
             if open then updateSectionHeight(false) end
         end)
 
-        -- 内部控件建造器 (完全按 metUI 样式)
+        -- 内部控件建造器
         local child = {}
 
         child.Button = function(_, btnText, callback)
@@ -1704,7 +1709,7 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = MainStroke
     Gradient.Enabled = false
 
-    -- 彩虹效果 (不变)
+    -- 彩虹效果
     task.spawn(function()
         local rot = 0
         while ScreenGui.Parent do
@@ -1761,7 +1766,9 @@ function Fenglib:CreateWindow(Config)
     Logo.Image = IconAsset
     Logo.Parent = Topbar
     local logoGradient = Instance.new("UIGradient")
-    AddToRegistry(logoGradient, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.AccentGradient) end)
+    AddToRegistry(logoGradient, "Color", function()
+        return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.AccentGradient)
+    end)
     logoGradient.Parent = Logo
 
     local TitleLabel = Instance.new("TextLabel")
@@ -1823,7 +1830,9 @@ function Fenglib:CreateWindow(Config)
         btnHover.BackgroundTransparency = 1
         btnHover.Parent = btn
         local hoverGradient = Instance.new("UIGradient")
-        AddToRegistry(hoverGradient, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.AccentGradient) end)
+        AddToRegistry(hoverGradient, "Color", function()
+            return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.AccentGradient)
+        end)
         hoverGradient.Parent = btnHover
 
         btn.MouseEnter:Connect(function()
@@ -1846,7 +1855,7 @@ function Fenglib:CreateWindow(Config)
         ScreenGui:Destroy()
     end)
 
-    -- 左侧 Tab 面板 (metUI 宽度 225，但我们用 140 以匹配原来大小)
+    -- 左侧 Tab 面板 (宽度 140)
     local LeftTabs = Instance.new("Frame")
     LeftTabs.Size = UDim2.new(0, 140, 1, -55)
     LeftTabs.Position = UDim2.new(0, 0, 0, 55)
@@ -2023,7 +2032,7 @@ function Fenglib:CreateWindow(Config)
         end)
     end
 
-    -- 通知系统 (略，与原一致)
+    -- 通知系统
     function Window:Notification(titleText, descText, notifType, duration)
         notifType = notifType or "Info"
         duration = duration or 3
@@ -2221,7 +2230,7 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- 3D 投影模式 (保持原 API)
+    -- 3D 投影模式
     Window._ProjectorModeEnabled = false
     Window._ProjectorObjects = nil
     Window._ProjectorSettings = {
@@ -2463,7 +2472,7 @@ function Fenglib:CreateWindow(Config)
         return Window._ProjectorModeEnabled
     end
 
-    -- Tab 创建 (metUI 样式)
+    -- Tab 创建
     local firstTab = true
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
@@ -2513,7 +2522,9 @@ function Fenglib:CreateWindow(Config)
             end
             TabIcon.Parent = ContentFrame
             local iconGrad = Instance.new("UIGradient")
-            AddToRegistry(iconGrad, "Color", function() return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.AccentGradient) end)
+            AddToRegistry(iconGrad, "Color", function()
+                return ColorSequence.new(CurrentTheme.Accent, CurrentTheme.AccentGradient)
+            end)
             iconGrad.Parent = TabIcon
         end
 
