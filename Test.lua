@@ -2775,8 +2775,7 @@ local Library do
                         local tx = wantTLX - p0.X + anch.X * sz.X
                         local ty = wantTLY - p0.Y + anch.Y * sz.Y
                         local cur = inst.Position
-                        local cx = cur.X.Offset
-                        local cy = cur.Y.Offset
+                        local cx, cy = cur.X.Offset, cur.Y.Offset
                         local a = math.clamp(FLOAT_LERP * (1 / math.max(dt, 1 / 240)), 0.06, 0.32)
                         inst.Position = UDim2FromOffset(cx + (tx - cx) * a, cy + (ty - cy) * a)
                     end)
@@ -4724,26 +4723,23 @@ local Library do
                     BackgroundColor3 = FromRGB(24, 22, 25)
                 })  Items["Background"]:AddToTheme({BackgroundColor3 = "Section Background"})
                 
-                -- ======================== 修改开始 ========================
-                -- 将原来的 Content Frame 改为 ScrollingFrame 以支持滚动
+                -- 修复：ScrollingFrame 高度固定，画布自动扩展，实现滚动而不溢出
                 Items["Content"] = Instances:Create("ScrollingFrame", {
                     Parent = Items["Background"].Instance,
                     Name = "\0",
                     BackgroundTransparency = 1,
                     BorderColor3 = FromRGB(0, 0, 0),
                     Position = UDim2New(0, 18, 0, 22),
-                    Size = UDim2New(1, -36, 0, 0),
-                    AutomaticSize = Enum.AutomaticSize.Y,           -- 自动高度
-                    AutomaticCanvasSize = Enum.AutomaticSize.Y,     -- 画布自动适应内容
+                    Size = UDim2New(1, -36, 1, -44),            -- 固定填满剩余空间
+                    AutomaticCanvasSize = Enum.AutomaticSize.Y,  -- 画布高度自动适应内容
                     ScrollingDirection = Enum.ScrollingDirection.Y,
-                    ScrollBarThickness = 4,                         -- 滚动条厚度
-                    ScrollBarImageColor3 = Library.Theme.Accent,    -- 滚动条颜色（跟随主题）
+                    ScrollBarThickness = 4,
+                    ScrollBarImageColor3 = Library.Theme.Accent,
                     BorderSizePixel = 0,
                     ClipsDescendants = true,
                     ZIndex = 2,
                 })
                 Items["Content"]:AddToTheme({ScrollBarImageColor3 = "Accent"})
-                -- ======================== 修改结束 ========================
                 
                 Instances:Create("UIListLayout", {
                     Parent = Items["Content"].Instance,
