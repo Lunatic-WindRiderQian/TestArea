@@ -1460,6 +1460,11 @@ function Fenglib:CreateWindow(Config)
     local IconAsset = Config.Icon
     local isCardMode = Config.Card == true
 
+    -- 添加 Tab 切换冷却与防连点标志
+    Window._switching = false
+    Window.TabSwitchCooldownSec = 0.5
+    Window._tabCooldownUntil = 0
+
     Window.RootFolder = Title
     Window.ConfigFolder = Title.."/Config"
     Window.CurrentConfig = ""
@@ -1850,64 +1855,7 @@ function Fenglib:CreateWindow(Config)
     local firstTab = true
     local activeCanvas = nil
 
-    -- Tab switching: exactly as in metUI.lua (0.42s, Quint, offset 30)
-    local function switchToTab(canvasGroup, tabButton)
-        if activeCanvas == canvasGroup then return end
-
-        local oldCanvas = activeCanvas
-
-        if oldCanvas then
-            Tween(oldCanvas, {
-                GroupTransparency = 1,
-                Position = UDim2.new(0, 0, 0, -30)
-            }, 0.42)
-        end
-
-        canvasGroup.Visible = true
-        canvasGroup.GroupTransparency = 1
-        canvasGroup.Position = UDim2.new(0, 0, 0, 30)
-
-        Tween(canvasGroup, {
-            GroupTransparency = 0,
-            Position = UDim2.new(0, 0, 0, 0)
-        }, 0.42)
-
-        activeCanvas = canvasGroup
-
-        -- Update tab buttons
-        for _, btn in ipairs(TabContainer:GetChildren()) do
-            if btn:IsA("TextButton") then
-                local bar = btn:FindFirstChild("TabIndicator")
-                if bar then
-                    Tween(bar, { Size = UDim2.new(0, 3, 0, 0), Transparency = 1 }, 0.25)
-                end
-                btn.Selected = false
-                Tween(btn, { BackgroundTransparency = 1 }, 0.25)
-                local content = btn:FindFirstChild("ContentFrame")
-                if content then
-                    local txt = content:FindFirstChildOfClass("TextLabel")
-                    if txt then
-                        Tween(txt, { TextColor3 = Color3.fromRGB(150, 150, 158) }, 0.25)
-                    end
-                end
-            end
-        end
-
-        tabButton.Selected = true
-        Tween(tabButton, { BackgroundTransparency = 0.05 }, 0.25)
-        local content = tabButton:FindFirstChild("ContentFrame")
-        if content then
-            local txt = content:FindFirstChildOfClass("TextLabel")
-            if txt then
-                Tween(txt, { TextColor3 = CurrentTheme.Text }, 0.25)
-            end
-        end
-        local bar = tabButton:FindFirstChild("TabIndicator")
-        if bar then
-            Tween(bar, { Size = UDim2.new(0, 3, 0.65, 0), Transparency = 0 }, 0.25)
-        end
-    end
-
+    -- ====== 替换后的 Window:Tab 方法（metUI 风格） ======
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -2016,10 +1964,88 @@ function Fenglib:CreateWindow(Config)
             return elements
         end
 
+        -- ====== metUI 风格的 switchToTab（内联） ======
+        local function switchToTab(canvasGroup, tabButton)
+            if Window._switching then return end
+            if activeCanvas == canvasGroup then return end
+
+            local now = tick()
+            if now < Window._tabCooldownUntil then return end
+
+            Window._switching = true
+            Window._tabCooldownUntil = now + Window.TabSwitchCooldownSec
+
+            local tweenInfo = TweenInfo.new(0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+            -- 旧页滑出淡出
+            if activeCanvas then
+                Tween(activeCanvas, {
+                    GroupTransparency = 1,
+                    Position = UDim2.new(0, 0, 0, -30)
+                }, 0.42)
+            end
+
+            -- 新页准备
+            canvasGroup.Visible = true
+            canvasGroup.GroupTransparency = 1
+            canvasGroup.Position = UDim2.new(0, 0, 0, 30)
+
+            -- 新页滑入淡入
+            Tween(canvasGroup, {
+                GroupTransparency = 0,
+                Position = UDim2.new(0, 0, 0, 0)
+            }, 0.42)
+
+            activeCanvas = canvasGroup
+
+            -- 更新所有 Tab 按钮的指示条（动画同步）
+            for _, btn in ipairs(TabContainer:GetChildren()) do
+                if btn:IsA("TextButton") then
+                    local bar = btn:FindFirstChild("TabIndicator")
+                    if bar then
+                        Tween(bar, { Size = UDim2.new(0, 3, 0, 0), Transparency = 1 }, 0.42)
+                    end
+                    btn.Selected = false
+                    Tween(btn, { BackgroundTransparency = 1 }, 0.42)
+                    local content = btn:FindFirstChild("ContentFrame")
+                    if content then
+                        local txt = content:FindFirstChildOfClass("TextLabel")
+                        if txt then
+                            Tween(txt, { TextColor3 = Color3.fromRGB(150, 150, 158) }, 0.42)
+                        end
+                    end
+                end
+            end
+
+            -- 选中当前按钮
+            tabButton.Selected = true
+            Tween(tabButton, { BackgroundTransparency = 0.05 }, 0.42)
+            local content = tabButton:FindFirstChild("ContentFrame")
+            if content then
+                local txt = content:FindFirstChildOfClass("TextLabel")
+                if txt then
+                    Tween(txt, { TextColor3 = CurrentTheme.Text }, 0.42)
+                end
+            end
+            local bar = tabButton:FindFirstChild("TabIndicator")
+            if bar then
+                Tween(bar, { Size = UDim2.new(0, 3, 0.65, 0), Transparency = 0 }, 0.42)
+            end
+
+            -- 解锁（动画时长 + 微小缓冲）
+            task.delay(0.45, function()
+                Window._switching = false
+            end)
+        end
+
+        -- Tab 点击事件（带冷却）
         TabBtn.MouseButton1Click:Connect(function()
+            local now = tick()
+            if now < Window._tabCooldownUntil then return end
             switchToTab(canvas, TabBtn)
         end)
 
+        -- 第一个 Tab 默认激活
         if firstTab then
             firstTab = false
             canvas.Visible = true
@@ -2032,6 +2058,7 @@ function Fenglib:CreateWindow(Config)
             indicator.Transparency = 0
         end
 
+        -- 固定顺序（配置页置后）
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
         if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
