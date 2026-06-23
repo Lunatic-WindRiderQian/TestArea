@@ -1761,24 +1761,24 @@ function Fenglib:CreateWindow(Config)
         ScreenGui:Destroy()
     end)
 
-    -- === CONTENT AREA (with metUI-style left panel background) ===
+    -- === CONTENT AREA (with metUI-style left panel background, no extra lines) ===
     local Content = Instance.new("Frame")
     Content.Size = UDim2.new(1, -20, 1, -(topbarHeight + 15))
     Content.Position = UDim2.new(0, 10, 0, topbarHeight + 5)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
-    -- Left panel (metUI background) - 左侧对齐主框架边缘，右侧位置不变（右侧仍在 140）
+    -- Left panel: left-aligned to MainFrame edge, width 150, right edge at 140
     local LeftPanel = Instance.new("Frame")
-    LeftPanel.Size = UDim2.new(0, 150, 1, 0)       -- 宽度从 140 增加到 150
-    LeftPanel.Position = UDim2.new(0, -10, 0, 0)    -- 左移 10px 对齐 MainFrame 左边缘
+    LeftPanel.Size = UDim2.new(0, 150, 1, 0)
+    LeftPanel.Position = UDim2.new(0, -10, 0, 0)
     LeftPanel.BackgroundTransparency = 0.12
     LeftPanel.BackgroundColor3 = CurrentTheme.Main
     LeftPanel.Parent = Content
     Instance.new("UICorner", LeftPanel).CornerRadius = UDim.new(0, 10)
     AddToRegistry(LeftPanel, "BackgroundColor3", "Main")
 
-    -- Tab container (inside left panel)
+    -- Tab container
     local TabContainer = Instance.new("ScrollingFrame")
     TabContainer.Size = UDim2.new(1, 0, 0.85, 0)
     TabContainer.BackgroundTransparency = 1
@@ -1797,7 +1797,7 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- Profile frame (bottom of left panel)
+    -- Profile frame
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(1, 0, 0, 40)
     ProfileFrame.Position = UDim2.new(0, 0, 1, -40)
@@ -1837,12 +1837,12 @@ function Fenglib:CreateWindow(Config)
     UsrName.Parent = ProfileFrame
     AddToRegistry(UsrName, "TextColor3", "Text")
 
-    -- No Line (deleted)
+    -- No dividing line — removed entirely.
 
-    -- 页面容器（右侧内容，从 LeftPanel 右侧开始，X = 140）
+    -- Page container (right side, starts at X=140)
     local PageContainer = Instance.new("Frame")
-    PageContainer.Size = UDim2.new(1, -140, 1, 0)   -- 宽度 = 总宽度 - 140
-    PageContainer.Position = UDim2.new(0, 140, 0, 0) -- 起始 X = 140（面板右侧）
+    PageContainer.Size = UDim2.new(1, -140, 1, 0)
+    PageContainer.Position = UDim2.new(0, 140, 0, 0)
     PageContainer.BackgroundTransparency = 1
     PageContainer.ClipsDescendants = true
     PageContainer.Parent = Content
@@ -1850,7 +1850,7 @@ function Fenglib:CreateWindow(Config)
     local firstTab = true
     local activeCanvas = nil
 
-    -- 切换 Tab 函数（完全采用 metUI 风格：Quint 缓动，0.42s，偏移 30px）
+    -- Tab switching: exactly as in metUI.lua (0.42s, Quint, offset 30)
     local function switchToTab(canvasGroup, tabButton)
         if activeCanvas == canvasGroup then return end
 
@@ -1860,14 +1860,12 @@ function Fenglib:CreateWindow(Config)
             Tween(oldCanvas, {
                 GroupTransparency = 1,
                 Position = UDim2.new(0, 0, 0, -30)
-            }, 0.42)  -- metUI 使用 0.42s
+            }, 0.42)
         end
 
         canvasGroup.Visible = true
         canvasGroup.GroupTransparency = 1
         canvasGroup.Position = UDim2.new(0, 0, 0, 30)
-
-        task.wait()
 
         Tween(canvasGroup, {
             GroupTransparency = 0,
@@ -1876,7 +1874,7 @@ function Fenglib:CreateWindow(Config)
 
         activeCanvas = canvasGroup
 
-        -- 更新 Tab 按钮样式（指示条动画）
+        -- Update tab buttons
         for _, btn in ipairs(TabContainer:GetChildren()) do
             if btn:IsA("TextButton") then
                 local bar = btn:FindFirstChild("TabIndicator")
@@ -1910,7 +1908,6 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- 创建 Tab 方法（API 不变）
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -1968,7 +1965,7 @@ function Fenglib:CreateWindow(Config)
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
 
-        -- CanvasGroup 页面
+        -- CanvasGroup page
         local canvas = Instance.new("CanvasGroup")
         canvas.Size = UDim2.new(1, 0, 1, 0)
         canvas.BackgroundTransparency = 1
@@ -2412,7 +2409,7 @@ function Fenglib:CreateWindow(Config)
     
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
-    -- === CARD MODE (unchanged, but adapt LeftPanel visibility) ===
+    -- === CARD MODE (unchanged, just hide left panel) ===
     if isCardMode then
         TabContainer.Visible = false
         LeftPanel.Visible = false
