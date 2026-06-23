@@ -1768,9 +1768,10 @@ function Fenglib:CreateWindow(Config)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
-    -- Left panel (metUI background) - full height aligned with Content
+    -- Left panel (metUI background) - 左侧对齐主框架边缘，右侧位置不变（右侧仍在 140）
     local LeftPanel = Instance.new("Frame")
-    LeftPanel.Size = UDim2.new(0, 140, 1, 0)
+    LeftPanel.Size = UDim2.new(0, 150, 1, 0)       -- 宽度从 140 增加到 150
+    LeftPanel.Position = UDim2.new(0, -10, 0, 0)    -- 左移 10px 对齐 MainFrame 左边缘
     LeftPanel.BackgroundTransparency = 0.12
     LeftPanel.BackgroundColor3 = CurrentTheme.Main
     LeftPanel.Parent = Content
@@ -1836,12 +1837,12 @@ function Fenglib:CreateWindow(Config)
     UsrName.Parent = ProfileFrame
     AddToRegistry(UsrName, "TextColor3", "Text")
 
-    -- No Line (deleted as requested)
+    -- No Line (deleted)
 
-    -- 页面容器（右侧内容，使用 CanvasGroup 实现 metUI 动画）
+    -- 页面容器（右侧内容，从 LeftPanel 右侧开始，X = 140）
     local PageContainer = Instance.new("Frame")
-    PageContainer.Size = UDim2.new(1, -150, 1, 0)  -- 140+10间隙
-    PageContainer.Position = UDim2.new(0, 150, 0, 0)
+    PageContainer.Size = UDim2.new(1, -140, 1, 0)   -- 宽度 = 总宽度 - 140
+    PageContainer.Position = UDim2.new(0, 140, 0, 0) -- 起始 X = 140（面板右侧）
     PageContainer.BackgroundTransparency = 1
     PageContainer.ClipsDescendants = true
     PageContainer.Parent = Content
@@ -1849,37 +1850,33 @@ function Fenglib:CreateWindow(Config)
     local firstTab = true
     local activeCanvas = nil
 
-    -- 重写的切换 Tab 函数（更稳定、无空白）
+    -- 切换 Tab 函数（完全采用 metUI 风格：Quint 缓动，0.42s，偏移 30px）
     local function switchToTab(canvasGroup, tabButton)
         if activeCanvas == canvasGroup then return end
 
         local oldCanvas = activeCanvas
 
-        -- 淡出旧页面（如果存在）
         if oldCanvas then
             Tween(oldCanvas, {
                 GroupTransparency = 1,
                 Position = UDim2.new(0, 0, 0, -30)
-            }, 0.35)
+            }, 0.42)  -- metUI 使用 0.42s
         end
 
-        -- 准备新页面：先设到下方并完全透明
         canvasGroup.Visible = true
         canvasGroup.GroupTransparency = 1
         canvasGroup.Position = UDim2.new(0, 0, 0, 30)
 
-        -- 等待一帧，确保布局更新
         task.wait()
 
-        -- 淡入新页面（归位 + 透明度渐变为0）
         Tween(canvasGroup, {
             GroupTransparency = 0,
             Position = UDim2.new(0, 0, 0, 0)
-        }, 0.4)
+        }, 0.42)
 
         activeCanvas = canvasGroup
 
-        -- 更新所有 Tab 按钮样式（指示条动画）
+        -- 更新 Tab 按钮样式（指示条动画）
         for _, btn in ipairs(TabContainer:GetChildren()) do
             if btn:IsA("TextButton") then
                 local bar = btn:FindFirstChild("TabIndicator")
@@ -1898,7 +1895,6 @@ function Fenglib:CreateWindow(Config)
             end
         end
 
-        -- 激活当前按钮
         tabButton.Selected = true
         Tween(tabButton, { BackgroundTransparency = 0.05 }, 0.25)
         local content = tabButton:FindFirstChild("ContentFrame")
@@ -1914,7 +1910,7 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- 创建 Tab 方法（API 完全不变）
+    -- 创建 Tab 方法（API 不变）
     function Window:Tab(name, icon)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -1972,7 +1968,7 @@ function Fenglib:CreateWindow(Config)
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
 
-        -- CanvasGroup 页面（包含滚动内容）
+        -- CanvasGroup 页面
         local canvas = Instance.new("CanvasGroup")
         canvas.Size = UDim2.new(1, 0, 1, 0)
         canvas.BackgroundTransparency = 1
@@ -2027,7 +2023,6 @@ function Fenglib:CreateWindow(Config)
             switchToTab(canvas, TabBtn)
         end)
 
-        -- 如果是第一个 Tab，直接显示（无动画）
         if firstTab then
             firstTab = false
             canvas.Visible = true
@@ -2040,7 +2035,6 @@ function Fenglib:CreateWindow(Config)
             indicator.Transparency = 0
         end
 
-        -- 特殊排序
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
         if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
