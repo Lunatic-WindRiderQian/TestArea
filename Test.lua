@@ -1,5 +1,5 @@
 -- Fenglib.lua
--- 完整修正版：Tab 按钮完全采用 metUI 风格（选中背景 Accent 透明度 0.88，指示条居中）
+-- 完整复刻 metUI Tab 按钮样式（选中背景 Accent 透明度 0.88，指示条居中）
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -150,6 +150,7 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
+-- ==================== Section Builder (保持不变) ====================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
@@ -1452,6 +1453,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     return createSection
 end
 
+-- ==================== Window 构造函数 ====================
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "FengY3"
