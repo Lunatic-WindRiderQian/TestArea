@@ -72,13 +72,13 @@ local function createPulseGlow(object)
 end
 
 local Themes = {
-    Dark   = {Main = Color3.fromRGB(12, 12, 14), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(0, 195, 255), Stroke = Color3.fromRGB(45, 45, 48)},
-    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 195, 255), Stroke = Color3.fromRGB(220, 220, 225)},
-    Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(0, 195, 255), Stroke = Color3.fromRGB(50, 45, 60)},
-    Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(0, 195, 255), Stroke = Color3.fromRGB(45, 55, 75)},
-    Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(0, 195, 255), Stroke = Color3.fromRGB(60, 40, 40)},
-    Yellow = {Main = Color3.fromRGB(22, 22, 12), Top = Color3.fromRGB(35, 35, 20), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(0, 195, 255), Stroke = Color3.fromRGB(60, 60, 40)},
-    Green  = {Main = Color3.fromRGB(12, 22, 15), Top = Color3.fromRGB(20, 35, 25), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(0, 195, 255), Stroke = Color3.fromRGB(40, 60, 50)},
+    Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48)},
+    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225)},
+    Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(160, 90, 255), Stroke = Color3.fromRGB(50, 45, 60)},
+    Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(70, 130, 255), Stroke = Color3.fromRGB(45, 55, 75)},
+    Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(60, 40, 40)},
+    Yellow = {Main = Color3.fromRGB(22, 22, 12), Top = Color3.fromRGB(35, 35, 20), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(255, 200, 80), Stroke = Color3.fromRGB(60, 60, 40)},
+    Green  = {Main = Color3.fromRGB(12, 22, 15), Top = Color3.fromRGB(20, 35, 25), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(60, 220, 130), Stroke = Color3.fromRGB(40, 60, 50)},
 }
 local CurrentTheme = Themes.Dark
 
@@ -1523,7 +1523,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = false
-    MainFrame.BackgroundTransparency = 0.12
+    MainFrame.BackgroundTransparency = 0.15
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
@@ -1537,7 +1537,7 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- 高级视觉增强
+    -- ===== 高级视觉增强 =====
     do
         local blurPart = Instance.new("Part")
         blurPart.Name = "FengBlurPart"
@@ -1562,7 +1562,7 @@ function Fenglib:CreateWindow(Config)
         dof.FarIntensity = 0
         dof.FocusDistance = 0
         dof.InFocusRadius = 1000
-        dof.NearIntensity = 0.8
+        dof.NearIntensity = 0.6
         dof.Parent = Lighting
 
         local function updateBlur()
@@ -1658,6 +1658,7 @@ function Fenglib:CreateWindow(Config)
             if dof then dof:Destroy() end
         end)
     end
+    -- ===== 高级视觉增强结束 =====
 
     task.spawn(function()
         local rot = 0
@@ -3080,21 +3081,23 @@ function Fenglib:CreateWindow(Config)
             return {}
         end
     else
-        -- ===== 普通模式（非卡片）- Tab 背景改回原版（灰色 Top 色，透明度 0.05） =====
+        -- ===== 普通模式（非卡片） =====
+        -- 页面滑入动画保留，但 Tab 按钮背景恢复原文件样式
         PageContainer.ClipsDescendants = true
 
         Window._activeTab = nil
 
         function Window:Tab(name, icon)
-            -- 标签按钮（背景色改为 Top，选中透明度 0.05，无指示条）
+            -- 创建标签按钮（恢复原文件样式：使用 Top 背景，选中透明度 0.05）
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(1, 0, 0, 32)
             TabBtn.BackgroundTransparency = 1
-            TabBtn.BackgroundColor3 = CurrentTheme.Top
+            TabBtn.BackgroundColor3 = CurrentTheme.Top   -- 使用 Top 色
             TabBtn.Text = ""
             TabBtn.Parent = TabContainer
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-            AddToRegistry(TabBtn, "BackgroundColor3", "Top")  -- 注册 Top 色
+            -- 注册主题更新，使背景色跟随 Top
+            AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
@@ -3113,7 +3116,7 @@ function Fenglib:CreateWindow(Config)
             Padding.PaddingLeft = UDim.new(0, 10)
             Padding.Parent = ContentFrame
 
-            -- 图标（保留斜向渐变）
+            -- 图标（保留之前加上的渐变）
             if icon then
                 local TabIcon = Instance.new("ImageLabel")
                 TabIcon.Size = UDim2.new(0, 28, 0, 28)
@@ -3125,6 +3128,7 @@ function Fenglib:CreateWindow(Config)
                 end
                 TabIcon.Parent = ContentFrame
                 
+                -- 斜向渐变（保留）
                 local iconGradient = Instance.new("UIGradient")
                 iconGradient.Rotation = -115
                 iconGradient.Color = ColorSequence.new({
@@ -3145,7 +3149,6 @@ function Fenglib:CreateWindow(Config)
                 iconCorner.Parent = TabIcon
             end
 
-            -- 文字标签
             local TabText = Instance.new("TextLabel")
             local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
             TabText.Size = UDim2.new(0, textWidth, 1, 0)
@@ -3158,7 +3161,6 @@ function Fenglib:CreateWindow(Config)
             TabText.Parent = ContentFrame
             AddToRegistry(TabText, "TextColor3", "Text")
 
-            -- 页面容器
             local Page = Instance.new("ScrollingFrame")
             Page.Size = UDim2.new(1, 0, 1, 0)
             Page.BackgroundTransparency = 1
@@ -3185,7 +3187,7 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- 切换逻辑（选中透明度 0.05，无指示条）
+            -- 切换逻辑
             TabBtn.MouseButton1Click:Connect(function()
                 if Window._activeTab and Window._activeTab.Btn == TabBtn then
                     return
@@ -3196,7 +3198,8 @@ function Fenglib:CreateWindow(Config)
                     Window._activeTab.Page.Visible = false
                 end
 
-                TabBtn.BackgroundTransparency = 0.05    -- 原版透明度
+                -- 选中时透明度改为 0.05（原文件样式）
+                TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 60)
                 Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
