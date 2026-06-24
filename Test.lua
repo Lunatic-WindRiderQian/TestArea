@@ -1537,8 +1537,9 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- ===== 高级视觉增强 =====
+    -- ===== 高级视觉增强（仅保留模糊和边框渐变，删除像素圆角黑点） =====
     do
+        -- 3D 背景模糊（毛玻璃效果）
         local blurPart = Instance.new("Part")
         blurPart.Name = "FengBlurPart"
         blurPart.Material = Enum.Material.Glass
@@ -1597,39 +1598,7 @@ function Fenglib:CreateWindow(Config)
 
         local blurConnection = RunService.RenderStepped:Connect(updateBlur)
 
-        -- 像素级圆角抗锯齿
-        local function addCornerPixel(parent, xOff, yOff, xAnchor, yAnchor)
-            local px = Instance.new("Frame")
-            px.Size = UDim2.new(0, 1, 0, 1)
-            px.Position = UDim2.new(xAnchor, xOff, yAnchor, yOff)
-            px.BackgroundTransparency = 0.12
-            px.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            px.BorderSizePixel = 0
-            px.Parent = parent
-            AddToRegistry(px, "BackgroundColor3", "Main")
-            return px
-        end
-
-        local function makeCornerGroup(x, y, anchorX, anchorY)
-            local group = Instance.new("Frame")
-            group.Size = UDim2.new(0, 5, 0, 5)
-            group.Position = UDim2.new(anchorX, x, anchorY, y)
-            group.BackgroundTransparency = 1
-            group.Parent = MainFrame
-            addCornerPixel(group, 2, 0, 0, 0)
-            addCornerPixel(group, 3, 0, 0, 0)
-            addCornerPixel(group, 4, 0, 0, 0)
-            addCornerPixel(group, 3, 1, 0, 0)
-            addCornerPixel(group, 4, 1, 0, 0)
-            return group
-        end
-
-        makeCornerGroup(0, 0, 0, 0)
-        makeCornerGroup(-5, 0, 1, 0)
-        makeCornerGroup(0, -5, 0, 1)
-        makeCornerGroup(-5, -5, 1, 1)
-
-        -- 边框斜向渐变
+        -- 边框斜向渐变（保留）
         local borderStroke = MainFrame:FindFirstChildOfClass("UIStroke")
         if borderStroke then
             local grad = Instance.new("UIGradient")
@@ -3082,21 +3051,19 @@ function Fenglib:CreateWindow(Config)
         end
     else
         -- ===== 普通模式（非卡片） =====
-        -- 页面滑入动画保留，但 Tab 按钮背景恢复原文件样式
+        -- 保留滑入动画，Tab 背景使用原文件样式（Top 色，选中透明度 0.05）
         PageContainer.ClipsDescendants = true
 
         Window._activeTab = nil
 
         function Window:Tab(name, icon)
-            -- 创建标签按钮（恢复原文件样式：使用 Top 背景，选中透明度 0.05）
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(1, 0, 0, 32)
             TabBtn.BackgroundTransparency = 1
-            TabBtn.BackgroundColor3 = CurrentTheme.Top   -- 使用 Top 色
+            TabBtn.BackgroundColor3 = CurrentTheme.Top
             TabBtn.Text = ""
             TabBtn.Parent = TabContainer
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-            -- 注册主题更新，使背景色跟随 Top
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
             local ContentFrame = Instance.new("Frame")
@@ -3116,7 +3083,7 @@ function Fenglib:CreateWindow(Config)
             Padding.PaddingLeft = UDim.new(0, 10)
             Padding.Parent = ContentFrame
 
-            -- 图标（保留之前加上的渐变）
+            -- 图标（没有渐变，只有纯色）
             if icon then
                 local TabIcon = Instance.new("ImageLabel")
                 TabIcon.Size = UDim2.new(0, 28, 0, 28)
@@ -3127,23 +3094,8 @@ function Fenglib:CreateWindow(Config)
                     TabIcon.Image = icon
                 end
                 TabIcon.Parent = ContentFrame
-                
-                -- 斜向渐变（保留）
-                local iconGradient = Instance.new("UIGradient")
-                iconGradient.Rotation = -115
-                iconGradient.Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-                    ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
-                })
-                iconGradient.Parent = TabIcon
-                
-                table.insert(ThemeListeners, function()
-                    iconGradient.Color = ColorSequence.new({
-                        ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-                        ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
-                    })
-                end)
-                
+                -- 纯色图标，跟随主题
+                AddToRegistry(TabIcon, "ImageColor3", "Text")
                 local iconCorner = Instance.new("UICorner")
                 iconCorner.CornerRadius = UDim.new(0, 8)
                 iconCorner.Parent = TabIcon
@@ -3187,7 +3139,6 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- 切换逻辑
             TabBtn.MouseButton1Click:Connect(function()
                 if Window._activeTab and Window._activeTab.Btn == TabBtn then
                     return
@@ -3198,7 +3149,7 @@ function Fenglib:CreateWindow(Config)
                     Window._activeTab.Page.Visible = false
                 end
 
-                -- 选中时透明度改为 0.05（原文件样式）
+                -- 选中透明度 0.05（原文件样式）
                 TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 60)
@@ -3211,7 +3162,6 @@ function Fenglib:CreateWindow(Config)
                 }
             end)
 
-            -- 默认激活第一个
             if not Window._activeTab then
                 TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
