@@ -5,6 +5,7 @@ local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService") 
 local TextService = game:GetService("TextService")
+local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
@@ -15,6 +16,7 @@ local RainbowSpeed = 1.0
 local Registry = {} 
 local ConfigObjects = {} 
 local ThemeListeners = {}
+local WindowCleanup = {}  -- 用于存储窗口级清理函数
 
 local function clamp(value, min, max)
     return math.max(min, math.min(max, value))
@@ -1521,7 +1523,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = false
-    MainFrame.BackgroundTransparency = 0.05
+    MainFrame.BackgroundTransparency = 0.15   -- 更透明，呈现玻璃质感
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
@@ -1534,6 +1536,124 @@ function Fenglib:CreateWindow(Config)
     local Gradient = Instance.new("UIGradient")
     Gradient.Parent = Stroke
     Gradient.Enabled = false
+
+    -- ===== 高级视觉增强（移植自 a.lua） =====
+    do
+        local blurPart = Instance.new("Part")
+        blurPart.Name = "FengBlurPart"
+        blurPart.Material = Enum.Material.Glass
+        blurPart.Transparency = 0.97
+        blurPart.Reflectance = 1
+        blurPart.CastShadow = false
+        blurPart.Anchored = true
+        blurPart.CanCollide = false
+        blurPart.CanQuery = false
+        blurPart.CollisionGroup = " "
+        blurPart.Size = Vector3.new(1, 1, 1) * 0.01
+        blurPart.Color = Color3.fromRGB(0, 0, 0)
+        blurPart.Parent = Camera
+
+        local blockMesh = Instance.new("BlockMesh")
+        blockMesh.Parent = blurPart
+
+        local dof = Instance.new("DepthOfFieldEffect")
+        dof.Name = "FengDOF"
+        dof.Enabled = true
+        dof.FarIntensity = 0
+        dof.FocusDistance = 0
+        dof.InFocusRadius = 1000
+        dof.NearIntensity = 0.6
+        dof.Parent = Lighting
+
+        local function updateBlur()
+            if not MainFrame.Visible or not MainFrame.Parent then
+                blockMesh.Scale = Vector3.new(0, 0, 0)
+                return
+            end
+            local corner0 = MainFrame.AbsolutePosition
+            local corner1 = corner0 + MainFrame.AbsoluteSize
+            local ray0 = Camera:ScreenPointToRay(corner0.X, corner0.Y, 1)
+            local ray1 = Camera:ScreenPointToRay(corner1.X, corner1.Y, 1)
+            local origin = Camera.CFrame.Position + Camera.CFrame.LookVector * (0.05 - Camera.NearPlaneZ)
+            local normal = Camera.CFrame.LookVector
+            local function getPoint(ray)
+                local d = (origin - ray.Origin).Dot(normal) / ray.Direction.Dot(normal)
+                return ray.Origin + ray.Direction * d
+            end
+            local pos0 = Camera.CFrame:PointToObjectSpace(getPoint(ray0))
+            local pos1 = Camera.CFrame:PointToObjectSpace(getPoint(ray1))
+            local size = pos1 - pos0
+            local center = (pos0 + pos1) / 2
+            blockMesh.Offset = center
+            blockMesh.Scale = size / 0.0101
+            blurPart.CFrame = Camera.CFrame
+        end
+
+        local blurConnection = RunService.RenderStepped:Connect(updateBlur)
+
+        -- 像素级圆角抗锯齿
+        local function addCornerPixel(parent, xOff, yOff, xAnchor, yAnchor)
+            local px = Instance.new("Frame")
+            px.Size = UDim2.new(0, 1, 0, 1)
+            px.Position = UDim2.new(xAnchor, xOff, yAnchor, yOff)
+            px.BackgroundTransparency = 0.12
+            px.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            px.BorderSizePixel = 0
+            px.Parent = parent
+            AddToRegistry(px, "BackgroundColor3", "Main")
+            return px
+        end
+
+        local function makeCornerGroup(x, y, anchorX, anchorY)
+            local group = Instance.new("Frame")
+            group.Size = UDim2.new(0, 5, 0, 5)
+            group.Position = UDim2.new(anchorX, x, anchorY, y)
+            group.BackgroundTransparency = 1
+            group.Parent = MainFrame
+            addCornerPixel(group, 2, 0, 0, 0)
+            addCornerPixel(group, 3, 0, 0, 0)
+            addCornerPixel(group, 4, 0, 0, 0)
+            addCornerPixel(group, 3, 1, 0, 0)
+            addCornerPixel(group, 4, 1, 0, 0)
+            return group
+        end
+
+        makeCornerGroup(0, 0, 0, 0)                 -- 左上
+        makeCornerGroup(-5, 0, 1, 0)                -- 右上
+        makeCornerGroup(0, -5, 0, 1)                -- 左下
+        makeCornerGroup(-5, -5, 1, 1)               -- 右下
+
+        -- 边框斜向渐变光泽
+        local borderStroke = MainFrame:FindFirstChildOfClass("UIStroke")
+        if borderStroke then
+            local grad = Instance.new("UIGradient")
+            grad.Rotation = -115
+            grad.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
+                ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
+            })
+            grad.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0.2),
+                NumberSequenceKeypoint.new(0.5, 0.9),
+                NumberSequenceKeypoint.new(1, 0.2)
+            })
+            grad.Parent = borderStroke
+            table.insert(ThemeListeners, function()
+                grad.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
+                    ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
+                })
+            end)
+        end
+
+        -- 清理函数
+        table.insert(WindowCleanup, function()
+            if blurConnection then blurConnection:Disconnect() end
+            if blurPart then blurPart:Destroy() end
+            if dof then dof:Destroy() end
+        end)
+    end
+    -- ===== 高级视觉增强结束 =====
 
     task.spawn(function()
         local rot = 0
@@ -2504,7 +2624,10 @@ function Fenglib:CreateWindow(Config)
     end
 
     function Window:SetKeybind(key) Keybind = key end
-    function Window:Destroy() ScreenGui:Destroy() end
+    function Window:Destroy() 
+        for _, fn in ipairs(WindowCleanup) do pcall(fn) end
+        ScreenGui:Destroy() 
+    end
     function Window:SetSubtitle(newSubtitle)
         for _, child in ipairs(Topbar:GetChildren()) do
             if child:IsA("TextLabel") and child ~= TitleLabel then
@@ -2954,22 +3077,20 @@ function Fenglib:CreateWindow(Config)
         end
     else
         -- ===== 普通模式（非卡片） =====
-        -- 开启页面容器裁剪，防止滑入动画溢出
         PageContainer.ClipsDescendants = true
 
-        -- 存储当前激活的标签
         Window._activeTab = nil
 
         function Window:Tab(name, icon)
-            -- 创建标签按钮（样式参考 a.lua）
+            -- 创建标签按钮（样式完全参照 a.lua）
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(1, 0, 0, 32)
             TabBtn.BackgroundTransparency = 1
-            TabBtn.BackgroundColor3 = CurrentTheme.Accent          -- 底色跟随主题
+            TabBtn.BackgroundColor3 = CurrentTheme.Accent
             TabBtn.Text = ""
             TabBtn.Parent = TabContainer
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-            AddToRegistry(TabBtn, "BackgroundColor3", "Accent")   -- 主题更新时自动刷新
+            AddToRegistry(TabBtn, "BackgroundColor3", "Accent")
 
             -- 内容框架（图标 + 文字）
             local ContentFrame = Instance.new("Frame")
@@ -3026,7 +3147,7 @@ function Fenglib:CreateWindow(Config)
             Page.ScrollBarThickness = 4
             Page.ScrollingEnabled = true
             Page.Visible = false
-            Page.Position = UDim2.new(0, 0, 0, 60)        -- 初始位于下方（滑入起点）
+            Page.Position = UDim2.new(0, 0, 0, 60)
             Page.Parent = PageContainer
 
             -- 页面内容容器
@@ -3050,20 +3171,18 @@ function Fenglib:CreateWindow(Config)
             -- 点击切换标签
             TabBtn.MouseButton1Click:Connect(function()
                 if Window._activeTab and Window._activeTab.Btn == TabBtn then
-                    return      -- 已激活则忽略
+                    return
                 end
 
-                -- 隐藏旧页面（无动画，直接隐藏）
                 if Window._activeTab then
                     Window._activeTab.Btn.BackgroundTransparency = 1
                     Window._activeTab.Page.Visible = false
                 end
 
-                -- 激活新页面（滑入动画）
                 TabBtn.BackgroundTransparency = 0.25
                 Page.Visible = true
-                Page.Position = UDim2.new(0, 0, 0, 60)    -- 先置于下方
-                Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)   -- 滑入
+                Page.Position = UDim2.new(0, 0, 0, 60)
+                Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
 
                 Window._activeTab = {
                     Btn  = TabBtn,
@@ -3084,11 +3203,11 @@ function Fenglib:CreateWindow(Config)
                 }
             end
 
-            -- 特殊排序（Config / Settings 放最后）
+            -- 特殊排序
             if name == "Config" then TabBtn.LayoutOrder = 99998 end
             if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
-            -- 返回元素创建函数（API 保持不变）
+            -- 返回元素创建函数
             local getElements = function()
                 local elements = {}
                 local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
