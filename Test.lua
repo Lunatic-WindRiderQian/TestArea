@@ -1,5 +1,5 @@
 -- Fenglib.lua
--- 基于原始 Test.lua，Tab 切换动画已替换为 metUI 风格（CanvasGroup 过渡 + 缓动）
+-- 基于原始 Test.lua，Tab 切换动画已替换为 metUI 风格（缓动动画，仅针对 Tab 按钮本身）
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -2795,29 +2795,39 @@ function Fenglib:CreateWindow(Config)
                 pageCanvas.Position = UDim2.new(0, 0, 0, 20)
                 Tween(pageCanvas, {GroupTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}, 0.3)
 
-                -- 更新侧边栏按钮样式
+                -- 1. 重置所有侧边栏按钮：直接赋值（无动画）
                 for _, btn in pairs(sideBar:GetChildren()) do
                     if btn:IsA("TextButton") then
                         btn.Selected = false
-                        Tween(btn, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top}, 0.2)
+                        btn.BackgroundTransparency = 1
+                        btn.BackgroundColor3 = CurrentTheme.Top
                         local content = btn:FindFirstChild("ContentFrame")
                         if content then
                             local txt = content:FindFirstChildOfClass("TextLabel")
                             if txt then
-                                Tween(txt, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.2)
+                                txt.TextColor3 = Color3.fromRGB(150, 150, 158)
                             end
                         end
                         local bar = btn:FindFirstChildOfClass("Frame")
                         if bar then
-                            Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0, 3, 0, 0)}, 0.2)
+                            bar.BackgroundTransparency = 1
+                            bar.Size = UDim2.new(0, 3, 0, 0)
                         end
                     end
                 end
 
+                -- 2. 对当前选中的 Tab 播放缓动动画（metUI 风格）
                 tabBtn.Selected = true
-                Tween(tabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
-                Tween(textLabel, {TextColor3 = CurrentTheme.Text}, 0.2)
-                Tween(tabBar, {BackgroundTransparency = 0, Size = UDim2.new(0, 3, 0.65, 0)}, 0.2)
+                local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                TweenService:Create(tabBtn, tweenInfo, {
+                    BackgroundTransparency = 0.05,
+                    BackgroundColor3 = CurrentTheme.Top
+                }):Play()
+                TweenService:Create(textLabel, tweenInfo, {TextColor3 = CurrentTheme.Text}):Play()
+                TweenService:Create(tabBar, tweenInfo, {
+                    BackgroundTransparency = 0,
+                    Size = UDim2.new(0, 3, 0.65, 0)
+                }):Play()
             end
 
             local cardObj = {}
@@ -2883,7 +2893,6 @@ function Fenglib:CreateWindow(Config)
                 textLabel.TextXAlignment = Enum.TextXAlignment.Left
                 textLabel.Parent = contentFrame
 
-                -- 创建 CanvasGroup 包裹页面
                 local pageCanvas = Instance.new("CanvasGroup")
                 pageCanvas.Size = UDim2.new(1, 0, 1, 0)
                 pageCanvas.BackgroundTransparency = 1
@@ -3047,7 +3056,6 @@ function Fenglib:CreateWindow(Config)
                 end
             end)
 
-            -- 创建 CanvasGroup 包裹页面
             local PageCanvas = Instance.new("CanvasGroup")
             PageCanvas.Name = "PageCanvas_" .. name
             PageCanvas.Size = UDim2.new(1, 0, 1, 0)
@@ -3088,53 +3096,63 @@ function Fenglib:CreateWindow(Config)
                         task.delay(0.3, function() v.Visible = false end)
                     end
                 end
-
                 -- 显示当前页面（入场动画）
                 PageCanvas.Visible = true
                 PageCanvas.GroupTransparency = 1
                 PageCanvas.Position = UDim2.new(0, 0, 0, 20)
                 Tween(PageCanvas, {GroupTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}, 0.3)
 
-                -- 更新所有 Tab 按钮样式（带动画）
+                -- 1. 重置所有 Tab 按钮：直接赋值（无动画）
                 for _, btn in pairs(TabContainer:GetChildren()) do
                     if btn:IsA("TextButton") then
                         btn.Selected = false
-                        Tween(btn, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top}, 0.2)
+                        btn.BackgroundTransparency = 1
+                        btn.BackgroundColor3 = CurrentTheme.Top
                         local content = btn:FindFirstChild("ContentFrame")
                         if content then
-                            local textLabel = content:FindFirstChildOfClass("TextLabel")
-                            if textLabel then
-                                Tween(textLabel, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.2)
+                            local txt = content:FindFirstChildOfClass("TextLabel")
+                            if txt then
+                                txt.TextColor3 = Color3.fromRGB(150, 150, 158)
                             end
                         end
                         local bar = btn:FindFirstChildOfClass("Frame")
                         if bar then
-                            Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0, 3, 0, 0)}, 0.2)
+                            bar.BackgroundTransparency = 1
+                            bar.Size = UDim2.new(0, 3, 0, 0)
                         end
                     end
                 end
 
+                -- 2. 对当前选中的 Tab 播放缓动动画（metUI 风格）
                 TabBtn.Selected = true
-                Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
-                Tween(TabText, {TextColor3 = CurrentTheme.Text}, 0.2)
-                Tween(TabBar, {BackgroundTransparency = 0, Size = UDim2.new(0, 3, 0.65, 0)}, 0.2)
+                local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                TweenService:Create(TabBtn, tweenInfo, {
+                    BackgroundTransparency = 0.05,
+                    BackgroundColor3 = CurrentTheme.Top
+                }):Play()
+
+                local content = TabBtn:FindFirstChild("ContentFrame")
+                if content then
+                    local txt = content:FindFirstChildOfClass("TextLabel")
+                    if txt then
+                        TweenService:Create(txt, tweenInfo, {TextColor3 = CurrentTheme.Text}):Play()
+                    end
+                end
+
+                local bar = TabBtn:FindFirstChildOfClass("Frame")
+                if bar then
+                    TweenService:Create(bar, tweenInfo, {
+                        BackgroundTransparency = 0,
+                        Size = UDim2.new(0, 3, 0.65, 0)
+                    }):Play()
+                end
             end
 
             TabBtn.MouseButton1Click:Connect(activateTab)
 
             if firstTab then
                 firstTab = false
-                -- 首次自动激活（入场动画）
-                PageCanvas.Visible = true
-                PageCanvas.GroupTransparency = 1
-                PageCanvas.Position = UDim2.new(0, 0, 0, 20)
-                Tween(PageCanvas, {GroupTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}, 0.3)
-                TabBtn.Selected = true
-                TabBtn.BackgroundTransparency = 0.05
-                TabBtn.BackgroundColor3 = CurrentTheme.Top
-                TabText.TextColor3 = CurrentTheme.Text
-                TabBar.BackgroundTransparency = 0
-                TabBar.Size = UDim2.new(0, 3, 0.65, 0)
+                activateTab()
             end
 
             if name == "Config" then TabBtn.LayoutOrder = 99998 end
