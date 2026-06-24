@@ -16,7 +16,7 @@ local RainbowSpeed = 1.0
 local Registry = {} 
 local ConfigObjects = {} 
 local ThemeListeners = {}
-local WindowCleanup = {}  -- 用于存储窗口级清理函数
+local WindowCleanup = {}
 
 local function clamp(value, min, max)
     return math.max(min, math.min(max, value))
@@ -1523,7 +1523,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = false
-    MainFrame.BackgroundTransparency = 0.15   -- 更透明，呈现玻璃质感
+    MainFrame.BackgroundTransparency = 0.15
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
@@ -1537,7 +1537,7 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- ===== 高级视觉增强（移植自 a.lua） =====
+    -- ===== 高级视觉增强（修正 Dot 调用语法） =====
     do
         local blurPart = Instance.new("Part")
         blurPart.Name = "FengBlurPart"
@@ -1576,10 +1576,17 @@ function Fenglib:CreateWindow(Config)
             local ray1 = Camera:ScreenPointToRay(corner1.X, corner1.Y, 1)
             local origin = Camera.CFrame.Position + Camera.CFrame.LookVector * (0.05 - Camera.NearPlaneZ)
             local normal = Camera.CFrame.LookVector
+
+            -- 修正：使用冒号调用 Dot 方法，并检查分母是否为 0
             local function getPoint(ray)
-                local d = (origin - ray.Origin).Dot(normal) / ray.Direction.Dot(normal)
+                local denominator = ray.Direction:Dot(normal)
+                if math.abs(denominator) < 1e-6 then
+                    return ray.Origin  -- 几乎平行时返回起点
+                end
+                local d = (origin - ray.Origin):Dot(normal) / denominator
                 return ray.Origin + ray.Direction * d
             end
+
             local pos0 = Camera.CFrame:PointToObjectSpace(getPoint(ray0))
             local pos1 = Camera.CFrame:PointToObjectSpace(getPoint(ray1))
             local size = pos1 - pos0
@@ -1618,12 +1625,12 @@ function Fenglib:CreateWindow(Config)
             return group
         end
 
-        makeCornerGroup(0, 0, 0, 0)                 -- 左上
-        makeCornerGroup(-5, 0, 1, 0)                -- 右上
-        makeCornerGroup(0, -5, 0, 1)                -- 左下
-        makeCornerGroup(-5, -5, 1, 1)               -- 右下
+        makeCornerGroup(0, 0, 0, 0)
+        makeCornerGroup(-5, 0, 1, 0)
+        makeCornerGroup(0, -5, 0, 1)
+        makeCornerGroup(-5, -5, 1, 1)
 
-        -- 边框斜向渐变光泽
+        -- 边框斜向渐变
         local borderStroke = MainFrame:FindFirstChildOfClass("UIStroke")
         if borderStroke then
             local grad = Instance.new("UIGradient")
@@ -1646,7 +1653,6 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- 清理函数
         table.insert(WindowCleanup, function()
             if blurConnection then blurConnection:Disconnect() end
             if blurPart then blurPart:Destroy() end
@@ -3082,7 +3088,6 @@ function Fenglib:CreateWindow(Config)
         Window._activeTab = nil
 
         function Window:Tab(name, icon)
-            -- 创建标签按钮（样式完全参照 a.lua）
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(1, 0, 0, 32)
             TabBtn.BackgroundTransparency = 1
@@ -3092,7 +3097,6 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Accent")
 
-            -- 内容框架（图标 + 文字）
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
             ContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -3110,7 +3114,6 @@ function Fenglib:CreateWindow(Config)
             Padding.PaddingLeft = UDim.new(0, 10)
             Padding.Parent = ContentFrame
 
-            -- 图标（可选）
             if icon then
                 local TabIcon = Instance.new("ImageLabel")
                 TabIcon.Size = UDim2.new(0, 28, 0, 28)
@@ -3127,7 +3130,6 @@ function Fenglib:CreateWindow(Config)
                 iconCorner.Parent = TabIcon
             end
 
-            -- 文字标签
             local TabText = Instance.new("TextLabel")
             local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
             TabText.Size = UDim2.new(0, textWidth, 1, 0)
@@ -3140,7 +3142,6 @@ function Fenglib:CreateWindow(Config)
             TabText.Parent = ContentFrame
             AddToRegistry(TabText, "TextColor3", "Text")
 
-            -- 页面（ScrollingFrame）
             local Page = Instance.new("ScrollingFrame")
             Page.Size = UDim2.new(1, 0, 1, 0)
             Page.BackgroundTransparency = 1
@@ -3150,7 +3151,6 @@ function Fenglib:CreateWindow(Config)
             Page.Position = UDim2.new(0, 0, 0, 60)
             Page.Parent = PageContainer
 
-            -- 页面内容容器
             local PageContent = Instance.new("Frame")
             PageContent.Size = UDim2.new(1, 0, 0, 0)
             PageContent.AutomaticSize = Enum.AutomaticSize.Y
@@ -3168,7 +3168,6 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- 点击切换标签
             TabBtn.MouseButton1Click:Connect(function()
                 if Window._activeTab and Window._activeTab.Btn == TabBtn then
                     return
@@ -3191,7 +3190,6 @@ function Fenglib:CreateWindow(Config)
                 }
             end)
 
-            -- 第一个标签默认激活
             if not Window._activeTab then
                 TabBtn.BackgroundTransparency = 0.25
                 Page.Visible = true
@@ -3203,11 +3201,9 @@ function Fenglib:CreateWindow(Config)
                 }
             end
 
-            -- 特殊排序
             if name == "Config" then TabBtn.LayoutOrder = 99998 end
             if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
-            -- 返回元素创建函数
             local getElements = function()
                 local elements = {}
                 local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
