@@ -1,5 +1,5 @@
 -- Fenglib.lua
--- 基于原始 Test.lua，Tab 切换动画已替换为 metUI 风格（缓动动画，仅针对 Tab 按钮本身）
+-- 完全仿 metUI 的 Tab 切换动画：所有按钮同时缓动，背景、文字、指示条均平滑过渡
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
