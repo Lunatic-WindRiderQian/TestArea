@@ -1,5 +1,5 @@
 -- Fenglib.lua
--- 基于原始 Test.lua，Tab 切换动画已替换为 metUI 风格（CanvasGroup 过渡 + 缓动）
+-- 完整修正版：Tab 按钮完全采用 metUI 风格（选中背景 Accent 透明度 0.88，指示条居中）
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -89,7 +89,7 @@ local function AddToRegistry(obj, prop, themeKey)
 end
 
 local function Tween(obj, props, time)
-    TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
+    TweenService:Create(obj, TweenInfo.new(time or 0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
 
 function Fenglib:SetTheme(themeName)
@@ -2782,20 +2782,17 @@ function Fenglib:CreateWindow(Config)
             rightPageContainer.Parent = cardContentFrame
 
             local function activateTab(tabBtn, pageCanvas, pageContent, textLabel, tabBar)
-                -- 隐藏其他页面（带动画）
                 for _, child in pairs(rightPageContainer:GetChildren()) do
                     if child:IsA("CanvasGroup") and child ~= pageCanvas then
                         Tween(child, {GroupTransparency = 1, Position = UDim2.new(0, 0, 0, -20)}, 0.3)
                         task.delay(0.3, function() child.Visible = false end)
                     end
                 end
-                -- 显示当前页面（入场动画）
                 pageCanvas.Visible = true
                 pageCanvas.GroupTransparency = 1
                 pageCanvas.Position = UDim2.new(0, 0, 0, 20)
                 Tween(pageCanvas, {GroupTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}, 0.3)
 
-                -- 更新侧边栏按钮样式
                 for _, btn in pairs(sideBar:GetChildren()) do
                     if btn:IsA("TextButton") then
                         btn.Selected = false
@@ -2822,7 +2819,6 @@ function Fenglib:CreateWindow(Config)
 
             local cardObj = {}
             function cardObj:Tab(tabName, tabIcon)
-                -- metUI 风格侧边栏 Tab
                 local tabBtn = Instance.new("TextButton")
                 tabBtn.Size = UDim2.new(1, 0, 0, 40)
                 tabBtn.BackgroundTransparency = 1
@@ -2831,7 +2827,6 @@ function Fenglib:CreateWindow(Config)
                 tabBtn.Parent = sideBar
                 Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 8)
 
-                -- 左侧指示条（3 x 22，垂直居中，左间距 6px）
                 local tabBar = Instance.new("Frame")
                 tabBar.Size = UDim2.new(0, 3, 0, 22)
                 tabBar.Position = UDim2.new(0, 6, 0.5, 0)
@@ -2858,7 +2853,6 @@ function Fenglib:CreateWindow(Config)
                 padding.PaddingLeft = UDim.new(0, 16)
                 padding.Parent = contentFrame
 
-                -- 图标（18x18）
                 if tabIcon then
                     local iconImg = Instance.new("ImageLabel")
                     iconImg.Size = UDim2.new(0, 18, 0, 18)
@@ -2874,7 +2868,6 @@ function Fenglib:CreateWindow(Config)
                     AddToRegistry(iconImg, "ImageColor3", "Text")
                 end
 
-                -- 文字（字号 14，自动宽度）
                 local textLabel = Instance.new("TextLabel")
                 textLabel.Size = UDim2.new(0, 0, 1, 0)
                 textLabel.Position = UDim2.new(0, 44, 0.5, 0)
@@ -2889,7 +2882,6 @@ function Fenglib:CreateWindow(Config)
                 textLabel.Parent = contentFrame
                 AddToRegistry(textLabel, "TextColor3", "Text")
 
-                -- CanvasGroup 页面
                 local pageCanvas = Instance.new("CanvasGroup")
                 pageCanvas.Size = UDim2.new(1, 0, 1, 0)
                 pageCanvas.BackgroundTransparency = 1
@@ -2944,7 +2936,6 @@ function Fenglib:CreateWindow(Config)
                 end
 
                 local function activateTab()
-                    -- 隐藏其他页面
                     for _, child in pairs(rightPageContainer:GetChildren()) do
                         if child:IsA("CanvasGroup") and child ~= pageCanvas then
                             Tween(child, {GroupTransparency = 1, Position = UDim2.new(0, 0, 0, -20)}, 0.3)
@@ -2952,13 +2943,11 @@ function Fenglib:CreateWindow(Config)
                         end
                     end
 
-                    -- 显示当前页面
                     pageCanvas.Visible = true
                     pageCanvas.GroupTransparency = 1
                     pageCanvas.Position = UDim2.new(0, 0, 0, 20)
                     Tween(pageCanvas, {GroupTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}, 0.3)
 
-                    -- 重置所有侧边栏按钮（未选中状态）
                     for _, btn in pairs(sideBar:GetChildren()) do
                         if btn:IsA("TextButton") then
                             btn.Selected = false
@@ -2977,7 +2966,6 @@ function Fenglib:CreateWindow(Config)
                         end
                     end
 
-                    -- 当前按钮选中（metUI 风格：Accent 色 + 透明度 0.88）
                     tabBtn.Selected = true
                     Tween(tabBtn, {BackgroundTransparency = 0.88, BackgroundColor3 = CurrentTheme.Accent}, 0.2)
                     Tween(textLabel, {TextColor3 = CurrentTheme.Text}, 0.2)
@@ -2986,7 +2974,6 @@ function Fenglib:CreateWindow(Config)
 
                 tabBtn.MouseButton1Click:Connect(activateTab)
 
-                -- 首次激活
                 local isFirst = true
                 for _, existing in ipairs(sideBar:GetChildren()) do
                     if existing:IsA("TextButton") and existing ~= tabBtn then
@@ -3030,7 +3017,6 @@ function Fenglib:CreateWindow(Config)
     else
         local firstTab = true
         function Window:Tab(name, icon)
-            -- metUI 风格 Tab 按钮
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(1, 0, 0, 40)
             TabBtn.BackgroundTransparency = 1
@@ -3040,7 +3026,6 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 8)
             TabBtn.Selected = false
 
-            -- 左侧指示条（3 x 22，垂直居中，左间距 6px）
             local TabBar = Instance.new("Frame")
             TabBar.Size = UDim2.new(0, 3, 0, 22)
             TabBar.Position = UDim2.new(0, 6, 0.5, 0)
@@ -3068,7 +3053,6 @@ function Fenglib:CreateWindow(Config)
             Padding.PaddingLeft = UDim.new(0, 16)
             Padding.Parent = ContentFrame
 
-            -- 图标（18x18）
             if icon then
                 local TabIcon = Instance.new("ImageLabel")
                 TabIcon.Size = UDim2.new(0, 18, 0, 18)
@@ -3084,7 +3068,6 @@ function Fenglib:CreateWindow(Config)
                 AddToRegistry(TabIcon, "ImageColor3", "Text")
             end
 
-            -- 文字（字号 14，自动宽度）
             local TabText = Instance.new("TextLabel")
             TabText.Size = UDim2.new(0, 0, 1, 0)
             TabText.Position = UDim2.new(0, 44, 0.5, 0)
@@ -3110,7 +3093,6 @@ function Fenglib:CreateWindow(Config)
                 end
             end)
 
-            -- CanvasGroup 页面容器
             local PageCanvas = Instance.new("CanvasGroup")
             PageCanvas.Name = "PageCanvas_" .. name
             PageCanvas.Size = UDim2.new(1, 0, 1, 0)
@@ -3144,7 +3126,6 @@ function Fenglib:CreateWindow(Config)
             task.spawn(updatePageCanvas)
 
             local function activateTab()
-                -- 隐藏其他页面（带淡出位移动画）
                 for _, v in pairs(PageContainer:GetChildren()) do
                     if v:IsA("CanvasGroup") and v ~= PageCanvas then
                         Tween(v, {GroupTransparency = 1, Position = UDim2.new(0, 0, 0, -20)}, 0.3)
@@ -3152,13 +3133,11 @@ function Fenglib:CreateWindow(Config)
                     end
                 end
 
-                -- 显示当前页面（淡入位移动画）
                 PageCanvas.Visible = true
                 PageCanvas.GroupTransparency = 1
                 PageCanvas.Position = UDim2.new(0, 0, 0, 20)
                 Tween(PageCanvas, {GroupTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}, 0.3)
 
-                -- 重置所有 Tab 按钮样式（未选中状态）
                 for _, btn in pairs(TabContainer:GetChildren()) do
                     if btn:IsA("TextButton") then
                         btn.Selected = false
@@ -3177,7 +3156,6 @@ function Fenglib:CreateWindow(Config)
                     end
                 end
 
-                -- 当前按钮选中状态（metUI 风格：Accent 色 + 透明度 0.88）
                 TabBtn.Selected = true
                 Tween(TabBtn, {BackgroundTransparency = 0.88, BackgroundColor3 = CurrentTheme.Accent}, 0.2)
                 Tween(TabText, {TextColor3 = CurrentTheme.Text}, 0.2)
@@ -3186,7 +3164,6 @@ function Fenglib:CreateWindow(Config)
 
             TabBtn.MouseButton1Click:Connect(activateTab)
 
-            -- 首次激活（直接进入选中状态，不带点击动画）
             if firstTab then
                 firstTab = false
                 PageCanvas.Visible = true
