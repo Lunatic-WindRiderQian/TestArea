@@ -1523,7 +1523,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = false
-    MainFrame.BackgroundTransparency = 0.12   -- a.lua 的值
+    MainFrame.BackgroundTransparency = 0.12
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
@@ -1537,7 +1537,7 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- ===== 高级视觉增强（毛玻璃模糊 + 像素圆角） =====
+    -- 高级视觉增强
     do
         local blurPart = Instance.new("Part")
         blurPart.Name = "FengBlurPart"
@@ -1562,7 +1562,7 @@ function Fenglib:CreateWindow(Config)
         dof.FarIntensity = 0
         dof.FocusDistance = 0
         dof.InFocusRadius = 1000
-        dof.NearIntensity = 0.8   -- a.lua 的值
+        dof.NearIntensity = 0.8
         dof.Parent = Lighting
 
         local function updateBlur()
@@ -1658,7 +1658,6 @@ function Fenglib:CreateWindow(Config)
             if dof then dof:Destroy() end
         end)
     end
-    -- ===== 高级视觉增强结束 =====
 
     task.spawn(function()
         local rot = 0
@@ -3081,21 +3080,21 @@ function Fenglib:CreateWindow(Config)
             return {}
         end
     else
-        -- ===== 普通模式（非卡片）- Tab 效果完全对齐 a.lua =====
+        -- ===== 普通模式（非卡片）- Tab 背景改回原版（灰色 Top 色，透明度 0.05） =====
         PageContainer.ClipsDescendants = true
 
         Window._activeTab = nil
 
         function Window:Tab(name, icon)
-            -- 标签按钮
+            -- 标签按钮（背景色改为 Top，选中透明度 0.05，无指示条）
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(1, 0, 0, 32)
             TabBtn.BackgroundTransparency = 1
-            TabBtn.BackgroundColor3 = CurrentTheme.Accent
+            TabBtn.BackgroundColor3 = CurrentTheme.Top
             TabBtn.Text = ""
             TabBtn.Parent = TabContainer
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-            AddToRegistry(TabBtn, "BackgroundColor3", "Accent")
+            AddToRegistry(TabBtn, "BackgroundColor3", "Top")  -- 注册 Top 色
 
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
@@ -3114,7 +3113,7 @@ function Fenglib:CreateWindow(Config)
             Padding.PaddingLeft = UDim.new(0, 10)
             Padding.Parent = ContentFrame
 
-            -- 图标（带 -115° 斜向渐变）
+            -- 图标（保留斜向渐变）
             if icon then
                 local TabIcon = Instance.new("ImageLabel")
                 TabIcon.Size = UDim2.new(0, 28, 0, 28)
@@ -3186,7 +3185,7 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- 切换逻辑
+            -- 切换逻辑（选中透明度 0.05，无指示条）
             TabBtn.MouseButton1Click:Connect(function()
                 if Window._activeTab and Window._activeTab.Btn == TabBtn then
                     return
@@ -3197,7 +3196,7 @@ function Fenglib:CreateWindow(Config)
                     Window._activeTab.Page.Visible = false
                 end
 
-                TabBtn.BackgroundTransparency = 0.25
+                TabBtn.BackgroundTransparency = 0.05    -- 原版透明度
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 60)
                 Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
@@ -3211,7 +3210,7 @@ function Fenglib:CreateWindow(Config)
 
             -- 默认激活第一个
             if not Window._activeTab then
-                TabBtn.BackgroundTransparency = 0.25
+                TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 0)
                 Window._activeTab = {
