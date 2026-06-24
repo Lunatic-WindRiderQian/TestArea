@@ -1,5 +1,5 @@
 -- Fenglib.lua
--- 完整复刻 metUI Tab 按钮样式（选中背景 Accent 透明度 0.88，指示条居中）
+-- 基于原始 Test.lua，Tab 切换动画已替换为 metUI 风格（CanvasGroup 过渡 + 缓动）
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -89,7 +89,7 @@ local function AddToRegistry(obj, prop, themeKey)
 end
 
 local function Tween(obj, props, time)
-    TweenService:Create(obj, TweenInfo.new(time or 0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
+    TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
 
 function Fenglib:SetTheme(themeName)
@@ -150,7 +150,6 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- ==================== Section Builder (保持不变) ====================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
@@ -1453,7 +1452,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     return createSection
 end
 
--- ==================== Window 构造函数 ====================
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "FengY3"
@@ -2784,17 +2782,20 @@ function Fenglib:CreateWindow(Config)
             rightPageContainer.Parent = cardContentFrame
 
             local function activateTab(tabBtn, pageCanvas, pageContent, textLabel, tabBar)
+                -- 隐藏其他页面（带动画）
                 for _, child in pairs(rightPageContainer:GetChildren()) do
                     if child:IsA("CanvasGroup") and child ~= pageCanvas then
                         Tween(child, {GroupTransparency = 1, Position = UDim2.new(0, 0, 0, -20)}, 0.3)
                         task.delay(0.3, function() child.Visible = false end)
                     end
                 end
+                -- 显示当前页面（入场动画）
                 pageCanvas.Visible = true
                 pageCanvas.GroupTransparency = 1
                 pageCanvas.Position = UDim2.new(0, 0, 0, 20)
                 Tween(pageCanvas, {GroupTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}, 0.3)
 
+                -- 更新侧边栏按钮样式
                 for _, btn in pairs(sideBar:GetChildren()) do
                     if btn:IsA("TextButton") then
                         btn.Selected = false
@@ -2814,7 +2815,7 @@ function Fenglib:CreateWindow(Config)
                 end
 
                 tabBtn.Selected = true
-                Tween(tabBtn, {BackgroundTransparency = 0.88, BackgroundColor3 = CurrentTheme.Accent}, 0.2)
+                Tween(tabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
                 Tween(textLabel, {TextColor3 = CurrentTheme.Text}, 0.2)
                 Tween(tabBar, {BackgroundTransparency = 0, Size = UDim2.new(0, 3, 0.65, 0)}, 0.2)
             end
@@ -2822,17 +2823,15 @@ function Fenglib:CreateWindow(Config)
             local cardObj = {}
             function cardObj:Tab(tabName, tabIcon)
                 local tabBtn = Instance.new("TextButton")
-                tabBtn.Size = UDim2.new(1, 0, 0, 40)
+                tabBtn.Size = UDim2.new(1, 0, 0, 32)
                 tabBtn.BackgroundTransparency = 1
                 tabBtn.Text = ""
-                tabBtn.AutoButtonColor = false
                 tabBtn.Parent = sideBar
-                Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 8)
+                Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 10)
 
                 local tabBar = Instance.new("Frame")
-                tabBar.Size = UDim2.new(0, 3, 0, 22)
-                tabBar.Position = UDim2.new(0, 6, 0.5, 0)
-                tabBar.AnchorPoint = Vector2.new(0, 0.5)
+                tabBar.Size = UDim2.new(0, 3, 0, 0)
+                tabBar.Position = UDim2.new(0, 0, 0.175, 0)
                 tabBar.BackgroundTransparency = 1
                 tabBar.BorderSizePixel = 0
                 tabBar.Parent = tabBtn
@@ -2848,42 +2847,43 @@ function Fenglib:CreateWindow(Config)
                 layout.FillDirection = Enum.FillDirection.Horizontal
                 layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
                 layout.VerticalAlignment = Enum.VerticalAlignment.Center
-                layout.Padding = UDim.new(0, 8)
+                layout.Padding = UDim.new(0, 5)
                 layout.Parent = contentFrame
 
                 local padding = Instance.new("UIPadding")
-                padding.PaddingLeft = UDim.new(0, 16)
+                padding.PaddingLeft = UDim.new(0, 10)
                 padding.Parent = contentFrame
 
                 if tabIcon then
                     local iconImg = Instance.new("ImageLabel")
-                    iconImg.Size = UDim2.new(0, 18, 0, 18)
-                    iconImg.Position = UDim2.new(0, 18, 0.5, 0)
-                    iconImg.AnchorPoint = Vector2.new(0, 0.5)
+                    iconImg.Size = UDim2.new(0, 28, 0, 28)
                     iconImg.BackgroundTransparency = 1
+                    
+                    local formattedIcon = tabIcon
                     if tonumber(tabIcon) then
-                        iconImg.Image = "rbxassetid://" .. tabIcon
-                    else
-                        iconImg.Image = tabIcon
+                        formattedIcon = "rbxassetid://" .. tabIcon
                     end
+                    iconImg.Image = formattedIcon
+                    
                     iconImg.Parent = contentFrame
                     AddToRegistry(iconImg, "ImageColor3", "Text")
+                    local ic = Instance.new("UICorner")
+                    ic.CornerRadius = UDim.new(0, 8)
+                    ic.Parent = iconImg
                 end
 
                 local textLabel = Instance.new("TextLabel")
-                textLabel.Size = UDim2.new(0, 0, 1, 0)
-                textLabel.Position = UDim2.new(0, 44, 0.5, 0)
-                textLabel.AnchorPoint = Vector2.new(0, 0.5)
-                textLabel.AutomaticSize = Enum.AutomaticSize.X
+                local textWidth = TextService:GetTextSize(tabName, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
+                textLabel.Size = UDim2.new(0, textWidth, 1, 0)
                 textLabel.BackgroundTransparency = 1
                 textLabel.Font = Enum.Font.GothamMedium
                 textLabel.Text = tabName
-                textLabel.TextColor3 = Color3.fromRGB(150, 150, 158)
+                textLabel.TextColor3 = Color3.fromRGB(150,150,158)
                 textLabel.TextSize = 14
                 textLabel.TextXAlignment = Enum.TextXAlignment.Left
                 textLabel.Parent = contentFrame
-                AddToRegistry(textLabel, "TextColor3", "Text")
 
+                -- 创建 CanvasGroup 包裹页面
                 local pageCanvas = Instance.new("CanvasGroup")
                 pageCanvas.Size = UDim2.new(1, 0, 1, 0)
                 pageCanvas.BackgroundTransparency = 1
@@ -2937,44 +2937,9 @@ function Fenglib:CreateWindow(Config)
                     return elements
                 end
 
-                local function activateTab()
-                    for _, child in pairs(rightPageContainer:GetChildren()) do
-                        if child:IsA("CanvasGroup") and child ~= pageCanvas then
-                            Tween(child, {GroupTransparency = 1, Position = UDim2.new(0, 0, 0, -20)}, 0.3)
-                            task.delay(0.3, function() child.Visible = false end)
-                        end
-                    end
-
-                    pageCanvas.Visible = true
-                    pageCanvas.GroupTransparency = 1
-                    pageCanvas.Position = UDim2.new(0, 0, 0, 20)
-                    Tween(pageCanvas, {GroupTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}, 0.3)
-
-                    for _, btn in pairs(sideBar:GetChildren()) do
-                        if btn:IsA("TextButton") then
-                            btn.Selected = false
-                            Tween(btn, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top}, 0.2)
-                            local content = btn:FindFirstChild("ContentFrame")
-                            if content then
-                                local txt = content:FindFirstChildOfClass("TextLabel")
-                                if txt then
-                                    Tween(txt, {TextColor3 = Color3.fromRGB(150, 150, 158)}, 0.2)
-                                end
-                            end
-                            local bar = btn:FindFirstChildOfClass("Frame")
-                            if bar then
-                                Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0, 3, 0, 0)}, 0.2)
-                            end
-                        end
-                    end
-
-                    tabBtn.Selected = true
-                    Tween(tabBtn, {BackgroundTransparency = 0.88, BackgroundColor3 = CurrentTheme.Accent}, 0.2)
-                    Tween(textLabel, {TextColor3 = CurrentTheme.Text}, 0.2)
-                    Tween(tabBar, {BackgroundTransparency = 0, Size = UDim2.new(0, 3, 0.65, 0)}, 0.2)
-                end
-
-                tabBtn.MouseButton1Click:Connect(activateTab)
+                tabBtn.MouseButton1Click:Connect(function()
+                    activateTab(tabBtn, pageCanvas, pageContent, textLabel, tabBar)
+                end)
 
                 local isFirst = true
                 for _, existing in ipairs(sideBar:GetChildren()) do
@@ -2984,17 +2949,7 @@ function Fenglib:CreateWindow(Config)
                     end
                 end
                 if isFirst then
-                    pageCanvas.Visible = true
-                    pageCanvas.GroupTransparency = 1
-                    pageCanvas.Position = UDim2.new(0, 0, 0, 20)
-                    Tween(pageCanvas, {GroupTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}, 0.3)
-
-                    tabBtn.Selected = true
-                    tabBtn.BackgroundTransparency = 0.88
-                    tabBtn.BackgroundColor3 = CurrentTheme.Accent
-                    textLabel.TextColor3 = CurrentTheme.Text
-                    tabBar.BackgroundTransparency = 0
-                    tabBar.Size = UDim2.new(0, 3, 0.65, 0)
+                    activateTab(tabBtn, pageCanvas, pageContent, textLabel, tabBar)
                 end
 
                 return getElements()
@@ -3020,18 +2975,17 @@ function Fenglib:CreateWindow(Config)
         local firstTab = true
         function Window:Tab(name, icon)
             local TabBtn = Instance.new("TextButton")
-            TabBtn.Size = UDim2.new(1, 0, 0, 40)
+            TabBtn.Size = UDim2.new(1, 0, 0, 32)
             TabBtn.BackgroundTransparency = 1
             TabBtn.Text = ""
-            TabBtn.AutoButtonColor = false
             TabBtn.Parent = TabContainer
-            Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 8)
+            Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
+
             TabBtn.Selected = false
 
             local TabBar = Instance.new("Frame")
-            TabBar.Size = UDim2.new(0, 3, 0, 22)
-            TabBar.Position = UDim2.new(0, 6, 0.5, 0)
-            TabBar.AnchorPoint = Vector2.new(0, 0.5)
+            TabBar.Size = UDim2.new(0, 3, 0, 0)
+            TabBar.Position = UDim2.new(0, 0, 0.175, 0)
             TabBar.BackgroundTransparency = 1
             TabBar.BorderSizePixel = 0
             TabBar.Parent = TabBtn
@@ -3048,18 +3002,16 @@ function Fenglib:CreateWindow(Config)
             Layout.FillDirection = Enum.FillDirection.Horizontal
             Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
             Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-            Layout.Padding = UDim.new(0, 8)
+            Layout.Padding = UDim.new(0, 5)
             Layout.Parent = ContentFrame
 
             local Padding = Instance.new("UIPadding")
-            Padding.PaddingLeft = UDim.new(0, 16)
+            Padding.PaddingLeft = UDim.new(0, 10)
             Padding.Parent = ContentFrame
 
             if icon then
                 local TabIcon = Instance.new("ImageLabel")
-                TabIcon.Size = UDim2.new(0, 18, 0, 18)
-                TabIcon.Position = UDim2.new(0, 18, 0.5, 0)
-                TabIcon.AnchorPoint = Vector2.new(0, 0.5)
+                TabIcon.Size = UDim2.new(0, 28, 0, 28)
                 TabIcon.BackgroundTransparency = 1
                 if tonumber(icon) then
                     TabIcon.Image = "rbxassetid://" .. icon
@@ -3068,13 +3020,14 @@ function Fenglib:CreateWindow(Config)
                 end
                 TabIcon.Parent = ContentFrame
                 AddToRegistry(TabIcon, "ImageColor3", "Text")
+                local iconCorner = Instance.new("UICorner")
+                iconCorner.CornerRadius = UDim.new(0, 8)
+                iconCorner.Parent = TabIcon
             end
 
             local TabText = Instance.new("TextLabel")
-            TabText.Size = UDim2.new(0, 0, 1, 0)
-            TabText.Position = UDim2.new(0, 44, 0.5, 0)
-            TabText.AnchorPoint = Vector2.new(0, 0.5)
-            TabText.AutomaticSize = Enum.AutomaticSize.X
+            local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
+            TabText.Size = UDim2.new(0, textWidth, 1, 0)
             TabText.BackgroundTransparency = 1
             TabText.Font = Enum.Font.GothamMedium
             TabText.Text = name
@@ -3082,7 +3035,6 @@ function Fenglib:CreateWindow(Config)
             TabText.TextSize = 14
             TabText.TextXAlignment = Enum.TextXAlignment.Left
             TabText.Parent = ContentFrame
-            AddToRegistry(TabText, "TextColor3", "Text")
 
             TabBtn.MouseEnter:Connect(function()
                 if not TabBtn.Selected then
@@ -3095,6 +3047,7 @@ function Fenglib:CreateWindow(Config)
                 end
             end)
 
+            -- 创建 CanvasGroup 包裹页面
             local PageCanvas = Instance.new("CanvasGroup")
             PageCanvas.Name = "PageCanvas_" .. name
             PageCanvas.Size = UDim2.new(1, 0, 1, 0)
@@ -3128,6 +3081,7 @@ function Fenglib:CreateWindow(Config)
             task.spawn(updatePageCanvas)
 
             local function activateTab()
+                -- 隐藏其他页面（带动画）
                 for _, v in pairs(PageContainer:GetChildren()) do
                     if v:IsA("CanvasGroup") and v ~= PageCanvas then
                         Tween(v, {GroupTransparency = 1, Position = UDim2.new(0, 0, 0, -20)}, 0.3)
@@ -3135,11 +3089,13 @@ function Fenglib:CreateWindow(Config)
                     end
                 end
 
+                -- 显示当前页面（入场动画）
                 PageCanvas.Visible = true
                 PageCanvas.GroupTransparency = 1
                 PageCanvas.Position = UDim2.new(0, 0, 0, 20)
                 Tween(PageCanvas, {GroupTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}, 0.3)
 
+                -- 更新所有 Tab 按钮样式（带动画）
                 for _, btn in pairs(TabContainer:GetChildren()) do
                     if btn:IsA("TextButton") then
                         btn.Selected = false
@@ -3159,7 +3115,7 @@ function Fenglib:CreateWindow(Config)
                 end
 
                 TabBtn.Selected = true
-                Tween(TabBtn, {BackgroundTransparency = 0.88, BackgroundColor3 = CurrentTheme.Accent}, 0.2)
+                Tween(TabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
                 Tween(TabText, {TextColor3 = CurrentTheme.Text}, 0.2)
                 Tween(TabBar, {BackgroundTransparency = 0, Size = UDim2.new(0, 3, 0.65, 0)}, 0.2)
             end
@@ -3168,14 +3124,14 @@ function Fenglib:CreateWindow(Config)
 
             if firstTab then
                 firstTab = false
+                -- 首次自动激活（入场动画）
                 PageCanvas.Visible = true
                 PageCanvas.GroupTransparency = 1
                 PageCanvas.Position = UDim2.new(0, 0, 0, 20)
                 Tween(PageCanvas, {GroupTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}, 0.3)
-
                 TabBtn.Selected = true
-                TabBtn.BackgroundTransparency = 0.88
-                TabBtn.BackgroundColor3 = CurrentTheme.Accent
+                TabBtn.BackgroundTransparency = 0.05
+                TabBtn.BackgroundColor3 = CurrentTheme.Top
                 TabText.TextColor3 = CurrentTheme.Text
                 TabBar.BackgroundTransparency = 0
                 TabBar.Size = UDim2.new(0, 3, 0.65, 0)
