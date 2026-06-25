@@ -1537,9 +1537,8 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- ===== 高级视觉增强（仅保留模糊和边框渐变，删除像素圆角黑点） =====
+    -- ===== 高级视觉增强（仅保留模糊和边框渐变） =====
     do
-        -- 3D 背景模糊（毛玻璃效果）
         local blurPart = Instance.new("Part")
         blurPart.Name = "FengBlurPart"
         blurPart.Material = Enum.Material.Glass
@@ -1598,7 +1597,6 @@ function Fenglib:CreateWindow(Config)
 
         local blurConnection = RunService.RenderStepped:Connect(updateBlur)
 
-        -- 边框斜向渐变（保留）
         local borderStroke = MainFrame:FindFirstChildOfClass("UIStroke")
         if borderStroke then
             local grad = Instance.new("UIGradient")
@@ -1877,18 +1875,19 @@ function Fenglib:CreateWindow(Config)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
-    -- ====== 修改 TabContainer：添加深色半透明背景和圆角 ======
+    -- ====== 修改后的 TabContainer：宽度140，左移10像素使左边缘与MainFrame对齐，高度为Content高度-40（正好到ProfileFrame顶部） ======
     local TabContainer = Instance.new("ScrollingFrame")
-    TabContainer.Size = UDim2.new(0, 180, 0.85, 0)          -- 加宽到 180，接近 metUI 的 225（可按需调整）
-    TabContainer.BackgroundTransparency = 0.12             -- 半透明毛玻璃
-    TabContainer.BackgroundColor3 = CurrentTheme.Main     -- 使用主题主色（深色）
+    TabContainer.Size = UDim2.new(0, 140, 1, -40)          -- 宽度140，高度 = Content高度 - 40（ProfileFrame高度）
+    TabContainer.Position = UDim2.new(0, -10, 0, 0)        -- 左移10像素，消除Content的左边距，与MainFrame左边缘对齐
+    TabContainer.BackgroundTransparency = 0.12
+    TabContainer.BackgroundColor3 = CurrentTheme.Main
     TabContainer.ScrollBarThickness = 4
     TabContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     TabContainer.Parent = Content
 
     -- 圆角
     local tabCorner = Instance.new("UICorner")
-    tabCorner.CornerRadius = UDim.new(0, 12)               -- 圆角 12，与 metUI 风格一致
+    tabCorner.CornerRadius = UDim.new(0, 12)
     tabCorner.Parent = TabContainer
     -- ====== 修改结束 ======
 
@@ -1944,14 +1943,14 @@ function Fenglib:CreateWindow(Config)
 
     local Line = Instance.new("Frame")
     Line.Size = UDim2.new(0, 1, 1, 0)
-    Line.Position = UDim2.new(0, 150, 0, 0)
+    Line.Position = UDim2.new(0, 140, 0, 0)  -- 移到与TabContainer右边缘对齐（宽度140）
     Line.BackgroundTransparency = 0.8
     Line.Parent = Content
     AddToRegistry(Line, "BackgroundColor3", "Stroke")
 
     local PageContainer = Instance.new("Frame")
-    PageContainer.Size = UDim2.new(1, -165, 1, 0)
-    PageContainer.Position = UDim2.new(0, 160, 0, 0)
+    PageContainer.Size = UDim2.new(1, -155, 1, 0)  -- 左侧留出140+15间距
+    PageContainer.Position = UDim2.new(0, 150, 0, 0)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
 
@@ -3059,7 +3058,6 @@ function Fenglib:CreateWindow(Config)
         end
     else
         -- ===== 普通模式（非卡片） =====
-        -- 保留滑入动画，Tab 背景使用原文件样式（Top 色，选中透明度 0.05）
         PageContainer.ClipsDescendants = true
 
         Window._activeTab = nil
