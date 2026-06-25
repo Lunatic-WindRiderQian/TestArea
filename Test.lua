@@ -1877,13 +1877,21 @@ function Fenglib:CreateWindow(Config)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
+    -- ====== 修改 TabContainer：添加深色半透明背景和圆角 ======
     local TabContainer = Instance.new("ScrollingFrame")
-    TabContainer.Size = UDim2.new(0, 140, 0.85, 0)
-    TabContainer.BackgroundTransparency = 1
+    TabContainer.Size = UDim2.new(0, 180, 0.85, 0)          -- 加宽到 180，接近 metUI 的 225（可按需调整）
+    TabContainer.BackgroundTransparency = 0.12             -- 半透明毛玻璃
+    TabContainer.BackgroundColor3 = CurrentTheme.Main     -- 使用主题主色（深色）
     TabContainer.ScrollBarThickness = 4
     TabContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     TabContainer.Parent = Content
-    
+
+    -- 圆角
+    local tabCorner = Instance.new("UICorner")
+    tabCorner.CornerRadius = UDim.new(0, 12)               -- 圆角 12，与 metUI 风格一致
+    tabCorner.Parent = TabContainer
+    -- ====== 修改结束 ======
+
     local TabList = Instance.new("UIListLayout")
     TabList.Padding = UDim.new(0, 8)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
@@ -3083,7 +3091,6 @@ function Fenglib:CreateWindow(Config)
             Padding.PaddingLeft = UDim.new(0, 10)
             Padding.Parent = ContentFrame
 
-            -- 图标（没有渐变，只有纯色）
             if icon then
                 local TabIcon = Instance.new("ImageLabel")
                 TabIcon.Size = UDim2.new(0, 28, 0, 28)
@@ -3094,7 +3101,6 @@ function Fenglib:CreateWindow(Config)
                     TabIcon.Image = icon
                 end
                 TabIcon.Parent = ContentFrame
-                -- 纯色图标，跟随主题
                 AddToRegistry(TabIcon, "ImageColor3", "Text")
                 local iconCorner = Instance.new("UICorner")
                 iconCorner.CornerRadius = UDim.new(0, 8)
@@ -3149,7 +3155,6 @@ function Fenglib:CreateWindow(Config)
                     Window._activeTab.Page.Visible = false
                 end
 
-                -- 选中透明度 0.05（原文件样式）
                 TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 60)
