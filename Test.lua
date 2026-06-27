@@ -1869,30 +1869,25 @@ function Fenglib:CreateWindow(Config)
         TitleLabel.Position = UDim2.new(0, 50, 0, 0)
     end
 
-    local Content = Instance.new("Frame")
-    Content.Size = UDim2.new(1, -20, 1, -(topbarHeight + 15))
-    Content.Position = UDim2.new(0, 10, 0, topbarHeight + 5)
-    Content.BackgroundTransparency = 1
-    Content.Parent = MainFrame
-
-    -- ====== 重构左侧栏：统一背景，删除分割线 ======
-    -- 左侧主容器（背景）
+    -- ====== 重新设计左侧栏和右侧区域 ======
+    -- 左侧容器（放在 MainFrame 内部，直接从 topbar 下方开始到 MainFrame 底部）
+    local leftWidth = 180   -- 宽度增加，占满分割线位置并更宽
     local LeftContainer = Instance.new("Frame")
-    LeftContainer.Size = UDim2.new(0, 150, 1, 0)            -- 宽度150，高度填满Content
-    LeftContainer.Position = UDim2.new(0, -10, 0, 0)        -- 左移10px对齐MainFrame左边缘
+    LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
+    LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
     LeftContainer.BackgroundTransparency = 0.12
     LeftContainer.BackgroundColor3 = CurrentTheme.Main
-    LeftContainer.ClipsDescendants = true                   -- 裁切子项
-    LeftContainer.Parent = Content
+    LeftContainer.ClipsDescendants = true
+    LeftContainer.Parent = MainFrame
 
-    -- 圆角
+    -- 圆角（左上和左下）
     local leftCorner = Instance.new("UICorner")
     leftCorner.CornerRadius = UDim.new(0, 12)
     leftCorner.Parent = LeftContainer
 
-    -- 标签滚动区域（上半部分）
+    -- 标签滚动区域（上半部分，为底部用户卡片预留 40px）
     local TabScroll = Instance.new("ScrollingFrame")
-    TabScroll.Size = UDim2.new(1, 0, 1, -40)                -- 为底部ProfileFrame留出40px
+    TabScroll.Size = UDim2.new(1, 0, 1, -40)
     TabScroll.Position = UDim2.new(0, 0, 0, 0)
     TabScroll.BackgroundTransparency = 1
     TabScroll.ScrollBarThickness = 4
@@ -1910,10 +1905,10 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- 底部用户卡片（ProfileFrame）
+    -- 底部用户卡片
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(1, 0, 0, 40)
-    ProfileFrame.Position = UDim2.new(0, 0, 1, 0)            -- 贴底
+    ProfileFrame.Position = UDim2.new(0, 0, 1, 0)
     ProfileFrame.AnchorPoint = Vector2.new(0, 1)
     ProfileFrame.BackgroundTransparency = 0.05
     ProfileFrame.Parent = LeftContainer
@@ -1951,15 +1946,22 @@ function Fenglib:CreateWindow(Config)
     UsrName.Parent = ProfileFrame
     AddToRegistry(UsrName, "TextColor3", "Text")
 
-    -- 右侧页面容器（从150开始）
-    local PageContainer = Instance.new("Frame")
-    PageContainer.Size = UDim2.new(1, -160, 1, 0)           -- 左侧留出150+10内边距
-    PageContainer.Position = UDim2.new(0, 160, 0, 0)
-    PageContainer.BackgroundTransparency = 1
-    PageContainer.Parent = Content
+    -- 右侧内容容器（从 leftWidth 开始，高度同 left）
+    local RightContainer = Instance.new("Frame")
+    RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
+    RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
+    RightContainer.BackgroundTransparency = 1
+    RightContainer.Parent = MainFrame
 
-    -- 删除原 Line（分割线）
-    -- ====== 左侧栏重构结束 ======
+    -- 原 Content 不再需要，我们直接用 RightContainer 作为 PageContainer 的父级
+    -- PageContainer（原用于放置页面）
+    local PageContainer = Instance.new("Frame")
+    PageContainer.Size = UDim2.new(1, 0, 1, 0)
+    PageContainer.BackgroundTransparency = 1
+    PageContainer.Parent = RightContainer
+
+    -- 删除分割线（不再需要）
+    -- ====== 布局修改结束 ======
 
     MainFrame.ClipsDescendants = false
 
@@ -2680,6 +2682,7 @@ function Fenglib:CreateWindow(Config)
 
     if isCardMode then
         LeftContainer.Visible = false
+        RightContainer.Visible = false
         PageContainer.Visible = false
 
         local cardsContainer = Instance.new("ScrollingFrame")
@@ -2688,7 +2691,7 @@ function Fenglib:CreateWindow(Config)
         cardsContainer.BackgroundTransparency = 1
         cardsContainer.ScrollBarThickness = 4
         cardsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-        cardsContainer.Parent = Content
+        cardsContainer.Parent = RightContainer  -- 用 RightContainer 作为父级
 
         local cardsLayout = Instance.new("UIGridLayout")
         cardsLayout.CellSize = UDim2.new(0.5, -20, 0, 74)
@@ -2853,7 +2856,7 @@ function Fenglib:CreateWindow(Config)
             cardContentFrame.Size = UDim2.new(1, 0, 1, 0)
             cardContentFrame.BackgroundTransparency = 1
             cardContentFrame.Visible = false
-            cardContentFrame.Parent = Content
+            cardContentFrame.Parent = RightContainer
 
             local cardLine = Instance.new("Frame")
             cardLine.Name = "CardLine"
@@ -3062,8 +3065,8 @@ function Fenglib:CreateWindow(Config)
             return {}
         end
     else
-        -- ===== 普通模式（非卡片） =====
-        PageContainer.ClipsDescendants = true
+        -- ===== 普通模式 =====
+        RightContainer.ClipsDescendants = true  -- 保证页面切换无溢出
 
         Window._activeTab = nil
 
