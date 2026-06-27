@@ -1903,44 +1903,63 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- ====== 头像卡片恢复到原始位置和宽度 ======
+    -- ====== 玩家头像卡片：居中显示，并向上移动 ======
     local ProfileFrame = Instance.new("Frame")
-    ProfileFrame.Size = UDim2.new(0, 140, 0, 40)          -- 宽度140，高度40（原样）
-    ProfileFrame.Position = UDim2.new(0, 0, 1, -40)        -- 底部偏移40（原位置）
+    ProfileFrame.Size = UDim2.new(1, 0, 0, 40)           -- 宽度填满 LeftContainer，实现居中
+    ProfileFrame.Position = UDim2.new(0, 0, 1, -55)      -- 距底部 55px（比原来 40px 向上 15px）
+    ProfileFrame.AnchorPoint = Vector2.new(0, 1)
     ProfileFrame.BackgroundTransparency = 0.05
     ProfileFrame.Parent = LeftContainer
     Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
     AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
 
+    -- 内部布局：使用 UIListLayout 实现内容居中
+    local profileLayout = Instance.new("UIListLayout")
+    profileLayout.FillDirection = Enum.FillDirection.Horizontal
+    profileLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    profileLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    profileLayout.Padding = UDim.new(0, 8)
+    profileLayout.Parent = ProfileFrame
+
     local Avatar = Instance.new("ImageLabel")
     Avatar.Size = UDim2.new(0, 26, 0, 26)
-    Avatar.Position = UDim2.new(0, 8, 0.5, -13)
     Avatar.BackgroundColor3 = Color3.fromRGB(20,20,20)
     Avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
     Avatar.Parent = ProfileFrame
     Instance.new("UICorner", Avatar).CornerRadius = UDim.new(1,0)
 
+    local textContainer = Instance.new("Frame")
+    textContainer.Size = UDim2.new(0, 0, 1, 0)
+    textContainer.AutomaticSize = Enum.AutomaticSize.X
+    textContainer.BackgroundTransparency = 1
+    textContainer.Parent = ProfileFrame
+
+    local textLayout = Instance.new("UIListLayout")
+    textLayout.Padding = UDim.new(0, 1)
+    textLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    textLayout.Parent = textContainer
+
     local DispName = Instance.new("TextLabel")
     DispName.Text = LocalPlayer.DisplayName
-    DispName.Size = UDim2.new(1, -45, 0, 15)
-    DispName.Position = UDim2.new(0, 40, 0, 5)
+    DispName.Size = UDim2.new(0, 0, 0, 15)
+    DispName.AutomaticSize = Enum.AutomaticSize.X
     DispName.BackgroundTransparency = 1
     DispName.Font = Enum.Font.GothamMedium
     DispName.TextSize = 11
     DispName.TextXAlignment = Enum.TextXAlignment.Left
-    DispName.Parent = ProfileFrame
+    DispName.Parent = textContainer
     AddToRegistry(DispName, "TextColor3", "Text")
 
     local UsrName = Instance.new("TextLabel")
     UsrName.Text = "@"..LocalPlayer.Name
-    UsrName.Size = UDim2.new(1, -45, 0, 15)
-    UsrName.Position = UDim2.new(0, 40, 0, 19)
+    UsrName.Size = UDim2.new(0, 0, 0, 15)
+    UsrName.AutomaticSize = Enum.AutomaticSize.X
     UsrName.BackgroundTransparency = 1
     UsrName.Font = Enum.Font.Gotham
     UsrName.TextSize = 10
     UsrName.TextTransparency = 0.5
     UsrName.TextXAlignment = Enum.TextXAlignment.Left
-    UsrName.Parent = ProfileFrame
+    UsrName.Parent = textContainer
     AddToRegistry(UsrName, "TextColor3", "Text")
 
     -- 右侧内容容器
