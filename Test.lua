@@ -1875,41 +1875,51 @@ function Fenglib:CreateWindow(Config)
     Content.BackgroundTransparency = 1
     Content.Parent = MainFrame
 
-    -- ====== 修改后的 TabContainer：宽度140，左移10像素使左边缘与MainFrame对齐，高度为Content高度-40（正好到ProfileFrame顶部） ======
-    local TabContainer = Instance.new("ScrollingFrame")
-    TabContainer.Size = UDim2.new(0, 140, 1, -40)          -- 宽度140，高度 = Content高度 - 40（ProfileFrame高度）
-    TabContainer.Position = UDim2.new(0, -10, 0, 0)        -- 左移10像素，消除Content的左边距，与MainFrame左边缘对齐
-    TabContainer.BackgroundTransparency = 0.12
-    TabContainer.BackgroundColor3 = CurrentTheme.Main
-    TabContainer.ScrollBarThickness = 4
-    TabContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-    TabContainer.Parent = Content
+    -- ====== 重构左侧栏：统一背景，删除分割线 ======
+    -- 左侧主容器（背景）
+    local LeftContainer = Instance.new("Frame")
+    LeftContainer.Size = UDim2.new(0, 150, 1, 0)            -- 宽度150，高度填满Content
+    LeftContainer.Position = UDim2.new(0, -10, 0, 0)        -- 左移10px对齐MainFrame左边缘
+    LeftContainer.BackgroundTransparency = 0.12
+    LeftContainer.BackgroundColor3 = CurrentTheme.Main
+    LeftContainer.ClipsDescendants = true                   -- 裁切子项
+    LeftContainer.Parent = Content
 
     -- 圆角
-    local tabCorner = Instance.new("UICorner")
-    tabCorner.CornerRadius = UDim.new(0, 12)
-    tabCorner.Parent = TabContainer
-    -- ====== 修改结束 ======
+    local leftCorner = Instance.new("UICorner")
+    leftCorner.CornerRadius = UDim.new(0, 12)
+    leftCorner.Parent = LeftContainer
+
+    -- 标签滚动区域（上半部分）
+    local TabScroll = Instance.new("ScrollingFrame")
+    TabScroll.Size = UDim2.new(1, 0, 1, -40)                -- 为底部ProfileFrame留出40px
+    TabScroll.Position = UDim2.new(0, 0, 0, 0)
+    TabScroll.BackgroundTransparency = 1
+    TabScroll.ScrollBarThickness = 4
+    TabScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+    TabScroll.Parent = LeftContainer
 
     local TabList = Instance.new("UIListLayout")
     TabList.Padding = UDim.new(0, 8)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
-    TabList.Parent = TabContainer
-    
+    TabList.Parent = TabScroll
+
     local function updateTabCanvas()
-        TabContainer.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y)
+        TabScroll.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y + 20)
     end
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
+    -- 底部用户卡片（ProfileFrame）
     local ProfileFrame = Instance.new("Frame")
-    ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
-    ProfileFrame.Position = UDim2.new(0, 0, 1, -40)
+    ProfileFrame.Size = UDim2.new(1, 0, 0, 40)
+    ProfileFrame.Position = UDim2.new(0, 0, 1, 0)            -- 贴底
+    ProfileFrame.AnchorPoint = Vector2.new(0, 1)
     ProfileFrame.BackgroundTransparency = 0.05
-    ProfileFrame.Parent = Content
+    ProfileFrame.Parent = LeftContainer
     Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
     AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
-    
+
     local Avatar = Instance.new("ImageLabel")
     Avatar.Size = UDim2.new(0, 26, 0, 26)
     Avatar.Position = UDim2.new(0, 8, 0.5, -13)
@@ -1917,7 +1927,7 @@ function Fenglib:CreateWindow(Config)
     Avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
     Avatar.Parent = ProfileFrame
     Instance.new("UICorner", Avatar).CornerRadius = UDim.new(1,0)
-    
+
     local DispName = Instance.new("TextLabel")
     DispName.Text = LocalPlayer.DisplayName
     DispName.Size = UDim2.new(1, -45, 0, 15)
@@ -1941,18 +1951,15 @@ function Fenglib:CreateWindow(Config)
     UsrName.Parent = ProfileFrame
     AddToRegistry(UsrName, "TextColor3", "Text")
 
-    local Line = Instance.new("Frame")
-    Line.Size = UDim2.new(0, 1, 1, 0)
-    Line.Position = UDim2.new(0, 140, 0, 0)  -- 移到与TabContainer右边缘对齐（宽度140）
-    Line.BackgroundTransparency = 0.8
-    Line.Parent = Content
-    AddToRegistry(Line, "BackgroundColor3", "Stroke")
-
+    -- 右侧页面容器（从150开始）
     local PageContainer = Instance.new("Frame")
-    PageContainer.Size = UDim2.new(1, -155, 1, 0)  -- 左侧留出140+15间距
-    PageContainer.Position = UDim2.new(0, 150, 0, 0)
+    PageContainer.Size = UDim2.new(1, -160, 1, 0)           -- 左侧留出150+10内边距
+    PageContainer.Position = UDim2.new(0, 160, 0, 0)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = Content
+
+    -- 删除原 Line（分割线）
+    -- ====== 左侧栏重构结束 ======
 
     MainFrame.ClipsDescendants = false
 
@@ -2672,10 +2679,8 @@ function Fenglib:CreateWindow(Config)
     end
 
     if isCardMode then
-        TabContainer.Visible = false
-        Line.Visible = false
+        LeftContainer.Visible = false
         PageContainer.Visible = false
-        ProfileFrame.Visible = false
 
         local cardsContainer = Instance.new("ScrollingFrame")
         cardsContainer.Name = "CardsContainer"
@@ -3068,7 +3073,7 @@ function Fenglib:CreateWindow(Config)
             TabBtn.BackgroundTransparency = 1
             TabBtn.BackgroundColor3 = CurrentTheme.Top
             TabBtn.Text = ""
-            TabBtn.Parent = TabContainer
+            TabBtn.Parent = TabScroll
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
