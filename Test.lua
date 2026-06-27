@@ -1537,7 +1537,7 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- ===== 高级视觉增强 =====
+    -- ===== 高级视觉增强（仅保留模糊和边框渐变） =====
     do
         local blurPart = Instance.new("Part")
         blurPart.Name = "FengBlurPart"
@@ -1869,10 +1869,9 @@ function Fenglib:CreateWindow(Config)
         TitleLabel.Position = UDim2.new(0, 50, 0, 0)
     end
 
-    -- ======= 布局修改：左侧背景宽度 140，头像独立在底部 =======
-    local leftWidth = 140
+    -- ====== 左侧背景宽度 160，延伸至底部 ======
+    local leftWidth = 160
 
-    -- 左侧背景（仅背景，不含头像）
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
@@ -1885,9 +1884,8 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 12)
     leftCorner.Parent = LeftContainer
 
-    -- 标签滚动区域（填满 LeftContainer）
     local TabScroll = Instance.new("ScrollingFrame")
-    TabScroll.Size = UDim2.new(1, 0, 1, 0)
+    TabScroll.Size = UDim2.new(1, 0, 1, -40)
     TabScroll.Position = UDim2.new(0, 0, 0, 0)
     TabScroll.BackgroundTransparency = 1
     TabScroll.ScrollBarThickness = 4
@@ -1905,14 +1903,12 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- 玩家头像卡片（独立于背景，位于 MainFrame 底部，原位置）
+    -- ====== 头像卡片恢复到原始位置和宽度 ======
     local ProfileFrame = Instance.new("Frame")
-    ProfileFrame.Size = UDim2.new(0, leftWidth, 0, 40)
-    ProfileFrame.Position = UDim2.new(0, 0, 1, -40)
-    ProfileFrame.AnchorPoint = Vector2.new(0, 1)
+    ProfileFrame.Size = UDim2.new(0, 140, 0, 40)          -- 宽度140，高度40（原样）
+    ProfileFrame.Position = UDim2.new(0, 0, 1, -40)        -- 底部偏移40（原位置）
     ProfileFrame.BackgroundTransparency = 0.05
-    ProfileFrame.ZIndex = 5
-    ProfileFrame.Parent = MainFrame
+    ProfileFrame.Parent = LeftContainer
     Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
     AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
 
@@ -1947,7 +1943,7 @@ function Fenglib:CreateWindow(Config)
     UsrName.Parent = ProfileFrame
     AddToRegistry(UsrName, "TextColor3", "Text")
 
-    -- 右侧内容区域
+    -- 右侧内容容器
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
@@ -1958,8 +1954,6 @@ function Fenglib:CreateWindow(Config)
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = RightContainer
-
-    -- ======= 布局修改结束 =======
 
     MainFrame.ClipsDescendants = false
 
