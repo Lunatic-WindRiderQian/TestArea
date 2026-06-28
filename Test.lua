@@ -1869,11 +1869,12 @@ function Fenglib:CreateWindow(Config)
         TitleLabel.Position = UDim2.new(0, 50, 0, 0)
     end
 
-    -- ====== 左侧背景宽度 160，延伸至底部 ======
+    -- ====== 左侧背景宽度 160，底部正好结束在卡片顶部 ======
     local leftWidth = 160
 
+    -- LeftContainer 高度减少 40 像素（卡片高度），底部正好在卡片顶部
     local LeftContainer = Instance.new("Frame")
-    LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
+    LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight - 40)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
     LeftContainer.BackgroundTransparency = 0.12
     LeftContainer.BackgroundColor3 = CurrentTheme.Main
@@ -1884,8 +1885,9 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 12)
     leftCorner.Parent = LeftContainer
 
+    -- Tab 滚动区域（高度自动适应 LeftContainer 新高度）
     local TabScroll = Instance.new("ScrollingFrame")
-    TabScroll.Size = UDim2.new(1, 0, 1, -40)
+    TabScroll.Size = UDim2.new(1, 0, 1, 0)
     TabScroll.Position = UDim2.new(0, 0, 0, 0)
     TabScroll.BackgroundTransparency = 1
     TabScroll.ScrollBarThickness = 4
@@ -1903,15 +1905,14 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- ====== 玩家头像卡片：左移3格，下移6格 ======
-    -- 原来：UDim2.new(0, 13, 1, -25)
-    -- 左移3格：X=10；下移6格：Y=-19
+    -- ====== 玩家头像卡片：位于 LeftContainer 外部底部，顶部与 LeftContainer 底部对齐 ======
+    -- ProfileFrame 放在 MainFrame 中，位于 LeftContainer 下方
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
-    ProfileFrame.Position = UDim2.new(0, 10, 1, -19)
+    ProfileFrame.Position = UDim2.new(0, 10, 1, -40)  -- 相对于 MainFrame 底部向上偏移 40px
     ProfileFrame.AnchorPoint = Vector2.new(0, 1)
     ProfileFrame.BackgroundTransparency = 0.05
-    ProfileFrame.Parent = LeftContainer
+    ProfileFrame.Parent = MainFrame
     Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
     AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
 
