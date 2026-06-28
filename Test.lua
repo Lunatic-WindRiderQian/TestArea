@@ -1903,10 +1903,12 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- ====== 玩家头像卡片：原大小（140x40），右移13px，下移5px（-25） ======
+    -- ====== 玩家头像卡片：左移3格，下移6格 ======
+    -- 原来：UDim2.new(0, 13, 1, -25)
+    -- 左移3格：X=10；下移6格：Y=-19
     local ProfileFrame = Instance.new("Frame")
-    ProfileFrame.Size = UDim2.new(0, 140, 0, 40)           -- 原大小
-    ProfileFrame.Position = UDim2.new(0, 13, 1, -25)       -- 右移13px，下移5px（-25）
+    ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
+    ProfileFrame.Position = UDim2.new(0, 10, 1, -19)
     ProfileFrame.AnchorPoint = Vector2.new(0, 1)
     ProfileFrame.BackgroundTransparency = 0.05
     ProfileFrame.Parent = LeftContainer
