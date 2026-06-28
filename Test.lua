@@ -1884,8 +1884,9 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 12)
     leftCorner.Parent = LeftContainer
 
+    -- 调整 TabScroll 底部预留空间，避免与玩家卡片重叠（预留 59 像素，正好避开卡片顶部）
     local TabScroll = Instance.new("ScrollingFrame")
-    TabScroll.Size = UDim2.new(1, 0, 1, -40)
+    TabScroll.Size = UDim2.new(1, 0, 1, -59)  -- 原为 -40，现改为 -59
     TabScroll.Position = UDim2.new(0, 0, 0, 0)
     TabScroll.BackgroundTransparency = 1
     TabScroll.ScrollBarThickness = 4
@@ -1903,11 +1904,10 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- ====== 玩家头像卡片：左移3格，下移6格（修复重叠） ======
-    -- 原位置导致与TabScroll底部重叠，现改为贴底对齐（偏移0），使卡片完全在预留的40px区域内
+    -- ====== 玩家头像卡片（保持原始位置不变） ======
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
-    ProfileFrame.Position = UDim2.new(0, 10, 1, 0)  -- 改为 0 偏移，底部紧贴容器底边
+    ProfileFrame.Position = UDim2.new(0, 10, 1, -19)  -- 保持原有偏移，不移动卡片
     ProfileFrame.AnchorPoint = Vector2.new(0, 1)
     ProfileFrame.BackgroundTransparency = 0.05
     ProfileFrame.Parent = LeftContainer
