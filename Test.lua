@@ -1869,10 +1869,9 @@ function Fenglib:CreateWindow(Config)
         TitleLabel.Position = UDim2.new(0, 50, 0, 0)
     end
 
-    -- ====== 左侧布局：背景全高，Tab 滚动区域限制在卡片上方 ======
+    -- ====== 左侧背景宽度 160，延伸至底部 ======
     local leftWidth = 160
 
-    -- 左侧背景面板（全高，延伸到窗口底部）
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
@@ -1885,7 +1884,6 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 12)
     leftCorner.Parent = LeftContainer
 
-    -- Tab 滚动区域（底部预留 40px 给卡片）
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -40)
     TabScroll.Position = UDim2.new(0, 0, 0, 0)
@@ -1905,16 +1903,18 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- 玩家头像卡片（位于 LeftContainer 内部底部，左移10px）
+    -- ====== 玩家头像卡片：左移3格，下移6格（修复重叠） ======
+    -- 原位置导致与TabScroll底部重叠，现改为贴底对齐（偏移0），使卡片完全在预留的40px区域内
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
-    ProfileFrame.Position = UDim2.new(0, 10, 1, -40)
+    ProfileFrame.Position = UDim2.new(0, 10, 1, 0)  -- 改为 0 偏移，底部紧贴容器底边
     ProfileFrame.AnchorPoint = Vector2.new(0, 1)
     ProfileFrame.BackgroundTransparency = 0.05
     ProfileFrame.Parent = LeftContainer
     Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
     AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
 
+    -- 内部绝对定位（与原文件一致）
     local Avatar = Instance.new("ImageLabel")
     Avatar.Size = UDim2.new(0, 26, 0, 26)
     Avatar.Position = UDim2.new(0, 8, 0.5, -13)
