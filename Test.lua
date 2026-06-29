@@ -181,23 +181,23 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ======== 完全复制 metUI 的 Section UI 结构 ========
-        local Section = {}  -- 用于存储 Items
+        local Section = {}  -- 存储所有 UI 元素
 
-        -- 主容器
+        -- 主容器（Section 本身，带有背景颜色 Background，透明度 0.65）
         Section.Section = Instance.new("Frame")
         Section.Section.Size = UDim2.new(1, 0, 0, 0)
-        Section.Section.BackgroundTransparency = 0.15  -- 对应 metUI 的 0.65
-        Section.Section.BackgroundColor3 = CurrentTheme.Main
+        Section.Section.BackgroundTransparency = 0.65
+        Section.Section.BackgroundColor3 = CurrentTheme.Main          -- 对应 metUI 的 "Background"
         Section.Section.ClipsDescendants = true
         Section.Section.AutomaticSize = Enum.AutomaticSize.Y
         Section.Section.Parent = parent
         Instance.new("UICorner", Section.Section).CornerRadius = UDim.new(0, 6)
         AddToRegistry(Section.Section, "BackgroundColor3", "Main")
 
-        -- 顶部栏 (Top)
+        -- 顶部栏（Top，外框，对应 "Outline"）
         Section.Top = Instance.new("Frame")
         Section.Top.Size = UDim2.new(1, 0, 0, 45)
-        Section.Top.BackgroundTransparency = 0.15
+        Section.Top.BackgroundTransparency = 0.65
         Section.Top.BackgroundColor3 = CurrentTheme.Stroke
         Section.Top.Parent = Section.Section
         local topCorner = Instance.new("UICorner")
@@ -205,11 +205,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         topCorner.Parent = Section.Top
         AddToRegistry(Section.Top, "BackgroundColor3", "Stroke")
 
-        -- TopBackground (内部)
+        -- 顶部内部（TopBackground，对应 "Section Top"）
         Section.TopBackground = Instance.new("Frame")
         Section.TopBackground.Size = UDim2.new(1, -2, 1, -2)
         Section.TopBackground.Position = UDim2.new(0, 1, 0, 1)
-        Section.TopBackground.BackgroundTransparency = 0.15
+        Section.TopBackground.BackgroundTransparency = 0.65
         Section.TopBackground.BackgroundColor3 = CurrentTheme.Top
         Section.TopBackground.Parent = Section.Top
         local topBgCorner = Instance.new("UICorner")
@@ -217,7 +217,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         topBgCorner.Parent = Section.TopBackground
         AddToRegistry(Section.TopBackground, "BackgroundColor3", "Top")
 
-        -- 图标
+        -- 图标（带渐变）
         Section.Icon = Instance.new("ImageLabel")
         Section.Icon.Size = UDim2.new(0, 21, 0, 20)
         Section.Icon.Position = UDim2.new(0, 15, 0.5, -10)
@@ -245,7 +245,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Section.Title.Parent = Section.TopBackground
         AddToRegistry(Section.Title, "TextColor3", "Text")
 
-        -- 描述
+        -- 描述（副标题）
         Section.Description = Instance.new("TextLabel")
         Section.Description.Text = ""
         Section.Description.Size = UDim2.new(1, -80, 0, 15)
@@ -258,7 +258,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Section.Description.Parent = Section.TopBackground
         AddToRegistry(Section.Description, "TextColor3", "Text")
 
-        -- 折叠开关 (Toggle)
+        -- 折叠开关（Toggle）
         Section.Toggle = Instance.new("TextButton")
         Section.Toggle.Size = UDim2.new(0, 26, 0, 16)
         Section.Toggle.Position = UDim2.new(1, -15, 0.5, -8)
@@ -280,12 +280,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Section.Circle.Parent = Section.Toggle
         Instance.new("UICorner", Section.Circle).CornerRadius = UDim.new(1, 0)
 
-        -- 背景 (内容容器外层)
+        -- 内容背景层（Background，对应 "Section Background"）
         Section.Background = Instance.new("Frame")
         Section.Background.Size = UDim2.new(1, -2, 0, 0)
         Section.Background.Position = UDim2.new(0, 1, 0, 45)
-        Section.Background.BackgroundTransparency = 0.15
-        Section.Background.BackgroundColor3 = CurrentTheme.Main
+        Section.Background.BackgroundTransparency = 0.65
+        Section.Background.BackgroundColor3 = CurrentTheme.Main          -- 对应 "Section Background"
         Section.Background.ClipsDescendants = true
         Section.Background.AutomaticSize = Enum.AutomaticSize.Y
         Section.Background.Parent = Section.Section
@@ -294,7 +294,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bgCorner.Parent = Section.Background
         AddToRegistry(Section.Background, "BackgroundColor3", "Main")
 
-        -- 内容 (放置子控件的实际容器)
+        -- 内容容器（Content，透明，放置所有子控件）
         Section.Content = Instance.new("Frame")
         Section.Content.Size = UDim2.new(1, -24, 0, 0)
         Section.Content.Position = UDim2.new(0, 12, 0, 15)
@@ -313,7 +313,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentPadding.PaddingBottom = UDim.new(0, 10)
         contentPadding.Parent = Section.Content
 
-        -- 折叠遮罩 (Fade)
+        -- 折叠遮罩（Fade）
         Section.Fade = Instance.new("TextButton")
         Section.Fade.Size = UDim2.new(1, 0, 1, 0)
         Section.Fade.BackgroundTransparency = 1
@@ -329,17 +329,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local open = defaultOpen
         local currentContentTween, currentSectionTween
 
-        -- 更新高度 (用于折叠动画)
+        -- 更新高度（折叠动画）
         local function updateSectionHeight(instant)
             local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
-            -- 注意：Section.Background 的高度由内容决定，我们通过调整 Section.Section 的总高度来控制
-            -- 但为了动画，我们直接调整 Section.Background 和 Section.Section 的大小
-            local topHeight = 45
-            local targetSectionHeight = topHeight + targetContentHeight + 10  -- 加上一些内边距
+            -- 总高度 = 标题栏 45 + 内容背景高度（内容高度 + 内边距 10）
+            local targetBgHeight = targetContentHeight + 10
+            local targetSectionHeight = 45 + targetBgHeight
             if currentContentTween then currentContentTween:Cancel() end
             if currentSectionTween then currentSectionTween:Cancel() end
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-            currentContentTween = TweenService:Create(Section.Background, tweenInfo, {Size = UDim2.new(1, -2, 0, targetContentHeight + 10)})
+            currentContentTween = TweenService:Create(Section.Background, tweenInfo, {Size = UDim2.new(1, -2, 0, targetBgHeight)})
             currentSectionTween = TweenService:Create(Section.Section, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
             currentContentTween:Play()
             currentSectionTween:Play()
@@ -379,7 +378,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         Section.Toggle.MouseButton1Click:Connect(toggle)
 
-        -- ===== 子控件方法 (完全保留原样) =====
+        -- ===== 子控件方法（完全保留原样） =====
         local child = {}
 
         child.Button = function(_, btnText, callback)
@@ -1570,7 +1569,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 end
 
 -- ================================================================
--- 窗口创建函数 (其余保持不变)
+-- 窗口创建函数（其余保持不变）
 -- ================================================================
 function Fenglib:CreateWindow(Config)
     local Window = {}
