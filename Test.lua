@@ -149,6 +149,9 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
+-- ============================================================
+-- 替换后的 createSectionBuilder（使用 jx.lua 风格）
+-- ============================================================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
@@ -177,57 +180,93 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             iconClosed = defaultIcon
         end
 
+        -- 外层 Section（仿 jx.lua 的 Items["Section"]）
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 36)
-        sectionFrame.BackgroundTransparency = 1
-        sectionFrame.Parent = parent
+        sectionFrame.BackgroundTransparency = 0.65
+        sectionFrame.BackgroundColor3 = CurrentTheme.Main
         sectionFrame.ClipsDescendants = true
+        sectionFrame.Parent = parent
+        AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
 
+        local sectionCorner = Instance.new("UICorner")
+        sectionCorner.CornerRadius = UDim.new(0, 4)
+        sectionCorner.Parent = sectionFrame
+
+        -- 标题栏（仿 Items["Top"]）
         local titleBar = Instance.new("Frame")
         titleBar.Size = UDim2.new(1, 0, 0, 36)
-        titleBar.BackgroundTransparency = 1
+        titleBar.BackgroundTransparency = 0.65
+        titleBar.BackgroundColor3 = CurrentTheme.Stroke
         titleBar.Parent = sectionFrame
+        AddToRegistry(titleBar, "BackgroundColor3", "Stroke")
 
+        local titleCorner = Instance.new("UICorner")
+        titleCorner.CornerRadius = UDim.new(0, 4)
+        titleCorner.Parent = titleBar
+
+        -- 标题栏内部背景（仿 Items["TopBackground"]）
+        local topBackground = Instance.new("Frame")
+        topBackground.Size = UDim2.new(1, -2, 1, -2)
+        topBackground.Position = UDim2.new(0, 1, 0, 1)
+        topBackground.BackgroundTransparency = 0.65
+        topBackground.BackgroundColor3 = CurrentTheme.Top
+        topBackground.Parent = titleBar
+        AddToRegistry(topBackground, "BackgroundColor3", "Top")
+
+        local topCorner = Instance.new("UICorner")
+        topCorner.CornerRadius = UDim.new(0, 4)
+        topCorner.Parent = topBackground
+
+        -- 图标
         local iconLabel = Instance.new("ImageLabel")
         iconLabel.Size = UDim2.new(0, 28, 0, 28)
-        iconLabel.Position = UDim2.new(0, 5, 0.5, -14)
+        iconLabel.Position = UDim2.new(0, 8, 0.5, -14)
         iconLabel.BackgroundTransparency = 1
         iconLabel.Image = defaultOpen and iconOpen or iconClosed
-        iconLabel.Parent = titleBar
-        local iconCorner = Instance.new("UICorner")
-        iconCorner.CornerRadius = UDim.new(0, 8)
-        iconCorner.Parent = iconLabel
+        iconLabel.Parent = topBackground
         AddToRegistry(iconLabel, "ImageColor3", "Text")
 
+        -- 标题文字
         local textLabel = Instance.new("TextLabel")
         textLabel.Text = text
-        textLabel.Size = UDim2.new(1, -38, 1, 0)
-        textLabel.Position = UDim2.new(0, 38, 0, 0)
+        textLabel.Size = UDim2.new(1, -48, 1, 0)
+        textLabel.Position = UDim2.new(0, 44, 0, 0)
         textLabel.BackgroundTransparency = 1
         textLabel.Font = Enum.Font.GothamBold
         textLabel.TextSize = 14
         textLabel.TextXAlignment = Enum.TextXAlignment.Left
-        textLabel.Parent = titleBar
+        textLabel.Parent = topBackground
         AddToRegistry(textLabel, "TextColor3", "Accent")
 
+        -- 折叠按钮（覆盖标题栏）
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(1, 0, 1, 0)
         toggleBtn.BackgroundTransparency = 1
         toggleBtn.Text = ""
         toggleBtn.Parent = titleBar
 
+        -- 内容容器（仿 Items["Background"]）
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, 0, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 0, 0, 36)
-        contentContainerSection.BackgroundTransparency = 1
+        contentContainerSection.BackgroundTransparency = 0.65
+        contentContainerSection.BackgroundColor3 = CurrentTheme.Main
         contentContainerSection.ClipsDescendants = true
         contentContainerSection.Parent = sectionFrame
+        AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
 
+        local contentCorner = Instance.new("UICorner")
+        contentCorner.CornerRadius = UDim.new(0, 4)
+        contentCorner.Parent = contentContainerSection
+
+        -- 内容布局
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Padding = UDim.new(0, 8)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentContainerSection
 
+        -- 以下为原有折叠/展开逻辑（未改动）
         local currentContentTween, currentSectionTween
         local open = defaultOpen
 
@@ -262,6 +301,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
+        -- ========== 返回的子元素方法（完全保留原 API） ==========
         local child = {}
 
         child.Button = function(_, btnText, callback)
@@ -1450,6 +1490,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
     return createSection
 end
+-- ============================================================
 
 function Fenglib:CreateWindow(Config)
     local Window = {}
