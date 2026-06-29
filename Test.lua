@@ -150,7 +150,7 @@ function Fenglib:LoadConfig(path)
 end
 
 -- ============================================================
--- 替换后的 createSectionBuilder（使用 jx.lua 风格）
+-- 完整升级的 createSectionBuilder（jx.lua 风格 + 右侧折叠开关）
 -- ============================================================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
@@ -218,7 +218,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         topCorner.CornerRadius = UDim.new(0, 4)
         topCorner.Parent = topBackground
 
-        -- 图标
+        -- 左侧折叠图标（箭头）
         local iconLabel = Instance.new("ImageLabel")
         iconLabel.Size = UDim2.new(0, 28, 0, 28)
         iconLabel.Position = UDim2.new(0, 8, 0.5, -14)
@@ -230,7 +230,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         -- 标题文字
         local textLabel = Instance.new("TextLabel")
         textLabel.Text = text
-        textLabel.Size = UDim2.new(1, -48, 1, 0)
+        textLabel.Size = UDim2.new(1, -100, 1, 0)  -- 留出右侧开关空间
         textLabel.Position = UDim2.new(0, 44, 0, 0)
         textLabel.BackgroundTransparency = 1
         textLabel.Font = Enum.Font.GothamBold
@@ -239,14 +239,46 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         textLabel.Parent = topBackground
         AddToRegistry(textLabel, "TextColor3", "Accent")
 
-        -- 折叠按钮（覆盖标题栏）
+        -- ===== 右侧 Toggle 开关（控制折叠/展开） =====
+        local toggleSwitch = Instance.new("Frame")
+        toggleSwitch.Size = UDim2.new(0, 42, 0, 22)
+        toggleSwitch.Position = UDim2.new(1, -56, 0.5, -11)
+        toggleSwitch.AnchorPoint = Vector2.new(1, 0.5)
+        toggleSwitch.Parent = topBackground
+        Instance.new("UICorner", toggleSwitch).CornerRadius = UDim.new(1, 0)
+        toggleSwitch.BackgroundColor3 = defaultOpen and CurrentTheme.Accent or CurrentTheme.Stroke
+        AddToRegistry(toggleSwitch, "BackgroundColor3", "Stroke") -- 初始颜色稍后更新
+
+        local swStroke = Instance.new("UIStroke")
+        swStroke.Thickness = 1
+        swStroke.Transparency = 0.6
+        swStroke.Parent = toggleSwitch
+        AddToRegistry(swStroke, "Color", "Stroke")
+
+        local dot = Instance.new("Frame")
+        dot.Size = UDim2.new(0, 16, 0, 16)
+        dot.Position = defaultOpen and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+        dot.AnchorPoint = Vector2.new(0, 0.5)
+        dot.BackgroundColor3 = Color3.new(1, 1, 1)
+        dot.Parent = toggleSwitch
+        Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+
+        -- 开关点击事件
+        local switchBtn = Instance.new("TextButton")
+        switchBtn.Size = UDim2.new(1, 0, 1, 0)
+        switchBtn.BackgroundTransparency = 1
+        switchBtn.Text = ""
+        switchBtn.ZIndex = 5
+        switchBtn.Parent = toggleSwitch
+
+        -- 折叠按钮（覆盖标题栏，但不覆盖开关区域）
         local toggleBtn = Instance.new("TextButton")
-        toggleBtn.Size = UDim2.new(1, 0, 1, 0)
+        toggleBtn.Size = UDim2.new(1, -56, 1, 0)  -- 避开开关区域
         toggleBtn.BackgroundTransparency = 1
         toggleBtn.Text = ""
         toggleBtn.Parent = titleBar
 
-        -- 内容容器（仿 Items["Background"]）
+        -- 内容容器
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, 0, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 0, 0, 36)
@@ -266,10 +298,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentContainerSection
 
-        -- 以下为原有折叠/展开逻辑（未改动）
         local currentContentTween, currentSectionTween
         local open = defaultOpen
 
+        -- 更新开关外观
+        local function updateSwitch()
+            toggleSwitch.BackgroundColor3 = open and CurrentTheme.Accent or CurrentTheme.Stroke
+            dot.Position = open and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+        end
+
+        -- 更新高度
         local function updateSectionHeight(instant)
             local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
             local targetSectionHeight = 36 + targetContentHeight
@@ -285,20 +323,29 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         task.spawn(function()
             task.wait()
             updateSectionHeight(true)
+            updateSwitch()
         end)
 
         local function toggle()
             open = not open
             iconLabel.Image = open and iconOpen or iconClosed
+            updateSwitch()
             updateSectionHeight(false)
         end
 
+        -- 绑定点击事件：标题栏按钮和开关按钮
         toggleBtn.MouseButton1Click:Connect(toggle)
+        switchBtn.MouseButton1Click:Connect(toggle)
 
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             if open then
                 updateSectionHeight(false)
             end
+        end)
+
+        -- 主题更新监听
+        table.insert(ThemeListeners, function()
+            updateSwitch()
         end)
 
         -- ========== 返回的子元素方法（完全保留原 API） ==========
