@@ -150,7 +150,7 @@ function Fenglib:LoadConfig(path)
 end
 
 -- ============================================================
--- 替换后的 createSectionBuilder 函数 (metUI 风格)
+-- createSectionBuilder – 完全使用 metUI 的 Section 风格
 -- ============================================================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
@@ -180,96 +180,157 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             iconClosed = defaultIcon
         end
 
-        -- ===== 新 Section 框架（metUI 风格） =====
+        -- ===== 完全参照 metUI 的 Section 框架 =====
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 0)
-        sectionFrame.BackgroundTransparency = 0.15
-        sectionFrame.BackgroundColor3 = CurrentTheme.Main
+        sectionFrame.BackgroundTransparency = 0.15          -- 对应 metUI 的 BackgroundTransparency
+        sectionFrame.BackgroundColor3 = CurrentTheme.Main   -- 对应 Background
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
-        Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0, 12)
+        Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0, 6)
         AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
 
-        -- 标题栏
-        local titleBar = Instance.new("Frame")
-        titleBar.Size = UDim2.new(1, 0, 0, 40)
-        titleBar.BackgroundTransparency = 0.05
-        titleBar.BackgroundColor3 = CurrentTheme.Top
-        titleBar.Parent = sectionFrame
-        local titleCorner = Instance.new("UICorner")
-        titleCorner.CornerRadius = UDim.new(0, 12)
-        titleCorner.Parent = titleBar
-        AddToRegistry(titleBar, "BackgroundColor3", "Top")
+        -- ---- 顶部栏 (Top) ----
+        local topBar = Instance.new("Frame")
+        topBar.Size = UDim2.new(1, 0, 0, 45)
+        topBar.BackgroundTransparency = 0.15
+        topBar.BackgroundColor3 = CurrentTheme.Stroke       -- 对应 Outline
+        topBar.Parent = sectionFrame
+        local topCorner = Instance.new("UICorner")
+        topCorner.CornerRadius = UDim.new(0, 6)
+        topCorner.Parent = topBar
+        AddToRegistry(topBar, "BackgroundColor3", "Stroke")
 
-        -- 图标
+        -- ---- TopBackground（实际内容区） ----
+        local topBg = Instance.new("Frame")
+        topBg.Size = UDim2.new(1, -2, 1, -2)
+        topBg.Position = UDim2.new(0, 1, 0, 1)
+        topBg.BackgroundTransparency = 0.15
+        topBg.BackgroundColor3 = CurrentTheme.Top          -- 对应 Section Top
+        topBg.Parent = topBar
+        local topBgCorner = Instance.new("UICorner")
+        topBgCorner.CornerRadius = UDim.new(0, 6)
+        topBgCorner.Parent = topBg
+        AddToRegistry(topBg, "BackgroundColor3", "Top")
+
+        -- ---- 图标 ----
         local iconLabel = Instance.new("ImageLabel")
-        iconLabel.Size = UDim2.new(0, 28, 0, 28)
-        iconLabel.Position = UDim2.new(0, 8, 0.5, -14)
+        iconLabel.Size = UDim2.new(0, 21, 0, 20)
+        iconLabel.Position = UDim2.new(0, 15, 0.5, -10)
         iconLabel.BackgroundTransparency = 1
         iconLabel.Image = defaultOpen and iconOpen or iconClosed
-        iconLabel.Parent = titleBar
-        local iconCorner = Instance.new("UICorner")
-        iconCorner.CornerRadius = UDim.new(0, 8)
-        iconCorner.Parent = iconLabel
-        AddToRegistry(iconLabel, "ImageColor3", "Text")
+        iconLabel.Parent = topBg
+        local iconGrad = Instance.new("UIGradient")
+        iconGrad.Rotation = -115
+        iconGrad.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
+            ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
+        })
+        iconGrad.Parent = iconLabel
+        AddToRegistry(iconLabel, "ImageColor3", "Accent")
 
-        -- 标题文字
-        local textLabel = Instance.new("TextLabel")
-        textLabel.Text = text
-        textLabel.Size = UDim2.new(1, -50, 1, 0)
-        textLabel.Position = UDim2.new(0, 44, 0, 0)
-        textLabel.BackgroundTransparency = 1
-        textLabel.Font = Enum.Font.GothamBold
-        textLabel.TextSize = 14
-        textLabel.TextXAlignment = Enum.TextXAlignment.Left
-        textLabel.Parent = titleBar
-        AddToRegistry(textLabel, "TextColor3", "Accent")
+        -- ---- 标题 ----
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Text = text
+        titleLabel.Size = UDim2.new(1, -80, 0, 15)
+        titleLabel.Position = UDim2.new(0, 50, 0, 10)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.TextSize = 15
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.Parent = topBg
+        AddToRegistry(titleLabel, "TextColor3", "Text")
 
-        -- 折叠箭头指示器
-        local arrowIcon = Instance.new("ImageLabel")
-        arrowIcon.Size = UDim2.new(0, 16, 0, 16)
-        arrowIcon.Position = UDim2.new(1, -22, 0.5, -8)
-        arrowIcon.BackgroundTransparency = 1
-        arrowIcon.Image = "rbxassetid://6031085685"   -- 向下箭头
-        arrowIcon.Parent = titleBar
-        AddToRegistry(arrowIcon, "ImageColor3", "Text")
+        -- ---- 副标题（描述） ----
+        local descLabel = Instance.new("TextLabel")
+        descLabel.Text = ""   -- 可后续设置
+        descLabel.Size = UDim2.new(1, -80, 0, 15)
+        descLabel.Position = UDim2.new(0, 50, 0, 28)
+        descLabel.BackgroundTransparency = 1
+        descLabel.Font = Enum.Font.Gotham
+        descLabel.TextSize = 14
+        descLabel.TextTransparency = 0.4
+        descLabel.TextXAlignment = Enum.TextXAlignment.Left
+        descLabel.Parent = topBg
+        AddToRegistry(descLabel, "TextColor3", "Text")
 
-        -- 点击区域（覆盖整个标题栏）
+        -- ---- 折叠开关 (Toggle) ----
         local toggleBtn = Instance.new("TextButton")
-        toggleBtn.Size = UDim2.new(1, 0, 1, 0)
-        toggleBtn.BackgroundTransparency = 1
+        toggleBtn.Size = UDim2.new(0, 26, 0, 16)
+        toggleBtn.Position = UDim2.new(1, -15, 0.5, -8)
+        toggleBtn.AnchorPoint = Vector2.new(1, 0.5)
+        toggleBtn.BackgroundTransparency = 0
+        toggleBtn.BackgroundColor3 = defaultOpen and CurrentTheme.Accent or CurrentTheme.Stroke
+        toggleBtn.AutoButtonColor = false
         toggleBtn.Text = ""
-        toggleBtn.Parent = titleBar
+        toggleBtn.Parent = topBg
+        Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 9)
+        AddToRegistry(toggleBtn, "BackgroundColor3", defaultOpen and "Accent" or "Stroke")
 
-        -- 内容容器（放置所有子控件）
+        -- 圆形指示器
+        local circle = Instance.new("Frame")
+        circle.Size = UDim2.new(0, 8, 0, 8)
+        circle.Position = defaultOpen and UDim2.new(1, -4, 0.5, -4) or UDim2.new(0, 4, 0.5, -4)
+        circle.AnchorPoint = Vector2.new(1, 0.5)
+        circle.BackgroundColor3 = Color3.new(1, 1, 1)
+        circle.Parent = toggleBtn
+        Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+
+        local open = defaultOpen
+        local function toggle()
+            open = not open
+            iconLabel.Image = open and iconOpen or iconClosed
+            toggleBtn.BackgroundColor3 = open and CurrentTheme.Accent or CurrentTheme.Stroke
+            circle.Position = open and UDim2.new(1, -4, 0.5, -4) or UDim2.new(0, 4, 0.5, -4)
+            updateSectionHeight(false)
+        end
+        toggleBtn.MouseButton1Click:Connect(toggle)
+
+        -- ---- 内容容器 ----
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, 0, 0, 0)
-        contentContainerSection.Position = UDim2.new(0, 0, 0, 40)
-        contentContainerSection.BackgroundTransparency = 1
+        contentContainerSection.Position = UDim2.new(0, 1, 0, 45)
+        contentContainerSection.BackgroundTransparency = 0.15
+        contentContainerSection.BackgroundColor3 = CurrentTheme.Main
         contentContainerSection.ClipsDescendants = true
         contentContainerSection.Parent = sectionFrame
+        local contentCorner = Instance.new("UICorner")
+        contentCorner.CornerRadius = UDim.new(0, 6)
+        contentCorner.Parent = contentContainerSection
+        AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
 
-        -- 内容布局
+        -- 布局
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 8)
+        contentLayout.Padding = UDim.new(0, 5)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentContainerSection
 
         -- 内边距
         local contentPadding = Instance.new("UIPadding")
-        contentPadding.PaddingTop = UDim.new(0, 8)
-        contentPadding.PaddingBottom = UDim.new(0, 8)
-        contentPadding.PaddingLeft = UDim.new(0, 8)
-        contentPadding.PaddingRight = UDim.new(0, 8)
+        contentPadding.PaddingTop = UDim.new(0, 12)
+        contentPadding.PaddingBottom = UDim.new(0, 10)
+        contentPadding.PaddingLeft = UDim.new(0, 12)
+        contentPadding.PaddingRight = UDim.new(0, 12)
         contentPadding.Parent = contentContainerSection
 
-        -- 折叠状态
-        local open = defaultOpen
-        local currentContentTween, currentSectionTween
+        -- ---- 折叠遮罩 ----
+        local fade = Instance.new("TextButton")
+        fade.Size = UDim2.new(1, 0, 1, 0)
+        fade.Position = UDim2.new(0, 0, 0, 0)
+        fade.BackgroundTransparency = 1
+        fade.BackgroundColor3 = CurrentTheme.Main
+        fade.AutoButtonColor = false
+        fade.Text = ""
+        fade.Visible = false
+        fade.Parent = contentContainerSection
+        Instance.new("UICorner", fade).CornerRadius = UDim.new(0, 6)
+        AddToRegistry(fade, "BackgroundColor3", "Main")
 
+        -- ---- 高度更新 ----
+        local currentContentTween, currentSectionTween
         local function updateSectionHeight(instant)
             local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
-            local targetSectionHeight = 40 + targetContentHeight
+            local targetSectionHeight = 45 + targetContentHeight
             if currentContentTween then currentContentTween:Cancel() end
             if currentSectionTween then currentSectionTween:Cancel() end
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -277,6 +338,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
             currentContentTween:Play()
             currentSectionTween:Play()
+            if not open then
+                fade.Visible = true
+                Tween(fade, {BackgroundTransparency = 0.3}, 0.25)
+            else
+                Tween(fade, {BackgroundTransparency = 1}, 0.25)
+                task.wait(0.3)
+                fade.Visible = false
+            end
         end
 
         task.spawn(function()
@@ -284,23 +353,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             updateSectionHeight(true)
         end)
 
-        local function toggle()
-            open = not open
-            iconLabel.Image = open and iconOpen or iconClosed
-            -- 箭头旋转动画
-            Tween(arrowIcon, {Rotation = open and 0 or 180}, 0.3)
-            updateSectionHeight(false)
-        end
-
-        toggleBtn.MouseButton1Click:Connect(toggle)
-
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             if open then
                 updateSectionHeight(false)
             end
         end)
 
-        -- ===== 以下所有方法保持不变 =====
+        -- ===== 所有子控件方法（完全保留原样） =====
         local child = {}
 
         child.Button = function(_, btnText, callback)
