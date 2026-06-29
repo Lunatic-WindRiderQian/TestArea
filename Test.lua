@@ -149,9 +149,9 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- ============================================================
--- createSectionBuilder – 完全使用 metUI 的 Section 风格
--- ============================================================
+-- ================================================================
+-- 完整搬运 metUI 的 Section 框架，并保留所有子控件 API
+-- ================================================================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
@@ -180,46 +180,53 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             iconClosed = defaultIcon
         end
 
-        -- ===== 完全参照 metUI 的 Section 框架 =====
+        -- ======== 完全参照 metUI 的 Section 外观 ========
+        -- 主容器（自动高度，深色背景，圆角）
         local sectionFrame = Instance.new("Frame")
+        sectionFrame.Name = "SectionFrame"
         sectionFrame.Size = UDim2.new(1, 0, 0, 0)
-        sectionFrame.BackgroundTransparency = 0.15          -- 对应 metUI 的 BackgroundTransparency
-        sectionFrame.BackgroundColor3 = CurrentTheme.Main   -- 对应 Background
+        sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
+        sectionFrame.BackgroundTransparency = 0.15
+        sectionFrame.BackgroundColor3 = CurrentTheme.Main      -- 对应 "Background"
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
         Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0, 6)
         AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
 
-        -- ---- 顶部栏 (Top) ----
+        -- 顶部栏（外框，对应 "Outline"）
         local topBar = Instance.new("Frame")
+        topBar.Name = "TopBar"
         topBar.Size = UDim2.new(1, 0, 0, 45)
         topBar.BackgroundTransparency = 0.15
-        topBar.BackgroundColor3 = CurrentTheme.Stroke       -- 对应 Outline
+        topBar.BackgroundColor3 = CurrentTheme.Stroke          -- 对应 "Outline"
         topBar.Parent = sectionFrame
         local topCorner = Instance.new("UICorner")
         topCorner.CornerRadius = UDim.new(0, 6)
         topCorner.Parent = topBar
         AddToRegistry(topBar, "BackgroundColor3", "Stroke")
 
-        -- ---- TopBackground（实际内容区） ----
+        -- 顶部背景（内部，对应 "Section Top"）
         local topBg = Instance.new("Frame")
+        topBg.Name = "TopBg"
         topBg.Size = UDim2.new(1, -2, 1, -2)
         topBg.Position = UDim2.new(0, 1, 0, 1)
         topBg.BackgroundTransparency = 0.15
-        topBg.BackgroundColor3 = CurrentTheme.Top          -- 对应 Section Top
+        topBg.BackgroundColor3 = CurrentTheme.Top             -- 对应 "Section Top"
         topBg.Parent = topBar
         local topBgCorner = Instance.new("UICorner")
         topBgCorner.CornerRadius = UDim.new(0, 6)
         topBgCorner.Parent = topBg
         AddToRegistry(topBg, "BackgroundColor3", "Top")
 
-        -- ---- 图标 ----
+        -- 图标（带渐变）
         local iconLabel = Instance.new("ImageLabel")
+        iconLabel.Name = "SectionIcon"
         iconLabel.Size = UDim2.new(0, 21, 0, 20)
         iconLabel.Position = UDim2.new(0, 15, 0.5, -10)
         iconLabel.BackgroundTransparency = 1
         iconLabel.Image = defaultOpen and iconOpen or iconClosed
         iconLabel.Parent = topBg
+        -- 添加渐变（模仿 metUI）
         local iconGrad = Instance.new("UIGradient")
         iconGrad.Rotation = -115
         iconGrad.Color = ColorSequence.new({
@@ -229,8 +236,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         iconGrad.Parent = iconLabel
         AddToRegistry(iconLabel, "ImageColor3", "Accent")
 
-        -- ---- 标题 ----
+        -- 标题
         local titleLabel = Instance.new("TextLabel")
+        titleLabel.Name = "SectionTitle"
         titleLabel.Text = text
         titleLabel.Size = UDim2.new(1, -80, 0, 15)
         titleLabel.Position = UDim2.new(0, 50, 0, 10)
@@ -241,9 +249,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         titleLabel.Parent = topBg
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
-        -- ---- 副标题（描述） ----
+        -- 描述（副标题，可留空）
         local descLabel = Instance.new("TextLabel")
-        descLabel.Text = ""   -- 可后续设置
+        descLabel.Name = "SectionDesc"
+        descLabel.Text = ""   -- 默认为空，可后续设置
         descLabel.Size = UDim2.new(1, -80, 0, 15)
         descLabel.Position = UDim2.new(0, 50, 0, 28)
         descLabel.BackgroundTransparency = 1
@@ -254,8 +263,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         descLabel.Parent = topBg
         AddToRegistry(descLabel, "TextColor3", "Text")
 
-        -- ---- 折叠开关 (Toggle) ----
+        -- 右侧折叠开关
         local toggleBtn = Instance.new("TextButton")
+        toggleBtn.Name = "SectionToggle"
         toggleBtn.Size = UDim2.new(0, 26, 0, 16)
         toggleBtn.Position = UDim2.new(1, -15, 0.5, -8)
         toggleBtn.AnchorPoint = Vector2.new(1, 0.5)
@@ -269,6 +279,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- 圆形指示器
         local circle = Instance.new("Frame")
+        circle.Name = "ToggleCircle"
         circle.Size = UDim2.new(0, 8, 0, 8)
         circle.Position = defaultOpen and UDim2.new(1, -4, 0.5, -4) or UDim2.new(0, 4, 0.5, -4)
         circle.AnchorPoint = Vector2.new(1, 0.5)
@@ -276,22 +287,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         circle.Parent = toggleBtn
         Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
 
-        local open = defaultOpen
-        local function toggle()
-            open = not open
-            iconLabel.Image = open and iconOpen or iconClosed
-            toggleBtn.BackgroundColor3 = open and CurrentTheme.Accent or CurrentTheme.Stroke
-            circle.Position = open and UDim2.new(1, -4, 0.5, -4) or UDim2.new(0, 4, 0.5, -4)
-            updateSectionHeight(false)
-        end
-        toggleBtn.MouseButton1Click:Connect(toggle)
-
-        -- ---- 内容容器 ----
+        -- 内容容器（对应 "Section Background"）
         local contentContainerSection = Instance.new("Frame")
+        contentContainerSection.Name = "SectionContent"
         contentContainerSection.Size = UDim2.new(1, 0, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 45)
         contentContainerSection.BackgroundTransparency = 0.15
-        contentContainerSection.BackgroundColor3 = CurrentTheme.Main
+        contentContainerSection.BackgroundColor3 = CurrentTheme.Main   -- 对应 "Section Background"
         contentContainerSection.ClipsDescendants = true
         contentContainerSection.Parent = sectionFrame
         local contentCorner = Instance.new("UICorner")
@@ -299,7 +301,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentCorner.Parent = contentContainerSection
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
 
-        -- 布局
+        -- 内容布局
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Padding = UDim.new(0, 5)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -313,8 +315,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentPadding.PaddingRight = UDim.new(0, 12)
         contentPadding.Parent = contentContainerSection
 
-        -- ---- 折叠遮罩 ----
+        -- 折叠遮罩
         local fade = Instance.new("TextButton")
+        fade.Name = "SectionFade"
         fade.Size = UDim2.new(1, 0, 1, 0)
         fade.Position = UDim2.new(0, 0, 0, 0)
         fade.BackgroundTransparency = 1
@@ -326,8 +329,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Instance.new("UICorner", fade).CornerRadius = UDim.new(0, 6)
         AddToRegistry(fade, "BackgroundColor3", "Main")
 
-        -- ---- 高度更新 ----
+        -- 折叠状态
+        local open = defaultOpen
         local currentContentTween, currentSectionTween
+
         local function updateSectionHeight(instant)
             local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
             local targetSectionHeight = 45 + targetContentHeight
@@ -338,6 +343,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
             currentContentTween:Play()
             currentSectionTween:Play()
+
+            -- 遮罩动画
             if not open then
                 fade.Visible = true
                 Tween(fade, {BackgroundTransparency = 0.3}, 0.25)
@@ -348,18 +355,31 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
+        -- 初始化高度
         task.spawn(function()
             task.wait()
             updateSectionHeight(true)
         end)
 
+        -- 内容变化时更新高度
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             if open then
                 updateSectionHeight(false)
             end
         end)
 
-        -- ===== 所有子控件方法（完全保留原样） =====
+        -- 切换函数
+        local function toggle()
+            open = not open
+            iconLabel.Image = open and iconOpen or iconClosed
+            toggleBtn.BackgroundColor3 = open and CurrentTheme.Accent or CurrentTheme.Stroke
+            circle.Position = open and UDim2.new(1, -4, 0.5, -4) or UDim2.new(0, 4, 0.5, -4)
+            updateSectionHeight(false)
+        end
+
+        toggleBtn.MouseButton1Click:Connect(toggle)
+
+        -- ===== 子控件方法（完全保留原样） =====
         local child = {}
 
         child.Button = function(_, btnText, callback)
@@ -1549,9 +1569,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     return createSection
 end
 
--- ============================================================
--- 窗口创建函数（其余保持不变）
--- ============================================================
+-- ================================================================
+-- 以下为窗口创建函数，保持不变
+-- ================================================================
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "FengY3"
