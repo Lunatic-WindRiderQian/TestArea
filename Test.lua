@@ -149,7 +149,6 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- ===== 替换 createSectionBuilder 为基于 metUI 风格的实现 =====
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
@@ -178,20 +177,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             iconClosed = defaultIcon
         end
 
-        -- 主容器（可折叠）
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 36)
         sectionFrame.BackgroundTransparency = 1
         sectionFrame.Parent = parent
         sectionFrame.ClipsDescendants = true
 
-        -- 标题栏
         local titleBar = Instance.new("Frame")
         titleBar.Size = UDim2.new(1, 0, 0, 36)
         titleBar.BackgroundTransparency = 1
         titleBar.Parent = sectionFrame
 
-        -- 图标（带渐变和圆角）
         local iconLabel = Instance.new("ImageLabel")
         iconLabel.Size = UDim2.new(0, 28, 0, 28)
         iconLabel.Position = UDim2.new(0, 5, 0.5, -14)
@@ -203,7 +199,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         iconCorner.Parent = iconLabel
         AddToRegistry(iconLabel, "ImageColor3", "Text")
 
-        -- 标题文字
         local textLabel = Instance.new("TextLabel")
         textLabel.Text = text
         textLabel.Size = UDim2.new(1, -38, 1, 0)
@@ -215,14 +210,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         textLabel.Parent = titleBar
         AddToRegistry(textLabel, "TextColor3", "Accent")
 
-        -- 折叠按钮（透明覆盖）
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(1, 0, 1, 0)
         toggleBtn.BackgroundTransparency = 1
         toggleBtn.Text = ""
         toggleBtn.Parent = titleBar
 
-        -- 内容容器（可折叠区域）
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, 0, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 0, 0, 36)
@@ -235,9 +228,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentContainerSection
 
-        -- 展开/折叠状态
-        local open = defaultOpen
         local currentContentTween, currentSectionTween
+        local open = defaultOpen
 
         local function updateSectionHeight(instant)
             local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
@@ -270,10 +262,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- ===== 控件工厂（保持原 API） =====
         local child = {}
 
-        -- Button
         child.Button = function(_, btnText, callback)
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
@@ -325,7 +315,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Toggle
         child.Toggle = function(_, toggleText, default, callback)
             local Enabled = default or false
             local controlId = toggleText .. "_" .. tostring(#Registry)
@@ -398,7 +387,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- Slider
         child.Slider = function(_, sliderText, min, max, default, callback, options)
             options = options or {}
             local unlimited = (min == nil and max == nil)
@@ -563,7 +551,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- Dropdown（带搜索和刷新）
         child.Dropdown = function(_, dropText, options, callback)
             local Dropped = false
             local Selected = options[1] or ""
@@ -715,7 +702,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return {Refresh = RefreshOptions, Reset = ResetDropdown}
         end
 
-        -- Keybind
         child.Keybind = function(_, keyText, default, callback)
             local Key = default or Enum.KeyCode.M
             local controlId = keyText .. "_" .. tostring(#Registry)
@@ -776,7 +762,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- Textbox
         child.Textbox = function(_, boxText, placeholder, callback)
             local controlId = boxText .. "_" .. tostring(#Registry)
 
@@ -829,7 +814,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
-        -- Input（增强版 Textbox）
         child.Input = function(_, inputText, default, callback, options)
             options = options or {}
             local placeholder = options.placeholder or ""; local acceptedCharacters = options.acceptedCharacters or "All"; local characterLimit = options.characterLimit; local onChanged = options.onChanged
@@ -866,7 +850,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local self = {}; function self.UpdateText(newText) InputBox.Text = tostring(newText); ConfigObjects[controlId].Value = InputBox.Text end; function self.GetText() return InputBox.Text end; function self.SetVisible(state) InputFrame.Visible = state end; function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end; return self
         end
 
-        -- Label
         child.Label = function(_, labelText)
             local LabelFrame = Instance.new("Frame")
             LabelFrame.Size = UDim2.new(1, 0, 0, 42)
@@ -893,7 +876,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- SubLabel
         child.SubLabel = function(_, subLabelText)
             local SubLabelFrame = Instance.new("Frame")
             SubLabelFrame.Size = UDim2.new(1, 0, 0, 42)
@@ -921,7 +903,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Paragraph
         child.Paragraph = function(_, headerText, bodyText)
             local ParaFrame = Instance.new("Frame")
             ParaFrame.Size = UDim2.new(1, 0, 0, 0)
@@ -974,7 +955,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ColorPicker
         child.ColorPicker = function(_, pickerText, default, callback)
             local Color = default or Color3.fromRGB(255, 255, 255)
             local h, s, v = Color3.toHSV(Color)
@@ -1266,7 +1246,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- Image
         child.Image = function(_, config)
             config = config or {}
             local title = config.Title or "Image"
