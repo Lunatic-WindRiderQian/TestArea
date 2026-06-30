@@ -149,7 +149,6 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- ========== 修改后的 createSectionBuilder ==========
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
@@ -178,26 +177,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             iconClosed = defaultIcon
         end
 
-        -- ===== 卡片外层容器（深色背景 + 圆角） =====
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 36)
-        sectionFrame.BackgroundColor3 = CurrentTheme.Main
-        sectionFrame.BackgroundTransparency = 0
-        sectionFrame.ClipsDescendants = true
+        sectionFrame.BackgroundTransparency = 1
         sectionFrame.Parent = parent
-        AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
+        sectionFrame.ClipsDescendants = true
 
-        local sectionCorner = Instance.new("UICorner")
-        sectionCorner.CornerRadius = UDim.new(0, 12)  -- 与窗口圆角统一
-        sectionCorner.Parent = sectionFrame
-
-        -- ===== 标题栏（稍亮背景） =====
         local titleBar = Instance.new("Frame")
         titleBar.Size = UDim2.new(1, 0, 0, 36)
-        titleBar.BackgroundColor3 = CurrentTheme.Top
-        titleBar.BackgroundTransparency = 0
+        titleBar.BackgroundTransparency = 1
         titleBar.Parent = sectionFrame
-        AddToRegistry(titleBar, "BackgroundColor3", "Top")
 
         local iconLabel = Instance.new("ImageLabel")
         iconLabel.Size = UDim2.new(0, 28, 0, 28)
@@ -227,21 +216,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         toggleBtn.Text = ""
         toggleBtn.Parent = titleBar
 
-        -- ===== 内容容器（带内边距，透明背景） =====
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, 0, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 0, 0, 36)
         contentContainerSection.BackgroundTransparency = 1
         contentContainerSection.ClipsDescendants = true
         contentContainerSection.Parent = sectionFrame
-
-        -- 内边距：左12 右12 上8 下8（与 metUI 一致）
-        local padding = Instance.new("UIPadding")
-        padding.PaddingLeft = UDim.new(0, 12)
-        padding.PaddingRight = UDim.new(0, 12)
-        padding.PaddingTop = UDim.new(0, 8)
-        padding.PaddingBottom = UDim.new(0, 8)
-        padding.Parent = contentContainerSection
 
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Padding = UDim.new(0, 8)
@@ -282,7 +262,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- ===== 返回所有子元素创建方法（完全保持不变） =====
         local child = {}
 
         child.Button = function(_, btnText, callback)
