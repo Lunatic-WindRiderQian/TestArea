@@ -177,35 +177,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             iconClosed = defaultIcon
         end
 
-        -- ===== 修改：标题栏添加半透明背景 =====
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 36)
         sectionFrame.BackgroundTransparency = 1
-        sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
+        sectionFrame.ClipsDescendants = true
 
-        -- 标题栏外层（半透明背景，模仿 metUI 的 Items["Top"]）
         local titleBar = Instance.new("Frame")
         titleBar.Size = UDim2.new(1, 0, 0, 36)
-        titleBar.BackgroundTransparency = 0.35
-        titleBar.BackgroundColor3 = CurrentTheme.Main
+        titleBar.BackgroundTransparency = 1
         titleBar.Parent = sectionFrame
-        AddToRegistry(titleBar, "BackgroundColor3", "Main")
 
-        -- 标题栏内层（略浅底色，增加层次感）
-        local innerBar = Instance.new("Frame")
-        innerBar.Size = UDim2.new(1, -2, 1, -2)
-        innerBar.Position = UDim2.new(0, 1, 0, 1)
-        innerBar.BackgroundTransparency = 0.2
-        innerBar.BackgroundColor3 = CurrentTheme.Top
-        innerBar.Parent = titleBar
-        Instance.new("UICorner", innerBar).CornerRadius = UDim.new(0, 4)
-        AddToRegistry(innerBar, "BackgroundColor3", "Top")
-
-        -- 标题栏圆角
-        Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 8)
-
-        -- 图标
         local iconLabel = Instance.new("ImageLabel")
         iconLabel.Size = UDim2.new(0, 28, 0, 28)
         iconLabel.Position = UDim2.new(0, 5, 0.5, -14)
@@ -217,7 +199,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         iconCorner.Parent = iconLabel
         AddToRegistry(iconLabel, "ImageColor3", "Text")
 
-        -- 标题文字
         local textLabel = Instance.new("TextLabel")
         textLabel.Text = text
         textLabel.Size = UDim2.new(1, -38, 1, 0)
@@ -229,14 +210,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         textLabel.Parent = titleBar
         AddToRegistry(textLabel, "TextColor3", "Accent")
 
-        -- 折叠按钮
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(1, 0, 1, 0)
         toggleBtn.BackgroundTransparency = 1
         toggleBtn.Text = ""
         toggleBtn.Parent = titleBar
 
-        -- 内容容器
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, 0, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 0, 0, 36)
@@ -249,7 +228,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentContainerSection
 
-        -- 折叠动画逻辑
         local currentContentTween, currentSectionTween
         local open = defaultOpen
 
@@ -284,7 +262,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- 各种控件创建（与原来一致，只是父容器改为了 contentContainerSection）
         local child = {}
 
         child.Button = function(_, btnText, callback)
@@ -1926,9 +1903,7 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- ====== 玩家头像卡片：左移3格，下移6格 ======
-    -- 原来：UDim2.new(0, 13, 1, -25)
-    -- 左移3格：X=10；下移6格：Y=-19
+    -- ====== 玩家头像卡片 ======
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
     ProfileFrame.Position = UDim2.new(0, 10, 1, -19)
@@ -1938,7 +1913,6 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
     AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
 
-    -- 内部绝对定位（与原文件一致）
     local Avatar = Instance.new("ImageLabel")
     Avatar.Size = UDim2.new(0, 26, 0, 26)
     Avatar.Position = UDim2.new(0, 8, 0.5, -13)
@@ -1970,12 +1944,23 @@ function Fenglib:CreateWindow(Config)
     UsrName.Parent = ProfileFrame
     AddToRegistry(UsrName, "TextColor3", "Text")
 
-    -- 右侧内容容器
+    -- ====== 右侧内容容器（已搬运 metUI 的背景样式） ======
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
-    RightContainer.BackgroundTransparency = 1
+    RightContainer.BackgroundColor3 = CurrentTheme.Main
+    RightContainer.BackgroundTransparency = 0.75
+    RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
+
+    local rightCorner = Instance.new("UICorner")
+    rightCorner.CornerRadius = UDim.new(0, 12)
+    rightCorner.Parent = RightContainer
+
+    -- 主题更新时同步 RightContainer 背景色
+    table.insert(ThemeListeners, function()
+        RightContainer.BackgroundColor3 = CurrentTheme.Main
+    end)
 
     local PageContainer = Instance.new("Frame")
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
