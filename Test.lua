@@ -150,7 +150,7 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 搬运自 metUI 的 Section 样式（缩短版：头部 42px，内边距 8px）
+-- 搬运自 metUI 的 Section 样式（缩短版：头部 42px，左右内边距 12）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
@@ -158,7 +158,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- 主容器（缩短版）
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(1, 0, 0, 42)          -- 初始高度缩短
+        sectionFrame.Size = UDim2.new(1, 0, 0, 42)
         sectionFrame.BackgroundTransparency = 0.65
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
@@ -180,7 +180,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Instance.new("UICorner", topBg).CornerRadius = UDim.new(0, 6)
         AddToRegistry(topBg, "BackgroundColor3", "Top")
 
-        -- 标题（位置上移）
+        -- 标题
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Size = UDim2.new(1, -80, 0, 18)
         titleLabel.Position = UDim2.new(0, 16, 0, 6)
@@ -192,7 +192,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         titleLabel.Parent = topBg
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
-        -- 副标题（位置上移）
+        -- 副标题
         local subLabel = Instance.new("TextLabel")
         subLabel.Size = UDim2.new(1, -80, 0, 16)
         subLabel.Position = UDim2.new(0, 16, 0, 24)
@@ -211,7 +211,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subLabel.Text = icons.subtitle
         end
 
-        -- 折叠按钮（位置微调）
+        -- 折叠按钮
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(0, 24, 0, 24)
         toggleBtn.Position = UDim2.new(1, -32, 0.5, -12)
@@ -251,7 +251,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         arrowIcon.Parent = toggleBg
         AddToRegistry(arrowIcon, "ImageColor3", "Text")
 
-        -- 内容容器（内边距缩短为 8）
+        -- 内容容器（左右内边距 12）
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 42)
@@ -261,8 +261,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
 
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1, -16, 0, 0)        -- 左右内边距 8
-        contentHolder.Position = UDim2.new(0, 8, 0, 8)      -- 顶部内边距 8
+        contentHolder.Size = UDim2.new(1, -24, 0, 0)        -- 左右内边距 12
+        contentHolder.Position = UDim2.new(0, 12, 0, 8)      -- 左内边距 12，顶部内边距 8
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.Y
         contentHolder.Parent = contentContainerSection
@@ -277,7 +277,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local function updateSectionHeight(instant)
             local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
-            local targetSectionHeight = 42 + targetContentHeight + 8   -- 顶部42 + 内容 + 底部内边距8
+            local targetSectionHeight = 42 + targetContentHeight + 8
             if currentContentTween then currentContentTween:Cancel() end
             if currentSectionTween then currentSectionTween:Cancel() end
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -306,7 +306,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- 子元素创建器（完整版）
+        -- ===== 子元素创建器（完整版） =====
         local child = {}
 
         child.Button = function(_, btnText, callback)
@@ -1989,7 +1989,7 @@ function Fenglib:CreateWindow(Config)
     UsrName.Parent = ProfileFrame
     AddToRegistry(UsrName, "TextColor3", "Text")
 
-    -- ====== 右侧内容容器（已搬运 metUI 的背景样式） ======
+    -- ====== 右侧内容容器 ======
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
