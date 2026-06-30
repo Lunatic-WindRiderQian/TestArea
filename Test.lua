@@ -150,24 +150,24 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 搬运自 metUI 的 Section 样式（主容器、标题、副标题、唯一折叠图标）
+-- 搬运自 metUI 的 Section 样式（缩短版：头部 42px，内边距 8px）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
 
-        -- 主容器（仿 metUI 的 Section Background 2）
+        -- 主容器（缩短版）
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(1, 0, 0, 55)          -- 初始高度，随后动态调整
+        sectionFrame.Size = UDim2.new(1, 0, 0, 42)          -- 初始高度缩短
         sectionFrame.BackgroundTransparency = 0.65
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
         Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0, 8)
         AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
 
-        -- 头部区域（仿 metUI 的 Top + TopBackground）
+        -- 头部区域（高度 42）
         local titleBar = Instance.new("Frame")
-        titleBar.Size = UDim2.new(1, 0, 0, 55)
+        titleBar.Size = UDim2.new(1, 0, 0, 42)
         titleBar.BackgroundTransparency = 0.65
         titleBar.Parent = sectionFrame
         AddToRegistry(titleBar, "BackgroundColor3", "Stroke")
@@ -180,10 +180,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Instance.new("UICorner", topBg).CornerRadius = UDim.new(0, 6)
         AddToRegistry(topBg, "BackgroundColor3", "Top")
 
-        -- 标题（仿 metUI 的 Title）
+        -- 标题（位置上移）
         local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(1, -80, 0, 20)
-        titleLabel.Position = UDim2.new(0, 16, 0, 8)
+        titleLabel.Size = UDim2.new(1, -80, 0, 18)
+        titleLabel.Position = UDim2.new(0, 16, 0, 6)
         titleLabel.BackgroundTransparency = 1
         titleLabel.Font = Enum.Font.GothamBold
         titleLabel.Text = text
@@ -192,30 +192,29 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         titleLabel.Parent = topBg
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
-        -- 副标题（仿 metUI 的 Description）
+        -- 副标题（位置上移）
         local subLabel = Instance.new("TextLabel")
-        subLabel.Size = UDim2.new(1, -80, 0, 18)
-        subLabel.Position = UDim2.new(0, 16, 0, 30)
+        subLabel.Size = UDim2.new(1, -80, 0, 16)
+        subLabel.Position = UDim2.new(0, 16, 0, 24)
         subLabel.BackgroundTransparency = 1
         subLabel.Font = Enum.Font.Gotham
         subLabel.Text = ""
-        subLabel.TextSize = 13
+        subLabel.TextSize = 12
         subLabel.TextTransparency = 0.5
         subLabel.TextXAlignment = Enum.TextXAlignment.Left
         subLabel.Parent = topBg
         AddToRegistry(subLabel, "TextColor3", "Text")
 
-        -- 若 icons 为字符串，则用作副标题（兼容旧调用方式）
         if type(icons) == "string" then
             subLabel.Text = icons
         elseif type(icons) == "table" and icons.subtitle then
             subLabel.Text = icons.subtitle
         end
 
-        -- 折叠控制按钮（唯一图标，仿 metUI 的 Toggle 渐变圆点）
+        -- 折叠按钮（位置微调）
         local toggleBtn = Instance.new("TextButton")
-        toggleBtn.Size = UDim2.new(0, 28, 0, 28)
-        toggleBtn.Position = UDim2.new(1, -36, 0.5, -14)
+        toggleBtn.Size = UDim2.new(0, 24, 0, 24)
+        toggleBtn.Position = UDim2.new(1, -32, 0.5, -12)
         toggleBtn.BackgroundTransparency = 1
         toggleBtn.Text = ""
         toggleBtn.Parent = topBg
@@ -244,27 +243,26 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end)
 
         local arrowIcon = Instance.new("ImageLabel")
-        arrowIcon.Size = UDim2.new(0, 16, 0, 16)
-        arrowIcon.Position = UDim2.new(0.5, -8, 0.5, -8)
+        arrowIcon.Size = UDim2.new(0, 14, 0, 14)
+        arrowIcon.Position = UDim2.new(0.5, -7, 0.5, -7)
         arrowIcon.BackgroundTransparency = 1
-        arrowIcon.Image = "rbxassetid://123317177279443"   -- 向下箭头
+        arrowIcon.Image = "rbxassetid://123317177279443"
         arrowIcon.ImageColor3 = Color3.new(1,1,1)
         arrowIcon.Parent = toggleBg
         AddToRegistry(arrowIcon, "ImageColor3", "Text")
 
-        -- 内容容器（仿 metUI 的 Background + Content）
+        -- 内容容器（内边距缩短为 8）
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
-        contentContainerSection.Position = UDim2.new(0, 1, 0, 55)
+        contentContainerSection.Position = UDim2.new(0, 1, 0, 42)
         contentContainerSection.BackgroundTransparency = 0.65
         contentContainerSection.ClipsDescendants = true
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
 
-        -- 内容内部容器（带内边距）
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1, -24, 0, 0)
-        contentHolder.Position = UDim2.new(0, 12, 0, 12)
+        contentHolder.Size = UDim2.new(1, -16, 0, 0)        -- 左右内边距 8
+        contentHolder.Position = UDim2.new(0, 8, 0, 8)      -- 顶部内边距 8
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.Y
         contentHolder.Parent = contentContainerSection
@@ -274,17 +272,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentHolder
 
-        -- 动态高度调整
         local currentContentTween, currentSectionTween
         local open = defaultOpen
 
         local function updateSectionHeight(instant)
             local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
-            local targetSectionHeight = 55 + targetContentHeight + 12  -- 顶部55 + 内容 + 底部内边距
+            local targetSectionHeight = 42 + targetContentHeight + 8   -- 顶部42 + 内容 + 底部内边距8
             if currentContentTween then currentContentTween:Cancel() end
             if currentSectionTween then currentSectionTween:Cancel() end
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-            currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {Size = UDim2.new(1, -2, 0, math.max(0, targetContentHeight + 12))})
+            currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {Size = UDim2.new(1, -2, 0, math.max(0, targetContentHeight + 8))})
             currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
             currentContentTween:Play()
             currentSectionTween:Play()
@@ -297,7 +294,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local function toggle()
             open = not open
-            arrowIcon.Rotation = open and 0 or 180   -- 箭头旋转
+            arrowIcon.Rotation = open and 0 or 180
             updateSectionHeight(false)
         end
 
@@ -309,7 +306,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- -------------------- 子元素创建器（与原接口完全一致） --------------------
+        -- 子元素创建器（完整版）
         local child = {}
 
         child.Button = function(_, btnText, callback)
@@ -2005,7 +2002,6 @@ function Fenglib:CreateWindow(Config)
     rightCorner.CornerRadius = UDim.new(0, 12)
     rightCorner.Parent = RightContainer
 
-    -- 主题更新时同步 RightContainer 背景色
     table.insert(ThemeListeners, function()
         RightContainer.BackgroundColor3 = CurrentTheme.Main
     end)
