@@ -71,14 +71,22 @@ local function createPulseGlow(object)
     }
 end
 
+-- 主题定义（增加 Section 专用颜色）
 local Themes = {
-    Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48)},
-    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225)},
-    Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(160, 90, 255), Stroke = Color3.fromRGB(50, 45, 60)},
-    Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(70, 130, 255), Stroke = Color3.fromRGB(45, 55, 75)},
-    Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(60, 40, 40)},
-    Yellow = {Main = Color3.fromRGB(22, 22, 12), Top = Color3.fromRGB(35, 35, 20), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(255, 200, 80), Stroke = Color3.fromRGB(60, 60, 40)},
-    Green  = {Main = Color3.fromRGB(12, 22, 15), Top = Color3.fromRGB(20, 35, 25), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(60, 220, 130), Stroke = Color3.fromRGB(40, 60, 50)},
+    Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48),
+              SectionBg2 = Color3.fromRGB(10, 10, 12), SectionTop = Color3.fromRGB(28, 27, 31), SectionBg = Color3.fromRGB(10, 10, 12), Outline = Color3.fromRGB(25, 25, 28)},
+    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225),
+              SectionBg2 = Color3.fromRGB(235, 235, 235), SectionTop = Color3.fromRGB(245, 245, 245), SectionBg = Color3.fromRGB(235, 235, 235), Outline = Color3.fromRGB(210, 210, 210)},
+    Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(160, 90, 255), Stroke = Color3.fromRGB(50, 45, 60),
+              SectionBg2 = Color3.fromRGB(15, 12, 18), SectionTop = Color3.fromRGB(28, 23, 33), SectionBg = Color3.fromRGB(15, 12, 18), Outline = Color3.fromRGB(35, 30, 45)},
+    Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(70, 130, 255), Stroke = Color3.fromRGB(45, 55, 75),
+              SectionBg2 = Color3.fromRGB(10, 15, 22), SectionTop = Color3.fromRGB(22, 28, 40), SectionBg = Color3.fromRGB(10, 15, 22), Outline = Color3.fromRGB(30, 40, 55)},
+    Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(60, 40, 40),
+              SectionBg2 = Color3.fromRGB(18, 10, 10), SectionTop = Color3.fromRGB(32, 18, 18), SectionBg = Color3.fromRGB(18, 10, 10), Outline = Color3.fromRGB(40, 25, 25)},
+    Yellow = {Main = Color3.fromRGB(22, 22, 12), Top = Color3.fromRGB(35, 35, 20), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(255, 200, 80), Stroke = Color3.fromRGB(60, 60, 40),
+              SectionBg2 = Color3.fromRGB(18, 18, 10), SectionTop = Color3.fromRGB(32, 32, 18), SectionBg = Color3.fromRGB(18, 18, 10), Outline = Color3.fromRGB(40, 40, 25)},
+    Green  = {Main = Color3.fromRGB(12, 22, 15), Top = Color3.fromRGB(20, 35, 25), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(60, 220, 130), Stroke = Color3.fromRGB(40, 60, 50),
+              SectionBg2 = Color3.fromRGB(10, 18, 12), SectionTop = Color3.fromRGB(18, 30, 22), SectionBg = Color3.fromRGB(10, 18, 12), Outline = Color3.fromRGB(30, 45, 35)},
 }
 local CurrentTheme = Themes.Dark
 
@@ -149,10 +157,14 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
+-- ============================================================
+-- 重写 createSectionBuilder 以模仿 metUI 的 Section 样式
+-- ============================================================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
 
+        -- 图标处理
         local function formatAssetId(id)
             if type(id) == "number" then
                 return "rbxassetid://" .. tostring(id)
@@ -177,67 +189,154 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             iconClosed = defaultIcon
         end
 
+        -- ---------- 外层容器（模仿 metUI 的 Section） ----------
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(1, 0, 0, 36)
-        sectionFrame.BackgroundTransparency = 1
-        sectionFrame.Parent = parent
+        sectionFrame.Size = UDim2.new(1, 0, 0, 45)
+        sectionFrame.BackgroundColor3 = CurrentTheme.SectionBg2
+        sectionFrame.BackgroundTransparency = 0.65
         sectionFrame.ClipsDescendants = true
+        sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
+        sectionFrame.Parent = parent
 
-        local titleBar = Instance.new("Frame")
-        titleBar.Size = UDim2.new(1, 0, 0, 36)
-        titleBar.BackgroundTransparency = 1
-        titleBar.Parent = sectionFrame
+        local sectionCorner = Instance.new("UICorner")
+        sectionCorner.CornerRadius = UDim.new(0, 4)
+        sectionCorner.Parent = sectionFrame
 
+        -- ---------- 顶部栏 ----------
+        local topBar = Instance.new("Frame")
+        topBar.Size = UDim2.new(1, 0, 0, 55)
+        topBar.BackgroundColor3 = CurrentTheme.Outline
+        topBar.BackgroundTransparency = 0.65
+        topBar.ZIndex = 2
+        topBar.Parent = sectionFrame
+
+        local topBg = Instance.new("Frame")
+        topBg.Size = UDim2.new(1, -2, 1, -2)
+        topBg.Position = UDim2.new(0, 1, 0, 1)
+        topBg.BackgroundColor3 = CurrentTheme.SectionTop
+        topBg.BackgroundTransparency = 0.65
+        topBg.Parent = topBar
+        local topBgCorner = Instance.new("UICorner")
+        topBgCorner.CornerRadius = UDim.new(0, 4)
+        topBgCorner.Parent = topBg
+
+        -- 图标
         local iconLabel = Instance.new("ImageLabel")
-        iconLabel.Size = UDim2.new(0, 28, 0, 28)
-        iconLabel.Position = UDim2.new(0, 5, 0.5, -14)
+        iconLabel.Size = UDim2.new(0, 21, 0, 20)
+        iconLabel.Position = UDim2.new(0, 15, 0.5, -10)
         iconLabel.BackgroundTransparency = 1
         iconLabel.Image = defaultOpen and iconOpen or iconClosed
-        iconLabel.Parent = titleBar
-        local iconCorner = Instance.new("UICorner")
-        iconCorner.CornerRadius = UDim.new(0, 8)
-        iconCorner.Parent = iconLabel
+        iconLabel.Parent = topBg
         AddToRegistry(iconLabel, "ImageColor3", "Text")
 
-        local textLabel = Instance.new("TextLabel")
-        textLabel.Text = text
-        textLabel.Size = UDim2.new(1, -38, 1, 0)
-        textLabel.Position = UDim2.new(0, 38, 0, 0)
-        textLabel.BackgroundTransparency = 1
-        textLabel.Font = Enum.Font.GothamBold
-        textLabel.TextSize = 14
-        textLabel.TextXAlignment = Enum.TextXAlignment.Left
-        textLabel.Parent = titleBar
-        AddToRegistry(textLabel, "TextColor3", "Accent")
+        -- 标题
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Text = text
+        titleLabel.Size = UDim2.new(0, 0, 0, 15)
+        titleLabel.Position = UDim2.new(0, 50, 0, 10)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.TextSize = 15
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.AutomaticSize = Enum.AutomaticSize.X
+        titleLabel.Parent = topBg
+        AddToRegistry(titleLabel, "TextColor3", "Text")
 
+        -- 描述（若有）
+        local descLabel = Instance.new("TextLabel")
+        descLabel.Text = ""
+        descLabel.Size = UDim2.new(0, 0, 0, 15)
+        descLabel.Position = UDim2.new(0, 50, 0, 28)
+        descLabel.BackgroundTransparency = 1
+        descLabel.Font = Enum.Font.Gotham
+        descLabel.TextSize = 15
+        descLabel.TextTransparency = 0.4
+        descLabel.TextXAlignment = Enum.TextXAlignment.Left
+        descLabel.AutomaticSize = Enum.AutomaticSize.X
+        descLabel.Parent = topBg
+        AddToRegistry(descLabel, "TextColor3", "Text")
+
+        -- 折叠开关
         local toggleBtn = Instance.new("TextButton")
-        toggleBtn.Size = UDim2.new(1, 0, 1, 0)
-        toggleBtn.BackgroundTransparency = 1
+        toggleBtn.Size = UDim2.new(0, 26, 0, 16)
+        toggleBtn.Position = UDim2.new(1, -15, 0.5, -8)
+        toggleBtn.AnchorPoint = Vector2.new(1, 0.5)
+        toggleBtn.BackgroundColor3 = CurrentTheme.Text
+        toggleBtn.BackgroundTransparency = 0
         toggleBtn.Text = ""
-        toggleBtn.Parent = titleBar
+        toggleBtn.AutoButtonColor = false
+        toggleBtn.Parent = topBg
 
+        local toggleCorner = Instance.new("UICorner")
+        toggleCorner.CornerRadius = UDim.new(0, 9)
+        toggleCorner.Parent = toggleBtn
+
+        -- 圆点
+        local dot = Instance.new("Frame")
+        dot.Size = UDim2.new(0, 8, 0, 8)
+        dot.Position = defaultOpen and UDim2.new(1, -4, 0.5, -4) or UDim2.new(0, 4, 0.5, -4)
+        dot.AnchorPoint = Vector2.new(1, 0.5)
+        dot.BackgroundColor3 = CurrentTheme.Text
+        dot.BackgroundTransparency = defaultOpen and 0 or 0.6
+        dot.Parent = toggleBtn
+        local dotCorner = Instance.new("UICorner")
+        dotCorner.CornerRadius = UDim.new(1, 0)
+        dotCorner.Parent = dot
+
+        -- 渐变（仅装饰）
+        local toggleGrad = Instance.new("UIGradient")
+        toggleGrad.Rotation = -115
+        toggleGrad.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
+            ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
+        })
+        toggleGrad.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0),
+            NumberSequenceKeypoint.new(1, 0.5)
+        })
+        toggleGrad.Parent = toggleBtn
+
+        -- ---------- 内容区背景 ----------
+        local contentBg = Instance.new("Frame")
+        contentBg.Size = UDim2.new(1, -2, 1, -56)
+        contentBg.Position = UDim2.new(0, 1, 0, 55)
+        contentBg.BackgroundColor3 = CurrentTheme.SectionBg
+        contentBg.BackgroundTransparency = 0.65
+        contentBg.ClipsDescendants = true
+        contentBg.Parent = sectionFrame
+
+        local contentBgCorner = Instance.new("UICorner")
+        contentBgCorner.CornerRadius = UDim.new(0, 4)
+        contentBgCorner.Parent = contentBg
+
+        -- ---------- 实际元素容器 ----------
         local contentContainerSection = Instance.new("Frame")
-        contentContainerSection.Size = UDim2.new(1, 0, 0, 0)
-        contentContainerSection.Position = UDim2.new(0, 0, 0, 36)
+        contentContainerSection.Size = UDim2.new(1, -24, 0, 0)
+        contentContainerSection.Position = UDim2.new(0, 12, 0, 15)
         contentContainerSection.BackgroundTransparency = 1
-        contentContainerSection.ClipsDescendants = true
-        contentContainerSection.Parent = sectionFrame
+        contentContainerSection.AutomaticSize = Enum.AutomaticSize.Y
+        contentContainerSection.Parent = contentBg
 
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 8)
+        contentLayout.Padding = UDim.new(0, 5)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentContainerSection
 
-        local currentContentTween, currentSectionTween
+        local paddingBottom = Instance.new("UIPadding")
+        paddingBottom.PaddingBottom = UDim.new(0, 10)
+        paddingBottom.Parent = contentContainerSection
+
+        -- ---------- 折叠逻辑 ----------
         local open = defaultOpen
+        local currentContentTween, currentSectionTween
 
         local function updateSectionHeight(instant)
             local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
-            local targetSectionHeight = 36 + targetContentHeight
+            local targetSectionHeight = 55 + targetContentHeight
             if currentContentTween then currentContentTween:Cancel() end
             if currentSectionTween then currentSectionTween:Cancel() end
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-            currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {Size = UDim2.new(1, 0, 0, targetContentHeight)})
+            currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {Size = UDim2.new(1, -24, 0, targetContentHeight)})
             currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
             currentContentTween:Play()
             currentSectionTween:Play()
@@ -251,17 +350,36 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function toggle()
             open = not open
             iconLabel.Image = open and iconOpen or iconClosed
+            if open then
+                toggleBtn.BackgroundColor3 = CurrentTheme.Text
+                dot.BackgroundTransparency = 0
+                dot.Position = UDim2.new(1, -4, 0.5, -4)
+            else
+                toggleBtn.BackgroundColor3 = CurrentTheme.Main
+                dot.BackgroundTransparency = 0.6
+                dot.Position = UDim2.new(0, 4, 0.5, -4)
+            end
             updateSectionHeight(false)
         end
 
         toggleBtn.MouseButton1Click:Connect(toggle)
 
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if open then updateSectionHeight(false) end
+        end)
+
+        -- 主题更新
+        table.insert(ThemeListeners, function()
             if open then
-                updateSectionHeight(false)
+                toggleBtn.BackgroundColor3 = CurrentTheme.Text
+                dot.BackgroundTransparency = 0
+            else
+                toggleBtn.BackgroundColor3 = CurrentTheme.Main
+                dot.BackgroundTransparency = 0.6
             end
         end)
 
+        -- ---------- 子元素生成器（与原始实现一致，但父级改为 contentContainerSection） ----------
         local child = {}
 
         child.Button = function(_, btnText, callback)
@@ -1451,6 +1569,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     return createSection
 end
 
+-- ============================================================
+-- Fenglib:CreateWindow 保持不变（Section 已使用新样式）
+-- ============================================================
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Title or "FengY3"
@@ -1481,6 +1602,10 @@ function Fenglib:CreateWindow(Config)
                 Text   = t.Text   and toC3(t.Text)   or CurrentTheme.Text,
                 Accent = t.Accent and toC3(t.Accent) or CurrentTheme.Accent,
                 Stroke = t.Stroke and toC3(t.Stroke) or CurrentTheme.Stroke,
+                SectionBg2 = t.SectionBg2 and toC3(t.SectionBg2) or CurrentTheme.SectionBg2,
+                SectionTop = t.SectionTop and toC3(t.SectionTop) or CurrentTheme.SectionTop,
+                SectionBg  = t.SectionBg  and toC3(t.SectionBg)  or CurrentTheme.SectionBg,
+                Outline   = t.Outline   and toC3(t.Outline)   or CurrentTheme.Outline,
             }
             local customName = t.Name or "Custom"
             Themes[customName] = customTheme
@@ -1537,7 +1662,7 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- ===== 高级视觉增强（仅保留模糊和边框渐变） =====
+    -- ===== 高级视觉增强（模糊和边框渐变） =====
     do
         local blurPart = Instance.new("Part")
         blurPart.Name = "FengBlurPart"
@@ -1625,7 +1750,6 @@ function Fenglib:CreateWindow(Config)
             if dof then dof:Destroy() end
         end)
     end
-    -- ===== 高级视觉增强结束 =====
 
     task.spawn(function()
         local rot = 0
@@ -1869,7 +1993,7 @@ function Fenglib:CreateWindow(Config)
         TitleLabel.Position = UDim2.new(0, 50, 0, 0)
     end
 
-    -- ====== 左侧背景宽度 160，延伸至底部 ======
+    -- 左侧导航宽度
     local leftWidth = 160
 
     local LeftContainer = Instance.new("Frame")
@@ -1903,9 +2027,7 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- ====== 玩家头像卡片：左移3格，下移6格 ======
-    -- 原来：UDim2.new(0, 13, 1, -25)
-    -- 左移3格：X=10；下移6格：Y=-19
+    -- 玩家头像卡片
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
     ProfileFrame.Position = UDim2.new(0, 10, 1, -19)
@@ -1915,7 +2037,6 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
     AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
 
-    -- 内部绝对定位（与原文件一致）
     local Avatar = Instance.new("ImageLabel")
     Avatar.Size = UDim2.new(0, 26, 0, 26)
     Avatar.Position = UDim2.new(0, 8, 0.5, -13)
