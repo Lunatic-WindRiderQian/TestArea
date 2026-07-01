@@ -150,7 +150,7 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 搬运自 metUI 的 Section 样式（高度适中：头部 46，内边距 8）
+-- 搬运自 metUI 的 Section 样式（修复展开/收缩高度问题）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
@@ -246,6 +246,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         arrowIcon.Parent = toggleBg
         AddToRegistry(arrowIcon, "ImageColor3", "Text")
 
+        -- ====== 修复点：内容容器手动控制高度 ======
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
@@ -258,7 +259,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentHolder.Size = UDim2.new(1, -24, 0, 0)
         contentHolder.Position = UDim2.new(0, 12, 0, 8)
         contentHolder.BackgroundTransparency = 1
-        contentHolder.AutomaticSize = Enum.AutomaticSize.Y
+        contentHolder.AutomaticSize = Enum.AutomaticSize.None  -- 关键：禁用自动大小
         contentHolder.Parent = contentContainerSection
 
         local contentLayout = Instance.new("UIListLayout")
@@ -266,18 +267,39 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentHolder
 
-        local currentContentTween, currentSectionTween
+        -- 底部内边距占位
+        local bottomPadding = Instance.new("Frame")
+        bottomPadding.Size = UDim2.new(1, 0, 0, 8)
+        bottomPadding.BackgroundTransparency = 1
+        bottomPadding.Parent = contentHolder
+
+        local currentContentTween, currentSectionTween, currentHolderTween
         local open = defaultOpen
 
         local function updateSectionHeight(instant)
-            local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
-            local targetSectionHeight = 46 + targetContentHeight + 8
+            local actualContentHeight = contentLayout.AbsoluteContentSize.Y
+            local targetContentHeight = open and math.max(0, actualContentHeight) or 0
+            local targetContainerHeight = targetContentHeight + 16  -- 顶部8 + 底部8
+            local targetSectionHeight = 46 + targetContainerHeight
+
             if currentContentTween then currentContentTween:Cancel() end
             if currentSectionTween then currentSectionTween:Cancel() end
+            if currentHolderTween then currentHolderTween:Cancel() end
+
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-            currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {Size = UDim2.new(1, -2, 0, math.max(0, targetContentHeight + 8))})
-            currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
+
+            currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {
+                Size = UDim2.new(1, -2, 0, targetContainerHeight)
+            })
+            currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
+                Size = UDim2.new(1, -24, 0, math.max(0, targetContentHeight))
+            })
+            currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
+                Size = UDim2.new(1, 0, 0, targetSectionHeight)
+            })
+
             currentContentTween:Play()
+            currentHolderTween:Play()
             currentSectionTween:Play()
         end
 
@@ -295,6 +317,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         toggleBtn.MouseButton1Click:Connect(toggle)
 
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if open then
+                updateSectionHeight(false)
+            end
+        end)
+
+        -- 新增子元素时延迟刷新
+        contentHolder.ChildAdded:Connect(function()
+            task.wait(0.05)
             if open then
                 updateSectionHeight(false)
             end
