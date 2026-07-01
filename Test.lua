@@ -246,12 +246,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         arrowIcon.Parent = toggleBg
         AddToRegistry(arrowIcon, "ImageColor3", "Text")
 
-        -- ====== 修复点：内容容器手动控制高度 ======
+        -- ====== 内容容器（强制裁剪） ======
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
         contentContainerSection.BackgroundTransparency = 0.65
-        contentContainerSection.ClipsDescendants = true
+        contentContainerSection.ClipsDescendants = true   -- 关键：裁剪子元素
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
 
@@ -259,7 +259,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentHolder.Size = UDim2.new(1, -24, 0, 0)
         contentHolder.Position = UDim2.new(0, 12, 0, 8)
         contentHolder.BackgroundTransparency = 1
-        contentHolder.AutomaticSize = Enum.AutomaticSize.None  -- 关键：禁用自动大小
+        contentHolder.AutomaticSize = Enum.AutomaticSize.None
+        contentHolder.ClipsDescendants = true              -- 关键：裁剪子元素
         contentHolder.Parent = contentContainerSection
 
         local contentLayout = Instance.new("UIListLayout")
@@ -267,7 +268,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentHolder
 
-        -- 底部内边距占位
+        -- 底部内边距占位（确保底部有空间）
         local bottomPadding = Instance.new("Frame")
         bottomPadding.Size = UDim2.new(1, 0, 0, 8)
         bottomPadding.BackgroundTransparency = 1
@@ -278,8 +279,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local function updateSectionHeight(instant)
             local actualContentHeight = contentLayout.AbsoluteContentSize.Y
+            -- 收缩时内容高度为 0
             local targetContentHeight = open and math.max(0, actualContentHeight) or 0
-            local targetContainerHeight = targetContentHeight + 16  -- 顶部8 + 底部8
+            -- 容器高度 = 内容高度 + 顶部内边距(8) + 底部内边距(8)
+            local targetContainerHeight = targetContentHeight + 16
             local targetSectionHeight = 46 + targetContainerHeight
 
             if currentContentTween then currentContentTween:Cancel() end
@@ -288,12 +291,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
+            -- 外层容器：包含内边距
             currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {
                 Size = UDim2.new(1, -2, 0, targetContainerHeight)
             })
+            -- 内层容器：实际内容高度（收缩时为 0）
             currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
                 Size = UDim2.new(1, -24, 0, math.max(0, targetContentHeight))
             })
+            -- 整个 Section
             currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                 Size = UDim2.new(1, 0, 0, targetSectionHeight)
             })
