@@ -150,24 +150,22 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 搬运自 metUI 的 Section 样式（高度略微增加：头部 50，内边距 10）
+-- 搬运自 metUI 的 Section 样式（高度适中：头部 46，内边距 8）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
 
-        -- 主容器（高度 50）
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(1, 0, 0, 50)
+        sectionFrame.Size = UDim2.new(1, 0, 0, 46)
         sectionFrame.BackgroundTransparency = 0.65
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
         Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0, 8)
         AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
 
-        -- 头部区域（高度 50）
         local titleBar = Instance.new("Frame")
-        titleBar.Size = UDim2.new(1, 0, 0, 50)
+        titleBar.Size = UDim2.new(1, 0, 0, 46)
         titleBar.BackgroundTransparency = 0.65
         titleBar.Parent = sectionFrame
         AddToRegistry(titleBar, "BackgroundColor3", "Stroke")
@@ -180,10 +178,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Instance.new("UICorner", topBg).CornerRadius = UDim.new(0, 6)
         AddToRegistry(topBg, "BackgroundColor3", "Top")
 
-        -- 标题
         local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(1, -80, 0, 20)
-        titleLabel.Position = UDim2.new(0, 16, 0, 7)
+        titleLabel.Size = UDim2.new(1, -80, 0, 19)
+        titleLabel.Position = UDim2.new(0, 16, 0, 6)
         titleLabel.BackgroundTransparency = 1
         titleLabel.Font = Enum.Font.GothamBold
         titleLabel.Text = text
@@ -192,10 +189,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         titleLabel.Parent = topBg
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
-        -- 副标题
         local subLabel = Instance.new("TextLabel")
-        subLabel.Size = UDim2.new(1, -80, 0, 18)
-        subLabel.Position = UDim2.new(0, 16, 0, 28)
+        subLabel.Size = UDim2.new(1, -80, 0, 17)
+        subLabel.Position = UDim2.new(0, 16, 0, 26)
         subLabel.BackgroundTransparency = 1
         subLabel.Font = Enum.Font.Gotham
         subLabel.Text = ""
@@ -211,10 +207,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subLabel.Text = icons.subtitle
         end
 
-        -- 折叠按钮
         local toggleBtn = Instance.new("TextButton")
-        toggleBtn.Size = UDim2.new(0, 26, 0, 26)
-        toggleBtn.Position = UDim2.new(1, -34, 0.5, -13)
+        toggleBtn.Size = UDim2.new(0, 25, 0, 25)
+        toggleBtn.Position = UDim2.new(1, -33, 0.5, -12.5)
         toggleBtn.BackgroundTransparency = 1
         toggleBtn.Text = ""
         toggleBtn.Parent = topBg
@@ -243,26 +238,25 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end)
 
         local arrowIcon = Instance.new("ImageLabel")
-        arrowIcon.Size = UDim2.new(0, 15, 0, 15)
-        arrowIcon.Position = UDim2.new(0.5, -7.5, 0.5, -7.5)
+        arrowIcon.Size = UDim2.new(0, 14, 0, 14)
+        arrowIcon.Position = UDim2.new(0.5, -7, 0.5, -7)
         arrowIcon.BackgroundTransparency = 1
         arrowIcon.Image = "rbxassetid://123317177279443"
         arrowIcon.ImageColor3 = Color3.new(1,1,1)
         arrowIcon.Parent = toggleBg
         AddToRegistry(arrowIcon, "ImageColor3", "Text")
 
-        -- 内容容器（左右内边距 12，顶部内边距 10）
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
-        contentContainerSection.Position = UDim2.new(0, 1, 0, 50)
+        contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
         contentContainerSection.BackgroundTransparency = 0.65
         contentContainerSection.ClipsDescendants = true
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
 
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1, -24, 0, 0)        -- 左右内边距 12
-        contentHolder.Position = UDim2.new(0, 12, 0, 10)      -- 左内边距 12，顶部内边距 10
+        contentHolder.Size = UDim2.new(1, -24, 0, 0)
+        contentHolder.Position = UDim2.new(0, 12, 0, 8)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.Y
         contentHolder.Parent = contentContainerSection
@@ -277,11 +271,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local function updateSectionHeight(instant)
             local targetContentHeight = open and contentLayout.AbsoluteContentSize.Y or 0
-            local targetSectionHeight = 50 + targetContentHeight + 10   -- 顶部50 + 内容 + 底部内边距10
+            local targetSectionHeight = 46 + targetContentHeight + 8
             if currentContentTween then currentContentTween:Cancel() end
             if currentSectionTween then currentSectionTween:Cancel() end
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-            currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {Size = UDim2.new(1, -2, 0, math.max(0, targetContentHeight + 10))})
+            currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {Size = UDim2.new(1, -2, 0, math.max(0, targetContentHeight + 8))})
             currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {Size = UDim2.new(1, 0, 0, targetSectionHeight)})
             currentContentTween:Play()
             currentSectionTween:Play()
