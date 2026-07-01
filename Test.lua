@@ -150,7 +150,7 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 搬运自 metUI 的 Section 样式（修复展开/收缩高度问题）
+-- 彻底重写 Section（收缩时 contentHolder.Visible = false，完全消除残留）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
@@ -246,12 +246,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         arrowIcon.Parent = toggleBg
         AddToRegistry(arrowIcon, "ImageColor3", "Text")
 
-        -- ====== 内容容器（强制裁剪） ======
+        -- ====== 内容容器（重写：收缩时直接隐藏） ======
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
         contentContainerSection.BackgroundTransparency = 0.65
-        contentContainerSection.ClipsDescendants = true   -- 关键：裁剪子元素
+        contentContainerSection.ClipsDescendants = true
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
 
@@ -260,7 +260,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentHolder.Position = UDim2.new(0, 12, 0, 8)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
-        contentHolder.ClipsDescendants = true              -- 关键：裁剪子元素
+        contentHolder.ClipsDescendants = true
+        contentHolder.Visible = defaultOpen  -- 默认根据 open 状态
         contentHolder.Parent = contentContainerSection
 
         local contentLayout = Instance.new("UIListLayout")
@@ -268,7 +269,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentHolder
 
-        -- 底部内边距占位（确保底部有空间）
         local bottomPadding = Instance.new("Frame")
         bottomPadding.Size = UDim2.new(1, 0, 0, 8)
         bottomPadding.BackgroundTransparency = 1
@@ -277,12 +277,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local currentContentTween, currentSectionTween, currentHolderTween
         local open = defaultOpen
 
+        -- 计算内容高度
+        local function getContentHeight()
+            return contentLayout.AbsoluteContentSize.Y
+        end
+
+        -- 更新高度（展开/收缩）
         local function updateSectionHeight(instant)
-            local actualContentHeight = contentLayout.AbsoluteContentSize.Y
-            -- 收缩时内容高度为 0
+            local actualContentHeight = getContentHeight()
             local targetContentHeight = open and math.max(0, actualContentHeight) or 0
-            -- 容器高度 = 内容高度 + 顶部内边距(8) + 底部内边距(8)
-            local targetContainerHeight = targetContentHeight + 16
+            local targetContainerHeight = targetContentHeight + 16  -- 顶部8 + 底部8
             local targetSectionHeight = 46 + targetContainerHeight
 
             if currentContentTween then currentContentTween:Cancel() end
@@ -291,15 +295,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-            -- 外层容器：包含内边距
+            -- 控制可见性：收缩时隐藏，展开时显示
+            if open then
+                contentHolder.Visible = true
+            end
+
             currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {
                 Size = UDim2.new(1, -2, 0, targetContainerHeight)
             })
-            -- 内层容器：实际内容高度（收缩时为 0）
             currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
                 Size = UDim2.new(1, -24, 0, math.max(0, targetContentHeight))
             })
-            -- 整个 Section
             currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                 Size = UDim2.new(1, 0, 0, targetSectionHeight)
             })
@@ -307,6 +313,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             currentContentTween:Play()
             currentHolderTween:Play()
             currentSectionTween:Play()
+
+            -- 收缩完成后隐藏 contentHolder（彻底消除残留）
+            if not open then
+                task.delay((instant and 0 or 0.3) + 0.05, function()
+                    if not open and contentHolder then
+                        contentHolder.Visible = false
+                    end
+                end)
+            end
         end
 
         task.spawn(function()
@@ -328,7 +343,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- 新增子元素时延迟刷新
         contentHolder.ChildAdded:Connect(function()
             task.wait(0.05)
             if open then
