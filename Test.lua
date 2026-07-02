@@ -150,34 +150,43 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 彻底重写 Section（收缩时背景层完全消失）
+-- 彻底重写 Section（修复圆角和边框问题）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         if defaultOpen == nil then defaultOpen = true end
 
+        -- ===== 主容器 =====
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 46)
         sectionFrame.BackgroundTransparency = 0.65
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
-        Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0, 8)
+        local mainCorner = Instance.new("UICorner", sectionFrame)
+        mainCorner.CornerRadius = UDim.new(0, 8)
         AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
 
+        -- ===== 头部 =====
         local titleBar = Instance.new("Frame")
         titleBar.Size = UDim2.new(1, 0, 0, 46)
         titleBar.BackgroundTransparency = 0.65
+        titleBar.ClipsDescendants = true
         titleBar.Parent = sectionFrame
+        local titleBarCorner = Instance.new("UICorner", titleBar)
+        titleBarCorner.CornerRadius = UDim.new(0, 8)
         AddToRegistry(titleBar, "BackgroundColor3", "Stroke")
 
         local topBg = Instance.new("Frame")
         topBg.Size = UDim2.new(1, -2, 1, -2)
         topBg.Position = UDim2.new(0, 1, 0, 1)
         topBg.BackgroundTransparency = 0.65
+        topBg.ClipsDescendants = true
         topBg.Parent = titleBar
-        Instance.new("UICorner", topBg).CornerRadius = UDim.new(0, 6)
+        local topBgCorner = Instance.new("UICorner", topBg)
+        topBgCorner.CornerRadius = UDim.new(0, 6)
         AddToRegistry(topBg, "BackgroundColor3", "Top")
 
+        -- 标题
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Size = UDim2.new(1, -80, 0, 19)
         titleLabel.Position = UDim2.new(0, 16, 0, 6)
@@ -189,6 +198,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         titleLabel.Parent = topBg
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
+        -- 副标题
         local subLabel = Instance.new("TextLabel")
         subLabel.Size = UDim2.new(1, -80, 0, 17)
         subLabel.Position = UDim2.new(0, 16, 0, 26)
@@ -207,6 +217,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subLabel.Text = icons.subtitle
         end
 
+        -- 折叠按钮
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(0, 25, 0, 25)
         toggleBtn.Position = UDim2.new(1, -33, 0.5, -12.5)
@@ -220,7 +231,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         toggleBg.BackgroundColor3 = Color3.new(1,1,1)
         toggleBg.BackgroundTransparency = 0.8
         toggleBg.Parent = toggleBtn
-        Instance.new("UICorner", toggleBg).CornerRadius = UDim.new(1, 0)
+        local toggleBgCorner = Instance.new("UICorner", toggleBg)
+        toggleBgCorner.CornerRadius = UDim.new(1, 0)
         AddToRegistry(toggleBg, "BackgroundColor3", "Stroke")
 
         local toggleGrad = Instance.new("UIGradient")
@@ -246,7 +258,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         arrowIcon.Parent = toggleBg
         AddToRegistry(arrowIcon, "ImageColor3", "Text")
 
-        -- ====== 内容容器（收缩时背景层完全消失） ======
+        -- ====== 内容容器（完整修复圆角和边框） ======
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
@@ -254,6 +266,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainerSection.ClipsDescendants = true
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
+        
+        -- 内容容器圆角
+        local contentCorner = Instance.new("UICorner", contentContainerSection)
+        contentCorner.CornerRadius = UDim.new(0, 6)
+        
+        -- 内容容器边框（完全覆盖）
+        local contentStroke = Instance.new("UIStroke")
+        contentStroke.Thickness = 1
+        contentStroke.Transparency = 0.5
+        contentStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        contentStroke.Parent = contentContainerSection
+        AddToRegistry(contentStroke, "Color", "Stroke")
 
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -24, 0, 0)
