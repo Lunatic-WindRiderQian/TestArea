@@ -150,7 +150,7 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 彻底重写 Section（收缩时 contentHolder.Visible = false，完全消除残留）
+-- 彻底重写 Section（收缩时背景层完全消失）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
@@ -246,7 +246,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         arrowIcon.Parent = toggleBg
         AddToRegistry(arrowIcon, "ImageColor3", "Text")
 
-        -- ====== 内容容器（重写：收缩时直接隐藏） ======
+        -- ====== 内容容器（收缩时背景层完全消失） ======
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
@@ -261,7 +261,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = true
-        contentHolder.Visible = defaultOpen  -- 默认根据 open 状态
         contentHolder.Parent = contentContainerSection
 
         local contentLayout = Instance.new("UIListLayout")
@@ -274,54 +273,68 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.Parent = contentHolder
 
-        local currentContentTween, currentSectionTween, currentHolderTween
+        local currentContentTween, currentSectionTween, currentHolderTween, currentBgTween
         local open = defaultOpen
 
-        -- 计算内容高度
         local function getContentHeight()
             return contentLayout.AbsoluteContentSize.Y
         end
 
-        -- 更新高度（展开/收缩）
         local function updateSectionHeight(instant)
             local actualContentHeight = getContentHeight()
             local targetContentHeight = open and math.max(0, actualContentHeight) or 0
-            local targetContainerHeight = targetContentHeight + 16  -- 顶部8 + 底部8
+            local targetContainerHeight = targetContentHeight + 16
             local targetSectionHeight = 46 + targetContainerHeight
 
             if currentContentTween then currentContentTween:Cancel() end
             if currentSectionTween then currentSectionTween:Cancel() end
             if currentHolderTween then currentHolderTween:Cancel() end
+            if currentBgTween then currentBgTween:Cancel() end
 
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-            -- 控制可见性：收缩时隐藏，展开时显示
             if open then
+                contentContainerSection.Visible = true
                 contentHolder.Visible = true
-            end
-
-            currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {
-                Size = UDim2.new(1, -2, 0, targetContainerHeight)
-            })
-            currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
-                Size = UDim2.new(1, -24, 0, math.max(0, targetContentHeight))
-            })
-            currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
-                Size = UDim2.new(1, 0, 0, targetSectionHeight)
-            })
-
-            currentContentTween:Play()
-            currentHolderTween:Play()
-            currentSectionTween:Play()
-
-            -- 收缩完成后隐藏 contentHolder（彻底消除残留）
-            if not open then
+                
+                currentBgTween = TweenService:Create(contentContainerSection, tweenInfo, {
+                    BackgroundTransparency = 0.65
+                })
+                currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {
+                    Size = UDim2.new(1, -2, 0, targetContainerHeight)
+                })
+                currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
+                    Size = UDim2.new(1, -24, 0, math.max(0, targetContentHeight))
+                })
+                currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
+                    Size = UDim2.new(1, 0, 0, targetSectionHeight)
+                })
+            else
+                currentBgTween = TweenService:Create(contentContainerSection, tweenInfo, {
+                    BackgroundTransparency = 1
+                })
+                currentContentTween = TweenService:Create(contentContainerSection, tweenInfo, {
+                    Size = UDim2.new(1, -2, 0, 0)
+                })
+                currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
+                    Size = UDim2.new(1, -24, 0, 0)
+                })
+                currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
+                    Size = UDim2.new(1, 0, 0, 46)
+                })
+                
                 task.delay((instant and 0 or 0.3) + 0.05, function()
-                    if not open and contentHolder then
+                    if not open and contentContainerSection then
+                        contentContainerSection.Visible = false
                         contentHolder.Visible = false
                     end
                 end)
             end
+
+            currentBgTween:Play()
+            currentContentTween:Play()
+            currentHolderTween:Play()
+            currentSectionTween:Play()
         end
 
         task.spawn(function()
@@ -350,7 +363,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- ===== 子元素创建器（完整版） =====
+        -- ===== 子元素创建器 =====
         local child = {}
 
         child.Button = function(_, btnText, callback)
