@@ -150,7 +150,7 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 重写 Section（支持 label / sublabel / icon / open，图标增大+圆角）
+-- 重写 Section（支持 label / sublabel / icon / open，图标增大+圆角+对齐修正）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
@@ -207,32 +207,35 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         topBgCorner.CornerRadius = UDim.new(0, 6)
         AddToRegistry(topBg, "BackgroundColor3", "Top")
 
-        -- 左侧偏移（给图标留空间）
+        -- ===== 图标（尺寸32，圆角8，左侧边距10） =====
         local leftOffset = 16
         if iconAsset then
             local icon = Instance.new("ImageLabel")
-            icon.Size = UDim2.new(0, 32, 0, 32)          -- 尺寸增大
-            icon.Position = UDim2.new(0, 10, 0.5, -16)   -- 垂直居中
+            icon.Size = UDim2.new(0, 32, 0, 32)
+            icon.Position = UDim2.new(0, 10, 0.5, -16)   -- 垂直居中于 topBg
             icon.BackgroundTransparency = 1
             if tonumber(iconAsset) then
                 icon.Image = "rbxassetid://" .. iconAsset
             else
                 icon.Image = iconAsset
             end
-            -- 添加圆角
             local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 8)     -- 圆角半径 8
+            iconCorner.CornerRadius = UDim.new(0, 8)
             iconCorner.Parent = icon
             
             icon.Parent = topBg
             AddToRegistry(icon, "ImageColor3", "Text")
-            leftOffset = 52  -- 增加左侧边距
+            leftOffset = 50  -- 图标左侧10 + 图标宽32 + 文字间距8
         end
 
-        -- 标题
+        -- ===== 标题（根据有无副标题调整垂直位置，使整体居中于图标） =====
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Size = UDim2.new(1, -80, 0, 19)
-        titleLabel.Position = UDim2.new(0, leftOffset, 0, 6)
+        if subtitleText then
+            titleLabel.Position = UDim2.new(0, leftOffset, 0, 4)   -- 整体中心与图标对齐
+        else
+            titleLabel.Position = UDim2.new(0, leftOffset, 0, 14)  -- 单独居中（高度19，图标中心23）
+        end
         titleLabel.BackgroundTransparency = 1
         titleLabel.Font = Enum.Font.GothamBold
         titleLabel.Text = titleText
@@ -241,11 +244,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         titleLabel.Parent = topBg
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
-        -- 副标题
+        -- ===== 副标题（仅在有时） =====
         if subtitleText then
             local subLabel = Instance.new("TextLabel")
             subLabel.Size = UDim2.new(1, -80, 0, 17)
-            subLabel.Position = UDim2.new(0, leftOffset, 0, 26)
+            subLabel.Position = UDim2.new(0, leftOffset, 0, 25)   -- 标题下方2px间距
             subLabel.BackgroundTransparency = 1
             subLabel.Font = Enum.Font.Gotham
             subLabel.Text = subtitleText
@@ -256,7 +259,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(subLabel, "TextColor3", "Text")
         end
 
-        -- 折叠按钮
+        -- ===== 折叠按钮（保持不变） =====
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(0, 25, 0, 25)
         toggleBtn.Position = UDim2.new(1, -33, 0.5, -12.5)
@@ -297,7 +300,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         arrowIcon.Parent = toggleBg
         AddToRegistry(arrowIcon, "ImageColor3", "Text")
 
-        -- ====== 内容容器 ======
+        -- ====== 内容容器（保持不变） ======
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
@@ -424,7 +427,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- ===== 子元素创建器 =====
+        -- ===== 子元素创建器（完全不变） =====
         local child = {}
 
         child.Button = function(_, btnText, callback)
