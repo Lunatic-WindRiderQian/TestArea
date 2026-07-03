@@ -150,7 +150,7 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 重写 Section（支持 label / sublabel / icon / open）
+-- 重写 Section（支持 label / sublabel / icon / open，图标增大+圆角）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
@@ -211,17 +211,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local leftOffset = 16
         if iconAsset then
             local icon = Instance.new("ImageLabel")
-            icon.Size = UDim2.new(0, 24, 0, 24)
-            icon.Position = UDim2.new(0, 10, 0.5, -12)
+            icon.Size = UDim2.new(0, 32, 0, 32)          -- 尺寸增大
+            icon.Position = UDim2.new(0, 10, 0.5, -16)   -- 垂直居中
             icon.BackgroundTransparency = 1
             if tonumber(iconAsset) then
                 icon.Image = "rbxassetid://" .. iconAsset
             else
                 icon.Image = iconAsset
             end
+            -- 添加圆角
+            local iconCorner = Instance.new("UICorner")
+            iconCorner.CornerRadius = UDim.new(0, 8)     -- 圆角半径 8
+            iconCorner.Parent = icon
+            
             icon.Parent = topBg
             AddToRegistry(icon, "ImageColor3", "Text")
-            leftOffset = 44
+            leftOffset = 52  -- 增加左侧边距
         end
 
         -- 标题
@@ -292,7 +297,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         arrowIcon.Parent = toggleBg
         AddToRegistry(arrowIcon, "ImageColor3", "Text")
 
-        -- ====== 内容容器（完整修复圆角和边框） ======
+        -- ====== 内容容器 ======
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
