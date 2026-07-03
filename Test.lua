@@ -150,11 +150,19 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 彻底重写 Section（修复圆角和边框问题）
+-- Section（键值对风格：label, sublabel, icon, open）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
-    local function createSection(text, icons, defaultOpen)
-        if defaultOpen == nil then defaultOpen = true end
+    local function createSection(config)
+        -- 兼容旧调用方式
+        if type(config) == "string" then
+            config = {label = config}
+        end
+        
+        local label = config.label or config.text or "Section"
+        local sublabel = config.sublabel or config.subtitle or ""
+        local iconAsset = config.icon or config.Icon
+        local defaultOpen = config.open ~= nil and config.open or config.defaultOpen or true
 
         -- ===== 主容器 =====
         local sectionFrame = Instance.new("Frame")
@@ -186,38 +194,54 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         topBgCorner.CornerRadius = UDim.new(0, 6)
         AddToRegistry(topBg, "BackgroundColor3", "Top")
 
-        -- 标题
+        -- ===== 图标 =====
+        local iconImage = Instance.new("ImageLabel")
+        iconImage.Size = UDim2.new(0, 20, 0, 20)
+        iconImage.Position = UDim2.new(0, 14, 0.5, -10)
+        iconImage.BackgroundTransparency = 1
+        iconImage.Parent = topBg
+        AddToRegistry(iconImage, "ImageColor3", "Text")
+        
+        -- 处理图标
+        local hasIcon = false
+        if iconAsset then
+            if type(iconAsset) == "number" then
+                iconImage.Image = "rbxassetid://" .. tostring(iconAsset)
+            else
+                iconImage.Image = iconAsset
+            end
+            hasIcon = true
+            iconImage.Visible = true
+        else
+            iconImage.Visible = false
+        end
+
+        -- ===== 标题 =====
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Size = UDim2.new(1, -80, 0, 19)
-        titleLabel.Position = UDim2.new(0, 16, 0, 6)
+        titleLabel.Position = UDim2.new(0, hasIcon and 42 or 16, 0, 6)
         titleLabel.BackgroundTransparency = 1
         titleLabel.Font = Enum.Font.GothamBold
-        titleLabel.Text = text
+        titleLabel.Text = label
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
         titleLabel.Parent = topBg
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
-        -- 副标题
+        -- ===== 副标题 =====
         local subLabel = Instance.new("TextLabel")
         subLabel.Size = UDim2.new(1, -80, 0, 17)
-        subLabel.Position = UDim2.new(0, 16, 0, 26)
+        subLabel.Position = UDim2.new(0, hasIcon and 42 or 16, 0, 26)
         subLabel.BackgroundTransparency = 1
         subLabel.Font = Enum.Font.Gotham
-        subLabel.Text = ""
+        subLabel.Text = sublabel
         subLabel.TextSize = 12
         subLabel.TextTransparency = 0.5
         subLabel.TextXAlignment = Enum.TextXAlignment.Left
         subLabel.Parent = topBg
         AddToRegistry(subLabel, "TextColor3", "Text")
 
-        if type(icons) == "string" then
-            subLabel.Text = icons
-        elseif type(icons) == "table" and icons.subtitle then
-            subLabel.Text = icons.subtitle
-        end
-
-        -- 折叠按钮
+        -- ===== 折叠按钮 =====
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(0, 25, 0, 25)
         toggleBtn.Position = UDim2.new(1, -33, 0.5, -12.5)
@@ -258,7 +282,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         arrowIcon.Parent = toggleBg
         AddToRegistry(arrowIcon, "ImageColor3", "Text")
 
-        -- ====== 内容容器（完整修复圆角和边框） ======
+        -- ====== 内容容器 ======
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
@@ -267,11 +291,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
         
-        -- 内容容器圆角
         local contentCorner = Instance.new("UICorner", contentContainerSection)
         contentCorner.CornerRadius = UDim.new(0, 6)
         
-        -- 内容容器边框（完全覆盖）
         local contentStroke = Instance.new("UIStroke")
         contentStroke.Thickness = 1
         contentStroke.Transparency = 0.5
@@ -3319,7 +3341,7 @@ function Fenglib:CreateWindow(Config)
             local getElements = function()
                 local elements = {}
                 local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
-                elements.Section      = function(_, text, icons, defaultOpen) return createSection(text, icons, defaultOpen) end
+                elements.Section      = function(config) return createSection(config) end
                 elements.Button       = function(_, btnText, callback) return createSection("", nil, true).Button(btnText, callback) end
                 elements.Toggle       = function(_, toggleText, default, callback) return createSection("", nil, true).Toggle(toggleText, default, callback) end
                 elements.Slider       = function(_, sliderText, min, max, default, callback, options) return createSection("", nil, true).Slider(sliderText, min, max, default, callback, options) end
