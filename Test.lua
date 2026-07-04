@@ -150,11 +150,11 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 重写 Section（支持 label / sublabel / icon / open，图标增大+圆角+对齐修正）
+-- 重写 Section（全新折叠逻辑，彻底解决 nil 错误）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
-        -- 兼容新旧两种调用方式
+        -- 解析参数
         local titleText = ""
         local subtitleText = nil
         local iconAsset = nil
@@ -174,10 +174,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             elseif type(icons) == "string" then
                 subtitleText = icons
             end
-            -- defaultOpen 沿用传入值
         end
 
-        -- ===== 主容器 =====
+        -- === 主容器 ===
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 46)
         sectionFrame.BackgroundTransparency = 0.65
@@ -187,7 +186,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         mainCorner.CornerRadius = UDim.new(0, 8)
         AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
 
-        -- ===== 头部 =====
+        -- === 头部 ===
         local titleBar = Instance.new("Frame")
         titleBar.Size = UDim2.new(1, 0, 0, 46)
         titleBar.BackgroundTransparency = 0.65
@@ -207,12 +206,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         topBgCorner.CornerRadius = UDim.new(0, 6)
         AddToRegistry(topBg, "BackgroundColor3", "Top")
 
-        -- ===== 图标（尺寸32，圆角8，左侧边距10） =====
+        -- === 图标 ===
         local leftOffset = 16
         if iconAsset then
             local icon = Instance.new("ImageLabel")
             icon.Size = UDim2.new(0, 32, 0, 32)
-            icon.Position = UDim2.new(0, 10, 0.5, -16)   -- 垂直居中于 topBg
+            icon.Position = UDim2.new(0, 10, 0.5, -16)
             icon.BackgroundTransparency = 1
             if tonumber(iconAsset) then
                 icon.Image = "rbxassetid://" .. iconAsset
@@ -222,19 +221,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local iconCorner = Instance.new("UICorner")
             iconCorner.CornerRadius = UDim.new(0, 8)
             iconCorner.Parent = icon
-            
             icon.Parent = topBg
             AddToRegistry(icon, "ImageColor3", "Text")
-            leftOffset = 50  -- 图标左侧10 + 图标宽32 + 文字间距8
+            leftOffset = 50
         end
 
-        -- ===== 标题（根据有无副标题调整垂直位置，使整体居中于图标） =====
+        -- === 标题 ===
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Size = UDim2.new(1, -80, 0, 19)
         if subtitleText then
-            titleLabel.Position = UDim2.new(0, leftOffset, 0, 4)   -- 整体中心与图标对齐
+            titleLabel.Position = UDim2.new(0, leftOffset, 0, 4)
         else
-            titleLabel.Position = UDim2.new(0, leftOffset, 0, 14)  -- 单独居中（高度19，图标中心23）
+            titleLabel.Position = UDim2.new(0, leftOffset, 0, 14)
         end
         titleLabel.BackgroundTransparency = 1
         titleLabel.Font = Enum.Font.GothamBold
@@ -244,11 +242,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         titleLabel.Parent = topBg
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
-        -- ===== 副标题（仅在有时） =====
+        -- === 副标题 ===
         if subtitleText then
             local subLabel = Instance.new("TextLabel")
             subLabel.Size = UDim2.new(1, -80, 0, 17)
-            subLabel.Position = UDim2.new(0, leftOffset, 0, 25)   -- 标题下方2px间距
+            subLabel.Position = UDim2.new(0, leftOffset, 0, 25)
             subLabel.BackgroundTransparency = 1
             subLabel.Font = Enum.Font.Gotham
             subLabel.Text = subtitleText
@@ -259,7 +257,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(subLabel, "TextColor3", "Text")
         end
 
-        -- ===== 折叠开关（Toggle 样式，带 I/O 文字） =====
+        -- =================== 折叠开关（全新稳健实现） ===================
+        local open = defaultOpen  -- 状态变量
+
+        -- 开关按钮
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(0, 42, 0, 22)
         toggleBtn.Position = UDim2.new(1, -52, 0.5, -11)
@@ -268,18 +269,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         toggleBtn.Parent = topBg
         toggleBtn.ZIndex = 3
 
-        local Switch = Instance.new("Frame")
-        Switch.Size = UDim2.new(1, 0, 1, 0)
-        Switch.BackgroundColor3 = open and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        Switch.Parent = toggleBtn
-        Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
+        -- 开关背景
+        local switchBg = Instance.new("Frame")
+        switchBg.Size = UDim2.new(1, 0, 1, 0)
+        switchBg.BackgroundColor3 = open and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        switchBg.Parent = toggleBtn
+        Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
 
-        local SwStroke = Instance.new("UIStroke")
-        SwStroke.Thickness = 1
-        SwStroke.Transparency = 0.6
-        SwStroke.Parent = Switch
-        AddToRegistry(SwStroke, "Color", "Stroke")
+        -- 边框
+        local swStroke = Instance.new("UIStroke")
+        swStroke.Thickness = 1
+        swStroke.Transparency = 0.6
+        swStroke.Parent = switchBg
+        AddToRegistry(swStroke, "Color", "Stroke")
 
+        -- 左侧 "I"
         local leftLabel = Instance.new("TextLabel")
         leftLabel.Size = UDim2.new(0.5, 0, 1, 0)
         leftLabel.Position = UDim2.new(0, 4, 0, 0)
@@ -287,11 +291,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         leftLabel.Font = Enum.Font.GothamBold
         leftLabel.Text = "I"
         leftLabel.TextSize = 12
-        leftLabel.TextColor3 = Color3.new(1, 1, 1)
+        leftLabel.TextColor3 = open and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
+        leftLabel.TextTransparency = open and 0 or 0.6
         leftLabel.TextXAlignment = Enum.TextXAlignment.Left
         leftLabel.TextYAlignment = Enum.TextYAlignment.Center
-        leftLabel.Parent = Switch
+        leftLabel.Parent = switchBg
 
+        -- 右侧 "O"
         local rightLabel = Instance.new("TextLabel")
         rightLabel.Size = UDim2.new(0.5, 0, 1, 0)
         rightLabel.Position = UDim2.new(0.5, 0, 0, 0)
@@ -299,19 +305,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         rightLabel.Font = Enum.Font.GothamBold
         rightLabel.Text = "O"
         rightLabel.TextSize = 12
-        rightLabel.TextColor3 = Color3.new(1, 1, 1)
+        rightLabel.TextColor3 = open and Color3.fromRGB(150, 150, 150) or Color3.new(1, 1, 1)
+        rightLabel.TextTransparency = open and 0.6 or 0
         rightLabel.TextXAlignment = Enum.TextXAlignment.Right
         rightLabel.TextYAlignment = Enum.TextYAlignment.Center
-        rightLabel.Parent = Switch
+        rightLabel.Parent = switchBg
 
-        local Dot = Instance.new("Frame")
-        Dot.Size = UDim2.new(0, 16, 0, 16)
-        Dot.Position = open and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-        Dot.BackgroundColor3 = Color3.new(1, 1, 1)
-        Dot.Parent = Switch
-        Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
+        -- 滑块（圆点）
+        local dot = Instance.new("Frame")
+        dot.Size = UDim2.new(0, 16, 0, 16)
+        dot.Position = open and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+        dot.BackgroundColor3 = Color3.new(1, 1, 1)
+        dot.Parent = switchBg
+        Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
 
-        local function updateSwitchVisuals(animate)
+        -- 更新开关视觉（带动画参数）
+        local function updateSwitch(animate)
             local targetBg = open and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
             local dotTarget = open and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
             local leftColor = open and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
@@ -320,13 +329,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local rightTrans = open and 0.6 or 0
 
             if animate then
-                Tween(Switch, { BackgroundColor3 = targetBg })
-                Tween(Dot, { Position = dotTarget })
+                Tween(switchBg, { BackgroundColor3 = targetBg })
+                Tween(dot, { Position = dotTarget })
                 Tween(leftLabel, { TextColor3 = leftColor, TextTransparency = leftTrans })
                 Tween(rightLabel, { TextColor3 = rightColor, TextTransparency = rightTrans })
             else
-                Switch.BackgroundColor3 = targetBg
-                Dot.Position = dotTarget
+                switchBg.BackgroundColor3 = targetBg
+                dot.Position = dotTarget
                 leftLabel.TextColor3 = leftColor
                 leftLabel.TextTransparency = leftTrans
                 rightLabel.TextColor3 = rightColor
@@ -334,27 +343,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        updateSwitchVisuals(false)
+        -- 初始化开关状态
+        updateSwitch(false)
 
-        local function toggleSection()
-            open = not open
-            updateSwitchVisuals(true)
-            updateSectionHeight(false)
-        end
-
-        toggleBtn.MouseButton1Click:Connect(toggleSection)
-        table.insert(ThemeListeners, function()
-            SwStroke.Color = CurrentTheme.Stroke
-        end)
-
-        -- 点击标题区域也可切换
-        topBg.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                toggleSection()
-            end
-        end)
-
-        -- ====== 内容容器（保持不变） ======
+        -- ===== 内容容器 =====
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
@@ -391,8 +383,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.Parent = contentHolder
 
+        -- 高度更新函数
         local currentContentTween, currentSectionTween, currentHolderTween, currentBgTween
-        local open = defaultOpen
 
         local function getContentHeight()
             return contentLayout.AbsoluteContentSize.Y
@@ -455,11 +447,33 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             currentSectionTween:Play()
         end
 
+        -- 初始化展开/折叠状态
         task.spawn(function()
             task.wait()
             updateSectionHeight(true)
         end)
 
+        -- 切换函数（无外部依赖，直接闭包）
+        local function toggleSection()
+            open = not open
+            updateSwitch(true)          -- 更新开关 UI（带动画）
+            updateSectionHeight(false)  -- 更新容器高度
+        end
+
+        -- 绑定点击事件
+        toggleBtn.MouseButton1Click:Connect(toggleSection)
+        topBg.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                toggleSection()
+            end
+        end)
+
+        -- 主题更新时仅刷新开关边框
+        table.insert(ThemeListeners, function()
+            swStroke.Color = CurrentTheme.Stroke
+        end)
+
+        -- 监听内容大小变化自动调整高度
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             if open then
                 updateSectionHeight(false)
@@ -473,7 +487,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- ===== 子元素创建器（完全不变） =====
+        -- ===== 子元素创建器 =====
         local child = {}
 
         child.Button = function(_, btnText, callback)
