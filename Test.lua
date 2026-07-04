@@ -268,21 +268,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         toggleBtn.Parent = topBg
         toggleBtn.ZIndex = 3
 
-        -- 开关背景（初始根据 open 决定颜色）
         local Switch = Instance.new("Frame")
         Switch.Size = UDim2.new(1, 0, 1, 0)
         Switch.BackgroundColor3 = open and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
         Switch.Parent = toggleBtn
         Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
 
-        -- 边框（跟随主题 Stroke）
         local SwStroke = Instance.new("UIStroke")
         SwStroke.Thickness = 1
         SwStroke.Transparency = 0.6
         SwStroke.Parent = Switch
         AddToRegistry(SwStroke, "Color", "Stroke")
 
-        -- 左侧文字 "I"
         local leftLabel = Instance.new("TextLabel")
         leftLabel.Size = UDim2.new(0.5, 0, 1, 0)
         leftLabel.Position = UDim2.new(0, 4, 0, 0)
@@ -295,7 +292,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         leftLabel.TextYAlignment = Enum.TextYAlignment.Center
         leftLabel.Parent = Switch
 
-        -- 右侧文字 "O"
         local rightLabel = Instance.new("TextLabel")
         rightLabel.Size = UDim2.new(0.5, 0, 1, 0)
         rightLabel.Position = UDim2.new(0.5, 0, 0, 0)
@@ -308,7 +304,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         rightLabel.TextYAlignment = Enum.TextYAlignment.Center
         rightLabel.Parent = Switch
 
-        -- 滑块（圆点）
         local Dot = Instance.new("Frame")
         Dot.Size = UDim2.new(0, 16, 0, 16)
         Dot.Position = open and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
@@ -316,12 +311,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Dot.Parent = Switch
         Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
-        -- ===== 更新开关视觉（带动画参数） =====
         local function updateSwitchVisuals(animate)
             local targetBg = open and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
             local dotTarget = open and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-
-            -- 文字高亮：开启时 I 亮，O 暗；关闭时 O 亮，I 暗
             local leftColor = open and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
             local rightColor = open and Color3.fromRGB(150, 150, 150) or Color3.new(1, 1, 1)
             local leftTrans = open and 0 or 0.6
@@ -342,22 +334,24 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- 初始化状态（直接设置，无动画）
         updateSwitchVisuals(false)
 
-        -- ===== 重写 toggle 函数 =====
-        local function toggle()
+        local function toggleSection()
             open = not open
-            updateSwitchVisuals(true)   -- 带动画切换
-            updateSectionHeight(false) -- 展开/折叠高度动画
+            updateSwitchVisuals(true)
+            updateSectionHeight(false)
         end
 
-        -- 点击开关触发切换
-        toggleBtn.MouseButton1Click:Connect(toggle)
-
-        -- 主题变化时仅更新边框颜色（开关自身颜色固定红绿）
+        toggleBtn.MouseButton1Click:Connect(toggleSection)
         table.insert(ThemeListeners, function()
             SwStroke.Color = CurrentTheme.Stroke
+        end)
+
+        -- 点击标题区域也可切换
+        topBg.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                toggleSection()
+            end
         end)
 
         -- ====== 内容容器（保持不变） ======
@@ -464,13 +458,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         task.spawn(function()
             task.wait()
             updateSectionHeight(true)
-        end)
-
-        -- 点击标题区域也可切换（用户习惯）
-        topBg.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                toggle()
-            end
         end)
 
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
