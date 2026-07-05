@@ -283,13 +283,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         swStroke.Parent = switchBg
         AddToRegistry(swStroke, "Color", "Stroke")
 
-        -- 左侧 "I"
+        -- 左侧文字 "√"（原 "I"）
         local leftLabel = Instance.new("TextLabel")
         leftLabel.Size = UDim2.new(0.5, 0, 1, 0)
         leftLabel.Position = UDim2.new(0, 4, 0, 0)
         leftLabel.BackgroundTransparency = 1
         leftLabel.Font = Enum.Font.GothamBold
-        leftLabel.Text = "I"
+        leftLabel.Text = "√"
         leftLabel.TextSize = 12
         leftLabel.TextColor3 = open and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
         leftLabel.TextTransparency = open and 0 or 0.6
@@ -297,13 +297,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         leftLabel.TextYAlignment = Enum.TextYAlignment.Center
         leftLabel.Parent = switchBg
 
-        -- 右侧 "O"
+        -- 右侧文字 "X"（原 "O"），并左移 2 像素
         local rightLabel = Instance.new("TextLabel")
         rightLabel.Size = UDim2.new(0.5, 0, 1, 0)
-        rightLabel.Position = UDim2.new(0.5, 0, 0, 0)
+        rightLabel.Position = UDim2.new(0.5, -2, 0, 0)  -- 左移 2px
         rightLabel.BackgroundTransparency = 1
         rightLabel.Font = Enum.Font.GothamBold
-        rightLabel.Text = "O"
+        rightLabel.Text = "X"
         rightLabel.TextSize = 12
         rightLabel.TextColor3 = open and Color3.fromRGB(150, 150, 150) or Color3.new(1, 1, 1)
         rightLabel.TextTransparency = open and 0.6 or 0
