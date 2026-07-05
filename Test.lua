@@ -3312,11 +3312,11 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- 添加左侧指示标（只控制透明度，不改变文字/图标颜色）
+            -- 左侧指示标 - 完美重合（竖条，高度填满，左侧对齐）
             local indicator = Instance.new("Frame")
             indicator.Name = "TabIndicator"
             indicator.Size = UDim2.new(0, 3, 1, 0)          -- 宽度3，高度填满
-            indicator.Position = UDim2.new(0, 0, 0, 0)      -- 左侧对齐
+            indicator.Position = UDim2.new(0, 0, 0, 0)      -- 左侧贴边
             indicator.BackgroundColor3 = CurrentTheme.Accent
             indicator.BackgroundTransparency = 1            -- 默认隐藏
             indicator.BorderSizePixel = 0
@@ -3326,7 +3326,7 @@ function Fenglib:CreateWindow(Config)
             indicatorCorner.Parent = indicator
             AddToRegistry(indicator, "BackgroundColor3", "Accent")
 
-            -- 主题更新时保证指示标颜色同步
+            -- 主题更新时颜色同步
             table.insert(ThemeListeners, function()
                 if indicator then
                     indicator.BackgroundColor3 = CurrentTheme.Accent
