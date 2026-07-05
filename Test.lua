@@ -3312,26 +3312,27 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- 左侧指示标 - 完美重合（竖条，高度填满，左侧对齐）
-            local indicator = Instance.new("Frame")
-            indicator.Name = "TabIndicator"
-            indicator.Size = UDim2.new(0, 3, 1, 0)          -- 宽度3，高度填满
-            indicator.Position = UDim2.new(0, 0, 0, 0)      -- 左侧贴边
-            indicator.BackgroundColor3 = CurrentTheme.Accent
-            indicator.BackgroundTransparency = 1            -- 默认隐藏
-            indicator.BorderSizePixel = 0
-            indicator.Parent = TabBtn
-            local indicatorCorner = Instance.new("UICorner")
-            indicatorCorner.CornerRadius = UDim.new(1, 0)    -- 右边圆角（可选）
-            indicatorCorner.Parent = indicator
-            AddToRegistry(indicator, "BackgroundColor3", "Accent")
+            -- 添加左侧发光条 (Glow)
+            local glow = Instance.new("Frame")
+            glow.Name = "Glow"
+            glow.Size = UDim2.new(0, 3, 1, 0)
+            glow.Position = UDim2.new(0, 0, 0, 0)
+            glow.BackgroundColor3 = CurrentTheme.Accent
+            glow.BorderSizePixel = 0
+            glow.BackgroundTransparency = 1  -- 默认隐藏
+            glow.Parent = TabBtn
+            Instance.new("UICorner", glow).CornerRadius = UDim.new(0, 3)
+            AddToRegistry(glow, "BackgroundColor3", "Accent")
 
-            -- 主题更新时颜色同步
-            table.insert(ThemeListeners, function()
-                if indicator then
-                    indicator.BackgroundColor3 = CurrentTheme.Accent
-                end
-            end)
+            -- 渐变加强效果（可选）
+            local grad = Instance.new("UIGradient")
+            grad.Rotation = 90
+            grad.Transparency = NumberSequence.new{
+                NumberSequenceKeypoint.new(0, 0.4),
+                NumberSequenceKeypoint.new(0.5, 0),
+                NumberSequenceKeypoint.new(1, 0.4)
+            }
+            grad.Parent = glow
 
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
@@ -3350,9 +3351,8 @@ function Fenglib:CreateWindow(Config)
             Padding.PaddingLeft = UDim.new(0, 10)
             Padding.Parent = ContentFrame
 
-            local TabIcon = nil
             if icon then
-                TabIcon = Instance.new("ImageLabel")
+                local TabIcon = Instance.new("ImageLabel")
                 TabIcon.Size = UDim2.new(0, 28, 0, 28)
                 TabIcon.BackgroundTransparency = 1
                 if tonumber(icon) then
@@ -3382,7 +3382,7 @@ function Fenglib:CreateWindow(Config)
             local Page = Instance.new("ScrollingFrame")
             Page.Size = UDim2.new(1, 0, 1, 0)
             Page.BackgroundTransparency = 1
-            Page.ScrollBarThickness = 0
+            Page.ScrollBarThickness = 0   -- 隐藏滚动条
             Page.ScrollingEnabled = true
             Page.Visible = false
             Page.Position = UDim2.new(0, 0, 0, 60)
@@ -3405,61 +3405,41 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- 激活/停用函数（只控制指示标透明度，不改变文字/图标颜色）
-            local function setActive(active)
-                if active then
-                    indicator.BackgroundTransparency = 0
-                    TabBtn.BackgroundTransparency = 0.05
-                else
-                    indicator.BackgroundTransparency = 1
-                    TabBtn.BackgroundTransparency = 1
-                end
-            end
-
             TabBtn.MouseButton1Click:Connect(function()
                 if Window._activeTab and Window._activeTab.Btn == TabBtn then
                     return
                 end
 
                 if Window._activeTab then
-                    local oldData = Window._activeTab
-                    if oldData.Reset then
-                        oldData.Reset()
-                    end
-                    oldData.Btn.BackgroundTransparency = 1
-                    oldData.Page.Visible = false
+                    local oldGlow = Window._activeTab.Btn:FindFirstChild("Glow")
+                    if oldGlow then oldGlow.BackgroundTransparency = 1 end
+                    Window._activeTab.Btn.BackgroundTransparency = 1
+                    Window._activeTab.Page.Visible = false
                 end
 
-                setActive(true)
+                local newGlow = TabBtn:FindFirstChild("Glow")
+                if newGlow then newGlow.BackgroundTransparency = 0 end
+                TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
-                Page.Position = UDim2.new(0, 0, 0, 60)
                 Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
 
                 Window._activeTab = {
                     Btn  = TabBtn,
                     Page = Page,
-                    Text = TabText,
-                    Icon = TabIcon,
-                    Indicator = indicator,
-                    Reset = function()
-                        setActive(false)
-                    end
+                    Text = TabText
                 }
             end)
 
             if not Window._activeTab then
-                setActive(true)
+                TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 0)
+                local glow = TabBtn:FindFirstChild("Glow")
+                if glow then glow.BackgroundTransparency = 0 end
                 Window._activeTab = {
                     Btn  = TabBtn,
                     Page = Page,
-                    Text = TabText,
-                    Icon = TabIcon,
-                    Indicator = indicator,
-                    Reset = function()
-                        setActive(false)
-                    end
+                    Text = TabText
                 }
             end
 
