@@ -150,7 +150,7 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 重写 Section（全新折叠逻辑）
+-- 重写 Section（折叠逻辑保持不变）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
@@ -3279,31 +3279,31 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- ====== 发光条（完全参照原文件） ======
-            local glow = Instance.new("Frame")
-            glow.Name = "Glow"
-            glow.Size = UDim2.new(0, 20, 1, 0)          -- 宽度20，高度撑满
-            glow.BackgroundTransparency = 1            -- 默认隐藏
-            glow.BorderSizePixel = 0
-            glow.BackgroundColor3 = CurrentTheme.Accent
-            glow.Parent = TabBtn
-            Instance.new("UICorner", glow).CornerRadius = UDim.new(0, 3)
-            AddToRegistry(glow, "BackgroundColor3", "Accent")
+            -- ===== 发光条 – 完全复制自 渲染.lua 的 AddTab =====
+            local Glow = Instance.new("Frame")
+            Glow.Name = "Glow"
+            Glow.Size = UDim2.new(0, 20, 1, 0)          -- 宽度20，高度撑满
+            Glow.BackgroundTransparency = 1            -- 默认隐藏
+            Glow.BorderSizePixel = 0
+            Glow.BackgroundColor3 = CurrentTheme.Accent
+            Glow.Parent = TabBtn
+            Instance.new("UICorner", Glow).CornerRadius = UDim.new(0, 3)
+            AddToRegistry(Glow, "BackgroundColor3", "Accent")
 
-            local glowImage = Instance.new("ImageLabel")
-            glowImage.Name = "GlowImage"
-            glowImage.ImageColor3 = CurrentTheme.Accent
-            glowImage.ScaleType = Enum.ScaleType.Slice
-            glowImage.ImageTransparency = 1            -- 初始隐藏
-            glowImage.Parent = glow
-            glowImage.BackgroundTransparency = 1
-            glowImage.Size = UDim2.new(1, 20, 1, 20)    -- 比父容器大，制造光晕
-            glowImage.Position = UDim2.new(0, -20, 0, -10) -- 向左、上下扩展
-            glowImage.Image = "rbxassetid://18245826428"
-            glowImage.SliceCenter = Rect.new(Vector2.new(20, 20), Vector2.new(80, 80))
-            glowImage.BorderSizePixel = 0
-            AddToRegistry(glowImage, "ImageColor3", "Accent")
-            -- ====== 发光条结束 ======
+            local GlowImage = Instance.new("ImageLabel")
+            GlowImage.Name = "GlowImage"
+            GlowImage.ImageColor3 = CurrentTheme.Accent
+            GlowImage.ScaleType = Enum.ScaleType.Slice
+            GlowImage.ImageTransparency = 1            -- 默认隐藏
+            GlowImage.Parent = Glow
+            GlowImage.BackgroundTransparency = 1
+            GlowImage.Size = UDim2.new(1, 20, 1, 20)   -- 比父容器大，制造溢出光晕
+            GlowImage.Position = UDim2.new(0, -20, 0, -10)
+            GlowImage.Image = "rbxassetid://18245826428"
+            GlowImage.SliceCenter = Rect.new(20, 20, 80, 80)
+            GlowImage.BorderSizePixel = 0
+            AddToRegistry(GlowImage, "ImageColor3", "Accent")
+            -- ==========================================
 
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
@@ -3376,7 +3376,7 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- 选中逻辑（控制发光条）
+            -- 选中逻辑（与渲染.lua 完全一致）
             local function selectTab()
                 if Window._activeTab and Window._activeTab.Btn == TabBtn then
                     return
