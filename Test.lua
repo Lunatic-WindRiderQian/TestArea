@@ -3312,21 +3312,21 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- 添加左侧指示标（来自第一个文件）
+            -- 添加左侧指示标（只控制透明度，不改变文字/图标颜色）
             local indicator = Instance.new("Frame")
             indicator.Name = "TabIndicator"
-            indicator.Size = UDim2.new(0, 3, 1, 0)
-            indicator.Position = UDim2.new(0, 0, 0, 0)
+            indicator.Size = UDim2.new(0, 3, 1, 0)          -- 宽度3，高度填满
+            indicator.Position = UDim2.new(0, 0, 0, 0)      -- 左侧对齐
             indicator.BackgroundColor3 = CurrentTheme.Accent
-            indicator.BackgroundTransparency = 1  -- 默认隐藏
+            indicator.BackgroundTransparency = 1            -- 默认隐藏
             indicator.BorderSizePixel = 0
             indicator.Parent = TabBtn
             local indicatorCorner = Instance.new("UICorner")
-            indicatorCorner.CornerRadius = UDim.new(1, 0)
+            indicatorCorner.CornerRadius = UDim.new(1, 0)    -- 右边圆角（可选）
             indicatorCorner.Parent = indicator
             AddToRegistry(indicator, "BackgroundColor3", "Accent")
 
-            -- 添加主题更新监听，保证指示标颜色随主题变化
+            -- 主题更新时保证指示标颜色同步
             table.insert(ThemeListeners, function()
                 if indicator then
                     indicator.BackgroundColor3 = CurrentTheme.Accent
@@ -3382,7 +3382,7 @@ function Fenglib:CreateWindow(Config)
             local Page = Instance.new("ScrollingFrame")
             Page.Size = UDim2.new(1, 0, 1, 0)
             Page.BackgroundTransparency = 1
-            Page.ScrollBarThickness = 0   -- 隐藏滚动条
+            Page.ScrollBarThickness = 0
             Page.ScrollingEnabled = true
             Page.Visible = false
             Page.Position = UDim2.new(0, 0, 0, 60)
@@ -3405,23 +3405,13 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- 激活/停用函数
+            -- 激活/停用函数（只控制指示标透明度，不改变文字/图标颜色）
             local function setActive(active)
                 if active then
-                    -- 激活状态：指示标可见，文字颜色变为 Accent，图标变为 Accent，背景微透明
                     indicator.BackgroundTransparency = 0
-                    TabText.TextColor3 = CurrentTheme.Accent
-                    if TabIcon then
-                        TabIcon.ImageColor3 = CurrentTheme.Accent
-                    end
                     TabBtn.BackgroundTransparency = 0.05
                 else
-                    -- 非激活：指示标隐藏，文字颜色恢复，图标恢复，背景全透明
                     indicator.BackgroundTransparency = 1
-                    TabText.TextColor3 = CurrentTheme.Text
-                    if TabIcon then
-                        TabIcon.ImageColor3 = CurrentTheme.Text
-                    end
                     TabBtn.BackgroundTransparency = 1
                 end
             end
@@ -3432,7 +3422,6 @@ function Fenglib:CreateWindow(Config)
                 end
 
                 if Window._activeTab then
-                    -- 取消旧Tab激活
                     local oldData = Window._activeTab
                     if oldData.Reset then
                         oldData.Reset()
@@ -3441,7 +3430,6 @@ function Fenglib:CreateWindow(Config)
                     oldData.Page.Visible = false
                 end
 
-                -- 激活新Tab
                 setActive(true)
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 60)
