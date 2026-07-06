@@ -3303,11 +3303,11 @@ function Fenglib:CreateWindow(Config)
 
         Window._activeTab = nil
 
-        -- ========== 修改点：添加指示条并缩减宽度 ==========
+        -- ========== 修改点：添加指示条并缩减宽度，激活背景使用 Accent 透明 0.88 ==========
         function Window:Tab(name, icon)
-            -- 创建 Tab 按钮，宽度改为 140（原为占满父容器）
+            -- 创建 Tab 按钮，宽度 140
             local TabBtn = Instance.new("TextButton")
-            TabBtn.Size = UDim2.new(0, 140, 0, 32)   -- 固定宽度 140
+            TabBtn.Size = UDim2.new(0, 140, 0, 32)
             TabBtn.BackgroundTransparency = 1
             TabBtn.BackgroundColor3 = CurrentTheme.Top
             TabBtn.Text = ""
@@ -3315,9 +3315,9 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- 添加指示条（与第一个文件一致）
+            -- 指示条
             local TabBar = Instance.new("Frame")
-            TabBar.Size = UDim2.new(0, 3, 0, 0)               -- 初始不可见
+            TabBar.Size = UDim2.new(0, 3, 0, 0)
             TabBar.Position = UDim2.new(0, 0, 0.175, 0)
             TabBar.BackgroundTransparency = 1
             TabBar.BorderSizePixel = 0
@@ -3325,7 +3325,7 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
             AddToRegistry(TabBar, "BackgroundColor3", "Accent")
 
-            -- 按钮内容（图标+文本，保持不变）
+            -- 内容（图标+文字）
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
             ContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -3365,7 +3365,7 @@ function Fenglib:CreateWindow(Config)
             TabText.BackgroundTransparency = 1
             TabText.Font = Enum.Font.GothamMedium
             TabText.Text = name
-            TabText.TextColor3 = CurrentTheme.Text
+            TabText.TextColor3 = Color3.fromRGB(150,150,158)  -- 非激活颜色
             TabText.TextSize = 14
             TabText.TextXAlignment = Enum.TextXAlignment.Left
             TabText.Parent = ContentFrame
@@ -3398,22 +3398,23 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- 点击切换逻辑（重置所有 Tab 的指示条，并高亮当前）
+            -- 点击切换逻辑（应用 metUI 激活背景：Accent, 透明度 0.88）
             TabBtn.MouseButton1Click:Connect(function()
                 if Window._activeTab and Window._activeTab.Btn == TabBtn then
                     return
                 end
 
-                -- 重置所有 Tab 按钮
+                -- 重置所有 Tab（移除激活样式）
                 for _, child in ipairs(TabScroll:GetChildren()) do
                     if child:IsA("TextButton") then
                         child.BackgroundTransparency = 1
-                        -- 重置指示条
+                        child.BackgroundColor3 = CurrentTheme.Top
+                        -- 指示条隐藏
                         local bar = child:FindFirstChildOfClass("Frame")
                         if bar then
                             Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
                         end
-                        -- 重置文字颜色
+                        -- 文字颜色恢复非激活
                         local content = child:FindFirstChild("ContentFrame")
                         if content then
                             local txt = content:FindFirstChildOfClass("TextLabel")
@@ -3424,8 +3425,10 @@ function Fenglib:CreateWindow(Config)
                     end
                 end
 
-                -- 高亮当前 Tab
-                TabBtn.BackgroundTransparency = 0.05
+                -- 激活当前 Tab（metUI 样式）
+                TabBtn.BackgroundTransparency = 0.88
+                TabBtn.BackgroundColor3 = CurrentTheme.Accent
+
                 local bar = TabBtn:FindFirstChildOfClass("Frame")
                 if bar then
                     Tween(bar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
@@ -3452,10 +3455,10 @@ function Fenglib:CreateWindow(Config)
                 }
             end)
 
-            -- 如果是第一个 Tab，默认选中
+            -- 如果是第一个 Tab，默认激活（使用相同样式）
             if not Window._activeTab then
-                -- 直接设置为选中（无需动画）
-                TabBtn.BackgroundTransparency = 0.05
+                TabBtn.BackgroundTransparency = 0.88
+                TabBtn.BackgroundColor3 = CurrentTheme.Accent
                 local bar = TabBtn:FindFirstChildOfClass("Frame")
                 if bar then
                     bar.BackgroundTransparency = 0
