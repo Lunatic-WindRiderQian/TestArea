@@ -3278,9 +3278,9 @@ function Fenglib:CreateWindow(Config)
         Window._activeTab = nil
         Window._tabs = {}  -- 存储每个 Tab 的状态表
 
-        -- ========== Tab 创建 ==========
+        -- ========== Tab 创建（已升级为带发光指示条和高级阴影） ==========
         function Window:Tab(name, icon)
-            -- 创建 Tab 按钮
+            -- 创建 Tab 按钮容器（自身背景始终透明）
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(0, 140, 0, 32)
             TabBtn.BackgroundTransparency = 1
@@ -3288,24 +3288,55 @@ function Fenglib:CreateWindow(Config)
             TabBtn.Text = ""
             TabBtn.Parent = TabScroll
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-            AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- 指示条
-            local TabBar = Instance.new("Frame")
-            TabBar.Size = UDim2.new(0, 3, 0, 0)
-            TabBar.Position = UDim2.new(0, 0, 0.175, 0)
-            TabBar.BackgroundTransparency = 1
-            TabBar.BorderSizePixel = 0
-            TabBar.Parent = TabBtn
-            Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
-            AddToRegistry(TabBar, "BackgroundColor3", "Accent")
+            -- ---- 左侧发光指示条（光晕） ----
+            local Indicator = Instance.new("Frame")
+            Indicator.Size = UDim2.new(0, 20, 1, 0)
+            Indicator.Position = UDim2.new(0, 0, 0, 0)
+            Indicator.BackgroundTransparency = 1
+            Indicator.BackgroundColor3 = CurrentTheme.Accent
+            Indicator.BorderSizePixel = 0
+            Indicator.Parent = TabBtn
+            Instance.new("UICorner", Indicator).CornerRadius = UDim.new(0, 3)
+            AddToRegistry(Indicator, "BackgroundColor3", "Accent")
 
-            -- 内容（图标+文字）
+            local IndicatorGlow = Instance.new("ImageLabel")
+            IndicatorGlow.Size = UDim2.new(1, 20, 1, 20)
+            IndicatorGlow.Position = UDim2.new(0, -20, 0, -10)
+            IndicatorGlow.BackgroundTransparency = 1
+            IndicatorGlow.Image = "rbxassetid://18245826428"
+            IndicatorGlow.ScaleType = Enum.ScaleType.Slice
+            IndicatorGlow.SliceCenter = Rect.new(20, 20, 80, 80)
+            IndicatorGlow.ImageColor3 = CurrentTheme.Accent
+            IndicatorGlow.ImageTransparency = 1
+            IndicatorGlow.Parent = Indicator
+            AddToRegistry(IndicatorGlow, "ImageColor3", "Accent")
+
+            -- ---- 激活背景（填充） ----
+            local Background = Instance.new("Frame")
+            Background.Size = UDim2.new(1, 0, 1, 0)
+            Background.Position = UDim2.new(0, 0, 0, 0)
+            Background.BackgroundTransparency = 1
+            Background.BackgroundColor3 = CurrentTheme.Top
+            Background.BorderSizePixel = 0
+            Background.Parent = TabBtn
+            Instance.new("UICorner", Background).CornerRadius = UDim.new(0, 10)
+            AddToRegistry(Background, "BackgroundColor3", "Top")
+
+            -- ---- 边框发光（UIStroke） ----
+            local Stroke = Instance.new("UIStroke")
+            Stroke.Color = CurrentTheme.Accent
+            Stroke.Thickness = 1.5
+            Stroke.Transparency = 1
+            Stroke.Parent = TabBtn
+            AddToRegistry(Stroke, "Color", "Accent")
+
+            -- ---- 内容（图标 + 文字） ----
             local ContentFrame = Instance.new("Frame")
-            ContentFrame.Name = "ContentFrame"
             ContentFrame.Size = UDim2.new(1, 0, 1, 0)
             ContentFrame.BackgroundTransparency = 1
             ContentFrame.Parent = TabBtn
+            ContentFrame.ZIndex = 2
 
             local Layout = Instance.new("UIListLayout")
             Layout.FillDirection = Enum.FillDirection.Horizontal
@@ -3347,7 +3378,7 @@ function Fenglib:CreateWindow(Config)
             TabText.Parent = ContentFrame
             AddToRegistry(TabText, "TextColor3", "Text")
 
-            -- 页面容器
+            -- ---- 页面容器 ----
             local Page = Instance.new("ScrollingFrame")
             Page.Size = UDim2.new(1, 0, 1, 0)
             Page.BackgroundTransparency = 1
@@ -3374,16 +3405,19 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- === 使用独立状态表，不在按钮上挂载自定义属性 ===
+            -- ---- 状态表 ----
             local state = {
                 isActive = false,
                 btn = TabBtn,
                 page = Page,
                 textLabel = TabText,
-                bar = TabBar
+                background = Background,
+                indicator = Indicator,
+                indicatorGlow = IndicatorGlow,
+                stroke = Stroke
             }
 
-            -- 点击切换逻辑
+            -- ---- 切换逻辑 ----
             TabBtn.MouseButton1Click:Connect(function()
                 if Window._activeTab and Window._activeTab == state then
                     return
@@ -3391,78 +3425,67 @@ function Fenglib:CreateWindow(Config)
 
                 -- 重置所有 Tab
                 for _, s in ipairs(Window._tabs) do
-                    local btn = s.btn
-                    btn.BackgroundTransparency = 1
-                    btn.BackgroundColor3 = CurrentTheme.Top
-                    s.isActive = false
-                    -- 指示条隐藏
-                    local bar = s.bar
-                    if bar then
-                        Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
-                    end
-                    -- 文字透明度恢复 0.3
-                    local txt = s.textLabel
-                    if txt then
-                        Tween(txt, {TextTransparency = 0.3}, 0.2)
+                    if s.isActive then
+                        -- 隐藏背景、指示条、发光和边框
+                        Tween(s.background, {BackgroundTransparency = 1}, 0.2)
+                        Tween(s.indicator, {BackgroundTransparency = 1}, 0.2)
+                        Tween(s.indicatorGlow, {ImageTransparency = 1}, 0.2)
+                        Tween(s.stroke, {Transparency = 1}, 0.2)
+                        Tween(s.textLabel, {TextTransparency = 0.3}, 0.2)
+                        s.isActive = false
                     end
                 end
 
-                -- 激活当前 Tab（metUI 样式）
-                TabBtn.BackgroundTransparency = 0.88
-                TabBtn.BackgroundColor3 = CurrentTheme.Accent
+                -- 激活当前 Tab
                 state.isActive = true
-
-                if TabBar then
-                    Tween(TabBar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
-                end
-                Tween(TabText, {TextTransparency = 0}, 0.2)
+                Tween(state.background, {BackgroundTransparency = 0}, 0.2)
+                Tween(state.indicator, {BackgroundTransparency = 0}, 0.2)
+                Tween(state.indicatorGlow, {ImageTransparency = 0.69}, 0.2)
+                Tween(state.stroke, {Transparency = 0.4}, 0.2)
+                Tween(state.textLabel, {TextTransparency = 0}, 0.2)
 
                 -- 切换页面
                 if Window._activeTab then
                     Window._activeTab.page.Visible = false
                 end
                 Page.Visible = true
-                Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
+                Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
 
                 Window._activeTab = state
             end)
 
-            -- 如果是第一个 Tab，默认激活
+            -- ---- 默认激活第一个 Tab ----
             if not Window._activeTab then
-                TabBtn.BackgroundTransparency = 0.88
-                TabBtn.BackgroundColor3 = CurrentTheme.Accent
                 state.isActive = true
-                TabBar.BackgroundTransparency = 0
-                TabBar.Size = UDim2.new(0,3,0.65,0)
-                TabText.TextTransparency = 0
+                state.background.BackgroundTransparency = 0
+                state.indicator.BackgroundTransparency = 0
+                state.indicatorGlow.ImageTransparency = 0.69
+                state.stroke.Transparency = 0.4
+                state.textLabel.TextTransparency = 0
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 0)
                 Window._activeTab = state
             end
 
-            -- 存储状态表
-            table.insert(Window._tabs, state)
-
             -- 排序（配置/设置靠后）
             if name == "Config" then TabBtn.LayoutOrder = 99998 end
             if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
-            -- 主题更新监听（安全访问状态表）
+            -- 保存状态表
+            table.insert(Window._tabs, state)
+
+            -- 主题更新（颜色自动通过 AddToRegistry 更新，但边框透明度需要重置）
             table.insert(ThemeListeners, function()
                 for _, s in ipairs(Window._tabs) do
-                    local btn = s.btn
                     if s.isActive then
-                        btn.BackgroundColor3 = CurrentTheme.Accent
-                        btn.BackgroundTransparency = 0.88
+                        s.stroke.Transparency = 0.4
                     else
-                        btn.BackgroundColor3 = CurrentTheme.Top
-                        btn.BackgroundTransparency = 1
+                        s.stroke.Transparency = 1
                     end
-                    -- TextLabel 颜色通过 AddToRegistry 自动更新
                 end
             end)
 
-            -- 返回元素构建函数
+            -- ---- 返回元素构建函数 ----
             local getElements = function()
                 local elements = {}
                 local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
@@ -3484,7 +3507,7 @@ function Fenglib:CreateWindow(Config)
 
             return getElements()
         end
-        -- ========== 修改结束 ==========
+        -- ========== Tab 修改结束 ==========
     end
 
     return Window
