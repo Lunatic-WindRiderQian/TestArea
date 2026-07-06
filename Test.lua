@@ -2124,6 +2124,7 @@ function Fenglib:CreateWindow(Config)
     local TabList = Instance.new("UIListLayout")
     TabList.Padding = UDim.new(0, 8)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
+    TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center   -- 新增：使 Tab 按钮居中
     TabList.Parent = TabScroll
 
     local function updateTabCanvas()
@@ -3304,9 +3305,9 @@ function Fenglib:CreateWindow(Config)
 
         -- ========== 修改点：添加指示条并缩减宽度 ==========
         function Window:Tab(name, icon)
-            -- 创建 Tab 按钮，宽度缩减为 120（原为占满父容器）
+            -- 创建 Tab 按钮，宽度改为 140（原为占满父容器）
             local TabBtn = Instance.new("TextButton")
-            TabBtn.Size = UDim2.new(0, 120, 0, 32)   -- 固定宽度 120
+            TabBtn.Size = UDim2.new(0, 140, 0, 32)   -- 固定宽度 140
             TabBtn.BackgroundTransparency = 1
             TabBtn.BackgroundColor3 = CurrentTheme.Top
             TabBtn.Text = ""
