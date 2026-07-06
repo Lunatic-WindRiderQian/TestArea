@@ -3302,6 +3302,7 @@ function Fenglib:CreateWindow(Config)
         RightContainer.ClipsDescendants = true
 
         Window._activeTab = nil
+        Window._tabs = {}  -- 存储所有 Tab 按钮
 
         -- ========== 修改点：添加指示条并缩减宽度，激活背景使用 Accent 透明 0.88 ==========
         function Window:Tab(name, icon)
@@ -3312,6 +3313,8 @@ function Fenglib:CreateWindow(Config)
             TabBtn.BackgroundColor3 = CurrentTheme.Top
             TabBtn.Text = ""
             TabBtn.Parent = TabScroll
+            TabBtn._active = false  -- 标记是否激活
+            table.insert(Window._tabs, TabBtn)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
@@ -3365,7 +3368,8 @@ function Fenglib:CreateWindow(Config)
             TabText.BackgroundTransparency = 1
             TabText.Font = Enum.Font.GothamMedium
             TabText.Text = name
-            TabText.TextColor3 = Color3.fromRGB(150,150,158)  -- 非激活颜色
+            TabText.TextColor3 = CurrentTheme.Text
+            TabText.TextTransparency = 0.3  -- 非激活透明度
             TabText.TextSize = 14
             TabText.TextXAlignment = Enum.TextXAlignment.Left
             TabText.Parent = ContentFrame
@@ -3405,22 +3409,21 @@ function Fenglib:CreateWindow(Config)
                 end
 
                 -- 重置所有 Tab（移除激活样式）
-                for _, child in ipairs(TabScroll:GetChildren()) do
-                    if child:IsA("TextButton") then
-                        child.BackgroundTransparency = 1
-                        child.BackgroundColor3 = CurrentTheme.Top
-                        -- 指示条隐藏
-                        local bar = child:FindFirstChildOfClass("Frame")
-                        if bar then
-                            Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
-                        end
-                        -- 文字颜色恢复非激活
-                        local content = child:FindFirstChild("ContentFrame")
-                        if content then
-                            local txt = content:FindFirstChildOfClass("TextLabel")
-                            if txt then
-                                Tween(txt, {TextColor3 = Color3.fromRGB(150,150,158)}, 0.2)
-                            end
+                for _, child in ipairs(Window._tabs) do
+                    child.BackgroundTransparency = 1
+                    child.BackgroundColor3 = CurrentTheme.Top
+                    child._active = false
+                    -- 指示条隐藏
+                    local bar = child:FindFirstChildOfClass("Frame")
+                    if bar then
+                        Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
+                    end
+                    -- 文字透明度恢复 0.3
+                    local content = child:FindFirstChild("ContentFrame")
+                    if content then
+                        local txt = content:FindFirstChildOfClass("TextLabel")
+                        if txt then
+                            Tween(txt, {TextTransparency = 0.3}, 0.2)
                         end
                     end
                 end
@@ -3428,6 +3431,7 @@ function Fenglib:CreateWindow(Config)
                 -- 激活当前 Tab（metUI 样式）
                 TabBtn.BackgroundTransparency = 0.88
                 TabBtn.BackgroundColor3 = CurrentTheme.Accent
+                TabBtn._active = true
 
                 local bar = TabBtn:FindFirstChildOfClass("Frame")
                 if bar then
@@ -3437,7 +3441,7 @@ function Fenglib:CreateWindow(Config)
                 if content then
                     local txt = content:FindFirstChildOfClass("TextLabel")
                     if txt then
-                        Tween(txt, {TextColor3 = CurrentTheme.Text}, 0.2)
+                        Tween(txt, {TextTransparency = 0}, 0.2)  -- 激活时完全不透明
                     end
                 end
 
@@ -3459,6 +3463,7 @@ function Fenglib:CreateWindow(Config)
             if not Window._activeTab then
                 TabBtn.BackgroundTransparency = 0.88
                 TabBtn.BackgroundColor3 = CurrentTheme.Accent
+                TabBtn._active = true
                 local bar = TabBtn:FindFirstChildOfClass("Frame")
                 if bar then
                     bar.BackgroundTransparency = 0
@@ -3468,7 +3473,7 @@ function Fenglib:CreateWindow(Config)
                 if content then
                     local txt = content:FindFirstChildOfClass("TextLabel")
                     if txt then
-                        txt.TextColor3 = CurrentTheme.Text
+                        txt.TextTransparency = 0
                     end
                 end
                 Page.Visible = true
@@ -3507,6 +3512,22 @@ function Fenglib:CreateWindow(Config)
             return getElements()
         end
         -- ========== 修改结束 ==========
+
+        -- 添加 Tab 主题更新监听（保证主题切换时激活状态颜色同步）
+        table.insert(ThemeListeners, function()
+            if Window._tabs then
+                for _, btn in ipairs(Window._tabs) do
+                    if btn._active then
+                        btn.BackgroundColor3 = CurrentTheme.Accent
+                        btn.BackgroundTransparency = 0.88
+                    else
+                        btn.BackgroundColor3 = CurrentTheme.Top
+                        btn.BackgroundTransparency = 1
+                    end
+                    -- 更新文字颜色（已通过 AddToRegistry 自动更新）
+                end
+            end
+        end)
     end
 
     return Window
