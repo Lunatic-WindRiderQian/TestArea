@@ -3312,22 +3312,27 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- ========== 左侧指示标（使用内置切片图片实现左侧圆角） ==========
-            -- 该图片为 Roblox 内置资源（rbxassetid://18245826428），无需额外下载
-            local Indicator = Instance.new("ImageLabel")
-            Indicator.Name = "TabIndicator"
-            Indicator.Size = UDim2.new(0, 20, 1, 0)      -- 宽度20，高度与按钮一致
-            Indicator.Position = UDim2.new(0, 0, 0, 0)   -- 紧贴按钮左侧，完美对齐
+            -- ===== 指示标（左侧半圆右方） =====
+            local Indicator = Instance.new("Frame")
+            Indicator.Size = UDim2.new(0, 20, 1, 0)
             Indicator.BackgroundTransparency = 1
-            Indicator.Image = "rbxassetid://18245826428" -- 内置圆角切片资源
-            Indicator.ScaleType = Enum.ScaleType.Slice
-            Indicator.SliceCenter = Rect.new(20, 20, 80, 80)  -- 切片参数，仅显示左侧圆角
-            Indicator.ImageTransparency = 1              -- 默认透明，选中后变为0
-            Indicator.ZIndex = 10                        -- 确保在内容之上
+            Indicator.BorderSizePixel = 0
+            Indicator.ZIndex = 2
             Indicator.Parent = TabBtn
-            AddToRegistry(Indicator, "ImageColor3", "Accent")  -- 颜色跟随主题
-            -- ========================================================
 
+            local IndImage = Instance.new("ImageLabel")
+            IndImage.Image = "rbxassetid://18245826428"          -- 与渲染.lua 相同的切片资源
+            IndImage.ScaleType = Enum.ScaleType.Slice
+            IndImage.SliceCenter = Rect.new(Vector2.new(20, 20), Vector2.new(80, 80))
+            IndImage.Size = UDim2.new(1, 20, 1, 20)              -- 扩展以形成左侧半圆
+            IndImage.Position = UDim2.new(0, -20, 0, -10)
+            IndImage.BackgroundTransparency = 1
+            IndImage.ImageTransparency = 1
+            IndImage.ZIndex = 3
+            IndImage.Parent = Indicator
+            AddToRegistry(IndImage, "ImageColor3", "Accent")     -- 主题联动
+
+            -- ===== 内容（图标 + 文字） =====
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
             ContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -3373,6 +3378,7 @@ function Fenglib:CreateWindow(Config)
             TabText.Parent = ContentFrame
             AddToRegistry(TabText, "TextColor3", "Text")
 
+            -- ===== 页面容器 =====
             local Page = Instance.new("ScrollingFrame")
             Page.Size = UDim2.new(1, 0, 1, 0)
             Page.BackgroundTransparency = 1
@@ -3399,57 +3405,57 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- ====== 点击切换逻辑（更新指示标透明度） ======
-            TabBtn.MouseButton1Click:Connect(function()
-                if Window._activeTab and Window._activeTab.Btn == TabBtn then
-                    return
-                end
-
-                -- 取消激活旧 Tab
-                if Window._activeTab then
-                    Window._activeTab.Btn.BackgroundTransparency = 1
-                    Window._activeTab.Page.Visible = false
-                    if Window._activeTab.Indicator then
-                        Window._activeTab.Indicator.ImageTransparency = 1   -- 隐藏指示标
+            -- ===== 激活函数 =====
+            local function activateTab(btn)
+                -- 更新所有 Tab 的指示标
+                for _, child in ipairs(TabScroll:GetChildren()) do
+                    if child:IsA("TextButton") then
+                        local ind = child:FindFirstChild("Indicator")
+                        if ind then
+                            local img = ind:FindFirstChildOfClass("ImageLabel")
+                            if child == btn then
+                                ind.BackgroundTransparency = 0
+                                if img then img.ImageTransparency = 0.69 end
+                            else
+                                ind.BackgroundTransparency = 1
+                                if img then img.ImageTransparency = 1 end
+                            end
+                        end
                     end
                 end
 
-                -- 激活当前 Tab
-                TabBtn.BackgroundTransparency = 0.05
+                -- 隐藏上一个页面
+                if Window._activeTab and Window._activeTab.Btn ~= btn then
+                    Window._activeTab.Btn.BackgroundTransparency = 1
+                    Window._activeTab.Page.Visible = false
+                end
+
+                -- 激活当前
+                btn.BackgroundTransparency = 0.05
                 Page.Visible = true
-                Indicator.ImageTransparency = 0   -- 显示指示标
                 Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
 
                 Window._activeTab = {
-                    Btn  = TabBtn,
+                    Btn  = btn,
                     Page = Page,
-                    Text = TabText,
-                    Indicator = Indicator
-                }
-            end)
-
-            -- 若这是第一个 Tab，则自动激活
-            if not Window._activeTab then
-                TabBtn.BackgroundTransparency = 0.05
-                Page.Visible = true
-                Page.Position = UDim2.new(0, 0, 0, 0)
-                Indicator.ImageTransparency = 0   -- 显示指示标
-                Window._activeTab = {
-                    Btn  = TabBtn,
-                    Page = Page,
-                    Text = TabText,
-                    Indicator = Indicator
+                    Text = TabText
                 }
             end
 
-            if name == "Config" then TabBtn.LayoutOrder = 99998 end
-            if name == "Settings" then TabBtn.LayoutOrder = 99999 end
+            TabBtn.MouseButton1Click:Connect(function()
+                activateTab(TabBtn)
+            end)
 
-            -- 返回元素创建器
+            -- 如果是第一个 Tab，默认激活
+            if not Window._activeTab then
+                activateTab(TabBtn)
+            end
+
+            -- ===== 返回元素构造器 =====
             local getElements = function()
                 local elements = {}
                 local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
-                elements.Section = function(_, config) return createSection(config) end
+                elements.Section      = function(_, config) return createSection(config) end
                 elements.Button       = function(_, btnText, callback) return createSection("", nil, true).Button(btnText, callback) end
                 elements.Toggle       = function(_, toggleText, default, callback) return createSection("", nil, true).Toggle(toggleText, default, callback) end
                 elements.Slider       = function(_, sliderText, min, max, default, callback, options) return createSection("", nil, true).Slider(sliderText, min, max, default, callback, options) end
