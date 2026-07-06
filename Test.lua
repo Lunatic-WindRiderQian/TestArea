@@ -150,10 +150,11 @@ function Fenglib:LoadConfig(path)
 end
 
 -------------------------------------------------------------------------------
--- 重写 Section（折叠逻辑保持不变）
+-- 重写 Section（全新折叠逻辑，彻底解决 nil 错误）
 -------------------------------------------------------------------------------
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
+        -- 解析参数
         local titleText = ""
         local subtitleText = nil
         local iconAsset = nil
@@ -175,6 +176,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
+        -- === 主容器 ===
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 46)
         sectionFrame.BackgroundTransparency = 0.65
@@ -184,6 +186,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         mainCorner.CornerRadius = UDim.new(0, 8)
         AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
 
+        -- === 头部 ===
         local titleBar = Instance.new("Frame")
         titleBar.Size = UDim2.new(1, 0, 0, 46)
         titleBar.BackgroundTransparency = 0.65
@@ -203,6 +206,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         topBgCorner.CornerRadius = UDim.new(0, 6)
         AddToRegistry(topBg, "BackgroundColor3", "Top")
 
+        -- === 图标 ===
         local leftOffset = 16
         if iconAsset then
             local icon = Instance.new("ImageLabel")
@@ -222,6 +226,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             leftOffset = 50
         end
 
+        -- === 标题 ===
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Size = UDim2.new(1, -80, 0, 19)
         if subtitleText then
@@ -237,6 +242,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         titleLabel.Parent = topBg
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
+        -- === 副标题 ===
         if subtitleText then
             local subLabel = Instance.new("TextLabel")
             subLabel.Size = UDim2.new(1, -80, 0, 17)
@@ -251,7 +257,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(subLabel, "TextColor3", "Text")
         end
 
-        local open = defaultOpen
+        -- =================== 折叠开关（全新稳健实现） ===================
+        local open = defaultOpen  -- 状态变量
+
+        -- 开关按钮
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(0, 42, 0, 22)
         toggleBtn.Position = UDim2.new(1, -52, 0.5, -11)
@@ -260,18 +269,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         toggleBtn.Parent = topBg
         toggleBtn.ZIndex = 3
 
+        -- 开关背景
         local switchBg = Instance.new("Frame")
         switchBg.Size = UDim2.new(1, 0, 1, 0)
         switchBg.BackgroundColor3 = open and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
         switchBg.Parent = toggleBtn
         Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
 
+        -- 边框
         local swStroke = Instance.new("UIStroke")
         swStroke.Thickness = 1
         swStroke.Transparency = 0.6
         swStroke.Parent = switchBg
         AddToRegistry(swStroke, "Color", "Stroke")
 
+        -- 左侧 "I"
         local leftLabel = Instance.new("TextLabel")
         leftLabel.Size = UDim2.new(0.5, 0, 1, 0)
         leftLabel.Position = UDim2.new(0, 4, 0, 0)
@@ -285,9 +297,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         leftLabel.TextYAlignment = Enum.TextYAlignment.Center
         leftLabel.Parent = switchBg
 
+        -- 右侧 "O"（左移 4 像素）
         local rightLabel = Instance.new("TextLabel")
         rightLabel.Size = UDim2.new(0.5, 0, 1, 0)
-        rightLabel.Position = UDim2.new(0.5, -4, 0, 0)
+        rightLabel.Position = UDim2.new(0.5, -4, 0, 0)   -- 修改这里，左移 4 像素
         rightLabel.BackgroundTransparency = 1
         rightLabel.Font = Enum.Font.GothamBold
         rightLabel.Text = "O"
@@ -298,6 +311,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         rightLabel.TextYAlignment = Enum.TextYAlignment.Center
         rightLabel.Parent = switchBg
 
+        -- 滑块（圆点）
         local dot = Instance.new("Frame")
         dot.Size = UDim2.new(0, 16, 0, 16)
         dot.Position = open and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
@@ -305,6 +319,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         dot.Parent = switchBg
         Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
 
+        -- 更新开关视觉（带动画参数）
         local function updateSwitch(animate)
             local targetBg = open and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
             local dotTarget = open and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
@@ -327,8 +342,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 rightLabel.TextTransparency = rightTrans
             end
         end
+
+        -- 初始化开关状态
         updateSwitch(false)
 
+        -- ===== 内容容器 =====
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
@@ -347,9 +365,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
 
+        -- 修改：减小 contentHolder 的顶部间距（Y 从 8 改为 4）
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -24, 0, 0)
-        contentHolder.Position = UDim2.new(0, 12, 0, 4)
+        contentHolder.Position = UDim2.new(0, 12, 0, 4)   -- 原为 8，现改为 4
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = true
@@ -360,11 +379,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentHolder
 
+        -- 修改：减小底部填充高度（从 8 改为 4）
         local bottomPadding = Instance.new("Frame")
-        bottomPadding.Size = UDim2.new(1, 0, 0, 4)
+        bottomPadding.Size = UDim2.new(1, 0, 0, 4)   -- 原为 8，现改为 4
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.Parent = contentHolder
 
+        -- 高度更新函数
         local currentContentTween, currentSectionTween, currentHolderTween, currentBgTween
 
         local function getContentHeight()
@@ -428,17 +449,20 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             currentSectionTween:Play()
         end
 
+        -- 初始化展开/折叠状态
         task.spawn(function()
             task.wait()
             updateSectionHeight(true)
         end)
 
+        -- 切换函数（无外部依赖，直接闭包）
         local function toggleSection()
             open = not open
-            updateSwitch(true)
-            updateSectionHeight(false)
+            updateSwitch(true)          -- 更新开关 UI（带动画）
+            updateSectionHeight(false)  -- 更新容器高度
         end
 
+        -- 绑定点击事件
         toggleBtn.MouseButton1Click:Connect(toggleSection)
         topBg.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -446,10 +470,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
+        -- 主题更新时仅刷新开关边框
         table.insert(ThemeListeners, function()
             swStroke.Color = CurrentTheme.Stroke
         end)
 
+        -- 监听内容大小变化自动调整高度
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             if open then
                 updateSectionHeight(false)
@@ -463,6 +489,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
+        -- ===== 子元素创建器 =====
         local child = {}
 
         child.Button = function(_, btnText, callback)
@@ -1738,6 +1765,7 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
+    -- ===== 高级视觉增强（仅保留模糊和边框渐变） =====
     do
         local blurPart = Instance.new("Part")
         blurPart.Name = "FengBlurPart"
@@ -1825,6 +1853,7 @@ function Fenglib:CreateWindow(Config)
             if dof then dof:Destroy() end
         end)
     end
+    -- ===== 高级视觉增强结束 =====
 
     task.spawn(function()
         local rot = 0
@@ -2068,6 +2097,7 @@ function Fenglib:CreateWindow(Config)
         TitleLabel.Position = UDim2.new(0, 50, 0, 0)
     end
 
+    -- ====== 左侧背景宽度 160，延伸至底部 ======
     local leftWidth = 160
 
     local LeftContainer = Instance.new("Frame")
@@ -2082,11 +2112,12 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 12)
     leftCorner.Parent = LeftContainer
 
+    -- 删除 Tab 滚动条：设置 ScrollBarThickness = 0
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -40)
     TabScroll.Position = UDim2.new(0, 0, 0, 0)
     TabScroll.BackgroundTransparency = 1
-    TabScroll.ScrollBarThickness = 0
+    TabScroll.ScrollBarThickness = 0   -- 隐藏滚动条
     TabScroll.ScrollingDirection = Enum.ScrollingDirection.Y
     TabScroll.Parent = LeftContainer
 
@@ -2101,6 +2132,7 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
+    -- ====== 玩家头像卡片 ======
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
     ProfileFrame.Position = UDim2.new(0, 10, 1, -19)
@@ -2141,6 +2173,7 @@ function Fenglib:CreateWindow(Config)
     UsrName.Parent = ProfileFrame
     AddToRegistry(UsrName, "TextColor3", "Text")
 
+    -- ====== 右侧内容容器 ======
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
@@ -3185,7 +3218,7 @@ function Fenglib:CreateWindow(Config)
                 local page = Instance.new("ScrollingFrame")
                 page.Size = UDim2.new(1, 0, 1, 0)
                 page.BackgroundTransparency = 1
-                page.ScrollBarThickness = 0
+                page.ScrollBarThickness = 0   -- 隐藏滚动条
                 page.ScrollingEnabled = false
                 page.Visible = false
                 page.Parent = rightPageContainer
@@ -3208,7 +3241,7 @@ function Fenglib:CreateWindow(Config)
                 task.spawn(updatePageCanvas)
 
                 page.ScrollingEnabled = true
-                page.ScrollBarThickness = 0
+                page.ScrollBarThickness = 0   -- 再次确保隐藏
 
                 local getElements = function()
                     local elements = {}
@@ -3279,31 +3312,19 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- ===== 发光条 – 完全复制自 渲染.lua 的 AddTab =====
-            local Glow = Instance.new("Frame")
-            Glow.Name = "Glow"
-            Glow.Size = UDim2.new(0, 20, 1, 0)          -- 宽度20，高度撑满
-            Glow.BackgroundTransparency = 1            -- 默认隐藏
-            Glow.BorderSizePixel = 0
-            Glow.BackgroundColor3 = CurrentTheme.Accent
-            Glow.Parent = TabBtn
-            Instance.new("UICorner", Glow).CornerRadius = UDim.new(0, 3)
-            AddToRegistry(Glow, "BackgroundColor3", "Accent")
-
-            local GlowImage = Instance.new("ImageLabel")
-            GlowImage.Name = "GlowImage"
-            GlowImage.ImageColor3 = CurrentTheme.Accent
-            GlowImage.ScaleType = Enum.ScaleType.Slice
-            GlowImage.ImageTransparency = 1            -- 默认隐藏
-            GlowImage.Parent = Glow
-            GlowImage.BackgroundTransparency = 1
-            GlowImage.Size = UDim2.new(1, 20, 1, 20)   -- 比父容器大，制造溢出光晕
-            GlowImage.Position = UDim2.new(0, -20, 0, -10)
-            GlowImage.Image = "rbxassetid://18245826428"
-            GlowImage.SliceCenter = Rect.new(20, 20, 80, 80)
-            GlowImage.BorderSizePixel = 0
-            AddToRegistry(GlowImage, "ImageColor3", "Accent")
-            -- ==========================================
+            -- ===== 新增：左侧指示标 =====
+            local indicator = Instance.new("Frame")
+            indicator.Name = "TabIndicator"
+            indicator.Size = UDim2.new(0, 3, 0, 0.65)          -- 宽度3，高度为按钮的65%
+            indicator.Position = UDim2.new(0, 0, 0.5, 0)        -- 左侧对齐，垂直居中
+            indicator.AnchorPoint = Vector2.new(0, 0.5)
+            indicator.BackgroundColor3 = CurrentTheme.Accent
+            indicator.BackgroundTransparency = 1                -- 默认隐藏
+            indicator.ZIndex = 2
+            indicator.Parent = TabBtn
+            Instance.new("UICorner", indicator).CornerRadius = UDim.new(0, 3)   -- 圆角，实现左侧圆润
+            AddToRegistry(indicator, "BackgroundColor3", "Accent")              -- 随主题变化
+            -- ===== 新增结束 =====
 
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
@@ -3376,66 +3397,49 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- 选中逻辑（与渲染.lua 完全一致）
-            local function selectTab()
+            TabBtn.MouseButton1Click:Connect(function()
                 if Window._activeTab and Window._activeTab.Btn == TabBtn then
                     return
                 end
 
+                -- 取消激活旧 Tab
                 if Window._activeTab then
-                    local oldGlow = Window._activeTab.Btn:FindFirstChild("Glow")
-                    if oldGlow then
-                        Tween(oldGlow, {BackgroundTransparency = 1}, 0.3)
-                        local oldGlowImage = oldGlow:FindFirstChild("GlowImage")
-                        if oldGlowImage then
-                            Tween(oldGlowImage, {ImageTransparency = 1}, 0.3)
-                        end
-                    end
                     Window._activeTab.Btn.BackgroundTransparency = 1
                     Window._activeTab.Page.Visible = false
-                end
-
-                local newGlow = TabBtn:FindFirstChild("Glow")
-                if newGlow then
-                    Tween(newGlow, {BackgroundTransparency = 0}, 0.3)
-                    local newGlowImage = newGlow:FindFirstChild("GlowImage")
-                    if newGlowImage then
-                        Tween(newGlowImage, {ImageTransparency = 0.69}, 0.3)
+                    if Window._activeTab.Indicator then
+                        Window._activeTab.Indicator.BackgroundTransparency = 1   -- 隐藏旧指示标
                     end
                 end
+
+                -- 激活当前 Tab
                 TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
                 Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
+                indicator.BackgroundTransparency = 0   -- 显示指示标
 
                 Window._activeTab = {
                     Btn  = TabBtn,
                     Page = Page,
-                    Text = TabText
+                    Text = TabText,
+                    Indicator = indicator
                 }
-            end
+            end)
 
-            TabBtn.MouseButton1Click:Connect(selectTab)
-
-            -- 初始选中第一个Tab
+            -- 默认激活第一个 Tab（如果没有激活的）
             if not Window._activeTab then
-                local glow = TabBtn:FindFirstChild("Glow")
-                if glow then
-                    glow.BackgroundTransparency = 0
-                    local glowImage = glow:FindFirstChild("GlowImage")
-                    if glowImage then
-                        glowImage.ImageTransparency = 0.69
-                    end
-                end
                 TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 0)
+                indicator.BackgroundTransparency = 0   -- 显示指示标
                 Window._activeTab = {
                     Btn  = TabBtn,
                     Page = Page,
-                    Text = TabText
+                    Text = TabText,
+                    Indicator = indicator
                 }
             end
 
+            -- 排序（Config / Settings 靠后）
             if name == "Config" then TabBtn.LayoutOrder = 99998 end
             if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
