@@ -3312,18 +3312,20 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- ===== 新增：左侧指示条 =====
+            -- ===== 指示条（高度与按钮一致） =====
             local Indicator = Instance.new("Frame")
             Indicator.Name = "TabIndicator"
-            Indicator.Size = UDim2.new(0, 3, 0.65, 0)
-            Indicator.Position = UDim2.new(0, 0, 0.175, 0)
+            Indicator.Size = UDim2.new(0, 3, 1, 0)   -- 高度 100%
+            Indicator.Position = UDim2.new(0, 0, 0, 0) -- 左对齐，顶部
             Indicator.BackgroundColor3 = CurrentTheme.Accent
             Indicator.BackgroundTransparency = 1
             Indicator.BorderSizePixel = 0
             Indicator.Parent = TabBtn
-            Instance.new("UICorner", Indicator).CornerRadius = UDim.new(1, 0)
+            -- 可选：加一点圆角（右侧）
+            local corner = Instance.new("UICorner", Indicator)
+            corner.CornerRadius = UDim.new(0, 2)  -- 轻微圆角
             AddToRegistry(Indicator, "BackgroundColor3", "Accent")
-            -- =================================
+            -- =========================================
 
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
