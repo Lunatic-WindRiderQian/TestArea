@@ -3312,19 +3312,20 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- ========== 新增：左侧指示标 ==========
-            local Indicator = Instance.new("Frame")
+            -- ========== 左侧指示标（ImageLabel 实现左侧圆角） ==========
+            local Indicator = Instance.new("ImageLabel")
             Indicator.Name = "TabIndicator"
-            Indicator.Size = UDim2.new(0, 4, 1, -4)   -- 宽度4，上下各留2px边距
-            Indicator.Position = UDim2.new(0, 0, 0, 2)
-            Indicator.BackgroundColor3 = CurrentTheme.Accent
-            Indicator.BackgroundTransparency = 1      -- 默认隐藏
-            Indicator.BorderSizePixel = 0
-            Indicator.ZIndex = 10                     -- 确保显示在内容之上
+            Indicator.Size = UDim2.new(0, 20, 1, 0)   -- 宽度 20，高度与按钮一致
+            Indicator.Position = UDim2.new(0, 0, 0, 0)
+            Indicator.BackgroundTransparency = 1
+            Indicator.Image = "rbxassetid://18245826428"   -- 使用第一个文件的资源
+            Indicator.ScaleType = Enum.ScaleType.Slice
+            Indicator.SliceCenter = Rect.new(20, 20, 80, 80) -- 切片参数，仅显示左侧圆角
+            Indicator.ImageTransparency = 1             -- 默认透明
+            Indicator.ZIndex = 10
             Indicator.Parent = TabBtn
-            Instance.new("UICorner", Indicator).CornerRadius = UDim.new(0, 2)
-            AddToRegistry(Indicator, "BackgroundColor3", "Accent")
-            -- ======================================
+            AddToRegistry(Indicator, "ImageColor3", "Accent")
+            -- ========================================================
 
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
@@ -3397,7 +3398,7 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- ====== 点击切换逻辑（已更新，包含指示器） ======
+            -- ====== 点击切换逻辑（更新指示标透明度） ======
             TabBtn.MouseButton1Click:Connect(function()
                 if Window._activeTab and Window._activeTab.Btn == TabBtn then
                     return
@@ -3408,21 +3409,21 @@ function Fenglib:CreateWindow(Config)
                     Window._activeTab.Btn.BackgroundTransparency = 1
                     Window._activeTab.Page.Visible = false
                     if Window._activeTab.Indicator then
-                        Window._activeTab.Indicator.BackgroundTransparency = 1
+                        Window._activeTab.Indicator.ImageTransparency = 1   -- 隐藏指示标
                     end
                 end
 
                 -- 激活当前 Tab
                 TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
-                Indicator.BackgroundTransparency = 0   -- 显示指示标
+                Indicator.ImageTransparency = 0   -- 显示指示标
                 Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
 
                 Window._activeTab = {
                     Btn  = TabBtn,
                     Page = Page,
                     Text = TabText,
-                    Indicator = Indicator   -- 保存指示器引用
+                    Indicator = Indicator
                 }
             end)
 
@@ -3431,7 +3432,7 @@ function Fenglib:CreateWindow(Config)
                 TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 0)
-                Indicator.BackgroundTransparency = 0   -- 显示指示标
+                Indicator.ImageTransparency = 0   -- 显示指示标
                 Window._activeTab = {
                     Btn  = TabBtn,
                     Page = Page,
@@ -3443,7 +3444,7 @@ function Fenglib:CreateWindow(Config)
             if name == "Config" then TabBtn.LayoutOrder = 99998 end
             if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
-            -- 返回元素创建器（保持不变）
+            -- 返回元素创建器
             local getElements = function()
                 local elements = {}
                 local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
