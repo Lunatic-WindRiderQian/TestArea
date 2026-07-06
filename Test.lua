@@ -3327,9 +3327,8 @@ function Fenglib:CreateWindow(Config)
             corner.Parent = RoundHelper
             AddToRegistry(RoundHelper, "BackgroundColor3", "Accent")
 
-            -- 存储引用以便切换
-            IndicatorContainer.MainBar = MainBar
-            IndicatorContainer.RoundHelper = RoundHelper
+            -- 注意：不再设置 MainBar / RoundHelper 作为属性，避免访问错误
+            -- 仅保留 IndicatorContainer 作为容器引用
             TabBtn.IndicatorContainer = IndicatorContainer
             -- -------------------------------------------------
 
