@@ -3312,19 +3312,20 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- ========== 左侧指示标（ImageLabel 实现左侧圆角） ==========
+            -- ========== 左侧指示标（使用内置切片图片实现左侧圆角） ==========
+            -- 该图片为 Roblox 内置资源（rbxassetid://18245826428），无需额外下载
             local Indicator = Instance.new("ImageLabel")
             Indicator.Name = "TabIndicator"
-            Indicator.Size = UDim2.new(0, 20, 1, 0)   -- 宽度 20，高度与按钮一致
-            Indicator.Position = UDim2.new(0, 0, 0, 0)
+            Indicator.Size = UDim2.new(0, 20, 1, 0)      -- 宽度20，高度与按钮一致
+            Indicator.Position = UDim2.new(0, 0, 0, 0)   -- 紧贴按钮左侧，完美对齐
             Indicator.BackgroundTransparency = 1
-            Indicator.Image = "rbxassetid://18245826428"   -- 使用第一个文件的资源
+            Indicator.Image = "rbxassetid://18245826428" -- 内置圆角切片资源
             Indicator.ScaleType = Enum.ScaleType.Slice
-            Indicator.SliceCenter = Rect.new(20, 20, 80, 80) -- 切片参数，仅显示左侧圆角
-            Indicator.ImageTransparency = 1             -- 默认透明
-            Indicator.ZIndex = 10
+            Indicator.SliceCenter = Rect.new(20, 20, 80, 80)  -- 切片参数，仅显示左侧圆角
+            Indicator.ImageTransparency = 1              -- 默认透明，选中后变为0
+            Indicator.ZIndex = 10                        -- 确保在内容之上
             Indicator.Parent = TabBtn
-            AddToRegistry(Indicator, "ImageColor3", "Accent")
+            AddToRegistry(Indicator, "ImageColor3", "Accent")  -- 颜色跟随主题
             -- ========================================================
 
             local ContentFrame = Instance.new("Frame")
