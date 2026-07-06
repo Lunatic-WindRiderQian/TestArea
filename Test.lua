@@ -3312,19 +3312,19 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- ===== 新增：左侧指示标 =====
-            local indicator = Instance.new("Frame")
-            indicator.Name = "TabIndicator"
-            indicator.Size = UDim2.new(0, 3, 0, 0.65)          -- 宽度3，高度为按钮的65%
-            indicator.Position = UDim2.new(0, 0, 0.5, 0)        -- 左侧对齐，垂直居中
-            indicator.AnchorPoint = Vector2.new(0, 0.5)
-            indicator.BackgroundColor3 = CurrentTheme.Accent
-            indicator.BackgroundTransparency = 1                -- 默认隐藏
-            indicator.ZIndex = 2
-            indicator.Parent = TabBtn
-            Instance.new("UICorner", indicator).CornerRadius = UDim.new(0, 3)   -- 圆角，实现左侧圆润
-            AddToRegistry(indicator, "BackgroundColor3", "Accent")              -- 随主题变化
-            -- ===== 新增结束 =====
+            -- ========== 新增：左侧指示标 ==========
+            local Indicator = Instance.new("Frame")
+            Indicator.Name = "TabIndicator"
+            Indicator.Size = UDim2.new(0, 4, 1, -4)   -- 宽度4，上下各留2px边距
+            Indicator.Position = UDim2.new(0, 0, 0, 2)
+            Indicator.BackgroundColor3 = CurrentTheme.Accent
+            Indicator.BackgroundTransparency = 1      -- 默认隐藏
+            Indicator.BorderSizePixel = 0
+            Indicator.ZIndex = 10                     -- 确保显示在内容之上
+            Indicator.Parent = TabBtn
+            Instance.new("UICorner", Indicator).CornerRadius = UDim.new(0, 2)
+            AddToRegistry(Indicator, "BackgroundColor3", "Accent")
+            -- ======================================
 
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
@@ -3397,6 +3397,7 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
+            -- ====== 点击切换逻辑（已更新，包含指示器） ======
             TabBtn.MouseButton1Click:Connect(function()
                 if Window._activeTab and Window._activeTab.Btn == TabBtn then
                     return
@@ -3407,42 +3408,42 @@ function Fenglib:CreateWindow(Config)
                     Window._activeTab.Btn.BackgroundTransparency = 1
                     Window._activeTab.Page.Visible = false
                     if Window._activeTab.Indicator then
-                        Window._activeTab.Indicator.BackgroundTransparency = 1   -- 隐藏旧指示标
+                        Window._activeTab.Indicator.BackgroundTransparency = 1
                     end
                 end
 
                 -- 激活当前 Tab
                 TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
+                Indicator.BackgroundTransparency = 0   -- 显示指示标
                 Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
-                indicator.BackgroundTransparency = 0   -- 显示指示标
 
                 Window._activeTab = {
                     Btn  = TabBtn,
                     Page = Page,
                     Text = TabText,
-                    Indicator = indicator
+                    Indicator = Indicator   -- 保存指示器引用
                 }
             end)
 
-            -- 默认激活第一个 Tab（如果没有激活的）
+            -- 若这是第一个 Tab，则自动激活
             if not Window._activeTab then
                 TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 0)
-                indicator.BackgroundTransparency = 0   -- 显示指示标
+                Indicator.BackgroundTransparency = 0   -- 显示指示标
                 Window._activeTab = {
                     Btn  = TabBtn,
                     Page = Page,
                     Text = TabText,
-                    Indicator = indicator
+                    Indicator = Indicator
                 }
             end
 
-            -- 排序（Config / Settings 靠后）
             if name == "Config" then TabBtn.LayoutOrder = 99998 end
             if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
+            -- 返回元素创建器（保持不变）
             local getElements = function()
                 local elements = {}
                 local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
