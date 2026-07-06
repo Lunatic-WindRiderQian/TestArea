@@ -3315,18 +3315,22 @@ function Fenglib:CreateWindow(Config)
             -- 启用裁剪，使指示标左侧被 TabBtn 的圆角裁剪成圆弧
             TabBtn.ClipsDescendants = true
 
-            -- ===== 指示标（左侧圆弧，右侧直角） =====
+            -- ===== 指示标：左侧半圆，右侧裁剪 =====
             local Indicator = Instance.new("Frame")
             Indicator.Name = "TabIndicator"
-            Indicator.Size = UDim2.new(0, 13, 1, 0)          -- 宽度13，左侧超出10
-            Indicator.Position = UDim2.new(0, -10, 0, 0)     -- 左移10，使左侧超出边界
+            Indicator.Size = UDim2.new(0, 32, 0, 32)          -- 正方形，用于形成半圆
+            Indicator.AnchorPoint = Vector2.new(0, 0.5)      -- 左边缘居中
+            Indicator.Position = UDim2.new(0, -16, 0.5, 0)   -- 左移 16 像素，使左侧半圆露出
             Indicator.BackgroundColor3 = CurrentTheme.Accent
             Indicator.BackgroundTransparency = 1
             Indicator.BorderSizePixel = 0
             Indicator.Parent = TabBtn
-            -- 不添加 UICorner，靠父级裁剪形成左侧圆弧
+
+            local indicatorCorner = Instance.new("UICorner")
+            indicatorCorner.CornerRadius = UDim.new(0, 16)   -- 半圆（半径 = 宽度的一半）
+            indicatorCorner.Parent = Indicator
+
             AddToRegistry(Indicator, "BackgroundColor3", "Accent")
-            -- =========================================
 
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
