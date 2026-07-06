@@ -3312,25 +3312,35 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- 启用裁剪，使指示标左侧被 TabBtn 的圆角裁剪成圆弧
-            TabBtn.ClipsDescendants = true
+            -- ===== 新版指示标：左圆右直（独立组合） =====
+            local IndicatorContainer = Instance.new("Frame")
+            IndicatorContainer.Name = "TabIndicator"
+            IndicatorContainer.Size = UDim2.new(0, 20, 1, 0)   -- 总宽度，可根据圆角调整
+            IndicatorContainer.Position = UDim2.new(0, 0, 0, 0)
+            IndicatorContainer.BackgroundTransparency = 1
+            IndicatorContainer.Parent = TabBtn
 
-            -- ===== 指示标：左侧半圆，右侧裁剪 =====
-            local Indicator = Instance.new("Frame")
-            Indicator.Name = "TabIndicator"
-            Indicator.Size = UDim2.new(0, 32, 0, 32)          -- 正方形，用于形成半圆
-            Indicator.AnchorPoint = Vector2.new(0, 0.5)      -- 左边缘居中
-            Indicator.Position = UDim2.new(0, -16, 0.5, 0)   -- 左移 16 像素，使左侧半圆露出
-            Indicator.BackgroundColor3 = CurrentTheme.Accent
-            Indicator.BackgroundTransparency = 1
-            Indicator.BorderSizePixel = 0
-            Indicator.Parent = TabBtn
+            local R = 10  -- 与 TabBtn 圆角半径一致
+            local LeftPart = Instance.new("Frame")
+            LeftPart.Size = UDim2.new(0, 2*R, 1, 0)
+            LeftPart.BackgroundColor3 = CurrentTheme.Accent
+            LeftPart.BackgroundTransparency = 1
+            LeftPart.Parent = IndicatorContainer
+            Instance.new("UICorner", LeftPart).CornerRadius = UDim.new(0, R)
+            AddToRegistry(LeftPart, "BackgroundColor3", "Accent")
 
-            local indicatorCorner = Instance.new("UICorner")
-            indicatorCorner.CornerRadius = UDim.new(0, 16)   -- 半圆（半径 = 宽度的一半）
-            indicatorCorner.Parent = Indicator
+            local RightPart = Instance.new("Frame")
+            RightPart.Size = UDim2.new(1, -2*R, 1, 0)
+            RightPart.Position = UDim2.new(0, 2*R, 0, 0)
+            RightPart.BackgroundColor3 = CurrentTheme.Accent
+            RightPart.BackgroundTransparency = 1
+            RightPart.Parent = IndicatorContainer
+            AddToRegistry(RightPart, "BackgroundColor3", "Accent")
 
-            AddToRegistry(Indicator, "BackgroundColor3", "Accent")
+            -- 存储引用以便取消激活时控制
+            TabBtn.LeftIndicator = LeftPart
+            TabBtn.RightIndicator = RightPart
+            -- =========================================
 
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
@@ -3407,16 +3417,18 @@ function Fenglib:CreateWindow(Config)
             local function activateTab()
                 -- 取消旧 Tab
                 if Window._activeTab and Window._activeTab.Btn ~= TabBtn then
-                    local oldIndicator = Window._activeTab.Btn:FindFirstChild("TabIndicator")
-                    if oldIndicator then
-                        Tween(oldIndicator, {BackgroundTransparency = 1}, 0.2)
+                    local oldBtn = Window._activeTab.Btn
+                    if oldBtn.LeftIndicator then
+                        Tween(oldBtn.LeftIndicator, {BackgroundTransparency = 1}, 0.2)
+                        Tween(oldBtn.RightIndicator, {BackgroundTransparency = 1}, 0.2)
                     end
-                    Window._activeTab.Btn.BackgroundTransparency = 1
+                    oldBtn.BackgroundTransparency = 1
                     Window._activeTab.Page.Visible = false
                 end
 
                 -- 激活当前 Tab
-                Tween(Indicator, {BackgroundTransparency = 0}, 0.2)
+                Tween(LeftPart, {BackgroundTransparency = 0}, 0.2)
+                Tween(RightPart, {BackgroundTransparency = 0}, 0.2)
                 TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
                 Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
@@ -3432,7 +3444,8 @@ function Fenglib:CreateWindow(Config)
 
             -- 默认选中第一个 Tab
             if not Window._activeTab then
-                Indicator.BackgroundTransparency = 0   -- 直接可见
+                LeftPart.BackgroundTransparency = 0
+                RightPart.BackgroundTransparency = 0
                 TabBtn.BackgroundTransparency = 0.05
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 0)
