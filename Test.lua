@@ -3278,7 +3278,7 @@ function Fenglib:CreateWindow(Config)
         Window._activeTab = nil
         Window._tabs = {}  -- 存储每个 Tab 的状态表
 
-        -- ========== Tab 创建（已修改：删除指示条，发光条宽度改为3，保留光晕纹理） ==========
+        -- ========== Tab 创建（修改：删除指示条，发光条宽度3，光晕纹理内部） ==========
         function Window:Tab(name, icon)
             -- 创建 Tab 按钮
             local TabBtn = Instance.new("TextButton")
@@ -3290,9 +3290,9 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- ====== 发光条（宽度3，保留光晕纹理） ======
+            -- ====== 发光条（宽度3，光晕纹理在内部） ======
             local Glow = Instance.new("Frame")
-            Glow.Size = UDim2.new(0, 3, 1, 0)   -- 宽度改为3
+            Glow.Size = UDim2.new(0, 3, 1, 0)   -- 宽度3
             Glow.Position = UDim2.new(0, 0, 0, 0)
             Glow.BackgroundTransparency = 1
             Glow.BorderSizePixel = 0
@@ -3301,17 +3301,17 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", Glow).CornerRadius = UDim.new(0, 3)
             AddToRegistry(Glow, "BackgroundColor3", "Accent")
 
-            -- 光晕纹理（恢复）
+            -- 光晕纹理（完全填充发光条内部）
             local GlowImage = Instance.new("ImageLabel")
             GlowImage.ImageColor3 = CurrentTheme.Accent
             GlowImage.ScaleType = Enum.ScaleType.Slice
             GlowImage.ImageTransparency = 1
             GlowImage.Parent = Glow
             GlowImage.BackgroundColor3 = CurrentTheme.Accent
-            GlowImage.Size = UDim2.new(1, 20, 1, 20)   -- 保留光晕尺寸
+            GlowImage.Size = UDim2.new(1, 0, 1, 0)   -- 填充父级
             GlowImage.Image = "rbxassetid://18245826428"   -- 光晕纹理
             GlowImage.BackgroundTransparency = 1
-            GlowImage.Position = UDim2.new(0, -20, 0, -10)
+            GlowImage.Position = UDim2.new(0, 0, 0, 0)  -- 无偏移
             GlowImage.ZIndex = 2
             GlowImage.BorderSizePixel = 0
             GlowImage.SliceCenter = Rect.new(Vector2.new(20, 20), Vector2.new(80, 80))
@@ -3392,7 +3392,7 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- 状态表（包含 glow 和 glowImage）
+            -- 状态表
             local state = {
                 isActive = false,
                 btn = TabBtn,
@@ -3418,7 +3418,6 @@ function Fenglib:CreateWindow(Config)
                     if s.textLabel then
                         Tween(s.textLabel, {TextTransparency = 0.3}, 0.2)
                     end
-                    -- 重置发光
                     if s.glow then
                         Tween(s.glow, {BackgroundTransparency = 1}, 0.2)
                     end
@@ -3432,7 +3431,6 @@ function Fenglib:CreateWindow(Config)
                 TabBtn.BackgroundColor3 = CurrentTheme.Accent
                 state.isActive = true
                 Tween(TabText, {TextTransparency = 0}, 0.2)
-                -- 激活发光
                 if Glow then
                     Tween(Glow, {BackgroundTransparency = 0}, 0.2)
                 end
@@ -3460,7 +3458,6 @@ function Fenglib:CreateWindow(Config)
                 Page.Position = UDim2.new(0, 0, 0, 0)
                 Window._activeTab = state
 
-                -- 默认发光显示
                 Glow.BackgroundTransparency = 0
                 GlowImage.ImageTransparency = 0.69
             end
@@ -3468,11 +3465,11 @@ function Fenglib:CreateWindow(Config)
             -- 存储状态表
             table.insert(Window._tabs, state)
 
-            -- 排序（配置/设置靠后）
+            -- 排序
             if name == "Config" then TabBtn.LayoutOrder = 99998 end
             if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
-            -- 主题更新监听
+            -- 主题更新
             table.insert(ThemeListeners, function()
                 for _, s in ipairs(Window._tabs) do
                     local btn = s.btn
