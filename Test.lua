@@ -3278,7 +3278,7 @@ function Fenglib:CreateWindow(Config)
         Window._activeTab = nil
         Window._tabs = {}  -- 存储每个 Tab 的状态表
 
-        -- ========== Tab 创建 ==========
+        -- ========== Tab 创建（已搬运光晕效果） ==========
         function Window:Tab(name, icon)
             -- 创建 Tab 按钮
             local TabBtn = Instance.new("TextButton")
@@ -3289,6 +3289,35 @@ function Fenglib:CreateWindow(Config)
             TabBtn.Parent = TabScroll
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
+
+            -- ======== 左侧光晕 ========
+            local Glow = Instance.new("Frame")
+            Glow.Name = "Glow"
+            Glow.Size = UDim2.new(0, 20, 1, 0)
+            Glow.Position = UDim2.new(0, 0, 0, 0)
+            Glow.BackgroundTransparency = 1  -- 默认隐藏
+            Glow.BorderSizePixel = 0
+            Glow.ZIndex = 2
+            Glow.Parent = TabBtn
+            AddToRegistry(Glow, "BackgroundColor3", "Accent")
+
+            local glowCorner = Instance.new("UICorner")
+            glowCorner.CornerRadius = UDim.new(0, 3)
+            glowCorner.Parent = Glow
+
+            local GlowImage = Instance.new("ImageLabel")
+            GlowImage.Name = "GlowImage"
+            GlowImage.Image = "rbxassetid://18245826428"
+            GlowImage.ScaleType = Enum.ScaleType.Slice
+            GlowImage.SliceCenter = Rect.new(20, 20, 80, 80)
+            GlowImage.Size = UDim2.new(1, 20, 1, 20)
+            GlowImage.Position = UDim2.new(0, -20, 0, -10)
+            GlowImage.BackgroundTransparency = 1
+            GlowImage.ImageTransparency = 1   -- 默认隐藏
+            GlowImage.ZIndex = 2
+            GlowImage.Parent = Glow
+            AddToRegistry(GlowImage, "ImageColor3", "Accent")
+            -- ============================
 
             -- 指示条
             local TabBar = Instance.new("Frame")
@@ -3374,13 +3403,15 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- === 使用独立状态表，不在按钮上挂载自定义属性 ===
+            -- 状态表（包含光晕对象）
             local state = {
                 isActive = false,
                 btn = TabBtn,
                 page = Page,
                 textLabel = TabText,
-                bar = TabBar
+                bar = TabBar,
+                glow = Glow,
+                glowImage = GlowImage,
             }
 
             -- 点击切换逻辑
@@ -3395,22 +3426,31 @@ function Fenglib:CreateWindow(Config)
                     btn.BackgroundTransparency = 1
                     btn.BackgroundColor3 = CurrentTheme.Top
                     s.isActive = false
-                    -- 指示条隐藏
+                    -- 隐藏光晕
+                    if s.glow then
+                        s.glow.BackgroundTransparency = 1
+                    end
+                    if s.glowImage then
+                        s.glowImage.ImageTransparency = 1
+                    end
+                    -- 隐藏指示条
                     local bar = s.bar
                     if bar then
                         Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
                     end
-                    -- 文字透明度恢复 0.3
+                    -- 文字透明度恢复
                     local txt = s.textLabel
                     if txt then
                         Tween(txt, {TextTransparency = 0.3}, 0.2)
                     end
                 end
 
-                -- 激活当前 Tab（样式改为 Test.lua：仅透明度 0.05，不改变颜色）
+                -- 激活当前 Tab
                 TabBtn.BackgroundTransparency = 0.05
-                -- 不设置 BackgroundColor3，保持主题默认的 Top
                 state.isActive = true
+                -- 显示光晕
+                Glow.BackgroundTransparency = 0
+                GlowImage.ImageTransparency = 0.69   -- 半透明发光
 
                 if TabBar then
                     Tween(TabBar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
@@ -3427,11 +3467,12 @@ function Fenglib:CreateWindow(Config)
                 Window._activeTab = state
             end)
 
-            -- 如果是第一个 Tab，默认激活（同样应用修改后的样式）
+            -- 如果是第一个 Tab，默认激活（同样应用光晕）
             if not Window._activeTab then
                 TabBtn.BackgroundTransparency = 0.05
-                -- 不设置 BackgroundColor3
                 state.isActive = true
+                Glow.BackgroundTransparency = 0
+                GlowImage.ImageTransparency = 0.69
                 TabBar.BackgroundTransparency = 0
                 TabBar.Size = UDim2.new(0,3,0.65,0)
                 TabText.TextTransparency = 0
@@ -3447,18 +3488,17 @@ function Fenglib:CreateWindow(Config)
             if name == "Config" then TabBtn.LayoutOrder = 99998 end
             if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
-            -- 主题更新监听（安全访问状态表）
+            -- 主题更新监听（保持光晕颜色同步）
             table.insert(ThemeListeners, function()
                 for _, s in ipairs(Window._tabs) do
                     local btn = s.btn
                     if s.isActive then
                         btn.BackgroundTransparency = 0.05
-                        -- 不改变 BackgroundColor3，由主题自动更新
+                        -- 光晕颜色通过 AddToRegistry 自动更新
                     else
                         btn.BackgroundColor3 = CurrentTheme.Top
                         btn.BackgroundTransparency = 1
                     end
-                    -- TextLabel 颜色通过 AddToRegistry 自动更新
                 end
             end)
 
