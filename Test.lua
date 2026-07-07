@@ -3145,38 +3145,6 @@ function Fenglib:CreateWindow(Config)
                 Instance.new("UICorner", tabBar).CornerRadius = UDim.new(1, 0)
                 AddToRegistry(tabBar, "BackgroundColor3", "Accent")
 
-                -- ===== 光晕效果（卡片模式 Tab） =====
-                local glow = Instance.new("Frame")
-                glow.Name = "Glow"
-                glow.Size = UDim2.new(1, 6, 0.8, 0)
-                glow.Position = UDim2.new(0, -3, 0.1, 0)
-                glow.BackgroundColor3 = CurrentTheme.Accent
-                glow.BackgroundTransparency = 0.7
-                glow.BorderSizePixel = 0
-                glow.ZIndex = 0
-                glow.Parent = tabBtn
-                Instance.new("UICorner", glow).CornerRadius = UDim.new(1, 0)
-                local grad = Instance.new("UIGradient")
-                grad.Rotation = 90
-                grad.Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255))
-                })
-                grad.Transparency = NumberSequence.new({
-                    NumberSequenceKeypoint.new(0, 1),
-                    NumberSequenceKeypoint.new(0.5, 0.3),
-                    NumberSequenceKeypoint.new(1, 1)
-                })
-                grad.Parent = glow
-                AddToRegistry(glow, "BackgroundColor3", "Accent")
-                table.insert(ThemeListeners, function()
-                    glow.BackgroundColor3 = CurrentTheme.Accent
-                end)
-                glow.ZIndex = 0
-                tabBar.ZIndex = 1
-                -- 默认隐藏（非激活）
-                glow.BackgroundTransparency = 1
-
                 local contentFrame = Instance.new("Frame")
                 contentFrame.Size = UDim2.new(1, 0, 1, 0)
                 contentFrame.BackgroundTransparency = 1
@@ -3248,7 +3216,7 @@ function Fenglib:CreateWindow(Config)
                 task.spawn(updatePageCanvas)
 
                 page.ScrollingEnabled = true
-                page.ScrollBarThickness = 0
+                page.ScrollBarThickness = 0   -- 再次确保隐藏
 
                 local getElements = function()
                     local elements = {}
@@ -3270,42 +3238,7 @@ function Fenglib:CreateWindow(Config)
                 end
 
                 tabBtn.MouseButton1Click:Connect(function()
-                    -- 重置所有卡片 Tab
-                    for _, btn in ipairs(sideBar:GetChildren()) do
-                        if btn:IsA("TextButton") then
-                            btn.Selected = false
-                            Tween(btn, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top}, 0.2)
-                            local txt = btn:FindFirstChild("ContentFrame") and btn.ContentFrame:FindFirstChildOfClass("TextLabel")
-                            if txt then
-                                Tween(txt, {TextColor3 = Color3.fromRGB(150,150,158)}, 0.2)
-                            end
-                            local bar = btn:FindFirstChildOfClass("Frame")
-                            if bar then
-                                Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
-                            end
-                            -- 隐藏光晕
-                            local g = btn:FindFirstChild("Glow")
-                            if g then
-                                Tween(g, {BackgroundTransparency = 1}, 0.2)
-                            end
-                        end
-                    end
-
-                    -- 激活当前
-                    tabBtn.Selected = true
-                    Tween(tabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
-                    Tween(textLabel, {TextColor3 = CurrentTheme.Text}, 0.2)
-                    Tween(tabBar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
-                    -- 显示光晕
-                    Tween(glow, {BackgroundTransparency = 0.3}, 0.2)
-
-                    -- 切换页面
-                    for _, child in ipairs(rightPageContainer:GetChildren()) do
-                        if child:IsA("ScrollingFrame") then
-                            child.Visible = false
-                        end
-                    end
-                    page.Visible = true
+                    activateTab(tabBtn, page, textLabel, tabBar)
                 end)
 
                 local isFirst = true
@@ -3316,13 +3249,7 @@ function Fenglib:CreateWindow(Config)
                     end
                 end
                 if isFirst then
-                    -- 激活第一个
-                    tabBtn.Selected = true
-                    Tween(tabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
-                    Tween(textLabel, {TextColor3 = CurrentTheme.Text}, 0.2)
-                    Tween(tabBar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
-                    Tween(glow, {BackgroundTransparency = 0.3}, 0.2)
-                    page.Visible = true
+                    activateTab(tabBtn, page, textLabel, tabBar)
                 end
 
                 return getElements()
@@ -3351,19 +3278,38 @@ function Fenglib:CreateWindow(Config)
         Window._activeTab = nil
         Window._tabs = {}  -- 存储每个 Tab 的状态表
 
-        -- ========== Tab 创建（包含光晕效果） ==========
+        -- ========== Tab 创建（新样式：光晕背景） ==========
         function Window:Tab(name, icon)
             -- 创建 Tab 按钮
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(0, 140, 0, 32)
-            TabBtn.BackgroundTransparency = 1
+            TabBtn.BackgroundTransparency = 1   -- 按钮自身完全透明
             TabBtn.BackgroundColor3 = CurrentTheme.Top
             TabBtn.Text = ""
             TabBtn.Parent = TabScroll
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- 指示条 (TabBar)
+            -- 光晕背景层（从左到右渐变透明，主题色）
+            local glowFrame = Instance.new("Frame")
+            glowFrame.Name = "GlowBackground"
+            glowFrame.Size = UDim2.new(1, 0, 1, 0)
+            glowFrame.BackgroundColor3 = CurrentTheme.Accent
+            glowFrame.BackgroundTransparency = 1   -- 默认隐藏
+            glowFrame.Parent = TabBtn
+            local glowCorner = Instance.new("UICorner")
+            glowCorner.CornerRadius = UDim.new(0, 10)
+            glowCorner.Parent = glowFrame
+            local glowGrad = Instance.new("UIGradient")
+            glowGrad.Rotation = 0   -- 从左到右
+            glowGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
+            glowGrad.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0.55),   -- 左侧半透明（不透明度0.45）
+                NumberSequenceKeypoint.new(1, 1)       -- 右侧完全透明
+            })
+            glowGrad.Parent = glowFrame
+
+            -- 指示条
             local TabBar = Instance.new("Frame")
             TabBar.Size = UDim2.new(0, 3, 0, 0)
             TabBar.Position = UDim2.new(0, 0, 0.175, 0)
@@ -3372,38 +3318,6 @@ function Fenglib:CreateWindow(Config)
             TabBar.Parent = TabBtn
             Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
             AddToRegistry(TabBar, "BackgroundColor3", "Accent")
-
-            -- ===== 光晕效果 =====
-            local Glow = Instance.new("Frame")
-            Glow.Name = "Glow"
-            Glow.Size = UDim2.new(1, 6, 0.8, 0)          -- 比指示条略宽，高度稍小形成柔光
-            Glow.Position = UDim2.new(0, -3, 0.1, 0)      -- 居中偏移
-            Glow.BackgroundColor3 = CurrentTheme.Accent
-            Glow.BackgroundTransparency = 0.7            -- 初始半透明，激活后变亮
-            Glow.BorderSizePixel = 0
-            Glow.ZIndex = 0                               -- 放在指示条后面
-            Glow.Parent = TabBtn
-            Instance.new("UICorner", Glow).CornerRadius = UDim.new(1, 0)
-            -- 渐变透明度：中间亮，边缘淡出
-            local grad = Instance.new("UIGradient")
-            grad.Rotation = 90
-            grad.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255))
-            })
-            grad.Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0, 1),
-                NumberSequenceKeypoint.new(0.5, 0.25),
-                NumberSequenceKeypoint.new(1, 1)
-            })
-            grad.Parent = Glow
-            AddToRegistry(Glow, "BackgroundColor3", "Accent")
-            table.insert(ThemeListeners, function()
-                Glow.BackgroundColor3 = CurrentTheme.Accent
-            end)
-
-            -- 提升指示条层级，使其在光晕之上
-            TabBar.ZIndex = 1
 
             -- 内容（图标+文字）
             local ContentFrame = Instance.new("Frame")
@@ -3479,14 +3393,14 @@ function Fenglib:CreateWindow(Config)
             PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
             task.spawn(updatePageCanvas)
 
-            -- === 使用独立状态表 ===
+            -- 独立状态表
             local state = {
                 isActive = false,
                 btn = TabBtn,
                 page = Page,
                 textLabel = TabText,
                 bar = TabBar,
-                glow = Glow
+                glow = glowFrame
             }
 
             -- 点击切换逻辑
@@ -3497,19 +3411,13 @@ function Fenglib:CreateWindow(Config)
 
                 -- 重置所有 Tab
                 for _, s in ipairs(Window._tabs) do
-                    local btn = s.btn
-                    btn.BackgroundTransparency = 1
-                    btn.BackgroundColor3 = CurrentTheme.Top
+                    s.btn.BackgroundTransparency = 1          -- 按钮自身透明
                     s.isActive = false
+                    s.glow.BackgroundTransparency = 1         -- 隐藏光晕
                     -- 指示条隐藏
                     local bar = s.bar
                     if bar then
                         Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
-                    end
-                    -- 光晕隐藏（透明度1）
-                    local glow = s.glow
-                    if glow then
-                        Tween(glow, {BackgroundTransparency = 1}, 0.2)
                     end
                     -- 文字透明度恢复 0.3
                     local txt = s.textLabel
@@ -3519,14 +3427,12 @@ function Fenglib:CreateWindow(Config)
                 end
 
                 -- 激活当前 Tab
-                TabBtn.BackgroundTransparency = 0.05
+                TabBtn.BackgroundTransparency = 1          -- 按钮自身透明
                 state.isActive = true
+                state.glow.BackgroundTransparency = 0      -- 显示光晕
 
                 if TabBar then
                     Tween(TabBar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
-                end
-                if Glow then
-                    Tween(Glow, {BackgroundTransparency = 0.25}, 0.2)   -- 光晕显现
                 end
                 Tween(TabText, {TextTransparency = 0}, 0.2)
 
@@ -3540,13 +3446,13 @@ function Fenglib:CreateWindow(Config)
                 Window._activeTab = state
             end)
 
-            -- 如果是第一个 Tab，默认激活（同样应用光晕）
+            -- 如果是第一个 Tab，默认激活
             if not Window._activeTab then
-                TabBtn.BackgroundTransparency = 0.05
+                TabBtn.BackgroundTransparency = 1
                 state.isActive = true
+                state.glow.BackgroundTransparency = 0
                 TabBar.BackgroundTransparency = 0
                 TabBar.Size = UDim2.new(0,3,0.65,0)
-                Glow.BackgroundTransparency = 0.25   -- 光晕初始显现
                 TabText.TextTransparency = 0
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 0)
@@ -3560,17 +3466,23 @@ function Fenglib:CreateWindow(Config)
             if name == "Config" then TabBtn.LayoutOrder = 99998 end
             if name == "Settings" then TabBtn.LayoutOrder = 99999 end
 
-            -- 主题更新监听（安全访问状态表）
+            -- 主题更新监听
             table.insert(ThemeListeners, function()
                 for _, s in ipairs(Window._tabs) do
-                    local btn = s.btn
-                    if s.isActive then
-                        btn.BackgroundTransparency = 0.05
-                    else
-                        btn.BackgroundColor3 = CurrentTheme.Top
-                        btn.BackgroundTransparency = 1
+                    local glow = s.glow
+                    if glow then
+                        glow.BackgroundColor3 = CurrentTheme.Accent
+                        local grad = glow:FindFirstChildOfClass("UIGradient")
+                        if grad then
+                            grad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
+                        end
                     end
-                    -- TextLabel 颜色通过 AddToRegistry 自动更新
+                    -- 按钮自身背景色由 AddToRegistry 自动更新
+                    if s.isActive then
+                        s.btn.BackgroundTransparency = 1
+                    else
+                        s.btn.BackgroundTransparency = 1
+                    end
                 end
             end)
 
