@@ -3407,9 +3407,9 @@ function Fenglib:CreateWindow(Config)
                     end
                 end
 
-                -- 激活当前 Tab（metUI 样式）
-                TabBtn.BackgroundTransparency = 0.88
-                TabBtn.BackgroundColor3 = CurrentTheme.Accent
+                -- 激活当前 Tab（样式改为 Test.lua：仅透明度 0.05，不改变颜色）
+                TabBtn.BackgroundTransparency = 0.05
+                -- 不设置 BackgroundColor3，保持主题默认的 Top
                 state.isActive = true
 
                 if TabBar then
@@ -3427,10 +3427,10 @@ function Fenglib:CreateWindow(Config)
                 Window._activeTab = state
             end)
 
-            -- 如果是第一个 Tab，默认激活
+            -- 如果是第一个 Tab，默认激活（同样应用修改后的样式）
             if not Window._activeTab then
-                TabBtn.BackgroundTransparency = 0.88
-                TabBtn.BackgroundColor3 = CurrentTheme.Accent
+                TabBtn.BackgroundTransparency = 0.05
+                -- 不设置 BackgroundColor3
                 state.isActive = true
                 TabBar.BackgroundTransparency = 0
                 TabBar.Size = UDim2.new(0,3,0.65,0)
@@ -3452,8 +3452,8 @@ function Fenglib:CreateWindow(Config)
                 for _, s in ipairs(Window._tabs) do
                     local btn = s.btn
                     if s.isActive then
-                        btn.BackgroundColor3 = CurrentTheme.Accent
-                        btn.BackgroundTransparency = 0.88
+                        btn.BackgroundTransparency = 0.05
+                        -- 不改变 BackgroundColor3，由主题自动更新
                     else
                         btn.BackgroundColor3 = CurrentTheme.Top
                         btn.BackgroundTransparency = 1
