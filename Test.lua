@@ -3278,7 +3278,7 @@ function Fenglib:CreateWindow(Config)
         Window._activeTab = nil
         Window._tabs = {}  -- 存储每个 Tab 的状态表
 
-        -- ========== Tab 创建（修改：删除光晕，发光条宽度3，位置右移4px） ==========
+        -- ========== Tab 创建（修改：删除光晕，发光条宽度改为7，位置左移） ==========
         function Window:Tab(name, icon)
             -- 创建 Tab 按钮
             local TabBtn = Instance.new("TextButton")
@@ -3290,10 +3290,10 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- ====== 发光条（宽度3，位置右移4px，无光晕） ======
+            -- ====== 发光条（宽度7，位置X=0，无光晕） ======
             local Glow = Instance.new("Frame")
-            Glow.Size = UDim2.new(0, 3, 1, 0)   -- 宽度3
-            Glow.Position = UDim2.new(0, 4, 0, 0)   -- 右移4px
+            Glow.Size = UDim2.new(0, 7, 1, 0)   -- 宽度7（左侧延伸到X=0，右侧保持在X=7）
+            Glow.Position = UDim2.new(0, 0, 0, 0)   -- 从左侧边缘开始
             Glow.BackgroundTransparency = 1
             Glow.BorderSizePixel = 0
             Glow.BackgroundColor3 = CurrentTheme.Accent
