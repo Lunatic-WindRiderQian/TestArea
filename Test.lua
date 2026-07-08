@@ -1724,7 +1724,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Size = UDim2.new(0, 0, 0, 0) 
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    MainFrame.ClipsDescendants = false
+    MainFrame.ClipsDescendants = true          -- 关键修改：启用圆角裁剪，使背景圆角生效
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
@@ -1739,7 +1739,7 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- ===== 高级视觉增强（仅保留模糊和边框渐变） =====
+    -- ===== 高级视觉增强（保留所有特效，仅修正圆角裁剪） =====
     do
         local blurPart = Instance.new("Part")
         blurPart.Name = "FengBlurPart"
