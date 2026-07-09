@@ -465,11 +465,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end)
 
         -- =============================================
-        -- 所有控件均接受 config 表格，字段名如 Name, Callback, Default, Options, 等
+        -- 所有控件定义 (child)
         -- =============================================
         local child = {}
 
-        -- Button
+        -- Button (保持不变)
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
             local callback = config.Callback or function() end
@@ -523,10 +523,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Toggle
+        -- Toggle (保持不变)
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
-            local Enabled = config.Default or false
+            local Enabled = config.Value or false
             local callback = config.Callback or function() end
             local controlId = toggleText .. "_" .. tostring(#Registry)
 
@@ -598,12 +598,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- Slider
+        -- Slider (保持不变)
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
-            local min = config.Min
-            local max = config.Max
-            local default = config.Default or (min or 0)
+            local valueTable = config.Value or {}
+            local min = valueTable.Min
+            local max = valueTable.Max
+            local default = valueTable.Default
             local callback = config.Callback or function() end
             local options = config.Options or {}
             local unlimited = (min == nil and max == nil)
@@ -768,15 +769,46 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- Dropdown
+        -- ===== Dropdown (增强版，移除图标，添加选项分割线) =====
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
-            local options = config.Options or {}
+            local options = config.Values or {}
+            local multi = config.Multi or false
+            local selectedValue = config.Value
             local callback = config.Callback or function() end
             local Dropped = false
-            local Selected = options[1] or ""
+
+            local optionData = {}
+            local selectedItems = {}
             local controlId = dropText .. "_" .. tostring(#Registry)
 
+            -- 初始化选中项
+            if multi then
+                selectedItems = {}
+                if type(selectedValue) == "table" then
+                    for _, v in ipairs(selectedValue) do
+                        if table.find(options, v) then
+                            table.insert(selectedItems, v)
+                        end
+                    end
+                end
+            else
+                if selectedValue and table.find(options, selectedValue) then
+                    selectedItems = { selectedValue }
+                else
+                    selectedItems = {}
+                end
+            end
+
+            local function getDisplayText()
+                if multi then
+                    return #selectedItems > 0 and table.concat(selectedItems, ", ") or "..."
+                else
+                    return selectedItems[1] or "..."
+                end
+            end
+
+            -- ===== UI 构建 =====
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Text = ""
@@ -786,7 +818,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
             local Lbl = Instance.new("TextLabel")
-            Lbl.Text = dropText
+            Lbl.Text = dropText .. ": " .. getDisplayText()
             Lbl.Size = UDim2.new(1, -40, 1, 0)
             Lbl.Position = UDim2.new(0, 15, 0, 0)
             Lbl.BackgroundTransparency = 1
@@ -796,14 +828,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Lbl.Parent = Btn
             AddToRegistry(Lbl, "TextColor3", "Text")
 
-            local Icon = Instance.new("ImageLabel")
-            Icon.Image = "rbxassetid://18865373378"
-            Icon.Size = UDim2.new(0, 20, 0, 20)
-            Icon.Position = UDim2.new(1, -30, 0.5, -10)
-            Icon.BackgroundTransparency = 1
-            Icon.Parent = Btn
-            AddToRegistry(Icon, "ImageColor3", "Accent")
+            -- 不创建图标 (已移除)
 
+            -- 下拉容器
             local Container = Instance.new("Frame")
             Container.Size = UDim2.new(1, 0, 0, 0)
             Container.Visible = false
@@ -821,109 +848,510 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local List = Instance.new("UIListLayout")
             List.SortOrder = Enum.SortOrder.LayoutOrder
+            List.Padding = UDim.new(0, 2)
             List.Parent = Container
 
-            local function Select(opt)
-                Dropped = false
-                Selected = opt
-                Lbl.Text = dropText .. ": " .. opt
-                if ConfigObjects[controlId] then
-                    ConfigObjects[controlId].Value = opt
-                end
-                callback(opt)
-
-                Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
-                Tween(Icon, {Rotation = 0}, 0.28)
-                task.wait(0.3)
-                Container.Visible = false
+            -- 更新显示
+            local function updateDisplay()
+                Lbl.Text = dropText .. ": " .. getDisplayText()
             end
 
-            local function RefreshOptions(newOpts)
-                for _, v in pairs(Container:GetChildren()) do
-                    if v:IsA("TextButton") then v:Destroy() end
+            local function fireCallback()
+                local result = multi and selectedItems or (selectedItems[1] or nil)
+                if ConfigObjects[controlId] then
+                    ConfigObjects[controlId].Value = result
+                end
+                callback(result)
+            end
+
+            -- 构建单个选项（含分割线）
+            local function buildOption(opt, isLast)
+                local isSelected = table.find(selectedItems, opt) ~= nil
+
+                local O = Instance.new("TextButton")
+                O.Size = UDim2.new(1, 0, 0, 34)
+                O.Text = "   " .. opt
+                O.TextXAlignment = Enum.TextXAlignment.Left
+                O.Font = Enum.Font.GothamMedium
+                O.TextSize = 12
+                O.BackgroundTransparency = 1
+                O.Parent = Container
+                O.TextColor3 = isSelected and CurrentTheme.Accent or CurrentTheme.Text
+                O._selected = isSelected
+
+                local function updateOptionStyle(btn, selected)
+                    if selected then
+                        btn.TextColor3 = CurrentTheme.Accent
+                    else
+                        btn.TextColor3 = CurrentTheme.Text
+                    end
+                    btn._selected = selected
                 end
 
-                for _, opt in pairs(newOpts) do
-                    local O = Instance.new("TextButton")
-                    O.Size = UDim2.new(1, 0, 0, 34)
-                    O.Text = "   " .. opt
-                    O.TextXAlignment = Enum.TextXAlignment.Left
-                    O.Font = Enum.Font.GothamMedium
-                    O.TextSize = 12
-                    O.BackgroundTransparency = 1
-                    O.Parent = Container
-                    O.TextColor3 = CurrentTheme.Text
-
-                    O.MouseEnter:Connect(function()
-                        Tween(O, {TextColor3 = CurrentTheme.Accent}, 0.15)
-                    end)
-                    O.MouseLeave:Connect(function()
+                O.MouseEnter:Connect(function()
+                    if not O._selected then
+                        Tween(O, {TextColor3 = Color3.fromRGB(200, 200, 210)}, 0.15)
+                    end
+                end)
+                O.MouseLeave:Connect(function()
+                    if not O._selected then
                         Tween(O, {TextColor3 = CurrentTheme.Text}, 0.15)
-                    end)
+                    else
+                        Tween(O, {TextColor3 = CurrentTheme.Accent}, 0.15)
+                    end
+                end)
 
-                    O.MouseButton1Click:Connect(function() Select(opt) end)
+                O.MouseButton1Click:Connect(function()
+                    if multi then
+                        local idx = table.find(selectedItems, opt)
+                        if idx then
+                            table.remove(selectedItems, idx)
+                            updateOptionStyle(O, false)
+                        else
+                            table.insert(selectedItems, opt)
+                            updateOptionStyle(O, true)
+                        end
+                        updateDisplay()
+                        fireCallback()
+                    else
+                        for _, child in ipairs(Container:GetChildren()) do
+                            if child:IsA("TextButton") then
+                                updateOptionStyle(child, child.Text:match("%s*(.+)$") == opt)
+                            end
+                        end
+                        selectedItems = { opt }
+                        updateDisplay()
+                        fireCallback()
+                        Dropped = false
+                        Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
+                        task.wait(0.3)
+                        Container.Visible = false
+                    end
+                end)
+
+                optionData[opt] = {
+                    btn = O,
+                    selected = isSelected,
+                    update = function(self, sel)
+                        self.selected = sel
+                        updateOptionStyle(O, sel)
+                    end
+                }
+
+                -- 分割线（非最后一项）
+                if not isLast then
+                    local sep = Instance.new("Frame")
+                    sep.Size = UDim2.new(1, -20, 0, 1)
+                    sep.Position = UDim2.new(0, 10, 0, 0)
+                    sep.BackgroundColor3 = CurrentTheme.Stroke
+                    sep.BackgroundTransparency = 0.7
+                    sep.BorderSizePixel = 0
+                    sep.Parent = Container
+                    AddToRegistry(sep, "BackgroundColor3", "Stroke")
+                end
+            end
+
+            -- 刷新选项列表
+            local function refreshOptions(newOpts)
+                for _, child in ipairs(Container:GetChildren()) do
+                    child:Destroy()
+                end
+                optionData = {}
+
+                for i, opt in ipairs(newOpts) do
+                    buildOption(opt, i == #newOpts)
+                end
+
+                if not multi and #selectedItems == 0 and #newOpts > 0 then
+                    selectedItems = { newOpts[1] }
+                    for _, child in ipairs(Container:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            local text = child.Text:match("%s*(.+)$")
+                            if text == newOpts[1] then
+                                updateOptionStyle(child, true)
+                            end
+                        end
+                    end
+                    updateDisplay()
+                    fireCallback()
                 end
 
                 if Dropped then
-                    local targetHeight = #newOpts * 34
+                    local count = 0
+                    for _, child in ipairs(Container:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            count = count + 1
+                        end
+                    end
+                    local targetHeight = count * 34 + (count - 1) * 1
                     Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
                 end
             end
-            RefreshOptions(options)
 
-            local function ResetDropdown()
-                if #options > 0 then
-                    Select(options[1])
-                else
-                    Dropped = false
-                    Lbl.Text = dropText
-                    Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
-                    Tween(Icon, {Rotation = 0}, 0.2)
-                    task.delay(0.22, function() Container.Visible = false end)
-                end
-            end
+            refreshOptions(options)
 
+            -- 打开/关闭下拉
             Btn.MouseButton1Click:Connect(function()
                 Dropped = not Dropped
                 if Dropped then
                     Container.Visible = true
-                    local buttonCount = 0
-                    for _, child in pairs(Container:GetChildren()) do
+                    local count = 0
+                    for _, child in ipairs(Container:GetChildren()) do
                         if child:IsA("TextButton") then
-                            buttonCount = buttonCount + 1
+                            count = count + 1
                         end
                     end
-                    local targetHeight = buttonCount * 34
+                    local targetHeight = count * 34 + (count - 1) * 1
                     Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.32)
-                    Tween(Icon, {Rotation = 180}, 0.32)
                 else
                     Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
-                    Tween(Icon, {Rotation = 0}, 0.28)
                     task.wait(0.3)
                     Container.Visible = false
                 end
             end)
 
-            ConfigObjects[controlId] = {
-                Type = "Dropdown",
-                Value = Selected,
-                Set = function(val) Select(val) end,
-                Refresh = RefreshOptions,
-                Reset = ResetDropdown
-            }
-
-            table.insert(ThemeListeners, function()
-                for _, O in pairs(Container:GetChildren()) do
-                    if O:IsA("TextButton") then
-                        O.TextColor3 = CurrentTheme.Text
+            -- 点击外部关闭（简单坐标判断）
+            UserInputService.InputBegan:Connect(function(input)
+                if Dropped and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                    local pos = input.Position
+                    local container = Container
+                    local btn = Btn
+                    if not (pos.X >= container.AbsolutePosition.X and pos.X <= container.AbsolutePosition.X + container.AbsoluteSize.X and
+                            pos.Y >= container.AbsolutePosition.Y and pos.Y <= container.AbsolutePosition.Y + container.AbsoluteSize.Y) and
+                       not (pos.X >= btn.AbsolutePosition.X and pos.X <= btn.AbsolutePosition.X + btn.AbsoluteSize.X and
+                            pos.Y >= btn.AbsolutePosition.Y and pos.Y <= btn.AbsolutePosition.Y + btn.AbsoluteSize.Y) then
+                        Dropped = false
+                        Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
+                        task.wait(0.3)
+                        Container.Visible = false
                     end
                 end
             end)
 
-            return {Refresh = RefreshOptions, Reset = ResetDropdown}
+            -- 注册
+            ConfigObjects[controlId] = {
+                Type = "Dropdown",
+                Value = multi and selectedItems or (selectedItems[1] or nil),
+                Set = function(val)
+                    if multi then
+                        if type(val) == "table" then
+                            selectedItems = {}
+                            for _, v in ipairs(val) do
+                                if table.find(options, v) then
+                                    table.insert(selectedItems, v)
+                                end
+                            end
+                        end
+                    else
+                        if type(val) == "string" and table.find(options, val) then
+                            selectedItems = { val }
+                        end
+                    end
+                    for _, child in ipairs(Container:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            local text = child.Text:match("%s*(.+)$")
+                            if multi then
+                                updateOptionStyle(child, table.find(selectedItems, text) ~= nil)
+                            else
+                                updateOptionStyle(child, text == (selectedItems[1] or ""))
+                            end
+                        end
+                    end
+                    updateDisplay()
+                    fireCallback()
+                end,
+                Refresh = refreshOptions,
+                Reset = function()
+                    if multi then selectedItems = {}
+                    else selectedItems = {}; if #options > 0 then selectedItems = { options[1] } end end
+                    refreshOptions(options)
+                end,
+                Add = function(opt)
+                    if not table.find(options, opt) then
+                        table.insert(options, opt)
+                        refreshOptions(options)
+                    end
+                end,
+                Remove = function(opt)
+                    local idx = table.find(options, opt)
+                    if idx then
+                        table.remove(options, idx)
+                        if not multi then
+                            if selectedItems[1] == opt then selectedItems = {} end
+                        else
+                            local sidx = table.find(selectedItems, opt)
+                            if sidx then table.remove(selectedItems, sidx) end
+                        end
+                        refreshOptions(options)
+                    end
+                end,
+                Get = function()
+                    return multi and selectedItems or (selectedItems[1] or nil)
+                end
+            }
+
+            return {
+                Refresh = refreshOptions,
+                Reset = function() ConfigObjects[controlId].Reset() end,
+                Add = function(opt) ConfigObjects[controlId].Add(opt) end,
+                Remove = function(opt) ConfigObjects[controlId].Remove(opt) end,
+                Get = function() return ConfigObjects[controlId].Get() end,
+                Set = function(val) ConfigObjects[controlId].Set(val) end,
+            }
         end
 
-        -- Keybind
+        -- ===== Listbox (搜索过滤，多选，动态管理) =====
+        child.Listbox = function(_, config)
+            config = config or {}
+            local title = config.Name or "List"
+            local items = config.Values or {}
+            local multi = config.Multi or false
+            local selected = config.Value or {}
+            local callback = config.Callback or function() end
+            local controlId = title .. "_listbox_" .. tostring(#Registry)
+
+            local allItems = {}
+            for _, v in ipairs(items) do table.insert(allItems, v) end
+            local selectedItems = {}
+            if multi then
+                if type(selected) == "table" then
+                    for _, v in ipairs(selected) do
+                        if table.find(allItems, v) then table.insert(selectedItems, v) end
+                    end
+                end
+            else
+                if selected and table.find(allItems, selected) then
+                    selectedItems = { selected }
+                end
+            end
+
+            -- 主容器
+            local main = Instance.new("Frame")
+            main.Size = UDim2.new(1, 0, 0, 0)
+            main.AutomaticSize = Enum.AutomaticSize.Y
+            main.Parent = contentHolder
+            main.BackgroundTransparency = 0.05
+            Instance.new("UICorner", main).CornerRadius = UDim.new(0, 4)
+            AddToRegistry(main, "BackgroundColor3", "Top")
+
+            local padding = Instance.new("UIPadding")
+            padding.PaddingLeft = UDim.new(0, 12)
+            padding.PaddingRight = UDim.new(0, 12)
+            padding.PaddingTop = UDim.new(0, 12)
+            padding.PaddingBottom = UDim.new(0, 12)
+            padding.Parent = main
+
+            local layout = Instance.new("UIListLayout")
+            layout.Padding = UDim.new(0, 8)
+            layout.SortOrder = Enum.SortOrder.LayoutOrder
+            layout.Parent = main
+
+            -- 标题
+            local titleLbl = Instance.new("TextLabel")
+            titleLbl.Size = UDim2.new(1, 0, 0, 20)
+            titleLbl.BackgroundTransparency = 1
+            titleLbl.Font = Enum.Font.GothamBold
+            titleLbl.Text = title
+            titleLbl.TextSize = 14
+            titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+            titleLbl.Parent = main
+            AddToRegistry(titleLbl, "TextColor3", "Text")
+
+            -- 搜索框
+            local searchBox = Instance.new("TextBox")
+            searchBox.Size = UDim2.new(1, 0, 0, 28)
+            searchBox.PlaceholderText = "Search..."
+            searchBox.Text = ""
+            searchBox.Font = Enum.Font.GothamMedium
+            searchBox.TextSize = 12
+            searchBox.BackgroundTransparency = 0.1
+            searchBox.Parent = main
+            Instance.new("UICorner", searchBox).CornerRadius = UDim.new(0, 6)
+            AddToRegistry(searchBox, "BackgroundColor3", "Main")
+            AddToRegistry(searchBox, "TextColor3", "Text")
+            local sbStroke = Instance.new("UIStroke")
+            sbStroke.Thickness = 1
+            sbStroke.Transparency = 0.6
+            sbStroke.Parent = searchBox
+            AddToRegistry(sbStroke, "Color", "Stroke")
+
+            -- 滚动列表容器
+            local listContainer = Instance.new("ScrollingFrame")
+            listContainer.Size = UDim2.new(1, 0, 0, 120)
+            listContainer.BackgroundTransparency = 1
+            listContainer.ScrollBarThickness = 4
+            listContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+            listContainer.Parent = main
+
+            local listLayout = Instance.new("UIListLayout")
+            listLayout.Padding = UDim.new(0, 2)
+            listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            listLayout.Parent = listContainer
+
+            local function updateCanvas()
+                listContainer.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10)
+            end
+            listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+            task.spawn(updateCanvas)
+
+            local optionButtons = {}
+
+            local function createOptionButton(text)
+                local isSelected = table.find(selectedItems, text) ~= nil
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.new(1, 0, 0, 28)
+                btn.Text = "   " .. text
+                btn.TextXAlignment = Enum.TextXAlignment.Left
+                btn.Font = Enum.Font.GothamMedium
+                btn.TextSize = 12
+                btn.BackgroundTransparency = 0.02
+                btn.Parent = listContainer
+                btn.TextColor3 = isSelected and CurrentTheme.Accent or CurrentTheme.Text
+                btn._selected = isSelected
+
+                local dot = Instance.new("Frame")
+                dot.Size = UDim2.new(0, 6, 0, 6)
+                dot.Position = UDim2.new(0, 4, 0.5, -3)
+                dot.AnchorPoint = Vector2.new(0, 0.5)
+                dot.BackgroundTransparency = isSelected and 0 or 1
+                dot.BorderSizePixel = 0
+                dot.Parent = btn
+                Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+                AddToRegistry(dot, "BackgroundColor3", "Accent")
+
+                local function updateStyle(selected)
+                    btn._selected = selected
+                    btn.TextColor3 = selected and CurrentTheme.Accent or CurrentTheme.Text
+                    dot.BackgroundTransparency = selected and 0 or 1
+                end
+
+                btn.MouseButton1Click:Connect(function()
+                    if multi then
+                        local idx = table.find(selectedItems, text)
+                        if idx then
+                            table.remove(selectedItems, idx)
+                            updateStyle(false)
+                        else
+                            table.insert(selectedItems, text)
+                            updateStyle(true)
+                        end
+                        callback(selectedItems)
+                        if ConfigObjects[controlId] then
+                            ConfigObjects[controlId].Value = selectedItems
+                        end
+                    else
+                        for _, ob in ipairs(optionButtons) do
+                            ob.updateStyle(false)
+                        end
+                        selectedItems = { text }
+                        updateStyle(true)
+                        callback(text)
+                        if ConfigObjects[controlId] then
+                            ConfigObjects[controlId].Value = text
+                        end
+                    end
+                end)
+
+                return {
+                    btn = btn,
+                    text = text,
+                    dot = dot,
+                    updateStyle = updateStyle,
+                    setVisible = function(vis) btn.Visible = vis end
+                }
+            end
+
+            local function refreshList(newItems)
+                for _, ob in ipairs(optionButtons) do ob.btn:Destroy() end
+                optionButtons = {}
+                if newItems then
+                    allItems = {}
+                    for _, v in ipairs(newItems) do table.insert(allItems, v) end
+                end
+                for _, text in ipairs(allItems) do
+                    local ob = createOptionButton(text)
+                    table.insert(optionButtons, ob)
+                end
+                local searchText = searchBox.Text:lower()
+                for _, ob in ipairs(optionButtons) do
+                    if searchText == "" or ob.text:lower():find(searchText) then
+                        ob.btn.Visible = true
+                    else
+                        ob.btn.Visible = false
+                    end
+                end
+                updateCanvas()
+                if ConfigObjects[controlId] then
+                    ConfigObjects[controlId].Value = multi and selectedItems or (selectedItems[1] or nil)
+                end
+            end
+
+            searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+                local searchText = searchBox.Text:lower()
+                for _, ob in ipairs(optionButtons) do
+                    if searchText == "" or ob.text:lower():find(searchText) then
+                        ob.btn.Visible = true
+                    else
+                        ob.btn.Visible = false
+                    end
+                end
+                updateCanvas()
+            end)
+
+            refreshList()
+
+            ConfigObjects[controlId] = {
+                Type = "Listbox",
+                Value = multi and selectedItems or (selectedItems[1] or nil),
+                Set = function(val)
+                    if multi then
+                        if type(val) == "table" then
+                            selectedItems = {}
+                            for _, v in ipairs(val) do
+                                if table.find(allItems, v) then
+                                    table.insert(selectedItems, v)
+                                end
+                            end
+                        end
+                    else
+                        if type(val) == "string" and table.find(allItems, val) then
+                            selectedItems = { val }
+                        end
+                    end
+                    for _, ob in ipairs(optionButtons) do
+                        ob.updateStyle(table.find(selectedItems, ob.text) ~= nil)
+                    end
+                    callback(selectedItems)
+                end,
+                Refresh = refreshList,
+                Add = function(opt)
+                    if not table.find(allItems, opt) then
+                        table.insert(allItems, opt)
+                        refreshList()
+                    end
+                end,
+                Remove = function(opt)
+                    local idx = table.find(allItems, opt)
+                    if idx then
+                        table.remove(allItems, idx)
+                        refreshList()
+                    end
+                end,
+                Get = function()
+                    return multi and selectedItems or (selectedItems[1] or nil)
+                end
+            }
+
+            return {
+                Refresh = refreshList,
+                Add = function(opt) ConfigObjects[controlId].Add(opt) end,
+                Remove = function(opt) ConfigObjects[controlId].Remove(opt) end,
+                Get = function() return ConfigObjects[controlId].Get() end,
+                Set = function(val) ConfigObjects[controlId].Set(val) end,
+            }
+        end
+
+        -- Keybind (保持不变)
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
             local Key = config.Default or Enum.KeyCode.M
@@ -986,7 +1414,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- ColorPicker
+        -- ColorPicker (保持不变)
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
             local Color = config.Default or Color3.fromRGB(255, 255, 255)
@@ -1280,10 +1708,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- Input
+        -- Input (保持不变)
         child.Input = function(_, config)
             local inputText = config.Name or ""
-            local default = config.Default or ""
+            local default = config.Value or ""
             local callback = config.Callback or function() end
             local options = config or {}
             local placeholder = options.Placeholder or ""
@@ -1371,7 +1799,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Textbox
+        -- Textbox (保持不变)
         child.Textbox = function(_, config)
             local boxText = config.Name or ""
             local placeholder = config.Placeholder or ""
@@ -1427,7 +1855,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
-        -- Label
+        -- Label (保持不变)
         child.Label = function(_, config)
             local labelText = config.Name or ""
             local LabelFrame = Instance.new("Frame")
@@ -1455,7 +1883,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- SubLabel
+        -- SubLabel (保持不变)
         child.SubLabel = function(_, config)
             local subLabelText = config.Name or ""
             local SubLabelFrame = Instance.new("Frame")
@@ -1484,7 +1912,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Paragraph
+        -- Paragraph (保持不变)
         child.Paragraph = function(_, config)
             local headerText = config.Header or ""
             local bodyText = config.Body or ""
@@ -1539,7 +1967,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Image (already accepts a table, unchanged)
+        -- Image (保持不变)
         child.Image = function(_, config)
             config = config or {}
             local title = config.Title or "Image"
@@ -3571,6 +3999,7 @@ function Fenglib:CreateWindow(Config)
                 elements.Paragraph= function(_, config) return createSection("", nil, true).Paragraph(config) end
                 elements.ColorPicker= function(_, config) return createSection("", nil, true).ColorPicker(config) end
                 elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
+                elements.Listbox  = function(_, config) return createSection("", nil, true).Listbox(config) end
                 return elements
             end
 
