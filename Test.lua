@@ -770,7 +770,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- 升级版 Dropdown（多选、状态持久化、光晕效果）
+        -- 升级版 Dropdown（支持多选、状态持久化、主题适配）
         -- ============================================================
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
@@ -878,15 +878,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     O.Parent = Container
                     O.TextColor3 = CurrentTheme.Text
 
-                    -- 选项按钮光晕边框（默认隐藏）
-                    local glowStroke = Instance.new("UIStroke")
-                    glowStroke.Thickness = 2
-                    glowStroke.Color = CurrentTheme.Accent
-                    glowStroke.Transparency = 1
-                    glowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                    glowStroke.Parent = O
-
-                    -- 勾选框（包含光晕边框 + 勾号图标）
                     local check = Instance.new("Frame")
                     check.Size = UDim2.new(0, 16, 0, 16)
                     check.Position = UDim2.new(0, 10, 0.5, -8)
@@ -896,14 +887,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     local checkCorner = Instance.new("UICorner")
                     checkCorner.CornerRadius = UDim.new(0, 4)
                     checkCorner.Parent = check
-
-                    -- 勾选框光晕边框
-                    local checkGlow = Instance.new("UIStroke")
-                    checkGlow.Thickness = 1.5
-                    checkGlow.Color = CurrentTheme.Accent
-                    checkGlow.Transparency = 1
-                    checkGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                    checkGlow.Parent = check
+                    local checkStroke = Instance.new("UIStroke")
+                    checkStroke.Thickness = 1.5
+                    checkStroke.Color = CurrentTheme.Accent
+                    checkStroke.Transparency = 0.7
+                    checkStroke.Parent = check
 
                     local checkMark = Instance.new("ImageLabel")
                     checkMark.Size = UDim2.new(0, 12, 0, 12)
@@ -938,8 +926,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                         label = label,
                         check = check,
                         checkMark = checkMark,
-                        checkGlow = checkGlow,
-                        glowStroke = glowStroke,
                         value = opt,
                         selected = false
                     }
@@ -955,10 +941,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                                 table.insert(selected, opt)
                                 optData.selected = true
                             end
-                            -- 更新勾号和光晕
                             optData.checkMark.ImageTransparency = optData.selected and 0 or 1
-                            optData.checkGlow.Transparency = optData.selected and 0.3 or 1
-                            optData.glowStroke.Transparency = optData.selected and 0.2 or 1
+                            optData.check.BackgroundTransparency = optData.selected and 0.1 or 1
                             updateLabel()
                             if ConfigObjects[controlId] then
                                 ConfigObjects[controlId].Value = selected
@@ -969,8 +953,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                             for _, d in ipairs(optionButtons) do
                                 d.selected = (d.value == opt)
                                 d.checkMark.ImageTransparency = d.selected and 0 or 1
-                                d.checkGlow.Transparency = d.selected and 0.3 or 1
-                                d.glowStroke.Transparency = d.selected and 0.2 or 1
+                                d.check.BackgroundTransparency = d.selected and 0.1 or 1
                             end
                             updateLabel()
                             if ConfigObjects[controlId] then
@@ -986,7 +969,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
 
-                -- 初始化选中状态
                 for _, d in ipairs(optionButtons) do
                     if multi then
                         d.selected = table.find(selected, d.value) ~= nil
@@ -994,8 +976,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                         d.selected = (d.value == selected)
                     end
                     d.checkMark.ImageTransparency = d.selected and 0 or 1
-                    d.checkGlow.Transparency = d.selected and 0.3 or 1
-                    d.glowStroke.Transparency = d.selected and 0.2 or 1
+                    d.check.BackgroundTransparency = d.selected and 0.1 or 1
                 end
 
                 if Dropped then
@@ -1074,8 +1055,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                             d.selected = (d.value == selected)
                         end
                         d.checkMark.ImageTransparency = d.selected and 0 or 1
-                        d.checkGlow.Transparency = d.selected and 0.3 or 1
-                        d.glowStroke.Transparency = d.selected and 0.2 or 1
+                        d.check.BackgroundTransparency = d.selected and 0.1 or 1
                     end
                     updateLabel()
                     callback(selected)
@@ -1106,11 +1086,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Btn.Visible = state
             end
 
-            -- 主题更新同步光晕颜色
             table.insert(ThemeListeners, function()
                 for _, d in ipairs(optionButtons) do
-                    d.glowStroke.Color = CurrentTheme.Accent
-                    d.checkGlow.Color = CurrentTheme.Accent
+                    d.checkStroke.Color = CurrentTheme.Accent
                 end
             end)
 
