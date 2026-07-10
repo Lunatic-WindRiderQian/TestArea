@@ -598,7 +598,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- Slider (修改：启用 Rounding，支持小数位数控制)
+        -- Slider (修正：输入框可正常聚焦，拖动仅限轨道)
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
             local valueTable = config.Value or {}
@@ -654,7 +654,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(NumStroke, "Color", "Stroke")
             Num.Focused:Connect(function() Tween(NumStroke, {Transparency = 0.2}, 0.15) end)
 
-            local Track, Fill, Knob
+            local Track, Fill, Knob, Bar
             if not unlimited then
                 Track = Instance.new("Frame")
                 Track.Size = UDim2.new(1, -30, 0, 5)
@@ -679,14 +679,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Knob.ZIndex = 2
                 Knob.Parent = Track
                 Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
-            end
 
-            -- 拖动按钮（覆盖整个 Tile）
-            local DragButton = Instance.new("TextButton")
-            DragButton.Size = UDim2.new(1, 0, 1, 0)
-            DragButton.BackgroundTransparency = 1
-            DragButton.Text = ""
-            DragButton.Parent = Tile
+                -- 拖动按钮（仅覆盖轨道，不干扰输入框）
+                Bar = Instance.new("TextButton")
+                Bar.Size = UDim2.new(1, 0, 0, 18)
+                Bar.Position = UDim2.new(0, 0, 0.5, -9)
+                Bar.BackgroundTransparency = 1
+                Bar.Text = ""
+                Bar.ZIndex = 3
+                Bar.Parent = Track
+            end
 
             local white = Color3.new(1, 1, 1)
             local dragging = false
@@ -747,27 +749,29 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
 
-            DragButton.InputBegan:Connect(function(input)
-                if unlimited then return end
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    SetDragging(true)
-                    UpdateSlider(GetValueFromInput(input))
-                end
-            end)
+            if Bar then
+                Bar.InputBegan:Connect(function(input)
+                    if unlimited then return end
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        SetDragging(true)
+                        UpdateSlider(GetValueFromInput(input))
+                    end
+                end)
 
-            DragButton.InputEnded:Connect(function(input)
-                if unlimited then return end
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    SetDragging(false)
-                end
-            end)
+                Bar.InputEnded:Connect(function(input)
+                    if unlimited then return end
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        SetDragging(false)
+                    end
+                end)
 
-            UserInputService.InputChanged:Connect(function(input)
-                if unlimited then return end
-                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                    UpdateSlider(GetValueFromInput(input))
-                end
-            end)
+                UserInputService.InputChanged:Connect(function(input)
+                    if unlimited then return end
+                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                        UpdateSlider(GetValueFromInput(input))
+                    end
+                end)
+            end
 
             Num.FocusLost:Connect(function()
                 Tween(NumStroke, {Transparency = 0.75}, 0.15)
