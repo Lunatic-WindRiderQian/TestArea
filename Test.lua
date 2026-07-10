@@ -598,7 +598,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- Slider
+        -- Slider (修改：使用主题色代替硬编码粉色)
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
             local valueTable = config.Value or {}
@@ -610,6 +610,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local unlimited = (min == nil and max == nil)
             min = tonumber(min)
             max = tonumber(max)
+            local Rounding = config.Rounding or 0
             local Val = tonumber(default) or (min or 0)
             local controlId = sliderText .. "_" .. tostring(#Registry)
 
@@ -653,20 +654,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(NumStroke, "Color", "Stroke")
             Num.Focused:Connect(function() Tween(NumStroke, {Transparency = 0.2}, 0.15) end)
 
-            if unlimited then
-                local HintLbl = Instance.new("TextLabel")
-                HintLbl.Text = "∞"
-                HintLbl.Size = UDim2.new(0, 14, 0, 14)
-                HintLbl.Position = UDim2.new(1, -(numW + 10) - 16, 0, 18)
-                HintLbl.BackgroundTransparency = 1
-                HintLbl.Font = Enum.Font.GothamBold
-                HintLbl.TextSize = 11
-                HintLbl.TextTransparency = 0.4
-                HintLbl.Parent = Tile
-                AddToRegistry(HintLbl, "TextColor3", "Accent")
-            end
-
-            local Track, Fill, Knob, Bar
+            local Track, Fill, Knob
             if not unlimited then
                 Track = Instance.new("Frame")
                 Track.Size = UDim2.new(1, -30, 0, 5)
@@ -691,82 +679,120 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Knob.ZIndex = 2
                 Knob.Parent = Track
                 Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
-
-                Bar = Instance.new("TextButton")
-                Bar.Size = UDim2.new(1, 0, 0, 18)
-                Bar.Position = UDim2.new(0, 0, 0.5, -9)
-                Bar.BackgroundTransparency = 1
-                Bar.Text = ""
-                Bar.ZIndex = 3
-                Bar.Parent = Track
             end
 
-            local function Update(newVal)
-                if min ~= nil and max ~= nil then
-                    newVal = clamp(newVal, min, max)
-                elseif min ~= nil then
-                    newVal = math.max(newVal, min)
-                elseif max ~= nil then
-                    newVal = math.min(newVal, max)
+            -- 拖动按钮（覆盖整个 Tile）
+            local DragButton = Instance.new("TextButton")
+            DragButton.Size = UDim2.new(1, 0, 1, 0)
+            DragButton.BackgroundTransparency = 1
+            DragButton.Text = ""
+            DragButton.Parent = Tile
+
+            local white = Color3.new(1, 1, 1)
+            local dragging = false
+
+            local function Round(n, decimals)
+                local factor = 10 ^ decimals
+                return math.floor(n * factor + 0.5) / factor
+            end
+
+            local function UpdateSlider(val)
+                if unlimited then
+                    Val = val
+                    Num.Text = tostring(Val)
+                    if ConfigObjects[controlId] then ConfigObjects[controlId].Value = Val end
+                    callback(Val)
+                    return
+                end
+                val = math.clamp(val, min, max)
+                val = Round(val, Rounding)
+                local ratio = (val - min) / (max - min)
+                TweenService:Create(Fill, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size = UDim2.new(ratio, 0, 1, 0)}):Play()
+                TweenService:Create(Knob, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = UDim2.new(ratio, 0, 0.5, 0)}):Play()
+                Num.Text = tostring(val)
+                Val = val
+                if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
+                callback(val)
+                return val
+            end
+
+            local function GetValueFromInput(input)
+                if unlimited or not Track then return Val end
+                local absX = Track.AbsolutePosition.X
+                local absW = Track.AbsoluteSize.X
+                local ratio = math.clamp((input.Position.X - absX) / absW, 0, 1)
+                return ratio * (max - min) + min
+            end
+
+            local function SetDragging(state)
+                dragging = state
+                if state then
+                    TweenService:Create(Num, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {TextSize = 15}):Play()
+                    TweenService:Create(Num, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextColor3 = CurrentTheme.Accent}):Play()
+                    TweenService:Create(TitleLbl, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextColor3 = CurrentTheme.Accent}):Play()
                 else
-                    newVal = newVal
+                    TweenService:Create(Num, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {TextSize = 12}):Play()
+                    TweenService:Create(Num, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextColor3 = white}):Play()
+                    TweenService:Create(TitleLbl, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextColor3 = white}):Play()
                 end
-                Val = newVal
-                Num.Text = tostring(Val)
-                if ConfigObjects[controlId] then
-                    ConfigObjects[controlId].Value = Val
-                end
-                if Track and Fill and Knob and min ~= nil and max ~= nil and max ~= min then
-                    local p = (Val - min) / (max - min)
-                    Tween(Fill, {Size = UDim2.new(p, 0, 1, 0)}, 0.16)
-                    Tween(Knob, {Position = UDim2.new(p, 0, 0.5, 0)}, 0.16)
-                end
-                callback(Val)
             end
 
-            ConfigObjects[controlId] = {Type = "Slider", Value = Val, Set = function(val) Update(tonumber(val) or Val) end}
-
-            local function Drag(input)
-                if not Track or min == nil or max == nil or max == min then return end
-                local p = clamp((input.Position.X - Track.AbsolutePosition.X) / Track.AbsoluteSize.X, 0, 1)
-                Update(min + (max - min) * p)
+            local function SetFocused(state)
+                if state then
+                    TweenService:Create(Num, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextColor3 = CurrentTheme.Accent}):Play()
+                    TweenService:Create(TitleLbl, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextColor3 = CurrentTheme.Accent}):Play()
+                else
+                    TweenService:Create(Num, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextColor3 = white}):Play()
+                    TweenService:Create(TitleLbl, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextColor3 = white}):Play()
+                end
             end
+
+            DragButton.InputBegan:Connect(function(input)
+                if unlimited then return end
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    SetDragging(true)
+                    UpdateSlider(GetValueFromInput(input))
+                end
+            end)
+
+            DragButton.InputEnded:Connect(function(input)
+                if unlimited then return end
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    SetDragging(false)
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(input)
+                if unlimited then return end
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    UpdateSlider(GetValueFromInput(input))
+                end
+            end)
 
             Num.FocusLost:Connect(function()
                 Tween(NumStroke, {Transparency = 0.75}, 0.15)
+                SetFocused(false)
                 local typed = tonumber(Num.Text)
                 if typed then
-                    Update(typed)
+                    UpdateSlider(typed)
                 else
                     Num.Text = tostring(Val)
                 end
             end)
 
-            if Bar then
-                local sliding = false
-                Bar.InputBegan:Connect(function(i)
-                    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                        sliding = true
-                        Drag(i)
-                    end
-                end)
-                UserInputService.InputEnded:Connect(function(i)
-                    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                        sliding = false
-                    end
-                end)
-                UserInputService.InputChanged:Connect(function(i)
-                    if sliding and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                        Drag(i)
-                    end
-                end)
-            end
+            Num.Focused:Connect(function()
+                SetFocused(true)
+            end)
+
+            ConfigObjects[controlId] = {Type = "Slider", Value = Val, Set = function(val) UpdateSlider(tonumber(val) or Val) end}
 
             table.insert(ThemeListeners, function()
                 if Fill then Fill.BackgroundColor3 = CurrentTheme.Accent end
                 if Track then Track.BackgroundColor3 = CurrentTheme.Stroke end
                 Num.TextColor3 = CurrentTheme.Accent
             end)
+
+            UpdateSlider(Val)
         end
 
         -- ============================================================
