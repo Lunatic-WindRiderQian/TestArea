@@ -771,8 +771,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ============================================================
         -- 升级版 Dropdown（支持多选、状态持久化、主题适配）
-        -- 选中状态改为：主题色上→透明下 渐变光晕
-        -- 修复：禁用选项按钮的 AutoButtonColor 防止白色背景
+        -- 选中状态：主题色上→透明下 渐变光晕
+        -- 修复悬停白色背景：为选项按钮设置背景色为主题色
         -- ============================================================
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
@@ -812,7 +812,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Text = ""
             Btn.BackgroundTransparency = 0.05
-            Btn.AutoButtonColor = false  -- 防止点击时变白
+            Btn.AutoButtonColor = false
             Btn.Parent = contentHolder
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
@@ -878,7 +878,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     O.Size = UDim2.new(1, 0, 0, 34)
                     O.Text = ""
                     O.BackgroundTransparency = 1
-                    O.AutoButtonColor = false  -- 关键修复：禁用默认点击颜色
+                    O.AutoButtonColor = false
+                    O.BackgroundColor3 = CurrentTheme.Top   -- 关键修复：设置背景色为主题色，悬停时显示半透明主题色而非白色
                     O.Parent = Container
                     O.TextColor3 = CurrentTheme.Text
 
@@ -906,7 +907,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     checkGrad.Transparency = NumberSequence.new(1)
                     checkGrad.Parent = check
 
-                    -- 对勾图标（保留用于视觉提示）
+                    -- 对勾图标
                     local checkMark = Instance.new("ImageLabel")
                     checkMark.Size = UDim2.new(0, 12, 0, 12)
                     checkMark.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -929,7 +930,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     AddToRegistry(label, "TextColor3", "Text")
 
                     O.MouseEnter:Connect(function()
-                        Tween(O, {BackgroundTransparency = 0.1}, 0.15)
+                        Tween(O, {BackgroundTransparency = 0.1}, 0.15)  -- 悬停时显示主题色半透明
                     end)
                     O.MouseLeave:Connect(function()
                         Tween(O, {BackgroundTransparency = 1}, 0.15)
@@ -1107,7 +1108,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Btn.Visible = state
             end
 
-            -- 主题监听：更新复选框颜色和渐变
+            -- 主题监听：更新复选框颜色和渐变，以及选项按钮背景色
             table.insert(ThemeListeners, function()
                 for _, d in ipairs(optionButtons) do
                     if d.checkStroke then d.checkStroke.Color = CurrentTheme.Accent end
@@ -1116,6 +1117,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end
                     if d.checkGrad then
                         d.checkGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
+                    end
+                    -- 更新选项按钮背景色
+                    if d.button then
+                        d.button.BackgroundColor3 = CurrentTheme.Top
                     end
                 end
             end)
