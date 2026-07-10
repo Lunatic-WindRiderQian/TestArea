@@ -772,6 +772,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         -- ============================================================
         -- 升级版 Dropdown（支持多选、状态持久化、主题适配）
         -- 选中状态改为：主题色上→透明下 渐变光晕
+        -- 修复：禁用选项按钮的 AutoButtonColor 防止白色背景
         -- ============================================================
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
@@ -811,6 +812,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Text = ""
             Btn.BackgroundTransparency = 0.05
+            Btn.AutoButtonColor = false  -- 防止点击时变白
             Btn.Parent = contentHolder
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
@@ -876,6 +878,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     O.Size = UDim2.new(1, 0, 0, 34)
                     O.Text = ""
                     O.BackgroundTransparency = 1
+                    O.AutoButtonColor = false  -- 关键修复：禁用默认点击颜色
                     O.Parent = Container
                     O.TextColor3 = CurrentTheme.Text
 
@@ -883,8 +886,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     local check = Instance.new("Frame")
                     check.Size = UDim2.new(0, 16, 0, 16)
                     check.Position = UDim2.new(0, 10, 0.5, -8)
-                    check.BackgroundColor3 = CurrentTheme.Accent  -- 主题色
-                    check.BackgroundTransparency = 1              -- 默认透明
+                    check.BackgroundColor3 = CurrentTheme.Accent
+                    check.BackgroundTransparency = 1
                     check.ZIndex = 1
                     check.Parent = O
                     local checkCorner = Instance.new("UICorner")
@@ -900,7 +903,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     local checkGrad = Instance.new("UIGradient")
                     checkGrad.Rotation = 0
                     checkGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
-                    checkGrad.Transparency = NumberSequence.new(1)   -- 默认全透明
+                    checkGrad.Transparency = NumberSequence.new(1)
                     checkGrad.Parent = check
 
                     -- 对勾图标（保留用于视觉提示）
@@ -910,7 +913,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     checkMark.AnchorPoint = Vector2.new(0.5, 0.5)
                     checkMark.BackgroundTransparency = 1
                     checkMark.Image = "rbxassetid://16633109272"
-                    checkMark.ImageTransparency = 1  -- 默认隐藏，我们可以用渐变代替或保留
+                    checkMark.ImageTransparency = 1
                     checkMark.Parent = check
                     AddToRegistry(checkMark, "ImageColor3", "Accent")
 
@@ -954,7 +957,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                                 table.insert(selected, opt)
                                 optData.selected = true
                             end
-                            -- 更新光晕状态
                             optData.check.BackgroundTransparency = optData.selected and 0 or 1
                             optData.checkGrad.Transparency = optData.selected and NumberSequence.new(0, 0, 1, 0.7) or NumberSequence.new(1)
                             optData.checkMark.ImageTransparency = optData.selected and 0 or 1
