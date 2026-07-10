@@ -771,6 +771,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ============================================================
         -- 升级版 Dropdown（支持多选、状态持久化、主题适配）
+        -- 选中状态改为：主题色上→透明下 渐变光晕
         -- ============================================================
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
@@ -878,10 +879,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     O.Parent = Container
                     O.TextColor3 = CurrentTheme.Text
 
+                    -- 复选框：采用主题色上→透明下渐变
                     local check = Instance.new("Frame")
                     check.Size = UDim2.new(0, 16, 0, 16)
                     check.Position = UDim2.new(0, 10, 0.5, -8)
-                    check.BackgroundTransparency = 1
+                    check.BackgroundColor3 = CurrentTheme.Accent  -- 主题色
+                    check.BackgroundTransparency = 1              -- 默认透明
                     check.ZIndex = 1
                     check.Parent = O
                     local checkCorner = Instance.new("UICorner")
@@ -893,13 +896,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     checkStroke.Transparency = 0.7
                     checkStroke.Parent = check
 
+                    -- 渐变：上主题色 -> 下透明
+                    local checkGrad = Instance.new("UIGradient")
+                    checkGrad.Rotation = 0
+                    checkGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
+                    checkGrad.Transparency = NumberSequence.new(1)   -- 默认全透明
+                    checkGrad.Parent = check
+
+                    -- 对勾图标（保留用于视觉提示）
                     local checkMark = Instance.new("ImageLabel")
                     checkMark.Size = UDim2.new(0, 12, 0, 12)
                     checkMark.Position = UDim2.new(0.5, 0, 0.5, 0)
                     checkMark.AnchorPoint = Vector2.new(0.5, 0.5)
                     checkMark.BackgroundTransparency = 1
                     checkMark.Image = "rbxassetid://16633109272"
-                    checkMark.ImageTransparency = 1
+                    checkMark.ImageTransparency = 1  -- 默认隐藏，我们可以用渐变代替或保留
                     checkMark.Parent = check
                     AddToRegistry(checkMark, "ImageColor3", "Accent")
 
@@ -925,6 +936,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                         button = O,
                         label = label,
                         check = check,
+                        checkGrad = checkGrad,
+                        checkStroke = checkStroke,
                         checkMark = checkMark,
                         value = opt,
                         selected = false
@@ -941,8 +954,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                                 table.insert(selected, opt)
                                 optData.selected = true
                             end
+                            -- 更新光晕状态
+                            optData.check.BackgroundTransparency = optData.selected and 0 or 1
+                            optData.checkGrad.Transparency = optData.selected and NumberSequence.new(0, 0, 1, 0.7) or NumberSequence.new(1)
                             optData.checkMark.ImageTransparency = optData.selected and 0 or 1
-                            optData.check.BackgroundTransparency = optData.selected and 0.1 or 1
                             updateLabel()
                             if ConfigObjects[controlId] then
                                 ConfigObjects[controlId].Value = selected
@@ -952,8 +967,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                             selected = opt
                             for _, d in ipairs(optionButtons) do
                                 d.selected = (d.value == opt)
+                                d.check.BackgroundTransparency = d.selected and 0 or 1
+                                d.checkGrad.Transparency = d.selected and NumberSequence.new(0, 0, 1, 0.7) or NumberSequence.new(1)
                                 d.checkMark.ImageTransparency = d.selected and 0 or 1
-                                d.check.BackgroundTransparency = d.selected and 0.1 or 1
                             end
                             updateLabel()
                             if ConfigObjects[controlId] then
@@ -969,14 +985,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
 
+                -- 初始化所有选项的状态
                 for _, d in ipairs(optionButtons) do
                     if multi then
                         d.selected = table.find(selected, d.value) ~= nil
                     else
                         d.selected = (d.value == selected)
                     end
+                    d.check.BackgroundTransparency = d.selected and 0 or 1
+                    d.checkGrad.Transparency = d.selected and NumberSequence.new(0, 0, 1, 0.7) or NumberSequence.new(1)
                     d.checkMark.ImageTransparency = d.selected and 0 or 1
-                    d.check.BackgroundTransparency = d.selected and 0.1 or 1
                 end
 
                 if Dropped then
@@ -1054,8 +1072,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                         else
                             d.selected = (d.value == selected)
                         end
+                        d.check.BackgroundTransparency = d.selected and 0 or 1
+                        d.checkGrad.Transparency = d.selected and NumberSequence.new(0, 0, 1, 0.7) or NumberSequence.new(1)
                         d.checkMark.ImageTransparency = d.selected and 0 or 1
-                        d.check.BackgroundTransparency = d.selected and 0.1 or 1
                     end
                     updateLabel()
                     callback(selected)
@@ -1086,9 +1105,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Btn.Visible = state
             end
 
+            -- 主题监听：更新复选框颜色和渐变
             table.insert(ThemeListeners, function()
                 for _, d in ipairs(optionButtons) do
-                    d.checkStroke.Color = CurrentTheme.Accent
+                    if d.checkStroke then d.checkStroke.Color = CurrentTheme.Accent end
+                    if d.check then
+                        d.check.BackgroundColor3 = CurrentTheme.Accent
+                    end
+                    if d.checkGrad then
+                        d.checkGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
+                    end
                 end
             end)
 
