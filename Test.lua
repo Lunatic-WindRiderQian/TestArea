@@ -770,7 +770,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- 升级版 Dropdown（支持多选、状态持久化、高级视觉渲染）
+        -- 升级版 Dropdown（多选、状态持久化、光晕效果）
         -- ============================================================
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
@@ -877,92 +877,34 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     O.BackgroundTransparency = 1
                     O.Parent = Container
                     O.TextColor3 = CurrentTheme.Text
-                    O.ClipsDescendants = true
 
-                    -- 高级选中背景（渐变/玻璃态）
-                    local selectedBg = Instance.new("Frame")
-                    selectedBg.Size = UDim2.new(1, 0, 1, 0)
-                    selectedBg.BackgroundTransparency = 1
-                    selectedBg.ZIndex = 0
-                    selectedBg.Parent = O
-                    Instance.new("UICorner", selectedBg).CornerRadius = UDim.new(0, 4)
-                    AddToRegistry(selectedBg, "BackgroundColor3", "Accent")
-                    selectedBg.BackgroundTransparency = 1
-                    -- 渐变增强
-                    local grad = Instance.new("UIGradient")
-                    grad.Rotation = 45
-                    grad.Color = ColorSequence.new({
-                        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
-                        ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255))
-                    })
-                    grad.Transparency = NumberSequence.new({
-                        NumberSequenceKeypoint.new(0, 0.7),
-                        NumberSequenceKeypoint.new(1, 1)
-                    })
-                    grad.Parent = selectedBg
-                    AddToRegistry(grad, "Color", function()
-                        return ColorSequence.new({
-                            ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-                            ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
-                        })
-                    end)
+                    -- 选项按钮光晕边框（默认隐藏）
+                    local glowStroke = Instance.new("UIStroke")
+                    glowStroke.Thickness = 2
+                    glowStroke.Color = CurrentTheme.Accent
+                    glowStroke.Transparency = 1
+                    glowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                    glowStroke.Parent = O
 
-                    -- 发光边框
-                    local border = Instance.new("UIStroke")
-                    border.Thickness = 1
-                    border.Color = CurrentTheme.Accent
-                    border.Transparency = 1
-                    border.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                    border.Parent = O
-                    AddToRegistry(border, "Color", "Accent")
-
-                    -- 高级勾选框（带发光效果）
+                    -- 勾选框（包含光晕边框 + 勾号图标）
                     local check = Instance.new("Frame")
-                    check.Size = UDim2.new(0, 18, 0, 18)
-                    check.Position = UDim2.new(0, 10, 0.5, -9)
+                    check.Size = UDim2.new(0, 16, 0, 16)
+                    check.Position = UDim2.new(0, 10, 0.5, -8)
                     check.BackgroundTransparency = 1
                     check.ZIndex = 1
                     check.Parent = O
                     local checkCorner = Instance.new("UICorner")
-                    checkCorner.CornerRadius = UDim.new(0, 5)
+                    checkCorner.CornerRadius = UDim.new(0, 4)
                     checkCorner.Parent = check
 
-                    -- 勾选框背景（选中时显示渐变）
-                    local checkBg = Instance.new("Frame")
-                    checkBg.Size = UDim2.new(1, 0, 1, 0)
-                    checkBg.BackgroundTransparency = 1
-                    checkBg.ZIndex = 0
-                    checkBg.Parent = check
-                    Instance.new("UICorner", checkBg).CornerRadius = UDim.new(0, 5)
-                    AddToRegistry(checkBg, "BackgroundColor3", "Accent")
-                    local glowGrad = Instance.new("UIGradient")
-                    glowGrad.Rotation = 45
-                    glowGrad.Color = ColorSequence.new({
-                        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
-                        ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255))
-                    })
-                    glowGrad.Transparency = NumberSequence.new({
-                        NumberSequenceKeypoint.new(0, 0.3),
-                        NumberSequenceKeypoint.new(1, 0.8)
-                    })
-                    glowGrad.Parent = checkBg
-                    AddToRegistry(glowGrad, "Color", function()
-                        return ColorSequence.new({
-                            ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-                            ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
-                        })
-                    end)
+                    -- 勾选框光晕边框
+                    local checkGlow = Instance.new("UIStroke")
+                    checkGlow.Thickness = 1.5
+                    checkGlow.Color = CurrentTheme.Accent
+                    checkGlow.Transparency = 1
+                    checkGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                    checkGlow.Parent = check
 
-                    -- 勾选框发光边框
-                    local checkBorder = Instance.new("UIStroke")
-                    checkBorder.Thickness = 1.5
-                    checkBorder.Color = CurrentTheme.Accent
-                    checkBorder.Transparency = 0.6
-                    checkBorder.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                    checkBorder.Parent = check
-                    AddToRegistry(checkBorder, "Color", "Accent")
-
-                    -- 对勾标记（带弹入动画）
                     local checkMark = Instance.new("ImageLabel")
                     checkMark.Size = UDim2.new(0, 12, 0, 12)
                     checkMark.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -970,25 +912,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     checkMark.BackgroundTransparency = 1
                     checkMark.Image = "rbxassetid://16633109272"
                     checkMark.ImageTransparency = 1
-                    checkMark.ScaleType = Enum.ScaleType.Fit
                     checkMark.Parent = check
                     AddToRegistry(checkMark, "ImageColor3", "Accent")
-
-                    -- 光晕环（围绕勾选框）
-                    local glowRing = Instance.new("Frame")
-                    glowRing.Size = UDim2.new(1.4, 0, 1.4, 0)
-                    glowRing.Position = UDim2.new(0.5, 0, 0.5, 0)
-                    glowRing.AnchorPoint = Vector2.new(0.5, 0.5)
-                    glowRing.BackgroundTransparency = 1
-                    glowRing.ZIndex = -1
-                    glowRing.Parent = check
-                    Instance.new("UICorner", glowRing).CornerRadius = UDim.new(1, 0)
-                    local ringStroke = Instance.new("UIStroke")
-                    ringStroke.Thickness = 2
-                    ringStroke.Color = CurrentTheme.Accent
-                    ringStroke.Transparency = 1
-                    ringStroke.Parent = glowRing
-                    AddToRegistry(ringStroke, "Color", "Accent")
 
                     local label = Instance.new("TextLabel")
                     label.Size = UDim2.new(1, -40, 1, 0)
@@ -1001,35 +926,25 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     label.Parent = O
                     AddToRegistry(label, "TextColor3", "Text")
 
-                    -- 鼠标悬浮效果
                     O.MouseEnter:Connect(function()
-                        if not optData.selected then
-                            Tween(selectedBg, {BackgroundTransparency = 0.92}, 0.15)
-                        end
+                        Tween(O, {BackgroundTransparency = 0.1}, 0.15)
                     end)
                     O.MouseLeave:Connect(function()
-                        if not optData.selected then
-                            Tween(selectedBg, {BackgroundTransparency = 1}, 0.15)
-                        end
+                        Tween(O, {BackgroundTransparency = 1}, 0.15)
                     end)
 
                     local optData = {
                         button = O,
                         label = label,
                         check = check,
-                        checkBg = checkBg,
-                        checkBorder = checkBorder,
                         checkMark = checkMark,
-                        glowRing = glowRing,
-                        ringStroke = ringStroke,
-                        selectedBg = selectedBg,
-                        border = border,
+                        checkGlow = checkGlow,
+                        glowStroke = glowStroke,
                         value = opt,
                         selected = false
                     }
                     table.insert(optionButtons, optData)
 
-                    -- 点击处理
                     O.MouseButton1Click:Connect(function()
                         if multi then
                             local idx = table.find(selected, opt)
@@ -1040,35 +955,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                                 table.insert(selected, opt)
                                 optData.selected = true
                             end
-                            -- 更新视觉（调用统一更新函数）
-                            local function updateVisuals(d, sel)
-                                -- 选中背景
-                                d.selectedBg.BackgroundTransparency = sel and 0.85 or 1
-                                d.border.Transparency = sel and 0.3 or 1
-                                d.border.Thickness = sel and 2 or 1
-                                d.label.TextColor3 = sel and CurrentTheme.Accent or CurrentTheme.Text
-                                -- 勾选框背景
-                                d.checkBg.BackgroundTransparency = sel and 0.2 or 1
-                                -- 勾选框边框
-                                d.checkBorder.Transparency = sel and 0.2 or 0.6
-                                d.checkBorder.Thickness = sel and 2.5 or 1.5
-                                -- 对勾标记缩放
-                                local mark = d.checkMark
-                                local scaleObj = mark:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
-                                scaleObj.Parent = mark
-                                local targetScale = sel and 1 or 0
-                                scaleObj.Scale = sel and 0.5 or 0
-                                Tween(scaleObj, {Scale = targetScale}, sel and 0.25 or 0.15)
-                                mark.ImageTransparency = sel and 0 or 1
-                                -- 光晕环
-                                d.glowRing.Transparency = sel and 0.6 or 1
-                                if d.ringStroke then
-                                    d.ringStroke.Transparency = sel and 0.3 or 1
-                                end
-                                -- 微缩放选项
-                                Tween(d.button, {Size = UDim2.new(1, 0, 0, sel and 36 or 34)}, 0.15)
-                            end
-                            updateVisuals(optData, optData.selected)
+                            -- 更新勾号和光晕
+                            optData.checkMark.ImageTransparency = optData.selected and 0 or 1
+                            optData.checkGlow.Transparency = optData.selected and 0.3 or 1
+                            optData.glowStroke.Transparency = optData.selected and 0.2 or 1
                             updateLabel()
                             if ConfigObjects[controlId] then
                                 ConfigObjects[controlId].Value = selected
@@ -1078,28 +968,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                             selected = opt
                             for _, d in ipairs(optionButtons) do
                                 d.selected = (d.value == opt)
-                                local function updateVisuals(d, sel)
-                                    d.selectedBg.BackgroundTransparency = sel and 0.85 or 1
-                                    d.border.Transparency = sel and 0.3 or 1
-                                    d.border.Thickness = sel and 2 or 1
-                                    d.label.TextColor3 = sel and CurrentTheme.Accent or CurrentTheme.Text
-                                    d.checkBg.BackgroundTransparency = sel and 0.2 or 1
-                                    d.checkBorder.Transparency = sel and 0.2 or 0.6
-                                    d.checkBorder.Thickness = sel and 2.5 or 1.5
-                                    local mark = d.checkMark
-                                    local scaleObj = mark:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
-                                    scaleObj.Parent = mark
-                                    local targetScale = sel and 1 or 0
-                                    scaleObj.Scale = sel and 0.5 or 0
-                                    Tween(scaleObj, {Scale = targetScale}, sel and 0.25 or 0.15)
-                                    mark.ImageTransparency = sel and 0 or 1
-                                    d.glowRing.Transparency = sel and 0.6 or 1
-                                    if d.ringStroke then
-                                        d.ringStroke.Transparency = sel and 0.3 or 1
-                                    end
-                                    Tween(d.button, {Size = UDim2.new(1, 0, 0, sel and 36 or 34)}, 0.15)
-                                end
-                                updateVisuals(d, d.selected)
+                                d.checkMark.ImageTransparency = d.selected and 0 or 1
+                                d.checkGlow.Transparency = d.selected and 0.3 or 1
+                                d.glowStroke.Transparency = d.selected and 0.2 or 1
                             end
                             updateLabel()
                             if ConfigObjects[controlId] then
@@ -1113,64 +984,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                             Container.Visible = false
                         end
                     end)
-
-                    -- 主题更新监听
-                    table.insert(ThemeListeners, function()
-                        optData.border.Color = CurrentTheme.Accent
-                        optData.checkBorder.Color = CurrentTheme.Accent
-                        optData.ringStroke.Color = CurrentTheme.Accent
-                        optData.checkBg.BackgroundColor3 = CurrentTheme.Accent
-                        -- 更新渐变
-                        local gradObj = optData.checkBg:FindFirstChildOfClass("UIGradient")
-                        if gradObj then
-                            gradObj.Color = ColorSequence.new({
-                                ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-                                ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
-                            })
-                        end
-                        -- 更新选中文本颜色
-                        if optData.selected then
-                            optData.label.TextColor3 = CurrentTheme.Accent
-                        else
-                            optData.label.TextColor3 = CurrentTheme.Text
-                        end
-                        -- 更新选中背景
-                        optData.selectedBg.BackgroundColor3 = CurrentTheme.Accent
-                        local grad2 = optData.selectedBg:FindFirstChildOfClass("UIGradient")
-                        if grad2 then
-                            grad2.Color = ColorSequence.new({
-                                ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-                                ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
-                            })
-                        end
-                    end)
                 end
 
-                -- 初始化所有选项的选中状态
+                -- 初始化选中状态
                 for _, d in ipairs(optionButtons) do
                     if multi then
                         d.selected = table.find(selected, d.value) ~= nil
                     else
                         d.selected = (d.value == selected)
                     end
-                    -- 应用初始状态（无动画）
-                    d.selectedBg.BackgroundTransparency = d.selected and 0.85 or 1
-                    d.border.Transparency = d.selected and 0.3 or 1
-                    d.border.Thickness = d.selected and 2 or 1
-                    d.label.TextColor3 = d.selected and CurrentTheme.Accent or CurrentTheme.Text
-                    d.checkBg.BackgroundTransparency = d.selected and 0.2 or 1
-                    d.checkBorder.Transparency = d.selected and 0.2 or 0.6
-                    d.checkBorder.Thickness = d.selected and 2.5 or 1.5
-                    local mark = d.checkMark
-                    local scaleObj = mark:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
-                    scaleObj.Parent = mark
-                    scaleObj.Scale = d.selected and 1 or 0
-                    mark.ImageTransparency = d.selected and 0 or 1
-                    d.glowRing.Transparency = d.selected and 0.6 or 1
-                    if d.ringStroke then
-                        d.ringStroke.Transparency = d.selected and 0.3 or 1
-                    end
-                    d.button.Size = UDim2.new(1, 0, 0, d.selected and 36 or 34)
+                    d.checkMark.ImageTransparency = d.selected and 0 or 1
+                    d.checkGlow.Transparency = d.selected and 0.3 or 1
+                    d.glowStroke.Transparency = d.selected and 0.2 or 1
                 end
 
                 if Dropped then
@@ -1181,7 +1006,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             rebuildOptions(options)
 
-            -- 主按钮点击切换下拉
             Btn.MouseButton1Click:Connect(function()
                 Dropped = not Dropped
                 if Dropped then
@@ -1197,7 +1021,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
 
-            -- 外部点击关闭
             local function isMouseOver(frame)
                 if not frame then return false end
                 local mousePos = UserInputService:GetMouseLocation()
@@ -1222,7 +1045,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
 
-            -- 注册配置对象
             ConfigObjects[controlId] = {
                 Type = "Dropdown",
                 Value = multi and selected or selected,
@@ -1245,30 +1067,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                             selected = options[1] or ""
                         end
                     end
-                    -- 刷新视觉
                     for _, d in ipairs(optionButtons) do
                         if multi then
                             d.selected = table.find(selected, d.value) ~= nil
                         else
                             d.selected = (d.value == selected)
                         end
-                        d.selectedBg.BackgroundTransparency = d.selected and 0.85 or 1
-                        d.border.Transparency = d.selected and 0.3 or 1
-                        d.border.Thickness = d.selected and 2 or 1
-                        d.label.TextColor3 = d.selected and CurrentTheme.Accent or CurrentTheme.Text
-                        d.checkBg.BackgroundTransparency = d.selected and 0.2 or 1
-                        d.checkBorder.Transparency = d.selected and 0.2 or 0.6
-                        d.checkBorder.Thickness = d.selected and 2.5 or 1.5
-                        local mark = d.checkMark
-                        local scaleObj = mark:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
-                        scaleObj.Parent = mark
-                        scaleObj.Scale = d.selected and 1 or 0
-                        mark.ImageTransparency = d.selected and 0 or 1
-                        d.glowRing.Transparency = d.selected and 0.6 or 1
-                        if d.ringStroke then
-                            d.ringStroke.Transparency = d.selected and 0.3 or 1
-                        end
-                        d.button.Size = UDim2.new(1, 0, 0, d.selected and 36 or 34)
+                        d.checkMark.ImageTransparency = d.selected and 0 or 1
+                        d.checkGlow.Transparency = d.selected and 0.3 or 1
+                        d.glowStroke.Transparency = d.selected and 0.2 or 1
                     end
                     updateLabel()
                     callback(selected)
@@ -1299,7 +1106,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Btn.Visible = state
             end
 
-            -- 清理
+            -- 主题更新同步光晕颜色
+            table.insert(ThemeListeners, function()
+                for _, d in ipairs(optionButtons) do
+                    d.glowStroke.Color = CurrentTheme.Accent
+                    d.checkGlow.Color = CurrentTheme.Accent
+                end
+            end)
+
             table.insert(WindowCleanup or {}, function()
                 if globalClickConn then globalClickConn:Disconnect() end
             end)
@@ -2134,8 +1948,7 @@ function Fenglib:CreateWindow(Config)
     local Title = Config.Name or "FengY3"
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind 
-    -- 默认 Logo 改为 123552345012545
-    local IconAsset = Config.Logo or "123552345012545"
+    local IconAsset = Config.Logo
     local isCardMode = Config.Card == true
 
     Window.RootFolder = Title 
@@ -2348,8 +2161,12 @@ function Fenglib:CreateWindow(Config)
     Topbar.BackgroundTransparency = 1
     Topbar.Parent = MainFrame
 
-    if tonumber(IconAsset) then
-        IconAsset = "rbxassetid://" .. IconAsset
+    if IconAsset then
+        if tonumber(IconAsset) then
+            IconAsset = "rbxassetid://" .. IconAsset
+        end
+    else
+        IconAsset = "rbxassetid://78229538488090"  
     end
 
     local Icon = Instance.new("ImageLabel")
