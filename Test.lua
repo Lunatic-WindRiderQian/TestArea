@@ -1216,8 +1216,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- 完整 ColorPicker（源自 jx.lua 核心）
-        -- 支持 HSV 调色板、Alpha、预设颜色、HEX 输入、折叠面板
+        -- 🆕 完整 ColorPicker（源自 jx.lua 核心）
+        -- 支持 HSV 调色板、Alpha 滑块、预设颜色网格、HEX 输入、折叠面板
+        -- 旧版 ColorPicker 已被完全删除替换
         -- ============================================================
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
