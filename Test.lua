@@ -17,7 +17,9 @@ local Registry = {}
 local ConfigObjects = {} 
 local ThemeListeners = {}
 local WindowCleanup = {}
+local WindowFrames = {}          -- 用于主题切换时更新背景图片
 
+-- ========== 工具函数 ==========
 local function clamp(value, min, max)
     return math.max(min, math.min(max, value))
 end
@@ -71,17 +73,302 @@ local function createPulseGlow(object)
     }
 end
 
+-- ========== 流光光泽动画（来自 FluentPro） ==========
+local ShineStates = setmetatable({}, {__mode = "k"})  -- 弱键，防止内存泄漏
+
+function Fenglib:_applyWindowShine(windowFrame, theme, enabled)
+    if not windowFrame then return end
+
+    -- 清理旧连接
+    local oldState = ShineStates[windowFrame]
+    if oldState and oldState.conn then
+        pcall(function() oldState.conn:Disconnect() end)
+        ShineStates[windowFrame] = nil
+    end
+
+    if not enabled or not theme.ShineEnabled or not theme.Shine then
+        return
+    end
+
+    local shine = theme.Shine
+    local speed = shine.Speed or 0.5
+    local rotationSpeed = shine.RotationSpeed or 25
+    local colorSeq = shine.ColorSequence
+
+    local strokeShineOn = theme.StrokeShine
+    local strokeFrom = theme.StrokeDark or theme.Accent
+    local strokeTo = theme.Accent
+
+    local gradients = {}
+    local strokes = {}
+    for _, obj in ipairs(windowFrame:GetDescendants()) do
+        if obj:IsA("UIGradient") then
+            table.insert(gradients, obj)
+        elseif obj:IsA("UIStroke") and strokeShineOn then
+            table.insert(strokes, obj)
+        end
+    end
+
+    if #gradients == 0 and #strokes == 0 then
+        return
+    end
+
+    local conn
+    conn = RunService.RenderStepped:Connect(function(dt)
+        for i = #gradients, 1, -1 do
+            local g = gradients[i]
+            if g.Parent then
+                local t = (g:GetAttribute("_t") or 0) + dt * speed
+                g:SetAttribute("_t", t)
+                g.Rotation = (t * rotationSpeed) % 360
+                g.Offset = Vector2.new(math.sin(t * 0.6) * 0.18, g.Offset.Y)
+                if colorSeq then
+                    g.Color = colorSeq
+                end
+            else
+                table.remove(gradients, i)
+            end
+        end
+
+        if strokeFrom and strokeTo then
+            for i = #strokes, 1, -1 do
+                local s = strokes[i]
+                if s.Parent then
+                    local t = (s:GetAttribute("_t") or 0) + dt * speed
+                    s:SetAttribute("_t", t)
+                    local pulse = (math.sin(t) + 1) / 2
+                    s.Thickness = 1.25 + pulse * 1.25
+                    s.Color = strokeFrom:Lerp(strokeTo, pulse)
+                else
+                    table.remove(strokes, i)
+                end
+            end
+        end
+    end)
+
+    ShineStates[windowFrame] = {
+        conn = conn,
+        gradients = gradients,
+        strokes = strokes
+    }
+end
+
+-- ========== 背景图片系统（来自 FluentPro） ==========
+function Fenglib:_getImageAsset(src)
+    if type(src) ~= "string" or src == "" then return nil end
+    if src:match("^rbxassetid://") or src:match("^rbxasset://") then return src end
+    if src:match("^%d+$") then return "rbxassetid://" .. src end
+    return src
+end
+
+local function applyBackgroundImages(frame, theme)
+    if not frame then return end
+
+    -- 主题背景图
+    local bgImg = frame:FindFirstChild("_ThemeBG")
+    if not bgImg then
+        bgImg = Instance.new("ImageLabel")
+        bgImg.Name = "_ThemeBG"
+        bgImg.Size = UDim2.fromScale(1, 1)
+        bgImg.BackgroundTransparency = 1
+        bgImg.ZIndex = 0
+        bgImg.Parent = frame
+    end
+    local bgAsset = theme.Background
+    if bgAsset and bgAsset ~= "" then
+        bgImg.Image = Fenglib:_getImageAsset(bgAsset) or ""
+        bgImg.ImageTransparency = theme.BackgroundTransparency or 0
+        bgImg.ScaleType = Enum.ScaleType.Crop
+        bgImg.Visible = true
+    else
+        bgImg.Visible = false
+    end
+
+    -- 噪声纹理（亚克力质感）
+    local noiseImg = frame:FindFirstChild("_NoiseBG")
+    if not noiseImg then
+        noiseImg = Instance.new("ImageLabel")
+        noiseImg.Name = "_NoiseBG"
+        noiseImg.Size = UDim2.fromScale(1, 1)
+        noiseImg.BackgroundTransparency = 1
+        noiseImg.ZIndex = 0
+        noiseImg.Parent = frame
+    end
+    local noiseAsset = theme.NoiseImage or "rbxassetid://9968344227"
+    noiseImg.Image = Fenglib:_getImageAsset(noiseAsset) or "rbxassetid://9968344227"
+    noiseImg.ImageTransparency = theme.NoiseTransparency or 0.92
+    noiseImg.ScaleType = Enum.ScaleType.Tile
+    noiseImg.TileSize = UDim2.new(0, 128, 0, 128)
+    noiseImg.Visible = true
+end
+
+-- ========== 主题定义（包含背景图片和流光配置） ==========
 local Themes = {
-    Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48)},
-    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225)},
-    Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(160, 90, 255), Stroke = Color3.fromRGB(50, 45, 60)},
-    Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(70, 130, 255), Stroke = Color3.fromRGB(45, 55, 75)},
-    Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(60, 40, 40)},
-    Yellow = {Main = Color3.fromRGB(22, 22, 12), Top = Color3.fromRGB(35, 35, 20), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(255, 200, 80), Stroke = Color3.fromRGB(60, 60, 40)},
-    Green  = {Main = Color3.fromRGB(12, 22, 15), Top = Color3.fromRGB(20, 35, 25), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(60, 220, 130), Stroke = Color3.fromRGB(40, 60, 50)},
+    Dark = {
+        Main   = Color3.fromRGB(13, 13, 13),
+        Top    = Color3.fromRGB(28, 28, 30),
+        Text   = Color3.fromRGB(240, 240, 245),
+        Accent = Color3.fromRGB(80, 140, 255),
+        Stroke = Color3.fromRGB(45, 45, 48),
+        Background = "rbxassetid://121343473918667",
+        BackgroundTransparency = 0.15,
+        NoiseImage = "rbxassetid://9968344227",
+        NoiseTransparency = 0.92,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0,   Color3.fromRGB(40,40,40)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(105,105,105)),
+                ColorSequenceKeypoint.new(1,   Color3.fromRGB(40,40,40))
+            })
+        },
+        StrokeShine = true,
+        StrokeDark = Color3.fromRGB(90, 90, 90),
+    },
+    White = {
+        Main   = Color3.fromRGB(243, 243, 243),
+        Top    = Color3.fromRGB(255, 255, 255),
+        Text   = Color3.fromRGB(20, 20, 20),
+        Accent = Color3.fromRGB(0, 100, 210),
+        Stroke = Color3.fromRGB(220, 220, 225),
+        Background = nil,   -- 无背景图
+        BackgroundTransparency = 0,
+        NoiseImage = "rbxassetid://9968344227",
+        NoiseTransparency = 0.92,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.4,
+            RotationSpeed = 20,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0,   Color3.fromRGB(200,200,200)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,255,255)),
+                ColorSequenceKeypoint.new(1,   Color3.fromRGB(200,200,200))
+            })
+        },
+        StrokeShine = true,
+        StrokeDark = Color3.fromRGB(200, 200, 200),
+    },
+    Purple = {
+        Main   = Color3.fromRGB(18, 15, 22),
+        Top    = Color3.fromRGB(30, 25, 35),
+        Text   = Color3.fromRGB(245, 240, 255),
+        Accent = Color3.fromRGB(160, 90, 255),
+        Stroke = Color3.fromRGB(50, 45, 60),
+        Background = "rbxassetid://136310484943077",
+        BackgroundTransparency = 0.15,
+        NoiseImage = "rbxassetid://9968344227",
+        NoiseTransparency = 0.92,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0,   Color3.fromRGB(40,25,65)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(160,120,220)),
+                ColorSequenceKeypoint.new(1,   Color3.fromRGB(40,25,65))
+            })
+        },
+        StrokeShine = true,
+        StrokeDark = Color3.fromRGB(110, 90, 130),
+    },
+    Blue = {
+        Main   = Color3.fromRGB(12, 18, 28),
+        Top    = Color3.fromRGB(25, 32, 45),
+        Text   = Color3.fromRGB(240, 245, 255),
+        Accent = Color3.fromRGB(70, 130, 255),
+        Stroke = Color3.fromRGB(45, 55, 75),
+        Background = "rbxassetid://95656189244173",
+        BackgroundTransparency = 0.12,
+        NoiseImage = "rbxassetid://9968344227",
+        NoiseTransparency = 0.92,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.6,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0,   Color3.fromRGB(10,40,50)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(57,197,187)),
+                ColorSequenceKeypoint.new(1,   Color3.fromRGB(10,40,50))
+            })
+        },
+        StrokeShine = true,
+        StrokeDark = Color3.fromRGB(35, 155, 150),
+    },
+    Red = {
+        Main   = Color3.fromRGB(22, 12, 12),
+        Top    = Color3.fromRGB(35, 20, 20),
+        Text   = Color3.fromRGB(255, 240, 240),
+        Accent = Color3.fromRGB(255, 80, 80),
+        Stroke = Color3.fromRGB(60, 40, 40),
+        Background = "rbxassetid://132324914333495",
+        BackgroundTransparency = 0.15,
+        NoiseImage = "rbxassetid://9968344227",
+        NoiseTransparency = 0.92,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0,   Color3.fromRGB(71,0,0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(159,0,0)),
+                ColorSequenceKeypoint.new(1,   Color3.fromRGB(71,0,0))
+            })
+        },
+        StrokeShine = true,
+        StrokeDark = Color3.fromRGB(145, 15, 25),
+    },
+    Yellow = {
+        Main   = Color3.fromRGB(22, 22, 12),
+        Top    = Color3.fromRGB(35, 35, 20),
+        Text   = Color3.fromRGB(255, 255, 240),
+        Accent = Color3.fromRGB(255, 200, 80),
+        Stroke = Color3.fromRGB(60, 60, 40),
+        Background = "rbxassetid://107795771598485",
+        BackgroundTransparency = 0.12,
+        NoiseImage = "rbxassetid://9968344227",
+        NoiseTransparency = 0.92,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.6,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0,   Color3.fromRGB(50,22,4)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,170,40)),
+                ColorSequenceKeypoint.new(1,   Color3.fromRGB(50,22,4))
+            })
+        },
+        StrokeShine = true,
+        StrokeDark = Color3.fromRGB(185, 120, 25),
+    },
+    Green = {
+        Main   = Color3.fromRGB(12, 22, 15),
+        Top    = Color3.fromRGB(20, 35, 25),
+        Text   = Color3.fromRGB(240, 255, 245),
+        Accent = Color3.fromRGB(60, 220, 130),
+        Stroke = Color3.fromRGB(40, 60, 50),
+        Background = nil,
+        BackgroundTransparency = 0,
+        NoiseImage = "rbxassetid://9968344227",
+        NoiseTransparency = 0.92,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0,   Color3.fromRGB(20,60,30)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(60,220,130)),
+                ColorSequenceKeypoint.new(1,   Color3.fromRGB(20,60,30))
+            })
+        },
+        StrokeShine = true,
+        StrokeDark = Color3.fromRGB(40, 120, 70),
+    },
 }
 local CurrentTheme = Themes.Dark
 
+-- ========== 注册与主题更新 ==========
 local function AddToRegistry(obj, prop, themeKey)
     table.insert(Registry, {Object = obj, Property = prop, Type = themeKey})
     obj[prop] = CurrentTheme[themeKey]
@@ -94,10 +381,17 @@ end
 function Fenglib:SetTheme(themeName)
     if Themes[themeName] then
         CurrentTheme = Themes[themeName]
+        -- 更新颜色
         for _, r in pairs(Registry) do
             if r.Object then
                 Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]})
             end
+        end
+        -- 更新所有窗口的背景图片
+        for _, frame in pairs(WindowFrames) do
+            applyBackgroundImages(frame, CurrentTheme)
+            -- 重新应用流光（可能开关变化）
+            Fenglib:_applyWindowShine(frame, CurrentTheme, true)
         end
         for _, fn in pairs(ThemeListeners) do
             pcall(fn)
@@ -149,373 +443,7 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- ========================= MediaManager =========================
-local MediaManager = {}
-MediaManager.Folder = "FengMediaCache"
-
-function MediaManager:SetFolder(f)
-    self.Folder = f
-end
-
-function MediaManager:_init(sub)
-    pcall(function()
-        if not isfolder(self.Folder) then makefolder(self.Folder) end
-        local p = self.Folder .. "/" .. sub
-        if not isfolder(p) then makefolder(p) end
-    end)
-end
-
-function MediaManager:_rname(ext)
-    local s = "abcdefghijklmnopqrstuvwxyz0123456789"
-    local n = ""
-    for _ = 1, 12 do local i = math.random(1, #s) n = n .. s:sub(i, i) end
-    return n .. "." .. ext
-end
-
-function MediaManager:_fetch(src, sub, exts, defExt, noDownload)
-    if type(src) ~= "string" or src == "" then return "" end
-    if src:match("^rbxassetid://") or src:match("^rbxasset://") then return src end
-    if src:match("^%d+$") then return "rbxassetid://" .. src end
-    if not src:match("^https?://") then return "" end
-    self:_init(sub)
-    local dir = self.Folder .. "/" .. sub
-    local cleanPath = src:match("^[^?#]+") or src
-    local ext = (cleanPath:match("%.([^%.%/]+)$") or defExt):lower()
-    if not exts[ext] then ext = defExt end
-    local hs = HttpService
-    local mapPath = dir .. "/_map.json"
-    local map = {}
-    pcall(function()
-        if isfile(mapPath) then
-            local ok, d = pcall(hs.JSONDecode, hs, readfile(mapPath))
-            if ok and type(d) == "table" then map = d end
-        end
-    end)
-    local key = tostring(#src) .. "_" .. src:sub(1,40):gsub("[^%w]","")
-    if map[key] then
-        local cp = dir .. "/" .. map[key]
-        if isfile(cp) then
-            local ok, a = pcall(getcustomasset, cp)
-            if ok and a and a ~= "" then return a end
-        end
-        map[key] = nil
-    end
-    if noDownload then return nil end
-    local body = nil
-    local dlOk = pcall(function()
-        local req = (syn and syn.request) or http_request or request
-        local r = req({Url = src, Method = "GET", Headers = {["User-Agent"] = "Roblox/WinInet"}})
-        if r and r.Body and #r.Body > 128 then body = r.Body end
-    end)
-    if not (dlOk and body) then return "" end
-    local isFtyp = #body >= 8 and body:sub(5,8) == "ftyp"
-    local fname = self:_rname(isFtyp and "ogg" or ext)
-    local path = dir .. "/" .. fname
-    writefile(path, body)
-    if isfile(path) then
-        local ok2, a = pcall(getcustomasset, path)
-        if ok2 and a and a ~= "" then
-            map[key] = fname
-            pcall(function()
-                local ok3, enc = pcall(hs.JSONEncode, hs, map)
-                if ok3 then writefile(mapPath, enc) end
-            end)
-            return a
-        end
-    end
-    return ""
-end
-
-function MediaManager:Image(src)
-    return self:_fetch(src, "images", {png=1, jpg=1, jpeg=1, webp=1, gif=1}, "png")
-end
-
-function MediaManager:Audio(src, noDownload)
-    return self:_fetch(src, "audio", {mp3=1, ogg=1, wav=1, flac=1}, "mp3", noDownload)
-end
-
-function MediaManager:Video(src)
-    if type(src) ~= "string" or src == "" then return "" end
-    if src:match("^rbxassetid://") or src:match("^rbxasset://") then return src end
-    if src:match("^%d+$") then return "rbxassetid://" .. src end
-    if not src:match("^https?://") then return "" end
-    local ext = (src:match("%.(%a+)%??[^/]*$") or "webm"):lower()
-    if not ({webm=1, mp4=1, ogg=1, mov=1})[ext] then ext = "webm" end
-    if ext == "mp4" or ext == "mov" then ext = "webm" end
-    self:_init("videos")
-    local dir = self.Folder .. "/videos"
-    local mapPath = dir .. "/_map.json"
-    local hs = HttpService
-    local map = {}
-    pcall(function()
-        if isfile(mapPath) then
-            local ok, d = pcall(hs.JSONDecode, hs, readfile(mapPath))
-            if ok and type(d) == "table" then map = d end
-        end
-    end)
-    local key = tostring(#src) .. "_" .. src:sub(1,40):gsub("[^%w]","")
-    if map[key] then
-        local cp = dir .. "/" .. map[key]
-        if isfile(cp) then
-            local ok, a = pcall(getcustomasset, cp)
-            if ok and a and a ~= "" then return a end
-        end
-        map[key] = nil
-    end
-    local fname = self:_rname(ext)
-    local path = dir .. "/" .. fname
-    local body = nil
-    local reqOk = pcall(function()
-        local req = (syn and syn.request) or http_request or request
-        local r = req({Url = src, Method = "GET", Headers = {["User-Agent"] = "Roblox/WinInet"}})
-        if r and r.Body and #r.Body > 512 then
-            local peek = r.Body:sub(1,15):lower()
-            if peek:find("<!doctype") or peek:find("<html") then return end
-            body = r.Body
-            writefile(path, body)
-        end
-    end)
-    if reqOk and body and isfile(path) then
-        local ok2, a = pcall(getcustomasset, path)
-        if ok2 and a and a ~= "" then
-            map[key] = fname
-            pcall(function()
-                local ok3, enc = pcall(hs.JSONEncode, hs, map)
-                if ok3 then writefile(mapPath, enc) end
-            end)
-            return a
-        end
-    end
-    return ""
-end
-
-Fenglib.MediaManager = MediaManager
-
--- ========================= FloatingButtonManager =========================
-local FloatingButtonManager = {}
-FloatingButtonManager.Folder = "FengFloatingButtons"
-FloatingButtonManager.Buttons = {}
-FloatingButtonManager.Library = nil
-
-local function serUDim2(u) return {ScaleX = u.X.Scale, OffsetX = u.X.Offset, ScaleY = u.Y.Scale, OffsetY = u.Y.Offset} end
-local function desUDim2(t) return UDim2.new(t.ScaleX or 0, t.OffsetX or 0, t.ScaleY or 0, t.OffsetY or 0) end
-
-function FloatingButtonManager:SetLibrary(lib) self.Library = lib end
-function FloatingButtonManager:SetFolder(folder) self.Folder = folder; self:BuildFolderTree() end
-function FloatingButtonManager:BuildFolderTree()
-    local paths = {self.Folder, self.Folder .. "/settings"}
-    for _, p in ipairs(paths) do if not isfolder(p) then makefolder(p) end end
-end
-FloatingButtonManager:BuildFolderTree()
-
-function FloatingButtonManager:AddButton(id, frameOrButton, locked, isCircle, applyShapeCallback, frame)
-    local targetFrame = frame or frameOrButton
-    if frameOrButton:IsA("TextButton") and not frame then
-        local p = frameOrButton.Parent
-        if p and p:IsA("Frame") then targetFrame = p end
-    end
-    self.Buttons[id] = {
-        frame = targetFrame,
-        button = frameOrButton,
-        applyShape = applyShapeCallback,
-    }
-    targetFrame:SetAttribute("Locked", locked or false)
-    targetFrame:SetAttribute("IsCircle", isCircle or false)
-    -- 使按钮可拖动
-    local dragging = false
-    local dragStartPos, dragStartObjPos
-    local function startDrag(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStartPos = input.Position
-            dragStartObjPos = targetFrame.Position
-        end
-    end
-    local function onMove(input)
-        if not dragging then return end
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            local delta = input.Position - dragStartPos
-            targetFrame.Position = UDim2.new(
-                dragStartObjPos.X.Scale, dragStartObjPos.X.Offset + delta.X,
-                dragStartObjPos.Y.Scale, dragStartObjPos.Y.Offset + delta.Y
-            )
-        end
-    end
-    local function endDrag(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end
-    targetFrame.InputBegan:Connect(startDrag)
-    UserInputService.InputChanged:Connect(onMove)
-    UserInputService.InputEnded:Connect(endDrag)
-end
-
-function FloatingButtonManager:Save(name)
-    local path = self.Folder .. "/settings/" .. name .. ".json"
-    local data = {}
-    for id, entry in pairs(self.Buttons) do
-        local f = entry.frame
-        data[id] = {
-            size = serUDim2(f.Size),
-            position = serUDim2(f.Position),
-            locked = f:GetAttribute("Locked") or false,
-            isCircle = f:GetAttribute("IsCircle") or false,
-        }
-    end
-    local ok, enc = pcall(HttpService.JSONEncode, HttpService, data)
-    if not ok then return false, "encode failed" end
-    writefile(path, enc)
-    return true
-end
-
-function FloatingButtonManager:Load(name)
-    local path = self.Folder .. "/settings/" .. name .. ".json"
-    if not isfile(path) then return false, "no such file" end
-    local ok, dec = pcall(HttpService.JSONDecode, HttpService, readfile(path))
-    if not ok then return false, "decode failed" end
-    for id, saved in pairs(dec) do
-        local entry = self.Buttons[id]
-        if entry then
-            local f = entry.frame
-            if saved.position then f.Position = desUDim2(saved.position) end
-            if saved.size then f.Size = desUDim2(saved.size) end
-            f:SetAttribute("Locked", saved.locked or false)
-            f:SetAttribute("IsCircle", saved.isCircle or false)
-            if entry.applyShape then
-                task.defer(function() pcall(entry.applyShape, saved.isCircle or false) end)
-            end
-        end
-    end
-    return true
-end
-
-function FloatingButtonManager:RefreshConfigList()
-    local list = listfiles(self.Folder .. "/settings")
-    local out = {}
-    for _, file in ipairs(list) do
-        if file:sub(-5) == ".json" then
-            local nm = file:match("([^/\\]+)%.json$")
-            if nm then table.insert(out, nm) end
-        end
-    end
-    return out
-end
-
-function FloatingButtonManager:LoadAutoloadConfig()
-    local autoPath = self.Folder .. "/settings/autoload.txt"
-    if isfile(autoPath) then
-        local name = readfile(autoPath)
-        local ok, err = self:Load(name)
-        if not ok then
-            return self.Library:Notify({Title="Floating Buttons", Content="Failed to load autoload layout: " .. tostring(err), Duration=5})
-        end
-        self.Library:Notify({Title="Floating Buttons", Content=string.format("Auto loaded layout %q", name), Duration=5})
-    end
-end
-
-function FloatingButtonManager:BuildConfigSection(tab)
-    assert(self.Library, "Must set FloatingButtonManager.Library")
-    local section = tab:AddSection("Floating Buttons Config","lucide/file-type-corner")
-    section:AddInput("FB_ConfigName",{Title="Layout name",Icon="solar/widget-bold",Placeholder="Enter name..."})
-    section:AddDropdown("FB_ConfigList",{Title="Layouts list",Values=self:RefreshConfigList(),AllowNull=true,NoSearch=true,Icon="solar/list-bold",DropdownOutsideWindow=true,IsManagerDropdown=true})
-    section:AddButton({Title="Load layout",Icon="solar/upload-minimalistic-bold",Callback=function()
-        local name = self.Library.Options.FB_ConfigList.Value
-        if not name or name=="" then return self.Library:Notify({Title="Floating Buttons",Content="No layout selected",Duration=5}) end
-        local ok,err = self:Load(name)
-        if not ok then return self.Library:Notify({Title="Floating Buttons",Content="Failed to load: "..tostring(err),Duration=5}) end
-        self.Library:Notify({Title="Floating Buttons",Content=string.format("Loaded layout %q",name),Duration=5})
-    end})
-    local function _doCreateFB(name)
-        local ok,err = self:Save(name)
-        if not ok then return self.Library:Notify({Title="Floating Buttons",Content="Failed to save: "..tostring(err),Duration=5}) end
-        self.Library:Notify({Title="Floating Buttons",Content=string.format("Saved layout %q",name),Duration=5})
-        self.Library.Options.FB_ConfigList:SetValues(self:RefreshConfigList())
-        self.Library.Options.FB_ConfigList:SetValue(nil)
-    end
-    section:AddButton({Title="Create layout",Icon="solar/diskette-bold",Callback=function()
-        local name = self.Library.Options.FB_ConfigName.Value
-        if not name or name:gsub(" ","")=="" then
-            return self.Library:Notify({Title="Floating Buttons",Content="Invalid layout name",Duration=5})
-        end
-        local path = self.Folder .. "/settings/" .. name .. ".json"
-        local win = self.Library.Window
-        if isfile(path) and win then
-            win:Dialog({
-                Title="Overwrite layout?",
-                Content=string.format("A layout named %q already exists. Overwrite it?",name),
-                Buttons={
-                    {Title="Overwrite", Callback=function() _doCreateFB(name) end},
-                    {Title="Cancel"},
-                },
-            })
-            return
-        end
-        _doCreateFB(name)
-    end})
-    section:AddButton({Title="Overwrite layout",Icon="solar/refresh-bold",Callback=function()
-        local name = self.Library.Options.FB_ConfigList.Value
-        if not name or name=="" then return self.Library:Notify({Title="Floating Buttons",Content="No layout selected",Duration=5}) end
-        local ok,err = self:Save(name)
-        if not ok then return self.Library:Notify({Title="Floating Buttons",Content="Failed to overwrite: "..tostring(err),Duration=5}) end
-        self.Library:Notify({Title="Floating Buttons",Content=string.format("Overwrote layout %q",name),Duration=5})
-    end})
-    section:AddButton({Title="Delete layout",Icon="solar/close-circle-bold",Callback=function()
-        local name = self.Library.Options.FB_ConfigList.Value
-        if not name or name=="" then return self.Library:Notify({Title="Floating Buttons",Content="No layout selected",Duration=5}) end
-        local win = self.Library.Window
-        local function _doDeleteFB()
-            local path = self.Folder .. "/settings/" .. name .. ".json"
-            if isfile(path) then delfile(path) end
-            self.Library:Notify({Title="Floating Buttons",Content=string.format("Deleted layout %q",name),Duration=5})
-            self.Library.Options.FB_ConfigList:SetValues(self:RefreshConfigList())
-            self.Library.Options.FB_ConfigList:SetValue(nil)
-        end
-        if win then
-            win:Dialog({
-                Title="Delete layout?",
-                Content=string.format("Are you sure you want to permanently delete %q?",name),
-                Buttons={
-                    {Title="Delete", Callback=_doDeleteFB},
-                    {Title="Cancel"},
-                },
-            })
-        else
-            _doDeleteFB()
-        end
-    end})
-    section:AddButton({Title="Refresh list",Icon="solar/restart-bold",Callback=function()
-        self.Library.Options.FB_ConfigList:SetValues(self:RefreshConfigList())
-        self.Library.Options.FB_ConfigList:SetValue(nil)
-    end})
-    local autoPath = self.Folder .. "/settings/autoload.txt"
-    local AutoloadButton
-    AutoloadButton = section:AddButton({Title="Set as autoload",Icon="solar/star-bold",Description="Current autoload layout: none",Callback=function()
-        local name = self.Library.Options.FB_ConfigList.Value
-        if isfile(autoPath) then
-            delfile(autoPath)
-            AutoloadButton:SetDesc("Current autoload layout: none")
-            self.Library:Notify({Title="Floating Buttons",Content="Autoload disabled",Duration=5})
-        else
-            if not name or name=="" then return self.Library:Notify({Title="Floating Buttons",Content="No layout selected",Duration=5}) end
-            writefile(autoPath,name)
-            AutoloadButton:SetDesc("Current autoload layout: "..name)
-            self.Library:Notify({Title="Floating Buttons",Content=string.format("Set %q to autoload",name),Duration=5})
-        end
-    end})
-    if isfile(autoPath) then
-        local nm = readfile(autoPath)
-        if nm and nm ~= "" then AutoloadButton:SetDesc("Current autoload layout: " .. nm) end
-    end
-    -- 忽略配置保存中的这些键
-    self:SetIgnoreIndexes({"FB_ConfigList","FB_ConfigName"})
-end
-
-function FloatingButtonManager:SetIgnoreIndexes(list) end -- 简化
-
-Fenglib.FloatingButtonManager = FloatingButtonManager
-
--- ========================= Section Builder =========================
+-- ========== Section 构建器（所有控件圆角 4） ==========
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         local titleText = ""
@@ -828,12 +756,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- =============================================
-        -- 所有控件
-        -- =============================================
+        -- ===== 控件 =====
         local child = {}
 
-        -- Button
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
             local callback = config.Callback or function() end
@@ -887,7 +812,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Toggle
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
@@ -962,7 +886,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- Slider
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
             local valueTable = config.Value or {}
@@ -1162,7 +1085,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             UpdateSlider(Val)
         end
 
-        -- Dropdown (multi support)
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
             local options = config.Values or {}
@@ -1514,7 +1436,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Keybind
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
             local Key = config.Default or Enum.KeyCode.M
@@ -1577,7 +1498,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- ColorPicker
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
             local Color = config.Default or Color3.fromRGB(255, 255, 255)
@@ -1981,7 +1901,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Input
         child.Input = function(_, config)
             local inputText = config.Name or ""
             local default = config.Value or ""
@@ -2072,7 +1991,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Textbox
         child.Textbox = function(_, config)
             local boxText = config.Name or ""
             local placeholder = config.Placeholder or ""
@@ -2128,7 +2046,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
-        -- Label
         child.Label = function(_, config)
             local labelText = config.Name or ""
             local LabelFrame = Instance.new("Frame")
@@ -2156,7 +2073,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- SubLabel
         child.SubLabel = function(_, config)
             local subLabelText = config.Name or ""
             local SubLabelFrame = Instance.new("Frame")
@@ -2185,7 +2101,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Paragraph
         child.Paragraph = function(_, config)
             local headerText = config.Header or ""
             local bodyText = config.Body or ""
@@ -2240,7 +2155,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Image (enhanced with MediaManager)
         child.Image = function(_, config)
             config = config or {}
             local title = config.Title or "Image"
@@ -2263,8 +2177,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     elseif asset:match("^rbxassetid://") then
                         return asset
                     elseif asset:match("^http") then
-                        local cached = MediaManager:Image(asset)
-                        if cached and cached ~= "" then return cached end
                         return asset
                     else
                         return "rbxassetid://" .. asset
@@ -2443,430 +2355,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========================= Audio Control =========================
-        child.Audio = function(_, config)
-            local opts = config or {}
-            local parent = contentHolder
-            if not parent then return end
-            local src = opts.Audio or opts.Sound or ""
-            local vol = (opts.Volume ~= nil) and math.clamp(opts.Volume, 0, 10) or 0.5
-            local looped = opts.Looped ~= false
-            local auto = opts.AutoPlay ~= false
-
-            local function resolve(s, noDownload)
-                if type(s) ~= "string" or s == "" then return "" end
-                if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
-                if s:match("^%d+$") then return "rbxassetid://" .. s end
-                if s:match("^https?://") then
-                    local cached = MediaManager:Audio(s, noDownload)
-                    if cached and cached ~= "" then return cached end
-                    return ""
-                end
-                return ""
-            end
-
-            local isHttp = type(src) == "string" and src:match("^https?://")
-            local resolved = isHttp and resolve(src, true) or resolve(src, false)
-            local pendingDownload = isHttp and (not resolved or resolved == "")
-            local hasAudio = (resolved ~= nil and resolved ~= "") or pendingDownload
-
-            local snd = nil
-            local playOutside = (opts.PlayOutsideWindow == true)
-
-            local function _initSound(resolvedId)
-                local sndSvc = game:GetService("SoundService")
-                for _, ex in ipairs(sndSvc:GetChildren()) do
-                    if ex:IsA("Sound") and ex.Name == "BFAudio" and ex.SoundId == resolvedId then
-                        pcall(function() ex:Stop(); ex:Destroy() end)
-                    end
-                end
-                for _, ex in ipairs(workspace:GetChildren()) do
-                    if ex:IsA("Sound") and ex.Name == "BFAudio" and ex.SoundId == resolvedId then
-                        pcall(function() ex:Stop(); ex:Destroy() end)
-                    end
-                end
-                local s2 = Instance.new("Sound")
-                s2.Name   = "BFAudio"
-                pcall(function() s2.SoundId = resolvedId end)
-                s2.Volume = vol
-                s2.Looped = looped
-                if playOutside then
-                    s2.RollOffMaxDistance = 10000
-                    s2.Parent = game:GetService("SoundService")
-                else
-                    s2.Parent = workspace
-                end
-                return s2
-            end
-
-            if hasAudio and not pendingDownload then
-                snd = _initSound(resolved)
-            end
-
-            local rs = RunService
-            local uis = UserInputService
-            local function fmtTime(s)
-                s = math.max(0, math.floor(s or 0))
-                return string.format("%d:%02d", math.floor(s / 60), s % 60)
-            end
-
-            local function applyAudioIcon(imgLabel, iconName)
-                -- 简单图标，不依赖外部
-                imgLabel.Image = "rbxassetid://10734885614" -- 占位
-            end
-
-            local audioTitle    = opts.AudioTitle    or opts.Title    or (hasAudio and "Audio" or nil)
-            local audioSubtitle = opts.AudioSubtitle or opts.SubTitle or nil
-            local hasLabels = (audioTitle ~= nil and audioTitle ~= "") or (audioSubtitle ~= nil and audioSubtitle ~= "")
-
-            local wrapHeight = hasLabels and 118 or 96
-            local wrap = Instance.new("Frame")
-            wrap.Size = UDim2.new(1, -16, 0, wrapHeight)
-            wrap.BackgroundTransparency = 0.9
-            wrap.BorderSizePixel = 0
-            wrap.Parent = parent
-            AddToRegistry(wrap, "BackgroundColor3", "Element")
-            Instance.new("UICorner", wrap).CornerRadius = UDim.new(0, 8)
-            local stroke = Instance.new("UIStroke")
-            stroke.Transparency = 0.6
-            stroke.Thickness = 1
-            stroke.Parent = wrap
-            AddToRegistry(stroke, "Color", "InElementBorder")
-
-            local padding = Instance.new("UIPadding")
-            padding.PaddingLeft = UDim.new(0, 10)
-            padding.PaddingRight = UDim.new(0, 10)
-            padding.PaddingTop = UDim.new(0, 10)
-            padding.PaddingBottom = UDim.new(0, 10)
-            padding.Parent = wrap
-
-            local topRow = Instance.new("Frame")
-            topRow.Size = UDim2.new(1, 0, 0, hasLabels and 38 or 28)
-            topRow.BackgroundTransparency = 1
-            topRow.Parent = wrap
-
-            local audioIconImg = Instance.new("ImageLabel")
-            audioIconImg.Size = UDim2.fromOffset(20, 20)
-            audioIconImg.Position = UDim2.new(0, 0, 0.5, 0)
-            audioIconImg.AnchorPoint = Vector2.new(0, 0.5)
-            audioIconImg.BackgroundTransparency = 1
-            audioIconImg.ZIndex = 2
-            audioIconImg.Parent = topRow
-            audioIconImg.Image = "rbxassetid://10734885614"
-            AddToRegistry(audioIconImg, "ImageColor3", hasAudio and "Accent" or "SubText")
-
-            local titleHolder = Instance.new("Frame")
-            titleHolder.Size = UDim2.new(1, -110, 1, 0)
-            titleHolder.Position = UDim2.new(0, 28, 0, 0)
-            titleHolder.BackgroundTransparency = 1
-            titleHolder.ZIndex = 2
-            titleHolder.Parent = topRow
-
-            local statusLbl = Instance.new("TextLabel")
-            statusLbl.Size = UDim2.new(1, 0, 0, 16)
-            statusLbl.Position = UDim2.new(0, 0, 0, hasLabels and 2 or 0)
-            statusLbl.AnchorPoint = Vector2.new(0, 0)
-            statusLbl.BackgroundTransparency = 1
-            statusLbl.Text = (audioTitle ~= nil and audioTitle ~= "") and audioTitle or (hasAudio and "Audio" or "No audio source")
-            statusLbl.TextSize = hasLabels and 12 or 11
-            statusLbl.Font = hasLabels and Enum.Font.GothamBold or Enum.Font.Gotham
-            statusLbl.TextXAlignment = Enum.TextXAlignment.Left
-            statusLbl.TextTruncate = Enum.TextTruncate.AtEnd
-            statusLbl.ZIndex = 2
-            statusLbl.Parent = titleHolder
-            AddToRegistry(statusLbl, "TextColor3", hasAudio and "Text" or "SubText")
-
-            local subtitleLbl = Instance.new("TextLabel")
-            subtitleLbl.Size = UDim2.new(1, 0, 0, 13)
-            subtitleLbl.Position = UDim2.new(0, 0, 0, 20)
-            subtitleLbl.AnchorPoint = Vector2.new(0, 0)
-            subtitleLbl.BackgroundTransparency = 1
-            subtitleLbl.Text = (audioSubtitle ~= nil) and audioSubtitle or ""
-            subtitleLbl.TextSize = 10
-            subtitleLbl.Font = Enum.Font.Gotham
-            subtitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-            subtitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
-            subtitleLbl.Visible = (audioSubtitle ~= nil and audioSubtitle ~= "")
-            subtitleLbl.ZIndex = 2
-            subtitleLbl.Parent = titleHolder
-            AddToRegistry(subtitleLbl, "TextColor3", "SubText")
-
-            local controls = Instance.new("Frame")
-            controls.Size = UDim2.new(0, 116, 1, 0)
-            controls.Position = UDim2.new(1, 0, 0, 0)
-            controls.AnchorPoint = Vector2.new(1, 0)
-            controls.BackgroundTransparency = 1
-            controls.Visible = hasAudio
-            controls.Parent = topRow
-
-            local btnLayout = Instance.new("UIListLayout")
-            btnLayout.FillDirection = Enum.FillDirection.Horizontal
-            btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-            btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-            btnLayout.Padding = UDim.new(0, 4)
-            btnLayout.Parent = controls
-
-            local function ctrlBtn(iconName, cb)
-                local btn = Instance.new("TextButton")
-                btn.Size = UDim2.fromOffset(24, 24)
-                btn.BackgroundTransparency = 1
-                btn.Text = ""
-                btn.ZIndex = 3
-                btn.Parent = controls
-                local icImg = Instance.new("ImageLabel")
-                icImg.Size = UDim2.fromOffset(16, 16)
-                icImg.Position = UDim2.new(0.5, 0, 0.5, 0)
-                icImg.AnchorPoint = Vector2.new(0.5, 0.5)
-                icImg.BackgroundTransparency = 1
-                icImg.ZIndex = 4
-                icImg.Parent = btn
-                icImg.Image = "rbxassetid://10734885614"
-                AddToRegistry(icImg, "ImageColor3", "Text")
-                btn.MouseButton1Click:Connect(function() pcall(cb) end)
-                return btn, icImg
-            end
-
-            local playing = false
-            local playBtn, pauseBtn, outsideIcImg
-            if hasAudio then
-                local _downloading = false
-                local function _doPlay()
-                    if not snd then return end
-                    pcall(function() snd:Play() end)
-                    playing = true
-                    if playBtn then playBtn.Visible = false end
-                    if pauseBtn then pauseBtn.Visible = true end
-                end
-                local function _triggerPlay()
-                    if _downloading then return end
-                    if snd then
-                        _doPlay()
-                        return
-                    end
-                    if pendingDownload then
-                        _downloading = true
-                        if Fenglib.Notify then
-                            Fenglib:Notify({Title="Audio", Content="Downloading audio...", Type="Info", Duration=4})
-                        end
-                        task.spawn(function()
-                            local got = resolve(src, false)
-                            _downloading = false
-                            if got and got ~= "" then
-                                pendingDownload = false
-                                snd = _initSound(got)
-                                _doPlay()
-                                if Fenglib.Notify then
-                                    Fenglib:Notify({Title="Audio", Content="Audio ready", Type="Success", Duration=2})
-                                end
-                            else
-                                if Fenglib.Notify then
-                                    Fenglib:Notify({Title="Audio", Content="Failed to download", Type="Error", Duration=3})
-                                end
-                            end
-                        end)
-                    end
-                end
-                playBtn = ctrlBtn("solar/play-bold", _triggerPlay)
-                pauseBtn = ctrlBtn("solar/pause-bold", function()
-                    if snd then snd:Pause() end
-                    playing = false
-                    if playBtn then playBtn.Visible = true end
-                    if pauseBtn then pauseBtn.Visible = false end
-                end)
-                pauseBtn.Visible = false
-                local stopBtn = ctrlBtn("solar/stop-bold", function()
-                    if snd then snd:Stop() end
-                    playing = false
-                    if playBtn then playBtn.Visible = true end
-                    if pauseBtn then pauseBtn.Visible = false end
-                end)
-                local outsideBtn, outsideIc = ctrlBtn("solar/export-bold", function()
-                    playOutside = not playOutside
-                    if snd then
-                        local wasPlaying = playing
-                        pcall(function() if wasPlaying then snd:Stop() end end)
-                        if playOutside then
-                            snd.RollOffMaxDistance = 10000
-                            snd.Parent = game:GetService("SoundService")
-                        else
-                            snd.Parent = workspace
-                        end
-                        if wasPlaying then pcall(function() snd:Play() end) end
-                    end
-                end)
-                outsideIcImg = outsideIc
-
-                if auto and snd then
-                    _doPlay()
-                end
-            end
-
-            local seekRowOffset = hasLabels and 56 or 36
-            local seekRow = Instance.new("Frame")
-            seekRow.Size = UDim2.new(1, 0, 0, 24)
-            seekRow.Position = UDim2.new(0, 0, 0, seekRowOffset)
-            seekRow.BackgroundTransparency = 1
-            seekRow.Visible = hasAudio
-            seekRow.Parent = wrap
-
-            local curLbl = Instance.new("TextLabel")
-            curLbl.Size = UDim2.fromOffset(34, 20)
-            curLbl.Position = UDim2.new(0, 0, 0.5, 0)
-            curLbl.AnchorPoint = Vector2.new(0, 0.5)
-            curLbl.BackgroundTransparency = 1
-            curLbl.Text = "0:00"
-            curLbl.TextSize = 10
-            curLbl.Font = Enum.Font.Gotham
-            curLbl.TextXAlignment = Enum.TextXAlignment.Left
-            curLbl.ZIndex = 3
-            curLbl.Parent = seekRow
-            AddToRegistry(curLbl, "TextColor3", "SubText")
-
-            local durLbl = Instance.new("TextLabel")
-            durLbl.Size = UDim2.fromOffset(34, 20)
-            durLbl.Position = UDim2.new(1, 0, 0.5, 0)
-            durLbl.AnchorPoint = Vector2.new(1, 0.5)
-            durLbl.BackgroundTransparency = 1
-            durLbl.Text = "0:00"
-            durLbl.TextSize = 10
-            durLbl.Font = Enum.Font.Gotham
-            durLbl.TextXAlignment = Enum.TextXAlignment.Right
-            durLbl.ZIndex = 3
-            durLbl.Parent = seekRow
-            AddToRegistry(durLbl, "TextColor3", "SubText")
-
-            local rail = Instance.new("Frame")
-            rail.Size = UDim2.new(1, -76, 0, 4)
-            rail.Position = UDim2.new(0, 38, 0.5, 0)
-            rail.AnchorPoint = Vector2.new(0, 0.5)
-            rail.BackgroundTransparency = 0.65
-            rail.ZIndex = 2
-            rail.Parent = seekRow
-            AddToRegistry(rail, "BackgroundColor3", "SubText")
-            Instance.new("UICorner", rail).CornerRadius = UDim.new(1, 0)
-
-            local fill = Instance.new("Frame")
-            fill.Size = UDim2.new(0, 0, 1, 0)
-            fill.BackgroundTransparency = 0
-            fill.ZIndex = 3
-            fill.Parent = rail
-            AddToRegistry(fill, "BackgroundColor3", "Accent")
-            Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-
-            local knob = Instance.new("Frame")
-            knob.Size = UDim2.fromOffset(12, 12)
-            knob.Position = UDim2.new(0, 0, 0.5, 0)
-            knob.AnchorPoint = Vector2.new(0.5, 0.5)
-            knob.ZIndex = 4
-            knob.Parent = rail
-            AddToRegistry(knob, "BackgroundColor3", "Accent")
-            Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
-
-            local dragging = false
-            local function seekTo(inputX)
-                if not snd then return end
-                local railX = rail.AbsolutePosition.X
-                local railW = rail.AbsoluteSize.X
-                if railW <= 0 then return end
-                local pct = math.clamp((inputX - railX) / railW, 0, 1)
-                local dur = snd.TimeLength or 0
-                if dur > 0 then
-                    pcall(function() snd.TimePosition = pct * dur end)
-                end
-            end
-
-            rail.InputBegan:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                    dragging = true
-                    seekTo(inp.Position.X)
-                end
-            end)
-            rail.InputEnded:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                    dragging = false
-                end
-            end)
-            uis.InputChanged:Connect(function(inp)
-                if dragging and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
-                    seekTo(inp.Position.X)
-                end
-            end)
-
-            local hbConn = rs.Heartbeat:Connect(function()
-                if not wrap.Parent then return end
-                if not snd then return end
-                local dur = snd.TimeLength or 0
-                local pos = snd.TimePosition or 0
-                curLbl.Text = fmtTime(pos)
-                durLbl.Text = fmtTime(dur)
-                local pct = dur > 0 and (pos / dur) or 0
-                fill.Size = UDim2.new(pct, 0, 1, 0)
-                knob.Position = UDim2.new(pct, 0, 0.5, 0)
-            end)
-
-            local mod = {Frame = wrap, Type = "Audio", Sound = snd}
-            function mod:Play() if snd then pcall(function() snd:Play() end) end end
-            function mod:Pause() if snd then pcall(function() snd:Pause() end) end end
-            function mod:Stop() if snd then pcall(function() snd:Stop() end) end end
-            function mod:SetVolume(v) if snd then snd.Volume = math.clamp(v, 0, 10) end end
-            function mod:SetAudio(src)
-                local r = resolve(src)
-                if snd then
-                    pcall(function() snd:Stop() end)
-                    pcall(function() snd.SoundId = r end)
-                else
-                    snd = Instance.new("Sound")
-                    snd.Name = "BFAudio"
-                    snd.SoundId = r
-                    snd.Volume = vol
-                    snd.Looped = looped
-                    if playOutside then
-                        snd.Parent = game:GetService("SoundService")
-                    else
-                        snd.Parent = workspace
-                    end
-                end
-                hasAudio = r ~= ""
-                controls.Visible = hasAudio
-                seekRow.Visible = hasAudio
-                statusLbl.Text = hasAudio and (audioTitle or "Audio") or "No audio source"
-                if playBtn then playBtn.Visible = hasAudio end
-                if pauseBtn then pauseBtn.Visible = false end
-            end
-            function mod:SetAudioTitle(title, subtitle)
-                statusLbl.Text = title or (hasAudio and "Audio" or "No audio source")
-                if subtitle ~= nil then
-                    subtitleLbl.Text = subtitle
-                    subtitleLbl.Visible = subtitle ~= ""
-                end
-            end
-            function mod:SetPlayOutside(enabled)
-                playOutside = enabled
-                if snd then
-                    local wasPlaying = playing
-                    pcall(function() snd:Stop() end)
-                    if enabled then
-                        snd.Parent = game:GetService("SoundService")
-                    else
-                        snd.Parent = workspace
-                    end
-                    if wasPlaying then pcall(function() snd:Play() end) end
-                end
-            end
-            function mod:Destroy()
-                if hbConn then hbConn:Disconnect() end
-                if snd then pcall(function() snd:Stop(); snd:Destroy() end) end
-                wrap:Destroy()
-            end
-            return mod
-        end
-
         return child
     end
     return createSection
 end
 
--- ========================= Window Creation =========================
+-- ============================================================
+--  窗口创建主函数
+-- ============================================================
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Name or "FengY3"
@@ -2897,6 +2393,14 @@ function Fenglib:CreateWindow(Config)
                 Text   = t.Text   and toC3(t.Text)   or CurrentTheme.Text,
                 Accent = t.Accent and toC3(t.Accent) or CurrentTheme.Accent,
                 Stroke = t.Stroke and toC3(t.Stroke) or CurrentTheme.Stroke,
+                Background = t.Background or CurrentTheme.Background,
+                BackgroundTransparency = t.BackgroundTransparency or CurrentTheme.BackgroundTransparency,
+                NoiseImage = t.NoiseImage or CurrentTheme.NoiseImage,
+                NoiseTransparency = t.NoiseTransparency or CurrentTheme.NoiseTransparency,
+                ShineEnabled = t.ShineEnabled ~= nil and t.ShineEnabled or CurrentTheme.ShineEnabled,
+                Shine = t.Shine or CurrentTheme.Shine,
+                StrokeShine = t.StrokeShine ~= nil and t.StrokeShine or CurrentTheme.StrokeShine,
+                StrokeDark = t.StrokeDark or CurrentTheme.StrokeDark,
             }
             local customName = t.Name or "Custom"
             Themes[customName] = customTheme
@@ -2911,6 +2415,7 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
+    -- 通知容器
     local NotificationHolder = Instance.new("Frame")
     NotificationHolder.Name = "NotificationHolder"
     NotificationHolder.Size = UDim2.new(0, 300, 0, 0)
@@ -2934,6 +2439,7 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.PaddingBottom = UDim.new(0, 5)
     HolderPadding.Parent = NotificationHolder
 
+    -- 主窗口框架
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0) 
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -2944,6 +2450,16 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
+    -- 记录窗口帧用于后续主题更新和流光
+    table.insert(WindowFrames, MainFrame)
+
+    -- 应用背景图片
+    applyBackgroundImages(MainFrame, CurrentTheme)
+
+    -- 应用流光动画
+    Fenglib:_applyWindowShine(MainFrame, CurrentTheme, true)
+
+    -- 窗口描边
     local Stroke = Instance.new("UIStroke")
     Stroke.Thickness = 2
     Stroke.Parent = MainFrame
@@ -2953,7 +2469,7 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- 高级视觉增强
+    -- 高级视觉增强（模糊+DOF）
     do
         local blurPart = Instance.new("Part")
         blurPart.Name = "FengBlurPart"
@@ -3042,6 +2558,7 @@ function Fenglib:CreateWindow(Config)
         end)
     end
 
+    -- 彩虹模式线程
     task.spawn(function()
         local rot = 0
         while ScreenGui.Parent do
@@ -3078,6 +2595,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
+    -- 顶部栏
     local topbarHeight = Subtitle and 45 or 40
 
     local Topbar = Instance.new("Frame")
@@ -3464,6 +2982,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
+    -- 3D投射模式
     Window._ProjectorModeEnabled = false
     Window._ProjectorObjects = nil
     Window._ProjectorSettings = {
@@ -3877,6 +3396,7 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
+    -- ===== 通知系统 =====
     function Window:Notification(titleText, descText, notifType, duration)
         notifType = notifType or "Info"
         duration = duration or 3
@@ -4065,6 +3585,13 @@ function Fenglib:CreateWindow(Config)
 
     function Window:SetKeybind(key) Keybind = key end
     function Window:Destroy() 
+        -- 清理流光连接
+        local state = ShineStates[MainFrame]
+        if state and state.conn then
+            state.conn:Disconnect()
+            ShineStates[MainFrame] = nil
+        end
+        -- 清理其他
         for _, fn in ipairs(WindowCleanup) do pcall(fn) end
         ScreenGui:Destroy() 
     end
@@ -4130,6 +3657,7 @@ function Fenglib:CreateWindow(Config)
         return Window._ProjectorModeEnabled
     end
 
+    -- ===== 卡片模式（与普通模式二选一） =====
     if isCardMode then
         LeftContainer.Visible = false
         RightContainer.Visible = false
@@ -4197,8 +3725,6 @@ function Fenglib:CreateWindow(Config)
                 elseif asset:match("^rbxassetid://") then
                     return asset
                 elseif asset:match("^http") then
-                    local cached = MediaManager:Image(asset)
-                    if cached and cached ~= "" then return cached end
                     return asset
                 else
                     return "rbxassetid://" .. asset
@@ -4479,7 +4005,6 @@ function Fenglib:CreateWindow(Config)
                     elements.Paragraph= function(_, config) return createSection("", nil, true).Paragraph(config) end
                     elements.ColorPicker= function(_, config) return createSection("", nil, true).ColorPicker(config) end
                     elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
-                    elements.Audio    = function(_, config) return createSection("", nil, true).Audio(config) end
                     return elements
                 end
 
@@ -4730,17 +4255,12 @@ function Fenglib:CreateWindow(Config)
                 elements.Paragraph= function(_, config) return createSection("", nil, true).Paragraph(config) end
                 elements.ColorPicker= function(_, config) return createSection("", nil, true).ColorPicker(config) end
                 elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
-                elements.Audio    = function(_, config) return createSection("", nil, true).Audio(config) end
                 return elements
             end
 
             return getElements()
         end
     end
-
-    -- 注册 FloatingButtonManager
-    FloatingButtonManager:SetLibrary(Window)
-    Window.FloatingButtonManager = FloatingButtonManager
 
     return Window
 end
