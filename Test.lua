@@ -2565,6 +2565,45 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
+    -- ========================================
+    -- 新增：Category 和 TabDivider 方法
+    -- ========================================
+    function Window:Category(name)
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 0, 24)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamBold
+        label.Text = name
+        label.TextSize = 13
+        label.TextColor3 = CurrentTheme.Text
+        label.TextTransparency = 0.5
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = TabScroll
+        -- 左缩进与标签文字对齐
+        local pad = Instance.new("UIPadding")
+        pad.PaddingLeft = UDim.new(0, 14)
+        pad.Parent = label
+        AddToRegistry(label, "TextColor3", "Text")
+        table.insert(ThemeListeners, function()
+            label.TextColor3 = CurrentTheme.Text
+        end)
+        -- 调整布局顺序使分类可以插入到任意位置（按调用顺序）
+    end
+
+    function Window:TabDivider()
+        local line = Instance.new("Frame")
+        line.Size = UDim2.new(1, -20, 0, 1)
+        line.Position = UDim2.new(0, 10, 0, 0)
+        line.BackgroundColor3 = CurrentTheme.Stroke
+        line.BackgroundTransparency = 0.5
+        line.BorderSizePixel = 0
+        line.Parent = TabScroll
+        AddToRegistry(line, "BackgroundColor3", "Stroke")
+        table.insert(ThemeListeners, function()
+            line.BackgroundColor3 = CurrentTheme.Stroke
+        end)
+    end
+
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
     ProfileFrame.Position = UDim2.new(0, 10, 1, -19)
