@@ -161,9 +161,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         if type(text) == "table" then
             local config = text
-            titleText = config.label or ""
-            subtitleText = config.sublabel
-            iconAsset = config.icon
+            -- 仅使用新命名，旧键名已废弃
+            titleText = config.Name or ""
+            subtitleText = config.SubName
+            iconAsset = config.Logo
             if config.open ~= nil then defaultOpen = config.open end
         else
             titleText = text or ""
@@ -2536,7 +2537,7 @@ function Fenglib:CreateWindow(Config)
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
-    LeftContainer.BackgroundTransparency = 0.12
+    LeftContainer.BackgroundTransparency = 0.3    -- 修改：更透明
     LeftContainer.BackgroundColor3 = CurrentTheme.Main
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
