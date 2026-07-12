@@ -149,9 +149,373 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--------------------------------------------------------------------------------
--- createSectionBuilder (所有组件主容器圆角改为 4)
--------------------------------------------------------------------------------
+-- ========================= MediaManager =========================
+local MediaManager = {}
+MediaManager.Folder = "FengMediaCache"
+
+function MediaManager:SetFolder(f)
+    self.Folder = f
+end
+
+function MediaManager:_init(sub)
+    pcall(function()
+        if not isfolder(self.Folder) then makefolder(self.Folder) end
+        local p = self.Folder .. "/" .. sub
+        if not isfolder(p) then makefolder(p) end
+    end)
+end
+
+function MediaManager:_rname(ext)
+    local s = "abcdefghijklmnopqrstuvwxyz0123456789"
+    local n = ""
+    for _ = 1, 12 do local i = math.random(1, #s) n = n .. s:sub(i, i) end
+    return n .. "." .. ext
+end
+
+function MediaManager:_fetch(src, sub, exts, defExt, noDownload)
+    if type(src) ~= "string" or src == "" then return "" end
+    if src:match("^rbxassetid://") or src:match("^rbxasset://") then return src end
+    if src:match("^%d+$") then return "rbxassetid://" .. src end
+    if not src:match("^https?://") then return "" end
+    self:_init(sub)
+    local dir = self.Folder .. "/" .. sub
+    local cleanPath = src:match("^[^?#]+") or src
+    local ext = (cleanPath:match("%.([^%.%/]+)$") or defExt):lower()
+    if not exts[ext] then ext = defExt end
+    local hs = HttpService
+    local mapPath = dir .. "/_map.json"
+    local map = {}
+    pcall(function()
+        if isfile(mapPath) then
+            local ok, d = pcall(hs.JSONDecode, hs, readfile(mapPath))
+            if ok and type(d) == "table" then map = d end
+        end
+    end)
+    local key = tostring(#src) .. "_" .. src:sub(1,40):gsub("[^%w]","")
+    if map[key] then
+        local cp = dir .. "/" .. map[key]
+        if isfile(cp) then
+            local ok, a = pcall(getcustomasset, cp)
+            if ok and a and a ~= "" then return a end
+        end
+        map[key] = nil
+    end
+    if noDownload then return nil end
+    local body = nil
+    local dlOk = pcall(function()
+        local req = (syn and syn.request) or http_request or request
+        local r = req({Url = src, Method = "GET", Headers = {["User-Agent"] = "Roblox/WinInet"}})
+        if r and r.Body and #r.Body > 128 then body = r.Body end
+    end)
+    if not (dlOk and body) then return "" end
+    local isFtyp = #body >= 8 and body:sub(5,8) == "ftyp"
+    local fname = self:_rname(isFtyp and "ogg" or ext)
+    local path = dir .. "/" .. fname
+    writefile(path, body)
+    if isfile(path) then
+        local ok2, a = pcall(getcustomasset, path)
+        if ok2 and a and a ~= "" then
+            map[key] = fname
+            pcall(function()
+                local ok3, enc = pcall(hs.JSONEncode, hs, map)
+                if ok3 then writefile(mapPath, enc) end
+            end)
+            return a
+        end
+    end
+    return ""
+end
+
+function MediaManager:Image(src)
+    return self:_fetch(src, "images", {png=1, jpg=1, jpeg=1, webp=1, gif=1}, "png")
+end
+
+function MediaManager:Audio(src, noDownload)
+    return self:_fetch(src, "audio", {mp3=1, ogg=1, wav=1, flac=1}, "mp3", noDownload)
+end
+
+function MediaManager:Video(src)
+    if type(src) ~= "string" or src == "" then return "" end
+    if src:match("^rbxassetid://") or src:match("^rbxasset://") then return src end
+    if src:match("^%d+$") then return "rbxassetid://" .. src end
+    if not src:match("^https?://") then return "" end
+    local ext = (src:match("%.(%a+)%??[^/]*$") or "webm"):lower()
+    if not ({webm=1, mp4=1, ogg=1, mov=1})[ext] then ext = "webm" end
+    if ext == "mp4" or ext == "mov" then ext = "webm" end
+    self:_init("videos")
+    local dir = self.Folder .. "/videos"
+    local mapPath = dir .. "/_map.json"
+    local hs = HttpService
+    local map = {}
+    pcall(function()
+        if isfile(mapPath) then
+            local ok, d = pcall(hs.JSONDecode, hs, readfile(mapPath))
+            if ok and type(d) == "table" then map = d end
+        end
+    end)
+    local key = tostring(#src) .. "_" .. src:sub(1,40):gsub("[^%w]","")
+    if map[key] then
+        local cp = dir .. "/" .. map[key]
+        if isfile(cp) then
+            local ok, a = pcall(getcustomasset, cp)
+            if ok and a and a ~= "" then return a end
+        end
+        map[key] = nil
+    end
+    local fname = self:_rname(ext)
+    local path = dir .. "/" .. fname
+    local body = nil
+    local reqOk = pcall(function()
+        local req = (syn and syn.request) or http_request or request
+        local r = req({Url = src, Method = "GET", Headers = {["User-Agent"] = "Roblox/WinInet"}})
+        if r and r.Body and #r.Body > 512 then
+            local peek = r.Body:sub(1,15):lower()
+            if peek:find("<!doctype") or peek:find("<html") then return end
+            body = r.Body
+            writefile(path, body)
+        end
+    end)
+    if reqOk and body and isfile(path) then
+        local ok2, a = pcall(getcustomasset, path)
+        if ok2 and a and a ~= "" then
+            map[key] = fname
+            pcall(function()
+                local ok3, enc = pcall(hs.JSONEncode, hs, map)
+                if ok3 then writefile(mapPath, enc) end
+            end)
+            return a
+        end
+    end
+    return ""
+end
+
+Fenglib.MediaManager = MediaManager
+
+-- ========================= FloatingButtonManager =========================
+local FloatingButtonManager = {}
+FloatingButtonManager.Folder = "FengFloatingButtons"
+FloatingButtonManager.Buttons = {}
+FloatingButtonManager.Library = nil
+
+local function serUDim2(u) return {ScaleX = u.X.Scale, OffsetX = u.X.Offset, ScaleY = u.Y.Scale, OffsetY = u.Y.Offset} end
+local function desUDim2(t) return UDim2.new(t.ScaleX or 0, t.OffsetX or 0, t.ScaleY or 0, t.OffsetY or 0) end
+
+function FloatingButtonManager:SetLibrary(lib) self.Library = lib end
+function FloatingButtonManager:SetFolder(folder) self.Folder = folder; self:BuildFolderTree() end
+function FloatingButtonManager:BuildFolderTree()
+    local paths = {self.Folder, self.Folder .. "/settings"}
+    for _, p in ipairs(paths) do if not isfolder(p) then makefolder(p) end end
+end
+FloatingButtonManager:BuildFolderTree()
+
+function FloatingButtonManager:AddButton(id, frameOrButton, locked, isCircle, applyShapeCallback, frame)
+    local targetFrame = frame or frameOrButton
+    if frameOrButton:IsA("TextButton") and not frame then
+        local p = frameOrButton.Parent
+        if p and p:IsA("Frame") then targetFrame = p end
+    end
+    self.Buttons[id] = {
+        frame = targetFrame,
+        button = frameOrButton,
+        applyShape = applyShapeCallback,
+    }
+    targetFrame:SetAttribute("Locked", locked or false)
+    targetFrame:SetAttribute("IsCircle", isCircle or false)
+    -- 使按钮可拖动
+    local dragging = false
+    local dragStartPos, dragStartObjPos
+    local function startDrag(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStartPos = input.Position
+            dragStartObjPos = targetFrame.Position
+        end
+    end
+    local function onMove(input)
+        if not dragging then return end
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            local delta = input.Position - dragStartPos
+            targetFrame.Position = UDim2.new(
+                dragStartObjPos.X.Scale, dragStartObjPos.X.Offset + delta.X,
+                dragStartObjPos.Y.Scale, dragStartObjPos.Y.Offset + delta.Y
+            )
+        end
+    end
+    local function endDrag(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end
+    targetFrame.InputBegan:Connect(startDrag)
+    UserInputService.InputChanged:Connect(onMove)
+    UserInputService.InputEnded:Connect(endDrag)
+end
+
+function FloatingButtonManager:Save(name)
+    local path = self.Folder .. "/settings/" .. name .. ".json"
+    local data = {}
+    for id, entry in pairs(self.Buttons) do
+        local f = entry.frame
+        data[id] = {
+            size = serUDim2(f.Size),
+            position = serUDim2(f.Position),
+            locked = f:GetAttribute("Locked") or false,
+            isCircle = f:GetAttribute("IsCircle") or false,
+        }
+    end
+    local ok, enc = pcall(HttpService.JSONEncode, HttpService, data)
+    if not ok then return false, "encode failed" end
+    writefile(path, enc)
+    return true
+end
+
+function FloatingButtonManager:Load(name)
+    local path = self.Folder .. "/settings/" .. name .. ".json"
+    if not isfile(path) then return false, "no such file" end
+    local ok, dec = pcall(HttpService.JSONDecode, HttpService, readfile(path))
+    if not ok then return false, "decode failed" end
+    for id, saved in pairs(dec) do
+        local entry = self.Buttons[id]
+        if entry then
+            local f = entry.frame
+            if saved.position then f.Position = desUDim2(saved.position) end
+            if saved.size then f.Size = desUDim2(saved.size) end
+            f:SetAttribute("Locked", saved.locked or false)
+            f:SetAttribute("IsCircle", saved.isCircle or false)
+            if entry.applyShape then
+                task.defer(function() pcall(entry.applyShape, saved.isCircle or false) end)
+            end
+        end
+    end
+    return true
+end
+
+function FloatingButtonManager:RefreshConfigList()
+    local list = listfiles(self.Folder .. "/settings")
+    local out = {}
+    for _, file in ipairs(list) do
+        if file:sub(-5) == ".json" then
+            local nm = file:match("([^/\\]+)%.json$")
+            if nm then table.insert(out, nm) end
+        end
+    end
+    return out
+end
+
+function FloatingButtonManager:LoadAutoloadConfig()
+    local autoPath = self.Folder .. "/settings/autoload.txt"
+    if isfile(autoPath) then
+        local name = readfile(autoPath)
+        local ok, err = self:Load(name)
+        if not ok then
+            return self.Library:Notify({Title="Floating Buttons", Content="Failed to load autoload layout: " .. tostring(err), Duration=5})
+        end
+        self.Library:Notify({Title="Floating Buttons", Content=string.format("Auto loaded layout %q", name), Duration=5})
+    end
+end
+
+function FloatingButtonManager:BuildConfigSection(tab)
+    assert(self.Library, "Must set FloatingButtonManager.Library")
+    local section = tab:AddSection("Floating Buttons Config","lucide/file-type-corner")
+    section:AddInput("FB_ConfigName",{Title="Layout name",Icon="solar/widget-bold",Placeholder="Enter name..."})
+    section:AddDropdown("FB_ConfigList",{Title="Layouts list",Values=self:RefreshConfigList(),AllowNull=true,NoSearch=true,Icon="solar/list-bold",DropdownOutsideWindow=true,IsManagerDropdown=true})
+    section:AddButton({Title="Load layout",Icon="solar/upload-minimalistic-bold",Callback=function()
+        local name = self.Library.Options.FB_ConfigList.Value
+        if not name or name=="" then return self.Library:Notify({Title="Floating Buttons",Content="No layout selected",Duration=5}) end
+        local ok,err = self:Load(name)
+        if not ok then return self.Library:Notify({Title="Floating Buttons",Content="Failed to load: "..tostring(err),Duration=5}) end
+        self.Library:Notify({Title="Floating Buttons",Content=string.format("Loaded layout %q",name),Duration=5})
+    end})
+    local function _doCreateFB(name)
+        local ok,err = self:Save(name)
+        if not ok then return self.Library:Notify({Title="Floating Buttons",Content="Failed to save: "..tostring(err),Duration=5}) end
+        self.Library:Notify({Title="Floating Buttons",Content=string.format("Saved layout %q",name),Duration=5})
+        self.Library.Options.FB_ConfigList:SetValues(self:RefreshConfigList())
+        self.Library.Options.FB_ConfigList:SetValue(nil)
+    end
+    section:AddButton({Title="Create layout",Icon="solar/diskette-bold",Callback=function()
+        local name = self.Library.Options.FB_ConfigName.Value
+        if not name or name:gsub(" ","")=="" then
+            return self.Library:Notify({Title="Floating Buttons",Content="Invalid layout name",Duration=5})
+        end
+        local path = self.Folder .. "/settings/" .. name .. ".json"
+        local win = self.Library.Window
+        if isfile(path) and win then
+            win:Dialog({
+                Title="Overwrite layout?",
+                Content=string.format("A layout named %q already exists. Overwrite it?",name),
+                Buttons={
+                    {Title="Overwrite", Callback=function() _doCreateFB(name) end},
+                    {Title="Cancel"},
+                },
+            })
+            return
+        end
+        _doCreateFB(name)
+    end})
+    section:AddButton({Title="Overwrite layout",Icon="solar/refresh-bold",Callback=function()
+        local name = self.Library.Options.FB_ConfigList.Value
+        if not name or name=="" then return self.Library:Notify({Title="Floating Buttons",Content="No layout selected",Duration=5}) end
+        local ok,err = self:Save(name)
+        if not ok then return self.Library:Notify({Title="Floating Buttons",Content="Failed to overwrite: "..tostring(err),Duration=5}) end
+        self.Library:Notify({Title="Floating Buttons",Content=string.format("Overwrote layout %q",name),Duration=5})
+    end})
+    section:AddButton({Title="Delete layout",Icon="solar/close-circle-bold",Callback=function()
+        local name = self.Library.Options.FB_ConfigList.Value
+        if not name or name=="" then return self.Library:Notify({Title="Floating Buttons",Content="No layout selected",Duration=5}) end
+        local win = self.Library.Window
+        local function _doDeleteFB()
+            local path = self.Folder .. "/settings/" .. name .. ".json"
+            if isfile(path) then delfile(path) end
+            self.Library:Notify({Title="Floating Buttons",Content=string.format("Deleted layout %q",name),Duration=5})
+            self.Library.Options.FB_ConfigList:SetValues(self:RefreshConfigList())
+            self.Library.Options.FB_ConfigList:SetValue(nil)
+        end
+        if win then
+            win:Dialog({
+                Title="Delete layout?",
+                Content=string.format("Are you sure you want to permanently delete %q?",name),
+                Buttons={
+                    {Title="Delete", Callback=_doDeleteFB},
+                    {Title="Cancel"},
+                },
+            })
+        else
+            _doDeleteFB()
+        end
+    end})
+    section:AddButton({Title="Refresh list",Icon="solar/restart-bold",Callback=function()
+        self.Library.Options.FB_ConfigList:SetValues(self:RefreshConfigList())
+        self.Library.Options.FB_ConfigList:SetValue(nil)
+    end})
+    local autoPath = self.Folder .. "/settings/autoload.txt"
+    local AutoloadButton
+    AutoloadButton = section:AddButton({Title="Set as autoload",Icon="solar/star-bold",Description="Current autoload layout: none",Callback=function()
+        local name = self.Library.Options.FB_ConfigList.Value
+        if isfile(autoPath) then
+            delfile(autoPath)
+            AutoloadButton:SetDesc("Current autoload layout: none")
+            self.Library:Notify({Title="Floating Buttons",Content="Autoload disabled",Duration=5})
+        else
+            if not name or name=="" then return self.Library:Notify({Title="Floating Buttons",Content="No layout selected",Duration=5}) end
+            writefile(autoPath,name)
+            AutoloadButton:SetDesc("Current autoload layout: "..name)
+            self.Library:Notify({Title="Floating Buttons",Content=string.format("Set %q to autoload",name),Duration=5})
+        end
+    end})
+    if isfile(autoPath) then
+        local nm = readfile(autoPath)
+        if nm and nm ~= "" then AutoloadButton:SetDesc("Current autoload layout: " .. nm) end
+    end
+    -- 忽略配置保存中的这些键
+    self:SetIgnoreIndexes({"FB_ConfigList","FB_ConfigName"})
+end
+
+function FloatingButtonManager:SetIgnoreIndexes(list) end -- 简化
+
+Fenglib.FloatingButtonManager = FloatingButtonManager
+
+-- ========================= Section Builder =========================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local function createSection(text, icons, defaultOpen)
         local titleText = ""
@@ -465,7 +829,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end)
 
         -- =============================================
-        -- 所有控件均接受新格式
+        -- 所有控件
         -- =============================================
         local child = {}
 
@@ -598,7 +962,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- Slider (修正：输入框可正常聚焦，拖动仅限轨道)
+        -- Slider
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
             local valueTable = config.Value or {}
@@ -610,7 +974,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local unlimited = (min == nil and max == nil)
             min = tonumber(min)
             max = tonumber(max)
-            local Rounding = config.Rounding or 0   -- 默认为0（整数），可设置小数位数
+            local Rounding = config.Rounding or 0
             local Val = tonumber(default) or (min or 0)
             local controlId = sliderText .. "_" .. tostring(#Registry)
 
@@ -680,7 +1044,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Knob.Parent = Track
                 Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
-                -- 拖动按钮（仅覆盖轨道，不干扰输入框）
                 Bar = Instance.new("TextButton")
                 Bar.Size = UDim2.new(1, 0, 0, 18)
                 Bar.Position = UDim2.new(0, 0, 0.5, -9)
@@ -707,7 +1070,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     return
                 end
                 val = math.clamp(val, min, max)
-                val = Round(val, Rounding)  -- 应用四舍五入
+                val = Round(val, Rounding)
                 local ratio = (val - min) / (max - min)
                 TweenService:Create(Fill, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size = UDim2.new(ratio, 0, 1, 0)}):Play()
                 TweenService:Create(Knob, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = UDim2.new(ratio, 0, 0.5, 0)}):Play()
@@ -799,11 +1162,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             UpdateSlider(Val)
         end
 
-        -- ============================================================
-        -- 升级版 Dropdown（支持多选、状态持久化、主题适配）
-        -- 选中状态：主题色上→透明下 渐变光晕
-        -- 修复悬停白色背景：为选项按钮设置背景色为主题色
-        -- ============================================================
+        -- Dropdown (multi support)
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
             local options = config.Values or {}
@@ -812,7 +1171,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local callback = config.Callback or function() end
             local controlId = dropText .. "_" .. tostring(#Registry)
 
-            -- 当前选中值（单选为字符串，多选为表）
             local selected = multi and {} or nil
             local function initSelected()
                 if multi then
@@ -909,11 +1267,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     O.Text = ""
                     O.BackgroundTransparency = 1
                     O.AutoButtonColor = false
-                    O.BackgroundColor3 = CurrentTheme.Top   -- 关键修复：设置背景色为主题色，悬停时显示半透明主题色而非白色
+                    O.BackgroundColor3 = CurrentTheme.Top
                     O.Parent = Container
                     O.TextColor3 = CurrentTheme.Text
 
-                    -- 复选框：采用主题色上→透明下渐变
                     local check = Instance.new("Frame")
                     check.Size = UDim2.new(0, 16, 0, 16)
                     check.Position = UDim2.new(0, 10, 0.5, -8)
@@ -930,14 +1287,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     checkStroke.Transparency = 0.7
                     checkStroke.Parent = check
 
-                    -- 渐变：上主题色 -> 下透明
                     local checkGrad = Instance.new("UIGradient")
                     checkGrad.Rotation = 0
                     checkGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
                     checkGrad.Transparency = NumberSequence.new(1)
                     checkGrad.Parent = check
 
-                    -- 对勾图标
                     local checkMark = Instance.new("ImageLabel")
                     checkMark.Size = UDim2.new(0, 12, 0, 12)
                     checkMark.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -960,7 +1315,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     AddToRegistry(label, "TextColor3", "Text")
 
                     O.MouseEnter:Connect(function()
-                        Tween(O, {BackgroundTransparency = 0.1}, 0.15)  -- 悬停时显示主题色半透明
+                        Tween(O, {BackgroundTransparency = 0.1}, 0.15)
                     end)
                     O.MouseLeave:Connect(function()
                         Tween(O, {BackgroundTransparency = 1}, 0.15)
@@ -1018,7 +1373,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
 
-                -- 初始化所有选项的状态
                 for _, d in ipairs(optionButtons) do
                     if multi then
                         d.selected = table.find(selected, d.value) ~= nil
@@ -1138,7 +1492,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Btn.Visible = state
             end
 
-            -- 主题监听：更新复选框颜色和渐变，以及选项按钮背景色
             table.insert(ThemeListeners, function()
                 for _, d in ipairs(optionButtons) do
                     if d.checkStroke then d.checkStroke.Color = CurrentTheme.Accent end
@@ -1148,7 +1501,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     if d.checkGrad then
                         d.checkGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
                     end
-                    -- 更新选项按钮背景色
                     if d.button then
                         d.button.BackgroundColor3 = CurrentTheme.Top
                     end
@@ -1225,23 +1577,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- ============================================================
-        -- ColorPicker 升级版（基于 jx.lua 核心）
-        -- 支持：色相/饱和度/明度/Alpha、Hex输入、预设颜色、拖拽调节
-        -- ============================================================
+        -- ColorPicker
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
             local Color = config.Default or Color3.fromRGB(255, 255, 255)
             local callback = config.Callback or function() end
             local controlId = pickerText .. "_" .. tostring(#Registry)
             
-            -- 颜色状态
             local hue, sat, val = Color3.toHSV(Color)
             local alpha = 1.0
             local hexValue = "#" .. Color:ToHex()
             local isOpen = false
             
-            -- 保存的颜色列表（预设）
             local savedColors = {}
             local function addPresetColors()
                 local presets = {
@@ -1260,7 +1607,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             addPresetColors()
             
-            -- 主按钮（显示颜色块）
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 44)
             Tile.Parent = contentHolder
@@ -1297,7 +1643,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             SwStroke.Parent = Swatch
             AddToRegistry(SwStroke, "Color", "Stroke")
             
-            -- ========== 颜色选择器面板（基于 jx 核心） ==========
             local Panel = Instance.new("Frame")
             Panel.Size = UDim2.new(1, 0, 0, 0)
             Panel.Visible = false
@@ -1311,7 +1656,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             PSt.Parent = Panel
             AddToRegistry(PSt, "Color", "Accent")
             
-            -- 饱和度/明度 选择区
             local SVBox = Instance.new("ImageLabel")
             SVBox.Size = UDim2.new(1, -52, 0, 110)
             SVBox.Position = UDim2.new(0, 10, 0, 10)
@@ -1333,7 +1677,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             DotStroke.Color = Color3.fromRGB(80, 80, 80)
             DotStroke.Parent = SVDot
             
-            -- 色相条
             local HueBar = Instance.new("Frame")
             HueBar.Size = UDim2.new(0, 16, 0, 110)
             HueBar.Position = UDim2.new(1, -30, 0, 10)
@@ -1363,7 +1706,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             HueDot.Parent = HueBar
             Instance.new("UICorner", HueDot).CornerRadius = UDim.new(1, 0)
             
-            -- Alpha 条
             local AlphaBar = Instance.new("Frame")
             AlphaBar.Size = UDim2.new(1, -52, 0, 6)
             AlphaBar.Position = UDim2.new(0, 10, 0, 128)
@@ -1384,7 +1726,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AlphaDot.Parent = AlphaBar
             Instance.new("UICorner", AlphaDot).CornerRadius = UDim.new(1, 0)
             
-            -- Hex 输入
             local HexBox = Instance.new("TextBox")
             HexBox.Size = UDim2.new(0.5, -20, 0, 24)
             HexBox.Position = UDim2.new(0, 10, 0, 142)
@@ -1403,7 +1744,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             HexStroke.Parent = HexBox
             AddToRegistry(HexStroke, "Color", "Stroke")
             
-            -- 预设颜色网格
             local PresetContainer = Instance.new("ScrollingFrame")
             PresetContainer.Size = UDim2.new(0.5, -10, 0, 70)
             PresetContainer.Position = UDim2.new(0.5, 10, 0, 140)
@@ -1417,7 +1757,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Grid.SortOrder = Enum.SortOrder.LayoutOrder
             Grid.Parent = PresetContainer
             
-            -- 填充预设颜色
             for _, data in ipairs(savedColors) do
                 local btn = Instance.new("TextButton")
                 btn.Size = UDim2.new(1, 0, 1, 0)
@@ -1451,7 +1790,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
             end
             
-            -- 更新颜色
             local function ApplyColor()
                 Color = Color3.fromHSV(hue, sat, val)
                 Swatch.BackgroundColor3 = Color
@@ -1462,7 +1800,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 callback(Color, alpha)
             end
             
-            -- 拖拽处理（SV、Hue、Alpha）
             local svDragging = false
             local SVBtn = Instance.new("TextButton")
             SVBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -1561,7 +1898,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
             
-            -- Hex 输入
             HexBox.FocusLost:Connect(function()
                 local txt = HexBox.Text:gsub("#", "")
                 if #txt == 6 or #txt == 3 then
@@ -1579,7 +1915,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
             
-            -- 打开/关闭面板
             local function togglePanel()
                 isOpen = not isOpen
                 if isOpen then
@@ -1594,7 +1929,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             
             ClickBtn.MouseButton1Click:Connect(togglePanel)
             
-            -- 注册到 ConfigObjects
             ConfigObjects[controlId] = {
                 Type = "ColorPicker",
                 Value = {R = Color.R, G = Color.G, B = Color.B, A = alpha},
@@ -1625,7 +1959,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             }
             
-            -- 主题更新
             table.insert(ThemeListeners, function()
                 SwStroke.Color = CurrentTheme.Stroke
                 PSt.Color = CurrentTheme.Accent
@@ -1633,7 +1966,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 HexBox.TextColor3 = CurrentTheme.Text
             end)
             
-            -- 返回接口（保持与旧版兼容）
             local self = {}
             function self.SetValue(val)
                 if ConfigObjects[controlId] then
@@ -1908,7 +2240,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Image
+        -- Image (enhanced with MediaManager)
         child.Image = function(_, config)
             config = config or {}
             local title = config.Title or "Image"
@@ -1931,6 +2263,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     elseif asset:match("^rbxassetid://") then
                         return asset
                     elseif asset:match("^http") then
+                        local cached = MediaManager:Image(asset)
+                        if cached and cached ~= "" then return cached end
                         return asset
                     else
                         return "rbxassetid://" .. asset
@@ -2109,11 +2443,430 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========================= Audio Control =========================
+        child.Audio = function(_, config)
+            local opts = config or {}
+            local parent = contentHolder
+            if not parent then return end
+            local src = opts.Audio or opts.Sound or ""
+            local vol = (opts.Volume ~= nil) and math.clamp(opts.Volume, 0, 10) or 0.5
+            local looped = opts.Looped ~= false
+            local auto = opts.AutoPlay ~= false
+
+            local function resolve(s, noDownload)
+                if type(s) ~= "string" or s == "" then return "" end
+                if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
+                if s:match("^%d+$") then return "rbxassetid://" .. s end
+                if s:match("^https?://") then
+                    local cached = MediaManager:Audio(s, noDownload)
+                    if cached and cached ~= "" then return cached end
+                    return ""
+                end
+                return ""
+            end
+
+            local isHttp = type(src) == "string" and src:match("^https?://")
+            local resolved = isHttp and resolve(src, true) or resolve(src, false)
+            local pendingDownload = isHttp and (not resolved or resolved == "")
+            local hasAudio = (resolved ~= nil and resolved ~= "") or pendingDownload
+
+            local snd = nil
+            local playOutside = (opts.PlayOutsideWindow == true)
+
+            local function _initSound(resolvedId)
+                local sndSvc = game:GetService("SoundService")
+                for _, ex in ipairs(sndSvc:GetChildren()) do
+                    if ex:IsA("Sound") and ex.Name == "BFAudio" and ex.SoundId == resolvedId then
+                        pcall(function() ex:Stop(); ex:Destroy() end)
+                    end
+                end
+                for _, ex in ipairs(workspace:GetChildren()) do
+                    if ex:IsA("Sound") and ex.Name == "BFAudio" and ex.SoundId == resolvedId then
+                        pcall(function() ex:Stop(); ex:Destroy() end)
+                    end
+                end
+                local s2 = Instance.new("Sound")
+                s2.Name   = "BFAudio"
+                pcall(function() s2.SoundId = resolvedId end)
+                s2.Volume = vol
+                s2.Looped = looped
+                if playOutside then
+                    s2.RollOffMaxDistance = 10000
+                    s2.Parent = game:GetService("SoundService")
+                else
+                    s2.Parent = workspace
+                end
+                return s2
+            end
+
+            if hasAudio and not pendingDownload then
+                snd = _initSound(resolved)
+            end
+
+            local rs = RunService
+            local uis = UserInputService
+            local function fmtTime(s)
+                s = math.max(0, math.floor(s or 0))
+                return string.format("%d:%02d", math.floor(s / 60), s % 60)
+            end
+
+            local function applyAudioIcon(imgLabel, iconName)
+                -- 简单图标，不依赖外部
+                imgLabel.Image = "rbxassetid://10734885614" -- 占位
+            end
+
+            local audioTitle    = opts.AudioTitle    or opts.Title    or (hasAudio and "Audio" or nil)
+            local audioSubtitle = opts.AudioSubtitle or opts.SubTitle or nil
+            local hasLabels = (audioTitle ~= nil and audioTitle ~= "") or (audioSubtitle ~= nil and audioSubtitle ~= "")
+
+            local wrapHeight = hasLabels and 118 or 96
+            local wrap = Instance.new("Frame")
+            wrap.Size = UDim2.new(1, -16, 0, wrapHeight)
+            wrap.BackgroundTransparency = 0.9
+            wrap.BorderSizePixel = 0
+            wrap.Parent = parent
+            AddToRegistry(wrap, "BackgroundColor3", "Element")
+            Instance.new("UICorner", wrap).CornerRadius = UDim.new(0, 8)
+            local stroke = Instance.new("UIStroke")
+            stroke.Transparency = 0.6
+            stroke.Thickness = 1
+            stroke.Parent = wrap
+            AddToRegistry(stroke, "Color", "InElementBorder")
+
+            local padding = Instance.new("UIPadding")
+            padding.PaddingLeft = UDim.new(0, 10)
+            padding.PaddingRight = UDim.new(0, 10)
+            padding.PaddingTop = UDim.new(0, 10)
+            padding.PaddingBottom = UDim.new(0, 10)
+            padding.Parent = wrap
+
+            local topRow = Instance.new("Frame")
+            topRow.Size = UDim2.new(1, 0, 0, hasLabels and 38 or 28)
+            topRow.BackgroundTransparency = 1
+            topRow.Parent = wrap
+
+            local audioIconImg = Instance.new("ImageLabel")
+            audioIconImg.Size = UDim2.fromOffset(20, 20)
+            audioIconImg.Position = UDim2.new(0, 0, 0.5, 0)
+            audioIconImg.AnchorPoint = Vector2.new(0, 0.5)
+            audioIconImg.BackgroundTransparency = 1
+            audioIconImg.ZIndex = 2
+            audioIconImg.Parent = topRow
+            audioIconImg.Image = "rbxassetid://10734885614"
+            AddToRegistry(audioIconImg, "ImageColor3", hasAudio and "Accent" or "SubText")
+
+            local titleHolder = Instance.new("Frame")
+            titleHolder.Size = UDim2.new(1, -110, 1, 0)
+            titleHolder.Position = UDim2.new(0, 28, 0, 0)
+            titleHolder.BackgroundTransparency = 1
+            titleHolder.ZIndex = 2
+            titleHolder.Parent = topRow
+
+            local statusLbl = Instance.new("TextLabel")
+            statusLbl.Size = UDim2.new(1, 0, 0, 16)
+            statusLbl.Position = UDim2.new(0, 0, 0, hasLabels and 2 or 0)
+            statusLbl.AnchorPoint = Vector2.new(0, 0)
+            statusLbl.BackgroundTransparency = 1
+            statusLbl.Text = (audioTitle ~= nil and audioTitle ~= "") and audioTitle or (hasAudio and "Audio" or "No audio source")
+            statusLbl.TextSize = hasLabels and 12 or 11
+            statusLbl.Font = hasLabels and Enum.Font.GothamBold or Enum.Font.Gotham
+            statusLbl.TextXAlignment = Enum.TextXAlignment.Left
+            statusLbl.TextTruncate = Enum.TextTruncate.AtEnd
+            statusLbl.ZIndex = 2
+            statusLbl.Parent = titleHolder
+            AddToRegistry(statusLbl, "TextColor3", hasAudio and "Text" or "SubText")
+
+            local subtitleLbl = Instance.new("TextLabel")
+            subtitleLbl.Size = UDim2.new(1, 0, 0, 13)
+            subtitleLbl.Position = UDim2.new(0, 0, 0, 20)
+            subtitleLbl.AnchorPoint = Vector2.new(0, 0)
+            subtitleLbl.BackgroundTransparency = 1
+            subtitleLbl.Text = (audioSubtitle ~= nil) and audioSubtitle or ""
+            subtitleLbl.TextSize = 10
+            subtitleLbl.Font = Enum.Font.Gotham
+            subtitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+            subtitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
+            subtitleLbl.Visible = (audioSubtitle ~= nil and audioSubtitle ~= "")
+            subtitleLbl.ZIndex = 2
+            subtitleLbl.Parent = titleHolder
+            AddToRegistry(subtitleLbl, "TextColor3", "SubText")
+
+            local controls = Instance.new("Frame")
+            controls.Size = UDim2.new(0, 116, 1, 0)
+            controls.Position = UDim2.new(1, 0, 0, 0)
+            controls.AnchorPoint = Vector2.new(1, 0)
+            controls.BackgroundTransparency = 1
+            controls.Visible = hasAudio
+            controls.Parent = topRow
+
+            local btnLayout = Instance.new("UIListLayout")
+            btnLayout.FillDirection = Enum.FillDirection.Horizontal
+            btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+            btnLayout.Padding = UDim.new(0, 4)
+            btnLayout.Parent = controls
+
+            local function ctrlBtn(iconName, cb)
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.fromOffset(24, 24)
+                btn.BackgroundTransparency = 1
+                btn.Text = ""
+                btn.ZIndex = 3
+                btn.Parent = controls
+                local icImg = Instance.new("ImageLabel")
+                icImg.Size = UDim2.fromOffset(16, 16)
+                icImg.Position = UDim2.new(0.5, 0, 0.5, 0)
+                icImg.AnchorPoint = Vector2.new(0.5, 0.5)
+                icImg.BackgroundTransparency = 1
+                icImg.ZIndex = 4
+                icImg.Parent = btn
+                icImg.Image = "rbxassetid://10734885614"
+                AddToRegistry(icImg, "ImageColor3", "Text")
+                btn.MouseButton1Click:Connect(function() pcall(cb) end)
+                return btn, icImg
+            end
+
+            local playing = false
+            local playBtn, pauseBtn, outsideIcImg
+            if hasAudio then
+                local _downloading = false
+                local function _doPlay()
+                    if not snd then return end
+                    pcall(function() snd:Play() end)
+                    playing = true
+                    if playBtn then playBtn.Visible = false end
+                    if pauseBtn then pauseBtn.Visible = true end
+                end
+                local function _triggerPlay()
+                    if _downloading then return end
+                    if snd then
+                        _doPlay()
+                        return
+                    end
+                    if pendingDownload then
+                        _downloading = true
+                        if Fenglib.Notify then
+                            Fenglib:Notify({Title="Audio", Content="Downloading audio...", Type="Info", Duration=4})
+                        end
+                        task.spawn(function()
+                            local got = resolve(src, false)
+                            _downloading = false
+                            if got and got ~= "" then
+                                pendingDownload = false
+                                snd = _initSound(got)
+                                _doPlay()
+                                if Fenglib.Notify then
+                                    Fenglib:Notify({Title="Audio", Content="Audio ready", Type="Success", Duration=2})
+                                end
+                            else
+                                if Fenglib.Notify then
+                                    Fenglib:Notify({Title="Audio", Content="Failed to download", Type="Error", Duration=3})
+                                end
+                            end
+                        end)
+                    end
+                end
+                playBtn = ctrlBtn("solar/play-bold", _triggerPlay)
+                pauseBtn = ctrlBtn("solar/pause-bold", function()
+                    if snd then snd:Pause() end
+                    playing = false
+                    if playBtn then playBtn.Visible = true end
+                    if pauseBtn then pauseBtn.Visible = false end
+                end)
+                pauseBtn.Visible = false
+                local stopBtn = ctrlBtn("solar/stop-bold", function()
+                    if snd then snd:Stop() end
+                    playing = false
+                    if playBtn then playBtn.Visible = true end
+                    if pauseBtn then pauseBtn.Visible = false end
+                end)
+                local outsideBtn, outsideIc = ctrlBtn("solar/export-bold", function()
+                    playOutside = not playOutside
+                    if snd then
+                        local wasPlaying = playing
+                        pcall(function() if wasPlaying then snd:Stop() end end)
+                        if playOutside then
+                            snd.RollOffMaxDistance = 10000
+                            snd.Parent = game:GetService("SoundService")
+                        else
+                            snd.Parent = workspace
+                        end
+                        if wasPlaying then pcall(function() snd:Play() end) end
+                    end
+                end)
+                outsideIcImg = outsideIc
+
+                if auto and snd then
+                    _doPlay()
+                end
+            end
+
+            local seekRowOffset = hasLabels and 56 or 36
+            local seekRow = Instance.new("Frame")
+            seekRow.Size = UDim2.new(1, 0, 0, 24)
+            seekRow.Position = UDim2.new(0, 0, 0, seekRowOffset)
+            seekRow.BackgroundTransparency = 1
+            seekRow.Visible = hasAudio
+            seekRow.Parent = wrap
+
+            local curLbl = Instance.new("TextLabel")
+            curLbl.Size = UDim2.fromOffset(34, 20)
+            curLbl.Position = UDim2.new(0, 0, 0.5, 0)
+            curLbl.AnchorPoint = Vector2.new(0, 0.5)
+            curLbl.BackgroundTransparency = 1
+            curLbl.Text = "0:00"
+            curLbl.TextSize = 10
+            curLbl.Font = Enum.Font.Gotham
+            curLbl.TextXAlignment = Enum.TextXAlignment.Left
+            curLbl.ZIndex = 3
+            curLbl.Parent = seekRow
+            AddToRegistry(curLbl, "TextColor3", "SubText")
+
+            local durLbl = Instance.new("TextLabel")
+            durLbl.Size = UDim2.fromOffset(34, 20)
+            durLbl.Position = UDim2.new(1, 0, 0.5, 0)
+            durLbl.AnchorPoint = Vector2.new(1, 0.5)
+            durLbl.BackgroundTransparency = 1
+            durLbl.Text = "0:00"
+            durLbl.TextSize = 10
+            durLbl.Font = Enum.Font.Gotham
+            durLbl.TextXAlignment = Enum.TextXAlignment.Right
+            durLbl.ZIndex = 3
+            durLbl.Parent = seekRow
+            AddToRegistry(durLbl, "TextColor3", "SubText")
+
+            local rail = Instance.new("Frame")
+            rail.Size = UDim2.new(1, -76, 0, 4)
+            rail.Position = UDim2.new(0, 38, 0.5, 0)
+            rail.AnchorPoint = Vector2.new(0, 0.5)
+            rail.BackgroundTransparency = 0.65
+            rail.ZIndex = 2
+            rail.Parent = seekRow
+            AddToRegistry(rail, "BackgroundColor3", "SubText")
+            Instance.new("UICorner", rail).CornerRadius = UDim.new(1, 0)
+
+            local fill = Instance.new("Frame")
+            fill.Size = UDim2.new(0, 0, 1, 0)
+            fill.BackgroundTransparency = 0
+            fill.ZIndex = 3
+            fill.Parent = rail
+            AddToRegistry(fill, "BackgroundColor3", "Accent")
+            Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+
+            local knob = Instance.new("Frame")
+            knob.Size = UDim2.fromOffset(12, 12)
+            knob.Position = UDim2.new(0, 0, 0.5, 0)
+            knob.AnchorPoint = Vector2.new(0.5, 0.5)
+            knob.ZIndex = 4
+            knob.Parent = rail
+            AddToRegistry(knob, "BackgroundColor3", "Accent")
+            Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+            local dragging = false
+            local function seekTo(inputX)
+                if not snd then return end
+                local railX = rail.AbsolutePosition.X
+                local railW = rail.AbsoluteSize.X
+                if railW <= 0 then return end
+                local pct = math.clamp((inputX - railX) / railW, 0, 1)
+                local dur = snd.TimeLength or 0
+                if dur > 0 then
+                    pcall(function() snd.TimePosition = pct * dur end)
+                end
+            end
+
+            rail.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    dragging = true
+                    seekTo(inp.Position.X)
+                end
+            end)
+            rail.InputEnded:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    dragging = false
+                end
+            end)
+            uis.InputChanged:Connect(function(inp)
+                if dragging and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+                    seekTo(inp.Position.X)
+                end
+            end)
+
+            local hbConn = rs.Heartbeat:Connect(function()
+                if not wrap.Parent then return end
+                if not snd then return end
+                local dur = snd.TimeLength or 0
+                local pos = snd.TimePosition or 0
+                curLbl.Text = fmtTime(pos)
+                durLbl.Text = fmtTime(dur)
+                local pct = dur > 0 and (pos / dur) or 0
+                fill.Size = UDim2.new(pct, 0, 1, 0)
+                knob.Position = UDim2.new(pct, 0, 0.5, 0)
+            end)
+
+            local mod = {Frame = wrap, Type = "Audio", Sound = snd}
+            function mod:Play() if snd then pcall(function() snd:Play() end) end end
+            function mod:Pause() if snd then pcall(function() snd:Pause() end) end end
+            function mod:Stop() if snd then pcall(function() snd:Stop() end) end end
+            function mod:SetVolume(v) if snd then snd.Volume = math.clamp(v, 0, 10) end end
+            function mod:SetAudio(src)
+                local r = resolve(src)
+                if snd then
+                    pcall(function() snd:Stop() end)
+                    pcall(function() snd.SoundId = r end)
+                else
+                    snd = Instance.new("Sound")
+                    snd.Name = "BFAudio"
+                    snd.SoundId = r
+                    snd.Volume = vol
+                    snd.Looped = looped
+                    if playOutside then
+                        snd.Parent = game:GetService("SoundService")
+                    else
+                        snd.Parent = workspace
+                    end
+                end
+                hasAudio = r ~= ""
+                controls.Visible = hasAudio
+                seekRow.Visible = hasAudio
+                statusLbl.Text = hasAudio and (audioTitle or "Audio") or "No audio source"
+                if playBtn then playBtn.Visible = hasAudio end
+                if pauseBtn then pauseBtn.Visible = false end
+            end
+            function mod:SetAudioTitle(title, subtitle)
+                statusLbl.Text = title or (hasAudio and "Audio" or "No audio source")
+                if subtitle ~= nil then
+                    subtitleLbl.Text = subtitle
+                    subtitleLbl.Visible = subtitle ~= ""
+                end
+            end
+            function mod:SetPlayOutside(enabled)
+                playOutside = enabled
+                if snd then
+                    local wasPlaying = playing
+                    pcall(function() snd:Stop() end)
+                    if enabled then
+                        snd.Parent = game:GetService("SoundService")
+                    else
+                        snd.Parent = workspace
+                    end
+                    if wasPlaying then pcall(function() snd:Play() end) end
+                end
+            end
+            function mod:Destroy()
+                if hbConn then hbConn:Disconnect() end
+                if snd then pcall(function() snd:Stop(); snd:Destroy() end) end
+                wrap:Destroy()
+            end
+            return mod
+        end
+
         return child
     end
     return createSection
 end
 
+-- ========================= Window Creation =========================
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Name or "FengY3"
@@ -2554,7 +3307,7 @@ function Fenglib:CreateWindow(Config)
     TabScroll.Parent = LeftContainer
 
     local TabList = Instance.new("UIListLayout")
-    TabList.Padding = UDim.new(0, 4)   -- 间距调整为 4，更紧凑
+    TabList.Padding = UDim.new(0, 4)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabList.Parent = TabScroll
@@ -2565,12 +3318,9 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- ========================================
-    -- Category 和 TabDivider 方法（已调整间距）
-    -- ========================================
     function Window:Category(name)
         local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 0, 20)   -- 高度从 24 改为 20，更紧凑
+        label.Size = UDim2.new(1, 0, 0, 20)
         label.BackgroundTransparency = 1
         label.Font = Enum.Font.GothamBold
         label.Text = name
@@ -3447,6 +4197,8 @@ function Fenglib:CreateWindow(Config)
                 elseif asset:match("^rbxassetid://") then
                     return asset
                 elseif asset:match("^http") then
+                    local cached = MediaManager:Image(asset)
+                    if cached and cached ~= "" then return cached end
                     return asset
                 else
                     return "rbxassetid://" .. asset
@@ -3727,6 +4479,7 @@ function Fenglib:CreateWindow(Config)
                     elements.Paragraph= function(_, config) return createSection("", nil, true).Paragraph(config) end
                     elements.ColorPicker= function(_, config) return createSection("", nil, true).ColorPicker(config) end
                     elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
+                    elements.Audio    = function(_, config) return createSection("", nil, true).Audio(config) end
                     return elements
                 end
 
@@ -3977,12 +4730,17 @@ function Fenglib:CreateWindow(Config)
                 elements.Paragraph= function(_, config) return createSection("", nil, true).Paragraph(config) end
                 elements.ColorPicker= function(_, config) return createSection("", nil, true).ColorPicker(config) end
                 elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
+                elements.Audio    = function(_, config) return createSection("", nil, true).Audio(config) end
                 return elements
             end
 
             return getElements()
         end
     end
+
+    -- 注册 FloatingButtonManager
+    FloatingButtonManager:SetLibrary(Window)
+    Window.FloatingButtonManager = FloatingButtonManager
 
     return Window
 end
