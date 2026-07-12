@@ -2554,7 +2554,7 @@ function Fenglib:CreateWindow(Config)
     TabScroll.Parent = LeftContainer
 
     local TabList = Instance.new("UIListLayout")
-    TabList.Padding = UDim.new(0, 8)
+    TabList.Padding = UDim.new(0, 4)   -- 间距调整为 4，更紧凑
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabList.Parent = TabScroll
@@ -2566,11 +2566,11 @@ function Fenglib:CreateWindow(Config)
     task.spawn(updateTabCanvas)
 
     -- ========================================
-    -- 新增：Category 和 TabDivider 方法
+    -- Category 和 TabDivider 方法（已调整间距）
     -- ========================================
     function Window:Category(name)
         local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 0, 24)
+        label.Size = UDim2.new(1, 0, 0, 20)   -- 高度从 24 改为 20，更紧凑
         label.BackgroundTransparency = 1
         label.Font = Enum.Font.GothamBold
         label.Text = name
@@ -2579,7 +2579,6 @@ function Fenglib:CreateWindow(Config)
         label.TextTransparency = 0.5
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.Parent = TabScroll
-        -- 左缩进与标签文字对齐
         local pad = Instance.new("UIPadding")
         pad.PaddingLeft = UDim.new(0, 14)
         pad.Parent = label
@@ -2587,7 +2586,6 @@ function Fenglib:CreateWindow(Config)
         table.insert(ThemeListeners, function()
             label.TextColor3 = CurrentTheme.Text
         end)
-        -- 调整布局顺序使分类可以插入到任意位置（按调用顺序）
     end
 
     function Window:TabDivider()
