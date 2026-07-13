@@ -2542,8 +2542,9 @@ function Fenglib:CreateWindow(Config)
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
 
+    -- 修改：左侧面板圆角改为 0（直角）
     local leftCorner = Instance.new("UICorner")
-    leftCorner.CornerRadius = UDim.new(0, 12)
+    leftCorner.CornerRadius = UDim.new(0, 0)
     leftCorner.Parent = LeftContainer
 
     local TabScroll = Instance.new("ScrollingFrame")
@@ -2651,8 +2652,9 @@ function Fenglib:CreateWindow(Config)
     RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
 
+    -- 修改：右侧面板圆角改为 0（直角）
     local rightCorner = Instance.new("UICorner")
-    rightCorner.CornerRadius = UDim.new(0, 12)
+    rightCorner.CornerRadius = UDim.new(0, 0)
     rightCorner.Parent = RightContainer
 
     table.insert(ThemeListeners, function()
@@ -3393,10 +3395,6 @@ function Fenglib:CreateWindow(Config)
         cardsContainer.ScrollBarThickness = 4
         cardsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
         cardsContainer.Parent = RightContainer
-        -- 卡片容器自身圆角
-        local cardsCorner = Instance.new("UICorner")
-        cardsCorner.CornerRadius = UDim.new(0, 12)
-        cardsCorner.Parent = cardsContainer
 
         local cardsLayout = Instance.new("UIGridLayout")
         cardsLayout.CellSize = UDim2.new(0.5, -20, 0, 74)
@@ -3695,10 +3693,6 @@ function Fenglib:CreateWindow(Config)
                 page.ScrollingEnabled = false
                 page.Visible = false
                 page.Parent = rightPageContainer
-                -- 卡片内Tab页面自身圆角
-                local pageCorner = Instance.new("UICorner")
-                pageCorner.CornerRadius = UDim.new(0, 12)
-                pageCorner.Parent = page
 
                 local pageContent = Instance.new("Frame")
                 pageContent.Size = UDim2.new(1, 0, 0, 0)
@@ -3871,10 +3865,6 @@ function Fenglib:CreateWindow(Config)
             Page.Visible = false
             Page.Position = UDim2.new(0, 0, 0, 60)
             Page.Parent = PageContainer
-            -- 普通模式主页面自身圆角
-            local pageCorner = Instance.new("UICorner")
-            pageCorner.CornerRadius = UDim.new(0, 12)
-            pageCorner.Parent = Page
 
             local PageContent = Instance.new("Frame")
             PageContent.Size = UDim2.new(1, 0, 0, 0)
