@@ -7,7 +7,7 @@ local HttpService = game:GetService("HttpService")
 local TextService = game:GetService("TextService")
 local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
--- 注意：不再在顶层获取 Camera，改为在 CreateWindow 内部动态获取
+local Camera = workspace.CurrentCamera
 
 local Fenglib = {}
 local RainbowEnabled = false
@@ -610,7 +610,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local unlimited = (min == nil and max == nil)
             min = tonumber(min)
             max = tonumber(max)
-            local Rounding = config.Rounding or 0
+            local Rounding = config.Rounding or 0   -- 默认为0（整数），可设置小数位数
             local Val = tonumber(default) or (min or 0)
             local controlId = sliderText .. "_" .. tostring(#Registry)
 
@@ -680,6 +680,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Knob.Parent = Track
                 Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
+                -- 拖动按钮（仅覆盖轨道，不干扰输入框）
                 Bar = Instance.new("TextButton")
                 Bar.Size = UDim2.new(1, 0, 0, 18)
                 Bar.Position = UDim2.new(0, 0, 0.5, -9)
@@ -706,7 +707,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     return
                 end
                 val = math.clamp(val, min, max)
-                val = Round(val, Rounding)
+                val = Round(val, Rounding)  -- 应用四舍五入
                 local ratio = (val - min) / (max - min)
                 TweenService:Create(Fill, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size = UDim2.new(ratio, 0, 1, 0)}):Play()
                 TweenService:Create(Knob, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = UDim2.new(ratio, 0, 0.5, 0)}):Play()
@@ -798,7 +799,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             UpdateSlider(Val)
         end
 
-        -- Dropdown (多选支持)
+        -- ============================================================
+        -- 升级版 Dropdown（支持多选、状态持久化、主题适配）
+        -- 选中状态：主题色上→透明下 渐变光晕
+        -- 修复悬停白色背景：为选项按钮设置背景色为主题色
+        -- ============================================================
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
             local options = config.Values or {}
@@ -807,6 +812,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local callback = config.Callback or function() end
             local controlId = dropText .. "_" .. tostring(#Registry)
 
+            -- 当前选中值（单选为字符串，多选为表）
             local selected = multi and {} or nil
             local function initSelected()
                 if multi then
@@ -903,10 +909,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     O.Text = ""
                     O.BackgroundTransparency = 1
                     O.AutoButtonColor = false
-                    O.BackgroundColor3 = CurrentTheme.Top
+                    O.BackgroundColor3 = CurrentTheme.Top   -- 关键修复：设置背景色为主题色，悬停时显示半透明主题色而非白色
                     O.Parent = Container
                     O.TextColor3 = CurrentTheme.Text
 
+                    -- 复选框：采用主题色上→透明下渐变
                     local check = Instance.new("Frame")
                     check.Size = UDim2.new(0, 16, 0, 16)
                     check.Position = UDim2.new(0, 10, 0.5, -8)
@@ -923,12 +930,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     checkStroke.Transparency = 0.7
                     checkStroke.Parent = check
 
+                    -- 渐变：上主题色 -> 下透明
                     local checkGrad = Instance.new("UIGradient")
                     checkGrad.Rotation = 0
                     checkGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
                     checkGrad.Transparency = NumberSequence.new(1)
                     checkGrad.Parent = check
 
+                    -- 对勾图标
                     local checkMark = Instance.new("ImageLabel")
                     checkMark.Size = UDim2.new(0, 12, 0, 12)
                     checkMark.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -951,7 +960,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     AddToRegistry(label, "TextColor3", "Text")
 
                     O.MouseEnter:Connect(function()
-                        Tween(O, {BackgroundTransparency = 0.1}, 0.15)
+                        Tween(O, {BackgroundTransparency = 0.1}, 0.15)  -- 悬停时显示主题色半透明
                     end)
                     O.MouseLeave:Connect(function()
                         Tween(O, {BackgroundTransparency = 1}, 0.15)
@@ -1009,6 +1018,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
 
+                -- 初始化所有选项的状态
                 for _, d in ipairs(optionButtons) do
                     if multi then
                         d.selected = table.find(selected, d.value) ~= nil
@@ -1128,6 +1138,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Btn.Visible = state
             end
 
+            -- 主题监听：更新复选框颜色和渐变，以及选项按钮背景色
             table.insert(ThemeListeners, function()
                 for _, d in ipairs(optionButtons) do
                     if d.checkStroke then d.checkStroke.Color = CurrentTheme.Accent end
@@ -1137,6 +1148,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     if d.checkGrad then
                         d.checkGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
                     end
+                    -- 更新选项按钮背景色
                     if d.button then
                         d.button.BackgroundColor3 = CurrentTheme.Top
                     end
@@ -1213,18 +1225,23 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- ColorPicker
+        -- ============================================================
+        -- ColorPicker 升级版（基于 jx.lua 核心）
+        -- 支持：色相/饱和度/明度/Alpha、Hex输入、预设颜色、拖拽调节
+        -- ============================================================
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
             local Color = config.Default or Color3.fromRGB(255, 255, 255)
             local callback = config.Callback or function() end
             local controlId = pickerText .. "_" .. tostring(#Registry)
             
+            -- 颜色状态
             local hue, sat, val = Color3.toHSV(Color)
             local alpha = 1.0
             local hexValue = "#" .. Color:ToHex()
             local isOpen = false
             
+            -- 保存的颜色列表（预设）
             local savedColors = {}
             local function addPresetColors()
                 local presets = {
@@ -1243,6 +1260,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             addPresetColors()
             
+            -- 主按钮（显示颜色块）
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 44)
             Tile.Parent = contentHolder
@@ -1279,6 +1297,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             SwStroke.Parent = Swatch
             AddToRegistry(SwStroke, "Color", "Stroke")
             
+            -- ========== 颜色选择器面板（基于 jx 核心） ==========
             local Panel = Instance.new("Frame")
             Panel.Size = UDim2.new(1, 0, 0, 0)
             Panel.Visible = false
@@ -1292,6 +1311,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             PSt.Parent = Panel
             AddToRegistry(PSt, "Color", "Accent")
             
+            -- 饱和度/明度 选择区
             local SVBox = Instance.new("ImageLabel")
             SVBox.Size = UDim2.new(1, -52, 0, 110)
             SVBox.Position = UDim2.new(0, 10, 0, 10)
@@ -1313,6 +1333,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             DotStroke.Color = Color3.fromRGB(80, 80, 80)
             DotStroke.Parent = SVDot
             
+            -- 色相条
             local HueBar = Instance.new("Frame")
             HueBar.Size = UDim2.new(0, 16, 0, 110)
             HueBar.Position = UDim2.new(1, -30, 0, 10)
@@ -1342,6 +1363,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             HueDot.Parent = HueBar
             Instance.new("UICorner", HueDot).CornerRadius = UDim.new(1, 0)
             
+            -- Alpha 条
             local AlphaBar = Instance.new("Frame")
             AlphaBar.Size = UDim2.new(1, -52, 0, 6)
             AlphaBar.Position = UDim2.new(0, 10, 0, 128)
@@ -1362,6 +1384,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AlphaDot.Parent = AlphaBar
             Instance.new("UICorner", AlphaDot).CornerRadius = UDim.new(1, 0)
             
+            -- Hex 输入
             local HexBox = Instance.new("TextBox")
             HexBox.Size = UDim2.new(0.5, -20, 0, 24)
             HexBox.Position = UDim2.new(0, 10, 0, 142)
@@ -1380,6 +1403,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             HexStroke.Parent = HexBox
             AddToRegistry(HexStroke, "Color", "Stroke")
             
+            -- 预设颜色网格
             local PresetContainer = Instance.new("ScrollingFrame")
             PresetContainer.Size = UDim2.new(0.5, -10, 0, 70)
             PresetContainer.Position = UDim2.new(0.5, 10, 0, 140)
@@ -1393,6 +1417,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Grid.SortOrder = Enum.SortOrder.LayoutOrder
             Grid.Parent = PresetContainer
             
+            -- 填充预设颜色
             for _, data in ipairs(savedColors) do
                 local btn = Instance.new("TextButton")
                 btn.Size = UDim2.new(1, 0, 1, 0)
@@ -1426,6 +1451,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
             end
             
+            -- 更新颜色
             local function ApplyColor()
                 Color = Color3.fromHSV(hue, sat, val)
                 Swatch.BackgroundColor3 = Color
@@ -1436,6 +1462,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 callback(Color, alpha)
             end
             
+            -- 拖拽处理（SV、Hue、Alpha）
             local svDragging = false
             local SVBtn = Instance.new("TextButton")
             SVBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -1534,6 +1561,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
             
+            -- Hex 输入
             HexBox.FocusLost:Connect(function()
                 local txt = HexBox.Text:gsub("#", "")
                 if #txt == 6 or #txt == 3 then
@@ -1551,6 +1579,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
             
+            -- 打开/关闭面板
             local function togglePanel()
                 isOpen = not isOpen
                 if isOpen then
@@ -1565,6 +1594,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             
             ClickBtn.MouseButton1Click:Connect(togglePanel)
             
+            -- 注册到 ConfigObjects
             ConfigObjects[controlId] = {
                 Type = "ColorPicker",
                 Value = {R = Color.R, G = Color.G, B = Color.B, A = alpha},
@@ -1595,6 +1625,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             }
             
+            -- 主题更新
             table.insert(ThemeListeners, function()
                 SwStroke.Color = CurrentTheme.Stroke
                 PSt.Color = CurrentTheme.Accent
@@ -1602,6 +1633,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 HexBox.TextColor3 = CurrentTheme.Text
             end)
             
+            -- 返回接口（保持与旧版兼容）
             local self = {}
             function self.SetValue(val)
                 if ConfigObjects[controlId] then
@@ -2083,12 +2115,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 end
 
 function Fenglib:CreateWindow(Config)
-    -- ====== 修复：等待摄像机就绪 ======
-    while not workspace.CurrentCamera do
-        task.wait()
-    end
-    local Camera = workspace.CurrentCamera  -- 现在肯定有效
-
     local Window = {}
     local Title = Config.Name or "FengY3"
     local Subtitle = Config.SubName
@@ -2162,6 +2188,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.ClipsDescendants = true
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Parent = ScreenGui
+    -- 主窗口圆角改为 0（方角）
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 0)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
@@ -2174,7 +2201,7 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
-    -- 高级视觉增强
+    -- 高级视觉增强（移除投影相关，保留模糊效果）
     do
         local blurPart = Instance.new("Part")
         blurPart.Name = "FengBlurPart"
@@ -2202,21 +2229,17 @@ function Fenglib:CreateWindow(Config)
         dof.NearIntensity = 0.6
         dof.Parent = Lighting
 
-        -- ====== 修复：updateBlur 动态获取 Camera ======
         local function updateBlur()
-            local camera = workspace.CurrentCamera
-            if not camera or not MainFrame.Visible or not MainFrame.Parent then
-                if blockMesh then
-                    blockMesh.Scale = Vector3.new(0, 0, 0)
-                end
+            if not MainFrame.Visible or not MainFrame.Parent then
+                blockMesh.Scale = Vector3.new(0, 0, 0)
                 return
             end
             local corner0 = MainFrame.AbsolutePosition
             local corner1 = corner0 + MainFrame.AbsoluteSize
-            local ray0 = camera:ScreenPointToRay(corner0.X, corner0.Y, 1)
-            local ray1 = camera:ScreenPointToRay(corner1.X, corner1.Y, 1)
-            local origin = camera.CFrame.Position + camera.CFrame.LookVector * (0.05 - camera.NearPlaneZ)
-            local normal = camera.CFrame.LookVector
+            local ray0 = Camera:ScreenPointToRay(corner0.X, corner0.Y, 1)
+            local ray1 = Camera:ScreenPointToRay(corner1.X, corner1.Y, 1)
+            local origin = Camera.CFrame.Position + Camera.CFrame.LookVector * (0.05 - Camera.NearPlaneZ)
+            local normal = Camera.CFrame.LookVector
 
             local function getPoint(ray)
                 local denominator = ray.Direction:Dot(normal)
@@ -2227,13 +2250,13 @@ function Fenglib:CreateWindow(Config)
                 return ray.Origin + ray.Direction * d
             end
 
-            local pos0 = camera.CFrame:PointToObjectSpace(getPoint(ray0))
-            local pos1 = camera.CFrame:PointToObjectSpace(getPoint(ray1))
+            local pos0 = Camera.CFrame:PointToObjectSpace(getPoint(ray0))
+            local pos1 = Camera.CFrame:PointToObjectSpace(getPoint(ray1))
             local size = pos1 - pos0
             local center = (pos0 + pos1) / 2
             blockMesh.Offset = center
             blockMesh.Scale = size / 0.0101
-            blurPart.CFrame = camera.CFrame
+            blurPart.CFrame = Camera.CFrame
         end
 
         local blurConnection = RunService.RenderStepped:Connect(updateBlur)
@@ -2331,7 +2354,9 @@ function Fenglib:CreateWindow(Config)
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- 窗口控制按钮
+    -- ============================================================
+    -- 窗口控制按钮（新样式，移除投影按钮）
+    -- ============================================================
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
     ButtonGroup.Size = UDim2.new(0, 180, 1, 0)
@@ -2350,6 +2375,7 @@ function Fenglib:CreateWindow(Config)
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
 
+    -- 统一创建样式按钮：矩形圆角、半透明背景、悬停时显示强调色渐变
     local function createControlButton(iconAsset, fallbackText, callback)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, 32, 0, 32)
@@ -2363,6 +2389,7 @@ function Fenglib:CreateWindow(Config)
         corner.CornerRadius = UDim.new(0, 7)
         corner.Parent = btn
 
+        -- 强调色背景（悬停时浮现）
         local accent = Instance.new("Frame")
         accent.Size = UDim2.new(0, 0, 0, 0)
         accent.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -2384,6 +2411,7 @@ function Fenglib:CreateWindow(Config)
         })
         accentGrad.Parent = accent
 
+        -- 按钮内容（图标或文本）
         local content
         if iconAsset then
             content = Instance.new("ImageLabel")
@@ -2409,6 +2437,7 @@ function Fenglib:CreateWindow(Config)
             content.Parent = btn
         end
 
+        -- 悬停效果
         btn.MouseEnter:Connect(function()
             Tween(btn, {BackgroundTransparency = 0}, 0.2)
             if content then
@@ -2429,6 +2458,7 @@ function Fenglib:CreateWindow(Config)
 
         btn.MouseButton1Click:Connect(callback)
 
+        -- 主题更新监听
         table.insert(ThemeListeners, function()
             btn.BackgroundColor3 = CurrentTheme.Element or CurrentTheme.Top
             accent.BackgroundColor3 = CurrentTheme.Accent
@@ -2446,16 +2476,9 @@ function Fenglib:CreateWindow(Config)
         return btn
     end
 
-    local Toggle3DBtn = createControlButton("rbxassetid://12684119225", nil, function()
-        ToggleProjectorMode()
-    end)
-
+    -- 投影按钮已完全移除，仅保留最小化、最大化、关闭
     local MinimizeBtn = createControlButton(nil, "−", function()
-        if Window._ProjectorModeEnabled then
-            SwitchTo2DMode()
-        else
-            MainFrame.Visible = false
-        end
+        MainFrame.Visible = false
     end)
 
     local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
@@ -2464,11 +2487,11 @@ function Fenglib:CreateWindow(Config)
     end)
 
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function()
-        if Window._ProjectorModeEnabled then
-            SwitchTo2DMode()
-        end
         ScreenGui:Destroy()
     end)
+    -- ============================================================
+    -- 结束控制按钮替换
+    -- ============================================================
 
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Text = Title
@@ -2533,6 +2556,9 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
+    -- ========================================
+    -- Category 和 TabDivider 方法
+    -- ========================================
     function Window:Category(name)
         local label = Instance.new("TextLabel")
         label.Size = UDim2.new(1, 0, 0, 20)
@@ -2679,16 +2705,6 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    Window._ProjectorModeEnabled = false
-    Window._ProjectorObjects = nil
-    Window._ProjectorSettings = {
-        distance = 8,
-        width = 12,
-        height = 8,
-        transparency = 0.3,
-        autoSize = true
-    }
-
     local function addPressEffect(button)
         local originalSize = button.Size
         local originalPos = button.Position
@@ -2709,186 +2725,6 @@ function Fenglib:CreateWindow(Config)
                 addPressEffect(child)
             end
             addPressEffectToAll(child)
-        end
-    end
-
-    function Window:UpdateProjectorSizeFromUI()
-        if not Window._ProjectorModeEnabled or not Window._ProjectorObjects then return end
-        local mainFrame = Window._ProjectorObjects.SurfaceGui:FindFirstChild("FengYu-Bento")
-        if not mainFrame then return end
-        local absSize = mainFrame.AbsoluteSize
-        if absSize.X <= 0 or absSize.Y <= 0 then return end
-        local aspect = absSize.X / absSize.Y
-        local targetHeight = Window._ProjectorSettings.height
-        local targetWidth = targetHeight * aspect
-        targetWidth = clamp(targetWidth, 4, 24)
-        targetHeight = clamp(targetHeight, 3, 16)
-        Window._ProjectorObjects.Screen.Size = Vector3.new(targetWidth, targetHeight, 0.1)
-        Window._ProjectorSettings.width = targetWidth
-        Window._ProjectorSettings.height = targetHeight
-    end
-
-    local function SwitchToProjectorMode(distance, width, height, transparency)
-        if Window._ProjectorModeEnabled then return end
-        
-        distance = distance or Window._ProjectorSettings.distance
-        width = width or Window._ProjectorSettings.width
-        height = height or Window._ProjectorSettings.height
-        transparency = transparency or Window._ProjectorSettings.transparency
-        
-        local projectorScreen = Instance.new("Part")
-        projectorScreen.Name = "FengYu_ProjectorScreen"
-        projectorScreen.Anchored = true
-        projectorScreen.CanCollide = false
-        projectorScreen.Locked = true
-        projectorScreen.Transparency = transparency
-        projectorScreen.Size = Vector3.new(width, height, 0.1)
-        projectorScreen.BrickColor = BrickColor.new("White")
-        projectorScreen.Material = Enum.Material.SmoothPlastic
-        projectorScreen.TopSurface = Enum.SurfaceType.Smooth
-        projectorScreen.BottomSurface = Enum.SurfaceType.Smooth
-        
-        local selectionBox = Instance.new("SelectionBox")
-        selectionBox.Adornee = projectorScreen
-        selectionBox.Color3 = CurrentTheme.Accent
-        selectionBox.LineThickness = 0.08
-        selectionBox.Transparency = 0.4
-        selectionBox.Parent = projectorScreen
-        
-        if syn and syn.protect_gui then syn.protect_gui(projectorScreen) end
-        projectorScreen.Parent = workspace
-        
-        local surfaceGui = Instance.new("SurfaceGui")
-        surfaceGui.Name = "ProjectorUI"
-        surfaceGui.ResetOnSpawn = false
-        surfaceGui.Face = Enum.NormalId.Front
-        surfaceGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-        surfaceGui.CanvasSize = Vector2.new(1600, 1200)
-        surfaceGui.ClipsDescendants = true
-        surfaceGui.AlwaysOnTop = true
-        surfaceGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        surfaceGui.Adornee = projectorScreen
-        surfaceGui.Parent = projectorScreen
-        
-        local originalChildren = {}
-        for _, child in ipairs(ScreenGui:GetChildren()) do
-            if child ~= OpenButton and child ~= NotificationHolder then
-                originalChildren[#originalChildren + 1] = child
-            end
-        end
-        
-        for _, child in ipairs(originalChildren) do
-            child.Parent = surfaceGui
-        end
-        
-        Window._savedMainFrameSize = MainFrame.Size
-        Window._savedMainFramePos = MainFrame.Position
-        
-        MainFrame.Size = UDim2.new(0, 600, 0, 400)
-        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-        
-        addPressEffectToAll(surfaceGui)
-        
-        local pointLight = Instance.new("PointLight")
-        pointLight.Brightness = 2.5
-        pointLight.Range = 20
-        pointLight.Color = CurrentTheme.Accent
-        pointLight.Parent = projectorScreen
-        
-        local function updateScreenPosition()
-            local character = LocalPlayer.Character
-            if not character then return end
-            local rootPart = character:FindFirstChild("HumanoidRootPart")
-            if not rootPart then return end
-            
-            local forward = rootPart.CFrame.LookVector
-            forward = Vector3.new(forward.X, 0, forward.Z).Unit
-            local targetPos = rootPart.Position + forward * distance
-            targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
-            
-            local lookAtPoint = Vector3.new(rootPart.Position.X, targetPos.Y, rootPart.Position.Z)
-            local screenCF = CFrame.lookAt(targetPos, lookAtPoint, Vector3.new(0, 1, 0))
-            
-            projectorScreen.CFrame = screenCF
-        end
-        
-        updateScreenPosition()
-        
-        local updateConnection
-        updateConnection = RunService.RenderStepped:Connect(function()
-            if not projectorScreen.Parent then
-                if updateConnection then updateConnection:Disconnect() end
-                return
-            end
-            updateScreenPosition()
-        end)
-        
-        local sizeConnection
-        sizeConnection = MainFrame:GetPropertyChangedSignal("Size"):Connect(function()
-            if Window._ProjectorSettings.autoSize then
-                Window:UpdateProjectorSizeFromUI()
-            end
-        end)
-        task.wait(0.1)
-        Window:UpdateProjectorSizeFromUI()
-        
-        Window._ProjectorModeEnabled = true
-        Window._ProjectorObjects = {
-            Screen = projectorScreen,
-            SurfaceGui = surfaceGui,
-            UpdateConnection = updateConnection,
-            SizeConnection = sizeConnection,
-            Light = pointLight,
-            SelectionBox = selectionBox
-        }
-        
-        return true
-    end
-    
-    local function SwitchTo2DMode()
-        if not Window._ProjectorModeEnabled then return end
-        
-        if Window._ProjectorObjects then
-            if Window._ProjectorObjects.UpdateConnection then
-                Window._ProjectorObjects.UpdateConnection:Disconnect()
-            end
-            if Window._ProjectorObjects.SizeConnection then
-                Window._ProjectorObjects.SizeConnection:Disconnect()
-            end
-            if Window._ProjectorObjects.SurfaceGui then
-                local surfaceGui = Window._ProjectorObjects.SurfaceGui
-                for _, child in ipairs(surfaceGui:GetChildren()) do
-                    child.Parent = ScreenGui
-                end
-            end
-            if Window._ProjectorObjects.Screen then
-                Window._ProjectorObjects.Screen:Destroy()
-            end
-        end
-        
-        if Window._savedMainFrameSize then
-            MainFrame.Size = Window._savedMainFrameSize
-            MainFrame.Position = Window._savedMainFramePos
-        else
-            MainFrame.Size = UDim2.new(0, 500, 0, 299)
-            MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-        end
-        
-        Window._ProjectorModeEnabled = false
-        Window._ProjectorObjects = nil
-
-        dragging = false
-        dragStartPos = nil
-        dragStartWindowPos = nil
-        
-        return true
-    end
-    
-    local function ToggleProjectorMode()
-        if Window._ProjectorModeEnabled then
-            SwitchTo2DMode()
-        else
-            SwitchToProjectorMode()
         end
     end
 
@@ -2922,7 +2758,6 @@ function Fenglib:CreateWindow(Config)
     end
     
     local function startDrag(input)
-        if Window._ProjectorModeEnabled then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStartPos = getInputPosition(input)
@@ -3013,16 +2848,11 @@ function Fenglib:CreateWindow(Config)
         toggleMainFrame()
     end)
 
-    -- ====== 修复：对 OpenButton 进行 nil 检查 ======
     MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
-        if OpenButton then
-            OpenButton.Visible = not MainFrame.Visible
-        end
+        OpenButton.Visible = not MainFrame.Visible
     end)
 
-    if OpenButton then
-        OpenButton.Visible = false
-    end
+    OpenButton.Visible = false
 
     function Window:Notification(titleText, descText, notifType, duration)
         notifType = notifType or "Info"
@@ -3222,59 +3052,6 @@ function Fenglib:CreateWindow(Config)
                 break
             end
         end
-    end
-
-    function Window:SetProjectorDistance(distance)
-        distance = clamp(distance, 3, 20)
-        Window._ProjectorSettings.distance = distance
-        if Window._ProjectorModeEnabled and Window._ProjectorObjects and Window._ProjectorObjects.Screen then
-            local character = LocalPlayer.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                local rootPart = character.HumanoidRootPart
-                local forward = rootPart.CFrame.LookVector
-                forward = Vector3.new(forward.X, 0, forward.Z).Unit
-                local targetPos = rootPart.Position + forward * distance
-                targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
-                local lookAtPoint = Vector3.new(rootPart.Position.X, targetPos.Y, rootPart.Position.Z)
-                local screenCF = CFrame.lookAt(targetPos, lookAtPoint, Vector3.new(0, 1, 0))
-                Window._ProjectorObjects.Screen.CFrame = screenCF
-            end
-        end
-    end
-    
-    function Window:SetProjectorSize(width, height)
-        width = clamp(width, 4, 24)
-        height = clamp(height, 3, 16)
-        Window._ProjectorSettings.width = width
-        Window._ProjectorSettings.height = height
-        Window._ProjectorSettings.autoSize = false
-        if Window._ProjectorModeEnabled and Window._ProjectorObjects and Window._ProjectorObjects.Screen then
-            Window._ProjectorObjects.Screen.Size = Vector3.new(width, height, 0.1)
-        end
-    end
-    
-    function Window:SetProjectorTransparency(transparency)
-        transparency = clamp(transparency, 0, 0.8)
-        Window._ProjectorSettings.transparency = transparency
-        if Window._ProjectorModeEnabled and Window._ProjectorObjects and Window._ProjectorObjects.Screen then
-            Window._ProjectorObjects.Screen.Transparency = transparency
-        end
-    end
-    
-    function Window:EnableProjectorMode(distance, width, height, transparency)
-        return SwitchToProjectorMode(distance, width, height, transparency)
-    end
-    
-    function Window:DisableProjectorMode()
-        return SwitchTo2DMode()
-    end
-    
-    function Window:ToggleProjectorMode()
-        return ToggleProjectorMode()
-    end
-    
-    function Window:IsProjectorMode()
-        return Window._ProjectorModeEnabled
     end
 
     if isCardMode then
@@ -3662,6 +3439,7 @@ function Fenglib:CreateWindow(Config)
             return {}
         end
     else
+        -- ===== 普通模式 =====
         RightContainer.ClipsDescendants = true
 
         Window._activeTab = nil
@@ -3884,7 +3662,7 @@ function Fenglib:CreateWindow(Config)
 end
 
 -- ============================================================
--- Custom Cursor (移植自 metUI) – 增加保护
+-- Custom Cursor (移植自 metUI)
 -- ============================================================
 do
     local cursorScreen = Instance.new("ScreenGui")
@@ -3937,11 +3715,10 @@ do
 
     function Fenglib:SetCustomCursor(enabled)
         enabled = enabled == true
-        local cursor = Fenglib._cursorObjects
-        if cursor and cursor.Root and cursor.Screen then
-            cursor.Root.Visible = enabled
-            cursor.Screen.Enabled = enabled
-            cursor.Enabled = enabled
+        if Fenglib._cursorObjects then
+            Fenglib._cursorObjects.Root.Visible = enabled
+            Fenglib._cursorObjects.Screen.Enabled = enabled
+            Fenglib._cursorObjects.Enabled = enabled
             pcall(function()
                 UserInputService.MouseIconEnabled = not enabled
             end)
