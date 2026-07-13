@@ -2201,6 +2201,57 @@ function Fenglib:CreateWindow(Config)
     Gradient.Parent = Stroke
     Gradient.Enabled = false
 
+    -- ===== 窗口尺寸调整手柄（移植自第一个文件） =====
+    local Resizer = Instance.new("TextButton")
+    Resizer.Name = "WindowResizer"
+    Resizer.Parent = MainFrame
+    Resizer.BackgroundTransparency = 0.8
+    Resizer.BackgroundColor3 = Color3.new(1, 1, 1)
+    Resizer.Position = UDim2.new(1, 5, 1, 5)
+    Resizer.Size = UDim2.new(0, 24, 0, 24)
+    Resizer.AnchorPoint = Vector2.new(1, 1)
+    Resizer.Text = ""
+    Resizer.ZIndex = 30
+    Resizer.Visible = false   -- 默认隐藏，由 MaximizeBtn 控制
+
+    local resizerStroke = Instance.new("UIStroke")
+    resizerStroke.Thickness = 4
+    resizerStroke.Color = Color3.new(1, 1, 1)
+    resizerStroke.Transparency = 0
+    resizerStroke.Parent = Resizer
+
+    local resizerCorner = Instance.new("UICorner")
+    resizerCorner.CornerRadius = UDim.new(0, 6)
+    resizerCorner.Parent = Resizer
+
+    local resizerVisible = false
+    local isResizing = false
+    local resizeStart = Vector2.new(0,0)
+    local startSize = UDim2.new(0,0,0,0)
+
+    Resizer.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isResizing = true
+            resizeStart = input.Position
+            startSize = MainFrame.Size
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - resizeStart
+            local newWidth = math.max(400, startSize.X.Offset + delta.X)
+            local newHeight = math.max(250, startSize.Y.Offset + delta.Y)
+            MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isResizing = false
+        end
+    end)
+
     -- 高级视觉增强（移除投影相关，保留模糊效果）
     do
         local blurPart = Instance.new("Part")
@@ -2355,7 +2406,7 @@ function Fenglib:CreateWindow(Config)
     iconCorner.Parent = Icon
 
     -- ============================================================
-    -- 窗口控制按钮（移除 Resizer 与 MaximizeBtn）
+    -- 窗口控制按钮（包含最小化、窗口调整开关、关闭）
     -- ============================================================
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
@@ -2472,11 +2523,18 @@ function Fenglib:CreateWindow(Config)
         return btn
     end
 
-    -- 只保留最小化和关闭按钮
+    -- 最小化按钮
     local MinimizeBtn = createControlButton(nil, "−", function()
         MainFrame.Visible = false
     end)
 
+    -- 窗口调整开关（MaximizeBtn）
+    local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
+        resizerVisible = not resizerVisible
+        Resizer.Visible = resizerVisible
+    end)
+
+    -- 关闭按钮
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function()
         ScreenGui:Destroy()
     end)
@@ -2644,8 +2702,6 @@ function Fenglib:CreateWindow(Config)
     PageContainer.Parent = RightContainer
 
     MainFrame.ClipsDescendants = false
-
-    -- 已移除 Resizer 和 MaximizeBtn
 
     local BackButton = nil
     if isCardMode then
