@@ -2534,25 +2534,56 @@ function Fenglib:CreateWindow(Config)
 
     local leftWidth = 160
 
+    -- ===== 左侧面板 – 仅左下角圆角 =====
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
-    LeftContainer.BackgroundTransparency = 0.3
-    LeftContainer.BackgroundColor3 = CurrentTheme.Main
+    LeftContainer.BackgroundTransparency = 1          -- 自身完全透明
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
 
-    -- 左下角圆角覆盖（仅左下角圆角）
-    local leftCornerFrame = Instance.new("Frame")
-    leftCornerFrame.Size = UDim2.new(0, 20, 0, 20)
-    leftCornerFrame.AnchorPoint = Vector2.new(0, 1)
-    leftCornerFrame.Position = UDim2.new(0, 0, 1, 0)
-    leftCornerFrame.BackgroundTransparency = 0.3
-    leftCornerFrame.BorderSizePixel = 0
-    leftCornerFrame.ZIndex = 5
-    Instance.new("UICorner", leftCornerFrame).CornerRadius = UDim.new(0, 10)
-    leftCornerFrame.Parent = LeftContainer
-    AddToRegistry(leftCornerFrame, "BackgroundColor3", "Main")
+    -- 实际背景（带四个圆角）
+    local bgFrame = Instance.new("Frame")
+    bgFrame.Name = "LeftBackground"
+    bgFrame.Size = UDim2.new(1, 0, 1, 0)
+    bgFrame.BackgroundTransparency = 0.3             -- 保持原有透明度
+    bgFrame.BackgroundColor3 = CurrentTheme.Main
+    bgFrame.Parent = LeftContainer
+    local bgCorner = Instance.new("UICorner")
+    bgCorner.CornerRadius = UDim.new(0, 4)           -- 圆角半径 4，可自行调整
+    bgCorner.Parent = bgFrame
+
+    -- 遮挡左上角（恢复直角）
+    local topLeftMask = Instance.new("Frame")
+    topLeftMask.Size = UDim2.new(0, 4, 0, 4)         -- 半径大小
+    topLeftMask.Position = UDim2.new(0, 0, 0, 0)
+    topLeftMask.BackgroundColor3 = CurrentTheme.Main
+    topLeftMask.BackgroundTransparency = 0.3
+    topLeftMask.Parent = LeftContainer
+
+    -- 遮挡右上角
+    local topRightMask = Instance.new("Frame")
+    topRightMask.Size = UDim2.new(0, 4, 0, 4)
+    topRightMask.Position = UDim2.new(1, -4, 0, 0)
+    topRightMask.BackgroundColor3 = CurrentTheme.Main
+    topRightMask.BackgroundTransparency = 0.3
+    topRightMask.Parent = LeftContainer
+
+    -- 遮挡右下角
+    local bottomRightMask = Instance.new("Frame")
+    bottomRightMask.Size = UDim2.new(0, 4, 0, 4)
+    bottomRightMask.Position = UDim2.new(1, -4, 1, -4)
+    bottomRightMask.BackgroundColor3 = CurrentTheme.Main
+    bottomRightMask.BackgroundTransparency = 0.3
+    bottomRightMask.Parent = LeftContainer
+
+    -- 主题更新时同步颜色
+    table.insert(ThemeListeners, function()
+        bgFrame.BackgroundColor3 = CurrentTheme.Main
+        topLeftMask.BackgroundColor3 = CurrentTheme.Main
+        topRightMask.BackgroundColor3 = CurrentTheme.Main
+        bottomRightMask.BackgroundColor3 = CurrentTheme.Main
+    end)
 
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -40)
@@ -2563,7 +2594,7 @@ function Fenglib:CreateWindow(Config)
     TabScroll.Parent = LeftContainer
 
     local TabList = Instance.new("UIListLayout")
-    TabList.Padding = UDim.new(0, 4)
+    TabList.Padding = UDim.new(0, 4)   -- 间距调整为 4，更紧凑
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabList.Parent = TabScroll
@@ -2579,7 +2610,7 @@ function Fenglib:CreateWindow(Config)
     -- ========================================
     function Window:Category(name)
         local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 0, 20)
+        label.Size = UDim2.new(1, 0, 0, 20)   -- 高度从 24 改为 20，更紧凑
         label.BackgroundTransparency = 1
         label.Font = Enum.Font.GothamBold
         label.Text = name
@@ -2659,17 +2690,10 @@ function Fenglib:CreateWindow(Config)
     RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
 
-    -- 右下角圆角覆盖（仅右下角圆角）
-    local rightCornerFrame = Instance.new("Frame")
-    rightCornerFrame.Size = UDim2.new(0, 20, 0, 20)
-    rightCornerFrame.AnchorPoint = Vector2.new(1, 1)
-    rightCornerFrame.Position = UDim2.new(1, 0, 1, 0)
-    rightCornerFrame.BackgroundTransparency = 0.75
-    rightCornerFrame.BorderSizePixel = 0
-    rightCornerFrame.ZIndex = 5
-    Instance.new("UICorner", rightCornerFrame).CornerRadius = UDim.new(0, 10)
-    rightCornerFrame.Parent = RightContainer
-    AddToRegistry(rightCornerFrame, "BackgroundColor3", "Main")
+    -- 修改：右侧面板圆角改为 0（直角）
+    local rightCorner = Instance.new("UICorner")
+    rightCorner.CornerRadius = UDim.new(0, 0)
+    rightCorner.Parent = RightContainer
 
     table.insert(ThemeListeners, function()
         RightContainer.BackgroundColor3 = CurrentTheme.Main
