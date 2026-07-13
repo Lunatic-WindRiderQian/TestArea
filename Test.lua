@@ -2537,15 +2537,22 @@ function Fenglib:CreateWindow(Config)
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
-    LeftContainer.BackgroundTransparency = 0.3    -- 修改：更透明
+    LeftContainer.BackgroundTransparency = 0.3
     LeftContainer.BackgroundColor3 = CurrentTheme.Main
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
 
-    -- 修改：左侧面板圆角改为 0（直角）
-    local leftCorner = Instance.new("UICorner")
-    leftCorner.CornerRadius = UDim.new(0, 0)
-    leftCorner.Parent = LeftContainer
+    -- 左下角圆角覆盖（仅左下角圆角）
+    local leftCornerFrame = Instance.new("Frame")
+    leftCornerFrame.Size = UDim2.new(0, 20, 0, 20)
+    leftCornerFrame.AnchorPoint = Vector2.new(0, 1)
+    leftCornerFrame.Position = UDim2.new(0, 0, 1, 0)
+    leftCornerFrame.BackgroundTransparency = 0.3
+    leftCornerFrame.BorderSizePixel = 0
+    leftCornerFrame.ZIndex = 5
+    Instance.new("UICorner", leftCornerFrame).CornerRadius = UDim.new(0, 10)
+    leftCornerFrame.Parent = LeftContainer
+    AddToRegistry(leftCornerFrame, "BackgroundColor3", "Main")
 
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -40)
@@ -2556,7 +2563,7 @@ function Fenglib:CreateWindow(Config)
     TabScroll.Parent = LeftContainer
 
     local TabList = Instance.new("UIListLayout")
-    TabList.Padding = UDim.new(0, 4)   -- 间距调整为 4，更紧凑
+    TabList.Padding = UDim.new(0, 4)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabList.Parent = TabScroll
@@ -2572,7 +2579,7 @@ function Fenglib:CreateWindow(Config)
     -- ========================================
     function Window:Category(name)
         local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 0, 20)   -- 高度从 24 改为 20，更紧凑
+        label.Size = UDim2.new(1, 0, 0, 20)
         label.BackgroundTransparency = 1
         label.Font = Enum.Font.GothamBold
         label.Text = name
@@ -2652,10 +2659,17 @@ function Fenglib:CreateWindow(Config)
     RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
 
-    -- 修改：右侧面板圆角改为 0（直角）
-    local rightCorner = Instance.new("UICorner")
-    rightCorner.CornerRadius = UDim.new(0, 0)
-    rightCorner.Parent = RightContainer
+    -- 右下角圆角覆盖（仅右下角圆角）
+    local rightCornerFrame = Instance.new("Frame")
+    rightCornerFrame.Size = UDim2.new(0, 20, 0, 20)
+    rightCornerFrame.AnchorPoint = Vector2.new(1, 1)
+    rightCornerFrame.Position = UDim2.new(1, 0, 1, 0)
+    rightCornerFrame.BackgroundTransparency = 0.75
+    rightCornerFrame.BorderSizePixel = 0
+    rightCornerFrame.ZIndex = 5
+    Instance.new("UICorner", rightCornerFrame).CornerRadius = UDim.new(0, 10)
+    rightCornerFrame.Parent = RightContainer
+    AddToRegistry(rightCornerFrame, "BackgroundColor3", "Main")
 
     table.insert(ThemeListeners, function()
         RightContainer.BackgroundColor3 = CurrentTheme.Main
