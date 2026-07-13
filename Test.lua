@@ -7,7 +7,7 @@ local HttpService = game:GetService("HttpService")
 local TextService = game:GetService("TextService")
 local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+-- 注意：不再在顶层获取 Camera，改为在 CreateWindow 内部动态获取
 
 local Fenglib = {}
 local RainbowEnabled = false
@@ -161,7 +161,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         if type(text) == "table" then
             local config = text
-            -- 仅使用新命名，旧键名已废弃
             titleText = config.Name or ""
             subtitleText = config.SubName
             iconAsset = config.Logo
@@ -611,7 +610,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local unlimited = (min == nil and max == nil)
             min = tonumber(min)
             max = tonumber(max)
-            local Rounding = config.Rounding or 0   -- 默认为0（整数），可设置小数位数
+            local Rounding = config.Rounding or 0
             local Val = tonumber(default) or (min or 0)
             local controlId = sliderText .. "_" .. tostring(#Registry)
 
@@ -681,7 +680,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Knob.Parent = Track
                 Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
-                -- 拖动按钮（仅覆盖轨道，不干扰输入框）
                 Bar = Instance.new("TextButton")
                 Bar.Size = UDim2.new(1, 0, 0, 18)
                 Bar.Position = UDim2.new(0, 0, 0.5, -9)
@@ -708,7 +706,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     return
                 end
                 val = math.clamp(val, min, max)
-                val = Round(val, Rounding)  -- 应用四舍五入
+                val = Round(val, Rounding)
                 local ratio = (val - min) / (max - min)
                 TweenService:Create(Fill, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size = UDim2.new(ratio, 0, 1, 0)}):Play()
                 TweenService:Create(Knob, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = UDim2.new(ratio, 0, 0.5, 0)}):Play()
@@ -800,11 +798,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             UpdateSlider(Val)
         end
 
-        -- ============================================================
-        -- 升级版 Dropdown（支持多选、状态持久化、主题适配）
-        -- 选中状态：主题色上→透明下 渐变光晕
-        -- 修复悬停白色背景：为选项按钮设置背景色为主题色
-        -- ============================================================
+        -- Dropdown (多选支持)
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
             local options = config.Values or {}
@@ -813,7 +807,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local callback = config.Callback or function() end
             local controlId = dropText .. "_" .. tostring(#Registry)
 
-            -- 当前选中值（单选为字符串，多选为表）
             local selected = multi and {} or nil
             local function initSelected()
                 if multi then
@@ -910,11 +903,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     O.Text = ""
                     O.BackgroundTransparency = 1
                     O.AutoButtonColor = false
-                    O.BackgroundColor3 = CurrentTheme.Top   -- 关键修复：设置背景色为主题色，悬停时显示半透明主题色而非白色
+                    O.BackgroundColor3 = CurrentTheme.Top
                     O.Parent = Container
                     O.TextColor3 = CurrentTheme.Text
 
-                    -- 复选框：采用主题色上→透明下渐变
                     local check = Instance.new("Frame")
                     check.Size = UDim2.new(0, 16, 0, 16)
                     check.Position = UDim2.new(0, 10, 0.5, -8)
@@ -931,14 +923,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     checkStroke.Transparency = 0.7
                     checkStroke.Parent = check
 
-                    -- 渐变：上主题色 -> 下透明
                     local checkGrad = Instance.new("UIGradient")
                     checkGrad.Rotation = 0
                     checkGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
                     checkGrad.Transparency = NumberSequence.new(1)
                     checkGrad.Parent = check
 
-                    -- 对勾图标
                     local checkMark = Instance.new("ImageLabel")
                     checkMark.Size = UDim2.new(0, 12, 0, 12)
                     checkMark.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -961,7 +951,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     AddToRegistry(label, "TextColor3", "Text")
 
                     O.MouseEnter:Connect(function()
-                        Tween(O, {BackgroundTransparency = 0.1}, 0.15)  -- 悬停时显示主题色半透明
+                        Tween(O, {BackgroundTransparency = 0.1}, 0.15)
                     end)
                     O.MouseLeave:Connect(function()
                         Tween(O, {BackgroundTransparency = 1}, 0.15)
@@ -1019,7 +1009,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
 
-                -- 初始化所有选项的状态
                 for _, d in ipairs(optionButtons) do
                     if multi then
                         d.selected = table.find(selected, d.value) ~= nil
@@ -1139,7 +1128,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Btn.Visible = state
             end
 
-            -- 主题监听：更新复选框颜色和渐变，以及选项按钮背景色
             table.insert(ThemeListeners, function()
                 for _, d in ipairs(optionButtons) do
                     if d.checkStroke then d.checkStroke.Color = CurrentTheme.Accent end
@@ -1149,7 +1137,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     if d.checkGrad then
                         d.checkGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
                     end
-                    -- 更新选项按钮背景色
                     if d.button then
                         d.button.BackgroundColor3 = CurrentTheme.Top
                     end
@@ -1226,23 +1213,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- ============================================================
-        -- ColorPicker 升级版（基于 jx.lua 核心）
-        -- 支持：色相/饱和度/明度/Alpha、Hex输入、预设颜色、拖拽调节
-        -- ============================================================
+        -- ColorPicker
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
             local Color = config.Default or Color3.fromRGB(255, 255, 255)
             local callback = config.Callback or function() end
             local controlId = pickerText .. "_" .. tostring(#Registry)
             
-            -- 颜色状态
             local hue, sat, val = Color3.toHSV(Color)
             local alpha = 1.0
             local hexValue = "#" .. Color:ToHex()
             local isOpen = false
             
-            -- 保存的颜色列表（预设）
             local savedColors = {}
             local function addPresetColors()
                 local presets = {
@@ -1261,7 +1243,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             addPresetColors()
             
-            -- 主按钮（显示颜色块）
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 44)
             Tile.Parent = contentHolder
@@ -1298,7 +1279,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             SwStroke.Parent = Swatch
             AddToRegistry(SwStroke, "Color", "Stroke")
             
-            -- ========== 颜色选择器面板（基于 jx 核心） ==========
             local Panel = Instance.new("Frame")
             Panel.Size = UDim2.new(1, 0, 0, 0)
             Panel.Visible = false
@@ -1312,7 +1292,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             PSt.Parent = Panel
             AddToRegistry(PSt, "Color", "Accent")
             
-            -- 饱和度/明度 选择区
             local SVBox = Instance.new("ImageLabel")
             SVBox.Size = UDim2.new(1, -52, 0, 110)
             SVBox.Position = UDim2.new(0, 10, 0, 10)
@@ -1334,7 +1313,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             DotStroke.Color = Color3.fromRGB(80, 80, 80)
             DotStroke.Parent = SVDot
             
-            -- 色相条
             local HueBar = Instance.new("Frame")
             HueBar.Size = UDim2.new(0, 16, 0, 110)
             HueBar.Position = UDim2.new(1, -30, 0, 10)
@@ -1364,7 +1342,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             HueDot.Parent = HueBar
             Instance.new("UICorner", HueDot).CornerRadius = UDim.new(1, 0)
             
-            -- Alpha 条
             local AlphaBar = Instance.new("Frame")
             AlphaBar.Size = UDim2.new(1, -52, 0, 6)
             AlphaBar.Position = UDim2.new(0, 10, 0, 128)
@@ -1385,7 +1362,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AlphaDot.Parent = AlphaBar
             Instance.new("UICorner", AlphaDot).CornerRadius = UDim.new(1, 0)
             
-            -- Hex 输入
             local HexBox = Instance.new("TextBox")
             HexBox.Size = UDim2.new(0.5, -20, 0, 24)
             HexBox.Position = UDim2.new(0, 10, 0, 142)
@@ -1404,7 +1380,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             HexStroke.Parent = HexBox
             AddToRegistry(HexStroke, "Color", "Stroke")
             
-            -- 预设颜色网格
             local PresetContainer = Instance.new("ScrollingFrame")
             PresetContainer.Size = UDim2.new(0.5, -10, 0, 70)
             PresetContainer.Position = UDim2.new(0.5, 10, 0, 140)
@@ -1418,7 +1393,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Grid.SortOrder = Enum.SortOrder.LayoutOrder
             Grid.Parent = PresetContainer
             
-            -- 填充预设颜色
             for _, data in ipairs(savedColors) do
                 local btn = Instance.new("TextButton")
                 btn.Size = UDim2.new(1, 0, 1, 0)
@@ -1452,7 +1426,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
             end
             
-            -- 更新颜色
             local function ApplyColor()
                 Color = Color3.fromHSV(hue, sat, val)
                 Swatch.BackgroundColor3 = Color
@@ -1463,7 +1436,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 callback(Color, alpha)
             end
             
-            -- 拖拽处理（SV、Hue、Alpha）
             local svDragging = false
             local SVBtn = Instance.new("TextButton")
             SVBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -1562,7 +1534,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
             
-            -- Hex 输入
             HexBox.FocusLost:Connect(function()
                 local txt = HexBox.Text:gsub("#", "")
                 if #txt == 6 or #txt == 3 then
@@ -1580,7 +1551,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
             
-            -- 打开/关闭面板
             local function togglePanel()
                 isOpen = not isOpen
                 if isOpen then
@@ -1595,7 +1565,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             
             ClickBtn.MouseButton1Click:Connect(togglePanel)
             
-            -- 注册到 ConfigObjects
             ConfigObjects[controlId] = {
                 Type = "ColorPicker",
                 Value = {R = Color.R, G = Color.G, B = Color.B, A = alpha},
@@ -1626,7 +1595,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             }
             
-            -- 主题更新
             table.insert(ThemeListeners, function()
                 SwStroke.Color = CurrentTheme.Stroke
                 PSt.Color = CurrentTheme.Accent
@@ -1634,7 +1602,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 HexBox.TextColor3 = CurrentTheme.Text
             end)
             
-            -- 返回接口（保持与旧版兼容）
             local self = {}
             function self.SetValue(val)
                 if ConfigObjects[controlId] then
@@ -2116,6 +2083,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 end
 
 function Fenglib:CreateWindow(Config)
+    -- ====== 修复：等待摄像机就绪 ======
+    while not workspace.CurrentCamera do
+        task.wait()
+    end
+    local Camera = workspace.CurrentCamera  -- 现在肯定有效
+
     local Window = {}
     local Title = Config.Name or "FengY3"
     local Subtitle = Config.SubName
@@ -2189,7 +2162,6 @@ function Fenglib:CreateWindow(Config)
     MainFrame.ClipsDescendants = true
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Parent = ScreenGui
-    -- 主窗口圆角改为 0（方角）
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 0)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
@@ -2230,17 +2202,21 @@ function Fenglib:CreateWindow(Config)
         dof.NearIntensity = 0.6
         dof.Parent = Lighting
 
+        -- ====== 修复：updateBlur 动态获取 Camera ======
         local function updateBlur()
-            if not MainFrame.Visible or not MainFrame.Parent then
-                blockMesh.Scale = Vector3.new(0, 0, 0)
+            local camera = workspace.CurrentCamera
+            if not camera or not MainFrame.Visible or not MainFrame.Parent then
+                if blockMesh then
+                    blockMesh.Scale = Vector3.new(0, 0, 0)
+                end
                 return
             end
             local corner0 = MainFrame.AbsolutePosition
             local corner1 = corner0 + MainFrame.AbsoluteSize
-            local ray0 = Camera:ScreenPointToRay(corner0.X, corner0.Y, 1)
-            local ray1 = Camera:ScreenPointToRay(corner1.X, corner1.Y, 1)
-            local origin = Camera.CFrame.Position + Camera.CFrame.LookVector * (0.05 - Camera.NearPlaneZ)
-            local normal = Camera.CFrame.LookVector
+            local ray0 = camera:ScreenPointToRay(corner0.X, corner0.Y, 1)
+            local ray1 = camera:ScreenPointToRay(corner1.X, corner1.Y, 1)
+            local origin = camera.CFrame.Position + camera.CFrame.LookVector * (0.05 - camera.NearPlaneZ)
+            local normal = camera.CFrame.LookVector
 
             local function getPoint(ray)
                 local denominator = ray.Direction:Dot(normal)
@@ -2251,13 +2227,13 @@ function Fenglib:CreateWindow(Config)
                 return ray.Origin + ray.Direction * d
             end
 
-            local pos0 = Camera.CFrame:PointToObjectSpace(getPoint(ray0))
-            local pos1 = Camera.CFrame:PointToObjectSpace(getPoint(ray1))
+            local pos0 = camera.CFrame:PointToObjectSpace(getPoint(ray0))
+            local pos1 = camera.CFrame:PointToObjectSpace(getPoint(ray1))
             local size = pos1 - pos0
             local center = (pos0 + pos1) / 2
             blockMesh.Offset = center
             blockMesh.Scale = size / 0.0101
-            blurPart.CFrame = Camera.CFrame
+            blurPart.CFrame = camera.CFrame
         end
 
         local blurConnection = RunService.RenderStepped:Connect(updateBlur)
@@ -2355,9 +2331,7 @@ function Fenglib:CreateWindow(Config)
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
-    -- ============================================================
-    -- 窗口控制按钮（新样式，替换原 createTextButton / createIconButton）
-    -- ============================================================
+    -- 窗口控制按钮
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
     ButtonGroup.Size = UDim2.new(0, 180, 1, 0)
@@ -2376,7 +2350,6 @@ function Fenglib:CreateWindow(Config)
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
 
-    -- 统一创建样式按钮：矩形圆角、半透明背景、悬停时显示强调色渐变
     local function createControlButton(iconAsset, fallbackText, callback)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, 32, 0, 32)
@@ -2390,7 +2363,6 @@ function Fenglib:CreateWindow(Config)
         corner.CornerRadius = UDim.new(0, 7)
         corner.Parent = btn
 
-        -- 强调色背景（悬停时浮现）
         local accent = Instance.new("Frame")
         accent.Size = UDim2.new(0, 0, 0, 0)
         accent.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -2408,11 +2380,10 @@ function Fenglib:CreateWindow(Config)
         accentGrad.Rotation = -115
         accentGrad.Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-            ColorSequenceKeypoint.new(1, CurrentTheme.Accent) -- 若支持双色可改为 CurrentTheme.AccentGradient
+            ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
         })
         accentGrad.Parent = accent
 
-        -- 按钮内容（图标或文本）
         local content
         if iconAsset then
             content = Instance.new("ImageLabel")
@@ -2438,7 +2409,6 @@ function Fenglib:CreateWindow(Config)
             content.Parent = btn
         end
 
-        -- 悬停效果
         btn.MouseEnter:Connect(function()
             Tween(btn, {BackgroundTransparency = 0}, 0.2)
             if content then
@@ -2459,13 +2429,12 @@ function Fenglib:CreateWindow(Config)
 
         btn.MouseButton1Click:Connect(callback)
 
-        -- 主题更新监听
         table.insert(ThemeListeners, function()
             btn.BackgroundColor3 = CurrentTheme.Element or CurrentTheme.Top
             accent.BackgroundColor3 = CurrentTheme.Accent
             accentGrad.Color = ColorSequence.new({
                 ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-                ColorSequenceKeypoint.new(1, CurrentTheme.Accent) -- 可扩展
+                ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
             })
             if content and content:IsA("ImageLabel") then
                 content.ImageColor3 = CurrentTheme.Text
@@ -2500,9 +2469,6 @@ function Fenglib:CreateWindow(Config)
         end
         ScreenGui:Destroy()
     end)
-    -- ============================================================
-    -- 结束控制按钮替换
-    -- ============================================================
 
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Text = Title
@@ -2538,12 +2504,11 @@ function Fenglib:CreateWindow(Config)
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
-    LeftContainer.BackgroundTransparency = 0.3    -- 修改：更透明
+    LeftContainer.BackgroundTransparency = 0.3
     LeftContainer.BackgroundColor3 = CurrentTheme.Main
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
 
-    -- 修改：左侧面板圆角改为 0（直角）
     local leftCorner = Instance.new("UICorner")
     leftCorner.CornerRadius = UDim.new(0, 0)
     leftCorner.Parent = LeftContainer
@@ -2557,7 +2522,7 @@ function Fenglib:CreateWindow(Config)
     TabScroll.Parent = LeftContainer
 
     local TabList = Instance.new("UIListLayout")
-    TabList.Padding = UDim.new(0, 4)   -- 间距调整为 4，更紧凑
+    TabList.Padding = UDim.new(0, 4)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabList.Parent = TabScroll
@@ -2568,12 +2533,9 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- ========================================
-    -- Category 和 TabDivider 方法（已调整间距）
-    -- ========================================
     function Window:Category(name)
         local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 0, 20)   -- 高度从 24 改为 20，更紧凑
+        label.Size = UDim2.new(1, 0, 0, 20)
         label.BackgroundTransparency = 1
         label.Font = Enum.Font.GothamBold
         label.Text = name
@@ -2653,7 +2615,6 @@ function Fenglib:CreateWindow(Config)
     RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
 
-    -- 修改：右侧面板圆角改为 0（直角）
     local rightCorner = Instance.new("UICorner")
     rightCorner.CornerRadius = UDim.new(0, 0)
     rightCorner.Parent = RightContainer
@@ -2931,17 +2892,12 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- 注意：Toggle3DBtn 已在上方创建，这里不需要重复
-    -- 移除原 createIconButton 调用
-
     local resizerVisible = false
     Resizer.Visible = resizerVisible
 
-    -- 注意：MinimizeBtn, MaximizeBtn, CloseBtn 已在上方创建
-
     local BackButton = nil
     if isCardMode then
-        BackButton = createControlButton("rbxassetid://7733764800", nil, function() end)  -- 卡片模式返回按钮
+        BackButton = createControlButton("rbxassetid://7733764800", nil, function() end)
         BackButton.Visible = false
         BackButton.LayoutOrder = -1
         for _, child in ipairs(ButtonGroup:GetChildren()) do
@@ -3057,11 +3013,16 @@ function Fenglib:CreateWindow(Config)
         toggleMainFrame()
     end)
 
+    -- ====== 修复：对 OpenButton 进行 nil 检查 ======
     MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
-        OpenButton.Visible = not MainFrame.Visible
+        if OpenButton then
+            OpenButton.Visible = not MainFrame.Visible
+        end
     end)
 
-    OpenButton.Visible = false
+    if OpenButton then
+        OpenButton.Visible = false
+    end
 
     function Window:Notification(titleText, descText, notifType, duration)
         notifType = notifType or "Info"
@@ -3701,7 +3662,6 @@ function Fenglib:CreateWindow(Config)
             return {}
         end
     else
-        -- ===== 普通模式 =====
         RightContainer.ClipsDescendants = true
 
         Window._activeTab = nil
@@ -3924,7 +3884,7 @@ function Fenglib:CreateWindow(Config)
 end
 
 -- ============================================================
--- Custom Cursor (移植自 metUI)
+-- Custom Cursor (移植自 metUI) – 增加保护
 -- ============================================================
 do
     local cursorScreen = Instance.new("ScreenGui")
@@ -3934,7 +3894,7 @@ do
     cursorScreen.ZIndexBehavior = Enum.ZIndexBehavior.Global
     cursorScreen.ResetOnSpawn = false
     cursorScreen.Enabled = false
-    cursorScreen.Parent = CoreGui   -- 若需要可改为 gethui()
+    cursorScreen.Parent = CoreGui
 
     local cursorRoot = Instance.new("Frame")
     cursorRoot.Name = "CursorRoot"
@@ -3977,10 +3937,11 @@ do
 
     function Fenglib:SetCustomCursor(enabled)
         enabled = enabled == true
-        if Fenglib._cursorObjects then
-            Fenglib._cursorObjects.Root.Visible = enabled
-            Fenglib._cursorObjects.Screen.Enabled = enabled
-            Fenglib._cursorObjects.Enabled = enabled
+        local cursor = Fenglib._cursorObjects
+        if cursor and cursor.Root and cursor.Screen then
+            cursor.Root.Visible = enabled
+            cursor.Screen.Enabled = enabled
+            cursor.Enabled = enabled
             pcall(function()
                 UserInputService.MouseIconEnabled = not enabled
             end)
