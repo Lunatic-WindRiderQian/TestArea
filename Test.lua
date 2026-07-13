@@ -2355,6 +2355,9 @@ function Fenglib:CreateWindow(Config)
     iconCorner.CornerRadius = UDim.new(0, 8)
     iconCorner.Parent = Icon
 
+    -- ============================================================
+    -- 窗口控制按钮（新样式，替换原 createTextButton / createIconButton）
+    -- ============================================================
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
     ButtonGroup.Size = UDim2.new(0, 180, 1, 0)
@@ -2373,136 +2376,133 @@ function Fenglib:CreateWindow(Config)
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
 
-    local function NewRoundFrame(radius, imageType, properties, children)
-        local frame = Instance.new("ImageLabel")
-        frame.BackgroundTransparency = 1
-        frame.Image = imageType == "Squircle" and "rbxassetid://80999662900595" or
-                      imageType == "SquircleOutline" and "rbxassetid://117788349049947" or
-                      imageType == "SquircleOutline2" and "rbxassetid://117817408534198" or
-                      "rbxassetid://80999662900595"
-        frame.ScaleType = Enum.ScaleType.Slice
-        frame.SliceCenter = Rect.new(256, 256, 256, 256)
-        frame.SliceScale = radius / 256
-        for prop, val in pairs(properties or {}) do
-            frame[prop] = val
-        end
-        for _, child in ipairs(children or {}) do
-            child.Parent = frame
-        end
-        return frame
-    end
-
-    local function createTextButton(textSymbol, callback)
+    -- 统一创建样式按钮：矩形圆角、半透明背景、悬停时显示强调色渐变
+    local function createControlButton(iconAsset, fallbackText, callback)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 36, 0, 36)
-        btn.Text = textSymbol
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 20
-        btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.BackgroundTransparency = 1
-        btn.Parent = ButtonGroup
-
-        local bg = NewRoundFrame(9, "Squircle", {
-            Size = UDim2.new(1, 0, 1, 0),
-            ImageTransparency = 0.95,
-            ImageColor3 = Color3.new(1, 1, 1),
-            Parent = btn
-        })
-
-        local outline = NewRoundFrame(9, "SquircleOutline", {
-            Size = UDim2.new(1, 0, 1, 0),
-            ImageTransparency = 1,
-            ImageColor3 = Color3.new(1, 1, 1),
-            Parent = btn
-        })
-        local gradient = Instance.new("UIGradient")
-        gradient.Rotation = 45
-        gradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 255, 255))
-        })
-        gradient.Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0.0, 0.1),
-            NumberSequenceKeypoint.new(0.5, 1),
-            NumberSequenceKeypoint.new(1.0, 0.1)
-        })
-        gradient.Parent = outline
-
-        local function onHover()
-            Tween(bg, {ImageTransparency = 0.8}, 0.2)
-            Tween(outline, {ImageTransparency = 0.75}, 0.2)
-        end
-        local function onLeave()
-            Tween(bg, {ImageTransparency = 0.95}, 0.2)
-            Tween(outline, {ImageTransparency = 1}, 0.2)
-        end
-
-        btn.MouseEnter:Connect(onHover)
-        btn.MouseLeave:Connect(onLeave)
-        btn.MouseButton1Click:Connect(callback)
-
-        return btn
-    end
-
-    local function createIconButton(iconAsset, callback)
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 36, 0, 36)
+        btn.Size = UDim2.new(0, 32, 0, 32)
+        btn.AutoButtonColor = false
         btn.Text = ""
-        btn.BackgroundTransparency = 1
+        btn.BackgroundTransparency = 0.2
+        btn.BackgroundColor3 = CurrentTheme.Element or CurrentTheme.Top
         btn.Parent = ButtonGroup
 
-        local bg = NewRoundFrame(9, "Squircle", {
-            Size = UDim2.new(1, 0, 1, 0),
-            ImageTransparency = 0.95,
-            ImageColor3 = Color3.new(1, 1, 1),
-            Parent = btn
-        })
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 7)
+        corner.Parent = btn
 
-        local outline = NewRoundFrame(9, "SquircleOutline", {
-            Size = UDim2.new(1, 0, 1, 0),
-            ImageTransparency = 1,
-            ImageColor3 = Color3.new(1, 1, 1),
-            Parent = btn
-        })
-        local gradient = Instance.new("UIGradient")
-        gradient.Rotation = 45
-        gradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 255, 255))
-        })
-        gradient.Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0.0, 0.1),
-            NumberSequenceKeypoint.new(0.5, 1),
-            NumberSequenceKeypoint.new(1.0, 0.1)
-        })
-        gradient.Parent = outline
+        -- 强调色背景（悬停时浮现）
+        local accent = Instance.new("Frame")
+        accent.Size = UDim2.new(0, 0, 0, 0)
+        accent.AnchorPoint = Vector2.new(0.5, 0.5)
+        accent.Position = UDim2.new(0.5, 0, 0.5, 0)
+        accent.BackgroundTransparency = 1
+        accent.ZIndex = 2
+        accent.BackgroundColor3 = CurrentTheme.Accent
+        accent.Parent = btn
 
-        local icon = Instance.new("ImageLabel")
-        icon.Size = UDim2.new(0, 18, 0, 18)
-        icon.Position = UDim2.new(0.5, 0, 0.5, 0)
-        icon.AnchorPoint = Vector2.new(0.5, 0.5)
-        icon.BackgroundTransparency = 1
-        icon.Image = iconAsset
-        icon.ImageColor3 = Color3.new(1, 1, 1)
-        icon.Parent = btn
+        local accentCorner = Instance.new("UICorner")
+        accentCorner.CornerRadius = UDim.new(0, 7)
+        accentCorner.Parent = accent
 
-        local function onHover()
-            Tween(bg, {ImageTransparency = 0.8}, 0.2)
-            Tween(outline, {ImageTransparency = 0.75}, 0.2)
+        local accentGrad = Instance.new("UIGradient")
+        accentGrad.Rotation = -115
+        accentGrad.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
+            ColorSequenceKeypoint.new(1, CurrentTheme.Accent) -- 若支持双色可改为 CurrentTheme.AccentGradient
+        })
+        accentGrad.Parent = accent
+
+        -- 按钮内容（图标或文本）
+        local content
+        if iconAsset then
+            content = Instance.new("ImageLabel")
+            content.Size = UDim2.new(0, 14, 0, 14)
+            content.AnchorPoint = Vector2.new(0.5, 0.5)
+            content.Position = UDim2.new(0.5, 0, 0.5, 0)
+            content.BackgroundTransparency = 1
+            content.Image = iconAsset
+            content.ImageColor3 = CurrentTheme.Text
+            content.ImageTransparency = 0.3
+            content.ZIndex = 3
+            content.Parent = btn
+        else
+            content = Instance.new("TextLabel")
+            content.Size = UDim2.new(1, 0, 1, 0)
+            content.BackgroundTransparency = 1
+            content.Font = Enum.Font.GothamBold
+            content.Text = fallbackText or ""
+            content.TextSize = 18
+            content.TextColor3 = CurrentTheme.Text
+            content.TextTransparency = 0.3
+            content.ZIndex = 3
+            content.Parent = btn
         end
-        local function onLeave()
-            Tween(bg, {ImageTransparency = 0.95}, 0.2)
-            Tween(outline, {ImageTransparency = 1}, 0.2)
-        end
 
-        btn.MouseEnter:Connect(onHover)
-        btn.MouseLeave:Connect(onLeave)
+        -- 悬停效果
+        btn.MouseEnter:Connect(function()
+            Tween(btn, {BackgroundTransparency = 0}, 0.2)
+            if content then
+                local transProp = content:IsA("ImageLabel") and "ImageTransparency" or "TextTransparency"
+                Tween(content, {[transProp] = 0}, 0.2)
+            end
+            Tween(accent, {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 0}, 0.2)
+        end)
+
+        btn.MouseLeave:Connect(function()
+            Tween(btn, {BackgroundTransparency = 0.2}, 0.2)
+            if content then
+                local transProp = content:IsA("ImageLabel") and "ImageTransparency" or "TextTransparency"
+                Tween(content, {[transProp] = 0.3}, 0.2)
+            end
+            Tween(accent, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.2)
+        end)
+
         btn.MouseButton1Click:Connect(callback)
+
+        -- 主题更新监听
+        table.insert(ThemeListeners, function()
+            btn.BackgroundColor3 = CurrentTheme.Element or CurrentTheme.Top
+            accent.BackgroundColor3 = CurrentTheme.Accent
+            accentGrad.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
+                ColorSequenceKeypoint.new(1, CurrentTheme.Accent) -- 可扩展
+            })
+            if content and content:IsA("ImageLabel") then
+                content.ImageColor3 = CurrentTheme.Text
+            elseif content and content:IsA("TextLabel") then
+                content.TextColor3 = CurrentTheme.Text
+            end
+        end)
 
         return btn
     end
+
+    local Toggle3DBtn = createControlButton("rbxassetid://12684119225", nil, function()
+        ToggleProjectorMode()
+    end)
+
+    local MinimizeBtn = createControlButton(nil, "−", function()
+        if Window._ProjectorModeEnabled then
+            SwitchTo2DMode()
+        else
+            MainFrame.Visible = false
+        end
+    end)
+
+    local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
+        resizerVisible = not resizerVisible
+        Resizer.Visible = resizerVisible
+    end)
+
+    local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function()
+        if Window._ProjectorModeEnabled then
+            SwitchTo2DMode()
+        end
+        ScreenGui:Destroy()
+    end)
+    -- ============================================================
+    -- 结束控制按钮替换
+    -- ============================================================
 
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Text = Title
@@ -2931,85 +2931,17 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    local Toggle3DBtn = createIconButton("rbxassetid://12684119225", function()
-        ToggleProjectorMode()
-    end)
-    
-    local MinimizeBtn = createTextButton("-", function()
-        if Window._ProjectorModeEnabled then
-            SwitchTo2DMode()
-        else
-            MainFrame.Visible = false
-        end
-    end)
-    
+    -- 注意：Toggle3DBtn 已在上方创建，这里不需要重复
+    -- 移除原 createIconButton 调用
+
     local resizerVisible = false
     Resizer.Visible = resizerVisible
-    
-    local MaximizeBtn = createIconButton("rbxassetid://6031090998", function()
-        resizerVisible = not resizerVisible
-        Resizer.Visible = resizerVisible
-    end)
-    
-    local CloseBtn = createTextButton("X", function()
-        if Window._ProjectorModeEnabled then
-            SwitchTo2DMode()
-        end
-        ScreenGui:Destroy()
-    end)
+
+    -- 注意：MinimizeBtn, MaximizeBtn, CloseBtn 已在上方创建
 
     local BackButton = nil
     if isCardMode then
-        BackButton = createIconButton("rbxassetid://7733764800", function() end)
-        BackButton:Destroy()
-        BackButton = Instance.new("TextButton")
-        BackButton.Size = UDim2.new(0, 36, 0, 36)
-        BackButton.Text = ""
-        BackButton.BackgroundTransparency = 1
-        BackButton.Parent = ButtonGroup
-        local bg = NewRoundFrame(9, "Squircle", {
-            Size = UDim2.new(1, 0, 1, 0),
-            ImageTransparency = 0.95,
-            ImageColor3 = Color3.new(1, 1, 1),
-            Parent = BackButton
-        })
-        local outline = NewRoundFrame(9, "SquircleOutline", {
-            Size = UDim2.new(1, 0, 1, 0),
-            ImageTransparency = 1,
-            ImageColor3 = Color3.new(1, 1, 1),
-            Parent = BackButton
-        })
-        local gradient = Instance.new("UIGradient")
-        gradient.Rotation = 45
-        gradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 255, 255))
-        })
-        gradient.Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0.0, 0.1),
-            NumberSequenceKeypoint.new(0.5, 1),
-            NumberSequenceKeypoint.new(1.0, 0.1)
-        })
-        gradient.Parent = outline
-        local icon = Instance.new("ImageLabel")
-        icon.Size = UDim2.new(0, 18, 0, 18)
-        icon.Position = UDim2.new(0.5, 0, 0.5, 0)
-        icon.AnchorPoint = Vector2.new(0.5, 0.5)
-        icon.BackgroundTransparency = 1
-        icon.Image = "rbxassetid://7733764800"
-        icon.ImageColor3 = Color3.new(1, 1, 1)
-        icon.Parent = BackButton
-        local function onHover()
-            Tween(bg, {ImageTransparency = 0.8}, 0.2)
-            Tween(outline, {ImageTransparency = 0.75}, 0.2)
-        end
-        local function onLeave()
-            Tween(bg, {ImageTransparency = 0.95}, 0.2)
-            Tween(outline, {ImageTransparency = 1}, 0.2)
-        end
-        BackButton.MouseEnter:Connect(onHover)
-        BackButton.MouseLeave:Connect(onLeave)
+        BackButton = createControlButton("rbxassetid://7733764800", nil, function() end)  -- 卡片模式返回按钮
         BackButton.Visible = false
         BackButton.LayoutOrder = -1
         for _, child in ipairs(ButtonGroup:GetChildren()) do
