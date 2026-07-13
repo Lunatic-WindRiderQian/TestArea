@@ -2583,8 +2583,9 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 0)
     leftCorner.Parent = LeftContainer
 
+    -- Tab 滚动区域（调整高度）
     local TabScroll = Instance.new("ScrollingFrame")
-    TabScroll.Size = UDim2.new(1, 0, 1, -40)
+    TabScroll.Size = UDim2.new(1, 0, 1, -55)   -- 原为 -40，改为 -55 为卡片留空
     TabScroll.Position = UDim2.new(0, 0, 0, 0)
     TabScroll.BackgroundTransparency = 1
     TabScroll.ScrollBarThickness = 0
@@ -2640,9 +2641,10 @@ function Fenglib:CreateWindow(Config)
         end)
     end
 
+    -- 玩家卡片（下移）
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
-    ProfileFrame.Position = UDim2.new(0, 10, 1, -19)
+    ProfileFrame.Position = UDim2.new(0, 10, 1, -10)   -- 原为 -19，改为 -10 下移
     ProfileFrame.AnchorPoint = Vector2.new(0, 1)
     ProfileFrame.BackgroundTransparency = 0.05
     ProfileFrame.Parent = LeftContainer
