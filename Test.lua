@@ -2189,7 +2189,8 @@ function Fenglib:CreateWindow(Config)
     MainFrame.ClipsDescendants = true
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Parent = ScreenGui
-    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
+    -- 主窗口圆角改为 0（方角）
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 0)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
     local Stroke = Instance.new("UIStroke")
@@ -2534,56 +2535,18 @@ function Fenglib:CreateWindow(Config)
 
     local leftWidth = 160
 
-    -- ===== 左侧面板 – 仅左下角圆角 =====
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
-    LeftContainer.BackgroundTransparency = 1          -- 自身完全透明
+    LeftContainer.BackgroundTransparency = 0.3    -- 修改：更透明
+    LeftContainer.BackgroundColor3 = CurrentTheme.Main
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
 
-    -- 实际背景（带四个圆角）
-    local bgFrame = Instance.new("Frame")
-    bgFrame.Name = "LeftBackground"
-    bgFrame.Size = UDim2.new(1, 0, 1, 0)
-    bgFrame.BackgroundTransparency = 0.3             -- 保持原有透明度
-    bgFrame.BackgroundColor3 = CurrentTheme.Main
-    bgFrame.Parent = LeftContainer
-    local bgCorner = Instance.new("UICorner")
-    bgCorner.CornerRadius = UDim.new(0, 4)           -- 圆角半径 4，可自行调整
-    bgCorner.Parent = bgFrame
-
-    -- 遮挡左上角（恢复直角）
-    local topLeftMask = Instance.new("Frame")
-    topLeftMask.Size = UDim2.new(0, 4, 0, 4)         -- 半径大小
-    topLeftMask.Position = UDim2.new(0, 0, 0, 0)
-    topLeftMask.BackgroundColor3 = CurrentTheme.Main
-    topLeftMask.BackgroundTransparency = 0.3
-    topLeftMask.Parent = LeftContainer
-
-    -- 遮挡右上角
-    local topRightMask = Instance.new("Frame")
-    topRightMask.Size = UDim2.new(0, 4, 0, 4)
-    topRightMask.Position = UDim2.new(1, -4, 0, 0)
-    topRightMask.BackgroundColor3 = CurrentTheme.Main
-    topRightMask.BackgroundTransparency = 0.3
-    topRightMask.Parent = LeftContainer
-
-    -- 遮挡右下角
-    local bottomRightMask = Instance.new("Frame")
-    bottomRightMask.Size = UDim2.new(0, 4, 0, 4)
-    bottomRightMask.Position = UDim2.new(1, -4, 1, -4)
-    bottomRightMask.BackgroundColor3 = CurrentTheme.Main
-    bottomRightMask.BackgroundTransparency = 0.3
-    bottomRightMask.Parent = LeftContainer
-
-    -- 主题更新时同步颜色
-    table.insert(ThemeListeners, function()
-        bgFrame.BackgroundColor3 = CurrentTheme.Main
-        topLeftMask.BackgroundColor3 = CurrentTheme.Main
-        topRightMask.BackgroundColor3 = CurrentTheme.Main
-        bottomRightMask.BackgroundColor3 = CurrentTheme.Main
-    end)
+    -- 修改：左侧面板圆角改为 0（直角）
+    local leftCorner = Instance.new("UICorner")
+    leftCorner.CornerRadius = UDim.new(0, 0)
+    leftCorner.Parent = LeftContainer
 
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -40)
