@@ -2355,7 +2355,7 @@ function Fenglib:CreateWindow(Config)
     iconCorner.Parent = Icon
 
     -- ============================================================
-    -- 窗口控制按钮（新样式，移除投影按钮）
+    -- 窗口控制按钮（移除 Resizer 与 MaximizeBtn）
     -- ============================================================
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
@@ -2375,7 +2375,7 @@ function Fenglib:CreateWindow(Config)
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = ButtonGroup
 
-    -- 统一创建样式按钮：矩形圆角、半透明背景、悬停时显示强调色渐变
+    -- 统一创建样式按钮
     local function createControlButton(iconAsset, fallbackText, callback)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, 32, 0, 32)
@@ -2389,7 +2389,6 @@ function Fenglib:CreateWindow(Config)
         corner.CornerRadius = UDim.new(0, 7)
         corner.Parent = btn
 
-        -- 强调色背景（悬停时浮现）
         local accent = Instance.new("Frame")
         accent.Size = UDim2.new(0, 0, 0, 0)
         accent.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -2411,7 +2410,6 @@ function Fenglib:CreateWindow(Config)
         })
         accentGrad.Parent = accent
 
-        -- 按钮内容（图标或文本）
         local content
         if iconAsset then
             content = Instance.new("ImageLabel")
@@ -2437,7 +2435,6 @@ function Fenglib:CreateWindow(Config)
             content.Parent = btn
         end
 
-        -- 悬停效果
         btn.MouseEnter:Connect(function()
             Tween(btn, {BackgroundTransparency = 0}, 0.2)
             if content then
@@ -2458,7 +2455,6 @@ function Fenglib:CreateWindow(Config)
 
         btn.MouseButton1Click:Connect(callback)
 
-        -- 主题更新监听
         table.insert(ThemeListeners, function()
             btn.BackgroundColor3 = CurrentTheme.Element or CurrentTheme.Top
             accent.BackgroundColor3 = CurrentTheme.Accent
@@ -2476,21 +2472,14 @@ function Fenglib:CreateWindow(Config)
         return btn
     end
 
-    -- 投影按钮已完全移除，仅保留最小化、最大化、关闭
+    -- 只保留最小化和关闭按钮
     local MinimizeBtn = createControlButton(nil, "−", function()
         MainFrame.Visible = false
-    end)
-
-    local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
-        resizerVisible = not resizerVisible
-        Resizer.Visible = resizerVisible
     end)
 
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function()
         ScreenGui:Destroy()
     end)
-    -- ============================================================
-    -- 结束控制按钮替换
     -- ============================================================
 
     local TitleLabel = Instance.new("TextLabel")
@@ -2656,80 +2645,7 @@ function Fenglib:CreateWindow(Config)
 
     MainFrame.ClipsDescendants = false
 
-    local Resizer = Instance.new("TextButton")
-    Resizer.Name = "WindowResizer"
-    Resizer.Parent = MainFrame
-    Resizer.BackgroundTransparency = 0.8
-    Resizer.BackgroundColor3 = Color3.new(1, 1, 1)
-    Resizer.Position = UDim2.new(1, 5, 1, 5)
-    Resizer.Size = UDim2.new(0, 24, 0, 24)
-    Resizer.AnchorPoint = Vector2.new(1, 1)
-    Resizer.Text = ""
-    Resizer.ZIndex = 30
-    Resizer.Visible = false
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Thickness = 4
-    stroke.Color = Color3.new(1, 1, 1)
-    stroke.Transparency = 0
-    stroke.Parent = Resizer
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = Resizer
-
-    local isResizing = false
-    local resizeStart = Vector2.new(0,0)
-    local startSize = UDim2.new(0,0,0,0)
-
-    Resizer.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            isResizing = true
-            resizeStart = input.Position
-            startSize = MainFrame.Size
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - resizeStart
-            local newWidth = math.max(400, startSize.X.Offset + delta.X)
-            local newHeight = math.max(250, startSize.Y.Offset + delta.Y)
-            MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            isResizing = false
-        end
-    end)
-
-    local function addPressEffect(button)
-        local originalSize = button.Size
-        local originalPos = button.Position
-        button.MouseButton1Down:Connect(function()
-            Tween(button, {Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset * 0.95, originalSize.Y.Scale, originalSize.Y.Offset * 0.95), Position = UDim2.new(originalPos.X.Scale, originalPos.X.Offset + 2, originalPos.Y.Scale, originalPos.Y.Offset + 2)}, 0.05)
-        end)
-        button.MouseButton1Up:Connect(function()
-            Tween(button, {Size = originalSize, Position = originalPos}, 0.1)
-        end)
-        button.MouseLeave:Connect(function()
-            Tween(button, {Size = originalSize, Position = originalPos}, 0.1)
-        end)
-    end
-
-    local function addPressEffectToAll(parent)
-        for _, child in ipairs(parent:GetChildren()) do
-            if child:IsA("TextButton") or child:IsA("ImageButton") then
-                addPressEffect(child)
-            end
-            addPressEffectToAll(child)
-        end
-    end
-
-    local resizerVisible = false
-    Resizer.Visible = resizerVisible
+    -- 已移除 Resizer 和 MaximizeBtn
 
     local BackButton = nil
     if isCardMode then
