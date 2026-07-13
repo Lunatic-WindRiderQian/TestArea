@@ -2641,16 +2641,17 @@ function Fenglib:CreateWindow(Config)
         end)
     end
 
-    -- 玩家卡片（下移）
+    -- ===== 玩家卡片（增强：匿名切换按钮） =====
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
-    ProfileFrame.Position = UDim2.new(0, 10, 1, -10)   -- 原为 -19，改为 -10 下移
+    ProfileFrame.Position = UDim2.new(0, 10, 1, -10)
     ProfileFrame.AnchorPoint = Vector2.new(0, 1)
     ProfileFrame.BackgroundTransparency = 0.05
     ProfileFrame.Parent = LeftContainer
     Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
     AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
 
+    -- 头像
     local Avatar = Instance.new("ImageLabel")
     Avatar.Size = UDim2.new(0, 26, 0, 26)
     Avatar.Position = UDim2.new(0, 8, 0.5, -13)
@@ -2659,8 +2660,12 @@ function Fenglib:CreateWindow(Config)
     Avatar.Parent = ProfileFrame
     Instance.new("UICorner", Avatar).CornerRadius = UDim.new(1,0)
 
+    -- 显示名称（初始为真实名）
+    local realDisplayName = LocalPlayer.DisplayName
+    local realUsername = "@" .. LocalPlayer.Name
+
     local DispName = Instance.new("TextLabel")
-    DispName.Text = LocalPlayer.DisplayName
+    DispName.Text = realDisplayName
     DispName.Size = UDim2.new(1, -45, 0, 15)
     DispName.Position = UDim2.new(0, 40, 0, 5)
     DispName.BackgroundTransparency = 1
@@ -2671,7 +2676,7 @@ function Fenglib:CreateWindow(Config)
     AddToRegistry(DispName, "TextColor3", "Text")
 
     local UsrName = Instance.new("TextLabel")
-    UsrName.Text = "@"..LocalPlayer.Name
+    UsrName.Text = realUsername
     UsrName.Size = UDim2.new(1, -45, 0, 15)
     UsrName.Position = UDim2.new(0, 40, 0, 19)
     UsrName.BackgroundTransparency = 1
@@ -2681,6 +2686,52 @@ function Fenglib:CreateWindow(Config)
     UsrName.TextXAlignment = Enum.TextXAlignment.Left
     UsrName.Parent = ProfileFrame
     AddToRegistry(UsrName, "TextColor3", "Text")
+
+    -- ====== 匿名切换按钮（眼睛图标） ======
+    local AnonBtn = Instance.new("TextButton")
+    AnonBtn.Size = UDim2.new(0, 18, 0, 18)
+    AnonBtn.Position = UDim2.new(1, -6, 0.5, 0)
+    AnonBtn.AnchorPoint = Vector2.new(1, 0.5)
+    AnonBtn.BackgroundTransparency = 0.7
+    AnonBtn.Text = ""
+    AnonBtn.Parent = ProfileFrame
+    Instance.new("UICorner", AnonBtn).CornerRadius = UDim.new(1, 0)
+    AddToRegistry(AnonBtn, "BackgroundColor3", "Top")
+
+    local EyeIcon = Instance.new("ImageLabel")
+    EyeIcon.Size = UDim2.new(1, 0, 1, 0)
+    EyeIcon.BackgroundTransparency = 1
+    EyeIcon.Image = "rbxassetid://10723346959"   -- lucide/eye
+    EyeIcon.ImageColor3 = CurrentTheme.Text
+    EyeIcon.ImageTransparency = 0.3
+    EyeIcon.Parent = AnonBtn
+    AddToRegistry(EyeIcon, "ImageColor3", "Text")
+
+    -- 状态
+    local anonActive = false
+    local function setAnon(active)
+        anonActive = active
+        if active then
+            DispName.Text = "Anonymous"
+            UsrName.Text = "@•••••••"
+            EyeIcon.Image = "rbxassetid://10723346871"  -- lucide/eye-off
+        else
+            DispName.Text = realDisplayName
+            UsrName.Text = realUsername
+            EyeIcon.Image = "rbxassetid://10723346959"  -- lucide/eye
+        end
+    end
+
+    AnonBtn.MouseButton1Click:Connect(function()
+        setAnon(not anonActive)
+    end)
+
+    -- 将按钮加入主题监听（颜色适配）
+    table.insert(ThemeListeners, function()
+        AnonBtn.BackgroundColor3 = CurrentTheme.Top
+        EyeIcon.ImageColor3 = CurrentTheme.Text
+    end)
+    -- ==========================================
 
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
