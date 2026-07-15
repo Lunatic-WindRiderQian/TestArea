@@ -2655,9 +2655,10 @@ function Fenglib:CreateWindow(Config)
         arrow.Parent = titleBar
         AddToRegistry(arrow, "ImageColor3", "Text")
 
-        -- 内容容器（用于放置 Tab）
+        -- 内容容器（用于放置 Tab），必须向下偏移 44 像素（标题栏高度）
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, 0, 0, 0)
+        contentContainer.Position = UDim2.new(0, 0, 0, 44)  -- 关键：避免与标题栏重叠
         contentContainer.BackgroundTransparency = 1
         contentContainer.ClipsDescendants = true
         contentContainer.Parent = sectionFrame
@@ -3571,7 +3572,7 @@ function Fenglib:CreateWindow(Config)
             TabBtn.BackgroundTransparency = 1
             TabBtn.BackgroundColor3 = CurrentTheme.Top
             TabBtn.Text = ""
-            local parentContainer = currentCategoryContainer or TabScroll   -- 关键修改
+            local parentContainer = currentCategoryContainer or TabScroll   -- 关键修改：放入当前 Category 或全局
             TabBtn.Parent = parentContainer
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
