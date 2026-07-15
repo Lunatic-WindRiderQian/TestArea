@@ -2605,26 +2605,120 @@ function Fenglib:CreateWindow(Config)
     task.spawn(updateTabCanvas)
 
     -- ========================================
-    -- Category 和 TabDivider 方法
+    -- Category 和 TabDivider 方法（折叠式 Category，移植自 WindUI）
     -- ========================================
-    function Window:Category(name)
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 0, 20)
-        label.BackgroundTransparency = 1
-        label.Font = Enum.Font.GothamBold
-        label.Text = name
-        label.TextSize = 13
-        label.TextColor3 = CurrentTheme.Text
-        label.TextTransparency = 0.5
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = TabScroll
-        local pad = Instance.new("UIPadding")
-        pad.PaddingLeft = UDim.new(0, 14)
-        pad.Parent = label
-        AddToRegistry(label, "TextColor3", "Text")
-        table.insert(ThemeListeners, function()
-            label.TextColor3 = CurrentTheme.Text
+    local currentCategoryContainer = nil  -- 当前激活的 Category 内容容器
+
+    function Window:Category(nameOrConfig)
+        -- 解析参数
+        local config = type(nameOrConfig) == "string" and { Name = nameOrConfig } or nameOrConfig
+        local title = config.Name or "Category"
+        local opened = config.Opened ~= false   -- 默认为 true（展开）
+        local icon = config.Icon                -- 可选图标（暂未使用，可扩展）
+
+        -- 创建折叠框架
+        local sectionFrame = Instance.new("Frame")
+        sectionFrame.Size = UDim2.new(1, 0, 0, 44)   -- 初始高度
+        sectionFrame.BackgroundTransparency = 0.05
+        sectionFrame.ClipsDescendants = true
+        sectionFrame.Parent = TabScroll
+        Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0, 0)
+        AddToRegistry(sectionFrame, "BackgroundColor3", "Top")
+
+        -- 标题栏（点击切换）
+        local titleBar = Instance.new("TextButton")
+        titleBar.Size = UDim2.new(1, 0, 0, 44)
+        titleBar.BackgroundTransparency = 1
+        titleBar.Text = ""
+        titleBar.Parent = sectionFrame
+
+        -- 标题文字
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Size = UDim2.new(1, -40, 1, 0)
+        titleLabel.Position = UDim2.new(0, 14, 0, 0)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.Text = title
+        titleLabel.TextSize = 13
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.Parent = titleBar
+        AddToRegistry(titleLabel, "TextColor3", "Text")
+
+        -- 展开图标（chevron-down）
+        local arrow = Instance.new("ImageLabel")
+        arrow.Size = UDim2.new(0, 16, 0, 16)
+        arrow.Position = UDim2.new(1, -24, 0.5, -8)
+        arrow.BackgroundTransparency = 1
+        arrow.Image = "rbxassetid://18865373378"   -- lucide/chevron-down
+        arrow.ImageColor3 = CurrentTheme.Text
+        arrow.ImageTransparency = 0.3
+        arrow.Parent = titleBar
+        AddToRegistry(arrow, "ImageColor3", "Text")
+
+        -- 内容容器（用于放置 Tab）
+        local contentContainer = Instance.new("Frame")
+        contentContainer.Size = UDim2.new(1, 0, 0, 0)
+        contentContainer.BackgroundTransparency = 1
+        contentContainer.ClipsDescendants = true
+        contentContainer.Parent = sectionFrame
+
+        local contentLayout = Instance.new("UIListLayout")
+        contentLayout.Padding = UDim.new(0, 4)
+        contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        contentLayout.Parent = contentContainer
+
+        -- 状态
+        local isOpen = opened
+
+        -- 更新高度（动画）
+        local function updateHeight(instant)
+            local contentHeight = contentLayout.AbsoluteContentSize.Y
+            local targetContentHeight = isOpen and math.max(0, contentHeight) or 0
+            local targetSectionHeight = 44 + targetContentHeight
+
+            local tweenInfo = instant and TweenInfo.new(0) or TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            TweenService:Create(sectionFrame, tweenInfo, { Size = UDim2.new(1, 0, 0, targetSectionHeight) }):Play()
+            TweenService:Create(contentContainer, tweenInfo, { Size = UDim2.new(1, 0, 0, targetContentHeight) }):Play()
+            if isOpen then
+                contentContainer.Visible = true
+            else
+                task.delay(0.3, function() if not isOpen then contentContainer.Visible = false end end)
+            end
+        end
+
+        -- 切换展开/折叠
+        local function toggle()
+            isOpen = not isOpen
+            arrow.Rotation = isOpen and 180 or 0
+            updateHeight(false)
+        end
+
+        titleBar.MouseButton1Click:Connect(toggle)
+
+        -- 监听内容变化
+        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if isOpen then updateHeight(false) end
         end)
+
+        -- 设置当前 Category 容器，后续 Tab 将添加到此
+        currentCategoryContainer = contentContainer
+
+        -- 初始状态
+        if opened then
+            arrow.Rotation = 180
+            task.spawn(function() updateHeight(true) end)
+        else
+            contentContainer.Visible = false
+            contentContainer.Size = UDim2.new(1, 0, 0, 0)
+            sectionFrame.Size = UDim2.new(1, 0, 0, 44)
+        end
+
+        -- 返回 Category 对象（可扩展）
+        return {
+            SetTitle = function(self, newTitle) titleLabel.Text = newTitle end,
+            Toggle = toggle,
+            IsOpen = function() return isOpen end,
+        }
     end
 
     function Window:TabDivider()
@@ -2634,7 +2728,7 @@ function Fenglib:CreateWindow(Config)
         line.BackgroundColor3 = CurrentTheme.Stroke
         line.BackgroundTransparency = 0.5
         line.BorderSizePixel = 0
-        line.Parent = TabScroll
+        line.Parent = currentCategoryContainer or TabScroll   -- 若在 Category 内则添加至其容器，否则全局
         AddToRegistry(line, "BackgroundColor3", "Stroke")
         table.insert(ThemeListeners, function()
             line.BackgroundColor3 = CurrentTheme.Stroke
@@ -3470,13 +3564,15 @@ function Fenglib:CreateWindow(Config)
         Window._activeTab = nil
         Window._tabs = {}
 
+        -- 修改 Tab 方法，使其自动添加到当前 Category（若存在）
         function Window:Tab(name, icon)
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(0, 140, 0, 32)
             TabBtn.BackgroundTransparency = 1
             TabBtn.BackgroundColor3 = CurrentTheme.Top
             TabBtn.Text = ""
-            TabBtn.Parent = TabScroll
+            local parentContainer = currentCategoryContainer or TabScroll   -- 关键修改
+            TabBtn.Parent = parentContainer
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
