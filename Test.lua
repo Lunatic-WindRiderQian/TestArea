@@ -2605,7 +2605,7 @@ function Fenglib:CreateWindow(Config)
     task.spawn(updateTabCanvas)
 
     -- ========================================
-    -- Category 和 TabDivider 方法（折叠式 Category，移植自 WindUI）
+    -- Category 和 TabDivider 方法（折叠式 Category，移植自 WindUI，高度优化）
     -- ========================================
     local currentCategoryContainer = nil  -- 当前激活的 Category 内容容器
 
@@ -2614,11 +2614,13 @@ function Fenglib:CreateWindow(Config)
         local config = type(nameOrConfig) == "string" and { Name = nameOrConfig } or nameOrConfig
         local title = config.Name or "Category"
         local opened = config.Opened ~= false   -- 默认为 true（展开）
-        local icon = config.Icon                -- 可选图标（暂未使用，可扩展）
+        local icon = config.Icon                -- 可选图标（暂未使用）
+
+        local headerHeight = 38                 -- 标题栏高度（原为 44）
 
         -- 创建折叠框架
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(1, 0, 0, 44)   -- 初始高度
+        sectionFrame.Size = UDim2.new(1, 0, 0, headerHeight)
         sectionFrame.BackgroundTransparency = 0.05
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = TabScroll
@@ -2627,7 +2629,7 @@ function Fenglib:CreateWindow(Config)
 
         -- 标题栏（点击切换）
         local titleBar = Instance.new("TextButton")
-        titleBar.Size = UDim2.new(1, 0, 0, 44)
+        titleBar.Size = UDim2.new(1, 0, 0, headerHeight)
         titleBar.BackgroundTransparency = 1
         titleBar.Text = ""
         titleBar.Parent = sectionFrame
@@ -2649,22 +2651,22 @@ function Fenglib:CreateWindow(Config)
         arrow.Size = UDim2.new(0, 16, 0, 16)
         arrow.Position = UDim2.new(1, -24, 0.5, -8)
         arrow.BackgroundTransparency = 1
-        arrow.Image = "rbxassetid://18865373378"   -- lucide/chevron-down
+        arrow.Image = "rbxassetid://18865373378"
         arrow.ImageColor3 = CurrentTheme.Text
         arrow.ImageTransparency = 0.3
         arrow.Parent = titleBar
         AddToRegistry(arrow, "ImageColor3", "Text")
 
-        -- 内容容器（用于放置 Tab），必须向下偏移 44 像素（标题栏高度）
+        -- 内容容器（用于放置 Tab），偏移量与标题栏高度一致
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, 0, 0, 0)
-        contentContainer.Position = UDim2.new(0, 0, 0, 44)  -- 关键：避免与标题栏重叠
+        contentContainer.Position = UDim2.new(0, 0, 0, headerHeight)
         contentContainer.BackgroundTransparency = 1
         contentContainer.ClipsDescendants = true
         contentContainer.Parent = sectionFrame
 
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 4)
+        contentLayout.Padding = UDim.new(0, 2)     -- 内部间距从 4 减至 2
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentContainer
 
@@ -2675,7 +2677,7 @@ function Fenglib:CreateWindow(Config)
         local function updateHeight(instant)
             local contentHeight = contentLayout.AbsoluteContentSize.Y
             local targetContentHeight = isOpen and math.max(0, contentHeight) or 0
-            local targetSectionHeight = 44 + targetContentHeight
+            local targetSectionHeight = headerHeight + targetContentHeight
 
             local tweenInfo = instant and TweenInfo.new(0) or TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
             TweenService:Create(sectionFrame, tweenInfo, { Size = UDim2.new(1, 0, 0, targetSectionHeight) }):Play()
@@ -2701,7 +2703,7 @@ function Fenglib:CreateWindow(Config)
             if isOpen then updateHeight(false) end
         end)
 
-        -- 设置当前 Category 容器，后续 Tab 将添加到此
+        -- 设置当前 Category 容器
         currentCategoryContainer = contentContainer
 
         -- 初始状态
@@ -2711,10 +2713,10 @@ function Fenglib:CreateWindow(Config)
         else
             contentContainer.Visible = false
             contentContainer.Size = UDim2.new(1, 0, 0, 0)
-            sectionFrame.Size = UDim2.new(1, 0, 0, 44)
+            sectionFrame.Size = UDim2.new(1, 0, 0, headerHeight)
         end
 
-        -- 返回 Category 对象（可扩展）
+        -- 返回 Category 对象
         return {
             SetTitle = function(self, newTitle) titleLabel.Text = newTitle end,
             Toggle = toggle,
