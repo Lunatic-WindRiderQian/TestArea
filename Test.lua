@@ -2543,7 +2543,7 @@ function Fenglib:CreateWindow(Config)
     task.spawn(updateTabCanvas)
 
     -- ============================================================
-    -- 新增的 Window:Category 支持 Collapsible / Opened
+    -- 修复后的 Window:Category 支持 Collapsible / Opened
     -- ============================================================
     function Window:Category(config)
         -- 兼容旧用法：如果传入的是字符串，视为 Name
@@ -2625,7 +2625,7 @@ function Fenglib:CreateWindow(Config)
                 childContainer.Visible = false
                 childContainer.Size = UDim2.new(1, 0, 0, 0)
                 if arrow then
-                    arrow.Rotation = 0   -- 箭头向右（或任意您喜欢的表示折叠）
+                    arrow.Rotation = 0
                 end
             else
                 -- 展开：显示标题 + 子内容
@@ -2635,19 +2635,21 @@ function Fenglib:CreateWindow(Config)
                 childContainer.Visible = true
                 childContainer.Size = UDim2.new(1, 0, 0, contentHeight)
                 if arrow then
-                    arrow.Rotation = 180  -- 箭头向下
+                    arrow.Rotation = 180
                 end
             end
-            -- 强制更新左侧滚动区域（TabScroll）的画布尺寸
-            -- UIListLayout的AbsoluteContentSize变化会自动触发，但这里手动触发一下以确保
-            if TabScroll and TabScroll.CanvasSize then
-                -- 下一帧自动更新，无需额外操作
-            end
+            -- 强制刷新左侧滚动区域画布
+            task.spawn(function()
+                task.wait()
+                if TabScroll then
+                    TabScroll.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y + 20)
+                end
+            end)
         end
 
-        -- 点击标题切换折叠状态
+        -- 点击标题切换折叠状态（使用 Activated 更稳定）
         if collapsible then
-            header.MouseButton1Click:Connect(function()
+            header.Activated:Connect(function()
                 opened = not opened
                 updateCategoryHeight()
             end)
@@ -2677,7 +2679,7 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- 高亮背景（模仿原Tab中的glow效果）
+            -- 高亮背景
             local glowFrame = Instance.new("Frame")
             glowFrame.Name = "GlowBackground"
             glowFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2763,7 +2765,7 @@ function Fenglib:CreateWindow(Config)
             Page.ScrollingEnabled = true
             Page.Visible = false
             Page.Position = UDim2.new(0, 0, 0, 60)
-            Page.Parent = PageContainer   -- PageContainer是全局的，所有页面共用
+            Page.Parent = PageContainer
 
             local PageContent = Instance.new("Frame")
             PageContent.Size = UDim2.new(1, 0, 0, 0)
@@ -2793,7 +2795,7 @@ function Fenglib:CreateWindow(Config)
             }
 
             -- 点击切换Tab
-            TabBtn.MouseButton1Click:Connect(function()
+            TabBtn.Activated:Connect(function()
                 if Window._activeTab and Window._activeTab == state then
                     return
                 end
@@ -2845,7 +2847,7 @@ function Fenglib:CreateWindow(Config)
             -- 保存到全局Tab列表（用于切换）
             table.insert(Window._tabs, state)
 
-            -- 主题更新监听（保持颜色同步）
+            -- 主题更新监听
             table.insert(ThemeListeners, function()
                 for _, s in ipairs(Window._tabs) do
                     if s.glow then
@@ -2863,7 +2865,7 @@ function Fenglib:CreateWindow(Config)
                 end
             end)
 
-            -- 返回一个用于添加元素的对象（与原Tab一致）
+            -- 返回用于添加元素的对象
             local getElements = function()
                 local elements = {}
                 local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
@@ -2890,8 +2892,7 @@ function Fenglib:CreateWindow(Config)
     end
 
     -- ============================================================
-    -- 旧的 Window:Category 已被替换，以上为新的实现。
-    -- 以下保留原有的 TabDivider 和 Profile 等功能。
+    -- 其余原有功能保持不变
     -- ============================================================
 
     function Window:TabDivider()
@@ -3729,9 +3730,6 @@ function Fenglib:CreateWindow(Config)
         Window._activeTab = nil
         Window._tabs = {}
 
-        -- 注意：此处原有一个 Window:Tab 的定义，但由于我们在上面新增了 Category 并且 Category 内部有 Tab，
-        -- 但原来的 Window:Tab 仍然需要保留，用于直接在左侧添加标签（非分类方式）。
-        -- 为了兼容，保留原有的 Window:Tab 实现。
         function Window:Tab(name, icon)
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(0, 140, 0, 32)
@@ -3850,7 +3848,7 @@ function Fenglib:CreateWindow(Config)
                 glow = glowFrame
             }
 
-            TabBtn.MouseButton1Click:Connect(function()
+            TabBtn.Activated:Connect(function()
                 if Window._activeTab and Window._activeTab == state then
                     return
                 end
