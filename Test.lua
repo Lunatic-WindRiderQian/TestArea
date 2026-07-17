@@ -154,6 +154,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local titleText = ""
         local subtitleText = nil
         local iconAsset = nil
+        local collapsible = true   -- 新增：是否可折叠，默认 true
         if defaultOpen == nil then defaultOpen = true end
 
         if type(text) == "table" then
@@ -162,6 +163,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subtitleText = config.SubName
             iconAsset = config.Logo
             if config.open ~= nil then defaultOpen = config.open end
+            if config.collapsible ~= nil then collapsible = config.collapsible end  -- 支持 collapsible 字段
         else
             titleText = text or ""
             if type(icons) == "table" then
@@ -170,6 +172,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             elseif type(icons) == "string" then
                 subtitleText = icons
             end
+        end
+
+        -- 如果不可折叠，则强制打开
+        if not collapsible then
+            defaultOpen = true
         end
 
         local sectionFrame = Instance.new("Frame")
@@ -249,83 +256,92 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         local open = defaultOpen
-        local toggleBtn = Instance.new("TextButton")
-        toggleBtn.Size = UDim2.new(0, 42, 0, 22)
-        toggleBtn.Position = UDim2.new(1, -52, 0.5, -11)
-        toggleBtn.BackgroundTransparency = 1
-        toggleBtn.Text = ""
-        toggleBtn.Parent = topBg
-        toggleBtn.ZIndex = 3
+        local toggleBtn = nil
+        local switchBg = nil
+        local leftLabel = nil
+        local rightLabel = nil
+        local dot = nil
 
-        local switchBg = Instance.new("Frame")
-        switchBg.Size = UDim2.new(1, 0, 1, 0)
-        switchBg.BackgroundColor3 = open and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        switchBg.Parent = toggleBtn
-        Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
+        -- 仅当 collapsible 为 true 时创建切换控件
+        if collapsible then
+            toggleBtn = Instance.new("TextButton")
+            toggleBtn.Size = UDim2.new(0, 42, 0, 22)
+            toggleBtn.Position = UDim2.new(1, -52, 0.5, -11)
+            toggleBtn.BackgroundTransparency = 1
+            toggleBtn.Text = ""
+            toggleBtn.Parent = topBg
+            toggleBtn.ZIndex = 3
 
-        local swStroke = Instance.new("UIStroke")
-        swStroke.Thickness = 1
-        swStroke.Transparency = 0.6
-        swStroke.Parent = switchBg
-        AddToRegistry(swStroke, "Color", "Stroke")
+            switchBg = Instance.new("Frame")
+            switchBg.Size = UDim2.new(1, 0, 1, 0)
+            switchBg.BackgroundColor3 = open and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+            switchBg.Parent = toggleBtn
+            Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
 
-        local leftLabel = Instance.new("TextLabel")
-        leftLabel.Size = UDim2.new(0.5, 0, 1, 0)
-        leftLabel.Position = UDim2.new(0, 4, 0, 0)
-        leftLabel.BackgroundTransparency = 1
-        leftLabel.Font = Enum.Font.GothamBold
-        leftLabel.Text = "I"
-        leftLabel.TextSize = 12
-        leftLabel.TextColor3 = open and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
-        leftLabel.TextTransparency = open and 0 or 0.6
-        leftLabel.TextXAlignment = Enum.TextXAlignment.Left
-        leftLabel.TextYAlignment = Enum.TextYAlignment.Center
-        leftLabel.Parent = switchBg
+            local swStroke = Instance.new("UIStroke")
+            swStroke.Thickness = 1
+            swStroke.Transparency = 0.6
+            swStroke.Parent = switchBg
+            AddToRegistry(swStroke, "Color", "Stroke")
 
-        local rightLabel = Instance.new("TextLabel")
-        rightLabel.Size = UDim2.new(0.5, 0, 1, 0)
-        rightLabel.Position = UDim2.new(0.5, -4, 0, 0)
-        rightLabel.BackgroundTransparency = 1
-        rightLabel.Font = Enum.Font.GothamBold
-        rightLabel.Text = "O"
-        rightLabel.TextSize = 12
-        rightLabel.TextColor3 = open and Color3.fromRGB(150, 150, 150) or Color3.new(1, 1, 1)
-        rightLabel.TextTransparency = open and 0.6 or 0
-        rightLabel.TextXAlignment = Enum.TextXAlignment.Right
-        rightLabel.TextYAlignment = Enum.TextYAlignment.Center
-        rightLabel.Parent = switchBg
+            leftLabel = Instance.new("TextLabel")
+            leftLabel.Size = UDim2.new(0.5, 0, 1, 0)
+            leftLabel.Position = UDim2.new(0, 4, 0, 0)
+            leftLabel.BackgroundTransparency = 1
+            leftLabel.Font = Enum.Font.GothamBold
+            leftLabel.Text = "I"
+            leftLabel.TextSize = 12
+            leftLabel.TextColor3 = open and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
+            leftLabel.TextTransparency = open and 0 or 0.6
+            leftLabel.TextXAlignment = Enum.TextXAlignment.Left
+            leftLabel.TextYAlignment = Enum.TextYAlignment.Center
+            leftLabel.Parent = switchBg
 
-        local dot = Instance.new("Frame")
-        dot.Size = UDim2.new(0, 16, 0, 16)
-        dot.Position = open and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-        dot.BackgroundColor3 = Color3.new(1, 1, 1)
-        dot.Parent = switchBg
-        Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+            rightLabel = Instance.new("TextLabel")
+            rightLabel.Size = UDim2.new(0.5, 0, 1, 0)
+            rightLabel.Position = UDim2.new(0.5, -4, 0, 0)
+            rightLabel.BackgroundTransparency = 1
+            rightLabel.Font = Enum.Font.GothamBold
+            rightLabel.Text = "O"
+            rightLabel.TextSize = 12
+            rightLabel.TextColor3 = open and Color3.fromRGB(150, 150, 150) or Color3.new(1, 1, 1)
+            rightLabel.TextTransparency = open and 0.6 or 0
+            rightLabel.TextXAlignment = Enum.TextXAlignment.Right
+            rightLabel.TextYAlignment = Enum.TextYAlignment.Center
+            rightLabel.Parent = switchBg
 
-        local function updateSwitch(animate)
-            local targetBg = open and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-            local dotTarget = open and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-            local leftColor = open and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
-            local rightColor = open and Color3.fromRGB(150, 150, 150) or Color3.new(1, 1, 1)
-            local leftTrans = open and 0 or 0.6
-            local rightTrans = open and 0.6 or 0
+            dot = Instance.new("Frame")
+            dot.Size = UDim2.new(0, 16, 0, 16)
+            dot.Position = open and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+            dot.BackgroundColor3 = Color3.new(1, 1, 1)
+            dot.Parent = switchBg
+            Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
 
-            if animate then
-                Tween(switchBg, { BackgroundColor3 = targetBg })
-                Tween(dot, { Position = dotTarget })
-                Tween(leftLabel, { TextColor3 = leftColor, TextTransparency = leftTrans })
-                Tween(rightLabel, { TextColor3 = rightColor, TextTransparency = rightTrans })
-            else
-                switchBg.BackgroundColor3 = targetBg
-                dot.Position = dotTarget
-                leftLabel.TextColor3 = leftColor
-                leftLabel.TextTransparency = leftTrans
-                rightLabel.TextColor3 = rightColor
-                rightLabel.TextTransparency = rightTrans
+            local function updateSwitch(animate)
+                local targetBg = open and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+                local dotTarget = open and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+                local leftColor = open and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
+                local rightColor = open and Color3.fromRGB(150, 150, 150) or Color3.new(1, 1, 1)
+                local leftTrans = open and 0 or 0.6
+                local rightTrans = open and 0.6 or 0
+
+                if animate then
+                    Tween(switchBg, { BackgroundColor3 = targetBg })
+                    Tween(dot, { Position = dotTarget })
+                    Tween(leftLabel, { TextColor3 = leftColor, TextTransparency = leftTrans })
+                    Tween(rightLabel, { TextColor3 = rightColor, TextTransparency = rightTrans })
+                else
+                    switchBg.BackgroundColor3 = targetBg
+                    dot.Position = dotTarget
+                    leftLabel.TextColor3 = leftColor
+                    leftLabel.TextTransparency = leftTrans
+                    rightLabel.TextColor3 = rightColor
+                    rightLabel.TextTransparency = rightTrans
+                end
             end
-        end
 
-        updateSwitch(false)
+            updateSwitch(false)
+        end
 
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
@@ -432,12 +448,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end)
 
         local function toggleSection()
+            if not collapsible then return end  -- 如果不可折叠，则忽略切换
             open = not open
             updateSwitch(true)
             updateSectionHeight(false)
         end
 
-        toggleBtn.MouseButton1Click:Connect(toggleSection)
+        if toggleBtn then
+            toggleBtn.MouseButton1Click:Connect(toggleSection)
+        end
         topBg.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 toggleSection()
@@ -445,7 +464,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end)
 
         table.insert(ThemeListeners, function()
-            swStroke.Color = CurrentTheme.Stroke
+            if switchBg then
+                local swStroke = switchBg:FindFirstChildOfClass("UIStroke")
+                if swStroke then
+                    swStroke.Color = CurrentTheme.Stroke
+                end
+            end
         end)
 
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -2542,410 +2566,26 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- ============================================================
-    -- 完整复刻 windUI 的 TabSection (分类折叠容器)
-    -- 支持 Collapsible, Opened, Icon, 箭头动画, 主题自适应
-    -- ============================================================
-    function Window:Category(config)
-        -- 兼容旧用法：如果传入字符串，当作 Name
-        if type(config) == "string" then
-            config = { Name = config }
-        end
-        config = config or {}
-        local name = config.Name or "Section"
-        local icon = config.Icon
-        local iconThemed = config.IconThemed ~= false
-        local collapsible = config.Collapsible == true
-        local opened = config.Opened == true
-        -- 不可折叠时始终展开
-        if not collapsible then opened = true end
-
-        -- 主容器（容纳标题和内容）
-        local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(1, 0, 0, 0)  -- 高度动态调整
-        sectionFrame.BackgroundTransparency = 1
-        sectionFrame.ClipsDescendants = true
-        sectionFrame.Parent = TabScroll
-
-        -- 标题栏
-        local header = Instance.new("TextButton")
-        header.Size = UDim2.new(1, 0, 0, 42)  -- 与原有 Tab 高度一致
-        header.BackgroundTransparency = 0.05
-        header.BackgroundColor3 = CurrentTheme.Top
-        header.Text = ""
-        header.Parent = sectionFrame
-        Instance.new("UICorner", header).CornerRadius = UDim.new(0, 10)
-        AddToRegistry(header, "BackgroundColor3", "Top")
-
-        -- 标题内容水平布局
-        local headerContent = Instance.new("Frame")
-        headerContent.Size = UDim2.new(1, 0, 1, 0)
-        headerContent.BackgroundTransparency = 1
-        headerContent.Parent = header
-
-        local headerLayout = Instance.new("UIListLayout")
-        headerLayout.FillDirection = Enum.FillDirection.Horizontal
-        headerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        headerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-        headerLayout.Padding = UDim.new(0, 8)
-        headerLayout.Parent = headerContent
-
-        local headerPadding = Instance.new("UIPadding")
-        headerPadding.PaddingLeft = UDim.new(0, 14)
-        headerPadding.PaddingRight = UDim.new(0, 14)
-        headerPadding.Parent = headerContent
-
-        -- 图标
-        local iconImage = nil
-        if icon then
-            iconImage = Instance.new("ImageLabel")
-            iconImage.Size = UDim2.new(0, 24, 0, 24)
-            iconImage.BackgroundTransparency = 1
-            if tonumber(icon) then
-                iconImage.Image = "rbxassetid://" .. icon
-            else
-                iconImage.Image = icon
-            end
-            iconImage.Parent = headerContent
-            AddToRegistry(iconImage, "ImageColor3", "Text")
-            local ic = Instance.new("UICorner")
-            ic.CornerRadius = UDim.new(0, 6)
-            ic.Parent = iconImage
-        end
-
-        -- 标题文字
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(1, -30, 1, 0)
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.Font = Enum.Font.GothamBold
-        titleLabel.Text = name
-        titleLabel.TextSize = 13
-        titleLabel.TextColor3 = CurrentTheme.Text
-        titleLabel.TextTransparency = 0.5
-        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        titleLabel.Parent = headerContent
-        AddToRegistry(titleLabel, "TextColor3", "Text")
-
-        -- 折叠箭头（仅在可折叠时显示）
-        local arrow = nil
-        if collapsible then
-            arrow = Instance.new("ImageLabel")
-            arrow.Size = UDim2.new(0, 16, 0, 16)
-            arrow.BackgroundTransparency = 1
-            arrow.Image = "rbxassetid://6031090998"  -- 可替换
-            arrow.ImageColor3 = CurrentTheme.Text
-            arrow.ImageTransparency = 0.4
-            arrow.Parent = headerContent
-            AddToRegistry(arrow, "ImageColor3", "Text")
-            -- 箭头初始旋转：展开时向下（180°），折叠时向右（0°）
-            arrow.Rotation = opened and 180 or 0
-        end
-
-        -- 内容容器（用于放置子Tab）
-        local contentContainer = Instance.new("Frame")
-        contentContainer.Size = UDim2.new(1, 0, 0, 0)
-        contentContainer.Position = UDim2.new(0, 0, 0, 42)  -- 在标题下方
-        contentContainer.BackgroundTransparency = 1
-        contentContainer.ClipsDescendants = true
-        contentContainer.Parent = sectionFrame
-
-        local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 2)
-        contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        contentLayout.Parent = contentContainer
-
-        -- 存储子Tab的按钮列表（用于切换高亮）
-        local tabButtons = {}
-
-        -- 更新分类高度
-        local function updateSectionHeight(instant)
-            local contentHeight = contentLayout.AbsoluteContentSize.Y
-            local targetContentHeight = opened and contentHeight or 0
-            local targetSectionHeight = 42 + targetContentHeight
-
-            if instant then
-                sectionFrame.Size = UDim2.new(1, 0, 0, targetSectionHeight)
-                contentContainer.Size = UDim2.new(1, 0, 0, targetContentHeight)
-                contentContainer.Visible = opened
-                if arrow then
-                    arrow.Rotation = opened and 180 or 0
-                end
-            else
-                Tween(sectionFrame, { Size = UDim2.new(1, 0, 0, targetSectionHeight) }, 0.3)
-                Tween(contentContainer, { Size = UDim2.new(1, 0, 0, targetContentHeight) }, 0.3)
-                if arrow then
-                    Tween(arrow, { Rotation = opened and 180 or 0 }, 0.3)
-                end
-                -- 延迟隐藏/显示内容（避免闪烁）
-                if opened then
-                    task.delay(0.05, function()
-                        if contentContainer then contentContainer.Visible = true end
-                    end)
-                else
-                    task.delay(0.35, function()
-                        if contentContainer then contentContainer.Visible = false end
-                    end)
-                end
-            end
-
-            -- 强制刷新左侧滚动画布
-            task.spawn(function()
-                task.wait(0.05)
-                if TabScroll then
-                    TabScroll.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y + 20)
-                end
-            end)
-        end
-
-        -- 点击标题切换折叠
-        if collapsible then
-            header.Activated:Connect(function()
-                opened = not opened
-                updateSectionHeight(false)
-            end)
-        end
-
-        -- 监听子内容布局变化，动态调整高度
-        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            if opened then
-                updateSectionHeight(false)
-            end
+    function Window:Category(name)
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 0, 20)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamBold
+        label.Text = name
+        label.TextSize = 13
+        label.TextColor3 = CurrentTheme.Text
+        label.TextTransparency = 0.5
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = TabScroll
+        local pad = Instance.new("UIPadding")
+        pad.PaddingLeft = UDim.new(0, 14)
+        pad.Parent = label
+        AddToRegistry(label, "TextColor3", "Text")
+        table.insert(ThemeListeners, function()
+            label.TextColor3 = CurrentTheme.Text
         end)
-
-        -- 初始展开状态
-        task.spawn(function()
-            task.wait()
-            updateSectionHeight(true)
-            if opened then
-                contentContainer.Visible = true
-            else
-                contentContainer.Visible = false
-            end
-        end)
-
-        -- 返回对象，提供 Tab 方法
-        local categoryObj = {}
-
-        function categoryObj:Tab(tabName, tabIcon)
-            -- 创建与原有 Tab 按钮样式一致的按钮
-            local TabBtn = Instance.new("TextButton")
-            TabBtn.Size = UDim2.new(1, 0, 0, 32)
-            TabBtn.BackgroundTransparency = 1
-            TabBtn.BackgroundColor3 = CurrentTheme.Top
-            TabBtn.Text = ""
-            TabBtn.Parent = contentContainer
-            Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-            AddToRegistry(TabBtn, "BackgroundColor3", "Top")
-
-            -- 高亮背景（激活时显示）
-            local glowFrame = Instance.new("Frame")
-            glowFrame.Name = "GlowBackground"
-            glowFrame.Size = UDim2.new(1, 0, 1, 0)
-            glowFrame.BackgroundColor3 = CurrentTheme.Accent
-            glowFrame.BackgroundTransparency = 1
-            glowFrame.Parent = TabBtn
-            local glowCorner = Instance.new("UICorner")
-            glowCorner.CornerRadius = UDim.new(0, 10)
-            glowCorner.Parent = glowFrame
-            local glowGrad = Instance.new("UIGradient")
-            glowGrad.Rotation = 0
-            glowGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
-            glowGrad.Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0, 0.55),
-                NumberSequenceKeypoint.new(1, 1)
-            })
-            glowGrad.Parent = glowFrame
-
-            -- 左侧指示条
-            local TabBar = Instance.new("Frame")
-            TabBar.Size = UDim2.new(0, 3, 0, 0)
-            TabBar.Position = UDim2.new(0, 0, 0.175, 0)
-            TabBar.BackgroundTransparency = 1
-            TabBar.BorderSizePixel = 0
-            TabBar.Parent = TabBtn
-            Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
-            AddToRegistry(TabBar, "BackgroundColor3", "Accent")
-
-            -- 水平布局（图标+文字）
-            local ContentFrame = Instance.new("Frame")
-            ContentFrame.Name = "ContentFrame"
-            ContentFrame.Size = UDim2.new(1, 0, 1, 0)
-            ContentFrame.BackgroundTransparency = 1
-            ContentFrame.Parent = TabBtn
-
-            local Layout = Instance.new("UIListLayout")
-            Layout.FillDirection = Enum.FillDirection.Horizontal
-            Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-            Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-            Layout.Padding = UDim.new(0, 5)
-            Layout.Parent = ContentFrame
-
-            local Padding = Instance.new("UIPadding")
-            Padding.PaddingLeft = UDim.new(0, 14)
-            Padding.Parent = ContentFrame
-
-            if tabIcon then
-                local TabIcon = Instance.new("ImageLabel")
-                TabIcon.Size = UDim2.new(0, 24, 0, 24)
-                TabIcon.BackgroundTransparency = 1
-                if tonumber(tabIcon) then
-                    TabIcon.Image = "rbxassetid://" .. tabIcon
-                else
-                    TabIcon.Image = tabIcon
-                end
-                TabIcon.Parent = ContentFrame
-                AddToRegistry(TabIcon, "ImageColor3", "Text")
-                local iconCorner = Instance.new("UICorner")
-                iconCorner.CornerRadius = UDim.new(0, 6)
-                iconCorner.Parent = TabIcon
-            end
-
-            local textWidth = TextService:GetTextSize(tabName, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
-            local TabText = Instance.new("TextLabel")
-            TabText.Size = UDim2.new(0, textWidth, 1, 0)
-            TabText.BackgroundTransparency = 1
-            TabText.Font = Enum.Font.GothamMedium
-            TabText.Text = tabName
-            TabText.TextColor3 = CurrentTheme.Text
-            TabText.TextTransparency = 0.3
-            TabText.TextSize = 14
-            TabText.TextXAlignment = Enum.TextXAlignment.Left
-            TabText.Parent = ContentFrame
-            AddToRegistry(TabText, "TextColor3", "Text")
-
-            -- 对应页面（右侧内容）
-            local Page = Instance.new("ScrollingFrame")
-            Page.Size = UDim2.new(1, 0, 1, 0)
-            Page.BackgroundTransparency = 1
-            Page.ScrollBarThickness = 0
-            Page.ScrollingEnabled = true
-            Page.Visible = false
-            Page.Position = UDim2.new(0, 0, 0, 60)
-            Page.Parent = PageContainer
-
-            local PageContent = Instance.new("Frame")
-            PageContent.Size = UDim2.new(1, 0, 0, 0)
-            PageContent.AutomaticSize = Enum.AutomaticSize.Y
-            PageContent.BackgroundTransparency = 1
-            PageContent.Parent = Page
-
-            local PageList = Instance.new("UIListLayout")
-            PageList.Padding = UDim.new(0, 10)
-            PageList.SortOrder = Enum.SortOrder.LayoutOrder
-            PageList.Parent = PageContent
-
-            local function updatePageCanvas()
-                Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
-            end
-            PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
-            task.spawn(updatePageCanvas)
-
-            -- Tab 状态
-            local state = {
-                isActive = false,
-                btn = TabBtn,
-                page = Page,
-                textLabel = TabText,
-                bar = TabBar,
-                glow = glowFrame
-            }
-
-            -- 点击切换 Tab
-            TabBtn.Activated:Connect(function()
-                if Window._activeTab and Window._activeTab == state then
-                    return
-                end
-
-                -- 取消所有 Tab 激活状态
-                for _, s in ipairs(Window._tabs) do
-                    s.btn.BackgroundTransparency = 1
-                    s.isActive = false
-                    s.glow.BackgroundTransparency = 1
-                    if s.bar then
-                        Tween(s.bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
-                    end
-                    if s.textLabel then
-                        Tween(s.textLabel, {TextTransparency = 0.3}, 0.2)
-                    end
-                end
-
-                -- 激活当前
-                state.isActive = true
-                state.glow.BackgroundTransparency = 0
-                if state.bar then
-                    Tween(state.bar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
-                end
-                Tween(state.textLabel, {TextTransparency = 0}, 0.2)
-
-                if Window._activeTab then
-                    Window._activeTab.page.Visible = false
-                end
-                state.page.Visible = true
-                Tween(state.page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
-
-                Window._activeTab = state
-            end)
-
-            -- 第一个 Tab 默认激活
-            if not Window._activeTab then
-                TabBtn.BackgroundTransparency = 1
-                state.isActive = true
-                state.glow.BackgroundTransparency = 0
-                TabBar.BackgroundTransparency = 0
-                TabBar.Size = UDim2.new(0,3,0.65,0)
-                TabText.TextTransparency = 0
-                Page.Visible = true
-                Page.Position = UDim2.new(0, 0, 0, 0)
-                Window._activeTab = state
-            end
-
-            table.insert(Window._tabs, state)
-
-            -- 主题更新
-            table.insert(ThemeListeners, function()
-                for _, s in ipairs(Window._tabs) do
-                    if s.glow then
-                        s.glow.BackgroundColor3 = CurrentTheme.Accent
-                        local grad = s.glow:FindFirstChildOfClass("UIGradient")
-                        if grad then
-                            grad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
-                        end
-                    end
-                    if s.isActive then
-                        s.btn.BackgroundTransparency = 1
-                    else
-                        s.btn.BackgroundTransparency = 1
-                    end
-                end
-            end)
-
-            -- 返回元素构建器（与原有 Tab 一致）
-            local getElements = function()
-                local elements = {}
-                local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
-                elements.Section = function(_, cfg) return createSection(cfg) end
-                elements.Button   = function(_, cfg) return createSection("", nil, true).Button(cfg) end
-                elements.Toggle   = function(_, cfg) return createSection("", nil, true).Toggle(cfg) end
-                elements.Slider   = function(_, cfg) return createSection("", nil, true).Slider(cfg) end
-                elements.Dropdown = function(_, cfg) return createSection("", nil, true).Dropdown(cfg) end
-                elements.Keybind  = function(_, cfg) return createSection("", nil, true).Keybind(cfg) end
-                elements.Textbox  = function(_, cfg) return createSection("", nil, true).Textbox(cfg) end
-                elements.Input    = function(_, cfg) return createSection("", nil, true).Input(cfg) end
-                elements.Label    = function(_, cfg) return createSection("", nil, true).Label(cfg) end
-                elements.SubLabel = function(_, cfg) return createSection("", nil, true).SubLabel(cfg) end
-                elements.Paragraph= function(_, cfg) return createSection("", nil, true).Paragraph(cfg) end
-                elements.ColorPicker= function(_, cfg) return createSection("", nil, true).ColorPicker(cfg) end
-                elements.Image    = function(_, cfg) return createSection("", nil, true).Image(cfg) end
-                return elements
-            end
-
-            return getElements()
-        end
-
-        return categoryObj
     end
 
-    -- 其余原有功能（TabDivider, 用户头像, 通知, 拖拽等）保持不变
     function Window:TabDivider()
         local line = Instance.new("Frame")
         line.Size = UDim2.new(1, -20, 0, 1)
@@ -3781,7 +3421,6 @@ function Fenglib:CreateWindow(Config)
         Window._activeTab = nil
         Window._tabs = {}
 
-        -- 原有非分类 Tab（直接添加到左侧，不受折叠控制）
         function Window:Tab(name, icon)
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(0, 140, 0, 32)
@@ -3900,7 +3539,7 @@ function Fenglib:CreateWindow(Config)
                 glow = glowFrame
             }
 
-            TabBtn.Activated:Connect(function()
+            TabBtn.MouseButton1Click:Connect(function()
                 if Window._activeTab and Window._activeTab == state then
                     return
                 end
@@ -3992,6 +3631,38 @@ function Fenglib:CreateWindow(Config)
             end
 
             return getElements()
+        end
+
+        -- 新增：在活动Tab中添加可折叠分类容器 (Category)
+        function Window:Category(config)
+            local activeTab = Window._activeTab
+            if not activeTab then
+                warn("No active tab to add Category")
+                return nil
+            end
+
+            -- 获取当前 Tab 的内容容器（PageContent）
+            local pageContent = activeTab.page:FindFirstChild("PageContent") or activeTab.page
+            if not pageContent then
+                warn("PageContent not found")
+                return nil
+            end
+
+            -- 创建 Section 所需的配置
+            local sectionConfig = {
+                Name = config.Name or "Category",
+                SubName = config.SubName,
+                Logo = config.Icon,
+                open = config.Opened ~= false,   -- 默认 true
+                collapsible = config.Collapsible ~= false  -- 默认 true
+            }
+
+            -- 调用现有的 createSectionBuilder 创建可折叠容器
+            local createSection = createSectionBuilder(pageContent, pageContent, 330, 1)
+            local section = createSection(sectionConfig)
+
+            -- 返回该 Section 对象，用户可通过它添加 Button、Toggle 等元素
+            return section
         end
     end
 
