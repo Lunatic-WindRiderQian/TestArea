@@ -2543,40 +2543,79 @@ function Fenglib:CreateWindow(Config)
     task.spawn(updateTabCanvas)
 
     -- ============================================================
-    -- 新的 Window:Category 实现（支持 Collapsible 和 Opened）
+    -- 完整复刻 windUI 的 TabSection (分类折叠容器)
+    -- 支持 Collapsible, Opened, Icon, 箭头动画, 主题自适应
     -- ============================================================
     function Window:Category(config)
-        -- 兼容旧用法：如果传入的是字符串，视为 Name
+        -- 兼容旧用法：如果传入字符串，当作 Name
         if type(config) == "string" then
             config = { Name = config }
         end
         config = config or {}
-        local name = config.Name or "Category"
+        local name = config.Name or "Section"
+        local icon = config.Icon
+        local iconThemed = config.IconThemed ~= false
         local collapsible = config.Collapsible == true
         local opened = config.Opened == true
-        if not collapsible then opened = true end   -- 不可折叠则始终展开
+        -- 不可折叠时始终展开
+        if not collapsible then opened = true end
 
-        -- 分类容器（主 Frame）
-        local categoryFrame = Instance.new("Frame")
-        categoryFrame.Size = UDim2.new(1, 0, 0, 0)  -- 高度由内部自动计算
-        categoryFrame.BackgroundTransparency = 1
-        categoryFrame.ClipsDescendants = true
-        categoryFrame.Parent = TabScroll
+        -- 主容器（容纳标题和内容）
+        local sectionFrame = Instance.new("Frame")
+        sectionFrame.Size = UDim2.new(1, 0, 0, 0)  -- 高度动态调整
+        sectionFrame.BackgroundTransparency = 1
+        sectionFrame.ClipsDescendants = true
+        sectionFrame.Parent = TabScroll
 
-        -- 标题栏（点击切换折叠）
+        -- 标题栏
         local header = Instance.new("TextButton")
-        header.Size = UDim2.new(1, 0, 0, 30)
+        header.Size = UDim2.new(1, 0, 0, 42)  -- 与原有 Tab 高度一致
         header.BackgroundTransparency = 0.05
         header.BackgroundColor3 = CurrentTheme.Top
         header.Text = ""
-        header.Parent = categoryFrame
-        Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
+        header.Parent = sectionFrame
+        Instance.new("UICorner", header).CornerRadius = UDim.new(0, 10)
         AddToRegistry(header, "BackgroundColor3", "Top")
 
-        -- 标题文本
+        -- 标题内容水平布局
+        local headerContent = Instance.new("Frame")
+        headerContent.Size = UDim2.new(1, 0, 1, 0)
+        headerContent.BackgroundTransparency = 1
+        headerContent.Parent = header
+
+        local headerLayout = Instance.new("UIListLayout")
+        headerLayout.FillDirection = Enum.FillDirection.Horizontal
+        headerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        headerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        headerLayout.Padding = UDim.new(0, 8)
+        headerLayout.Parent = headerContent
+
+        local headerPadding = Instance.new("UIPadding")
+        headerPadding.PaddingLeft = UDim.new(0, 14)
+        headerPadding.PaddingRight = UDim.new(0, 14)
+        headerPadding.Parent = headerContent
+
+        -- 图标
+        local iconImage = nil
+        if icon then
+            iconImage = Instance.new("ImageLabel")
+            iconImage.Size = UDim2.new(0, 24, 0, 24)
+            iconImage.BackgroundTransparency = 1
+            if tonumber(icon) then
+                iconImage.Image = "rbxassetid://" .. icon
+            else
+                iconImage.Image = icon
+            end
+            iconImage.Parent = headerContent
+            AddToRegistry(iconImage, "ImageColor3", "Text")
+            local ic = Instance.new("UICorner")
+            ic.CornerRadius = UDim.new(0, 6)
+            ic.Parent = iconImage
+        end
+
+        -- 标题文字
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Size = UDim2.new(1, -30, 1, 0)
-        titleLabel.Position = UDim2.new(0, 10, 0, 0)
         titleLabel.BackgroundTransparency = 1
         titleLabel.Font = Enum.Font.GothamBold
         titleLabel.Text = name
@@ -2584,77 +2623,74 @@ function Fenglib:CreateWindow(Config)
         titleLabel.TextColor3 = CurrentTheme.Text
         titleLabel.TextTransparency = 0.5
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        titleLabel.Parent = header
+        titleLabel.Parent = headerContent
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
-        -- 折叠箭头（仅当可折叠时显示）
+        -- 折叠箭头（仅在可折叠时显示）
         local arrow = nil
         if collapsible then
             arrow = Instance.new("ImageLabel")
             arrow.Size = UDim2.new(0, 16, 0, 16)
-            arrow.Position = UDim2.new(1, -22, 0.5, -8)
             arrow.BackgroundTransparency = 1
-            arrow.Image = "rbxassetid://6031090998"   -- 向下箭头（可替换）
+            arrow.Image = "rbxassetid://6031090998"  -- 可替换
             arrow.ImageColor3 = CurrentTheme.Text
             arrow.ImageTransparency = 0.4
-            arrow.Parent = header
+            arrow.Parent = headerContent
             AddToRegistry(arrow, "ImageColor3", "Text")
-            if opened then
-                arrow.Rotation = 180
-            else
-                arrow.Rotation = 0
-            end
+            -- 箭头初始旋转：展开时向下（180°），折叠时向右（0°）
+            arrow.Rotation = opened and 180 or 0
         end
 
-        -- 子容器（用于放置 Tab 按钮）
-        local childContainer = Instance.new("Frame")
-        childContainer.Size = UDim2.new(1, 0, 0, 0)
-        childContainer.Position = UDim2.new(0, 0, 0, 30)   -- 在标题下方
-        childContainer.BackgroundTransparency = 1
-        childContainer.ClipsDescendants = true
-        childContainer.Parent = categoryFrame
+        -- 内容容器（用于放置子Tab）
+        local contentContainer = Instance.new("Frame")
+        contentContainer.Size = UDim2.new(1, 0, 0, 0)
+        contentContainer.Position = UDim2.new(0, 0, 0, 42)  -- 在标题下方
+        contentContainer.BackgroundTransparency = 1
+        contentContainer.ClipsDescendants = true
+        contentContainer.Parent = sectionFrame
 
-        local childList = Instance.new("UIListLayout")
-        childList.Padding = UDim.new(0, 4)
-        childList.SortOrder = Enum.SortOrder.LayoutOrder
-        childList.Parent = childContainer
+        local contentLayout = Instance.new("UIListLayout")
+        contentLayout.Padding = UDim.new(0, 2)
+        contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        contentLayout.Parent = contentContainer
 
-        -- 初始折叠状态
-        local isOpen = opened
+        -- 存储子Tab的按钮列表（用于切换高亮）
+        local tabButtons = {}
 
-        -- 更新分类高度和箭头
-        local function updateHeight(animate)
-            local contentHeight = childList.AbsoluteContentSize.Y
-            local targetHeight = 30 + (isOpen and contentHeight or 0)
-            local targetChildHeight = isOpen and contentHeight or 0
+        -- 更新分类高度
+        local function updateSectionHeight(instant)
+            local contentHeight = contentLayout.AbsoluteContentSize.Y
+            local targetContentHeight = opened and contentHeight or 0
+            local targetSectionHeight = 42 + targetContentHeight
 
-            if animate then
-                Tween(categoryFrame, { Size = UDim2.new(1, 0, 0, targetHeight) }, 0.25)
-                Tween(childContainer, { Size = UDim2.new(1, 0, 0, targetChildHeight) }, 0.25)
+            if instant then
+                sectionFrame.Size = UDim2.new(1, 0, 0, targetSectionHeight)
+                contentContainer.Size = UDim2.new(1, 0, 0, targetContentHeight)
+                contentContainer.Visible = opened
                 if arrow then
-                    Tween(arrow, { Rotation = isOpen and 180 or 0 }, 0.2)
-                end
-                -- 折叠时隐藏内容（在动画结束后）
-                if not isOpen then
-                    task.delay(0.26, function()
-                        if not isOpen then
-                            childContainer.Visible = false
-                        end
-                    end)
-                else
-                    childContainer.Visible = true
+                    arrow.Rotation = opened and 180 or 0
                 end
             else
-                categoryFrame.Size = UDim2.new(1, 0, 0, targetHeight)
-                childContainer.Size = UDim2.new(1, 0, 0, targetChildHeight)
-                childContainer.Visible = isOpen
+                Tween(sectionFrame, { Size = UDim2.new(1, 0, 0, targetSectionHeight) }, 0.3)
+                Tween(contentContainer, { Size = UDim2.new(1, 0, 0, targetContentHeight) }, 0.3)
                 if arrow then
-                    arrow.Rotation = isOpen and 180 or 0
+                    Tween(arrow, { Rotation = opened and 180 or 0 }, 0.3)
+                end
+                -- 延迟隐藏/显示内容（避免闪烁）
+                if opened then
+                    task.delay(0.05, function()
+                        if contentContainer then contentContainer.Visible = true end
+                    end)
+                else
+                    task.delay(0.35, function()
+                        if contentContainer then contentContainer.Visible = false end
+                    end)
                 end
             end
-            -- 强制刷新左侧滚动区域画布
+
+            -- 强制刷新左侧滚动画布
             task.spawn(function()
-                task.wait()
+                task.wait(0.05)
                 if TabScroll then
                     TabScroll.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y + 20)
                 end
@@ -2664,37 +2700,44 @@ function Fenglib:CreateWindow(Config)
         -- 点击标题切换折叠
         if collapsible then
             header.Activated:Connect(function()
-                isOpen = not isOpen
-                updateHeight(true)
+                opened = not opened
+                updateSectionHeight(false)
             end)
         end
 
-        -- 监听子容器布局变化（子Tab增加或删除时自动调整高度）
-        childList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            updateHeight(false)   -- 不带动画，以免频繁动画影响体验
+        -- 监听子内容布局变化，动态调整高度
+        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if opened then
+                updateSectionHeight(false)
+            end
         end)
 
-        -- 初始更新（等待一帧让 UI 计算完成）
+        -- 初始展开状态
         task.spawn(function()
             task.wait()
-            updateHeight(false)
+            updateSectionHeight(true)
+            if opened then
+                contentContainer.Visible = true
+            else
+                contentContainer.Visible = false
+            end
         end)
 
-        -- 返回的分类对象，提供 Tab 方法
+        -- 返回对象，提供 Tab 方法
         local categoryObj = {}
 
         function categoryObj:Tab(tabName, tabIcon)
-            -- 创建 Tab 按钮（与原 Tab 按钮样式相同）
+            -- 创建与原有 Tab 按钮样式一致的按钮
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(1, 0, 0, 32)
             TabBtn.BackgroundTransparency = 1
             TabBtn.BackgroundColor3 = CurrentTheme.Top
             TabBtn.Text = ""
-            TabBtn.Parent = childContainer
+            TabBtn.Parent = contentContainer
             Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
             AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-            -- 高亮背景
+            -- 高亮背景（激活时显示）
             local glowFrame = Instance.new("Frame")
             glowFrame.Name = "GlowBackground"
             glowFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2723,7 +2766,7 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
             AddToRegistry(TabBar, "BackgroundColor3", "Accent")
 
-            -- 内容水平布局
+            -- 水平布局（图标+文字）
             local ContentFrame = Instance.new("Frame")
             ContentFrame.Name = "ContentFrame"
             ContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2738,13 +2781,12 @@ function Fenglib:CreateWindow(Config)
             Layout.Parent = ContentFrame
 
             local Padding = Instance.new("UIPadding")
-            Padding.PaddingLeft = UDim.new(0, 10)
+            Padding.PaddingLeft = UDim.new(0, 14)
             Padding.Parent = ContentFrame
 
-            -- 图标（如果有）
             if tabIcon then
                 local TabIcon = Instance.new("ImageLabel")
-                TabIcon.Size = UDim2.new(0, 28, 0, 28)
+                TabIcon.Size = UDim2.new(0, 24, 0, 24)
                 TabIcon.BackgroundTransparency = 1
                 if tonumber(tabIcon) then
                     TabIcon.Image = "rbxassetid://" .. tabIcon
@@ -2754,11 +2796,10 @@ function Fenglib:CreateWindow(Config)
                 TabIcon.Parent = ContentFrame
                 AddToRegistry(TabIcon, "ImageColor3", "Text")
                 local iconCorner = Instance.new("UICorner")
-                iconCorner.CornerRadius = UDim.new(0, 8)
+                iconCorner.CornerRadius = UDim.new(0, 6)
                 iconCorner.Parent = TabIcon
             end
 
-            -- 文字
             local textWidth = TextService:GetTextSize(tabName, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
             local TabText = Instance.new("TextLabel")
             TabText.Size = UDim2.new(0, textWidth, 1, 0)
@@ -2772,7 +2813,7 @@ function Fenglib:CreateWindow(Config)
             TabText.Parent = ContentFrame
             AddToRegistry(TabText, "TextColor3", "Text")
 
-            -- 对应的页面（右侧内容区域）
+            -- 对应页面（右侧内容）
             local Page = Instance.new("ScrollingFrame")
             Page.Size = UDim2.new(1, 0, 1, 0)
             Page.BackgroundTransparency = 1
@@ -2815,28 +2856,27 @@ function Fenglib:CreateWindow(Config)
                     return
                 end
 
-                -- 取消所有 Tab 的激活状态
+                -- 取消所有 Tab 激活状态
                 for _, s in ipairs(Window._tabs) do
                     s.btn.BackgroundTransparency = 1
                     s.isActive = false
                     s.glow.BackgroundTransparency = 1
                     if s.bar then
-                        Tween(s.bar, { BackgroundTransparency = 1, Size = UDim2.new(0, 3, 0, 0) }, 0.2)
+                        Tween(s.bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
                     end
                     if s.textLabel then
-                        Tween(s.textLabel, { TextTransparency = 0.3 }, 0.2)
+                        Tween(s.textLabel, {TextTransparency = 0.3}, 0.2)
                     end
                 end
 
-                -- 激活当前 Tab
+                -- 激活当前
                 state.isActive = true
                 state.glow.BackgroundTransparency = 0
                 if state.bar then
-                    Tween(state.bar, { BackgroundTransparency = 0, Size = UDim2.new(0, 3, 0.65, 0) }, 0.2)
+                    Tween(state.bar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
                 end
-                Tween(state.textLabel, { TextTransparency = 0 }, 0.2)
+                Tween(state.textLabel, {TextTransparency = 0}, 0.2)
 
-                -- 隐藏旧页面，显示新页面
                 if Window._activeTab then
                     Window._activeTab.page.Visible = false
                 end
@@ -2846,13 +2886,13 @@ function Fenglib:CreateWindow(Config)
                 Window._activeTab = state
             end)
 
-            -- 如果是第一个 Tab，默认激活
+            -- 第一个 Tab 默认激活
             if not Window._activeTab then
                 TabBtn.BackgroundTransparency = 1
                 state.isActive = true
                 state.glow.BackgroundTransparency = 0
                 TabBar.BackgroundTransparency = 0
-                TabBar.Size = UDim2.new(0, 3, 0.65, 0)
+                TabBar.Size = UDim2.new(0,3,0.65,0)
                 TabText.TextTransparency = 0
                 Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 0)
@@ -2861,7 +2901,7 @@ function Fenglib:CreateWindow(Config)
 
             table.insert(Window._tabs, state)
 
-            -- 主题更新监听
+            -- 主题更新
             table.insert(ThemeListeners, function()
                 for _, s in ipairs(Window._tabs) do
                     if s.glow then
@@ -2879,23 +2919,23 @@ function Fenglib:CreateWindow(Config)
                 end
             end)
 
-            -- 返回元素构建器
+            -- 返回元素构建器（与原有 Tab 一致）
             local getElements = function()
                 local elements = {}
                 local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
-                elements.Section   = function(_, cfg) return createSection(cfg) end
-                elements.Button    = function(_, cfg) return createSection("", nil, true).Button(cfg) end
-                elements.Toggle    = function(_, cfg) return createSection("", nil, true).Toggle(cfg) end
-                elements.Slider    = function(_, cfg) return createSection("", nil, true).Slider(cfg) end
-                elements.Dropdown  = function(_, cfg) return createSection("", nil, true).Dropdown(cfg) end
-                elements.Keybind   = function(_, cfg) return createSection("", nil, true).Keybind(cfg) end
-                elements.Textbox   = function(_, cfg) return createSection("", nil, true).Textbox(cfg) end
-                elements.Input     = function(_, cfg) return createSection("", nil, true).Input(cfg) end
-                elements.Label     = function(_, cfg) return createSection("", nil, true).Label(cfg) end
-                elements.SubLabel  = function(_, cfg) return createSection("", nil, true).SubLabel(cfg) end
-                elements.Paragraph = function(_, cfg) return createSection("", nil, true).Paragraph(cfg) end
-                elements.ColorPicker = function(_, cfg) return createSection("", nil, true).ColorPicker(cfg) end
-                elements.Image     = function(_, cfg) return createSection("", nil, true).Image(cfg) end
+                elements.Section = function(_, cfg) return createSection(cfg) end
+                elements.Button   = function(_, cfg) return createSection("", nil, true).Button(cfg) end
+                elements.Toggle   = function(_, cfg) return createSection("", nil, true).Toggle(cfg) end
+                elements.Slider   = function(_, cfg) return createSection("", nil, true).Slider(cfg) end
+                elements.Dropdown = function(_, cfg) return createSection("", nil, true).Dropdown(cfg) end
+                elements.Keybind  = function(_, cfg) return createSection("", nil, true).Keybind(cfg) end
+                elements.Textbox  = function(_, cfg) return createSection("", nil, true).Textbox(cfg) end
+                elements.Input    = function(_, cfg) return createSection("", nil, true).Input(cfg) end
+                elements.Label    = function(_, cfg) return createSection("", nil, true).Label(cfg) end
+                elements.SubLabel = function(_, cfg) return createSection("", nil, true).SubLabel(cfg) end
+                elements.Paragraph= function(_, cfg) return createSection("", nil, true).Paragraph(cfg) end
+                elements.ColorPicker= function(_, cfg) return createSection("", nil, true).ColorPicker(cfg) end
+                elements.Image    = function(_, cfg) return createSection("", nil, true).Image(cfg) end
                 return elements
             end
 
@@ -2905,10 +2945,7 @@ function Fenglib:CreateWindow(Config)
         return categoryObj
     end
 
-    -- ============================================================
-    -- 其余原有功能保持不变
-    -- ============================================================
-
+    -- 其余原有功能（TabDivider, 用户头像, 通知, 拖拽等）保持不变
     function Window:TabDivider()
         local line = Instance.new("Frame")
         line.Size = UDim2.new(1, -20, 0, 1)
@@ -3744,6 +3781,7 @@ function Fenglib:CreateWindow(Config)
         Window._activeTab = nil
         Window._tabs = {}
 
+        -- 原有非分类 Tab（直接添加到左侧，不受折叠控制）
         function Window:Tab(name, icon)
             local TabBtn = Instance.new("TextButton")
             TabBtn.Size = UDim2.new(0, 140, 0, 32)
