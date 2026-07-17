@@ -1,8 +1,3 @@
--- ============================================================
--- 完整 UI.lua（FengYu Bento UI Library）
--- 支持侧边栏可折叠分类（Category），Tab 自动归入当前分类
--- ============================================================
-
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -2069,9 +2064,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     return createSection
 end
 
--- ============================================================
--- 窗口主函数
--- ============================================================
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Name or "FengY3"
@@ -2550,12 +2542,11 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- 当前分类上下文（用于 Tab 自动归入）
     Window._currentCategory = nil
 
-    -- ============================================================
-    -- [NEW] Category - 支持折叠与展开
-    -- ============================================================
+    -- ================================================================
+    -- [FIX] Category 添加 UIListLayout 防止重叠
+    -- ================================================================
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
@@ -2566,6 +2557,13 @@ function Fenglib:CreateWindow(Config)
         categoryFrame.AutomaticSize = Enum.AutomaticSize.Y
         categoryFrame.BackgroundTransparency = 1
         categoryFrame.Parent = TabScroll
+
+        -- [FIX] 添加垂直布局，防止 header 与 content 重叠
+        local catLayout = Instance.new("UIListLayout")
+        catLayout.FillDirection = Enum.FillDirection.Vertical
+        catLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        catLayout.Padding = UDim.new(0, 0)
+        catLayout.Parent = categoryFrame
 
         local header = Instance.new("TextButton")
         header.Size = UDim2.new(1, 0, 0, 28)
@@ -2607,10 +2605,9 @@ function Fenglib:CreateWindow(Config)
         content.Visible = opened
         content.Parent = categoryFrame
 
-        -- 增加内边距，避免 Tab 与头部紧贴
+        -- 内容缩进（可选）
         local contentPadding = Instance.new("UIPadding")
-        contentPadding.PaddingTop = UDim.new(0, 2)
-        contentPadding.PaddingBottom = UDim.new(0, 2)
+        contentPadding.PaddingLeft = UDim.new(0, 12)   -- 缩进 12 像素
         contentPadding.Parent = content
 
         local contentList = Instance.new("UIListLayout")
@@ -2629,7 +2626,6 @@ function Fenglib:CreateWindow(Config)
 
         header.MouseButton1Click:Connect(toggleCategory)
 
-        -- 保存上下文
         Window._currentCategory = {
             frame = categoryFrame,
             content = content,
@@ -2650,16 +2646,7 @@ function Fenglib:CreateWindow(Config)
         return Window._currentCategory
     end
 
-    -- ============================================================
-    -- [NEW] 退出当前分类（后续 Tab 独立）
-    -- ============================================================
-    function Window:EndCategory()
-        Window._currentCategory = nil
-    end
-
-    -- ============================================================
-    -- [NEW] Tab - 自动归入当前分类
-    -- ============================================================
+    -- Tab & TabDivider 自动归入当前 Category（若存在）
     function Window:Tab(name, icon)
         local parentContainer = TabScroll
         local parentList = TabList
@@ -2880,9 +2867,6 @@ function Fenglib:CreateWindow(Config)
         return getElements()
     end
 
-    -- ============================================================
-    -- [NEW] TabDivider - 自动归入当前分类
-    -- ============================================================
     function Window:TabDivider()
         local parentContainer = TabScroll
         if Window._currentCategory then
@@ -3721,15 +3705,11 @@ function Fenglib:CreateWindow(Config)
 
         Window._activeTab = nil
         Window._tabs = {}
-        -- Tab 已在上方定义，无需重复
     end
 
     return Window
 end
 
--- ============================================================
--- 自定义鼠标（可选）
--- ============================================================
 do
     local cursorScreen = Instance.new("ScreenGui")
     cursorScreen.Name = "FengCustomCursor"
