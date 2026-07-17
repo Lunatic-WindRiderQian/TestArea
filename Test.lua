@@ -2545,7 +2545,7 @@ function Fenglib:CreateWindow(Config)
     Window._currentCategory = nil
 
     -- ================================================================
-    -- [FIX] Category 移除左缩进，保持原位置
+    -- Category - 可折叠分组
     -- ================================================================
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
@@ -2558,7 +2558,6 @@ function Fenglib:CreateWindow(Config)
         categoryFrame.BackgroundTransparency = 1
         categoryFrame.Parent = TabScroll
 
-        -- 垂直布局，防止重叠
         local catLayout = Instance.new("UIListLayout")
         catLayout.FillDirection = Enum.FillDirection.Vertical
         catLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -2605,9 +2604,6 @@ function Fenglib:CreateWindow(Config)
         content.Visible = opened
         content.Parent = categoryFrame
 
-        -- 移除左缩进，保持与标题左对齐
-        -- 不再添加 UIPadding
-
         local contentList = Instance.new("UIListLayout")
         contentList.Padding = UDim.new(0, 4)
         contentList.SortOrder = Enum.SortOrder.LayoutOrder
@@ -2644,6 +2640,9 @@ function Fenglib:CreateWindow(Config)
         return Window._currentCategory
     end
 
+    -- ================================================================
+    -- Tab - 修复动画与首次显示
+    -- ================================================================
     function Window:Tab(name, icon)
         local parentContainer = TabScroll
         local parentList = TabList
@@ -2741,7 +2740,7 @@ function Fenglib:CreateWindow(Config)
         Page.ScrollBarThickness = 0
         Page.ScrollingEnabled = true
         Page.Visible = false
-        Page.Position = UDim2.new(0, 0, 0, 60)
+        Page.Position = UDim2.new(0, 0, 0, 60)   -- 初始下移
         Page.Parent = PageContainer
 
         local PageContent = Instance.new("Frame")
@@ -2770,7 +2769,7 @@ function Fenglib:CreateWindow(Config)
             glow = glowFrame
         }
 
-        TabBtn.MouseButton1Click:Connect(function()
+        local function activateTab()
             if Window._activeTab and Window._activeTab == state then
                 return
             end
@@ -2792,7 +2791,6 @@ function Fenglib:CreateWindow(Config)
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
-
             if TabBar then
                 Tween(TabBar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
             end
@@ -2801,22 +2799,24 @@ function Fenglib:CreateWindow(Config)
             if Window._activeTab then
                 Window._activeTab.page.Visible = false
             end
+
             Page.Visible = true
-            Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
+            Page.Position = UDim2.new(0, 0, 0, 60)
+            local tween = TweenService:Create(Page, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                Position = UDim2.new(0, 0, 0, 0)
+            })
+            tween:Play()
+            tween.Completed:Connect(function()
+                updatePageCanvas()
+            end)
 
             Window._activeTab = state
-        end)
+        end
+
+        TabBtn.MouseButton1Click:Connect(activateTab)
 
         if not Window._activeTab then
-            TabBtn.BackgroundTransparency = 1
-            state.isActive = true
-            state.glow.BackgroundTransparency = 0
-            TabBar.BackgroundTransparency = 0
-            TabBar.Size = UDim2.new(0,3,0.65,0)
-            TabText.TextTransparency = 0
-            Page.Visible = true
-            Page.Position = UDim2.new(0, 0, 0, 0)
-            Window._activeTab = state
+            activateTab()
         end
 
         table.insert(Window._tabs, state)
