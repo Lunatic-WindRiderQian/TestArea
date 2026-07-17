@@ -2545,7 +2545,7 @@ function Fenglib:CreateWindow(Config)
     Window._currentCategory = nil
 
     -- ================================================================
-    -- [FIX] Category 添加 UIListLayout 防止重叠
+    -- [FIX] Category 移除左缩进，保持原位置
     -- ================================================================
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
@@ -2558,7 +2558,7 @@ function Fenglib:CreateWindow(Config)
         categoryFrame.BackgroundTransparency = 1
         categoryFrame.Parent = TabScroll
 
-        -- [FIX] 添加垂直布局，防止 header 与 content 重叠
+        -- 垂直布局，防止重叠
         local catLayout = Instance.new("UIListLayout")
         catLayout.FillDirection = Enum.FillDirection.Vertical
         catLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -2605,10 +2605,8 @@ function Fenglib:CreateWindow(Config)
         content.Visible = opened
         content.Parent = categoryFrame
 
-        -- 内容缩进（可选）
-        local contentPadding = Instance.new("UIPadding")
-        contentPadding.PaddingLeft = UDim.new(0, 12)   -- 缩进 12 像素
-        contentPadding.Parent = content
+        -- 移除左缩进，保持与标题左对齐
+        -- 不再添加 UIPadding
 
         local contentList = Instance.new("UIListLayout")
         contentList.Padding = UDim.new(0, 4)
@@ -2646,7 +2644,6 @@ function Fenglib:CreateWindow(Config)
         return Window._currentCategory
     end
 
-    -- Tab & TabDivider 自动归入当前 Category（若存在）
     function Window:Tab(name, icon)
         local parentContainer = TabScroll
         local parentList = TabList
