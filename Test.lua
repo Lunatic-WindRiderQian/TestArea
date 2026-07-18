@@ -2543,7 +2543,7 @@ function Fenglib:CreateWindow(Config)
 
     Window._currentCategory = nil
 
-    -- ====== 重写的 Category 函数（完全可靠） ======
+    -- 修正后的 Category 函数
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
@@ -2594,7 +2594,6 @@ function Fenglib:CreateWindow(Config)
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.Parent = header
 
-        -- 内容容器：初始高度0
         local content = Instance.new("Frame")
         content.Size = UDim2.new(1, 0, 0, 0)
         content.BackgroundTransparency = 1
@@ -2610,7 +2609,6 @@ function Fenglib:CreateWindow(Config)
         contentList.Parent = content
 
         local currentTween = nil
-        local contentReady = false
 
         local function getContentHeight()
             return contentList.AbsoluteContentSize.Y or 0
@@ -2644,49 +2642,31 @@ function Fenglib:CreateWindow(Config)
             if not collapsible then return end
             opened = not opened
             Tween(arrow, { Rotation = opened and 0 or -90 }, 0.25)
+
+            -- 【关键修复】等待一帧确保布局完成后再计算高度
+            RunService.Heartbeat:Wait()
+
             local targetHeight = opened and getContentHeight() or 0
             setContentHeight(targetHeight, true)
         end
 
         header.MouseButton1Click:Connect(toggleCategory)
 
-        -- 监听内容变化（多种方式确保捕获）
-        local function refreshContent()
-            if not contentReady then
-                contentReady = true
-                task.defer(function()
-                    local h = getContentHeight()
-                    local initialHeight = opened and h or 0
-                    content.Size = UDim2.new(1, 0, 0, initialHeight)
-                    updateTabCanvas()
-                end)
-            elseif opened then
+        contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if opened then
                 local h = getContentHeight()
                 if math.abs(h - content.Size.Y.Offset) > 0.5 then
                     setContentHeight(h, false)
                 end
             end
-        end
+        end)
 
-        -- 监听 AbsoluteContentSize 变化
-        local sizeConnection = contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(refreshContent)
-        -- 监听子元素添加
-        local childAddedConnection = content.ChildAdded:Connect(refreshContent)
-        -- 监听子元素移除（可能有）
-        local childRemovedConnection = content.ChildRemoved:Connect(refreshContent)
-
-        -- 兜底：延迟检查
-        task.delay(0.15, function()
-            if not contentReady then
-                contentReady = true
-                local h = getContentHeight()
-                local initialHeight = opened and h or 0
-                content.Size = UDim2.new(1, 0, 0, initialHeight)
-                updateTabCanvas()
-                sizeConnection:Disconnect()
-                childAddedConnection:Disconnect()
-                childRemovedConnection:Disconnect()
-            end
+        task.spawn(function()
+            task.wait()
+            local h = getContentHeight()
+            local initialHeight = opened and h or 0
+            content.Size = UDim2.new(1, 0, 0, initialHeight)
+            updateTabCanvas()
         end)
 
         Window._currentCategory = {
@@ -2698,8 +2678,7 @@ function Fenglib:CreateWindow(Config)
             arrow = arrow,
             collapsible = collapsible,
             opened = opened,
-            toggle = toggleCategory,
-            Refresh = refreshContent  -- 外部可手动调用
+            toggle = toggleCategory
         }
 
         table.insert(ThemeListeners, function()
@@ -2709,7 +2688,6 @@ function Fenglib:CreateWindow(Config)
 
         return Window._currentCategory
     end
-    -- ====== Category 函数结束 ======
 
     function Window:TabDivider()
         local parentContainer = TabScroll
@@ -3148,7 +3126,6 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- 非卡片模式
     RightContainer.ClipsDescendants = true
 
     Window._activeTab = nil
