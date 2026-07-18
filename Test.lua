@@ -2543,11 +2543,16 @@ function Fenglib:CreateWindow(Config)
 
     Window._currentCategory = nil
 
-    -- ====== 重写的 Category 函数（修正 Collapsible 和 Opened） ======
+    -- ====== 修正后的 Category 函数（正确识别 Opened = false） ======
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
-        local opened = type(config) == "table" and (config.Opened ~= nil and config.Opened or true) or true
+
+        -- 修复：正确处理 Opened 参数，允许初始折叠
+        local opened = true
+        if type(config) == "table" and config.Opened ~= nil then
+            opened = config.Opened
+        end
 
         local categoryFrame = Instance.new("Frame")
         categoryFrame.Size = UDim2.new(1, 0, 0, 0)
@@ -2594,6 +2599,7 @@ function Fenglib:CreateWindow(Config)
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.Parent = header
 
+        -- 内容容器
         local content = Instance.new("Frame")
         content.Size = UDim2.new(1, 0, 0, 0)
         content.BackgroundTransparency = 1
@@ -2616,11 +2622,12 @@ function Fenglib:CreateWindow(Config)
 
         local function setContentHeight(targetHeight, animate)
             targetHeight = math.max(0, targetHeight)
-            if currentTween then
-                currentTween:Cancel()
-                currentTween = nil
-            end
-            if animate and opened then
+            local currentHeight = content.Size.Y.Offset
+            if animate and currentHeight ~= targetHeight then
+                if currentTween then
+                    currentTween:Cancel()
+                    currentTween = nil
+                end
                 currentTween = TweenService:Create(
                     content,
                     TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
@@ -3122,6 +3129,7 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
+    -- 非卡片模式
     RightContainer.ClipsDescendants = true
 
     Window._activeTab = nil
