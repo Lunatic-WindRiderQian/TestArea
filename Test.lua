@@ -2543,7 +2543,7 @@ function Fenglib:CreateWindow(Config)
 
     Window._currentCategory = nil
 
-    -- ====== 修正后的 Category 函数 ======
+    -- ====== 修正后的 Category 函数（使用 TweenService:Create 避免 nil） ======
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
@@ -2594,11 +2594,12 @@ function Fenglib:CreateWindow(Config)
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.Parent = header
 
+        -- 内容容器：始终可见，通过高度控制显示
         local content = Instance.new("Frame")
         content.Size = UDim2.new(1, 0, 0, 0)
         content.BackgroundTransparency = 1
-        content.AutomaticSize = Enum.AutomaticSize.None
-        content.ClipsDescendants = true
+        content.AutomaticSize = Enum.AutomaticSize.None   -- 手动控制高度
+        content.ClipsDescendants = true                  -- 裁剪超出部分
         content.Visible = true
         content.Parent = categoryFrame
 
@@ -2608,19 +2609,23 @@ function Fenglib:CreateWindow(Config)
         contentList.HorizontalAlignment = Enum.HorizontalAlignment.Center
         contentList.Parent = content
 
-        local currentTween = nil
+        local currentTween = nil   -- 当前动画对象，用于取消
 
+        -- 获取内容实际高度
         local function getContentHeight()
             return contentList.AbsoluteContentSize.Y or 0
         end
 
+        -- 设置内容高度（可带动画）
         local function setContentHeight(targetHeight, animate)
             targetHeight = math.max(0, targetHeight)
-            if animate then
+            local currentHeight = content.Size.Y.Offset
+            if animate and currentHeight ~= targetHeight then
                 if currentTween then
                     currentTween:Cancel()
                     currentTween = nil
                 end
+                -- 直接使用 TweenService，避免全局 Tween 不返回值的问题
                 currentTween = TweenService:Create(
                     content,
                     TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
@@ -2629,7 +2634,7 @@ function Fenglib:CreateWindow(Config)
                 currentTween:Play()
                 currentTween.Completed:Connect(function()
                     currentTween = nil
-                    task.spawn(updateTabCanvas)
+                    task.spawn(updateTabCanvas)  -- 动画完成后更新滚动区域
                 end)
             else
                 content.Size = UDim2.new(1, 0, 0, targetHeight)
@@ -2637,20 +2642,19 @@ function Fenglib:CreateWindow(Config)
             end
         end
 
+        -- 切换展开/折叠
         local function toggleCategory()
             if not collapsible then return end
             opened = not opened
+            -- 箭头旋转动画（使用全局 Tween 没问题，因为 arrow 有效且 Tween 会直接播放）
             Tween(arrow, { Rotation = opened and 0 or -90 }, 0.25)
-
-            -- 等待一帧让布局系统完成子元素大小计算
-            RunService.Heartbeat:Wait()
-
             local targetHeight = opened and getContentHeight() or 0
             setContentHeight(targetHeight, true)
         end
 
         header.MouseButton1Click:Connect(toggleCategory)
 
+        -- 监听内容布局变化，若展开则自动调整高度（不带动画）
         contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             if opened then
                 local h = getContentHeight()
@@ -2660,7 +2664,19 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        -- 初始化：等待一帧后根据 opened 设置正确高度
+        -- 监听子元素添加，及时更新高度
+        content.ChildAdded:Connect(function()
+            if opened then
+                task.defer(function()
+                    local h = getContentHeight()
+                    if h > 0 then
+                        setContentHeight(h, false)
+                    end
+                end)
+            end
+        end)
+
+        -- 初始化高度
         task.spawn(function()
             task.wait()
             local h = getContentHeight()
@@ -2678,7 +2694,13 @@ function Fenglib:CreateWindow(Config)
             arrow = arrow,
             collapsible = collapsible,
             opened = opened,
-            toggle = toggleCategory
+            toggle = toggleCategory,
+            Open = function()
+                if collapsible and not opened then toggleCategory() end
+            end,
+            Close = function()
+                if collapsible and opened then toggleCategory() end
+            end
         }
 
         table.insert(ThemeListeners, function()
@@ -2688,6 +2710,7 @@ function Fenglib:CreateWindow(Config)
 
         return Window._currentCategory
     end
+    -- ====== Category 函数结束 ======
 
     function Window:TabDivider()
         local parentContainer = TabScroll
@@ -3126,10 +3149,12 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
+    -- 非卡片模式
     RightContainer.ClipsDescendants = true
 
     Window._activeTab = nil
     Window._tabs = {}
+    -- _currentCategory 已在上面定义
 
     function Window:Tab(name, icon)
         local parentContainer = TabScroll
