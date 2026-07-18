@@ -2543,15 +2543,20 @@ function Fenglib:CreateWindow(Config)
 
     Window._currentCategory = nil
 
+    -- ==============================
+    -- 修改后的 Category 函数（箭头移至右侧 + 平滑高度动画）
+    -- ==============================
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
         local opened = type(config) == "table" and (config.Opened ~= nil and config.Opened or true) or true
 
+        -- categoryFrame: 关闭自动尺寸，启用裁剪，初始高度仅header
         local categoryFrame = Instance.new("Frame")
-        categoryFrame.Size = UDim2.new(1, 0, 0, 0)
-        categoryFrame.AutomaticSize = Enum.AutomaticSize.Y
+        categoryFrame.Size = UDim2.new(1, 0, 0, 28)
+        categoryFrame.AutomaticSize = Enum.AutomaticSize.None
         categoryFrame.BackgroundTransparency = 1
+        categoryFrame.ClipsDescendants = true
         categoryFrame.Parent = TabScroll
 
         local catLayout = Instance.new("UIListLayout")
@@ -2566,12 +2571,28 @@ function Fenglib:CreateWindow(Config)
         header.Text = ""
         header.Parent = categoryFrame
 
+        -- header内部布局：左对齐，箭头放在最后
         local headerLayout = Instance.new("UIListLayout")
         headerLayout.FillDirection = Enum.FillDirection.Horizontal
         headerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        headerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
         headerLayout.Padding = UDim.new(0, 4)
         headerLayout.Parent = header
 
+        -- 标题（占据剩余宽度）
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -16, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamBold
+        label.Text = name
+        label.TextSize = 13
+        label.TextColor3 = CurrentTheme.Text
+        label.TextTransparency = 0.5
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = header
+        AddToRegistry(label, "TextColor3", "Text")
+
+        -- 箭头（最右侧）
         local arrow = Instance.new("ImageLabel")
         arrow.Size = UDim2.new(0, 12, 0, 12)
         arrow.BackgroundTransparency = 1
@@ -2581,23 +2602,14 @@ function Fenglib:CreateWindow(Config)
         arrow.Visible = collapsible
         arrow.Rotation = opened and 0 or -90
         arrow.Parent = header
+        AddToRegistry(arrow, "ImageColor3", "Text")
 
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, -20, 1, 0)
-        label.BackgroundTransparency = 1
-        label.Font = Enum.Font.GothamBold
-        label.Text = name
-        label.TextSize = 13
-        label.TextColor3 = CurrentTheme.Text
-        label.TextTransparency = 0.5
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = header
-
+        -- 内容容器（始终可见，高度由内容自动撑开）
         local content = Instance.new("Frame")
         content.Size = UDim2.new(1, 0, 0, 0)
-        content.BackgroundTransparency = 1
         content.AutomaticSize = Enum.AutomaticSize.Y
-        content.Visible = opened
+        content.BackgroundTransparency = 1
+        content.Visible = true
         content.Parent = categoryFrame
 
         local contentList = Instance.new("UIListLayout")
@@ -2606,16 +2618,7 @@ function Fenglib:CreateWindow(Config)
         contentList.HorizontalAlignment = Enum.HorizontalAlignment.Center
         contentList.Parent = content
 
-        local function toggleCategory()
-            if not collapsible then return end
-            opened = not opened
-            content.Visible = opened
-            arrow.Rotation = opened and 0 or -90
-            task.defer(updateTabCanvas)
-        end
-
-        header.MouseButton1Click:Connect(toggleCategory)
-
+        -- 存储当前category引用
         Window._currentCategory = {
             frame = categoryFrame,
             content = content,
@@ -2628,6 +2631,49 @@ function Fenglib:CreateWindow(Config)
             toggle = toggleCategory
         }
 
+        local function toggleCategory()
+            if not collapsible then return end
+
+            opened = not opened
+            arrow.Rotation = opened and 0 or -90
+
+            local headerHeight = header.AbsoluteSize.Y or 28
+            local contentHeight = 0
+            if opened then
+                content.Visible = true
+                task.wait(0.02)
+                contentHeight = contentList.AbsoluteContentSize.Y or 0
+                if contentHeight > 0 then
+                    contentHeight = contentHeight + 8
+                end
+            end
+
+            local targetHeight = headerHeight + (opened and contentHeight or 0)
+
+            Tween(categoryFrame, { Size = UDim2.new(1, 0, 0, targetHeight) }, 0.35)
+
+            if not opened then
+                -- 内容虽隐藏，但保留可见性以便下次展开计算
+                -- 此处无需额外操作，因为categoryFrame已裁剪
+            end
+
+            task.defer(updateTabCanvas)
+        end
+
+        header.MouseButton1Click:Connect(toggleCategory)
+
+        -- 初始状态设定
+        if opened then
+            local headerHeight = header.AbsoluteSize.Y or 28
+            content.Visible = true
+            task.wait(0.02)
+            local contentHeight = contentList.AbsoluteContentSize.Y or 0
+            if contentHeight > 0 then contentHeight = contentHeight + 8 end
+            categoryFrame.Size = UDim2.new(1, 0, 0, headerHeight + contentHeight)
+        else
+            categoryFrame.Size = UDim2.new(1, 0, 0, header.AbsoluteSize.Y or 28)
+        end
+
         table.insert(ThemeListeners, function()
             label.TextColor3 = CurrentTheme.Text
             arrow.ImageColor3 = CurrentTheme.Text
@@ -2636,6 +2682,7 @@ function Fenglib:CreateWindow(Config)
         return Window._currentCategory
     end
 
+    -- 保留TabDivider
     function Window:TabDivider()
         local parentContainer = TabScroll
         if Window._currentCategory then
