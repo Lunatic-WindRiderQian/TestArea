@@ -2543,7 +2543,7 @@ function Fenglib:CreateWindow(Config)
 
     Window._currentCategory = nil
 
-    -- ====== 修正后的 Category 函数（使用 TweenService:Create 避免 nil） ======
+    -- 修正后的 Category 函数，解决 Opened 不起作用的问题
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
@@ -2596,10 +2596,10 @@ function Fenglib:CreateWindow(Config)
 
         -- 内容容器：始终可见，通过高度控制显示
         local content = Instance.new("Frame")
-        content.Size = UDim2.new(1, 0, 0, 0)
+        content.Size = UDim2.new(1, 0, 0, 0)          -- 初始高度 0
         content.BackgroundTransparency = 1
-        content.AutomaticSize = Enum.AutomaticSize.None   -- 手动控制高度
-        content.ClipsDescendants = true                  -- 裁剪超出部分
+        content.AutomaticSize = Enum.AutomaticSize.None
+        content.ClipsDescendants = true
         content.Visible = true
         content.Parent = categoryFrame
 
@@ -2609,14 +2609,13 @@ function Fenglib:CreateWindow(Config)
         contentList.HorizontalAlignment = Enum.HorizontalAlignment.Center
         contentList.Parent = content
 
-        local currentTween = nil   -- 当前动画对象，用于取消
+        local currentTween = nil
+        local contentReady = false   -- 标记内容是否已加载完成
 
-        -- 获取内容实际高度
         local function getContentHeight()
             return contentList.AbsoluteContentSize.Y or 0
         end
 
-        -- 设置内容高度（可带动画）
         local function setContentHeight(targetHeight, animate)
             targetHeight = math.max(0, targetHeight)
             local currentHeight = content.Size.Y.Offset
@@ -2625,7 +2624,6 @@ function Fenglib:CreateWindow(Config)
                     currentTween:Cancel()
                     currentTween = nil
                 end
-                -- 直接使用 TweenService，避免全局 Tween 不返回值的问题
                 currentTween = TweenService:Create(
                     content,
                     TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
@@ -2634,7 +2632,7 @@ function Fenglib:CreateWindow(Config)
                 currentTween:Play()
                 currentTween.Completed:Connect(function()
                     currentTween = nil
-                    task.spawn(updateTabCanvas)  -- 动画完成后更新滚动区域
+                    task.spawn(updateTabCanvas)
                 end)
             else
                 content.Size = UDim2.new(1, 0, 0, targetHeight)
@@ -2642,11 +2640,9 @@ function Fenglib:CreateWindow(Config)
             end
         end
 
-        -- 切换展开/折叠
         local function toggleCategory()
             if not collapsible then return end
             opened = not opened
-            -- 箭头旋转动画（使用全局 Tween 没问题，因为 arrow 有效且 Tween 会直接播放）
             Tween(arrow, { Rotation = opened and 0 or -90 }, 0.25)
             local targetHeight = opened and getContentHeight() or 0
             setContentHeight(targetHeight, true)
@@ -2654,9 +2650,20 @@ function Fenglib:CreateWindow(Config)
 
         header.MouseButton1Click:Connect(toggleCategory)
 
-        -- 监听内容布局变化，若展开则自动调整高度（不带动画）
-        contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            if opened then
+        -- 监听内容布局变化，并在内容加载完成后设置初始高度
+        local sizeConnection
+        sizeConnection = contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if not contentReady then
+                contentReady = true
+                -- 首次获取到有效高度时，根据 opened 设置高度
+                local h = getContentHeight()
+                local initialHeight = opened and h or 0
+                content.Size = UDim2.new(1, 0, 0, initialHeight)
+                updateTabCanvas()
+                -- 断开监听，避免后续不必要的重复处理
+                sizeConnection:Disconnect()
+            elseif opened then
+                -- 已展开状态下，内容变化时自动调整高度（不带动画，避免频繁抖动）
                 local h = getContentHeight()
                 if math.abs(h - content.Size.Y.Offset) > 0.5 then
                     setContentHeight(h, false)
@@ -2664,13 +2671,19 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        -- 初始化高度
-        task.spawn(function()
-            task.wait()
-            local h = getContentHeight()
-            local initialHeight = opened and h or 0
-            content.Size = UDim2.new(1, 0, 0, initialHeight)
-            updateTabCanvas()
+        -- 如果 content 内没有任何子元素，则 AbsoluteContentSize 可能永远不会触发，
+        -- 此时需要兜底：延迟一帧检查，若仍未触发则手动处理
+        task.delay(0.1, function()
+            if not contentReady then
+                contentReady = true
+                local h = getContentHeight()
+                local initialHeight = opened and h or 0
+                content.Size = UDim2.new(1, 0, 0, initialHeight)
+                updateTabCanvas()
+                if sizeConnection then
+                    sizeConnection:Disconnect()
+                end
+            end
         end)
 
         Window._currentCategory = {
