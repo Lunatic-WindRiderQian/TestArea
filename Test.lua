@@ -2543,7 +2543,7 @@ function Fenglib:CreateWindow(Config)
 
     Window._currentCategory = nil
 
-    -- 修正后的 Category 函数
+    -- ====== 修正后的 Category 函数 ======
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
@@ -2616,8 +2616,7 @@ function Fenglib:CreateWindow(Config)
 
         local function setContentHeight(targetHeight, animate)
             targetHeight = math.max(0, targetHeight)
-            local currentHeight = content.Size.Y.Offset
-            if animate and currentHeight ~= targetHeight then
+            if animate then
                 if currentTween then
                     currentTween:Cancel()
                     currentTween = nil
@@ -2643,7 +2642,7 @@ function Fenglib:CreateWindow(Config)
             opened = not opened
             Tween(arrow, { Rotation = opened and 0 or -90 }, 0.25)
 
-            -- 【关键修复】等待一帧确保布局完成后再计算高度
+            -- 等待一帧让布局系统完成子元素大小计算
             RunService.Heartbeat:Wait()
 
             local targetHeight = opened and getContentHeight() or 0
@@ -2661,6 +2660,7 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
+        -- 初始化：等待一帧后根据 opened 设置正确高度
         task.spawn(function()
             task.wait()
             local h = getContentHeight()
