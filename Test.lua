@@ -2543,7 +2543,7 @@ function Fenglib:CreateWindow(Config)
 
     Window._currentCategory = nil
 
-    -- 修正后的 Category 函数，解决 Opened 不起作用的问题
+    -- ====== 重写的 Category 函数（完全可靠） ======
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
@@ -2594,9 +2594,9 @@ function Fenglib:CreateWindow(Config)
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.Parent = header
 
-        -- 内容容器：始终可见，通过高度控制显示
+        -- 内容容器：初始高度0
         local content = Instance.new("Frame")
-        content.Size = UDim2.new(1, 0, 0, 0)          -- 初始高度 0
+        content.Size = UDim2.new(1, 0, 0, 0)
         content.BackgroundTransparency = 1
         content.AutomaticSize = Enum.AutomaticSize.None
         content.ClipsDescendants = true
@@ -2610,7 +2610,7 @@ function Fenglib:CreateWindow(Config)
         contentList.Parent = content
 
         local currentTween = nil
-        local contentReady = false   -- 标记内容是否已加载完成
+        local contentReady = false
 
         local function getContentHeight()
             return contentList.AbsoluteContentSize.Y or 0
@@ -2650,39 +2650,42 @@ function Fenglib:CreateWindow(Config)
 
         header.MouseButton1Click:Connect(toggleCategory)
 
-        -- 监听内容布局变化，并在内容加载完成后设置初始高度
-        local sizeConnection
-        sizeConnection = contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        -- 监听内容变化（多种方式确保捕获）
+        local function refreshContent()
             if not contentReady then
                 contentReady = true
-                -- 首次获取到有效高度时，根据 opened 设置高度
-                local h = getContentHeight()
-                local initialHeight = opened and h or 0
-                content.Size = UDim2.new(1, 0, 0, initialHeight)
-                updateTabCanvas()
-                -- 断开监听，避免后续不必要的重复处理
-                sizeConnection:Disconnect()
+                task.defer(function()
+                    local h = getContentHeight()
+                    local initialHeight = opened and h or 0
+                    content.Size = UDim2.new(1, 0, 0, initialHeight)
+                    updateTabCanvas()
+                end)
             elseif opened then
-                -- 已展开状态下，内容变化时自动调整高度（不带动画，避免频繁抖动）
                 local h = getContentHeight()
                 if math.abs(h - content.Size.Y.Offset) > 0.5 then
                     setContentHeight(h, false)
                 end
             end
-        end)
+        end
 
-        -- 如果 content 内没有任何子元素，则 AbsoluteContentSize 可能永远不会触发，
-        -- 此时需要兜底：延迟一帧检查，若仍未触发则手动处理
-        task.delay(0.1, function()
+        -- 监听 AbsoluteContentSize 变化
+        local sizeConnection = contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(refreshContent)
+        -- 监听子元素添加
+        local childAddedConnection = content.ChildAdded:Connect(refreshContent)
+        -- 监听子元素移除（可能有）
+        local childRemovedConnection = content.ChildRemoved:Connect(refreshContent)
+
+        -- 兜底：延迟检查
+        task.delay(0.15, function()
             if not contentReady then
                 contentReady = true
                 local h = getContentHeight()
                 local initialHeight = opened and h or 0
                 content.Size = UDim2.new(1, 0, 0, initialHeight)
                 updateTabCanvas()
-                if sizeConnection then
-                    sizeConnection:Disconnect()
-                end
+                sizeConnection:Disconnect()
+                childAddedConnection:Disconnect()
+                childRemovedConnection:Disconnect()
             end
         end)
 
@@ -2695,7 +2698,8 @@ function Fenglib:CreateWindow(Config)
             arrow = arrow,
             collapsible = collapsible,
             opened = opened,
-            toggle = toggleCategory
+            toggle = toggleCategory,
+            Refresh = refreshContent  -- 外部可手动调用
         }
 
         table.insert(ThemeListeners, function()
@@ -3149,7 +3153,6 @@ function Fenglib:CreateWindow(Config)
 
     Window._activeTab = nil
     Window._tabs = {}
-    -- _currentCategory 已在上面定义
 
     function Window:Tab(name, icon)
         local parentContainer = TabScroll
