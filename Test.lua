@@ -2543,7 +2543,7 @@ function Fenglib:CreateWindow(Config)
 
     Window._currentCategory = nil
 
-    -- ====== 修改后的 Category 函数（带平滑动画） ======
+    -- ====== 修正后的 Category 函数（使用 TweenService:Create 避免 nil） ======
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
@@ -2611,7 +2611,7 @@ function Fenglib:CreateWindow(Config)
 
         local currentTween = nil   -- 当前动画对象，用于取消
 
-        -- 获取内容实际高度（由 UIListLayout 决定）
+        -- 获取内容实际高度
         local function getContentHeight()
             return contentList.AbsoluteContentSize.Y or 0
         end
@@ -2625,7 +2625,12 @@ function Fenglib:CreateWindow(Config)
                     currentTween:Cancel()
                     currentTween = nil
                 end
-                currentTween = Tween(content, { Size = UDim2.new(1, 0, 0, targetHeight) }, 0.3)
+                -- 直接使用 TweenService，避免全局 Tween 不返回值的问题
+                currentTween = TweenService:Create(
+                    content,
+                    TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+                    { Size = UDim2.new(1, 0, 0, targetHeight) }
+                )
                 currentTween:Play()
                 currentTween.Completed:Connect(function()
                     currentTween = nil
@@ -2641,14 +2646,15 @@ function Fenglib:CreateWindow(Config)
         local function toggleCategory()
             if not collapsible then return end
             opened = not opened
-            Tween(arrow, { Rotation = opened and 0 or -90 }, 0.25)  -- 箭头旋转动画
+            -- 箭头旋转动画（使用全局 Tween 没问题，因为 arrow 有效且 Tween 会直接播放）
+            Tween(arrow, { Rotation = opened and 0 or -90 }, 0.25)
             local targetHeight = opened and getContentHeight() or 0
             setContentHeight(targetHeight, true)
         end
 
         header.MouseButton1Click:Connect(toggleCategory)
 
-        -- 监听内容布局变化，若展开则自动调整高度（不带动画，避免跳跃）
+        -- 监听内容布局变化，若展开则自动调整高度（不带动画）
         contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             if opened then
                 local h = getContentHeight()
