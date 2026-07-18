@@ -2070,7 +2070,6 @@ function Fenglib:CreateWindow(Config)
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind 
     local IconAsset = Config.Logo
-    local isCardMode = Config.Card == true
 
     Window.RootFolder = Title 
     Window.ConfigFolder = Title.."/Config"
@@ -2544,9 +2543,6 @@ function Fenglib:CreateWindow(Config)
 
     Window._currentCategory = nil
 
-    -- ================================================================
-    -- Category - 可折叠分组
-    -- ================================================================
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
@@ -2638,230 +2634,6 @@ function Fenglib:CreateWindow(Config)
         end)
 
         return Window._currentCategory
-    end
-
-    -- ================================================================
-    -- Tab - 修复动画与首次显示
-    -- ================================================================
-    function Window:Tab(name, icon)
-        local parentContainer = TabScroll
-        local parentList = TabList
-
-        if Window._currentCategory then
-            parentContainer = Window._currentCategory.content
-            parentList = Window._currentCategory.contentList
-        end
-
-        local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(0, 140, 0, 32)
-        TabBtn.BackgroundTransparency = 1
-        TabBtn.BackgroundColor3 = CurrentTheme.Top
-        TabBtn.Text = ""
-        TabBtn.Parent = parentContainer
-        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-        AddToRegistry(TabBtn, "BackgroundColor3", "Top")
-
-        local glowFrame = Instance.new("Frame")
-        glowFrame.Name = "GlowBackground"
-        glowFrame.Size = UDim2.new(1, 0, 1, 0)
-        glowFrame.BackgroundColor3 = CurrentTheme.Accent
-        glowFrame.BackgroundTransparency = 1
-        glowFrame.Parent = TabBtn
-        local glowCorner = Instance.new("UICorner")
-        glowCorner.CornerRadius = UDim.new(0, 10)
-        glowCorner.Parent = glowFrame
-        local glowGrad = Instance.new("UIGradient")
-        glowGrad.Rotation = 0
-        glowGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
-        glowGrad.Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0.55),
-            NumberSequenceKeypoint.new(1, 1)
-        })
-        glowGrad.Parent = glowFrame
-
-        local TabBar = Instance.new("Frame")
-        TabBar.Size = UDim2.new(0, 3, 0, 0)
-        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
-        TabBar.BackgroundTransparency = 1
-        TabBar.BorderSizePixel = 0
-        TabBar.Parent = TabBtn
-        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
-        AddToRegistry(TabBar, "BackgroundColor3", "Accent")
-
-        local ContentFrame = Instance.new("Frame")
-        ContentFrame.Name = "ContentFrame"
-        ContentFrame.Size = UDim2.new(1, 0, 1, 0)
-        ContentFrame.BackgroundTransparency = 1
-        ContentFrame.Parent = TabBtn
-
-        local Layout = Instance.new("UIListLayout")
-        Layout.FillDirection = Enum.FillDirection.Horizontal
-        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-        Layout.Padding = UDim.new(0, 5)
-        Layout.Parent = ContentFrame
-
-        local Padding = Instance.new("UIPadding")
-        Padding.PaddingLeft = UDim.new(0, 10)
-        Padding.Parent = ContentFrame
-
-        if icon then
-            local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0, 28, 0, 28)
-            TabIcon.BackgroundTransparency = 1
-            if tonumber(icon) then
-                TabIcon.Image = "rbxassetid://" .. icon
-            else
-                TabIcon.Image = icon
-            end
-            TabIcon.Parent = ContentFrame
-            AddToRegistry(TabIcon, "ImageColor3", "Text")
-            local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 8)
-            iconCorner.Parent = TabIcon
-        end
-
-        local TabText = Instance.new("TextLabel")
-        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
-        TabText.Size = UDim2.new(0, textWidth, 1, 0)
-        TabText.BackgroundTransparency = 1
-        TabText.Font = Enum.Font.GothamMedium
-        TabText.Text = name
-        TabText.TextColor3 = CurrentTheme.Text
-        TabText.TextTransparency = 0.3
-        TabText.TextSize = 14
-        TabText.TextXAlignment = Enum.TextXAlignment.Left
-        TabText.Parent = ContentFrame
-        AddToRegistry(TabText, "TextColor3", "Text")
-
-        local Page = Instance.new("ScrollingFrame")
-        Page.Size = UDim2.new(1, 0, 1, 0)
-        Page.BackgroundTransparency = 1
-        Page.ScrollBarThickness = 0
-        Page.ScrollingEnabled = true
-        Page.Visible = false
-        Page.Position = UDim2.new(0, 0, 0, 60)   -- 初始下移
-        Page.Parent = PageContainer
-
-        local PageContent = Instance.new("Frame")
-        PageContent.Size = UDim2.new(1, 0, 0, 0)
-        PageContent.AutomaticSize = Enum.AutomaticSize.Y
-        PageContent.BackgroundTransparency = 1
-        PageContent.Parent = Page
-
-        local PageList = Instance.new("UIListLayout")
-        PageList.Padding = UDim.new(0, 10)
-        PageList.SortOrder = Enum.SortOrder.LayoutOrder
-        PageList.Parent = PageContent
-
-        local function updatePageCanvas()
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
-        end
-        PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
-        task.spawn(updatePageCanvas)
-
-        local state = {
-            isActive = false,
-            btn = TabBtn,
-            page = Page,
-            textLabel = TabText,
-            bar = TabBar,
-            glow = glowFrame
-        }
-
-        local function activateTab()
-            if Window._activeTab and Window._activeTab == state then
-                return
-            end
-
-            for _, s in ipairs(Window._tabs) do
-                s.btn.BackgroundTransparency = 1
-                s.isActive = false
-                s.glow.BackgroundTransparency = 1
-                local bar = s.bar
-                if bar then
-                    Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
-                end
-                local txt = s.textLabel
-                if txt then
-                    Tween(txt, {TextTransparency = 0.3}, 0.2)
-                end
-            end
-
-            TabBtn.BackgroundTransparency = 1
-            state.isActive = true
-            state.glow.BackgroundTransparency = 0
-            if TabBar then
-                Tween(TabBar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
-            end
-            Tween(TabText, {TextTransparency = 0}, 0.2)
-
-            if Window._activeTab then
-                Window._activeTab.page.Visible = false
-            end
-
-            Page.Visible = true
-            Page.Position = UDim2.new(0, 0, 0, 60)
-            local tween = TweenService:Create(Page, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                Position = UDim2.new(0, 0, 0, 0)
-            })
-            tween:Play()
-            tween.Completed:Connect(function()
-                updatePageCanvas()
-            end)
-
-            Window._activeTab = state
-        end
-
-        TabBtn.MouseButton1Click:Connect(activateTab)
-
-        if not Window._activeTab then
-            activateTab()
-        end
-
-        table.insert(Window._tabs, state)
-
-        if name == "Config" then TabBtn.LayoutOrder = 99998 end
-        if name == "Settings" then TabBtn.LayoutOrder = 99999 end
-
-        table.insert(ThemeListeners, function()
-            for _, s in ipairs(Window._tabs) do
-                local glow = s.glow
-                if glow then
-                    glow.BackgroundColor3 = CurrentTheme.Accent
-                    local grad = glow:FindFirstChildOfClass("UIGradient")
-                    if grad then
-                        grad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
-                    end
-                end
-                if s.isActive then
-                    s.btn.BackgroundTransparency = 1
-                else
-                    s.btn.BackgroundTransparency = 1
-                end
-            end
-        end)
-
-        local getElements = function()
-            local elements = {}
-            local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
-            elements.Section = function(_, config) return createSection(config) end
-            elements.Button   = function(_, config) return createSection("", nil, true).Button(config) end
-            elements.Toggle   = function(_, config) return createSection("", nil, true).Toggle(config) end
-            elements.Slider   = function(_, config) return createSection("", nil, true).Slider(config) end
-            elements.Dropdown = function(_, config) return createSection("", nil, true).Dropdown(config) end
-            elements.Keybind  = function(_, config) return createSection("", nil, true).Keybind(config) end
-            elements.Textbox  = function(_, config) return createSection("", nil, true).Textbox(config) end
-            elements.Input    = function(_, config) return createSection("", nil, true).Input(config) end
-            elements.Label    = function(_, config) return createSection("", nil, true).Label(config) end
-            elements.SubLabel = function(_, config) return createSection("", nil, true).SubLabel(config) end
-            elements.Paragraph= function(_, config) return createSection("", nil, true).Paragraph(config) end
-            elements.ColorPicker= function(_, config) return createSection("", nil, true).ColorPicker(config) end
-            elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
-            return elements
-        end
-
-        return getElements()
     end
 
     function Window:TabDivider()
@@ -2989,18 +2761,6 @@ function Fenglib:CreateWindow(Config)
     PageContainer.Parent = RightContainer
 
     MainFrame.ClipsDescendants = false
-
-    local BackButton = nil
-    if isCardMode then
-        BackButton = createControlButton("rbxassetid://7733764800", nil, function() end)
-        BackButton.Visible = false
-        BackButton.LayoutOrder = -1
-        for _, child in ipairs(ButtonGroup:GetChildren()) do
-            if child:IsA("TextButton") and child ~= BackButton then
-                child.LayoutOrder = 1
-            end
-        end
-    end
 
     Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
@@ -3313,395 +3073,231 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    if isCardMode then
-        LeftContainer.Visible = false
-        RightContainer.Visible = false
-        PageContainer.Visible = false
+    -- 非卡片模式
+    RightContainer.ClipsDescendants = true
 
-        local cardsContainer = Instance.new("ScrollingFrame")
-        cardsContainer.Name = "CardsContainer"
-        cardsContainer.Size = UDim2.new(1, 0, 1, 0)
-        cardsContainer.BackgroundTransparency = 1
-        cardsContainer.ScrollBarThickness = 4
-        cardsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-        cardsContainer.Parent = RightContainer
+    Window._activeTab = nil
+    Window._tabs = {}
+    -- _currentCategory 已在上面定义
 
-        local cardsLayout = Instance.new("UIGridLayout")
-        cardsLayout.CellSize = UDim2.new(0.5, -20, 0, 74)
-        cardsLayout.CellPadding = UDim2.new(0, 15, 0, 15)
-        cardsLayout.FillDirection = Enum.FillDirection.Horizontal
-        cardsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        cardsLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-        cardsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        cardsLayout.Parent = cardsContainer
+    function Window:Tab(name, icon)
+        local parentContainer = TabScroll
+        local parentList = TabList
 
-        local function updateCardsCanvas()
-            cardsContainer.CanvasSize = UDim2.new(0, 0, 0, cardsLayout.AbsoluteContentSize.Y + 20)
+        if Window._currentCategory then
+            parentContainer = Window._currentCategory.content
+            parentList = Window._currentCategory.contentList
         end
-        cardsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCardsCanvas)
-        task.spawn(updateCardsCanvas)
 
-        local cardContents = {}
-        local currentActiveCard = nil
+        local TabBtn = Instance.new("TextButton")
+        TabBtn.Size = UDim2.new(0, 140, 0, 32)
+        TabBtn.BackgroundTransparency = 1
+        TabBtn.BackgroundColor3 = CurrentTheme.Top
+        TabBtn.Text = ""
+        TabBtn.Parent = parentContainer
+        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
+        AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-        local function showCardList()
-            for _, info in pairs(cardContents) do
-                if info.contentFrame then info.contentFrame.Visible = false end
+        local glowFrame = Instance.new("Frame")
+        glowFrame.Name = "GlowBackground"
+        glowFrame.Size = UDim2.new(1, 0, 1, 0)
+        glowFrame.BackgroundColor3 = CurrentTheme.Accent
+        glowFrame.BackgroundTransparency = 1
+        glowFrame.Parent = TabBtn
+        local glowCorner = Instance.new("UICorner")
+        glowCorner.CornerRadius = UDim.new(0, 10)
+        glowCorner.Parent = glowFrame
+        local glowGrad = Instance.new("UIGradient")
+        glowGrad.Rotation = 0
+        glowGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
+        glowGrad.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.55),
+            NumberSequenceKeypoint.new(1, 1)
+        })
+        glowGrad.Parent = glowFrame
+
+        local TabBar = Instance.new("Frame")
+        TabBar.Size = UDim2.new(0, 3, 0, 0)
+        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
+        TabBar.BackgroundTransparency = 1
+        TabBar.BorderSizePixel = 0
+        TabBar.Parent = TabBtn
+        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
+        AddToRegistry(TabBar, "BackgroundColor3", "Accent")
+
+        local ContentFrame = Instance.new("Frame")
+        ContentFrame.Name = "ContentFrame"
+        ContentFrame.Size = UDim2.new(1, 0, 1, 0)
+        ContentFrame.BackgroundTransparency = 1
+        ContentFrame.Parent = TabBtn
+
+        local Layout = Instance.new("UIListLayout")
+        Layout.FillDirection = Enum.FillDirection.Horizontal
+        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        Layout.VerticalAlignment = Enum.VerticalAlignment.Center
+        Layout.Padding = UDim.new(0, 5)
+        Layout.Parent = ContentFrame
+
+        local Padding = Instance.new("UIPadding")
+        Padding.PaddingLeft = UDim.new(0, 10)
+        Padding.Parent = ContentFrame
+
+        if icon then
+            local TabIcon = Instance.new("ImageLabel")
+            TabIcon.Size = UDim2.new(0, 28, 0, 28)
+            TabIcon.BackgroundTransparency = 1
+            if tonumber(icon) then
+                TabIcon.Image = "rbxassetid://" .. icon
+            else
+                TabIcon.Image = icon
             end
-            cardsContainer.Visible = true
-            if BackButton then BackButton.Visible = false end
-            currentActiveCard = nil
-        end
-
-        local function showCardContent(cardName)
-            if currentActiveCard == cardName then return end
-            if currentActiveCard and cardContents[currentActiveCard] then
-                cardContents[currentActiveCard].contentFrame.Visible = false
-            end
-            cardsContainer.Visible = false
-            local info = cardContents[cardName]
-            if info then
-                info.contentFrame.Visible = true
-                currentActiveCard = cardName
-                if BackButton then BackButton.Visible = true end
-            end
-        end
-
-        if BackButton then
-            BackButton.MouseButton1Click:Connect(showCardList)
-        end
-
-        local function formatCardIcon(asset)
-            if type(asset) == "number" then
-                return "rbxassetid://" .. tostring(asset)
-            elseif type(asset) == "string" then
-                if tonumber(asset) then
-                    return "rbxassetid://" .. asset
-                elseif asset:match("^rbxassetid://") then
-                    return asset
-                elseif asset:match("^http") then
-                    return asset
-                else
-                    return "rbxassetid://84830962019412"
-                end
-            end
-            return "rbxassetid://84830962019412"
-        end
-
-        function Window:Card(name, description, icon)
-            local cardBtn = Instance.new("TextButton")
-            cardBtn.Name = "Card_" .. name
-            cardBtn.Size = UDim2.new(1, 0, 1, 0)
-            cardBtn.BackgroundColor3 = CurrentTheme.Top
-            cardBtn.BackgroundTransparency = 0.2
-            cardBtn.AutoButtonColor = false
-            cardBtn.Text = ""
-            cardBtn.Parent = cardsContainer
-
-            local cardCorner = Instance.new("UICorner")
-            cardCorner.CornerRadius = UDim.new(0, 12)
-            cardCorner.Parent = cardBtn
-
-            local cardGlow = Instance.new("UIStroke")
-            cardGlow.Parent = cardBtn
-            cardGlow.Color = CurrentTheme.Accent
-            cardGlow.Thickness = 2
-            cardGlow.Transparency = 0.7
-            startNeonFlowEffect(cardGlow, "Color", 0.008)
-            createPulseGlow(cardGlow)
-
-            local horizontalLayout = Instance.new("Frame")
-            horizontalLayout.Size = UDim2.new(1, 0, 1, 0)
-            horizontalLayout.BackgroundTransparency = 1
-            horizontalLayout.Parent = cardBtn
-
-            local padding = Instance.new("UIPadding")
-            padding.PaddingLeft = UDim.new(0, 10)
-            padding.PaddingRight = UDim.new(0, 10)
-            padding.PaddingTop = UDim.new(0, 10)
-            padding.PaddingBottom = UDim.new(0, 10)
-            padding.Parent = horizontalLayout
-
-            local cardIcon = Instance.new("ImageLabel")
-            cardIcon.Size = UDim2.new(0, 44, 0, 44)
-            cardIcon.BackgroundTransparency = 1
-            cardIcon.Image = formatCardIcon(icon)
-            cardIcon.ImageColor3 = CurrentTheme.Text
-            cardIcon.Parent = horizontalLayout
-            cardIcon.Position = UDim2.new(0, 0, 0, 5)
+            TabIcon.Parent = ContentFrame
+            AddToRegistry(TabIcon, "ImageColor3", "Text")
             local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 10)
-            iconCorner.Parent = cardIcon
-            AddToRegistry(cardIcon, "ImageColor3", "Text")
-
-            local rightFrame = Instance.new("Frame")
-            rightFrame.Size = UDim2.new(1, -54, 1, 0)
-            rightFrame.Position = UDim2.new(0, 54, 0, 0)
-            rightFrame.BackgroundTransparency = 1
-            rightFrame.Parent = horizontalLayout
-
-            local textLayout = Instance.new("UIListLayout")
-            textLayout.Padding = UDim.new(0, 2)
-            textLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            textLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-            textLayout.Parent = rightFrame
-
-            local cardTitle = Instance.new("TextLabel")
-            cardTitle.Size = UDim2.new(1, 0, 0, 0)
-            cardTitle.AutomaticSize = Enum.AutomaticSize.Y
-            cardTitle.BackgroundTransparency = 1
-            cardTitle.Font = Enum.Font.GothamBold
-            cardTitle.Text = name
-            cardTitle.TextColor3 = CurrentTheme.Text
-            cardTitle.TextSize = 13
-            cardTitle.TextXAlignment = Enum.TextXAlignment.Left
-            cardTitle.TextTruncate = Enum.TextTruncate.AtEnd
-            cardTitle.Parent = rightFrame
-            AddToRegistry(cardTitle, "TextColor3", "Text")
-
-            local cardDesc = Instance.new("TextLabel")
-            cardDesc.Size = UDim2.new(1, 0, 0, 0)
-            cardDesc.AutomaticSize = Enum.AutomaticSize.Y
-            cardDesc.BackgroundTransparency = 1
-            cardDesc.Font = Enum.Font.Gotham
-            cardDesc.Text = description or ""
-            cardDesc.TextColor3 = Color3.fromRGB(180, 190, 210)
-            cardDesc.TextSize = 11
-            cardDesc.TextXAlignment = Enum.TextXAlignment.Left
-            cardDesc.TextWrapped = true
-            cardDesc.TextTruncate = Enum.TextTruncate.AtEnd
-            cardDesc.Parent = rightFrame
-            AddToRegistry(cardDesc, "TextColor3", "Text")
-
-            cardBtn.MouseEnter:Connect(function()
-                Tween(cardBtn, {BackgroundTransparency = 0.05}, 0.2)
-                Tween(cardGlow, {Thickness = 3, Transparency = 0.4}, 0.2)
-                Tween(cardIcon, {Size = UDim2.new(0, 48, 0, 48)}, 0.2)
-            end)
-            cardBtn.MouseLeave:Connect(function()
-                Tween(cardBtn, {BackgroundTransparency = 0.2}, 0.2)
-                Tween(cardGlow, {Thickness = 2, Transparency = 0.7}, 0.2)
-                Tween(cardIcon, {Size = UDim2.new(0, 44, 0, 44)}, 0.2)
-            end)
-
-            local cardContentFrame = Instance.new("Frame")
-            cardContentFrame.Name = "CardContent_" .. name
-            cardContentFrame.Size = UDim2.new(1, 0, 1, 0)
-            cardContentFrame.BackgroundTransparency = 1
-            cardContentFrame.Visible = false
-            cardContentFrame.Parent = RightContainer
-
-            local cardLine = Instance.new("Frame")
-            cardLine.Name = "CardLine"
-            cardLine.Size = UDim2.new(0, 1, 1, 0)
-            cardLine.Position = UDim2.new(0, 150, 0, 0)
-            cardLine.BackgroundTransparency = 0.8
-            cardLine.Parent = cardContentFrame
-            AddToRegistry(cardLine, "BackgroundColor3", "Stroke")
-
-            local sideBar = Instance.new("ScrollingFrame")
-            sideBar.Size = UDim2.new(0, 140, 1, 0)
-            sideBar.BackgroundTransparency = 1
-            sideBar.ScrollBarThickness = 4
-            sideBar.ScrollingDirection = Enum.ScrollingDirection.Y
-            sideBar.Parent = cardContentFrame
-
-            local sideBarLayout = Instance.new("UIListLayout")
-            sideBarLayout.Padding = UDim.new(0, 8)
-            sideBarLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            sideBarLayout.Parent = sideBar
-
-            local function updateSidebarCanvas()
-                sideBar.CanvasSize = UDim2.new(0, 0, 0, sideBarLayout.AbsoluteContentSize.Y)
-            end
-            sideBarLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSidebarCanvas)
-            task.spawn(updateSidebarCanvas)
-
-            local rightPageContainer = Instance.new("Frame")
-            rightPageContainer.Size = UDim2.new(1, -155, 1, 0)
-            rightPageContainer.Position = UDim2.new(0, 150, 0, 0)
-            rightPageContainer.BackgroundTransparency = 1
-            rightPageContainer.Parent = cardContentFrame
-
-            local function activateTab(tabBtn, page, textLabel, tabBar)
-                for _, child in ipairs(rightPageContainer:GetChildren()) do
-                    if child:IsA("ScrollingFrame") then
-                        child.Visible = false
-                    end
-                end
-                page.Visible = true
-                for _, btn in ipairs(sideBar:GetChildren()) do
-                    if btn:IsA("TextButton") then
-                        btn.Selected = false
-                        Tween(btn, {BackgroundTransparency = 1, BackgroundColor3 = CurrentTheme.Top}, 0.2)
-                        local btnContent = btn:FindFirstChild("ContentFrame")
-                        if btnContent then
-                            local txt = btnContent:FindFirstChildOfClass("TextLabel")
-                            if txt then
-                                Tween(txt, {TextColor3 = Color3.fromRGB(150,150,158)}, 0.2)
-                            end
-                        end
-                        local bar = btn:FindFirstChildOfClass("Frame")
-                        if bar then
-                            Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
-                        end
-                    end
-                end
-                tabBtn.Selected = true
-                Tween(tabBtn, {BackgroundTransparency = 0.05, BackgroundColor3 = CurrentTheme.Top}, 0.2)
-                Tween(textLabel, {TextColor3 = CurrentTheme.Text}, 0.2)
-                Tween(tabBar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
-            end
-
-            local cardObj = {}
-            function cardObj:Tab(tabName, tabIcon)
-                local tabBtn = Instance.new("TextButton")
-                tabBtn.Size = UDim2.new(1, 0, 0, 32)
-                tabBtn.BackgroundTransparency = 1
-                tabBtn.Text = ""
-                tabBtn.Parent = sideBar
-                Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 10)
-
-                local tabBar = Instance.new("Frame")
-                tabBar.Size = UDim2.new(0, 3, 0, 0)
-                tabBar.Position = UDim2.new(0, 0, 0.175, 0)
-                tabBar.BackgroundTransparency = 1
-                tabBar.BorderSizePixel = 0
-                tabBar.Parent = tabBtn
-                Instance.new("UICorner", tabBar).CornerRadius = UDim.new(1, 0)
-                AddToRegistry(tabBar, "BackgroundColor3", "Accent")
-
-                local contentFrame = Instance.new("Frame")
-                contentFrame.Size = UDim2.new(1, 0, 1, 0)
-                contentFrame.BackgroundTransparency = 1
-                contentFrame.Parent = tabBtn
-
-                local layout = Instance.new("UIListLayout")
-                layout.FillDirection = Enum.FillDirection.Horizontal
-                layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-                layout.VerticalAlignment = Enum.VerticalAlignment.Center
-                layout.Padding = UDim.new(0, 5)
-                layout.Parent = contentFrame
-
-                local padding = Instance.new("UIPadding")
-                padding.PaddingLeft = UDim.new(0, 10)
-                padding.Parent = contentFrame
-
-                if tabIcon then
-                    local iconImg = Instance.new("ImageLabel")
-                    iconImg.Size = UDim2.new(0, 28, 0, 28)
-                    iconImg.BackgroundTransparency = 1
-                    
-                    local formattedIcon = tabIcon
-                    if tonumber(tabIcon) then
-                        formattedIcon = "rbxassetid://" .. tabIcon
-                    end
-                    iconImg.Image = formattedIcon
-                    
-                    iconImg.Parent = contentFrame
-                    AddToRegistry(iconImg, "ImageColor3", "Text")
-                    local ic = Instance.new("UICorner")
-                    ic.CornerRadius = UDim.new(0, 8)
-                    ic.Parent = iconImg
-                end
-
-                local textLabel = Instance.new("TextLabel")
-                local textWidth = TextService:GetTextSize(tabName, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
-                textLabel.Size = UDim2.new(0, textWidth, 1, 0)
-                textLabel.BackgroundTransparency = 1
-                textLabel.Font = Enum.Font.GothamMedium
-                textLabel.Text = tabName
-                textLabel.TextColor3 = Color3.fromRGB(150,150,158)
-                textLabel.TextSize = 14
-                textLabel.TextXAlignment = Enum.TextXAlignment.Left
-                textLabel.Parent = contentFrame
-
-                local page = Instance.new("ScrollingFrame")
-                page.Size = UDim2.new(1, 0, 1, 0)
-                page.BackgroundTransparency = 1
-                page.ScrollBarThickness = 0
-                page.ScrollingEnabled = false
-                page.Visible = false
-                page.Parent = rightPageContainer
-
-                local pageContent = Instance.new("Frame")
-                pageContent.Size = UDim2.new(1, 0, 0, 0)
-                pageContent.AutomaticSize = Enum.AutomaticSize.Y
-                pageContent.BackgroundTransparency = 1
-                pageContent.Parent = page
-
-                local contentLayout = Instance.new("UIListLayout")
-                contentLayout.Padding = UDim.new(0, 10)
-                contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                contentLayout.Parent = pageContent
-
-                local function updatePageCanvas()
-                    page.CanvasSize = UDim2.new(0, 0, 0, contentLayout.AbsoluteContentSize.Y + 10)
-                end
-                contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
-                task.spawn(updatePageCanvas)
-
-                page.ScrollingEnabled = true
-                page.ScrollBarThickness = 0
-
-                local getElements = function()
-                    local elements = {}
-                    local createSection = createSectionBuilder(pageContent, pageContent, 330, 1)
-                    elements.Section = function(_, config) return createSection(config) end
-                    elements.Button   = function(_, config) return createSection("", nil, true).Button(config) end
-                    elements.Toggle   = function(_, config) return createSection("", nil, true).Toggle(config) end
-                    elements.Slider   = function(_, config) return createSection("", nil, true).Slider(config) end
-                    elements.Dropdown = function(_, config) return createSection("", nil, true).Dropdown(config) end
-                    elements.Keybind  = function(_, config) return createSection("", nil, true).Keybind(config) end
-                    elements.Textbox  = function(_, config) return createSection("", nil, true).Textbox(config) end
-                    elements.Input    = function(_, config) return createSection("", nil, true).Input(config) end
-                    elements.Label    = function(_, config) return createSection("", nil, true).Label(config) end
-                    elements.SubLabel = function(_, config) return createSection("", nil, true).SubLabel(config) end
-                    elements.Paragraph= function(_, config) return createSection("", nil, true).Paragraph(config) end
-                    elements.ColorPicker= function(_, config) return createSection("", nil, true).ColorPicker(config) end
-                    elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
-                    return elements
-                end
-
-                tabBtn.MouseButton1Click:Connect(function()
-                    activateTab(tabBtn, page, textLabel, tabBar)
-                end)
-
-                local isFirst = true
-                for _, existing in ipairs(sideBar:GetChildren()) do
-                    if existing:IsA("TextButton") and existing ~= tabBtn then
-                        isFirst = false
-                        break
-                    end
-                end
-                if isFirst then
-                    activateTab(tabBtn, page, textLabel, tabBar)
-                end
-
-                return getElements()
-            end
-
-            cardContents[name] = {
-                contentFrame = cardContentFrame,
-                cardButton = cardBtn
-            }
-
-            cardBtn.MouseButton1Click:Connect(function()
-                showCardContent(name)
-            end)
-
-            return cardObj
+            iconCorner.CornerRadius = UDim.new(0, 8)
+            iconCorner.Parent = TabIcon
         end
 
-        Window.Tab = function()
-            warn("卡片模式下请使用 Window:Card(...):Tab(...)")
-            return {}
-        end
-    else
-        RightContainer.ClipsDescendants = true
+        local TabText = Instance.new("TextLabel")
+        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
+        TabText.Size = UDim2.new(0, textWidth, 1, 0)
+        TabText.BackgroundTransparency = 1
+        TabText.Font = Enum.Font.GothamMedium
+        TabText.Text = name
+        TabText.TextColor3 = CurrentTheme.Text
+        TabText.TextTransparency = 0.3
+        TabText.TextSize = 14
+        TabText.TextXAlignment = Enum.TextXAlignment.Left
+        TabText.Parent = ContentFrame
+        AddToRegistry(TabText, "TextColor3", "Text")
 
-        Window._activeTab = nil
-        Window._tabs = {}
+        local Page = Instance.new("ScrollingFrame")
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.BackgroundTransparency = 1
+        Page.ScrollBarThickness = 0
+        Page.ScrollingEnabled = true
+        Page.Visible = false
+        Page.Position = UDim2.new(0, 0, 0, 60)
+        Page.Parent = PageContainer
+
+        local PageContent = Instance.new("Frame")
+        PageContent.Size = UDim2.new(1, 0, 0, 0)
+        PageContent.AutomaticSize = Enum.AutomaticSize.Y
+        PageContent.BackgroundTransparency = 1
+        PageContent.Parent = Page
+
+        local PageList = Instance.new("UIListLayout")
+        PageList.Padding = UDim.new(0, 10)
+        PageList.SortOrder = Enum.SortOrder.LayoutOrder
+        PageList.Parent = PageContent
+
+        local function updatePageCanvas()
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
+        end
+        PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
+        task.spawn(updatePageCanvas)
+
+        local state = {
+            isActive = false,
+            btn = TabBtn,
+            page = Page,
+            textLabel = TabText,
+            bar = TabBar,
+            glow = glowFrame
+        }
+
+        TabBtn.MouseButton1Click:Connect(function()
+            if Window._activeTab and Window._activeTab == state then
+                return
+            end
+
+            for _, s in ipairs(Window._tabs) do
+                s.btn.BackgroundTransparency = 1
+                s.isActive = false
+                s.glow.BackgroundTransparency = 1
+                local bar = s.bar
+                if bar then
+                    Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0,3,0,0)}, 0.2)
+                end
+                local txt = s.textLabel
+                if txt then
+                    Tween(txt, {TextTransparency = 0.3}, 0.2)
+                end
+            end
+
+            TabBtn.BackgroundTransparency = 1
+            state.isActive = true
+            state.glow.BackgroundTransparency = 0
+
+            if TabBar then
+                Tween(TabBar, {BackgroundTransparency = 0, Size = UDim2.new(0,3,0.65,0)}, 0.2)
+            end
+            Tween(TabText, {TextTransparency = 0}, 0.2)
+
+            if Window._activeTab then
+                Window._activeTab.page.Visible = false
+            end
+            Page.Visible = true
+            Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
+
+            Window._activeTab = state
+        end)
+
+        if not Window._activeTab then
+            TabBtn.BackgroundTransparency = 1
+            state.isActive = true
+            state.glow.BackgroundTransparency = 0
+            TabBar.BackgroundTransparency = 0
+            TabBar.Size = UDim2.new(0,3,0.65,0)
+            TabText.TextTransparency = 0
+            Page.Visible = true
+            Page.Position = UDim2.new(0, 0, 0, 0)
+            Window._activeTab = state
+        end
+
+        table.insert(Window._tabs, state)
+
+        if name == "Config" then TabBtn.LayoutOrder = 99998 end
+        if name == "Settings" then TabBtn.LayoutOrder = 99999 end
+
+        table.insert(ThemeListeners, function()
+            for _, s in ipairs(Window._tabs) do
+                local glow = s.glow
+                if glow then
+                    glow.BackgroundColor3 = CurrentTheme.Accent
+                    local grad = glow:FindFirstChildOfClass("UIGradient")
+                    if grad then
+                        grad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
+                    end
+                end
+                if s.isActive then
+                    s.btn.BackgroundTransparency = 1
+                else
+                    s.btn.BackgroundTransparency = 1
+                end
+            end
+        end)
+
+        local getElements = function()
+            local elements = {}
+            local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
+            elements.Section = function(_, config) return createSection(config) end
+            elements.Button   = function(_, config) return createSection("", nil, true).Button(config) end
+            elements.Toggle   = function(_, config) return createSection("", nil, true).Toggle(config) end
+            elements.Slider   = function(_, config) return createSection("", nil, true).Slider(config) end
+            elements.Dropdown = function(_, config) return createSection("", nil, true).Dropdown(config) end
+            elements.Keybind  = function(_, config) return createSection("", nil, true).Keybind(config) end
+            elements.Textbox  = function(_, config) return createSection("", nil, true).Textbox(config) end
+            elements.Input    = function(_, config) return createSection("", nil, true).Input(config) end
+            elements.Label    = function(_, config) return createSection("", nil, true).Label(config) end
+            elements.SubLabel = function(_, config) return createSection("", nil, true).SubLabel(config) end
+            elements.Paragraph= function(_, config) return createSection("", nil, true).Paragraph(config) end
+            elements.ColorPicker= function(_, config) return createSection("", nil, true).ColorPicker(config) end
+            elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
+            return elements
+        end
+
+        return getElements()
     end
 
     return Window
