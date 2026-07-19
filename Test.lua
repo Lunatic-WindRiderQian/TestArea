@@ -2543,7 +2543,7 @@ function Fenglib:CreateWindow(Config)
 
     Window._currentCategory = nil
 
-    -- ====== 修正后的 Category 函数（箭头移至右侧，使用 chevron-down 图标） ======
+    -- ====== 修正后的 Category 函数（文字恢复左边距，箭头在右侧，图标更换为 9805044719） ======
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
@@ -2564,31 +2564,56 @@ function Fenglib:CreateWindow(Config)
         catLayout.Padding = UDim.new(0, 0)
         catLayout.Parent = categoryFrame
 
-        -- 头部按钮（直接显示文字，并添加右侧箭头）
+        -- 头部按钮（内嵌布局以控制文字左边距）
         local header = Instance.new("TextButton")
         header.Size = UDim2.new(1, 0, 0, 28)
         header.BackgroundTransparency = 1
-        header.Text = name
-        header.TextXAlignment = Enum.TextXAlignment.Left
-        header.Font = Enum.Font.GothamBold
-        header.TextSize = 13
-        header.TextColor3 = CurrentTheme.Text
-        header.TextTransparency = 0.5
+        header.Text = ""
         header.Parent = categoryFrame
-        AddToRegistry(header, "TextColor3", "Text")
 
-        -- 右侧箭头（使用 chevron-down 图标）
+        -- 内容容器（水平布局：文字 + 箭头）
+        local contentFrame = Instance.new("Frame")
+        contentFrame.Size = UDim2.new(1, 0, 1, 0)
+        contentFrame.BackgroundTransparency = 1
+        contentFrame.Parent = header
+
+        local contentLayout = Instance.new("UIListLayout")
+        contentLayout.FillDirection = Enum.FillDirection.Horizontal
+        contentLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        contentLayout.Padding = UDim.new(0, 0)
+        contentLayout.Parent = contentFrame
+
+        -- 左右内边距（使文字与边缘保留间距）
+        local contentPadding = Instance.new("UIPadding")
+        contentPadding.PaddingLeft = UDim.new(0, 10)
+        contentPadding.PaddingRight = UDim.new(0, 10)
+        contentPadding.Parent = contentFrame
+
+        -- 文字标签（占据剩余空间）
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -20, 1, 0)  -- 预留箭头空间
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamBold
+        label.Text = name
+        label.TextSize = 13
+        label.TextColor3 = CurrentTheme.Text
+        label.TextTransparency = 0.5
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = contentFrame
+        AddToRegistry(label, "TextColor3", "Text")
+
+        -- 右侧箭头（使用新图标 9805044719）
         local arrow = Instance.new("ImageLabel")
         arrow.Size = UDim2.new(0, 12, 0, 12)
         arrow.BackgroundTransparency = 1
-        arrow.Image = "rbxassetid://18865373378"          -- 向下箭头
+        arrow.Image = "rbxassetid://9805044719"       -- 新箭头图标
         arrow.ImageColor3 = CurrentTheme.Text
         arrow.ImageTransparency = 0.3
         arrow.Visible = collapsible
-        arrow.Rotation = opened and 0 or 180              -- 折叠时旋转 180°
-        arrow.Parent = header
+        arrow.Rotation = opened and 0 or 180          -- 展开朝下，折叠朝上
+        arrow.Parent = contentFrame
         arrow.AnchorPoint = Vector2.new(1, 0.5)
-        arrow.Position = UDim2.new(1, -10, 0.5, 0)        -- 距离右边缘 10px
+        arrow.Position = UDim2.new(1, 0, 0.5, 0)      -- 固定在右侧
         AddToRegistry(arrow, "ImageColor3", "Text")
 
         -- 内容容器（保持不变）
@@ -2639,7 +2664,7 @@ function Fenglib:CreateWindow(Config)
         local function toggleCategory()
             if not collapsible then return end
             opened = not opened
-            Tween(arrow, { Rotation = opened and 0 or 180 }, 0.25)   -- 旋转 180°
+            Tween(arrow, { Rotation = opened and 0 or 180 }, 0.25)
             local targetHeight = opened and getContentHeight() or 0
             setContentHeight(targetHeight, true)
         end
@@ -2668,7 +2693,7 @@ function Fenglib:CreateWindow(Config)
             content = content,
             contentList = contentList,
             header = header,
-            label = header,        -- 直接复用 header，因为 header 现在就是文本按钮
+            label = label,
             arrow = arrow,
             collapsible = collapsible,
             opened = opened,
@@ -2676,7 +2701,7 @@ function Fenglib:CreateWindow(Config)
         }
 
         table.insert(ThemeListeners, function()
-            header.TextColor3 = CurrentTheme.Text
+            label.TextColor3 = CurrentTheme.Text
             arrow.ImageColor3 = CurrentTheme.Text
         end)
 
