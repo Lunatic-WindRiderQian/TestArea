@@ -2543,12 +2543,10 @@ function Fenglib:CreateWindow(Config)
 
     Window._currentCategory = nil
 
-    -- ====== 修正后的 Category 函数（正确识别 Opened = false） ======
+    -- ====== 修正后的 Category 函数（箭头移至右侧，使用 chevron-down 图标） ======
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
-
-        -- 修复：正确处理 Opened 参数，允许初始折叠
         local opened = true
         if type(config) == "table" and config.Opened ~= nil then
             opened = config.Opened
@@ -2566,40 +2564,34 @@ function Fenglib:CreateWindow(Config)
         catLayout.Padding = UDim.new(0, 0)
         catLayout.Parent = categoryFrame
 
+        -- 头部按钮（直接显示文字，并添加右侧箭头）
         local header = Instance.new("TextButton")
         header.Size = UDim2.new(1, 0, 0, 28)
         header.BackgroundTransparency = 1
-        header.Text = ""
+        header.Text = name
+        header.TextXAlignment = Enum.TextXAlignment.Left
+        header.Font = Enum.Font.GothamBold
+        header.TextSize = 13
+        header.TextColor3 = CurrentTheme.Text
+        header.TextTransparency = 0.5
         header.Parent = categoryFrame
+        AddToRegistry(header, "TextColor3", "Text")
 
-        local headerLayout = Instance.new("UIListLayout")
-        headerLayout.FillDirection = Enum.FillDirection.Horizontal
-        headerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-        headerLayout.Padding = UDim.new(0, 4)
-        headerLayout.Parent = header
-
+        -- 右侧箭头（使用 chevron-down 图标）
         local arrow = Instance.new("ImageLabel")
         arrow.Size = UDim2.new(0, 12, 0, 12)
         arrow.BackgroundTransparency = 1
-        arrow.Image = "rbxassetid://6031090998"
+        arrow.Image = "rbxassetid://18865373378"          -- 向下箭头
         arrow.ImageColor3 = CurrentTheme.Text
         arrow.ImageTransparency = 0.3
         arrow.Visible = collapsible
-        arrow.Rotation = opened and 0 or -90
+        arrow.Rotation = opened and 0 or 180              -- 折叠时旋转 180°
         arrow.Parent = header
+        arrow.AnchorPoint = Vector2.new(1, 0.5)
+        arrow.Position = UDim2.new(1, -10, 0.5, 0)        -- 距离右边缘 10px
+        AddToRegistry(arrow, "ImageColor3", "Text")
 
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, -20, 1, 0)
-        label.BackgroundTransparency = 1
-        label.Font = Enum.Font.GothamBold
-        label.Text = name
-        label.TextSize = 13
-        label.TextColor3 = CurrentTheme.Text
-        label.TextTransparency = 0.5
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = header
-
-        -- 内容容器
+        -- 内容容器（保持不变）
         local content = Instance.new("Frame")
         content.Size = UDim2.new(1, 0, 0, 0)
         content.BackgroundTransparency = 1
@@ -2647,7 +2639,7 @@ function Fenglib:CreateWindow(Config)
         local function toggleCategory()
             if not collapsible then return end
             opened = not opened
-            Tween(arrow, { Rotation = opened and 0 or -90 }, 0.25)
+            Tween(arrow, { Rotation = opened and 0 or 180 }, 0.25)   -- 旋转 180°
             local targetHeight = opened and getContentHeight() or 0
             setContentHeight(targetHeight, true)
         end
@@ -2676,7 +2668,7 @@ function Fenglib:CreateWindow(Config)
             content = content,
             contentList = contentList,
             header = header,
-            label = label,
+            label = header,        -- 直接复用 header，因为 header 现在就是文本按钮
             arrow = arrow,
             collapsible = collapsible,
             opened = opened,
@@ -2684,7 +2676,7 @@ function Fenglib:CreateWindow(Config)
         }
 
         table.insert(ThemeListeners, function()
-            label.TextColor3 = CurrentTheme.Text
+            header.TextColor3 = CurrentTheme.Text
             arrow.ImageColor3 = CurrentTheme.Text
         end)
 
