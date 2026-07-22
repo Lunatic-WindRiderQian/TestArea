@@ -1777,88 +1777,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        child.SubLabel = function(_, config)
-            local subLabelText = config.Name or ""
-            local SubLabelFrame = Instance.new("Frame")
-            SubLabelFrame.Size = UDim2.new(1, 0, 0, 42)
-            SubLabelFrame.Parent = contentHolder
-            SubLabelFrame.BackgroundTransparency = 0.05
-            Instance.new("UICorner", SubLabelFrame).CornerRadius = UDim.new(0, 4)
-            AddToRegistry(SubLabelFrame, "BackgroundColor3", "Top")
-
-            local TextLabel = Instance.new("TextLabel")
-            TextLabel.Size = UDim2.new(1, -20, 1, 0)
-            TextLabel.Position = UDim2.new(0, 10, 0, 0)
-            TextLabel.BackgroundTransparency = 1
-            TextLabel.Font = Enum.Font.Gotham
-            TextLabel.Text = subLabelText
-            TextLabel.TextSize = 12
-            TextLabel.TextTransparency = 0.5
-            TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-            TextLabel.TextTruncate = Enum.TextTruncate.AtEnd
-            TextLabel.Parent = SubLabelFrame
-            AddToRegistry(TextLabel, "TextColor3", "Text")
-
-            local self = {}
-            function self.UpdateText(newText) TextLabel.Text = newText end
-            function self.SetVisible(state) SubLabelFrame.Visible = state end
-            return self
-        end
-
-        child.Paragraph = function(_, config)
-            local headerText = config.Header or ""
-            local bodyText = config.Body or ""
-            local ParaFrame = Instance.new("Frame")
-            ParaFrame.Size = UDim2.new(1, 0, 0, 0)
-            ParaFrame.AutomaticSize = Enum.AutomaticSize.Y
-            ParaFrame.Parent = contentHolder
-            ParaFrame.BackgroundTransparency = 0.05
-            Instance.new("UICorner", ParaFrame).CornerRadius = UDim.new(0, 4)
-            AddToRegistry(ParaFrame, "BackgroundColor3", "Top")
-
-            local Padding = Instance.new("UIPadding")
-            Padding.PaddingLeft = UDim.new(0, 12)
-            Padding.PaddingRight = UDim.new(0, 12)
-            Padding.PaddingTop = UDim.new(0, 12)
-            Padding.PaddingBottom = UDim.new(0, 12)
-            Padding.Parent = ParaFrame
-
-            local Layout = Instance.new("UIListLayout")
-            Layout.Padding = UDim.new(0, 5)
-            Layout.SortOrder = Enum.SortOrder.LayoutOrder
-            Layout.Parent = ParaFrame
-
-            local HeaderLabel = Instance.new("TextLabel")
-            HeaderLabel.Size = UDim2.new(1, 0, 0, 0)
-            HeaderLabel.AutomaticSize = Enum.AutomaticSize.Y
-            HeaderLabel.BackgroundTransparency = 1
-            HeaderLabel.Font = Enum.Font.GothamBold
-            HeaderLabel.Text = headerText
-            HeaderLabel.TextSize = 14
-            HeaderLabel.TextXAlignment = Enum.TextXAlignment.Left
-            HeaderLabel.TextWrapped = true
-            HeaderLabel.Parent = ParaFrame
-            AddToRegistry(HeaderLabel, "TextColor3", "Accent")
-
-            local BodyLabel = Instance.new("TextLabel")
-            BodyLabel.Size = UDim2.new(1, 0, 0, 0)
-            BodyLabel.AutomaticSize = Enum.AutomaticSize.Y
-            BodyLabel.BackgroundTransparency = 1
-            BodyLabel.Font = Enum.Font.Gotham
-            BodyLabel.Text = bodyText
-            BodyLabel.TextSize = 13
-            BodyLabel.TextXAlignment = Enum.TextXAlignment.Left
-            BodyLabel.TextWrapped = true
-            BodyLabel.Parent = ParaFrame
-            AddToRegistry(BodyLabel, "TextColor3", "Text")
-
-            local self = {}
-            function self.UpdateHeader(newHeader) HeaderLabel.Text = newHeader end
-            function self.UpdateBody(newBody) BodyLabel.Text = newBody end
-            function self.SetVisible(state) ParaFrame.Visible = state end
-            return self
-        end
-
         child.Image = function(_, config)
             config = config or {}
             local title = config.Title or "Image"
@@ -2058,6 +1976,75 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             return self
         end
+
+        -- ------------------------------------------------------------
+        -- Divider 组件（从 metUI 移植）
+        -- ------------------------------------------------------------
+        child.Divider = function(_, config)
+            local labelText = config and config.Name or config or ""
+
+            local container = Instance.new("Frame")
+            container.Size = UDim2.new(1, 0, 0, (labelText ~= "" and 22 or 12))
+            container.BackgroundTransparency = 1
+            container.Parent = contentHolder
+
+            if labelText ~= "" then
+                -- 左线
+                local leftLine = Instance.new("Frame")
+                leftLine.Size = UDim2.new(0.35, -6, 0, 1)
+                leftLine.Position = UDim2.new(0, 0, 0.5, 0)
+                leftLine.AnchorPoint = Vector2.new(0, 0.5)
+                leftLine.BackgroundColor3 = CurrentTheme.Stroke
+                leftLine.Parent = container
+                AddToRegistry(leftLine, "BackgroundColor3", "Stroke")
+
+                -- 右线
+                local rightLine = Instance.new("Frame")
+                rightLine.Size = UDim2.new(0.35, -6, 0, 1)
+                rightLine.Position = UDim2.new(1, 0, 0.5, 0)
+                rightLine.AnchorPoint = Vector2.new(1, 0.5)
+                rightLine.BackgroundColor3 = CurrentTheme.Stroke
+                rightLine.Parent = container
+                AddToRegistry(rightLine, "BackgroundColor3", "Stroke")
+
+                -- 标签
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(0, 0, 1, 0)
+                label.AutomaticSize = Enum.AutomaticSize.X
+                label.Position = UDim2.new(0.5, 0, 0.5, 0)
+                label.AnchorPoint = Vector2.new(0.5, 0.5)
+                label.BackgroundTransparency = 1
+                label.Font = Enum.Font.GothamMedium
+                label.Text = labelText
+                label.TextSize = 12
+                label.TextColor3 = CurrentTheme.Text
+                label.TextTransparency = 0.4
+                label.Parent = container
+                AddToRegistry(label, "TextColor3", "Text")
+            else
+                -- 完整横线
+                local line = Instance.new("Frame")
+                line.Size = UDim2.new(1, 0, 0, 1)
+                line.Position = UDim2.new(0, 0, 0.5, 0)
+                line.AnchorPoint = Vector2.new(0, 0.5)
+                line.BackgroundColor3 = CurrentTheme.Stroke
+                line.Parent = container
+                AddToRegistry(line, "BackgroundColor3", "Stroke")
+            end
+
+            local self = {}
+            function self.SetVisible(state)
+                container.Visible = state
+            end
+            function self.UpdateText(newText)
+                local label = container:FindFirstChildOfClass("TextLabel")
+                if label then
+                    label.Text = newText
+                end
+            end
+            return self
+        end
+        -- ------------------------------------------------------------
 
         return child
     end
@@ -2543,7 +2530,6 @@ function Fenglib:CreateWindow(Config)
 
     Window._currentCategory = nil
 
-    -- ====== 修正后的 Category 函数（文字右移，图标更换） ======
     function Window:Category(config)
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
@@ -2564,7 +2550,6 @@ function Fenglib:CreateWindow(Config)
         catLayout.Padding = UDim.new(0, 0)
         catLayout.Parent = categoryFrame
 
-        -- 头部按钮（直接显示文字，并添加左侧内边距）
         local header = Instance.new("TextButton")
         header.Size = UDim2.new(1, 0, 0, 28)
         header.BackgroundTransparency = 1
@@ -2575,27 +2560,24 @@ function Fenglib:CreateWindow(Config)
         header.TextColor3 = CurrentTheme.Text
         header.TextTransparency = 0.5
         header.Parent = categoryFrame
-        -- 添加左侧内边距（模拟原来图标占位）
         local pad = Instance.new("UIPadding")
-        pad.PaddingLeft = UDim.new(0, 10)  -- 文字向右移动
+        pad.PaddingLeft = UDim.new(0, 10)
         pad.Parent = header
         AddToRegistry(header, "TextColor3", "Text")
 
-        -- 右侧箭头（使用用户指定的图标 8240930340）
         local arrow = Instance.new("ImageLabel")
         arrow.Size = UDim2.new(0, 12, 0, 12)
         arrow.BackgroundTransparency = 1
-        arrow.Image = "rbxassetid://8240930340"          -- 替换为指定图标
+        arrow.Image = "rbxassetid://8240930340"
         arrow.ImageColor3 = CurrentTheme.Text
         arrow.ImageTransparency = 0.3
         arrow.Visible = collapsible
-        arrow.Rotation = opened and 0 or 180              -- 折叠时旋转 180°
+        arrow.Rotation = opened and 0 or 180
         arrow.Parent = header
         arrow.AnchorPoint = Vector2.new(1, 0.5)
-        arrow.Position = UDim2.new(1, -10, 0.5, 0)        -- 距离右边缘 10px
+        arrow.Position = UDim2.new(1, -10, 0.5, 0)
         AddToRegistry(arrow, "ImageColor3", "Text")
 
-        -- 内容容器（保持不变）
         local content = Instance.new("Frame")
         content.Size = UDim2.new(1, 0, 0, 0)
         content.BackgroundTransparency = 1
@@ -2643,7 +2625,7 @@ function Fenglib:CreateWindow(Config)
         local function toggleCategory()
             if not collapsible then return end
             opened = not opened
-            Tween(arrow, { Rotation = opened and 0 or 180 }, 0.25)   -- 旋转 180°
+            Tween(arrow, { Rotation = opened and 0 or 180 }, 0.25)
             local targetHeight = opened and getContentHeight() or 0
             setContentHeight(targetHeight, true)
         end
@@ -2686,7 +2668,6 @@ function Fenglib:CreateWindow(Config)
 
         return Window._currentCategory
     end
-    -- ====== Category 函数结束 ======
 
     function Window:TabDivider()
         local parentContainer = TabScroll
@@ -3125,12 +3106,10 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- 非卡片模式
     RightContainer.ClipsDescendants = true
 
     Window._activeTab = nil
     Window._tabs = {}
-    -- _currentCategory 已在上面定义
 
     function Window:Tab(name, icon)
         local parentContainer = TabScroll
@@ -3342,10 +3321,9 @@ function Fenglib:CreateWindow(Config)
             elements.Textbox  = function(_, config) return createSection("", nil, true).Textbox(config) end
             elements.Input    = function(_, config) return createSection("", nil, true).Input(config) end
             elements.Label    = function(_, config) return createSection("", nil, true).Label(config) end
-            elements.SubLabel = function(_, config) return createSection("", nil, true).SubLabel(config) end
-            elements.Paragraph= function(_, config) return createSection("", nil, true).Paragraph(config) end
             elements.ColorPicker= function(_, config) return createSection("", nil, true).ColorPicker(config) end
             elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
+            elements.Divider  = function(_, config) return createSection("", nil, true).Divider(config) end
             return elements
         end
 
