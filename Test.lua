@@ -1977,9 +1977,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ------------------------------------------------------------
-        -- Divider 组件（从 metUI 移植）
-        -- ------------------------------------------------------------
         child.Divider = function(_, config)
             local labelText = config and config.Name or config or ""
 
@@ -1989,7 +1986,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             container.Parent = contentHolder
 
             if labelText ~= "" then
-                -- 左线
                 local leftLine = Instance.new("Frame")
                 leftLine.Size = UDim2.new(0.35, -6, 0, 1)
                 leftLine.Position = UDim2.new(0, 0, 0.5, 0)
@@ -1998,7 +1994,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 leftLine.Parent = container
                 AddToRegistry(leftLine, "BackgroundColor3", "Stroke")
 
-                -- 右线
                 local rightLine = Instance.new("Frame")
                 rightLine.Size = UDim2.new(0.35, -6, 0, 1)
                 rightLine.Position = UDim2.new(1, 0, 0.5, 0)
@@ -2007,7 +2002,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 rightLine.Parent = container
                 AddToRegistry(rightLine, "BackgroundColor3", "Stroke")
 
-                -- 标签
                 local label = Instance.new("TextLabel")
                 label.Size = UDim2.new(0, 0, 1, 0)
                 label.AutomaticSize = Enum.AutomaticSize.X
@@ -2022,7 +2016,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 label.Parent = container
                 AddToRegistry(label, "TextColor3", "Text")
             else
-                -- 完整横线
                 local line = Instance.new("Frame")
                 line.Size = UDim2.new(1, 0, 0, 1)
                 line.Position = UDim2.new(0, 0, 0.5, 0)
@@ -2044,7 +2037,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             return self
         end
-        -- ------------------------------------------------------------
 
         return child
     end
@@ -2117,12 +2109,16 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.PaddingBottom = UDim.new(0, 5)
     HolderPadding.Parent = NotificationHolder
 
+    local FINAL_WIDTH = 500
+    local FINAL_HEIGHT = 299
+
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 0, 0, 0) 
+    MainFrame.Size = UDim2.new(0, 0, 0, 0)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = true
     MainFrame.BackgroundTransparency = 0.15
+    MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 0)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
@@ -2309,6 +2305,105 @@ function Fenglib:CreateWindow(Config)
             RunService.RenderStepped:Wait()
         end
     end)
+
+    -- =================== 启动动画部分 ===================
+    -- Logo Intro
+    local IntroHolder = Instance.new("Frame")
+    IntroHolder.Size = UDim2.new(1, 999999, 1, 999999)
+    IntroHolder.AnchorPoint = Vector2.new(0.5, 0.5)
+    IntroHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
+    IntroHolder.BackgroundColor3 = Color3.fromRGB(230, 230, 235)
+    IntroHolder.BackgroundTransparency = 1
+    IntroHolder.ZIndex = 50
+    IntroHolder.Parent = ScreenGui
+
+    local function formatIcon(asset)
+        if tonumber(asset) then
+            return "rbxassetid://" .. asset
+        elseif type(asset) == "string" and asset:match("^rbxassetid://") then
+            return asset
+        elseif type(asset) == "string" and asset:match("^http") then
+            return asset
+        elseif type(asset) == "string" then
+            return "rbxassetid://" .. asset
+        end
+        return "rbxassetid://78229538488090"
+    end
+
+    local IntroLogo = Instance.new("ImageLabel")
+    IntroLogo.Size = UDim2.new(0, 0, 0, 0)
+    IntroLogo.AnchorPoint = Vector2.new(0.5, 0.5)
+    IntroLogo.Position = UDim2.new(0.5, 0, 0.5, -16)
+    IntroLogo.BackgroundTransparency = 1
+    IntroLogo.Image = formatIcon(IconAsset or "78229538488090")
+    IntroLogo.ZIndex = 51
+    IntroLogo.Parent = IntroHolder
+    Instance.new("UICorner", IntroLogo).CornerRadius = UDim.new(1, 0)
+
+    local IntroTitle = Instance.new("TextLabel")
+    IntroTitle.Size = UDim2.new(0, 0, 0, 20)
+    IntroTitle.AnchorPoint = Vector2.new(0.5, 0.5)
+    IntroTitle.Position = UDim2.new(0.5, 0, 0.5, 40)
+    IntroTitle.BackgroundTransparency = 1
+    IntroTitle.Font = Enum.Font.GothamBold
+    IntroTitle.Text = Title
+    IntroTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    IntroTitle.TextTransparency = 1
+    IntroTitle.TextSize = 20
+    IntroTitle.ZIndex = 51
+    IntroTitle.Parent = IntroHolder
+
+    local IntroSub = Instance.new("TextLabel")
+    IntroSub.Size = UDim2.new(0, 0, 0, 16)
+    IntroSub.AnchorPoint = Vector2.new(0.5, 0.5)
+    IntroSub.Position = UDim2.new(0.5, 0, 0.5, 62)
+    IntroSub.BackgroundTransparency = 1
+    IntroSub.Font = Enum.Font.Gotham
+    IntroSub.Text = Subtitle or ""
+    IntroSub.TextColor3 = Color3.fromRGB(200, 200, 200)
+    IntroSub.TextTransparency = 1
+    IntroSub.TextSize = 16
+    IntroSub.ZIndex = 51
+    IntroSub.Parent = IntroHolder
+
+    -- 播放 Intro 动画
+    TweenService:Create(IntroHolder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        BackgroundTransparency = 0.85
+    }):Play()
+    TweenService:Create(IntroLogo, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 82, 0, 82)
+    }):Play()
+    TweenService:Create(IntroTitle, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        TextTransparency = 0
+    }):Play()
+    TweenService:Create(IntroSub, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        TextTransparency = 0
+    }):Play()
+
+    task.wait(1.3)
+
+    -- 显示主窗口并播放缩放动画（同时 Intro 淡出）
+    MainFrame.Visible = true
+    TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT)
+    }):Play()
+
+    TweenService:Create(IntroHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        BackgroundTransparency = 1
+    }):Play()
+    TweenService:Create(IntroTitle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        TextTransparency = 1
+    }):Play()
+    TweenService:Create(IntroSub, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        TextTransparency = 1
+    }):Play()
+    TweenService:Create(IntroLogo, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 0, 0, 0)
+    }):Play()
+
+    task.wait(0.35)
+    IntroHolder:Destroy()
+    -- =================== 动画结束 ===================
 
     local topbarHeight = Subtitle and 45 or 40
 
@@ -2794,8 +2889,6 @@ function Fenglib:CreateWindow(Config)
     PageContainer.Parent = RightContainer
 
     MainFrame.ClipsDescendants = false
-
-    Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 299)}, 0.6)
 
     local dragging = false
     local dragStartPos = nil
