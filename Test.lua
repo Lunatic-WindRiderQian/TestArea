@@ -3,7 +3,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
+local HttpService = game:GetService("HttpService") 
 local TextService = game:GetService("TextService")
 local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
@@ -11,10 +11,10 @@ local Camera = workspace.CurrentCamera
 
 local Fenglib = {}
 local RainbowEnabled = false
-local RainbowType = "Animated/Cycling Rainbow"
+local RainbowType = "Animated/Cycling Rainbow" 
 local RainbowSpeed = 1.0
-local Registry = {}
-local ConfigObjects = {}
+local Registry = {} 
+local ConfigObjects = {} 
 local ThemeListeners = {}
 local WindowCleanup = {}
 
@@ -327,17 +327,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         updateSwitch(false)
 
-        local contentContainerSection = Instance.new("Frame")
+        -- 🔄 核心改动：将内容容器改为 ScrollingFrame，实现滚动并保持圆角裁剪
+        local contentContainerSection = Instance.new("ScrollingFrame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
         contentContainerSection.BackgroundTransparency = 0.65
         contentContainerSection.ClipsDescendants = true
+        contentContainerSection.ScrollBarThickness = 4
+        contentContainerSection.ScrollingEnabled = true
+        contentContainerSection.CanvasSize = UDim2.new(0, 0, 0, 0)
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
-        
+
         local contentCorner = Instance.new("UICorner", contentContainerSection)
         contentCorner.CornerRadius = UDim.new(0, 4)
-        
+
         local contentStroke = Instance.new("UIStroke")
         contentStroke.Thickness = 1
         contentStroke.Transparency = 0.5
@@ -345,6 +349,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
 
+        -- 内容容器（放置UI元素）
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -24, 0, 0)
         contentHolder.Position = UDim2.new(0, 12, 0, 4)
@@ -372,7 +377,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function updateSectionHeight(instant)
             local actualContentHeight = getContentHeight()
             local targetContentHeight = open and math.max(0, actualContentHeight) or 0
-            local targetContainerHeight = targetContentHeight + 16
+            local targetContainerHeight = targetContentHeight + 16  -- 上下内边距
             local targetSectionHeight = 46 + targetContainerHeight
 
             if currentContentTween then currentContentTween:Cancel() end
@@ -385,7 +390,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if open then
                 contentContainerSection.Visible = true
                 contentHolder.Visible = true
-                
+
                 currentBgTween = TweenService:Create(contentContainerSection, tweenInfo, {
                     BackgroundTransparency = 0.65
                 })
@@ -411,7 +416,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(1, 0, 0, 46)
                 })
-                
+
                 task.delay((instant and 0 or 0.3) + 0.05, function()
                     if not open and contentContainerSection then
                         contentContainerSection.Visible = false
@@ -424,6 +429,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             currentContentTween:Play()
             currentHolderTween:Play()
             currentSectionTween:Play()
+
+            -- 更新 CanvasSize 使滚动区域匹配内容
+            if open then
+                contentContainerSection.CanvasSize = UDim2.new(0, 0, 0, targetContentHeight + 16)
+            else
+                contentContainerSection.CanvasSize = UDim2.new(0, 0, 0, 0)
+            end
         end
 
         task.spawn(function()
@@ -461,6 +473,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
+        -- 以下为各种控件方法（Button, Toggle, Slider, Dropdown, Keybind, ColorPicker, Input, Textbox, Label, Image, Divider）
+        -- 与原代码完全相同，此处保留
         local child = {}
 
         child.Button = function(_, config)
@@ -2047,10 +2061,10 @@ function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Name or "FengY3"
     local Subtitle = Config.SubName
-    local Keybind = Config.Keybind
+    local Keybind = Config.Keybind 
     local IconAsset = Config.Logo
 
-    Window.RootFolder = Title
+    Window.RootFolder = Title 
     Window.ConfigFolder = Title.."/Config"
     Window.CurrentConfig = ""
 
@@ -2292,7 +2306,7 @@ function Fenglib:CreateWindow(Config)
                     Gradient.Enabled = true; rot = rot + 5; Gradient.Rotation = rot
                     Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))}); Stroke.Color = Color3.new(1,1,1)
                 elseif RainbowType == "Neon/Glowing Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1)
+                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1) 
                 elseif RainbowType == "Pastel Rainbow" then
                     Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
                 elseif RainbowType == "Vertical/Horizontal Fade" then
@@ -2413,13 +2427,13 @@ function Fenglib:CreateWindow(Config)
             IconAsset = "rbxassetid://" .. IconAsset
         end
     else
-        IconAsset = "rbxassetid://78229538488090"
+        IconAsset = "rbxassetid://78229538488090"  
     end
 
     local Icon = Instance.new("ImageLabel")
     Icon.Name = "WindowIcon"
     Icon.Size = UDim2.new(0, 32, 0, 32)
-    Icon.Position = UDim2.new(0, 10, 0.5, -16)
+    Icon.Position = UDim2.new(0, 10, 0.5, -16)  
     Icon.BackgroundTransparency = 1
     Icon.Image = IconAsset
     Icon.Parent = Topbar
@@ -2566,7 +2580,7 @@ function Fenglib:CreateWindow(Config)
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
     if Subtitle then
-        TitleLabel.Size = UDim2.new(1, -180, 0, 20)
+        TitleLabel.Size = UDim2.new(1, -180, 0, 20)   
         TitleLabel.Position = UDim2.new(0, 50, 0, 5)
 
         local SubtitleLabel = Instance.new("TextLabel")
@@ -2587,7 +2601,7 @@ function Fenglib:CreateWindow(Config)
 
     local leftWidth = 160
 
-    -- Left panel（修改为斜切角）
+    -- Left panel
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
@@ -2595,52 +2609,316 @@ function Fenglib:CreateWindow(Config)
     LeftContainer.BackgroundColor3 = CurrentTheme.Main
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
+    local leftCorner = Instance.new("UICorner")
+    leftCorner.CornerRadius = UDim.new(0, 16)
+    leftCorner.Parent = LeftContainer
 
-    -- 不再使用圆角，改用斜切角装饰
-    table.insert(ThemeListeners, function()
-        LeftContainer.BackgroundColor3 = CurrentTheme.Main
-    end)
-
-    -- ===== 斜切角装饰（内凹三角形） =====
-    local function createSlantedCorner(pos, anchor, rotation)
+    -- ===== 三个圆弧角装饰（内凹圆弧，与窗口圆角同向） =====
+    local function createCorner(pos, anchor)
         local container = Instance.new("Frame")
-        container.Size = UDim2.new(0, 20, 0, 20)
+        container.Size = UDim2.new(0, 16, 0, 16)
         container.Position = pos
         container.AnchorPoint = anchor
         container.BackgroundTransparency = 1
         container.BorderSizePixel = 0
         container.ZIndex = 0
-        container.ClipsDescendants = false
+        container.ClipsDescendants = true
         container.Parent = LeftContainer
 
-        local triangle = Instance.new("Frame")
-        triangle.Size = UDim2.new(1, 0, 1, 0)
-        triangle.BackgroundColor3 = CurrentTheme.Main
-        triangle.BackgroundTransparency = 0.3   -- 与 LeftContainer 一致
-        triangle.BorderSizePixel = 0
-        triangle.Parent = container
+        local arc = Instance.new("Frame")
+        arc.Size = UDim2.new(0, 32, 0, 32)
+        local offsetX, offsetY = 0, 0
+        if anchor.X == 0 and anchor.Y == 0 then
+            offsetX, offsetY = -16, -16
+        elseif anchor.X == 1 and anchor.Y == 0 then
+            offsetX, offsetY = 0, -16
+        elseif anchor.X == 1 and anchor.Y == 1 then
+            offsetX, offsetY = 0, 0
+        end
+        arc.Position = UDim2.new(0, offsetX, 0, offsetY)
+        arc.BackgroundColor3 = CurrentTheme.Main
+        arc.BackgroundTransparency = 0.2
+        arc.BorderSizePixel = 0
+        arc.Parent = container
 
-        local grad = Instance.new("UIGradient")
-        grad.Rotation = rotation
-        grad.Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0,     1),
-            NumberSequenceKeypoint.new(0.495, 1),
-            NumberSequenceKeypoint.new(0.505, 0),
-            NumberSequenceKeypoint.new(1,     0)
-        })
-        grad.Parent = triangle
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 16)
+        corner.Parent = arc
 
         table.insert(ThemeListeners, function()
-            triangle.BackgroundColor3 = CurrentTheme.Main
+            arc.BackgroundColor3 = CurrentTheme.Main
         end)
 
         return container
     end
 
-    -- 三个角：左上、右上、右下
-    createSlantedCorner(UDim2.new(0, 0, 0, 0), Vector2.new(0, 0), 45)
-    createSlantedCorner(UDim2.new(1, 0, 0, 0), Vector2.new(1, 0), -45)
-    createSlantedCorner(UDim2.new(1, 0, 1, 0), Vector2.new(1, 1), -135)
+    createCorner(UDim2.new(0, 0, 0, 0), Vector2.new(0, 0))
+    createCorner(UDim2.new(1, 0, 0, 0), Vector2.new(1, 0))
+    createCorner(UDim2.new(1, 0, 1, 0), Vector2.new(1, 1))
+
+    local TabScroll = Instance.new("ScrollingFrame")
+    TabScroll.Size = UDim2.new(1, 0, 1, -55)
+    TabScroll.Position = UDim2.new(0, 0, 0, 0)
+    TabScroll.BackgroundTransparency = 1
+    TabScroll.ScrollBarThickness = 0
+    TabScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+    TabScroll.Parent = LeftContainer
+
+    local TabList = Instance.new("UIListLayout")
+    TabList.Padding = UDim.new(0, 4)
+    TabList.SortOrder = Enum.SortOrder.LayoutOrder
+    TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    TabList.Parent = TabScroll
+
+    local function updateTabCanvas()
+        TabScroll.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y + 20)
+    end
+    TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
+    task.spawn(updateTabCanvas)
+
+    Window._currentCategory = nil
+
+    function Window:Category(config)
+        local name = type(config) == "table" and config.Name or config
+        local collapsible = type(config) == "table" and config.Collapsible or false
+        local opened = true
+        if type(config) == "table" and config.Opened ~= nil then
+            opened = config.Opened
+        end
+
+        local categoryFrame = Instance.new("Frame")
+        categoryFrame.Size = UDim2.new(1, 0, 0, 0)
+        categoryFrame.AutomaticSize = Enum.AutomaticSize.Y
+        categoryFrame.BackgroundTransparency = 1
+        categoryFrame.Parent = TabScroll
+
+        local catLayout = Instance.new("UIListLayout")
+        catLayout.FillDirection = Enum.FillDirection.Vertical
+        catLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        catLayout.Padding = UDim.new(0, 0)
+        catLayout.Parent = categoryFrame
+
+        local header = Instance.new("TextButton")
+        header.Size = UDim2.new(1, 0, 0, 28)
+        header.BackgroundTransparency = 1
+        header.Text = name
+        header.TextXAlignment = Enum.TextXAlignment.Left
+        header.Font = Enum.Font.GothamBold
+        header.TextSize = 13
+        header.TextColor3 = CurrentTheme.Text
+        header.TextTransparency = 0.5
+        header.Parent = categoryFrame
+        local pad = Instance.new("UIPadding")
+        pad.PaddingLeft = UDim.new(0, 10)
+        pad.Parent = header
+        AddToRegistry(header, "TextColor3", "Text")
+
+        local arrow = Instance.new("ImageLabel")
+        arrow.Size = UDim2.new(0, 12, 0, 12)
+        arrow.BackgroundTransparency = 1
+        arrow.Image = "rbxassetid://8240930340"
+        arrow.ImageColor3 = CurrentTheme.Text
+        arrow.ImageTransparency = 0.3
+        arrow.Visible = collapsible
+        arrow.Rotation = opened and 0 or 180
+        arrow.Parent = header
+        arrow.AnchorPoint = Vector2.new(1, 0.5)
+        arrow.Position = UDim2.new(1, -10, 0.5, 0)
+        AddToRegistry(arrow, "ImageColor3", "Text")
+
+        local content = Instance.new("Frame")
+        content.Size = UDim2.new(1, 0, 0, 0)
+        content.BackgroundTransparency = 1
+        content.AutomaticSize = Enum.AutomaticSize.None
+        content.ClipsDescendants = true
+        content.Visible = true
+        content.Parent = categoryFrame
+
+        local contentList = Instance.new("UIListLayout")
+        contentList.Padding = UDim.new(0, 4)
+        contentList.SortOrder = Enum.SortOrder.LayoutOrder
+        contentList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        contentList.Parent = content
+
+        local currentTween = nil
+
+        local function getContentHeight()
+            return contentList.AbsoluteContentSize.Y or 0
+        end
+
+        local function setContentHeight(targetHeight, animate)
+            targetHeight = math.max(0, targetHeight)
+            local currentHeight = content.Size.Y.Offset
+            if animate and currentHeight ~= targetHeight then
+                if currentTween then
+                    currentTween:Cancel()
+                    currentTween = nil
+                end
+                currentTween = TweenService:Create(
+                    content,
+                    TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+                    { Size = UDim2.new(1, 0, 0, targetHeight) }
+                )
+                currentTween:Play()
+                currentTween.Completed:Connect(function()
+                    currentTween = nil
+                    task.spawn(updateTabCanvas)
+                end)
+            else
+                content.Size = UDim2.new(1, 0, 0, targetHeight)
+                task.spawn(updateTabCanvas)
+            end
+        end
+
+        local function toggleCategory()
+            if not collapsible then return end
+            opened = not opened
+            Tween(arrow, { Rotation = opened and 0 or 180 }, 0.25)
+            local targetHeight = opened and getContentHeight() or 0
+            setContentHeight(targetHeight, true)
+        end
+
+        header.MouseButton1Click:Connect(toggleCategory)
+
+        contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if opened then
+                local h = getContentHeight()
+                if math.abs(h - content.Size.Y.Offset) > 0.5 then
+                    setContentHeight(h, false)
+                end
+            end
+        end)
+
+        task.spawn(function()
+            task.wait()
+            local h = getContentHeight()
+            local initialHeight = opened and h or 0
+            content.Size = UDim2.new(1, 0, 0, initialHeight)
+            updateTabCanvas()
+        end)
+
+        Window._currentCategory = {
+            frame = categoryFrame,
+            content = content,
+            contentList = contentList,
+            header = header,
+            label = header,
+            arrow = arrow,
+            collapsible = collapsible,
+            opened = opened,
+            toggle = toggleCategory
+        }
+
+        table.insert(ThemeListeners, function()
+            header.TextColor3 = CurrentTheme.Text
+            arrow.ImageColor3 = CurrentTheme.Text
+        end)
+
+        return Window._currentCategory
+    end
+
+    function Window:TabDivider()
+        local parentContainer = TabScroll
+        if Window._currentCategory then
+            parentContainer = Window._currentCategory.content
+        end
+        local line = Instance.new("Frame")
+        line.Size = UDim2.new(1, -20, 0, 1)
+        line.Position = UDim2.new(0, 10, 0, 0)
+        line.BackgroundColor3 = CurrentTheme.Stroke
+        line.BackgroundTransparency = 0.5
+        line.BorderSizePixel = 0
+        line.Parent = parentContainer
+        AddToRegistry(line, "BackgroundColor3", "Stroke")
+        table.insert(ThemeListeners, function()
+            line.BackgroundColor3 = CurrentTheme.Stroke
+        end)
+    end
+
+    local ProfileFrame = Instance.new("Frame")
+    ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
+    ProfileFrame.Position = UDim2.new(0, 10, 1, -10)
+    ProfileFrame.AnchorPoint = Vector2.new(0, 1)
+    ProfileFrame.BackgroundTransparency = 0.05
+    ProfileFrame.Parent = LeftContainer
+    Instance.new("UICorner", ProfileFrame).CornerRadius = UDim.new(0, 10)
+    AddToRegistry(ProfileFrame, "BackgroundColor3", "Top")
+
+    local Avatar = Instance.new("ImageLabel")
+    Avatar.Size = UDim2.new(0, 26, 0, 26)
+    Avatar.Position = UDim2.new(0, 8, 0.5, -13)
+    Avatar.BackgroundColor3 = Color3.fromRGB(20,20,20)
+    Avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+    Avatar.Parent = ProfileFrame
+    Instance.new("UICorner", Avatar).CornerRadius = UDim.new(1,0)
+
+    local realDisplayName = LocalPlayer.DisplayName
+    local realUsername = "@" .. LocalPlayer.Name
+
+    local DispName = Instance.new("TextLabel")
+    DispName.Text = realDisplayName
+    DispName.Size = UDim2.new(1, -45, 0, 15)
+    DispName.Position = UDim2.new(0, 40, 0, 5)
+    DispName.BackgroundTransparency = 1
+    DispName.Font = Enum.Font.GothamMedium
+    DispName.TextSize = 11
+    DispName.TextXAlignment = Enum.TextXAlignment.Left
+    DispName.Parent = ProfileFrame
+    AddToRegistry(DispName, "TextColor3", "Text")
+
+    local UsrName = Instance.new("TextLabel")
+    UsrName.Text = realUsername
+    UsrName.Size = UDim2.new(1, -45, 0, 15)
+    UsrName.Position = UDim2.new(0, 40, 0, 19)
+    UsrName.BackgroundTransparency = 1
+    UsrName.Font = Enum.Font.Gotham
+    UsrName.TextSize = 10
+    UsrName.TextTransparency = 0.5
+    UsrName.TextXAlignment = Enum.TextXAlignment.Left
+    UsrName.Parent = ProfileFrame
+    AddToRegistry(UsrName, "TextColor3", "Text")
+
+    local AnonBtn = Instance.new("TextButton")
+    AnonBtn.Size = UDim2.new(0, 18, 0, 18)
+    AnonBtn.Position = UDim2.new(1, -6, 0.5, 0)
+    AnonBtn.AnchorPoint = Vector2.new(1, 0.5)
+    AnonBtn.BackgroundTransparency = 0.7
+    AnonBtn.Text = ""
+    AnonBtn.Parent = ProfileFrame
+    Instance.new("UICorner", AnonBtn).CornerRadius = UDim.new(1, 0)
+    AddToRegistry(AnonBtn, "BackgroundColor3", "Top")
+
+    local EyeIcon = Instance.new("ImageLabel")
+    EyeIcon.Size = UDim2.new(1, 0, 1, 0)
+    EyeIcon.BackgroundTransparency = 1
+    EyeIcon.Image = "rbxassetid://10723346959"
+    EyeIcon.ImageColor3 = CurrentTheme.Text
+    EyeIcon.ImageTransparency = 0.3
+    EyeIcon.Parent = AnonBtn
+    AddToRegistry(EyeIcon, "ImageColor3", "Text")
+
+    local anonActive = false
+    local function setAnon(active)
+        anonActive = active
+        if active then
+            DispName.Text = "脚本杀手"
+            UsrName.Text = "@•••••••"
+            EyeIcon.Image = "rbxassetid://10723346871"
+        else
+            DispName.Text = realDisplayName
+            UsrName.Text = realUsername
+            EyeIcon.Image = "rbxassetid://10723346959"
+        end
+    end
+
+    AnonBtn.MouseButton1Click:Connect(function()
+        setAnon(not anonActive)
+    end)
+
+    table.insert(ThemeListeners, function()
+        AnonBtn.BackgroundColor3 = CurrentTheme.Top
+        EyeIcon.ImageColor3 = CurrentTheme.Text
+    end)
 
     -- Right container
     local RightContainer = Instance.new("Frame")
@@ -2737,14 +3015,14 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Parent = ScreenGui
     OpenButton.BackgroundColor3 = CurrentTheme.Accent
     OpenButton.BackgroundTransparency = 0.85
-    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)
+    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)  
     OpenButton.Size = UDim2.new(0, 40, 0, 40)
     OpenButton.Active = true
-    OpenButton.Draggable = true
-    OpenButton.Image = "rbxassetid://84830962019412"
+    OpenButton.Draggable = true  
+    OpenButton.Image = "rbxassetid://84830962019412"  
     OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
     OpenButton.ImageTransparency = 0.15
-    OpenButton.ZIndex = 10
+    OpenButton.ZIndex = 10  
 
     OpenButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -2962,9 +3240,9 @@ function Fenglib:CreateWindow(Config)
     end
 
     function Window:SetKeybind(key) Keybind = key end
-    function Window:Destroy()
+    function Window:Destroy() 
         for _, fn in ipairs(WindowCleanup) do pcall(fn) end
-        ScreenGui:Destroy()
+        ScreenGui:Destroy() 
     end
     function Window:SetSubtitle(newSubtitle)
         for _, child in ipairs(Topbar:GetChildren()) do
