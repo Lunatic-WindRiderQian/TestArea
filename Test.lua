@@ -2120,7 +2120,6 @@ function Fenglib:CreateWindow(Config)
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
-    -- 主框架圆角改为 16（保持统一）
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
@@ -2307,8 +2306,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- =================== 启动动画部分 ===================
-    -- Logo Intro
+    -- Intro animation
     local IntroHolder = Instance.new("Frame")
     IntroHolder.Size = UDim2.new(1, 999999, 1, 999999)
     IntroHolder.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -2367,7 +2365,6 @@ function Fenglib:CreateWindow(Config)
     IntroSub.ZIndex = 51
     IntroSub.Parent = IntroHolder
 
-    -- 播放 Intro 动画
     TweenService:Create(IntroHolder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         BackgroundTransparency = 0.85
     }):Play()
@@ -2383,7 +2380,6 @@ function Fenglib:CreateWindow(Config)
 
     task.wait(1.3)
 
-    -- 显示主窗口并播放缩放动画（同时 Intro 淡出）
     MainFrame.Visible = true
     TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
         Size = UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT)
@@ -2404,7 +2400,6 @@ function Fenglib:CreateWindow(Config)
 
     task.wait(0.35)
     IntroHolder:Destroy()
-    -- =================== 动画结束 ===================
 
     local topbarHeight = Subtitle and 45 or 40
 
@@ -2592,7 +2587,7 @@ function Fenglib:CreateWindow(Config)
 
     local leftWidth = 160
 
-    -- ===== 左侧面板（圆角） =====
+    -- Left panel
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
@@ -2600,10 +2595,30 @@ function Fenglib:CreateWindow(Config)
     LeftContainer.BackgroundColor3 = CurrentTheme.Main
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
-    -- 左侧圆角 16
     local leftCorner = Instance.new("UICorner")
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
+
+    -- ===== 在左侧Tab背景上添加三个直角装饰（左上、右上、右下） =====
+    local function createCorner(pos, anchor)
+        local corner = Instance.new("Frame")
+        corner.Size = UDim2.new(0, 8, 0, 8)
+        corner.Position = pos
+        corner.AnchorPoint = anchor
+        corner.BackgroundColor3 = CurrentTheme.Accent
+        corner.BackgroundTransparency = 0.4
+        corner.BorderSizePixel = 0
+        corner.ZIndex = 10
+        corner.Parent = LeftContainer
+        table.insert(ThemeListeners, function()
+            corner.BackgroundColor3 = CurrentTheme.Accent
+        end)
+        return corner
+    end
+
+    createCorner(UDim2.new(0, 2, 0, 2), Vector2.new(0, 0)) -- 左上
+    createCorner(UDim2.new(1, -2, 0, 2), Vector2.new(1, 0)) -- 右上
+    createCorner(UDim2.new(1, -2, 1, -2), Vector2.new(1, 1)) -- 右下
 
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -55)
@@ -2869,7 +2884,7 @@ function Fenglib:CreateWindow(Config)
         EyeIcon.ImageColor3 = CurrentTheme.Text
     end)
 
-    -- ===== 右侧容器 =====
+    -- Right container (no corners added here anymore)
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
@@ -2879,7 +2894,7 @@ function Fenglib:CreateWindow(Config)
     RightContainer.Parent = MainFrame
 
     local rightCorner = Instance.new("UICorner")
-    rightCorner.CornerRadius = UDim.new(0, 0)   -- 无圆角
+    rightCorner.CornerRadius = UDim.new(0, 0)
     rightCorner.Parent = RightContainer
 
     table.insert(ThemeListeners, function()
@@ -2890,31 +2905,6 @@ function Fenglib:CreateWindow(Config)
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = RightContainer
-
-    -- ===== 添加三个直角装饰（左上、右上、右下） =====
-    local function createCorner(pos, anchor)
-        local corner = Instance.new("Frame")
-        corner.Size = UDim2.new(0, 8, 0, 8)          -- 大小 8x8
-        corner.Position = pos
-        corner.AnchorPoint = anchor
-        corner.BackgroundColor3 = CurrentTheme.Accent
-        corner.BackgroundTransparency = 0.4          -- 半透明，更柔和
-        corner.BorderSizePixel = 0
-        corner.ZIndex = 10                           -- 置于上层
-        corner.Parent = RightContainer
-        -- 主题更新时同步颜色
-        table.insert(ThemeListeners, function()
-            corner.BackgroundColor3 = CurrentTheme.Accent
-        end)
-        return corner
-    end
-
-    -- 左上角 (距离边缘 2px)
-    createCorner(UDim2.new(0, 2, 0, 2), Vector2.new(0, 0))
-    -- 右上角
-    createCorner(UDim2.new(1, -2, 0, 2), Vector2.new(1, 0))
-    -- 右下角
-    createCorner(UDim2.new(1, -2, 1, -2), Vector2.new(1, 1))
 
     MainFrame.ClipsDescendants = false
 
