@@ -2120,6 +2120,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
+    -- 主框架圆角改为 16（保持统一）
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
@@ -2306,7 +2307,8 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- Intro Animation
+    -- =================== 启动动画部分 ===================
+    -- Logo Intro
     local IntroHolder = Instance.new("Frame")
     IntroHolder.Size = UDim2.new(1, 999999, 1, 999999)
     IntroHolder.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -2365,6 +2367,7 @@ function Fenglib:CreateWindow(Config)
     IntroSub.ZIndex = 51
     IntroSub.Parent = IntroHolder
 
+    -- 播放 Intro 动画
     TweenService:Create(IntroHolder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         BackgroundTransparency = 0.85
     }):Play()
@@ -2380,6 +2383,7 @@ function Fenglib:CreateWindow(Config)
 
     task.wait(1.3)
 
+    -- 显示主窗口并播放缩放动画（同时 Intro 淡出）
     MainFrame.Visible = true
     TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
         Size = UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT)
@@ -2400,6 +2404,7 @@ function Fenglib:CreateWindow(Config)
 
     task.wait(0.35)
     IntroHolder:Destroy()
+    -- =================== 动画结束 ===================
 
     local topbarHeight = Subtitle and 45 or 40
 
@@ -2587,6 +2592,7 @@ function Fenglib:CreateWindow(Config)
 
     local leftWidth = 160
 
+    -- ===== 左侧面板（圆角） =====
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
@@ -2594,6 +2600,7 @@ function Fenglib:CreateWindow(Config)
     LeftContainer.BackgroundColor3 = CurrentTheme.Main
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
+    -- 左侧圆角 16
     local leftCorner = Instance.new("UICorner")
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
@@ -2862,6 +2869,7 @@ function Fenglib:CreateWindow(Config)
         EyeIcon.ImageColor3 = CurrentTheme.Text
     end)
 
+    -- ===== 右侧容器 =====
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
@@ -2871,7 +2879,7 @@ function Fenglib:CreateWindow(Config)
     RightContainer.Parent = MainFrame
 
     local rightCorner = Instance.new("UICorner")
-    rightCorner.CornerRadius = UDim.new(0, 0)
+    rightCorner.CornerRadius = UDim.new(0, 0)   -- 无圆角
     rightCorner.Parent = RightContainer
 
     table.insert(ThemeListeners, function()
@@ -2882,6 +2890,31 @@ function Fenglib:CreateWindow(Config)
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = RightContainer
+
+    -- ===== 添加三个直角装饰（左上、右上、右下） =====
+    local function createCorner(pos, anchor)
+        local corner = Instance.new("Frame")
+        corner.Size = UDim2.new(0, 8, 0, 8)          -- 大小 8x8
+        corner.Position = pos
+        corner.AnchorPoint = anchor
+        corner.BackgroundColor3 = CurrentTheme.Accent
+        corner.BackgroundTransparency = 0.4          -- 半透明，更柔和
+        corner.BorderSizePixel = 0
+        corner.ZIndex = 10                           -- 置于上层
+        corner.Parent = RightContainer
+        -- 主题更新时同步颜色
+        table.insert(ThemeListeners, function()
+            corner.BackgroundColor3 = CurrentTheme.Accent
+        end)
+        return corner
+    end
+
+    -- 左上角 (距离边缘 2px)
+    createCorner(UDim2.new(0, 2, 0, 2), Vector2.new(0, 0))
+    -- 右上角
+    createCorner(UDim2.new(1, -2, 0, 2), Vector2.new(1, 0))
+    -- 右下角
+    createCorner(UDim2.new(1, -2, 1, -2), Vector2.new(1, 1))
 
     MainFrame.ClipsDescendants = false
 
@@ -3208,30 +3241,15 @@ function Fenglib:CreateWindow(Config)
             parentList = Window._currentCategory.contentList
         end
 
-        -- === 修改开始：Tab按钮变为黑色背景正方形，左上角圆角 ===
         local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(0, 40, 0, 40)   -- 正方形
-        TabBtn.BackgroundTransparency = 0       -- 不透明
-        TabBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- 黑色背景
+        TabBtn.Size = UDim2.new(0, 140, 0, 32)
+        TabBtn.BackgroundTransparency = 1
+        TabBtn.BackgroundColor3 = CurrentTheme.Top
         TabBtn.Text = ""
         TabBtn.Parent = parentContainer
-        -- 统一圆角（实际所有角都有圆角）
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 8)
-        btnCorner.Parent = TabBtn
+        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
+        AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
-        -- 添加遮罩，使右上角和右下角变为直角（只保留左上角圆角）
-        local cornerMask = Instance.new("Frame")
-        cornerMask.Size = UDim2.new(0.5, 0, 1, 0)   -- 覆盖右侧一半
-        cornerMask.Position = UDim2.new(0.5, 0, 0, 0)
-        cornerMask.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- 与背景同色
-        cornerMask.BackgroundTransparency = 0
-        cornerMask.BorderSizePixel = 0
-        cornerMask.Parent = TabBtn
-        -- 这样右上和右下被直角覆盖，左上角仍显示圆角
-        -- 若要更精确，可将圆角半径调小，或调整遮罩
-
-        -- 原有的glowFrame（激活光效）仍保留，但需要调整位置和透明度
         local glowFrame = Instance.new("Frame")
         glowFrame.Name = "GlowBackground"
         glowFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -3239,7 +3257,7 @@ function Fenglib:CreateWindow(Config)
         glowFrame.BackgroundTransparency = 1
         glowFrame.Parent = TabBtn
         local glowCorner = Instance.new("UICorner")
-        glowCorner.CornerRadius = UDim.new(0, 8)
+        glowCorner.CornerRadius = UDim.new(0, 10)
         glowCorner.Parent = glowFrame
         local glowGrad = Instance.new("UIGradient")
         glowGrad.Rotation = 0
@@ -3250,19 +3268,15 @@ function Fenglib:CreateWindow(Config)
         })
         glowGrad.Parent = glowFrame
 
-        -- TabBar（左侧竖条）调整位置和样式
         local TabBar = Instance.new("Frame")
         TabBar.Size = UDim2.new(0, 3, 0, 0)
-        TabBar.Position = UDim2.new(0, 0, 0.15, 0)
+        TabBar.Position = UDim2.new(0, 0, 0.175, 0)
         TabBar.BackgroundTransparency = 1
         TabBar.BorderSizePixel = 0
         TabBar.Parent = TabBtn
-        local barCorner = Instance.new("UICorner")
-        barCorner.CornerRadius = UDim.new(1, 0)
-        barCorner.Parent = TabBar
+        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
         AddToRegistry(TabBar, "BackgroundColor3", "Accent")
 
-        -- ContentFrame（图标和文字）保持原样，但可能需要调整布局
         local ContentFrame = Instance.new("Frame")
         ContentFrame.Name = "ContentFrame"
         ContentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -3308,7 +3322,6 @@ function Fenglib:CreateWindow(Config)
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
-        -- === 修改结束 ===
 
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
@@ -3351,7 +3364,7 @@ function Fenglib:CreateWindow(Config)
             end
 
             for _, s in ipairs(Window._tabs) do
-                s.btn.BackgroundTransparency = 1   -- 保持黑色背景不透明，但可能变淡？这里我们不让它透明
+                s.btn.BackgroundTransparency = 1
                 s.isActive = false
                 s.glow.BackgroundTransparency = 1
                 local bar = s.bar
@@ -3364,8 +3377,7 @@ function Fenglib:CreateWindow(Config)
                 end
             end
 
-            -- 激活状态：保持背景不透明，glow显示
-            TabBtn.BackgroundTransparency = 0
+            TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
 
@@ -3384,7 +3396,7 @@ function Fenglib:CreateWindow(Config)
         end)
 
         if not Window._activeTab then
-            TabBtn.BackgroundTransparency = 0
+            TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
             TabBar.BackgroundTransparency = 0
@@ -3411,9 +3423,9 @@ function Fenglib:CreateWindow(Config)
                     end
                 end
                 if s.isActive then
-                    s.btn.BackgroundTransparency = 0
+                    s.btn.BackgroundTransparency = 1
                 else
-                    s.btn.BackgroundTransparency = 0
+                    s.btn.BackgroundTransparency = 1
                 end
             end
         end)
