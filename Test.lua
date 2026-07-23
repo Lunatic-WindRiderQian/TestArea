@@ -2120,7 +2120,8 @@ function Fenglib:CreateWindow(Config)
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
-    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 0)
+    -- 主框架圆角改为 16
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
     local Stroke = Instance.new("UIStroke")
@@ -2306,7 +2307,8 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- =================== 启动动画（仅 Logo 动画，无窗口缩放） ===================
+    -- =================== 启动动画部分 ===================
+    -- Logo Intro
     local IntroHolder = Instance.new("Frame")
     IntroHolder.Size = UDim2.new(1, 999999, 1, 999999)
     IntroHolder.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -2365,7 +2367,7 @@ function Fenglib:CreateWindow(Config)
     IntroSub.ZIndex = 51
     IntroSub.Parent = IntroHolder
 
-    -- 播放 Logo 动画
+    -- 播放 Intro 动画
     TweenService:Create(IntroHolder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         BackgroundTransparency = 0.85
     }):Play()
@@ -2381,9 +2383,11 @@ function Fenglib:CreateWindow(Config)
 
     task.wait(1.3)
 
-    -- Logo 淡出，同时窗口直接显示（无缩放）
+    -- 显示主窗口并播放缩放动画（同时 Intro 淡出）
     MainFrame.Visible = true
-    MainFrame.Size = UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT)  -- 直接设置尺寸
+    TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT)
+    }):Play()
 
     TweenService:Create(IntroHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
         BackgroundTransparency = 1
@@ -2400,9 +2404,8 @@ function Fenglib:CreateWindow(Config)
 
     task.wait(0.35)
     IntroHolder:Destroy()
-    -- =================== 启动动画结束 ===================
+    -- =================== 动画结束 ===================
 
-    -- 以下为原窗口 UI 构建（保持不变）
     local topbarHeight = Subtitle and 45 or 40
 
     local Topbar = Instance.new("Frame")
