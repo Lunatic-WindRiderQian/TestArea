@@ -2893,8 +2893,9 @@ function Fenglib:CreateWindow(Config)
     RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
 
+    -- 修改此处：将圆角从 0 改为 16，与左侧保持一致
     local rightCorner = Instance.new("UICorner")
-    rightCorner.CornerRadius = UDim.new(0, 0)
+    rightCorner.CornerRadius = UDim.new(0, 16)   -- 之前为 UDim.new(0, 0)
     rightCorner.Parent = RightContainer
 
     table.insert(ThemeListeners, function()
