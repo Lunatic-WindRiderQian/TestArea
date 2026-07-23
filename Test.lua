@@ -2599,8 +2599,8 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    -- ===== 三个圆弧角装饰（内凹圆弧，与窗口圆角同向） =====
-    local function createCorner(pos, anchor)
+    -- ===== 三个箭头形角落装饰（替代原圆弧） =====
+    local function createCorner(pos, anchor, rotation)
         local container = Instance.new("Frame")
         container.Size = UDim2.new(0, 16, 0, 16)
         container.Position = pos
@@ -2608,39 +2608,30 @@ function Fenglib:CreateWindow(Config)
         container.BackgroundTransparency = 1
         container.BorderSizePixel = 0
         container.ZIndex = 0
-        container.ClipsDescendants = true
+        container.ClipsDescendants = false
         container.Parent = LeftContainer
 
-        local arc = Instance.new("Frame")
-        arc.Size = UDim2.new(0, 32, 0, 32)
-        local offsetX, offsetY = 0, 0
-        if anchor.X == 0 and anchor.Y == 0 then
-            offsetX, offsetY = -16, -16
-        elseif anchor.X == 1 and anchor.Y == 0 then
-            offsetX, offsetY = 0, -16
-        elseif anchor.X == 1 and anchor.Y == 1 then
-            offsetX, offsetY = 0, 0
-        end
-        arc.Position = UDim2.new(0, offsetX, 0, offsetY)
-        arc.BackgroundColor3 = CurrentTheme.Main
-        arc.BackgroundTransparency = 0.2
-        arc.BorderSizePixel = 0
-        arc.Parent = container
-
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 16)
-        corner.Parent = arc
+        local arrow = Instance.new("ImageLabel")
+        arrow.Size = UDim2.new(0.8, 0, 0.8, 0)
+        arrow.AnchorPoint = Vector2.new(0.5, 0.5)
+        arrow.Position = UDim2.new(0.5, 0, 0.5, 0)
+        arrow.BackgroundTransparency = 1
+        arrow.Image = "rbxassetid://6362483694"   -- 右箭头，通过旋转适配
+        arrow.ImageColor3 = CurrentTheme.Main
+        arrow.ImageTransparency = 0.2
+        arrow.Rotation = rotation
+        arrow.Parent = container
 
         table.insert(ThemeListeners, function()
-            arc.BackgroundColor3 = CurrentTheme.Main
+            arrow.ImageColor3 = CurrentTheme.Main
         end)
 
         return container
     end
 
-    createCorner(UDim2.new(0, 0, 0, 0), Vector2.new(0, 0))
-    createCorner(UDim2.new(1, 0, 0, 0), Vector2.new(1, 0))
-    createCorner(UDim2.new(1, 0, 1, 0), Vector2.new(1, 1))
+    createCorner(UDim2.new(0, 0, 0, 0), Vector2.new(0, 0), 135)   -- 左上角 → 指向右下
+    createCorner(UDim2.new(1, 0, 0, 0), Vector2.new(1, 0), -135)  -- 右上角 → 指向左下
+    createCorner(UDim2.new(1, 0, 1, 0), Vector2.new(1, 1), -45)   -- 右下角 → 指向左上
 
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -55)
@@ -2915,55 +2906,13 @@ function Fenglib:CreateWindow(Config)
     RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
 
-    -- 移除凸圆角，改用内凹装饰（凹效果）
+    local rightCorner = Instance.new("UICorner")
+    rightCorner.CornerRadius = UDim.new(0, 16)
+    rightCorner.Parent = RightContainer
+
     table.insert(ThemeListeners, function()
         RightContainer.BackgroundColor3 = CurrentTheme.Main
     end)
-
-    -- 内凹圆弧生成函数（复用左侧逻辑，但透明度匹配右侧）
-    local function addConcaveCorner(parent, pos, anchor)
-        local container = Instance.new("Frame")
-        container.Size = UDim2.new(0, 16, 0, 16)
-        container.Position = pos
-        container.AnchorPoint = anchor
-        container.BackgroundTransparency = 1
-        container.ClipsDescendants = true
-        container.Parent = parent
-
-        local arc = Instance.new("Frame")
-        arc.Size = UDim2.new(0, 32, 0, 32)
-        local offsetX, offsetY = 0, 0
-        if anchor.X == 0 and anchor.Y == 0 then
-            offsetX, offsetY = -16, -16
-        elseif anchor.X == 1 and anchor.Y == 0 then
-            offsetX, offsetY = 0, -16
-        elseif anchor.X == 1 and anchor.Y == 1 then
-            offsetX, offsetY = 0, 0
-        elseif anchor.X == 0 and anchor.Y == 1 then
-            offsetX, offsetY = -16, 0
-        end
-        arc.Position = UDim2.new(0, offsetX, 0, offsetY)
-        arc.BackgroundColor3 = CurrentTheme.Main
-        arc.BackgroundTransparency = 0.75   -- 和右侧容器透明度一致
-        arc.BorderSizePixel = 0
-        arc.Parent = container
-
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 16)
-        corner.Parent = arc
-
-        table.insert(ThemeListeners, function()
-            arc.BackgroundColor3 = CurrentTheme.Main
-        end)
-    end
-
-    -- 给右侧容器添加内凹角：
-    -- 左下角（和左侧面板右下角拼成完整凹口）
-    addConcaveCorner(RightContainer, UDim2.new(0, 0, 1, 0), Vector2.new(0, 1))
-    -- 右下角（窗口最右下角，变成内凹）
-    addConcaveCorner(RightContainer, UDim2.new(1, 0, 1, 0), Vector2.new(1, 1))
-    -- （如果你想右上角也变凹，去掉下面注释）
-    -- addConcaveCorner(RightContainer, UDim2.new(1, 0, 0, 0), Vector2.new(1, 0))
 
     local PageContainer = Instance.new("Frame")
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
