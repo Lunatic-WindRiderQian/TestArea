@@ -2599,16 +2599,16 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    -- ===== 三个直角装饰，颜色与背景（Main）一致，半透明 =====
+    -- ===== 三个直角装饰，与黑色背景同一帧，颜色相同，半透明 =====
     local function createCorner(pos, anchor)
         local corner = Instance.new("Frame")
         corner.Size = UDim2.new(0, 16, 0, 16)
         corner.Position = pos
         corner.AnchorPoint = anchor
-        corner.BackgroundColor3 = CurrentTheme.Main   -- 与背景色相同
-        corner.BackgroundTransparency = 0.2           -- 半透明，隐约可见
+        corner.BackgroundColor3 = CurrentTheme.Main
+        corner.BackgroundTransparency = 0.2
         corner.BorderSizePixel = 0
-        corner.ZIndex = 10
+        corner.ZIndex = 0
         corner.Parent = LeftContainer
         table.insert(ThemeListeners, function()
             corner.BackgroundColor3 = CurrentTheme.Main
