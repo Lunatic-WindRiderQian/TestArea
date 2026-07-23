@@ -2599,7 +2599,7 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    -- ===== 三个圆弧角装饰（扇形） =====
+    -- ===== 三个圆弧角装饰（内凹圆弧，与窗口圆角同向） =====
     local function createCorner(pos, anchor)
         -- 容器：16x16，负责裁剪
         local container = Instance.new("Frame")
@@ -2615,16 +2615,14 @@ function Fenglib:CreateWindow(Config)
         -- 内部圆形：32x32，半径为16，变成完整的圆
         local arc = Instance.new("Frame")
         arc.Size = UDim2.new(0, 32, 0, 32)
-        -- 根据锚点决定偏移，让容器只显示我们需要的象限
+        -- 偏移使容器显示圆形的内侧部分（内凹圆弧）
         local offsetX, offsetY = 0, 0
-        if anchor.X == 0 and anchor.Y == 0 then          -- 左上角
-            offsetX, offsetY = 0, 0
-        elseif anchor.X == 1 and anchor.Y == 0 then      -- 右上角
-            offsetX, offsetY = -16, 0
-        elseif anchor.X == 1 and anchor.Y == 1 then      -- 右下角
+        if anchor.X == 0 and anchor.Y == 0 then          -- 左上角：显示圆的右下部分
             offsetX, offsetY = -16, -16
-        elseif anchor.X == 0 and anchor.Y == 1 then      -- 左下角
+        elseif anchor.X == 1 and anchor.Y == 0 then      -- 右上角：显示圆的左下部分
             offsetX, offsetY = 0, -16
+        elseif anchor.X == 1 and anchor.Y == 1 then      -- 右下角：显示圆的左上部分
+            offsetX, offsetY = 0, 0
         end
         arc.Position = UDim2.new(0, offsetX, 0, offsetY)
         arc.BackgroundColor3 = CurrentTheme.Main
