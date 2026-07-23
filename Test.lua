@@ -2599,9 +2599,8 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    -- ===== 三个圆弧角装饰（内凹圆弧，与窗口圆角同向） =====
+    -- ===== 三个内圆角装饰（弧形向内凹陷） =====
     local function createCorner(pos, anchor)
-        -- 容器：16x16，负责裁剪
         local container = Instance.new("Frame")
         container.Size = UDim2.new(0, 16, 0, 16)
         container.Position = pos
@@ -2612,30 +2611,27 @@ function Fenglib:CreateWindow(Config)
         container.ClipsDescendants = true
         container.Parent = LeftContainer
 
-        -- 内部圆形：32x32，半径为16，变成完整的圆
         local arc = Instance.new("Frame")
         arc.Size = UDim2.new(0, 32, 0, 32)
-        -- 偏移使容器显示圆形的内侧部分（内凹圆弧）
+        -- 偏移量使弧线向内凹陷（显示圆形的外侧部分）
         local offsetX, offsetY = 0, 0
-        if anchor.X == 0 and anchor.Y == 0 then          -- 左上角：显示圆的右下部分
-            offsetX, offsetY = -16, -16
-        elseif anchor.X == 1 and anchor.Y == 0 then      -- 右上角：显示圆的左下部分
-            offsetX, offsetY = 0, -16
-        elseif anchor.X == 1 and anchor.Y == 1 then      -- 右下角：显示圆的左上部分
+        if anchor.X == 0 and anchor.Y == 0 then          -- 左上角
             offsetX, offsetY = 0, 0
+        elseif anchor.X == 1 and anchor.Y == 0 then      -- 右上角
+            offsetX, offsetY = -16, 0
+        elseif anchor.X == 1 and anchor.Y == 1 then      -- 右下角
+            offsetX, offsetY = -16, -16
         end
         arc.Position = UDim2.new(0, offsetX, 0, offsetY)
         arc.BackgroundColor3 = CurrentTheme.Main
-        arc.BackgroundTransparency = 0.2   -- 与原透明度一致
+        arc.BackgroundTransparency = 0.2
         arc.BorderSizePixel = 0
         arc.Parent = container
 
-        -- 圆形关键：半径 = 16（等于尺寸的一半）
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, 16)
         corner.Parent = arc
 
-        -- 主题跟随
         table.insert(ThemeListeners, function()
             arc.BackgroundColor3 = CurrentTheme.Main
         end)
