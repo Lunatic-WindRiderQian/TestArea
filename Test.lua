@@ -2599,14 +2599,14 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    -- ===== 在左侧Tab背景上添加三个直角装饰（左上、右上、右下） =====
+    -- ===== 左侧Tab背景的三个直角装饰（增大到16x16，紧贴边缘，透明度0.2） =====
     local function createCorner(pos, anchor)
         local corner = Instance.new("Frame")
-        corner.Size = UDim2.new(0, 8, 0, 8)
+        corner.Size = UDim2.new(0, 16, 0, 16)          -- 增大到16x16
         corner.Position = pos
         corner.AnchorPoint = anchor
         corner.BackgroundColor3 = CurrentTheme.Accent
-        corner.BackgroundTransparency = 0.4
+        corner.BackgroundTransparency = 0.2            -- 更透明，融入背景
         corner.BorderSizePixel = 0
         corner.ZIndex = 10
         corner.Parent = LeftContainer
@@ -2616,9 +2616,12 @@ function Fenglib:CreateWindow(Config)
         return corner
     end
 
-    createCorner(UDim2.new(0, 2, 0, 2), Vector2.new(0, 0)) -- 左上
-    createCorner(UDim2.new(1, -2, 0, 2), Vector2.new(1, 0)) -- 右上
-    createCorner(UDim2.new(1, -2, 1, -2), Vector2.new(1, 1)) -- 右下
+    -- 左上角（紧贴边缘，无偏移）
+    createCorner(UDim2.new(0, 0, 0, 0), Vector2.new(0, 0))
+    -- 右上角
+    createCorner(UDim2.new(1, 0, 0, 0), Vector2.new(1, 0))
+    -- 右下角
+    createCorner(UDim2.new(1, 0, 1, 0), Vector2.new(1, 1))
 
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -55)
@@ -2884,7 +2887,7 @@ function Fenglib:CreateWindow(Config)
         EyeIcon.ImageColor3 = CurrentTheme.Text
     end)
 
-    -- Right container (no corners added here anymore)
+    -- Right container (no corners here)
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
