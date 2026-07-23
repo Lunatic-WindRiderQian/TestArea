@@ -2592,6 +2592,7 @@ function Fenglib:CreateWindow(Config)
 
     local leftWidth = 160
 
+    -- ===== 左侧面板（圆角）=====
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
@@ -2599,9 +2600,9 @@ function Fenglib:CreateWindow(Config)
     LeftContainer.BackgroundColor3 = CurrentTheme.Main
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
-
+    -- 左侧圆角 16
     local leftCorner = Instance.new("UICorner")
-    leftCorner.CornerRadius = UDim.new(0, 0)
+    leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
     local TabScroll = Instance.new("ScrollingFrame")
@@ -2868,21 +2869,23 @@ function Fenglib:CreateWindow(Config)
         EyeIcon.ImageColor3 = CurrentTheme.Text
     end)
 
+    -- ===== 右侧容器（透明，背景由内部 Frame 提供，方角）=====
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
-    RightContainer.BackgroundColor3 = CurrentTheme.Main
-    RightContainer.BackgroundTransparency = 0.75
+    RightContainer.BackgroundTransparency = 1  -- 透明
     RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
+    -- 右侧容器本身不设圆角
 
-    local rightCorner = Instance.new("UICorner")
-    rightCorner.CornerRadius = UDim.new(0, 0)
-    rightCorner.Parent = RightContainer
-
-    table.insert(ThemeListeners, function()
-        RightContainer.BackgroundColor3 = CurrentTheme.Main
-    end)
+    -- 右侧背景（复制左侧样式，但方角）
+    local RightBg = Instance.new("Frame")
+    RightBg.Name = "RightBackground"
+    RightBg.Size = UDim2.new(1, 0, 1, 0)
+    RightBg.BackgroundTransparency = 0.3
+    RightBg.Parent = RightContainer
+    AddToRegistry(RightBg, "BackgroundColor3", "Main")
+    -- 不加 UICorner，保持方角
 
     local PageContainer = Instance.new("Frame")
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
