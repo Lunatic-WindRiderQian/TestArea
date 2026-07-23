@@ -2120,7 +2120,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
-    -- 主框架圆角改为 16
+    -- 主框架圆角改为 16（保持统一）
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
@@ -2592,7 +2592,7 @@ function Fenglib:CreateWindow(Config)
 
     local leftWidth = 160
 
-    -- ===== 左侧面板（圆角）=====
+    -- ===== 左侧面板（圆角） =====
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0, leftWidth, 1, -topbarHeight)
     LeftContainer.Position = UDim2.new(0, 0, 0, topbarHeight)
@@ -2869,23 +2869,22 @@ function Fenglib:CreateWindow(Config)
         EyeIcon.ImageColor3 = CurrentTheme.Text
     end)
 
-    -- ===== 右侧容器（透明，背景由内部 Frame 提供，方角）=====
+    -- ===== 右侧容器（保持原样，透明背景） =====
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
-    RightContainer.BackgroundTransparency = 1  -- 透明
+    RightContainer.BackgroundColor3 = CurrentTheme.Main
+    RightContainer.BackgroundTransparency = 0.75   -- 透明，沿用原样式
     RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
-    -- 右侧容器本身不设圆角
 
-    -- 右侧背景（复制左侧样式，但方角）
-    local RightBg = Instance.new("Frame")
-    RightBg.Name = "RightBackground"
-    RightBg.Size = UDim2.new(1, 0, 1, 0)
-    RightBg.BackgroundTransparency = 0.3
-    RightBg.Parent = RightContainer
-    AddToRegistry(RightBg, "BackgroundColor3", "Main")
-    -- 不加 UICorner，保持方角
+    local rightCorner = Instance.new("UICorner")
+    rightCorner.CornerRadius = UDim.new(0, 0)   -- 无圆角
+    rightCorner.Parent = RightContainer
+
+    table.insert(ThemeListeners, function()
+        RightContainer.BackgroundColor3 = CurrentTheme.Main
+    end)
 
     local PageContainer = Instance.new("Frame")
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
