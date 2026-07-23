@@ -2599,7 +2599,7 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    -- ===== 三个圆弧角装饰（修改为内凹圆弧角） =====
+    -- ===== 三个箭头型内凹角落（尖锐直角，无圆角） =====
     local function createCorner(pos, anchor)
         local container = Instance.new("Frame")
         container.Size = UDim2.new(0, 16, 0, 16)
@@ -2627,10 +2627,7 @@ function Fenglib:CreateWindow(Config)
         arc.BorderSizePixel = 0
         arc.Parent = container
 
-        -- 添加圆角，使角落呈现内凹圆弧
-        local arcCorner = Instance.new("UICorner")
-        arcCorner.CornerRadius = UDim.new(0, 16)   -- 与容器尺寸匹配，形成四分之一圆
-        arcCorner.Parent = arc
+        -- 不添加 UICorner，保持尖锐直角（箭头型）
 
         table.insert(ThemeListeners, function()
             arc.BackgroundColor3 = CurrentTheme.Main
