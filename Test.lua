@@ -2599,39 +2599,42 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    -- ===== 三个箭头形角落装饰（替代原圆弧） =====
-    local function createCorner(pos, anchor, rotation)
+    -- ===== 三个直角装饰，已改为45°斜切角 =====
+    local function createCorner(pos, anchor)
+        -- 外层容器：用来裁剪，保持16x16的大小
         local container = Instance.new("Frame")
         container.Size = UDim2.new(0, 16, 0, 16)
         container.Position = pos
         container.AnchorPoint = anchor
-        container.BackgroundTransparency = 1
+        container.BackgroundTransparency = 1          -- 自身完全透明
         container.BorderSizePixel = 0
+        container.ClipsDescendants = true             -- 开启裁剪，切出斜边
         container.ZIndex = 0
-        container.ClipsDescendants = false
         container.Parent = LeftContainer
 
-        local arrow = Instance.new("ImageLabel")
-        arrow.Size = UDim2.new(0.8, 0, 0.8, 0)
-        arrow.AnchorPoint = Vector2.new(0.5, 0.5)
-        arrow.Position = UDim2.new(0.5, 0, 0.5, 0)
-        arrow.BackgroundTransparency = 1
-        arrow.Image = "rbxassetid://6362483694"   -- 右箭头，通过旋转适配
-        arrow.ImageColor3 = CurrentTheme.Main
-        arrow.ImageTransparency = 0.2
-        arrow.Rotation = rotation
-        arrow.Parent = container
+        -- 内部旋转方块：实际显示颜色的部分
+        local cornerBlock = Instance.new("Frame")
+        cornerBlock.Size = UDim2.new(0, 24, 0, 24)    -- 24 ≈ 16 * √2，确保覆盖对角线
+        cornerBlock.Position = UDim2.new(0, 0, 0, 0)
+        cornerBlock.AnchorPoint = anchor              -- 锚点和外层容器保持一致
+        cornerBlock.BackgroundColor3 = CurrentTheme.Main
+        cornerBlock.BackgroundTransparency = 0.2
+        cornerBlock.BorderSizePixel = 0
+        cornerBlock.Rotation = 45                    -- 旋转45°，切出斜角
+        cornerBlock.ZIndex = 0
+        cornerBlock.Parent = container
 
+        -- 主题切换时同步颜色
         table.insert(ThemeListeners, function()
-            arrow.ImageColor3 = CurrentTheme.Main
+            cornerBlock.BackgroundColor3 = CurrentTheme.Main
         end)
 
         return container
     end
 
-    createCorner(UDim2.new(0, 0, 0, 0), Vector2.new(0, 0), 135)   -- 左上角 → 指向右下
-    createCorner(UDim2.new(1, 0, 0, 0), Vector2.new(1, 0), -135)  -- 右上角 → 指向左下
-    createCorner(UDim2.new(1, 0, 1, 0), Vector2.new(1, 1), -45)   -- 右下角 → 指向左上
+    createCorner(UDim2.new(0, 0, 0, 0), Vector2.new(0, 0))
+    createCorner(UDim2.new(1, 0, 0, 0), Vector2.new(1, 0))
+    createCorner(UDim2.new(1, 0, 1, 0), Vector2.new(1, 1))
 
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -55)
