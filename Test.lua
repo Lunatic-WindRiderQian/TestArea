@@ -2599,9 +2599,8 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    -- ===== 三个圆弧角装饰（内凹圆弧，与窗口圆角同向） =====
+    -- ===== 修改为凹角圆弧装饰 =====
     local function createCorner(pos, anchor)
-        -- 容器：16x16，负责裁剪
         local container = Instance.new("Frame")
         container.Size = UDim2.new(0, 16, 0, 16)
         container.Position = pos
@@ -2612,30 +2611,27 @@ function Fenglib:CreateWindow(Config)
         container.ClipsDescendants = true
         container.Parent = LeftContainer
 
-        -- 内部圆形：32x32，半径为16，变成完整的圆
         local arc = Instance.new("Frame")
         arc.Size = UDim2.new(0, 32, 0, 32)
-        -- 偏移使容器显示圆形的内侧部分（内凹圆弧）
+        -- 凹角偏移：将圆心移到容器内部的对角方向，使容器显示圆形的外侧边缘，形成内凹弧
         local offsetX, offsetY = 0, 0
-        if anchor.X == 0 and anchor.Y == 0 then          -- 左上角：显示圆的右下部分
-            offsetX, offsetY = -16, -16
-        elseif anchor.X == 1 and anchor.Y == 0 then      -- 右上角：显示圆的左下部分
-            offsetX, offsetY = 0, -16
-        elseif anchor.X == 1 and anchor.Y == 1 then      -- 右下角：显示圆的左上部分
+        if anchor.X == 0 and anchor.Y == 0 then          -- 左上角：圆心移至 (0,0) 即内部右下
             offsetX, offsetY = 0, 0
+        elseif anchor.X == 1 and anchor.Y == 0 then      -- 右上角：圆心移至 (-16,0) 即内部左下
+            offsetX, offsetY = -16, 0
+        elseif anchor.X == 1 and anchor.Y == 1 then      -- 右下角：圆心移至 (-16,-16) 即内部左上
+            offsetX, offsetY = -16, -16
         end
         arc.Position = UDim2.new(0, offsetX, 0, offsetY)
         arc.BackgroundColor3 = CurrentTheme.Main
-        arc.BackgroundTransparency = 0.2   -- 与原透明度一致
+        arc.BackgroundTransparency = 0.3   -- 适当降低透明度，使凹陷阴影更明显
         arc.BorderSizePixel = 0
         arc.Parent = container
 
-        -- 圆形关键：半径 = 16（等于尺寸的一半）
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, 16)
         corner.Parent = arc
 
-        -- 主题跟随
         table.insert(ThemeListeners, function()
             arc.BackgroundColor3 = CurrentTheme.Main
         end)
@@ -2643,10 +2639,9 @@ function Fenglib:CreateWindow(Config)
         return container
     end
 
-    -- 修改：将三个装饰向内偏移 4 像素，以贴合圆角边缘
-    createCorner(UDim2.new(0, 4, 0, 4), Vector2.new(0, 0))
-    createCorner(UDim2.new(1, -4, 0, 4), Vector2.new(1, 0))
-    createCorner(UDim2.new(1, -4, 1, -4), Vector2.new(1, 1))
+    createCorner(UDim2.new(0, 0, 0, 0), Vector2.new(0, 0))
+    createCorner(UDim2.new(1, 0, 0, 0), Vector2.new(1, 0))
+    createCorner(UDim2.new(1, 0, 1, 0), Vector2.new(1, 1))
 
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -55)
@@ -2920,7 +2915,6 @@ function Fenglib:CreateWindow(Config)
     RightContainer.BackgroundTransparency = 0.75
     RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
-
     local rightCorner = Instance.new("UICorner")
     rightCorner.CornerRadius = UDim.new(0, 16)
     rightCorner.Parent = RightContainer
