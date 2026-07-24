@@ -150,12 +150,12 @@ function Fenglib:LoadConfig(path)
 end
 
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
-    -- 左边距 12%，使 Section 整体右移
+    -- 左边距改为 8%，使整体向左移动一些
     local padding = parent:FindFirstChild("SectionPadding")
     if not padding then
         padding = Instance.new("UIPadding")
         padding.Name = "SectionPadding"
-        padding.PaddingLeft = UDim.new(0.12, 0)   -- 左边距 12%
+        padding.PaddingLeft = UDim.new(0.08, 0)   -- 左边距 8%（原来是 12%）
         padding.Parent = parent
     end
 
@@ -181,9 +181,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- ===== 宽度改为 95%，左对齐 =====
+        -- ===== 宽度改为 98%，左对齐 =====
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(0.95, 0, 0, 46)   -- 宽度 95%
+        sectionFrame.Size = UDim2.new(0.98, 0, 0, 46)   -- 宽度 98%
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         sectionFrame.BackgroundTransparency = 0.65
@@ -408,9 +408,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
                     Size = UDim2.new(1, -60, 0, math.max(0, targetContentHeight))
                 })
-                -- ===== 动画宽度改为 95% =====
+                -- ===== 动画宽度改为 98% =====
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
-                    Size = UDim2.new(0.95, 0, 0, targetSectionHeight)
+                    Size = UDim2.new(0.98, 0, 0, targetSectionHeight)
                 })
             else
                 currentBgTween = TweenService:Create(contentContainerSection, tweenInfo, {
@@ -423,7 +423,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -60, 0, 0)
                 })
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
-                    Size = UDim2.new(0.95, 0, 0, 46)
+                    Size = UDim2.new(0.98, 0, 0, 46)
                 })
                 
                 task.delay((instant and 0 or 0.3) + 0.05, function()
