@@ -150,6 +150,15 @@ function Fenglib:LoadConfig(path)
 end
 
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
+    -- ===== 添加左边距使所有 Section 整体右移 =====
+    local padding = parent:FindFirstChild("SectionPadding")
+    if not padding then
+        padding = Instance.new("UIPadding")
+        padding.Name = "SectionPadding"
+        padding.PaddingLeft = UDim.new(0.05, 0)   -- 左边距为父容器宽度的 5%
+        padding.Parent = parent
+    end
+
     local function createSection(text, icons, defaultOpen)
         local titleText = ""
         local subtitleText = nil
@@ -172,11 +181,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- ===== 修改点：整体向右平移 50 像素 =====
+        -- ===== 修改：Section 宽度保持 80%，但不再居中，改为左对齐 =====
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(0.8, 0, 0, 46)        -- 宽度 80%
-        sectionFrame.AnchorPoint = Vector2.new(0.5, 0)       -- 水平居中锚点
-        sectionFrame.Position = UDim2.new(0.5, 50, 0, 0)    -- 向右偏移 50 像素
+        sectionFrame.Size = UDim2.new(0.8, 0, 0, 46)
+        sectionFrame.AnchorPoint = Vector2.new(0, 0)   -- 默认左上角
+        sectionFrame.Position = UDim2.new(0, 0, 0, 0)  -- 左对齐
         sectionFrame.BackgroundTransparency = 0.65
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
@@ -348,6 +357,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
 
+        -- 内容控件进一步缩进（左右各 30）
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -60, 0, 0)
         contentHolder.Position = UDim2.new(0, 30, 0, 4)
@@ -398,7 +408,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
                     Size = UDim2.new(1, -60, 0, math.max(0, targetContentHeight))
                 })
-                -- 保持宽度 0.8，高度变化
+                -- 宽度保持 80%，左对齐（Position不变）
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(0.8, 0, 0, targetSectionHeight)
                 })
