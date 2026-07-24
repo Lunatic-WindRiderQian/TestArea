@@ -181,9 +181,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- ===== 修改点：宽度改为 90%，左对齐 =====
+        -- ===== 宽度改为 95%，左对齐 =====
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(0.9, 0, 0, 46)   -- 宽度 90%
+        sectionFrame.Size = UDim2.new(0.95, 0, 0, 46)   -- 宽度 95%
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         sectionFrame.BackgroundTransparency = 0.65
@@ -408,9 +408,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
                     Size = UDim2.new(1, -60, 0, math.max(0, targetContentHeight))
                 })
-                -- ===== 动画宽度也改为 90% =====
+                -- ===== 动画宽度改为 95% =====
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
-                    Size = UDim2.new(0.9, 0, 0, targetSectionHeight)
+                    Size = UDim2.new(0.95, 0, 0, targetSectionHeight)
                 })
             else
                 currentBgTween = TweenService:Create(contentContainerSection, tweenInfo, {
@@ -423,7 +423,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -60, 0, 0)
                 })
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
-                    Size = UDim2.new(0.9, 0, 0, 46)
+                    Size = UDim2.new(0.95, 0, 0, 46)
                 })
                 
                 task.delay((instant and 0 or 0.3) + 0.05, function()
