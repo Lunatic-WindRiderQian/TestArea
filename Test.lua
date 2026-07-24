@@ -150,12 +150,12 @@ function Fenglib:LoadConfig(path)
 end
 
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
-    -- ===== 添加左边距使所有 Section 整体右移 =====
+    -- ===== 增加左边距，使所有 Section 整体向右移动更多（从 5% 改为 12%） =====
     local padding = parent:FindFirstChild("SectionPadding")
     if not padding then
         padding = Instance.new("UIPadding")
         padding.Name = "SectionPadding"
-        padding.PaddingLeft = UDim.new(0.05, 0)   -- 左边距为父容器宽度的 5%
+        padding.PaddingLeft = UDim.new(0.12, 0)   -- 左边距 12%
         padding.Parent = parent
     end
 
@@ -181,11 +181,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- ===== 修改：Section 宽度保持 80%，但不再居中，改为左对齐 =====
+        -- Section 宽度 80%，左对齐（不再居中）
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(0.8, 0, 0, 46)
-        sectionFrame.AnchorPoint = Vector2.new(0, 0)   -- 默认左上角
-        sectionFrame.Position = UDim2.new(0, 0, 0, 0)  -- 左对齐
+        sectionFrame.AnchorPoint = Vector2.new(0, 0)
+        sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         sectionFrame.BackgroundTransparency = 0.65
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
@@ -408,7 +408,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
                     Size = UDim2.new(1, -60, 0, math.max(0, targetContentHeight))
                 })
-                -- 宽度保持 80%，左对齐（Position不变）
+                -- 宽度保持 80%，左对齐
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(0.8, 0, 0, targetSectionHeight)
                 })
