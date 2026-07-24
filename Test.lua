@@ -150,7 +150,7 @@ function Fenglib:LoadConfig(path)
 end
 
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
-    -- 左边距改为 4%，使整体更靠左
+    -- 左边距 4%，使整体靠左但保留少量缩进
     local padding = parent:FindFirstChild("SectionPadding")
     if not padding then
         padding = Instance.new("UIPadding")
@@ -181,9 +181,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- ===== 宽度改为 99%，左对齐 =====
+        -- ===== 宽度改为 96%，左对齐，正好填满剩余空间（4%左边距 + 96%宽度 = 100%） =====
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(0.99, 0, 0, 46)   -- 宽度 99%
+        sectionFrame.Size = UDim2.new(0.96, 0, 0, 46)   -- 宽度 96%
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         sectionFrame.BackgroundTransparency = 0.65
@@ -408,9 +408,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
                     Size = UDim2.new(1, -60, 0, math.max(0, targetContentHeight))
                 })
-                -- ===== 动画宽度改为 99% =====
+                -- ===== 动画宽度同步改为 96% =====
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
-                    Size = UDim2.new(0.99, 0, 0, targetSectionHeight)
+                    Size = UDim2.new(0.96, 0, 0, targetSectionHeight)
                 })
             else
                 currentBgTween = TweenService:Create(contentContainerSection, tweenInfo, {
@@ -423,7 +423,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -60, 0, 0)
                 })
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
-                    Size = UDim2.new(0.99, 0, 0, 46)
+                    Size = UDim2.new(0.96, 0, 0, 46)
                 })
                 
                 task.delay((instant and 0 or 0.3) + 0.05, function()
