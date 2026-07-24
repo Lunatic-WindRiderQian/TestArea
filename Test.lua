@@ -2920,9 +2920,8 @@ function Fenglib:CreateWindow(Config)
     RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
 
-    -- 修改此处：将圆角从 0 改为 16，与左侧保持一致
     local rightCorner = Instance.new("UICorner")
-    rightCorner.CornerRadius = UDim.new(0, 16)   -- 之前为 UDim.new(0, 0)
+    rightCorner.CornerRadius = UDim.new(0, 16)
     rightCorner.Parent = RightContainer
 
     table.insert(ThemeListeners, function()
@@ -3341,24 +3340,22 @@ function Fenglib:CreateWindow(Config)
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
 
-        -- ===== 修改点：为 Page 添加圆角裁剪 =====
+        -- ===== 创建右侧滚动列表（Page），并添加圆角裁剪 =====
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
-        -- 给一个半透明背景让圆角可见
-        Page.BackgroundTransparency = 0.1
-        Page.BackgroundColor3 = CurrentTheme.Main
+        Page.BackgroundTransparency = 1
         Page.ScrollBarThickness = 0
         Page.ScrollingEnabled = true
         Page.Visible = false
         Page.Position = UDim2.new(0, 0, 0, 60)
         Page.Parent = PageContainer
 
-        -- 添加圆角裁剪（圆角半径与 RightContainer 保持一致，设为 16）
+        -- 添加圆角裁剪，半径与 RightContainer 保持一致（16）
         local pageCorner = Instance.new("UICorner")
         pageCorner.CornerRadius = UDim.new(0, 16)
         pageCorner.Parent = Page
-        Page.ClipsDescendants = true  -- 确保内容被裁剪
-        -- ===== 修改结束 =====
+        Page.ClipsDescendants = true
+        -- ===== 圆角添加结束 =====
 
         local PageContent = Instance.new("Frame")
         PageContent.Size = UDim2.new(1, 0, 0, 0)
