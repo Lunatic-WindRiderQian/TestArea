@@ -327,20 +327,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         updateSwitch(false)
 
-        -- 内容容器改为 ScrollingFrame，圆角半径设为 16 以匹配主窗口
-        local contentContainerSection = Instance.new("ScrollingFrame")
+        -- ========== 修改区域开始 ==========
+        -- 外层容器：保持 Frame，负责背景和圆角裁剪（半径改为 16）
+        local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
         contentContainerSection.BackgroundTransparency = 0.65
         contentContainerSection.ClipsDescendants = true
-        contentContainerSection.ScrollBarThickness = 4
-        contentContainerSection.ScrollingEnabled = true
-        contentContainerSection.CanvasSize = UDim2.new(0, 0, 0, 0)
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
 
         local contentCorner = Instance.new("UICorner", contentContainerSection)
-        contentCorner.CornerRadius = UDim.new(0, 16)  -- 改为 16
+        contentCorner.CornerRadius = UDim.new(0, 16)  -- 与主窗口一致
 
         local contentStroke = Instance.new("UIStroke")
         contentStroke.Thickness = 1
@@ -349,14 +347,25 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
 
-        -- 内容容器（放置UI元素）
+        -- 内层滚动容器（透明，负责滚动）
+        local scrollContainer = Instance.new("ScrollingFrame")
+        scrollContainer.Size = UDim2.new(1, 0, 1, 0)  -- 填满外层
+        scrollContainer.Position = UDim2.new(0, 0, 0, 0)
+        scrollContainer.BackgroundTransparency = 1
+        scrollContainer.ClipsDescendants = false  -- 裁剪由外层负责
+        scrollContainer.ScrollBarThickness = 4
+        scrollContainer.ScrollingEnabled = true
+        scrollContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+        scrollContainer.Parent = contentContainerSection
+
+        -- 内容容器（原 contentHolder），现在放在 scrollContainer 内部
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -24, 0, 0)
         contentHolder.Position = UDim2.new(0, 12, 0, 4)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = true
-        contentHolder.Parent = contentContainerSection
+        contentHolder.Parent = scrollContainer
 
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Padding = UDim.new(0, 6)
@@ -367,6 +376,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bottomPadding.Size = UDim2.new(1, 0, 0, 4)
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.Parent = contentHolder
+        -- ========== 修改区域结束 ==========
 
         local currentContentTween, currentSectionTween, currentHolderTween, currentBgTween
 
@@ -377,7 +387,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function updateSectionHeight(instant)
             local actualContentHeight = getContentHeight()
             local targetContentHeight = open and math.max(0, actualContentHeight) or 0
-            local targetContainerHeight = targetContentHeight + 16
+            local targetContainerHeight = targetContentHeight + 16  -- 上下内边距
             local targetSectionHeight = 46 + targetContainerHeight
 
             if currentContentTween then currentContentTween:Cancel() end
@@ -430,11 +440,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             currentHolderTween:Play()
             currentSectionTween:Play()
 
-            -- 更新 CanvasSize
+            -- 更新滚动容器的 CanvasSize
             if open then
-                contentContainerSection.CanvasSize = UDim2.new(0, 0, 0, targetContentHeight + 16)
+                scrollContainer.CanvasSize = UDim2.new(0, 0, 0, targetContentHeight + 16)
             else
-                contentContainerSection.CanvasSize = UDim2.new(0, 0, 0, 0)
+                scrollContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
             end
         end
 
@@ -473,7 +483,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- 控件方法
+        -- 控件方法（完全保持不变）
         local child = {}
 
         child.Button = function(_, config)
