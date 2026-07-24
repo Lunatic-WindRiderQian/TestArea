@@ -327,8 +327,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         updateSwitch(false)
 
-        -- ========== 修改区域开始 ==========
-        -- 外层容器：保持 Frame，负责背景和圆角裁剪（半径改为 16）
         local contentContainerSection = Instance.new("Frame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
@@ -336,10 +334,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainerSection.ClipsDescendants = true
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
-
+        
         local contentCorner = Instance.new("UICorner", contentContainerSection)
-        contentCorner.CornerRadius = UDim.new(0, 16)  -- 与主窗口一致
-
+        contentCorner.CornerRadius = UDim.new(0, 4)
+        
         local contentStroke = Instance.new("UIStroke")
         contentStroke.Thickness = 1
         contentStroke.Transparency = 0.5
@@ -347,25 +345,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
 
-        -- 内层滚动容器（透明，负责滚动）
-        local scrollContainer = Instance.new("ScrollingFrame")
-        scrollContainer.Size = UDim2.new(1, 0, 1, 0)  -- 填满外层
-        scrollContainer.Position = UDim2.new(0, 0, 0, 0)
-        scrollContainer.BackgroundTransparency = 1
-        scrollContainer.ClipsDescendants = false  -- 裁剪由外层负责
-        scrollContainer.ScrollBarThickness = 4
-        scrollContainer.ScrollingEnabled = true
-        scrollContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-        scrollContainer.Parent = contentContainerSection
-
-        -- 内容容器（原 contentHolder），现在放在 scrollContainer 内部
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -24, 0, 0)
         contentHolder.Position = UDim2.new(0, 12, 0, 4)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = true
-        contentHolder.Parent = scrollContainer
+        contentHolder.Parent = contentContainerSection
 
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Padding = UDim.new(0, 6)
@@ -376,7 +362,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bottomPadding.Size = UDim2.new(1, 0, 0, 4)
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.Parent = contentHolder
-        -- ========== 修改区域结束 ==========
 
         local currentContentTween, currentSectionTween, currentHolderTween, currentBgTween
 
@@ -387,7 +372,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function updateSectionHeight(instant)
             local actualContentHeight = getContentHeight()
             local targetContentHeight = open and math.max(0, actualContentHeight) or 0
-            local targetContainerHeight = targetContentHeight + 16  -- 上下内边距
+            local targetContainerHeight = targetContentHeight + 16
             local targetSectionHeight = 46 + targetContainerHeight
 
             if currentContentTween then currentContentTween:Cancel() end
@@ -400,7 +385,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if open then
                 contentContainerSection.Visible = true
                 contentHolder.Visible = true
-
+                
                 currentBgTween = TweenService:Create(contentContainerSection, tweenInfo, {
                     BackgroundTransparency = 0.65
                 })
@@ -426,7 +411,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(1, 0, 0, 46)
                 })
-
+                
                 task.delay((instant and 0 or 0.3) + 0.05, function()
                     if not open and contentContainerSection then
                         contentContainerSection.Visible = false
@@ -439,13 +424,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             currentContentTween:Play()
             currentHolderTween:Play()
             currentSectionTween:Play()
-
-            -- 更新滚动容器的 CanvasSize
-            if open then
-                scrollContainer.CanvasSize = UDim2.new(0, 0, 0, targetContentHeight + 16)
-            else
-                scrollContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-            end
         end
 
         task.spawn(function()
@@ -483,7 +461,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- 控件方法（完全保持不变）
         local child = {}
 
         child.Button = function(_, config)
@@ -2624,6 +2601,7 @@ function Fenglib:CreateWindow(Config)
 
     -- ===== 三个圆弧角装饰（内凹圆弧，与窗口圆角同向） =====
     local function createCorner(pos, anchor)
+        -- 容器：16x16，负责裁剪
         local container = Instance.new("Frame")
         container.Size = UDim2.new(0, 16, 0, 16)
         container.Position = pos
@@ -2634,26 +2612,30 @@ function Fenglib:CreateWindow(Config)
         container.ClipsDescendants = true
         container.Parent = LeftContainer
 
+        -- 内部圆形：32x32，半径为16，变成完整的圆
         local arc = Instance.new("Frame")
         arc.Size = UDim2.new(0, 32, 0, 32)
+        -- 偏移使容器显示圆形的内侧部分（内凹圆弧）
         local offsetX, offsetY = 0, 0
-        if anchor.X == 0 and anchor.Y == 0 then
+        if anchor.X == 0 and anchor.Y == 0 then          -- 左上角：显示圆的右下部分
             offsetX, offsetY = -16, -16
-        elseif anchor.X == 1 and anchor.Y == 0 then
+        elseif anchor.X == 1 and anchor.Y == 0 then      -- 右上角：显示圆的左下部分
             offsetX, offsetY = 0, -16
-        elseif anchor.X == 1 and anchor.Y == 1 then
+        elseif anchor.X == 1 and anchor.Y == 1 then      -- 右下角：显示圆的左上部分
             offsetX, offsetY = 0, 0
         end
         arc.Position = UDim2.new(0, offsetX, 0, offsetY)
         arc.BackgroundColor3 = CurrentTheme.Main
-        arc.BackgroundTransparency = 0.2
+        arc.BackgroundTransparency = 0.2   -- 与原透明度一致
         arc.BorderSizePixel = 0
         arc.Parent = container
 
+        -- 圆形关键：半径 = 16（等于尺寸的一半）
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, 16)
         corner.Parent = arc
 
+        -- 主题跟随
         table.insert(ThemeListeners, function()
             arc.BackgroundColor3 = CurrentTheme.Main
         end)
@@ -2935,11 +2917,11 @@ function Fenglib:CreateWindow(Config)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
     RightContainer.BackgroundColor3 = CurrentTheme.Main
     RightContainer.BackgroundTransparency = 0.75
-    RightContainer.ClipsDescendants = true
+    RightContainer.ClipsDescendants = true   -- 启用裁剪以实现圆角效果
     RightContainer.Parent = MainFrame
 
     local rightCorner = Instance.new("UICorner")
-    rightCorner.CornerRadius = UDim.new(0, 16)
+    rightCorner.CornerRadius = UDim.new(0, 16)   -- 与左侧保持一致
     rightCorner.Parent = RightContainer
 
     table.insert(ThemeListeners, function()
@@ -3364,7 +3346,7 @@ function Fenglib:CreateWindow(Config)
         Page.ScrollBarThickness = 0
         Page.ScrollingEnabled = true
         Page.Visible = false
-        Page.Position = UDim2.new(0, 0, 0, 60)
+        Page.Position = UDim2.new(0, 0, 0, 0)   -- 修正：移除顶部偏移
         Page.Parent = PageContainer
 
         local PageContent = Instance.new("Frame")
