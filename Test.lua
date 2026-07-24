@@ -3344,7 +3344,9 @@ function Fenglib:CreateWindow(Config)
         -- ===== 修改点：为 Page 添加圆角裁剪 =====
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
-        Page.BackgroundTransparency = 1
+        -- 给一个半透明背景让圆角可见
+        Page.BackgroundTransparency = 0.1
+        Page.BackgroundColor3 = CurrentTheme.Main
         Page.ScrollBarThickness = 0
         Page.ScrollingEnabled = true
         Page.Visible = false
