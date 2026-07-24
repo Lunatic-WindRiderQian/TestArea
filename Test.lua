@@ -327,7 +327,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         updateSwitch(false)
 
-        -- 🔄 核心改动：将内容容器改为 ScrollingFrame，实现滚动并保持圆角裁剪
+        -- 内容容器改为 ScrollingFrame，圆角半径设为 16 以匹配主窗口
         local contentContainerSection = Instance.new("ScrollingFrame")
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
@@ -340,7 +340,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
 
         local contentCorner = Instance.new("UICorner", contentContainerSection)
-        contentCorner.CornerRadius = UDim.new(0, 4)
+        contentCorner.CornerRadius = UDim.new(0, 16)  -- 改为 16
 
         local contentStroke = Instance.new("UIStroke")
         contentStroke.Thickness = 1
@@ -377,7 +377,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function updateSectionHeight(instant)
             local actualContentHeight = getContentHeight()
             local targetContentHeight = open and math.max(0, actualContentHeight) or 0
-            local targetContainerHeight = targetContentHeight + 16  -- 上下内边距
+            local targetContainerHeight = targetContentHeight + 16
             local targetSectionHeight = 46 + targetContainerHeight
 
             if currentContentTween then currentContentTween:Cancel() end
@@ -430,7 +430,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             currentHolderTween:Play()
             currentSectionTween:Play()
 
-            -- 更新 CanvasSize 使滚动区域匹配内容
+            -- 更新 CanvasSize
             if open then
                 contentContainerSection.CanvasSize = UDim2.new(0, 0, 0, targetContentHeight + 16)
             else
@@ -473,8 +473,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        -- 以下为各种控件方法（Button, Toggle, Slider, Dropdown, Keybind, ColorPicker, Input, Textbox, Label, Image, Divider）
-        -- 与原代码完全相同，此处保留
+        -- 控件方法
         local child = {}
 
         child.Button = function(_, config)
