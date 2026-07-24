@@ -345,9 +345,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
 
+        -- ===== 修改点：内容控件宽度缩小（左右边距各 30） =====
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1, -24, 0, 0)
-        contentHolder.Position = UDim2.new(0, 12, 0, 4)
+        contentHolder.Size = UDim2.new(1, -60, 0, 0)   -- 原为 -24
+        contentHolder.Position = UDim2.new(0, 30, 0, 4) -- 原为 12
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = true
@@ -393,7 +394,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -2, 0, targetContainerHeight)
                 })
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
-                    Size = UDim2.new(1, -24, 0, math.max(0, targetContentHeight))
+                    Size = UDim2.new(1, -60, 0, math.max(0, targetContentHeight))  -- 宽度也同步保持 -60
                 })
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(1, 0, 0, targetSectionHeight)
@@ -406,7 +407,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -2, 0, 0)
                 })
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
-                    Size = UDim2.new(1, -24, 0, 0)
+                    Size = UDim2.new(1, -60, 0, 0)
                 })
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(1, 0, 0, 46)
@@ -2120,7 +2121,6 @@ function Fenglib:CreateWindow(Config)
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
-    -- 主框架圆角设为 16
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
@@ -2595,12 +2595,10 @@ function Fenglib:CreateWindow(Config)
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
 
-    -- LeftContainer 圆角设为 16
     local leftCorner = Instance.new("UICorner")
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    -- ===== 三个圆弧角装饰（内凹圆弧，与窗口圆角同向） =====
     local function createCorner(pos, anchor)
         local container = Instance.new("Frame")
         container.Size = UDim2.new(0, 16, 0, 16)
@@ -2907,7 +2905,6 @@ function Fenglib:CreateWindow(Config)
         EyeIcon.ImageColor3 = CurrentTheme.Text
     end)
 
-    -- Right container with rounded corners (16px)
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
@@ -3336,7 +3333,6 @@ function Fenglib:CreateWindow(Config)
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
 
-        -- Page with rounded corners (16px) and clipping
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
