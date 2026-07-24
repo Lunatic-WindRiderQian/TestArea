@@ -2120,7 +2120,8 @@ function Fenglib:CreateWindow(Config)
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
-    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 0)
+    -- 主框架圆角设为 16
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
     local Stroke = Instance.new("UIStroke")
@@ -2594,8 +2595,9 @@ function Fenglib:CreateWindow(Config)
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
 
+    -- LeftContainer 圆角设为 16
     local leftCorner = Instance.new("UICorner")
-    leftCorner.CornerRadius = UDim.new(0, 0)
+    leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
     -- ===== 三个圆弧角装饰（内凹圆弧，与窗口圆角同向） =====
