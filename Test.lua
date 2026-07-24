@@ -172,11 +172,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- Section 宽度占 80%，居中
+        -- ===== 修改点 1：Section 宽度缩减为父容器的 80%，并居中 =====
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(0.8, 0, 0, 46)
-        sectionFrame.AnchorPoint = Vector2.new(0.5, 0)
-        sectionFrame.Position = UDim2.new(0.5, 0, 0, 0)
+        sectionFrame.Size = UDim2.new(0.8, 0, 0, 46)   -- 宽度占 80%
+        sectionFrame.AnchorPoint = Vector2.new(0.5, 0) -- 水平居中锚点
+        sectionFrame.Position = UDim2.new(0.5, 0, 0, 0) -- 居中
         sectionFrame.BackgroundTransparency = 0.65
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
@@ -203,13 +203,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         topBgCorner.CornerRadius = UDim.new(0, 4)
         AddToRegistry(topBg, "BackgroundColor3", "Top")
 
-        -- 头部标题居中
-        local headerContainer = Instance.new("Frame")
-        headerContainer.Size = UDim2.new(1, -80, 1, 0)
-        headerContainer.Position = UDim2.new(0, 0, 0, 0)
-        headerContainer.BackgroundTransparency = 1
-        headerContainer.Parent = topBg
-
+        local leftOffset = 16
         if iconAsset then
             local icon = Instance.new("ImageLabel")
             icon.Size = UDim2.new(0, 32, 0, 32)
@@ -223,32 +217,37 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local iconCorner = Instance.new("UICorner")
             iconCorner.CornerRadius = UDim.new(0, 8)
             iconCorner.Parent = icon
-            icon.Parent = headerContainer
+            icon.Parent = topBg
             AddToRegistry(icon, "ImageColor3", "Text")
+            leftOffset = 50
         end
 
         local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(1, 0, 0, 19)
-        titleLabel.Position = UDim2.new(0, 0, 0, subtitleText and 4 or 14)
+        titleLabel.Size = UDim2.new(1, -80, 0, 19)
+        if subtitleText then
+            titleLabel.Position = UDim2.new(0, leftOffset, 0, 4)
+        else
+            titleLabel.Position = UDim2.new(0, leftOffset, 0, 14)
+        end
         titleLabel.BackgroundTransparency = 1
         titleLabel.Font = Enum.Font.GothamBold
         titleLabel.Text = titleText
         titleLabel.TextSize = 15
-        titleLabel.TextXAlignment = Enum.TextXAlignment.Center
-        titleLabel.Parent = headerContainer
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.Parent = topBg
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
         if subtitleText then
             local subLabel = Instance.new("TextLabel")
-            subLabel.Size = UDim2.new(1, 0, 0, 17)
-            subLabel.Position = UDim2.new(0, 0, 0, 25)
+            subLabel.Size = UDim2.new(1, -80, 0, 17)
+            subLabel.Position = UDim2.new(0, leftOffset, 0, 25)
             subLabel.BackgroundTransparency = 1
             subLabel.Font = Enum.Font.Gotham
             subLabel.Text = subtitleText
             subLabel.TextSize = 12
             subLabel.TextTransparency = 0.5
-            subLabel.TextXAlignment = Enum.TextXAlignment.Center
-            subLabel.Parent = headerContainer
+            subLabel.TextXAlignment = Enum.TextXAlignment.Left
+            subLabel.Parent = topBg
             AddToRegistry(subLabel, "TextColor3", "Text")
         end
 
@@ -349,7 +348,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
 
-        -- 内容居中容器
+        -- 内容控件进一步缩进（左右各 30）
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -60, 0, 0)
         contentHolder.Position = UDim2.new(0, 30, 0, 4)
@@ -358,31 +357,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentHolder.ClipsDescendants = true
         contentHolder.Parent = contentContainerSection
 
-        -- 居中框架，宽度为 contentHolder 的 90%
-        local centerFrame = Instance.new("Frame")
-        centerFrame.Size = UDim2.new(0.9, 0, 0, 0)
-        centerFrame.AnchorPoint = Vector2.new(0.5, 0)
-        centerFrame.Position = UDim2.new(0.5, 0, 0, 0)
-        centerFrame.BackgroundTransparency = 1
-        centerFrame.AutomaticSize = Enum.AutomaticSize.Y
-        centerFrame.ClipsDescendants = true
-        centerFrame.Parent = contentHolder
-
-        -- 所有控件将放入 centerFrame，并水平居中
-        local contentParent = centerFrame
-
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Padding = UDim.new(0, 6)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        contentLayout.Parent = contentParent
+        contentLayout.Parent = contentHolder
 
         local bottomPadding = Instance.new("Frame")
         bottomPadding.Size = UDim2.new(1, 0, 0, 4)
         bottomPadding.BackgroundTransparency = 1
-        bottomPadding.Parent = contentParent
+        bottomPadding.Parent = contentHolder
 
-        local currentContentTween, currentSectionTween, currentHolderTween, currentBgTween, currentCenterTween
+        local currentContentTween, currentSectionTween, currentHolderTween, currentBgTween
 
         local function getContentHeight()
             return contentLayout.AbsoluteContentSize.Y
@@ -398,14 +383,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if currentSectionTween then currentSectionTween:Cancel() end
             if currentHolderTween then currentHolderTween:Cancel() end
             if currentBgTween then currentBgTween:Cancel() end
-            if currentCenterTween then currentCenterTween:Cancel() end
 
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
             if open then
                 contentContainerSection.Visible = true
                 contentHolder.Visible = true
-                centerFrame.Visible = true
                 
                 currentBgTween = TweenService:Create(contentContainerSection, tweenInfo, {
                     BackgroundTransparency = 0.65
@@ -414,11 +397,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -2, 0, targetContainerHeight)
                 })
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
-                    Size = UDim2.new(1, -60, 0, targetContainerHeight)
+                    Size = UDim2.new(1, -60, 0, math.max(0, targetContentHeight))
                 })
-                currentCenterTween = TweenService:Create(centerFrame, tweenInfo, {
-                    Size = UDim2.new(0.9, 0, 0, targetContentHeight)
-                })
+                -- ===== 修改点 2：动画中宽度保持 80% =====
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(0.8, 0, 0, targetSectionHeight)
                 })
@@ -432,9 +413,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
                     Size = UDim2.new(1, -60, 0, 0)
                 })
-                currentCenterTween = TweenService:Create(centerFrame, tweenInfo, {
-                    Size = UDim2.new(0.9, 0, 0, 0)
-                })
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(0.8, 0, 0, 46)
                 })
@@ -443,7 +421,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     if not open and contentContainerSection then
                         contentContainerSection.Visible = false
                         contentHolder.Visible = false
-                        centerFrame.Visible = false
                     end
                 end)
             end
@@ -451,7 +428,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             currentBgTween:Play()
             currentContentTween:Play()
             currentHolderTween:Play()
-            currentCenterTween:Play()
             currentSectionTween:Play()
         end
 
@@ -483,7 +459,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end)
 
-        contentParent.ChildAdded:Connect(function()
+        contentHolder.ChildAdded:Connect(function()
             task.wait(0.05)
             if open then
                 updateSectionHeight(false)
@@ -500,7 +476,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Btn.Text = ""
             Btn.Font = Enum.Font.Gotham
             Btn.TextSize = 14
-            Btn.Parent = contentParent
+            Btn.Parent = contentHolder
             Btn.BackgroundTransparency = 0.05
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
@@ -553,7 +529,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
-            Tile.Parent = contentParent
+            Tile.Parent = contentHolder
             Tile.BackgroundTransparency = 0.05
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -637,7 +613,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local tileH = unlimited and 42 or 60
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, tileH)
-            Tile.Parent = contentParent
+            Tile.Parent = contentHolder
             Tile.BackgroundTransparency = 0.05
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -856,7 +832,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Btn.Text = ""
             Btn.BackgroundTransparency = 0.05
             Btn.AutoButtonColor = false
-            Btn.Parent = contentParent
+            Btn.Parent = contentHolder
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
@@ -883,7 +859,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Container.Visible = false
             Container.ClipsDescendants = true
             Container.ZIndex = 10
-            Container.Parent = contentParent
+            Container.Parent = contentHolder
             Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Container, "BackgroundColor3", "Top")
             local CSt = Instance.new("UIStroke")
@@ -1177,7 +1153,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
-            Tile.Parent = contentParent
+            Tile.Parent = contentHolder
             Tile.BackgroundTransparency = 0.05
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -1262,7 +1238,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 44)
-            Tile.Parent = contentParent
+            Tile.Parent = contentHolder
             Tile.BackgroundTransparency = 0.05
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -1300,7 +1276,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Panel.Size = UDim2.new(1, 0, 0, 0)
             Panel.Visible = false
             Panel.ClipsDescendants = true
-            Panel.Parent = contentParent
+            Panel.Parent = contentHolder
             Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Panel, "BackgroundColor3", "Top")
             local PSt = Instance.new("UIStroke")
@@ -1647,7 +1623,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local InputFrame = Instance.new("Frame")
             InputFrame.Size = UDim2.new(1, 0, 0, 42)
-            InputFrame.Parent = contentParent
+            InputFrame.Parent = contentHolder
             InputFrame.BackgroundTransparency = 0.05
             Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(InputFrame, "BackgroundColor3", "Top")
@@ -1732,7 +1708,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local Frame = Instance.new("Frame")
             Frame.Size = UDim2.new(1, 0, 0, 70)
-            Frame.Parent = contentParent
+            Frame.Parent = contentHolder
             Frame.BackgroundTransparency = 0.05
             Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Frame, "BackgroundColor3", "Top")
@@ -1783,7 +1759,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local labelText = config.Name or ""
             local LabelFrame = Instance.new("Frame")
             LabelFrame.Size = UDim2.new(1, 0, 0, 42)
-            LabelFrame.Parent = contentParent
+            LabelFrame.Parent = contentHolder
             LabelFrame.BackgroundTransparency = 0.05
             Instance.new("UICorner", LabelFrame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(LabelFrame, "BackgroundColor3", "Top")
@@ -1839,7 +1815,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local imageFrame = Instance.new("Frame")
             imageFrame.Size = UDim2.new(1, 0, 0, 0)
             imageFrame.AutomaticSize = Enum.AutomaticSize.Y
-            imageFrame.Parent = contentParent
+            imageFrame.Parent = contentHolder
             imageFrame.BackgroundTransparency = 0.05
             Instance.new("UICorner", imageFrame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(imageFrame, "BackgroundColor3", "Top")
@@ -2012,7 +1988,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local container = Instance.new("Frame")
             container.Size = UDim2.new(1, 0, 0, (labelText ~= "" and 22 or 12))
             container.BackgroundTransparency = 1
-            container.Parent = contentParent
+            container.Parent = contentHolder
 
             if labelText ~= "" then
                 local leftLine = Instance.new("Frame")
