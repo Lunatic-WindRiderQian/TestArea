@@ -345,13 +345,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
 
+        -- ========== 宽度缩减修改点 ==========
+        -- 左右缩进从 12px 增加到 20px，总偏移 -40
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1, -24, 0, 0)
-        contentHolder.Position = UDim2.new(0, 12, 0, 4)
+        contentHolder.Size = UDim2.new(1, -40, 0, 0)   -- 原来为 -24
+        contentHolder.Position = UDim2.new(0, 20, 0, 4)  -- 原来为 12
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = true
         contentHolder.Parent = contentContainerSection
+        -- ===================================
 
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Padding = UDim.new(0, 6)
@@ -393,7 +396,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -2, 0, targetContainerHeight)
                 })
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
-                    Size = UDim2.new(1, -24, 0, math.max(0, targetContentHeight))
+                    Size = UDim2.new(1, -40, 0, math.max(0, targetContentHeight))
                 })
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(1, 0, 0, targetSectionHeight)
@@ -406,7 +409,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -2, 0, 0)
                 })
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
-                    Size = UDim2.new(1, -24, 0, 0)
+                    Size = UDim2.new(1, -40, 0, 0)
                 })
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(1, 0, 0, 46)
@@ -2920,8 +2923,9 @@ function Fenglib:CreateWindow(Config)
     RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
 
+    -- 修改此处：将圆角从 0 改为 16，与左侧保持一致
     local rightCorner = Instance.new("UICorner")
-    rightCorner.CornerRadius = UDim.new(0, 16)
+    rightCorner.CornerRadius = UDim.new(0, 16)   -- 之前为 UDim.new(0, 0)
     rightCorner.Parent = RightContainer
 
     table.insert(ThemeListeners, function()
@@ -3340,7 +3344,6 @@ function Fenglib:CreateWindow(Config)
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
 
-        -- ===== 创建右侧滚动列表（Page），并添加圆角裁剪 =====
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
@@ -3349,13 +3352,6 @@ function Fenglib:CreateWindow(Config)
         Page.Visible = false
         Page.Position = UDim2.new(0, 0, 0, 60)
         Page.Parent = PageContainer
-
-        -- 添加圆角裁剪，半径与 RightContainer 保持一致（16）
-        local pageCorner = Instance.new("UICorner")
-        pageCorner.CornerRadius = UDim.new(0, 16)
-        pageCorner.Parent = Page
-        Page.ClipsDescendants = true
-        -- ===== 圆角添加结束 =====
 
         local PageContent = Instance.new("Frame")
         PageContent.Size = UDim2.new(1, 0, 0, 0)
