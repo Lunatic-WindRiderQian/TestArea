@@ -150,12 +150,12 @@ function Fenglib:LoadConfig(path)
 end
 
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
-    -- 左边距 4%，使整体靠左但保留少量缩进
+    -- 左边距 4%
     local padding = parent:FindFirstChild("SectionPadding")
     if not padding then
         padding = Instance.new("UIPadding")
         padding.Name = "SectionPadding"
-        padding.PaddingLeft = UDim.new(0.04, 0)   -- 左边距 4%
+        padding.PaddingLeft = UDim.new(0.04, 0)
         padding.Parent = parent
     end
 
@@ -181,9 +181,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- ===== 宽度改为 96%，左对齐，正好填满剩余空间（4%左边距 + 96%宽度 = 100%） =====
+        -- Section 宽度 96%，左对齐
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(0.96, 0, 0, 46)   -- 宽度 96%
+        sectionFrame.Size = UDim2.new(0.96, 0, 0, 46)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         sectionFrame.BackgroundTransparency = 0.65
@@ -357,10 +357,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
 
-        -- 内容控件缩进（左右各30）
+        -- ===== 修改：减小左右缩进，使控件更宽 =====
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1, -60, 0, 0)
-        contentHolder.Position = UDim2.new(0, 30, 0, 4)
+        contentHolder.Size = UDim2.new(1, -20, 0, 0)   -- 原为 -60，现改为 -20
+        contentHolder.Position = UDim2.new(0, 10, 0, 4) -- 原为 30，现改为 10
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = true
@@ -406,9 +406,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -2, 0, targetContainerHeight)
                 })
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
-                    Size = UDim2.new(1, -60, 0, math.max(0, targetContentHeight))
+                    Size = UDim2.new(1, -20, 0, math.max(0, targetContentHeight))  -- 同步修改
                 })
-                -- ===== 动画宽度同步改为 96% =====
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(0.96, 0, 0, targetSectionHeight)
                 })
@@ -420,7 +419,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -2, 0, 0)
                 })
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
-                    Size = UDim2.new(1, -60, 0, 0)
+                    Size = UDim2.new(1, -20, 0, 0)  -- 同步修改
                 })
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(0.96, 0, 0, 46)
