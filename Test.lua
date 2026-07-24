@@ -172,11 +172,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- ===== 修改点 1：Section 宽度缩减为父容器的 80%，并居中 =====
+        -- ===== 修改点：Section 改为右对齐（靠右），宽度 80% =====
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(0.8, 0, 0, 46)   -- 宽度占 80%
-        sectionFrame.AnchorPoint = Vector2.new(0.5, 0) -- 水平居中锚点
-        sectionFrame.Position = UDim2.new(0.5, 0, 0, 0) -- 居中
+        sectionFrame.Size = UDim2.new(0.8, 0, 0, 46)        -- 宽度占 80%
+        sectionFrame.AnchorPoint = Vector2.new(1, 0)        -- 锚点在右上角
+        sectionFrame.Position = UDim2.new(1, 0, 0, 0)       -- 右边缘紧贴父容器右边缘
         sectionFrame.BackgroundTransparency = 0.65
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
@@ -348,7 +348,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
 
-        -- 内容控件进一步缩进（左右各 30）
+        -- 内容控件保持左右各 30 缩进（现在 Section 已右移，内容依然在其内部左对齐）
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -60, 0, 0)
         contentHolder.Position = UDim2.new(0, 30, 0, 4)
@@ -399,7 +399,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
                     Size = UDim2.new(1, -60, 0, math.max(0, targetContentHeight))
                 })
-                -- ===== 修改点 2：动画中宽度保持 80% =====
+                -- 动画中宽度保持 80%，右对齐
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(0.8, 0, 0, targetSectionHeight)
                 })
