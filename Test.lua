@@ -172,8 +172,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
+        -- ===== 修改点 1：整个 Section 左右缩进 20 像素 =====
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(1, 0, 0, 46)
+        sectionFrame.Size = UDim2.new(1, -40, 0, 46)   -- 宽度减少 40
+        sectionFrame.Position = UDim2.new(0, 20, 0, 0) -- 右移 20，保持居中
         sectionFrame.BackgroundTransparency = 0.65
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
@@ -345,10 +347,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
 
-        -- ===== 修改点：内容控件宽度缩小（左右边距各 30） =====
+        -- 内容控件进一步缩进（保持之前设定的左右各 30）
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1, -60, 0, 0)   -- 原为 -24
-        contentHolder.Position = UDim2.new(0, 30, 0, 4) -- 原为 12
+        contentHolder.Size = UDim2.new(1, -60, 0, 0)
+        contentHolder.Position = UDim2.new(0, 30, 0, 4)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = true
@@ -394,10 +396,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -2, 0, targetContainerHeight)
                 })
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
-                    Size = UDim2.new(1, -60, 0, math.max(0, targetContentHeight))  -- 宽度也同步保持 -60
+                    Size = UDim2.new(1, -60, 0, math.max(0, targetContentHeight))
                 })
+                -- ===== 修改点 2：动画中保持缩进的宽度 =====
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
-                    Size = UDim2.new(1, 0, 0, targetSectionHeight)
+                    Size = UDim2.new(1, -40, 0, targetSectionHeight)
                 })
             else
                 currentBgTween = TweenService:Create(contentContainerSection, tweenInfo, {
@@ -410,7 +413,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -60, 0, 0)
                 })
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
-                    Size = UDim2.new(1, 0, 0, 46)
+                    Size = UDim2.new(1, -40, 0, 46)
                 })
                 
                 task.delay((instant and 0 or 0.3) + 0.05, function()
