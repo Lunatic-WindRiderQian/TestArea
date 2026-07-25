@@ -150,7 +150,6 @@ function Fenglib:LoadConfig(path)
 end
 
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
-    -- 左边距 4%
     local padding = parent:FindFirstChild("SectionPadding")
     if not padding then
         padding = Instance.new("UIPadding")
@@ -181,7 +180,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- Section 宽度 96%，左对齐
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(0.96, 0, 0, 46)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
@@ -357,10 +355,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
 
-        -- ===== 修改：减小左右缩进，使控件更宽 =====
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1, -20, 0, 0)   -- 原为 -60，现改为 -20
-        contentHolder.Position = UDim2.new(0, 10, 0, 4) -- 原为 30，现改为 10
+        contentHolder.Size = UDim2.new(1, -20, 0, 0)
+        contentHolder.Position = UDim2.new(0, 10, 0, 4)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = true
@@ -406,7 +403,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -2, 0, targetContainerHeight)
                 })
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
-                    Size = UDim2.new(1, -20, 0, math.max(0, targetContentHeight))  -- 同步修改
+                    Size = UDim2.new(1, -20, 0, math.max(0, targetContentHeight))
                 })
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(0.96, 0, 0, targetSectionHeight)
@@ -419,7 +416,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Size = UDim2.new(1, -2, 0, 0)
                 })
                 currentHolderTween = TweenService:Create(contentHolder, tweenInfo, {
-                    Size = UDim2.new(1, -20, 0, 0)  -- 同步修改
+                    Size = UDim2.new(1, -20, 0, 0)
                 })
                 currentSectionTween = TweenService:Create(sectionFrame, tweenInfo, {
                     Size = UDim2.new(0.96, 0, 0, 46)
@@ -2125,6 +2122,7 @@ function Fenglib:CreateWindow(Config)
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 299
 
+    -- ===== 窗口主框架（去除玻璃，添加 FluentPro 背景和 Shine 动画）=====
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -2136,15 +2134,57 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
+    -- 边框（保留，但不再用于彩虹渐变，避免干扰背景）
     local Stroke = Instance.new("UIStroke")
     Stroke.Thickness = 2
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
-    local Gradient = Instance.new("UIGradient")
-    Gradient.Parent = Stroke
-    Gradient.Enabled = false
+    -- ===== 添加 FluentPro 风格背景图片（Blood Red 主题） =====
+    local bgImage = Instance.new("ImageLabel")
+    bgImage.Name = "FluentBG"
+    bgImage.Size = UDim2.new(1, 0, 1, 0)
+    bgImage.BackgroundTransparency = 1
+    bgImage.Image = "rbxassetid://121343473918667"   -- Blood Red 背景
+    bgImage.ScaleType = Enum.ScaleType.Crop
+    bgImage.ZIndex = 0
+    bgImage.Parent = MainFrame
 
+    -- ===== 背景 Shine 动画（UIGradient 旋转） =====
+    local bgGradient = Instance.new("UIGradient")
+    bgGradient.Rotation = 0
+    bgGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 10, 20)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 80, 80)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 10, 20))
+    })
+    bgGradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.6),
+        NumberSequenceKeypoint.new(0.5, 0.0),
+        NumberSequenceKeypoint.new(1, 0.6)
+    })
+    bgGradient.Parent = bgImage
+
+    -- Shine 旋转循环
+    local shineConn
+    local function startShine()
+        local rot = 0
+        shineConn = RunService.RenderStepped:Connect(function(dt)
+            rot = (rot + dt * 20) % 360   -- 速度可调
+            bgGradient.Rotation = rot
+        end)
+    end
+    startShine()
+
+    -- 窗口销毁时清理
+    table.insert(WindowCleanup, function()
+        if shineConn then shineConn:Disconnect() end
+    end)
+
+    -- ---- 以下移除原有的玻璃模糊和景深效果（blurPart, DOF, updateBlur 等） ----
+    -- 原 do ... end 块已删除，不再创建 blurPart / dof / blurConnection
+
+    -- ===== 窗口调整大小按钮（可选保留） =====
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
@@ -2195,130 +2235,41 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    do
-        local blurPart = Instance.new("Part")
-        blurPart.Name = "FengBlurPart"
-        blurPart.Material = Enum.Material.Glass
-        blurPart.Transparency = 0.97
-        blurPart.Reflectance = 1
-        blurPart.CastShadow = false
-        blurPart.Anchored = true
-        blurPart.CanCollide = false
-        blurPart.CanQuery = false
-        blurPart.CollisionGroup = " "
-        blurPart.Size = Vector3.new(1, 1, 1) * 0.01
-        blurPart.Color = Color3.fromRGB(0, 0, 0)
-        blurPart.Parent = Camera
-
-        local blockMesh = Instance.new("BlockMesh")
-        blockMesh.Parent = blurPart
-
-        local dof = Instance.new("DepthOfFieldEffect")
-        dof.Name = "FengDOF"
-        dof.Enabled = true
-        dof.FarIntensity = 0
-        dof.FocusDistance = 0
-        dof.InFocusRadius = 1000
-        dof.NearIntensity = 0.6
-        dof.Parent = Lighting
-
-        local function updateBlur()
-            if not MainFrame.Visible or not MainFrame.Parent then
-                blockMesh.Scale = Vector3.new(0, 0, 0)
-                return
-            end
-            local corner0 = MainFrame.AbsolutePosition
-            local corner1 = corner0 + MainFrame.AbsoluteSize
-            local ray0 = Camera:ScreenPointToRay(corner0.X, corner0.Y, 1)
-            local ray1 = Camera:ScreenPointToRay(corner1.X, corner1.Y, 1)
-            local origin = Camera.CFrame.Position + Camera.CFrame.LookVector * (0.05 - Camera.NearPlaneZ)
-            local normal = Camera.CFrame.LookVector
-
-            local function getPoint(ray)
-                local denominator = ray.Direction:Dot(normal)
-                if math.abs(denominator) < 1e-6 then
-                    return ray.Origin
-                end
-                local d = (origin - ray.Origin):Dot(normal) / denominator
-                return ray.Origin + ray.Direction * d
-            end
-
-            local pos0 = Camera.CFrame:PointToObjectSpace(getPoint(ray0))
-            local pos1 = Camera.CFrame:PointToObjectSpace(getPoint(ray1))
-            local size = pos1 - pos0
-            local center = (pos0 + pos1) / 2
-            blockMesh.Offset = center
-            blockMesh.Scale = size / 0.0101
-            blurPart.CFrame = Camera.CFrame
-        end
-
-        local blurConnection = RunService.RenderStepped:Connect(updateBlur)
-
-        local borderStroke = MainFrame:FindFirstChildOfClass("UIStroke")
-        if borderStroke then
-            local grad = Instance.new("UIGradient")
-            grad.Rotation = -115
-            grad.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-                ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
-            })
-            grad.Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0, 0.2),
-                NumberSequenceKeypoint.new(0.5, 0.9),
-                NumberSequenceKeypoint.new(1, 0.2)
-            })
-            grad.Parent = borderStroke
-            table.insert(ThemeListeners, function()
-                grad.Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-                    ColorSequenceKeypoint.new(1, CurrentTheme.Accent)
-                })
-            end)
-        end
-
-        table.insert(WindowCleanup, function()
-            if blurConnection then blurConnection:Disconnect() end
-            if blurPart then blurPart:Destroy() end
-            if dof then dof:Destroy() end
-        end)
-    end
-
+    -- ===== 彩虹模式（保留，但仅影响边框 Stroke，不影响背景） =====
     task.spawn(function()
         local rot = 0
         while ScreenGui.Parent do
             if RainbowEnabled then
                 local t = tick() * RainbowSpeed
                 if RainbowType == "Linear Gradient (Solid Rainbow)" then
-                    Gradient.Enabled = true; Gradient.Rotation = 0
-                    Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)), ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255,255,0)),ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0,255,255)),ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0,0,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))})
-                    Stroke.Color = Color3.new(1,1,1)
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Animated/Cycling Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Smooth Fading Gradient" then
-                    Gradient.Enabled = true; rot = rot + 2; Gradient.Rotation = rot
-                    Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,0))}); Stroke.Color = Color3.new(1,1,1)
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Step/Band Rainbow" then
-                    Gradient.Enabled = false; local step = math.floor((t % 2) * 4) / 4; Stroke.Color = Color3.fromHSV(step, 1, 1)
+                    local step = math.floor((t % 2) * 4) / 4
+                    Stroke.Color = Color3.fromHSV(step, 1, 1)
                 elseif RainbowType == "Rainbow Pulse" then
-                    Gradient.Enabled = false; local pulse = (math.sin(t * 3) + 1) / 2; Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
+                    local pulse = (math.sin(t * 3) + 1) / 2
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
                 elseif RainbowType == "Radial Rainbow" then
-                    Gradient.Enabled = true; rot = rot + 5; Gradient.Rotation = rot
-                    Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))}); Stroke.Color = Color3.new(1,1,1)
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Neon/Glowing Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1) 
+                    Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1)
                 elseif RainbowType == "Pastel Rainbow" then
-                    Gradient.Enabled = false; Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
                 elseif RainbowType == "Vertical/Horizontal Fade" then
-                    Gradient.Enabled = true; Gradient.Rotation = 90; local c = Color3.fromHSV(t % 5/5, 1, 1); local c2 = Color3.fromHSV((t+1) % 5/5, 1, 1); Gradient.Color = ColorSequence.new(c, c2); Stroke.Color = Color3.new(1,1,1)
+                    Stroke.Color = Color3.fromHSV(t % 5/5, 1, 1)
                 end
             else
-                Gradient.Enabled = false
                 Stroke.Color = CurrentTheme.Stroke
             end
             RunService.RenderStepped:Wait()
         end
     end)
 
+    -- ===== 启动动画（Intro） =====
     local IntroHolder = Instance.new("Frame")
     IntroHolder.Size = UDim2.new(1, 999999, 1, 999999)
     IntroHolder.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -2413,6 +2364,7 @@ function Fenglib:CreateWindow(Config)
     task.wait(0.35)
     IntroHolder:Destroy()
 
+    -- ===== Topbar =====
     local topbarHeight = Subtitle and 45 or 40
 
     local Topbar = Instance.new("Frame")
@@ -3481,6 +3433,7 @@ function Fenglib:CreateWindow(Config)
     return Window
 end
 
+-- ===== 自定义光标 =====
 do
     local cursorScreen = Instance.new("ScreenGui")
     cursorScreen.Name = "FengCustomCursor"
