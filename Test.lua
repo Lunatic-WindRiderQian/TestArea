@@ -2134,7 +2134,7 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
-    -- 边框（保留，但不再用于彩虹渐变，避免干扰背景）
+    -- 边框（保留）
     local Stroke = Instance.new("UIStroke")
     Stroke.Thickness = 2
     Stroke.Parent = MainFrame
@@ -2149,6 +2149,11 @@ function Fenglib:CreateWindow(Config)
     bgImage.ScaleType = Enum.ScaleType.Crop
     bgImage.ZIndex = 0
     bgImage.Parent = MainFrame
+
+    -- 给背景图添加独立的圆角（与窗口一致）
+    local bgCorner = Instance.new("UICorner")
+    bgCorner.CornerRadius = UDim.new(0, 16)
+    bgCorner.Parent = bgImage
 
     -- ===== 背景 Shine 动画（UIGradient 旋转） =====
     local bgGradient = Instance.new("UIGradient")
@@ -2181,10 +2186,10 @@ function Fenglib:CreateWindow(Config)
         if shineConn then shineConn:Disconnect() end
     end)
 
-    -- ---- 以下移除原有的玻璃模糊和景深效果（blurPart, DOF, updateBlur 等） ----
-    -- 原 do ... end 块已删除，不再创建 blurPart / dof / blurConnection
+    -- ---- 以下移除原有的玻璃模糊和景深效果 ----
+    -- 原 do ... end 块已删除
 
-    -- ===== 窗口调整大小按钮（可选保留） =====
+    -- ===== 窗口调整大小按钮 =====
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
@@ -2235,7 +2240,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- ===== 彩虹模式（保留，但仅影响边框 Stroke，不影响背景） =====
+    -- ===== 彩虹模式（仅影响边框） =====
     task.spawn(function()
         local rot = 0
         while ScreenGui.Parent do
