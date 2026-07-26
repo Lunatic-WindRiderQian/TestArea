@@ -2135,13 +2135,12 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
-    -- 边框
     local Stroke = Instance.new("UIStroke")
     Stroke.Thickness = 2
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
-    -- ===== 背景图（使用 Scene 参数，默认 102597607447167） =====
+    -- ===== 背景图 =====
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
@@ -2155,34 +2154,36 @@ function Fenglib:CreateWindow(Config)
     bgImage.ZIndex = 0
     bgImage.Parent = MainFrame
 
-    -- 背景图圆角
     local bgCorner = Instance.new("UICorner")
     bgCorner.CornerRadius = UDim.new(0, 16)
     bgCorner.Parent = bgImage
 
-    -- ===== Shine 动画（纯透明度扫光，不改变图片颜色） =====
+    -- ===== Shine 动画（原 Blood Red 主题配置，仅透明度扫光，不改变图片颜色） =====
     local bgGradient = Instance.new("UIGradient")
     bgGradient.Rotation = 0
-    -- ★ 关键修改：Color 设为纯白，不改变图片原始颜色
+
+    -- ★ 原 Blood Red 主题的 ColorSequence
     bgGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(71, 0, 0)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(159, 0, 0)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(71, 0, 0))
     })
-    -- 透明度渐变：产生扫光效果
+
+    -- ★ 透明度控制：高光区域半透明（红色可见），其余区域透明（图片底色显现）
     bgGradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.7),
-        NumberSequenceKeypoint.new(0.3, 0.0),
-        NumberSequenceKeypoint.new(0.7, 0.0),
-        NumberSequenceKeypoint.new(1, 0.7)
+        NumberSequenceKeypoint.new(0, 0.85),
+        NumberSequenceKeypoint.new(0.3, 0.2),
+        NumberSequenceKeypoint.new(0.7, 0.2),
+        NumberSequenceKeypoint.new(1, 0.85)
     })
     bgGradient.Parent = bgImage
 
-    -- Shine 旋转
+    -- Shine 旋转（原 RotationSpeed = 25）
     local shineConn
     local function startShine()
         local rot = 0
         shineConn = RunService.RenderStepped:Connect(function(dt)
-            rot = (rot + dt * 20) % 360
+            rot = (rot + dt * 25) % 360
             bgGradient.Rotation = rot
         end)
     end
