@@ -2059,7 +2059,7 @@ function Fenglib:CreateWindow(Config)
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind 
     local IconAsset = Config.Logo
-    -- ==== 新增 Scene 参数，默认使用 102597607447167 ====
+    -- Scene 参数：控制背景图，默认 102597607447167
     local SceneId = Config.Scene or 102597607447167
 
     Window.RootFolder = Title 
@@ -2124,7 +2124,7 @@ function Fenglib:CreateWindow(Config)
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 299
 
-    -- ===== 窗口主框架（去除玻璃，添加 FluentPro 背景和 Shine 动画）=====
+    -- ===== 窗口主框架 =====
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -2136,22 +2136,21 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
-    -- 边框（保留）
+    -- 边框
     local Stroke = Instance.new("UIStroke")
     Stroke.Thickness = 2
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
-    -- ===== 添加背景图，使用 Scene 参数或默认值 =====
+    -- ===== 背景图（由 Scene 控制，默认 102597607447167） =====
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
     bgImage.BackgroundTransparency = 1
-    -- 如果 SceneId 是数字或数字字符串，拼接为 rbxassetid://
     if type(SceneId) == "number" or (type(SceneId) == "string" and tonumber(SceneId)) then
         bgImage.Image = "rbxassetid://" .. tostring(SceneId)
     else
-        bgImage.Image = tostring(SceneId)  -- 可能是完整 URL 或 rbxassetid:// 前缀
+        bgImage.Image = tostring(SceneId)
     end
     bgImage.ScaleType = Enum.ScaleType.Crop
     bgImage.ZIndex = 0
@@ -2162,7 +2161,7 @@ function Fenglib:CreateWindow(Config)
     bgCorner.CornerRadius = UDim.new(0, 16)
     bgCorner.Parent = bgImage
 
-    -- ===== 背景 Shine 动画（UIGradient 旋转） =====
+    -- ===== Shine 动画（保留，颜色序列可自定义） =====
     local bgGradient = Instance.new("UIGradient")
     bgGradient.Rotation = 0
     bgGradient.Color = ColorSequence.new({
@@ -2177,24 +2176,19 @@ function Fenglib:CreateWindow(Config)
     })
     bgGradient.Parent = bgImage
 
-    -- Shine 旋转循环
     local shineConn
     local function startShine()
         local rot = 0
         shineConn = RunService.RenderStepped:Connect(function(dt)
-            rot = (rot + dt * 20) % 360   -- 速度可调
+            rot = (rot + dt * 20) % 360
             bgGradient.Rotation = rot
         end)
     end
     startShine()
 
-    -- 窗口销毁时清理
     table.insert(WindowCleanup, function()
         if shineConn then shineConn:Disconnect() end
     end)
-
-    -- ---- 以下移除原有的玻璃模糊和景深效果 ----
-    -- 原 do ... end 块已删除
 
     -- ===== 窗口调整大小按钮 =====
     local Resizer = Instance.new("TextButton")
@@ -2281,7 +2275,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- ===== 启动动画（Intro） =====
+    -- ===== 启动动画 =====
     local IntroHolder = Instance.new("Frame")
     IntroHolder.Size = UDim2.new(1, 999999, 1, 999999)
     IntroHolder.AnchorPoint = Vector2.new(0.5, 0.5)
