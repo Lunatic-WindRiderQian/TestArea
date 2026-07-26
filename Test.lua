@@ -2059,6 +2059,8 @@ function Fenglib:CreateWindow(Config)
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind 
     local IconAsset = Config.Logo
+    -- ==== 新增 Scene 参数，默认使用 102597607447167 ====
+    local SceneId = Config.Scene or 102597607447167
 
     Window.RootFolder = Title 
     Window.ConfigFolder = Title.."/Config"
@@ -2140,17 +2142,22 @@ function Fenglib:CreateWindow(Config)
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
-    -- ===== 添加 FluentPro 风格背景图片（Blood Red 主题） =====
+    -- ===== 添加背景图，使用 Scene 参数或默认值 =====
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
     bgImage.BackgroundTransparency = 1
-    bgImage.Image = "rbxassetid://121343473918667"   -- Blood Red 背景
+    -- 如果 SceneId 是数字或数字字符串，拼接为 rbxassetid://
+    if type(SceneId) == "number" or (type(SceneId) == "string" and tonumber(SceneId)) then
+        bgImage.Image = "rbxassetid://" .. tostring(SceneId)
+    else
+        bgImage.Image = tostring(SceneId)  -- 可能是完整 URL 或 rbxassetid:// 前缀
+    end
     bgImage.ScaleType = Enum.ScaleType.Crop
     bgImage.ZIndex = 0
     bgImage.Parent = MainFrame
 
-    -- 给背景图添加独立的圆角（与窗口一致）
+    -- 背景图圆角
     local bgCorner = Instance.new("UICorner")
     bgCorner.CornerRadius = UDim.new(0, 16)
     bgCorner.Parent = bgImage
