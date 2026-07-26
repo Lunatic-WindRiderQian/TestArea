@@ -2059,7 +2059,6 @@ function Fenglib:CreateWindow(Config)
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind 
     local IconAsset = Config.Logo
-    -- Scene 参数：控制背景图，默认 102597607447167
     local SceneId = Config.Scene or 102597607447167
 
     Window.RootFolder = Title 
@@ -2142,7 +2141,7 @@ function Fenglib:CreateWindow(Config)
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
-    -- ===== 背景图（由 Scene 控制，默认 102597607447167） =====
+    -- ===== 背景图（使用 Scene 参数，默认 102597607447167） =====
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
@@ -2161,21 +2160,24 @@ function Fenglib:CreateWindow(Config)
     bgCorner.CornerRadius = UDim.new(0, 16)
     bgCorner.Parent = bgImage
 
-    -- ===== Shine 动画（保留，颜色序列可自定义） =====
+    -- ===== Shine 动画（纯透明度扫光，不改变图片颜色） =====
     local bgGradient = Instance.new("UIGradient")
     bgGradient.Rotation = 0
+    -- ★ 关键修改：Color 设为纯白，不改变图片原始颜色
     bgGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 10, 20)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 80, 80)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 10, 20))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
     })
+    -- 透明度渐变：产生扫光效果
     bgGradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.6),
-        NumberSequenceKeypoint.new(0.5, 0.0),
-        NumberSequenceKeypoint.new(1, 0.6)
+        NumberSequenceKeypoint.new(0, 0.7),
+        NumberSequenceKeypoint.new(0.3, 0.0),
+        NumberSequenceKeypoint.new(0.7, 0.0),
+        NumberSequenceKeypoint.new(1, 0.7)
     })
     bgGradient.Parent = bgImage
 
+    -- Shine 旋转
     local shineConn
     local function startShine()
         local rot = 0
@@ -2247,11 +2249,7 @@ function Fenglib:CreateWindow(Config)
         while ScreenGui.Parent do
             if RainbowEnabled then
                 local t = tick() * RainbowSpeed
-                if RainbowType == "Linear Gradient (Solid Rainbow)" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Animated/Cycling Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Smooth Fading Gradient" then
+                if RainbowType == "Animated/Cycling Rainbow" then
                     Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Step/Band Rainbow" then
                     local step = math.floor((t % 2) * 4) / 4
@@ -2259,14 +2257,12 @@ function Fenglib:CreateWindow(Config)
                 elseif RainbowType == "Rainbow Pulse" then
                     local pulse = (math.sin(t * 3) + 1) / 2
                     Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
-                elseif RainbowType == "Radial Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Neon/Glowing Rainbow" then
                     Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1)
                 elseif RainbowType == "Pastel Rainbow" then
                     Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
-                elseif RainbowType == "Vertical/Horizontal Fade" then
-                    Stroke.Color = Color3.fromHSV(t % 5/5, 1, 1)
+                else
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 end
             else
                 Stroke.Color = CurrentTheme.Stroke
@@ -2275,7 +2271,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- ===== 启动动画 =====
+    -- ===== 启动动画（Intro） =====
     local IntroHolder = Instance.new("Frame")
     IntroHolder.Size = UDim2.new(1, 999999, 1, 999999)
     IntroHolder.AnchorPoint = Vector2.new(0.5, 0.5)
