@@ -2059,6 +2059,7 @@ function Fenglib:CreateWindow(Config)
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind 
     local IconAsset = Config.Logo
+    -- ==== 新增 Scene 参数，默认使用 102597607447167 ====
     local SceneId = Config.Scene or 102597607447167
 
     Window.RootFolder = Title 
@@ -2123,7 +2124,7 @@ function Fenglib:CreateWindow(Config)
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 299
 
-    -- ===== 窗口主框架 =====
+    -- ===== 窗口主框架（去除玻璃，添加 FluentPro 背景和 Shine 动画）=====
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -2135,63 +2136,65 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
+    -- 边框（保留）
     local Stroke = Instance.new("UIStroke")
     Stroke.Thickness = 2
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
-    -- ===== 背景图 =====
+    -- ===== 添加背景图，使用 Scene 参数或默认值 =====
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
     bgImage.BackgroundTransparency = 1
+    -- 如果 SceneId 是数字或数字字符串，拼接为 rbxassetid://
     if type(SceneId) == "number" or (type(SceneId) == "string" and tonumber(SceneId)) then
         bgImage.Image = "rbxassetid://" .. tostring(SceneId)
     else
-        bgImage.Image = tostring(SceneId)
+        bgImage.Image = tostring(SceneId)  -- 可能是完整 URL 或 rbxassetid:// 前缀
     end
     bgImage.ScaleType = Enum.ScaleType.Crop
     bgImage.ZIndex = 0
     bgImage.Parent = MainFrame
 
+    -- 背景图圆角
     local bgCorner = Instance.new("UICorner")
     bgCorner.CornerRadius = UDim.new(0, 16)
     bgCorner.Parent = bgImage
 
-    -- ===== Shine 动画（原 Blood Red 主题配置，仅透明度扫光，不改变图片颜色） =====
+    -- ===== 背景 Shine 动画（UIGradient 旋转） =====
     local bgGradient = Instance.new("UIGradient")
     bgGradient.Rotation = 0
-
-    -- ★ 原 Blood Red 主题的 ColorSequence
     bgGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(71, 0, 0)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(159, 0, 0)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(71, 0, 0))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 10, 20)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 80, 80)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 10, 20))
     })
-
-    -- ★ 透明度控制：高光区域半透明（红色可见），其余区域透明（图片底色显现）
     bgGradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.85),
-        NumberSequenceKeypoint.new(0.3, 0.2),
-        NumberSequenceKeypoint.new(0.7, 0.2),
-        NumberSequenceKeypoint.new(1, 0.85)
+        NumberSequenceKeypoint.new(0, 0.6),
+        NumberSequenceKeypoint.new(0.5, 0.0),
+        NumberSequenceKeypoint.new(1, 0.6)
     })
     bgGradient.Parent = bgImage
 
-    -- Shine 旋转（原 RotationSpeed = 25）
+    -- Shine 旋转循环
     local shineConn
     local function startShine()
         local rot = 0
         shineConn = RunService.RenderStepped:Connect(function(dt)
-            rot = (rot + dt * 25) % 360
+            rot = (rot + dt * 20) % 360   -- 速度可调
             bgGradient.Rotation = rot
         end)
     end
     startShine()
 
+    -- 窗口销毁时清理
     table.insert(WindowCleanup, function()
         if shineConn then shineConn:Disconnect() end
     end)
+
+    -- ---- 以下移除原有的玻璃模糊和景深效果 ----
+    -- 原 do ... end 块已删除
 
     -- ===== 窗口调整大小按钮 =====
     local Resizer = Instance.new("TextButton")
@@ -2250,7 +2253,11 @@ function Fenglib:CreateWindow(Config)
         while ScreenGui.Parent do
             if RainbowEnabled then
                 local t = tick() * RainbowSpeed
-                if RainbowType == "Animated/Cycling Rainbow" then
+                if RainbowType == "Linear Gradient (Solid Rainbow)" then
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
+                elseif RainbowType == "Animated/Cycling Rainbow" then
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
+                elseif RainbowType == "Smooth Fading Gradient" then
                     Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Step/Band Rainbow" then
                     local step = math.floor((t % 2) * 4) / 4
@@ -2258,12 +2265,14 @@ function Fenglib:CreateWindow(Config)
                 elseif RainbowType == "Rainbow Pulse" then
                     local pulse = (math.sin(t * 3) + 1) / 2
                     Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
+                elseif RainbowType == "Radial Rainbow" then
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Neon/Glowing Rainbow" then
                     Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1)
                 elseif RainbowType == "Pastel Rainbow" then
                     Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
-                else
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
+                elseif RainbowType == "Vertical/Horizontal Fade" then
+                    Stroke.Color = Color3.fromHSV(t % 5/5, 1, 1)
                 end
             else
                 Stroke.Color = CurrentTheme.Stroke
