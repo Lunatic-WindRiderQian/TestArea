@@ -82,9 +82,20 @@ local Themes = {
 }
 local CurrentTheme = Themes.Dark
 
+-- 增强的 AddToRegistry，防止因缺失主题键而崩溃
 local function AddToRegistry(obj, prop, themeKey)
-    table.insert(Registry, {Object = obj, Property = prop, Type = themeKey})
-    obj[prop] = CurrentTheme[themeKey]
+    if not themeKey then return end
+    local color = CurrentTheme[themeKey]
+    if color then
+        table.insert(Registry, {Object = obj, Property = prop, Type = themeKey})
+        obj[prop] = color
+    else
+        -- 如果主题键不存在，给出警告并设置默认颜色
+        warn("AddToRegistry: Missing theme key '" .. tostring(themeKey) .. "' for object", obj)
+        if prop == "ImageColor3" or prop == "TextColor3" or prop == "BackgroundColor3" then
+            obj[prop] = Color3.new(1, 1, 1)
+        end
+    end
 end
 
 local function Tween(obj, props, time)
@@ -1231,7 +1242,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             mouseIco.ImageTransparency = 0.35
             mouseIco.LayoutOrder = 1
             mouseIco.Parent = KeyBtn
-            AddToRegistry(mouseIco, "ImageColor3", "SubText")
+            AddToRegistry(mouseIco, "ImageColor3", "Text")   -- 修正：使用 "Text"
 
             -- 键名标签
             local KeyLabel = Instance.new("TextLabel")
