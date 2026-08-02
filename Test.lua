@@ -71,14 +71,15 @@ local function createPulseGlow(object)
     }
 end
 
+-- ===== 主题定义（已添加 SubText 字段） =====
 local Themes = {
-    Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48)},
-    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225)},
-    Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(160, 90, 255), Stroke = Color3.fromRGB(50, 45, 60)},
-    Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(70, 130, 255), Stroke = Color3.fromRGB(45, 55, 75)},
-    Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(60, 40, 40)},
-    Yellow = {Main = Color3.fromRGB(22, 22, 12), Top = Color3.fromRGB(35, 35, 20), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(255, 200, 80), Stroke = Color3.fromRGB(60, 60, 40)},
-    Green  = {Main = Color3.fromRGB(12, 22, 15), Top = Color3.fromRGB(20, 35, 25), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(60, 220, 130), Stroke = Color3.fromRGB(40, 60, 50)},
+    Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48), SubText = Color3.fromRGB(170, 170, 170)},
+    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225), SubText = Color3.fromRGB(120, 120, 120)},
+    Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(160, 90, 255), Stroke = Color3.fromRGB(50, 45, 60), SubText = Color3.fromRGB(180, 170, 200)},
+    Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(70, 130, 255), Stroke = Color3.fromRGB(45, 55, 75), SubText = Color3.fromRGB(160, 180, 210)},
+    Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(60, 40, 40), SubText = Color3.fromRGB(200, 160, 160)},
+    Yellow = {Main = Color3.fromRGB(22, 22, 12), Top = Color3.fromRGB(35, 35, 20), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(255, 200, 80), Stroke = Color3.fromRGB(60, 60, 40), SubText = Color3.fromRGB(200, 190, 150)},
+    Green  = {Main = Color3.fromRGB(12, 22, 15), Top = Color3.fromRGB(20, 35, 25), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(60, 220, 130), Stroke = Color3.fromRGB(40, 60, 50), SubText = Color3.fromRGB(160, 210, 180)},
 }
 local CurrentTheme = Themes.Dark
 
@@ -1151,7 +1152,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ================================
-        -- 替换后的 Keybind 元素（FluentPro 风格，带鼠标图标）
+        -- Keybind 元素（FluentPro 风格，带鼠标图标，使用 SubText 主题）
         -- ================================
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
@@ -1203,7 +1204,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             KeyLayout.SortOrder = Enum.SortOrder.LayoutOrder
             KeyLayout.Parent = KeyContainer
 
-            -- 鼠标图标（FluentPro 风格）
+            -- 鼠标图标（使用 SubText 颜色）
             local mouseIco = Instance.new("ImageLabel")
             mouseIco.Size = UDim2.new(0, 13, 0, 13)
             mouseIco.BackgroundTransparency = 1
@@ -1211,7 +1212,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             mouseIco.ImageTransparency = 0.35
             mouseIco.LayoutOrder = 1
             mouseIco.Parent = KeyContainer
-            AddToRegistry(mouseIco, "ImageColor3", "SubText")
+            AddToRegistry(mouseIco, "ImageColor3", "SubText")  -- 现在 SubText 已定义
 
             -- 按键标签
             local KeyLabel = Instance.new("TextLabel")
@@ -2239,6 +2240,7 @@ function Fenglib:CreateWindow(Config)
                 Text   = t.Text   and toC3(t.Text)   or CurrentTheme.Text,
                 Accent = t.Accent and toC3(t.Accent) or CurrentTheme.Accent,
                 Stroke = t.Stroke and toC3(t.Stroke) or CurrentTheme.Stroke,
+                SubText= t.SubText and toC3(t.SubText) or CurrentTheme.SubText,
             }
             local customName = t.Name or "Custom"
             Themes[customName] = customTheme
