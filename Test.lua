@@ -1150,23 +1150,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========================================================================
-        --  Keybind (FluentPro 风格，支持 Toggle / Hold 模式)
-        -- ========================================================================
+        -- ================================
+        -- 替换后的 Keybind 元素（FluentPro 风格）
+        -- ================================
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
-            local defaultKey = config.Default or Enum.KeyCode.LeftControl
-            local mode = config.Mode or "Toggle"  -- "Toggle" 或 "Hold"
+            local defaultKey = config.Default or Enum.KeyCode.M
+            local mode = config.Mode or "Toggle"  -- "Toggle", "Hold", "Always"
             local callback = config.Callback or function() end
             local changedCallback = config.ChangedCallback or function() end
             local controlId = keyText .. "_" .. tostring(#Registry)
 
-            -- 当前按键（字符串）
-            local currentKey = defaultKey.Name
-            -- 切换状态（仅 Toggle 模式有效）
+            local currentKey = defaultKey
             local toggled = false
+            local isWaiting = false
 
-            -- 主容器
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
@@ -1174,14 +1172,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
-            -- 点击区域
             local ClickBtn = Instance.new("TextButton")
             ClickBtn.Size = UDim2.new(1, 0, 1, 0)
             ClickBtn.BackgroundTransparency = 1
             ClickBtn.Text = ""
             ClickBtn.Parent = Tile
 
-            -- 标题
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = keyText
             TitleLbl.Size = UDim2.new(0.6, 0, 1, 0)
@@ -1193,203 +1189,157 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 显示按键的按钮（可点击设置新按键）
-            local KeyBtn = Instance.new("TextButton")
-            KeyBtn.Size = UDim2.new(0, 86, 0, 28)
-            KeyBtn.Position = UDim2.new(1, -100, 0.5, -14)
-            KeyBtn.BackgroundTransparency = 0.1
-            KeyBtn.Text = currentKey
-            KeyBtn.Font = Enum.Font.GothamMedium
-            KeyBtn.TextSize = 11
-            KeyBtn.TextColor3 = CurrentTheme.Accent
-            KeyBtn.Parent = Tile
-            Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0, 8)
-            AddToRegistry(KeyBtn, "BackgroundColor3", "Main")
-            AddToRegistry(KeyBtn, "TextColor3", "Accent")
+            local KeyLabel = Instance.new("TextLabel")
+            KeyLabel.Text = currentKey.Name
+            KeyLabel.Size = UDim2.new(0, 86, 0, 28)
+            KeyLabel.Position = UDim2.new(1, -100, 0.5, -14)
+            KeyLabel.Font = Enum.Font.GothamMedium
+            KeyLabel.TextSize = 11
+            KeyLabel.Parent = Tile
+            KeyLabel.BackgroundTransparency = 0.1
+            Instance.new("UICorner", KeyLabel).CornerRadius = UDim.new(0, 8)
+            AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
+            AddToRegistry(KeyLabel, "TextColor3", "Accent")
 
-            -- 鼠标图标（可选，显示在按键左侧）
-            local MouseIcon = Instance.new("ImageLabel")
-            MouseIcon.Size = UDim2.new(0, 13, 0, 13)
-            MouseIcon.Position = UDim2.new(0, 6, 0.5, -6.5)
-            MouseIcon.BackgroundTransparency = 1
-            MouseIcon.Image = "rbxassetid://10734898592"  -- 鼠标图标
-            MouseIcon.ImageTransparency = 0.35
-            MouseIcon.Parent = KeyBtn
-            AddToRegistry(MouseIcon, "ImageColor3", "SubText")
-
-            -- 为了让文本不被图标遮挡，调整文本位置
-            local padding = Instance.new("UIPadding")
-            padding.PaddingLeft = UDim.new(0, 24)
-            padding.PaddingRight = UDim.new(0, 8)
-            padding.Parent = KeyBtn
-
-            -- 保存配置对象
+            -- 存储状态
             ConfigObjects[controlId] = {
                 Type = "Keybind",
-                Value = currentKey,
-                Set = function(val)
+                Value = currentKey.Name,
+                Mode = mode,
+                Set = function(val, newMode)
                     if type(val) == "string" then
+                        local key = Enum.KeyCode[val]
+                        if key then
+                            currentKey = key
+                            KeyLabel.Text = key.Name
+                            ConfigObjects[controlId].Value = key.Name
+                            changedCallback(key)
+                        end
+                    elseif type(val) == "userdata" and val.ClassName == "KeyCode" then
                         currentKey = val
-                        KeyBtn.Text = currentKey
-                        changedCallback(Enum.KeyCode[currentKey] or defaultKey)
-                    elseif type(val) == "userdata" and val.ClassName == "EnumItem" then
-                        currentKey = val.Name
-                        KeyBtn.Text = currentKey
+                        KeyLabel.Text = val.Name
+                        ConfigObjects[controlId].Value = val.Name
                         changedCallback(val)
                     end
+                    if newMode then
+                        mode = newMode
+                        ConfigObjects[controlId].Mode = mode
+                    end
                 end,
-                Get = function() return Enum.KeyCode[currentKey] end
+                GetValue = function()
+                    return currentKey
+                end,
+                GetMode = function()
+                    return mode
+                end
             }
 
-            -- 用于等待按键的临时状态
-            local waiting = false
-            local tempConn
-
-            -- 设置按键（等待用户输入）
-            local function startKeybindCapture()
-                if waiting then return end
-                waiting = true
-                KeyBtn.Text = "..."
-                -- 禁用其他输入？（可选）
-                local inputConn
-                inputConn = UserInputService.InputBegan:Connect(function(input, gpe)
-                    if gpe then return end
-                    local newKey
+            -- 点击进入等待按键
+            ClickBtn.MouseButton1Click:Connect(function()
+                if isWaiting then return end
+                isWaiting = true
+                KeyLabel.Text = "..."
+                local inputBeganConn
+                local function onInputBegan(input, gameProcessed)
+                    if gameProcessed then return end
+                    local key = nil
                     if input.UserInputType == Enum.UserInputType.Keyboard then
-                        newKey = input.KeyCode
+                        key = input.KeyCode
+                        if key == Enum.KeyCode.Unknown then return end
                     elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        newKey = Enum.KeyCode.MouseButton1
+                        key = Enum.KeyCode.LeftMouseButton
                     elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-                        newKey = Enum.KeyCode.MouseButton2
+                        key = Enum.KeyCode.RightMouseButton
                     else
                         return
                     end
-                    -- 忽略一些特殊按键（如 Escape 可以取消）
-                    if newKey == Enum.KeyCode.Escape then
-                        waiting = false
-                        KeyBtn.Text = currentKey
-                        inputConn:Disconnect()
-                        return
-                    end
-                    -- 更新
-                    currentKey = newKey.Name
-                    KeyBtn.Text = currentKey
-                    ConfigObjects[controlId].Value = currentKey
-                    changedCallback(newKey)
-                    waiting = false
-                    inputConn:Disconnect()
-                end)
-                -- 超时保护（5秒后取消）
-                task.delay(5, function()
-                    if waiting then
-                        waiting = false
-                        KeyBtn.Text = currentKey
-                        if inputConn then inputConn:Disconnect() end
-                    end
-                end)
-            end
-
-            -- 点击按钮进入设置模式
-            ClickBtn.MouseButton1Click:Connect(function()
-                if not waiting then
-                    startKeybindCapture()
-                end
-            end)
-
-            -- 处理模式（Toggle / Hold）
-            local function processInput(input, isDown)
-                if waiting then return end
-                if not KeyBtn or not KeyBtn.Parent then return end
-                if UserInputService:GetFocusedTextBox() then return end
-
-                local keyName = currentKey
-                if keyName == "MouseButton1" then
-                    if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-                elseif keyName == "MouseButton2" then
-                    if input.UserInputType ~= Enum.UserInputType.MouseButton2 then return end
-                elseif keyName ~= "Unknown" then
-                    if input.UserInputType ~= Enum.UserInputType.Keyboard or input.KeyCode.Name ~= keyName then return end
-                else
-                    return
-                end
-
-                if mode == "Toggle" then
-                    if isDown then
-                        toggled = not toggled
-                        callback(toggled)
-                    end
-                elseif mode == "Hold" then
-                    callback(isDown)
-                end
-            end
-
-            -- 监听全局输入
-            local inputBeganConn = UserInputService.InputBegan:Connect(function(input, gpe)
-                if gpe then return end
-                processInput(input, true)
-            end)
-
-            local inputEndedConn = UserInputService.InputEnded:Connect(function(input, gpe)
-                if gpe then return end
-                processInput(input, false)
-            end)
-
-            -- 清理连接（当 Tile 销毁时）
-            local function cleanup()
-                if inputBeganConn then inputBeganConn:Disconnect() end
-                if inputEndedConn then inputEndedConn:Disconnect() end
-            end
-            Tile.AncestryChanged:Connect(function()
-                if not Tile.Parent then cleanup() end
-            end)
-
-            -- 主题更新（保持颜色同步）
-            table.insert(ThemeListeners, function()
-                KeyBtn.BackgroundColor3 = CurrentTheme.Main
-                KeyBtn.TextColor3 = CurrentTheme.Accent
-                MouseIcon.ImageColor3 = CurrentTheme.SubText
-                TitleLbl.TextColor3 = CurrentTheme.Text
-            end)
-
-            -- 返回接口
-            local self = {}
-            function self.GetKey()
-                return Enum.KeyCode[currentKey]
-            end
-            function self.SetKey(key)
-                if type(key) == "string" then
                     currentKey = key
-                elseif type(key) == "userdata" and key.ClassName == "EnumItem" then
-                    currentKey = key.Name
+                    KeyLabel.Text = key.Name
+                    ConfigObjects[controlId].Value = key.Name
+                    changedCallback(key)
+                    isWaiting = false
+                    if inputBeganConn then inputBeganConn:Disconnect() end
                 end
-                KeyBtn.Text = currentKey
-                ConfigObjects[controlId].Value = currentKey
-                changedCallback(Enum.KeyCode[currentKey])
+                inputBeganConn = UserInputService.InputBegan:Connect(onInputBegan)
+            end)
+
+            -- Mode 逻辑（Toggle / Hold / Always）
+            -- 这里实现 Toggle 和 Hold 的自动回调，Always 忽略
+            -- 根据 Mode 在按键时触发回调
+            local function handleKeyState(state)
+                if mode == "Toggle" then
+                    toggled = state
+                    callback(toggled)
+                elseif mode == "Hold" then
+                    callback(state)
+                elseif mode == "Always" then
+                    -- 不做自动触发，由用户自行处理
+                end
+            end
+
+            local keyDownConn, keyUpConn
+            local function setupModeListeners()
+                if keyDownConn then keyDownConn:Disconnect() end
+                if keyUpConn then keyUpConn:Disconnect() end
+                if mode == "Always" then return end
+
+                local keyName = currentKey.Name
+                local isMouse = (keyName == "LeftMouseButton" or keyName == "RightMouseButton")
+                keyDownConn = UserInputService.InputBegan:Connect(function(input, gpe)
+                    if gpe then return end
+                    if isMouse then
+                        if input.UserInputType == (keyName == "LeftMouseButton" and Enum.UserInputType.MouseButton1 or Enum.UserInputType.MouseButton2) then
+                            handleKeyState(true)
+                        end
+                    else
+                        if input.KeyCode == currentKey then
+                            handleKeyState(true)
+                        end
+                    end
+                end)
+                keyUpConn = UserInputService.InputEnded:Connect(function(input, gpe)
+                    if gpe then return end
+                    if isMouse then
+                        if input.UserInputType == (keyName == "LeftMouseButton" and Enum.UserInputType.MouseButton1 or Enum.UserInputType.MouseButton2) then
+                            handleKeyState(false)
+                        end
+                    else
+                        if input.KeyCode == currentKey then
+                            handleKeyState(false)
+                        end
+                    end
+                end)
+            end
+
+            -- 当按键改变时重新设置监听
+            local oldSet = ConfigObjects[controlId].Set
+            ConfigObjects[controlId].Set = function(val, newMode)
+                oldSet(val, newMode)
+                setupModeListeners()
+            end
+
+            -- 初始化监听
+            setupModeListeners()
+
+            local self = {}
+            function self.SetValue(val, newMode)
+                if ConfigObjects[controlId] then
+                    ConfigObjects[controlId].Set(val, newMode)
+                end
+            end
+            function self.GetValue()
+                return ConfigObjects[controlId].GetValue()
             end
             function self.GetMode()
-                return mode
-            end
-            function self.SetMode(newMode)
-                mode = newMode
-            end
-            function self.GetState()
-                if mode == "Toggle" then
-                    return toggled
-                else
-                    -- 实时检测是否按住（非线程安全，但可用）
-                    local key = Enum.KeyCode[currentKey]
-                    if key then
-                        return UserInputService:IsKeyDown(key)
-                    end
-                    return false
-                end
+                return ConfigObjects[controlId].GetMode()
             end
             function self.SetVisible(state)
                 Tile.Visible = state
             end
-            function self.Destroy()
-                cleanup()
-                Tile:Destroy()
+            function self.SetMode(newMode)
+                mode = newMode
+                ConfigObjects[controlId].Mode = mode
+                setupModeListeners()
             end
             return self
         end
