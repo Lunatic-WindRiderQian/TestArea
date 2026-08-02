@@ -1151,7 +1151,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ================================
-        -- 替换后的 Keybind 元素（FluentPro 风格）
+        -- 替换后的 Keybind 元素（FluentPro 风格，带鼠标图标）
         -- ================================
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
@@ -1189,14 +1189,40 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
+            -- 按键容器（水平布局：鼠标图标 + 按键标签）
+            local KeyContainer = Instance.new("Frame")
+            KeyContainer.Size = UDim2.new(0, 86, 0, 28)
+            KeyContainer.Position = UDim2.new(1, -100, 0.5, -14)
+            KeyContainer.BackgroundTransparency = 1
+            KeyContainer.Parent = Tile
+
+            local KeyLayout = Instance.new("UIListLayout")
+            KeyLayout.FillDirection = Enum.FillDirection.Horizontal
+            KeyLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            KeyLayout.Padding = UDim.new(0, 4)
+            KeyLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            KeyLayout.Parent = KeyContainer
+
+            -- 鼠标图标（FluentPro 风格）
+            local mouseIco = Instance.new("ImageLabel")
+            mouseIco.Size = UDim2.new(0, 13, 0, 13)
+            mouseIco.BackgroundTransparency = 1
+            mouseIco.Image = "rbxassetid://10734898592"
+            mouseIco.ImageTransparency = 0.35
+            mouseIco.LayoutOrder = 1
+            mouseIco.Parent = KeyContainer
+            AddToRegistry(mouseIco, "ImageColor3", "SubText")
+
+            -- 按键标签
             local KeyLabel = Instance.new("TextLabel")
             KeyLabel.Text = currentKey.Name
-            KeyLabel.Size = UDim2.new(0, 86, 0, 28)
-            KeyLabel.Position = UDim2.new(1, -100, 0.5, -14)
+            KeyLabel.Size = UDim2.new(0, 0, 1, 0)
+            KeyLabel.AutomaticSize = Enum.AutomaticSize.X
             KeyLabel.Font = Enum.Font.GothamMedium
             KeyLabel.TextSize = 11
-            KeyLabel.Parent = Tile
             KeyLabel.BackgroundTransparency = 0.1
+            KeyLabel.LayoutOrder = 2
+            KeyLabel.Parent = KeyContainer
             Instance.new("UICorner", KeyLabel).CornerRadius = UDim.new(0, 8)
             AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
             AddToRegistry(KeyLabel, "TextColor3", "Accent")
@@ -1264,8 +1290,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
 
             -- Mode 逻辑（Toggle / Hold / Always）
-            -- 这里实现 Toggle 和 Hold 的自动回调，Always 忽略
-            -- 根据 Mode 在按键时触发回调
             local function handleKeyState(state)
                 if mode == "Toggle" then
                     toggled = state
