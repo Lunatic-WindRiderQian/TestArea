@@ -71,7 +71,6 @@ local function createPulseGlow(object)
     }
 end
 
--- ===== 主题定义（已添加 SubText 字段） =====
 local Themes = {
     Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48), SubText = Color3.fromRGB(170, 170, 170)},
     White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225), SubText = Color3.fromRGB(120, 120, 120)},
@@ -1152,12 +1151,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ================================
-        -- Keybind 元素（FluentPro 风格，带鼠标图标，使用 SubText 主题）
+        -- 完全来自 FluentPro 的 Keybind 实现
         -- ================================
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
             local defaultKey = config.Default or Enum.KeyCode.M
-            local mode = config.Mode or "Toggle"  -- "Toggle", "Hold", "Always"
+            local mode = config.Mode or "Toggle"
             local callback = config.Callback or function() end
             local changedCallback = config.ChangedCallback or function() end
             local controlId = keyText .. "_" .. tostring(#Registry)
@@ -1181,8 +1180,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = keyText
-            TitleLbl.Size = UDim2.new(0.6, 0, 1, 0)
-            TitleLbl.Position = UDim2.new(0, 15, 0, 0)
+            TitleLbl.Size = UDim2.new(1, -30, 0, 20)
+            TitleLbl.Position = UDim2.new(0, 15, 0, unlimited and 11 or 10)
             TitleLbl.BackgroundTransparency = 1
             TitleLbl.Font = Enum.Font.GothamMedium
             TitleLbl.TextSize = 13
@@ -1190,12 +1189,19 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 按键容器（水平布局：鼠标图标 + 按键标签）
+            -- 按键容器：鼠标图标 + 按键标签（FluentPro 风格）
             local KeyContainer = Instance.new("Frame")
-            KeyContainer.Size = UDim2.new(0, 86, 0, 28)
-            KeyContainer.Position = UDim2.new(1, -100, 0.5, -14)
-            KeyContainer.BackgroundTransparency = 1
+            KeyContainer.Size = UDim2.new(0, 0, 0, 30)
+            KeyContainer.Position = UDim2.new(1, -10, 0.5, 0)
+            KeyContainer.AnchorPoint = Vector2.new(1, 0.5)
+            KeyContainer.BackgroundTransparency = 0.9
             KeyContainer.Parent = Tile
+            KeyContainer.AutomaticSize = Enum.AutomaticSize.X
+            AddToRegistry(KeyContainer, "BackgroundColor3", "Keybind")
+
+            Instance.new("UICorner", KeyContainer).CornerRadius = UDim.new(0, 5)
+            Instance.new("UIPadding", KeyContainer).PaddingLeft = UDim.new(0, 7)
+            Instance.new("UIPadding", KeyContainer).PaddingRight = UDim.new(0, 8)
 
             local KeyLayout = Instance.new("UIListLayout")
             KeyLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -1204,7 +1210,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             KeyLayout.SortOrder = Enum.SortOrder.LayoutOrder
             KeyLayout.Parent = KeyContainer
 
-            -- 鼠标图标（使用 SubText 颜色）
+            -- 鼠标图标
             local mouseIco = Instance.new("ImageLabel")
             mouseIco.Size = UDim2.new(0, 13, 0, 13)
             mouseIco.BackgroundTransparency = 1
@@ -1212,21 +1218,27 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             mouseIco.ImageTransparency = 0.35
             mouseIco.LayoutOrder = 1
             mouseIco.Parent = KeyContainer
-            AddToRegistry(mouseIco, "ImageColor3", "SubText")  -- 现在 SubText 已定义
+            AddToRegistry(mouseIco, "ImageColor3", "SubText")
 
             -- 按键标签
             local KeyLabel = Instance.new("TextLabel")
             KeyLabel.Text = currentKey.Name
-            KeyLabel.Size = UDim2.new(0, 0, 1, 0)
+            KeyLabel.Size = UDim2.new(0, 0, 0, 14)
             KeyLabel.AutomaticSize = Enum.AutomaticSize.X
             KeyLabel.Font = Enum.Font.GothamMedium
-            KeyLabel.TextSize = 11
-            KeyLabel.BackgroundTransparency = 0.1
+            KeyLabel.TextSize = 13
+            KeyLabel.TextXAlignment = Enum.TextXAlignment.Center
+            KeyLabel.BackgroundTransparency = 1
             KeyLabel.LayoutOrder = 2
             KeyLabel.Parent = KeyContainer
-            Instance.new("UICorner", KeyLabel).CornerRadius = UDim.new(0, 8)
-            AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
-            AddToRegistry(KeyLabel, "TextColor3", "Accent")
+            AddToRegistry(KeyLabel, "TextColor3", "Text")
+
+            -- 边框
+            local KeyStroke = Instance.new("UIStroke")
+            KeyStroke.Transparency = 0.5
+            KeyStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            KeyStroke.Parent = KeyContainer
+            AddToRegistry(KeyStroke, "Color", "InElementBorder")
 
             -- 存储状态
             ConfigObjects[controlId] = {
@@ -1290,15 +1302,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 inputBeganConn = UserInputService.InputBegan:Connect(onInputBegan)
             end)
 
-            -- Mode 逻辑（Toggle / Hold / Always）
+            -- Mode 逻辑
             local function handleKeyState(state)
                 if mode == "Toggle" then
                     toggled = state
                     callback(toggled)
                 elseif mode == "Hold" then
                     callback(state)
-                elseif mode == "Always" then
-                    -- 不做自动触发，由用户自行处理
                 end
             end
 
@@ -1365,6 +1375,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 mode = newMode
                 ConfigObjects[controlId].Mode = mode
                 setupModeListeners()
+            end
+            function self.OnClick(cb)
+                -- FluentPro 风格：允许外部注册点击回调
+                if cb then
+                    local oldCallback = callback
+                    callback = function(state)
+                        pcall(oldCallback, state)
+                        pcall(cb, state)
+                    end
+                end
             end
             return self
         end
