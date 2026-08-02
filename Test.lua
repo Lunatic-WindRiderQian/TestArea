@@ -1150,7 +1150,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ======================== 新 Keybind 控件（FluentPro 风格） ========================
+        -- ============================================================
+        --  KEYBIND 控件 - 完整替换为 FluentPro 风格
+        --  支持 Toggle / Hold / Always 三种模式，交互式按键录制
+        -- ============================================================
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
             local defaultKey = config.Default or Enum.KeyCode.M
@@ -1349,7 +1352,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             return self
         end
-        -- ======================== 新 Keybind 控件结束 ========================
 
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
