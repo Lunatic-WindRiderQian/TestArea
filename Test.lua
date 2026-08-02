@@ -1150,12 +1150,23 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========================================================================
+        --  Keybind (FluentPro 风格，支持 Toggle / Hold 模式)
+        -- ========================================================================
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
-            local Key = config.Default or Enum.KeyCode.M
+            local defaultKey = config.Default or Enum.KeyCode.LeftControl
+            local mode = config.Mode or "Toggle"  -- "Toggle" 或 "Hold"
             local callback = config.Callback or function() end
+            local changedCallback = config.ChangedCallback or function() end
             local controlId = keyText .. "_" .. tostring(#Registry)
 
+            -- 当前按键（字符串）
+            local currentKey = defaultKey.Name
+            -- 切换状态（仅 Toggle 模式有效）
+            local toggled = false
+
+            -- 主容器
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
@@ -1163,12 +1174,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
+            -- 点击区域
             local ClickBtn = Instance.new("TextButton")
             ClickBtn.Size = UDim2.new(1, 0, 1, 0)
             ClickBtn.BackgroundTransparency = 1
             ClickBtn.Text = ""
             ClickBtn.Parent = Tile
 
+            -- 标题
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = keyText
             TitleLbl.Size = UDim2.new(0.6, 0, 1, 0)
@@ -1180,36 +1193,205 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            local KeyLabel = Instance.new("TextLabel")
-            KeyLabel.Text = Key.Name
-            KeyLabel.Size = UDim2.new(0, 86, 0, 28)
-            KeyLabel.Position = UDim2.new(1, -100, 0.5, -14)
-            KeyLabel.Font = Enum.Font.GothamMedium
-            KeyLabel.TextSize = 11
-            KeyLabel.Parent = Tile
-            KeyLabel.BackgroundTransparency = 0.1
-            Instance.new("UICorner", KeyLabel).CornerRadius = UDim.new(0, 8)
-            AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
-            AddToRegistry(KeyLabel, "TextColor3", "Accent")
+            -- 显示按键的按钮（可点击设置新按键）
+            local KeyBtn = Instance.new("TextButton")
+            KeyBtn.Size = UDim2.new(0, 86, 0, 28)
+            KeyBtn.Position = UDim2.new(1, -100, 0.5, -14)
+            KeyBtn.BackgroundTransparency = 0.1
+            KeyBtn.Text = currentKey
+            KeyBtn.Font = Enum.Font.GothamMedium
+            KeyBtn.TextSize = 11
+            KeyBtn.TextColor3 = CurrentTheme.Accent
+            KeyBtn.Parent = Tile
+            Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0, 8)
+            AddToRegistry(KeyBtn, "BackgroundColor3", "Main")
+            AddToRegistry(KeyBtn, "TextColor3", "Accent")
 
-            ConfigObjects[controlId] = {Type = "Keybind", Value = Key.Name, Set = function(val)
-                Key = Enum.KeyCode[val] or Key
-                KeyLabel.Text = Key.Name
-                callback(Key)
-            end}
+            -- 鼠标图标（可选，显示在按键左侧）
+            local MouseIcon = Instance.new("ImageLabel")
+            MouseIcon.Size = UDim2.new(0, 13, 0, 13)
+            MouseIcon.Position = UDim2.new(0, 6, 0.5, -6.5)
+            MouseIcon.BackgroundTransparency = 1
+            MouseIcon.Image = "rbxassetid://10734898592"  -- 鼠标图标
+            MouseIcon.ImageTransparency = 0.35
+            MouseIcon.Parent = KeyBtn
+            AddToRegistry(MouseIcon, "ImageColor3", "SubText")
 
+            -- 为了让文本不被图标遮挡，调整文本位置
+            local padding = Instance.new("UIPadding")
+            padding.PaddingLeft = UDim.new(0, 24)
+            padding.PaddingRight = UDim.new(0, 8)
+            padding.Parent = KeyBtn
+
+            -- 保存配置对象
+            ConfigObjects[controlId] = {
+                Type = "Keybind",
+                Value = currentKey,
+                Set = function(val)
+                    if type(val) == "string" then
+                        currentKey = val
+                        KeyBtn.Text = currentKey
+                        changedCallback(Enum.KeyCode[currentKey] or defaultKey)
+                    elseif type(val) == "userdata" and val.ClassName == "EnumItem" then
+                        currentKey = val.Name
+                        KeyBtn.Text = currentKey
+                        changedCallback(val)
+                    end
+                end,
+                Get = function() return Enum.KeyCode[currentKey] end
+            }
+
+            -- 用于等待按键的临时状态
+            local waiting = false
+            local tempConn
+
+            -- 设置按键（等待用户输入）
+            local function startKeybindCapture()
+                if waiting then return end
+                waiting = true
+                KeyBtn.Text = "..."
+                -- 禁用其他输入？（可选）
+                local inputConn
+                inputConn = UserInputService.InputBegan:Connect(function(input, gpe)
+                    if gpe then return end
+                    local newKey
+                    if input.UserInputType == Enum.UserInputType.Keyboard then
+                        newKey = input.KeyCode
+                    elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        newKey = Enum.KeyCode.MouseButton1
+                    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+                        newKey = Enum.KeyCode.MouseButton2
+                    else
+                        return
+                    end
+                    -- 忽略一些特殊按键（如 Escape 可以取消）
+                    if newKey == Enum.KeyCode.Escape then
+                        waiting = false
+                        KeyBtn.Text = currentKey
+                        inputConn:Disconnect()
+                        return
+                    end
+                    -- 更新
+                    currentKey = newKey.Name
+                    KeyBtn.Text = currentKey
+                    ConfigObjects[controlId].Value = currentKey
+                    changedCallback(newKey)
+                    waiting = false
+                    inputConn:Disconnect()
+                end)
+                -- 超时保护（5秒后取消）
+                task.delay(5, function()
+                    if waiting then
+                        waiting = false
+                        KeyBtn.Text = currentKey
+                        if inputConn then inputConn:Disconnect() end
+                    end
+                end)
+            end
+
+            -- 点击按钮进入设置模式
             ClickBtn.MouseButton1Click:Connect(function()
-                KeyLabel.Text = "..."
-                local input = UserInputService.InputBegan:Wait()
-                if input.KeyCode.Name ~= "Unknown" then
-                    Key = input.KeyCode
-                    KeyLabel.Text = Key.Name
-                    ConfigObjects[controlId].Value = Key.Name
-                    callback(Key)
-                else
-                    KeyLabel.Text = Key.Name
+                if not waiting then
+                    startKeybindCapture()
                 end
             end)
+
+            -- 处理模式（Toggle / Hold）
+            local function processInput(input, isDown)
+                if waiting then return end
+                if not KeyBtn or not KeyBtn.Parent then return end
+                if UserInputService:GetFocusedTextBox() then return end
+
+                local keyName = currentKey
+                if keyName == "MouseButton1" then
+                    if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+                elseif keyName == "MouseButton2" then
+                    if input.UserInputType ~= Enum.UserInputType.MouseButton2 then return end
+                elseif keyName ~= "Unknown" then
+                    if input.UserInputType ~= Enum.UserInputType.Keyboard or input.KeyCode.Name ~= keyName then return end
+                else
+                    return
+                end
+
+                if mode == "Toggle" then
+                    if isDown then
+                        toggled = not toggled
+                        callback(toggled)
+                    end
+                elseif mode == "Hold" then
+                    callback(isDown)
+                end
+            end
+
+            -- 监听全局输入
+            local inputBeganConn = UserInputService.InputBegan:Connect(function(input, gpe)
+                if gpe then return end
+                processInput(input, true)
+            end)
+
+            local inputEndedConn = UserInputService.InputEnded:Connect(function(input, gpe)
+                if gpe then return end
+                processInput(input, false)
+            end)
+
+            -- 清理连接（当 Tile 销毁时）
+            local function cleanup()
+                if inputBeganConn then inputBeganConn:Disconnect() end
+                if inputEndedConn then inputEndedConn:Disconnect() end
+            end
+            Tile.AncestryChanged:Connect(function()
+                if not Tile.Parent then cleanup() end
+            end)
+
+            -- 主题更新（保持颜色同步）
+            table.insert(ThemeListeners, function()
+                KeyBtn.BackgroundColor3 = CurrentTheme.Main
+                KeyBtn.TextColor3 = CurrentTheme.Accent
+                MouseIcon.ImageColor3 = CurrentTheme.SubText
+                TitleLbl.TextColor3 = CurrentTheme.Text
+            end)
+
+            -- 返回接口
+            local self = {}
+            function self.GetKey()
+                return Enum.KeyCode[currentKey]
+            end
+            function self.SetKey(key)
+                if type(key) == "string" then
+                    currentKey = key
+                elseif type(key) == "userdata" and key.ClassName == "EnumItem" then
+                    currentKey = key.Name
+                end
+                KeyBtn.Text = currentKey
+                ConfigObjects[controlId].Value = currentKey
+                changedCallback(Enum.KeyCode[currentKey])
+            end
+            function self.GetMode()
+                return mode
+            end
+            function self.SetMode(newMode)
+                mode = newMode
+            end
+            function self.GetState()
+                if mode == "Toggle" then
+                    return toggled
+                else
+                    -- 实时检测是否按住（非线程安全，但可用）
+                    local key = Enum.KeyCode[currentKey]
+                    if key then
+                        return UserInputService:IsKeyDown(key)
+                    end
+                    return false
+                end
+            end
+            function self.SetVisible(state)
+                Tile.Visible = state
+            end
+            function self.Destroy()
+                cleanup()
+                Tile:Destroy()
+            end
+            return self
         end
 
         child.ColorPicker = function(_, config)
@@ -2059,7 +2241,6 @@ function Fenglib:CreateWindow(Config)
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind 
     local IconAsset = Config.Logo
-    -- ==== 新增 Scene 参数，默认使用 102597607447167 ====
     local SceneId = Config.Scene or 102597607447167
 
     Window.RootFolder = Title 
@@ -2124,7 +2305,6 @@ function Fenglib:CreateWindow(Config)
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 299
 
-    -- ===== 窗口主框架（去除玻璃，添加 FluentPro 背景和 Shine 动画）=====
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -2136,33 +2316,28 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
-    -- 边框（保留）
     local Stroke = Instance.new("UIStroke")
     Stroke.Thickness = 2
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
-    -- ===== 添加背景图，使用 Scene 参数或默认值 =====
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
     bgImage.BackgroundTransparency = 1
-    -- 如果 SceneId 是数字或数字字符串，拼接为 rbxassetid://
     if type(SceneId) == "number" or (type(SceneId) == "string" and tonumber(SceneId)) then
         bgImage.Image = "rbxassetid://" .. tostring(SceneId)
     else
-        bgImage.Image = tostring(SceneId)  -- 可能是完整 URL 或 rbxassetid:// 前缀
+        bgImage.Image = tostring(SceneId)
     end
     bgImage.ScaleType = Enum.ScaleType.Crop
     bgImage.ZIndex = 0
     bgImage.Parent = MainFrame
 
-    -- 背景图圆角
     local bgCorner = Instance.new("UICorner")
     bgCorner.CornerRadius = UDim.new(0, 16)
     bgCorner.Parent = bgImage
 
-    -- ===== 背景 Shine 动画（UIGradient 旋转） =====
     local bgGradient = Instance.new("UIGradient")
     bgGradient.Rotation = 0
     bgGradient.Color = ColorSequence.new({
@@ -2177,26 +2352,20 @@ function Fenglib:CreateWindow(Config)
     })
     bgGradient.Parent = bgImage
 
-    -- Shine 旋转循环
     local shineConn
     local function startShine()
         local rot = 0
         shineConn = RunService.RenderStepped:Connect(function(dt)
-            rot = (rot + dt * 20) % 360   -- 速度可调
+            rot = (rot + dt * 20) % 360
             bgGradient.Rotation = rot
         end)
     end
     startShine()
 
-    -- 窗口销毁时清理
     table.insert(WindowCleanup, function()
         if shineConn then shineConn:Disconnect() end
     end)
 
-    -- ---- 以下移除原有的玻璃模糊和景深效果 ----
-    -- 原 do ... end 块已删除
-
-    -- ===== 窗口调整大小按钮 =====
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
@@ -2247,7 +2416,6 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- ===== 彩虹模式（仅影响边框） =====
     task.spawn(function()
         local rot = 0
         while ScreenGui.Parent do
@@ -2281,7 +2449,6 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- ===== 启动动画（Intro） =====
     local IntroHolder = Instance.new("Frame")
     IntroHolder.Size = UDim2.new(1, 999999, 1, 999999)
     IntroHolder.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -2376,7 +2543,6 @@ function Fenglib:CreateWindow(Config)
     task.wait(0.35)
     IntroHolder:Destroy()
 
-    -- ===== Topbar =====
     local topbarHeight = Subtitle and 45 or 40
 
     local Topbar = Instance.new("Frame")
@@ -3445,7 +3611,6 @@ function Fenglib:CreateWindow(Config)
     return Window
 end
 
--- ===== 自定义光标 =====
 do
     local cursorScreen = Instance.new("ScreenGui")
     cursorScreen.Name = "FengCustomCursor"
