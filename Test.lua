@@ -537,79 +537,152 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ============================================================
+        -- 替换后的 Toggle（滑动开关，FluentPro 风格）
+        -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
             local callback = config.Callback or function() end
             local controlId = toggleText .. "_" .. tostring(#Registry)
 
+            -- 外层容器（与 FluentPro 一致：高度38，圆角8）
             local Tile = Instance.new("Frame")
-            Tile.Size = UDim2.new(1, 0, 0, 42)
+            Tile.Size = UDim2.new(1, 0, 0, 38)
+            Tile.BackgroundTransparency = 0.9
+            Tile.BorderSizePixel = 0
             Tile.Parent = contentHolder
-            Tile.BackgroundTransparency = 0.05
-            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
-            AddToRegistry(Tile, "BackgroundColor3", "Top")
+            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 8)
+            AddToRegistry(Tile, "BackgroundColor3", "Main")
+            -- 描边
+            local stroke = Instance.new("UIStroke")
+            stroke.Thickness = 1
+            stroke.Transparency = 0.5
+            stroke.Parent = Tile
+            AddToRegistry(stroke, "Color", "Stroke")
 
-            local ClickBtn = Instance.new("TextButton")
-            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
-            ClickBtn.BackgroundTransparency = 1
-            ClickBtn.Text = ""
-            ClickBtn.Parent = Tile
-
+            -- 标题（左对齐）
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = toggleText
-            TitleLbl.Size = UDim2.new(0.7, 0, 1, 0)
-            TitleLbl.Position = UDim2.new(0, 15, 0, 0)
+            TitleLbl.Size = UDim2.new(1, -54, 1, 0)
+            TitleLbl.Position = UDim2.new(0, 12, 0, 0)
             TitleLbl.BackgroundTransparency = 1
             TitleLbl.Font = Enum.Font.GothamMedium
-            TitleLbl.TextSize = 13
+            TitleLbl.TextSize = 14
             TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+            TitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
+            -- 滑动开关（轨道+滑块）
             local Switch = Instance.new("Frame")
-            Switch.Size = UDim2.new(0, 42, 0, 22)
-            Switch.Position = UDim2.new(1, -56, 0.5, -11)
+            Switch.Size = UDim2.fromOffset(36, 18)
+            Switch.AnchorPoint = Vector2.new(1, 0.5)
+            Switch.Position = UDim2.new(1, -10, 0.5, 0)
+            Switch.BackgroundTransparency = 1  -- 背景由轨道控制
             Switch.Parent = Tile
-            Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
-            Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-
-            local SwStroke = Instance.new("UIStroke")
-            SwStroke.Thickness = 1
-            SwStroke.Transparency = 0.6
-            SwStroke.Parent = Switch
-            AddToRegistry(SwStroke, "Color", "Stroke")
-
+            -- 轨道（背景）
+            local Rail = Instance.new("Frame")
+            Rail.Size = UDim2.new(1, 0, 1, 0)
+            Rail.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
+            Rail.BackgroundTransparency = 0.5
+            Rail.Parent = Switch
+            Instance.new("UICorner", Rail).CornerRadius = UDim.new(1, 0)
+            AddToRegistry(Rail, "BackgroundColor3", "Accent")  -- 启用时用 Accent
+            -- 滑块
             local Dot = Instance.new("Frame")
-            Dot.Size = UDim2.new(0, 16, 0, 16)
-            Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+            Dot.Size = UDim2.fromOffset(14, 14)
+            Dot.AnchorPoint = Vector2.new(0.5, 0.5)
+            Dot.Position = Enabled and UDim2.new(1, -9, 0.5, 0) or UDim2.new(0, 9, 0.5, 0)
             Dot.BackgroundColor3 = Color3.new(1, 1, 1)
+            Dot.BackgroundTransparency = 0
             Dot.Parent = Switch
             Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
-            ConfigObjects[controlId] = {Type = "Toggle", Value = Enabled, Set = function(val)
-                Enabled = val
-                Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-                Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-                callback(Enabled)
-            end}
+            -- 滑块描边（轻微）
+            local dotStroke = Instance.new("UIStroke")
+            dotStroke.Thickness = 1
+            dotStroke.Transparency = 0.3
+            dotStroke.Color = Color3.fromRGB(180, 180, 180)
+            dotStroke.Parent = Dot
 
-            local function Update()
-                Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke})
-                Tween(Dot, {Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)})
-                ConfigObjects[controlId].Value = Enabled
+            -- 点击容器（整个 Tile 可点击）
+            local clickBtn = Instance.new("TextButton")
+            clickBtn.Size = UDim2.new(1, 0, 1, 0)
+            clickBtn.BackgroundTransparency = 1
+            clickBtn.Text = ""
+            clickBtn.Parent = Tile
+
+            -- 切换函数（带动画）
+            local function setEnabled(newVal, animate)
+                Enabled = newVal
+                local targetColor = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
+                local targetPos = Enabled and UDim2.new(1, -9, 0.5, 0) or UDim2.new(0, 9, 0.5, 0)
+                if animate then
+                    Tween(Rail, { BackgroundColor3 = targetColor }, 0.25)
+                    Tween(Dot, { Position = targetPos }, 0.25)
+                else
+                    Rail.BackgroundColor3 = targetColor
+                    Dot.Position = targetPos
+                end
+                if ConfigObjects[controlId] then
+                    ConfigObjects[controlId].Value = Enabled
+                end
                 callback(Enabled)
             end
 
-            ClickBtn.MouseButton1Click:Connect(function()
-                Enabled = not Enabled
-                Update()
+            clickBtn.MouseButton1Click:Connect(function()
+                setEnabled(not Enabled, true)
             end)
 
-            table.insert(ThemeListeners, function()
-                Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke})
+            -- 悬停效果
+            clickBtn.MouseEnter:Connect(function()
+                Tween(Tile, { BackgroundTransparency = 0.7 }, 0.15)
             end)
+            clickBtn.MouseLeave:Connect(function()
+                Tween(Tile, { BackgroundTransparency = 0.9 }, 0.15)
+            end)
+
+            -- 配置对象（保存/加载）
+            ConfigObjects[controlId] = {
+                Type = "Toggle",
+                Value = Enabled,
+                Set = function(val)
+                    setEnabled(val, false)
+                end
+            }
+
+            -- 主题更新监听
+            table.insert(ThemeListeners, function()
+                -- 更新轨道颜色
+                Rail.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
+                -- 更新描边颜色
+                stroke.Color = CurrentTheme.Stroke
+            end)
+
+            -- 初始化
+            setEnabled(Enabled, false)
+
+            -- 返回对象（兼容原有接口）
+            local self = {}
+            function self.SetValue(val)
+                if ConfigObjects[controlId] then
+                    ConfigObjects[controlId].Set(val)
+                end
+            end
+            function self.GetValue()
+                return Enabled
+            end
+            function self.SetVisible(state)
+                Tile.Visible = state
+            end
+            function self.Destroy()
+                Tile:Destroy()
+                ConfigObjects[controlId] = nil
+            end
+            return self
         end
+        -- ============================================================
 
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
@@ -1242,7 +1315,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             mouseIco.ImageTransparency = 0.35
             mouseIco.LayoutOrder = 1
             mouseIco.Parent = KeyBtn
-            AddToRegistry(mouseIco, "ImageColor3", "Text")   -- 修正：使用 "Text"
+            AddToRegistry(mouseIco, "ImageColor3", "Text")
 
             -- 键名标签
             local KeyLabel = Instance.new("TextLabel")
@@ -1269,7 +1342,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                         state.Mode = newMode
                         KeyLabel.Text = newKey
                         ConfigObjects[controlId].Value = { Key = newKey, Mode = newMode }
-                        -- 可在此触发键变更回调
                     elseif type(val) == "string" then
                         state.Key = val
                         KeyLabel.Text = val
