@@ -538,7 +538,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- 替换后的 Toggle（滑动开关，原文件容器风格）
+        -- 修改后的 Toggle（滑动开关，更大尺寸，透明轨道+边框，滑块颜色跟随主题）
         -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
@@ -566,31 +566,40 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 滑动开关（轨道+滑块）
+            -- 滑动开关（轨道+滑块），尺寸加大
             local Switch = Instance.new("Frame")
-            Switch.Size = UDim2.fromOffset(36, 18)
+            Switch.Size = UDim2.fromOffset(44, 22)  -- 从 36x18 增大到 44x22
             Switch.AnchorPoint = Vector2.new(1, 0.5)
             Switch.Position = UDim2.new(1, -10, 0.5, 0)
             Switch.BackgroundTransparency = 1
             Switch.Parent = Tile
 
+            -- 轨道（透明背景 + 边框）
             local Rail = Instance.new("Frame")
             Rail.Size = UDim2.new(1, 0, 1, 0)
-            Rail.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-            Rail.BackgroundTransparency = 0.5
+            Rail.BackgroundTransparency = 1  -- 完全透明
             Rail.Parent = Switch
-            Instance.new("UICorner", Rail).CornerRadius = UDim.new(1, 0)
-            AddToRegistry(Rail, "BackgroundColor3", "Accent")
+            Instance.new("UICorner", Rail).CornerRadius = UDim.new(1, 0)  -- 圆角
 
+            -- 轨道的边框（UIStroke）
+            local RailStroke = Instance.new("UIStroke")
+            RailStroke.Thickness = 1.5
+            RailStroke.Transparency = 0  -- 不透明
+            RailStroke.Color = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
+            RailStroke.Parent = Rail
+            AddToRegistry(RailStroke, "Color", "Accent")  -- 默认用 Accent，但切换时会覆盖
+
+            -- 滑块（Dot），填充色跟随主题
             local Dot = Instance.new("Frame")
-            Dot.Size = UDim2.fromOffset(14, 14)
+            Dot.Size = UDim2.fromOffset(16, 16)  -- 稍微大一点适应大开关
             Dot.AnchorPoint = Vector2.new(0.5, 0.5)
-            Dot.Position = Enabled and UDim2.new(1, -9, 0.5, 0) or UDim2.new(0, 9, 0.5, 0)
-            Dot.BackgroundColor3 = Color3.new(1, 1, 1)
+            Dot.Position = Enabled and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0)
+            Dot.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
             Dot.BackgroundTransparency = 0
             Dot.Parent = Switch
             Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
+            -- 可选：滑块边框（轻微）
             local dotStroke = Instance.new("UIStroke")
             dotStroke.Thickness = 1
             dotStroke.Transparency = 0.3
@@ -608,12 +617,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local function setEnabled(newVal, animate)
                 Enabled = newVal
                 local targetColor = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-                local targetPos = Enabled and UDim2.new(1, -9, 0.5, 0) or UDim2.new(0, 9, 0.5, 0)
+                local targetPos = Enabled and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0)
                 if animate then
-                    Tween(Rail, { BackgroundColor3 = targetColor }, 0.25)
-                    Tween(Dot, { Position = targetPos }, 0.25)
+                    Tween(RailStroke, { Color = targetColor }, 0.25)
+                    Tween(Dot, { BackgroundColor3 = targetColor, Position = targetPos }, 0.25)
                 else
-                    Rail.BackgroundColor3 = targetColor
+                    RailStroke.Color = targetColor
+                    Dot.BackgroundColor3 = targetColor
                     Dot.Position = targetPos
                 end
                 if ConfigObjects[controlId] then
@@ -643,10 +653,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             }
 
-            -- 主题更新监听
+            -- 主题更新监听：当主题切换时，更新轨道的边框颜色和滑块颜色
             table.insert(ThemeListeners, function()
-                Rail.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-                -- Tile 背景色由 AddToRegistry 自动更新
+                local targetColor = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
+                RailStroke.Color = targetColor
+                Dot.BackgroundColor3 = targetColor
             end)
 
             -- 初始化
