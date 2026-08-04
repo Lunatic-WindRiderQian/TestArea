@@ -83,17 +83,8 @@ local Themes = {
 local CurrentTheme = Themes.Dark
 
 local function AddToRegistry(obj, prop, themeKey)
-    if not themeKey then return end
-    local color = CurrentTheme[themeKey]
-    if color then
-        table.insert(Registry, {Object = obj, Property = prop, Type = themeKey})
-        obj[prop] = color
-    else
-        warn("AddToRegistry: Missing theme key '" .. tostring(themeKey) .. "' for object", obj)
-        if prop == "ImageColor3" or prop == "TextColor3" or prop == "BackgroundColor3" then
-            obj[prop] = Color3.new(1, 1, 1)
-        end
-    end
+    table.insert(Registry, {Object = obj, Property = prop, Type = themeKey})
+    obj[prop] = CurrentTheme[themeKey]
 end
 
 local function Tween(obj, props, time)
@@ -535,16 +526,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ============================================================
-        -- 修正后的 Toggle（滑动开关，状态管理完全遵循源文件逻辑）
-        -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
             local callback = config.Callback or function() end
             local controlId = toggleText .. "_" .. tostring(#Registry)
 
-            -- 外层容器（模仿 FluentPro 的 Element 风格）
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
@@ -552,7 +539,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
-            -- 标题
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = ""
+            ClickBtn.Parent = Tile
+
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = toggleText
             TitleLbl.Size = UDim2.new(0.7, 0, 1, 0)
@@ -564,130 +556,49 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 开关轨道（与 FluentPro 尺寸一致：36x18）
-            local Track = Instance.new("Frame")
-            Track.Size = UDim2.fromOffset(36, 18)
-            Track.AnchorPoint = Vector2.new(1, 0.5)
-            Track.Position = UDim2.new(1, -10, 0.5, 0)
-            Track.BackgroundTransparency = 1
-            Track.Parent = Tile
-            Instance.new("UICorner", Track).CornerRadius = UDim.new(1, 0)
+            local Switch = Instance.new("Frame")
+            Switch.Size = UDim2.new(0, 42, 0, 22)
+            Switch.Position = UDim2.new(1, -56, 0.5, -11)
+            Switch.Parent = Tile
+            Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
+            Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
 
-            -- 轨道背景（颜色随状态变化）
-            local TrackBg = Instance.new("Frame")
-            TrackBg.Size = UDim2.new(1, 0, 1, 0)
-            TrackBg.BackgroundTransparency = 0
-            TrackBg.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(200, 200, 200)
-            TrackBg.Parent = Track
-            Instance.new("UICorner", TrackBg).CornerRadius = UDim.new(1, 0)
+            local SwStroke = Instance.new("UIStroke")
+            SwStroke.Thickness = 1
+            SwStroke.Transparency = 0.6
+            SwStroke.Parent = Switch
+            AddToRegistry(SwStroke, "Color", "Stroke")
 
-            -- 轨道描边（始终存在）
-            local TrackStroke = Instance.new("UIStroke")
-            TrackStroke.Thickness = 1.5
-            TrackStroke.Transparency = 0.5
-            TrackStroke.Color = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-            TrackStroke.Parent = TrackBg
-
-            -- 滑块（圆点）
             local Dot = Instance.new("Frame")
-            Dot.Size = UDim2.fromOffset(14, 14)
-            Dot.AnchorPoint = Vector2.new(0.5, 0.5)
-            Dot.Position = Enabled and UDim2.new(1, -9, 0.5, 0) or UDim2.new(0, 9, 0.5, 0)
+            Dot.Size = UDim2.new(0, 16, 0, 16)
+            Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
             Dot.BackgroundColor3 = Color3.new(1, 1, 1)
-            Dot.BackgroundTransparency = 0
-            Dot.Parent = Track
+            Dot.Parent = Switch
             Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
-            -- 点击区域（覆盖整个 Tile）
-            local ClickBtn = Instance.new("TextButton")
-            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
-            ClickBtn.BackgroundTransparency = 1
-            ClickBtn.Text = ""
-            ClickBtn.Parent = Tile
+            ConfigObjects[controlId] = {Type = "Toggle", Value = Enabled, Set = function(val)
+                Enabled = val
+                Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
+                Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+                callback(Enabled)
+            end}
 
-            -- ========== 状态管理 ==========
-            local function updateVisuals(animate)
-                local targetBgColor = Enabled and CurrentTheme.Accent or Color3.fromRGB(200, 200, 200)
-                local targetStrokeColor = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-                local targetPos = Enabled and UDim2.new(1, -9, 0.5, 0) or UDim2.new(0, 9, 0.5, 0)
-
-                if animate then
-                    Tween(TrackBg, { BackgroundColor3 = targetBgColor }, 0.25)
-                    Tween(TrackStroke, { Color = targetStrokeColor }, 0.25)
-                    Tween(Dot, { Position = targetPos }, 0.25)
-                else
-                    TrackBg.BackgroundColor3 = targetBgColor
-                    TrackStroke.Color = targetStrokeColor
-                    Dot.Position = targetPos
-                end
-            end
-
-            local function SetValue(newVal, animate)
-                Enabled = newVal
-                updateVisuals(animate or false)
-                -- 更新配置对象
-                if ConfigObjects[controlId] then
-                    ConfigObjects[controlId].Value = Enabled
-                end
-                -- 触发回调
+            local function Update()
+                Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke})
+                Tween(Dot, {Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)})
+                ConfigObjects[controlId].Value = Enabled
                 callback(Enabled)
             end
 
-            -- 点击切换
             ClickBtn.MouseButton1Click:Connect(function()
-                SetValue(not Enabled, true)
+                Enabled = not Enabled
+                Update()
             end)
 
-            -- 悬停效果
-            ClickBtn.MouseEnter:Connect(function()
-                Tween(Tile, { BackgroundTransparency = 0.00 }, 0.18)
-            end)
-            ClickBtn.MouseLeave:Connect(function()
-                Tween(Tile, { BackgroundTransparency = 0.05 }, 0.18)
-            end)
-
-            -- ========== 配置对象（用于保存/加载） ==========
-            ConfigObjects[controlId] = {
-                Type = "Toggle",
-                Value = Enabled,
-                Set = function(val)
-                    SetValue(val, false)
-                end
-            }
-
-            -- ========== 主题更新监听 ==========
             table.insert(ThemeListeners, function()
-                -- 根据当前状态重新应用颜色
-                local bgCol = Enabled and CurrentTheme.Accent or Color3.fromRGB(200, 200, 200)
-                local strokeCol = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-                TrackBg.BackgroundColor3 = bgCol
-                TrackStroke.Color = strokeCol
-                -- 滑块颜色不变（白色）
+                Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke})
             end)
-
-            -- ========== 初始化（确保与变量一致） ==========
-            SetValue(Enabled, false)
-
-            -- ========== 返回对象 ==========
-            local self = {}
-            function self.SetValue(val)
-                if ConfigObjects[controlId] then
-                    ConfigObjects[controlId].Set(val)
-                end
-            end
-            function self.GetValue()
-                return Enabled
-            end
-            function self.SetVisible(state)
-                Tile.Visible = state
-            end
-            function self.Destroy()
-                Tile:Destroy()
-                ConfigObjects[controlId] = nil
-            end
-            return self
         end
-        -- ============================================================
 
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
@@ -1239,25 +1150,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ============================================================
-        --  修改后的 Keybind（基于 FluentPro 核心，支持 Toggle/Hold + 鼠标）
-        -- ============================================================
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
-            local defaultKey = config.Default or Enum.KeyCode.M
-            local mode = config.Mode or "Toggle"  -- "Toggle" 或 "Hold"
+            local Key = config.Default or Enum.KeyCode.M
             local callback = config.Callback or function() end
             local controlId = keyText .. "_" .. tostring(#Registry)
 
-            -- 状态
-            local state = {
-                Key = defaultKey.Name,
-                Mode = mode,
-                Toggled = false,
-                IsWaiting = false,
-            }
-
-            -- 容器
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
@@ -1265,7 +1163,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
-            -- 标题
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = ""
+            ClickBtn.Parent = Tile
+
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = keyText
             TitleLbl.Size = UDim2.new(0.6, 0, 1, 0)
@@ -1277,214 +1180,37 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 键位显示按钮（点击更改键）
-            local KeyBtn = Instance.new("TextButton")
-            KeyBtn.Size = UDim2.new(0, 0, 0, 30)
-            KeyBtn.Position = UDim2.new(1, -10, 0.5, 0)
-            KeyBtn.AnchorPoint = Vector2.new(1, 0.5)
-            KeyBtn.BackgroundTransparency = 0.1
-            KeyBtn.Text = ""
-            KeyBtn.AutoButtonColor = false
-            KeyBtn.Parent = Tile
-            KeyBtn.AutomaticSize = Enum.AutomaticSize.X
-            AddToRegistry(KeyBtn, "BackgroundColor3", "Main")
-
-            local keyCorner = Instance.new("UICorner")
-            keyCorner.CornerRadius = UDim.new(0, 5)
-            keyCorner.Parent = KeyBtn
-
-            local keyStroke = Instance.new("UIStroke")
-            keyStroke.Thickness = 1
-            keyStroke.Transparency = 0.5
-            keyStroke.Parent = KeyBtn
-            AddToRegistry(keyStroke, "Color", "Stroke")
-
-            -- 内部水平布局
-            local innerLayout = Instance.new("UIListLayout")
-            innerLayout.FillDirection = Enum.FillDirection.Horizontal
-            innerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-            innerLayout.Padding = UDim.new(0, 4)
-            innerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            innerLayout.Parent = KeyBtn
-
-            local keyPadding = Instance.new("UIPadding")
-            keyPadding.PaddingLeft = UDim.new(0, 7)
-            keyPadding.PaddingRight = UDim.new(0, 8)
-            keyPadding.Parent = KeyBtn
-
-            -- 鼠标图标
-            local mouseIco = Instance.new("ImageLabel")
-            mouseIco.Size = UDim2.fromOffset(13, 13)
-            mouseIco.BackgroundTransparency = 1
-            mouseIco.Image = "rbxassetid://10734898592"
-            mouseIco.ImageTransparency = 0.35
-            mouseIco.LayoutOrder = 1
-            mouseIco.Parent = KeyBtn
-            AddToRegistry(mouseIco, "ImageColor3", "Text")
-
-            -- 键名标签
             local KeyLabel = Instance.new("TextLabel")
-            KeyLabel.Text = state.Key
-            KeyLabel.Size = UDim2.new(0, 0, 0, 14)
-            KeyLabel.BackgroundTransparency = 1
+            KeyLabel.Text = Key.Name
+            KeyLabel.Size = UDim2.new(0, 86, 0, 28)
+            KeyLabel.Position = UDim2.new(1, -100, 0.5, -14)
             KeyLabel.Font = Enum.Font.GothamMedium
-            KeyLabel.TextSize = 13
-            KeyLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
-            KeyLabel.AutomaticSize = Enum.AutomaticSize.X
-            KeyLabel.LayoutOrder = 2
-            KeyLabel.Parent = KeyBtn
-            AddToRegistry(KeyLabel, "TextColor3", "Text")
+            KeyLabel.TextSize = 11
+            KeyLabel.Parent = Tile
+            KeyLabel.BackgroundTransparency = 0.1
+            Instance.new("UICorner", KeyLabel).CornerRadius = UDim.new(0, 8)
+            AddToRegistry(KeyLabel, "BackgroundColor3", "Main")
+            AddToRegistry(KeyLabel, "TextColor3", "Accent")
 
-            -- 配置对象（用于保存/加载）
-            ConfigObjects[controlId] = {
-                Type = "Keybind",
-                Value = { Key = state.Key, Mode = state.Mode },
-                Set = function(val)
-                    if type(val) == "table" then
-                        local newKey = val.Key or state.Key
-                        local newMode = val.Mode or state.Mode
-                        state.Key = newKey
-                        state.Mode = newMode
-                        KeyLabel.Text = newKey
-                        ConfigObjects[controlId].Value = { Key = newKey, Mode = newMode }
-                    elseif type(val) == "string" then
-                        state.Key = val
-                        KeyLabel.Text = val
-                        ConfigObjects[controlId].Value = { Key = val, Mode = state.Mode }
-                    end
-                end
-            }
+            ConfigObjects[controlId] = {Type = "Keybind", Value = Key.Name, Set = function(val)
+                Key = Enum.KeyCode[val] or Key
+                KeyLabel.Text = Key.Name
+                callback(Key)
+            end}
 
-            local function updateKeyDisplay(newKey)
-                state.Key = newKey
-                KeyLabel.Text = newKey
-                ConfigObjects[controlId].Value = { Key = newKey, Mode = state.Mode }
-            end
-
-            -- 点击按钮进入等待输入
-            KeyBtn.MouseButton1Click:Connect(function()
-                if state.IsWaiting then return end
-                state.IsWaiting = true
+            ClickBtn.MouseButton1Click:Connect(function()
                 KeyLabel.Text = "..."
                 local input = UserInputService.InputBegan:Wait()
-                state.IsWaiting = false
-                local newKey = nil
-                if input.UserInputType == Enum.UserInputType.Keyboard then
-                    if input.KeyCode.Name ~= "Unknown" then
-                        newKey = input.KeyCode.Name
-                    end
-                elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    newKey = "MouseLeft"
-                elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-                    newKey = "MouseRight"
-                end
-                if newKey then
-                    updateKeyDisplay(newKey)
+                if input.KeyCode.Name ~= "Unknown" then
+                    Key = input.KeyCode
+                    KeyLabel.Text = Key.Name
+                    ConfigObjects[controlId].Value = Key.Name
+                    callback(Key)
                 else
-                    KeyLabel.Text = state.Key -- 恢复
+                    KeyLabel.Text = Key.Name
                 end
             end)
-
-            -- Toggle 切换
-            local function doToggle()
-                if state.Mode == "Toggle" then
-                    state.Toggled = not state.Toggled
-                    pcall(callback, state.Toggled)
-                end
-            end
-
-            local function doPress()
-                if state.Mode == "Hold" then
-                    pcall(callback, true)
-                end
-            end
-
-            local function doRelease()
-                if state.Mode == "Hold" then
-                    pcall(callback, false)
-                end
-            end
-
-            -- 全局输入监听
-            local inputConn
-            inputConn = UserInputService.InputBegan:Connect(function(input, gpe)
-                if gpe then return end
-                if state.IsWaiting then return end
-                if UserInputService:GetFocusedTextBox() then return end
-
-                local key = state.Key
-                if state.Mode == "Toggle" then
-                    if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        doToggle()
-                    elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then
-                        doToggle()
-                    elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then
-                        doToggle()
-                    end
-                elseif state.Mode == "Hold" then
-                    if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        doPress()
-                    elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then
-                        doPress()
-                    elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then
-                        doPress()
-                    end
-                end
-            end)
-
-            local inputEndConn
-            inputEndConn = UserInputService.InputEnded:Connect(function(input, gpe)
-                if gpe then return end
-                if state.IsWaiting then return end
-                if state.Mode == "Hold" then
-                    local key = state.Key
-                    if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        doRelease()
-                    elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then
-                        doRelease()
-                    elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then
-                        doRelease()
-                    end
-                end
-            end)
-
-            -- 清理
-            local function cleanup()
-                if inputConn then inputConn:Disconnect() end
-                if inputEndConn then inputEndConn:Disconnect() end
-            end
-
-            -- 返回对象
-            local self = {}
-            function self.SetValue(val, newMode)
-                if type(val) == "table" then
-                    ConfigObjects[controlId].Set(val)
-                else
-                    ConfigObjects[controlId].Set({ Key = tostring(val), Mode = newMode or state.Mode })
-                end
-            end
-            function self.GetValue()
-                return { Key = state.Key, Mode = state.Mode }
-            end
-            function self.GetState()
-                return state.Toggled
-            end
-            function self.SetMode(newMode)
-                state.Mode = newMode
-                ConfigObjects[controlId].Value = { Key = state.Key, Mode = state.Mode }
-            end
-            function self.Destroy()
-                cleanup()
-                Tile:Destroy()
-                ConfigObjects[controlId] = nil
-            end
-            function self.SetVisible(vis)
-                Tile.Visible = vis
-            end
-
-            return self
         end
-        -- ============================================================
 
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
