@@ -538,7 +538,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- 修改后的 Toggle（滑动开关，更大尺寸，透明轨道+边框，滑块颜色跟随主题）
+        -- 修复后的 Toggle（true/false 状态逻辑修正）
         -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
@@ -546,7 +546,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local callback = config.Callback or function() end
             local controlId = toggleText .. "_" .. tostring(#Registry)
 
-            -- 外层容器（原文件风格：透明度0.05，圆角4，背景Top，无描边）
+            -- 外层容器
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
@@ -554,7 +554,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
-            -- 标题（左对齐，间距15）
+            -- 标题
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = toggleText
             TitleLbl.Size = UDim2.new(0.7, 0, 1, 0)
@@ -566,9 +566,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 滑动开关（轨道+滑块），尺寸加大
+            -- 滑动开关（轨道+滑块）
             local Switch = Instance.new("Frame")
-            Switch.Size = UDim2.fromOffset(44, 22)  -- 从 36x18 增大到 44x22
+            Switch.Size = UDim2.fromOffset(44, 22)
             Switch.AnchorPoint = Vector2.new(1, 0.5)
             Switch.Position = UDim2.new(1, -10, 0.5, 0)
             Switch.BackgroundTransparency = 1
@@ -577,21 +577,20 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             -- 轨道（透明背景 + 边框）
             local Rail = Instance.new("Frame")
             Rail.Size = UDim2.new(1, 0, 1, 0)
-            Rail.BackgroundTransparency = 1  -- 完全透明
+            Rail.BackgroundTransparency = 1
             Rail.Parent = Switch
-            Instance.new("UICorner", Rail).CornerRadius = UDim.new(1, 0)  -- 圆角
+            Instance.new("UICorner", Rail).CornerRadius = UDim.new(1, 0)
 
-            -- 轨道的边框（UIStroke）
+            -- 轨道的边框
             local RailStroke = Instance.new("UIStroke")
             RailStroke.Thickness = 1.5
-            RailStroke.Transparency = 0  -- 不透明
+            RailStroke.Transparency = 0
             RailStroke.Color = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
             RailStroke.Parent = Rail
-            AddToRegistry(RailStroke, "Color", "Accent")  -- 默认用 Accent，但切换时会覆盖
 
-            -- 滑块（Dot），填充色跟随主题
+            -- 滑块
             local Dot = Instance.new("Frame")
-            Dot.Size = UDim2.fromOffset(16, 16)  -- 稍微大一点适应大开关
+            Dot.Size = UDim2.fromOffset(16, 16)
             Dot.AnchorPoint = Vector2.new(0.5, 0.5)
             Dot.Position = Enabled and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0)
             Dot.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
@@ -599,25 +598,27 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Dot.Parent = Switch
             Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
-            -- 可选：滑块边框（轻微）
             local dotStroke = Instance.new("UIStroke")
             dotStroke.Thickness = 1
             dotStroke.Transparency = 0.3
             dotStroke.Color = Color3.fromRGB(180, 180, 180)
             dotStroke.Parent = Dot
 
-            -- 点击容器（整个 Tile 可点击）
+            -- 点击容器
             local clickBtn = Instance.new("TextButton")
             clickBtn.Size = UDim2.new(1, 0, 1, 0)
             clickBtn.BackgroundTransparency = 1
             clickBtn.Text = ""
             clickBtn.Parent = Tile
 
-            -- 切换函数（带动画）
+            -- ===== 核心修复：setEnabled 确保 Enabled 变量正确赋值 =====
             local function setEnabled(newVal, animate)
+                -- 1. 先更新变量
                 Enabled = newVal
+                -- 2. 计算目标颜色和位置
                 local targetColor = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
                 local targetPos = Enabled and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0)
+                -- 3. 更新视觉
                 if animate then
                     Tween(RailStroke, { Color = targetColor }, 0.25)
                     Tween(Dot, { BackgroundColor3 = targetColor, Position = targetPos }, 0.25)
@@ -626,9 +627,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Dot.BackgroundColor3 = targetColor
                     Dot.Position = targetPos
                 end
+                -- 4. 更新配置对象
                 if ConfigObjects[controlId] then
                     ConfigObjects[controlId].Value = Enabled
                 end
+                -- 5. 触发回调
                 callback(Enabled)
             end
 
@@ -636,7 +639,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 setEnabled(not Enabled, true)
             end)
 
-            -- 悬停效果（原文件有悬停透明度变化）
+            -- 悬停效果
             clickBtn.MouseEnter:Connect(function()
                 Tween(Tile, {BackgroundTransparency = 0.00}, 0.18)
             end)
@@ -649,21 +652,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Type = "Toggle",
                 Value = Enabled,
                 Set = function(val)
+                    -- 加载配置时以非动画方式设置
                     setEnabled(val, false)
                 end
             }
 
-            -- 主题更新监听：当主题切换时，更新轨道的边框颜色和滑块颜色
+            -- 主题更新监听：只更新颜色，不改变状态
             table.insert(ThemeListeners, function()
                 local targetColor = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
                 RailStroke.Color = targetColor
                 Dot.BackgroundColor3 = targetColor
             end)
 
-            -- 初始化
+            -- 初始化（确保显示与变量一致）
             setEnabled(Enabled, false)
 
-            -- 返回对象（兼容原有接口）
+            -- 返回对象
             local self = {}
             function self.SetValue(val)
                 if ConfigObjects[controlId] then
