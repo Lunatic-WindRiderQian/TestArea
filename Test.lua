@@ -538,7 +538,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- 修复后的 Toggle（true/false 状态逻辑修正）
+        -- 修正后的 Toggle（滑动开关，状态管理完全遵循源文件逻辑）
         -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
@@ -546,7 +546,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local callback = config.Callback or function() end
             local controlId = toggleText .. "_" .. tostring(#Registry)
 
-            -- 外层容器
+            -- 外层容器（原文件风格）
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
@@ -581,14 +581,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Rail.Parent = Switch
             Instance.new("UICorner", Rail).CornerRadius = UDim.new(1, 0)
 
-            -- 轨道的边框
+            -- 轨道的边框（不注册到Registry，手动控制颜色）
             local RailStroke = Instance.new("UIStroke")
             RailStroke.Thickness = 1.5
             RailStroke.Transparency = 0
             RailStroke.Color = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
             RailStroke.Parent = Rail
 
-            -- 滑块
+            -- 滑块（不注册到Registry，手动控制颜色）
             local Dot = Instance.new("Frame")
             Dot.Size = UDim2.fromOffset(16, 16)
             Dot.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -598,6 +598,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Dot.Parent = Switch
             Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
+            -- 滑块可选描边（无关状态）
             local dotStroke = Instance.new("UIStroke")
             dotStroke.Thickness = 1
             dotStroke.Transparency = 0.3
@@ -611,14 +612,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             clickBtn.Text = ""
             clickBtn.Parent = Tile
 
-            -- ===== 核心修复：setEnabled 确保 Enabled 变量正确赋值 =====
-            local function setEnabled(newVal, animate)
-                -- 1. 先更新变量
-                Enabled = newVal
-                -- 2. 计算目标颜色和位置
+            -- ===== 核心状态管理（完全参照源文件逻辑） =====
+            -- 更新视觉（根据当前 Enabled）
+            local function updateVisuals(animate)
                 local targetColor = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
                 local targetPos = Enabled and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0)
-                -- 3. 更新视觉
                 if animate then
                     Tween(RailStroke, { Color = targetColor }, 0.25)
                     Tween(Dot, { BackgroundColor3 = targetColor, Position = targetPos }, 0.25)
@@ -627,16 +625,23 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Dot.BackgroundColor3 = targetColor
                     Dot.Position = targetPos
                 end
-                -- 4. 更新配置对象
+            end
+
+            -- 设置值（与源文件的 Set 方法一致）
+            local function SetValue(newVal, animate)
+                Enabled = newVal
+                updateVisuals(animate)
+                -- 更新配置对象
                 if ConfigObjects[controlId] then
                     ConfigObjects[controlId].Value = Enabled
                 end
-                -- 5. 触发回调
+                -- 触发回调
                 callback(Enabled)
             end
 
+            -- 点击事件：切换状态
             clickBtn.MouseButton1Click:Connect(function()
-                setEnabled(not Enabled, true)
+                SetValue(not Enabled, true)
             end)
 
             -- 悬停效果
@@ -647,13 +652,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Tween(Tile, {BackgroundTransparency = 0.05}, 0.18)
             end)
 
-            -- 配置对象（保存/加载）
+            -- 配置对象（用于保存/加载）
             ConfigObjects[controlId] = {
                 Type = "Toggle",
                 Value = Enabled,
                 Set = function(val)
                     -- 加载配置时以非动画方式设置
-                    setEnabled(val, false)
+                    SetValue(val, false)
                 end
             }
 
@@ -665,9 +670,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
 
             -- 初始化（确保显示与变量一致）
-            setEnabled(Enabled, false)
+            SetValue(Enabled, false)
 
-            -- 返回对象
+            -- 返回对象（兼容原有接口）
             local self = {}
             function self.SetValue(val)
                 if ConfigObjects[controlId] then
