@@ -538,7 +538,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- 替换后的 Toggle（滑动开关，FluentPro 风格）
+        -- 替换后的 Toggle（滑动开关，原文件容器风格）
         -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
@@ -546,31 +546,23 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local callback = config.Callback or function() end
             local controlId = toggleText .. "_" .. tostring(#Registry)
 
-            -- 外层容器（与 FluentPro 一致：高度38，圆角8）
+            -- 外层容器（原文件风格：透明度0.05，圆角4，背景Top，无描边）
             local Tile = Instance.new("Frame")
-            Tile.Size = UDim2.new(1, 0, 0, 38)
-            Tile.BackgroundTransparency = 0.9
-            Tile.BorderSizePixel = 0
+            Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
-            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 8)
-            AddToRegistry(Tile, "BackgroundColor3", "Main")
-            -- 描边
-            local stroke = Instance.new("UIStroke")
-            stroke.Thickness = 1
-            stroke.Transparency = 0.5
-            stroke.Parent = Tile
-            AddToRegistry(stroke, "Color", "Stroke")
+            Tile.BackgroundTransparency = 0.05
+            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
+            AddToRegistry(Tile, "BackgroundColor3", "Top")
 
-            -- 标题（左对齐）
+            -- 标题（左对齐，间距15）
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = toggleText
-            TitleLbl.Size = UDim2.new(1, -54, 1, 0)
-            TitleLbl.Position = UDim2.new(0, 12, 0, 0)
+            TitleLbl.Size = UDim2.new(0.7, 0, 1, 0)
+            TitleLbl.Position = UDim2.new(0, 15, 0, 0)
             TitleLbl.BackgroundTransparency = 1
             TitleLbl.Font = Enum.Font.GothamMedium
-            TitleLbl.TextSize = 14
+            TitleLbl.TextSize = 13
             TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-            TitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
@@ -579,17 +571,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Switch.Size = UDim2.fromOffset(36, 18)
             Switch.AnchorPoint = Vector2.new(1, 0.5)
             Switch.Position = UDim2.new(1, -10, 0.5, 0)
-            Switch.BackgroundTransparency = 1  -- 背景由轨道控制
+            Switch.BackgroundTransparency = 1
             Switch.Parent = Tile
-            -- 轨道（背景）
+
             local Rail = Instance.new("Frame")
             Rail.Size = UDim2.new(1, 0, 1, 0)
             Rail.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
             Rail.BackgroundTransparency = 0.5
             Rail.Parent = Switch
             Instance.new("UICorner", Rail).CornerRadius = UDim.new(1, 0)
-            AddToRegistry(Rail, "BackgroundColor3", "Accent")  -- 启用时用 Accent
-            -- 滑块
+            AddToRegistry(Rail, "BackgroundColor3", "Accent")
+
             local Dot = Instance.new("Frame")
             Dot.Size = UDim2.fromOffset(14, 14)
             Dot.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -599,7 +591,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Dot.Parent = Switch
             Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
-            -- 滑块描边（轻微）
             local dotStroke = Instance.new("UIStroke")
             dotStroke.Thickness = 1
             dotStroke.Transparency = 0.3
@@ -635,12 +626,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 setEnabled(not Enabled, true)
             end)
 
-            -- 悬停效果
+            -- 悬停效果（原文件有悬停透明度变化）
             clickBtn.MouseEnter:Connect(function()
-                Tween(Tile, { BackgroundTransparency = 0.7 }, 0.15)
+                Tween(Tile, {BackgroundTransparency = 0.00}, 0.18)
             end)
             clickBtn.MouseLeave:Connect(function()
-                Tween(Tile, { BackgroundTransparency = 0.9 }, 0.15)
+                Tween(Tile, {BackgroundTransparency = 0.05}, 0.18)
             end)
 
             -- 配置对象（保存/加载）
@@ -654,10 +645,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             -- 主题更新监听
             table.insert(ThemeListeners, function()
-                -- 更新轨道颜色
                 Rail.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-                -- 更新描边颜色
-                stroke.Color = CurrentTheme.Stroke
+                -- Tile 背景色由 AddToRegistry 自动更新
             end)
 
             -- 初始化
