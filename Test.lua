@@ -82,7 +82,6 @@ local Themes = {
 }
 local CurrentTheme = Themes.Dark
 
--- 增强的 AddToRegistry，防止因缺失主题键而崩溃
 local function AddToRegistry(obj, prop, themeKey)
     if not themeKey then return end
     local color = CurrentTheme[themeKey]
@@ -90,7 +89,6 @@ local function AddToRegistry(obj, prop, themeKey)
         table.insert(Registry, {Object = obj, Property = prop, Type = themeKey})
         obj[prop] = color
     else
-        -- 如果主题键不存在，给出警告并设置默认颜色
         warn("AddToRegistry: Missing theme key '" .. tostring(themeKey) .. "' for object", obj)
         if prop == "ImageColor3" or prop == "TextColor3" or prop == "BackgroundColor3" then
             obj[prop] = Color3.new(1, 1, 1)
@@ -546,7 +544,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local callback = config.Callback or function() end
             local controlId = toggleText .. "_" .. tostring(#Registry)
 
-            -- 外层容器（原文件风格）
+            -- 外层容器（模仿 FluentPro 的 Element 风格）
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
@@ -566,71 +564,67 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 滑动开关（轨道+滑块）
-            local Switch = Instance.new("Frame")
-            Switch.Size = UDim2.fromOffset(44, 22)
-            Switch.AnchorPoint = Vector2.new(1, 0.5)
-            Switch.Position = UDim2.new(1, -10, 0.5, 0)
-            Switch.BackgroundTransparency = 1
-            Switch.Parent = Tile
+            -- 开关轨道（与 FluentPro 尺寸一致：36x18）
+            local Track = Instance.new("Frame")
+            Track.Size = UDim2.fromOffset(36, 18)
+            Track.AnchorPoint = Vector2.new(1, 0.5)
+            Track.Position = UDim2.new(1, -10, 0.5, 0)
+            Track.BackgroundTransparency = 1
+            Track.Parent = Tile
+            Instance.new("UICorner", Track).CornerRadius = UDim.new(1, 0)
 
-            -- 轨道（透明背景 + 边框）
-            local Rail = Instance.new("Frame")
-            Rail.Size = UDim2.new(1, 0, 1, 0)
-            Rail.BackgroundTransparency = 1
-            Rail.Parent = Switch
-            Instance.new("UICorner", Rail).CornerRadius = UDim.new(1, 0)
+            -- 轨道背景（颜色随状态变化）
+            local TrackBg = Instance.new("Frame")
+            TrackBg.Size = UDim2.new(1, 0, 1, 0)
+            TrackBg.BackgroundTransparency = 0
+            TrackBg.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(200, 200, 200)
+            TrackBg.Parent = Track
+            Instance.new("UICorner", TrackBg).CornerRadius = UDim.new(1, 0)
 
-            -- 轨道的边框（不注册到Registry，手动控制颜色）
-            local RailStroke = Instance.new("UIStroke")
-            RailStroke.Thickness = 1.5
-            RailStroke.Transparency = 0
-            RailStroke.Color = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-            RailStroke.Parent = Rail
+            -- 轨道描边（始终存在）
+            local TrackStroke = Instance.new("UIStroke")
+            TrackStroke.Thickness = 1.5
+            TrackStroke.Transparency = 0.5
+            TrackStroke.Color = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
+            TrackStroke.Parent = TrackBg
 
-            -- 滑块（不注册到Registry，手动控制颜色）
+            -- 滑块（圆点）
             local Dot = Instance.new("Frame")
-            Dot.Size = UDim2.fromOffset(16, 16)
+            Dot.Size = UDim2.fromOffset(14, 14)
             Dot.AnchorPoint = Vector2.new(0.5, 0.5)
-            Dot.Position = Enabled and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0)
-            Dot.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
+            Dot.Position = Enabled and UDim2.new(1, -9, 0.5, 0) or UDim2.new(0, 9, 0.5, 0)
+            Dot.BackgroundColor3 = Color3.new(1, 1, 1)
             Dot.BackgroundTransparency = 0
-            Dot.Parent = Switch
+            Dot.Parent = Track
             Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
-            -- 滑块可选描边（无关状态）
-            local dotStroke = Instance.new("UIStroke")
-            dotStroke.Thickness = 1
-            dotStroke.Transparency = 0.3
-            dotStroke.Color = Color3.fromRGB(180, 180, 180)
-            dotStroke.Parent = Dot
+            -- 点击区域（覆盖整个 Tile）
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = ""
+            ClickBtn.Parent = Tile
 
-            -- 点击容器
-            local clickBtn = Instance.new("TextButton")
-            clickBtn.Size = UDim2.new(1, 0, 1, 0)
-            clickBtn.BackgroundTransparency = 1
-            clickBtn.Text = ""
-            clickBtn.Parent = Tile
-
-            -- ===== 核心状态管理（完全参照源文件逻辑） =====
-            -- 更新视觉（根据当前 Enabled）
+            -- ========== 状态管理 ==========
             local function updateVisuals(animate)
-                local targetColor = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-                local targetPos = Enabled and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0)
+                local targetBgColor = Enabled and CurrentTheme.Accent or Color3.fromRGB(200, 200, 200)
+                local targetStrokeColor = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
+                local targetPos = Enabled and UDim2.new(1, -9, 0.5, 0) or UDim2.new(0, 9, 0.5, 0)
+
                 if animate then
-                    Tween(RailStroke, { Color = targetColor }, 0.25)
-                    Tween(Dot, { BackgroundColor3 = targetColor, Position = targetPos }, 0.25)
+                    Tween(TrackBg, { BackgroundColor3 = targetBgColor }, 0.25)
+                    Tween(TrackStroke, { Color = targetStrokeColor }, 0.25)
+                    Tween(Dot, { Position = targetPos }, 0.25)
                 else
-                    RailStroke.Color = targetColor
-                    Dot.BackgroundColor3 = targetColor
+                    TrackBg.BackgroundColor3 = targetBgColor
+                    TrackStroke.Color = targetStrokeColor
                     Dot.Position = targetPos
                 end
             end
 
-            -- 设置值（与源文件的 Set 方法一致）
             local function SetValue(newVal, animate)
                 Enabled = newVal
-                updateVisuals(animate)
+                updateVisuals(animate or false)
                 -- 更新配置对象
                 if ConfigObjects[controlId] then
                     ConfigObjects[controlId].Value = Enabled
@@ -639,40 +633,42 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 callback(Enabled)
             end
 
-            -- 点击事件：切换状态
-            clickBtn.MouseButton1Click:Connect(function()
+            -- 点击切换
+            ClickBtn.MouseButton1Click:Connect(function()
                 SetValue(not Enabled, true)
             end)
 
             -- 悬停效果
-            clickBtn.MouseEnter:Connect(function()
-                Tween(Tile, {BackgroundTransparency = 0.00}, 0.18)
+            ClickBtn.MouseEnter:Connect(function()
+                Tween(Tile, { BackgroundTransparency = 0.00 }, 0.18)
             end)
-            clickBtn.MouseLeave:Connect(function()
-                Tween(Tile, {BackgroundTransparency = 0.05}, 0.18)
+            ClickBtn.MouseLeave:Connect(function()
+                Tween(Tile, { BackgroundTransparency = 0.05 }, 0.18)
             end)
 
-            -- 配置对象（用于保存/加载）
+            -- ========== 配置对象（用于保存/加载） ==========
             ConfigObjects[controlId] = {
                 Type = "Toggle",
                 Value = Enabled,
                 Set = function(val)
-                    -- 加载配置时以非动画方式设置
                     SetValue(val, false)
                 end
             }
 
-            -- 主题更新监听：只更新颜色，不改变状态
+            -- ========== 主题更新监听 ==========
             table.insert(ThemeListeners, function()
-                local targetColor = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-                RailStroke.Color = targetColor
-                Dot.BackgroundColor3 = targetColor
+                -- 根据当前状态重新应用颜色
+                local bgCol = Enabled and CurrentTheme.Accent or Color3.fromRGB(200, 200, 200)
+                local strokeCol = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
+                TrackBg.BackgroundColor3 = bgCol
+                TrackStroke.Color = strokeCol
+                -- 滑块颜色不变（白色）
             end)
 
-            -- 初始化（确保显示与变量一致）
+            -- ========== 初始化（确保与变量一致） ==========
             SetValue(Enabled, false)
 
-            -- 返回对象（兼容原有接口）
+            -- ========== 返回对象 ==========
             local self = {}
             function self.SetValue(val)
                 if ConfigObjects[controlId] then
