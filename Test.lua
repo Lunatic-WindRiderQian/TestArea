@@ -536,7 +536,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- Toggle（已替换为 FluentPro 风格胶囊开关）
+        -- Toggle（FluentPro 风格胶囊开关，位置已微调）
         -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
@@ -571,7 +571,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             -- 胶囊开关（FluentPro 风格）
             local Switch = Instance.new("Frame")
             Switch.Size = UDim2.fromOffset(42, 22)
-            Switch.Position = UDim2.new(1, -10, 0.5, 0)
+            Switch.Position = UDim2.new(1, -8, 0.5, 0)  -- 右偏移 -8
             Switch.AnchorPoint = Vector2.new(1, 0.5)
             Switch.BackgroundTransparency = 1
             Switch.Parent = Tile
