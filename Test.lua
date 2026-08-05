@@ -2216,36 +2216,34 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- Checkbox（从 FluentPro 移植）
-        -- 修改点：
-        --   1. 使用 config.Name 而非 config.Title
-        --   2. 容器背景透明度 0.05，注册为 "Top"
+        -- Checkbox —— 完全与 Toggle 等控件的主容器一致
         -- ============================================================
         child.Checkbox = function(_, config)
-            local title = config.Name or ""   -- 改用 Name
+            local title = config.Name or ""
             local default = config.Default or false
             local callback = config.Callback or function() end
             local controlId = title .. "_" .. tostring(#Registry)
 
             local Tile = Instance.new("Frame")
-            Tile.Size = UDim2.new(1, 0, 0, 38)
+            Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
-            Tile.BackgroundTransparency = 0.05   -- 与 Toggle 一致
-            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 8)
-            local stroke = Instance.new("UIStroke")
-            stroke.Thickness = 1
-            stroke.Transparency = 0.5
-            stroke.Parent = Tile
-            AddToRegistry(Tile, "BackgroundColor3", "Top")   -- 注册为 Top
-            AddToRegistry(stroke, "Color", "Stroke")
+            Tile.BackgroundTransparency = 0.05
+            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
+            AddToRegistry(Tile, "BackgroundColor3", "Top")
+
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = ""
+            ClickBtn.Parent = Tile
 
             local TitleLbl = Instance.new("TextLabel")
-            TitleLbl.Size = UDim2.new(1, -56, 1, 0)
-            TitleLbl.Position = UDim2.new(0, 12, 0, 0)
+            TitleLbl.Text = title
+            TitleLbl.Size = UDim2.new(0.7, 0, 1, 0)
+            TitleLbl.Position = UDim2.new(0, 15, 0, 0)
             TitleLbl.BackgroundTransparency = 1
             TitleLbl.Font = Enum.Font.GothamMedium
-            TitleLbl.Text = title
-            TitleLbl.TextSize = 14
+            TitleLbl.TextSize = 13
             TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
@@ -2268,7 +2266,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             check.AnchorPoint = Vector2.new(0.5, 0.5)
             check.Position = UDim2.new(0.5, 0, 0.5, 0)
             check.BackgroundTransparency = 1
-            check.Image = "rbxassetid://10709790644"      -- 勾号图标
+            check.Image = "rbxassetid://10709790644"
             check.ImageTransparency = 1
             check.Parent = box
 
@@ -2321,10 +2319,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 ConfigObjects[controlId] = nil
             end
 
-            Tile.InputBegan:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                    h:SetValue(not h.Value)
-                end
+            ClickBtn.MouseButton1Click:Connect(function()
+                h:SetValue(not h.Value)
             end)
 
             h:SetValue(default)
