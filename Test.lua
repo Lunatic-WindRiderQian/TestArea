@@ -2335,6 +2335,115 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             return h
         end
+
+        -- ============================================================
+        -- ProgressBar (移植自 FluentPro)
+        -- ============================================================
+        child.ProgressBar = function(_, config)
+            local title = config.Title or ""
+            local min = config.Min or 0
+            local max = config.Max or 100
+            local default = config.Default or min
+            local showPercent = config.ShowPercent ~= false
+            local callback = config.Callback or function() end
+            local controlId = title .. "_" .. tostring(#Registry)
+
+            local containerHeight = (title ~= "" and 46 or 26)
+            local wrap = Instance.new("Frame")
+            wrap.Size = UDim2.new(1, 0, 0, containerHeight)
+            wrap.BackgroundTransparency = 1
+            wrap.Parent = contentHolder
+
+            local titleLbl = nil
+            if title ~= "" then
+                titleLbl = Instance.new("TextLabel")
+                titleLbl.Size = UDim2.new(1, -50, 0, 16)
+                titleLbl.Position = UDim2.new(0, 0, 0, 0)
+                titleLbl.BackgroundTransparency = 1
+                titleLbl.Font = Enum.Font.GothamMedium
+                titleLbl.Text = title
+                titleLbl.TextSize = 14
+                titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+                titleLbl.Parent = wrap
+                AddToRegistry(titleLbl, "TextColor3", "Text")
+            end
+
+            local pctLbl = nil
+            if showPercent then
+                pctLbl = Instance.new("TextLabel")
+                pctLbl.Size = UDim2.new(0, 50, 0, 16)
+                pctLbl.Position = UDim2.new(1, -50, 0, 0)
+                pctLbl.BackgroundTransparency = 1
+                pctLbl.Font = Enum.Font.Gotham
+                pctLbl.Text = "0%"
+                pctLbl.TextSize = 13
+                pctLbl.TextXAlignment = Enum.TextXAlignment.Right
+                pctLbl.Parent = wrap
+                AddToRegistry(pctLbl, "TextColor3", "SubText")
+            end
+
+            local rail = Instance.new("Frame")
+            rail.Size = UDim2.new(1, 0, 0, 8)
+            rail.Position = UDim2.new(0, 0, 1, -8)
+            rail.BackgroundTransparency = 0.4
+            rail.BorderSizePixel = 0
+            rail.Parent = wrap
+            Instance.new("UICorner", rail).CornerRadius = UDim.new(1, 0)
+            AddToRegistry(rail, "BackgroundColor3", "Stroke")
+
+            local fill = Instance.new("Frame")
+            fill.Size = UDim2.fromScale(0, 1)
+            fill.BackgroundTransparency = 0
+            fill.BorderSizePixel = 0
+            fill.Parent = rail
+            Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+            AddToRegistry(fill, "BackgroundColor3", "Accent")
+
+            local h = {
+                Value = math.clamp(default, min, max),
+                Min = min,
+                Max = max,
+                Type = "ProgressBar",
+                Frame = wrap,
+            }
+
+            function h:SetTitle(s)
+                if titleLbl then
+                    titleLbl.Text = tostring(s or "")
+                end
+            end
+
+            function h:SetValue(val)
+                val = math.clamp(tonumber(val) or h.Min, h.Min, h.Max)
+                h.Value = val
+                local alpha = (h.Max > h.Min) and (val - h.Min) / (h.Max - h.Min) or 0
+                Tween(fill, { Size = UDim2.fromScale(alpha, 1) }, 0.2)
+                if pctLbl then
+                    pctLbl.Text = math.floor(alpha * 100) .. "%"
+                end
+                if callback then pcall(callback, val) end
+                if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
+            end
+
+            function h:Destroy()
+                wrap:Destroy()
+                ConfigObjects[controlId] = nil
+            end
+
+            function h:SetVisible(state)
+                wrap.Visible = state
+            end
+
+            h:SetValue(default)
+
+            ConfigObjects[controlId] = {
+                Type = "ProgressBar",
+                Value = h.Value,
+                Set = function(val) h:SetValue(val) end
+            }
+
+            return h
+        end
         -- ============================================================
 
         return child
@@ -3710,6 +3819,7 @@ function Fenglib:CreateWindow(Config)
             elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
             elements.Divider  = function(_, config) return createSection("", nil, true).Divider(config) end
             elements.Checkbox = function(_, config) return createSection("", nil, true).Checkbox(config) end
+            elements.ProgressBar = function(_, config) return createSection("", nil, true).ProgressBar(config) end
             return elements
         end
 
