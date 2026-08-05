@@ -82,7 +82,6 @@ local Themes = {
 }
 local CurrentTheme = Themes.Dark
 
--- 增强的 AddToRegistry，防止因缺失主题键而崩溃
 local function AddToRegistry(obj, prop, themeKey)
     if not themeKey then return end
     local color = CurrentTheme[themeKey]
@@ -90,7 +89,6 @@ local function AddToRegistry(obj, prop, themeKey)
         table.insert(Registry, {Object = obj, Property = prop, Type = themeKey})
         obj[prop] = color
     else
-        -- 如果主题键不存在，给出警告并设置默认颜色
         warn("AddToRegistry: Missing theme key '" .. tostring(themeKey) .. "' for object", obj)
         if prop == "ImageColor3" or prop == "TextColor3" or prop == "BackgroundColor3" then
             obj[prop] = Color3.new(1, 1, 1)
@@ -538,7 +536,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- Toggle 完全采用第一个文件（UI.lua）的实现（红绿背景 + I/O 文字）
+        -- Toggle（已替换为 FluentPro 风格胶囊开关）
         -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
@@ -570,68 +568,59 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
+            -- 胶囊开关（FluentPro 风格）
             local Switch = Instance.new("Frame")
-            Switch.Size = UDim2.new(0, 42, 0, 22)
-            Switch.Position = UDim2.new(1, -56, 0.5, -11)
+            Switch.Size = UDim2.fromOffset(42, 22)
+            Switch.Position = UDim2.new(1, -10, 0.5, 0)
+            Switch.AnchorPoint = Vector2.new(1, 0.5)
+            Switch.BackgroundTransparency = 1
             Switch.Parent = Tile
-            Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
-            Switch.BackgroundColor3 = Enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+
+            local SwitchBg = Instance.new("Frame")
+            SwitchBg.Size = UDim2.fromScale(1, 1)
+            SwitchBg.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(80, 80, 80)
+            SwitchBg.BorderSizePixel = 0
+            SwitchBg.Parent = Switch
+            local bgCorner = Instance.new("UICorner")
+            bgCorner.CornerRadius = UDim.new(1, 0)
+            bgCorner.Parent = SwitchBg
 
             local SwStroke = Instance.new("UIStroke")
             SwStroke.Thickness = 1
-            SwStroke.Transparency = 0.6
-            SwStroke.Parent = Switch
+            SwStroke.Transparency = 0.4
+            SwStroke.Color = CurrentTheme.Stroke
+            SwStroke.Parent = SwitchBg
             AddToRegistry(SwStroke, "Color", "Stroke")
 
-            local leftLabel = Instance.new("TextLabel")
-            leftLabel.Size = UDim2.new(0.5, 0, 1, 0)
-            leftLabel.Position = UDim2.new(0, 4, 0, 0)
-            leftLabel.BackgroundTransparency = 1
-            leftLabel.Font = Enum.Font.GothamBold
-            leftLabel.Text = "I"
-            leftLabel.TextSize = 12
-            leftLabel.TextColor3 = Enabled and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
-            leftLabel.TextTransparency = Enabled and 0 or 0.6
-            leftLabel.TextXAlignment = Enum.TextXAlignment.Left
-            leftLabel.TextYAlignment = Enum.TextYAlignment.Center
-            leftLabel.Parent = Switch
-
-            local rightLabel = Instance.new("TextLabel")
-            rightLabel.Size = UDim2.new(0.5, 0, 1, 0)
-            rightLabel.Position = UDim2.new(0.5, -4, 0, 0)
-            rightLabel.BackgroundTransparency = 1
-            rightLabel.Font = Enum.Font.GothamBold
-            rightLabel.Text = "O"
-            rightLabel.TextSize = 12
-            rightLabel.TextColor3 = Enabled and Color3.fromRGB(150, 150, 150) or Color3.new(1, 1, 1)
-            rightLabel.TextTransparency = Enabled and 0.6 or 0
-            rightLabel.TextXAlignment = Enum.TextXAlignment.Right
-            rightLabel.TextYAlignment = Enum.TextYAlignment.Center
-            rightLabel.Parent = Switch
-
             local Dot = Instance.new("Frame")
-            Dot.Size = UDim2.new(0, 16, 0, 16)
-            Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+            Dot.Size = UDim2.fromOffset(16, 16)
+            Dot.Position = Enabled and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
+            Dot.AnchorPoint = Vector2.new(0.5, 0.5)
             Dot.BackgroundColor3 = Color3.new(1, 1, 1)
-            Dot.Parent = Switch
-            Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
+            Dot.BorderSizePixel = 0
+            Dot.Parent = SwitchBg
+            local dotCorner = Instance.new("UICorner")
+            dotCorner.CornerRadius = UDim.new(1, 0)
+            dotCorner.Parent = Dot
 
             ConfigObjects[controlId] = {
                 Type = "Toggle",
                 Value = Enabled,
                 Set = function(val)
                     Enabled = val
-                    Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-                    Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+                    SwitchBg.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(80, 80, 80)
+                    Dot.Position = Enabled and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
                     callback(Enabled)
                 end
             }
 
             local function Update()
-                Tween(Switch, {BackgroundColor3 = Enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)})
-                Tween(Dot, {Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)})
-                Tween(leftLabel, {TextColor3 = Enabled and Color3.new(1,1,1) or Color3.fromRGB(150,150,150), TextTransparency = Enabled and 0 or 0.6})
-                Tween(rightLabel, {TextColor3 = Enabled and Color3.fromRGB(150,150,150) or Color3.new(1,1,1), TextTransparency = Enabled and 0.6 or 0})
+                Tween(SwitchBg, {
+                    BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(80, 80, 80)
+                }, 0.2)
+                Tween(Dot, {
+                    Position = Enabled and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
+                }, 0.2)
                 ConfigObjects[controlId].Value = Enabled
                 callback(Enabled)
             end
@@ -643,6 +632,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             table.insert(ThemeListeners, function()
                 SwStroke.Color = CurrentTheme.Stroke
+                if Enabled then
+                    SwitchBg.BackgroundColor3 = CurrentTheme.Accent
+                end
             end)
 
             local self = {}
