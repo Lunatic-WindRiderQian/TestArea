@@ -345,8 +345,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
         
-        local contentCorner = Instance.new("UICorner", contentContainerSection)
+        local contentCorner = Instance.new("UICorner")
         contentCorner.CornerRadius = UDim.new(0, 4)
+        contentCorner.Parent = contentContainerSection
         
         local contentStroke = Instance.new("UIStroke")
         contentStroke.Thickness = 1
@@ -526,9 +527,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ============================================================
-        -- 修改后的 Toggle：透明背景 + 外框，滑块跟随主题色 (Accent)
-        -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
@@ -559,42 +557,37 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 开关主体：透明背景 + 外框
             local Switch = Instance.new("Frame")
             Switch.Size = UDim2.new(0, 42, 0, 22)
             Switch.Position = UDim2.new(1, -56, 0.5, -11)
             Switch.Parent = Tile
-            Switch.BackgroundTransparency = 1  -- 背景透明
+            Switch.BackgroundTransparency = 1
             Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
 
-            -- 外框，跟随主题色
             local SwStroke = Instance.new("UIStroke")
             SwStroke.Thickness = 1
             SwStroke.Transparency = 0.6
             SwStroke.Parent = Switch
             AddToRegistry(SwStroke, "Color", "Stroke")
 
-            -- 滑块（开关头），跟随主题色（Accent）
             local Dot = Instance.new("Frame")
             Dot.Size = UDim2.new(0, 16, 0, 16)
             Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
             Dot.Parent = Switch
             Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
-            AddToRegistry(Dot, "BackgroundColor3", "Accent")  -- 滑块颜色随主题色变化
+            AddToRegistry(Dot, "BackgroundColor3", "Accent")
 
             ConfigObjects[controlId] = {
                 Type = "Toggle",
                 Value = Enabled,
                 Set = function(val)
                     Enabled = val
-                    -- 只移动滑块，不改变背景色
                     Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
                     callback(Enabled)
                 end
             }
 
             local function Update()
-                -- 仅移动滑块
                 Tween(Dot, {Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)})
                 ConfigObjects[controlId].Value = Enabled
                 callback(Enabled)
@@ -604,10 +597,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Enabled = not Enabled
                 Update()
             end)
-
-            -- 主题变化时，滑块颜色和外框颜色已通过 AddToRegistry 自动更新，无需额外监听
         end
-        -- ============================================================
 
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
@@ -1159,17 +1149,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ============================================================
-        -- 修改后的 Keybind（基于 FluentPro 核心，支持 Toggle/Hold + 鼠标）
-        -- ============================================================
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
             local defaultKey = config.Default or Enum.KeyCode.M
-            local mode = config.Mode or "Toggle"  -- "Toggle" 或 "Hold"
+            local mode = config.Mode or "Toggle"
             local callback = config.Callback or function() end
             local controlId = keyText .. "_" .. tostring(#Registry)
 
-            -- 状态
             local state = {
                 Key = defaultKey.Name,
                 Mode = mode,
@@ -1177,7 +1163,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 IsWaiting = false,
             }
 
-            -- 容器
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
@@ -1185,7 +1170,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
-            -- 标题
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = keyText
             TitleLbl.Size = UDim2.new(0.6, 0, 1, 0)
@@ -1197,7 +1181,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 键位显示按钮（点击更改键）
             local KeyBtn = Instance.new("TextButton")
             KeyBtn.Size = UDim2.new(0, 0, 0, 30)
             KeyBtn.Position = UDim2.new(1, -10, 0.5, 0)
@@ -1219,7 +1202,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             keyStroke.Parent = KeyBtn
             AddToRegistry(keyStroke, "Color", "Stroke")
 
-            -- 内部水平布局
             local innerLayout = Instance.new("UIListLayout")
             innerLayout.FillDirection = Enum.FillDirection.Horizontal
             innerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
@@ -1232,7 +1214,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             keyPadding.PaddingRight = UDim.new(0, 8)
             keyPadding.Parent = KeyBtn
 
-            -- 鼠标图标
             local mouseIco = Instance.new("ImageLabel")
             mouseIco.Size = UDim2.fromOffset(13, 13)
             mouseIco.BackgroundTransparency = 1
@@ -1242,7 +1223,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             mouseIco.Parent = KeyBtn
             AddToRegistry(mouseIco, "ImageColor3", "Text")
 
-            -- 键名标签
             local KeyLabel = Instance.new("TextLabel")
             KeyLabel.Text = state.Key
             KeyLabel.Size = UDim2.new(0, 0, 0, 14)
@@ -1255,7 +1235,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             KeyLabel.Parent = KeyBtn
             AddToRegistry(KeyLabel, "TextColor3", "Text")
 
-            -- 配置对象（用于保存/加载）
             ConfigObjects[controlId] = {
                 Type = "Keybind",
                 Value = { Key = state.Key, Mode = state.Mode },
@@ -1281,7 +1260,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 ConfigObjects[controlId].Value = { Key = newKey, Mode = state.Mode }
             end
 
-            -- 点击按钮进入等待输入
             KeyBtn.MouseButton1Click:Connect(function()
                 if state.IsWaiting then return end
                 state.IsWaiting = true
@@ -1301,11 +1279,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 if newKey then
                     updateKeyDisplay(newKey)
                 else
-                    KeyLabel.Text = state.Key -- 恢复
+                    KeyLabel.Text = state.Key
                 end
             end)
 
-            -- Toggle 切换
             local function doToggle()
                 if state.Mode == "Toggle" then
                     state.Toggled = not state.Toggled
@@ -1325,7 +1302,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
 
-            -- 全局输入监听
             local inputConn
             inputConn = UserInputService.InputBegan:Connect(function(input, gpe)
                 if gpe then return end
@@ -1368,13 +1344,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
 
-            -- 清理
             local function cleanup()
                 if inputConn then inputConn:Disconnect() end
                 if inputEndConn then inputEndConn:Disconnect() end
             end
 
-            -- 返回对象
             local self = {}
             function self.SetValue(val, newMode)
                 if type(val) == "table" then
@@ -1404,7 +1378,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             return self
         end
-        -- ============================================================
 
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
@@ -2241,6 +2214,129 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             return self
         end
+
+        -- ============================================================
+        -- 新增 Checkbox（从 FluentPro 移植）
+        -- ============================================================
+        child.Checkbox = function(_, config)
+            local title = config.Title or ""
+            local default = config.Default or false
+            local callback = config.Callback or function() end
+            local controlId = title .. "_" .. tostring(#Registry)
+
+            local Tile = Instance.new("Frame")
+            Tile.Size = UDim2.new(1, 0, 0, 38)
+            Tile.Parent = contentHolder
+            Tile.BackgroundTransparency = 0.9
+            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 8)
+            local stroke = Instance.new("UIStroke")
+            stroke.Thickness = 1
+            stroke.Transparency = 0.5
+            stroke.Parent = Tile
+            AddToRegistry(Tile, "BackgroundColor3", "Top")
+            AddToRegistry(stroke, "Color", "Stroke")
+
+            local TitleLbl = Instance.new("TextLabel")
+            TitleLbl.Size = UDim2.new(1, -56, 1, 0)
+            TitleLbl.Position = UDim2.new(0, 12, 0, 0)
+            TitleLbl.BackgroundTransparency = 1
+            TitleLbl.Font = Enum.Font.GothamMedium
+            TitleLbl.Text = title
+            TitleLbl.TextSize = 14
+            TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+            TitleLbl.Parent = Tile
+            AddToRegistry(TitleLbl, "TextColor3", "Text")
+
+            local box = Instance.new("Frame")
+            box.Size = UDim2.fromOffset(20, 20)
+            box.AnchorPoint = Vector2.new(1, 0.5)
+            box.Position = UDim2.new(1, -12, 0.5, 0)
+            box.BackgroundTransparency = 0
+            box.Parent = Tile
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5)
+
+            local boxStroke = Instance.new("UIStroke")
+            boxStroke.Thickness = 1.4
+            boxStroke.Transparency = 0.4
+            boxStroke.Parent = box
+
+            local check = Instance.new("ImageLabel")
+            check.Size = UDim2.fromOffset(14, 14)
+            check.AnchorPoint = Vector2.new(0.5, 0.5)
+            check.Position = UDim2.new(0.5, 0, 0.5, 0)
+            check.BackgroundTransparency = 1
+            check.Image = "rbxassetid://10709790644"      -- 勾号图标
+            check.ImageTransparency = 1
+            check.Parent = box
+
+            local h = {
+                Value = default,
+                Callback = callback,
+                Type = "Checkbox",
+            }
+
+            local function updateColors()
+                if h.Value then
+                    box.BackgroundColor3 = CurrentTheme.Accent
+                    boxStroke.Color = CurrentTheme.Accent
+                    check.ImageTransparency = 0
+                else
+                    box.BackgroundColor3 = CurrentTheme.Stroke
+                    boxStroke.Color = CurrentTheme.Stroke
+                    check.ImageTransparency = 1
+                end
+            end
+
+            table.insert(ThemeListeners, updateColors)
+
+            function h:SetValue(val)
+                val = not (not val)
+                h.Value = val
+                updateColors()
+                if ConfigObjects[controlId] then
+                    ConfigObjects[controlId].Value = val
+                end
+                pcall(callback, val)
+                pcall(h.Changed, val)
+            end
+
+            function h:OnChanged(_, cb)
+                h.Changed = cb
+                cb(h.Value)
+            end
+
+            function h:GetValue()
+                return h.Value
+            end
+
+            function h:SetVisible(vis)
+                Tile.Visible = vis
+            end
+
+            function h:Destroy()
+                Tile:Destroy()
+                ConfigObjects[controlId] = nil
+            end
+
+            Tile.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    h:SetValue(not h.Value)
+                end
+            end)
+
+            h:SetValue(default)
+
+            ConfigObjects[controlId] = {
+                Type = "Checkbox",
+                Value = h.Value,
+                Set = function(val)
+                    h:SetValue(val)
+                end
+            }
+
+            return h
+        end
+        -- ============================================================
 
         return child
     end
@@ -3614,6 +3710,7 @@ function Fenglib:CreateWindow(Config)
             elements.ColorPicker= function(_, config) return createSection("", nil, true).ColorPicker(config) end
             elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
             elements.Divider  = function(_, config) return createSection("", nil, true).Divider(config) end
+            elements.Checkbox = function(_, config) return createSection("", nil, true).Checkbox(config) end
             return elements
         end
 
