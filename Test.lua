@@ -536,7 +536,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- Toggle（FluentPro 风格胶囊开关，位置已微调）
+        -- Toggle（纯滑动开关，带轨道边框，无 I/O 标签）
         -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
@@ -568,14 +568,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 胶囊开关（FluentPro 风格）
+            -- 开关容器
             local Switch = Instance.new("Frame")
             Switch.Size = UDim2.fromOffset(42, 22)
-            Switch.Position = UDim2.new(1, -8, 0.5, 0)  -- 右偏移 -8
+            Switch.Position = UDim2.new(1, -8, 0.5, 0)
             Switch.AnchorPoint = Vector2.new(1, 0.5)
             Switch.BackgroundTransparency = 1
             Switch.Parent = Tile
 
+            -- 背景（填充色，开启时为 Accent，关闭时为灰色）
             local SwitchBg = Instance.new("Frame")
             SwitchBg.Size = UDim2.fromScale(1, 1)
             SwitchBg.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(80, 80, 80)
@@ -585,6 +586,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             bgCorner.CornerRadius = UDim.new(1, 0)
             bgCorner.Parent = SwitchBg
 
+            -- 边框（始终显示，颜色跟随主题）
             local SwStroke = Instance.new("UIStroke")
             SwStroke.Thickness = 1
             SwStroke.Transparency = 0.4
@@ -592,6 +594,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             SwStroke.Parent = SwitchBg
             AddToRegistry(SwStroke, "Color", "Stroke")
 
+            -- 滑动圆点（白色）
             local Dot = Instance.new("Frame")
             Dot.Size = UDim2.fromOffset(16, 16)
             Dot.Position = Enabled and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
