@@ -2216,10 +2216,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- 新增 Checkbox（从 FluentPro 移植）
+        -- Checkbox（从 FluentPro 移植）
+        -- 修改点：
+        --   1. 使用 config.Name 而非 config.Title
+        --   2. 容器背景透明度 0.05，注册为 "Top"
         -- ============================================================
         child.Checkbox = function(_, config)
-            local title = config.Title or ""
+            local title = config.Name or ""   -- 改用 Name
             local default = config.Default or false
             local callback = config.Callback or function() end
             local controlId = title .. "_" .. tostring(#Registry)
@@ -2227,13 +2230,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 38)
             Tile.Parent = contentHolder
-            Tile.BackgroundTransparency = 0.9
+            Tile.BackgroundTransparency = 0.05   -- 与 Toggle 一致
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 8)
             local stroke = Instance.new("UIStroke")
             stroke.Thickness = 1
             stroke.Transparency = 0.5
             stroke.Parent = Tile
-            AddToRegistry(Tile, "BackgroundColor3", "Top")
+            AddToRegistry(Tile, "BackgroundColor3", "Top")   -- 注册为 Top
             AddToRegistry(stroke, "Color", "Stroke")
 
             local TitleLbl = Instance.new("TextLabel")
