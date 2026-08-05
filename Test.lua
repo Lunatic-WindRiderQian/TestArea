@@ -536,7 +536,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- Toggle（纯滑动开关，带轨道边框，无 I/O 标签）
+        -- Toggle（原始备用.lua 样式：带 I/O 标签的胶囊开关）
         -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
@@ -568,7 +568,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 开关容器
+            -- 胶囊开关（FluentPro 风格）
             local Switch = Instance.new("Frame")
             Switch.Size = UDim2.fromOffset(42, 22)
             Switch.Position = UDim2.new(1, -8, 0.5, 0)
@@ -576,7 +576,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Switch.BackgroundTransparency = 1
             Switch.Parent = Tile
 
-            -- 背景（填充色，开启时为 Accent，关闭时为灰色）
             local SwitchBg = Instance.new("Frame")
             SwitchBg.Size = UDim2.fromScale(1, 1)
             SwitchBg.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(80, 80, 80)
@@ -586,7 +585,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             bgCorner.CornerRadius = UDim.new(1, 0)
             bgCorner.Parent = SwitchBg
 
-            -- 边框（始终显示，颜色跟随主题）
             local SwStroke = Instance.new("UIStroke")
             SwStroke.Thickness = 1
             SwStroke.Transparency = 0.4
@@ -594,7 +592,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             SwStroke.Parent = SwitchBg
             AddToRegistry(SwStroke, "Color", "Stroke")
 
-            -- 滑动圆点（白色）
             local Dot = Instance.new("Frame")
             Dot.Size = UDim2.fromOffset(16, 16)
             Dot.Position = Enabled and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
@@ -606,6 +603,34 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             dotCorner.CornerRadius = UDim.new(1, 0)
             dotCorner.Parent = Dot
 
+            -- 左标签 "I"
+            local leftLabel = Instance.new("TextLabel")
+            leftLabel.Size = UDim2.new(0.5, 0, 1, 0)
+            leftLabel.Position = UDim2.new(0, 4, 0, 0)
+            leftLabel.BackgroundTransparency = 1
+            leftLabel.Font = Enum.Font.GothamBold
+            leftLabel.Text = "I"
+            leftLabel.TextSize = 12
+            leftLabel.TextColor3 = Enabled and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
+            leftLabel.TextTransparency = Enabled and 0 or 0.6
+            leftLabel.TextXAlignment = Enum.TextXAlignment.Left
+            leftLabel.TextYAlignment = Enum.TextYAlignment.Center
+            leftLabel.Parent = SwitchBg
+
+            -- 右标签 "O"
+            local rightLabel = Instance.new("TextLabel")
+            rightLabel.Size = UDim2.new(0.5, 0, 1, 0)
+            rightLabel.Position = UDim2.new(0.5, -4, 0, 0)
+            rightLabel.BackgroundTransparency = 1
+            rightLabel.Font = Enum.Font.GothamBold
+            rightLabel.Text = "O"
+            rightLabel.TextSize = 12
+            rightLabel.TextColor3 = Enabled and Color3.fromRGB(150, 150, 150) or Color3.new(1, 1, 1)
+            rightLabel.TextTransparency = Enabled and 0.6 or 0
+            rightLabel.TextXAlignment = Enum.TextXAlignment.Right
+            rightLabel.TextYAlignment = Enum.TextYAlignment.Center
+            rightLabel.Parent = SwitchBg
+
             ConfigObjects[controlId] = {
                 Type = "Toggle",
                 Value = Enabled,
@@ -613,6 +638,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Enabled = val
                     SwitchBg.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(80, 80, 80)
                     Dot.Position = Enabled and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
+                    leftLabel.TextColor3 = Enabled and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150)
+                    leftLabel.TextTransparency = Enabled and 0 or 0.6
+                    rightLabel.TextColor3 = Enabled and Color3.fromRGB(150, 150, 150) or Color3.new(1, 1, 1)
+                    rightLabel.TextTransparency = Enabled and 0.6 or 0
                     callback(Enabled)
                 end
             }
@@ -623,6 +652,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 }, 0.2)
                 Tween(Dot, {
                     Position = Enabled and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
+                }, 0.2)
+                Tween(leftLabel, {
+                    TextColor3 = Enabled and Color3.new(1, 1, 1) or Color3.fromRGB(150, 150, 150),
+                    TextTransparency = Enabled and 0 or 0.6
+                }, 0.2)
+                Tween(rightLabel, {
+                    TextColor3 = Enabled and Color3.fromRGB(150, 150, 150) or Color3.new(1, 1, 1),
+                    TextTransparency = Enabled and 0.6 or 0
                 }, 0.2)
                 ConfigObjects[controlId].Value = Enabled
                 callback(Enabled)
