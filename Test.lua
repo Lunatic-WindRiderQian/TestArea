@@ -526,6 +526,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ============================================================
+        -- 修改后的 Toggle：透明背景 + 外框，滑块跟随主题色 (Accent)
+        -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
@@ -556,35 +559,42 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
+            -- 开关主体：透明背景 + 外框
             local Switch = Instance.new("Frame")
             Switch.Size = UDim2.new(0, 42, 0, 22)
             Switch.Position = UDim2.new(1, -56, 0.5, -11)
             Switch.Parent = Tile
+            Switch.BackgroundTransparency = 1  -- 背景透明
             Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
-            Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
 
+            -- 外框，跟随主题色
             local SwStroke = Instance.new("UIStroke")
             SwStroke.Thickness = 1
             SwStroke.Transparency = 0.6
             SwStroke.Parent = Switch
             AddToRegistry(SwStroke, "Color", "Stroke")
 
+            -- 滑块（开关头），跟随主题色（Accent）
             local Dot = Instance.new("Frame")
             Dot.Size = UDim2.new(0, 16, 0, 16)
             Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-            Dot.BackgroundColor3 = Color3.new(1, 1, 1)
             Dot.Parent = Switch
             Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
+            AddToRegistry(Dot, "BackgroundColor3", "Accent")  -- 滑块颜色随主题色变化
 
-            ConfigObjects[controlId] = {Type = "Toggle", Value = Enabled, Set = function(val)
-                Enabled = val
-                Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
-                Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-                callback(Enabled)
-            end}
+            ConfigObjects[controlId] = {
+                Type = "Toggle",
+                Value = Enabled,
+                Set = function(val)
+                    Enabled = val
+                    -- 只移动滑块，不改变背景色
+                    Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+                    callback(Enabled)
+                end
+            }
 
             local function Update()
-                Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke})
+                -- 仅移动滑块
                 Tween(Dot, {Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)})
                 ConfigObjects[controlId].Value = Enabled
                 callback(Enabled)
@@ -595,10 +605,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Update()
             end)
 
-            table.insert(ThemeListeners, function()
-                Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke})
-            end)
+            -- 主题变化时，滑块颜色和外框颜色已通过 AddToRegistry 自动更新，无需额外监听
         end
+        -- ============================================================
 
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
