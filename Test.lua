@@ -2216,7 +2216,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- Checkbox —— 完全与 Toggle 等控件的主容器一致
+        -- Checkbox
         -- ============================================================
         child.Checkbox = function(_, config)
             local title = config.Name or ""
@@ -2337,31 +2337,32 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- ProgressBar (移植自 FluentPro) —— 修复 "SubText" 为 "Text"
+        -- ProgressBar (新格式：Name + Value嵌套)
         -- ============================================================
         child.ProgressBar = function(_, config)
-            local title = config.Title or ""
-            local min = config.Min or 0
-            local max = config.Max or 100
-            local default = config.Default or min
+            local name = config.Name or ""
+            local valueConfig = config.Value or {}
+            local min = valueConfig.Min or 0
+            local max = valueConfig.Max or 100
+            local default = valueConfig.Default or min
             local showPercent = config.ShowPercent ~= false
             local callback = config.Callback or function() end
-            local controlId = title .. "_" .. tostring(#Registry)
+            local controlId = name .. "_" .. tostring(#Registry)
 
-            local containerHeight = (title ~= "" and 46 or 26)
+            local containerHeight = (name ~= "" and 46 or 26)
             local wrap = Instance.new("Frame")
             wrap.Size = UDim2.new(1, 0, 0, containerHeight)
             wrap.BackgroundTransparency = 1
             wrap.Parent = contentHolder
 
             local titleLbl = nil
-            if title ~= "" then
+            if name ~= "" then
                 titleLbl = Instance.new("TextLabel")
                 titleLbl.Size = UDim2.new(1, -50, 0, 16)
                 titleLbl.Position = UDim2.new(0, 0, 0, 0)
                 titleLbl.BackgroundTransparency = 1
                 titleLbl.Font = Enum.Font.GothamMedium
-                titleLbl.Text = title
+                titleLbl.Text = name
                 titleLbl.TextSize = 14
                 titleLbl.TextXAlignment = Enum.TextXAlignment.Left
                 titleLbl.Parent = wrap
@@ -2378,9 +2379,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 pctLbl.Text = "0%"
                 pctLbl.TextSize = 13
                 pctLbl.TextXAlignment = Enum.TextXAlignment.Right
-                pctLbl.TextTransparency = 0.5  -- 手动设置透明度，替代 SubText
+                pctLbl.TextTransparency = 0.5
                 pctLbl.Parent = wrap
-                AddToRegistry(pctLbl, "TextColor3", "Text")  -- 改用 "Text" 键
+                AddToRegistry(pctLbl, "TextColor3", "Text")
             end
 
             local rail = Instance.new("Frame")
@@ -2445,7 +2446,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             return h
         end
-        -- ============================================================
 
         return child
     end
