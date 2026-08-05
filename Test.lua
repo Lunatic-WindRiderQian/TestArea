@@ -83,17 +83,8 @@ local Themes = {
 local CurrentTheme = Themes.Dark
 
 local function AddToRegistry(obj, prop, themeKey)
-    if not themeKey then return end
-    local color = CurrentTheme[themeKey]
-    if color then
-        table.insert(Registry, {Object = obj, Property = prop, Type = themeKey})
-        obj[prop] = color
-    else
-        warn("AddToRegistry: Missing theme key '" .. tostring(themeKey) .. "' for object", obj)
-        if prop == "ImageColor3" or prop == "TextColor3" or prop == "BackgroundColor3" then
-            obj[prop] = Color3.new(1, 1, 1)
-        end
-    end
+    table.insert(Registry, {Object = obj, Property = prop, Type = themeKey})
+    obj[prop] = CurrentTheme[themeKey]
 end
 
 local function Tween(obj, props, time)
@@ -535,16 +526,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ============================================================
-        -- Toggle（完全采用 FluentPro 风格，替换原有 I/O 开关）
-        -- ============================================================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
             local callback = config.Callback or function() end
             local controlId = toggleText .. "_" .. tostring(#Registry)
 
-            -- 行容器
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
@@ -552,14 +539,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
-            -- 点击区域（覆盖整行）
             local ClickBtn = Instance.new("TextButton")
             ClickBtn.Size = UDim2.new(1, 0, 1, 0)
             ClickBtn.BackgroundTransparency = 1
             ClickBtn.Text = ""
             ClickBtn.Parent = Tile
 
-            -- 标题
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = toggleText
             TitleLbl.Size = UDim2.new(0.7, 0, 1, 0)
@@ -571,104 +556,49 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- ========== FluentPro 风格 Toggle ==========
-            -- 外容器（透明，仅用于定位）
-            local SwitchContainer = Instance.new("Frame")
-            SwitchContainer.Size = UDim2.fromOffset(36, 18)
-            SwitchContainer.AnchorPoint = Vector2.new(1, 0.5)
-            SwitchContainer.Position = UDim2.new(1, -10, 0.5, 0)
-            SwitchContainer.BackgroundTransparency = 1
-            SwitchContainer.Parent = Tile
+            local Switch = Instance.new("Frame")
+            Switch.Size = UDim2.new(0, 42, 0, 22)
+            Switch.Position = UDim2.new(1, -56, 0.5, -11)
+            Switch.Parent = Tile
+            Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
+            Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
 
-            -- 背景（胶囊）
-            local SwitchBg = Instance.new("Frame")
-            SwitchBg.Size = UDim2.fromScale(1, 1)
-            SwitchBg.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(80, 80, 80)
-            SwitchBg.BorderSizePixel = 0
-            SwitchBg.Parent = SwitchContainer
-            local bgCorner = Instance.new("UICorner")
-            bgCorner.CornerRadius = UDim.new(1, 0)
-            bgCorner.Parent = SwitchBg
-
-            -- 边框（UIStroke）
             local SwStroke = Instance.new("UIStroke")
             SwStroke.Thickness = 1
-            SwStroke.Transparency = 0.4
-            SwStroke.Color = CurrentTheme.Stroke
-            SwStroke.Parent = SwitchBg
+            SwStroke.Transparency = 0.6
+            SwStroke.Parent = Switch
             AddToRegistry(SwStroke, "Color", "Stroke")
 
-            -- 圆形滑块
             local Dot = Instance.new("Frame")
-            Dot.Size = UDim2.fromOffset(14, 14)
-            Dot.Position = Enabled and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
-            Dot.AnchorPoint = Vector2.new(0.5, 0.5)
+            Dot.Size = UDim2.new(0, 16, 0, 16)
+            Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
             Dot.BackgroundColor3 = Color3.new(1, 1, 1)
-            Dot.BorderSizePixel = 0
-            Dot.Parent = SwitchBg
-            local dotCorner = Instance.new("UICorner")
-            dotCorner.CornerRadius = UDim.new(1, 0)
-            dotCorner.Parent = Dot
+            Dot.Parent = Switch
+            Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
-            -- ========== 配置对象 ==========
-            ConfigObjects[controlId] = {
-                Type = "Toggle",
-                Value = Enabled,
-                Set = function(val)
-                    Enabled = val
-                    -- 动画更新 UI
-                    Tween(SwitchBg, {
-                        BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(80, 80, 80)
-                    }, 0.2)
-                    Tween(Dot, {
-                        Position = Enabled and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
-                    }, 0.2)
-                    callback(Enabled)
-                end
-            }
+            ConfigObjects[controlId] = {Type = "Toggle", Value = Enabled, Set = function(val)
+                Enabled = val
+                Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke
+                Dot.Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+                callback(Enabled)
+            end}
 
-            -- 更新函数（供点击调用）
             local function Update()
-                Enabled = not Enabled
-                -- 使用 Tween 动画
-                Tween(SwitchBg, {
-                    BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(80, 80, 80)
-                }, 0.2)
-                Tween(Dot, {
-                    Position = Enabled and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
-                }, 0.2)
+                Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke})
+                Tween(Dot, {Position = Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)})
                 ConfigObjects[controlId].Value = Enabled
                 callback(Enabled)
             end
 
-            ClickBtn.MouseButton1Click:Connect(Update)
-
-            -- 主题监听（当主题切换时刷新背景色）
-            table.insert(ThemeListeners, function()
-                SwStroke.Color = CurrentTheme.Stroke
-                SwitchBg.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(80, 80, 80)
+            ClickBtn.MouseButton1Click:Connect(function()
+                Enabled = not Enabled
+                Update()
             end)
 
-            -- ========== 返回对象 ==========
-            local self = {}
-            function self.SetValue(val)
-                if ConfigObjects[controlId] then
-                    ConfigObjects[controlId].Set(val)
-                end
-            end
-            function self.GetValue()
-                return Enabled
-            end
-            function self.SetVisible(state)
-                Tile.Visible = state
-            end
-            function self.Destroy()
-                Tile:Destroy()
-                ConfigObjects[controlId] = nil
-            end
-            return self
+            table.insert(ThemeListeners, function()
+                Tween(Switch, {BackgroundColor3 = Enabled and CurrentTheme.Accent or CurrentTheme.Stroke})
+            end)
         end
-        -- ============================================================
 
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
@@ -1221,7 +1151,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        --  修改后的 Keybind（基于 FluentPro 核心，支持 Toggle/Hold + 鼠标）
+        -- 修改后的 Keybind（基于 FluentPro 核心，支持 Toggle/Hold + 鼠标）
         -- ============================================================
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
