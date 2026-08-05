@@ -2337,7 +2337,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- ProgressBar (移植自 FluentPro)
+        -- ProgressBar (移植自 FluentPro) —— 修复 "SubText" 为 "Text"
         -- ============================================================
         child.ProgressBar = function(_, config)
             local title = config.Title or ""
@@ -2378,8 +2378,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 pctLbl.Text = "0%"
                 pctLbl.TextSize = 13
                 pctLbl.TextXAlignment = Enum.TextXAlignment.Right
+                pctLbl.TextTransparency = 0.5  -- 手动设置透明度，替代 SubText
                 pctLbl.Parent = wrap
-                AddToRegistry(pctLbl, "TextColor3", "SubText")
+                AddToRegistry(pctLbl, "TextColor3", "Text")  -- 改用 "Text" 键
             end
 
             local rail = Instance.new("Frame")
