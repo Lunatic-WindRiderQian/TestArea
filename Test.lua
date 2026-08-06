@@ -1784,6 +1784,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ============================================================
         -- Input 元素（核心逻辑移植自 FluentPro AddInput + FluentPro 风格容器）
+        -- 已修复 Indicator 颜色问题（使用 Stroke/Accent 手动管理）
         -- ============================================================
         child.Input = function(_, config)
             local inputText = config.Name or ""
@@ -1791,14 +1792,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local callback = config.Callback or function() end
             local options = config or {}
             local placeholder = options.Placeholder or ""
-            local finished = options.Finished == true          -- 仅在失焦时触发
-            local numeric = options.Numeric == true            -- 限制数字
+            local finished = options.Finished == true
+            local numeric = options.Numeric == true
             local maxLength = options.MaxLength or options.CharacterLimit
             local acceptedChars = options.AcceptedCharacters
             local onChanged = options.OnChanged
             local controlId = inputText .. "_" .. tostring(#Registry)
 
-            -- 主容器（与 Input 元素背景一致）
+            -- 主容器
             local InputFrame = Instance.new("Frame")
             InputFrame.Size = UDim2.new(1, 0, 0, 42)
             InputFrame.Parent = contentHolder
@@ -1818,21 +1819,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             NameLbl.Parent = InputFrame
             AddToRegistry(NameLbl, "TextColor3", "Text")
 
-            -- 输入框容器（模仿 FluentPro 的 Textbox 组件）
+            -- 输入框容器
             local BoxContainer = Instance.new("Frame")
-            BoxContainer.Size = UDim2.new(0.3,0,0,28)       -- 与原来 InputBox 大小一致
+            BoxContainer.Size = UDim2.new(0.3,0,0,28)
             BoxContainer.Position = UDim2.new(0.7,-10,0.5,-14)
-            BoxContainer.BackgroundTransparency = 0.1       -- 浅色背景
+            BoxContainer.BackgroundTransparency = 0.1
             BoxContainer.ClipsDescendants = true
             BoxContainer.Parent = InputFrame
             AddToRegistry(BoxContainer, "BackgroundColor3", "Main")
             Instance.new("UICorner", BoxContainer).CornerRadius = UDim.new(0, 6)
 
-            -- 输入框（无边框，填满容器）
+            -- 输入框
             local InputBox = Instance.new("TextBox")
             InputBox.Text = tostring(default)
             InputBox.PlaceholderText = placeholder
-            InputBox.Size = UDim2.new(1, -10, 1, 0)          -- 左侧留白
+            InputBox.Size = UDim2.new(1, -10, 1, 0)
             InputBox.Position = UDim2.new(0, 10, 0, 0)
             InputBox.Font = Enum.Font.GothamBold
             InputBox.TextSize = 13
@@ -1842,17 +1843,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             InputBox.Parent = BoxContainer
             AddToRegistry(InputBox, "TextColor3", "Accent")
 
-            -- 指示线（Indicator）
+            -- 指示线（Indicator）—— 不再使用 AddToRegistry，手动管理颜色
             local Indicator = Instance.new("Frame")
-            Indicator.Size = UDim2.new(1, -4, 0, 1)          -- 宽度与输入框一致，略缩
-            Indicator.Position = UDim2.new(0, 2, 1, 0)       -- 底部
+            Indicator.Size = UDim2.new(1, -4, 0, 1)
+            Indicator.Position = UDim2.new(0, 2, 1, 0)
             Indicator.AnchorPoint = Vector2.new(0, 1)
             Indicator.BackgroundTransparency = 0.5
             Indicator.BorderSizePixel = 0
             Indicator.Parent = BoxContainer
-            AddToRegistry(Indicator, "BackgroundColor3", "InputIndicator")
+            Indicator.BackgroundColor3 = CurrentTheme.Stroke  -- 初始颜色
 
-            -- 聚焦/失焦动画
+            -- 聚焦/失焦动画（同时更新 Indicator 颜色）
             local function onFocus()
                 Tween(Indicator, {
                     Size = UDim2.new(1, -2, 0, 2),
@@ -1860,10 +1861,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     BackgroundTransparency = 0
                 }, 0.15)
                 Tween(BoxContainer, { BackgroundTransparency = 0.05 }, 0.15)
-                pcall(function()
-                    -- 切换 Indicator 颜色为主题强调色
-                    AddToRegistry(Indicator, "BackgroundColor3", "Accent")
-                end)
+                Indicator.BackgroundColor3 = CurrentTheme.Accent
             end
 
             local function onFocusLost()
@@ -1873,17 +1871,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     BackgroundTransparency = 0.5
                 }, 0.15)
                 Tween(BoxContainer, { BackgroundTransparency = 0.1 }, 0.15)
-                pcall(function()
-                    AddToRegistry(Indicator, "BackgroundColor3", "InputIndicator")
-                end)
+                Indicator.BackgroundColor3 = CurrentTheme.Stroke
+                if finished then
+                    updateValue()
+                end
             end
 
             InputBox.Focused:Connect(onFocus)
-            InputBox.FocusLost:Connect(function()
-                onFocusLost()
-                -- 失焦时更新值（如果需要）
-                if finished then
-                    updateValue()
+            InputBox.FocusLost:Connect(onFocusLost)
+
+            -- 主题更新时，根据聚焦状态更新 Indicator 颜色
+            table.insert(ThemeListeners, function()
+                if InputBox:IsFocused() then
+                    Indicator.BackgroundColor3 = CurrentTheme.Accent
+                else
+                    Indicator.BackgroundColor3 = CurrentTheme.Stroke
                 end
             end)
 
@@ -1929,19 +1931,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             -- 事件绑定
             if finished then
-                -- 仅在焦点丢失时更新（已在 FocusLost 中调用 updateValue）
-                -- 但上面已有 FocusLost 回调，我们直接重用，避免重复绑定
-                -- 但上面的 FocusLost 只调用了 updateValue 一次，而 finished 模式下我们还要处理其他逻辑，
-                -- 但 updateValue 已经包含了过滤和回调，所以可以。
-                -- 注意：上面已经绑定了 FocusLost -> onFocusLost + updateValue (我们将在下面添加)
-                -- 为清晰，我们重新定义 FocusLost 行为，但为了不冲突，我们覆盖原有绑定。
-                -- 重新绑定 FocusLost
                 InputBox.FocusLost:Connect(function()
                     onFocusLost()
                     updateValue()
                 end)
             else
-                -- 实时模式
                 InputBox:GetPropertyChangedSignal("Text"):Connect(function()
                     local raw = InputBox.Text
                     local filtered = filterText(raw)
