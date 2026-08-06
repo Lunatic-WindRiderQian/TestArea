@@ -486,7 +486,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local child = {}
 
-        -- ========== 修改的 Button 元素 ==========
+        -- ========== 修改的 Button 元素（使用 Frame 容器 + 透明度动画） ==========
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
             local callback = config.Callback or function() end
@@ -524,17 +524,20 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Icon.Parent = Tile
             AddToRegistry(Icon, "ImageColor3", "Text")
 
+            -- 新的悬停 / 点击动画（模仿 FluentPro 的透明度变化，无缩放）
             ClickBtn.MouseEnter:Connect(function()
-                Tween(Tile, {BackgroundTransparency = 0.00}, 0.18)
-            end)
-            ClickBtn.MouseLeave:Connect(function()
                 Tween(Tile, {BackgroundTransparency = 0.05}, 0.18)
             end)
-
+            ClickBtn.MouseLeave:Connect(function()
+                Tween(Tile, {BackgroundTransparency = 1}, 0.18)
+            end)
+            ClickBtn.MouseButton1Down:Connect(function()
+                Tween(Tile, {BackgroundTransparency = 0.2}, 0.1)
+            end)
+            ClickBtn.MouseButton1Up:Connect(function()
+                Tween(Tile, {BackgroundTransparency = 0.05}, 0.1)
+            end)
             ClickBtn.MouseButton1Click:Connect(function()
-                Tween(Tile, {Size = UDim2.new(0.97, 0, 0, 38)}, 0.1)
-                task.wait(0.1)
-                Tween(Tile, {Size = UDim2.new(1, 0, 0, 42)}, 0.15)
                 callback()
             end)
 
