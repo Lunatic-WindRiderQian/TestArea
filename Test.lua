@@ -1783,21 +1783,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- Input (FluentPro 风格，含光标跟随、聚焦高亮)
-        -- 稳定版：增加防御性检查，避免 ConfigObjects 为 nil 时报错
+        -- Input 元素（核心逻辑移植自 FluentPro AddInput）
         -- ============================================================
         child.Input = function(_, config)
             local inputText = config.Name or ""
             local default = config.Value or ""
             local callback = config.Callback or function() end
-            local placeholder = config.Placeholder or ""
-            local numeric = config.Numeric or false
-            local maxLength = config.MaxLength
-            local finished = config.Finished or false
-            local onChanged = config.OnChanged
+            local options = config or {}
+            local placeholder = options.Placeholder or ""
+            local finished = options.Finished == true          -- 仅在失焦时触发
+            local numeric = options.Numeric == true            -- 限制数字
+            local maxLength = options.MaxLength or options.CharacterLimit  -- 支持两种命名
+            local acceptedChars = options.AcceptedCharacters   -- 可为函数或字符串
+            local onChanged = options.OnChanged
             local controlId = inputText .. "_" .. tostring(#Registry)
 
-            -- 主容器
             local InputFrame = Instance.new("Frame")
             InputFrame.Size = UDim2.new(1, 0, 0, 42)
             InputFrame.Parent = contentHolder
@@ -1805,11 +1805,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(InputFrame, "BackgroundColor3", "Top")
 
-            -- 标题
             local NameLbl = Instance.new("TextLabel")
             NameLbl.Text = inputText
-            NameLbl.Size = UDim2.new(0.6, 0, 1, 0)
-            NameLbl.Position = UDim2.new(0, 15, 0, 0)
+            NameLbl.Size = UDim2.new(0.6,0,1,0)
+            NameLbl.Position = UDim2.new(0,15,0,0)
             NameLbl.TextXAlignment = Enum.TextXAlignment.Left
             NameLbl.Font = Enum.Font.GothamMedium
             NameLbl.TextSize = 13
@@ -1817,187 +1816,129 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             NameLbl.Parent = InputFrame
             AddToRegistry(NameLbl, "TextColor3", "Text")
 
-            -- FluentPro 风格输入框容器
-            local inputContainer = Instance.new("Frame")
-            inputContainer.Size = UDim2.new(0.3, 0, 0, 28)
-            inputContainer.Position = UDim2.new(0.7, -10, 0.5, -14)
-            inputContainer.BackgroundTransparency = 0.1
-            inputContainer.ClipsDescendants = true
-            inputContainer.Parent = InputFrame
-            Instance.new("UICorner", inputContainer).CornerRadius = UDim.new(0, 6)
-            AddToRegistry(inputContainer, "BackgroundColor3", "Main")
-
-            -- 边框（用于高亮）
-            local inputStroke = Instance.new("UIStroke")
-            inputStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-            inputStroke.Color = CurrentTheme.Stroke
-            inputStroke.Transparency = 0.6
-            inputStroke.Parent = inputContainer
-            AddToRegistry(inputStroke, "Color", "Stroke")
-
-            -- 指示条（底部高亮线）
-            local indicator = Instance.new("Frame")
-            indicator.Size = UDim2.new(1, -4, 0, 1)
-            indicator.Position = UDim2.new(0, 2, 1, 0)
-            indicator.AnchorPoint = Vector2.new(0, 1)
-            indicator.BackgroundTransparency = 0.5
-            indicator.BackgroundColor3 = CurrentTheme.Stroke
-            indicator.BorderSizePixel = 0
-            indicator.Parent = inputContainer
-            AddToRegistry(indicator, "BackgroundColor3", "Stroke")
-
-            -- 实际 TextBox
             local InputBox = Instance.new("TextBox")
             InputBox.Text = tostring(default)
             InputBox.PlaceholderText = placeholder
-            InputBox.Size = UDim2.new(1, 0, 1, 0)
-            InputBox.Position = UDim2.new(0, 2, 0, 0)
+            InputBox.Size = UDim2.new(0.3,0,0,28)
+            InputBox.Position = UDim2.new(0.7,-10,0.5,-14)
             InputBox.Font = Enum.Font.GothamBold
             InputBox.TextSize = 13
-            InputBox.TextXAlignment = Enum.TextXAlignment.Left
-            InputBox.TextYAlignment = Enum.TextYAlignment.Center
+            InputBox.TextXAlignment = Enum.TextXAlignment.Center
             InputBox.ClearTextOnFocus = false
-            InputBox.BackgroundTransparency = 1
-            InputBox.Parent = inputContainer
+            InputBox.Parent = InputFrame
+
+            local boxCorner = Instance.new("UICorner")
+            boxCorner.CornerRadius = UDim.new(0,6)
+            boxCorner.Parent = InputBox
+            AddToRegistry(InputBox, "BackgroundColor3", "Main")
             AddToRegistry(InputBox, "TextColor3", "Accent")
 
-            -- 光标跟随逻辑
-            local function updateCursorPosition()
-                local padding = 2
-                local containerWidth = inputContainer.AbsoluteSize.X
-                if containerWidth <= 0 then return end
+            local boxStroke = Instance.new("UIStroke")
+            boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            boxStroke.Color = CurrentTheme.Stroke
+            boxStroke.Transparency = 0.6
+            boxStroke.Parent = InputBox
 
-                if not InputBox:IsFocused() or InputBox.TextBounds.X <= containerWidth - 2 * padding then
-                    InputBox.Position = UDim2.new(0, padding, 0, 0)
-                else
-                    local cursorPos = InputBox.CursorPosition
-                    if cursorPos ~= -1 then
-                        local textBefore = string.sub(InputBox.Text, 1, cursorPos - 1)
-                        local textWidth = TextService:GetTextSize(
-                            textBefore,
-                            InputBox.TextSize,
-                            InputBox.Font,
-                            Vector2.new(math.huge, math.huge)
-                        ).X
-                        local currentOffset = InputBox.Position.X.Offset
-                        if currentOffset + textWidth < padding then
-                            InputBox.Position = UDim2.fromOffset(padding - textWidth, 0)
-                        elseif currentOffset + textWidth > containerWidth - padding - 1 then
-                            InputBox.Position = UDim2.fromOffset(containerWidth - textWidth - padding - 1, 0)
-                        end
-                    end
+            -- 过滤函数（移植自 FluentPro）
+            local function filterText(text)
+                if maxLength then
+                    text = text:sub(1, maxLength)
                 end
+                if numeric then
+                    local filtered = text:gsub("[^%d-]", "")
+                    if filtered:match("^-") then
+                        filtered = "-" .. filtered:gsub("-", "")
+                    else
+                        filtered = filtered:gsub("-", "")
+                    end
+                    return filtered
+                end
+                if type(acceptedChars) == "function" then
+                    return acceptedChars(text)
+                elseif acceptedChars == "Alphabetic" then
+                    return text:gsub("[^a-zA-Z]", "")
+                elseif acceptedChars == "AlphaNumeric" then
+                    return text:gsub("[^a-zA-Z0-9]", "")
+                end
+                return text
             end
 
-            -- 绑定事件
-            InputBox:GetPropertyChangedSignal("Text"):Connect(updateCursorPosition)
-            InputBox:GetPropertyChangedSignal("CursorPosition"):Connect(updateCursorPosition)
-
-            InputBox.Focused:Connect(function()
-                updateCursorPosition()
-                inputStroke.Color = CurrentTheme.Accent
-                inputStroke.Transparency = 0.2
-                indicator.Size = UDim2.new(1, -2, 0, 2)
-                indicator.Position = UDim2.new(0, 1, 1, 0)
-                indicator.BackgroundTransparency = 0
-                indicator.BackgroundColor3 = CurrentTheme.Accent
-                inputContainer.BackgroundColor3 = CurrentTheme.Accent
-                inputContainer.BackgroundTransparency = 0.2
-            end)
-
-            InputBox.FocusLost:Connect(function(enterPressed)
-                updateCursorPosition()
-                inputStroke.Color = CurrentTheme.Stroke
-                inputStroke.Transparency = 0.6
-                indicator.Size = UDim2.new(1, -4, 0, 1)
-                indicator.Position = UDim2.new(0, 2, 1, 0)
-                indicator.BackgroundTransparency = 0.5
-                indicator.BackgroundColor3 = CurrentTheme.Stroke
-                inputContainer.BackgroundColor3 = CurrentTheme.Main
-                inputContainer.BackgroundTransparency = 0.1
-
-                if enterPressed and finished then
-                    h:SetValue(InputBox.Text)
+            local function updateValue()
+                local filtered = filterText(InputBox.Text)
+                if filtered ~= InputBox.Text then
+                    InputBox.Text = filtered
                 end
-            end)
-
-            -- 核心状态对象
-            local h = {
-                Value = default,
-                Numeric = numeric,
-                Finished = finished,
-                Callback = callback,
-                Changed = onChanged or function() end,
-            }
-
-            function h:SetValue(val)
-                if type(val) ~= "string" then val = tostring(val) end
-                if self.Numeric then
-                    if val:len() > 0 and not tonumber(val) then
-                        val = self.Value
-                    end
-                end
-                if maxLength and #val > maxLength then
-                    val = val:sub(1, maxLength)
-                end
-                self.Value = val
-                InputBox.Text = val
-                -- 安全更新 ConfigObjects，防止为 nil
                 if ConfigObjects[controlId] then
-                    ConfigObjects[controlId].Value = val
+                    ConfigObjects[controlId].Value = filtered
                 end
-                pcall(self.Callback, val)
-                pcall(self.Changed, val)
+                if callback then
+                    pcall(callback, filtered)
+                end
+                if onChanged then
+                    pcall(onChanged, filtered)
+                end
             end
 
-            -- 实时更新（Finished 为 false 时）
-            if not finished then
+            if finished then
+                InputBox.FocusLost:Connect(function()
+                    updateValue()
+                end)
+            else
                 InputBox:GetPropertyChangedSignal("Text"):Connect(function()
-                    h:SetValue(InputBox.Text)
+                    local raw = InputBox.Text
+                    local filtered = filterText(raw)
+                    if filtered ~= raw then
+                        local cursor = InputBox.CursorPosition
+                        InputBox.Text = filtered
+                        pcall(function()
+                            InputBox.CursorPosition = math.min(cursor, #filtered)
+                        end)
+                    end
+                    if ConfigObjects[controlId] then
+                        ConfigObjects[controlId].Value = InputBox.Text
+                    end
+                    if callback then
+                        pcall(callback, InputBox.Text)
+                    end
+                    if onChanged then
+                        pcall(onChanged, InputBox.Text)
+                    end
                 end)
             end
 
-            -- 注册配置对象（同时提供 Set 和 SetValue 别名）
             ConfigObjects[controlId] = {
                 Type = "Input",
-                Value = h.Value,
-                Set = function(val) h:SetValue(val) end,
-                SetValue = function(val) h:SetValue(val) end,   -- 兼容用户误用
+                Value = InputBox.Text,
+                Set = function(val)
+                    local str = tostring(val)
+                    local filtered = filterText(str)
+                    InputBox.Text = filtered
+                    ConfigObjects[controlId].Value = filtered
+                    if callback then pcall(callback, filtered) end
+                end
             }
 
-            -- 对外接口（全部安全包装）
             local self = {}
-            function self.SetValue(val)
-                if InputBox and InputBox.Parent then
-                    h:SetValue(val)
-                end
-            end
             function self.UpdateText(newText)
-                if InputBox and InputBox.Parent then
-                    h:SetValue(newText)
-                end
+                local filtered = filterText(tostring(newText))
+                InputBox.Text = filtered
+                ConfigObjects[controlId].Value = filtered
             end
             function self.GetText()
-                return InputBox and InputBox.Text or ""
+                return InputBox.Text
             end
             function self.SetVisible(state)
-                if InputFrame then InputFrame.Visible = state end
+                InputFrame.Visible = state
             end
             function self.UpdatePlaceholder(newPlaceholder)
-                if InputBox then InputBox.PlaceholderText = newPlaceholder end
+                InputBox.PlaceholderText = newPlaceholder
             end
-            function self.SetNumeric(newNumeric)
-                h.Numeric = newNumeric
-            end
-            function self.SetMaxLength(newMax)
-                maxLength = newMax
-            end
-            function self.Destroy()
-                if InputFrame then InputFrame:Destroy() end
-                ConfigObjects[controlId] = nil
+            function self.SetValue(val)
+                self.UpdateText(val)
             end
             return self
         end
+        -- ============================================================
 
         child.Textbox = function(_, config)
             local boxText = config.Name or ""
@@ -2464,7 +2405,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- ProgressBar (新格式：Name + Value嵌套)
+        -- ProgressBar
         -- ============================================================
         child.ProgressBar = function(_, config)
             local name = config.Name or ""
