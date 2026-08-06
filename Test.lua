@@ -158,6 +158,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         padding.Parent = parent
     end
 
+    -- 辅助函数：给容器应用透明背景 + 外框
+    local function styleContainer(frame)
+        frame.BackgroundTransparency = 1
+        local stroke = Instance.new("UIStroke")
+        stroke.Thickness = 1.5
+        stroke.Color = CurrentTheme.Stroke
+        stroke.Parent = frame
+        table.insert(ThemeListeners, function()
+            stroke.Color = CurrentTheme.Stroke
+        end)
+    end
+
     local function createSection(text, icons, defaultOpen)
         local titleText = ""
         local subtitleText = nil
@@ -483,7 +495,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Btn.Font = Enum.Font.Gotham
             Btn.TextSize = 14
             Btn.Parent = contentHolder
-            Btn.BackgroundTransparency = 0.05
+            styleContainer(Btn)  -- 透明 + 外框
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
@@ -536,7 +548,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
-            Tile.BackgroundTransparency = 0.05
+            styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
@@ -618,7 +630,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, tileH)
             Tile.Parent = contentHolder
-            Tile.BackgroundTransparency = 0.05
+            styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
@@ -834,9 +846,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Text = ""
-            Btn.BackgroundTransparency = 0.05
             Btn.AutoButtonColor = false
             Btn.Parent = contentHolder
+            styleContainer(Btn)
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
@@ -864,6 +876,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Container.ClipsDescendants = true
             Container.ZIndex = 10
             Container.Parent = contentHolder
+            styleContainer(Container)
             Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Container, "BackgroundColor3", "Top")
             local CSt = Instance.new("UIStroke")
@@ -1166,7 +1179,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
-            Tile.BackgroundTransparency = 0.05
+            styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
@@ -1411,7 +1424,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 44)
             Tile.Parent = contentHolder
-            Tile.BackgroundTransparency = 0.05
+            styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
             
@@ -1449,6 +1462,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Panel.Visible = false
             Panel.ClipsDescendants = true
             Panel.Parent = contentHolder
+            styleContainer(Panel)
             Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Panel, "BackgroundColor3", "Top")
             local PSt = Instance.new("UIStroke")
@@ -1782,10 +1796,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ============================================================
-        -- Input 元素（核心逻辑移植自 FluentPro AddInput + FluentPro 风格容器）
-        -- 已修复 updateValue 定义顺序问题
-        -- ============================================================
         child.Input = function(_, config)
             local inputText = config.Name or ""
             local default = config.Value or ""
@@ -1799,15 +1809,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local onChanged = options.OnChanged
             local controlId = inputText .. "_" .. tostring(#Registry)
 
-            -- 主容器
             local InputFrame = Instance.new("Frame")
             InputFrame.Size = UDim2.new(1, 0, 0, 42)
             InputFrame.Parent = contentHolder
-            InputFrame.BackgroundTransparency = 0.05
+            styleContainer(InputFrame)
             Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(InputFrame, "BackgroundColor3", "Top")
 
-            -- 标题
             local NameLbl = Instance.new("TextLabel")
             NameLbl.Text = inputText
             NameLbl.Size = UDim2.new(0.6,0,1,0)
@@ -1819,7 +1827,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             NameLbl.Parent = InputFrame
             AddToRegistry(NameLbl, "TextColor3", "Text")
 
-            -- 输入框容器
             local BoxContainer = Instance.new("Frame")
             BoxContainer.Size = UDim2.new(0.3,0,0,28)
             BoxContainer.Position = UDim2.new(0.7,-10,0.5,-14)
@@ -1829,7 +1836,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(BoxContainer, "BackgroundColor3", "Main")
             Instance.new("UICorner", BoxContainer).CornerRadius = UDim.new(0, 6)
 
-            -- 输入框
             local InputBox = Instance.new("TextBox")
             InputBox.Text = tostring(default)
             InputBox.PlaceholderText = placeholder
@@ -1843,7 +1849,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             InputBox.Parent = BoxContainer
             AddToRegistry(InputBox, "TextColor3", "Accent")
 
-            -- 指示线（Indicator）—— 手动管理颜色
             local Indicator = Instance.new("Frame")
             Indicator.Size = UDim2.new(1, -4, 0, 1)
             Indicator.Position = UDim2.new(0, 2, 1, 0)
@@ -1853,7 +1858,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Indicator.Parent = BoxContainer
             Indicator.BackgroundColor3 = CurrentTheme.Stroke
 
-            -- 过滤函数（定义在 onFocus/onFocusLost 之前）
             local function filterText(text)
                 if maxLength then
                     text = text:sub(1, maxLength)
@@ -1893,7 +1897,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
 
-            -- 聚焦/失焦动画
             local function onFocus()
                 Tween(Indicator, {
                     Size = UDim2.new(1, -2, 0, 2),
@@ -1920,7 +1923,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             InputBox.Focused:Connect(onFocus)
             InputBox.FocusLost:Connect(onFocusLost)
 
-            -- 主题更新时，根据聚焦状态更新 Indicator 颜色
             table.insert(ThemeListeners, function()
                 if InputBox:IsFocused() then
                     Indicator.BackgroundColor3 = CurrentTheme.Accent
@@ -1929,7 +1931,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
 
-            -- 实时模式（finished == false 时，输入即触发回调）
             if not finished then
                 InputBox:GetPropertyChangedSignal("Text"):Connect(function()
                     local raw = InputBox.Text
@@ -1953,7 +1954,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
             end
 
-            -- 配置对象
             ConfigObjects[controlId] = {
                 Type = "Input",
                 Value = InputBox.Text,
@@ -1966,7 +1966,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             }
 
-            -- 公共接口
             local self = {}
             function self.UpdateText(newText)
                 local filtered = filterText(tostring(newText))
@@ -1987,7 +1986,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             return self
         end
-        -- ============================================================
 
         child.Textbox = function(_, config)
             local boxText = config.Name or ""
@@ -1998,7 +1996,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Frame = Instance.new("Frame")
             Frame.Size = UDim2.new(1, 0, 0, 70)
             Frame.Parent = contentHolder
-            Frame.BackgroundTransparency = 0.05
+            styleContainer(Frame)
             Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Frame, "BackgroundColor3", "Top")
 
@@ -2049,7 +2047,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local LabelFrame = Instance.new("Frame")
             LabelFrame.Size = UDim2.new(1, 0, 0, 42)
             LabelFrame.Parent = contentHolder
-            LabelFrame.BackgroundTransparency = 0.05
+            styleContainer(LabelFrame)
             Instance.new("UICorner", LabelFrame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(LabelFrame, "BackgroundColor3", "Top")
 
@@ -2105,7 +2103,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             imageFrame.Size = UDim2.new(1, 0, 0, 0)
             imageFrame.AutomaticSize = Enum.AutomaticSize.Y
             imageFrame.Parent = contentHolder
-            imageFrame.BackgroundTransparency = 0.05
+            styleContainer(imageFrame)
             Instance.new("UICorner", imageFrame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(imageFrame, "BackgroundColor3", "Top")
 
@@ -2332,9 +2330,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ============================================================
-        -- Checkbox
-        -- ============================================================
         child.Checkbox = function(_, config)
             local title = config.Name or ""
             local default = config.Default or false
@@ -2344,7 +2339,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = contentHolder
-            Tile.BackgroundTransparency = 0.05
+            styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
@@ -2453,9 +2448,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return h
         end
 
-        -- ============================================================
-        -- ProgressBar
-        -- ============================================================
         child.ProgressBar = function(_, config)
             local name = config.Name or ""
             local valueConfig = config.Value or {}
@@ -2471,6 +2463,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             wrap.Size = UDim2.new(1, 0, 0, containerHeight)
             wrap.BackgroundTransparency = 1
             wrap.Parent = contentHolder
+            -- 为进度条容器加外框（但不透明背景已经是1，我们依然加外框）
+            styleContainer(wrap)  -- 使其透明 + 外框
 
             local titleLbl = nil
             if name ~= "" then
