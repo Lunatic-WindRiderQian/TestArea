@@ -486,30 +486,44 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local child = {}
 
-        -- ===================== 重写 Button =====================
+        -- ============================================================
+        -- 修改后的 Button：使用 FluentPro 的 AddButton 背景核心
+        -- ============================================================
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
             local callback = config.Callback or function() end
+
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Text = ""
             Btn.Font = Enum.Font.Gotham
             Btn.TextSize = 14
             Btn.Parent = contentHolder
-            Btn.BackgroundTransparency = 1  -- 背景完全透明，只显示边框
-            -- 直接添加边框（不依赖 styleContainer）
-            local stroke = Instance.new("UIStroke")
-            stroke.Thickness = 2
-            stroke.Color = CurrentTheme.Stroke
-            stroke.Transparency = 0        -- 完全不透明
-            stroke.Parent = Btn
-            table.insert(ThemeListeners, function()
-                stroke.Color = CurrentTheme.Stroke
-            end)
-            Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
-            -- 可以保留背景色注册（虽然透明，但用于主题切换时可能调整）
-            AddToRegistry(Btn, "BackgroundColor3", "Top")
 
+            -- 设置背景核心：使用 Element 颜色和透明度（跟随主题）
+            Btn.BackgroundTransparency = 0.89  -- 初始值，会被主题覆盖
+            Btn.BackgroundColor3 = CurrentTheme.Element
+            Btn.BorderSizePixel = 0
+
+            -- 边框（使用 ElementBorder）
+            local border = Instance.new("UIStroke")
+            border.Thickness = 1
+            border.Transparency = 0.5
+            border.Color = CurrentTheme.ElementBorder
+            border.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            border.Parent = Btn
+
+            -- 圆角
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 4)
+            corner.Parent = Btn
+
+            -- 注册主题更新（背景颜色、透明度、边框颜色）
+            AddToRegistry(Btn, "BackgroundColor3", "Element")
+            AddToRegistry(Btn, "BackgroundTransparency", "ElementTransparency")
+            AddToRegistry(border, "Color", "ElementBorder")
+
+            -- 文字标签
             local TextLabel = Instance.new("TextLabel")
             TextLabel.Size = UDim2.new(1, -30, 1, 0)
             TextLabel.Position = UDim2.new(0, 10, 0, 0)
@@ -521,6 +535,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TextLabel.Parent = Btn
             AddToRegistry(TextLabel, "TextColor3", "Text")
 
+            -- 箭头图标
             local Icon = Instance.new("ImageLabel")
             Icon.Size = UDim2.new(0, 15, 0, 15)
             Icon.Position = UDim2.new(1, -25, 0.5, -7.5)
@@ -530,13 +545,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Text")
 
+            -- 悬停效果（透明度变化，基于 ElementTransparency）
             Btn.MouseEnter:Connect(function()
-                Tween(Btn, {BackgroundTransparency = 0.00}, 0.18)
+                -- 悬停时降低透明度（更不透明）
+                Tween(Btn, {BackgroundTransparency = 0.0}, 0.18)
             end)
             Btn.MouseLeave:Connect(function()
-                Tween(Btn, {BackgroundTransparency = 0.05}, 0.18)
+                -- 离开时恢复主题透明度
+                Tween(Btn, {BackgroundTransparency = CurrentTheme.ElementTransparency}, 0.18)
             end)
 
+            -- 点击动画（快速缩放）
             Btn.MouseButton1Click:Connect(function()
                 Tween(Btn, {Size = UDim2.new(0.97, 0, 0, 38)}, 0.1)
                 task.wait(0.1)
@@ -544,13 +563,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 callback()
             end)
 
+            -- 返回控制方法
             local self = {}
             function self.UpdateText(newText) TextLabel.Text = newText end
             function self.SetVisible(state) Btn.Visible = state end
             return self
         end
 
-        -- ===================== 重写 Toggle =====================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
@@ -623,7 +642,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- ===================== Slider =====================
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
             local valueTable = config.Value or {}
@@ -823,7 +841,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             UpdateSlider(Val)
         end
 
-        -- ===================== 重写 Dropdown =====================
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
             local options = config.Values or {}
@@ -857,21 +874,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local Dropped = false
 
-            -- 主按钮（同 Button 容器样式）
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Text = ""
             Btn.AutoButtonColor = false
             Btn.Parent = contentHolder
-            Btn.BackgroundTransparency = 1
-            local btnStroke = Instance.new("UIStroke")
-            btnStroke.Thickness = 2
-            btnStroke.Color = CurrentTheme.Stroke
-            btnStroke.Transparency = 0
-            btnStroke.Parent = Btn
-            table.insert(ThemeListeners, function()
-                btnStroke.Color = CurrentTheme.Stroke
-            end)
+            styleContainer(Btn)  -- 透明 + 外框
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
@@ -893,24 +901,20 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Accent")
 
-            -- 下拉列表容器（移除 styleContainer，直接构建边框）
             local Container = Instance.new("Frame")
             Container.Size = UDim2.new(1, 0, 0, 0)
             Container.Visible = false
             Container.ClipsDescendants = true
             Container.ZIndex = 10
             Container.Parent = contentHolder
-            Container.BackgroundTransparency = 0.65  -- 半透明背景，与主题协调
-            local containerStroke = Instance.new("UIStroke")
-            containerStroke.Thickness = 2
-            containerStroke.Color = CurrentTheme.Accent  -- 使用 Accent 颜色更突出
-            containerStroke.Transparency = 0
-            containerStroke.Parent = Container
-            table.insert(ThemeListeners, function()
-                containerStroke.Color = CurrentTheme.Accent
-            end)
+            styleContainer(Container)
             Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Container, "BackgroundColor3", "Top")
+            local CSt = Instance.new("UIStroke")
+            CSt.Thickness = 1
+            CSt.Transparency = 0.65
+            CSt.Parent = Container
+            AddToRegistry(CSt, "Color", "Accent")
 
             local List = Instance.new("UIListLayout")
             List.SortOrder = Enum.SortOrder.LayoutOrder
