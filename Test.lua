@@ -1784,6 +1784,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ============================================================
         -- Input (FluentPro 风格，含光标跟随、聚焦高亮)
+        -- 稳定版：增加防御性检查，避免 ConfigObjects 为 nil 时报错
         -- ============================================================
         child.Input = function(_, config)
             local inputText = config.Name or ""
@@ -1816,7 +1817,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             NameLbl.Parent = InputFrame
             AddToRegistry(NameLbl, "TextColor3", "Text")
 
-            -- ===== FluentPro 风格输入框容器 =====
+            -- FluentPro 风格输入框容器
             local inputContainer = Instance.new("Frame")
             inputContainer.Size = UDim2.new(0.3, 0, 0, 28)
             inputContainer.Position = UDim2.new(0.7, -10, 0.5, -14)
@@ -1834,7 +1835,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             inputStroke.Parent = inputContainer
             AddToRegistry(inputStroke, "Color", "Stroke")
 
-            -- 指示条（底部高亮线，类似 FluentPro 的 Indicator）
+            -- 指示条（底部高亮线）
             local indicator = Instance.new("Frame")
             indicator.Size = UDim2.new(1, -4, 0, 1)
             indicator.Position = UDim2.new(0, 2, 1, 0)
@@ -1845,12 +1846,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             indicator.Parent = inputContainer
             AddToRegistry(indicator, "BackgroundColor3", "Stroke")
 
-            -- 实际 TextBox（背景透明，位置动态调整）
+            -- 实际 TextBox
             local InputBox = Instance.new("TextBox")
             InputBox.Text = tostring(default)
             InputBox.PlaceholderText = placeholder
             InputBox.Size = UDim2.new(1, 0, 1, 0)
-            InputBox.Position = UDim2.new(0, 2, 0, 0)   -- 初始偏移
+            InputBox.Position = UDim2.new(0, 2, 0, 0)
             InputBox.Font = Enum.Font.GothamBold
             InputBox.TextSize = 13
             InputBox.TextXAlignment = Enum.TextXAlignment.Left
@@ -1860,7 +1861,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             InputBox.Parent = inputContainer
             AddToRegistry(InputBox, "TextColor3", "Accent")
 
-            -- 光标跟随逻辑（复制自 FluentPro Textbox）
+            -- 光标跟随逻辑
             local function updateCursorPosition()
                 local padding = 2
                 local containerWidth = inputContainer.AbsoluteSize.X
@@ -1894,21 +1895,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             InputBox.Focused:Connect(function()
                 updateCursorPosition()
-                -- 高亮边框和指示条
                 inputStroke.Color = CurrentTheme.Accent
                 inputStroke.Transparency = 0.2
                 indicator.Size = UDim2.new(1, -2, 0, 2)
                 indicator.Position = UDim2.new(0, 1, 1, 0)
                 indicator.BackgroundTransparency = 0
                 indicator.BackgroundColor3 = CurrentTheme.Accent
-                -- 背景颜色变化（可选）
                 inputContainer.BackgroundColor3 = CurrentTheme.Accent
                 inputContainer.BackgroundTransparency = 0.2
             end)
 
             InputBox.FocusLost:Connect(function(enterPressed)
                 updateCursorPosition()
-                -- 恢复样式
                 inputStroke.Color = CurrentTheme.Stroke
                 inputStroke.Transparency = 0.6
                 indicator.Size = UDim2.new(1, -4, 0, 1)
@@ -1944,6 +1942,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
                 self.Value = val
                 InputBox.Text = val
+                -- 安全更新 ConfigObjects，防止为 nil
                 if ConfigObjects[controlId] then
                     ConfigObjects[controlId].Value = val
                 end
@@ -1958,20 +1957,45 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
             end
 
+            -- 注册配置对象（同时提供 Set 和 SetValue 别名）
             ConfigObjects[controlId] = {
                 Type = "Input",
                 Value = h.Value,
                 Set = function(val) h:SetValue(val) end,
+                SetValue = function(val) h:SetValue(val) end,   -- 兼容用户误用
             }
 
-            -- 对外接口
+            -- 对外接口（全部安全包装）
             local self = {}
-            function self.UpdateText(newText) h:SetValue(newText) end
-            function self.GetText() return InputBox.Text end
-            function self.SetVisible(state) InputFrame.Visible = state end
-            function self.UpdatePlaceholder(newPlaceholder) InputBox.PlaceholderText = newPlaceholder end
-            function self.SetNumeric(newNumeric) h.Numeric = newNumeric end
-            function self.SetMaxLength(newMax) maxLength = newMax end
+            function self.SetValue(val)
+                if InputBox and InputBox.Parent then
+                    h:SetValue(val)
+                end
+            end
+            function self.UpdateText(newText)
+                if InputBox and InputBox.Parent then
+                    h:SetValue(newText)
+                end
+            end
+            function self.GetText()
+                return InputBox and InputBox.Text or ""
+            end
+            function self.SetVisible(state)
+                if InputFrame then InputFrame.Visible = state end
+            end
+            function self.UpdatePlaceholder(newPlaceholder)
+                if InputBox then InputBox.PlaceholderText = newPlaceholder end
+            end
+            function self.SetNumeric(newNumeric)
+                h.Numeric = newNumeric
+            end
+            function self.SetMaxLength(newMax)
+                maxLength = newMax
+            end
+            function self.Destroy()
+                if InputFrame then InputFrame:Destroy() end
+                ConfigObjects[controlId] = nil
+            end
             return self
         end
 
