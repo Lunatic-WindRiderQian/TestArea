@@ -353,7 +353,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
         contentContainerSection.BackgroundTransparency = 0.65
-        contentContainerSection.ClipsDescendants = true
+        contentContainerSection.ClipsDescendants = false  -- 关键修改：关闭裁剪，保证边框完整
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
         
@@ -373,7 +373,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentHolder.Position = UDim2.new(0, 10, 0, 4)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
-        contentHolder.ClipsDescendants = true
+        contentHolder.ClipsDescendants = false  -- 关键修改：关闭裁剪
         contentHolder.Parent = contentContainerSection
 
         local contentLayout = Instance.new("UIListLayout")
@@ -2463,8 +2463,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             wrap.Size = UDim2.new(1, 0, 0, containerHeight)
             wrap.BackgroundTransparency = 1
             wrap.Parent = contentHolder
-            -- 为进度条容器加外框（但不透明背景已经是1，我们依然加外框）
-            styleContainer(wrap)  -- 使其透明 + 外框
+            styleContainer(wrap)
 
             local titleLbl = nil
             if name ~= "" then
