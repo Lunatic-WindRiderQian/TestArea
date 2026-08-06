@@ -1784,7 +1784,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ============================================================
         -- Input 元素（核心逻辑移植自 FluentPro AddInput + FluentPro 风格容器）
-        -- 已修复 Indicator 颜色问题（使用 Stroke/Accent 手动管理）
+        -- 已修复 updateValue 定义顺序问题
         -- ============================================================
         child.Input = function(_, config)
             local inputText = config.Name or ""
@@ -1843,7 +1843,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             InputBox.Parent = BoxContainer
             AddToRegistry(InputBox, "TextColor3", "Accent")
 
-            -- 指示线（Indicator）—— 不再使用 AddToRegistry，手动管理颜色
+            -- 指示线（Indicator）—— 手动管理颜色
             local Indicator = Instance.new("Frame")
             Indicator.Size = UDim2.new(1, -4, 0, 1)
             Indicator.Position = UDim2.new(0, 2, 1, 0)
@@ -1851,45 +1851,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Indicator.BackgroundTransparency = 0.5
             Indicator.BorderSizePixel = 0
             Indicator.Parent = BoxContainer
-            Indicator.BackgroundColor3 = CurrentTheme.Stroke  -- 初始颜色
+            Indicator.BackgroundColor3 = CurrentTheme.Stroke
 
-            -- 聚焦/失焦动画（同时更新 Indicator 颜色）
-            local function onFocus()
-                Tween(Indicator, {
-                    Size = UDim2.new(1, -2, 0, 2),
-                    Position = UDim2.new(0, 1, 1, 0),
-                    BackgroundTransparency = 0
-                }, 0.15)
-                Tween(BoxContainer, { BackgroundTransparency = 0.05 }, 0.15)
-                Indicator.BackgroundColor3 = CurrentTheme.Accent
-            end
-
-            local function onFocusLost()
-                Tween(Indicator, {
-                    Size = UDim2.new(1, -4, 0, 1),
-                    Position = UDim2.new(0, 2, 1, 0),
-                    BackgroundTransparency = 0.5
-                }, 0.15)
-                Tween(BoxContainer, { BackgroundTransparency = 0.1 }, 0.15)
-                Indicator.BackgroundColor3 = CurrentTheme.Stroke
-                if finished then
-                    updateValue()
-                end
-            end
-
-            InputBox.Focused:Connect(onFocus)
-            InputBox.FocusLost:Connect(onFocusLost)
-
-            -- 主题更新时，根据聚焦状态更新 Indicator 颜色
-            table.insert(ThemeListeners, function()
-                if InputBox:IsFocused() then
-                    Indicator.BackgroundColor3 = CurrentTheme.Accent
-                else
-                    Indicator.BackgroundColor3 = CurrentTheme.Stroke
-                end
-            end)
-
-            -- 过滤函数
+            -- 过滤函数（定义在 onFocus/onFocusLost 之前）
             local function filterText(text)
                 if maxLength then
                     text = text:sub(1, maxLength)
@@ -1929,13 +1893,44 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
 
-            -- 事件绑定
-            if finished then
-                InputBox.FocusLost:Connect(function()
-                    onFocusLost()
+            -- 聚焦/失焦动画
+            local function onFocus()
+                Tween(Indicator, {
+                    Size = UDim2.new(1, -2, 0, 2),
+                    Position = UDim2.new(0, 1, 1, 0),
+                    BackgroundTransparency = 0
+                }, 0.15)
+                Tween(BoxContainer, { BackgroundTransparency = 0.05 }, 0.15)
+                Indicator.BackgroundColor3 = CurrentTheme.Accent
+            end
+
+            local function onFocusLost()
+                Tween(Indicator, {
+                    Size = UDim2.new(1, -4, 0, 1),
+                    Position = UDim2.new(0, 2, 1, 0),
+                    BackgroundTransparency = 0.5
+                }, 0.15)
+                Tween(BoxContainer, { BackgroundTransparency = 0.1 }, 0.15)
+                Indicator.BackgroundColor3 = CurrentTheme.Stroke
+                if finished then
                     updateValue()
-                end)
-            else
+                end
+            end
+
+            InputBox.Focused:Connect(onFocus)
+            InputBox.FocusLost:Connect(onFocusLost)
+
+            -- 主题更新时，根据聚焦状态更新 Indicator 颜色
+            table.insert(ThemeListeners, function()
+                if InputBox:IsFocused() then
+                    Indicator.BackgroundColor3 = CurrentTheme.Accent
+                else
+                    Indicator.BackgroundColor3 = CurrentTheme.Stroke
+                end
+            end)
+
+            -- 实时模式（finished == false 时，输入即触发回调）
+            if not finished then
                 InputBox:GetPropertyChangedSignal("Text"):Connect(function()
                     local raw = InputBox.Text
                     local filtered = filterText(raw)
