@@ -158,15 +158,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         padding.Parent = parent
     end
 
-    -- 辅助函数：给容器应用透明背景 + 外框（Button/Dropdown 等使用）
+    -- 辅助函数：给容器应用透明背景 + 醒目边框（使用 Accent 色，加粗）
     local function styleContainer(frame)
         frame.BackgroundTransparency = 1
         local stroke = Instance.new("UIStroke")
-        stroke.Thickness = 1.5
-        stroke.Color = CurrentTheme.Stroke
+        stroke.Thickness = 2.5          -- 加粗边框
+        stroke.Color = CurrentTheme.Accent   -- 使用强调色，更显眼
+        stroke.Transparency = 0.2       -- 稍微不透明
         stroke.Parent = frame
         table.insert(ThemeListeners, function()
-            stroke.Color = CurrentTheme.Stroke
+            stroke.Color = CurrentTheme.Accent
         end)
     end
 
@@ -495,7 +496,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Btn.Font = Enum.Font.Gotham
             Btn.TextSize = 14
             Btn.Parent = contentHolder
-            styleContainer(Btn)  -- 透明 + 外框
+            styleContainer(Btn)  -- 透明 + 醒目边框
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
@@ -848,7 +849,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Btn.Text = ""
             Btn.AutoButtonColor = false
             Btn.Parent = contentHolder
-            styleContainer(Btn)  -- 透明 + 外框
+            styleContainer(Btn)  -- 透明 + 醒目边框
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
