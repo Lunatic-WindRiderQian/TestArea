@@ -158,7 +158,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         padding.Parent = parent
     end
 
-    -- 辅助函数：给容器应用透明背景 + 外框
+    -- 辅助函数：给容器应用透明背景 + 外框（Button/Dropdown 等使用）
     local function styleContainer(frame)
         frame.BackgroundTransparency = 1
         local stroke = Instance.new("UIStroke")
@@ -353,7 +353,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
         contentContainerSection.BackgroundTransparency = 0.65
-        contentContainerSection.ClipsDescendants = false  -- 关键修改：关闭裁剪，保证边框完整
+        contentContainerSection.ClipsDescendants = false  -- 保证边框完整
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
         
@@ -373,7 +373,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentHolder.Position = UDim2.new(0, 10, 0, 4)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
-        contentHolder.ClipsDescendants = false  -- 关键修改：关闭裁剪
+        contentHolder.ClipsDescendants = false  -- 保证边框完整
         contentHolder.Parent = contentContainerSection
 
         local contentLayout = Instance.new("UIListLayout")
@@ -848,7 +848,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Btn.Text = ""
             Btn.AutoButtonColor = false
             Btn.Parent = contentHolder
-            styleContainer(Btn)
+            styleContainer(Btn)  -- 透明 + 外框
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
@@ -2448,6 +2448,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return h
         end
 
+        -- ProgressBar 恢复原样：不加透明背景（原为透明），不加外框
         child.ProgressBar = function(_, config)
             local name = config.Name or ""
             local valueConfig = config.Value or {}
@@ -2461,9 +2462,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local containerHeight = (name ~= "" and 46 or 26)
             local wrap = Instance.new("Frame")
             wrap.Size = UDim2.new(1, 0, 0, containerHeight)
-            wrap.BackgroundTransparency = 1
+            wrap.BackgroundTransparency = 1   -- 原样透明，没有外框
             wrap.Parent = contentHolder
-            styleContainer(wrap)
+            -- 注意：不调用 styleContainer(wrap)
 
             local titleLbl = nil
             if name ~= "" then
