@@ -158,16 +158,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         padding.Parent = parent
     end
 
-    -- 辅助函数：给容器应用透明背景 + 醒目边框（使用 Accent 色，加粗）
+    -- 辅助函数：给容器应用透明背景 + 外框（Button/Dropdown 等使用）
     local function styleContainer(frame)
         frame.BackgroundTransparency = 1
         local stroke = Instance.new("UIStroke")
-        stroke.Thickness = 2.5          -- 加粗边框
-        stroke.Color = CurrentTheme.Accent   -- 使用强调色，更显眼
-        stroke.Transparency = 0.2       -- 稍微不透明
+        stroke.Thickness = 1.5
+        stroke.Color = CurrentTheme.Stroke
         stroke.Parent = frame
         table.insert(ThemeListeners, function()
-            stroke.Color = CurrentTheme.Accent
+            stroke.Color = CurrentTheme.Stroke
         end)
     end
 
@@ -487,6 +486,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local child = {}
 
+        -- ===================== 重写 Button =====================
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
             local callback = config.Callback or function() end
@@ -496,8 +496,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Btn.Font = Enum.Font.Gotham
             Btn.TextSize = 14
             Btn.Parent = contentHolder
-            styleContainer(Btn)  -- 透明 + 醒目边框
+            Btn.BackgroundTransparency = 1  -- 背景完全透明，只显示边框
+            -- 直接添加边框（不依赖 styleContainer）
+            local stroke = Instance.new("UIStroke")
+            stroke.Thickness = 2
+            stroke.Color = CurrentTheme.Stroke
+            stroke.Transparency = 0        -- 完全不透明
+            stroke.Parent = Btn
+            table.insert(ThemeListeners, function()
+                stroke.Color = CurrentTheme.Stroke
+            end)
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
+            -- 可以保留背景色注册（虽然透明，但用于主题切换时可能调整）
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
             local TextLabel = Instance.new("TextLabel")
@@ -540,6 +550,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ===================== 重写 Toggle =====================
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
@@ -612,6 +623,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
+        -- ===================== Slider =====================
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
             local valueTable = config.Value or {}
@@ -811,6 +823,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             UpdateSlider(Val)
         end
 
+        -- ===================== 重写 Dropdown =====================
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
             local options = config.Values or {}
@@ -844,12 +857,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local Dropped = false
 
+            -- 主按钮（同 Button 容器样式）
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Text = ""
             Btn.AutoButtonColor = false
             Btn.Parent = contentHolder
-            styleContainer(Btn)  -- 透明 + 醒目边框
+            Btn.BackgroundTransparency = 1
+            local btnStroke = Instance.new("UIStroke")
+            btnStroke.Thickness = 2
+            btnStroke.Color = CurrentTheme.Stroke
+            btnStroke.Transparency = 0
+            btnStroke.Parent = Btn
+            table.insert(ThemeListeners, function()
+                btnStroke.Color = CurrentTheme.Stroke
+            end)
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
 
@@ -871,20 +893,24 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Accent")
 
+            -- 下拉列表容器（移除 styleContainer，直接构建边框）
             local Container = Instance.new("Frame")
             Container.Size = UDim2.new(1, 0, 0, 0)
             Container.Visible = false
             Container.ClipsDescendants = true
             Container.ZIndex = 10
             Container.Parent = contentHolder
-            styleContainer(Container)
+            Container.BackgroundTransparency = 0.65  -- 半透明背景，与主题协调
+            local containerStroke = Instance.new("UIStroke")
+            containerStroke.Thickness = 2
+            containerStroke.Color = CurrentTheme.Accent  -- 使用 Accent 颜色更突出
+            containerStroke.Transparency = 0
+            containerStroke.Parent = Container
+            table.insert(ThemeListeners, function()
+                containerStroke.Color = CurrentTheme.Accent
+            end)
             Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Container, "BackgroundColor3", "Top")
-            local CSt = Instance.new("UIStroke")
-            CSt.Thickness = 1
-            CSt.Transparency = 0.65
-            CSt.Parent = Container
-            AddToRegistry(CSt, "Color", "Accent")
 
             local List = Instance.new("UIListLayout")
             List.SortOrder = Enum.SortOrder.LayoutOrder
