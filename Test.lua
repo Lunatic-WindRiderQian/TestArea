@@ -486,7 +486,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local child = {}
 
-        -- ========== Button ==========
+        -- ========== 修改的 Button 元素（使用 Frame 容器 + 透明度动画） ==========
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
             local callback = config.Callback or function() end
@@ -524,6 +524,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Icon.Parent = Tile
             AddToRegistry(Icon, "ImageColor3", "Text")
 
+            -- 新的悬停 / 点击动画（模仿 FluentPro 的透明度变化，无缩放）
             ClickBtn.MouseEnter:Connect(function()
                 Tween(Tile, {BackgroundTransparency = 0.05}, 0.18)
             end)
@@ -545,8 +546,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             function self.SetVisible(state) Tile.Visible = state end
             return self
         end
+        -- ========== 修改结束 ==========
 
-        -- ========== Toggle ==========
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
@@ -619,7 +620,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- ========== Slider ==========
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
             local valueTable = config.Value or {}
@@ -819,7 +819,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             UpdateSlider(Val)
         end
 
-        -- ========== Dropdown (强化容器) ==========
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
             local options = config.Values or {}
@@ -853,24 +852,19 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local Dropped = false
 
-            -- 按钮：显式背景 + 粗边框（不使用 styleContainer）
-            local Btn = Instance.new("TextButton")
+            -- ====== 主按钮（改为 Frame + 内部 ClickBtn） ======
+            local Btn = Instance.new("Frame")
             Btn.Size = UDim2.new(1, 0, 0, 42)
-            Btn.Text = ""
-            Btn.AutoButtonColor = false
             Btn.Parent = contentHolder
-            Btn.BackgroundTransparency = 0.15
-            Btn.BackgroundColor3 = CurrentTheme.Top
-            local btnStroke = Instance.new("UIStroke")
-            btnStroke.Thickness = 2.5
-            btnStroke.Color = CurrentTheme.Accent
-            btnStroke.Transparency = 0
-            btnStroke.Parent = Btn
-            table.insert(ThemeListeners, function()
-                btnStroke.Color = CurrentTheme.Accent
-                Btn.BackgroundColor3 = CurrentTheme.Top
-            end)
+            styleContainer(Btn)
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
+            AddToRegistry(Btn, "BackgroundColor3", "Top")
+
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = ""
+            ClickBtn.Parent = Btn
 
             local Lbl = Instance.new("TextLabel")
             Lbl.Size = UDim2.new(1, -40, 1, 0)
@@ -890,25 +884,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Accent")
 
-            -- 下拉容器：同样显式背景 + 粗边框
+            -- ====== 下拉列表容器 ======
             local Container = Instance.new("Frame")
             Container.Size = UDim2.new(1, 0, 0, 0)
             Container.Visible = false
             Container.ClipsDescendants = true
             Container.ZIndex = 10
             Container.Parent = contentHolder
-            Container.BackgroundTransparency = 0.15
-            Container.BackgroundColor3 = CurrentTheme.Top
-            local containerStroke = Instance.new("UIStroke")
-            containerStroke.Thickness = 2.5
-            containerStroke.Color = CurrentTheme.Accent
-            containerStroke.Transparency = 0
-            containerStroke.Parent = Container
-            table.insert(ThemeListeners, function()
-                containerStroke.Color = CurrentTheme.Accent
-                Container.BackgroundColor3 = CurrentTheme.Top
-            end)
+            styleContainer(Container)
             Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 4)
+            AddToRegistry(Container, "BackgroundColor3", "Top")
 
             local List = Instance.new("UIListLayout")
             List.SortOrder = Enum.SortOrder.LayoutOrder
@@ -1065,7 +1050,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             rebuildOptions(options)
 
-            Btn.MouseButton1Click:Connect(function()
+            -- ====== 点击事件绑定到 ClickBtn ======
+            ClickBtn.MouseButton1Click:Connect(function()
                 Dropped = not Dropped
                 if Dropped then
                     Container.Visible = true
@@ -1187,7 +1173,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Keybind ==========
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
             local defaultKey = config.Default or Enum.KeyCode.M
@@ -1418,7 +1403,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== ColorPicker ==========
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
             local Color = config.Default or Color3.fromRGB(255, 255, 255)
@@ -1823,7 +1807,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Input ==========
         child.Input = function(_, config)
             local inputText = config.Name or ""
             local default = config.Value or ""
@@ -2015,7 +1998,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Textbox ==========
         child.Textbox = function(_, config)
             local boxText = config.Name or ""
             local placeholder = config.Placeholder or ""
@@ -2071,7 +2053,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
-        -- ========== Label ==========
         child.Label = function(_, config)
             local labelText = config.Name or ""
             local LabelFrame = Instance.new("Frame")
@@ -2099,7 +2080,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Image ==========
         child.Image = function(_, config)
             config = config or {}
             local title = config.Title or "Image"
@@ -2300,7 +2280,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Divider ==========
         child.Divider = function(_, config)
             local labelText = config and config.Name or config or ""
 
@@ -2362,7 +2341,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Checkbox ==========
         child.Checkbox = function(_, config)
             local title = config.Name or ""
             local default = config.Default or false
@@ -2481,7 +2459,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return h
         end
 
-        -- ========== ProgressBar ==========
+        -- ProgressBar 恢复原样：不加透明背景（原为透明），不加外框
         child.ProgressBar = function(_, config)
             local name = config.Name or ""
             local valueConfig = config.Value or {}
@@ -2497,6 +2475,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             wrap.Size = UDim2.new(1, 0, 0, containerHeight)
             wrap.BackgroundTransparency = 1   -- 原样透明，没有外框
             wrap.Parent = contentHolder
+            -- 注意：不调用 styleContainer(wrap)
 
             local titleLbl = nil
             if name ~= "" then
