@@ -72,19 +72,29 @@ local function createPulseGlow(object)
 end
 
 local Themes = {
-    Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48)},
-    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225)},
-    Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(160, 90, 255), Stroke = Color3.fromRGB(50, 45, 60)},
-    Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(70, 130, 255), Stroke = Color3.fromRGB(45, 55, 75)},
-    Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(60, 40, 40)},
-    Yellow = {Main = Color3.fromRGB(22, 22, 12), Top = Color3.fromRGB(35, 35, 20), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(255, 200, 80), Stroke = Color3.fromRGB(60, 60, 40)},
-    Green  = {Main = Color3.fromRGB(12, 22, 15), Top = Color3.fromRGB(20, 35, 25), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(60, 220, 130), Stroke = Color3.fromRGB(40, 60, 50)},
+    Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48), SubText = Color3.fromRGB(160, 160, 170), Element = Color3.fromRGB(45, 45, 50), Hover = Color3.fromRGB(60, 60, 70)},
+    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225), SubText = Color3.fromRGB(100, 100, 110), Element = Color3.fromRGB(235, 235, 240), Hover = Color3.fromRGB(210, 210, 220)},
+    Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(160, 90, 255), Stroke = Color3.fromRGB(50, 45, 60), SubText = Color3.fromRGB(180, 170, 200), Element = Color3.fromRGB(50, 45, 60), Hover = Color3.fromRGB(70, 60, 85)},
+    Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(70, 130, 255), Stroke = Color3.fromRGB(45, 55, 75), SubText = Color3.fromRGB(150, 170, 200), Element = Color3.fromRGB(45, 55, 75), Hover = Color3.fromRGB(65, 80, 105)},
+    Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(60, 40, 40), SubText = Color3.fromRGB(200, 160, 160), Element = Color3.fromRGB(60, 40, 40), Hover = Color3.fromRGB(85, 55, 55)},
+    Yellow = {Main = Color3.fromRGB(22, 22, 12), Top = Color3.fromRGB(35, 35, 20), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(255, 200, 80), Stroke = Color3.fromRGB(60, 60, 40), SubText = Color3.fromRGB(200, 190, 160), Element = Color3.fromRGB(60, 60, 40), Hover = Color3.fromRGB(85, 85, 55)},
+    Green  = {Main = Color3.fromRGB(12, 22, 15), Top = Color3.fromRGB(20, 35, 25), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(60, 220, 130), Stroke = Color3.fromRGB(40, 60, 50), SubText = Color3.fromRGB(160, 200, 180), Element = Color3.fromRGB(40, 60, 50), Hover = Color3.fromRGB(55, 85, 70)},
 }
 local CurrentTheme = Themes.Dark
 
+-- 防御性 AddToRegistry：若主题键缺失则回退
 local function AddToRegistry(obj, prop, themeKey)
+    local val = CurrentTheme[themeKey]
+    if val == nil then
+        -- 尝试从 Dark 主题回退
+        val = Themes.Dark[themeKey]
+        if val == nil then
+            warn("Theme key '" .. tostring(themeKey) .. "' not found, using fallback white.")
+            val = Color3.new(1, 1, 1)
+        end
+    end
     table.insert(Registry, {Object = obj, Property = prop, Type = themeKey})
-    obj[prop] = CurrentTheme[themeKey]
+    obj[prop] = val
 end
 
 local function Tween(obj, props, time)
@@ -149,7 +159,7 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- ===== 新增 MediaManager（用于视频缓存） =====
+-- ===== MediaManager（视频缓存） =====
 local MediaManager = {}
 MediaManager.Folder = "FengVideoCache"
 
@@ -226,7 +236,7 @@ function MediaManager:Video(src)
     end
     return ""
 end
--- ===== MediaManager 结束 =====
+-- ===== 结束 MediaManager =====
 
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local padding = parent:FindFirstChild("SectionPadding")
@@ -237,7 +247,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         padding.Parent = parent
     end
 
-    -- 辅助函数：给容器应用透明背景 + 外框（Button/Dropdown 等使用）
     local function styleContainer(frame)
         frame.BackgroundTransparency = 1
         local stroke = Instance.new("UIStroke")
@@ -2657,7 +2666,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return h
         end
 
-        -- ===== 新增 Video 元素 =====
+        -- ===== Video 元素 =====
         child.Video = function(_, config)
             local opts   = config or {}
             local parent = contentHolder
@@ -2678,7 +2687,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return ""
             end
 
-            -- 使用 MediaManager 处理 http 链接
             local function resolveMedia(s)
                 if type(s)~="string" or s=="" then return "" end
                 if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
@@ -2691,7 +2699,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local function applyIcon(imgLabel, iconName)
                 if not imgLabel then return end
-                local ic = iconName -- 简单图标，直接使用 rbxassetid 映射
                 local imageMap = {
                     ["play"]    = "rbxassetid://10734923549",
                     ["pause"]   = "rbxassetid://10734919336",
@@ -2761,7 +2768,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 vidCorner.Parent = vid
             end
 
-            -- 占位符
             local placeholder = Instance.new("Frame")
             placeholder.Size = UDim2.fromScale(1, 1)
             placeholder.BackgroundTransparency = 1
@@ -2805,7 +2811,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return mod
             end
 
-            -- ===== 控制覆盖层 =====
+            -- Overlay
             local overlay = Instance.new("CanvasGroup")
             overlay.Size = UDim2.new(1, 0, 0, 54)
             overlay.Position = UDim2.new(0, 0, 1, 0)
@@ -2830,7 +2836,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             grad.Rotation = 90
             grad.Parent = gradFr
 
-            -- 进度条行
+            -- Seek row
             local seekRow = Instance.new("Frame")
             seekRow.Size = UDim2.new(1, -12, 0, 16)
             seekRow.Position = UDim2.new(0, 6, 0, 4)
@@ -2895,7 +2901,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             timeDur.ZIndex = 7
             timeDur.Parent = seekRow
 
-            -- 控制按钮行
+            -- Controls row
             local ctrlRow = Instance.new("Frame")
             ctrlRow.Size = UDim2.new(1, -12, 0, 26)
             ctrlRow.Position = UDim2.new(0, 6, 0, 24)
@@ -2953,7 +2959,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             btnLayout.Padding = UDim.new(0, 2)
             btnLayout.Parent = ctrlRow
 
-            -- 显示/隐藏覆盖层
             local ctrlVisible = false
             local fadeTimer = 0
             local fadingOut = false
@@ -3011,7 +3016,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             pauseBtn.Visible = auto
             playBtn.Visible = not auto
 
-            -- 进度条拖拽
             local seeking = false
             local function vidSeek(posX)
                 resetFade()
@@ -3042,7 +3046,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
 
-            -- 更新时间显示
             local function fmtTime(s)
                 s = math.max(0, math.floor(s or 0))
                 return string.format("%d:%02d", math.floor(s/60), s%60)
@@ -3145,13 +3148,22 @@ function Fenglib:CreateWindow(Config)
                 elseif type(v) == "userdata" then return v
                 else return Color3.new(0,0,0) end
             end
-            local customTheme = {
-                Main   = t.Main   and toC3(t.Main)   or CurrentTheme.Main,
-                Top    = t.Top    and toC3(t.Top)    or CurrentTheme.Top,
-                Text   = t.Text   and toC3(t.Text)   or CurrentTheme.Text,
-                Accent = t.Accent and toC3(t.Accent) or CurrentTheme.Accent,
-                Stroke = t.Stroke and toC3(t.Stroke) or CurrentTheme.Stroke,
-            }
+            -- 完整复制当前主题所有键
+            local customTheme = {}
+            for k, v in pairs(CurrentTheme) do
+                customTheme[k] = v
+            end
+            -- 覆盖用户提供的键
+            if t.Main   then customTheme.Main   = toC3(t.Main) end
+            if t.Top    then customTheme.Top    = toC3(t.Top) end
+            if t.Text   then customTheme.Text   = toC3(t.Text) end
+            if t.Accent then customTheme.Accent = toC3(t.Accent) end
+            if t.Stroke then customTheme.Stroke = toC3(t.Stroke) end
+            if t.SubText then customTheme.SubText = toC3(t.SubText) end
+            if t.Element then customTheme.Element = toC3(t.Element) end
+            if t.Hover then customTheme.Hover = toC3(t.Hover) end
+            -- 可扩展更多
+
             local customName = t.Name or "Custom"
             Themes[customName] = customTheme
             CurrentTheme = customTheme
@@ -4490,7 +4502,6 @@ function Fenglib:CreateWindow(Config)
             elements.Divider  = function(_, config) return createSection("", nil, true).Divider(config) end
             elements.Checkbox = function(_, config) return createSection("", nil, true).Checkbox(config) end
             elements.ProgressBar = function(_, config) return createSection("", nil, true).ProgressBar(config) end
-            -- 新增 Video
             elements.Video    = function(_, config) return createSection("", nil, true).Video(config) end
 
             return elements
