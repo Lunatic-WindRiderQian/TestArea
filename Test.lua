@@ -2212,14 +2212,19 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             clickBtn.Parent = imageFrame
             clickBtn.MouseButton1Click:Connect(callback)
 
-            local function onEnter()
-                Tween(imageFrame, {BackgroundTransparency = 0.00}, 0.18)
-            end
-            local function onLeave()
+            -- 修改：悬停/按下动画与 Button 完全一致
+            clickBtn.MouseEnter:Connect(function()
                 Tween(imageFrame, {BackgroundTransparency = 0.05}, 0.18)
-            end
-            clickBtn.MouseEnter:Connect(onEnter)
-            clickBtn.MouseLeave:Connect(onLeave)
+            end)
+            clickBtn.MouseLeave:Connect(function()
+                Tween(imageFrame, {BackgroundTransparency = 1}, 0.18)
+            end)
+            clickBtn.MouseButton1Down:Connect(function()
+                Tween(imageFrame, {BackgroundTransparency = 0.2}, 0.1)
+            end)
+            clickBtn.MouseButton1Up:Connect(function()
+                Tween(imageFrame, {BackgroundTransparency = 0.05}, 0.1)
+            end)
 
             local self = {}
             function self.UpdateTitle(newTitle)
