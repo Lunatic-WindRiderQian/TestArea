@@ -149,6 +149,85 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
+-- ===== 新增 MediaManager（用于视频缓存） =====
+local MediaManager = {}
+MediaManager.Folder = "FengVideoCache"
+
+function MediaManager:SetFolder(f)
+    self.Folder = f
+end
+
+function MediaManager:_init(sub)
+    pcall(function()
+        if not isfolder(self.Folder) then makefolder(self.Folder) end
+        local p = self.Folder .. "/" .. sub
+        if not isfolder(p) then makefolder(p) end
+    end)
+end
+
+function MediaManager:_rname(ext)
+    local s = "abcdefghijklmnopqrstuvwxyz0123456789"
+    local n = ""
+    for _=1,12 do local i=math.random(1,#s); n=n..s:sub(i,i) end
+    return n.."."..ext
+end
+
+function MediaManager:Video(src)
+    if type(src)~="string" or src=="" then return "" end
+    if src:match("^rbxassetid://") or src:match("^rbxasset://") then return src end
+    if src:match("^%d+$") then return "rbxassetid://"..src end
+    if not src:match("^https?://") then return "" end
+    local ext = (src:match("%.(%a+)%??[^/]*$") or "webm"):lower()
+    if not ({webm=1,mp4=1,ogg=1,mov=1})[ext] then ext="webm" end
+    if ext == "mp4" or ext == "mov" then ext = "webm" end
+    self:_init("videos")
+    local dir = self.Folder.."/videos"
+    local mapPath = dir.."/_map.json"
+    local hs = HttpService
+    local map = {}
+    pcall(function()
+        if isfile(mapPath) then
+            local ok,d = pcall(hs.JSONDecode, hs, readfile(mapPath))
+            if ok and type(d)=="table" then map=d end
+        end
+    end)
+    local key = tostring(#src).."_"..src:sub(1,40):gsub("[^%w]","")
+    if map[key] then
+        local cp = dir.."/"..map[key]
+        if isfile(cp) then
+            local ok,a = pcall(getcustomasset, cp)
+            if ok and a and a~="" then return a end
+        end
+        map[key] = nil
+    end
+    local fname = self:_rname(ext)
+    local path  = dir.."/"..fname
+    local body  = nil
+    local reqOk = pcall(function()
+        local req = (syn and syn.request) or http_request or request
+        local r = req({Url=src,Method="GET",Headers={["User-Agent"]="Roblox/WinInet"}})
+        if r and r.Body and #r.Body > 512 then
+            local peek = r.Body:sub(1,15):lower()
+            if peek:find("<!doctype") or peek:find("<html") then return end
+            body = r.Body
+            writefile(path, body)
+        end
+    end)
+    if reqOk and body and isfile(path) then
+        local ok2,a = pcall(getcustomasset, path)
+        if ok2 and a and a~="" then
+            map[key] = fname
+            pcall(function()
+                local ok3,enc = pcall(hs.JSONEncode, hs, map)
+                if ok3 then writefile(mapPath, enc) end
+            end)
+            return a
+        end
+    end
+    return ""
+end
+-- ===== MediaManager 结束 =====
+
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
     local padding = parent:FindFirstChild("SectionPadding")
     if not padding then
@@ -353,7 +432,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
         contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
         contentContainerSection.BackgroundTransparency = 0.65
-        contentContainerSection.ClipsDescendants = false  -- 保证边框完整
+        contentContainerSection.ClipsDescendants = false
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
         
@@ -373,7 +452,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentHolder.Position = UDim2.new(0, 10, 0, 4)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
-        contentHolder.ClipsDescendants = false  -- 保证边框完整
+        contentHolder.ClipsDescendants = false
         contentHolder.Parent = contentContainerSection
 
         local contentLayout = Instance.new("UIListLayout")
@@ -486,7 +565,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local child = {}
 
-        -- ========== 修改的 Button 元素（使用 Frame 容器 + 透明度动画） ==========
+        -- ========== Button ==========
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
             local callback = config.Callback or function() end
@@ -524,7 +603,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Icon.Parent = Tile
             AddToRegistry(Icon, "ImageColor3", "Text")
 
-            -- 新的悬停 / 点击动画（模仿 FluentPro 的透明度变化，无缩放）
             ClickBtn.MouseEnter:Connect(function()
                 Tween(Tile, {BackgroundTransparency = 0.05}, 0.18)
             end)
@@ -546,8 +624,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             function self.SetVisible(state) Tile.Visible = state end
             return self
         end
-        -- ========== 修改结束 ==========
 
+        -- ========== Toggle ==========
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
@@ -620,6 +698,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
+        -- ========== Slider ==========
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
             local valueTable = config.Value or {}
@@ -819,6 +898,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             UpdateSlider(Val)
         end
 
+        -- ========== Dropdown ==========
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
             local options = config.Values or {}
@@ -852,7 +932,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local Dropped = false
 
-            -- ====== 主按钮（改为 Frame + 内部 ClickBtn） ======
             local Btn = Instance.new("Frame")
             Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Parent = contentHolder
@@ -884,7 +963,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Icon.Parent = Btn
             AddToRegistry(Icon, "ImageColor3", "Accent")
 
-            -- ====== 下拉列表容器 ======
             local Container = Instance.new("Frame")
             Container.Size = UDim2.new(1, 0, 0, 0)
             Container.Visible = false
@@ -1050,7 +1128,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             rebuildOptions(options)
 
-            -- ====== 点击事件绑定到 ClickBtn ======
             ClickBtn.MouseButton1Click:Connect(function()
                 Dropped = not Dropped
                 if Dropped then
@@ -1173,6 +1250,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Keybind ==========
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
             local defaultKey = config.Default or Enum.KeyCode.M
@@ -1403,6 +1481,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== ColorPicker ==========
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
             local Color = config.Default or Color3.fromRGB(255, 255, 255)
@@ -1807,6 +1886,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Input ==========
         child.Input = function(_, config)
             local inputText = config.Name or ""
             local default = config.Value or ""
@@ -1998,6 +2078,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Textbox ==========
         child.Textbox = function(_, config)
             local boxText = config.Name or ""
             local placeholder = config.Placeholder or ""
@@ -2053,6 +2134,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
+        -- ========== Label ==========
         child.Label = function(_, config)
             local labelText = config.Name or ""
             local LabelFrame = Instance.new("Frame")
@@ -2080,6 +2162,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Image ==========
         child.Image = function(_, config)
             config = config or {}
             local title = config.Title or "Image"
@@ -2212,7 +2295,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             clickBtn.Parent = imageFrame
             clickBtn.MouseButton1Click:Connect(callback)
 
-            -- 修改：悬停/按下动画与 Button 完全一致
             clickBtn.MouseEnter:Connect(function()
                 Tween(imageFrame, {BackgroundTransparency = 0.05}, 0.18)
             end)
@@ -2285,6 +2367,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Divider ==========
         child.Divider = function(_, config)
             local labelText = config and config.Name or config or ""
 
@@ -2346,6 +2429,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Checkbox ==========
         child.Checkbox = function(_, config)
             local title = config.Name or ""
             local default = config.Default or false
@@ -2464,7 +2548,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return h
         end
 
-        -- ProgressBar 恢复原样：不加透明背景（原为透明），不加外框
+        -- ========== ProgressBar ==========
         child.ProgressBar = function(_, config)
             local name = config.Name or ""
             local valueConfig = config.Value or {}
@@ -2478,9 +2562,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local containerHeight = (name ~= "" and 46 or 26)
             local wrap = Instance.new("Frame")
             wrap.Size = UDim2.new(1, 0, 0, containerHeight)
-            wrap.BackgroundTransparency = 1   -- 原样透明，没有外框
+            wrap.BackgroundTransparency = 1
             wrap.Parent = contentHolder
-            -- 注意：不调用 styleContainer(wrap)
 
             local titleLbl = nil
             if name ~= "" then
@@ -2572,6 +2655,465 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             }
 
             return h
+        end
+
+        -- ===== 新增 Video 元素 =====
+        child.Video = function(_, config)
+            local opts   = config or {}
+            local parent = contentHolder
+            if not parent then return end
+
+            local radius = opts.Radius or 8
+            local src    = opts.Video or ""
+            local looped = opts.Looped ~= false
+            local vol    = opts.Volume or 0
+            local auto   = opts.AutoPlay ~= false
+            local title  = opts.Title or "Video"
+            local aspect = opts.AspectRatio or "16:9"
+
+            local function resolveSync(s)
+                if type(s)~="string" or s=="" then return "" end
+                if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
+                if s:match("^%d+$") then return "rbxassetid://"..s end
+                return ""
+            end
+
+            -- 使用 MediaManager 处理 http 链接
+            local function resolveMedia(s)
+                if type(s)~="string" or s=="" then return "" end
+                if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
+                if s:match("^%d+$") then return "rbxassetid://"..s end
+                if s:match("^https?://") then
+                    return MediaManager:Video(s)
+                end
+                return ""
+            end
+
+            local function applyIcon(imgLabel, iconName)
+                if not imgLabel then return end
+                local ic = iconName -- 简单图标，直接使用 rbxassetid 映射
+                local imageMap = {
+                    ["play"]    = "rbxassetid://10734923549",
+                    ["pause"]   = "rbxassetid://10734919336",
+                    ["stop"]    = "rbxassetid://10734972621",
+                    ["volume"]  = "rbxassetid://10747376008",
+                    ["external"]= "rbxassetid://10747366266",
+                }
+                imgLabel.Image = imageMap[iconName] or ""
+            end
+
+            local function parseRatio(r)
+                if type(r) == "number" then return r end
+                if type(r) == "string" then
+                    local rw, rh = r:match("(%d+):(%d+)")
+                    if rw and rh and tonumber(rh) ~= 0 then return tonumber(rw) / tonumber(rh) end
+                end
+                return 16 / 9
+            end
+
+            local ratioNum = parseRatio(aspect)
+
+            local wrap = Instance.new("Frame")
+            wrap.Size = UDim2.new(1, -16, 0, 180)
+            wrap.BackgroundColor3 = CurrentTheme.Main
+            wrap.BackgroundTransparency = 0.9
+            wrap.BorderSizePixel = 0
+            wrap.ClipsDescendants = true
+            wrap.Parent = parent
+            AddToRegistry(wrap, "BackgroundColor3", "Main")
+
+            local function recalcAspect()
+                local w = wrap.AbsoluteSize.X
+                if w > 0 and ratioNum and ratioNum > 0 then
+                    wrap.Size = UDim2.new(1, -16, 0, math.floor(w / ratioNum))
+                end
+            end
+            wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
+            task.defer(recalcAspect)
+
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, radius)
+            corner.Parent = wrap
+
+            local stroke = Instance.new("UIStroke")
+            stroke.Thickness = 1
+            stroke.Transparency = 0.6
+            stroke.Parent = wrap
+            AddToRegistry(stroke, "Color", "Stroke")
+
+            local resolved = resolveMedia(src)
+            local hasVideo = (resolved ~= "")
+
+            local vid = nil
+            if hasVideo then
+                vid = Instance.new("VideoFrame")
+                vid.Size = UDim2.fromScale(1, 1)
+                vid.BackgroundTransparency = 1
+                vid.Looped = looped
+                vid.Volume = vol
+                vid.ZIndex = 1
+                vid:SetAttribute("BFVolume", vol)
+                vid:SetAttribute("BFAutoPlay", auto)
+                vid.Video = resolved
+                vid.Parent = wrap
+                local vidCorner = Instance.new("UICorner")
+                vidCorner.CornerRadius = UDim.new(0, radius)
+                vidCorner.Parent = vid
+            end
+
+            -- 占位符
+            local placeholder = Instance.new("Frame")
+            placeholder.Size = UDim2.fromScale(1, 1)
+            placeholder.BackgroundTransparency = 1
+            placeholder.Visible = not hasVideo
+            placeholder.ZIndex = 2
+            placeholder.Parent = wrap
+
+            local phImg = Instance.new("ImageLabel")
+            phImg.Size = UDim2.fromOffset(32, 32)
+            phImg.Position = UDim2.new(0.5, 0, 0.5, -14)
+            phImg.AnchorPoint = Vector2.new(0.5, 0.5)
+            phImg.BackgroundTransparency = 1
+            phImg.ImageTransparency = 0.4
+            phImg.ZIndex = 3
+            phImg.Parent = placeholder
+            AddToRegistry(phImg, "ImageColor3", "SubText")
+            applyIcon(phImg, "play")
+
+            local phText = Instance.new("TextLabel")
+            phText.Size = UDim2.new(1, 0, 0, 16)
+            phText.Position = UDim2.new(0, 0, 0.5, 20)
+            phText.AnchorPoint = Vector2.new(0, 0)
+            phText.BackgroundTransparency = 1
+            phText.Text = "Video not available"
+            phText.TextSize = 11
+            phText.Font = Enum.Font.GothamMedium
+            phText.TextTransparency = 0.5
+            phText.ZIndex = 3
+            phText.Parent = placeholder
+            AddToRegistry(phText, "TextColor3", "SubText")
+
+            if not hasVideo then
+                local mod = {Frame=wrap, Type="Video", VideoFrame=nil}
+                function mod:Destroy() wrap:Destroy() end
+                function mod:SetVideo(s) end
+                function mod:SetVolume(v) end
+                function mod:Play() end
+                function mod:Pause() end
+                function mod:Stop() end
+                function mod:SetAspectRatio(r) end
+                return mod
+            end
+
+            -- ===== 控制覆盖层 =====
+            local overlay = Instance.new("CanvasGroup")
+            overlay.Size = UDim2.new(1, 0, 0, 54)
+            overlay.Position = UDim2.new(0, 0, 1, 0)
+            overlay.AnchorPoint = Vector2.new(0, 1)
+            overlay.BackgroundTransparency = 1
+            overlay.GroupTransparency = 1
+            overlay.ZIndex = 5
+            overlay.Parent = wrap
+
+            local gradFr = Instance.new("Frame")
+            gradFr.Size = UDim2.fromScale(1, 1)
+            gradFr.BackgroundColor3 = Color3.fromRGB(0,0,0)
+            gradFr.BackgroundTransparency = 0
+            gradFr.BorderSizePixel = 0
+            gradFr.ZIndex = 5
+            gradFr.Parent = overlay
+            local grad = Instance.new("UIGradient")
+            grad.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0.3),
+                NumberSequenceKeypoint.new(1, 1)
+            })
+            grad.Rotation = 90
+            grad.Parent = gradFr
+
+            -- 进度条行
+            local seekRow = Instance.new("Frame")
+            seekRow.Size = UDim2.new(1, -12, 0, 16)
+            seekRow.Position = UDim2.new(0, 6, 0, 4)
+            seekRow.BackgroundTransparency = 1
+            seekRow.ZIndex = 6
+            seekRow.Parent = overlay
+
+            local timeCur = Instance.new("TextLabel")
+            timeCur.Size = UDim2.fromOffset(36, 16)
+            timeCur.BackgroundTransparency = 1
+            timeCur.Text = "0:00"
+            timeCur.TextSize = 10
+            timeCur.Font = Enum.Font.GothamMedium
+            timeCur.TextColor3 = Color3.fromRGB(220,220,220)
+            timeCur.ZIndex = 7
+            timeCur.Parent = seekRow
+
+            local seekContainer = Instance.new("Frame")
+            seekContainer.Size = UDim2.new(1, -84, 0, 16)
+            seekContainer.Position = UDim2.fromOffset(40, 0)
+            seekContainer.BackgroundTransparency = 1
+            seekContainer.ZIndex = 6
+            seekContainer.Parent = seekRow
+
+            local seekRail = Instance.new("TextButton")
+            seekRail.Size = UDim2.new(1, 0, 0, 5)
+            seekRail.Position = UDim2.new(0, 0, 0.5, -2)
+            seekRail.BackgroundColor3 = Color3.fromRGB(80,80,90)
+            seekRail.BorderSizePixel = 0
+            seekRail.ZIndex = 7
+            seekRail.Text = ""
+            seekRail.AutoButtonColor = false
+            seekRail.Parent = seekContainer
+            Instance.new("UICorner", seekRail).CornerRadius = UDim.new(1, 0)
+
+            local seekFill = Instance.new("Frame")
+            seekFill.Size = UDim2.new(0, 0, 1, 0)
+            seekFill.BackgroundColor3 = CurrentTheme.Accent
+            seekFill.BorderSizePixel = 0
+            seekFill.ZIndex = 8
+            seekFill.Parent = seekRail
+            Instance.new("UICorner", seekFill).CornerRadius = UDim.new(1, 0)
+
+            local seekKnob = Instance.new("Frame")
+            seekKnob.Size = UDim2.fromOffset(12, 12)
+            seekKnob.Position = UDim2.new(0, 0, 0.5, 0)
+            seekKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+            seekKnob.BackgroundColor3 = Color3.fromRGB(255,255,255)
+            seekKnob.BorderSizePixel = 0
+            seekKnob.ZIndex = 9
+            seekKnob.Parent = seekRail
+            Instance.new("UICorner", seekKnob).CornerRadius = UDim.new(1, 0)
+
+            local timeDur = Instance.new("TextLabel")
+            timeDur.Size = UDim2.fromOffset(36, 16)
+            timeDur.Position = UDim2.new(1, -36, 0, 0)
+            timeDur.BackgroundTransparency = 1
+            timeDur.Text = "0:00"
+            timeDur.TextSize = 10
+            timeDur.Font = Enum.Font.GothamMedium
+            timeDur.TextColor3 = Color3.fromRGB(160,160,170)
+            timeDur.ZIndex = 7
+            timeDur.Parent = seekRow
+
+            -- 控制按钮行
+            local ctrlRow = Instance.new("Frame")
+            ctrlRow.Size = UDim2.new(1, -12, 0, 26)
+            ctrlRow.Position = UDim2.new(0, 6, 0, 24)
+            ctrlRow.BackgroundTransparency = 1
+            ctrlRow.ZIndex = 6
+            ctrlRow.Parent = overlay
+
+            local function ctrlBtn(iconName, cb)
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.fromOffset(22, 22)
+                btn.BackgroundTransparency = 1
+                btn.Text = ""
+                btn.ZIndex = 7
+                btn.AutoButtonColor = false
+                btn.Parent = ctrlRow
+                local ic = Instance.new("ImageLabel")
+                ic.Size = UDim2.fromOffset(16, 16)
+                ic.Position = UDim2.new(0.5, 0, 0.5, 0)
+                ic.AnchorPoint = Vector2.new(0.5, 0.5)
+                ic.BackgroundTransparency = 1
+                ic.ZIndex = 8
+                ic.Parent = btn
+                AddToRegistry(ic, "ImageColor3", "Text")
+                applyIcon(ic, iconName)
+                btn.MouseButton1Click:Connect(function() pcall(cb) end)
+                return btn, ic
+            end
+
+            local playing = auto
+            local playBtn, playIco = ctrlBtn("play", function() end)
+            local pauseBtn, pauseIco = ctrlBtn("pause", function() end)
+            local stopBtn, stopIco = ctrlBtn("stop", function() end)
+            local volIco = Instance.new("ImageLabel")
+            volIco.Size = UDim2.fromOffset(14, 14)
+            volIco.Position = UDim2.fromOffset(68, 4)
+            volIco.BackgroundTransparency = 1
+            volIco.ZIndex = 7
+            volIco.Parent = ctrlRow
+            AddToRegistry(volIco, "ImageColor3", "SubText")
+            applyIcon(volIco, "volume")
+            local volLbl = Instance.new("TextLabel")
+            volLbl.Size = UDim2.fromOffset(32, 22)
+            volLbl.Position = UDim2.fromOffset(84, 0)
+            volLbl.BackgroundTransparency = 1
+            volLbl.Text = tostring(math.floor(vol*100)).."%"
+            volLbl.TextSize = 10
+            volLbl.Font = Enum.Font.Gotham
+            volLbl.ZIndex = 7
+            volLbl.Parent = ctrlRow
+            AddToRegistry(volLbl, "TextColor3", "SubText")
+
+            local btnLayout = Instance.new("UIListLayout")
+            btnLayout.FillDirection = Enum.FillDirection.Horizontal
+            btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            btnLayout.Padding = UDim.new(0, 2)
+            btnLayout.Parent = ctrlRow
+
+            -- 显示/隐藏覆盖层
+            local ctrlVisible = false
+            local fadeTimer = 0
+            local fadingOut = false
+
+            local function showOverlay()
+                ctrlVisible = true
+                fadingOut = false
+                fadeTimer = 3
+                Tween(overlay, {GroupTransparency = 0}, 0.18)
+            end
+
+            local function hideOverlay()
+                ctrlVisible = false
+                fadingOut = true
+                Tween(overlay, {GroupTransparency = 1}, 0.3)
+            end
+
+            local vidClickBtn = Instance.new("TextButton")
+            vidClickBtn.Size = UDim2.fromScale(1, 1)
+            vidClickBtn.BackgroundTransparency = 1
+            vidClickBtn.Text = ""
+            vidClickBtn.ZIndex = 4
+            vidClickBtn.AutoButtonColor = false
+            vidClickBtn.Parent = wrap
+            vidClickBtn.MouseButton1Click:Connect(function()
+                if ctrlVisible then fadeTimer = 3 else showOverlay() end
+            end)
+
+            local function resetFade() fadeTimer = 3; fadingOut = false end
+
+            playBtn.MouseButton1Click:Connect(function()
+                if vid then pcall(function() vid:Play() end) end
+                playing = true
+                playBtn.Visible = false
+                pauseBtn.Visible = true
+                resetFade()
+            end)
+
+            pauseBtn.MouseButton1Click:Connect(function()
+                if vid then pcall(function() vid:Pause() end) end
+                playing = false
+                playBtn.Visible = true
+                pauseBtn.Visible = false
+                resetFade()
+            end)
+
+            stopBtn.MouseButton1Click:Connect(function()
+                if vid then pcall(function() vid:Stop() end) end
+                playing = false
+                playBtn.Visible = true
+                pauseBtn.Visible = false
+                resetFade()
+            end)
+
+            pauseBtn.Visible = auto
+            playBtn.Visible = not auto
+
+            -- 进度条拖拽
+            local seeking = false
+            local function vidSeek(posX)
+                resetFade()
+                local rx = seekRail.AbsolutePosition.X
+                local rw = seekRail.AbsoluteSize.X
+                local pct = math.clamp((posX - rx) / rw, 0, 1)
+                seekFill.Size = UDim2.new(pct, 0, 1, 0)
+                seekKnob.Position = UDim2.new(pct, 0, 0.5, 0)
+                if vid and vid.TimeLength and vid.TimeLength > 0 then
+                    pcall(function() vid.TimePosition = vid.TimeLength * pct end)
+                end
+            end
+
+            seekRail.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    seeking = true
+                    vidSeek(inp.Position.X)
+                    resetFade()
+                    inp.Changed:Connect(function()
+                        if inp.UserInputState == Enum.UserInputState.End then seeking = false end
+                    end)
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(inp)
+                if seeking and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+                    vidSeek(inp.Position.X)
+                end
+            end)
+
+            -- 更新时间显示
+            local function fmtTime(s)
+                s = math.max(0, math.floor(s or 0))
+                return string.format("%d:%02d", math.floor(s/60), s%60)
+            end
+
+            local hbConn = RunService.Heartbeat:Connect(function(dt)
+                if not wrap.Parent then return end
+                if ctrlVisible then
+                    fadeTimer = fadeTimer - dt
+                    if fadeTimer <= 0 and not seeking then
+                        hideOverlay()
+                    end
+                end
+                if not vid then return end
+                local dur = vid.TimeLength or 0
+                local pos = 0
+                pcall(function() pos = vid.TimePosition end)
+                if dur > 0 and not seeking then
+                    local pct = math.clamp(pos / dur, 0, 1)
+                    seekFill.Size = UDim2.new(pct, 0, 1, 0)
+                    seekKnob.Position = UDim2.new(pct, 0, 0.5, 0)
+                end
+                timeCur.Text = fmtTime(pos)
+                timeDur.Text = fmtTime(dur)
+            end)
+
+            if auto and hasVideo then
+                task.spawn(function()
+                    task.wait(0.08)
+                    if vid and vid.Parent then
+                        pcall(function() vid:Play() end)
+                        playing = true
+                        pauseBtn.Visible = true
+                        playBtn.Visible = false
+                    end
+                end)
+            end
+
+            local mod = {Frame=wrap, Type="Video", VideoFrame=vid}
+            function mod:Play()
+                if vid then pcall(function() vid:Play() end); playing=true; playBtn.Visible=false; pauseBtn.Visible=true end
+            end
+            function mod:Pause()
+                if vid then pcall(function() vid:Pause() end); playing=false; playBtn.Visible=true; pauseBtn.Visible=false end
+            end
+            function mod:Stop()
+                if vid then pcall(function() vid:Stop() end); playing=false; playBtn.Visible=true; pauseBtn.Visible=false end
+            end
+            function mod:SetVideo(s)
+                if not vid then return end
+                local r = resolveMedia(s)
+                if r ~= "" then
+                    vid.Video = r
+                    placeholder.Visible = false
+                else
+                    placeholder.Visible = true
+                end
+            end
+            function mod:SetVolume(v)
+                if vid then vid.Volume = math.clamp(v, 0, 1) end
+                volLbl.Text = tostring(math.floor(math.clamp(v, 0, 1)*100)).."%"
+            end
+            function mod:SetAspectRatio(r)
+                ratioNum = parseRatio(r)
+                recalcAspect()
+            end
+            function mod:Destroy()
+                pcall(function() hbConn:Disconnect() end)
+                wrap:Destroy()
+            end
+            return mod
         end
 
         return child
@@ -3948,6 +4490,9 @@ function Fenglib:CreateWindow(Config)
             elements.Divider  = function(_, config) return createSection("", nil, true).Divider(config) end
             elements.Checkbox = function(_, config) return createSection("", nil, true).Checkbox(config) end
             elements.ProgressBar = function(_, config) return createSection("", nil, true).ProgressBar(config) end
+            -- 新增 Video
+            elements.Video    = function(_, config) return createSection("", nil, true).Video(config) end
+
             return elements
         end
 
