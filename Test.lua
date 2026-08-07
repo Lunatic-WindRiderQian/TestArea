@@ -2174,8 +2174,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         -- ========== Image ==========
         child.Image = function(_, config)
             config = config or {}
-            local title = config.Title or "Image"
-            local subtitle = config.Subtitle or ""
+            local title = config.Name or "Image"
+            local subtitle = config.SubName or ""
             local description = config.Description or {}
             if type(description) == "string" then
                 description = {description}
@@ -2677,7 +2677,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local looped = opts.Looped ~= false
             local vol    = opts.Volume or 0
             local auto   = opts.AutoPlay ~= false
-            local title  = opts.Title or "Video"
+            local title  = opts.Name or "Video"
             local aspect = opts.AspectRatio or "16:9"
 
             local function resolveSync(s)
