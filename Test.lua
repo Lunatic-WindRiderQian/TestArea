@@ -82,11 +82,9 @@ local Themes = {
 }
 local CurrentTheme = Themes.Dark
 
--- 防御性 AddToRegistry：若主题键缺失则回退
 local function AddToRegistry(obj, prop, themeKey)
     local val = CurrentTheme[themeKey]
     if val == nil then
-        -- 尝试从 Dark 主题回退
         val = Themes.Dark[themeKey]
         if val == nil then
             warn("Theme key '" .. tostring(themeKey) .. "' not found, using fallback white.")
@@ -159,7 +157,7 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- ===== MediaManager（视频&音频缓存） =====
+-- ===== MediaManager =====
 local MediaManager = {}
 MediaManager.Folder = "FengMediaCache"
 
@@ -182,7 +180,6 @@ function MediaManager:_rname(ext)
     return n.."."..ext
 end
 
--- 音频下载（支持 mp3, ogg, wav, flac）
 function MediaManager:Audio(src, noDownload)
     if type(src)~="string" or src=="" then return "" end
     if src:match("^rbxassetid://") or src:match("^rbxasset://") then return src end
@@ -238,7 +235,6 @@ function MediaManager:Audio(src, noDownload)
     return ""
 end
 
--- 视频下载
 function MediaManager:Video(src)
     if type(src)~="string" or src=="" then return "" end
     if src:match("^rbxassetid://") or src:match("^rbxasset://") then return src end
@@ -294,7 +290,6 @@ function MediaManager:Video(src)
     return ""
 end
 
--- ===== MediaManager:Image（图片下载）=====
 function MediaManager:Image(src)
     if type(src)~="string" or src=="" then return "" end
     if src:match("^rbxassetid://") or src:match("^rbxasset://") then return src end
@@ -351,7 +346,7 @@ end
 -- ===== 结束 MediaManager =====
 
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
-    local win = window  -- 用于通知
+    local win = window
     local padding = parent:FindFirstChild("SectionPadding")
     if not padding then
         padding = Instance.new("UIPadding")
@@ -687,7 +682,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local child = {}
 
-        -- ========== Button ==========
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
             local callback = config.Callback or function() end
@@ -747,7 +741,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Toggle ==========
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
@@ -820,7 +813,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- ========== Slider ==========
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
             local valueTable = config.Value or {}
@@ -1020,7 +1012,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             UpdateSlider(Val)
         end
 
-        -- ========== Dropdown ==========
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
             local options = config.Values or {}
@@ -1372,7 +1363,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Keybind ==========
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
             local defaultKey = config.Default or Enum.KeyCode.M
@@ -1603,7 +1593,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== ColorPicker ==========
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
             local Color = config.Default or Color3.fromRGB(255, 255, 255)
@@ -2008,7 +1997,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Input ==========
         child.Input = function(_, config)
             local inputText = config.Name or ""
             local default = config.Value or ""
@@ -2200,7 +2188,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Textbox ==========
         child.Textbox = function(_, config)
             local boxText = config.Name or ""
             local placeholder = config.Placeholder or ""
@@ -2256,7 +2243,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
-        -- ========== Label ==========
         child.Label = function(_, config)
             local labelText = config.Name or ""
             local LabelFrame = Instance.new("Frame")
@@ -2284,7 +2270,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Image ==========
         child.Image = function(_, config)
             config = config or {}
             local title = config.Name or "Image"
@@ -2489,7 +2474,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Divider ==========
         child.Divider = function(_, config)
             local labelText = config and config.Name or config or ""
 
@@ -2551,7 +2535,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Checkbox ==========
         child.Checkbox = function(_, config)
             local title = config.Name or ""
             local default = config.Default or false
@@ -2670,7 +2653,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return h
         end
 
-        -- ========== ProgressBar ==========
         child.ProgressBar = function(_, config)
             local name = config.Name or ""
             local valueConfig = config.Value or {}
@@ -2779,7 +2761,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return h
         end
 
-        -- ===== Video 元素 =====
         child.Video = function(_, config)
             local opts   = config or {}
             local parent = contentHolder
@@ -2924,7 +2905,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return mod
             end
 
-            -- Overlay
             local overlay = Instance.new("CanvasGroup")
             overlay.Size = UDim2.new(1, 0, 0, 54)
             overlay.Position = UDim2.new(0, 0, 1, 0)
@@ -2949,7 +2929,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             grad.Rotation = 90
             grad.Parent = gradFr
 
-            -- Seek row
             local seekRow = Instance.new("Frame")
             seekRow.Size = UDim2.new(1, -12, 0, 16)
             seekRow.Position = UDim2.new(0, 6, 0, 4)
@@ -3014,7 +2993,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             timeDur.ZIndex = 7
             timeDur.Parent = seekRow
 
-            -- Controls row
             local ctrlRow = Instance.new("Frame")
             ctrlRow.Size = UDim2.new(1, -12, 0, 26)
             ctrlRow.Position = UDim2.new(0, 6, 0, 24)
@@ -3232,7 +3210,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
-        -- ========== Audio (from FluentPro) ==========
         child.Audio = function(_, config)
             local opts = config or {}
             local parent = contentHolder
@@ -3285,7 +3262,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 snd = initSound(resolved)
             end
 
-            -- UI
             local wrapHeight = (title ~= "" or subtitle ~= "") and 118 or 96
             local wrap = Instance.new("Frame")
             wrap.Size = UDim2.new(1, -16, 0, wrapHeight)
@@ -3642,18 +3618,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
-        -- ========== Viewport (3D 预览) ==========
         child.Viewport = function(_, config)
             local opts = config or {}
             local parent = contentHolder
             if not parent then return end
 
-            local lib = Fenglib  -- 用于访问主题等
             local UIS = UserInputService
             local RS  = RunService
             local TS  = TweenService
 
-            -- 解析参数
             local height     = opts.Height or 200
             local focused    = (opts.Focused ~= false)
             local interactive= (opts.Interactive ~= false)
@@ -3664,7 +3637,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             assert(obj, "Viewport - Missing Object")
 
-            -- 辅助函数：解析宽高比
             local function parseRatio(r)
                 if type(r) == "number" then return r end
                 if type(r) == "string" then
@@ -3674,7 +3646,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return nil
             end
 
-            -- 主容器
             local wrap = Instance.new("Frame")
             wrap.Name = "ViewportHolder"
             wrap.Size = UDim2.new(1, -16, 0, height)
@@ -3694,7 +3665,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             wrapStroke.Parent = wrap
             AddToRegistry(wrapStroke, "Color", "Stroke")
 
-            -- 宽高比适配
             local ratioNum = parseRatio(aspectRatio)
             local function recalcAspect()
                 if not ratioNum or ratioNum <= 0 then return end
@@ -3706,7 +3676,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
             task.defer(recalcAspect)
 
-            -- 背景（模仿 Viewport 背景）
             local bg = Instance.new("ImageLabel")
             bg.Size = UDim2.fromScale(1, 1)
             bg.BackgroundTransparency = 0.1
@@ -3717,9 +3686,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local bgCorner = Instance.new("UICorner")
             bgCorner.CornerRadius = UDim.new(0, radius)
             bgCorner.Parent = bg
-            AddToRegistry(bg, "BackgroundColor3", "Main")  -- 使用主题颜色
+            AddToRegistry(bg, "BackgroundColor3", "Main")
 
-            -- 直接使用 ViewportFrame
             local vp = Instance.new("ViewportFrame")
             vp.Name = "Viewport"
             vp.Size = UDim2.fromScale(1, 1)
@@ -3728,17 +3696,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             vp.Active = interactive
             vp.Parent = wrap
 
-            -- 将对象放入 ViewportFrame（克隆或直接移动？FluentPro 中直接设置 Parent）
             obj.Parent = vp
 
-            -- 交互状态
             local Dragging = false
             local Pinching = false
             local LastMousePos = nil
             local LastPinchDist = 0
             local ScrollFrameRef = nil
 
-            -- 查找最近的 ScrollingFrame（用于禁用滚动）
             local function findScrollFrame(inst)
                 while inst do
                     if inst:IsA("ScrollingFrame") then
@@ -3750,14 +3715,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             ScrollFrameRef = findScrollFrame(wrap)
 
-            -- 辅助：判断鼠标是否在 Viewport 内
             local function isMouseInViewport(pos)
                 local ap = vp.AbsolutePosition
                 local as = vp.AbsoluteSize
                 return pos.X >= ap.X and pos.X <= ap.X + as.X and pos.Y >= ap.Y and pos.Y <= ap.Y + as.Y
             end
 
-            -- 更新相机缩放值（用于 SetValue）
             local function updateZoomValue()
                 local ok, mpos = pcall(function() return obj:GetPivot().Position end)
                 if ok and camera then
@@ -3766,7 +3729,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
 
-            -- 焦点定位
             local function focusCamera()
                 local mpos = obj:GetPivot().Position
                 local size = obj:IsA("BasePart") and obj.Size or select(2, obj:GetBoundingBox(0))
@@ -3779,8 +3741,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 task.defer(focusCamera)
             end
 
-            -- === 事件连接：鼠标交互 ===
-            -- 鼠标进入：禁用滚动
             vp.MouseEnter:Connect(function()
                 if interactive and ScrollFrameRef then
                     ScrollFrameRef.ScrollingEnabled = false
@@ -3795,7 +3755,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
 
-            -- 开始拖拽
             vp.InputBegan:Connect(function(inp)
                 if interactive then
                     if inp.UserInputType == Enum.UserInputType.MouseButton1 or (inp.UserInputType == Enum.UserInputType.Touch and not Pinching) then
@@ -3813,17 +3772,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
 
-            -- 拖拽旋转
             UIS.InputChanged:Connect(function(inp)
                 if interactive and Dragging and not Pinching then
                     if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
                         local delta = inp.Position - LastMousePos
                         LastMousePos = inp.Position
                         local pos = obj:GetPivot().Position
-                        -- 水平旋转
                         local ry = CFrame.fromAxisAngle(Vector3.new(0,1,0), -delta.X * 0.02)
                         camera.CFrame = CFrame.new(pos) * ry * CFrame.new(-pos) * camera.CFrame
-                        -- 垂直旋转（限制上下角度）
                         local rx = CFrame.fromAxisAngle(camera.CFrame.RightVector, -delta.Y * 0.02)
                         local pitched = CFrame.new(pos) * rx * CFrame.new(-pos) * camera.CFrame
                         if pitched.UpVector.Y > 0.1 then
@@ -3834,7 +3790,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
 
-            -- 滚轮缩放
             vp.InputChanged:Connect(function(inp)
                 if interactive then
                     if inp.UserInputType == Enum.UserInputType.MouseWheel then
@@ -3846,7 +3801,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
 
-            -- 触摸双指缩放
             UIS.TouchPinch:Connect(function(touches, scale, vel, state)
                 if interactive then
                     if state == Enum.UserInputState.Begin then
@@ -3868,7 +3822,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
 
-            -- 构建返回对象
             local self = {
                 Frame = wrap,
                 Type = "Viewport",
@@ -3877,10 +3830,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Interactive = interactive,
                 Height = height,
                 Focused = focused,
-                Value = nil,  -- 会在 updateZoomValue 中设置
+                Value = nil,
             }
 
-            -- 方法
             function self:SetObject(newObj, clone)
                 if clone then newObj = newObj:Clone() end
                 if self.Object then self.Object:Destroy() end
@@ -3926,47 +3878,28 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             function self:Destroy()
                 wrap:Destroy()
-                -- 清理资源（如有需要）
             end
 
-            -- 初始化时设置 Value
             updateZoomValue()
 
             return self
         end
 
-        -- ===== 新增 Social（仅支持 bilibili 和 kuaishou，已移除海外平台）=====
+        -- ===== Social（支持 Name / SubName / SmlName / Logo / copy）=====
         child.Social = function(_, config)
             config = config or {}
             local parent = contentHolder
             if not parent then return end
 
-            local username = tostring(config.Username or "")
-            local platform = tostring(config.Platform or "")
-            local profileUrl = config.ProfileUrl or config.Url
-            -- 如果没给 username 但给了 profileUrl，尝试从 URL 解析（仅识别 bilibili 和 kuaishou）
-            if username == "" and type(profileUrl) == "string" and profileUrl ~= "" then
-                local host, path = profileUrl:match("^https?://([^/]+)/?(.-)[/?#]?$")
-                if not host then host, path = profileUrl:match("^https?://([^/]+)/?(.*)$") end
-                if host then
-                    host = host:gsub("^www%.", ""):lower()
-                    -- 只保留 bilibili 和 kuaishou
-                    local hostMap = {
-                        ["bilibili.com"] = "bilibili",
-                        ["kuaishou.com"] = "kuaishou",
-                    }
-                    local user = path and path:match("^([^/?#]+)")
-                    if user and user ~= "" then
-                        if user:sub(1,1) == "@" then user = user:sub(2) end
-                        username = user
-                        if platform == "" and hostMap[host] then
-                            platform = hostMap[host]:sub(1,1):upper()..hostMap[host]:sub(2)
-                        end
-                    end
-                end
-            end
+            local displayName = tostring(config.Name or config.DisplayName or "")
+            local subName = tostring(config.SubName or config.Subtitle or "")
+            local platform = tostring(config.SmlName or config.Platform or "")
+            local avatarSrc = config.Logo or config.Avatar or ""
+            local copyText = tostring(config.copy or "已复制到剪贴板")
 
-            local displayName = tostring(config.DisplayName or (username ~= "" and username or ""))
+            if displayName == "" then
+                displayName = "用户"
+            end
 
             -- 主卡片
             local wrap = Instance.new("Frame")
@@ -3984,7 +3917,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             stroke.Transparency = 0.45
             stroke.Thickness = 1.5
             stroke.Parent = wrap
-            AddToRegistry(stroke, "Color", "Stroke")  -- 修正：使用 "Stroke" 而非 "InElementBorder"
+            AddToRegistry(stroke, "Color", "Stroke")
 
             -- 头像
             local avatarBg = Instance.new("Frame")
@@ -4009,13 +3942,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             avatarImgCorner.CornerRadius = UDim.new(0, 8)
             avatarImgCorner.Parent = avatarImg
 
-            local hasAvatarSource = (username ~= "") or (type(profileUrl) == "string" and profileUrl ~= "") or (type(config.Avatar) == "string" and config.Avatar ~= "")
-            if hasAvatarSource then
+            if avatarSrc ~= "" then
                 avatarCorner.CornerRadius = UDim.new(1, 0)
                 avatarImgCorner.CornerRadius = UDim.new(1, 0)
             end
 
-            -- 显示名（可点击复制）
+            -- 显示名
             local nameBtn = Instance.new("TextButton")
             nameBtn.Name = "DisplayNameButton"
             nameBtn.Text = displayName
@@ -4030,20 +3962,26 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             nameBtn.Parent = wrap
             AddToRegistry(nameBtn, "TextColor3", "Text")
 
-            -- 用户名（可点击复制）
-            local userBtn = Instance.new("TextButton")
-            userBtn.Name = "UsernameButton"
-            userBtn.Text = (username ~= "" and ("@"..username) or "")
-            userBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
-            userBtn.TextSize = 11
-            userBtn.TextXAlignment = Enum.TextXAlignment.Left
-            userBtn.TextTruncate = Enum.TextTruncate.AtEnd
-            userBtn.BackgroundTransparency = 1
-            userBtn.AutoButtonColor = false
-            userBtn.Size = UDim2.new(1, -140, 0, 13)
-            userBtn.Position = UDim2.new(0, 62, 0, 27)
-            userBtn.Parent = wrap
-            AddToRegistry(userBtn, "TextColor3", "SubText")
+            -- 副标题
+            if subName ~= "" then
+                local subNameBtn = Instance.new("TextButton")
+                subNameBtn.Name = "SubNameButton"
+                subNameBtn.Text = subName
+                subNameBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
+                subNameBtn.TextSize = 11
+                subNameBtn.TextXAlignment = Enum.TextXAlignment.Left
+                subNameBtn.TextTruncate = Enum.TextTruncate.AtEnd
+                subNameBtn.BackgroundTransparency = 1
+                subNameBtn.AutoButtonColor = false
+                subNameBtn.Size = UDim2.new(1, -140, 0, 13)
+                subNameBtn.Position = UDim2.new(0, 62, 0, 27)
+                subNameBtn.Parent = wrap
+                AddToRegistry(subNameBtn, "TextColor3", "SubText")
+                subNameBtn.MouseButton1Click:Connect(function()
+                    pcall(function() toclipboard(subName) end)
+                    if win then win:Notification("", copyText, "Success", 2) end
+                end)
+            end
 
             -- 平台标签
             if platform ~= "" then
@@ -4056,100 +3994,29 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 platformLbl.TextXAlignment = Enum.TextXAlignment.Left
                 platformLbl.BackgroundTransparency = 1
                 platformLbl.Size = UDim2.new(1, -140, 0, 12)
-                platformLbl.Position = UDim2.new(0, 62, 0, 42)
+                platformLbl.Position = UDim2.new(0, 62, 0, subName ~= "" and 42 or 27)
                 platformLbl.Parent = wrap
                 AddToRegistry(platformLbl, "TextColor3", "SubText")
             end
 
-            -- 复制按钮
-            local copyBtn = nil
-            if profileUrl then
-                copyBtn = Instance.new("TextButton")
-                copyBtn.Name = "CopyLinkButton"
-                copyBtn.Text = "Copy"
-                copyBtn.Size = UDim2.fromOffset(52, 26)
-                copyBtn.Position = UDim2.new(1, -11, 0.5, 0)
-                copyBtn.AnchorPoint = Vector2.new(1, 0.5)
-                copyBtn.TextColor3 = Color3.fromRGB(255,255,255)
-                copyBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold)
-                copyBtn.TextSize = 12
-                copyBtn.Parent = wrap
-                AddToRegistry(copyBtn, "BackgroundColor3", "Element")
-                local copyCorner = Instance.new("UICorner")
-                copyCorner.CornerRadius = UDim.new(0, 8)
-                copyCorner.Parent = copyBtn
-                local copyStroke = Instance.new("UIStroke")
-                copyStroke.Transparency = 0.4
-                copyStroke.Thickness = 1
-                copyStroke.Parent = copyBtn
-                -- 使用 "Stroke" 替代 "InElementBorder"
-                AddToRegistry(copyStroke, "Color", "Stroke")
-            end
+            -- 点击名称复制（使用自定义提示）
+            nameBtn.MouseButton1Click:Connect(function()
+                pcall(function() toclipboard(displayName) end)
+                if win then win:Notification("", copyText, "Success", 2) end
+            end)
 
-            -- 复制函数
-            local function _copy(text, label)
-                if not text or text == "" then return end
-                pcall(function() toclipboard(text) end)
-                if win then win:Notification("Copied", (label or "Text").." copied to clipboard", "Success", 2) end
-            end
-
-            nameBtn.MouseButton1Click:Connect(function() _copy(displayName, "Display name") end)
-            userBtn.MouseButton1Click:Connect(function() _copy(username, "Username") end)
-            if copyBtn then
-                copyBtn.MouseButton1Click:Connect(function() _copy(profileUrl, "Profile link") end)
-            end
-
-            -- 头像加载（使用 MediaManager:Image）
+            -- 头像加载
             task.spawn(function()
-                local avatarSrc = config.Avatar
                 local imgUrl = nil
-
-                local function _slugFromHost(hostUrl)
-                    local host, path = hostUrl:match("^https?://([^/]+)/?(.*)$")
-                    if not host then return nil, nil end
-                    host = host:gsub("^www%.", ""):lower()
-                    local user = path:match("^([^/?#]+)")
-                    if not user or user == "" then return nil, nil end
-                    -- 同样只保留 bilibili 和 kuaishou
-                    local hostMap = {
-                        ["bilibili.com"] = "bilibili",
-                        ["kuaishou.com"] = "kuaishou",
-                    }
-                    local slug = hostMap[host]
-                    if user:sub(1,1) == "@" then user = user:sub(2) end
-                    return slug, user
-                end
-
-                if type(avatarSrc) == "string" and avatarSrc:match("^https?://") then
-                    if avatarSrc:match("unavatar%.io") or avatarSrc:match("linkspreview") then
+                if avatarSrc ~= "" then
+                    if avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") or avatarSrc:match("^http") then
                         imgUrl = avatarSrc
-                    else
-                        local slug, user = _slugFromHost(avatarSrc)
-                        if slug and user then
-                            imgUrl = "https://unavatar.io/"..slug.."/"..user
-                        else
-                            imgUrl = avatarSrc
-                        end
-                    end
-                elseif type(profileUrl) == "string" and profileUrl:match("^https?://") and username == "" then
-                    if config.AvatarService == "linkpreview" then
-                        imgUrl = "https://linkspreview.netlify.app/url?url="..profileUrl
-                    else
-                        local slug, user = _slugFromHost(profileUrl)
-                        if slug and user then
-                            imgUrl = "https://unavatar.io/"..slug.."/"..user
-                        end
-                    end
-                elseif username ~= "" then
-                    if config.AvatarService == "linkpreview" and profileUrl then
-                        imgUrl = "https://linkspreview.netlify.app/url?url="..tostring(profileUrl)
-                    else
-                        local slug = platform ~= "" and (platform:lower().."/") or ""
-                        imgUrl = "https://unavatar.io/"..slug..username
+                    elseif tonumber(avatarSrc) then
+                        imgUrl = "rbxassetid://" .. avatarSrc
                     end
                 end
 
-                if imgUrl then
+                if imgUrl and imgUrl ~= "" then
                     local ok, asset = pcall(function()
                         return MediaManager:Image(imgUrl)
                     end)
@@ -4161,22 +4028,81 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
 
-            -- 返回控制方法
             local mod = {Frame=wrap, Type="Social"}
-            function mod:SetUsername(newUsername)
-                username = tostring(newUsername or "")
-                userBtn.Text = username ~= "" and ("@"..username) or ""
-            end
-            function mod:SetDisplayName(newDisplayName)
-                displayName = tostring(newDisplayName or "")
+            function mod:SetName(newName)
+                displayName = tostring(newName or "")
                 nameBtn.Text = displayName
+            end
+            function mod:SetSubName(newSubName)
+                subName = tostring(newSubName or "")
+                local existing = wrap:FindFirstChild("SubNameButton")
+                if existing then existing:Destroy() end
+                if subName ~= "" then
+                    local subNameBtn = Instance.new("TextButton")
+                    subNameBtn.Name = "SubNameButton"
+                    subNameBtn.Text = subName
+                    subNameBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
+                    subNameBtn.TextSize = 11
+                    subNameBtn.TextXAlignment = Enum.TextXAlignment.Left
+                    subNameBtn.TextTruncate = Enum.TextTruncate.AtEnd
+                    subNameBtn.BackgroundTransparency = 1
+                    subNameBtn.AutoButtonColor = false
+                    subNameBtn.Size = UDim2.new(1, -140, 0, 13)
+                    subNameBtn.Position = UDim2.new(0, 62, 0, 27)
+                    subNameBtn.Parent = wrap
+                    AddToRegistry(subNameBtn, "TextColor3", "SubText")
+                    subNameBtn.MouseButton1Click:Connect(function()
+                        pcall(function() toclipboard(subName) end)
+                        if win then win:Notification("", copyText, "Success", 2) end
+                    end)
+                end
+            end
+            function mod:SetSmlName(newPlatform)
+                platform = tostring(newPlatform or "")
+                local existing = wrap:FindFirstChild("PlatformLabel")
+                if existing then existing:Destroy() end
+                if platform ~= "" then
+                    local platformLbl = Instance.new("TextLabel")
+                    platformLbl.Name = "PlatformLabel"
+                    platformLbl.Text = platform
+                    platformLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
+                    platformLbl.TextSize = 10
+                    platformLbl.TextTransparency = 0.3
+                    platformLbl.TextXAlignment = Enum.TextXAlignment.Left
+                    platformLbl.BackgroundTransparency = 1
+                    platformLbl.Size = UDim2.new(1, -140, 0, 12)
+                    platformLbl.Position = UDim2.new(0, 62, 0, subName ~= "" and 42 or 27)
+                    platformLbl.Parent = wrap
+                    AddToRegistry(platformLbl, "TextColor3", "SubText")
+                end
+            end
+            function mod:SetLogo(newLogo)
+                avatarSrc = tostring(newLogo or "")
+                if avatarSrc ~= "" then
+                    local imgUrl
+                    if avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") or avatarSrc:match("^http") then
+                        imgUrl = avatarSrc
+                    elseif tonumber(avatarSrc) then
+                        imgUrl = "rbxassetid://" .. avatarSrc
+                    end
+                    if imgUrl then
+                        local ok, asset = pcall(function()
+                            return MediaManager:Image(imgUrl)
+                        end)
+                        if ok and asset and asset ~= "" then
+                            avatarImg.Image = asset
+                        end
+                    end
+                end
+            end
+            function mod:SetCopyText(newText)
+                copyText = tostring(newText or "已复制到剪贴板")
             end
             function mod:Destroy()
                 wrap:Destroy()
             end
             return mod
         end
-        -- ===== 结束 Social =====
 
         return child
     end
@@ -5561,7 +5487,7 @@ function Fenglib:CreateWindow(Config)
             elements.Video    = function(_, config) return createSection("", nil, true).Video(config) end
             elements.Audio    = function(_, config) return createSection("", nil, true).Audio(config) end
             elements.Viewport = function(_, config) return createSection("", nil, true).Viewport(config) end
-            elements.Social   = function(_, config) return createSection("", nil, true).Social(config) end   -- 已修改
+            elements.Social   = function(_, config) return createSection("", nil, true).Social(config) end
             return elements
         end
 
