@@ -682,6 +682,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local child = {}
 
+        -- ========== Button ==========
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
             local callback = config.Callback or function() end
@@ -2761,6 +2762,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return h
         end
 
+        -- ===== Video 元素 =====
         child.Video = function(_, config)
             local opts   = config or {}
             local parent = contentHolder
@@ -3885,7 +3887,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ===== Social（支持 Name / SubName / SmlName / Logo / copy / Cbn）=====
+        -- ===== Social =====
         child.Social = function(_, config)
             config = config or {}
             local parent = contentHolder
@@ -3902,7 +3904,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 displayName = "用户"
             end
 
-            -- 主卡片
             local wrap = Instance.new("Frame")
             wrap.Size = UDim2.new(1, 0, 0, 64)
             wrap.BackgroundTransparency = 0.82
@@ -3920,7 +3921,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             stroke.Parent = wrap
             AddToRegistry(stroke, "Color", "Stroke")
 
-            -- 头像
             local avatarBg = Instance.new("Frame")
             avatarBg.Name = "AvatarBg"
             avatarBg.Size = UDim2.fromOffset(42, 42)
@@ -3948,7 +3948,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 avatarImgCorner.CornerRadius = UDim.new(1, 0)
             end
 
-            -- 显示名
             local nameLbl = Instance.new("TextLabel")
             nameLbl.Name = "DisplayName"
             nameLbl.Text = displayName
@@ -3962,7 +3961,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             nameLbl.Parent = wrap
             AddToRegistry(nameLbl, "TextColor3", "Text")
 
-            -- 副标题
             if subName ~= "" then
                 local subNameLbl = Instance.new("TextLabel")
                 subNameLbl.Name = "SubName"
@@ -3978,7 +3976,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AddToRegistry(subNameLbl, "TextColor3", "SubText")
             end
 
-            -- 平台标签
             if platform ~= "" then
                 local platformLbl = Instance.new("TextLabel")
                 platformLbl.Name = "PlatformLabel"
@@ -3994,7 +3991,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AddToRegistry(platformLbl, "TextColor3", "SubText")
             end
 
-            -- 复制按钮（点击复制 copy 字段内容，按钮文字使用 Cbn）
             if copyText ~= "" then
                 local copyBtn = Instance.new("TextButton")
                 copyBtn.Name = "CopyButton"
@@ -4018,14 +4014,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 copyStroke.Parent = copyBtn
                 AddToRegistry(copyStroke, "Color", "Stroke")
 
-                -- 点击复制 copy 内容
                 copyBtn.MouseButton1Click:Connect(function()
                     pcall(function() toclipboard(copyText) end)
                     if win then win:Notification("", "已复制到剪贴板", "Success", 2) end
                 end)
             end
 
-            -- 头像加载
             task.spawn(function()
                 local imgUrl = nil
                 if avatarSrc ~= "" then
@@ -4150,6 +4144,92 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 wrap:Destroy()
             end
             return mod
+        end
+
+        -- ===== Paragraph（完整复刻 FluentPro，支持富文本）=====
+        child.Paragraph = function(_, config)
+            config = config or {}
+            local title = config.Name or ""
+            local content = config.Content or ""
+
+            local frame = Instance.new("Frame")
+            frame.Size = UDim2.new(1, 0, 0, 0)
+            frame.AutomaticSize = Enum.AutomaticSize.Y
+            frame.BackgroundTransparency = 0.92
+            frame.BorderSizePixel = 0
+            frame.Parent = contentHolder
+            AddToRegistry(frame, "BackgroundColor3", "Top")
+
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 4)
+            corner.Parent = frame
+
+            local stroke = Instance.new("UIStroke")
+            stroke.Transparency = 0.6
+            stroke.Thickness = 1
+            stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            stroke.Parent = frame
+            AddToRegistry(stroke, "Color", "Stroke")
+
+            local labelHolder = Instance.new("Frame")
+            labelHolder.Size = UDim2.new(1, -20, 0, 0)
+            labelHolder.Position = UDim2.new(0, 10, 0, 0)
+            labelHolder.BackgroundTransparency = 1
+            labelHolder.AutomaticSize = Enum.AutomaticSize.Y
+            labelHolder.Parent = frame
+
+            local holderLayout = Instance.new("UIListLayout")
+            holderLayout.Padding = UDim.new(0, 0)
+            holderLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            holderLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            holderLayout.Parent = labelHolder
+
+            local padding = Instance.new("UIPadding")
+            padding.PaddingTop = UDim.new(0, 13)
+            padding.PaddingBottom = UDim.new(0, 13)
+            padding.Parent = labelHolder
+
+            -- 标题：支持富文本
+            local titleLabel = Instance.new("TextLabel")
+            titleLabel.Size = UDim2.new(1, 0, 0, 14)
+            titleLabel.BackgroundTransparency = 1
+            titleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium)
+            titleLabel.Text = title
+            titleLabel.TextSize = 13
+            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            titleLabel.TextTruncate = Enum.TextTruncate.AtEnd
+            titleLabel.RichText = true   -- 启用富文本
+            titleLabel.Parent = labelHolder
+            AddToRegistry(titleLabel, "TextColor3", "Text")
+
+            -- 内容：支持富文本
+            local contentLabel = Instance.new("TextLabel")
+            contentLabel.Size = UDim2.new(1, 0, 0, 14)
+            contentLabel.BackgroundTransparency = 1
+            contentLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular)
+            contentLabel.Text = content
+            contentLabel.TextSize = 12
+            contentLabel.TextXAlignment = Enum.TextXAlignment.Left
+            contentLabel.TextWrapped = true
+            contentLabel.AutomaticSize = Enum.AutomaticSize.Y
+            contentLabel.RichText = true   -- 启用富文本
+            contentLabel.Parent = labelHolder
+            AddToRegistry(contentLabel, "TextColor3", "SubText")
+
+            local self = {}
+            function self.SetName(newTitle)
+                titleLabel.Text = newTitle
+            end
+            function self.SetContent(newContent)
+                contentLabel.Text = newContent
+            end
+            function self.SetVisible(state)
+                frame.Visible = state
+            end
+            function self.Destroy()
+                frame:Destroy()
+            end
+            return self
         end
 
         return child
@@ -5536,6 +5616,7 @@ function Fenglib:CreateWindow(Config)
             elements.Audio    = function(_, config) return createSection("", nil, true).Audio(config) end
             elements.Viewport = function(_, config) return createSection("", nil, true).Viewport(config) end
             elements.Social   = function(_, config) return createSection("", nil, true).Social(config) end
+            elements.Paragraph = function(_, config) return createSection("", nil, true).Paragraph(config) end
             return elements
         end
 
