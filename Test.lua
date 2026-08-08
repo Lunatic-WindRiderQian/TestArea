@@ -3587,6 +3587,299 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
+        -- ========== Viewport (3D 预览) ==========
+        child.Viewport = function(_, config)
+            local opts = config or {}
+            local parent = contentHolder
+            if not parent then return end
+
+            local lib = Fenglib  -- 用于访问主题等
+            local UIS = UserInputService
+            local RS  = RunService
+            local TS  = TweenService
+
+            -- 解析参数
+            local height     = opts.Height or 200
+            local focused    = (opts.Focused ~= false)
+            local interactive= (opts.Interactive ~= false)
+            local camera     = opts.Camera or Instance.new("Camera")
+            local obj        = opts.Object
+            local aspectRatio= opts.AspectRatio
+            local radius     = opts.Radius or 8
+
+            assert(obj, "Viewport - Missing Object")
+
+            -- 辅助函数：解析宽高比
+            local function parseRatio(r)
+                if type(r) == "number" then return r end
+                if type(r) == "string" then
+                    local w, h = r:match("(%d+):(%d+)")
+                    if w and h and tonumber(h) ~= 0 then return tonumber(w) / tonumber(h) end
+                end
+                return nil
+            end
+
+            -- 主容器
+            local wrap = Instance.new("Frame")
+            wrap.Name = "ViewportHolder"
+            wrap.Size = UDim2.new(1, -16, 0, height)
+            wrap.BackgroundTransparency = 0.9
+            wrap.BorderSizePixel = 0
+            wrap.ClipsDescendants = true
+            wrap.Parent = parent
+            AddToRegistry(wrap, "BackgroundColor3", "Main")
+
+            local wrapCorner = Instance.new("UICorner")
+            wrapCorner.CornerRadius = UDim.new(0, radius)
+            wrapCorner.Parent = wrap
+
+            local wrapStroke = Instance.new("UIStroke")
+            wrapStroke.Thickness = 1
+            wrapStroke.Transparency = 0.6
+            wrapStroke.Parent = wrap
+            AddToRegistry(wrapStroke, "Color", "Stroke")
+
+            -- 宽高比适配
+            local ratioNum = parseRatio(aspectRatio)
+            local function recalcAspect()
+                if not ratioNum or ratioNum <= 0 then return end
+                local w = wrap.AbsoluteSize.X
+                if w > 0 then
+                    wrap.Size = UDim2.new(1, -16, 0, math.floor(w / ratioNum))
+                end
+            end
+            wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
+            task.defer(recalcAspect)
+
+            -- 背景（模仿 Viewport 背景）
+            local bg = Instance.new("ImageLabel")
+            bg.Size = UDim2.fromScale(1, 1)
+            bg.BackgroundTransparency = 0.1
+            bg.BorderSizePixel = 0
+            bg.Image = ""
+            bg.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+            bg.Parent = wrap
+            local bgCorner = Instance.new("UICorner")
+            bgCorner.CornerRadius = UDim.new(0, radius)
+            bgCorner.Parent = bg
+            AddToRegistry(bg, "BackgroundColor3", "Main")  -- 使用主题颜色
+
+            -- 直接使用 ViewportFrame
+            local vp = Instance.new("ViewportFrame")
+            vp.Name = "Viewport"
+            vp.Size = UDim2.fromScale(1, 1)
+            vp.BackgroundTransparency = 1
+            vp.CurrentCamera = camera
+            vp.Active = interactive
+            vp.Parent = wrap
+
+            -- 将对象放入 ViewportFrame（克隆或直接移动？FluentPro 中直接设置 Parent）
+            obj.Parent = vp
+
+            -- 交互状态
+            local Dragging = false
+            local Pinching = false
+            local LastMousePos = nil
+            local LastPinchDist = 0
+            local ScrollFrameRef = nil
+
+            -- 查找最近的 ScrollingFrame（用于禁用滚动）
+            local function findScrollFrame(inst)
+                while inst do
+                    if inst:IsA("ScrollingFrame") then
+                        return inst
+                    end
+                    inst = inst.Parent
+                end
+                return nil
+            end
+            ScrollFrameRef = findScrollFrame(wrap)
+
+            -- 辅助：判断鼠标是否在 Viewport 内
+            local function isMouseInViewport(pos)
+                local ap = vp.AbsolutePosition
+                local as = vp.AbsoluteSize
+                return pos.X >= ap.X and pos.X <= ap.X + as.X and pos.Y >= ap.Y and pos.Y <= ap.Y + as.Y
+            end
+
+            -- 更新相机缩放值（用于 SetValue）
+            local function updateZoomValue()
+                local ok, mpos = pcall(function() return obj:GetPivot().Position end)
+                if ok and camera then
+                    local dist = (camera.CFrame.Position - mpos).Magnitude
+                    if self then self.Value = dist end
+                end
+            end
+
+            -- 焦点定位
+            local function focusCamera()
+                local mpos = obj:GetPivot().Position
+                local size = obj:IsA("BasePart") and obj.Size or select(2, obj:GetBoundingBox(0))
+                local ext = math.max(size.X, size.Y, size.Z)
+                camera.CFrame = CFrame.new(mpos + Vector3.new(0, ext/2, ext*2), mpos)
+                updateZoomValue()
+            end
+
+            if focused then
+                task.defer(focusCamera)
+            end
+
+            -- === 事件连接：鼠标交互 ===
+            -- 鼠标进入：禁用滚动
+            vp.MouseEnter:Connect(function()
+                if interactive and ScrollFrameRef then
+                    ScrollFrameRef.ScrollingEnabled = false
+                end
+            end)
+
+            vp.InputEnded:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+                    if ScrollFrameRef then
+                        ScrollFrameRef.ScrollingEnabled = true
+                    end
+                end
+            end)
+
+            -- 开始拖拽
+            vp.InputBegan:Connect(function(inp)
+                if interactive then
+                    if inp.UserInputType == Enum.UserInputType.MouseButton1 or (inp.UserInputType == Enum.UserInputType.Touch and not Pinching) then
+                        Dragging = true
+                        LastMousePos = inp.Position
+                    end
+                end
+            end)
+
+            UIS.InputEnded:Connect(function(inp)
+                if interactive then
+                    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                        Dragging = false
+                    end
+                end
+            end)
+
+            -- 拖拽旋转
+            UIS.InputChanged:Connect(function(inp)
+                if interactive and Dragging and not Pinching then
+                    if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+                        local delta = inp.Position - LastMousePos
+                        LastMousePos = inp.Position
+                        local pos = obj:GetPivot().Position
+                        -- 水平旋转
+                        local ry = CFrame.fromAxisAngle(Vector3.new(0,1,0), -delta.X * 0.02)
+                        camera.CFrame = CFrame.new(pos) * ry * CFrame.new(-pos) * camera.CFrame
+                        -- 垂直旋转（限制上下角度）
+                        local rx = CFrame.fromAxisAngle(camera.CFrame.RightVector, -delta.Y * 0.02)
+                        local pitched = CFrame.new(pos) * rx * CFrame.new(-pos) * camera.CFrame
+                        if pitched.UpVector.Y > 0.1 then
+                            camera.CFrame = pitched
+                        end
+                        updateZoomValue()
+                    end
+                end
+            end)
+
+            -- 滚轮缩放
+            vp.InputChanged:Connect(function(inp)
+                if interactive then
+                    if inp.UserInputType == Enum.UserInputType.MouseWheel then
+                        if not isMouseInViewport(UIS:GetMouseLocation()) then return end
+                        local zoom = inp.Position.Z * 2
+                        camera.CFrame = camera.CFrame + camera.CFrame.LookVector * zoom
+                        updateZoomValue()
+                    end
+                end
+            end)
+
+            -- 触摸双指缩放
+            UIS.TouchPinch:Connect(function(touches, scale, vel, state)
+                if interactive then
+                    if state == Enum.UserInputState.Begin then
+                        local mid = (touches[1] + touches[2]) / 2
+                        if not isMouseInViewport(mid) then return end
+                        Pinching = true
+                        Dragging = false
+                        LastPinchDist = (touches[1] - touches[2]).Magnitude
+                    elseif state == Enum.UserInputState.Change then
+                        if not Pinching then return end
+                        local cur = (touches[1] - touches[2]).Magnitude
+                        local d = (cur - LastPinchDist) * 0.03
+                        LastPinchDist = cur
+                        camera.CFrame = camera.CFrame + camera.CFrame.LookVector * d
+                        updateZoomValue()
+                    elseif state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
+                        Pinching = false
+                    end
+                end
+            end)
+
+            -- 构建返回对象
+            local self = {
+                Frame = wrap,
+                Type = "Viewport",
+                Object = obj,
+                Camera = camera,
+                Interactive = interactive,
+                Height = height,
+                Focused = focused,
+                Value = nil,  -- 会在 updateZoomValue 中设置
+            }
+
+            -- 方法
+            function self:SetObject(newObj, clone)
+                if clone then newObj = newObj:Clone() end
+                if self.Object then self.Object:Destroy() end
+                self.Object = newObj
+                self.Object.Parent = vp
+                if self.Focused then focusCamera() end
+            end
+
+            function self:SetHeight(h)
+                self.Height = h
+                wrap.Size = UDim2.new(1, -16, 0, h)
+            end
+
+            function self:SetAspectRatio(ratio)
+                ratioNum = parseRatio(ratio)
+                if ratioNum then recalcAspect() else wrap.Size = UDim2.new(1, -16, 0, self.Height) end
+            end
+
+            function self:Focus()
+                if self.Object then focusCamera() end
+            end
+
+            function self:SetCamera(cam)
+                self.Camera = cam
+                vp.CurrentCamera = cam
+            end
+
+            function self:SetInteractive(val)
+                self.Interactive = val
+                vp.Active = val
+            end
+
+            function self:SetValue(dist)
+                if type(dist) ~= "number" then return end
+                local ok, mpos = pcall(function() return self.Object:GetPivot().Position end)
+                if not ok then return end
+                local dir = (self.Camera.CFrame.Position - mpos)
+                if dir.Magnitude < 1e-4 then dir = Vector3.new(0, 0, 1) end
+                dir = dir.Unit
+                self.Camera.CFrame = CFrame.new(mpos + dir * dist, mpos)
+                self.Value = dist
+            end
+
+            function self:Destroy()
+                wrap:Destroy()
+                -- 清理资源（如有需要）
+            end
+
+            -- 初始化时设置 Value
+            updateZoomValue()
+
+            return self
+        end
+
         return child
     end
     return createSection
@@ -4969,6 +5262,7 @@ function Fenglib:CreateWindow(Config)
             elements.ProgressBar = function(_, config) return createSection("", nil, true).ProgressBar(config) end
             elements.Video    = function(_, config) return createSection("", nil, true).Video(config) end
             elements.Audio    = function(_, config) return createSection("", nil, true).Audio(config) end
+            elements.Viewport = function(_, config) return createSection("", nil, true).Viewport(config) end
             return elements
         end
 
