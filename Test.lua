@@ -159,9 +159,9 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- ===== MediaManager（视频缓存） =====
+-- ===== MediaManager（视频&音频缓存） =====
 local MediaManager = {}
-MediaManager.Folder = "FengVideoCache"
+MediaManager.Folder = "FengMediaCache"
 
 function MediaManager:SetFolder(f)
     self.Folder = f
@@ -182,6 +182,63 @@ function MediaManager:_rname(ext)
     return n.."."..ext
 end
 
+-- 音频下载（支持 mp3, ogg, wav, flac）
+function MediaManager:Audio(src, noDownload)
+    if type(src)~="string" or src=="" then return "" end
+    if src:match("^rbxassetid://") or src:match("^rbxasset://") then return src end
+    if src:match("^%d+$") then return "rbxassetid://"..src end
+    if not src:match("^https?://") then return "" end
+    local ext = (src:match("%.(%a+)%??[^/]*$") or "mp3"):lower()
+    if not ({mp3=1,ogg=1,wav=1,flac=1})[ext] then ext="mp3" end
+    self:_init("audio")
+    local dir = self.Folder.."/audio"
+    local mapPath = dir.."/_map.json"
+    local hs = HttpService
+    local map = {}
+    pcall(function()
+        if isfile(mapPath) then
+            local ok,d = pcall(hs.JSONDecode, hs, readfile(mapPath))
+            if ok and type(d)=="table" then map=d end
+        end
+    end)
+    local key = tostring(#src).."_"..src:sub(1,40):gsub("[^%w]","")
+    if map[key] then
+        local cp = dir.."/"..map[key]
+        if isfile(cp) then
+            local ok,a = pcall(getcustomasset, cp)
+            if ok and a and a~="" then return a end
+        end
+        map[key] = nil
+    end
+    if noDownload then return nil end
+    local fname = self:_rname(ext)
+    local path  = dir.."/"..fname
+    local body  = nil
+    local reqOk = pcall(function()
+        local req = (syn and syn.request) or http_request or request
+        local r = req({Url=src,Method="GET",Headers={["User-Agent"]="Roblox/WinInet"}})
+        if r and r.Body and #r.Body > 128 then
+            local peek = r.Body:sub(1,15):lower()
+            if peek:find("<!doctype") or peek:find("<html") then return end
+            body = r.Body
+            writefile(path, body)
+        end
+    end)
+    if reqOk and body and isfile(path) then
+        local ok2,a = pcall(getcustomasset, path)
+        if ok2 and a and a~="" then
+            map[key] = fname
+            pcall(function()
+                local ok3,enc = pcall(hs.JSONEncode, hs, map)
+                if ok3 then writefile(mapPath, enc) end
+            end)
+            return a
+        end
+    end
+    return ""
+end
+
+-- 视频下载
 function MediaManager:Video(src)
     if type(src)~="string" or src=="" then return "" end
     if src:match("^rbxassetid://") or src:match("^rbxasset://") then return src end
@@ -238,7 +295,8 @@ function MediaManager:Video(src)
 end
 -- ===== 结束 MediaManager =====
 
-local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount)
+local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
+    local win = window  -- 用于通知
     local padding = parent:FindFirstChild("SectionPadding")
     if not padding then
         padding = Instance.new("UIPadding")
@@ -3119,6 +3177,416 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
+        -- ========== Audio (from FluentPro) ==========
+        child.Audio = function(_, config)
+            local opts = config or {}
+            local parent = contentHolder
+            if not parent then return end
+
+            local title = opts.Name or opts.Title or "Audio"
+            local subtitle = opts.SubName or opts.SubTitle or ""
+            local src = opts.Audio or opts.Sound or ""
+            local vol = (opts.Volume ~= nil) and math.clamp(opts.Volume, 0, 10) or 0.5
+            local looped = opts.Looped ~= false
+            local auto = opts.AutoPlay ~= false
+            local playOutside = opts.PlayOutsideWindow == true
+
+            local function resolve(s, noDownload)
+                local mm = MediaManager
+                if mm then return mm:Audio(s, noDownload) end
+                if type(s)~="string" or s=="" then return "" end
+                if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
+                if s:match("^%d+$") then return "rbxassetid://"..s end
+                return ""
+            end
+
+            local function fmtTime(s)
+                s = math.max(0, math.floor(s or 0))
+                return string.format("%d:%02d", math.floor(s/60), s%60)
+            end
+
+            local isHttp = type(src)=="string" and src:match("^https?://")
+            local resolved = isHttp and resolve(src, true) or resolve(src, false)
+            local pendingDownload = isHttp and (not resolved or resolved == "")
+            local hasAudio = (resolved ~= nil and resolved ~= "") or pendingDownload
+
+            local snd = nil
+            local function initSound(resolvedId)
+                local s2 = Instance.new("Sound")
+                s2.Name = "FengAudio"
+                pcall(function() s2.SoundId = resolvedId end)
+                s2.Volume = vol
+                s2.Looped = looped
+                if playOutside then
+                    s2.RollOffMaxDistance = 10000
+                    s2.Parent = game:GetService("SoundService")
+                else
+                    s2.Parent = workspace
+                end
+                return s2
+            end
+
+            if hasAudio and not pendingDownload then
+                snd = initSound(resolved)
+            end
+
+            -- UI
+            local wrapHeight = (title ~= "" or subtitle ~= "") and 118 or 96
+            local wrap = Instance.new("Frame")
+            wrap.Size = UDim2.new(1, -16, 0, wrapHeight)
+            wrap.BackgroundTransparency = 0.9
+            wrap.BorderSizePixel = 0
+            wrap.Parent = parent
+            AddToRegistry(wrap, "BackgroundColor3", "Top")
+            local wrapCorner = Instance.new("UICorner")
+            wrapCorner.CornerRadius = UDim.new(0, 8)
+            wrapCorner.Parent = wrap
+            local wrapStroke = Instance.new("UIStroke")
+            wrapStroke.Thickness = 1
+            wrapStroke.Transparency = 0.6
+            wrapStroke.Parent = wrap
+            AddToRegistry(wrapStroke, "Color", "Stroke")
+
+            local padding = Instance.new("UIPadding")
+            padding.PaddingLeft = UDim.new(0, 10)
+            padding.PaddingRight = UDim.new(0, 10)
+            padding.PaddingTop = UDim.new(0, 10)
+            padding.PaddingBottom = UDim.new(0, 10)
+            padding.Parent = wrap
+
+            local topRow = Instance.new("Frame")
+            topRow.Size = UDim2.new(1, 0, 0, (title ~= "" or subtitle ~= "") and 38 or 28)
+            topRow.BackgroundTransparency = 1
+            topRow.Parent = wrap
+
+            local audioIcon = Instance.new("ImageLabel")
+            audioIcon.Size = UDim2.fromOffset(20, 20)
+            audioIcon.Position = UDim2.new(0, 0, 0.5, 0)
+            audioIcon.AnchorPoint = Vector2.new(0, 0.5)
+            audioIcon.BackgroundTransparency = 1
+            audioIcon.ZIndex = 2
+            audioIcon.Parent = topRow
+            AddToRegistry(audioIcon, "ImageColor3", hasAudio and "Accent" or "SubText")
+            audioIcon.Image = "rbxassetid://10747376008"
+
+            local titleHolder = Instance.new("Frame")
+            titleHolder.Size = UDim2.new(1, -110, 1, 0)
+            titleHolder.Position = UDim2.new(0, 28, 0, 0)
+            titleHolder.BackgroundTransparency = 1
+            titleHolder.ZIndex = 2
+            titleHolder.Parent = topRow
+
+            local statusLbl = Instance.new("TextLabel")
+            statusLbl.Size = UDim2.new(1, 0, 0, 16)
+            statusLbl.Position = UDim2.new(0, 0, 0, (title ~= "" or subtitle ~= "") and 2 or 0)
+            statusLbl.AnchorPoint = Vector2.new(0, 0)
+            statusLbl.BackgroundTransparency = 1
+            statusLbl.Text = (title ~= "" and title) or (hasAudio and "Audio" or "No audio source")
+            statusLbl.TextSize = (title ~= "" or subtitle ~= "") and 12 or 11
+            statusLbl.Font = (title ~= "" or subtitle ~= "") and Enum.Font.GothamBold or Enum.Font.Gotham
+            statusLbl.TextXAlignment = Enum.TextXAlignment.Left
+            statusLbl.TextTruncate = Enum.TextTruncate.AtEnd
+            statusLbl.ZIndex = 2
+            statusLbl.Parent = titleHolder
+            AddToRegistry(statusLbl, "TextColor3", hasAudio and "Text" or "SubText")
+
+            local subtitleLbl = nil
+            if subtitle ~= "" then
+                subtitleLbl = Instance.new("TextLabel")
+                subtitleLbl.Size = UDim2.new(1, 0, 0, 13)
+                subtitleLbl.Position = UDim2.new(0, 0, 0, 20)
+                subtitleLbl.AnchorPoint = Vector2.new(0, 0)
+                subtitleLbl.BackgroundTransparency = 1
+                subtitleLbl.Text = subtitle
+                subtitleLbl.TextSize = 10
+                subtitleLbl.Font = Enum.Font.Gotham
+                subtitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+                subtitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
+                subtitleLbl.Visible = true
+                subtitleLbl.ZIndex = 2
+                subtitleLbl.Parent = titleHolder
+                AddToRegistry(subtitleLbl, "TextColor3", "SubText")
+            end
+
+            local controls = Instance.new("Frame")
+            controls.Size = UDim2.new(0, 116, 1, 0)
+            controls.Position = UDim2.new(1, 0, 0, 0)
+            controls.AnchorPoint = Vector2.new(1, 0)
+            controls.BackgroundTransparency = 1
+            controls.Visible = hasAudio
+            controls.Parent = topRow
+
+            local ctrlLayout = Instance.new("UIListLayout")
+            ctrlLayout.FillDirection = Enum.FillDirection.Horizontal
+            ctrlLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            ctrlLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+            ctrlLayout.Padding = UDim.new(0, 4)
+            ctrlLayout.Parent = controls
+
+            local function ctrlBtn(iconId, cb)
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.fromOffset(24, 24)
+                btn.BackgroundTransparency = 1
+                btn.Text = ""
+                btn.ZIndex = 3
+                btn.Parent = controls
+                local ic = Instance.new("ImageLabel")
+                ic.Size = UDim2.fromOffset(16, 16)
+                ic.Position = UDim2.new(0.5, 0, 0.5, 0)
+                ic.AnchorPoint = Vector2.new(0.5, 0.5)
+                ic.BackgroundTransparency = 1
+                ic.ZIndex = 4
+                ic.Parent = btn
+                AddToRegistry(ic, "ImageColor3", "Text")
+                local icons = {
+                    play = "rbxassetid://10734923549",
+                    pause = "rbxassetid://10734919336",
+                    stop = "rbxassetid://10734972621",
+                    external = "rbxassetid://10747366266",
+                    import = "rbxassetid://10747366266",
+                }
+                ic.Image = icons[iconId] or "rbxassetid://10734923549"
+                btn.MouseButton1Click:Connect(function() pcall(cb) end)
+                return btn, ic
+            end
+
+            local playing = false
+            local playBtn, playIco
+            local pauseBtn, pauseIco
+            local outsideBtn, outsideIco
+
+            if hasAudio then
+                local _downloading = false
+                local function _doPlay()
+                    if not snd then return end
+                    pcall(function() snd:Play() end)
+                    playing = true
+                    if playBtn then playBtn.Visible = false end
+                    if pauseBtn then pauseBtn.Visible = true end
+                end
+                local function _triggerPlay()
+                    if _downloading then return end
+                    if snd then
+                        _doPlay()
+                        return
+                    end
+                    if pendingDownload then
+                        _downloading = true
+                        if win then win:Notification("Audio", "Downloading audio, please wait...", "Info", 4) end
+                        task.spawn(function()
+                            local got = resolve(src, false)
+                            _downloading = false
+                            if got and got ~= "" then
+                                pendingDownload = false
+                                snd = initSound(got)
+                                _doPlay()
+                                if win then win:Notification("Audio", "Audio ready — playing now", "Success", 2) end
+                            else
+                                if win then win:Notification("Audio", "Failed to download audio", "Error", 3) end
+                            end
+                        end)
+                    end
+                end
+                playBtn, playIco = ctrlBtn("play", _triggerPlay)
+                pauseBtn, pauseIco = ctrlBtn("pause", function()
+                    if snd then snd:Pause() end
+                    playing = false
+                    if playBtn then playBtn.Visible = true end
+                    if pauseBtn then pauseBtn.Visible = false end
+                end)
+                pauseBtn.Visible = false
+
+                local stopBtn, stopIco = ctrlBtn("stop", function()
+                    if snd then pcall(function() snd:Stop(); snd.TimePosition = 0 end) end
+                    playing = false
+                    if playBtn then playBtn.Visible = true end
+                    if pauseBtn then pauseBtn.Visible = false end
+                end)
+
+                local function toggleOutside()
+                    playOutside = not playOutside
+                    local iconName = playOutside and "external" or "import"
+                    if outsideIco then
+                        outsideIco.Image = icons[iconName] or "rbxassetid://10747366266"
+                    end
+                    if snd then
+                        local wasPlaying = playing
+                        pcall(function() if wasPlaying then snd:Stop() end end)
+                        if playOutside then
+                            snd.RollOffMaxDistance = 10000
+                            snd.Parent = game:GetService("SoundService")
+                        else
+                            snd.Parent = workspace
+                        end
+                        if wasPlaying then pcall(function() snd:Play() end) end
+                    end
+                    if win then win:Notification("Audio", playOutside and "Play Outside Window: ON" or "Play Outside Window: OFF", "Info", 2) end
+                end
+                outsideBtn, outsideIco = ctrlBtn("external", toggleOutside)
+                if outsideIco then
+                    outsideIco.Image = playOutside and "rbxassetid://10747366266" or "rbxassetid://10747366266"
+                end
+
+                if auto and snd then
+                    _doPlay()
+                end
+            end
+
+            local seekRowOffset = (title ~= "" or subtitle ~= "") and 56 or 36
+            local seekRow = Instance.new("Frame")
+            seekRow.Size = UDim2.new(1, 0, 0, 24)
+            seekRow.Position = UDim2.new(0, 0, 0, seekRowOffset)
+            seekRow.BackgroundTransparency = 1
+            seekRow.Visible = hasAudio
+            seekRow.Parent = wrap
+
+            local curLbl = Instance.new("TextLabel")
+            curLbl.Size = UDim2.fromOffset(34, 20)
+            curLbl.Position = UDim2.new(0, 0, 0.5, 0)
+            curLbl.AnchorPoint = Vector2.new(0, 0.5)
+            curLbl.BackgroundTransparency = 1
+            curLbl.Text = "0:00"
+            curLbl.TextSize = 10
+            curLbl.Font = Enum.Font.Gotham
+            curLbl.TextXAlignment = Enum.TextXAlignment.Left
+            curLbl.ZIndex = 3
+            curLbl.Parent = seekRow
+            AddToRegistry(curLbl, "TextColor3", "SubText")
+
+            local durLbl = Instance.new("TextLabel")
+            durLbl.Size = UDim2.fromOffset(34, 20)
+            durLbl.Position = UDim2.new(1, 0, 0.5, 0)
+            durLbl.AnchorPoint = Vector2.new(1, 0.5)
+            durLbl.BackgroundTransparency = 1
+            durLbl.Text = "0:00"
+            durLbl.TextSize = 10
+            durLbl.Font = Enum.Font.Gotham
+            durLbl.TextXAlignment = Enum.TextXAlignment.Right
+            durLbl.ZIndex = 3
+            durLbl.Parent = seekRow
+            AddToRegistry(durLbl, "TextColor3", "SubText")
+
+            local rail = Instance.new("Frame")
+            rail.Size = UDim2.new(1, -76, 0, 4)
+            rail.Position = UDim2.new(0, 38, 0.5, 0)
+            rail.AnchorPoint = Vector2.new(0, 0.5)
+            rail.BackgroundTransparency = 0.65
+            rail.ZIndex = 2
+            rail.Parent = seekRow
+            AddToRegistry(rail, "BackgroundColor3", "SubText")
+            Instance.new("UICorner", rail).CornerRadius = UDim.new(1, 0)
+
+            local fill = Instance.new("Frame")
+            fill.Size = UDim2.new(0, 0, 1, 0)
+            fill.BackgroundTransparency = 0
+            fill.ZIndex = 3
+            fill.Parent = rail
+            AddToRegistry(fill, "BackgroundColor3", "Accent")
+            Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+
+            local knob = Instance.new("Frame")
+            knob.Size = UDim2.fromOffset(12, 12)
+            knob.Position = UDim2.new(0, 0, 0.5, 0)
+            knob.AnchorPoint = Vector2.new(0.5, 0.5)
+            knob.ZIndex = 4
+            knob.Parent = rail
+            AddToRegistry(knob, "BackgroundColor3", "Accent")
+            Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+            local dragging = false
+            local function seekTo(inputX)
+                if not snd then return end
+                local railX = rail.AbsolutePosition.X
+                local railW = rail.AbsoluteSize.X
+                if railW <= 0 then return end
+                local pct = math.clamp((inputX - railX) / railW, 0, 1)
+                local dur = snd.TimeLength or 0
+                if dur > 0 then
+                    pcall(function() snd.TimePosition = pct * dur end)
+                end
+            end
+
+            rail.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    dragging = true
+                    seekTo(inp.Position.X)
+                end
+            end)
+            rail.InputEnded:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    dragging = false
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(inp)
+                if dragging and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+                    seekTo(inp.Position.X)
+                end
+            end)
+
+            local hbConn = RunService.Heartbeat:Connect(function()
+                if not wrap.Parent then return end
+                if not snd then return end
+                local dur = snd.TimeLength or 0
+                local pos = snd.TimePosition or 0
+                curLbl.Text = fmtTime(pos)
+                durLbl.Text = fmtTime(dur)
+                local pct = dur > 0 and (pos / dur) or 0
+                fill.Size = UDim2.new(pct, 0, 1, 0)
+                knob.Position = UDim2.new(pct, 0, 0.5, 0)
+            end)
+
+            local mod = {Frame=wrap, Type="Audio", Sound=snd}
+            function mod:Play() if snd then pcall(function() snd:Play() end) end end
+            function mod:Pause() if snd then pcall(function() snd:Pause() end) end end
+            function mod:Stop() if snd then pcall(function() snd:Stop() end) end end
+            function mod:SetVolume(v)
+                if snd then snd.Volume = math.clamp(v, 0, 10) end
+            end
+            function mod:SetAudio(src)
+                local r = resolve(src)
+                if snd then
+                    pcall(function() snd:Stop() end)
+                    pcall(function() snd.SoundId = r end)
+                else
+                    snd = initSound(r)
+                end
+                hasAudio = r ~= ""
+                controls.Visible = hasAudio
+                seekRow.Visible = hasAudio
+                statusLbl.Text = hasAudio and (title or "Audio") or "No audio source"
+                if playBtn then playBtn.Visible = hasAudio end
+                if pauseBtn then pauseBtn.Visible = false end
+            end
+            function mod:SetAudioTitle(title, subtitle)
+                statusLbl.Text = title or (hasAudio and "Audio" or "No audio source")
+                if subtitleLbl then
+                    subtitleLbl.Text = subtitle or ""
+                    subtitleLbl.Visible = subtitle and subtitle ~= ""
+                end
+            end
+            function mod:SetPlayOutside(enabled)
+                playOutside = enabled
+                if snd then
+                    local wasPlaying = playing
+                    pcall(function() snd:Stop() end)
+                    if enabled then
+                        snd.Parent = game:GetService("SoundService")
+                    else
+                        snd.Parent = workspace
+                    end
+                    if wasPlaying then pcall(function() snd:Play() end) end
+                end
+            end
+            function mod:Destroy()
+                if hbConn then hbConn:Disconnect() end
+                if snd then pcall(function() snd:Stop(); snd:Destroy() end) end
+                wrap:Destroy()
+            end
+
+            return mod
+        end
+
         return child
     end
     return createSection
@@ -3148,12 +3616,10 @@ function Fenglib:CreateWindow(Config)
                 elseif type(v) == "userdata" then return v
                 else return Color3.new(0,0,0) end
             end
-            -- 完整复制当前主题所有键
             local customTheme = {}
             for k, v in pairs(CurrentTheme) do
                 customTheme[k] = v
             end
-            -- 覆盖用户提供的键
             if t.Main   then customTheme.Main   = toC3(t.Main) end
             if t.Top    then customTheme.Top    = toC3(t.Top) end
             if t.Text   then customTheme.Text   = toC3(t.Text) end
@@ -3162,7 +3628,6 @@ function Fenglib:CreateWindow(Config)
             if t.SubText then customTheme.SubText = toC3(t.SubText) end
             if t.Element then customTheme.Element = toC3(t.Element) end
             if t.Hover then customTheme.Hover = toC3(t.Hover) end
-            -- 可扩展更多
 
             local customName = t.Name or "Custom"
             Themes[customName] = customTheme
@@ -4487,7 +4952,7 @@ function Fenglib:CreateWindow(Config)
 
         local getElements = function()
             local elements = {}
-            local createSection = createSectionBuilder(PageContent, PageContent, 330, 1)
+            local createSection = createSectionBuilder(PageContent, PageContent, 330, 1, Window)
             elements.Section = function(_, config) return createSection(config) end
             elements.Button   = function(_, config) return createSection("", nil, true).Button(config) end
             elements.Toggle   = function(_, config) return createSection("", nil, true).Toggle(config) end
@@ -4503,7 +4968,7 @@ function Fenglib:CreateWindow(Config)
             elements.Checkbox = function(_, config) return createSection("", nil, true).Checkbox(config) end
             elements.ProgressBar = function(_, config) return createSection("", nil, true).ProgressBar(config) end
             elements.Video    = function(_, config) return createSection("", nil, true).Video(config) end
-
+            elements.Audio    = function(_, config) return createSection("", nil, true).Audio(config) end
             return elements
         end
 
