@@ -293,6 +293,61 @@ function MediaManager:Video(src)
     end
     return ""
 end
+
+-- ===== MediaManager:Image（图片下载）=====
+function MediaManager:Image(src)
+    if type(src)~="string" or src=="" then return "" end
+    if src:match("^rbxassetid://") or src:match("^rbxasset://") then return src end
+    if src:match("^%d+$") then return "rbxassetid://"..src end
+    if not src:match("^https?://") then return "" end
+    local ext = (src:match("%.(%a+)%??[^/]*$") or "png"):lower()
+    if not ({png=1,jpg=1,jpeg=1,webp=1,gif=1})[ext] then ext="png" end
+    self:_init("images")
+    local dir = self.Folder.."/images"
+    local mapPath = dir.."/_map.json"
+    local hs = HttpService
+    local map = {}
+    pcall(function()
+        if isfile(mapPath) then
+            local ok,d = pcall(hs.JSONDecode, hs, readfile(mapPath))
+            if ok and type(d)=="table" then map=d end
+        end
+    end)
+    local key = tostring(#src).."_"..src:sub(1,40):gsub("[^%w]","")
+    if map[key] then
+        local cp = dir.."/"..map[key]
+        if isfile(cp) then
+            local ok,a = pcall(getcustomasset, cp)
+            if ok and a and a~="" then return a end
+        end
+        map[key] = nil
+    end
+    local fname = self:_rname(ext)
+    local path = dir.."/"..fname
+    local body = nil
+    local reqOk = pcall(function()
+        local req = (syn and syn.request) or http_request or request
+        local r = req({Url=src,Method="GET",Headers={["User-Agent"]="Roblox/WinInet"}})
+        if r and r.Body and #r.Body > 128 then
+            local peek = r.Body:sub(1,15):lower()
+            if peek:find("<!doctype") or peek:find("<html") then return end
+            body = r.Body
+            writefile(path, body)
+        end
+    end)
+    if reqOk and body and isfile(path) then
+        local ok2,a = pcall(getcustomasset, path)
+        if ok2 and a and a~="" then
+            map[key] = fname
+            pcall(function()
+                local ok3,enc = pcall(hs.JSONEncode, hs, map)
+                if ok3 then writefile(mapPath, enc) end
+            end)
+            return a
+        end
+    end
+    return ""
+end
 -- ===== 结束 MediaManager =====
 
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
@@ -3880,6 +3935,258 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ===== 新增 Social（来自 FluentPro 的 AddSocial）=====
+        child.Social = function(_, config)
+            config = config or {}
+            local parent = contentHolder
+            if not parent then return end
+
+            local username = tostring(config.Username or "")
+            local platform = tostring(config.Platform or "")
+            local profileUrl = config.ProfileUrl or config.Url
+            -- 如果没给 username 但给了 profileUrl，尝试从 URL 解析
+            if username == "" and type(profileUrl) == "string" and profileUrl ~= "" then
+                local host, path = profileUrl:match("^https?://([^/]+)/?(.-)[/?#]?$")
+                if not host then host, path = profileUrl:match("^https?://([^/]+)/?(.*)$") end
+                if host then
+                    host = host:gsub("^www%.", ""):lower()
+                    local hostMap = {
+                        ["github.com"]="github", ["twitter.com"]="twitter", ["x.com"]="twitter",
+                        ["instagram.com"]="instagram", ["youtube.com"]="youtube", ["tiktok.com"]="tiktok",
+                        ["twitch.tv"]="twitch", ["reddit.com"]="reddit", ["telegram.me"]="telegram",
+                        ["t.me"]="telegram", ["soundcloud.com"]="soundcloud", ["steamcommunity.com"]="steam",
+                    }
+                    local user = path and path:match("^([^/?#]+)")
+                    if user and user ~= "" then
+                        if user:sub(1,1) == "@" then user = user:sub(2) end
+                        username = user
+                        if platform == "" and hostMap[host] then
+                            platform = hostMap[host]:sub(1,1):upper()..hostMap[host]:sub(2)
+                        end
+                    end
+                end
+            end
+
+            local displayName = tostring(config.DisplayName or (username ~= "" and username or ""))
+
+            -- 主卡片
+            local wrap = Instance.new("Frame")
+            wrap.Size = UDim2.new(1, 0, 0, 64)
+            wrap.BackgroundTransparency = 0.82
+            wrap.BorderSizePixel = 0
+            wrap.Parent = parent
+            AddToRegistry(wrap, "BackgroundColor3", "Top")
+
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 12)
+            corner.Parent = wrap
+
+            local stroke = Instance.new("UIStroke")
+            stroke.Transparency = 0.45
+            stroke.Thickness = 1.5
+            stroke.Parent = wrap
+            AddToRegistry(stroke, "Color", "Stroke")
+
+            -- 头像
+            local avatarBg = Instance.new("Frame")
+            avatarBg.Name = "AvatarBg"
+            avatarBg.Size = UDim2.fromOffset(42, 42)
+            avatarBg.Position = UDim2.new(0, 11, 0.5, 0)
+            avatarBg.AnchorPoint = Vector2.new(0, 0.5)
+            avatarBg.BackgroundColor3 = Color3.fromRGB(90,90,90)
+            avatarBg.Parent = wrap
+            avatarBg.ClipsDescendants = true
+
+            local avatarCorner = Instance.new("UICorner")
+            avatarCorner.CornerRadius = UDim.new(0, 8)
+            avatarCorner.Parent = avatarBg
+
+            local avatarImg = Instance.new("ImageLabel")
+            avatarImg.Size = UDim2.fromScale(1, 1)
+            avatarImg.BackgroundTransparency = 1
+            avatarImg.Parent = avatarBg
+
+            local avatarImgCorner = Instance.new("UICorner")
+            avatarImgCorner.CornerRadius = UDim.new(0, 8)
+            avatarImgCorner.Parent = avatarImg
+
+            local hasAvatarSource = (username ~= "") or (type(profileUrl) == "string" and profileUrl ~= "") or (type(config.Avatar) == "string" and config.Avatar ~= "")
+            if hasAvatarSource then
+                avatarCorner.CornerRadius = UDim.new(1, 0)
+                avatarImgCorner.CornerRadius = UDim.new(1, 0)
+            end
+
+            -- 显示名（可点击复制）
+            local nameBtn = Instance.new("TextButton")
+            nameBtn.Name = "DisplayNameButton"
+            nameBtn.Text = displayName
+            nameBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold)
+            nameBtn.TextSize = 13
+            nameBtn.TextXAlignment = Enum.TextXAlignment.Left
+            nameBtn.TextTruncate = Enum.TextTruncate.AtEnd
+            nameBtn.BackgroundTransparency = 1
+            nameBtn.AutoButtonColor = false
+            nameBtn.Size = UDim2.new(1, -140, 0, 16)
+            nameBtn.Position = UDim2.new(0, 62, 0, 9)
+            nameBtn.Parent = wrap
+            AddToRegistry(nameBtn, "TextColor3", "Text")
+
+            -- 用户名（可点击复制）
+            local userBtn = Instance.new("TextButton")
+            userBtn.Name = "UsernameButton"
+            userBtn.Text = (username ~= "" and ("@"..username) or "")
+            userBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
+            userBtn.TextSize = 11
+            userBtn.TextXAlignment = Enum.TextXAlignment.Left
+            userBtn.TextTruncate = Enum.TextTruncate.AtEnd
+            userBtn.BackgroundTransparency = 1
+            userBtn.AutoButtonColor = false
+            userBtn.Size = UDim2.new(1, -140, 0, 13)
+            userBtn.Position = UDim2.new(0, 62, 0, 27)
+            userBtn.Parent = wrap
+            AddToRegistry(userBtn, "TextColor3", "SubText")
+
+            -- 平台标签
+            if platform ~= "" then
+                local platformLbl = Instance.new("TextLabel")
+                platformLbl.Name = "PlatformLabel"
+                platformLbl.Text = platform
+                platformLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
+                platformLbl.TextSize = 10
+                platformLbl.TextTransparency = 0.3
+                platformLbl.TextXAlignment = Enum.TextXAlignment.Left
+                platformLbl.BackgroundTransparency = 1
+                platformLbl.Size = UDim2.new(1, -140, 0, 12)
+                platformLbl.Position = UDim2.new(0, 62, 0, 42)
+                platformLbl.Parent = wrap
+                AddToRegistry(platformLbl, "TextColor3", "SubText")
+            end
+
+            -- 复制按钮
+            local copyBtn = nil
+            if profileUrl then
+                copyBtn = Instance.new("TextButton")
+                copyBtn.Name = "CopyLinkButton"
+                copyBtn.Text = "Copy"
+                copyBtn.Size = UDim2.fromOffset(52, 26)
+                copyBtn.Position = UDim2.new(1, -11, 0.5, 0)
+                copyBtn.AnchorPoint = Vector2.new(1, 0.5)
+                copyBtn.TextColor3 = Color3.fromRGB(255,255,255)
+                copyBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold)
+                copyBtn.TextSize = 12
+                copyBtn.Parent = wrap
+                AddToRegistry(copyBtn, "BackgroundColor3", "Element")
+                local copyCorner = Instance.new("UICorner")
+                copyCorner.CornerRadius = UDim.new(0, 8)
+                copyCorner.Parent = copyBtn
+                local copyStroke = Instance.new("UIStroke")
+                copyStroke.Transparency = 0.4
+                copyStroke.Thickness = 1
+                copyStroke.Parent = copyBtn
+                AddToRegistry(copyStroke, "Color", "InElementBorder")
+            end
+
+            -- 复制函数
+            local function _copy(text, label)
+                if not text or text == "" then return end
+                pcall(function() toclipboard(text) end)  -- 使用 toclipboard
+                if win then win:Notification("Copied", (label or "Text").." copied to clipboard", "Success", 2) end
+            end
+
+            nameBtn.MouseButton1Click:Connect(function() _copy(displayName, "Display name") end)
+            userBtn.MouseButton1Click:Connect(function() _copy(username, "Username") end)
+            if copyBtn then
+                copyBtn.MouseButton1Click:Connect(function() _copy(profileUrl, "Profile link") end)
+            end
+
+            -- 头像加载（使用 MediaManager:Image）
+            task.spawn(function()
+                local avatarSrc = config.Avatar
+                local imgUrl = nil
+
+                local function _slugFromHost(hostUrl)
+                    local host, path = hostUrl:match("^https?://([^/]+)/?(.*)$")
+                    if not host then return nil, nil end
+                    host = host:gsub("^www%.", ""):lower()
+                    local user = path:match("^([^/?#]+)")
+                    if not user or user == "" then return nil, nil end
+                    local hostMap = {
+                        ["github.com"] = "github",
+                        ["twitter.com"] = "twitter",
+                        ["x.com"] = "twitter",
+                        ["instagram.com"] = "instagram",
+                        ["youtube.com"] = "youtube",
+                        ["tiktok.com"] = "tiktok",
+                        ["twitch.tv"] = "twitch",
+                        ["reddit.com"] = "reddit",
+                        ["telegram.me"] = "telegram",
+                        ["t.me"] = "telegram",
+                        ["soundcloud.com"] = "soundcloud",
+                        ["steamcommunity.com"] = "steam",
+                    }
+                    local slug = hostMap[host]
+                    if user:sub(1,1) == "@" then user = user:sub(2) end
+                    return slug, user
+                end
+
+                if type(avatarSrc) == "string" and avatarSrc:match("^https?://") then
+                    if avatarSrc:match("unavatar%.io") or avatarSrc:match("linkspreview") then
+                        imgUrl = avatarSrc
+                    else
+                        local slug, user = _slugFromHost(avatarSrc)
+                        if slug and user then
+                            imgUrl = "https://unavatar.io/"..slug.."/"..user
+                        else
+                            imgUrl = avatarSrc
+                        end
+                    end
+                elseif type(profileUrl) == "string" and profileUrl:match("^https?://") and username == "" then
+                    if config.AvatarService == "linkpreview" then
+                        imgUrl = "https://linkspreview.netlify.app/url?url="..profileUrl
+                    else
+                        local slug, user = _slugFromHost(profileUrl)
+                        if slug and user then
+                            imgUrl = "https://unavatar.io/"..slug.."/"..user
+                        end
+                    end
+                elseif username ~= "" then
+                    if config.AvatarService == "linkpreview" and profileUrl then
+                        imgUrl = "https://linkspreview.netlify.app/url?url="..tostring(profileUrl)
+                    else
+                        local slug = platform ~= "" and (platform:lower().."/") or ""
+                        imgUrl = "https://unavatar.io/"..slug..username
+                    end
+                end
+
+                if imgUrl then
+                    local ok, asset = pcall(function()
+                        return MediaManager:Image(imgUrl)
+                    end)
+                    if ok and asset and asset ~= "" then
+                        avatarImg.Image = asset
+                        avatarCorner.CornerRadius = UDim.new(1, 0)
+                        avatarImgCorner.CornerRadius = UDim.new(1, 0)
+                    end
+                end
+            end)
+
+            -- 返回控制方法
+            local mod = {Frame=wrap, Type="Social"}
+            function mod:SetUsername(newUsername)
+                username = tostring(newUsername or "")
+                userBtn.Text = username ~= "" and ("@"..username) or ""
+            end
+            function mod:SetDisplayName(newDisplayName)
+                displayName = tostring(newDisplayName or "")
+                nameBtn.Text = displayName
+            end
+            function mod:Destroy()
+                wrap:Destroy()
+            end
+            return mod
+        end
+        -- ===== 结束 Social =====
+
         return child
     end
     return createSection
@@ -5263,6 +5570,7 @@ function Fenglib:CreateWindow(Config)
             elements.Video    = function(_, config) return createSection("", nil, true).Video(config) end
             elements.Audio    = function(_, config) return createSection("", nil, true).Audio(config) end
             elements.Viewport = function(_, config) return createSection("", nil, true).Viewport(config) end
+            elements.Social   = function(_, config) return createSection("", nil, true).Social(config) end   -- 新增 Social
             return elements
         end
 
