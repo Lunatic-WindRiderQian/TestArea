@@ -3885,7 +3885,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ===== Social（支持 Name / SubName / SmlName / Logo / copy）=====
+        -- ===== Social（支持 Name / SubName / SmlName / Logo / copy / Cbn）=====
         child.Social = function(_, config)
             config = config or {}
             local parent = contentHolder
@@ -3895,7 +3895,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local subName = tostring(config.SubName or config.Subtitle or "")
             local platform = tostring(config.SmlName or config.Platform or "")
             local avatarSrc = config.Logo or config.Avatar or ""
-            local copyText = tostring(config.copy or "已复制到剪贴板")
+            local copyText = tostring(config.copy or "")
+            local buttonText = tostring(config.Cbn or "复制")
 
             if displayName == "" then
                 displayName = "用户"
@@ -3948,39 +3949,33 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
 
             -- 显示名
-            local nameBtn = Instance.new("TextButton")
-            nameBtn.Name = "DisplayNameButton"
-            nameBtn.Text = displayName
-            nameBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold)
-            nameBtn.TextSize = 13
-            nameBtn.TextXAlignment = Enum.TextXAlignment.Left
-            nameBtn.TextTruncate = Enum.TextTruncate.AtEnd
-            nameBtn.BackgroundTransparency = 1
-            nameBtn.AutoButtonColor = false
-            nameBtn.Size = UDim2.new(1, -140, 0, 16)
-            nameBtn.Position = UDim2.new(0, 62, 0, 9)
-            nameBtn.Parent = wrap
-            AddToRegistry(nameBtn, "TextColor3", "Text")
+            local nameLbl = Instance.new("TextLabel")
+            nameLbl.Name = "DisplayName"
+            nameLbl.Text = displayName
+            nameLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold)
+            nameLbl.TextSize = 13
+            nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+            nameLbl.TextTruncate = Enum.TextTruncate.AtEnd
+            nameLbl.BackgroundTransparency = 1
+            nameLbl.Size = UDim2.new(1, -140, 0, 16)
+            nameLbl.Position = UDim2.new(0, 62, 0, 9)
+            nameLbl.Parent = wrap
+            AddToRegistry(nameLbl, "TextColor3", "Text")
 
             -- 副标题
             if subName ~= "" then
-                local subNameBtn = Instance.new("TextButton")
-                subNameBtn.Name = "SubNameButton"
-                subNameBtn.Text = subName
-                subNameBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
-                subNameBtn.TextSize = 11
-                subNameBtn.TextXAlignment = Enum.TextXAlignment.Left
-                subNameBtn.TextTruncate = Enum.TextTruncate.AtEnd
-                subNameBtn.BackgroundTransparency = 1
-                subNameBtn.AutoButtonColor = false
-                subNameBtn.Size = UDim2.new(1, -140, 0, 13)
-                subNameBtn.Position = UDim2.new(0, 62, 0, 27)
-                subNameBtn.Parent = wrap
-                AddToRegistry(subNameBtn, "TextColor3", "SubText")
-                subNameBtn.MouseButton1Click:Connect(function()
-                    pcall(function() toclipboard(subName) end)
-                    if win then win:Notification("", copyText, "Success", 2) end
-                end)
+                local subNameLbl = Instance.new("TextLabel")
+                subNameLbl.Name = "SubName"
+                subNameLbl.Text = subName
+                subNameLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
+                subNameLbl.TextSize = 11
+                subNameLbl.TextXAlignment = Enum.TextXAlignment.Left
+                subNameLbl.TextTruncate = Enum.TextTruncate.AtEnd
+                subNameLbl.BackgroundTransparency = 1
+                subNameLbl.Size = UDim2.new(1, -140, 0, 13)
+                subNameLbl.Position = UDim2.new(0, 62, 0, 27)
+                subNameLbl.Parent = wrap
+                AddToRegistry(subNameLbl, "TextColor3", "SubText")
             end
 
             -- 平台标签
@@ -3999,11 +3994,36 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AddToRegistry(platformLbl, "TextColor3", "SubText")
             end
 
-            -- 点击名称复制（使用自定义提示）
-            nameBtn.MouseButton1Click:Connect(function()
-                pcall(function() toclipboard(displayName) end)
-                if win then win:Notification("", copyText, "Success", 2) end
-            end)
+            -- 复制按钮（点击复制 copy 字段内容，按钮文字使用 Cbn）
+            if copyText ~= "" then
+                local copyBtn = Instance.new("TextButton")
+                copyBtn.Name = "CopyButton"
+                copyBtn.Text = buttonText
+                copyBtn.Size = UDim2.fromOffset(52, 26)
+                copyBtn.Position = UDim2.new(1, -11, 0.5, 0)
+                copyBtn.AnchorPoint = Vector2.new(1, 0.5)
+                copyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                copyBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold)
+                copyBtn.TextSize = 12
+                copyBtn.Parent = wrap
+                AddToRegistry(copyBtn, "BackgroundColor3", "Element")
+
+                local copyCorner = Instance.new("UICorner")
+                copyCorner.CornerRadius = UDim.new(0, 8)
+                copyCorner.Parent = copyBtn
+
+                local copyStroke = Instance.new("UIStroke")
+                copyStroke.Transparency = 0.4
+                copyStroke.Thickness = 1
+                copyStroke.Parent = copyBtn
+                AddToRegistry(copyStroke, "Color", "Stroke")
+
+                -- 点击复制 copy 内容
+                copyBtn.MouseButton1Click:Connect(function()
+                    pcall(function() toclipboard(copyText) end)
+                    if win then win:Notification("", "已复制到剪贴板", "Success", 2) end
+                end)
+            end
 
             -- 头像加载
             task.spawn(function()
@@ -4031,30 +4051,26 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local mod = {Frame=wrap, Type="Social"}
             function mod:SetName(newName)
                 displayName = tostring(newName or "")
-                nameBtn.Text = displayName
+                local lbl = wrap:FindFirstChild("DisplayName")
+                if lbl then lbl.Text = displayName end
             end
             function mod:SetSubName(newSubName)
                 subName = tostring(newSubName or "")
-                local existing = wrap:FindFirstChild("SubNameButton")
+                local existing = wrap:FindFirstChild("SubName")
                 if existing then existing:Destroy() end
                 if subName ~= "" then
-                    local subNameBtn = Instance.new("TextButton")
-                    subNameBtn.Name = "SubNameButton"
-                    subNameBtn.Text = subName
-                    subNameBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
-                    subNameBtn.TextSize = 11
-                    subNameBtn.TextXAlignment = Enum.TextXAlignment.Left
-                    subNameBtn.TextTruncate = Enum.TextTruncate.AtEnd
-                    subNameBtn.BackgroundTransparency = 1
-                    subNameBtn.AutoButtonColor = false
-                    subNameBtn.Size = UDim2.new(1, -140, 0, 13)
-                    subNameBtn.Position = UDim2.new(0, 62, 0, 27)
-                    subNameBtn.Parent = wrap
-                    AddToRegistry(subNameBtn, "TextColor3", "SubText")
-                    subNameBtn.MouseButton1Click:Connect(function()
-                        pcall(function() toclipboard(subName) end)
-                        if win then win:Notification("", copyText, "Success", 2) end
-                    end)
+                    local newLbl = Instance.new("TextLabel")
+                    newLbl.Name = "SubName"
+                    newLbl.Text = subName
+                    newLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
+                    newLbl.TextSize = 11
+                    newLbl.TextXAlignment = Enum.TextXAlignment.Left
+                    newLbl.TextTruncate = Enum.TextTruncate.AtEnd
+                    newLbl.BackgroundTransparency = 1
+                    newLbl.Size = UDim2.new(1, -140, 0, 13)
+                    newLbl.Position = UDim2.new(0, 62, 0, 27)
+                    newLbl.Parent = wrap
+                    AddToRegistry(newLbl, "TextColor3", "SubText")
                 end
             end
             function mod:SetSmlName(newPlatform)
@@ -4062,18 +4078,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 local existing = wrap:FindFirstChild("PlatformLabel")
                 if existing then existing:Destroy() end
                 if platform ~= "" then
-                    local platformLbl = Instance.new("TextLabel")
-                    platformLbl.Name = "PlatformLabel"
-                    platformLbl.Text = platform
-                    platformLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
-                    platformLbl.TextSize = 10
-                    platformLbl.TextTransparency = 0.3
-                    platformLbl.TextXAlignment = Enum.TextXAlignment.Left
-                    platformLbl.BackgroundTransparency = 1
-                    platformLbl.Size = UDim2.new(1, -140, 0, 12)
-                    platformLbl.Position = UDim2.new(0, 62, 0, subName ~= "" and 42 or 27)
-                    platformLbl.Parent = wrap
-                    AddToRegistry(platformLbl, "TextColor3", "SubText")
+                    local newLbl = Instance.new("TextLabel")
+                    newLbl.Name = "PlatformLabel"
+                    newLbl.Text = platform
+                    newLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
+                    newLbl.TextSize = 10
+                    newLbl.TextTransparency = 0.3
+                    newLbl.TextXAlignment = Enum.TextXAlignment.Left
+                    newLbl.BackgroundTransparency = 1
+                    newLbl.Size = UDim2.new(1, -140, 0, 12)
+                    newLbl.Position = UDim2.new(0, 62, 0, subName ~= "" and 42 or 27)
+                    newLbl.Parent = wrap
+                    AddToRegistry(newLbl, "TextColor3", "SubText")
                 end
             end
             function mod:SetLogo(newLogo)
@@ -4095,8 +4111,40 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end
                 end
             end
-            function mod:SetCopyText(newText)
-                copyText = tostring(newText or "已复制到剪贴板")
+            function mod:SetCopy(newText)
+                copyText = tostring(newText or "")
+                local existing = wrap:FindFirstChild("CopyButton")
+                if existing then existing:Destroy() end
+                if copyText ~= "" then
+                    local newBtn = Instance.new("TextButton")
+                    newBtn.Name = "CopyButton"
+                    newBtn.Text = buttonText
+                    newBtn.Size = UDim2.fromOffset(52, 26)
+                    newBtn.Position = UDim2.new(1, -11, 0.5, 0)
+                    newBtn.AnchorPoint = Vector2.new(1, 0.5)
+                    newBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    newBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold)
+                    newBtn.TextSize = 12
+                    newBtn.Parent = wrap
+                    AddToRegistry(newBtn, "BackgroundColor3", "Element")
+                    local newCorner = Instance.new("UICorner")
+                    newCorner.CornerRadius = UDim.new(0, 8)
+                    newCorner.Parent = newBtn
+                    local newStroke = Instance.new("UIStroke")
+                    newStroke.Transparency = 0.4
+                    newStroke.Thickness = 1
+                    newStroke.Parent = newBtn
+                    AddToRegistry(newStroke, "Color", "Stroke")
+                    newBtn.MouseButton1Click:Connect(function()
+                        pcall(function() toclipboard(copyText) end)
+                        if win then win:Notification("", "已复制到剪贴板", "Success", 2) end
+                    end)
+                end
+            end
+            function mod:SetCbn(newText)
+                buttonText = tostring(newText or "复制")
+                local btn = wrap:FindFirstChild("CopyButton")
+                if btn then btn.Text = buttonText end
             end
             function mod:Destroy()
                 wrap:Destroy()
