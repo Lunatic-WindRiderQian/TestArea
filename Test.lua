@@ -3935,7 +3935,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ===== 新增 Social（来自 FluentPro 的 AddSocial）=====
+        -- ===== 新增 Social（仅支持 bilibili 和 kuaishou，已移除海外平台）=====
         child.Social = function(_, config)
             config = config or {}
             local parent = contentHolder
@@ -3944,17 +3944,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local username = tostring(config.Username or "")
             local platform = tostring(config.Platform or "")
             local profileUrl = config.ProfileUrl or config.Url
-            -- 如果没给 username 但给了 profileUrl，尝试从 URL 解析
+            -- 如果没给 username 但给了 profileUrl，尝试从 URL 解析（仅识别 bilibili 和 kuaishou）
             if username == "" and type(profileUrl) == "string" and profileUrl ~= "" then
                 local host, path = profileUrl:match("^https?://([^/]+)/?(.-)[/?#]?$")
                 if not host then host, path = profileUrl:match("^https?://([^/]+)/?(.*)$") end
                 if host then
                     host = host:gsub("^www%.", ""):lower()
+                    -- 只保留 bilibili 和 kuaishou
                     local hostMap = {
-                        ["github.com"]="github", ["twitter.com"]="twitter", ["x.com"]="twitter",
-                        ["instagram.com"]="instagram", ["youtube.com"]="youtube", ["tiktok.com"]="tiktok",
-                        ["twitch.tv"]="twitch", ["reddit.com"]="reddit", ["telegram.me"]="telegram",
-                        ["t.me"]="telegram", ["soundcloud.com"]="soundcloud", ["steamcommunity.com"]="steam",
+                        ["bilibili.com"] = "bilibili",
+                        ["kuaishou.com"] = "kuaishou",
                     }
                     local user = path and path:match("^([^/?#]+)")
                     if user and user ~= "" then
@@ -3985,7 +3984,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             stroke.Transparency = 0.45
             stroke.Thickness = 1.5
             stroke.Parent = wrap
-            AddToRegistry(stroke, "Color", "Stroke")
+            AddToRegistry(stroke, "Color", "Stroke")  -- 修正：使用 "Stroke" 而非 "InElementBorder"
 
             -- 头像
             local avatarBg = Instance.new("Frame")
@@ -4083,13 +4082,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 copyStroke.Transparency = 0.4
                 copyStroke.Thickness = 1
                 copyStroke.Parent = copyBtn
-                AddToRegistry(copyStroke, "Color", "InElementBorder")
+                -- 使用 "Stroke" 替代 "InElementBorder"
+                AddToRegistry(copyStroke, "Color", "Stroke")
             end
 
             -- 复制函数
             local function _copy(text, label)
                 if not text or text == "" then return end
-                pcall(function() toclipboard(text) end)  -- 使用 toclipboard
+                pcall(function() toclipboard(text) end)
                 if win then win:Notification("Copied", (label or "Text").." copied to clipboard", "Success", 2) end
             end
 
@@ -4110,19 +4110,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     host = host:gsub("^www%.", ""):lower()
                     local user = path:match("^([^/?#]+)")
                     if not user or user == "" then return nil, nil end
+                    -- 同样只保留 bilibili 和 kuaishou
                     local hostMap = {
-                        ["github.com"] = "github",
-                        ["twitter.com"] = "twitter",
-                        ["x.com"] = "twitter",
-                        ["instagram.com"] = "instagram",
-                        ["youtube.com"] = "youtube",
-                        ["tiktok.com"] = "tiktok",
-                        ["twitch.tv"] = "twitch",
-                        ["reddit.com"] = "reddit",
-                        ["telegram.me"] = "telegram",
-                        ["t.me"] = "telegram",
-                        ["soundcloud.com"] = "soundcloud",
-                        ["steamcommunity.com"] = "steam",
+                        ["bilibili.com"] = "bilibili",
+                        ["kuaishou.com"] = "kuaishou",
                     }
                     local slug = hostMap[host]
                     if user:sub(1,1) == "@" then user = user:sub(2) end
@@ -5570,7 +5561,7 @@ function Fenglib:CreateWindow(Config)
             elements.Video    = function(_, config) return createSection("", nil, true).Video(config) end
             elements.Audio    = function(_, config) return createSection("", nil, true).Audio(config) end
             elements.Viewport = function(_, config) return createSection("", nil, true).Viewport(config) end
-            elements.Social   = function(_, config) return createSection("", nil, true).Social(config) end   -- 新增 Social
+            elements.Social   = function(_, config) return createSection("", nil, true).Social(config) end   -- 已修改
             return elements
         end
 
