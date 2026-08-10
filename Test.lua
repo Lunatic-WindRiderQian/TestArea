@@ -71,14 +71,512 @@ local function createPulseGlow(object)
     }
 end
 
+-- ============================================================
+-- 主题表：来自 FluentPro，删除了所有 Background 字段
+-- 仅保留 Dark 作为默认，其余主题均包含 Shine 配置
+-- ============================================================
 local Themes = {
-    Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48), SubText = Color3.fromRGB(160, 160, 170), Element = Color3.fromRGB(45, 45, 50), Hover = Color3.fromRGB(60, 60, 70)},
-    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225), SubText = Color3.fromRGB(100, 100, 110), Element = Color3.fromRGB(235, 235, 240), Hover = Color3.fromRGB(210, 210, 220)},
-    Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(160, 90, 255), Stroke = Color3.fromRGB(50, 45, 60), SubText = Color3.fromRGB(180, 170, 200), Element = Color3.fromRGB(50, 45, 60), Hover = Color3.fromRGB(70, 60, 85)},
-    Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(70, 130, 255), Stroke = Color3.fromRGB(45, 55, 75), SubText = Color3.fromRGB(150, 170, 200), Element = Color3.fromRGB(45, 55, 75), Hover = Color3.fromRGB(65, 80, 105)},
-    Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(60, 40, 40), SubText = Color3.fromRGB(200, 160, 160), Element = Color3.fromRGB(60, 40, 40), Hover = Color3.fromRGB(85, 55, 55)},
-    Yellow = {Main = Color3.fromRGB(22, 22, 12), Top = Color3.fromRGB(35, 35, 20), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(255, 200, 80), Stroke = Color3.fromRGB(60, 60, 40), SubText = Color3.fromRGB(200, 190, 160), Element = Color3.fromRGB(60, 60, 40), Hover = Color3.fromRGB(85, 85, 55)},
-    Green  = {Main = Color3.fromRGB(12, 22, 15), Top = Color3.fromRGB(20, 35, 25), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(60, 220, 130), Stroke = Color3.fromRGB(40, 60, 50), SubText = Color3.fromRGB(160, 200, 180), Element = Color3.fromRGB(40, 60, 50), Hover = Color3.fromRGB(55, 85, 70)},
+    -- Dark（对应 FluentPro 的 Ash Gray）
+    Dark = {
+        Main    = Color3.fromRGB(60, 60, 60),
+        Top     = Color3.fromRGB(120, 120, 120),
+        Text    = Color3.fromRGB(240, 240, 240),
+        Accent  = Color3.fromRGB(150, 150, 150),
+        Stroke  = Color3.fromRGB(90, 90, 90),
+        SubText = Color3.fromRGB(170, 170, 170),
+        Element = Color3.fromRGB(120, 120, 120),
+        Hover   = Color3.fromRGB(120, 120, 120),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.4,
+            RotationSpeed = 20,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 40)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(105, 105, 105)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 40, 40))
+            })
+        }
+    },
+
+    ["Blood Red"] = {
+        Main    = Color3.fromRGB(35, 8, 10),
+        Top     = Color3.fromRGB(145, 15, 25),
+        Text    = Color3.fromRGB(255, 230, 230),
+        Accent  = Color3.fromRGB(180, 10, 20),
+        Stroke  = Color3.fromRGB(150, 18, 28),
+        SubText = Color3.fromRGB(210, 175, 178),
+        Element = Color3.fromRGB(130, 12, 22),
+        Hover   = Color3.fromRGB(180, 10, 20),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(71, 0, 0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(159, 0, 0)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(71, 0, 0))
+            })
+        }
+    },
+
+    ["Neon Purple"] = {
+        Main    = Color3.fromRGB(5, 0, 15),
+        Top     = Color3.fromRGB(130, 0, 230),
+        Text    = Color3.fromRGB(252, 245, 255),
+        Accent  = Color3.fromRGB(180, 0, 255),
+        Stroke  = Color3.fromRGB(155, 0, 245),
+        SubText = Color3.fromRGB(210, 185, 255),
+        Element = Color3.fromRGB(120, 0, 210),
+        Hover   = Color3.fromRGB(150, 0, 255),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.4,
+            RotationSpeed = 20,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(32, 5, 137)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(171, 32, 253)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(32, 5, 137))
+            })
+        }
+    },
+
+    ["Deep Violet"] = {
+        Main    = Color3.fromRGB(20, 20, 20),
+        Top     = Color3.fromRGB(160, 140, 180),
+        Text    = Color3.fromRGB(240, 240, 240),
+        Accent  = Color3.fromRGB(97, 62, 167),
+        Stroke  = Color3.fromRGB(100, 90, 110),
+        SubText = Color3.fromRGB(170, 170, 170),
+        Element = Color3.fromRGB(140, 120, 160),
+        Hover   = Color3.fromRGB(140, 120, 160),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 25, 65)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(160, 120, 220)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 25, 65))
+            })
+        }
+    },
+
+    ["Charcoal"] = {
+        Main    = Color3.fromRGB(20, 20, 20),
+        Top     = Color3.fromRGB(40, 40, 40),
+        Text    = Color3.fromRGB(240, 240, 240),
+        Accent  = Color3.fromRGB(102, 102, 102),
+        Stroke  = Color3.fromRGB(45, 45, 45),
+        SubText = Color3.fromRGB(170, 170, 170),
+        Element = Color3.fromRGB(35, 35, 35),
+        Hover   = Color3.fromRGB(90, 160, 255),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.45,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 150, 150)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
+            })
+        }
+    },
+
+    ["Pearl White"] = {
+        Main    = Color3.fromRGB(240, 240, 240),
+        Top     = Color3.fromRGB(230, 230, 230),
+        Text    = Color3.fromRGB(20, 20, 20),
+        Accent  = Color3.fromRGB(214, 214, 214),
+        Stroke  = Color3.fromRGB(210, 210, 210),
+        SubText = Color3.fromRGB(90, 90, 90),
+        Element = Color3.fromRGB(220, 220, 220),
+        Hover   = Color3.fromRGB(60, 160, 255),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.4,
+            RotationSpeed = 20,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(200, 200, 200)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
+            })
+        }
+    },
+
+    ["Deep Ocean"] = {
+        Main    = Color3.fromRGB(15, 30, 45),
+        Top     = Color3.fromRGB(0, 100, 150),
+        Text    = Color3.fromRGB(240, 248, 255),
+        Accent  = Color3.fromRGB(0, 150, 200),
+        Stroke  = Color3.fromRGB(0, 110, 165),
+        SubText = Color3.fromRGB(180, 210, 230),
+        Element = Color3.fromRGB(0, 90, 135),
+        Hover   = Color3.fromRGB(0, 150, 200),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 60, 90)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 200, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 60, 90))
+            })
+        }
+    },
+
+    ["Midnight Blue"] = {
+        Main    = Color3.fromRGB(10, 8, 25),
+        Top     = Color3.fromRGB(60, 45, 140),
+        Text    = Color3.fromRGB(220, 220, 255),
+        Accent  = Color3.fromRGB(100, 80, 200),
+        Stroke  = Color3.fromRGB(70, 55, 155),
+        SubText = Color3.fromRGB(170, 170, 210),
+        Element = Color3.fromRGB(55, 40, 125),
+        Hover   = Color3.fromRGB(100, 80, 200),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 15, 60)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(140, 120, 240)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 15, 60))
+            })
+        }
+    },
+
+    ["Royal Blue"] = {
+        Main    = Color3.fromRGB(10, 25, 50),
+        Top     = Color3.fromRGB(10, 65, 150),
+        Text    = Color3.fromRGB(220, 235, 255),
+        Accent  = Color3.fromRGB(15, 82, 186),
+        Stroke  = Color3.fromRGB(11, 70, 160),
+        SubText = Color3.fromRGB(170, 190, 220),
+        Element = Color3.fromRGB(9, 58, 135),
+        Hover   = Color3.fromRGB(15, 82, 186),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 40, 85)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50, 120, 230)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 40, 85))
+            })
+        }
+    },
+
+    ["Galaxy Purple"] = {
+        Main    = Color3.fromRGB(12, 5, 25),
+        Top     = Color3.fromRGB(125, 45, 190),
+        Text    = Color3.fromRGB(242, 232, 255),
+        Accent  = Color3.fromRGB(160, 60, 220),
+        Stroke  = Color3.fromRGB(130, 50, 195),
+        SubText = Color3.fromRGB(200, 178, 228),
+        Element = Color3.fromRGB(112, 40, 170),
+        Hover   = Color3.fromRGB(160, 60, 220),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(48, 18, 85)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(195, 100, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(48, 18, 85))
+            })
+        }
+    },
+
+    ["Cosmic Violet"] = {
+        Main    = Color3.fromRGB(12, 10, 22),
+        Top     = Color3.fromRGB(55, 38, 115),
+        Text    = Color3.fromRGB(230, 225, 245),
+        Accent  = Color3.fromRGB(80, 60, 140),
+        Stroke  = Color3.fromRGB(60, 42, 120),
+        SubText = Color3.fromRGB(185, 175, 210),
+        Element = Color3.fromRGB(50, 34, 104),
+        Hover   = Color3.fromRGB(80, 60, 140),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 25, 65)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(115, 90, 175)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 25, 65))
+            })
+        }
+    },
+
+    ["AMOLED"] = {
+        Main    = Color3.fromRGB(0, 0, 0),
+        Top     = Color3.fromRGB(28, 28, 28),
+        Text    = Color3.fromRGB(255, 255, 255),
+        Accent  = Color3.fromRGB(255, 255, 255),
+        Stroke  = Color3.fromRGB(30, 30, 30),
+        SubText = Color3.fromRGB(150, 150, 150),
+        Element = Color3.fromRGB(10, 10, 10),
+        Hover   = Color3.fromRGB(22, 22, 22),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = false,
+        Shine = nil
+    },
+
+    ["RGB"] = {
+        Main    = Color3.fromRGB(8, 8, 14),
+        Top     = Color3.fromRGB(0, 200, 160),
+        Text    = Color3.fromRGB(220, 255, 245),
+        Accent  = Color3.fromRGB(0, 255, 180),
+        Stroke  = Color3.fromRGB(0, 200, 160),
+        SubText = Color3.fromRGB(100, 220, 190),
+        Element = Color3.fromRGB(20, 20, 35),
+        Hover   = Color3.fromRGB(0, 50, 40),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 1.2,
+            RotationSpeed = 40,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 180)),
+                ColorSequenceKeypoint.new(0.33, Color3.fromRGB(120, 0, 255)),
+                ColorSequenceKeypoint.new(0.66, Color3.fromRGB(255, 0, 150)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 180))
+            })
+        }
+    },
+
+    ["Neon Cyber"] = {
+        Main    = Color3.fromRGB(5, 10, 5),
+        Top     = Color3.fromRGB(57, 255, 20),
+        Text    = Color3.fromRGB(200, 255, 190),
+        Accent  = Color3.fromRGB(57, 255, 20),
+        Stroke  = Color3.fromRGB(35, 160, 15),
+        SubText = Color3.fromRGB(80, 200, 60),
+        Element = Color3.fromRGB(10, 22, 10),
+        Hover   = Color3.fromRGB(15, 40, 15),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.8,
+            RotationSpeed = 30,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(5, 30, 5)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(57, 255, 20)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 5))
+            })
+        }
+    },
+
+    ["Arctic Frost"] = {
+        Main    = Color3.fromRGB(185, 215, 235),
+        Top     = Color3.fromRGB(90, 150, 200),
+        Text    = Color3.fromRGB(20, 40, 70),
+        Accent  = Color3.fromRGB(100, 180, 240),
+        Stroke  = Color3.fromRGB(140, 185, 218),
+        SubText = Color3.fromRGB(65, 105, 148),
+        Element = Color3.fromRGB(210, 235, 250),
+        Hover   = Color3.fromRGB(170, 210, 238),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.3,
+            RotationSpeed = 15,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(200, 235, 255)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 235, 255))
+            })
+        }
+    },
+
+    ["Cotton Candy"] = {
+        Main    = Color3.fromRGB(255, 225, 245),
+        Top     = Color3.fromRGB(195, 130, 185),
+        Text    = Color3.fromRGB(75, 25, 55),
+        Accent  = Color3.fromRGB(255, 130, 190),
+        Stroke  = Color3.fromRGB(235, 170, 215),
+        SubText = Color3.fromRGB(145, 75, 115),
+        Element = Color3.fromRGB(255, 200, 235),
+        Hover   = Color3.fromRGB(238, 182, 222),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.4,
+            RotationSpeed = 18,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 180, 220)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220, 180, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 180, 220))
+            })
+        }
+    },
+
+    ["Orange"] = {
+        Main    = Color3.fromRGB(4, 4, 4),
+        Top     = Color3.fromRGB(180, 80, 10),
+        Text    = Color3.fromRGB(255, 240, 220),
+        Accent  = Color3.fromRGB(255, 140, 30),
+        Stroke  = Color3.fromRGB(200, 90, 10),
+        SubText = Color3.fromRGB(220, 175, 130),
+        Element = Color3.fromRGB(22, 10, 2),
+        Hover   = Color3.fromRGB(255, 140, 30),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.7,
+            RotationSpeed = 30,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 10, 0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 140, 30)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 10, 0))
+            })
+        }
+    },
+
+    ["Cyanic"] = {
+        Main    = Color3.fromRGB(8, 18, 22),
+        Top     = Color3.fromRGB(40, 165, 160),
+        Text    = Color3.fromRGB(210, 248, 246),
+        Accent  = Color3.fromRGB(57, 197, 187),
+        Stroke  = Color3.fromRGB(40, 165, 160),
+        SubText = Color3.fromRGB(130, 210, 205),
+        Element = Color3.fromRGB(14, 38, 46),
+        Hover   = Color3.fromRGB(57, 197, 187),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.6,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 40, 50)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(57, 197, 187)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 40, 50))
+            })
+        }
+    },
+
+    ["Amber Glow"] = {
+        Main    = Color3.fromRGB(18, 10, 4),
+        Top     = Color3.fromRGB(190, 125, 25),
+        Text    = Color3.fromRGB(255, 245, 225),
+        Accent  = Color3.fromRGB(255, 170, 40),
+        Stroke  = Color3.fromRGB(200, 130, 30),
+        SubText = Color3.fromRGB(230, 195, 145),
+        Element = Color3.fromRGB(38, 20, 5),
+        Hover   = Color3.fromRGB(255, 170, 40),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.6,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 22, 4)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 170, 40)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 22, 4))
+            })
+        }
+    },
+
+    ["Bloomings"] = {
+        Main    = Color3.fromRGB(40, 15, 30),
+        Top     = Color3.fromRGB(50, 18, 38),
+        Text    = Color3.fromRGB(255, 240, 248),
+        Accent  = Color3.fromRGB(255, 80, 150),
+        Stroke  = Color3.fromRGB(200, 80, 150),
+        SubText = Color3.fromRGB(230, 190, 215),
+        Element = Color3.fromRGB(55, 22, 42),
+        Hover   = Color3.fromRGB(255, 255, 255),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.35,
+            RotationSpeed = 15,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 70, 150)),
+                ColorSequenceKeypoint.new(0.25, Color3.fromRGB(80, 255, 150)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+                ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255, 50, 130)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 70, 150))
+            })
+        }
+    },
+
+    ["Crimson"] = {
+        Main    = Color3.fromRGB(30, 6, 9),
+        Top     = Color3.fromRGB(16, 10, 16),
+        Text    = Color3.fromRGB(255, 235, 240),
+        Accent  = Color3.fromRGB(220, 30, 60),
+        Stroke  = Color3.fromRGB(200, 25, 55),
+        SubText = Color3.fromRGB(180, 100, 115),
+        Element = Color3.fromRGB(14, 8, 14),
+        Hover   = Color3.fromRGB(50, 12, 22),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.4,
+            RotationSpeed = 20,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 5, 20)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220, 30, 60)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 5, 20))
+            })
+        }
+    },
+
+    ["Gold"] = {
+        Main    = Color3.fromRGB(35, 27, 12),
+        Top     = Color3.fromRGB(80, 65, 30),
+        Text    = Color3.fromRGB(240, 240, 240),
+        Accent  = Color3.fromRGB(255, 200, 90),
+        Stroke  = Color3.fromRGB(80, 60, 25),
+        SubText = Color3.fromRGB(170, 170, 170),
+        Element = Color3.fromRGB(70, 55, 25),
+        Hover   = Color3.fromRGB(255, 200, 90),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 30, 10)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 210, 120)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 30, 10))
+            })
+        }
+    },
 }
 local CurrentTheme = Themes.Dark
 
@@ -4445,15 +4943,11 @@ function Fenglib:CreateWindow(Config)
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
+    -- ================== 背景图和动画（使用默认SceneId） ==================
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
     bgImage.BackgroundTransparency = 1
-    if type(SceneId) == "number" or (type(SceneId) == "string" and tonumber(SceneId)) then
-        bgImage.Image = "rbxassetid://" .. tostring(SceneId)
-    else
-        bgImage.Image = tostring(SceneId)
-    end
     bgImage.ScaleType = Enum.ScaleType.Crop
     bgImage.ZIndex = 0
     bgImage.Parent = MainFrame
@@ -4464,31 +4958,78 @@ function Fenglib:CreateWindow(Config)
 
     local bgGradient = Instance.new("UIGradient")
     bgGradient.Rotation = 0
-    bgGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 10, 20)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 80, 80)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 10, 20))
-    })
-    bgGradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.6),
-        NumberSequenceKeypoint.new(0.5, 0.0),
-        NumberSequenceKeypoint.new(1, 0.6)
-    })
     bgGradient.Parent = bgImage
 
-    local shineConn
-    local function startShine()
-        local rot = 0
-        shineConn = RunService.RenderStepped:Connect(function(dt)
-            rot = (rot + dt * 20) % 360
-            bgGradient.Rotation = rot
-        end)
-    end
-    startShine()
+    local shineConn = nil
 
-    table.insert(WindowCleanup, function()
-        if shineConn then shineConn:Disconnect() end
-    end)
+    -- 背景更新函数
+    local function updateBackground()
+        local theme = CurrentTheme
+
+        -- 使用传入的 SceneId 作为默认背景图
+        local defaultBg = ""
+        if SceneId then
+            if type(SceneId) == "number" or (type(SceneId) == "string" and tonumber(SceneId)) then
+                defaultBg = "rbxassetid://" .. tostring(SceneId)
+            else
+                defaultBg = tostring(SceneId)
+            end
+        end
+        bgImage.Image = defaultBg
+        bgImage.ImageTransparency = 0
+
+        -- 停止旧动画
+        if shineConn then
+            shineConn:Disconnect()
+            shineConn = nil
+        end
+
+        -- 启动新动画（如果主题启用）
+        if theme.ShineEnabled and theme.Shine then
+            local shine = theme.Shine
+            local speed = shine.RotationSpeed or 20
+            local colorSeq = shine.ColorSequence
+
+            if colorSeq then
+                bgGradient.Color = colorSeq
+            else
+                local accent = theme.Accent or Color3.fromRGB(255, 255, 255)
+                bgGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, accent),
+                    ColorSequenceKeypoint.new(0.5, Color3.new(1,1,1):Lerp(accent, 0.5)),
+                    ColorSequenceKeypoint.new(1, accent)
+                })
+            end
+
+            bgGradient.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0.6),
+                NumberSequenceKeypoint.new(0.5, 0.0),
+                NumberSequenceKeypoint.new(1, 0.6)
+            })
+
+            local rot = 0
+            shineConn = RunService.RenderStepped:Connect(function(dt)
+                rot = (rot + dt * speed) % 360
+                bgGradient.Rotation = rot
+            end)
+        else
+            bgGradient.Rotation = 0
+            bgGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 10, 20)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 80, 80)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 10, 20))
+            })
+            bgGradient.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0.6),
+                NumberSequenceKeypoint.new(0.5, 0.0),
+                NumberSequenceKeypoint.new(1, 0.6)
+            })
+        end
+    end
+
+    table.insert(ThemeListeners, updateBackground)
+    updateBackground()
+    -- ================== 背景图和动画结束 ==================
 
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
