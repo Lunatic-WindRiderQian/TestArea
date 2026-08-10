@@ -686,10 +686,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
             local callback = config.Callback or function() end
+            local parent = config.Parent or contentHolder
 
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
-            Tile.Parent = contentHolder
+            Tile.Parent = parent
             styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -747,10 +748,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Enabled = config.Value or false
             local callback = config.Callback or function() end
             local controlId = toggleText .. "_" .. tostring(#Registry)
+            local parent = config.Parent or contentHolder
 
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
-            Tile.Parent = contentHolder
+            Tile.Parent = parent
             styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -828,11 +830,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Rounding = config.Rounding or 0
             local Val = tonumber(default) or (min or 0)
             local controlId = sliderText .. "_" .. tostring(#Registry)
+            local parent = config.Parent or contentHolder
 
             local tileH = unlimited and 42 or 60
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, tileH)
-            Tile.Parent = contentHolder
+            Tile.Parent = parent
             styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -1020,6 +1023,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local multi = config.Multi == true
             local callback = config.Callback or function() end
             local controlId = dropText .. "_" .. tostring(#Registry)
+            local parent = config.Parent or contentHolder
 
             local selected = multi and {} or nil
             local function initSelected()
@@ -1048,7 +1052,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local Btn = Instance.new("Frame")
             Btn.Size = UDim2.new(1, 0, 0, 42)
-            Btn.Parent = contentHolder
+            Btn.Parent = parent
             styleContainer(Btn)
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
@@ -1082,7 +1086,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Container.Visible = false
             Container.ClipsDescendants = true
             Container.ZIndex = 10
-            Container.Parent = contentHolder
+            Container.Parent = parent
             styleContainer(Container)
             Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Container, "BackgroundColor3", "Top")
@@ -1370,6 +1374,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local mode = config.Mode or "Toggle"
             local callback = config.Callback or function() end
             local controlId = keyText .. "_" .. tostring(#Registry)
+            local parent = config.Parent or contentHolder
 
             local state = {
                 Key = defaultKey.Name,
@@ -1380,7 +1385,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
-            Tile.Parent = contentHolder
+            Tile.Parent = parent
             styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -1599,6 +1604,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Color = config.Default or Color3.fromRGB(255, 255, 255)
             local callback = config.Callback or function() end
             local controlId = pickerText .. "_" .. tostring(#Registry)
+            local parent = config.Parent or contentHolder
             
             local hue, sat, val = Color3.toHSV(Color)
             local alpha = 1.0
@@ -1625,7 +1631,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 44)
-            Tile.Parent = contentHolder
+            Tile.Parent = parent
             styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -1663,7 +1669,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Panel.Size = UDim2.new(1, 0, 0, 0)
             Panel.Visible = false
             Panel.ClipsDescendants = true
-            Panel.Parent = contentHolder
+            Panel.Parent = parent
             styleContainer(Panel)
             Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Panel, "BackgroundColor3", "Top")
@@ -2010,10 +2016,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local acceptedChars = options.AcceptedCharacters
             local onChanged = options.OnChanged
             local controlId = inputText .. "_" .. tostring(#Registry)
+            local parent = config.Parent or contentHolder
 
             local InputFrame = Instance.new("Frame")
             InputFrame.Size = UDim2.new(1, 0, 0, 42)
-            InputFrame.Parent = contentHolder
+            InputFrame.Parent = parent
             styleContainer(InputFrame)
             Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(InputFrame, "BackgroundColor3", "Top")
@@ -2194,10 +2201,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local placeholder = config.Placeholder or ""
             local callback = config.Callback or function() end
             local controlId = boxText .. "_" .. tostring(#Registry)
+            local parent = config.Parent or contentHolder
 
             local Frame = Instance.new("Frame")
             Frame.Size = UDim2.new(1, 0, 0, 70)
-            Frame.Parent = contentHolder
+            Frame.Parent = parent
             styleContainer(Frame)
             Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Frame, "BackgroundColor3", "Top")
@@ -2246,9 +2254,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         child.Label = function(_, config)
             local labelText = config.Name or ""
+            local parent = config.Parent or contentHolder
             local LabelFrame = Instance.new("Frame")
             LabelFrame.Size = UDim2.new(1, 0, 0, 42)
-            LabelFrame.Parent = contentHolder
+            LabelFrame.Parent = parent
             styleContainer(LabelFrame)
             Instance.new("UICorner", LabelFrame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(LabelFrame, "BackgroundColor3", "Top")
@@ -2283,6 +2292,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local iconColor = config.IconColor or CurrentTheme.Text
             local callback = config.Callback or function() end
             local strokeColor = config.StrokeColor or CurrentTheme.Stroke
+            local parent = config.Parent or contentHolder
 
             local function formatIcon(asset)
                 if type(asset) == "number" then
@@ -2304,7 +2314,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local imageFrame = Instance.new("Frame")
             imageFrame.Size = UDim2.new(1, 0, 0, 0)
             imageFrame.AutomaticSize = Enum.AutomaticSize.Y
-            imageFrame.Parent = contentHolder
+            imageFrame.Parent = parent
             styleContainer(imageFrame)
             Instance.new("UICorner", imageFrame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(imageFrame, "BackgroundColor3", "Top")
@@ -2477,11 +2487,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         child.Divider = function(_, config)
             local labelText = config and config.Name or config or ""
+            local parent = config and config.Parent or contentHolder
 
             local container = Instance.new("Frame")
             container.Size = UDim2.new(1, 0, 0, (labelText ~= "" and 22 or 12))
             container.BackgroundTransparency = 1
-            container.Parent = contentHolder
+            container.Parent = parent
 
             if labelText ~= "" then
                 local leftLine = Instance.new("Frame")
@@ -2536,10 +2547,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ===== Space =====
         child.Space = function(_, config)
             local height = (config and config.Height) or 8
-            local parent = contentHolder
+            local parent = config and config.Parent or contentHolder
 
             local sp = Instance.new("Frame")
             sp.Size = UDim2.new(1, 0, 0, height)
@@ -2566,10 +2576,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local default = config.Default or false
             local callback = config.Callback or function() end
             local controlId = title .. "_" .. tostring(#Registry)
+            local parent = config.Parent or contentHolder
 
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
-            Tile.Parent = contentHolder
+            Tile.Parent = parent
             styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -2688,12 +2699,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local showPercent = config.ShowPercent ~= false
             local callback = config.Callback or function() end
             local controlId = name .. "_" .. tostring(#Registry)
+            local parent = config.Parent or contentHolder
 
             local containerHeight = (name ~= "" and 46 or 26)
             local wrap = Instance.new("Frame")
             wrap.Size = UDim2.new(1, 0, 0, containerHeight)
             wrap.BackgroundTransparency = 1
-            wrap.Parent = contentHolder
+            wrap.Parent = parent
 
             local titleLbl = nil
             if name ~= "" then
@@ -2787,10 +2799,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return h
         end
 
-        -- ===== Video 元素 =====
         child.Video = function(_, config)
             local opts   = config or {}
-            local parent = contentHolder
+            local parent = opts.Parent or contentHolder
             if not parent then return end
 
             local radius = opts.Radius or 8
@@ -3239,7 +3250,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         child.Audio = function(_, config)
             local opts = config or {}
-            local parent = contentHolder
+            local parent = opts.Parent or contentHolder
             if not parent then return end
 
             local title = opts.Name or opts.Title or "Audio"
@@ -3647,7 +3658,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         child.Viewport = function(_, config)
             local opts = config or {}
-            local parent = contentHolder
+            local parent = opts.Parent or contentHolder
             if not parent then return end
 
             local UIS = UserInputService
@@ -3912,10 +3923,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ===== Social =====
         child.Social = function(_, config)
             config = config or {}
-            local parent = contentHolder
+            local parent = config.Parent or contentHolder
             if not parent then return end
 
             local displayName = tostring(config.Name or config.DisplayName or "")
@@ -4171,182 +4181,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
-        -- ===== Paragraph（完整复刻 FluentPro，支持富文本）=====
         child.Paragraph = function(_, config)
             config = config or {}
             local title = config.Name or ""
             local content = config.Content or ""
-
-            local frame = Instance.new("Frame")
-            frame.Size = UDim2.new(1, 0, 0, 0)
-            frame.AutomaticSize = Enum.AutomaticSize.Y
-            frame.BackgroundTransparency = 0.92
-            frame.BorderSizePixel = 0
-            frame.Parent = contentHolder
-            AddToRegistry(frame, "BackgroundColor3", "Top")
-
-            local corner = Instance.new("UICorner")
-            corner.CornerRadius = UDim.new(0, 4)
-            corner.Parent = frame
-
-            local stroke = Instance.new("UIStroke")
-            stroke.Transparency = 0.6
-            stroke.Thickness = 1
-            stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-            stroke.Parent = frame
-            AddToRegistry(stroke, "Color", "Stroke")
-
-            local labelHolder = Instance.new("Frame")
-            labelHolder.Size = UDim2.new(1, -20, 0, 0)
-            labelHolder.Position = UDim2.new(0, 10, 0, 0)
-            labelHolder.BackgroundTransparency = 1
-            labelHolder.AutomaticSize = Enum.AutomaticSize.Y
-            labelHolder.Parent = frame
-
-            local holderLayout = Instance.new("UIListLayout")
-            holderLayout.Padding = UDim.new(0, 0)
-            holderLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            holderLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-            holderLayout.Parent = labelHolder
-
-            local padding = Instance.new("UIPadding")
-            padding.PaddingTop = UDim.new(0, 13)
-            padding.PaddingBottom = UDim.new(0, 13)
-            padding.Parent = labelHolder
-
-            -- 标题：支持富文本
-            local titleLabel = Instance.new("TextLabel")
-            titleLabel.Size = UDim2.new(1, 0, 0, 14)
-            titleLabel.BackgroundTransparency = 1
-            titleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium)
-            titleLabel.Text = title
-            titleLabel.TextSize = 13
-            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-            titleLabel.TextTruncate = Enum.TextTruncate.AtEnd
-            titleLabel.RichText = true   -- 启用富文本
-            titleLabel.Parent = labelHolder
-            AddToRegistry(titleLabel, "TextColor3", "Text")
-
-            -- 内容：支持富文本
-            local contentLabel = Instance.new("TextLabel")
-            contentLabel.Size = UDim2.new(1, 0, 0, 14)
-            contentLabel.BackgroundTransparency = 1
-            contentLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular)
-            contentLabel.Text = content
-            contentLabel.TextSize = 12
-            contentLabel.TextXAlignment = Enum.TextXAlignment.Left
-            contentLabel.TextWrapped = true
-            contentLabel.AutomaticSize = Enum.AutomaticSize.Y
-            contentLabel.RichText = true   -- 启用富文本
-            contentLabel.Parent = labelHolder
-            AddToRegistry(contentLabel, "TextColor3", "SubText")
-
-            local self = {}
-            function self.SetName(newTitle)
-                titleLabel.Text = newTitle
-            end
-            function self.SetContent(newContent)
-                contentLabel.Text = newContent
-            end
-            function self.SetVisible(state)
-                frame.Visible = state
-            end
-            function self.Destroy()
-                frame:Destroy()
-            end
-            return self
-        end
-
-        -- ===== Group（多列容器）=====
-        child.Group = function(_, config)
-            local opts = (type(config) == "table" and config) or {}
-            local parent = contentHolder
-            if not parent then return end
-
-            local gap = opts.Gap or 6
-            local cols = opts.Columns or 2
-
-            local outerWrap = Instance.new("Frame")
-            outerWrap.Size = UDim2.new(1, 0, 0, 0)
-            outerWrap.AutomaticSize = Enum.AutomaticSize.Y
-            outerWrap.BackgroundTransparency = 1
-            outerWrap.BorderSizePixel = 0
-            outerWrap.Parent = parent
-
-            local padding = Instance.new("UIPadding")
-            padding.PaddingTop = UDim.new(0, 2)
-            padding.PaddingBottom = UDim.new(0, 2)
-            padding.Parent = outerWrap
-
-            local wrap = Instance.new("Frame")
-            wrap.Size = UDim2.new(1, 0, 0, 0)
-            wrap.AutomaticSize = Enum.AutomaticSize.Y
-            wrap.BackgroundTransparency = 1
-            wrap.BorderSizePixel = 0
-            wrap.Parent = outerWrap
-
-            local totalGap = gap * (cols - 1)
-            local colScale = 1 / cols
-            local colOffset = -math.floor(totalGap / cols + 0.5)
-
-            local layout = Instance.new("UIListLayout")
-            layout.FillDirection = Enum.FillDirection.Horizontal
-            layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-            layout.VerticalAlignment = Enum.VerticalAlignment.Top
-            layout.Padding = UDim.new(0, gap)
-            layout.SortOrder = Enum.SortOrder.LayoutOrder
-            layout.Parent = wrap
-
-            local mod = {
-                Frame = outerWrap,
-                Type = "Group",
-                Elements = {},
-                _section = nil,
-            }
-
-            function mod:SetSection(sec)
-                self._section = sec
-            end
-
-            function mod:AddElement()
-                local el = Instance.new("Frame")
-                el.Size = UDim2.new(colScale, colOffset, 0, 0)
-                el.BackgroundTransparency = 1
-                el.AutomaticSize = Enum.AutomaticSize.Y
-                el.Parent = wrap
-
-                local elLayout = Instance.new("UIListLayout")
-                elLayout.Padding = UDim.new(0, 5)
-                elLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                elLayout.Parent = el
-
-                local sec = self._section
-                local colObj = {
-                    Container = el,
-                    Type = sec and sec.Type or nil,
-                    ScrollFrame = sec and sec.ScrollFrame or nil,
-                    _elementCount = 0,
-                }
-                setmetatable(colObj, { __index = child })
-                table.insert(self.Elements, { Frame = el, ColObj = colObj })
-                return colObj
-            end
-
-            function mod:Destroy()
-                outerWrap:Destroy()
-            end
-
-            return mod
-        end
-
-        -- ===== Element（基础带标题/描述的框架）=====
-        child.Element = function(_, config)
-            local opts = (type(config) == "table" and config) or {}
-            local parent = contentHolder
-            if not parent then return end
-
-            local title = opts.Name or ""
-            local desc = opts.Description or ""
+            local parent = config.Parent or contentHolder
 
             local frame = Instance.new("Frame")
             frame.Size = UDim2.new(1, 0, 0, 0)
@@ -4363,6 +4202,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local stroke = Instance.new("UIStroke")
             stroke.Transparency = 0.6
             stroke.Thickness = 1
+            stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
             stroke.Parent = frame
             AddToRegistry(stroke, "Color", "Stroke")
 
@@ -4396,42 +4236,115 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             titleLabel.Parent = labelHolder
             AddToRegistry(titleLabel, "TextColor3", "Text")
 
-            local descLabel = Instance.new("TextLabel")
-            descLabel.Size = UDim2.new(1, 0, 0, 14)
-            descLabel.BackgroundTransparency = 1
-            descLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular)
-            descLabel.Text = desc
-            descLabel.TextSize = 12
-            descLabel.TextXAlignment = Enum.TextXAlignment.Left
-            descLabel.TextWrapped = true
-            descLabel.AutomaticSize = Enum.AutomaticSize.Y
-            descLabel.RichText = true
-            descLabel.Parent = labelHolder
-            AddToRegistry(descLabel, "TextColor3", "SubText")
+            local contentLabel = Instance.new("TextLabel")
+            contentLabel.Size = UDim2.new(1, 0, 0, 14)
+            contentLabel.BackgroundTransparency = 1
+            contentLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular)
+            contentLabel.Text = content
+            contentLabel.TextSize = 12
+            contentLabel.TextXAlignment = Enum.TextXAlignment.Left
+            contentLabel.TextWrapped = true
+            contentLabel.AutomaticSize = Enum.AutomaticSize.Y
+            contentLabel.RichText = true
+            contentLabel.Parent = labelHolder
+            AddToRegistry(contentLabel, "TextColor3", "SubText")
 
-            -- 额外内容容器（可放入自定义控件）
-            local contentContainer = Instance.new("Frame")
-            contentContainer.Size = UDim2.new(1, 0, 0, 0)
-            contentContainer.AutomaticSize = Enum.AutomaticSize.Y
-            contentContainer.BackgroundTransparency = 1
-            contentContainer.Parent = labelHolder
-
-            local mod = {
-                Frame = frame,
-                TitleLabel = titleLabel,
-                DescLabel = descLabel,
-                Content = contentContainer,
-            }
-
-            function mod:SetTitle(t)
-                titleLabel.Text = tostring(t or "")
+            local self = {}
+            function self.SetName(newTitle)
+                titleLabel.Text = newTitle
             end
-            function mod:SetDesc(d)
-                descLabel.Text = tostring(d or "")
+            function self.SetContent(newContent)
+                contentLabel.Text = newContent
             end
-            function mod:Destroy()
+            function self.SetVisible(state)
+                frame.Visible = state
+            end
+            function self.Destroy()
                 frame:Destroy()
             end
+            return self
+        end
+
+        -- ===== Group 组件（多列布局）=====
+        child.Group = function(_, config)
+            config = config or {}
+            local columns = config.Columns or 2
+            local gap = config.Gap or 6
+            local parent = config.Parent or contentHolder
+
+            local outerWrap = Instance.new("Frame")
+            outerWrap.Size = UDim2.new(1, 0, 0, 0)
+            outerWrap.BackgroundTransparency = 1
+            outerWrap.AutomaticSize = Enum.AutomaticSize.Y
+            outerWrap.Parent = parent
+
+            local wrap = Instance.new("Frame")
+            wrap.Size = UDim2.new(1, 0, 0, 0)
+            wrap.BackgroundTransparency = 1
+            wrap.AutomaticSize = Enum.AutomaticSize.Y
+            wrap.Parent = outerWrap
+
+            local totalGap = gap * (columns - 1)
+            local colScale = 1 / columns
+            local colOffset = -math.floor(totalGap / columns + 0.5)
+
+            local layout = Instance.new("UIListLayout")
+            layout.FillDirection = Enum.FillDirection.Horizontal
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+            layout.VerticalAlignment = Enum.VerticalAlignment.Top
+            layout.Padding = UDim.new(0, gap)
+            layout.Parent = wrap
+
+            local elements = {}
+
+            local mod = {
+                Frame = outerWrap,
+                Type = "Group",
+                Elements = elements,
+            }
+
+            function mod:SetSection(sec)
+                self._section = sec
+            end
+
+            function mod:AddElement()
+                local el = Instance.new("Frame")
+                el.Size = UDim2.new(colScale, colOffset, 0, 0)
+                el.BackgroundTransparency = 1
+                el.AutomaticSize = Enum.AutomaticSize.Y
+                el.Parent = wrap
+
+                local innerLayout = Instance.new("UIListLayout")
+                innerLayout.Padding = UDim.new(0, 5)
+                innerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                innerLayout.Parent = el
+
+                local colObj = {}
+                local function makeColMethod(methodName)
+                    return function(_, cfg)
+                        cfg = cfg or {}
+                        cfg.Parent = el
+                        return child[methodName](_, cfg)
+                    end
+                end
+
+                local colMethods = {}
+                for methodName, fn in pairs(child) do
+                    if type(fn) == "function" and methodName ~= "Group" and methodName ~= "Section" then
+                        colMethods[methodName] = makeColMethod(methodName)
+                    end
+                end
+                colMethods.SetSection = function(_, sec) mod._section = sec end
+
+                setmetatable(colObj, { __index = colMethods })
+                table.insert(elements, { Frame = el, ColObj = colObj })
+                return colObj
+            end
+
+            function mod:Destroy()
+                outerWrap:Destroy()
+            end
+
             return mod
         end
 
@@ -5822,7 +5735,6 @@ function Fenglib:CreateWindow(Config)
             elements.Social   = function(_, config) return createSection("", nil, true).Social(config) end
             elements.Paragraph = function(_, config) return createSection("", nil, true).Paragraph(config) end
             elements.Group    = function(_, config) return createSection("", nil, true).Group(config) end
-            elements.Element  = function(_, config) return createSection("", nil, true).Element(config) end
             return elements
         end
 
