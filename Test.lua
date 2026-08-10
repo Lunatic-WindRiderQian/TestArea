@@ -4257,6 +4257,184 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ===== Group（多列容器）=====
+        child.Group = function(_, config)
+            local opts = (type(config) == "table" and config) or {}
+            local parent = contentHolder
+            if not parent then return end
+
+            local gap = opts.Gap or 6
+            local cols = opts.Columns or 2
+
+            local outerWrap = Instance.new("Frame")
+            outerWrap.Size = UDim2.new(1, 0, 0, 0)
+            outerWrap.AutomaticSize = Enum.AutomaticSize.Y
+            outerWrap.BackgroundTransparency = 1
+            outerWrap.BorderSizePixel = 0
+            outerWrap.Parent = parent
+
+            local padding = Instance.new("UIPadding")
+            padding.PaddingTop = UDim.new(0, 2)
+            padding.PaddingBottom = UDim.new(0, 2)
+            padding.Parent = outerWrap
+
+            local wrap = Instance.new("Frame")
+            wrap.Size = UDim2.new(1, 0, 0, 0)
+            wrap.AutomaticSize = Enum.AutomaticSize.Y
+            wrap.BackgroundTransparency = 1
+            wrap.BorderSizePixel = 0
+            wrap.Parent = outerWrap
+
+            local totalGap = gap * (cols - 1)
+            local colScale = 1 / cols
+            local colOffset = -math.floor(totalGap / cols + 0.5)
+
+            local layout = Instance.new("UIListLayout")
+            layout.FillDirection = Enum.FillDirection.Horizontal
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+            layout.VerticalAlignment = Enum.VerticalAlignment.Top
+            layout.Padding = UDim.new(0, gap)
+            layout.SortOrder = Enum.SortOrder.LayoutOrder
+            layout.Parent = wrap
+
+            local mod = {
+                Frame = outerWrap,
+                Type = "Group",
+                Elements = {},
+                _section = nil,
+            }
+
+            function mod:SetSection(sec)
+                self._section = sec
+            end
+
+            function mod:AddElement()
+                local el = Instance.new("Frame")
+                el.Size = UDim2.new(colScale, colOffset, 0, 0)
+                el.BackgroundTransparency = 1
+                el.AutomaticSize = Enum.AutomaticSize.Y
+                el.Parent = wrap
+
+                local elLayout = Instance.new("UIListLayout")
+                elLayout.Padding = UDim.new(0, 5)
+                elLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                elLayout.Parent = el
+
+                local sec = self._section
+                local colObj = {
+                    Container = el,
+                    Type = sec and sec.Type or nil,
+                    ScrollFrame = sec and sec.ScrollFrame or nil,
+                    _elementCount = 0,
+                }
+                setmetatable(colObj, { __index = child })
+                table.insert(self.Elements, { Frame = el, ColObj = colObj })
+                return colObj
+            end
+
+            function mod:Destroy()
+                outerWrap:Destroy()
+            end
+
+            return mod
+        end
+
+        -- ===== Element（基础带标题/描述的框架）=====
+        child.Element = function(_, config)
+            local opts = (type(config) == "table" and config) or {}
+            local parent = contentHolder
+            if not parent then return end
+
+            local title = opts.Name or ""
+            local desc = opts.Description or ""
+
+            local frame = Instance.new("Frame")
+            frame.Size = UDim2.new(1, 0, 0, 0)
+            frame.AutomaticSize = Enum.AutomaticSize.Y
+            frame.BackgroundTransparency = 0.92
+            frame.BorderSizePixel = 0
+            frame.Parent = parent
+            AddToRegistry(frame, "BackgroundColor3", "Top")
+
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 4)
+            corner.Parent = frame
+
+            local stroke = Instance.new("UIStroke")
+            stroke.Transparency = 0.6
+            stroke.Thickness = 1
+            stroke.Parent = frame
+            AddToRegistry(stroke, "Color", "Stroke")
+
+            local labelHolder = Instance.new("Frame")
+            labelHolder.Size = UDim2.new(1, -20, 0, 0)
+            labelHolder.Position = UDim2.new(0, 10, 0, 0)
+            labelHolder.BackgroundTransparency = 1
+            labelHolder.AutomaticSize = Enum.AutomaticSize.Y
+            labelHolder.Parent = frame
+
+            local holderLayout = Instance.new("UIListLayout")
+            holderLayout.Padding = UDim.new(0, 0)
+            holderLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            holderLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            holderLayout.Parent = labelHolder
+
+            local padding = Instance.new("UIPadding")
+            padding.PaddingTop = UDim.new(0, 13)
+            padding.PaddingBottom = UDim.new(0, 13)
+            padding.Parent = labelHolder
+
+            local titleLabel = Instance.new("TextLabel")
+            titleLabel.Size = UDim2.new(1, 0, 0, 14)
+            titleLabel.BackgroundTransparency = 1
+            titleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium)
+            titleLabel.Text = title
+            titleLabel.TextSize = 13
+            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            titleLabel.TextTruncate = Enum.TextTruncate.AtEnd
+            titleLabel.RichText = true
+            titleLabel.Parent = labelHolder
+            AddToRegistry(titleLabel, "TextColor3", "Text")
+
+            local descLabel = Instance.new("TextLabel")
+            descLabel.Size = UDim2.new(1, 0, 0, 14)
+            descLabel.BackgroundTransparency = 1
+            descLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular)
+            descLabel.Text = desc
+            descLabel.TextSize = 12
+            descLabel.TextXAlignment = Enum.TextXAlignment.Left
+            descLabel.TextWrapped = true
+            descLabel.AutomaticSize = Enum.AutomaticSize.Y
+            descLabel.RichText = true
+            descLabel.Parent = labelHolder
+            AddToRegistry(descLabel, "TextColor3", "SubText")
+
+            -- 额外内容容器（可放入自定义控件）
+            local contentContainer = Instance.new("Frame")
+            contentContainer.Size = UDim2.new(1, 0, 0, 0)
+            contentContainer.AutomaticSize = Enum.AutomaticSize.Y
+            contentContainer.BackgroundTransparency = 1
+            contentContainer.Parent = labelHolder
+
+            local mod = {
+                Frame = frame,
+                TitleLabel = titleLabel,
+                DescLabel = descLabel,
+                Content = contentContainer,
+            }
+
+            function mod:SetTitle(t)
+                titleLabel.Text = tostring(t or "")
+            end
+            function mod:SetDesc(d)
+                descLabel.Text = tostring(d or "")
+            end
+            function mod:Destroy()
+                frame:Destroy()
+            end
+            return mod
+        end
+
         return child
     end
     return createSection
@@ -5643,6 +5821,8 @@ function Fenglib:CreateWindow(Config)
             elements.Viewport = function(_, config) return createSection("", nil, true).Viewport(config) end
             elements.Social   = function(_, config) return createSection("", nil, true).Social(config) end
             elements.Paragraph = function(_, config) return createSection("", nil, true).Paragraph(config) end
+            elements.Group    = function(_, config) return createSection("", nil, true).Group(config) end
+            elements.Element  = function(_, config) return createSection("", nil, true).Element(config) end
             return elements
         end
 
