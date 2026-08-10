@@ -2536,6 +2536,31 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ===== Space =====
+        child.Space = function(_, config)
+            local height = (config and config.Height) or 8
+            local parent = contentHolder
+
+            local sp = Instance.new("Frame")
+            sp.Size = UDim2.new(1, 0, 0, height)
+            sp.BackgroundTransparency = 1
+            sp.BorderSizePixel = 0
+            sp.Parent = parent
+
+            local self = {}
+            function self.SetHeight(h)
+                height = h
+                sp.Size = UDim2.new(1, 0, 0, height)
+            end
+            function self.SetVisible(state)
+                sp.Visible = state
+            end
+            function self.Destroy()
+                sp:Destroy()
+            end
+            return self
+        end
+
         child.Checkbox = function(_, config)
             local title = config.Name or ""
             local default = config.Default or false
@@ -5610,6 +5635,7 @@ function Fenglib:CreateWindow(Config)
             elements.ColorPicker= function(_, config) return createSection("", nil, true).ColorPicker(config) end
             elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
             elements.Divider  = function(_, config) return createSection("", nil, true).Divider(config) end
+            elements.Space    = function(_, config) return createSection("", nil, true).Space(config) end
             elements.Checkbox = function(_, config) return createSection("", nil, true).Checkbox(config) end
             elements.ProgressBar = function(_, config) return createSection("", nil, true).ProgressBar(config) end
             elements.Video    = function(_, config) return createSection("", nil, true).Video(config) end
