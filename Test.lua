@@ -4969,7 +4969,6 @@ function Fenglib:CreateWindow(Config)
             if t == theme then themeName = name; break end
         end
 
-        -- 使用 SceneId 作为默认背景图
         local defaultBg = ""
         if SceneId then
             if type(SceneId) == "number" or (type(SceneId) == "string" and tonumber(SceneId)) then
@@ -4982,44 +4981,34 @@ function Fenglib:CreateWindow(Config)
         bgImage.ImageTransparency = 0
         bgImage.BackgroundColor3 = theme.Main
 
-        -- 停止旧动画
-        if shineConn then
-            shineConn:Disconnect()
-            shineConn = nil
-        end
+        if shineConn then shineConn:Disconnect(); shineConn = nil end
 
-        -- 强制：Dark 和 AMOLED 无颜色附加
         local isNoColorTheme = (themeName == "Dark" or themeName == "AMOLED")
-
         if not isNoColorTheme and theme.ShineEnabled and theme.Shine then
             local shine = theme.Shine
             local speed = shine.RotationSpeed or 20
             local colorSeq = shine.ColorSequence
-
             if colorSeq then
                 bgGradient.Color = colorSeq
             else
-                local accent = theme.Accent or Color3.fromRGB(255, 255, 255)
+                local accent = theme.Accent or Color3.fromRGB(255,255,255)
                 bgGradient.Color = ColorSequence.new({
                     ColorSequenceKeypoint.new(0, accent),
                     ColorSequenceKeypoint.new(0.5, Color3.new(1,1,1):Lerp(accent, 0.5)),
                     ColorSequenceKeypoint.new(1, accent)
                 })
             end
-
             bgGradient.Transparency = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 0.6),
                 NumberSequenceKeypoint.new(0.5, 0.0),
                 NumberSequenceKeypoint.new(1, 0.6)
             })
-
             local rot = 0
             shineConn = RunService.RenderStepped:Connect(function(dt)
                 rot = (rot + dt * speed) % 360
                 bgGradient.Rotation = rot
             end)
         else
-            -- 无颜色叠加：渐变完全透明
             bgGradient.Rotation = 0
             bgGradient.Transparency = NumberSequence.new(1)
             bgGradient.Color = ColorSequence.new(Color3.new(1,1,1))
@@ -5031,7 +5020,6 @@ function Fenglib:CreateWindow(Config)
     -- ================== 背景图和动画结束 ==================
 
     -- ================== 删除了三个圆孤角 ==================
-    -- 不再创建 LeftContainer 的左上、右上、左下圆角弧装饰
 
     -- ================== Topbar（标题栏） ==================
     local topbarHeight = Subtitle and 45 or 40
@@ -5180,9 +5168,7 @@ function Fenglib:CreateWindow(Config)
         MainFrame.Visible = false
     end)
 
-    local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
-        -- 最大化/恢复功能可自定义
-    end)
+    local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function() end)
 
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function()
         ScreenGui:Destroy()
@@ -5252,6 +5238,167 @@ function Fenglib:CreateWindow(Config)
     end
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
+
+    -- ================== Category 分类方法（支持可折叠） ==================
+    Window._currentCategory = nil
+
+    function Window:Category(config)
+        local name = type(config) == "table" and config.Name or config
+        local collapsible = type(config) == "table" and config.Collapsible or false
+        local opened = true
+        if type(config) == "table" and config.Opened ~= nil then
+            opened = config.Opened
+        end
+
+        local categoryFrame = Instance.new("Frame")
+        categoryFrame.Size = UDim2.new(1, 0, 0, 0)
+        categoryFrame.AutomaticSize = Enum.AutomaticSize.Y
+        categoryFrame.BackgroundTransparency = 1
+        categoryFrame.Parent = TabScroll
+
+        local catLayout = Instance.new("UIListLayout")
+        catLayout.FillDirection = Enum.FillDirection.Vertical
+        catLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        catLayout.Padding = UDim.new(0, 0)
+        catLayout.Parent = categoryFrame
+
+        local header = Instance.new("TextButton")
+        header.Size = UDim2.new(1, 0, 0, 28)
+        header.BackgroundTransparency = 1
+        header.Text = name
+        header.TextXAlignment = Enum.TextXAlignment.Left
+        header.Font = Enum.Font.GothamBold
+        header.TextSize = 13
+        header.TextColor3 = CurrentTheme.Text
+        header.TextTransparency = 0.5
+        header.Parent = categoryFrame
+        local pad = Instance.new("UIPadding")
+        pad.PaddingLeft = UDim.new(0, 10)
+        pad.Parent = header
+        AddToRegistry(header, "TextColor3", "Text")
+
+        local arrow = Instance.new("ImageLabel")
+        arrow.Size = UDim2.new(0, 12, 0, 12)
+        arrow.BackgroundTransparency = 1
+        arrow.Image = "rbxassetid://8240930340"
+        arrow.ImageColor3 = CurrentTheme.Text
+        arrow.ImageTransparency = 0.3
+        arrow.Visible = collapsible
+        arrow.Rotation = opened and 0 or 180
+        arrow.Parent = header
+        arrow.AnchorPoint = Vector2.new(1, 0.5)
+        arrow.Position = UDim2.new(1, -10, 0.5, 0)
+        AddToRegistry(arrow, "ImageColor3", "Text")
+
+        local content = Instance.new("Frame")
+        content.Size = UDim2.new(1, 0, 0, 0)
+        content.BackgroundTransparency = 1
+        content.AutomaticSize = Enum.AutomaticSize.None
+        content.ClipsDescendants = true
+        content.Visible = true
+        content.Parent = categoryFrame
+
+        local contentList = Instance.new("UIListLayout")
+        contentList.Padding = UDim.new(0, 4)
+        contentList.SortOrder = Enum.SortOrder.LayoutOrder
+        contentList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        contentList.Parent = content
+
+        local currentTween = nil
+
+        local function getContentHeight()
+            return contentList.AbsoluteContentSize.Y or 0
+        end
+
+        local function setContentHeight(targetHeight, animate)
+            targetHeight = math.max(0, targetHeight)
+            local currentHeight = content.Size.Y.Offset
+            if animate and currentHeight ~= targetHeight then
+                if currentTween then
+                    currentTween:Cancel()
+                    currentTween = nil
+                end
+                currentTween = TweenService:Create(
+                    content,
+                    TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+                    { Size = UDim2.new(1, 0, 0, targetHeight) }
+                )
+                currentTween:Play()
+                currentTween.Completed:Connect(function()
+                    currentTween = nil
+                    task.spawn(updateTabCanvas)
+                end)
+            else
+                content.Size = UDim2.new(1, 0, 0, targetHeight)
+                task.spawn(updateTabCanvas)
+            end
+        end
+
+        local function toggleCategory()
+            if not collapsible then return end
+            opened = not opened
+            Tween(arrow, { Rotation = opened and 0 or 180 }, 0.25)
+            local targetHeight = opened and getContentHeight() or 0
+            setContentHeight(targetHeight, true)
+        end
+
+        header.MouseButton1Click:Connect(toggleCategory)
+
+        contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if opened then
+                local h = getContentHeight()
+                if math.abs(h - content.Size.Y.Offset) > 0.5 then
+                    setContentHeight(h, false)
+                end
+            end
+        end)
+
+        task.spawn(function()
+            task.wait()
+            local h = getContentHeight()
+            local initialHeight = opened and h or 0
+            content.Size = UDim2.new(1, 0, 0, initialHeight)
+            updateTabCanvas()
+        end)
+
+        Window._currentCategory = {
+            frame = categoryFrame,
+            content = content,
+            contentList = contentList,
+            header = header,
+            label = header,
+            arrow = arrow,
+            collapsible = collapsible,
+            opened = opened,
+            toggle = toggleCategory
+        }
+
+        table.insert(ThemeListeners, function()
+            header.TextColor3 = CurrentTheme.Text
+            arrow.ImageColor3 = CurrentTheme.Text
+        end)
+
+        return Window._currentCategory
+    end
+
+    -- ================== TabDivider 分割线 ==================
+    function Window:TabDivider()
+        local parentContainer = TabScroll
+        if Window._currentCategory then
+            parentContainer = Window._currentCategory.content
+        end
+        local line = Instance.new("Frame")
+        line.Size = UDim2.new(1, -20, 0, 1)
+        line.Position = UDim2.new(0, 10, 0, 0)
+        line.BackgroundColor3 = CurrentTheme.Stroke
+        line.BackgroundTransparency = 0.5
+        line.BorderSizePixel = 0
+        line.Parent = parentContainer
+        AddToRegistry(line, "BackgroundColor3", "Stroke")
+        table.insert(ThemeListeners, function()
+            line.BackgroundColor3 = CurrentTheme.Stroke
+        end)
+    end
 
     -- ================== ProfileFrame（用户信息） ==================
     local ProfileFrame = Instance.new("Frame")
