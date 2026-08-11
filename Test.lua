@@ -72,13 +72,9 @@ local function createPulseGlow(object)
 end
 
 -- ============================================================
--- 主题表：
---   Dark   → 原 Test.lua 配色，无动画颜色
---   AMOLED → 纯黑，无动画颜色
---   其余   → 来自 FluentPro，含彩色 Shine 动画
+-- 主题表
 -- ============================================================
 local Themes = {
-    -- Dark（原 Test.lua 的 Dark，无背景动画）
     Dark = {
         Main    = Color3.fromRGB(13, 13, 13),
         Top     = Color3.fromRGB(28, 28, 30),
@@ -90,11 +86,9 @@ local Themes = {
         Hover   = Color3.fromRGB(60, 60, 70),
         Background = nil,
         BackgroundTransparency = 0,
-        ShineEnabled = false,   -- 无颜色叠加
+        ShineEnabled = false,
         Shine = nil,
     },
-
-    -- AMOLED：纯黑主题，无动画颜色
     ["AMOLED"] = {
         Main    = Color3.fromRGB(0, 0, 0),
         Top     = Color3.fromRGB(28, 28, 28),
@@ -106,11 +100,9 @@ local Themes = {
         Hover   = Color3.fromRGB(22, 22, 22),
         Background = nil,
         BackgroundTransparency = 0,
-        ShineEnabled = false,   -- 无颜色叠加
+        ShineEnabled = false,
         Shine = nil,
     },
-
-    -- 以下来自 FluentPro，含彩色 Shine 动画
     ["Blood Red"] = {
         Main    = Color3.fromRGB(35, 8, 10),
         Top     = Color3.fromRGB(145, 15, 25),
@@ -133,7 +125,6 @@ local Themes = {
             })
         }
     },
-
     ["Neon Purple"] = {
         Main    = Color3.fromRGB(5, 0, 15),
         Top     = Color3.fromRGB(130, 0, 230),
@@ -156,7 +147,6 @@ local Themes = {
             })
         }
     },
-
     ["Deep Violet"] = {
         Main    = Color3.fromRGB(20, 20, 20),
         Top     = Color3.fromRGB(160, 140, 180),
@@ -179,7 +169,6 @@ local Themes = {
             })
         }
     },
-
     ["Charcoal"] = {
         Main    = Color3.fromRGB(20, 20, 20),
         Top     = Color3.fromRGB(40, 40, 40),
@@ -202,7 +191,6 @@ local Themes = {
             })
         }
     },
-
     ["Pearl White"] = {
         Main    = Color3.fromRGB(240, 240, 240),
         Top     = Color3.fromRGB(230, 230, 230),
@@ -225,7 +213,6 @@ local Themes = {
             })
         }
     },
-
     ["Deep Ocean"] = {
         Main    = Color3.fromRGB(15, 30, 45),
         Top     = Color3.fromRGB(0, 100, 150),
@@ -248,7 +235,6 @@ local Themes = {
             })
         }
     },
-
     ["Midnight Blue"] = {
         Main    = Color3.fromRGB(10, 8, 25),
         Top     = Color3.fromRGB(60, 45, 140),
@@ -271,7 +257,6 @@ local Themes = {
             })
         }
     },
-
     ["Royal Blue"] = {
         Main    = Color3.fromRGB(10, 25, 50),
         Top     = Color3.fromRGB(10, 65, 150),
@@ -294,7 +279,6 @@ local Themes = {
             })
         }
     },
-
     ["Galaxy Purple"] = {
         Main    = Color3.fromRGB(12, 5, 25),
         Top     = Color3.fromRGB(125, 45, 190),
@@ -317,7 +301,6 @@ local Themes = {
             })
         }
     },
-
     ["Cosmic Violet"] = {
         Main    = Color3.fromRGB(12, 10, 22),
         Top     = Color3.fromRGB(55, 38, 115),
@@ -340,7 +323,6 @@ local Themes = {
             })
         }
     },
-
     ["RGB"] = {
         Main    = Color3.fromRGB(8, 8, 14),
         Top     = Color3.fromRGB(0, 200, 160),
@@ -364,7 +346,6 @@ local Themes = {
             })
         }
     },
-
     ["Neon Cyber"] = {
         Main    = Color3.fromRGB(5, 10, 5),
         Top     = Color3.fromRGB(57, 255, 20),
@@ -387,7 +368,6 @@ local Themes = {
             })
         }
     },
-
     ["Arctic Frost"] = {
         Main    = Color3.fromRGB(185, 215, 235),
         Top     = Color3.fromRGB(90, 150, 200),
@@ -410,7 +390,6 @@ local Themes = {
             })
         }
     },
-
     ["Cotton Candy"] = {
         Main    = Color3.fromRGB(255, 225, 245),
         Top     = Color3.fromRGB(195, 130, 185),
@@ -433,7 +412,6 @@ local Themes = {
             })
         }
     },
-
     ["Orange"] = {
         Main    = Color3.fromRGB(4, 4, 4),
         Top     = Color3.fromRGB(180, 80, 10),
@@ -456,7 +434,6 @@ local Themes = {
             })
         }
     },
-
     ["Cyanic"] = {
         Main    = Color3.fromRGB(8, 18, 22),
         Top     = Color3.fromRGB(40, 165, 160),
@@ -479,7 +456,6 @@ local Themes = {
             })
         }
     },
-
     ["Amber Glow"] = {
         Main    = Color3.fromRGB(18, 10, 4),
         Top     = Color3.fromRGB(190, 125, 25),
@@ -502,7 +478,6 @@ local Themes = {
             })
         }
     },
-
     ["Bloomings"] = {
         Main    = Color3.fromRGB(40, 15, 30),
         Top     = Color3.fromRGB(50, 18, 38),
@@ -527,7 +502,6 @@ local Themes = {
             })
         }
     },
-
     ["Crimson"] = {
         Main    = Color3.fromRGB(30, 6, 9),
         Top     = Color3.fromRGB(16, 10, 16),
@@ -550,7 +524,6 @@ local Themes = {
             })
         }
     },
-
     ["Gold"] = {
         Main    = Color3.fromRGB(35, 27, 12),
         Top     = Color3.fromRGB(80, 65, 30),
@@ -841,7 +814,7 @@ end
 
 -- ==============================
 -- 组件构建器（createSectionBuilder）
--- 包含所有元素：Button, Toggle, Slider, Dropdown, Keybind, ColorPicker, Input, Textbox, Label, Image, Divider, Space, Checkbox, ProgressBar, Video, Audio, Viewport, Social, Paragraph, Group
+-- 完整包含所有元素类型
 -- ==============================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
@@ -5019,8 +4992,6 @@ function Fenglib:CreateWindow(Config)
     updateBackground()
     -- ================== 背景图和动画结束 ==================
 
-    -- ================== 删除了三个圆孤角 ==================
-
     -- ================== Topbar（标题栏） ==================
     local topbarHeight = Subtitle and 45 or 40
 
@@ -5239,7 +5210,7 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- ================== Category 分类方法（支持可折叠） ==================
+    -- ================== Category 分类方法 ==================
     Window._currentCategory = nil
 
     function Window:Category(config)
@@ -5509,7 +5480,7 @@ function Fenglib:CreateWindow(Config)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = RightContainer
 
-    -- ================== 拖拽窗口功能 ==================
+    -- ================== 窗口拖拽 ==================
     local dragging = false
     local dragStartPos = nil
     local dragStartWindowPos = nil
@@ -5559,7 +5530,7 @@ function Fenglib:CreateWindow(Config)
     UserInputService.InputChanged:Connect(onDragMove)
     UserInputService.InputEnded:Connect(endDrag)
 
-    -- ================== 窗口开关功能 ==================
+    -- ================== 窗口开关 ==================
     local function toggleMainFrame()
         if MainFrame.Visible then
             MainFrame.Visible = false
@@ -5577,7 +5548,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- ================== 悬浮打开按钮 ==================
+    -- ================== 悬浮按钮 ==================
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
