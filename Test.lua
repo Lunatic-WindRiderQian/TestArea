@@ -72,34 +72,26 @@ local function createPulseGlow(object)
 end
 
 -- ============================================================
--- 主题表：来自 FluentPro，删除了所有 Background 字段
--- 仅保留 Dark 作为默认，其余主题均包含 Shine 配置
+-- 主题表：Dark 保留原配色，其余来自 FluentPro（无背景图）
 -- ============================================================
 local Themes = {
-    -- Dark（对应 FluentPro 的 Ash Gray）
+    -- Dark（原 Test.lua 的 Dark，无背景动画）
     Dark = {
-        Main    = Color3.fromRGB(60, 60, 60),
-        Top     = Color3.fromRGB(120, 120, 120),
-        Text    = Color3.fromRGB(240, 240, 240),
-        Accent  = Color3.fromRGB(150, 150, 150),
-        Stroke  = Color3.fromRGB(90, 90, 90),
-        SubText = Color3.fromRGB(170, 170, 170),
-        Element = Color3.fromRGB(120, 120, 120),
-        Hover   = Color3.fromRGB(120, 120, 120),
+        Main    = Color3.fromRGB(13, 13, 13),
+        Top     = Color3.fromRGB(28, 28, 30),
+        Text    = Color3.fromRGB(240, 240, 245),
+        Accent  = Color3.fromRGB(80, 140, 255),
+        Stroke  = Color3.fromRGB(45, 45, 48),
+        SubText = Color3.fromRGB(160, 160, 170),
+        Element = Color3.fromRGB(45, 45, 50),
+        Hover   = Color3.fromRGB(60, 60, 70),
         Background = nil,
         BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.4,
-            RotationSpeed = 20,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 40)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(105, 105, 105)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 40, 40))
-            })
-        }
+        ShineEnabled = false,   -- 关闭动画，无颜色叠加
+        Shine = nil,
     },
 
+    -- 以下来自 FluentPro，无背景图，但有 Shine 动画
     ["Blood Red"] = {
         Main    = Color3.fromRGB(35, 8, 10),
         Top     = Color3.fromRGB(145, 15, 25),
@@ -4943,7 +4935,7 @@ function Fenglib:CreateWindow(Config)
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
-    -- ================== 背景图和动画（使用默认SceneId） ==================
+    -- ================== 背景图和动画 ==================
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
@@ -4962,11 +4954,10 @@ function Fenglib:CreateWindow(Config)
 
     local shineConn = nil
 
-    -- 背景更新函数
     local function updateBackground()
         local theme = CurrentTheme
 
-        -- 使用传入的 SceneId 作为默认背景图
+        -- 使用 SceneId 作为默认背景图
         local defaultBg = ""
         if SceneId then
             if type(SceneId) == "number" or (type(SceneId) == "string" and tonumber(SceneId)) then
@@ -4984,7 +4975,7 @@ function Fenglib:CreateWindow(Config)
             shineConn = nil
         end
 
-        -- 启动新动画（如果主题启用）
+        -- 如果主题启用 Shine，则应用动画；否则让渐变完全透明（无颜色）
         if theme.ShineEnabled and theme.Shine then
             local shine = theme.Shine
             local speed = shine.RotationSpeed or 20
@@ -5013,17 +5004,10 @@ function Fenglib:CreateWindow(Config)
                 bgGradient.Rotation = rot
             end)
         else
+            -- 关闭动画：渐变完全透明
             bgGradient.Rotation = 0
-            bgGradient.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 10, 20)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 80, 80)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 10, 20))
-            })
-            bgGradient.Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0, 0.6),
-                NumberSequenceKeypoint.new(0.5, 0.0),
-                NumberSequenceKeypoint.new(1, 0.6)
-            })
+            bgGradient.Transparency = NumberSequence.new(1)   -- 全透明，不显示任何颜色
+            bgGradient.Color = ColorSequence.new(Color3.new(1,1,1))  -- 任意颜色，反正透明
         end
     end
 
