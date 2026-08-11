@@ -73,6 +73,7 @@ end
 
 -- ========================================================================
 -- 主题表（仅保留 Dark + 全部 FluentPro 主题）
+-- 注意：背景相关字段（Background, BackgroundTransparency, Acrylic* 等）保留但在此背景实现中不会使用
 -- ========================================================================
 local Themes = {
     -- 默认暗色主题（保留）
@@ -97,6 +98,8 @@ local Themes = {
         SubText = Color3.fromRGB(170, 170, 170),
         Element = Color3.fromRGB(140, 120, 160),
         Hover   = Color3.fromRGB(140, 120, 160),
+        Background = "rbxassetid://136310484943077",
+        BackgroundTransparency = 0.15,
     },
     ["Ash Gray"] = {
         Main    = Color3.fromRGB(60, 60, 60),
@@ -137,6 +140,8 @@ local Themes = {
         SubText = Color3.fromRGB(210, 175, 178),
         Element = Color3.fromRGB(130, 12, 22),
         Hover   = Color3.fromRGB(180, 10, 20),
+        Background = "rbxassetid://121343473918667",
+        BackgroundTransparency = 0.15,
     },
     ["Neon Purple"] = {
         Main    = Color3.fromRGB(5, 0, 15),
@@ -4675,6 +4680,7 @@ function Fenglib:CreateWindow(Config)
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
+    -- ===== 原有背景实现（保留 SceneId 图片 + 固定渐变） =====
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
@@ -4706,19 +4712,22 @@ function Fenglib:CreateWindow(Config)
     })
     bgGradient.Parent = bgImage
 
-    local shineConn
-    local function startShine()
-        local rot = 0
-        shineConn = RunService.RenderStepped:Connect(function(dt)
-            rot = (rot + dt * 20) % 360
-            bgGradient.Rotation = rot
-        end)
-    end
-    startShine()
+    -- 无动态光效（保持静态）
+    -- 如需动态光效可取消下面的注释，但用户要求背景图不变，故保留静态
+    -- local shineConn
+    -- local function startShine()
+    --     local rot = 0
+    --     shineConn = RunService.RenderStepped:Connect(function(dt)
+    --         rot = (rot + dt * 20) % 360
+    --         bgGradient.Rotation = rot
+    --     end)
+    -- end
+    -- startShine()
+    -- table.insert(WindowCleanup, function()
+    --     if shineConn then shineConn:Disconnect() end
+    -- end)
 
-    table.insert(WindowCleanup, function()
-        if shineConn then shineConn:Disconnect() end
-    end)
+    -- ===== 原有背景实现结束 =====
 
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
@@ -5095,7 +5104,7 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    -- 已删除三个圆弧角（createCorner 调用）
+    -- 已删除三个圆弧角
 
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -55)
