@@ -72,7 +72,10 @@ local function createPulseGlow(object)
 end
 
 -- ============================================================
--- 主题表：Dark 保留原配色，其余来自 FluentPro（无背景图）
+-- 主题表：
+--   Dark   → 原 Test.lua 配色，无动画颜色
+--   AMOLED → 纯黑，无动画颜色
+--   其余   → 来自 FluentPro，含彩色 Shine 动画
 -- ============================================================
 local Themes = {
     -- Dark（原 Test.lua 的 Dark，无背景动画）
@@ -87,11 +90,27 @@ local Themes = {
         Hover   = Color3.fromRGB(60, 60, 70),
         Background = nil,
         BackgroundTransparency = 0,
-        ShineEnabled = false,   -- 关闭动画，无颜色叠加
+        ShineEnabled = false,   -- 无颜色叠加
         Shine = nil,
     },
 
-    -- 以下来自 FluentPro，无背景图，但有 Shine 动画
+    -- AMOLED：纯黑主题，无动画颜色
+    ["AMOLED"] = {
+        Main    = Color3.fromRGB(0, 0, 0),
+        Top     = Color3.fromRGB(28, 28, 28),
+        Text    = Color3.fromRGB(255, 255, 255),
+        Accent  = Color3.fromRGB(255, 255, 255),
+        Stroke  = Color3.fromRGB(30, 30, 30),
+        SubText = Color3.fromRGB(150, 150, 150),
+        Element = Color3.fromRGB(10, 10, 10),
+        Hover   = Color3.fromRGB(22, 22, 22),
+        Background = nil,
+        BackgroundTransparency = 0,
+        ShineEnabled = false,   -- 无颜色叠加
+        Shine = nil,
+    },
+
+    -- 以下来自 FluentPro，含彩色 Shine 动画
     ["Blood Red"] = {
         Main    = Color3.fromRGB(35, 8, 10),
         Top     = Color3.fromRGB(145, 15, 25),
@@ -320,21 +339,6 @@ local Themes = {
                 ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 25, 65))
             })
         }
-    },
-
-    ["AMOLED"] = {
-        Main    = Color3.fromRGB(0, 0, 0),
-        Top     = Color3.fromRGB(28, 28, 28),
-        Text    = Color3.fromRGB(255, 255, 255),
-        Accent  = Color3.fromRGB(255, 255, 255),
-        Stroke  = Color3.fromRGB(30, 30, 30),
-        SubText = Color3.fromRGB(150, 150, 150),
-        Element = Color3.fromRGB(10, 10, 10),
-        Hover   = Color3.fromRGB(22, 22, 22),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = false,
-        Shine = nil
     },
 
     ["RGB"] = {
@@ -4954,8 +4958,13 @@ function Fenglib:CreateWindow(Config)
 
     local shineConn = nil
 
+    -- 背景更新函数：Dark 和 AMOLED 强制透明，其余按 ShineEnabled 控制
     local function updateBackground()
         local theme = CurrentTheme
+        local themeName = nil
+        for name, t in pairs(Themes) do
+            if t == theme then themeName = name; break end
+        end
 
         -- 使用 SceneId 作为默认背景图
         local defaultBg = ""
@@ -4975,8 +4984,10 @@ function Fenglib:CreateWindow(Config)
             shineConn = nil
         end
 
-        -- 如果主题启用 Shine，则应用动画；否则让渐变完全透明（无颜色）
-        if theme.ShineEnabled and theme.Shine then
+        -- 强制：Dark 和 AMOLED 无颜色附加
+        local isNoColorTheme = (themeName == "Dark" or themeName == "AMOLED")
+
+        if not isNoColorTheme and theme.ShineEnabled and theme.Shine then
             local shine = theme.Shine
             local speed = shine.RotationSpeed or 20
             local colorSeq = shine.ColorSequence
@@ -5004,10 +5015,10 @@ function Fenglib:CreateWindow(Config)
                 bgGradient.Rotation = rot
             end)
         else
-            -- 关闭动画：渐变完全透明
+            -- 无颜色叠加：渐变完全透明
             bgGradient.Rotation = 0
-            bgGradient.Transparency = NumberSequence.new(1)   -- 全透明，不显示任何颜色
-            bgGradient.Color = ColorSequence.new(Color3.new(1,1,1))  -- 任意颜色，反正透明
+            bgGradient.Transparency = NumberSequence.new(1)   -- 全透明
+            bgGradient.Color = ColorSequence.new(Color3.new(1,1,1))
         end
     end
 
