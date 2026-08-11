@@ -5095,47 +5095,7 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    local function createCorner(pos, anchor)
-        local container = Instance.new("Frame")
-        container.Size = UDim2.new(0, 16, 0, 16)
-        container.Position = pos
-        container.AnchorPoint = anchor
-        container.BackgroundTransparency = 1
-        container.BorderSizePixel = 0
-        container.ZIndex = 0
-        container.ClipsDescendants = true
-        container.Parent = LeftContainer
-
-        local arc = Instance.new("Frame")
-        arc.Size = UDim2.new(0, 32, 0, 32)
-        local offsetX, offsetY = 0, 0
-        if anchor.X == 0 and anchor.Y == 0 then
-            offsetX, offsetY = -16, -16
-        elseif anchor.X == 1 and anchor.Y == 0 then
-            offsetX, offsetY = 0, -16
-        elseif anchor.X == 1 and anchor.Y == 1 then
-            offsetX, offsetY = 0, 0
-        end
-        arc.Position = UDim2.new(0, offsetX, 0, offsetY)
-        arc.BackgroundColor3 = CurrentTheme.Main
-        arc.BackgroundTransparency = 0.2
-        arc.BorderSizePixel = 0
-        arc.Parent = container
-
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 16)
-        corner.Parent = arc
-
-        table.insert(ThemeListeners, function()
-            arc.BackgroundColor3 = CurrentTheme.Main
-        end)
-
-        return container
-    end
-
-    createCorner(UDim2.new(0, 0, 0, 0), Vector2.new(0, 0))
-    createCorner(UDim2.new(1, 0, 0, 0), Vector2.new(1, 0))
-    createCorner(UDim2.new(1, 0, 1, 0), Vector2.new(1, 1))
+    -- 已删除三个圆弧角（createCorner 调用）
 
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -55)
