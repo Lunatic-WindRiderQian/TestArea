@@ -71,481 +71,14 @@ local function createPulseGlow(object)
     }
 end
 
--- ============================================================
--- 主题表
--- ============================================================
 local Themes = {
-    Dark = {
-        Main    = Color3.fromRGB(13, 13, 13),
-        Top     = Color3.fromRGB(28, 28, 30),
-        Text    = Color3.fromRGB(240, 240, 245),
-        Accent  = Color3.fromRGB(80, 140, 255),
-        Stroke  = Color3.fromRGB(45, 45, 48),
-        SubText = Color3.fromRGB(160, 160, 170),
-        Element = Color3.fromRGB(45, 45, 50),
-        Hover   = Color3.fromRGB(60, 60, 70),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = false,
-        Shine = nil,
-    },
-    ["AMOLED"] = {
-        Main    = Color3.fromRGB(0, 0, 0),
-        Top     = Color3.fromRGB(28, 28, 28),
-        Text    = Color3.fromRGB(255, 255, 255),
-        Accent  = Color3.fromRGB(255, 255, 255),
-        Stroke  = Color3.fromRGB(30, 30, 30),
-        SubText = Color3.fromRGB(150, 150, 150),
-        Element = Color3.fromRGB(10, 10, 10),
-        Hover   = Color3.fromRGB(22, 22, 22),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = false,
-        Shine = nil,
-    },
-    ["Blood Red"] = {
-        Main    = Color3.fromRGB(35, 8, 10),
-        Top     = Color3.fromRGB(145, 15, 25),
-        Text    = Color3.fromRGB(255, 230, 230),
-        Accent  = Color3.fromRGB(180, 10, 20),
-        Stroke  = Color3.fromRGB(150, 18, 28),
-        SubText = Color3.fromRGB(210, 175, 178),
-        Element = Color3.fromRGB(130, 12, 22),
-        Hover   = Color3.fromRGB(180, 10, 20),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.5,
-            RotationSpeed = 25,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(71, 0, 0)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(159, 0, 0)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(71, 0, 0))
-            })
-        }
-    },
-    ["Neon Purple"] = {
-        Main    = Color3.fromRGB(5, 0, 15),
-        Top     = Color3.fromRGB(130, 0, 230),
-        Text    = Color3.fromRGB(252, 245, 255),
-        Accent  = Color3.fromRGB(180, 0, 255),
-        Stroke  = Color3.fromRGB(155, 0, 245),
-        SubText = Color3.fromRGB(210, 185, 255),
-        Element = Color3.fromRGB(120, 0, 210),
-        Hover   = Color3.fromRGB(150, 0, 255),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.4,
-            RotationSpeed = 20,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(32, 5, 137)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(171, 32, 253)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(32, 5, 137))
-            })
-        }
-    },
-    ["Deep Violet"] = {
-        Main    = Color3.fromRGB(20, 20, 20),
-        Top     = Color3.fromRGB(160, 140, 180),
-        Text    = Color3.fromRGB(240, 240, 240),
-        Accent  = Color3.fromRGB(97, 62, 167),
-        Stroke  = Color3.fromRGB(100, 90, 110),
-        SubText = Color3.fromRGB(170, 170, 170),
-        Element = Color3.fromRGB(140, 120, 160),
-        Hover   = Color3.fromRGB(140, 120, 160),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.5,
-            RotationSpeed = 25,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 25, 65)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(160, 120, 220)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 25, 65))
-            })
-        }
-    },
-    ["Charcoal"] = {
-        Main    = Color3.fromRGB(20, 20, 20),
-        Top     = Color3.fromRGB(40, 40, 40),
-        Text    = Color3.fromRGB(240, 240, 240),
-        Accent  = Color3.fromRGB(102, 102, 102),
-        Stroke  = Color3.fromRGB(45, 45, 45),
-        SubText = Color3.fromRGB(170, 170, 170),
-        Element = Color3.fromRGB(35, 35, 35),
-        Hover   = Color3.fromRGB(90, 160, 255),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.45,
-            RotationSpeed = 25,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 150, 150)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
-            })
-        }
-    },
-    ["Pearl White"] = {
-        Main    = Color3.fromRGB(240, 240, 240),
-        Top     = Color3.fromRGB(230, 230, 230),
-        Text    = Color3.fromRGB(20, 20, 20),
-        Accent  = Color3.fromRGB(214, 214, 214),
-        Stroke  = Color3.fromRGB(210, 210, 210),
-        SubText = Color3.fromRGB(90, 90, 90),
-        Element = Color3.fromRGB(220, 220, 220),
-        Hover   = Color3.fromRGB(60, 160, 255),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.4,
-            RotationSpeed = 20,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(200, 200, 200)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
-            })
-        }
-    },
-    ["Deep Ocean"] = {
-        Main    = Color3.fromRGB(15, 30, 45),
-        Top     = Color3.fromRGB(0, 100, 150),
-        Text    = Color3.fromRGB(240, 248, 255),
-        Accent  = Color3.fromRGB(0, 150, 200),
-        Stroke  = Color3.fromRGB(0, 110, 165),
-        SubText = Color3.fromRGB(180, 210, 230),
-        Element = Color3.fromRGB(0, 90, 135),
-        Hover   = Color3.fromRGB(0, 150, 200),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.5,
-            RotationSpeed = 25,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 60, 90)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 200, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 60, 90))
-            })
-        }
-    },
-    ["Midnight Blue"] = {
-        Main    = Color3.fromRGB(10, 8, 25),
-        Top     = Color3.fromRGB(60, 45, 140),
-        Text    = Color3.fromRGB(220, 220, 255),
-        Accent  = Color3.fromRGB(100, 80, 200),
-        Stroke  = Color3.fromRGB(70, 55, 155),
-        SubText = Color3.fromRGB(170, 170, 210),
-        Element = Color3.fromRGB(55, 40, 125),
-        Hover   = Color3.fromRGB(100, 80, 200),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.5,
-            RotationSpeed = 25,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 15, 60)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(140, 120, 240)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 15, 60))
-            })
-        }
-    },
-    ["Royal Blue"] = {
-        Main    = Color3.fromRGB(10, 25, 50),
-        Top     = Color3.fromRGB(10, 65, 150),
-        Text    = Color3.fromRGB(220, 235, 255),
-        Accent  = Color3.fromRGB(15, 82, 186),
-        Stroke  = Color3.fromRGB(11, 70, 160),
-        SubText = Color3.fromRGB(170, 190, 220),
-        Element = Color3.fromRGB(9, 58, 135),
-        Hover   = Color3.fromRGB(15, 82, 186),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.5,
-            RotationSpeed = 25,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 40, 85)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50, 120, 230)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 40, 85))
-            })
-        }
-    },
-    ["Galaxy Purple"] = {
-        Main    = Color3.fromRGB(12, 5, 25),
-        Top     = Color3.fromRGB(125, 45, 190),
-        Text    = Color3.fromRGB(242, 232, 255),
-        Accent  = Color3.fromRGB(160, 60, 220),
-        Stroke  = Color3.fromRGB(130, 50, 195),
-        SubText = Color3.fromRGB(200, 178, 228),
-        Element = Color3.fromRGB(112, 40, 170),
-        Hover   = Color3.fromRGB(160, 60, 220),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.5,
-            RotationSpeed = 25,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(48, 18, 85)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(195, 100, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(48, 18, 85))
-            })
-        }
-    },
-    ["Cosmic Violet"] = {
-        Main    = Color3.fromRGB(12, 10, 22),
-        Top     = Color3.fromRGB(55, 38, 115),
-        Text    = Color3.fromRGB(230, 225, 245),
-        Accent  = Color3.fromRGB(80, 60, 140),
-        Stroke  = Color3.fromRGB(60, 42, 120),
-        SubText = Color3.fromRGB(185, 175, 210),
-        Element = Color3.fromRGB(50, 34, 104),
-        Hover   = Color3.fromRGB(80, 60, 140),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.5,
-            RotationSpeed = 25,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 25, 65)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(115, 90, 175)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 25, 65))
-            })
-        }
-    },
-    ["RGB"] = {
-        Main    = Color3.fromRGB(8, 8, 14),
-        Top     = Color3.fromRGB(0, 200, 160),
-        Text    = Color3.fromRGB(220, 255, 245),
-        Accent  = Color3.fromRGB(0, 255, 180),
-        Stroke  = Color3.fromRGB(0, 200, 160),
-        SubText = Color3.fromRGB(100, 220, 190),
-        Element = Color3.fromRGB(20, 20, 35),
-        Hover   = Color3.fromRGB(0, 50, 40),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 1.2,
-            RotationSpeed = 40,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 180)),
-                ColorSequenceKeypoint.new(0.33, Color3.fromRGB(120, 0, 255)),
-                ColorSequenceKeypoint.new(0.66, Color3.fromRGB(255, 0, 150)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 180))
-            })
-        }
-    },
-    ["Neon Cyber"] = {
-        Main    = Color3.fromRGB(5, 10, 5),
-        Top     = Color3.fromRGB(57, 255, 20),
-        Text    = Color3.fromRGB(200, 255, 190),
-        Accent  = Color3.fromRGB(57, 255, 20),
-        Stroke  = Color3.fromRGB(35, 160, 15),
-        SubText = Color3.fromRGB(80, 200, 60),
-        Element = Color3.fromRGB(10, 22, 10),
-        Hover   = Color3.fromRGB(15, 40, 15),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.8,
-            RotationSpeed = 30,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(5, 30, 5)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(57, 255, 20)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 30, 5))
-            })
-        }
-    },
-    ["Arctic Frost"] = {
-        Main    = Color3.fromRGB(185, 215, 235),
-        Top     = Color3.fromRGB(90, 150, 200),
-        Text    = Color3.fromRGB(20, 40, 70),
-        Accent  = Color3.fromRGB(100, 180, 240),
-        Stroke  = Color3.fromRGB(140, 185, 218),
-        SubText = Color3.fromRGB(65, 105, 148),
-        Element = Color3.fromRGB(210, 235, 250),
-        Hover   = Color3.fromRGB(170, 210, 238),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.3,
-            RotationSpeed = 15,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(200, 235, 255)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 235, 255))
-            })
-        }
-    },
-    ["Cotton Candy"] = {
-        Main    = Color3.fromRGB(255, 225, 245),
-        Top     = Color3.fromRGB(195, 130, 185),
-        Text    = Color3.fromRGB(75, 25, 55),
-        Accent  = Color3.fromRGB(255, 130, 190),
-        Stroke  = Color3.fromRGB(235, 170, 215),
-        SubText = Color3.fromRGB(145, 75, 115),
-        Element = Color3.fromRGB(255, 200, 235),
-        Hover   = Color3.fromRGB(238, 182, 222),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.4,
-            RotationSpeed = 18,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 180, 220)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220, 180, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 180, 220))
-            })
-        }
-    },
-    ["Orange"] = {
-        Main    = Color3.fromRGB(4, 4, 4),
-        Top     = Color3.fromRGB(180, 80, 10),
-        Text    = Color3.fromRGB(255, 240, 220),
-        Accent  = Color3.fromRGB(255, 140, 30),
-        Stroke  = Color3.fromRGB(200, 90, 10),
-        SubText = Color3.fromRGB(220, 175, 130),
-        Element = Color3.fromRGB(22, 10, 2),
-        Hover   = Color3.fromRGB(255, 140, 30),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.7,
-            RotationSpeed = 30,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 10, 0)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 140, 30)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 10, 0))
-            })
-        }
-    },
-    ["Cyanic"] = {
-        Main    = Color3.fromRGB(8, 18, 22),
-        Top     = Color3.fromRGB(40, 165, 160),
-        Text    = Color3.fromRGB(210, 248, 246),
-        Accent  = Color3.fromRGB(57, 197, 187),
-        Stroke  = Color3.fromRGB(40, 165, 160),
-        SubText = Color3.fromRGB(130, 210, 205),
-        Element = Color3.fromRGB(14, 38, 46),
-        Hover   = Color3.fromRGB(57, 197, 187),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.6,
-            RotationSpeed = 25,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 40, 50)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(57, 197, 187)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 40, 50))
-            })
-        }
-    },
-    ["Amber Glow"] = {
-        Main    = Color3.fromRGB(18, 10, 4),
-        Top     = Color3.fromRGB(190, 125, 25),
-        Text    = Color3.fromRGB(255, 245, 225),
-        Accent  = Color3.fromRGB(255, 170, 40),
-        Stroke  = Color3.fromRGB(200, 130, 30),
-        SubText = Color3.fromRGB(230, 195, 145),
-        Element = Color3.fromRGB(38, 20, 5),
-        Hover   = Color3.fromRGB(255, 170, 40),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.6,
-            RotationSpeed = 25,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 22, 4)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 170, 40)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 22, 4))
-            })
-        }
-    },
-    ["Bloomings"] = {
-        Main    = Color3.fromRGB(40, 15, 30),
-        Top     = Color3.fromRGB(50, 18, 38),
-        Text    = Color3.fromRGB(255, 240, 248),
-        Accent  = Color3.fromRGB(255, 80, 150),
-        Stroke  = Color3.fromRGB(200, 80, 150),
-        SubText = Color3.fromRGB(230, 190, 215),
-        Element = Color3.fromRGB(55, 22, 42),
-        Hover   = Color3.fromRGB(255, 255, 255),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.35,
-            RotationSpeed = 15,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 70, 150)),
-                ColorSequenceKeypoint.new(0.25, Color3.fromRGB(80, 255, 150)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-                ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255, 50, 130)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 70, 150))
-            })
-        }
-    },
-    ["Crimson"] = {
-        Main    = Color3.fromRGB(30, 6, 9),
-        Top     = Color3.fromRGB(16, 10, 16),
-        Text    = Color3.fromRGB(255, 235, 240),
-        Accent  = Color3.fromRGB(220, 30, 60),
-        Stroke  = Color3.fromRGB(200, 25, 55),
-        SubText = Color3.fromRGB(180, 100, 115),
-        Element = Color3.fromRGB(14, 8, 14),
-        Hover   = Color3.fromRGB(50, 12, 22),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.4,
-            RotationSpeed = 20,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 5, 20)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220, 30, 60)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 5, 20))
-            })
-        }
-    },
-    ["Gold"] = {
-        Main    = Color3.fromRGB(35, 27, 12),
-        Top     = Color3.fromRGB(80, 65, 30),
-        Text    = Color3.fromRGB(240, 240, 240),
-        Accent  = Color3.fromRGB(255, 200, 90),
-        Stroke  = Color3.fromRGB(80, 60, 25),
-        SubText = Color3.fromRGB(170, 170, 170),
-        Element = Color3.fromRGB(70, 55, 25),
-        Hover   = Color3.fromRGB(255, 200, 90),
-        Background = nil,
-        BackgroundTransparency = 0,
-        ShineEnabled = true,
-        Shine = {
-            Speed = 0.5,
-            RotationSpeed = 25,
-            ColorSequence = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 30, 10)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 210, 120)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 30, 10))
-            })
-        }
-    },
+    Dark   = {Main = Color3.fromRGB(13, 13, 13), Top = Color3.fromRGB(28, 28, 30), Text = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 140, 255), Stroke = Color3.fromRGB(45, 45, 48), SubText = Color3.fromRGB(160, 160, 170), Element = Color3.fromRGB(45, 45, 50), Hover = Color3.fromRGB(60, 60, 70)},
+    White  = {Main = Color3.fromRGB(243, 243, 243), Top = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(0, 100, 210), Stroke = Color3.fromRGB(220, 220, 225), SubText = Color3.fromRGB(100, 100, 110), Element = Color3.fromRGB(235, 235, 240), Hover = Color3.fromRGB(210, 210, 220)},
+    Purple = {Main = Color3.fromRGB(18, 15, 22), Top = Color3.fromRGB(30, 25, 35), Text = Color3.fromRGB(245, 240, 255), Accent = Color3.fromRGB(160, 90, 255), Stroke = Color3.fromRGB(50, 45, 60), SubText = Color3.fromRGB(180, 170, 200), Element = Color3.fromRGB(50, 45, 60), Hover = Color3.fromRGB(70, 60, 85)},
+    Blue   = {Main = Color3.fromRGB(12, 18, 28), Top = Color3.fromRGB(25, 32, 45), Text = Color3.fromRGB(240, 245, 255), Accent = Color3.fromRGB(70, 130, 255), Stroke = Color3.fromRGB(45, 55, 75), SubText = Color3.fromRGB(150, 170, 200), Element = Color3.fromRGB(45, 55, 75), Hover = Color3.fromRGB(65, 80, 105)},
+    Red    = {Main = Color3.fromRGB(22, 12, 12), Top = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 240, 240), Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(60, 40, 40), SubText = Color3.fromRGB(200, 160, 160), Element = Color3.fromRGB(60, 40, 40), Hover = Color3.fromRGB(85, 55, 55)},
+    Yellow = {Main = Color3.fromRGB(22, 22, 12), Top = Color3.fromRGB(35, 35, 20), Text = Color3.fromRGB(255, 255, 240), Accent = Color3.fromRGB(255, 200, 80), Stroke = Color3.fromRGB(60, 60, 40), SubText = Color3.fromRGB(200, 190, 160), Element = Color3.fromRGB(60, 60, 40), Hover = Color3.fromRGB(85, 85, 55)},
+    Green  = {Main = Color3.fromRGB(12, 22, 15), Top = Color3.fromRGB(20, 35, 25), Text = Color3.fromRGB(240, 255, 245), Accent = Color3.fromRGB(60, 220, 130), Stroke = Color3.fromRGB(40, 60, 50), SubText = Color3.fromRGB(160, 200, 180), Element = Color3.fromRGB(40, 60, 50), Hover = Color3.fromRGB(55, 85, 70)},
 }
 local CurrentTheme = Themes.Dark
 
@@ -812,10 +345,6 @@ function MediaManager:Image(src)
 end
 -- ===== 结束 MediaManager =====
 
--- ==============================
--- 组件构建器（createSectionBuilder）
--- 完整包含所有元素类型
--- ==============================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
     local padding = parent:FindFirstChild("SectionPadding")
@@ -4905,7 +4434,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = true
-    MainFrame.BackgroundTransparency = 0
+    MainFrame.BackgroundTransparency = 0.15
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
@@ -4916,11 +4445,15 @@ function Fenglib:CreateWindow(Config)
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
-    -- ================== 背景图和动画 ==================
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
-    bgImage.BackgroundTransparency = 0
+    bgImage.BackgroundTransparency = 1
+    if type(SceneId) == "number" or (type(SceneId) == "string" and tonumber(SceneId)) then
+        bgImage.Image = "rbxassetid://" .. tostring(SceneId)
+    else
+        bgImage.Image = tostring(SceneId)
+    end
     bgImage.ScaleType = Enum.ScaleType.Crop
     bgImage.ZIndex = 0
     bgImage.Parent = MainFrame
@@ -4931,68 +4464,209 @@ function Fenglib:CreateWindow(Config)
 
     local bgGradient = Instance.new("UIGradient")
     bgGradient.Rotation = 0
+    bgGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 10, 20)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 80, 80)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 10, 20))
+    })
+    bgGradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.6),
+        NumberSequenceKeypoint.new(0.5, 0.0),
+        NumberSequenceKeypoint.new(1, 0.6)
+    })
     bgGradient.Parent = bgImage
 
-    local shineConn = nil
+    local shineConn
+    local function startShine()
+        local rot = 0
+        shineConn = RunService.RenderStepped:Connect(function(dt)
+            rot = (rot + dt * 20) % 360
+            bgGradient.Rotation = rot
+        end)
+    end
+    startShine()
 
-    local function updateBackground()
-        local theme = CurrentTheme
-        local themeName = nil
-        for name, t in pairs(Themes) do
-            if t == theme then themeName = name; break end
+    table.insert(WindowCleanup, function()
+        if shineConn then shineConn:Disconnect() end
+    end)
+
+    local Resizer = Instance.new("TextButton")
+    Resizer.Name = "WindowResizer"
+    Resizer.Parent = MainFrame
+    Resizer.BackgroundTransparency = 0.8
+    Resizer.BackgroundColor3 = Color3.new(1, 1, 1)
+    Resizer.Position = UDim2.new(1, 5, 1, 5)
+    Resizer.Size = UDim2.new(0, 24, 0, 24)
+    Resizer.AnchorPoint = Vector2.new(1, 1)
+    Resizer.Text = ""
+    Resizer.ZIndex = 30
+    Resizer.Visible = false
+
+    local resizerStroke = Instance.new("UIStroke")
+    resizerStroke.Thickness = 4
+    resizerStroke.Color = Color3.new(1, 1, 1)
+    resizerStroke.Transparency = 0
+    resizerStroke.Parent = Resizer
+
+    local resizerCorner = Instance.new("UICorner")
+    resizerCorner.CornerRadius = UDim.new(0, 6)
+    resizerCorner.Parent = Resizer
+
+    local resizerVisible = false
+    local isResizing = false
+    local resizeStart = Vector2.new(0,0)
+    local startSize = UDim2.new(0,0,0,0)
+
+    Resizer.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isResizing = true
+            resizeStart = input.Position
+            startSize = MainFrame.Size
         end
+    end)
 
-        local defaultBg = ""
-        if SceneId then
-            if type(SceneId) == "number" or (type(SceneId) == "string" and tonumber(SceneId)) then
-                defaultBg = "rbxassetid://" .. tostring(SceneId)
+    UserInputService.InputChanged:Connect(function(input)
+        if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - resizeStart
+            local newWidth = math.max(400, startSize.X.Offset + delta.X)
+            local newHeight = math.max(250, startSize.Y.Offset + delta.Y)
+            MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isResizing = false
+        end
+    end)
+
+    task.spawn(function()
+        local rot = 0
+        while ScreenGui.Parent do
+            if RainbowEnabled then
+                local t = tick() * RainbowSpeed
+                if RainbowType == "Linear Gradient (Solid Rainbow)" then
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
+                elseif RainbowType == "Animated/Cycling Rainbow" then
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
+                elseif RainbowType == "Smooth Fading Gradient" then
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
+                elseif RainbowType == "Step/Band Rainbow" then
+                    local step = math.floor((t % 2) * 4) / 4
+                    Stroke.Color = Color3.fromHSV(step, 1, 1)
+                elseif RainbowType == "Rainbow Pulse" then
+                    local pulse = (math.sin(t * 3) + 1) / 2
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
+                elseif RainbowType == "Radial Rainbow" then
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
+                elseif RainbowType == "Neon/Glowing Rainbow" then
+                    Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1)
+                elseif RainbowType == "Pastel Rainbow" then
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
+                elseif RainbowType == "Vertical/Horizontal Fade" then
+                    Stroke.Color = Color3.fromHSV(t % 5/5, 1, 1)
+                end
             else
-                defaultBg = tostring(SceneId)
+                Stroke.Color = CurrentTheme.Stroke
             end
+            RunService.RenderStepped:Wait()
         end
-        bgImage.Image = defaultBg
-        bgImage.ImageTransparency = 0
-        bgImage.BackgroundColor3 = theme.Main
+    end)
 
-        if shineConn then shineConn:Disconnect(); shineConn = nil end
+    local IntroHolder = Instance.new("Frame")
+    IntroHolder.Size = UDim2.new(1, 999999, 1, 999999)
+    IntroHolder.AnchorPoint = Vector2.new(0.5, 0.5)
+    IntroHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
+    IntroHolder.BackgroundColor3 = Color3.fromRGB(230, 230, 235)
+    IntroHolder.BackgroundTransparency = 1
+    IntroHolder.ZIndex = 50
+    IntroHolder.Parent = ScreenGui
 
-        local isNoColorTheme = (themeName == "Dark" or themeName == "AMOLED")
-        if not isNoColorTheme and theme.ShineEnabled and theme.Shine then
-            local shine = theme.Shine
-            local speed = shine.RotationSpeed or 20
-            local colorSeq = shine.ColorSequence
-            if colorSeq then
-                bgGradient.Color = colorSeq
-            else
-                local accent = theme.Accent or Color3.fromRGB(255,255,255)
-                bgGradient.Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, accent),
-                    ColorSequenceKeypoint.new(0.5, Color3.new(1,1,1):Lerp(accent, 0.5)),
-                    ColorSequenceKeypoint.new(1, accent)
-                })
-            end
-            bgGradient.Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0, 0.6),
-                NumberSequenceKeypoint.new(0.5, 0.0),
-                NumberSequenceKeypoint.new(1, 0.6)
-            })
-            local rot = 0
-            shineConn = RunService.RenderStepped:Connect(function(dt)
-                rot = (rot + dt * speed) % 360
-                bgGradient.Rotation = rot
-            end)
-        else
-            bgGradient.Rotation = 0
-            bgGradient.Transparency = NumberSequence.new(1)
-            bgGradient.Color = ColorSequence.new(Color3.new(1,1,1))
+    local function formatIcon(asset)
+        if tonumber(asset) then
+            return "rbxassetid://" .. asset
+        elseif type(asset) == "string" and asset:match("^rbxassetid://") then
+            return asset
+        elseif type(asset) == "string" and asset:match("^http") then
+            return asset
+        elseif type(asset) == "string" then
+            return "rbxassetid://" .. asset
         end
+        return "rbxassetid://78229538488090"
     end
 
-    table.insert(ThemeListeners, updateBackground)
-    updateBackground()
-    -- ================== 背景图和动画结束 ==================
+    local IntroLogo = Instance.new("ImageLabel")
+    IntroLogo.Size = UDim2.new(0, 0, 0, 0)
+    IntroLogo.AnchorPoint = Vector2.new(0.5, 0.5)
+    IntroLogo.Position = UDim2.new(0.5, 0, 0.5, -16)
+    IntroLogo.BackgroundTransparency = 1
+    IntroLogo.Image = formatIcon(IconAsset or "78229538488090")
+    IntroLogo.ZIndex = 51
+    IntroLogo.Parent = IntroHolder
+    Instance.new("UICorner", IntroLogo).CornerRadius = UDim.new(1, 0)
 
-    -- ================== Topbar（标题栏） ==================
+    local IntroTitle = Instance.new("TextLabel")
+    IntroTitle.Size = UDim2.new(0, 0, 0, 20)
+    IntroTitle.AnchorPoint = Vector2.new(0.5, 0.5)
+    IntroTitle.Position = UDim2.new(0.5, 0, 0.5, 40)
+    IntroTitle.BackgroundTransparency = 1
+    IntroTitle.Font = Enum.Font.GothamBold
+    IntroTitle.Text = Title
+    IntroTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    IntroTitle.TextTransparency = 1
+    IntroTitle.TextSize = 20
+    IntroTitle.ZIndex = 51
+    IntroTitle.Parent = IntroHolder
+
+    local IntroSub = Instance.new("TextLabel")
+    IntroSub.Size = UDim2.new(0, 0, 0, 16)
+    IntroSub.AnchorPoint = Vector2.new(0.5, 0.5)
+    IntroSub.Position = UDim2.new(0.5, 0, 0.5, 62)
+    IntroSub.BackgroundTransparency = 1
+    IntroSub.Font = Enum.Font.Gotham
+    IntroSub.Text = Subtitle or ""
+    IntroSub.TextColor3 = Color3.fromRGB(200, 200, 200)
+    IntroSub.TextTransparency = 1
+    IntroSub.TextSize = 16
+    IntroSub.ZIndex = 51
+    IntroSub.Parent = IntroHolder
+
+    TweenService:Create(IntroHolder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        BackgroundTransparency = 0.85
+    }):Play()
+    TweenService:Create(IntroLogo, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 82, 0, 82)
+    }):Play()
+    TweenService:Create(IntroTitle, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        TextTransparency = 0
+    }):Play()
+    TweenService:Create(IntroSub, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        TextTransparency = 0
+    }):Play()
+
+    task.wait(1.3)
+
+    MainFrame.Visible = true
+    TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT)
+    }):Play()
+
+    TweenService:Create(IntroHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        BackgroundTransparency = 1
+    }):Play()
+    TweenService:Create(IntroTitle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        TextTransparency = 1
+    }):Play()
+    TweenService:Create(IntroSub, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        TextTransparency = 1
+    }):Play()
+    TweenService:Create(IntroLogo, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 0, 0, 0)
+    }):Play()
+
+    task.wait(0.35)
+    IntroHolder:Destroy()
+
     local topbarHeight = Subtitle and 45 or 40
 
     local Topbar = Instance.new("Frame")
@@ -5005,13 +4679,13 @@ function Fenglib:CreateWindow(Config)
             IconAsset = "rbxassetid://" .. IconAsset
         end
     else
-        IconAsset = "rbxassetid://78229538488090"
+        IconAsset = "rbxassetid://78229538488090"  
     end
 
     local Icon = Instance.new("ImageLabel")
     Icon.Name = "WindowIcon"
     Icon.Size = UDim2.new(0, 32, 0, 32)
-    Icon.Position = UDim2.new(0, 10, 0.5, -16)
+    Icon.Position = UDim2.new(0, 10, 0.5, -16)  
     Icon.BackgroundTransparency = 1
     Icon.Image = IconAsset
     Icon.Parent = Topbar
@@ -5139,7 +4813,10 @@ function Fenglib:CreateWindow(Config)
         MainFrame.Visible = false
     end)
 
-    local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function() end)
+    local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
+        resizerVisible = not resizerVisible
+        Resizer.Visible = resizerVisible
+    end)
 
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function()
         ScreenGui:Destroy()
@@ -5155,7 +4832,7 @@ function Fenglib:CreateWindow(Config)
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
     if Subtitle then
-        TitleLabel.Size = UDim2.new(1, -180, 0, 20)
+        TitleLabel.Size = UDim2.new(1, -180, 0, 20)   
         TitleLabel.Position = UDim2.new(0, 50, 0, 5)
 
         local SubtitleLabel = Instance.new("TextLabel")
@@ -5174,7 +4851,6 @@ function Fenglib:CreateWindow(Config)
         TitleLabel.Position = UDim2.new(0, 50, 0, 0)
     end
 
-    -- ================== LeftContainer（左侧导航栏） ==================
     local leftWidth = 160
 
     local LeftContainer = Instance.new("Frame")
@@ -5189,7 +4865,48 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    -- ================== TabScroll（标签页滚动区域） ==================
+    local function createCorner(pos, anchor)
+        local container = Instance.new("Frame")
+        container.Size = UDim2.new(0, 16, 0, 16)
+        container.Position = pos
+        container.AnchorPoint = anchor
+        container.BackgroundTransparency = 1
+        container.BorderSizePixel = 0
+        container.ZIndex = 0
+        container.ClipsDescendants = true
+        container.Parent = LeftContainer
+
+        local arc = Instance.new("Frame")
+        arc.Size = UDim2.new(0, 32, 0, 32)
+        local offsetX, offsetY = 0, 0
+        if anchor.X == 0 and anchor.Y == 0 then
+            offsetX, offsetY = -16, -16
+        elseif anchor.X == 1 and anchor.Y == 0 then
+            offsetX, offsetY = 0, -16
+        elseif anchor.X == 1 and anchor.Y == 1 then
+            offsetX, offsetY = 0, 0
+        end
+        arc.Position = UDim2.new(0, offsetX, 0, offsetY)
+        arc.BackgroundColor3 = CurrentTheme.Main
+        arc.BackgroundTransparency = 0.2
+        arc.BorderSizePixel = 0
+        arc.Parent = container
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 16)
+        corner.Parent = arc
+
+        table.insert(ThemeListeners, function()
+            arc.BackgroundColor3 = CurrentTheme.Main
+        end)
+
+        return container
+    end
+
+    createCorner(UDim2.new(0, 0, 0, 0), Vector2.new(0, 0))
+    createCorner(UDim2.new(1, 0, 0, 0), Vector2.new(1, 0))
+    createCorner(UDim2.new(1, 0, 1, 0), Vector2.new(1, 1))
+
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -55)
     TabScroll.Position = UDim2.new(0, 0, 0, 0)
@@ -5210,7 +4927,6 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- ================== Category 分类方法 ==================
     Window._currentCategory = nil
 
     function Window:Category(config)
@@ -5352,7 +5068,6 @@ function Fenglib:CreateWindow(Config)
         return Window._currentCategory
     end
 
-    -- ================== TabDivider 分割线 ==================
     function Window:TabDivider()
         local parentContainer = TabScroll
         if Window._currentCategory then
@@ -5371,7 +5086,6 @@ function Fenglib:CreateWindow(Config)
         end)
     end
 
-    -- ================== ProfileFrame（用户信息） ==================
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
     ProfileFrame.Position = UDim2.new(0, 10, 1, -10)
@@ -5457,7 +5171,6 @@ function Fenglib:CreateWindow(Config)
         EyeIcon.ImageColor3 = CurrentTheme.Text
     end)
 
-    -- ================== RightContainer（右侧内容区域） ==================
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
@@ -5474,13 +5187,13 @@ function Fenglib:CreateWindow(Config)
         RightContainer.BackgroundColor3 = CurrentTheme.Main
     end)
 
-    -- ================== PageContainer ==================
     local PageContainer = Instance.new("Frame")
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = RightContainer
 
-    -- ================== 窗口拖拽 ==================
+    MainFrame.ClipsDescendants = false
+
     local dragging = false
     local dragStartPos = nil
     local dragStartWindowPos = nil
@@ -5530,7 +5243,6 @@ function Fenglib:CreateWindow(Config)
     UserInputService.InputChanged:Connect(onDragMove)
     UserInputService.InputEnded:Connect(endDrag)
 
-    -- ================== 窗口开关 ==================
     local function toggleMainFrame()
         if MainFrame.Visible then
             MainFrame.Visible = false
@@ -5548,20 +5260,19 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- ================== 悬浮按钮 ==================
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
     OpenButton.BackgroundColor3 = CurrentTheme.Accent
     OpenButton.BackgroundTransparency = 0.85
-    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)
+    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)  
     OpenButton.Size = UDim2.new(0, 40, 0, 40)
     OpenButton.Active = true
-    OpenButton.Draggable = true
-    OpenButton.Image = "rbxassetid://84830962019412"
+    OpenButton.Draggable = true  
+    OpenButton.Image = "rbxassetid://84830962019412"  
     OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
     OpenButton.ImageTransparency = 0.15
-    OpenButton.ZIndex = 10
+    OpenButton.ZIndex = 10  
 
     OpenButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -5592,7 +5303,6 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- ================== 通知系统 ==================
     function Window:Notification(titleText, descText, notifType, duration)
         notifType = notifType or "Info"
         duration = duration or 3
@@ -6034,7 +5744,6 @@ function Fenglib:CreateWindow(Config)
     return Window
 end
 
--- ================== 自定义光标功能 ==================
 do
     local cursorScreen = Instance.new("ScreenGui")
     cursorScreen.Name = "FengCustomCursor"
