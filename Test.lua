@@ -4928,11 +4928,11 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = true
-    MainFrame.BackgroundTransparency = 0.15
+    MainFrame.BackgroundTransparency = 1  -- 完全透明，让背景图完全显示
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
-    AddToRegistry(MainFrame, "BackgroundColor3", "Main")
+    -- 不注册 Main，避免主题影响窗口背景色
 
     local Stroke = Instance.new("UIStroke")
     Stroke.Thickness = 2
@@ -4943,7 +4943,7 @@ function Fenglib:CreateWindow(Config)
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
-    bgImage.BackgroundTransparency = 1
+    bgImage.BackgroundTransparency = 0   -- 不透明，填充透明区域
     bgImage.ScaleType = Enum.ScaleType.Crop
     bgImage.ZIndex = 0
     bgImage.Parent = MainFrame
@@ -4977,6 +4977,8 @@ function Fenglib:CreateWindow(Config)
         end
         bgImage.Image = defaultBg
         bgImage.ImageTransparency = 0
+        -- 用主题主色填充透明部分，让背景图完全不透明
+        bgImage.BackgroundColor3 = theme.Main
 
         -- 停止旧动画
         if shineConn then
