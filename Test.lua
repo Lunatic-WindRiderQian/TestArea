@@ -839,6 +839,10 @@ function MediaManager:Image(src)
 end
 -- ===== 结束 MediaManager =====
 
+-- ==============================
+-- 组件构建器（createSectionBuilder）
+-- 包含所有元素：Button, Toggle, Slider, Dropdown, Keybind, ColorPicker, Input, Textbox, Label, Image, Divider, Space, Checkbox, ProgressBar, Video, Audio, Viewport, Social, Paragraph, Group
+-- ==============================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
     local padding = parent:FindFirstChild("SectionPadding")
@@ -4928,11 +4932,11 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.ClipsDescendants = true
-    MainFrame.BackgroundTransparency = 1  -- 完全透明，让背景图完全显示
+    MainFrame.BackgroundTransparency = 0
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
-    -- 不注册 Main，避免主题影响窗口背景色
+    AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
     local Stroke = Instance.new("UIStroke")
     Stroke.Thickness = 2
@@ -4943,7 +4947,7 @@ function Fenglib:CreateWindow(Config)
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
-    bgImage.BackgroundTransparency = 0   -- 不透明，填充透明区域
+    bgImage.BackgroundTransparency = 0
     bgImage.ScaleType = Enum.ScaleType.Crop
     bgImage.ZIndex = 0
     bgImage.Parent = MainFrame
@@ -4958,7 +4962,6 @@ function Fenglib:CreateWindow(Config)
 
     local shineConn = nil
 
-    -- 背景更新函数：Dark 和 AMOLED 强制透明，其余按 ShineEnabled 控制
     local function updateBackground()
         local theme = CurrentTheme
         local themeName = nil
@@ -4977,7 +4980,6 @@ function Fenglib:CreateWindow(Config)
         end
         bgImage.Image = defaultBg
         bgImage.ImageTransparency = 0
-        -- 用主题主色填充透明部分，让背景图完全不透明
         bgImage.BackgroundColor3 = theme.Main
 
         -- 停止旧动画
@@ -5019,7 +5021,7 @@ function Fenglib:CreateWindow(Config)
         else
             -- 无颜色叠加：渐变完全透明
             bgGradient.Rotation = 0
-            bgGradient.Transparency = NumberSequence.new(1)   -- 全透明
+            bgGradient.Transparency = NumberSequence.new(1)
             bgGradient.Color = ColorSequence.new(Color3.new(1,1,1))
         end
     end
@@ -5028,183 +5030,10 @@ function Fenglib:CreateWindow(Config)
     updateBackground()
     -- ================== 背景图和动画结束 ==================
 
-    local Resizer = Instance.new("TextButton")
-    Resizer.Name = "WindowResizer"
-    Resizer.Parent = MainFrame
-    Resizer.BackgroundTransparency = 0.8
-    Resizer.BackgroundColor3 = Color3.new(1, 1, 1)
-    Resizer.Position = UDim2.new(1, 5, 1, 5)
-    Resizer.Size = UDim2.new(0, 24, 0, 24)
-    Resizer.AnchorPoint = Vector2.new(1, 1)
-    Resizer.Text = ""
-    Resizer.ZIndex = 30
-    Resizer.Visible = false
+    -- ================== 删除了三个圆孤角 ==================
+    -- 不再创建 LeftContainer 的左上、右上、左下圆角弧装饰
 
-    local resizerStroke = Instance.new("UIStroke")
-    resizerStroke.Thickness = 4
-    resizerStroke.Color = Color3.new(1, 1, 1)
-    resizerStroke.Transparency = 0
-    resizerStroke.Parent = Resizer
-
-    local resizerCorner = Instance.new("UICorner")
-    resizerCorner.CornerRadius = UDim.new(0, 6)
-    resizerCorner.Parent = Resizer
-
-    local resizerVisible = false
-    local isResizing = false
-    local resizeStart = Vector2.new(0,0)
-    local startSize = UDim2.new(0,0,0,0)
-
-    Resizer.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            isResizing = true
-            resizeStart = input.Position
-            startSize = MainFrame.Size
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - resizeStart
-            local newWidth = math.max(400, startSize.X.Offset + delta.X)
-            local newHeight = math.max(250, startSize.Y.Offset + delta.Y)
-            MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            isResizing = false
-        end
-    end)
-
-    task.spawn(function()
-        local rot = 0
-        while ScreenGui.Parent do
-            if RainbowEnabled then
-                local t = tick() * RainbowSpeed
-                if RainbowType == "Linear Gradient (Solid Rainbow)" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Animated/Cycling Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Smooth Fading Gradient" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Step/Band Rainbow" then
-                    local step = math.floor((t % 2) * 4) / 4
-                    Stroke.Color = Color3.fromHSV(step, 1, 1)
-                elseif RainbowType == "Rainbow Pulse" then
-                    local pulse = (math.sin(t * 3) + 1) / 2
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
-                elseif RainbowType == "Radial Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Neon/Glowing Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1)
-                elseif RainbowType == "Pastel Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
-                elseif RainbowType == "Vertical/Horizontal Fade" then
-                    Stroke.Color = Color3.fromHSV(t % 5/5, 1, 1)
-                end
-            else
-                Stroke.Color = CurrentTheme.Stroke
-            end
-            RunService.RenderStepped:Wait()
-        end
-    end)
-
-    local IntroHolder = Instance.new("Frame")
-    IntroHolder.Size = UDim2.new(1, 999999, 1, 999999)
-    IntroHolder.AnchorPoint = Vector2.new(0.5, 0.5)
-    IntroHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
-    IntroHolder.BackgroundColor3 = Color3.fromRGB(230, 230, 235)
-    IntroHolder.BackgroundTransparency = 1
-    IntroHolder.ZIndex = 50
-    IntroHolder.Parent = ScreenGui
-
-    local function formatIcon(asset)
-        if tonumber(asset) then
-            return "rbxassetid://" .. asset
-        elseif type(asset) == "string" and asset:match("^rbxassetid://") then
-            return asset
-        elseif type(asset) == "string" and asset:match("^http") then
-            return asset
-        elseif type(asset) == "string" then
-            return "rbxassetid://" .. asset
-        end
-        return "rbxassetid://78229538488090"
-    end
-
-    local IntroLogo = Instance.new("ImageLabel")
-    IntroLogo.Size = UDim2.new(0, 0, 0, 0)
-    IntroLogo.AnchorPoint = Vector2.new(0.5, 0.5)
-    IntroLogo.Position = UDim2.new(0.5, 0, 0.5, -16)
-    IntroLogo.BackgroundTransparency = 1
-    IntroLogo.Image = formatIcon(IconAsset or "78229538488090")
-    IntroLogo.ZIndex = 51
-    IntroLogo.Parent = IntroHolder
-    Instance.new("UICorner", IntroLogo).CornerRadius = UDim.new(1, 0)
-
-    local IntroTitle = Instance.new("TextLabel")
-    IntroTitle.Size = UDim2.new(0, 0, 0, 20)
-    IntroTitle.AnchorPoint = Vector2.new(0.5, 0.5)
-    IntroTitle.Position = UDim2.new(0.5, 0, 0.5, 40)
-    IntroTitle.BackgroundTransparency = 1
-    IntroTitle.Font = Enum.Font.GothamBold
-    IntroTitle.Text = Title
-    IntroTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    IntroTitle.TextTransparency = 1
-    IntroTitle.TextSize = 20
-    IntroTitle.ZIndex = 51
-    IntroTitle.Parent = IntroHolder
-
-    local IntroSub = Instance.new("TextLabel")
-    IntroSub.Size = UDim2.new(0, 0, 0, 16)
-    IntroSub.AnchorPoint = Vector2.new(0.5, 0.5)
-    IntroSub.Position = UDim2.new(0.5, 0, 0.5, 62)
-    IntroSub.BackgroundTransparency = 1
-    IntroSub.Font = Enum.Font.Gotham
-    IntroSub.Text = Subtitle or ""
-    IntroSub.TextColor3 = Color3.fromRGB(200, 200, 200)
-    IntroSub.TextTransparency = 1
-    IntroSub.TextSize = 16
-    IntroSub.ZIndex = 51
-    IntroSub.Parent = IntroHolder
-
-    TweenService:Create(IntroHolder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0.85
-    }):Play()
-    TweenService:Create(IntroLogo, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 82, 0, 82)
-    }):Play()
-    TweenService:Create(IntroTitle, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        TextTransparency = 0
-    }):Play()
-    TweenService:Create(IntroSub, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        TextTransparency = 0
-    }):Play()
-
-    task.wait(1.3)
-
-    MainFrame.Visible = true
-    TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT)
-    }):Play()
-
-    TweenService:Create(IntroHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-        BackgroundTransparency = 1
-    }):Play()
-    TweenService:Create(IntroTitle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-        TextTransparency = 1
-    }):Play()
-    TweenService:Create(IntroSub, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-        TextTransparency = 1
-    }):Play()
-    TweenService:Create(IntroLogo, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-        Size = UDim2.new(0, 0, 0, 0)
-    }):Play()
-
-    task.wait(0.35)
-    IntroHolder:Destroy()
-
+    -- ================== Topbar（标题栏） ==================
     local topbarHeight = Subtitle and 45 or 40
 
     local Topbar = Instance.new("Frame")
@@ -5217,13 +5046,13 @@ function Fenglib:CreateWindow(Config)
             IconAsset = "rbxassetid://" .. IconAsset
         end
     else
-        IconAsset = "rbxassetid://78229538488090"  
+        IconAsset = "rbxassetid://78229538488090"
     end
 
     local Icon = Instance.new("ImageLabel")
     Icon.Name = "WindowIcon"
     Icon.Size = UDim2.new(0, 32, 0, 32)
-    Icon.Position = UDim2.new(0, 10, 0.5, -16)  
+    Icon.Position = UDim2.new(0, 10, 0.5, -16)
     Icon.BackgroundTransparency = 1
     Icon.Image = IconAsset
     Icon.Parent = Topbar
@@ -5352,8 +5181,7 @@ function Fenglib:CreateWindow(Config)
     end)
 
     local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
-        resizerVisible = not resizerVisible
-        Resizer.Visible = resizerVisible
+        -- 最大化/恢复功能可自定义
     end)
 
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function()
@@ -5370,7 +5198,7 @@ function Fenglib:CreateWindow(Config)
     AddToRegistry(TitleLabel, "TextColor3", "Text")
 
     if Subtitle then
-        TitleLabel.Size = UDim2.new(1, -180, 0, 20)   
+        TitleLabel.Size = UDim2.new(1, -180, 0, 20)
         TitleLabel.Position = UDim2.new(0, 50, 0, 5)
 
         local SubtitleLabel = Instance.new("TextLabel")
@@ -5389,6 +5217,7 @@ function Fenglib:CreateWindow(Config)
         TitleLabel.Position = UDim2.new(0, 50, 0, 0)
     end
 
+    -- ================== LeftContainer（左侧导航栏） ==================
     local leftWidth = 160
 
     local LeftContainer = Instance.new("Frame")
@@ -5403,48 +5232,7 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
-    local function createCorner(pos, anchor)
-        local container = Instance.new("Frame")
-        container.Size = UDim2.new(0, 16, 0, 16)
-        container.Position = pos
-        container.AnchorPoint = anchor
-        container.BackgroundTransparency = 1
-        container.BorderSizePixel = 0
-        container.ZIndex = 0
-        container.ClipsDescendants = true
-        container.Parent = LeftContainer
-
-        local arc = Instance.new("Frame")
-        arc.Size = UDim2.new(0, 32, 0, 32)
-        local offsetX, offsetY = 0, 0
-        if anchor.X == 0 and anchor.Y == 0 then
-            offsetX, offsetY = -16, -16
-        elseif anchor.X == 1 and anchor.Y == 0 then
-            offsetX, offsetY = 0, -16
-        elseif anchor.X == 1 and anchor.Y == 1 then
-            offsetX, offsetY = 0, 0
-        end
-        arc.Position = UDim2.new(0, offsetX, 0, offsetY)
-        arc.BackgroundColor3 = CurrentTheme.Main
-        arc.BackgroundTransparency = 0.2
-        arc.BorderSizePixel = 0
-        arc.Parent = container
-
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 16)
-        corner.Parent = arc
-
-        table.insert(ThemeListeners, function()
-            arc.BackgroundColor3 = CurrentTheme.Main
-        end)
-
-        return container
-    end
-
-    createCorner(UDim2.new(0, 0, 0, 0), Vector2.new(0, 0))
-    createCorner(UDim2.new(1, 0, 0, 0), Vector2.new(1, 0))
-    createCorner(UDim2.new(1, 0, 1, 0), Vector2.new(1, 1))
-
+    -- ================== TabScroll（标签页滚动区域） ==================
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -55)
     TabScroll.Position = UDim2.new(0, 0, 0, 0)
@@ -5465,165 +5253,7 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    Window._currentCategory = nil
-
-    function Window:Category(config)
-        local name = type(config) == "table" and config.Name or config
-        local collapsible = type(config) == "table" and config.Collapsible or false
-        local opened = true
-        if type(config) == "table" and config.Opened ~= nil then
-            opened = config.Opened
-        end
-
-        local categoryFrame = Instance.new("Frame")
-        categoryFrame.Size = UDim2.new(1, 0, 0, 0)
-        categoryFrame.AutomaticSize = Enum.AutomaticSize.Y
-        categoryFrame.BackgroundTransparency = 1
-        categoryFrame.Parent = TabScroll
-
-        local catLayout = Instance.new("UIListLayout")
-        catLayout.FillDirection = Enum.FillDirection.Vertical
-        catLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        catLayout.Padding = UDim.new(0, 0)
-        catLayout.Parent = categoryFrame
-
-        local header = Instance.new("TextButton")
-        header.Size = UDim2.new(1, 0, 0, 28)
-        header.BackgroundTransparency = 1
-        header.Text = name
-        header.TextXAlignment = Enum.TextXAlignment.Left
-        header.Font = Enum.Font.GothamBold
-        header.TextSize = 13
-        header.TextColor3 = CurrentTheme.Text
-        header.TextTransparency = 0.5
-        header.Parent = categoryFrame
-        local pad = Instance.new("UIPadding")
-        pad.PaddingLeft = UDim.new(0, 10)
-        pad.Parent = header
-        AddToRegistry(header, "TextColor3", "Text")
-
-        local arrow = Instance.new("ImageLabel")
-        arrow.Size = UDim2.new(0, 12, 0, 12)
-        arrow.BackgroundTransparency = 1
-        arrow.Image = "rbxassetid://8240930340"
-        arrow.ImageColor3 = CurrentTheme.Text
-        arrow.ImageTransparency = 0.3
-        arrow.Visible = collapsible
-        arrow.Rotation = opened and 0 or 180
-        arrow.Parent = header
-        arrow.AnchorPoint = Vector2.new(1, 0.5)
-        arrow.Position = UDim2.new(1, -10, 0.5, 0)
-        AddToRegistry(arrow, "ImageColor3", "Text")
-
-        local content = Instance.new("Frame")
-        content.Size = UDim2.new(1, 0, 0, 0)
-        content.BackgroundTransparency = 1
-        content.AutomaticSize = Enum.AutomaticSize.None
-        content.ClipsDescendants = true
-        content.Visible = true
-        content.Parent = categoryFrame
-
-        local contentList = Instance.new("UIListLayout")
-        contentList.Padding = UDim.new(0, 4)
-        contentList.SortOrder = Enum.SortOrder.LayoutOrder
-        contentList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        contentList.Parent = content
-
-        local currentTween = nil
-
-        local function getContentHeight()
-            return contentList.AbsoluteContentSize.Y or 0
-        end
-
-        local function setContentHeight(targetHeight, animate)
-            targetHeight = math.max(0, targetHeight)
-            local currentHeight = content.Size.Y.Offset
-            if animate and currentHeight ~= targetHeight then
-                if currentTween then
-                    currentTween:Cancel()
-                    currentTween = nil
-                end
-                currentTween = TweenService:Create(
-                    content,
-                    TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-                    { Size = UDim2.new(1, 0, 0, targetHeight) }
-                )
-                currentTween:Play()
-                currentTween.Completed:Connect(function()
-                    currentTween = nil
-                    task.spawn(updateTabCanvas)
-                end)
-            else
-                content.Size = UDim2.new(1, 0, 0, targetHeight)
-                task.spawn(updateTabCanvas)
-            end
-        end
-
-        local function toggleCategory()
-            if not collapsible then return end
-            opened = not opened
-            Tween(arrow, { Rotation = opened and 0 or 180 }, 0.25)
-            local targetHeight = opened and getContentHeight() or 0
-            setContentHeight(targetHeight, true)
-        end
-
-        header.MouseButton1Click:Connect(toggleCategory)
-
-        contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            if opened then
-                local h = getContentHeight()
-                if math.abs(h - content.Size.Y.Offset) > 0.5 then
-                    setContentHeight(h, false)
-                end
-            end
-        end)
-
-        task.spawn(function()
-            task.wait()
-            local h = getContentHeight()
-            local initialHeight = opened and h or 0
-            content.Size = UDim2.new(1, 0, 0, initialHeight)
-            updateTabCanvas()
-        end)
-
-        Window._currentCategory = {
-            frame = categoryFrame,
-            content = content,
-            contentList = contentList,
-            header = header,
-            label = header,
-            arrow = arrow,
-            collapsible = collapsible,
-            opened = opened,
-            toggle = toggleCategory
-        }
-
-        table.insert(ThemeListeners, function()
-            header.TextColor3 = CurrentTheme.Text
-            arrow.ImageColor3 = CurrentTheme.Text
-        end)
-
-        return Window._currentCategory
-    end
-
-    function Window:TabDivider()
-        local parentContainer = TabScroll
-        if Window._currentCategory then
-            parentContainer = Window._currentCategory.content
-        end
-        local line = Instance.new("Frame")
-        line.Size = UDim2.new(1, -20, 0, 1)
-        line.Position = UDim2.new(0, 10, 0, 0)
-        line.BackgroundColor3 = CurrentTheme.Stroke
-        line.BackgroundTransparency = 0.5
-        line.BorderSizePixel = 0
-        line.Parent = parentContainer
-        AddToRegistry(line, "BackgroundColor3", "Stroke")
-        table.insert(ThemeListeners, function()
-            line.BackgroundColor3 = CurrentTheme.Stroke
-        end)
-    end
-
+    -- ================== ProfileFrame（用户信息） ==================
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
     ProfileFrame.Position = UDim2.new(0, 10, 1, -10)
@@ -5709,6 +5339,7 @@ function Fenglib:CreateWindow(Config)
         EyeIcon.ImageColor3 = CurrentTheme.Text
     end)
 
+    -- ================== RightContainer（右侧内容区域） ==================
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
@@ -5725,13 +5356,13 @@ function Fenglib:CreateWindow(Config)
         RightContainer.BackgroundColor3 = CurrentTheme.Main
     end)
 
+    -- ================== PageContainer ==================
     local PageContainer = Instance.new("Frame")
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
     PageContainer.BackgroundTransparency = 1
     PageContainer.Parent = RightContainer
 
-    MainFrame.ClipsDescendants = false
-
+    -- ================== 拖拽窗口功能 ==================
     local dragging = false
     local dragStartPos = nil
     local dragStartWindowPos = nil
@@ -5781,6 +5412,7 @@ function Fenglib:CreateWindow(Config)
     UserInputService.InputChanged:Connect(onDragMove)
     UserInputService.InputEnded:Connect(endDrag)
 
+    -- ================== 窗口开关功能 ==================
     local function toggleMainFrame()
         if MainFrame.Visible then
             MainFrame.Visible = false
@@ -5798,19 +5430,20 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
+    -- ================== 悬浮打开按钮 ==================
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
     OpenButton.BackgroundColor3 = CurrentTheme.Accent
     OpenButton.BackgroundTransparency = 0.85
-    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)  
+    OpenButton.Position = UDim2.new(0.92, 0, 0.01, 0)
     OpenButton.Size = UDim2.new(0, 40, 0, 40)
     OpenButton.Active = true
-    OpenButton.Draggable = true  
-    OpenButton.Image = "rbxassetid://84830962019412"  
+    OpenButton.Draggable = true
+    OpenButton.Image = "rbxassetid://84830962019412"
     OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
     OpenButton.ImageTransparency = 0.15
-    OpenButton.ZIndex = 10  
+    OpenButton.ZIndex = 10
 
     OpenButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -5841,6 +5474,7 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
+    -- ================== 通知系统 ==================
     function Window:Notification(titleText, descText, notifType, duration)
         notifType = notifType or "Info"
         duration = duration or 3
@@ -6282,6 +5916,7 @@ function Fenglib:CreateWindow(Config)
     return Window
 end
 
+-- ================== 自定义光标功能 ==================
 do
     local cursorScreen = Instance.new("ScreenGui")
     cursorScreen.Name = "FengCustomCursor"
