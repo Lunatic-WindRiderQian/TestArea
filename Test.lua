@@ -9,6 +9,72 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+-- ========================================================================
+-- 从 FluentPro 搬运的 Animation 模块
+-- ========================================================================
+local Animation = {}
+do
+    local _RunService = RunService
+    local _state = setmetatable({}, {__mode = "k"})
+    
+    function Animation.Apply(theme, root, shineEnabled)
+        if not root then return end
+        local st = _state[root]
+        if st and st.conn then pcall(function() st.conn:Disconnect() end) end
+        st = {conn = nil, gradients = {}, strokes = {}}
+        _state[root] = st
+        if not theme or not shineEnabled or not theme.ShineEnabled or not theme.Shine then return end
+        
+        local ShineConfig   = theme.Shine
+        local Speed         = ShineConfig.Speed         or 0.5
+        local RotationSpeed = ShineConfig.RotationSpeed or 25
+        local ColorSeq      = ShineConfig.ColorSequence
+        local StrokeShineOn = theme.StrokeShine
+        local StrokeFrom    = theme.StrokeDark or theme.AcrylicBorder or Color3.fromRGB(40,40,40)
+        local StrokeTo      = theme.Accent or Color3.fromRGB(255,255,255)
+        local _gradients, _strokes = st.gradients, st.strokes
+        
+        for _, obj in ipairs(root:GetDescendants()) do
+            if obj:IsA("UIGradient") then
+                table.insert(_gradients, obj)
+            elseif obj:IsA("UIStroke") and StrokeShineOn then
+                table.insert(_strokes, obj)
+            end
+        end
+        
+        if #_gradients == 0 and #_strokes == 0 then return end
+        
+        st.conn = _RunService.RenderStepped:Connect(function(dt)
+            for i = #_gradients, 1, -1 do
+                local obj = _gradients[i]
+                if obj.Parent then
+                    local t = (obj:GetAttribute("_t") or 0) + dt * Speed
+                    obj:SetAttribute("_t", t)
+                    obj.Rotation = (t * RotationSpeed) % 360
+                    obj.Offset = Vector2.new(math.sin(t * 0.6) * 0.18, obj.Offset.Y)
+                    if ColorSeq then obj.Color = ColorSeq end
+                else
+                    table.remove(_gradients, i)
+                end
+            end
+            if StrokeFrom and StrokeTo then
+                for i = #_strokes, 1, -1 do
+                    local obj = _strokes[i]
+                    if obj.Parent then
+                        local t = (obj:GetAttribute("_t") or 0) + dt * Speed
+                        obj:SetAttribute("_t", t)
+                        local pulse = (math.sin(t) + 1) / 2
+                        obj.Thickness = 1.25 + pulse * 1.25
+                        obj.Color = StrokeFrom:Lerp(StrokeTo, pulse)
+                    else
+                        table.remove(_strokes, i)
+                    end
+                end
+            end
+        end)
+    end
+end
+
 local Fenglib = {}
 local RainbowEnabled = false
 local RainbowType = "Animated/Cycling Rainbow" 
@@ -72,69 +138,7 @@ local function createPulseGlow(object)
 end
 
 -- ========================================================================
--- 动画模块（从 FluentPro 移植）
--- ========================================================================
-local Animation
-do
-    local _RunService = game:GetService("RunService")
-    local _state = setmetatable({}, {__mode = "k"})
-    Animation = {}
-    function Animation.Apply(theme, root, shineEnabled)
-        if not root then return end
-        local st = _state[root]
-        if st and st.conn then pcall(function() st.conn:Disconnect() end) end
-        st = {conn = nil, gradients = {}, strokes = {}}
-        _state[root] = st
-        if not theme or not shineEnabled or not theme.ShineEnabled or not theme.Shine then return end
-        local ShineConfig   = theme.Shine
-        local Speed         = ShineConfig.Speed         or 0.5
-        local RotationSpeed = ShineConfig.RotationSpeed or 25
-        local ColorSeq      = ShineConfig.ColorSequence
-        local StrokeShineOn = theme.StrokeShine
-        local StrokeFrom    = theme.StrokeDark or theme.AcrylicBorder
-        local StrokeTo      = theme.Accent
-        local _gradients, _strokes = st.gradients, st.strokes
-        for _, obj in ipairs(root:GetDescendants()) do
-            if obj:IsA("UIGradient") then
-                table.insert(_gradients, obj)
-            elseif obj:IsA("UIStroke") and StrokeShineOn then
-                table.insert(_strokes, obj)
-            end
-        end
-        if #_gradients == 0 and #_strokes == 0 then return end
-        st.conn = _RunService.RenderStepped:Connect(function(dt)
-            for i = #_gradients, 1, -1 do
-                local obj = _gradients[i]
-                if obj.Parent then
-                    local t = (obj:GetAttribute("_t") or 0) + dt * Speed
-                    obj:SetAttribute("_t", t)
-                    obj.Rotation = (t * RotationSpeed) % 360
-                    obj.Offset = Vector2.new(math.sin(t * 0.6) * 0.18, obj.Offset.Y)
-                    if ColorSeq then obj.Color = ColorSeq end
-                else
-                    table.remove(_gradients, i)
-                end
-            end
-            if StrokeFrom and StrokeTo then
-                for i = #_strokes, 1, -1 do
-                    local obj = _strokes[i]
-                    if obj.Parent then
-                        local t = (obj:GetAttribute("_t") or 0) + dt * Speed
-                        obj:SetAttribute("_t", t)
-                        local pulse = (math.sin(t) + 1) / 2
-                        obj.Thickness = 1.25 + pulse * 1.25
-                        obj.Color = StrokeFrom:Lerp(StrokeTo, pulse)
-                    else
-                        table.remove(_strokes, i)
-                    end
-                end
-            end
-        end)
-    end
-end
-
--- ========================================================================
--- 主题表（包含全部 FluentPro 主题，含背景相关字段）
+-- 主题表（包含所有 FluentPro 主题 + 动画相关字段）
 -- ========================================================================
 local Themes = {
     -- 默认暗色主题（保留）
@@ -147,9 +151,22 @@ local Themes = {
         SubText = Color3.fromRGB(160, 160, 170),
         Element = Color3.fromRGB(45, 45, 50),
         Hover   = Color3.fromRGB(60, 60, 70),
+        ShineEnabled = true,
+        Shine = {
+            Speed = 0.4,
+            RotationSpeed = 20,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(40,40,40)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(105,105,105)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(40,40,40))
+            })
+        },
+        StrokeShine = true,
+        StrokeDark = Color3.fromRGB(40,40,40),
+        Background = nil,
+        BackgroundTransparency = 0,
     },
 
-    -- ===== FluentPro 全部主题 =====
     ["Deep Violet"] = {
         Main    = Color3.fromRGB(20, 20, 20),
         Top     = Color3.fromRGB(140, 120, 160),
@@ -161,12 +178,16 @@ local Themes = {
         Hover   = Color3.fromRGB(140, 120, 160),
         Background = "rbxassetid://136310484943077",
         BackgroundTransparency = 0.15,
-        AcrylicMain = Color3.fromRGB(20,20,20),
-        AcrylicBorder = Color3.fromRGB(110,90,130),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(85,57,139), Color3.fromRGB(40,25,65)),
-        AcrylicNoise = 0.92,
         ShineEnabled = true,
-        Shine = { Speed = 0.5, RotationSpeed = 25, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(40,25,65)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(160,120,220)), ColorSequenceKeypoint.new(1, Color3.fromRGB(40,25,65))}) },
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(40,25,65)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(160,120,220)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(40,25,65))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(110,90,130),
     },
@@ -179,12 +200,16 @@ local Themes = {
         SubText = Color3.fromRGB(170, 170, 170),
         Element = Color3.fromRGB(120, 120, 120),
         Hover   = Color3.fromRGB(120, 120, 120),
-        AcrylicMain = Color3.fromRGB(60,60,60),
-        AcrylicBorder = Color3.fromRGB(90,90,90),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(75,75,75), Color3.fromRGB(35,35,35)),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.4, RotationSpeed = 20, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(40,40,40)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(105,105,105)), ColorSequenceKeypoint.new(1, Color3.fromRGB(40,40,40))}) },
+        Shine = {
+            Speed = 0.4,
+            RotationSpeed = 20,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(40,40,40)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(105,105,105)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(40,40,40))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(90,90,90),
     },
@@ -197,12 +222,16 @@ local Themes = {
         SubText = Color3.fromRGB(170, 170, 170),
         Element = Color3.fromRGB(35, 35, 35),
         Hover   = Color3.fromRGB(90, 160, 255),
-        AcrylicMain = Color3.fromRGB(20,20,20),
-        AcrylicBorder = Color3.fromRGB(60,60,60),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(30,30,30), Color3.fromRGB(10,10,10)),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.45, RotationSpeed = 25, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(20,20,20)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150,150,150)), ColorSequenceKeypoint.new(1, Color3.fromRGB(20,20,20))}) },
+        Shine = {
+            Speed = 0.45,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(20,20,20)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150,150,150)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(20,20,20))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(60,60,60),
     },
@@ -215,12 +244,16 @@ local Themes = {
         SubText = Color3.fromRGB(90, 90, 90),
         Element = Color3.fromRGB(220, 220, 220),
         Hover   = Color3.fromRGB(60, 160, 255),
-        AcrylicMain = Color3.fromRGB(240,240,240),
-        AcrylicBorder = Color3.fromRGB(200,200,200),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(255,255,255), Color3.fromRGB(220,220,220)),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.4, RotationSpeed = 20, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(200,200,200)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,255,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(200,200,200))}) },
+        Shine = {
+            Speed = 0.4,
+            RotationSpeed = 20,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(200,200,200)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,255,255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(200,200,200))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(200,200,200),
     },
@@ -235,12 +268,16 @@ local Themes = {
         Hover   = Color3.fromRGB(180, 10, 20),
         Background = "rbxassetid://121343473918667",
         BackgroundTransparency = 0.15,
-        AcrylicMain = Color3.fromRGB(35,8,10),
-        AcrylicBorder = Color3.fromRGB(140,15,25),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(130,12,20), Color3.fromRGB(28,5,8)),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.5, RotationSpeed = 25, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(71,0,0)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(159,0,0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(71,0,0))}) },
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(71,0,0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(159,0,0)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(71,0,0))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(145,15,25),
     },
@@ -253,12 +290,16 @@ local Themes = {
         SubText = Color3.fromRGB(210, 185, 255),
         Element = Color3.fromRGB(120, 0, 210),
         Hover   = Color3.fromRGB(150, 0, 255),
-        AcrylicMain = Color3.fromRGB(5,0,15),
-        AcrylicBorder = Color3.fromRGB(140,0,255),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(5,0,15), Color3.fromRGB(45,0,160)),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.4, RotationSpeed = 20, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(32,5,137)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(171,32,253)), ColorSequenceKeypoint.new(1, Color3.fromRGB(32,5,137))}) },
+        Shine = {
+            Speed = 0.4,
+            RotationSpeed = 20,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(32,5,137)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(171,32,253)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(32,5,137))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(60,0,150),
     },
@@ -271,12 +312,16 @@ local Themes = {
         SubText = Color3.fromRGB(180, 210, 230),
         Element = Color3.fromRGB(0, 90, 135),
         Hover   = Color3.fromRGB(0, 150, 200),
-        AcrylicMain = Color3.fromRGB(15,30,45),
-        AcrylicBorder = Color3.fromRGB(0,100,150),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(0,80,120), Color3.fromRGB(10,25,40)),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.5, RotationSpeed = 25, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(0,60,90)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,200,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(0,60,90))}) },
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(0,60,90)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,200,255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(0,60,90))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(0,100,150),
     },
@@ -289,12 +334,16 @@ local Themes = {
         SubText = Color3.fromRGB(170, 170, 210),
         Element = Color3.fromRGB(55, 40, 125),
         Hover   = Color3.fromRGB(100, 80, 200),
-        AcrylicMain = Color3.fromRGB(10,8,25),
-        AcrylicBorder = Color3.fromRGB(60,45,140),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(50,35,120), Color3.fromRGB(8,5,20)),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.5, RotationSpeed = 25, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(25,15,60)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(140,120,240)), ColorSequenceKeypoint.new(1, Color3.fromRGB(25,15,60))}) },
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(25,15,60)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(140,120,240)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(25,15,60))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(60,45,140),
     },
@@ -307,12 +356,16 @@ local Themes = {
         SubText = Color3.fromRGB(170, 190, 220),
         Element = Color3.fromRGB(9, 58, 135),
         Hover   = Color3.fromRGB(15, 82, 186),
-        AcrylicMain = Color3.fromRGB(10,25,50),
-        AcrylicBorder = Color3.fromRGB(10,65,150),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(12,70,160), Color3.fromRGB(8,20,45)),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.5, RotationSpeed = 25, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(20,40,85)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50,120,230)), ColorSequenceKeypoint.new(1, Color3.fromRGB(20,40,85))}) },
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(20,40,85)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50,120,230)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(20,40,85))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(10,65,150),
     },
@@ -325,12 +378,16 @@ local Themes = {
         SubText = Color3.fromRGB(200, 178, 228),
         Element = Color3.fromRGB(112, 40, 170),
         Hover   = Color3.fromRGB(160, 60, 220),
-        AcrylicMain = Color3.fromRGB(12,5,25),
-        AcrylicBorder = Color3.fromRGB(120,40,185),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(110,35,175), Color3.fromRGB(8,3,20)),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.5, RotationSpeed = 25, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(48,18,85)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(195,100,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(48,18,85))}) },
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(48,18,85)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(195,100,255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(48,18,85))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(125,45,190),
     },
@@ -343,12 +400,16 @@ local Themes = {
         SubText = Color3.fromRGB(185, 175, 210),
         Element = Color3.fromRGB(50, 34, 104),
         Hover   = Color3.fromRGB(80, 60, 140),
-        AcrylicMain = Color3.fromRGB(12,10,22),
-        AcrylicBorder = Color3.fromRGB(50,35,110),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(45,30,100), Color3.fromRGB(8,6,16)),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.5, RotationSpeed = 25, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(35,25,65)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(115,90,175)), ColorSequenceKeypoint.new(1, Color3.fromRGB(35,25,65))}) },
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(35,25,65)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(115,90,175)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(35,25,65))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(55,38,115),
     },
@@ -361,13 +422,9 @@ local Themes = {
         SubText = Color3.fromRGB(150, 150, 150),
         Element = Color3.fromRGB(10, 10, 10),
         Hover   = Color3.fromRGB(22, 22, 22),
-        AcrylicMain = Color3.fromRGB(0,0,0),
-        AcrylicBorder = Color3.fromRGB(20,20,20),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(0,0,0), Color3.fromRGB(0,0,0)),
-        AcrylicNoise = 1,
         ShineEnabled = false,
-        Shine = { Speed = 0, RotationSpeed = 0, ColorSequence = ColorSequence.new(Color3.fromRGB(0,0,0), Color3.fromRGB(0,0,0)) },
         StrokeShine = false,
+        Shine = { Speed=0, RotationSpeed=0, ColorSequence=ColorSequence.new(Color3.fromRGB(0,0,0),Color3.fromRGB(0,0,0)) },
         StrokeDark = Color3.fromRGB(18,18,18),
     },
     ["RGB"] = {
@@ -379,12 +436,17 @@ local Themes = {
         SubText = Color3.fromRGB(100, 220, 190),
         Element = Color3.fromRGB(20, 20, 35),
         Hover   = Color3.fromRGB(0, 50, 40),
-        AcrylicMain = Color3.fromRGB(8,8,14),
-        AcrylicBorder = Color3.fromRGB(0,255,180),
-        AcrylicGradient = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(20,0,40)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,20,50)), ColorSequenceKeypoint.new(1, Color3.fromRGB(30,0,30))}),
-        AcrylicNoise = 0.95,
         ShineEnabled = true,
-        Shine = { Speed = 1.2, RotationSpeed = 40, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(0,255,180)), ColorSequenceKeypoint.new(0.33, Color3.fromRGB(120,0,255)), ColorSequenceKeypoint.new(0.66, Color3.fromRGB(255,0,150)), ColorSequenceKeypoint.new(1, Color3.fromRGB(0,255,180))}) },
+        Shine = {
+            Speed = 1.2,
+            RotationSpeed = 40,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(0,255,180)),
+                ColorSequenceKeypoint.new(0.33, Color3.fromRGB(120,0,255)),
+                ColorSequenceKeypoint.new(0.66, Color3.fromRGB(255,0,150)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(0,255,180))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(0,180,140),
     },
@@ -397,12 +459,16 @@ local Themes = {
         SubText = Color3.fromRGB(80, 200, 60),
         Element = Color3.fromRGB(10, 22, 10),
         Hover   = Color3.fromRGB(15, 40, 15),
-        AcrylicMain = Color3.fromRGB(5,10,5),
-        AcrylicBorder = Color3.fromRGB(40,200,20),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(10,25,10), Color3.fromRGB(3,8,3)),
-        AcrylicNoise = 0.93,
         ShineEnabled = true,
-        Shine = { Speed = 0.8, RotationSpeed = 30, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(5,30,5)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(57,255,20)), ColorSequenceKeypoint.new(1, Color3.fromRGB(5,30,5))}) },
+        Shine = {
+            Speed = 0.8,
+            RotationSpeed = 30,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(5,30,5)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(57,255,20)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(5,30,5))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(35,160,15),
     },
@@ -415,12 +481,16 @@ local Themes = {
         SubText = Color3.fromRGB(65, 105, 148),
         Element = Color3.fromRGB(210, 235, 250),
         Hover   = Color3.fromRGB(170, 210, 238),
-        AcrylicMain = Color3.fromRGB(185,215,235),
-        AcrylicBorder = Color3.fromRGB(200,228,248),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(235,248,255), Color3.fromRGB(210,235,250)),
-        AcrylicNoise = 0.97,
         ShineEnabled = true,
-        Shine = { Speed = 0.3, RotationSpeed = 15, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(200,235,255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,255,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(200,235,255))}) },
+        Shine = {
+            Speed = 0.3,
+            RotationSpeed = 15,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(200,235,255)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,255,255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(200,235,255))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(170,210,238),
     },
@@ -433,12 +503,16 @@ local Themes = {
         SubText = Color3.fromRGB(145, 75, 115),
         Element = Color3.fromRGB(255, 200, 235),
         Hover   = Color3.fromRGB(238, 182, 222),
-        AcrylicMain = Color3.fromRGB(255,225,245),
-        AcrylicBorder = Color3.fromRGB(255,190,230),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(255,235,250), Color3.fromRGB(235,210,255)),
-        AcrylicNoise = 0.96,
         ShineEnabled = true,
-        Shine = { Speed = 0.4, RotationSpeed = 18, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,180,220)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220,180,255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,180,220))}) },
+        Shine = {
+            Speed = 0.4,
+            RotationSpeed = 18,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(255,180,220)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220,180,255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255,180,220))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(228,172,213),
     },
@@ -451,12 +525,16 @@ local Themes = {
         SubText = Color3.fromRGB(220, 175, 130),
         Element = Color3.fromRGB(22, 10, 2),
         Hover   = Color3.fromRGB(255, 140, 30),
-        AcrylicMain = Color3.fromRGB(4,4,4),
-        AcrylicBorder = Color3.fromRGB(200,90,10),
-        AcrylicGradient = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(30,10,0)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(10,5,0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0))}),
-        AcrylicNoise = 0.98,
         ShineEnabled = true,
-        Shine = { Speed = 0.7, RotationSpeed = 30, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(30,10,0)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,140,30)), ColorSequenceKeypoint.new(1, Color3.fromRGB(30,10,0))}) },
+        Shine = {
+            Speed = 0.7,
+            RotationSpeed = 30,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(30,10,0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,140,30)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(30,10,0))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(180,80,10),
     },
@@ -469,12 +547,16 @@ local Themes = {
         SubText = Color3.fromRGB(130, 210, 205),
         Element = Color3.fromRGB(14, 38, 46),
         Hover   = Color3.fromRGB(57, 197, 187),
-        AcrylicMain = Color3.fromRGB(8,18,22),
-        AcrylicBorder = Color3.fromRGB(40,170,165),
-        AcrylicGradient = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(15,45,55)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(8,25,32)), ColorSequenceKeypoint.new(1, Color3.fromRGB(4,12,16))}),
-        AcrylicNoise = 0.92,
         ShineEnabled = true,
-        Shine = { Speed = 0.6, RotationSpeed = 25, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(10,40,50)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(57,197,187)), ColorSequenceKeypoint.new(1, Color3.fromRGB(10,40,50))}) },
+        Shine = {
+            Speed = 0.6,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(10,40,50)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(57,197,187)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(10,40,50))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(35,155,150),
     },
@@ -487,12 +569,16 @@ local Themes = {
         SubText = Color3.fromRGB(230, 195, 145),
         Element = Color3.fromRGB(38, 20, 5),
         Hover   = Color3.fromRGB(255, 170, 40),
-        AcrylicMain = Color3.fromRGB(18,10,4),
-        AcrylicBorder = Color3.fromRGB(200,130,30),
-        AcrylicGradient = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(50,25,5)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(28,14,3)), ColorSequenceKeypoint.new(1, Color3.fromRGB(10,5,1))}),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.6, RotationSpeed = 25, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(50,22,4)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,170,40)), ColorSequenceKeypoint.new(1, Color3.fromRGB(50,22,4))}) },
+        Shine = {
+            Speed = 0.6,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(50,22,4)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,170,40)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(50,22,4))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(185,120,25),
     },
@@ -505,12 +591,18 @@ local Themes = {
         SubText = Color3.fromRGB(230, 190, 215),
         Element = Color3.fromRGB(55, 22, 42),
         Hover   = Color3.fromRGB(255, 255, 255),
-        AcrylicMain = Color3.fromRGB(40,15,30),
-        AcrylicBorder = Color3.fromRGB(200,60,120),
-        AcrylicGradient = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(120,35,85)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(45,95,70)), ColorSequenceKeypoint.new(1, Color3.fromRGB(150,140,145))}),
-        AcrylicNoise = 0.90,
         ShineEnabled = true,
-        Shine = { Speed = 0.35, RotationSpeed = 15, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255,70,150)), ColorSequenceKeypoint.new(0.25, Color3.fromRGB(80,255,150)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,255,255)), ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255,50,130)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255,70,150))}) },
+        Shine = {
+            Speed = 0.35,
+            RotationSpeed = 15,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(255,70,150)),
+                ColorSequenceKeypoint.new(0.25, Color3.fromRGB(80,255,150)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,255,255)),
+                ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255,50,130)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255,70,150))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(80,30,60),
     },
@@ -523,12 +615,16 @@ local Themes = {
         SubText = Color3.fromRGB(180, 100, 115),
         Element = Color3.fromRGB(14, 8, 14),
         Hover   = Color3.fromRGB(50, 12, 22),
-        AcrylicMain = Color3.fromRGB(30,6,9),
-        AcrylicBorder = Color3.fromRGB(120,15,35),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(150,15,30), Color3.fromRGB(20,5,10)),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.4, RotationSpeed = 20, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(80,5,20)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220,30,60)), ColorSequenceKeypoint.new(1, Color3.fromRGB(80,5,20))}) },
+        Shine = {
+            Speed = 0.4,
+            RotationSpeed = 20,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(80,5,20)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220,30,60)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(80,5,20))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(70,5,18),
     },
@@ -541,17 +637,25 @@ local Themes = {
         SubText = Color3.fromRGB(170, 170, 170),
         Element = Color3.fromRGB(70, 55, 25),
         Hover   = Color3.fromRGB(255, 200, 90),
-        AcrylicMain = Color3.fromRGB(35,27,12),
-        AcrylicBorder = Color3.fromRGB(120,90,30),
-        AcrylicGradient = ColorSequence.new(Color3.fromRGB(70,55,20), Color3.fromRGB(20,15,5)),
-        AcrylicNoise = 0.9,
         ShineEnabled = true,
-        Shine = { Speed = 0.5, RotationSpeed = 25, ColorSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(40,30,10)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,210,120)), ColorSequenceKeypoint.new(1, Color3.fromRGB(40,30,10))}) },
+        Shine = {
+            Speed = 0.5,
+            RotationSpeed = 25,
+            ColorSequence = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(40,30,10)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,210,120)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(40,30,10))
+            })
+        },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(120,90,30),
     },
 }
 local CurrentTheme = Themes.Dark
+
+-- 为了支持背景图切换，存储主窗口的引用
+local MainWindowFrame = nil
+local CurrentAnimationRoot = nil
 
 local function AddToRegistry(obj, prop, themeKey)
     local val = CurrentTheme[themeKey]
@@ -570,63 +674,47 @@ local function Tween(obj, props, time)
     TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
 
+-- ========================================================================
+-- 修改后的 SetTheme：支持背景图切换 + 重新应用动画
+-- ========================================================================
 function Fenglib:SetTheme(themeName)
     if Themes[themeName] then
         CurrentTheme = Themes[themeName]
-        -- 更新已注册的颜色属性
+        -- 更新所有已注册的颜色
         for _, r in pairs(Registry) do
             if r.Object then
                 Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]})
             end
         end
-        -- 更新背景元素（背景图、渐变、噪点、边框）
-        if Fenglib._backgroundContainer then
-            local thm = CurrentTheme
-            -- 背景图片
-            local bgImg = Fenglib._backgroundContainer:FindFirstChild("__ThemeBG")
-            local bgVal = thm.Background
-            if bgImg then
-                if bgVal and bgVal ~= "" then
-                    bgImg.Image = tostring(bgVal)
-                    bgImg.ImageTransparency = thm.BackgroundTransparency or 0
-                    bgImg.Visible = true
-                else
-                    bgImg.Visible = false
-                end
-            end
-            -- 亚克力渐变
-            local grad = Fenglib._backgroundContainer:FindFirstChild("AcrylicGradient")
-            if grad then
-                local gradObj = grad:FindFirstChildOfClass("UIGradient")
-                if gradObj and thm.AcrylicGradient then
-                    gradObj.Color = thm.AcrylicGradient
-                end
-            end
-            -- 噪点透明度
-            local noise = Fenglib._backgroundContainer:FindFirstChild("AcrylicNoise")
-            if noise and thm.AcrylicNoise then
-                noise.ImageTransparency = thm.AcrylicNoise
-            end
-            -- 边框颜色
-            local border = Fenglib._backgroundContainer:FindFirstChild("AcrylicBorderStroke")
-            if border and thm.AcrylicBorder then
-                border.Color = thm.AcrylicBorder
-            end
-            -- 亚克力主色（背景底色）
-            local mainBg = Fenglib._backgroundContainer:FindFirstChild("AcrylicMain")
-            if mainBg and thm.AcrylicMain then
-                mainBg.BackgroundColor3 = thm.AcrylicMain
-            end
-            -- 重新应用动画（Shine）
-            if Animation and Animation.Apply then
-                local shineEnabled = thm.ShineEnabled
-                if shineEnabled == nil then shineEnabled = false end
-                Animation.Apply(thm, Fenglib._backgroundContainer, shineEnabled)
-            end
-        end
-        -- 执行其他监听器
         for _, fn in pairs(ThemeListeners) do
             pcall(fn)
+        end
+
+        -- 背景图切换
+        if MainWindowFrame then
+            local bgImage = MainWindowFrame:FindFirstChild("FluentBG")
+            if bgImage and bgImage:IsA("ImageLabel") then
+                local bgVal = CurrentTheme.Background
+                if bgVal and tostring(bgVal) ~= "" then
+                    bgImage.Image = tostring(bgVal)
+                    bgImage.ImageTransparency = CurrentTheme.BackgroundTransparency or 0
+                    bgImage.Visible = true
+                else
+                    bgImage.Visible = false
+                end
+            end
+        end
+
+        -- 重新应用动画
+        if CurrentAnimationRoot and CurrentTheme.ShineEnabled then
+            Animation.Apply(CurrentTheme, CurrentAnimationRoot, true)
+        elseif CurrentAnimationRoot then
+            -- 如果主题禁用动画，清除原有动画
+            local st = rawget(_G, "_AnimationState") and _G._AnimationState[CurrentAnimationRoot]
+            if st and st.conn then
+                st.conn:Disconnect()
+                st.conn = nil
+            end
         end
     end
 end
@@ -4872,6 +4960,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     return createSection
 end
 
+-- ========================================================================
+-- 修改后的 CreateWindow：支持动画和背景图
+-- ========================================================================
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Name or "FengY3"
@@ -4908,6 +4999,14 @@ function Fenglib:CreateWindow(Config)
             if t.SubText then customTheme.SubText = toC3(t.SubText) end
             if t.Element then customTheme.Element = toC3(t.Element) end
             if t.Hover then customTheme.Hover = toC3(t.Hover) end
+
+            -- 添加动画相关字段（如果未提供则使用默认）
+            if t.ShineEnabled ~= nil then customTheme.ShineEnabled = t.ShineEnabled end
+            if t.Shine then customTheme.Shine = t.Shine end
+            if t.StrokeShine ~= nil then customTheme.StrokeShine = t.StrokeShine end
+            if t.StrokeDark then customTheme.StrokeDark = toC3(t.StrokeDark) end
+            if t.Background then customTheme.Background = t.Background end
+            if t.BackgroundTransparency ~= nil then customTheme.BackgroundTransparency = t.BackgroundTransparency end
 
             local customName = t.Name or "Custom"
             Themes[customName] = customTheme
@@ -4964,104 +5063,55 @@ function Fenglib:CreateWindow(Config)
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
-    -- ===== 构建 FluentPro 风格背景（包含亚克力、背景图、渐变、噪点、边框） =====
-    local backgroundContainer = Instance.new("Frame")
-    backgroundContainer.Name = "BackgroundContainer"
-    backgroundContainer.Size = UDim2.new(1, 0, 1, 0)
-    backgroundContainer.BackgroundTransparency = 1
-    backgroundContainer.ZIndex = 0
-    backgroundContainer.Parent = MainFrame
-    Fenglib._backgroundContainer = backgroundContainer  -- 存储以便主题切换时更新
-
-    -- 亚克力主背景
-    local acrylicMain = Instance.new("Frame")
-    acrylicMain.Name = "AcrylicMain"
-    acrylicMain.Size = UDim2.new(1, 0, 1, 0)
-    acrylicMain.BackgroundTransparency = 0.35
-    acrylicMain.BorderSizePixel = 0
-    acrylicMain.ZIndex = 0
-    acrylicMain.Parent = backgroundContainer
-    AddToRegistry(acrylicMain, "BackgroundColor3", "AcrylicMain")
-    Instance.new("UICorner", acrylicMain).CornerRadius = UDim.new(0, 16)
-
-    -- 主题背景图片
-    local themeBg = Instance.new("ImageLabel")
-    themeBg.Name = "__ThemeBG"
-    themeBg.Size = UDim2.new(1, 0, 1, 0)
-    themeBg.BackgroundTransparency = 1
-    themeBg.ScaleType = Enum.ScaleType.Crop
-    themeBg.ZIndex = 0
-    themeBg.Parent = backgroundContainer
-    themeBg.Visible = false
-    Instance.new("UICorner", themeBg).CornerRadius = UDim.new(0, 16)
-
-    -- 亚克力渐变层
-    local acrylicGradFrame = Instance.new("Frame")
-    acrylicGradFrame.Name = "AcrylicGradient"
-    acrylicGradFrame.Size = UDim2.new(1, 0, 1, 0)
-    acrylicGradFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    acrylicGradFrame.BackgroundTransparency = 0.4
-    acrylicGradFrame.BorderSizePixel = 0
-    acrylicGradFrame.ZIndex = 0
-    acrylicGradFrame.Parent = backgroundContainer
-    Instance.new("UICorner", acrylicGradFrame).CornerRadius = UDim.new(0, 16)
-    local grad = Instance.new("UIGradient")
-    grad.Rotation = 90
-    grad.Parent = acrylicGradFrame
-    AddToRegistry(grad, "Color", "AcrylicGradient")
-
-    -- 噪点纹理
-    local noiseImg = Instance.new("ImageLabel")
-    noiseImg.Name = "AcrylicNoise"
-    noiseImg.Size = UDim2.new(1, 0, 1, 0)
-    noiseImg.BackgroundTransparency = 1
-    noiseImg.Image = "rbxassetid://9968344227"
-    noiseImg.ScaleType = Enum.ScaleType.Tile
-    noiseImg.TileSize = UDim2.new(0, 128, 0, 128)
-    noiseImg.ZIndex = 1
-    noiseImg.Parent = backgroundContainer
-    AddToRegistry(noiseImg, "ImageTransparency", "AcrylicNoise")
-    Instance.new("UICorner", noiseImg).CornerRadius = UDim.new(0, 16)
-
-    -- 边框
-    local borderStroke = Instance.new("UIStroke")
-    borderStroke.Name = "AcrylicBorderStroke"
-    borderStroke.Thickness = 1
-    borderStroke.Transparency = 0.5
-    borderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    borderStroke.ZIndex = 2
-    borderStroke.Parent = backgroundContainer
-    AddToRegistry(borderStroke, "Color", "AcrylicBorder")
-
-    -- 初始化背景（应用当前主题）
-    local thm = CurrentTheme
-    if thm.Background and thm.Background ~= "" then
-        themeBg.Image = tostring(thm.Background)
-        themeBg.ImageTransparency = thm.BackgroundTransparency or 0
-        themeBg.Visible = true
+    -- 背景图（支持主题切换）
+    local bgImage = Instance.new("ImageLabel")
+    bgImage.Name = "FluentBG"
+    bgImage.Size = UDim2.new(1, 0, 1, 0)
+    bgImage.BackgroundTransparency = 1
+    if type(SceneId) == "number" or (type(SceneId) == "string" and tonumber(SceneId)) then
+        bgImage.Image = "rbxassetid://" .. tostring(SceneId)
+    else
+        bgImage.Image = tostring(SceneId)
     end
-    if thm.AcrylicGradient then
-        grad.Color = thm.AcrylicGradient
-    end
-    if thm.AcrylicNoise then
-        noiseImg.ImageTransparency = thm.AcrylicNoise
-    end
-    if thm.AcrylicBorder then
-        borderStroke.Color = thm.AcrylicBorder
-    end
-    if thm.AcrylicMain then
-        acrylicMain.BackgroundColor3 = thm.AcrylicMain
+    bgImage.ScaleType = Enum.ScaleType.Crop
+    bgImage.ZIndex = 0
+    bgImage.Parent = MainFrame
+
+    local bgCorner = Instance.new("UICorner")
+    bgCorner.CornerRadius = UDim.new(0, 16)
+    bgCorner.Parent = bgImage
+
+    local bgGradient = Instance.new("UIGradient")
+    bgGradient.Rotation = 0
+    bgGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 10, 20)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 80, 80)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 10, 20))
+    })
+    bgGradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.6),
+        NumberSequenceKeypoint.new(0.5, 0.0),
+        NumberSequenceKeypoint.new(1, 0.6)
+    })
+    bgGradient.Parent = bgImage
+
+    -- 存储主窗口引用以便主题切换时更新背景
+    MainWindowFrame = MainFrame
+    CurrentAnimationRoot = MainFrame
+
+    -- 应用初始背景图
+    if CurrentTheme.Background then
+        bgImage.Image = CurrentTheme.Background
+        bgImage.ImageTransparency = CurrentTheme.BackgroundTransparency or 0
+        bgImage.Visible = true
+    else
+        bgImage.Visible = false
     end
 
-    -- 应用动画（Shine）
-    if Animation and Animation.Apply then
-        local shineEnabled = thm.ShineEnabled
-        if shineEnabled == nil then shineEnabled = false
-        Animation.Apply(thm, backgroundContainer, shineEnabled)
+    -- 启动动画（如果主题启用）
+    if CurrentTheme.ShineEnabled then
+        Animation.Apply(CurrentTheme, MainFrame, true)
     end
-
-    -- 监听主题变化以更新背景（已在 SetTheme 中实现）
-    -- ===== 背景构建结束 =====
 
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
@@ -5437,8 +5487,6 @@ function Fenglib:CreateWindow(Config)
     local leftCorner = Instance.new("UICorner")
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
-
-    -- 已删除圆弧角（用户要求删除）
 
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -55)
