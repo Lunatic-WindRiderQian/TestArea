@@ -10,7 +10,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ========================================================================
--- 从 FluentPro 搬运的 Animation 模块
+-- 从 FluentPro 搬运的 Animation 模块（完全不变）
 -- ========================================================================
 local Animation = {}
 do
@@ -138,10 +138,9 @@ local function createPulseGlow(object)
 end
 
 -- ========================================================================
--- 主题表（包含所有 FluentPro 主题 + 动画相关字段）
+-- 主题表（包含所有 FluentPro 主题 + 动画相关字段，但不包含背景图）
 -- ========================================================================
 local Themes = {
-    -- 默认暗色主题（保留）
     Dark = {
         Main    = Color3.fromRGB(13, 13, 13),
         Top     = Color3.fromRGB(28, 28, 30),
@@ -163,8 +162,6 @@ local Themes = {
         },
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(40,40,40),
-        Background = nil,
-        BackgroundTransparency = 0,
     },
 
     ["Deep Violet"] = {
@@ -176,8 +173,6 @@ local Themes = {
         SubText = Color3.fromRGB(170, 170, 170),
         Element = Color3.fromRGB(140, 120, 160),
         Hover   = Color3.fromRGB(140, 120, 160),
-        Background = "rbxassetid://136310484943077",
-        BackgroundTransparency = 0.15,
         ShineEnabled = true,
         Shine = {
             Speed = 0.5,
@@ -266,8 +261,6 @@ local Themes = {
         SubText = Color3.fromRGB(210, 175, 178),
         Element = Color3.fromRGB(130, 12, 22),
         Hover   = Color3.fromRGB(180, 10, 20),
-        Background = "rbxassetid://121343473918667",
-        BackgroundTransparency = 0.15,
         ShineEnabled = true,
         Shine = {
             Speed = 0.5,
@@ -653,8 +646,6 @@ local Themes = {
 }
 local CurrentTheme = Themes.Dark
 
--- 为了支持背景图切换，存储主窗口的引用
-local MainWindowFrame = nil
 local CurrentAnimationRoot = nil
 
 local function AddToRegistry(obj, prop, themeKey)
@@ -675,45 +666,35 @@ local function Tween(obj, props, time)
 end
 
 -- ========================================================================
--- 修改后的 SetTheme：支持背景图切换 + 重新应用动画
+-- SetTheme（修复版）：直接赋值 + 强制重置动画，确保主题切换立刻生效
 -- ========================================================================
 function Fenglib:SetTheme(themeName)
     if Themes[themeName] then
         CurrentTheme = Themes[themeName]
-        -- 更新所有已注册的颜色
+
+        -- 1. 立即更新所有注册对象的颜色（不使用 Tween，避免延迟和遗漏）
         for _, r in pairs(Registry) do
-            if r.Object then
-                Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]})
+            if r.Object and r.Object.Parent then
+                r.Object[r.Property] = CurrentTheme[r.Type]
             end
         end
+
+        -- 2. 触发所有手动监听的回调（用于 UIStroke 等复杂对象）
         for _, fn in pairs(ThemeListeners) do
             pcall(fn)
         end
 
-        -- 背景图切换
-        if MainWindowFrame then
-            local bgImage = MainWindowFrame:FindFirstChild("FluentBG")
-            if bgImage and bgImage:IsA("ImageLabel") then
-                local bgVal = CurrentTheme.Background
-                if bgVal and tostring(bgVal) ~= "" then
-                    bgImage.Image = tostring(bgVal)
-                    bgImage.ImageTransparency = CurrentTheme.BackgroundTransparency or 0
-                    bgImage.Visible = true
-                else
-                    bgImage.Visible = false
-                end
-            end
-        end
-
-        -- 重新应用动画
-        if CurrentAnimationRoot and CurrentTheme.ShineEnabled then
-            Animation.Apply(CurrentTheme, CurrentAnimationRoot, true)
-        elseif CurrentAnimationRoot then
-            -- 如果主题禁用动画，清除原有动画
+        -- 3. 强制刷新窗口动画：停止旧连接，根据新主题重新启用
+        if CurrentAnimationRoot then
+            -- 先停止已有的动画连接
             local st = rawget(_G, "_AnimationState") and _G._AnimationState[CurrentAnimationRoot]
             if st and st.conn then
                 st.conn:Disconnect()
                 st.conn = nil
+            end
+            -- 根据新主题的 ShineEnabled 决定是否启动动画
+            if CurrentTheme.ShineEnabled then
+                Animation.Apply(CurrentTheme, CurrentAnimationRoot, true)
             end
         end
     end
@@ -949,9 +930,10 @@ function MediaManager:Image(src)
     end
     return ""
 end
--- ===== 结束 MediaManager =====
 
--- 以下为窗口构建函数（包含所有元素组件），完全保留原样
+-- ========================================================================
+-- 窗口构建函数（包含所有元素组件）
+-- ========================================================================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
     local padding = parent:FindFirstChild("SectionPadding")
@@ -1350,6 +1332,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Toggle ==========
         child.Toggle = function(_, config)
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
@@ -1423,6 +1406,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
+        -- ========== Slider ==========
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
             local valueTable = config.Value or {}
@@ -1623,6 +1607,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             UpdateSlider(Val)
         end
 
+        -- ========== Dropdown ==========
         child.Dropdown = function(_, config)
             local dropText = config.Name or ""
             local options = config.Values or {}
@@ -1975,6 +1960,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Keybind ==========
         child.Keybind = function(_, config)
             local keyText = config.Name or ""
             local defaultKey = config.Default or Enum.KeyCode.M
@@ -2206,6 +2192,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== ColorPicker ==========
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
             local Color = config.Default or Color3.fromRGB(255, 255, 255)
@@ -2611,6 +2598,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Input ==========
         child.Input = function(_, config)
             local inputText = config.Name or ""
             local default = config.Value or ""
@@ -2803,6 +2791,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Textbox ==========
         child.Textbox = function(_, config)
             local boxText = config.Name or ""
             local placeholder = config.Placeholder or ""
@@ -2859,6 +2848,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
+        -- ========== Label ==========
         child.Label = function(_, config)
             local labelText = config.Name or ""
             local parent = config.Parent or contentHolder
@@ -2887,6 +2877,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Image ==========
         child.Image = function(_, config)
             config = config or {}
             local title = config.Name or "Image"
@@ -3092,6 +3083,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Divider ==========
         child.Divider = function(_, config)
             local labelText = config and config.Name or config or ""
             local parent = config and config.Parent or contentHolder
@@ -3154,6 +3146,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Space ==========
         child.Space = function(_, config)
             local height = (config and config.Height) or 8
             local parent = config and config.Parent or contentHolder
@@ -3178,6 +3171,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Checkbox ==========
         child.Checkbox = function(_, config)
             local title = config.Name or ""
             local default = config.Default or false
@@ -3297,6 +3291,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return h
         end
 
+        -- ========== ProgressBar ==========
         child.ProgressBar = function(_, config)
             local name = config.Name or ""
             local valueConfig = config.Value or {}
@@ -3406,6 +3401,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return h
         end
 
+        -- ========== Video ==========
         child.Video = function(_, config)
             local opts   = config or {}
             local parent = opts.Parent or contentHolder
@@ -3855,6 +3851,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
+        -- ========== Audio ==========
         child.Audio = function(_, config)
             local opts = config or {}
             local parent = opts.Parent or contentHolder
@@ -4263,6 +4260,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
+        -- ========== Viewport ==========
         child.Viewport = function(_, config)
             local opts = config or {}
             local parent = opts.Parent or contentHolder
@@ -4530,6 +4528,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- ========== Social ==========
         child.Social = function(_, config)
             config = config or {}
             local parent = config.Parent or contentHolder
@@ -4788,6 +4787,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
+        -- ========== Paragraph ==========
         child.Paragraph = function(_, config)
             config = config or {}
             local title = config.Name or ""
@@ -4961,7 +4961,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 end
 
 -- ========================================================================
--- 修改后的 CreateWindow：支持动画和背景图
+-- CreateWindow（完整实现）
 -- ========================================================================
 function Fenglib:CreateWindow(Config)
     local Window = {}
@@ -5000,13 +5000,10 @@ function Fenglib:CreateWindow(Config)
             if t.Element then customTheme.Element = toC3(t.Element) end
             if t.Hover then customTheme.Hover = toC3(t.Hover) end
 
-            -- 添加动画相关字段（如果未提供则使用默认）
             if t.ShineEnabled ~= nil then customTheme.ShineEnabled = t.ShineEnabled end
             if t.Shine then customTheme.Shine = t.Shine end
             if t.StrokeShine ~= nil then customTheme.StrokeShine = t.StrokeShine end
             if t.StrokeDark then customTheme.StrokeDark = toC3(t.StrokeDark) end
-            if t.Background then customTheme.Background = t.Background end
-            if t.BackgroundTransparency ~= nil then customTheme.BackgroundTransparency = t.BackgroundTransparency end
 
             local customName = t.Name or "Custom"
             Themes[customName] = customTheme
@@ -5063,7 +5060,7 @@ function Fenglib:CreateWindow(Config)
     Stroke.Parent = MainFrame
     AddToRegistry(Stroke, "Color", "Stroke")
 
-    -- 背景图（支持主题切换）
+    -- 背景图片（固定使用 SceneId，永不改变）
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1, 0, 1, 0)
@@ -5095,24 +5092,14 @@ function Fenglib:CreateWindow(Config)
     })
     bgGradient.Parent = bgImage
 
-    -- 存储主窗口引用以便主题切换时更新背景
-    MainWindowFrame = MainFrame
     CurrentAnimationRoot = MainFrame
 
-    -- 应用初始背景图
-    if CurrentTheme.Background then
-        bgImage.Image = CurrentTheme.Background
-        bgImage.ImageTransparency = CurrentTheme.BackgroundTransparency or 0
-        bgImage.Visible = true
-    else
-        bgImage.Visible = false
-    end
-
-    -- 启动动画（如果主题启用）
+    -- 启动动画
     if CurrentTheme.ShineEnabled then
         Animation.Apply(CurrentTheme, MainFrame, true)
     end
 
+    -- ===== Resizer =====
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
@@ -5163,32 +5150,14 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
+    -- ===== Rainbow 光环 =====
     task.spawn(function()
         local rot = 0
         while ScreenGui.Parent do
             if RainbowEnabled then
                 local t = tick() * RainbowSpeed
-                if RainbowType == "Linear Gradient (Solid Rainbow)" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Animated/Cycling Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Smooth Fading Gradient" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Step/Band Rainbow" then
-                    local step = math.floor((t % 2) * 4) / 4
-                    Stroke.Color = Color3.fromHSV(step, 1, 1)
-                elseif RainbowType == "Rainbow Pulse" then
-                    local pulse = (math.sin(t * 3) + 1) / 2
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
-                elseif RainbowType == "Radial Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Neon/Glowing Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1)
-                elseif RainbowType == "Pastel Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
-                elseif RainbowType == "Vertical/Horizontal Fade" then
-                    Stroke.Color = Color3.fromHSV(t % 5/5, 1, 1)
-                end
+                local hue = t % 1
+                Stroke.Color = Color3.fromHSV(hue, 1, 1)
             else
                 Stroke.Color = CurrentTheme.Stroke
             end
@@ -5196,6 +5165,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
+    -- ===== Intro 动画 =====
     local IntroHolder = Instance.new("Frame")
     IntroHolder.Size = UDim2.new(1, 999999, 1, 999999)
     IntroHolder.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -5290,6 +5260,7 @@ function Fenglib:CreateWindow(Config)
     task.wait(0.35)
     IntroHolder:Destroy()
 
+    -- ===== Topbar =====
     local topbarHeight = Subtitle and 45 or 40
 
     local Topbar = Instance.new("Frame")
@@ -5474,6 +5445,7 @@ function Fenglib:CreateWindow(Config)
         TitleLabel.Position = UDim2.new(0, 50, 0, 0)
     end
 
+    -- ===== LeftContainer =====
     local leftWidth = 160
 
     local LeftContainer = Instance.new("Frame")
@@ -5488,6 +5460,7 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0, 16)
     leftCorner.Parent = LeftContainer
 
+    -- ===== TabScroll =====
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1, 0, 1, -55)
     TabScroll.Position = UDim2.new(0, 0, 0, 0)
@@ -5667,6 +5640,7 @@ function Fenglib:CreateWindow(Config)
         end)
     end
 
+    -- ===== ProfileFrame =====
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Size = UDim2.new(0, 140, 0, 40)
     ProfileFrame.Position = UDim2.new(0, 10, 1, -10)
@@ -5752,6 +5726,7 @@ function Fenglib:CreateWindow(Config)
         EyeIcon.ImageColor3 = CurrentTheme.Text
     end)
 
+    -- ===== RightContainer =====
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1, -leftWidth, 1, -topbarHeight)
     RightContainer.Position = UDim2.new(0, leftWidth, 0, topbarHeight)
@@ -5775,6 +5750,7 @@ function Fenglib:CreateWindow(Config)
 
     MainFrame.ClipsDescendants = false
 
+    -- ===== Drag =====
     local dragging = false
     local dragStartPos = nil
     local dragStartWindowPos = nil
@@ -5824,6 +5800,7 @@ function Fenglib:CreateWindow(Config)
     UserInputService.InputChanged:Connect(onDragMove)
     UserInputService.InputEnded:Connect(endDrag)
 
+    -- ===== Toggle Window =====
     local function toggleMainFrame()
         if MainFrame.Visible then
             MainFrame.Visible = false
@@ -5841,6 +5818,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
+    -- ===== Floating Open Button =====
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
@@ -5884,6 +5862,7 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
+    -- ===== Notification =====
     function Window:Notification(titleText, descText, notifType, duration)
         notifType = notifType or "Info"
         duration = duration or 3
@@ -6325,6 +6304,9 @@ function Fenglib:CreateWindow(Config)
     return Window
 end
 
+-- ========================================================================
+-- 自定义鼠标（保留）
+-- ========================================================================
 do
     local cursorScreen = Instance.new("ScreenGui")
     cursorScreen.Name = "FengCustomCursor"
