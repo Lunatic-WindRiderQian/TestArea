@@ -10,7 +10,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ========================================================================
--- 从 FluentPro 搬运的 Animation 模块（完全不变）
+-- 从 FluentPro 搬运的 Animation 模块（已修改为动态扫描）
 -- ========================================================================
 local Animation = {}
 do
@@ -21,10 +21,10 @@ do
         if not root then return end
         local st = _state[root]
         if st and st.conn then pcall(function() st.conn:Disconnect() end) end
-        st = {conn = nil, gradients = {}, strokes = {}}
+        st = {conn = nil}
         _state[root] = st
         if not theme or not shineEnabled or not theme.ShineEnabled or not theme.Shine then return end
-        
+
         local ShineConfig   = theme.Shine
         local Speed         = ShineConfig.Speed         or 0.5
         local RotationSpeed = ShineConfig.RotationSpeed or 25
@@ -32,43 +32,23 @@ do
         local StrokeShineOn = theme.StrokeShine
         local StrokeFrom    = theme.StrokeDark or theme.AcrylicBorder or Color3.fromRGB(40,40,40)
         local StrokeTo      = theme.Accent or Color3.fromRGB(255,255,255)
-        local _gradients, _strokes = st.gradients, st.strokes
-        
-        for _, obj in ipairs(root:GetDescendants()) do
-            if obj:IsA("UIGradient") then
-                table.insert(_gradients, obj)
-            elseif obj:IsA("UIStroke") and StrokeShineOn then
-                table.insert(_strokes, obj)
-            end
-        end
-        
-        if #_gradients == 0 and #_strokes == 0 then return end
-        
+        local doStroke      = StrokeShineOn and StrokeFrom and StrokeTo
+
+        -- 每帧重新扫描所有子对象，动态捕获新添加的元素
         st.conn = _RunService.RenderStepped:Connect(function(dt)
-            for i = #_gradients, 1, -1 do
-                local obj = _gradients[i]
-                if obj.Parent then
+            for _, obj in ipairs(root:GetDescendants()) do
+                if obj:IsA("UIGradient") then
                     local t = (obj:GetAttribute("_t") or 0) + dt * Speed
                     obj:SetAttribute("_t", t)
                     obj.Rotation = (t * RotationSpeed) % 360
                     obj.Offset = Vector2.new(math.sin(t * 0.6) * 0.18, obj.Offset.Y)
                     if ColorSeq then obj.Color = ColorSeq end
-                else
-                    table.remove(_gradients, i)
-                end
-            end
-            if StrokeFrom and StrokeTo then
-                for i = #_strokes, 1, -1 do
-                    local obj = _strokes[i]
-                    if obj.Parent then
-                        local t = (obj:GetAttribute("_t") or 0) + dt * Speed
-                        obj:SetAttribute("_t", t)
-                        local pulse = (math.sin(t) + 1) / 2
-                        obj.Thickness = 1.25 + pulse * 1.25
-                        obj.Color = StrokeFrom:Lerp(StrokeTo, pulse)
-                    else
-                        table.remove(_strokes, i)
-                    end
+                elseif doStroke and obj:IsA("UIStroke") then
+                    local t = (obj:GetAttribute("_t") or 0) + dt * Speed
+                    obj:SetAttribute("_t", t)
+                    local pulse = (math.sin(t) + 1) / 2
+                    obj.Thickness = 1.25 + pulse * 1.25
+                    obj.Color = StrokeFrom:Lerp(StrokeTo, pulse)
                 end
             end
         end)
@@ -5086,7 +5066,7 @@ function Fenglib:CreateWindow(Config)
     })
     bgGradient.Parent = bgImage
 
-    -- 注意：原本在这里有 CurrentAnimationRoot = MainFrame 和 Animation.Apply 调用，现已移除，移至末尾
+    -- 注意：原本在此处的 CurrentAnimationRoot 和 Animation.Apply 已移至末尾
 
     -- ===== Resizer =====
     local Resizer = Instance.new("TextButton")
