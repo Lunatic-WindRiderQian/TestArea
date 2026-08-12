@@ -666,35 +666,29 @@ local function Tween(obj, props, time)
 end
 
 -- ========================================================================
--- SetTheme（修复版）：直接赋值 + 强制重置动画，确保主题切换立刻生效
+-- SetTheme：只更新颜色和动画，不改变背景图（Scene 固定）
 -- ========================================================================
 function Fenglib:SetTheme(themeName)
     if Themes[themeName] then
         CurrentTheme = Themes[themeName]
-
-        -- 1. 立即更新所有注册对象的颜色（不使用 Tween，避免延迟和遗漏）
         for _, r in pairs(Registry) do
-            if r.Object and r.Object.Parent then
-                r.Object[r.Property] = CurrentTheme[r.Type]
+            if r.Object then
+                Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]})
             end
         end
-
-        -- 2. 触发所有手动监听的回调（用于 UIStroke 等复杂对象）
         for _, fn in pairs(ThemeListeners) do
             pcall(fn)
         end
 
-        -- 3. 强制刷新窗口动画：停止旧连接，根据新主题重新启用
         if CurrentAnimationRoot then
-            -- 先停止已有的动画连接
-            local st = rawget(_G, "_AnimationState") and _G._AnimationState[CurrentAnimationRoot]
-            if st and st.conn then
-                st.conn:Disconnect()
-                st.conn = nil
-            end
-            -- 根据新主题的 ShineEnabled 决定是否启动动画
             if CurrentTheme.ShineEnabled then
                 Animation.Apply(CurrentTheme, CurrentAnimationRoot, true)
+            else
+                local st = rawget(_G, "_AnimationState") and _G._AnimationState[CurrentAnimationRoot]
+                if st and st.conn then
+                    st.conn:Disconnect()
+                    st.conn = nil
+                end
             end
         end
     end
@@ -5092,12 +5086,7 @@ function Fenglib:CreateWindow(Config)
     })
     bgGradient.Parent = bgImage
 
-    CurrentAnimationRoot = MainFrame
-
-    -- 启动动画
-    if CurrentTheme.ShineEnabled then
-        Animation.Apply(CurrentTheme, MainFrame, true)
-    end
+    -- 注意：原本在这里有 CurrentAnimationRoot = MainFrame 和 Animation.Apply 调用，现已移除，移至末尾
 
     -- ===== Resizer =====
     local Resizer = Instance.new("TextButton")
@@ -6299,6 +6288,12 @@ function Fenglib:CreateWindow(Config)
         end
 
         return getElements()
+    end
+
+    -- ===== 修复：在 UI 完全构建后启动 Shine 动画 =====
+    CurrentAnimationRoot = MainFrame
+    if CurrentTheme.ShineEnabled then
+        Animation.Apply(CurrentTheme, MainFrame, true)
     end
 
     return Window
