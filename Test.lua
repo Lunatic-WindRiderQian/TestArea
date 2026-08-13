@@ -1,9 +1,3 @@
---[[
-    FengY3 – 完整 UI 库
-    包含：主题、动画、窗口、所有控件、媒体管理器、自定义鼠标
-    Shine 开关：Fenglib:SetShineEnabled(bool) / Fenglib:GetShineEnabled()
-]]
-
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -16,21 +10,12 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ========================================================================
--- Animation 模块（支持全局开关 & 背景排除）
+-- 从 FluentPro 搬运的 Animation 模块（已修改为动态扫描）
 -- ========================================================================
 local Animation = {}
 do
     local _RunService = RunService
     local _state = setmetatable({}, {__mode = "k"})
-    local _shineEnabled = true
-    
-    function Animation.SetShineEnabled(enabled)
-        _shineEnabled = enabled
-    end
-    
-    function Animation.IsShineEnabled()
-        return _shineEnabled
-    end
     
     function Animation.Apply(theme, root, shineEnabled)
         if not root then return end
@@ -39,7 +24,6 @@ do
         st = {conn = nil}
         _state[root] = st
         if not theme or not shineEnabled or not theme.ShineEnabled or not theme.Shine then return end
-        if not _shineEnabled then return end
 
         local ShineConfig   = theme.Shine
         local Speed         = ShineConfig.Speed         or 0.5
@@ -50,18 +34,9 @@ do
         local StrokeTo      = theme.Accent or Color3.fromRGB(255,255,255)
         local doStroke      = StrokeShineOn and StrokeFrom and StrokeTo
 
-        local function isBackground(obj)
-            while obj do
-                if obj:GetAttribute("_IsBackground") then return true end
-                obj = obj.Parent
-            end
-            return false
-        end
-
+        -- 每帧重新扫描所有子对象，动态捕获新添加的元素
         st.conn = _RunService.RenderStepped:Connect(function(dt)
-            if not _shineEnabled then return end
             for _, obj in ipairs(root:GetDescendants()) do
-                if isBackground(obj) then continue end
                 if obj:IsA("UIGradient") then
                     local t = (obj:GetAttribute("_t") or 0) + dt * Speed
                     obj:SetAttribute("_t", t)
@@ -143,7 +118,7 @@ local function createPulseGlow(object)
 end
 
 -- ========================================================================
--- 主题表
+-- 主题表（包含所有 FluentPro 主题 + 动画相关字段，但不包含背景图）
 -- ========================================================================
 local Themes = {
     Dark = {
@@ -168,6 +143,7 @@ local Themes = {
         StrokeShine = true,
         StrokeDark = Color3.fromRGB(40,40,40),
     },
+
     ["Deep Violet"] = {
         Main    = Color3.fromRGB(20, 20, 20),
         Top     = Color3.fromRGB(140, 120, 160),
@@ -670,7 +646,7 @@ local function Tween(obj, props, time)
 end
 
 -- ========================================================================
--- SetTheme（支持全局 Shine 开关）
+-- SetTheme：只更新颜色和动画，不改变背景图（Scene 固定）
 -- ========================================================================
 function Fenglib:SetTheme(themeName)
     if Themes[themeName] then
@@ -685,7 +661,7 @@ function Fenglib:SetTheme(themeName)
         end
 
         if CurrentAnimationRoot then
-            if CurrentTheme.ShineEnabled and Fenglib:GetShineEnabled() then
+            if CurrentTheme.ShineEnabled then
                 Animation.Apply(CurrentTheme, CurrentAnimationRoot, true)
             else
                 local st = rawget(_G, "_AnimationState") and _G._AnimationState[CurrentAnimationRoot]
@@ -696,28 +672,6 @@ function Fenglib:SetTheme(themeName)
             end
         end
     end
-end
-
--- ========================================================================
--- 全局 Shine 开关 API
--- ========================================================================
-function Fenglib:SetShineEnabled(enabled)
-    Animation.SetShineEnabled(enabled)
-    if CurrentAnimationRoot then
-        if CurrentTheme.ShineEnabled and Fenglib:GetShineEnabled() then
-            Animation.Apply(CurrentTheme, CurrentAnimationRoot, true)
-        else
-            local st = rawget(_G, "_AnimationState") and _G._AnimationState[CurrentAnimationRoot]
-            if st and st.conn then
-                st.conn:Disconnect()
-                st.conn = nil
-            end
-        end
-    end
-end
-
-function Fenglib:GetShineEnabled()
-    return Animation.IsShineEnabled()
 end
 
 function Fenglib:ToggleRainbow(bool) RainbowEnabled = bool end
@@ -764,9 +718,7 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- ========================================================================
--- MediaManager
--- ========================================================================
+-- ===== MediaManager =====
 local MediaManager = {}
 MediaManager.Folder = "FengMediaCache"
 
@@ -954,7 +906,7 @@ function MediaManager:Image(src)
 end
 
 -- ========================================================================
--- 窗口构建函数（所有控件）
+-- 窗口构建函数（包含所有元素组件）
 -- ========================================================================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
@@ -5096,8 +5048,6 @@ function Fenglib:CreateWindow(Config)
     bgImage.ZIndex = 0
     bgImage.Parent = MainFrame
 
-    bgImage:SetAttribute("_IsBackground", true)  -- 标记背景
-
     local bgCorner = Instance.new("UICorner")
     bgCorner.CornerRadius = UDim.new(0, 16)
     bgCorner.Parent = bgImage
@@ -5115,6 +5065,8 @@ function Fenglib:CreateWindow(Config)
         NumberSequenceKeypoint.new(1, 0.6)
     })
     bgGradient.Parent = bgImage
+
+    -- 注意：原本在此处的 CurrentAnimationRoot 和 Animation.Apply 已移至末尾
 
     -- ===== Resizer =====
     local Resizer = Instance.new("TextButton")
@@ -6318,9 +6270,9 @@ function Fenglib:CreateWindow(Config)
         return getElements()
     end
 
-    -- ===== 启动 Shine 动画（使用全局开关） =====
+    -- ===== 修复：在 UI 完全构建后启动 Shine 动画 =====
     CurrentAnimationRoot = MainFrame
-    if CurrentTheme.ShineEnabled and Fenglib:GetShineEnabled() then
+    if CurrentTheme.ShineEnabled then
         Animation.Apply(CurrentTheme, MainFrame, true)
     end
 
@@ -6328,7 +6280,7 @@ function Fenglib:CreateWindow(Config)
 end
 
 -- ========================================================================
--- 自定义鼠标
+-- 自定义鼠标（保留）
 -- ========================================================================
 do
     local cursorScreen = Instance.new("ScreenGui")
