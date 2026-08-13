@@ -1,7 +1,8 @@
 --[[
     FengY3 – 完整 UI 库
-    包含：主题、动画、窗口、所有控件、媒体管理器、自定义鼠标
-    Shine 开关：Fenglib:SetShineEnabled(bool) / Fenglib:GetShineEnabled()
+    包含：主题、动画、所有控件、媒体管理器、自定义鼠标
+    全局 Shine 开关：Fenglib:SetShineEnabled(bool)
+    控件 Shine 开关：Fenglib:SetControlShineEnabled(bool)
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -16,20 +17,27 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ========================================================================
--- Animation 模块（支持全局开关 & 背景排除）
+-- Animation 模块（支持全局开关、控件开关、背景排除）
 -- ========================================================================
 local Animation = {}
 do
     local _RunService = RunService
     local _state = setmetatable({}, {__mode = "k"})
     local _shineEnabled = true
+    local _controlShineEnabled = true
     
     function Animation.SetShineEnabled(enabled)
         _shineEnabled = enabled
     end
-    
     function Animation.IsShineEnabled()
         return _shineEnabled
+    end
+    
+    function Animation.SetControlShineEnabled(enabled)
+        _controlShineEnabled = enabled
+    end
+    function Animation.IsControlShineEnabled()
+        return _controlShineEnabled
     end
     
     function Animation.Apply(theme, root, shineEnabled)
@@ -62,6 +70,12 @@ do
             if not _shineEnabled then return end
             for _, obj in ipairs(root:GetDescendants()) do
                 if isBackground(obj) then continue end
+                
+                local isInteractive = obj:GetAttribute("_IsInteractiveControl") or false
+                if isInteractive and not _controlShineEnabled then
+                    continue
+                end
+                
                 if obj:IsA("UIGradient") then
                     local t = (obj:GetAttribute("_t") or 0) + dt * Speed
                     obj:SetAttribute("_t", t)
@@ -143,7 +157,7 @@ local function createPulseGlow(object)
 end
 
 -- ========================================================================
--- 主题表
+-- 主题表（完整）
 -- ========================================================================
 local Themes = {
     Dark = {
@@ -670,7 +684,7 @@ local function Tween(obj, props, time)
 end
 
 -- ========================================================================
--- SetTheme（支持全局 Shine 开关）
+-- SetTheme（支持全局开关和控件开关）
 -- ========================================================================
 function Fenglib:SetTheme(themeName)
     if Themes[themeName] then
@@ -718,6 +732,28 @@ end
 
 function Fenglib:GetShineEnabled()
     return Animation.IsShineEnabled()
+end
+
+-- ========================================================================
+-- 交互控件 Shine 开关 API
+-- ========================================================================
+function Fenglib:SetControlShineEnabled(enabled)
+    Animation.SetControlShineEnabled(enabled)
+    if CurrentAnimationRoot then
+        if CurrentTheme.ShineEnabled and Fenglib:GetShineEnabled() then
+            Animation.Apply(CurrentTheme, CurrentAnimationRoot, true)
+        else
+            local st = rawget(_G, "_AnimationState") and _G._AnimationState[CurrentAnimationRoot]
+            if st and st.conn then
+                st.conn:Disconnect()
+                st.conn = nil
+            end
+        end
+    end
+end
+
+function Fenglib:GetControlShineEnabled()
+    return Animation.IsControlShineEnabled()
 end
 
 function Fenglib:ToggleRainbow(bool) RainbowEnabled = bool end
@@ -954,7 +990,7 @@ function MediaManager:Image(src)
 end
 
 -- ========================================================================
--- 窗口构建函数（所有控件）
+-- 窗口构建函数（所有控件完整展开，无一省略）
 -- ========================================================================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
@@ -1302,6 +1338,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = parent
+            Tile:SetAttribute("_IsInteractiveControl", true)
             styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -1365,6 +1402,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = parent
+            Tile:SetAttribute("_IsInteractiveControl", true)
             styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -1449,6 +1487,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, tileH)
             Tile.Parent = parent
+            Tile:SetAttribute("_IsInteractiveControl", true)
             styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -1667,6 +1706,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Btn = Instance.new("Frame")
             Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.Parent = parent
+            Btn:SetAttribute("_IsInteractiveControl", true)
             styleContainer(Btn)
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Btn, "BackgroundColor3", "Top")
@@ -1701,6 +1741,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Container.ClipsDescendants = true
             Container.ZIndex = 10
             Container.Parent = parent
+            Container:SetAttribute("_IsInteractiveControl", true)
             styleContainer(Container)
             Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Container, "BackgroundColor3", "Top")
@@ -2001,6 +2042,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = parent
+            Tile:SetAttribute("_IsInteractiveControl", true)
             styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -2248,6 +2290,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 44)
             Tile.Parent = parent
+            Tile:SetAttribute("_IsInteractiveControl", true)
             styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -2286,6 +2329,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Panel.Visible = false
             Panel.ClipsDescendants = true
             Panel.Parent = parent
+            Panel:SetAttribute("_IsInteractiveControl", true)
             styleContainer(Panel)
             Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Panel, "BackgroundColor3", "Top")
@@ -2638,6 +2682,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local InputFrame = Instance.new("Frame")
             InputFrame.Size = UDim2.new(1, 0, 0, 42)
             InputFrame.Parent = parent
+            InputFrame:SetAttribute("_IsInteractiveControl", true)
             styleContainer(InputFrame)
             Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(InputFrame, "BackgroundColor3", "Top")
@@ -2824,6 +2869,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Frame = Instance.new("Frame")
             Frame.Size = UDim2.new(1, 0, 0, 70)
             Frame.Parent = parent
+            Frame:SetAttribute("_IsInteractiveControl", true)
             styleContainer(Frame)
             Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Frame, "BackgroundColor3", "Top")
@@ -2870,7 +2916,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = {Type = "Textbox", Value = "", Set = function(val) Box.Text = val; callback(val) end}
         end
 
-        -- ========== Label ==========
+        -- ========== Label（不标记） ==========
         child.Label = function(_, config)
             local labelText = config.Name or ""
             local parent = config.Parent or contentHolder
@@ -2935,6 +2981,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             imageFrame.Size = UDim2.new(1, 0, 0, 0)
             imageFrame.AutomaticSize = Enum.AutomaticSize.Y
             imageFrame.Parent = parent
+            imageFrame:SetAttribute("_IsInteractiveControl", true)
             styleContainer(imageFrame)
             Instance.new("UICorner", imageFrame).CornerRadius = UDim.new(0, 4)
             AddToRegistry(imageFrame, "BackgroundColor3", "Top")
@@ -3105,7 +3152,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Divider ==========
+        -- ========== Divider（不标记） ==========
         child.Divider = function(_, config)
             local labelText = config and config.Name or config or ""
             local parent = config and config.Parent or contentHolder
@@ -3168,7 +3215,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== Space ==========
+        -- ========== Space（不标记） ==========
         child.Space = function(_, config)
             local height = (config and config.Height) or 8
             local parent = config and config.Parent or contentHolder
@@ -3204,6 +3251,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = parent
+            Tile:SetAttribute("_IsInteractiveControl", true)
             styleContainer(Tile)
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
@@ -3330,6 +3378,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             wrap.Size = UDim2.new(1, 0, 0, containerHeight)
             wrap.BackgroundTransparency = 1
             wrap.Parent = parent
+            wrap:SetAttribute("_IsInteractiveControl", true)
 
             local titleLbl = nil
             if name ~= "" then
@@ -3484,6 +3533,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             wrap.BorderSizePixel = 0
             wrap.ClipsDescendants = true
             wrap.Parent = parent
+            wrap:SetAttribute("_IsInteractiveControl", true)
             AddToRegistry(wrap, "BackgroundColor3", "Main")
 
             local function recalcAspect()
@@ -3932,6 +3982,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             wrap.BackgroundTransparency = 0.9
             wrap.BorderSizePixel = 0
             wrap.Parent = parent
+            wrap:SetAttribute("_IsInteractiveControl", true)
             AddToRegistry(wrap, "BackgroundColor3", "Top")
             local wrapCorner = Instance.new("UICorner")
             wrapCorner.CornerRadius = UDim.new(0, 8)
@@ -4318,6 +4369,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             wrap.BorderSizePixel = 0
             wrap.ClipsDescendants = true
             wrap.Parent = parent
+            wrap:SetAttribute("_IsInteractiveControl", true)
             AddToRegistry(wrap, "BackgroundColor3", "Main")
 
             local wrapCorner = Instance.new("UICorner")
@@ -4572,6 +4624,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             wrap.BackgroundTransparency = 0.82
             wrap.BorderSizePixel = 0
             wrap.Parent = parent
+            wrap:SetAttribute("_IsInteractiveControl", true)
             AddToRegistry(wrap, "BackgroundColor3", "Top")
 
             local corner = Instance.new("UICorner")
@@ -4809,7 +4862,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
-        -- ========== Paragraph ==========
+        -- ========== Paragraph（不标记） ==========
         child.Paragraph = function(_, config)
             config = config or {}
             local title = config.Name or ""
@@ -4894,7 +4947,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ===== Group 组件（多列布局）=====
+        -- ========== Group（不标记，容器） ==========
         child.Group = function(_, config)
             config = config or {}
             local columns = config.Columns or 2
@@ -4983,7 +5036,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 end
 
 -- ========================================================================
--- CreateWindow（完整实现）
+-- CreateWindow
 -- ========================================================================
 function Fenglib:CreateWindow(Config)
     local Window = {}
@@ -5096,7 +5149,7 @@ function Fenglib:CreateWindow(Config)
     bgImage.ZIndex = 0
     bgImage.Parent = MainFrame
 
-    bgImage:SetAttribute("_IsBackground", true)  -- 标记背景
+    bgImage:SetAttribute("_IsBackground", true)
 
     local bgCorner = Instance.new("UICorner")
     bgCorner.CornerRadius = UDim.new(0, 16)
@@ -5332,6 +5385,7 @@ function Fenglib:CreateWindow(Config)
         btn.BackgroundTransparency = 0.2
         btn.BackgroundColor3 = CurrentTheme.Element or CurrentTheme.Top
         btn.Parent = ButtonGroup
+        btn:SetAttribute("_IsInteractiveControl", true)
 
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, 7)
@@ -6100,6 +6154,7 @@ function Fenglib:CreateWindow(Config)
         TabBtn.BackgroundColor3 = CurrentTheme.Top
         TabBtn.Text = ""
         TabBtn.Parent = parentContainer
+        TabBtn:SetAttribute("_IsInteractiveControl", true)
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
         AddToRegistry(TabBtn, "BackgroundColor3", "Top")
 
@@ -6318,7 +6373,7 @@ function Fenglib:CreateWindow(Config)
         return getElements()
     end
 
-    -- ===== 启动 Shine 动画（使用全局开关） =====
+    -- ===== 启动 Shine 动画 =====
     CurrentAnimationRoot = MainFrame
     if CurrentTheme.ShineEnabled and Fenglib:GetShineEnabled() then
         Animation.Apply(CurrentTheme, MainFrame, true)
