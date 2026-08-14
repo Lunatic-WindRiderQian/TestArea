@@ -906,6 +906,22 @@ function MediaManager:Image(src)
 end
 
 -- ========================================================================
+-- 修改：styleContainer 统一为 Paragraph 样式（背景透明度0.92，边框厚度1，透明度0.6，模式Border）
+-- ========================================================================
+local function styleContainer(frame)
+    frame.BackgroundTransparency = 0.92
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 1
+    stroke.Color = CurrentTheme.Stroke
+    stroke.Transparency = 0.6
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = frame
+    table.insert(ThemeListeners, function()
+        stroke.Color = CurrentTheme.Stroke
+    end)
+end
+
+-- ========================================================================
 -- 窗口构建函数（包含所有元素组件）
 -- ========================================================================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
@@ -918,16 +934,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         padding.Parent = parent
     end
 
-    local function styleContainer(frame)
-        frame.BackgroundTransparency = 1
-        local stroke = Instance.new("UIStroke")
-        stroke.Thickness = 1.5
-        stroke.Color = CurrentTheme.Stroke
-        stroke.Parent = frame
-        table.insert(ThemeListeners, function()
-            stroke.Color = CurrentTheme.Stroke
-        end)
-    end
+    -- styleContainer 已在外层定义，此处不再重复
 
     local function createSection(text, icons, defaultOpen)
         local titleText = ""
@@ -955,12 +962,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionFrame.Size = UDim2.new(0.96, 0, 0, 46)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
-        sectionFrame.BackgroundTransparency = 0.65
+        sectionFrame.BackgroundTransparency = 0.92
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
         local mainCorner = Instance.new("UICorner", sectionFrame)
         mainCorner.CornerRadius = UDim.new(0, 4)
         AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
+        -- 添加边框，与Paragraph一致
+        local sectionStroke = Instance.new("UIStroke")
+        sectionStroke.Thickness = 1
+        sectionStroke.Color = CurrentTheme.Stroke
+        sectionStroke.Transparency = 0.6
+        sectionStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        sectionStroke.Parent = sectionFrame
+        table.insert(ThemeListeners, function()
+            sectionStroke.Color = CurrentTheme.Stroke
+        end)
 
         local titleBar = Instance.new("Frame")
         titleBar.Size = UDim2.new(1, 0, 0, 46)
@@ -1122,7 +1139,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         
         local contentStroke = Instance.new("UIStroke")
         contentStroke.Thickness = 1
-        contentStroke.Transparency = 0.5
+        contentStroke.Transparency = 0.6  -- 统一为0.6
         contentStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
@@ -1254,7 +1271,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1, 0, 0, 42)
             Tile.Parent = parent
-            styleContainer(Tile)
+            styleContainer(Tile)  -- 自动应用新样式
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
@@ -3280,7 +3297,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local containerHeight = (name ~= "" and 46 or 26)
             local wrap = Instance.new("Frame")
             wrap.Size = UDim2.new(1, 0, 0, containerHeight)
-            wrap.BackgroundTransparency = 1
+            wrap.BackgroundTransparency = 0.92
+            wrap.BackgroundColor3 = CurrentTheme.Top
+            -- 添加边框，与Paragraph一致
+            local wrapStroke = Instance.new("UIStroke")
+            wrapStroke.Thickness = 1
+            wrapStroke.Color = CurrentTheme.Stroke
+            wrapStroke.Transparency = 0.6
+            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            wrapStroke.Parent = wrap
+            table.insert(ThemeListeners, function()
+                wrapStroke.Color = CurrentTheme.Stroke
+            end)
             wrap.Parent = parent
 
             local titleLbl = nil
@@ -3432,11 +3460,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local wrap = Instance.new("Frame")
             wrap.Size = UDim2.new(1, -16, 0, 180)
             wrap.BackgroundColor3 = CurrentTheme.Main
-            wrap.BackgroundTransparency = 0.9
+            wrap.BackgroundTransparency = 0.92
             wrap.BorderSizePixel = 0
             wrap.ClipsDescendants = true
             wrap.Parent = parent
             AddToRegistry(wrap, "BackgroundColor3", "Main")
+            -- 边框
+            local wrapStroke = Instance.new("UIStroke")
+            wrapStroke.Thickness = 1
+            wrapStroke.Color = CurrentTheme.Stroke
+            wrapStroke.Transparency = 0.6
+            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            wrapStroke.Parent = wrap
+            table.insert(ThemeListeners, function()
+                wrapStroke.Color = CurrentTheme.Stroke
+            end)
 
             local function recalcAspect()
                 local w = wrap.AbsoluteSize.X
@@ -3450,12 +3488,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local corner = Instance.new("UICorner")
             corner.CornerRadius = UDim.new(0, radius)
             corner.Parent = wrap
-
-            local stroke = Instance.new("UIStroke")
-            stroke.Thickness = 1
-            stroke.Transparency = 0.6
-            stroke.Parent = wrap
-            AddToRegistry(stroke, "Color", "Stroke")
 
             local resolved = resolveMedia(src)
             local hasVideo = (resolved ~= "")
@@ -3881,18 +3913,25 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local wrapHeight = (title ~= "" or subtitle ~= "") and 118 or 96
             local wrap = Instance.new("Frame")
             wrap.Size = UDim2.new(1, -16, 0, wrapHeight)
-            wrap.BackgroundTransparency = 0.9
+            wrap.BackgroundTransparency = 0.92
+            wrap.BackgroundColor3 = CurrentTheme.Top
             wrap.BorderSizePixel = 0
             wrap.Parent = parent
             AddToRegistry(wrap, "BackgroundColor3", "Top")
+            -- 边框
+            local wrapStroke = Instance.new("UIStroke")
+            wrapStroke.Thickness = 1
+            wrapStroke.Color = CurrentTheme.Stroke
+            wrapStroke.Transparency = 0.6
+            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            wrapStroke.Parent = wrap
+            table.insert(ThemeListeners, function()
+                wrapStroke.Color = CurrentTheme.Stroke
+            end)
+
             local wrapCorner = Instance.new("UICorner")
             wrapCorner.CornerRadius = UDim.new(0, 8)
             wrapCorner.Parent = wrap
-            local wrapStroke = Instance.new("UIStroke")
-            wrapStroke.Thickness = 1
-            wrapStroke.Transparency = 0.6
-            wrapStroke.Parent = wrap
-            AddToRegistry(wrapStroke, "Color", "Stroke")
 
             local padding = Instance.new("UIPadding")
             padding.PaddingLeft = UDim.new(0, 10)
@@ -4266,21 +4305,26 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local wrap = Instance.new("Frame")
             wrap.Name = "ViewportHolder"
             wrap.Size = UDim2.new(1, -16, 0, height)
-            wrap.BackgroundTransparency = 0.9
+            wrap.BackgroundTransparency = 0.92
+            wrap.BackgroundColor3 = CurrentTheme.Main
             wrap.BorderSizePixel = 0
             wrap.ClipsDescendants = true
             wrap.Parent = parent
             AddToRegistry(wrap, "BackgroundColor3", "Main")
+            -- 边框
+            local wrapStroke = Instance.new("UIStroke")
+            wrapStroke.Thickness = 1
+            wrapStroke.Color = CurrentTheme.Stroke
+            wrapStroke.Transparency = 0.6
+            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            wrapStroke.Parent = wrap
+            table.insert(ThemeListeners, function()
+                wrapStroke.Color = CurrentTheme.Stroke
+            end)
 
             local wrapCorner = Instance.new("UICorner")
             wrapCorner.CornerRadius = UDim.new(0, radius)
             wrapCorner.Parent = wrap
-
-            local wrapStroke = Instance.new("UIStroke")
-            wrapStroke.Thickness = 1
-            wrapStroke.Transparency = 0.6
-            wrapStroke.Parent = wrap
-            AddToRegistry(wrapStroke, "Color", "Stroke")
 
             local ratioNum = parseRatio(aspectRatio)
             local function recalcAspect()
@@ -4521,20 +4565,25 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local wrap = Instance.new("Frame")
             wrap.Size = UDim2.new(1, 0, 0, 64)
-            wrap.BackgroundTransparency = 0.82
+            wrap.BackgroundTransparency = 0.92
+            wrap.BackgroundColor3 = CurrentTheme.Top
             wrap.BorderSizePixel = 0
             wrap.Parent = parent
             AddToRegistry(wrap, "BackgroundColor3", "Top")
+            -- 边框
+            local wrapStroke = Instance.new("UIStroke")
+            wrapStroke.Thickness = 1
+            wrapStroke.Color = CurrentTheme.Stroke
+            wrapStroke.Transparency = 0.6
+            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            wrapStroke.Parent = wrap
+            table.insert(ThemeListeners, function()
+                wrapStroke.Color = CurrentTheme.Stroke
+            end)
 
             local corner = Instance.new("UICorner")
             corner.CornerRadius = UDim.new(0, 12)
             corner.Parent = wrap
-
-            local stroke = Instance.new("UIStroke")
-            stroke.Transparency = 0.45
-            stroke.Thickness = 1.5
-            stroke.Parent = wrap
-            AddToRegistry(stroke, "Color", "Stroke")
 
             local avatarBg = Instance.new("Frame")
             avatarBg.Name = "AvatarBg"
@@ -5065,8 +5114,6 @@ function Fenglib:CreateWindow(Config)
         NumberSequenceKeypoint.new(1, 0.6)
     })
     bgGradient.Parent = bgImage
-
-    -- 注意：原本在此处的 CurrentAnimationRoot 和 Animation.Apply 已移至末尾
 
     -- ===== Resizer =====
     local Resizer = Instance.new("TextButton")
