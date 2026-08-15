@@ -10,7 +10,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ========================================================================
--- 从 FluentPro 搬运的 Animation 模块（已修改为动态扫描）
+-- 从 FluentPro 搬运的 Animation 模块（已修改为动态扫描）—— 但不再使用
 -- ========================================================================
 local Animation = {}
 do
@@ -626,8 +626,6 @@ local Themes = {
 }
 local CurrentTheme = Themes.Dark
 
-local CurrentAnimationRoot = nil
-
 local function AddToRegistry(obj, prop, themeKey)
     local val = CurrentTheme[themeKey]
     if val == nil then
@@ -646,7 +644,7 @@ local function Tween(obj, props, time)
 end
 
 -- ========================================================================
--- SetTheme：只更新颜色和动画，不改变背景图（Scene 固定）
+-- SetTheme：只更新颜色，不再触发 Shine 动画
 -- ========================================================================
 function Fenglib:SetTheme(themeName)
     if Themes[themeName] then
@@ -659,18 +657,7 @@ function Fenglib:SetTheme(themeName)
         for _, fn in pairs(ThemeListeners) do
             pcall(fn)
         end
-
-        if CurrentAnimationRoot then
-            if CurrentTheme.ShineEnabled then
-                Animation.Apply(CurrentTheme, CurrentAnimationRoot, true)
-            else
-                local st = rawget(_G, "_AnimationState") and _G._AnimationState[CurrentAnimationRoot]
-                if st and st.conn then
-                    st.conn:Disconnect()
-                    st.conn = nil
-                end
-            end
-        end
+        -- Shine 动画已移除
     end
 end
 
@@ -6317,11 +6304,8 @@ function Fenglib:CreateWindow(Config)
         return getElements()
     end
 
-    -- ===== 修复：在 UI 完全构建后启动 Shine 动画 =====
-    CurrentAnimationRoot = MainFrame
-    if CurrentTheme.ShineEnabled then
-        Animation.Apply(CurrentTheme, MainFrame, true)
-    end
+    -- 移除 Shine 动画启动代码（不再设置 CurrentAnimationRoot 和调用 Animation.Apply）
+    -- 原注释掉的代码已删除
 
     return Window
 end
