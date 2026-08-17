@@ -10,7 +10,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ========================================================================
--- 从 FluentPro 搬运的 Animation 模块（已修改为动态扫描）—— 但不再使用
+-- 从 FluentPro 搬运的 Animation 模块（已修改为动态扫描）—— 仅用于背景图
 -- ========================================================================
 local Animation = {}
 do
@@ -644,7 +644,7 @@ local function Tween(obj, props, time)
 end
 
 -- ========================================================================
--- SetTheme：只更新颜色，不再触发 Shine 动画
+-- SetTheme：只更新颜色，不再触发 Shine 动画（背景图除外，由单独调用管理）
 -- ========================================================================
 function Fenglib:SetTheme(themeName)
     if Themes[themeName] then
@@ -657,7 +657,7 @@ function Fenglib:SetTheme(themeName)
         for _, fn in pairs(ThemeListeners) do
             pcall(fn)
         end
-        -- Shine 动画已移除
+        -- 背景图的 Shine 动画由 CreateWindow 中单独启动，不在这里更新
     end
 end
 
@@ -5102,6 +5102,11 @@ function Fenglib:CreateWindow(Config)
     })
     bgGradient.Parent = bgImage
 
+    -- 为背景图单独启用 Shine 动画（仅作用于 bgImage 下的 UIGradient）
+    if CurrentTheme.ShineEnabled then
+        Animation.Apply(CurrentTheme, bgImage, true)
+    end
+
     -- ===== Resizer =====
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
@@ -6304,8 +6309,7 @@ function Fenglib:CreateWindow(Config)
         return getElements()
     end
 
-    -- 移除 Shine 动画启动代码（不再设置 CurrentAnimationRoot 和调用 Animation.Apply）
-    -- 原注释掉的代码已删除
+    -- 不再启动全局 Shine 动画（已移至背景图单独管理）
 
     return Window
 end
