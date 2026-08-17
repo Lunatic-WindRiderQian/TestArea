@@ -1,7 +1,9 @@
 -- ============================================================================
 -- 完整 Fenglib 模块 (FengY3 UI Library)
--- 包含所有主题、所有控件、背景图 Shine、彩虹边框修复（使用 UI.lua 版本）
+-- 包含所有主题、所有控件、背景图 Shine
 -- 移除主框架及所有控件的 Shine 动画（仅背景图保留）
+-- 移除所有彩虹循环效果
+-- 添加窗口调整大小手柄（Resizer）—— 从 UI.lua 搬运
 -- ============================================================================
 
 local TweenService = game:GetService("TweenService")
@@ -53,9 +55,6 @@ do
 end
 
 local Fenglib = {}
-local RainbowEnabled = false
-local RainbowType = "Animated/Cycling Rainbow"
-local RainbowSpeed = 1.0
 local Registry = {}
 local ConfigObjects = {}
 local ThemeListeners = {}
@@ -141,9 +140,7 @@ function Fenglib:SetTheme(name)
     end
 end
 
-function Fenglib:ToggleRainbow(b) RainbowEnabled = b end
-function Fenglib:SetRainbowType(t) RainbowType = t end
-function Fenglib:SetRainbowSpeed(s) RainbowSpeed = clamp(tonumber(s) or 1, 0.1, 10) end
+-- 彩虹相关函数已全部删除
 
 function Fenglib:SaveConfig(name, folder)
     local ok, err = pcall(function()
@@ -3665,36 +3662,56 @@ function Fenglib:CreateWindow(Config)
         Animation.Apply(CurrentTheme, bgImage, true)
     end
 
-    -- ===== 窗口边框彩虹（使用 UI.lua 版本，已替换） =====
-    task.spawn(function()
-        while ScreenGui.Parent do
-            if RainbowEnabled then
-                local t = tick() * RainbowSpeed
-                if RainbowType == "Linear Gradient (Solid Rainbow)" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Animated/Cycling Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Smooth Fading Gradient" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Step/Band Rainbow" then
-                    local step = math.floor((t % 2) * 4) / 4
-                    Stroke.Color = Color3.fromHSV(step, 1, 1)
-                elseif RainbowType == "Rainbow Pulse" then
-                    local pulse = (math.sin(t * 3) + 1) / 2
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
-                elseif RainbowType == "Radial Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
-                elseif RainbowType == "Neon/Glowing Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1)
-                elseif RainbowType == "Pastel Rainbow" then
-                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
-                elseif RainbowType == "Vertical/Horizontal Fade" then
-                    Stroke.Color = Color3.fromHSV(t % 5/5, 1, 1)
-                end
-            else
-                Stroke.Color = CurrentTheme.Stroke
-            end
-            RunService.RenderStepped:Wait()
+    -- ===== 彩虹循环已完全移除 =====
+
+    -- ===== 添加窗口调整大小手柄（Resizer），从 UI.lua 搬运 =====
+    local Resizer = Instance.new("TextButton")
+    Resizer.Name = "WindowResizer"
+    Resizer.Parent = MainFrame
+    Resizer.BackgroundTransparency = 0.8
+    Resizer.BackgroundColor3 = Color3.new(1,1,1)
+    Resizer.Position = UDim2.new(1, 5, 1, 5)
+    Resizer.Size = UDim2.new(0, 24, 0, 24)  -- 手柄大小
+    Resizer.AnchorPoint = Vector2.new(1, 1)
+    Resizer.Text = ""
+    Resizer.ZIndex = 30
+    Resizer.Visible = false
+
+    local resizerStroke = Instance.new("UIStroke")
+    resizerStroke.Thickness = 4
+    resizerStroke.Color = Color3.new(1,1,1)
+    resizerStroke.Transparency = 0
+    resizerStroke.Parent = Resizer
+
+    local resizerCorner = Instance.new("UICorner")
+    resizerCorner.CornerRadius = UDim.new(0, 6)
+    resizerCorner.Parent = Resizer
+
+    local resizerVisible = false
+    local isResizing = false
+    local resizeStart = Vector2.new(0,0)
+    local startSize = UDim2.new(0,0,0,0)
+
+    Resizer.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isResizing = true
+            resizeStart = input.Position
+            startSize = MainFrame.Size
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - resizeStart
+            local newWidth = math.max(400, startSize.X.Offset + delta.X)
+            local newHeight = math.max(250, startSize.Y.Offset + delta.Y)
+            MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isResizing = false
         end
     end)
 
@@ -3810,7 +3827,7 @@ function Fenglib:CreateWindow(Config)
 
     local function createControlButton(iconAsset, fallbackText, callback)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0,32,0,32)
+        btn.Size = UDim2.new(0,32,0,32)   -- 按钮大小
         btn.AutoButtonColor = false
         btn.Text = ""
         btn.BackgroundTransparency = 0.2
