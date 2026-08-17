@@ -1,6 +1,6 @@
 -- ============================================================================
 -- 完整 Fenglib 模块 (FengY3 UI Library)
--- 包含所有主题、所有控件、背景图 Shine、彩虹边框修复
+-- 包含所有主题、所有控件、背景图 Shine、彩虹边框修复（使用 UI.lua 版本）
 -- 移除主框架及所有控件的 Shine 动画（仅背景图保留）
 -- ============================================================================
 
@@ -3665,32 +3665,32 @@ function Fenglib:CreateWindow(Config)
         Animation.Apply(CurrentTheme, bgImage, true)
     end
 
-    -- 窗口边框彩虹（已修复类型切换）
+    -- ===== 窗口边框彩虹（使用 UI.lua 版本，已替换） =====
     task.spawn(function()
         while ScreenGui.Parent do
             if RainbowEnabled then
                 local t = tick() * RainbowSpeed
-                local hue = t % 1
-                local color
-                if RainbowType == "Animated/Cycling Rainbow" then
-                    color = Color3.fromHSV(hue, 1, 1)
+                if RainbowType == "Linear Gradient (Solid Rainbow)" then
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
+                elseif RainbowType == "Animated/Cycling Rainbow" then
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Smooth Fading Gradient" then
-                    color = Color3.fromHSV((hue + 0.5) % 1, 1, 1)
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Step/Band Rainbow" then
-                    local band = math.floor(hue * 6) / 6
-                    color = Color3.fromHSV(band, 1, 1)
+                    local step = math.floor((t % 2) * 4) / 4
+                    Stroke.Color = Color3.fromHSV(step, 1, 1)
                 elseif RainbowType == "Rainbow Pulse" then
-                    local pulse = (math.sin(t * 2) + 1) / 2
-                    color = Color3.fromHSV(hue, 1, pulse * 0.8 + 0.2)
+                    local pulse = (math.sin(t * 3) + 1) / 2
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, pulse, 1)
+                elseif RainbowType == "Radial Rainbow" then
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 1, 1)
                 elseif RainbowType == "Neon/Glowing Rainbow" then
-                    local glow = (math.sin(t * 3) + 1) / 2
-                    color = Color3.fromHSV(hue, 1, 0.7 + glow * 0.3)
+                    Stroke.Color = Color3.fromHSV(t % 2 / 2, 0.8, 1)
                 elseif RainbowType == "Pastel Rainbow" then
-                    color = Color3.fromHSV(hue, 0.5, 1)
-                else
-                    color = Color3.fromHSV(hue, 1, 1)
+                    Stroke.Color = Color3.fromHSV(t % 5 / 5, 0.4, 1)
+                elseif RainbowType == "Vertical/Horizontal Fade" then
+                    Stroke.Color = Color3.fromHSV(t % 5/5, 1, 1)
                 end
-                Stroke.Color = color
             else
                 Stroke.Color = CurrentTheme.Stroke
             end
