@@ -4,6 +4,7 @@
 -- 移除主框架及所有控件的 Shine 动画（仅背景图保留）
 -- 移除所有彩虹循环效果
 -- 添加窗口调整大小手柄（Resizer）—— 从 UI.lua 搬运
+-- Divider 已更新为：单条水平线 + 居中文本（可选）
 -- ============================================================================
 
 local TweenService = game:GetService("TweenService")
@@ -139,8 +140,6 @@ function Fenglib:SetTheme(name)
         for _, fn in pairs(ThemeListeners) do pcall(fn) end
     end
 end
-
--- 彩虹相关函数已全部删除
 
 function Fenglib:SaveConfig(name, folder)
     local ok, err = pcall(function()
@@ -2034,34 +2033,37 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ===== Divider =====
+        -- ===== Divider（新实现：单线 + 居中文本，可选） =====
         child.Divider = function(_, config)
-            local labelText = config and config.Name or config or ""
-            local parent = config and config.Parent or contentHolder
+            config = config or {}
+            local parent = config.Parent or contentHolder
+            local labelText = config.Name or ""   -- 若提供则显示
+            local hasText = (labelText ~= "")
+
+            -- 容器高度：有文本时稍高，无文本时只占一条线
+            local containerHeight = hasText and 24 or 12
             local container = Instance.new("Frame")
-            container.Size = UDim2.new(1,0,0,(labelText~="" and 22 or 12))
+            container.Size = UDim2.new(1, 0, 0, containerHeight)
             container.BackgroundTransparency = 1
             container.Parent = parent
-            if labelText~="" then
-                local leftLine = Instance.new("Frame")
-                leftLine.Size = UDim2.new(0.35,-6,0,1)
-                leftLine.Position = UDim2.new(0,0,0.5,0)
-                leftLine.AnchorPoint = Vector2.new(0,0.5)
-                leftLine.BackgroundColor3 = CurrentTheme.Stroke
-                leftLine.Parent = container
-                AddToRegistry(leftLine, "BackgroundColor3", "Stroke")
-                local rightLine = Instance.new("Frame")
-                rightLine.Size = UDim2.new(0.35,-6,0,1)
-                rightLine.Position = UDim2.new(1,0,0.5,0)
-                rightLine.AnchorPoint = Vector2.new(1,0.5)
-                rightLine.BackgroundColor3 = CurrentTheme.Stroke
-                rightLine.Parent = container
-                AddToRegistry(rightLine, "BackgroundColor3", "Stroke")
+
+            -- 水平线：左右各留 10px 边距（与 FluentPro 一致）
+            local line = Instance.new("Frame")
+            line.Size = UDim2.new(1, -10, 0, 1)
+            line.Position = UDim2.new(0, 5, 0.5, 0)
+            line.AnchorPoint = Vector2.new(0, 0.5)
+            line.BackgroundTransparency = 0.5
+            line.BorderSizePixel = 0
+            line.Parent = container
+            AddToRegistry(line, "BackgroundColor3", "Stroke")
+
+            if hasText then
+                -- 文本标签：居中显示
                 local label = Instance.new("TextLabel")
-                label.Size = UDim2.new(0,0,1,0)
+                label.Size = UDim2.new(0, 0, 0, 16)
                 label.AutomaticSize = Enum.AutomaticSize.X
-                label.Position = UDim2.new(0.5,0,0.5,0)
-                label.AnchorPoint = Vector2.new(0.5,0.5)
+                label.AnchorPoint = Vector2.new(0.5, 0.5)
+                label.Position = UDim2.new(0.5, 0, 0.5, 0)
                 label.BackgroundTransparency = 1
                 label.Font = Enum.Font.GothamMedium
                 label.Text = labelText
@@ -2070,20 +2072,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 label.TextTransparency = 0.4
                 label.Parent = container
                 AddToRegistry(label, "TextColor3", "Text")
-            else
-                local line = Instance.new("Frame")
-                line.Size = UDim2.new(1,0,0,1)
-                line.Position = UDim2.new(0,0,0.5,0)
-                line.AnchorPoint = Vector2.new(0,0.5)
-                line.BackgroundColor3 = CurrentTheme.Stroke
-                line.Parent = container
-                AddToRegistry(line, "BackgroundColor3", "Stroke")
             end
+
             local self = {}
-            function self.SetVisible(state) container.Visible = state end
+            function self.SetVisible(state)
+                container.Visible = state
+            end
             function self.UpdateText(newText)
-                local label = container:FindFirstChildOfClass("TextLabel")
-                if label then label.Text = newText end
+                local lbl = container:FindFirstChildOfClass("TextLabel")
+                if lbl then
+                    lbl.Text = newText or ""
+                end
+                -- 若之前无文本，现在添加文本，可重新调整高度（如需）
             end
             return self
         end
@@ -3662,8 +3662,6 @@ function Fenglib:CreateWindow(Config)
         Animation.Apply(CurrentTheme, bgImage, true)
     end
 
-    -- ===== 彩虹循环已完全移除 =====
-
     -- ===== 添加窗口调整大小手柄（Resizer），从 UI.lua 搬运 =====
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
@@ -3671,7 +3669,7 @@ function Fenglib:CreateWindow(Config)
     Resizer.BackgroundTransparency = 0.8
     Resizer.BackgroundColor3 = Color3.new(1,1,1)
     Resizer.Position = UDim2.new(1, 5, 1, 5)
-    Resizer.Size = UDim2.new(0, 24, 0, 24)  -- 手柄大小
+    Resizer.Size = UDim2.new(0, 24, 0, 24)
     Resizer.AnchorPoint = Vector2.new(1, 1)
     Resizer.Text = ""
     Resizer.ZIndex = 30
@@ -3827,7 +3825,7 @@ function Fenglib:CreateWindow(Config)
 
     local function createControlButton(iconAsset, fallbackText, callback)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0,32,0,32)   -- 按钮大小
+        btn.Size = UDim2.new(0,32,0,32)
         btn.AutoButtonColor = false
         btn.Text = ""
         btn.BackgroundTransparency = 0.2
