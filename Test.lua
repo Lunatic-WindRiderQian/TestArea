@@ -3289,7 +3289,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AddToRegistry(copyStroke, "Color", "Stroke")
                 copyBtn.MouseButton1Click:Connect(function()
                     pcall(function() toclipboard(copyText) end)
-                    if win then win:Notification("", "已复制到剪贴板", "Success", 2) end
+                    -- 已移除通知
                 end)
             end
             task.spawn(function()
@@ -3393,7 +3393,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     AddToRegistry(newStroke, "Color", "Stroke")
                     newBtn.MouseButton1Click:Connect(function()
                         pcall(function() toclipboard(copyText) end)
-                        if win then win:Notification("", "已复制到剪贴板", "Success", 2) end
+                        -- 已移除通知
                     end)
                 end
             end
