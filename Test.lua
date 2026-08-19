@@ -3789,6 +3789,19 @@ function Fenglib:CreateWindow(Config)
     Topbar.BackgroundTransparency = 1
     Topbar.Parent = MainFrame
 
+    -- 在 Topbar 底部添加分割线
+    local TopbarDivider = Instance.new("Frame")
+    TopbarDivider.Name = "TopbarDivider"
+    TopbarDivider.Size = UDim2.new(1,0,0,1)
+    TopbarDivider.Position = UDim2.new(0,0,1,0)
+    TopbarDivider.AnchorPoint = Vector2.new(0,1)
+    TopbarDivider.BackgroundColor3 = CurrentTheme.Stroke
+    TopbarDivider.BackgroundTransparency = 0.5
+    TopbarDivider.BorderSizePixel = 0
+    TopbarDivider.ZIndex = 2
+    TopbarDivider.Parent = Topbar
+    table.insert(ThemeListeners, function() TopbarDivider.BackgroundColor3 = CurrentTheme.Stroke end)
+
     if IconAsset then
         if tonumber(IconAsset) then IconAsset = "rbxassetid://"..IconAsset end
     else IconAsset = "rbxassetid://78229538488090" end
