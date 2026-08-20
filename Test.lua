@@ -3951,12 +3951,12 @@ function Fenglib:CreateWindow(Config)
         TitleLabel.Position = UDim2.new(0,50,0,0)
     end
 
-    -- ===== LeftContainer =====
+    -- ===== LeftContainer（黑色背景已移除） =====
     local leftWidth = 160
     local LeftContainer = Instance.new("Frame")
     LeftContainer.Size = UDim2.new(0,leftWidth,1,-topbarHeight)
     LeftContainer.Position = UDim2.new(0,0,0,topbarHeight)
-    LeftContainer.BackgroundTransparency = 0.3
+    LeftContainer.BackgroundTransparency = 1  -- 完全透明
     LeftContainer.BackgroundColor3 = CurrentTheme.Main
     LeftContainer.ClipsDescendants = true
     LeftContainer.Parent = MainFrame
@@ -4458,12 +4458,12 @@ function Fenglib:CreateWindow(Config)
         end
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(0,140,0,32)
-        TabBtn.BackgroundTransparency = 1
+        TabBtn.BackgroundTransparency = 1  -- 完全透明，无黑色背景
         TabBtn.BackgroundColor3 = CurrentTheme.Top
         TabBtn.Text = ""
         TabBtn.Parent = parentContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0,10)
-        AddToRegistry(TabBtn, "BackgroundColor3", "Top")
+        -- 不再注册 BackgroundColor3，避免主题更新时加上颜色
         local glowFrame = Instance.new("Frame")
         glowFrame.Name = "GlowBackground"
         glowFrame.Size = UDim2.new(1,0,1,0)
@@ -4593,7 +4593,8 @@ function Fenglib:CreateWindow(Config)
                     local grad = glow:FindFirstChildOfClass("UIGradient")
                     if grad then grad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent) end
                 end
-                if s.isActive then s.btn.BackgroundTransparency = 1 else s.btn.BackgroundTransparency = 1 end
+                -- 保持按钮背景透明
+                s.btn.BackgroundTransparency = 1
             end
         end)
         local getElements = function()
