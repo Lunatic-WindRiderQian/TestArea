@@ -3964,6 +3964,19 @@ function Fenglib:CreateWindow(Config)
     leftCorner.CornerRadius = UDim.new(0,16)
     leftCorner.Parent = LeftContainer
 
+    -- ===== 左侧面板右侧分割线 =====
+    local LeftDivider = Instance.new("Frame")
+    LeftDivider.Name = "LeftDivider"
+    LeftDivider.Size = UDim2.new(0, 1, 1, 0)
+    LeftDivider.Position = UDim2.new(1, 0, 0, 0)
+    LeftDivider.AnchorPoint = Vector2.new(1, 0)
+    LeftDivider.BackgroundColor3 = CurrentTheme.Stroke
+    LeftDivider.BackgroundTransparency = 0.5
+    LeftDivider.BorderSizePixel = 0
+    LeftDivider.ZIndex = 2
+    LeftDivider.Parent = LeftContainer
+    table.insert(ThemeListeners, function() LeftDivider.BackgroundColor3 = CurrentTheme.Stroke end)
+
     -- ===== TabScroll =====
     local TabScroll = Instance.new("ScrollingFrame")
     TabScroll.Size = UDim2.new(1,0,1,-55)
