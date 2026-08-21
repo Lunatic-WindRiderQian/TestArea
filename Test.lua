@@ -4187,12 +4187,12 @@ function Fenglib:CreateWindow(Config)
     AnonBtn.MouseButton1Click:Connect(function() setAnon(not anonActive) end)
     table.insert(ThemeListeners, function() AnonBtn.BackgroundColor3=CurrentTheme.Top; EyeIcon.ImageColor3=CurrentTheme.Text end)
 
-    -- ===== RightContainer =====
+    -- ===== RightContainer（已修改背景透明） =====
     local RightContainer = Instance.new("Frame")
     RightContainer.Size = UDim2.new(1,-leftWidth,1,-topbarHeight)
     RightContainer.Position = UDim2.new(0,leftWidth,0,topbarHeight)
     RightContainer.BackgroundColor3 = CurrentTheme.Main
-    RightContainer.BackgroundTransparency = 0.75
+    RightContainer.BackgroundTransparency = 1   -- 完全透明，移除右侧背景
     RightContainer.ClipsDescendants = true
     RightContainer.Parent = MainFrame
     local rightCorner = Instance.new("UICorner")
