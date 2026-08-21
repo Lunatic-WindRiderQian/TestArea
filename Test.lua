@@ -5,6 +5,9 @@
 -- 移除所有彩虹循环效果
 -- 添加窗口调整大小手柄（Resizer）—— 从 UI.lua 搬运
 -- Divider 已更新为：单条水平线 + 居中文本（可选）
+-- 
+-- 修复：统一使用 safeDisconnect 处理所有 :Disconnect() 调用，
+-- 避免 attempt to index nil with 'Disconnect' 错误。
 -- ============================================================================
 
 local TweenService = game:GetService("TweenService")
@@ -18,6 +21,13 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+-- ===== 安全断开连接工具 =====
+local function safeDisconnect(conn)
+    if conn then
+        pcall(conn.Disconnect, conn)
+    end
+end
+
 -- ===== Animation 模块（仅用于背景图 Shine） =====
 local Animation = {}
 do
@@ -26,7 +36,9 @@ do
     function Animation.Apply(theme, root, shineEnabled)
         if not root then return end
         local st = _state[root]
-        if st and st.conn then pcall(st.conn.Disconnect, st.conn) end
+        if st and st.conn then
+            safeDisconnect(st.conn)
+        end
         st = {conn = nil}
         _state[root] = st
         if not theme or not shineEnabled or not theme.ShineEnabled or not theme.Shine then return end
@@ -52,6 +64,7 @@ do
                 end
             end
         end)
+        return st.conn
     end
 end
 
@@ -68,7 +81,10 @@ local function startNeonFlowEffect(obj, prop, speed)
     local hue = 0
     local conn
     conn = RunService.Heartbeat:Connect(function()
-        if not obj or not obj.Parent then conn:Disconnect(); return end
+        if not obj or not obj.Parent then
+            safeDisconnect(conn)
+            return
+        end
         hue = (hue + speed) % 1
         obj[prop] = Color3.new(
             math.sin(hue * 3 + 0) * 0.3 + 0.7,
@@ -82,13 +98,16 @@ end
 local function createPulseGlow(obj)
     local running = true
     local conn = RunService.Heartbeat:Connect(function()
-        if not obj or not obj.Parent or not running then conn:Disconnect(); return end
+        if not obj or not obj.Parent or not running then
+            safeDisconnect(conn)
+            return
+        end
         local a = 0.5 + math.sin(tick() * 3) * 0.3
         if obj:IsA("UIStroke") then obj.Transparency = a
         elseif obj:IsA("Frame") or obj:IsA("TextButton") then obj.BackgroundTransparency = a end
     end)
     return {
-        Disconnect = function() running = false; if conn then conn:Disconnect(); conn = nil end end,
+        Disconnect = function() running = false; safeDisconnect(conn) end,
         IsRunning = function() return running and obj and obj.Parent end
     }
 end
@@ -1151,7 +1170,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     if d.button then d.button.BackgroundColor3 = CurrentTheme.Top end
                 end
             end)
-            table.insert(WindowCleanup or {}, function() if globalClickConn then globalClickConn:Disconnect() end end)
+            table.insert(WindowCleanup or {}, function() safeDisconnect(globalClickConn) end)
             return self
         end
 
@@ -1270,6 +1289,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 if state.Mode == "Hold" then pcall(callback, false) end
             end
             local inputConn
+            local inputEndConn
             inputConn = UserInputService.InputBegan:Connect(function(input, gpe)
                 if gpe then return end
                 if state.IsWaiting then return end
@@ -1285,7 +1305,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     elseif input.UserInputType==Enum.UserInputType.Keyboard and input.KeyCode.Name==key then doPress() end
                 end
             end)
-            local inputEndConn
             inputEndConn = UserInputService.InputEnded:Connect(function(input, gpe)
                 if gpe then return end
                 if state.IsWaiting then return end
@@ -1297,8 +1316,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
             local function cleanup()
-                if inputConn then inputConn:Disconnect() end
-                if inputEndConn then inputEndConn:Disconnect() end
+                safeDisconnect(inputConn)
+                safeDisconnect(inputEndConn)
             end
             local self = {}
             function self.SetValue(val, newMode)
@@ -2617,7 +2636,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             function mod:SetVolume(v) if vid then vid.Volume = math.clamp(v,0,1) end; volLbl.Text = tostring(math.floor(math.clamp(v,0,1)*100)).."%" end
             function mod:SetAspectRatio(r) ratioNum = parseRatio(r); recalcAspect() end
-            function mod:Destroy() pcall(function() hbConn:Disconnect() end); wrap:Destroy() end
+            function mod:Destroy() safeDisconnect(hbConn); wrap:Destroy() end
             return mod
         end
 
@@ -2965,7 +2984,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
             function mod:Destroy()
-                if hbConn then hbConn:Disconnect() end
+                safeDisconnect(hbConn)
                 if snd then pcall(function() snd:Stop(); snd:Destroy() end) end
                 wrap:Destroy()
             end
@@ -3657,9 +3676,10 @@ function Fenglib:CreateWindow(Config)
     })
     bgGradient.Parent = bgImage
 
-    -- 只为背景图启用 Shine 动画
+    -- 只为背景图启用 Shine 动画，并保存连接
+    local animConn = nil
     if CurrentTheme.ShineEnabled then
-        Animation.Apply(CurrentTheme, bgImage, true)
+        animConn = Animation.Apply(CurrentTheme, bgImage, true)
     end
 
     -- ===== 添加窗口调整大小手柄（Resizer），从 UI.lua 搬运 =====
@@ -4434,7 +4454,11 @@ function Fenglib:CreateWindow(Config)
     end
 
     function Window:SetKeybind(key) Keybind = key end
-    function Window:Destroy() for _, fn in ipairs(WindowCleanup) do pcall(fn) end; ScreenGui:Destroy() end
+    function Window:Destroy()
+        safeDisconnect(animConn)
+        for _, fn in ipairs(WindowCleanup) do pcall(fn) end
+        ScreenGui:Destroy()
+    end
     function Window:SetSubtitle(newSubtitle)
         for _, child in ipairs(Topbar:GetChildren()) do
             if child:IsA("TextLabel") and child ~= TitleLabel then
@@ -4698,7 +4722,7 @@ do
 
     function Fenglib:CleanupCursor()
         if Fenglib._cursorObjects then
-            if Fenglib._cursorObjects.Connection then Fenglib._cursorObjects.Connection:Disconnect() end
+            safeDisconnect(Fenglib._cursorObjects.Connection)
             if Fenglib._cursorObjects.Screen then Fenglib._cursorObjects.Screen:Destroy() end
             Fenglib._cursorObjects = nil
         end
