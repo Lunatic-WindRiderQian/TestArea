@@ -15,12 +15,6 @@ local function safeDisconnect(conn)
     end
 end
 
--- 用于模拟弹簧效果的缓动函数（Back.Out 带轻微过冲）
-local function springTween(obj, props, time)
-    TweenService:Create(obj, TweenInfo.new(time or 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), props):Play()
-end
-
--- Animation 模块（仅用于 Shine 效果，与主题无关）
 local Animation = {}
 do
     local _RunService = RunService
@@ -28,7 +22,9 @@ do
     function Animation.Apply(theme, root, shineEnabled)
         if not root then return end
         local st = _state[root]
-        if st and st.conn then safeDisconnect(st.conn) end
+        if st and st.conn then
+            safeDisconnect(st.conn)
+        end
         st = {conn = nil}
         _state[root] = st
         if not theme or not shineEnabled or not theme.ShineEnabled or not theme.Shine then return end
@@ -3956,22 +3952,24 @@ function Fenglib:CreateWindow(Config)
     TabScroll.ScrollingDirection = Enum.ScrollingDirection.Y
     TabScroll.Parent = LeftContainer
 
+    -- ================= 新增：全局指示条 =================
+    local SelectorBar = Instance.new("Frame")
+    SelectorBar.Name = "SelectorBar"
+    SelectorBar.Size = UDim2.new(0, 3, 0, 0)
+    SelectorBar.BackgroundColor3 = CurrentTheme.Accent
+    SelectorBar.BackgroundTransparency = 0
+    SelectorBar.BorderSizePixel = 0
+    SelectorBar.Parent = TabScroll
+    Instance.new("UICorner", SelectorBar).CornerRadius = UDim.new(1, 0)
+    table.insert(ThemeListeners, function()
+        SelectorBar.BackgroundColor3 = CurrentTheme.Accent
+    end)
+
     local TabList = Instance.new("UIListLayout")
     TabList.Padding = UDim.new(0,4)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabList.Parent = TabScroll
-
-    -- 独立指示条：从 Tab 按钮中抽离
-    local TabSelector = Instance.new("Frame")
-    TabSelector.Name = "TabSelector"
-    TabSelector.Size = UDim2.new(0, 3, 0, 0)
-    TabSelector.Position = UDim2.new(0, 0, 0, 0)
-    TabSelector.BackgroundTransparency = 0
-    TabSelector.BorderSizePixel = 0
-    TabSelector.Parent = TabScroll
-    AddToRegistry(TabSelector, "BackgroundColor3", "Accent")
-    Instance.new("UICorner", TabSelector).CornerRadius = UDim.new(1,0)
 
     local function updateTabCanvas()
         TabScroll.CanvasSize = UDim2.new(0,0,0, TabList.AbsoluteContentSize.Y + 20)
@@ -4428,6 +4426,7 @@ function Fenglib:CreateWindow(Config)
     Window._activeTab = nil
     Window._tabs = {}
 
+    -- 重写 Tab 方法：移除内部指示条，使用全局 SelectorBar
     function Window:Tab(name, icon)
         local parentContainer = TabScroll
         local parentList = TabList
@@ -4435,55 +4434,47 @@ function Fenglib:CreateWindow(Config)
             parentContainer = Window._currentCategory.content
             parentList = Window._currentCategory.contentList
         end
+
         local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(0,140,0,32)
+        TabBtn.Size = UDim2.new(0, 140, 0, 32)
         TabBtn.BackgroundTransparency = 1
         TabBtn.BackgroundColor3 = CurrentTheme.Top
         TabBtn.Text = ""
         TabBtn.Parent = parentContainer
-        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0,10)
-        local glowFrame = Instance.new("Frame")
-        glowFrame.Name = "GlowBackground"
-        glowFrame.Size = UDim2.new(1,0,1,0)
-        glowFrame.BackgroundColor3 = CurrentTheme.Accent
-        glowFrame.BackgroundTransparency = 1
-        glowFrame.Parent = TabBtn
-        local glowCorner = Instance.new("UICorner")
-        glowCorner.CornerRadius = UDim.new(0,10)
-        glowCorner.Parent = glowFrame
-        local glowGrad = Instance.new("UIGradient")
-        glowGrad.Rotation = 0
-        glowGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
-        glowGrad.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.55), NumberSequenceKeypoint.new(1,1)})
-        glowGrad.Parent = glowFrame
+        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
+
+        -- 不再需要内部 glowFrame 和 TabBar
+
         local ContentFrame = Instance.new("Frame")
         ContentFrame.Name = "ContentFrame"
-        ContentFrame.Size = UDim2.new(1,0,1,0)
+        ContentFrame.Size = UDim2.new(1, 0, 1, 0)
         ContentFrame.BackgroundTransparency = 1
         ContentFrame.Parent = TabBtn
+
         local Layout = Instance.new("UIListLayout")
         Layout.FillDirection = Enum.FillDirection.Horizontal
         Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
         Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-        Layout.Padding = UDim.new(0,5)
+        Layout.Padding = UDim.new(0, 5)
         Layout.Parent = ContentFrame
+
         local Padding = Instance.new("UIPadding")
-        Padding.PaddingLeft = UDim.new(0,10)
+        Padding.PaddingLeft = UDim.new(0, 10)
         Padding.Parent = ContentFrame
+
         if icon then
             local TabIcon = Instance.new("ImageLabel")
-            TabIcon.Size = UDim2.new(0,28,0,28)
+            TabIcon.Size = UDim2.new(0, 28, 0, 28)
             TabIcon.BackgroundTransparency = 1
             if tonumber(icon) then TabIcon.Image = "rbxassetid://"..icon else TabIcon.Image = icon end
             TabIcon.Parent = ContentFrame
             AddToRegistry(TabIcon, "ImageColor3", "Text")
-            local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0,8)
-            iconCorner.Parent = TabIcon
+            Instance.new("UICorner", TabIcon).CornerRadius = UDim.new(0, 8)
         end
+
         local TabText = Instance.new("TextLabel")
-        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200,32)).X
-        TabText.Size = UDim2.new(0,textWidth,1,0)
+        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
+        TabText.Size = UDim2.new(0, textWidth, 1, 0)
         TabText.BackgroundTransparency = 1
         TabText.Font = Enum.Font.GothamMedium
         TabText.Text = name
@@ -4494,126 +4485,121 @@ function Fenglib:CreateWindow(Config)
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
 
-        -- 每个 Tab 不再包含自己的指示条，统一由 TabSelector 控制
-
+        -- 页面内容
         local Page = Instance.new("ScrollingFrame")
-        Page.Size = UDim2.new(1,0,1,0)
+        Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
         Page.ScrollBarThickness = 0
         Page.ScrollingEnabled = true
         Page.Visible = false
-        Page.Position = UDim2.new(0,0,0,60)
+        Page.Position = UDim2.new(0, 0, 0, 60)
         Page.Parent = PageContainer
-        local pageCorner = Instance.new("UICorner")
-        pageCorner.CornerRadius = UDim.new(0,16)
-        pageCorner.Parent = Page
+        Instance.new("UICorner", Page).CornerRadius = UDim.new(0, 16)
         Page.ClipsDescendants = true
+
         local PageContent = Instance.new("Frame")
-        PageContent.Size = UDim2.new(1,0,0,0)
+        PageContent.Size = UDim2.new(1, 0, 0, 0)
         PageContent.AutomaticSize = Enum.AutomaticSize.Y
         PageContent.BackgroundTransparency = 1
         PageContent.Parent = Page
+
         local PageList = Instance.new("UIListLayout")
-        PageList.Padding = UDim.new(0,10)
+        PageList.Padding = UDim.new(0, 10)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
         PageList.Parent = PageContent
+
         local function updatePageCanvas()
-            Page.CanvasSize = UDim2.new(0,0,0, PageList.AbsoluteContentSize.Y + 10)
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
         end
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
         task.spawn(updatePageCanvas)
 
-        local state = {isActive=false, btn=TabBtn, page=Page, textLabel=TabText, glow=glowFrame}
+        local state = {
+            isActive = false,
+            btn = TabBtn,
+            page = Page,
+            textLabel = TabText,
+        }
+
+        local selectorTween = nil
 
         TabBtn.MouseButton1Click:Connect(function()
             if Window._activeTab and Window._activeTab == state then return end
+
+            -- 取消旧 Tab 高亮
             for _, s in ipairs(Window._tabs) do
                 s.btn.BackgroundTransparency = 1
                 s.isActive = false
-                s.glow.BackgroundTransparency = 1
                 local txt = s.textLabel
-                if txt then Tween(txt, {TextTransparency=0.3}, 0.2) end
+                if txt then Tween(txt, { TextTransparency = 0.3 }, 0.2) end
             end
+
+            -- 激活新 Tab
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
-            state.glow.BackgroundTransparency = 0
-            Tween(TabText, {TextTransparency=0}, 0.2)
+            Tween(TabText, { TextTransparency = 0 }, 0.2)
 
-            -- 移动指示条到目标 Tab
-            local targetX = TabBtn.AbsolutePosition.X - TabScroll.AbsolutePosition.X
-            local targetWidth = TabBtn.AbsoluteSize.X
-            local targetHeight = TabBtn.AbsoluteSize.Y * 0.65
-            springTween(TabSelector, {
-                Position = UDim2.new(0, targetX, 0.175, 0),
-                Size = UDim2.new(0, 3, 0, targetHeight)
-            }, 0.3)
-
+            -- 切换页面
             if Window._activeTab then Window._activeTab.page.Visible = false end
             Page.Visible = true
-            Tween(Page, {Position=UDim2.new(0,0,0,0)}, 0.5)
+            Tween(Page, { Position = UDim2.new(0, 0, 0, 0) }, 0.5)
             Window._activeTab = state
+
+            -- 更新全局指示条
+            local container = TabBtn.Parent
+            local btnAbsPos = TabBtn.AbsolutePosition
+            local containerAbsPos = container.AbsolutePosition
+            local targetY = btnAbsPos.Y - containerAbsPos.Y
+            local targetHeight = TabBtn.AbsoluteSize.Y * 0.65
+
+            if selectorTween then selectorTween:Cancel() end
+            local info = TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            selectorTween = TweenService:Create(SelectorBar, info, {
+                Position = UDim2.new(0, 0, 0, targetY),
+                Size = UDim2.new(0, 3, 0, targetHeight)
+            })
+            selectorTween:Play()
         end)
 
+        -- 如果还没有激活的 Tab，则默认激活第一个
         if not Window._activeTab then
-            -- 首个 Tab 默认激活
-            TabBtn.BackgroundTransparency = 1
-            state.isActive = true
-            state.glow.BackgroundTransparency = 0
-            TabText.TextTransparency = 0
-            Page.Visible = true
-            Page.Position = UDim2.new(0,0,0,0)
-            Window._activeTab = state
-            -- 初始化指示条位置（延迟一帧确保布局完成）
-            task.defer(function()
-                local x = TabBtn.AbsolutePosition.X - TabScroll.AbsolutePosition.X
-                local w = TabBtn.AbsoluteSize.X
-                local h = TabBtn.AbsoluteSize.Y * 0.65
-                TabSelector.Position = UDim2.new(0, x, 0.175, 0)
-                TabSelector.Size = UDim2.new(0, 3, 0, h)
-            end)
+            TabBtn.MouseButton1Click:Fire()
         end
 
         table.insert(Window._tabs, state)
-        if name == "Config" then TabBtn.LayoutOrder = 99998 end
-        if name == "Settings" then TabBtn.LayoutOrder = 99999 end
+
+        -- 主题监听
         table.insert(ThemeListeners, function()
             for _, s in ipairs(Window._tabs) do
-                local glow = s.glow
-                if glow then
-                    glow.BackgroundColor3 = CurrentTheme.Accent
-                    local grad = glow:FindFirstChildOfClass("UIGradient")
-                    if grad then grad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent) end
-                end
                 s.btn.BackgroundTransparency = 1
             end
-            -- 指示条颜色跟随主题
-            AddToRegistry(TabSelector, "BackgroundColor3", "Accent")
         end)
 
-        local getElements = function()
+        -- 返回元素构建器（与之前相同）
+        local function getElements()
             local elements = {}
             local createSection = createSectionBuilder(PageContent, PageContent, 330, 1, Window)
-            elements.Section = function(_, config) return createSection(config) end
-            elements.Button   = function(_, config) return createSection("", nil, true).Button(config) end
-            elements.Toggle   = function(_, config) return createSection("", nil, true).Toggle(config) end
-            elements.Slider   = function(_, config) return createSection("", nil, true).Slider(config) end
-            elements.Dropdown = function(_, config) return createSection("", nil, true).Dropdown(config) end
-            elements.Keybind  = function(_, config) return createSection("", nil, true).Keybind(config) end
-            elements.Textbox  = function(_, config) return createSection("", nil, true).Textbox(config) end
-            elements.Input    = function(_, config) return createSection("", nil, true).Input(config) end
-            elements.Label    = function(_, config) return createSection("", nil, true).Label(config) end
-            elements.ColorPicker= function(_, config) return createSection("", nil, true).ColorPicker(config) end
-            elements.Image    = function(_, config) return createSection("", nil, true).Image(config) end
-            elements.Divider  = function(_, config) return createSection("", nil, true).Divider(config) end
-            elements.Space    = function(_, config) return createSection("", nil, true).Space(config) end
-            elements.Checkbox = function(_, config) return createSection("", nil, true).Checkbox(config) end
-            elements.ProgressBar = function(_, config) return createSection("", nil, true).ProgressBar(config) end
-            elements.Video    = function(_, config) return createSection("", nil, true).Video(config) end
-            elements.Audio    = function(_, config) return createSection("", nil, true).Audio(config) end
-            elements.Viewport = function(_, config) return createSection("", nil, true).Viewport(config) end
-            elements.Social   = function(_, config) return createSection("", nil, true).Social(config) end
-            elements.Paragraph = function(_, config) return createSection("", nil, true).Paragraph(config) end
-            elements.Group    = function(_, config) return createSection("", nil, true).Group(config) end
+            elements.Section      = function(_, config) return createSection(config) end
+            elements.Button       = function(_, config) return createSection("", nil, true).Button(config) end
+            elements.Toggle       = function(_, config) return createSection("", nil, true).Toggle(config) end
+            elements.Slider       = function(_, config) return createSection("", nil, true).Slider(config) end
+            elements.Dropdown     = function(_, config) return createSection("", nil, true).Dropdown(config) end
+            elements.Keybind      = function(_, config) return createSection("", nil, true).Keybind(config) end
+            elements.Textbox      = function(_, config) return createSection("", nil, true).Textbox(config) end
+            elements.Input        = function(_, config) return createSection("", nil, true).Input(config) end
+            elements.Label        = function(_, config) return createSection("", nil, true).Label(config) end
+            elements.ColorPicker  = function(_, config) return createSection("", nil, true).ColorPicker(config) end
+            elements.Image        = function(_, config) return createSection("", nil, true).Image(config) end
+            elements.Divider      = function(_, config) return createSection("", nil, true).Divider(config) end
+            elements.Space        = function(_, config) return createSection("", nil, true).Space(config) end
+            elements.Checkbox     = function(_, config) return createSection("", nil, true).Checkbox(config) end
+            elements.ProgressBar  = function(_, config) return createSection("", nil, true).ProgressBar(config) end
+            elements.Video        = function(_, config) return createSection("", nil, true).Video(config) end
+            elements.Audio        = function(_, config) return createSection("", nil, true).Audio(config) end
+            elements.Viewport     = function(_, config) return createSection("", nil, true).Viewport(config) end
+            elements.Social       = function(_, config) return createSection("", nil, true).Social(config) end
+            elements.Paragraph    = function(_, config) return createSection("", nil, true).Paragraph(config) end
+            elements.Group        = function(_, config) return createSection("", nil, true).Group(config) end
             return elements
         end
         return getElements()
