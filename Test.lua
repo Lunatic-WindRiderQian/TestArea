@@ -15,65 +15,20 @@ local function safeDisconnect(conn)
     end
 end
 
--- ========== 新增：弹簧工具（从 FluentPro 的 Flipper 库提取） ==========
-local Spring = {}
-Spring.__index = Spring
-
-function Spring.new(target, config)
-    config = config or {}
-    return setmetatable({
-        _target = target,
-        _frequency = config.frequency or 4,
-        _damping = config.dampingRatio or 1,
-    }, Spring)
+-- 用于模拟弹簧效果的缓动函数（Back.Out 带轻微过冲）
+local function springTween(obj, props, time)
+    TweenService:Create(obj, TweenInfo.new(time or 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), props):Play()
 end
 
-function Spring:step(current, velocity, dt)
-    local f = self._frequency * 2 * math.pi
-    local g = self._damping
-    local target = self._target
-    local x = current - target
-    local v = velocity or 0
-    local eps = 0.001
-    local eps2 = 0.0001
-
-    if g == 1 then
-        local m = (x * (1 + f * dt) + v * dt) * math.exp(-f * dt) + target
-        local n = (v * (1 - f * dt) - x * (f * f * dt)) * math.exp(-f * dt)
-        return {value = m, velocity = n, complete = math.abs(n) < eps and math.abs(m - target) < eps2}
-    elseif g < 1 then
-        local o = math.sqrt(1 - g * g)
-        local p = math.cos(f * o * dt)
-        local s = math.sin(f * o * dt)
-        local t = s / o
-        local u = s / (f * o)
-        local m = (x * (p + g * t) + v * u) * math.exp(-g * f * dt) + target
-        local n = (v * (p - t * g) - x * (t * f)) * math.exp(-g * f * dt)
-        return {value = m, velocity = n, complete = math.abs(n) < eps and math.abs(m - target) < eps2}
-    else
-        local o = math.sqrt(g * g - 1)
-        local p = -f * (g - o)
-        local s = -f * (g + o)
-        local t = (v - x * p) / (2 * f * o)
-        local u = x - t
-        local m = u * math.exp(p * dt) + t * math.exp(s * dt) + target
-        local n = u * p * math.exp(p * dt) + t * s * math.exp(s * dt)
-        return {value = m, velocity = n, complete = math.abs(n) < eps and math.abs(m - target) < eps2}
-    end
-end
--- ================================================================
-
+-- Animation 模块（仅用于 Shine 效果，与主题无关）
 local Animation = {}
 do
     local _RunService = RunService
     local _state = setmetatable({}, {__mode = "k"})
     function Animation.Apply(theme, root, shineEnabled)
-        -- 保留原有的 Shine 动画（无改动）
         if not root then return end
         local st = _state[root]
-        if st and st.conn then
-            safeDisconnect(st.conn)
-        end
+        if st and st.conn then safeDisconnect(st.conn) end
         st = {conn = nil}
         _state[root] = st
         if not theme or not shineEnabled or not theme.ShineEnabled or not theme.Shine then return end
@@ -4007,6 +3962,17 @@ function Fenglib:CreateWindow(Config)
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabList.Parent = TabScroll
 
+    -- 独立指示条：从 Tab 按钮中抽离
+    local TabSelector = Instance.new("Frame")
+    TabSelector.Name = "TabSelector"
+    TabSelector.Size = UDim2.new(0, 3, 0, 0)
+    TabSelector.Position = UDim2.new(0, 0, 0, 0)
+    TabSelector.BackgroundTransparency = 0
+    TabSelector.BorderSizePixel = 0
+    TabSelector.Parent = TabScroll
+    AddToRegistry(TabSelector, "BackgroundColor3", "Accent")
+    Instance.new("UICorner", TabSelector).CornerRadius = UDim.new(1,0)
+
     local function updateTabCanvas()
         TabScroll.CanvasSize = UDim2.new(0,0,0, TabList.AbsoluteContentSize.Y + 20)
     end
@@ -4462,48 +4428,6 @@ function Fenglib:CreateWindow(Config)
     Window._activeTab = nil
     Window._tabs = {}
 
-    -- ====== 新增：弹簧状态管理 ======
-    local barSprings = {}      -- 键为 TabBtn，值为 { spring, current, velocity, target, bar }
-    local animConnection = nil
-
-    local function startSpringAnimation()
-        if animConnection then return end
-        animConnection = RunService.Heartbeat:Connect(function(dt)
-            local anyActive = false
-            for btn, state in pairs(barSprings) do
-                if state.bar and state.bar.Parent then
-                    anyActive = true
-                    local result = state.spring:step(state.current, state.velocity, dt)
-                    state.current = result.value
-                    state.velocity = result.velocity
-                    state.bar.Size = UDim2.new(0, 3, result.value, 0)
-                    if result.complete then
-                        state.current = state.target
-                        state.velocity = 0
-                    end
-                else
-                    barSprings[btn] = nil
-                end
-            end
-            if not anyActive then
-                safeDisconnect(animConnection)
-                animConnection = nil
-            end
-        end)
-    end
-
-    local function setBarTarget(btn, targetScale)
-        local state = barSprings[btn]
-        if state then
-            state.target = targetScale
-            state.spring._target = targetScale
-            state.current = state.bar.Size.Y.Scale or 0
-            state.velocity = 0
-            startSpringAnimation()
-        end
-    end
-    -- =================================
-
     function Window:Tab(name, icon)
         local parentContainer = TabScroll
         local parentList = TabList
@@ -4532,26 +4456,6 @@ function Fenglib:CreateWindow(Config)
         glowGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
         glowGrad.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.55), NumberSequenceKeypoint.new(1,1)})
         glowGrad.Parent = glowFrame
-        local TabBar = Instance.new("Frame")
-        TabBar.Size = UDim2.new(0,3,0,0)   -- 宽度3，高度比例将由弹簧驱动
-        TabBar.Position = UDim2.new(0,0,0.175,0)
-        TabBar.BackgroundTransparency = 1
-        TabBar.BorderSizePixel = 0
-        TabBar.Parent = TabBtn
-        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1,0)
-        AddToRegistry(TabBar, "BackgroundColor3", "Accent")
-
-        -- 初始化弹簧状态
-        local initScale = 0
-        local spring = Spring.new(0, { frequency = 6, dampingRatio = 1 })  -- 与 FluentPro 类似
-        barSprings[TabBtn] = {
-            spring = spring,
-            current = 0,
-            velocity = 0,
-            target = 0,
-            bar = TabBar
-        }
-
         local ContentFrame = Instance.new("Frame")
         ContentFrame.Name = "ContentFrame"
         ContentFrame.Size = UDim2.new(1,0,1,0)
@@ -4589,6 +4493,9 @@ function Fenglib:CreateWindow(Config)
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
+
+        -- 每个 Tab 不再包含自己的指示条，统一由 TabSelector 控制
+
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1,0,1,0)
         Page.BackgroundTransparency = 1
@@ -4615,56 +4522,57 @@ function Fenglib:CreateWindow(Config)
         end
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
         task.spawn(updatePageCanvas)
-        local state = {isActive=false, btn=TabBtn, page=Page, textLabel=TabText, bar=TabBar, glow=glowFrame}
+
+        local state = {isActive=false, btn=TabBtn, page=Page, textLabel=TabText, glow=glowFrame}
+
         TabBtn.MouseButton1Click:Connect(function()
             if Window._activeTab and Window._activeTab == state then return end
-            -- 隐藏所有其他指示条（目标设为0）
             for _, s in ipairs(Window._tabs) do
                 s.btn.BackgroundTransparency = 1
                 s.isActive = false
                 s.glow.BackgroundTransparency = 1
-                local bar = s.bar
-                if bar then
-                    -- 设置弹簧目标为0
-                    setBarTarget(s.btn, 0)
-                end
                 local txt = s.textLabel
                 if txt then Tween(txt, {TextTransparency=0.3}, 0.2) end
             end
-            -- 激活当前 Tab
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
-            if TabBar then
-                -- 弹簧目标为 0.65
-                setBarTarget(TabBtn, 0.65)
-            end
             Tween(TabText, {TextTransparency=0}, 0.2)
+
+            -- 移动指示条到目标 Tab
+            local targetX = TabBtn.AbsolutePosition.X - TabScroll.AbsolutePosition.X
+            local targetWidth = TabBtn.AbsoluteSize.X
+            local targetHeight = TabBtn.AbsoluteSize.Y * 0.65
+            springTween(TabSelector, {
+                Position = UDim2.new(0, targetX, 0.175, 0),
+                Size = UDim2.new(0, 3, 0, targetHeight)
+            }, 0.3)
+
             if Window._activeTab then Window._activeTab.page.Visible = false end
             Page.Visible = true
             Tween(Page, {Position=UDim2.new(0,0,0,0)}, 0.5)
             Window._activeTab = state
         end)
+
         if not Window._activeTab then
+            -- 首个 Tab 默认激活
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
-            -- 初始激活：直接设置指示条为0.65，不用动画
-            TabBar.Size = UDim2.new(0,3,0.65,0)
-            TabBar.BackgroundTransparency = 0
-            -- 记录弹簧状态为已完成
-            local st = barSprings[TabBtn]
-            if st then
-                st.current = 0.65
-                st.target = 0.65
-                st.velocity = 0
-                st.spring._target = 0.65
-            end
             TabText.TextTransparency = 0
             Page.Visible = true
             Page.Position = UDim2.new(0,0,0,0)
             Window._activeTab = state
+            -- 初始化指示条位置（延迟一帧确保布局完成）
+            task.defer(function()
+                local x = TabBtn.AbsolutePosition.X - TabScroll.AbsolutePosition.X
+                local w = TabBtn.AbsoluteSize.X
+                local h = TabBtn.AbsoluteSize.Y * 0.65
+                TabSelector.Position = UDim2.new(0, x, 0.175, 0)
+                TabSelector.Size = UDim2.new(0, 3, 0, h)
+            end)
         end
+
         table.insert(Window._tabs, state)
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
         if name == "Settings" then TabBtn.LayoutOrder = 99999 end
@@ -4678,7 +4586,10 @@ function Fenglib:CreateWindow(Config)
                 end
                 s.btn.BackgroundTransparency = 1
             end
+            -- 指示条颜色跟随主题
+            AddToRegistry(TabSelector, "BackgroundColor3", "Accent")
         end)
+
         local getElements = function()
             local elements = {}
             local createSection = createSectionBuilder(PageContent, PageContent, 330, 1, Window)
