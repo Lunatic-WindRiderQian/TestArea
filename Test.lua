@@ -352,13 +352,13 @@ local function styleContainer(frame)
     table.insert(ThemeListeners, function() stroke.Color = CurrentTheme.Stroke end)
 end
 
--- ========== 锁定覆盖层（WindUI 风格：黑色半透明 + 白色图标/文字） ==========
+-- ========== 锁定覆盖层（WindUI 风格：居中显示） ==========
 local function createLockOverlay(parent, defaultTitle)
     local overlay = Instance.new("Frame")
     overlay.Name = "LockOverlay"
     overlay.Size = UDim2.new(1, 0, 1, 0)
     overlay.BackgroundTransparency = 0.65
-    overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)   -- 纯黑背景
+    overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     overlay.Visible = false
     overlay.Active = true
     overlay.ZIndex = 999
@@ -368,25 +368,40 @@ local function createLockOverlay(parent, defaultTitle)
     corner.CornerRadius = UDim.new(0, 4)
     corner.Parent = overlay
 
+    -- 居中容器
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(0, 0, 0, 0)
+    container.AutomaticSize = Enum.AutomaticSize.XY
+    container.AnchorPoint = Vector2.new(0.5, 0.5)
+    container.Position = UDim2.new(0.5, 0, 0.5, 0)
+    container.BackgroundTransparency = 1
+    container.Parent = overlay
+
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Horizontal
+    layout.VerticalAlignment = Enum.VerticalAlignment.Center
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout.Padding = UDim.new(0, 8)
+    layout.Parent = container
+
     local lockIcon = Instance.new("ImageLabel")
     lockIcon.Size = UDim2.new(0, 16, 0, 16)
-    lockIcon.Position = UDim2.new(0, 10, 0.5, -8)
     lockIcon.BackgroundTransparency = 1
-    lockIcon.Image = "rbxassetid://10734898592"        -- 锁图标
-    lockIcon.ImageColor3 = Color3.fromRGB(255, 255, 255) -- 白色
-    lockIcon.Parent = overlay
+    lockIcon.Image = "rbxassetid://10734898592"
+    lockIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    lockIcon.Parent = container
 
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Name = "LockTitle"
-    titleLabel.Size = UDim2.new(1, -36, 1, 0)
-    titleLabel.Position = UDim2.new(0, 34, 0, 0)
+    titleLabel.Size = UDim2.new(0, 0, 0, 0)
+    titleLabel.AutomaticSize = Enum.AutomaticSize.XY
     titleLabel.BackgroundTransparency = 1
     titleLabel.Font = Enum.Font.GothamMedium
     titleLabel.Text = defaultTitle or "Locked"
     titleLabel.TextSize = 13
-    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)  -- 白色文字
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Parent = overlay
+    titleLabel.Parent = container
 
     return overlay
 end
@@ -699,7 +714,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local child = {}
 
         -- ====== 所有元素定义 ======
-        -- (注意：每个元素创建时都添加了锁定覆盖层，交互回调会检查 IsLocked)
+        -- 每个交互元素都添加了锁定覆盖层，交互前检查 IsLocked()
 
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
