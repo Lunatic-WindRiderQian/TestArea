@@ -352,17 +352,17 @@ local function styleContainer(frame)
     table.insert(ThemeListeners, function() stroke.Color = CurrentTheme.Stroke end)
 end
 
--- ========== 新增锁定支持 ==========
+-- ========== 锁定覆盖层（WindUI 风格：黑色半透明 + 白色图标/文字） ==========
 local function createLockOverlay(parent, defaultTitle)
     local overlay = Instance.new("Frame")
     overlay.Name = "LockOverlay"
     overlay.Size = UDim2.new(1, 0, 1, 0)
     overlay.BackgroundTransparency = 0.65
+    overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)   -- 纯黑背景
     overlay.Visible = false
     overlay.Active = true
     overlay.ZIndex = 999
     overlay.Parent = parent
-    AddToRegistry(overlay, "BackgroundColor3", "Main")
 
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 4)
@@ -372,9 +372,9 @@ local function createLockOverlay(parent, defaultTitle)
     lockIcon.Size = UDim2.new(0, 16, 0, 16)
     lockIcon.Position = UDim2.new(0, 10, 0.5, -8)
     lockIcon.BackgroundTransparency = 1
-    lockIcon.Image = "rbxassetid://10734898592"
+    lockIcon.Image = "rbxassetid://10734898592"        -- 锁图标
+    lockIcon.ImageColor3 = Color3.fromRGB(255, 255, 255) -- 白色
     lockIcon.Parent = overlay
-    AddToRegistry(lockIcon, "ImageColor3", "SubText")
 
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Name = "LockTitle"
@@ -384,9 +384,9 @@ local function createLockOverlay(parent, defaultTitle)
     titleLabel.Font = Enum.Font.GothamMedium
     titleLabel.Text = defaultTitle or "Locked"
     titleLabel.TextSize = 13
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)  -- 白色文字
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.Parent = overlay
-    AddToRegistry(titleLabel, "TextColor3", "Text")
 
     return overlay
 end
@@ -698,7 +698,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local child = {}
 
-        -- ====== 所有元素定义（已添加 Lock 支持） ======
+        -- ====== 所有元素定义 ======
+        -- (注意：每个元素创建时都添加了锁定覆盖层，交互回调会检查 IsLocked)
 
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
@@ -2096,7 +2097,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local obj = {}
             function obj.UpdateText(newText) TextLabel.Text = newText end
             function obj.SetVisible(state) LabelFrame.Visible = state end
-            -- Label 无交互，不添加锁定
             return obj
         end
 
@@ -3793,7 +3793,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             function mod:SetCbn(newText) buttonText=tostring(newText or "复制"); local btn=wrap:FindFirstChild("CopyButton"); if btn then btn.Text=buttonText end end
             function mod:Destroy() wrap:Destroy() end
 
-            -- 锁定支持（如果有复制按钮则已在上面返回带锁的对象）
             return mod
         end
 
