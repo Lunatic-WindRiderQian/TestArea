@@ -352,8 +352,17 @@ local function styleContainer(frame)
     table.insert(ThemeListeners, function() stroke.Color = CurrentTheme.Stroke end)
 end
 
--- Helper to create lock overlay
+-- Helper to create lock overlay (improved with rounded corners and horizontal layout)
 local function createLockOverlay(parent, defaultTitle)
+    -- 获取父元素的圆角半径（如果没有则使用默认 8）
+    local cornerRadius = UDim.new(0, 8)
+    for _, child in ipairs(parent:GetChildren()) do
+        if child:IsA("UICorner") then
+            cornerRadius = child.CornerRadius
+            break
+        end
+    end
+
     local lockFrame = Instance.new("Frame")
     lockFrame.Size = UDim2.new(1, 0, 1, 0)
     lockFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -362,26 +371,46 @@ local function createLockOverlay(parent, defaultTitle)
     lockFrame.ZIndex = 10
     lockFrame.Parent = parent
 
-    local lockIcon = Instance.new("ImageLabel")
-    lockIcon.Size = UDim2.new(0, 16, 0, 16)
-    lockIcon.Position = UDim2.new(0.5, -8, 0.5, -12)
-    lockIcon.BackgroundTransparency = 1
-    lockIcon.Image = "rbxassetid://10709791386"
-    lockIcon.Parent = lockFrame
-    AddToRegistry(lockIcon, "ImageColor3", "Text")
+    -- 圆角与父元素一致
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = cornerRadius
+    corner.Parent = lockFrame
 
+    -- 水平布局容器
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, 0, 1, 0)
+    container.BackgroundTransparency = 1
+    container.Parent = lockFrame
+
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Horizontal
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout.VerticalAlignment = Enum.VerticalAlignment.Center
+    layout.Padding = UDim.new(0, 8)
+    layout.Parent = container
+
+    -- 锁图标（使用指定 ID）
+    local lockIcon = Instance.new("ImageLabel")
+    lockIcon.Size = UDim2.new(0, 18, 0, 18)
+    lockIcon.BackgroundTransparency = 1
+    lockIcon.Image = "rbxassetid://12060512624"
+    lockIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    lockIcon.ImageTransparency = 0.1
+    lockIcon.Parent = container
+
+    -- 锁文字
     local lockLabel = Instance.new("TextLabel")
-    lockLabel.Size = UDim2.new(1, 0, 0, 20)
-    lockLabel.Position = UDim2.new(0, 0, 0.5, 8)
+    lockLabel.Size = UDim2.new(0, 0, 0, 20)
     lockLabel.BackgroundTransparency = 1
-    lockLabel.Font = Enum.Font.GothamMedium
+    lockLabel.Font = Enum.Font.GothamBold
     lockLabel.Text = defaultTitle or "Locked"
-    lockLabel.TextSize = 14
     lockLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     lockLabel.TextTransparency = 0.2
-    lockLabel.Parent = lockFrame
-    AddToRegistry(lockLabel, "TextColor3", "Text")
+    lockLabel.TextSize = 14
+    lockLabel.AutomaticSize = Enum.AutomaticSize.X
+    lockLabel.Parent = container
 
+    -- 返回锁框架和标签（以便后续更新文字）
     return lockFrame, lockLabel
 end
 
@@ -897,7 +926,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Val = val
                     Num.Text = tostring(Val)
                     if ConfigObjects[controlId] then ConfigObjects[controlId].Value = Val end
-                    callback(Val)
+                    callback(val)
                     return
                 end
                 val = math.clamp(val, min, max)
@@ -2073,7 +2102,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TextLabel.Parent = LabelFrame
             AddToRegistry(TextLabel, "TextColor3", "Text")
 
-            -- Lock (optional, but we add for consistency)
+            -- Lock (optional)
             local locked = config.Locked == true
             local lockedTitle = config.LockedTitle or "Locked"
             local lockFrame, lockLabel = createLockOverlay(LabelFrame, lockedTitle)
@@ -2911,11 +2940,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             function mod:Play() if not locked and vid then pcall(function() vid:Play() end); playing=true; playBtn.Visible=false; pauseBtn.Visible=true end end
             function mod:Pause() if not locked and vid then pcall(function() vid:Pause() end); playing=false; playBtn.Visible=true; pauseBtn.Visible=false end end
             function mod:Stop() if not locked and vid then pcall(function() vid:Stop() end); playing=false; playBtn.Visible=true; pauseBtn.Visible=false end end
-            function mod:SetVideo(s) if not locked and vid then local r = resolveMedia(s); if r~="" then vid.Video = r; placeholder.Visible = false else placeholder.Visible = true end end end
-            function mod:SetVolume(v) if vid then vid.Volume = math.clamp(v,0,1) end; volLbl.Text = tostring(math.floor(math.clamp(v,0,1)*100)).."%" end
-            function mod:SetAspectRatio(r) ratioNum = parseRatio(r); recalcAspect() end
+            function mod:SetVideo(s) if not locked and vid then local r=resolveMedia(s); if r~="" then vid.Video=r; placeholder.Visible=false else placeholder.Visible=true end end end
+            function mod:SetVolume(v) if vid then vid.Volume=math.clamp(v,0,1) end; volLbl.Text=tostring(math.floor(math.clamp(v,0,1)*100)).."%" end
+            function mod:SetAspectRatio(r) ratioNum=parseRatio(r); recalcAspect() end
             function mod:Destroy() safeDisconnect(hbConn); wrap:Destroy() end
-            function mod:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
+            function mod:Lock(title) updateLock(true); if title then lockLabel.Text=title; lockedTitle=title end end
             function mod:Unlock() updateLock(false) end
             function mod:IsLocked() return locked end
             return mod
