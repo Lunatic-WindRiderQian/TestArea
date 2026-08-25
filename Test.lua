@@ -1,3 +1,4 @@
+-- [[ 完整 Test.lua 修复版 ]] --
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -352,7 +353,7 @@ local function styleContainer(frame)
     table.insert(ThemeListeners, function() stroke.Color = CurrentTheme.Stroke end)
 end
 
--- ========== 锁定覆盖层（WindUI 风格：居中显示，锁图标使用 rbxassetid://12060512624） ==========
+-- ========== 锁定覆盖层（居中，图标 rbxassetid://12060512624） ==========
 local function createLockOverlay(parent, defaultTitle)
     local overlay = Instance.new("Frame")
     overlay.Name = "LockOverlay"
@@ -368,7 +369,6 @@ local function createLockOverlay(parent, defaultTitle)
     corner.CornerRadius = UDim.new(0, 4)
     corner.Parent = overlay
 
-    -- 居中容器
     local container = Instance.new("Frame")
     container.Size = UDim2.new(0, 0, 0, 0)
     container.AutomaticSize = Enum.AutomaticSize.XY
@@ -388,7 +388,7 @@ local function createLockOverlay(parent, defaultTitle)
     local lockIcon = Instance.new("ImageLabel")
     lockIcon.Size = UDim2.new(0, 16, 0, 16)
     lockIcon.BackgroundTransparency = 1
-    lockIcon.Image = "rbxassetid://12060512624"   -- 新的锁图标
+    lockIcon.Image = "rbxassetid://12060512624"
     lockIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
     lockIcon.Parent = container
 
@@ -436,7 +436,7 @@ local function applyLockMethods(obj, overlay, config)
     return obj
 end
 
--- ========== 元素构建器 ==========
+-- ========== 创建 Section 构建器 ==========
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
     local padding = parent:FindFirstChild("SectionPadding")
@@ -714,7 +714,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local child = {}
 
-        -- ====== 所有元素定义（每个交互入口都检查 IsLocked） ======
+        -- ====== 所有元素定义（每个交互入口都检查 IsLocked，且先检查对象是否存在） ======
 
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
@@ -764,6 +764,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             applyLockMethods(obj, overlay, config)
 
             ClickBtn.MouseButton1Click:Connect(function()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 pcall(callback)
             end)
@@ -822,9 +823,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local h = { Value = Enabled, Callback = callback, Type = "Toggle" }
 
             function h:SetValue(val)
-                if h:IsLocked() then return end
+                if not self then return end
+                if self:IsLocked() then return end
                 val = not (not val)
-                h.Value = val
+                self.Value = val
                 Dot.Position = val and UDim2.new(1,-19,0.5,-8) or UDim2.new(0,3,0.5,-8)
                 if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
                 pcall(callback, val)
@@ -835,6 +837,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = { Type="Toggle", Value=h.Value, Set=function(val) h:SetValue(val) end }
 
             ClickBtn.MouseButton1Click:Connect(function()
+                if not h then return end
                 if h:IsLocked() then return end
                 h:SetValue(not h.Value)
             end)
@@ -939,6 +942,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local obj = {}
 
             function obj:UpdateSlider(val)
+                if not self then return end
                 if self:IsLocked() then return end
                 if unlimited then
                     Val = val
@@ -984,6 +988,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             if Bar then
                 Bar.InputBegan:Connect(function(input)
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     if unlimited then return end
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -998,13 +1003,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end
                 end)
                 UserInputService.InputChanged:Connect(function(input)
-                    if not obj:IsLocked() and dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    if not obj then return end
+                    if obj:IsLocked() then return end
+                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                         obj:UpdateSlider(GetValueFromInput(input))
                     end
                 end)
             end
 
             Num.FocusLost:Connect(function()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 Tween(NumStroke, {Transparency=0.75}, 0.15)
                 SetFocused(false)
@@ -1166,6 +1174,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     local optData = {button=O,label=label,check=check,checkGrad=checkGrad,checkStroke=checkStroke,checkMark=checkMark,value=opt,selected=false}
                     table.insert(optionButtons, optData)
                     O.MouseButton1Click:Connect(function()
+                        if not obj then return end
                         if obj:IsLocked() then return end
                         if multi then
                             local idx = table.find(selected, opt)
@@ -1213,6 +1222,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             applyLockMethods(obj, overlay, config)
 
             ClickBtn.MouseButton1Click:Connect(function()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 Dropped = not Dropped
                 if Dropped then
@@ -1253,6 +1263,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = {
                 Type="Dropdown", Value=multi and selected or selected,
                 Set=function(val)
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     if multi then
                         if type(val)=="table" then
@@ -1383,6 +1394,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = {
                 Type="Keybind", Value={Key=state.Key, Mode=state.Mode},
                 Set=function(val)
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     if type(val)=="table" then
                         local newKey = val.Key or state.Key
@@ -1398,6 +1410,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             }
 
             local function updateKeyDisplay(newKey)
+                if not obj then return end
                 if obj:IsLocked() then return end
                 state.Key = newKey
                 KeyLabel.Text = newKey
@@ -1405,6 +1418,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
 
             KeyBtn.MouseButton1Click:Connect(function()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if state.IsWaiting then return end
                 state.IsWaiting = true
@@ -1420,14 +1434,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
 
             local function doToggle()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if state.Mode == "Toggle" then state.Toggled = not state.Toggled; pcall(callback, state.Toggled) end
             end
             local function doPress()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if state.Mode == "Hold" then pcall(callback, true) end
             end
             local function doRelease()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if state.Mode == "Hold" then pcall(callback, false) end
             end
@@ -1438,6 +1455,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 if gpe then return end
                 if state.IsWaiting then return end
                 if UserInputService:GetFocusedTextBox() then return end
+                if not obj then return end
                 if obj:IsLocked() then return end
                 local key = state.Key
                 if state.Mode == "Toggle" then
@@ -1453,6 +1471,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             inputEndConn = UserInputService.InputEnded:Connect(function(input, gpe)
                 if gpe then return end
                 if state.IsWaiting then return end
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if state.Mode == "Hold" then
                     local key = state.Key
@@ -1468,13 +1487,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
 
             function obj.SetValue(val, newMode)
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if type(val)=="table" then ConfigObjects[controlId].Set(val)
                 else ConfigObjects[controlId].Set({Key=tostring(val), Mode=newMode or state.Mode}) end
             end
             function obj.GetValue() return {Key=state.Key, Mode=state.Mode} end
             function obj.GetState() return state.Toggled end
-            function obj.SetMode(newMode) if not obj:IsLocked() then state.Mode = newMode; ConfigObjects[controlId].Value = {Key=state.Key, Mode=state.Mode} end end
+            function obj.SetMode(newMode)
+                if not obj then return end
+                if not obj:IsLocked() then state.Mode = newMode; ConfigObjects[controlId].Value = {Key=state.Key, Mode=state.Mode} end
+            end
             function obj.Destroy() cleanup(); Tile:Destroy(); ConfigObjects[controlId]=nil end
             function obj.SetVisible(vis) Tile.Visible = vis end
 
@@ -1674,6 +1697,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 btn.MouseEnter:Connect(function() Tween(stroke, {Transparency=0}, 0.15) end)
                 btn.MouseLeave:Connect(function() Tween(stroke, {Transparency=1}, 0.15) end)
                 btn.MouseButton1Click:Connect(function()
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     Color = data.Color
                     hue, sat, val = Color3.toHSV(Color)
@@ -1688,6 +1712,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
 
             local function ApplyColor()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 Color = Color3.fromHSV(hue,sat,val)
                 Swatch.BackgroundColor3 = Color
@@ -1706,6 +1731,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             SVBtn.ZIndex = 3
             SVBtn.Parent = SVBox
             SVBtn.InputBegan:Connect(function(i)
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
                     svDragging = true
@@ -1719,6 +1745,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
             UserInputService.InputChanged:Connect(function(i)
                 if svDragging and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     local x = (i.Position.X - SVBox.AbsolutePosition.X)/SVBox.AbsoluteSize.X
                     local y = (i.Position.Y - SVBox.AbsolutePosition.Y)/SVBox.AbsoluteSize.Y
@@ -1740,6 +1767,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             HueBtn.ZIndex = 3
             HueBtn.Parent = HueBar
             HueBtn.InputBegan:Connect(function(i)
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
                     hueDragging = true
@@ -1753,6 +1781,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
             UserInputService.InputChanged:Connect(function(i)
                 if hueDragging and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     local y = (i.Position.Y - HueBar.AbsolutePosition.Y)/HueBar.AbsoluteSize.Y
                     hue = math.clamp(y,0,1)
@@ -1774,6 +1803,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AlphaBtn.ZIndex = 3
             AlphaBtn.Parent = AlphaBar
             AlphaBtn.InputBegan:Connect(function(i)
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
                     alphaDragging = true
@@ -1785,6 +1815,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
             UserInputService.InputChanged:Connect(function(i)
                 if alphaDragging and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     local x = (i.Position.X - AlphaBar.AbsolutePosition.X)/AlphaBar.AbsoluteSize.X
                     alpha = math.clamp(x,0,1)
@@ -1797,6 +1828,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
 
             HexBox.FocusLost:Connect(function()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 local txt = HexBox.Text:gsub("#","")
                 if #txt==6 or #txt==3 then
@@ -1818,6 +1850,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             applyLockMethods(obj, overlay, config)
 
             local function togglePanel()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 isOpen = not isOpen
                 if isOpen then
@@ -1835,6 +1868,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = {
                 Type="ColorPicker", Value={R=Color.R, G=Color.G, B=Color.B, A=alpha},
                 Set=function(val)
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     if type(val)=="table" then
                         Color = Color3.new(val.R or 0, val.G or 0, val.B or 0)
@@ -1945,6 +1979,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             applyLockMethods(obj, overlay, config)
 
             local function filterText(text)
+                if not obj then return text end
                 if obj:IsLocked() then return text end
                 if maxLength then text = text:sub(1,maxLength) end
                 if numeric then
@@ -1959,6 +1994,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
 
             local function updateValue()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 local filtered = filterText(InputBox.Text)
                 if filtered ~= InputBox.Text then InputBox.Text = filtered end
@@ -1968,6 +2004,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
 
             local function onFocus()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 Tween(Indicator, {Size=UDim2.new(1,-2,0,2), Position=UDim2.new(0,1,1,0), BackgroundTransparency=0}, 0.15)
                 Tween(BoxContainer, {BackgroundTransparency=0.05}, 0.15)
@@ -1975,6 +2012,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
 
             local function onFocusLost()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 Tween(Indicator, {Size=UDim2.new(1,-4,0,1), Position=UDim2.new(0,2,1,0), BackgroundTransparency=0.5}, 0.15)
                 Tween(BoxContainer, {BackgroundTransparency=0.1}, 0.15)
@@ -1991,6 +2029,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             if not finished then
                 InputBox:GetPropertyChangedSignal("Text"):Connect(function()
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     local raw = InputBox.Text
                     local filtered = filterText(raw)
@@ -2008,12 +2047,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId] = {
                 Type="Input", Value=InputBox.Text,
                 Set=function(val)
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     local str=tostring(val); local filtered=filterText(str); InputBox.Text=filtered; ConfigObjects[controlId].Value=filtered; if callback then pcall(callback, filtered) end
                 end
             }
 
             function obj.UpdateText(newText)
+                if not obj then return end
                 if obj:IsLocked() then return end
                 local filtered=filterText(tostring(newText)); InputBox.Text=filtered; ConfigObjects[controlId].Value=filtered
             end
@@ -2073,15 +2114,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local obj = {}
             applyLockMethods(obj, overlay, config)
 
-            Box.Focused:Connect(function() if not obj:IsLocked() then Tween(BoxStroke, {Transparency=0.2}, 0.15) end end)
+            Box.Focused:Connect(function()
+                if not obj then return end
+                if not obj:IsLocked() then Tween(BoxStroke, {Transparency=0.2}, 0.15) end
+            end)
             Box.FocusLost:Connect(function()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 Tween(BoxStroke, {Transparency=0.75}, 0.15)
                 ConfigObjects[controlId].Value = Box.Text
                 pcall(callback, Box.Text)
             end)
 
-            ConfigObjects[controlId] = {Type="Textbox", Value="", Set=function(val) if not obj:IsLocked() then Box.Text=val; pcall(callback, val) end end}
+            ConfigObjects[controlId] = {Type="Textbox", Value="", Set=function(val)
+                if not obj then return end
+                if not obj:IsLocked() then Box.Text=val; pcall(callback, val) end
+            end}
 
             function obj.SetVisible(state) Frame.Visible = state end
             return obj
@@ -2245,6 +2293,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             applyLockMethods(obj, overlay, config)
 
             clickBtn.MouseButton1Click:Connect(function()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 pcall(callback)
             end)
@@ -2432,9 +2481,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             table.insert(ThemeListeners, updateColors)
 
             function h:SetValue(val)
-                if h:IsLocked() then return end
+                if not self then return end
+                if self:IsLocked() then return end
                 val = not (not val)
-                h.Value = val
+                self.Value = val
                 updateColors()
                 if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
                 pcall(callback, val)
@@ -2449,6 +2499,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             function h:Destroy() Tile:Destroy(); ConfigObjects[controlId]=nil end
 
             ClickBtn.MouseButton1Click:Connect(function()
+                if not h then return end
                 if h:IsLocked() then return end
                 h:SetValue(not h.Value)
             end)
@@ -2847,6 +2898,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             vidClickBtn.AutoButtonColor = false
             vidClickBtn.Parent = wrap
             vidClickBtn.MouseButton1Click:Connect(function()
+                if not obj then return end
                 if not obj:IsLocked() then
                     if ctrlVisible then fadeTimer = 3 else showOverlay() end
                 end
@@ -2858,16 +2910,19 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             applyLockMethods(obj, overlay, config)
 
             playBtn.MouseButton1Click:Connect(function()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if vid then pcall(function() vid:Play() end) end
                 playing = true; playBtn.Visible = false; pauseBtn.Visible = true; resetFade()
             end)
             pauseBtn.MouseButton1Click:Connect(function()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if vid then pcall(function() vid:Pause() end) end
                 playing = false; playBtn.Visible = true; pauseBtn.Visible = false; resetFade()
             end)
             stopBtn.MouseButton1Click:Connect(function()
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if vid then pcall(function() vid:Stop() end) end
                 playing = false; playBtn.Visible = true; pauseBtn.Visible = false; resetFade()
@@ -2877,6 +2932,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local seeking = false
             local function vidSeek(posX)
+                if not obj then return end
                 if obj:IsLocked() then return end
                 resetFade()
                 local rx = seekRail.AbsolutePosition.X
@@ -2889,6 +2945,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
             seekRail.InputBegan:Connect(function(inp)
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
                     seeking = true
@@ -2900,7 +2957,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
             UserInputService.InputChanged:Connect(function(inp)
-                if not obj:IsLocked() and seeking and (inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch) then
+                if not obj then return end
+                if obj:IsLocked() then return end
+                if seeking and (inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch) then
                     vidSeek(inp.Position.X)
                 end
             end)
@@ -3128,6 +3187,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if hasAudio then
                 local _downloading = false
                 local function _doPlay()
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     if not snd then return end
                     pcall(function() snd:Play() end)
@@ -3136,6 +3196,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     if pauseBtn then pauseBtn.Visible = true end
                 end
                 local function _triggerPlay()
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     if _downloading then return end
                     if snd then _doPlay(); return end
@@ -3158,6 +3219,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
                 playBtn, playIco = ctrlBtn("play", _triggerPlay)
                 pauseBtn, pauseIco = ctrlBtn("pause", function()
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     if snd then snd:Pause() end
                     playing = false
@@ -3167,6 +3229,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 pauseBtn.Visible = false
 
                 local stopBtn, stopIco = ctrlBtn("stop", function()
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     if snd then pcall(function() snd:Stop(); snd.TimePosition=0 end) end
                     playing = false
@@ -3175,6 +3238,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
 
                 local function toggleOutside()
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     playOutside = not playOutside
                     local iconName = playOutside and "external" or "import"
@@ -3261,6 +3325,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local dragging = false
             local function seekTo(inputX)
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if not snd then return end
                 local railX = rail.AbsolutePosition.X
@@ -3272,6 +3337,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
 
             rail.InputBegan:Connect(function(inp)
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
                     dragging = true
@@ -3279,13 +3345,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
             rail.InputEnded:Connect(function(inp)
+                if not obj then return end
                 if obj:IsLocked() then return end
                 if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
                     dragging = false
                 end
             end)
             UserInputService.InputChanged:Connect(function(inp)
-                if not obj:IsLocked() and dragging and (inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch) then
+                if not obj then return end
+                if obj:IsLocked() then return end
+                if dragging and (inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch) then
                     seekTo(inp.Position.X)
                 end
             end)
@@ -3448,6 +3517,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
 
             local function updateZoomValue()
+                if not obj2 then return end
                 if obj2:IsLocked() then return end
                 local ok, mpos = pcall(function() return obj:GetPivot().Position end)
                 if ok and camera then
@@ -3457,6 +3527,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
 
             local function focusCamera()
+                if not obj2 then return end
                 if obj2:IsLocked() then return end
                 local mpos = obj:GetPivot().Position
                 local size = obj:IsA("BasePart") and obj.Size or select(2, obj:GetBoundingBox(0))
@@ -3476,6 +3547,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
 
             vp.InputBegan:Connect(function(inp)
+                if not obj2 then return end
                 if obj2:IsLocked() then return end
                 if interactive then
                     if inp.UserInputType==Enum.UserInputType.MouseButton1 or (inp.UserInputType==Enum.UserInputType.Touch and not Pinching) then
@@ -3492,7 +3564,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
             UIS.InputChanged:Connect(function(inp)
-                if not obj2:IsLocked() and interactive and Dragging and not Pinching then
+                if not obj2 then return end
+                if obj2:IsLocked() then return end
+                if interactive and Dragging and not Pinching then
                     if inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch then
                         local delta = inp.Position - LastMousePos
                         LastMousePos = inp.Position
@@ -3508,6 +3582,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
 
             vp.InputChanged:Connect(function(inp)
+                if not obj2 then return end
                 if obj2:IsLocked() then return end
                 if interactive then
                     if inp.UserInputType==Enum.UserInputType.MouseWheel then
@@ -3520,6 +3595,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
 
             UIS.TouchPinch:Connect(function(touches, scale, vel, state)
+                if not obj2 then return end
                 if obj2:IsLocked() then return end
                 if interactive then
                     if state==Enum.UserInputState.Begin then
@@ -3694,6 +3770,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 applyLockMethods(obj, overlay, config)
 
                 copyBtn.MouseButton1Click:Connect(function()
+                    if not obj then return end
                     if obj:IsLocked() then return end
                     pcall(function() toclipboard(copyText) end)
                 end)
