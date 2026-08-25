@@ -352,7 +352,7 @@ local function styleContainer(frame)
     table.insert(ThemeListeners, function() stroke.Color = CurrentTheme.Stroke end)
 end
 
--- ========== 锁定覆盖层（WindUI 风格：居中显示） ==========
+-- ========== 锁定覆盖层（WindUI 风格：居中显示，锁图标 12060512624） ==========
 local function createLockOverlay(parent, defaultTitle)
     local overlay = Instance.new("Frame")
     overlay.Name = "LockOverlay"
@@ -387,7 +387,7 @@ local function createLockOverlay(parent, defaultTitle)
     local lockIcon = Instance.new("ImageLabel")
     lockIcon.Size = UDim2.new(0, 16, 0, 16)
     lockIcon.BackgroundTransparency = 1
-    lockIcon.Image = "rbxassetid://10734898592"
+    lockIcon.Image = "rbxassetid://12060512624"   -- 更新为新的锁图标
     lockIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
     lockIcon.Parent = container
 
@@ -714,8 +714,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local child = {}
 
         -- ====== 所有元素定义 ======
-        -- 每个交互元素都添加了锁定覆盖层，交互前检查 IsLocked()
-
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
             local callback = config.Callback or function() end
@@ -3569,6 +3567,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return obj2
         end
 
+        -- ====== Social 元素（修复图标显示） ======
         child.Social = function(_, config)
             config = config or {}
             local parent = config.Parent or contentHolder
@@ -3621,7 +3620,30 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local avatarImgCorner = Instance.new("UICorner")
             avatarImgCorner.CornerRadius = UDim.new(0,8)
             avatarImgCorner.Parent = avatarImg
+
+            -- 修复：直接设置图标
             if avatarSrc ~= "" then
+                local imgUrl
+                if tonumber(avatarSrc) then
+                    imgUrl = "rbxassetid://"..avatarSrc
+                elseif avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") then
+                    imgUrl = avatarSrc
+                elseif avatarSrc:match("^http") then
+                    local ok, asset = pcall(function() return MediaManager:Image(avatarSrc) end)
+                    if ok and asset and asset ~= "" then
+                        imgUrl = asset
+                    else
+                        imgUrl = "rbxassetid://10734898592"  -- 默认用户图标
+                    end
+                end
+                if imgUrl and imgUrl ~= "" then
+                    avatarImg.Image = imgUrl
+                    avatarCorner.CornerRadius = UDim.new(1,0)
+                    avatarImgCorner.CornerRadius = UDim.new(1,0)
+                end
+            else
+                -- 默认头像
+                avatarImg.Image = "rbxassetid://10734898592"
                 avatarCorner.CornerRadius = UDim.new(1,0)
                 avatarImgCorner.CornerRadius = UDim.new(1,0)
             end
@@ -3669,6 +3691,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AddToRegistry(platformLbl, "TextColor3", "SubText")
             end
 
+            local obj = {}
+            applyLockMethods(obj, overlay, config)
+
             if copyText ~= "" then
                 local copyBtn = Instance.new("TextButton")
                 copyBtn.Name = "CopyButton"
@@ -3690,38 +3715,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 copyStroke.Parent = copyBtn
                 AddToRegistry(copyStroke, "Color", "Stroke")
 
-                local obj = {}
-                applyLockMethods(obj, overlay, config)
-
                 copyBtn.MouseButton1Click:Connect(function()
                     if obj:IsLocked() then return end
                     pcall(function() toclipboard(copyText) end)
                 end)
-                return obj
             end
 
-            task.spawn(function()
-                local imgUrl = nil
-                if avatarSrc ~= "" then
-                    if avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") or avatarSrc:match("^http") then
-                        imgUrl = avatarSrc
-                    elseif tonumber(avatarSrc) then
-                        imgUrl = "rbxassetid://"..avatarSrc
-                    end
-                end
-                if imgUrl and imgUrl~="" then
-                    local ok, asset = pcall(function() return MediaManager:Image(imgUrl) end)
-                    if ok and asset and asset~="" then
-                        avatarImg.Image = asset
-                        avatarCorner.CornerRadius = UDim.new(1,0)
-                        avatarImgCorner.CornerRadius = UDim.new(1,0)
-                    end
-                end
-            end)
-
-            local mod = {Frame=wrap, Type="Social"}
-            function mod:SetName(newName) displayName=tostring(newName or ""); local lbl=wrap:FindFirstChild("DisplayName"); if lbl then lbl.Text=displayName end end
-            function mod:SetSubName(newSubName)
+            function obj:SetName(newName) displayName=tostring(newName or ""); local lbl=wrap:FindFirstChild("DisplayName"); if lbl then lbl.Text=displayName end end
+            function obj:SetSubName(newSubName)
                 subName=tostring(newSubName or "")
                 local existing=wrap:FindFirstChild("SubName")
                 if existing then existing:Destroy() end
@@ -3740,7 +3741,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     AddToRegistry(newLbl, "TextColor3", "SubText")
                 end
             end
-            function mod:SetSmlName(newPlatform)
+            function obj:SetSmlName(newPlatform)
                 platform=tostring(newPlatform or "")
                 local existing=wrap:FindFirstChild("PlatformLabel")
                 if existing then existing:Destroy() end
@@ -3759,24 +3760,30 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     AddToRegistry(newLbl, "TextColor3", "SubText")
                 end
             end
-            function mod:SetLogo(newLogo)
+            function obj:SetLogo(newLogo)
                 avatarSrc=tostring(newLogo or "")
                 if avatarSrc~="" then
                     local imgUrl
-                    if avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") or avatarSrc:match("^http") then
-                        imgUrl=avatarSrc
-                    elseif tonumber(avatarSrc) then
-                        imgUrl="rbxassetid://"..avatarSrc
-                    end
-                    if imgUrl then
-                        local ok, asset = pcall(function() return MediaManager:Image(imgUrl) end)
-                        if ok and asset and asset~="" then
-                            avatarImg.Image = asset
+                    if tonumber(avatarSrc) then
+                        imgUrl = "rbxassetid://"..avatarSrc
+                    elseif avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") then
+                        imgUrl = avatarSrc
+                    elseif avatarSrc:match("^http") then
+                        local ok, asset = pcall(function() return MediaManager:Image(avatarSrc) end)
+                        if ok and asset and asset ~= "" then
+                            imgUrl = asset
+                        else
+                            imgUrl = "rbxassetid://10734898592"
                         end
+                    end
+                    if imgUrl and imgUrl~="" then
+                        avatarImg.Image = imgUrl
+                        avatarCorner.CornerRadius = UDim.new(1,0)
+                        avatarImgCorner.CornerRadius = UDim.new(1,0)
                     end
                 end
             end
-            function mod:SetCopy(newText)
+            function obj:SetCopy(newText)
                 copyText=tostring(newText or "")
                 local existing=wrap:FindFirstChild("CopyButton")
                 if existing then existing:Destroy() end
@@ -3801,14 +3808,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     newStroke.Parent=newBtn
                     AddToRegistry(newStroke, "Color", "Stroke")
                     newBtn.MouseButton1Click:Connect(function()
+                        if obj:IsLocked() then return end
                         pcall(function() toclipboard(copyText) end)
                     end)
                 end
             end
-            function mod:SetCbn(newText) buttonText=tostring(newText or "复制"); local btn=wrap:FindFirstChild("CopyButton"); if btn then btn.Text=buttonText end end
-            function mod:Destroy() wrap:Destroy() end
+            function obj:SetCbn(newText) buttonText=tostring(newText or "复制"); local btn=wrap:FindFirstChild("CopyButton"); if btn then btn.Text=buttonText end end
+            function obj:Destroy() wrap:Destroy() end
 
-            return mod
+            return obj
         end
 
         child.Paragraph = function(_, config)
