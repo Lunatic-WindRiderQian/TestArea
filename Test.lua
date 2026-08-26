@@ -827,6 +827,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- Slider with fixed drag disable when locked
         child.Slider = function(_, config)
             local sliderText = config.Name or ""
             local valueTable = config.Value or {}
@@ -877,7 +878,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             NumStroke.Transparency = 0.75
             NumStroke.Parent = Num
             AddToRegistry(NumStroke, "Color", "Stroke")
-            Num.Focused:Connect(function() Tween(NumStroke, {Transparency=0.2}, 0.15) end)
+            Num.Focused:Connect(function() if not locked then Tween(NumStroke, {Transparency=0.2}, 0.15) end end)
             local Track, Fill, Knob, Bar
             if not unlimited then
                 Track = Instance.new("Frame")
@@ -916,6 +917,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return math.floor(n*factor+0.5)/factor
             end
             local function UpdateSlider(val)
+                if locked then return end
                 if unlimited then
                     Val = val
                     Num.Text = tostring(Val)
@@ -935,6 +937,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return val
             end
             local function GetValueFromInput(input)
+                if locked then return Val end
                 if unlimited or not Track then return Val end
                 local absX = Track.AbsolutePosition.X
                 local absW = Track.AbsoluteSize.X
@@ -942,6 +945,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return ratio*(max-min)+min
             end
             local function SetDragging(state)
+                if locked then return end
                 dragging = state
                 if state then
                     TweenService:Create(Num, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {TextSize=15}):Play()
@@ -954,6 +958,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
             local function SetFocused(state)
+                if locked then return end
                 if state then
                     TweenService:Create(Num, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextColor3=CurrentTheme.Accent}):Play()
                     TweenService:Create(TitleLbl, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextColor3=CurrentTheme.Accent}):Play()
@@ -964,6 +969,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             if Bar then
                 Bar.InputBegan:Connect(function(input)
+                    if locked then return end
                     if unlimited then return end
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         SetDragging(true)
@@ -971,12 +977,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end
                 end)
                 Bar.InputEnded:Connect(function(input)
+                    if locked then return end
                     if unlimited then return end
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         SetDragging(false)
                     end
                 end)
                 UserInputService.InputChanged:Connect(function(input)
+                    if locked then return end
                     if unlimited then return end
                     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                         UpdateSlider(GetValueFromInput(input))
@@ -984,12 +992,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
             end
             Num.FocusLost:Connect(function()
+                if locked then return end
                 Tween(NumStroke, {Transparency=0.75}, 0.15)
                 SetFocused(false)
                 local typed = tonumber(Num.Text)
                 if typed then UpdateSlider(typed) else Num.Text = tostring(Val) end
             end)
-            Num.Focused:Connect(function() SetFocused(true) end)
+            Num.Focused:Connect(function()
+                if locked then return end
+                SetFocused(true)
+            end)
 
             -- Lock
             local locked = config.Locked == true
