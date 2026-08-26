@@ -352,7 +352,7 @@ local function styleContainer(frame)
     table.insert(ThemeListeners, function() stroke.Color = CurrentTheme.Stroke end)
 end
 
--- Helper to create lock overlay (improved with rounded corners and horizontal layout)
+-- Helper to create lock overlay (with rounded corners and horizontal layout + click blocker)
 local function createLockOverlay(parent, defaultTitle)
     -- 获取父元素的圆角半径（如果没有则使用默认 8）
     local cornerRadius = UDim.new(0, 8)
@@ -375,6 +375,14 @@ local function createLockOverlay(parent, defaultTitle)
     local corner = Instance.new("UICorner")
     corner.CornerRadius = cornerRadius
     corner.Parent = lockFrame
+
+    -- 透明点击拦截器，确保任何点击/拖动无法穿透
+    local blocker = Instance.new("TextButton")
+    blocker.Size = UDim2.new(1, 0, 1, 0)
+    blocker.BackgroundTransparency = 1
+    blocker.Text = ""
+    blocker.ZIndex = 11
+    blocker.Parent = lockFrame
 
     -- 水平布局容器
     local container = Instance.new("Frame")
@@ -410,7 +418,6 @@ local function createLockOverlay(parent, defaultTitle)
     lockLabel.AutomaticSize = Enum.AutomaticSize.X
     lockLabel.Parent = container
 
-    -- 返回锁框架和标签（以便后续更新文字）
     return lockFrame, lockLabel
 end
 
@@ -2122,6 +2129,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
+        -- NOTE: Image, Social, Video, Audio, Viewport do NOT have locking support.
         child.Image = function(_, config)
             config = config or {}
             local title = config.Name or "Image"
@@ -2233,24 +2241,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             clickBtn.BackgroundTransparency = 1
             clickBtn.Text = ""
             clickBtn.Parent = imageFrame
-            clickBtn.MouseButton1Click:Connect(function() if not locked then callback() end end)
-            clickBtn.MouseEnter:Connect(function() if not locked then Tween(imageFrame, {BackgroundTransparency=0.05}, 0.18) end end)
-            clickBtn.MouseLeave:Connect(function() if not locked then Tween(imageFrame, {BackgroundTransparency=1}, 0.18) end end)
-            clickBtn.MouseButton1Down:Connect(function() if not locked then Tween(imageFrame, {BackgroundTransparency=0.2}, 0.1) end end)
-            clickBtn.MouseButton1Up:Connect(function() if not locked then Tween(imageFrame, {BackgroundTransparency=0.05}, 0.1) end end)
-
-            -- Lock
-            local locked = config.Locked == true
-            local lockedTitle = config.LockedTitle or "Locked"
-            local lockFrame, lockLabel = createLockOverlay(imageFrame, lockedTitle)
-            lockFrame.Visible = locked
-            clickBtn.Active = not locked
-
-            local function updateLock(state)
-                locked = state
-                lockFrame.Visible = state
-                clickBtn.Active = not state
-            end
+            clickBtn.MouseButton1Click:Connect(callback)
+            clickBtn.MouseEnter:Connect(function() Tween(imageFrame, {BackgroundTransparency=0.05}, 0.18) end)
+            clickBtn.MouseLeave:Connect(function() Tween(imageFrame, {BackgroundTransparency=1}, 0.18) end)
+            clickBtn.MouseButton1Down:Connect(function() Tween(imageFrame, {BackgroundTransparency=0.2}, 0.1) end)
+            clickBtn.MouseButton1Up:Connect(function() Tween(imageFrame, {BackgroundTransparency=0.05}, 0.1) end)
 
             local self = {}
             function self.UpdateTitle(newTitle) titleLabel.Text = newTitle end
@@ -2298,1208 +2293,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 if newColor then iconImg.ImageColor3 = newColor end
             end
             function self.SetVisible(state) imageFrame.Visible = state end
-            function self.Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
-            function self.Unlock() updateLock(false) end
-            function self.IsLocked() return locked end
-            return self
-        end
-
-        child.Divider = function(_, config)
-            config = config or {}
-            local parent = config.Parent or contentHolder
-            local labelText = config.Name or ""
-            local hasText = (labelText ~= "")
-
-            local containerHeight = hasText and 24 or 12
-            local container = Instance.new("Frame")
-            container.Size = UDim2.new(1, 0, 0, containerHeight)
-            container.BackgroundTransparency = 1
-            container.Parent = parent
-
-            local line = Instance.new("Frame")
-            line.Size = UDim2.new(1, -10, 0, 1)
-            line.Position = UDim2.new(0, 5, 0.5, 0)
-            line.AnchorPoint = Vector2.new(0, 0.5)
-            line.BackgroundTransparency = 0.5
-            line.BorderSizePixel = 0
-            line.Parent = container
-            AddToRegistry(line, "BackgroundColor3", "Stroke")
-
-            if hasText then
-                local label = Instance.new("TextLabel")
-                label.Size = UDim2.new(0, 0, 0, 16)
-                label.AutomaticSize = Enum.AutomaticSize.X
-                label.AnchorPoint = Vector2.new(0.5, 0.5)
-                label.Position = UDim2.new(0.5, 0, 0.5, 0)
-                label.BackgroundTransparency = 1
-                label.Font = Enum.Font.GothamMedium
-                label.Text = labelText
-                label.TextSize = 12
-                label.TextColor3 = CurrentTheme.Text
-                label.TextTransparency = 0.4
-                label.Parent = container
-                AddToRegistry(label, "TextColor3", "Text")
-            end
-
-            -- Divider doesn't need locking, but we provide stub methods
-            local self = {}
-            function self.SetVisible(state) container.Visible = state end
-            function self.UpdateText(newText)
-                local lbl = container:FindFirstChildOfClass("TextLabel")
-                if lbl then lbl.Text = newText or "" end
-            end
-            function self.Lock() end
-            function self.Unlock() end
-            function self.IsLocked() return false end
-            return self
-        end
-
-        child.Space = function(_, config)
-            local height = (config and config.Height) or 8
-            local parent = config and config.Parent or contentHolder
-            local sp = Instance.new("Frame")
-            sp.Size = UDim2.new(1,0,0,height)
-            sp.BackgroundTransparency = 1
-            sp.BorderSizePixel = 0
-            sp.Parent = parent
-            local self = {}
-            function self.SetHeight(h) height=h; sp.Size=UDim2.new(1,0,0,height) end
-            function self.SetVisible(state) sp.Visible = state end
-            function self.Destroy() sp:Destroy() end
-            function self.Lock() end
-            function self.Unlock() end
-            function self.IsLocked() return false end
-            return self
-        end
-
-        child.Checkbox = function(_, config)
-            local title = config.Name or ""
-            local default = config.Default or false
-            local callback = config.Callback or function() end
-            local controlId = title.."_"..tostring(#Registry)
-            local parent = config.Parent or contentHolder
-            local Tile = Instance.new("Frame")
-            Tile.Size = UDim2.new(1,0,0,42)
-            Tile.Parent = parent
-            styleContainer(Tile)
-            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0,4)
-            AddToRegistry(Tile, "BackgroundColor3", "Top")
-            local ClickBtn = Instance.new("TextButton")
-            ClickBtn.Size = UDim2.new(1,0,1,0)
-            ClickBtn.BackgroundTransparency = 1
-            ClickBtn.Text = ""
-            ClickBtn.Parent = Tile
-            local TitleLbl = Instance.new("TextLabel")
-            TitleLbl.Text = title
-            TitleLbl.Size = UDim2.new(0.7,0,1,0)
-            TitleLbl.Position = UDim2.new(0,15,0,0)
-            TitleLbl.BackgroundTransparency = 1
-            TitleLbl.Font = Enum.Font.GothamMedium
-            TitleLbl.TextSize = 13
-            TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-            TitleLbl.Parent = Tile
-            AddToRegistry(TitleLbl, "TextColor3", "Text")
-            local box = Instance.new("Frame")
-            box.Size = UDim2.fromOffset(20,20)
-            box.AnchorPoint = Vector2.new(1,0.5)
-            box.Position = UDim2.new(1,-12,0.5,0)
-            box.BackgroundTransparency = 0
-            box.Parent = Tile
-            Instance.new("UICorner", box).CornerRadius = UDim.new(0,5)
-            local boxStroke = Instance.new("UIStroke")
-            boxStroke.Thickness = 1.4
-            boxStroke.Transparency = 0.4
-            boxStroke.Parent = box
-            local check = Instance.new("ImageLabel")
-            check.Size = UDim2.fromOffset(14,14)
-            check.AnchorPoint = Vector2.new(0.5,0.5)
-            check.Position = UDim2.new(0.5,0,0.5,0)
-            check.BackgroundTransparency = 1
-            check.Image = "rbxassetid://10709790644"
-            check.ImageTransparency = 1
-            check.Parent = box
-            local h = {Value=default, Callback=callback, Type="Checkbox"}
-
-            -- Lock
-            local locked = config.Locked == true
-            local lockedTitle = config.LockedTitle or "Locked"
-            local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
-            lockFrame.Visible = locked
-            ClickBtn.Active = not locked
-
-            local function updateLock(state)
-                locked = state
-                lockFrame.Visible = state
-                ClickBtn.Active = not state
-            end
-
-            local function updateColors()
-                if locked then return end
-                if h.Value then
-                    box.BackgroundColor3 = CurrentTheme.Accent
-                    boxStroke.Color = CurrentTheme.Accent
-                    check.ImageTransparency = 0
-                else
-                    box.BackgroundColor3 = CurrentTheme.Stroke
-                    boxStroke.Color = CurrentTheme.Stroke
-                    check.ImageTransparency = 1
-                end
-            end
-            table.insert(ThemeListeners, updateColors)
-            function h:SetValue(val)
-                if locked then return end
-                val = not (not val)
-                h.Value = val
-                updateColors()
-                if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
-                pcall(callback, val)
-                pcall(h.Changed, val)
-            end
-            function h:OnChanged(_, cb) h.Changed = cb; cb(h.Value) end
-            function h:GetValue() return h.Value end
-            function h:SetVisible(vis) Tile.Visible = vis end
-            function h:Destroy() Tile:Destroy(); ConfigObjects[controlId]=nil end
-            function h:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
-            function h:Unlock() updateLock(false) end
-            function h:IsLocked() return locked end
-            ClickBtn.MouseButton1Click:Connect(function() if not locked then h:SetValue(not h.Value) end end)
-            h:SetValue(default)
-            ConfigObjects[controlId] = {Type="Checkbox", Value=h.Value, Set=function(val) h:SetValue(val) end}
-            return h
-        end
-
-        child.ProgressBar = function(_, config)
-            local name = config.Name or ""
-            local valueConfig = config.Value or {}
-            local min = valueConfig.Min or 0
-            local max = valueConfig.Max or 100
-            local default = valueConfig.Default or min
-            local showPercent = config.ShowPercent ~= false
-            local callback = config.Callback or function() end
-            local controlId = name.."_"..tostring(#Registry)
-            local parent = config.Parent or contentHolder
-            local containerHeight = (name~="" and 46 or 26)
-            local wrap = Instance.new("Frame")
-            wrap.Size = UDim2.new(1,0,0,containerHeight)
-            wrap.BackgroundTransparency = 0.92
-            wrap.BackgroundColor3 = CurrentTheme.Top
-            local wrapStroke = Instance.new("UIStroke")
-            wrapStroke.Thickness = 1
-            wrapStroke.Color = CurrentTheme.Stroke
-            wrapStroke.Transparency = 0.6
-            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-            wrapStroke.Parent = wrap
-            table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
-            wrap.Parent = parent
-            local titleLbl = nil
-            if name~="" then
-                titleLbl = Instance.new("TextLabel")
-                titleLbl.Size = UDim2.new(1,-50,0,16)
-                titleLbl.Position = UDim2.new(0,0,0,0)
-                titleLbl.BackgroundTransparency = 1
-                titleLbl.Font = Enum.Font.GothamMedium
-                titleLbl.Text = name
-                titleLbl.TextSize = 14
-                titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-                titleLbl.Parent = wrap
-                AddToRegistry(titleLbl, "TextColor3", "Text")
-            end
-            local pctLbl = nil
-            if showPercent then
-                pctLbl = Instance.new("TextLabel")
-                pctLbl.Size = UDim2.new(0,50,0,16)
-                pctLbl.Position = UDim2.new(1,-50,0,0)
-                pctLbl.BackgroundTransparency = 1
-                pctLbl.Font = Enum.Font.Gotham
-                pctLbl.Text = "0%"
-                pctLbl.TextSize = 13
-                pctLbl.TextXAlignment = Enum.TextXAlignment.Right
-                pctLbl.TextTransparency = 0.5
-                pctLbl.Parent = wrap
-                AddToRegistry(pctLbl, "TextColor3", "Text")
-            end
-            local rail = Instance.new("Frame")
-            rail.Size = UDim2.new(1,0,0,8)
-            rail.Position = UDim2.new(0,0,1,-8)
-            rail.BackgroundTransparency = 0.4
-            rail.BorderSizePixel = 0
-            rail.Parent = wrap
-            Instance.new("UICorner", rail).CornerRadius = UDim.new(1,0)
-            AddToRegistry(rail, "BackgroundColor3", "Stroke")
-            local fill = Instance.new("Frame")
-            fill.Size = UDim2.fromScale(0,1)
-            fill.BackgroundTransparency = 0
-            fill.BorderSizePixel = 0
-            fill.Parent = rail
-            Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-            AddToRegistry(fill, "BackgroundColor3", "Accent")
-            local h = {Value=math.clamp(default,min,max), Min=min, Max=max, Type="ProgressBar", Frame=wrap}
-
-            -- Lock (mostly for consistency)
-            local locked = config.Locked == true
-            local lockedTitle = config.LockedTitle or "Locked"
-            local lockFrame, lockLabel = createLockOverlay(wrap, lockedTitle)
-            lockFrame.Visible = locked
-
-            local function updateLock(state)
-                locked = state
-                lockFrame.Visible = state
-            end
-
-            function h:SetTitle(s) if titleLbl then titleLbl.Text = tostring(s or "") end end
-            function h:SetValue(val)
-                if locked then return end
-                val = math.clamp(tonumber(val) or h.Min, h.Min, h.Max)
-                h.Value = val
-                local alpha = (h.Max > h.Min) and (val - h.Min)/(h.Max - h.Min) or 0
-                Tween(fill, {Size=UDim2.fromScale(alpha,1)}, 0.2)
-                if pctLbl then pctLbl.Text = math.floor(alpha*100).."%" end
-                if callback then pcall(callback, val) end
-                if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
-            end
-            function h:Destroy() wrap:Destroy(); ConfigObjects[controlId]=nil end
-            function h:SetVisible(state) wrap.Visible = state end
-            function h:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
-            function h:Unlock() updateLock(false) end
-            function h:IsLocked() return locked end
-            h:SetValue(default)
-            ConfigObjects[controlId] = {Type="ProgressBar", Value=h.Value, Set=function(val) h:SetValue(val) end}
-            return h
-        end
-
-        child.Video = function(_, config)
-            local opts = config or {}
-            local parent = opts.Parent or contentHolder
-            if not parent then return end
-            local radius = opts.Radius or 8
-            local src = opts.Video or ""
-            local looped = opts.Looped ~= false
-            local vol = opts.Volume or 0
-            local auto = opts.AutoPlay ~= false
-            local title = opts.Name or "Video"
-            local aspect = opts.AspectRatio or "16:9"
-            local function resolveSync(s)
-                if type(s)~="string" or s=="" then return "" end
-                if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
-                if s:match("^%d+$") then return "rbxassetid://"..s end
-                return ""
-            end
-            local function resolveMedia(s)
-                if type(s)~="string" or s=="" then return "" end
-                if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
-                if s:match("^%d+$") then return "rbxassetid://"..s end
-                if s:match("^https?://") then return MediaManager:Video(s) end
-                return ""
-            end
-            local function applyIcon(imgLabel, iconName)
-                if not imgLabel then return end
-                local imageMap = {play="rbxassetid://10734923549", pause="rbxassetid://10734919336", stop="rbxassetid://10734972621", volume="rbxassetid://10747376008", external="rbxassetid://10747366266"}
-                imgLabel.Image = imageMap[iconName] or ""
-            end
-            local function parseRatio(r)
-                if type(r)=="number" then return r end
-                if type(r)=="string" then
-                    local rw, rh = r:match("(%d+):(%d+)")
-                    if rw and rh and tonumber(rh)~=0 then return tonumber(rw)/tonumber(rh) end
-                end
-                return 16/9
-            end
-            local ratioNum = parseRatio(aspect)
-            local wrap = Instance.new("Frame")
-            wrap.Size = UDim2.new(1,-16,0,180)
-            wrap.BackgroundColor3 = CurrentTheme.Main
-            wrap.BackgroundTransparency = 0.92
-            wrap.BorderSizePixel = 0
-            wrap.ClipsDescendants = true
-            wrap.Parent = parent
-            AddToRegistry(wrap, "BackgroundColor3", "Main")
-            local wrapStroke = Instance.new("UIStroke")
-            wrapStroke.Thickness = 1
-            wrapStroke.Color = CurrentTheme.Stroke
-            wrapStroke.Transparency = 0.6
-            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-            wrapStroke.Parent = wrap
-            table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
-            local function recalcAspect()
-                local w = wrap.AbsoluteSize.X
-                if w>0 and ratioNum and ratioNum>0 then wrap.Size = UDim2.new(1,-16,0,math.floor(w/ratioNum)) end
-            end
-            wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
-            task.defer(recalcAspect)
-            local corner = Instance.new("UICorner")
-            corner.CornerRadius = UDim.new(0,radius)
-            corner.Parent = wrap
-            local resolved = resolveMedia(src)
-            local hasVideo = (resolved~="")
-            local vid = nil
-            if hasVideo then
-                vid = Instance.new("VideoFrame")
-                vid.Size = UDim2.fromScale(1,1)
-                vid.BackgroundTransparency = 1
-                vid.Looped = looped
-                vid.Volume = vol
-                vid.ZIndex = 1
-                vid:SetAttribute("BFVolume", vol)
-                vid:SetAttribute("BFAutoPlay", auto)
-                vid.Video = resolved
-                vid.Parent = wrap
-                local vidCorner = Instance.new("UICorner")
-                vidCorner.CornerRadius = UDim.new(0,radius)
-                vidCorner.Parent = vid
-            end
-            local placeholder = Instance.new("Frame")
-            placeholder.Size = UDim2.fromScale(1,1)
-            placeholder.BackgroundTransparency = 1
-            placeholder.Visible = not hasVideo
-            placeholder.ZIndex = 2
-            placeholder.Parent = wrap
-            local phImg = Instance.new("ImageLabel")
-            phImg.Size = UDim2.fromOffset(32,32)
-            phImg.Position = UDim2.new(0.5,0,0.5,-14)
-            phImg.AnchorPoint = Vector2.new(0.5,0.5)
-            phImg.BackgroundTransparency = 1
-            phImg.ImageTransparency = 0.4
-            phImg.ZIndex = 3
-            phImg.Parent = placeholder
-            AddToRegistry(phImg, "ImageColor3", "SubText")
-            applyIcon(phImg, "play")
-            local phText = Instance.new("TextLabel")
-            phText.Size = UDim2.new(1,0,0,16)
-            phText.Position = UDim2.new(0,0,0.5,20)
-            phText.AnchorPoint = Vector2.new(0,0)
-            phText.BackgroundTransparency = 1
-            phText.Text = "Video not available"
-            phText.TextSize = 11
-            phText.Font = Enum.Font.GothamMedium
-            phText.TextTransparency = 0.5
-            phText.ZIndex = 3
-            phText.Parent = placeholder
-            AddToRegistry(phText, "TextColor3", "SubText")
-
-            -- Lock
-            local locked = opts.Locked == true
-            local lockedTitle = opts.LockedTitle or "Locked"
-            local lockFrame, lockLabel = createLockOverlay(wrap, lockedTitle)
-            lockFrame.Visible = locked
-
-            if not hasVideo then
-                local mod = {Frame=wrap, Type="Video", VideoFrame=nil}
-                function mod:Destroy() wrap:Destroy() end
-                function mod:SetVideo(s) end
-                function mod:SetVolume(v) end
-                function mod:Play() end
-                function mod:Pause() end
-                function mod:Stop() end
-                function mod:SetAspectRatio(r) end
-                function mod:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
-                function mod:Unlock() updateLock(false) end
-                function mod:IsLocked() return locked end
-                return mod
-            end
-
-            local overlay = Instance.new("CanvasGroup")
-            overlay.Size = UDim2.new(1,0,0,54)
-            overlay.Position = UDim2.new(0,0,1,0)
-            overlay.AnchorPoint = Vector2.new(0,1)
-            overlay.BackgroundTransparency = 1
-            overlay.GroupTransparency = 1
-            overlay.ZIndex = 5
-            overlay.Parent = wrap
-            local gradFr = Instance.new("Frame")
-            gradFr.Size = UDim2.fromScale(1,1)
-            gradFr.BackgroundColor3 = Color3.fromRGB(0,0,0)
-            gradFr.BackgroundTransparency = 0
-            gradFr.BorderSizePixel = 0
-            gradFr.ZIndex = 5
-            gradFr.Parent = overlay
-            local grad = Instance.new("UIGradient")
-            grad.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.3), NumberSequenceKeypoint.new(1,1)})
-            grad.Rotation = 90
-            grad.Parent = gradFr
-            local seekRow = Instance.new("Frame")
-            seekRow.Size = UDim2.new(1,-12,0,16)
-            seekRow.Position = UDim2.new(0,6,0,4)
-            seekRow.BackgroundTransparency = 1
-            seekRow.ZIndex = 6
-            seekRow.Parent = overlay
-            local timeCur = Instance.new("TextLabel")
-            timeCur.Size = UDim2.fromOffset(36,16)
-            timeCur.BackgroundTransparency = 1
-            timeCur.Text = "0:00"
-            timeCur.TextSize = 10
-            timeCur.Font = Enum.Font.GothamMedium
-            timeCur.TextColor3 = Color3.fromRGB(220,220,220)
-            timeCur.ZIndex = 7
-            timeCur.Parent = seekRow
-            local seekContainer = Instance.new("Frame")
-            seekContainer.Size = UDim2.new(1,-84,0,16)
-            seekContainer.Position = UDim2.fromOffset(40,0)
-            seekContainer.BackgroundTransparency = 1
-            seekContainer.ZIndex = 6
-            seekContainer.Parent = seekRow
-            local seekRail = Instance.new("TextButton")
-            seekRail.Size = UDim2.new(1,0,0,5)
-            seekRail.Position = UDim2.new(0,0,0.5,-2)
-            seekRail.BackgroundColor3 = Color3.fromRGB(80,80,90)
-            seekRail.BorderSizePixel = 0
-            seekRail.ZIndex = 7
-            seekRail.Text = ""
-            seekRail.AutoButtonColor = false
-            seekRail.Parent = seekContainer
-            Instance.new("UICorner", seekRail).CornerRadius = UDim.new(1,0)
-            local seekFill = Instance.new("Frame")
-            seekFill.Size = UDim2.new(0,0,1,0)
-            seekFill.BackgroundColor3 = CurrentTheme.Accent
-            seekFill.BorderSizePixel = 0
-            seekFill.ZIndex = 8
-            seekFill.Parent = seekRail
-            Instance.new("UICorner", seekFill).CornerRadius = UDim.new(1,0)
-            local seekKnob = Instance.new("Frame")
-            seekKnob.Size = UDim2.fromOffset(12,12)
-            seekKnob.Position = UDim2.new(0,0,0.5,0)
-            seekKnob.AnchorPoint = Vector2.new(0.5,0.5)
-            seekKnob.BackgroundColor3 = Color3.fromRGB(255,255,255)
-            seekKnob.BorderSizePixel = 0
-            seekKnob.ZIndex = 9
-            seekKnob.Parent = seekRail
-            Instance.new("UICorner", seekKnob).CornerRadius = UDim.new(1,0)
-            local timeDur = Instance.new("TextLabel")
-            timeDur.Size = UDim2.fromOffset(36,16)
-            timeDur.Position = UDim2.new(1,-36,0,0)
-            timeDur.BackgroundTransparency = 1
-            timeDur.Text = "0:00"
-            timeDur.TextSize = 10
-            timeDur.Font = Enum.Font.GothamMedium
-            timeDur.TextColor3 = Color3.fromRGB(160,160,170)
-            timeDur.ZIndex = 7
-            timeDur.Parent = seekRow
-            local ctrlRow = Instance.new("Frame")
-            ctrlRow.Size = UDim2.new(1,-12,0,26)
-            ctrlRow.Position = UDim2.new(0,6,0,24)
-            ctrlRow.BackgroundTransparency = 1
-            ctrlRow.ZIndex = 6
-            ctrlRow.Parent = overlay
-            local function ctrlBtn(iconName, cb)
-                local btn = Instance.new("TextButton")
-                btn.Size = UDim2.fromOffset(22,22)
-                btn.BackgroundTransparency = 1
-                btn.Text = ""
-                btn.ZIndex = 7
-                btn.AutoButtonColor = false
-                btn.Parent = ctrlRow
-                local ic = Instance.new("ImageLabel")
-                ic.Size = UDim2.fromOffset(16,16)
-                ic.Position = UDim2.new(0.5,0,0.5,0)
-                ic.AnchorPoint = Vector2.new(0.5,0.5)
-                ic.BackgroundTransparency = 1
-                ic.ZIndex = 8
-                ic.Parent = btn
-                AddToRegistry(ic, "ImageColor3", "Text")
-                applyIcon(ic, iconName)
-                btn.MouseButton1Click:Connect(function() if not locked then pcall(cb) end end)
-                return btn, ic
-            end
-            local playing = auto
-            local playBtn, playIco = ctrlBtn("play", function() end)
-            local pauseBtn, pauseIco = ctrlBtn("pause", function() end)
-            local stopBtn, stopIco = ctrlBtn("stop", function() end)
-            local volIco = Instance.new("ImageLabel")
-            volIco.Size = UDim2.fromOffset(14,14)
-            volIco.Position = UDim2.fromOffset(68,4)
-            volIco.BackgroundTransparency = 1
-            volIco.ZIndex = 7
-            volIco.Parent = ctrlRow
-            AddToRegistry(volIco, "ImageColor3", "SubText")
-            applyIcon(volIco, "volume")
-            local volLbl = Instance.new("TextLabel")
-            volLbl.Size = UDim2.fromOffset(32,22)
-            volLbl.Position = UDim2.fromOffset(84,0)
-            volLbl.BackgroundTransparency = 1
-            volLbl.Text = tostring(math.floor(vol*100)).."%"
-            volLbl.TextSize = 10
-            volLbl.Font = Enum.Font.Gotham
-            volLbl.ZIndex = 7
-            volLbl.Parent = ctrlRow
-            AddToRegistry(volLbl, "TextColor3", "SubText")
-            local btnLayout = Instance.new("UIListLayout")
-            btnLayout.FillDirection = Enum.FillDirection.Horizontal
-            btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-            btnLayout.Padding = UDim.new(0,2)
-            btnLayout.Parent = ctrlRow
-            local ctrlVisible = false
-            local fadeTimer = 0
-            local fadingOut = false
-            local function showOverlay()
-                ctrlVisible = true; fadingOut = false; fadeTimer = 3
-                Tween(overlay, {GroupTransparency=0}, 0.18)
-            end
-            local function hideOverlay()
-                ctrlVisible = false; fadingOut = true
-                Tween(overlay, {GroupTransparency=1}, 0.3)
-            end
-            local vidClickBtn = Instance.new("TextButton")
-            vidClickBtn.Size = UDim2.fromScale(1,1)
-            vidClickBtn.BackgroundTransparency = 1
-            vidClickBtn.Text = ""
-            vidClickBtn.ZIndex = 4
-            vidClickBtn.AutoButtonColor = false
-            vidClickBtn.Parent = wrap
-            vidClickBtn.MouseButton1Click:Connect(function()
-                if locked then return end
-                if ctrlVisible then fadeTimer = 3 else showOverlay() end
-            end)
-            local function resetFade() fadeTimer = 3; fadingOut = false end
-            playBtn.MouseButton1Click:Connect(function()
-                if locked then return end
-                if vid then pcall(function() vid:Play() end) end
-                playing = true; playBtn.Visible = false; pauseBtn.Visible = true; resetFade()
-            end)
-            pauseBtn.MouseButton1Click:Connect(function()
-                if locked then return end
-                if vid then pcall(function() vid:Pause() end) end
-                playing = false; playBtn.Visible = true; pauseBtn.Visible = false; resetFade()
-            end)
-            stopBtn.MouseButton1Click:Connect(function()
-                if locked then return end
-                if vid then pcall(function() vid:Stop() end) end
-                playing = false; playBtn.Visible = true; pauseBtn.Visible = false; resetFade()
-            end)
-            pauseBtn.Visible = auto; playBtn.Visible = not auto
-            local seeking = false
-            local function vidSeek(posX)
-                if locked then return end
-                resetFade()
-                local rx = seekRail.AbsolutePosition.X
-                local rw = seekRail.AbsoluteSize.X
-                local pct = math.clamp((posX-rx)/rw,0,1)
-                seekFill.Size = UDim2.new(pct,0,1,0)
-                seekKnob.Position = UDim2.new(pct,0,0.5,0)
-                if vid and vid.TimeLength and vid.TimeLength>0 then
-                    pcall(function() vid.TimePosition = vid.TimeLength * pct end)
-                end
-            end
-            seekRail.InputBegan:Connect(function(inp)
-                if locked then return end
-                if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
-                    seeking = true
-                    vidSeek(inp.Position.X)
-                    resetFade()
-                    inp.Changed:Connect(function()
-                        if inp.UserInputState==Enum.UserInputState.End then seeking = false end
-                    end)
-                end
-            end)
-            UserInputService.InputChanged:Connect(function(inp)
-                if locked then return end
-                if seeking and (inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch) then
-                    vidSeek(inp.Position.X)
-                end
-            end)
-            local function fmtTime(s) s = math.max(0, math.floor(s or 0)); return string.format("%d:%02d", math.floor(s/60), s%60) end
-            local hbConn = RunService.Heartbeat:Connect(function(dt)
-                if locked then return end
-                if not wrap.Parent then return end
-                if ctrlVisible then
-                    fadeTimer = fadeTimer - dt
-                    if fadeTimer <= 0 and not seeking then hideOverlay() end
-                end
-                if not vid then return end
-                local dur = vid.TimeLength or 0
-                local pos = 0; pcall(function() pos = vid.TimePosition end)
-                if dur > 0 and not seeking then
-                    local pct = math.clamp(pos/dur,0,1)
-                    seekFill.Size = UDim2.new(pct,0,1,0)
-                    seekKnob.Position = UDim2.new(pct,0,0.5,0)
-                end
-                timeCur.Text = fmtTime(pos)
-                timeDur.Text = fmtTime(dur)
-            end)
-            if auto and hasVideo then
-                task.spawn(function()
-                    task.wait(0.08)
-                    if locked then return end
-                    if vid and vid.Parent then
-                        pcall(function() vid:Play() end)
-                        playing = true
-                        pauseBtn.Visible = true
-                        playBtn.Visible = false
-                    end
-                end)
-            end
-
-            local function updateLock(state)
-                locked = state
-                lockFrame.Visible = state
-                vidClickBtn.Active = not state
-                -- disable interaction on controls
-                local btns = {playBtn, pauseBtn, stopBtn, seekRail}
-                for _, b in ipairs(btns) do if b then b.Active = not state end end
-            end
-
-            local mod = {Frame=wrap, Type="Video", VideoFrame=vid}
-            function mod:Play() if not locked and vid then pcall(function() vid:Play() end); playing=true; playBtn.Visible=false; pauseBtn.Visible=true end end
-            function mod:Pause() if not locked and vid then pcall(function() vid:Pause() end); playing=false; playBtn.Visible=true; pauseBtn.Visible=false end end
-            function mod:Stop() if not locked and vid then pcall(function() vid:Stop() end); playing=false; playBtn.Visible=true; pauseBtn.Visible=false end end
-            function mod:SetVideo(s) if not locked and vid then local r=resolveMedia(s); if r~="" then vid.Video=r; placeholder.Visible=false else placeholder.Visible=true end end end
-            function mod:SetVolume(v) if vid then vid.Volume=math.clamp(v,0,1) end; volLbl.Text=tostring(math.floor(math.clamp(v,0,1)*100)).."%" end
-            function mod:SetAspectRatio(r) ratioNum=parseRatio(r); recalcAspect() end
-            function mod:Destroy() safeDisconnect(hbConn); wrap:Destroy() end
-            function mod:Lock(title) updateLock(true); if title then lockLabel.Text=title; lockedTitle=title end end
-            function mod:Unlock() updateLock(false) end
-            function mod:IsLocked() return locked end
-            return mod
-        end
-
-        child.Audio = function(_, config)
-            local opts = config or {}
-            local parent = opts.Parent or contentHolder
-            if not parent then return end
-            local title = opts.Name or opts.Title or "Audio"
-            local subtitle = opts.SubName or opts.SubTitle or ""
-            local src = opts.Audio or opts.Sound or ""
-            local vol = (opts.Volume~=nil) and math.clamp(opts.Volume,0,10) or 0.5
-            local looped = opts.Looped ~= false
-            local auto = opts.AutoPlay ~= false
-            local playOutside = opts.PlayOutsideWindow == true
-            local function resolve(s, noDownload)
-                local mm = MediaManager
-                if mm then return mm:Audio(s, noDownload) end
-                if type(s)~="string" or s=="" then return "" end
-                if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
-                if s:match("^%d+$") then return "rbxassetid://"..s end
-                return ""
-            end
-            local function fmtTime(s) s = math.max(0, math.floor(s or 0)); return string.format("%d:%02d", math.floor(s/60), s%60) end
-            local isHttp = type(src)=="string" and src:match("^https?://")
-            local resolved = isHttp and resolve(src, true) or resolve(src, false)
-            local pendingDownload = isHttp and (not resolved or resolved=="")
-            local hasAudio = (resolved~=nil and resolved~="") or pendingDownload
-            local snd = nil
-            local function initSound(resolvedId)
-                local s2 = Instance.new("Sound")
-                s2.Name = "FengAudio"
-                pcall(function() s2.SoundId = resolvedId end)
-                s2.Volume = vol
-                s2.Looped = looped
-                if playOutside then
-                    s2.RollOffMaxDistance = 10000
-                    s2.Parent = game:GetService("SoundService")
-                else
-                    s2.Parent = workspace
-                end
-                return s2
-            end
-            if hasAudio and not pendingDownload then snd = initSound(resolved) end
-            local wrapHeight = (title~="" or subtitle~="") and 118 or 96
-            local wrap = Instance.new("Frame")
-            wrap.Size = UDim2.new(1,-16,0,wrapHeight)
-            wrap.BackgroundTransparency = 0.92
-            wrap.BackgroundColor3 = CurrentTheme.Top
-            wrap.BorderSizePixel = 0
-            wrap.Parent = parent
-            AddToRegistry(wrap, "BackgroundColor3", "Top")
-            local wrapStroke = Instance.new("UIStroke")
-            wrapStroke.Thickness = 1
-            wrapStroke.Color = CurrentTheme.Stroke
-            wrapStroke.Transparency = 0.6
-            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-            wrapStroke.Parent = wrap
-            table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
-            local wrapCorner = Instance.new("UICorner")
-            wrapCorner.CornerRadius = UDim.new(0,8)
-            wrapCorner.Parent = wrap
-            local padding = Instance.new("UIPadding")
-            padding.PaddingLeft = UDim.new(0,10)
-            padding.PaddingRight = UDim.new(0,10)
-            padding.PaddingTop = UDim.new(0,10)
-            padding.PaddingBottom = UDim.new(0,10)
-            padding.Parent = wrap
-            local topRow = Instance.new("Frame")
-            topRow.Size = UDim2.new(1,0,0,(title~="" or subtitle~="") and 38 or 28)
-            topRow.BackgroundTransparency = 1
-            topRow.Parent = wrap
-            local audioIcon = Instance.new("ImageLabel")
-            audioIcon.Size = UDim2.fromOffset(20,20)
-            audioIcon.Position = UDim2.new(0,0,0.5,0)
-            audioIcon.AnchorPoint = Vector2.new(0,0.5)
-            audioIcon.BackgroundTransparency = 1
-            audioIcon.ZIndex = 2
-            audioIcon.Parent = topRow
-            AddToRegistry(audioIcon, "ImageColor3", hasAudio and "Accent" or "SubText")
-            audioIcon.Image = "rbxassetid://10747376008"
-            local titleHolder = Instance.new("Frame")
-            titleHolder.Size = UDim2.new(1,-110,1,0)
-            titleHolder.Position = UDim2.new(0,28,0,0)
-            titleHolder.BackgroundTransparency = 1
-            titleHolder.ZIndex = 2
-            titleHolder.Parent = topRow
-            local statusLbl = Instance.new("TextLabel")
-            statusLbl.Size = UDim2.new(1,0,0,16)
-            statusLbl.Position = UDim2.new(0,0,0,(title~="" or subtitle~="") and 2 or 0)
-            statusLbl.AnchorPoint = Vector2.new(0,0)
-            statusLbl.BackgroundTransparency = 1
-            statusLbl.Text = (title~="" and title) or (hasAudio and "Audio" or "No audio source")
-            statusLbl.TextSize = (title~="" or subtitle~="") and 12 or 11
-            statusLbl.Font = (title~="" or subtitle~="") and Enum.Font.GothamBold or Enum.Font.Gotham
-            statusLbl.TextXAlignment = Enum.TextXAlignment.Left
-            statusLbl.TextTruncate = Enum.TextTruncate.AtEnd
-            statusLbl.ZIndex = 2
-            statusLbl.Parent = titleHolder
-            AddToRegistry(statusLbl, "TextColor3", hasAudio and "Text" or "SubText")
-            local subtitleLbl = nil
-            if subtitle~="" then
-                subtitleLbl = Instance.new("TextLabel")
-                subtitleLbl.Size = UDim2.new(1,0,0,13)
-                subtitleLbl.Position = UDim2.new(0,0,0,20)
-                subtitleLbl.AnchorPoint = Vector2.new(0,0)
-                subtitleLbl.BackgroundTransparency = 1
-                subtitleLbl.Text = subtitle
-                subtitleLbl.TextSize = 10
-                subtitleLbl.Font = Enum.Font.Gotham
-                subtitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-                subtitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
-                subtitleLbl.Visible = true
-                subtitleLbl.ZIndex = 2
-                subtitleLbl.Parent = titleHolder
-                AddToRegistry(subtitleLbl, "TextColor3", "SubText")
-            end
-
-            -- Lock
-            local locked = opts.Locked == true
-            local lockedTitle = opts.LockedTitle or "Locked"
-            local lockFrame, lockLabel = createLockOverlay(wrap, lockedTitle)
-            lockFrame.Visible = locked
-
-            local function updateLock(state)
-                locked = state
-                lockFrame.Visible = state
-                -- Disable controls
-                if controls then controls.Visible = not state end
-                if seekRow then seekRow.Visible = not state end
-                if topRow then topRow.Active = not state end
-            end
-
-            local controls = Instance.new("Frame")
-            controls.Size = UDim2.new(0,116,1,0)
-            controls.Position = UDim2.new(1,0,0,0)
-            controls.AnchorPoint = Vector2.new(1,0)
-            controls.BackgroundTransparency = 1
-            controls.Visible = hasAudio and not locked
-            controls.Parent = topRow
-            local ctrlLayout = Instance.new("UIListLayout")
-            ctrlLayout.FillDirection = Enum.FillDirection.Horizontal
-            ctrlLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-            ctrlLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-            ctrlLayout.Padding = UDim.new(0,4)
-            ctrlLayout.Parent = controls
-            local function ctrlBtn(iconId, cb)
-                local btn = Instance.new("TextButton")
-                btn.Size = UDim2.fromOffset(24,24)
-                btn.BackgroundTransparency = 1
-                btn.Text = ""
-                btn.ZIndex = 3
-                btn.Parent = controls
-                local ic = Instance.new("ImageLabel")
-                ic.Size = UDim2.fromOffset(16,16)
-                ic.Position = UDim2.new(0.5,0,0.5,0)
-                ic.AnchorPoint = Vector2.new(0.5,0.5)
-                ic.BackgroundTransparency = 1
-                ic.ZIndex = 4
-                ic.Parent = btn
-                AddToRegistry(ic, "ImageColor3", "Text")
-                local icons = {play="rbxassetid://10734923549", pause="rbxassetid://10734919336", stop="rbxassetid://10734972621", external="rbxassetid://10747366266", import="rbxassetid://10747366266"}
-                ic.Image = icons[iconId] or "rbxassetid://10734923549"
-                btn.MouseButton1Click:Connect(function() if not locked then pcall(cb) end end)
-                return btn, ic
-            end
-            local playing = false
-            local playBtn, playIco
-            local pauseBtn, pauseIco
-            local outsideBtn, outsideIco
-            if hasAudio then
-                local _downloading = false
-                local function _doPlay()
-                    if locked then return end
-                    if not snd then return end
-                    pcall(function() snd:Play() end)
-                    playing = true
-                    if playBtn then playBtn.Visible = false end
-                    if pauseBtn then pauseBtn.Visible = true end
-                end
-                local function _triggerPlay()
-                    if locked or _downloading then return end
-                    if snd then _doPlay(); return end
-                    if pendingDownload then
-                        _downloading = true
-                        if win then win:Notification("Audio", "Downloading audio, please wait...", "Info", 4) end
-                        task.spawn(function()
-                            local got = resolve(src, false)
-                            _downloading = false
-                            if got and got~="" then
-                                pendingDownload = false
-                                snd = initSound(got)
-                                _doPlay()
-                                if win then win:Notification("Audio", "Audio ready — playing now", "Success", 2) end
-                            else
-                                if win then win:Notification("Audio", "Failed to download audio", "Error", 3) end
-                            end
-                        end)
-                    end
-                end
-                playBtn, playIco = ctrlBtn("play", _triggerPlay)
-                pauseBtn, pauseIco = ctrlBtn("pause", function()
-                    if locked then return end
-                    if snd then snd:Pause() end
-                    playing = false
-                    if playBtn then playBtn.Visible = true end
-                    if pauseBtn then pauseBtn.Visible = false end
-                end)
-                pauseBtn.Visible = false
-                local stopBtn, stopIco = ctrlBtn("stop", function()
-                    if locked then return end
-                    if snd then pcall(function() snd:Stop(); snd.TimePosition=0 end) end
-                    playing = false
-                    if playBtn then playBtn.Visible = true end
-                    if pauseBtn then pauseBtn.Visible = false end
-                end)
-                local function toggleOutside()
-                    if locked then return end
-                    playOutside = not playOutside
-                    local iconName = playOutside and "external" or "import"
-                    if outsideIco then outsideIco.Image = icons[iconName] or "rbxassetid://10747366266" end
-                    if snd then
-                        local wasPlaying = playing
-                        pcall(function() if wasPlaying then snd:Stop() end end)
-                        if playOutside then
-                            snd.RollOffMaxDistance = 10000
-                            snd.Parent = game:GetService("SoundService")
-                        else
-                            snd.Parent = workspace
-                        end
-                        if wasPlaying then pcall(function() snd:Play() end) end
-                    end
-                    if win then win:Notification("Audio", playOutside and "Play Outside Window: ON" or "Play Outside Window: OFF", "Info", 2) end
-                end
-                outsideBtn, outsideIco = ctrlBtn("external", toggleOutside)
-                if outsideIco then outsideIco.Image = playOutside and "rbxassetid://10747366266" or "rbxassetid://10747366266" end
-                if auto and snd then _doPlay() end
-            end
-            local seekRowOffset = (title~="" or subtitle~="") and 56 or 36
-            local seekRow = Instance.new("Frame")
-            seekRow.Size = UDim2.new(1,0,0,24)
-            seekRow.Position = UDim2.new(0,0,0,seekRowOffset)
-            seekRow.BackgroundTransparency = 1
-            seekRow.Visible = hasAudio and not locked
-            seekRow.Parent = wrap
-            local curLbl = Instance.new("TextLabel")
-            curLbl.Size = UDim2.fromOffset(34,20)
-            curLbl.Position = UDim2.new(0,0,0.5,0)
-            curLbl.AnchorPoint = Vector2.new(0,0.5)
-            curLbl.BackgroundTransparency = 1
-            curLbl.Text = "0:00"
-            curLbl.TextSize = 10
-            curLbl.Font = Enum.Font.Gotham
-            curLbl.TextXAlignment = Enum.TextXAlignment.Left
-            curLbl.ZIndex = 3
-            curLbl.Parent = seekRow
-            AddToRegistry(curLbl, "TextColor3", "SubText")
-            local durLbl = Instance.new("TextLabel")
-            durLbl.Size = UDim2.fromOffset(34,20)
-            durLbl.Position = UDim2.new(1,0,0.5,0)
-            durLbl.AnchorPoint = Vector2.new(1,0.5)
-            durLbl.BackgroundTransparency = 1
-            durLbl.Text = "0:00"
-            durLbl.TextSize = 10
-            durLbl.Font = Enum.Font.Gotham
-            durLbl.TextXAlignment = Enum.TextXAlignment.Right
-            durLbl.ZIndex = 3
-            durLbl.Parent = seekRow
-            AddToRegistry(durLbl, "TextColor3", "SubText")
-            local rail = Instance.new("Frame")
-            rail.Size = UDim2.new(1,-76,0,4)
-            rail.Position = UDim2.new(0,38,0.5,0)
-            rail.AnchorPoint = Vector2.new(0,0.5)
-            rail.BackgroundTransparency = 0.65
-            rail.ZIndex = 2
-            rail.Parent = seekRow
-            AddToRegistry(rail, "BackgroundColor3", "SubText")
-            Instance.new("UICorner", rail).CornerRadius = UDim.new(1,0)
-            local fill = Instance.new("Frame")
-            fill.Size = UDim2.new(0,0,1,0)
-            fill.BackgroundTransparency = 0
-            fill.ZIndex = 3
-            fill.Parent = rail
-            AddToRegistry(fill, "BackgroundColor3", "Accent")
-            Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-            local knob = Instance.new("Frame")
-            knob.Size = UDim2.fromOffset(12,12)
-            knob.Position = UDim2.new(0,0,0.5,0)
-            knob.AnchorPoint = Vector2.new(0.5,0.5)
-            knob.ZIndex = 4
-            knob.Parent = rail
-            AddToRegistry(knob, "BackgroundColor3", "Accent")
-            Instance.new("UICorner", knob).CornerRadius = UDim.new(1,0)
-            local dragging = false
-            local function seekTo(inputX)
-                if locked then return end
-                if not snd then return end
-                local railX = rail.AbsolutePosition.X
-                local railW = rail.AbsoluteSize.X
-                if railW <= 0 then return end
-                local pct = math.clamp((inputX - railX)/railW,0,1)
-                local dur = snd.TimeLength or 0
-                if dur > 0 then pcall(function() snd.TimePosition = pct * dur end) end
-            end
-            rail.InputBegan:Connect(function(inp)
-                if locked then return end
-                if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
-                    dragging = true
-                    seekTo(inp.Position.X)
-                end
-            end)
-            rail.InputEnded:Connect(function(inp)
-                if locked then return end
-                if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
-                    dragging = false
-                end
-            end)
-            UserInputService.InputChanged:Connect(function(inp)
-                if locked then return end
-                if dragging and (inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch) then
-                    seekTo(inp.Position.X)
-                end
-            end)
-            local hbConn = RunService.Heartbeat:Connect(function()
-                if locked then return end
-                if not wrap.Parent then return end
-                if not snd then return end
-                local dur = snd.TimeLength or 0
-                local pos = snd.TimePosition or 0
-                curLbl.Text = fmtTime(pos)
-                durLbl.Text = fmtTime(dur)
-                local pct = dur > 0 and (pos/dur) or 0
-                fill.Size = UDim2.new(pct,0,1,0)
-                knob.Position = UDim2.new(pct,0,0.5,0)
-            end)
-
-            local mod = {Frame=wrap, Type="Audio", Sound=snd}
-            function mod:Play() if not locked and snd then pcall(function() snd:Play() end) end end
-            function mod:Pause() if not locked and snd then pcall(function() snd:Pause() end) end end
-            function mod:Stop() if not locked and snd then pcall(function() snd:Stop() end) end end
-            function mod:SetVolume(v) if snd then snd.Volume = math.clamp(v,0,10) end end
-            function mod:SetAudio(src) if not locked then local r=resolve(src); if snd then pcall(function() snd:Stop(); snd.SoundId = r end) else snd=initSound(r) end; hasAudio = r~=""; controls.Visible = hasAudio and not locked; seekRow.Visible = hasAudio and not locked; statusLbl.Text = hasAudio and (title or "Audio") or "No audio source"; if playBtn then playBtn.Visible = hasAudio end; if pauseBtn then pauseBtn.Visible = false end end end
-            function mod:SetAudioTitle(title, subtitle) statusLbl.Text = title or (hasAudio and "Audio" or "No audio source"); if subtitleLbl then subtitleLbl.Text = subtitle or ""; subtitleLbl.Visible = subtitle and subtitle~="" end end
-            function mod:SetPlayOutside(enabled) if not locked then playOutside = enabled; if snd then local wasPlaying=playing; pcall(function() snd:Stop() end); if enabled then snd.Parent=game:GetService("SoundService") else snd.Parent=workspace end; if wasPlaying then pcall(function() snd:Play() end) end end end end
-            function mod:Destroy() safeDisconnect(hbConn); if snd then pcall(function() snd:Stop(); snd:Destroy() end) end; wrap:Destroy() end
-            function mod:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
-            function mod:Unlock() updateLock(false) end
-            function mod:IsLocked() return locked end
-            return mod
-        end
-
-        child.Viewport = function(_, config)
-            local opts = config or {}
-            local parent = opts.Parent or contentHolder
-            if not parent then return end
-            local UIS = UserInputService
-            local RS = RunService
-            local TS = TweenService
-            local height = opts.Height or 200
-            local focused = (opts.Focused ~= false)
-            local interactive = (opts.Interactive ~= false)
-            local camera = opts.Camera or Instance.new("Camera")
-            local obj = opts.Object
-            local aspectRatio = opts.AspectRatio
-            local radius = opts.Radius or 8
-            assert(obj, "Viewport - Missing Object")
-            local function parseRatio(r)
-                if type(r)=="number" then return r end
-                if type(r)=="string" then
-                    local w,h = r:match("(%d+):(%d+)")
-                    if w and h and tonumber(h)~=0 then return tonumber(w)/tonumber(h) end
-                end
-                return nil
-            end
-            local wrap = Instance.new("Frame")
-            wrap.Name = "ViewportHolder"
-            wrap.Size = UDim2.new(1,-16,0,height)
-            wrap.BackgroundTransparency = 0.92
-            wrap.BackgroundColor3 = CurrentTheme.Main
-            wrap.BorderSizePixel = 0
-            wrap.ClipsDescendants = true
-            wrap.Parent = parent
-            AddToRegistry(wrap, "BackgroundColor3", "Main")
-            local wrapStroke = Instance.new("UIStroke")
-            wrapStroke.Thickness = 1
-            wrapStroke.Color = CurrentTheme.Stroke
-            wrapStroke.Transparency = 0.6
-            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-            wrapStroke.Parent = wrap
-            table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
-            local wrapCorner = Instance.new("UICorner")
-            wrapCorner.CornerRadius = UDim.new(0,radius)
-            wrapCorner.Parent = wrap
-            local ratioNum = parseRatio(aspectRatio)
-            local function recalcAspect()
-                if not ratioNum or ratioNum<=0 then return end
-                local w = wrap.AbsoluteSize.X
-                if w>0 then wrap.Size = UDim2.new(1,-16,0,math.floor(w/ratioNum)) end
-            end
-            wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
-            task.defer(recalcAspect)
-            local bg = Instance.new("ImageLabel")
-            bg.Size = UDim2.fromScale(1,1)
-            bg.BackgroundTransparency = 0.1
-            bg.BorderSizePixel = 0
-            bg.Image = ""
-            bg.BackgroundColor3 = Color3.fromRGB(15,15,20)
-            bg.Parent = wrap
-            local bgCorner = Instance.new("UICorner")
-            bgCorner.CornerRadius = UDim.new(0,radius)
-            bgCorner.Parent = bg
-            AddToRegistry(bg, "BackgroundColor3", "Main")
-            local vp = Instance.new("ViewportFrame")
-            vp.Name = "Viewport"
-            vp.Size = UDim2.fromScale(1,1)
-            vp.BackgroundTransparency = 1
-            vp.CurrentCamera = camera
-            vp.Active = interactive
-            vp.Parent = wrap
-            obj.Parent = vp
-            local Dragging = false
-            local Pinching = false
-            local LastMousePos = nil
-            local LastPinchDist = 0
-            local ScrollFrameRef = nil
-            local function findScrollFrame(inst)
-                while inst do
-                    if inst:IsA("ScrollingFrame") then return inst end
-                    inst = inst.Parent
-                end
-                return nil
-            end
-            ScrollFrameRef = findScrollFrame(wrap)
-            local function isMouseInViewport(pos)
-                local ap = vp.AbsolutePosition
-                local as = vp.AbsoluteSize
-                return pos.X>=ap.X and pos.X<=ap.X+as.X and pos.Y>=ap.Y and pos.Y<=ap.Y+as.Y
-            end
-            local function updateZoomValue()
-                local ok, mpos = pcall(function() return obj:GetPivot().Position end)
-                if ok and camera then
-                    local dist = (camera.CFrame.Position - mpos).Magnitude
-                    if self then self.Value = dist end
-                end
-            end
-            local function focusCamera()
-                local mpos = obj:GetPivot().Position
-                local size = obj:IsA("BasePart") and obj.Size or select(2, obj:GetBoundingBox(0))
-                local ext = math.max(size.X, size.Y, size.Z)
-                camera.CFrame = CFrame.new(mpos + Vector3.new(0, ext/2, ext*2), mpos)
-                updateZoomValue()
-            end
-            if focused then task.defer(focusCamera) end
-
-            -- Lock
-            local locked = opts.Locked == true
-            local lockedTitle = opts.LockedTitle or "Locked"
-            local lockFrame, lockLabel = createLockOverlay(wrap, lockedTitle)
-            lockFrame.Visible = locked
-            local function updateLock(state)
-                locked = state
-                lockFrame.Visible = state
-                vp.Active = interactive and not state
-            end
-
-            vp.MouseEnter:Connect(function()
-                if locked then return end
-                if interactive and ScrollFrameRef then ScrollFrameRef.ScrollingEnabled = false end
-            end)
-            vp.InputEnded:Connect(function(inp)
-                if locked then return end
-                if inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch then
-                    if ScrollFrameRef then ScrollFrameRef.ScrollingEnabled = true end
-                end
-            end)
-            vp.InputBegan:Connect(function(inp)
-                if locked or not interactive then return end
-                if inp.UserInputType==Enum.UserInputType.MouseButton1 or (inp.UserInputType==Enum.UserInputType.Touch and not Pinching) then
-                    Dragging = true
-                    LastMousePos = inp.Position
-                end
-            end)
-            UIS.InputEnded:Connect(function(inp)
-                if locked then return end
-                if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
-                    Dragging = false
-                end
-            end)
-            UIS.InputChanged:Connect(function(inp)
-                if locked or not interactive then return end
-                if Dragging and not Pinching then
-                    if inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch then
-                        local delta = inp.Position - LastMousePos
-                        LastMousePos = inp.Position
-                        local pos = obj:GetPivot().Position
-                        local ry = CFrame.fromAxisAngle(Vector3.new(0,1,0), -delta.X*0.02)
-                        camera.CFrame = CFrame.new(pos) * ry * CFrame.new(-pos) * camera.CFrame
-                        local rx = CFrame.fromAxisAngle(camera.CFrame.RightVector, -delta.Y*0.02)
-                        local pitched = CFrame.new(pos) * rx * CFrame.new(-pos) * camera.CFrame
-                        if pitched.UpVector.Y > 0.1 then camera.CFrame = pitched end
-                        updateZoomValue()
-                    end
-                end
-            end)
-            vp.InputChanged:Connect(function(inp)
-                if locked or not interactive then return end
-                if inp.UserInputType==Enum.UserInputType.MouseWheel then
-                    if not isMouseInViewport(UIS:GetMouseLocation()) then return end
-                    local zoom = inp.Position.Z * 2
-                    camera.CFrame = camera.CFrame + camera.CFrame.LookVector * zoom
-                    updateZoomValue()
-                end
-            end)
-            UIS.TouchPinch:Connect(function(touches, scale, vel, state)
-                if locked or not interactive then return end
-                if state==Enum.UserInputState.Begin then
-                    local mid = (touches[1]+touches[2])/2
-                    if not isMouseInViewport(mid) then return end
-                    Pinching = true; Dragging = false
-                    LastPinchDist = (touches[1]-touches[2]).Magnitude
-                elseif state==Enum.UserInputState.Change then
-                    if not Pinching then return end
-                    local cur = (touches[1]-touches[2]).Magnitude
-                    local d = (cur - LastPinchDist) * 0.03
-                    LastPinchDist = cur
-                    camera.CFrame = camera.CFrame + camera.CFrame.LookVector * d
-                    updateZoomValue()
-                elseif state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
-                    Pinching = false
-                end
-            end)
-            local self = {
-                Frame=wrap, Type="Viewport", Object=obj, Camera=camera,
-                Interactive=interactive, Height=height, Focused=focused, Value=nil
-            }
-            function self:SetObject(newObj, clone)
-                if locked then return end
-                if clone then newObj = newObj:Clone() end
-                if self.Object then self.Object:Destroy() end
-                self.Object = newObj
-                self.Object.Parent = vp
-                if self.Focused then focusCamera() end
-            end
-            function self:SetHeight(h) self.Height = h; wrap.Size = UDim2.new(1,-16,0,h) end
-            function self:SetAspectRatio(ratio) ratioNum = parseRatio(ratio); if ratioNum then recalcAspect() else wrap.Size = UDim2.new(1,-16,0,self.Height) end end
-            function self:Focus() if self.Object then focusCamera() end end
-            function self:SetCamera(cam) self.Camera = cam; vp.CurrentCamera = cam end
-            function self:SetInteractive(val) self.Interactive = val; vp.Active = val; if locked then vp.Active = false end end
-            function self:SetValue(dist) if locked then return end; local ok, mpos = pcall(function() return self.Object:GetPivot().Position end); if not ok then return end; local dir = (self.Camera.CFrame.Position - mpos); if dir.Magnitude < 1e-4 then dir = Vector3.new(0,0,1) end; dir = dir.Unit; self.Camera.CFrame = CFrame.new(mpos + dir * dist, mpos); self.Value = dist end
-            function self:Destroy() wrap:Destroy() end
-            function self:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
-            function self:Unlock() updateLock(false) end
-            function self:IsLocked() return locked end
-            updateZoomValue()
             return self
         end
 
@@ -3618,22 +2411,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
             end
 
-            -- Lock
-            local locked = config.Locked == true
-            local lockedTitle = config.LockedTitle or "Locked"
-            local lockFrame, lockLabel = createLockOverlay(wrap, lockedTitle)
-            lockFrame.Visible = locked
-
-            local function updateLock(state)
-                locked = state
-                lockFrame.Visible = state
-                -- disable copy button if exists
-                local btn = wrap:FindFirstChild("CopyButton")
-                if btn then btn.Active = not state end
-            end
-
             task.spawn(function()
-                if locked then return end
                 local imgUrl = nil
                 if avatarSrc ~= "" then
                     if avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") or avatarSrc:match("^http") then
@@ -3655,14 +2433,873 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             function mod:SetName(newName) displayName=tostring(newName or ""); local lbl=wrap:FindFirstChild("DisplayName"); if lbl then lbl.Text=displayName end end
             function mod:SetSubName(newSubName) subName=tostring(newSubName or ""); local existing=wrap:FindFirstChild("SubName"); if existing then existing:Destroy() end; if subName~="" then local newLbl=Instance.new("TextLabel"); newLbl.Name="SubName"; newLbl.Text=subName; newLbl.FontFace=Font.new("rbxasset://fonts/families/GothamSSm.json"); newLbl.TextSize=11; newLbl.TextXAlignment=Enum.TextXAlignment.Left; newLbl.TextTruncate=Enum.TextTruncate.AtEnd; newLbl.BackgroundTransparency=1; newLbl.Size=UDim2.new(1,-140,0,13); newLbl.Position=UDim2.new(0,62,0,27); newLbl.Parent=wrap; AddToRegistry(newLbl, "TextColor3", "SubText") end end
             function mod:SetSmlName(newPlatform) platform=tostring(newPlatform or ""); local existing=wrap:FindFirstChild("PlatformLabel"); if existing then existing:Destroy() end; if platform~="" then local newLbl=Instance.new("TextLabel"); newLbl.Name="PlatformLabel"; newLbl.Text=platform; newLbl.FontFace=Font.new("rbxasset://fonts/families/GothamSSm.json"); newLbl.TextSize=10; newLbl.TextTransparency=0.3; newLbl.TextXAlignment=Enum.TextXAlignment.Left; newLbl.BackgroundTransparency=1; newLbl.Size=UDim2.new(1,-140,0,12); newLbl.Position=UDim2.new(0,62,0, subName~="" and 42 or 27); newLbl.Parent=wrap; AddToRegistry(newLbl, "TextColor3", "SubText") end end
-            function mod:SetLogo(newLogo) if not locked then avatarSrc=tostring(newLogo or ""); if avatarSrc~="" then local imgUrl; if avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") or avatarSrc:match("^http") then imgUrl=avatarSrc elseif tonumber(avatarSrc) then imgUrl="rbxassetid://"..avatarSrc end; if imgUrl then local ok, asset = pcall(function() return MediaManager:Image(imgUrl) end); if ok and asset and asset~="" then avatarImg.Image = asset end end end end end
-            function mod:SetCopy(newText) if not locked then copyText=tostring(newText or ""); local existing=wrap:FindFirstChild("CopyButton"); if existing then existing:Destroy() end; if copyText~="" then local newBtn=Instance.new("TextButton"); newBtn.Name="CopyButton"; newBtn.Text=buttonText; newBtn.Size=UDim2.fromOffset(52,26); newBtn.Position=UDim2.new(1,-11,0.5,0); newBtn.AnchorPoint=Vector2.new(1,0.5); newBtn.TextColor3=Color3.fromRGB(255,255,255); newBtn.FontFace=Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold); newBtn.TextSize=12; newBtn.Parent=wrap; AddToRegistry(newBtn, "BackgroundColor3", "Element"); local newCorner=Instance.new("UICorner"); newCorner.CornerRadius=UDim.new(0,8); newCorner.Parent=newBtn; local newStroke=Instance.new("UIStroke"); newStroke.Transparency=0.4; newStroke.Thickness=1; newStroke.Parent=newBtn; AddToRegistry(newStroke, "Color", "Stroke"); newBtn.MouseButton1Click:Connect(function() pcall(function() toclipboard(copyText) end) end) end end end
+            function mod:SetLogo(newLogo) avatarSrc=tostring(newLogo or ""); if avatarSrc~="" then local imgUrl; if avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") or avatarSrc:match("^http") then imgUrl=avatarSrc elseif tonumber(avatarSrc) then imgUrl="rbxassetid://"..avatarSrc end; if imgUrl then local ok, asset = pcall(function() return MediaManager:Image(imgUrl) end); if ok and asset and asset~="" then avatarImg.Image = asset end end end end
+            function mod:SetCopy(newText) copyText=tostring(newText or ""); local existing=wrap:FindFirstChild("CopyButton"); if existing then existing:Destroy() end; if copyText~="" then local newBtn=Instance.new("TextButton"); newBtn.Name="CopyButton"; newBtn.Text=buttonText; newBtn.Size=UDim2.fromOffset(52,26); newBtn.Position=UDim2.new(1,-11,0.5,0); newBtn.AnchorPoint=Vector2.new(1,0.5); newBtn.TextColor3=Color3.fromRGB(255,255,255); newBtn.FontFace=Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold); newBtn.TextSize=12; newBtn.Parent=wrap; AddToRegistry(newBtn, "BackgroundColor3", "Element"); local newCorner=Instance.new("UICorner"); newCorner.CornerRadius=UDim.new(0,8); newCorner.Parent=newBtn; local newStroke=Instance.new("UIStroke"); newStroke.Transparency=0.4; newStroke.Thickness=1; newStroke.Parent=newBtn; AddToRegistry(newStroke, "Color", "Stroke"); newBtn.MouseButton1Click:Connect(function() pcall(function() toclipboard(copyText) end) end) end end
             function mod:SetCbn(newText) buttonText=tostring(newText or "复制"); local btn=wrap:FindFirstChild("CopyButton"); if btn then btn.Text=buttonText end end
             function mod:Destroy() wrap:Destroy() end
-            function mod:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
-            function mod:Unlock() updateLock(false) end
-            function mod:IsLocked() return locked end
             return mod
+        end
+
+        child.Video = function(_, config)
+            local opts = config or {}
+            local parent = opts.Parent or contentHolder
+            if not parent then return end
+            local radius = opts.Radius or 8
+            local src = opts.Video or ""
+            local looped = opts.Looped ~= false
+            local vol = opts.Volume or 0
+            local auto = opts.AutoPlay ~= false
+            local title = opts.Name or "Video"
+            local aspect = opts.AspectRatio or "16:9"
+            local function resolveSync(s)
+                if type(s)~="string" or s=="" then return "" end
+                if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
+                if s:match("^%d+$") then return "rbxassetid://"..s end
+                return ""
+            end
+            local function resolveMedia(s)
+                if type(s)~="string" or s=="" then return "" end
+                if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
+                if s:match("^%d+$") then return "rbxassetid://"..s end
+                if s:match("^https?://") then return MediaManager:Video(s) end
+                return ""
+            end
+            local function applyIcon(imgLabel, iconName)
+                if not imgLabel then return end
+                local imageMap = {play="rbxassetid://10734923549", pause="rbxassetid://10734919336", stop="rbxassetid://10734972621", volume="rbxassetid://10747376008", external="rbxassetid://10747366266"}
+                imgLabel.Image = imageMap[iconName] or ""
+            end
+            local function parseRatio(r)
+                if type(r)=="number" then return r end
+                if type(r)=="string" then
+                    local rw, rh = r:match("(%d+):(%d+)")
+                    if rw and rh and tonumber(rh)~=0 then return tonumber(rw)/tonumber(rh) end
+                end
+                return 16/9
+            end
+            local ratioNum = parseRatio(aspect)
+            local wrap = Instance.new("Frame")
+            wrap.Size = UDim2.new(1,-16,0,180)
+            wrap.BackgroundColor3 = CurrentTheme.Main
+            wrap.BackgroundTransparency = 0.92
+            wrap.BorderSizePixel = 0
+            wrap.ClipsDescendants = true
+            wrap.Parent = parent
+            AddToRegistry(wrap, "BackgroundColor3", "Main")
+            local wrapStroke = Instance.new("UIStroke")
+            wrapStroke.Thickness = 1
+            wrapStroke.Color = CurrentTheme.Stroke
+            wrapStroke.Transparency = 0.6
+            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            wrapStroke.Parent = wrap
+            table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
+            local function recalcAspect()
+                local w = wrap.AbsoluteSize.X
+                if w>0 and ratioNum and ratioNum>0 then wrap.Size = UDim2.new(1,-16,0,math.floor(w/ratioNum)) end
+            end
+            wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
+            task.defer(recalcAspect)
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0,radius)
+            corner.Parent = wrap
+            local resolved = resolveMedia(src)
+            local hasVideo = (resolved~="")
+            local vid = nil
+            if hasVideo then
+                vid = Instance.new("VideoFrame")
+                vid.Size = UDim2.fromScale(1,1)
+                vid.BackgroundTransparency = 1
+                vid.Looped = looped
+                vid.Volume = vol
+                vid.ZIndex = 1
+                vid:SetAttribute("BFVolume", vol)
+                vid:SetAttribute("BFAutoPlay", auto)
+                vid.Video = resolved
+                vid.Parent = wrap
+                local vidCorner = Instance.new("UICorner")
+                vidCorner.CornerRadius = UDim.new(0,radius)
+                vidCorner.Parent = vid
+            end
+            local placeholder = Instance.new("Frame")
+            placeholder.Size = UDim2.fromScale(1,1)
+            placeholder.BackgroundTransparency = 1
+            placeholder.Visible = not hasVideo
+            placeholder.ZIndex = 2
+            placeholder.Parent = wrap
+            local phImg = Instance.new("ImageLabel")
+            phImg.Size = UDim2.fromOffset(32,32)
+            phImg.Position = UDim2.new(0.5,0,0.5,-14)
+            phImg.AnchorPoint = Vector2.new(0.5,0.5)
+            phImg.BackgroundTransparency = 1
+            phImg.ImageTransparency = 0.4
+            phImg.ZIndex = 3
+            phImg.Parent = placeholder
+            AddToRegistry(phImg, "ImageColor3", "SubText")
+            applyIcon(phImg, "play")
+            local phText = Instance.new("TextLabel")
+            phText.Size = UDim2.new(1,0,0,16)
+            phText.Position = UDim2.new(0,0,0.5,20)
+            phText.AnchorPoint = Vector2.new(0,0)
+            phText.BackgroundTransparency = 1
+            phText.Text = "Video not available"
+            phText.TextSize = 11
+            phText.Font = Enum.Font.GothamMedium
+            phText.TextTransparency = 0.5
+            phText.ZIndex = 3
+            phText.Parent = placeholder
+            AddToRegistry(phText, "TextColor3", "SubText")
+
+            if not hasVideo then
+                local mod = {Frame=wrap, Type="Video", VideoFrame=nil}
+                function mod:Destroy() wrap:Destroy() end
+                function mod:SetVideo(s) end
+                function mod:SetVolume(v) end
+                function mod:Play() end
+                function mod:Pause() end
+                function mod:Stop() end
+                function mod:SetAspectRatio(r) end
+                return mod
+            end
+
+            local overlay = Instance.new("CanvasGroup")
+            overlay.Size = UDim2.new(1,0,0,54)
+            overlay.Position = UDim2.new(0,0,1,0)
+            overlay.AnchorPoint = Vector2.new(0,1)
+            overlay.BackgroundTransparency = 1
+            overlay.GroupTransparency = 1
+            overlay.ZIndex = 5
+            overlay.Parent = wrap
+            local gradFr = Instance.new("Frame")
+            gradFr.Size = UDim2.fromScale(1,1)
+            gradFr.BackgroundColor3 = Color3.fromRGB(0,0,0)
+            gradFr.BackgroundTransparency = 0
+            gradFr.BorderSizePixel = 0
+            gradFr.ZIndex = 5
+            gradFr.Parent = overlay
+            local grad = Instance.new("UIGradient")
+            grad.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.3), NumberSequenceKeypoint.new(1,1)})
+            grad.Rotation = 90
+            grad.Parent = gradFr
+            local seekRow = Instance.new("Frame")
+            seekRow.Size = UDim2.new(1,-12,0,16)
+            seekRow.Position = UDim2.new(0,6,0,4)
+            seekRow.BackgroundTransparency = 1
+            seekRow.ZIndex = 6
+            seekRow.Parent = overlay
+            local timeCur = Instance.new("TextLabel")
+            timeCur.Size = UDim2.fromOffset(36,16)
+            timeCur.BackgroundTransparency = 1
+            timeCur.Text = "0:00"
+            timeCur.TextSize = 10
+            timeCur.Font = Enum.Font.GothamMedium
+            timeCur.TextColor3 = Color3.fromRGB(220,220,220)
+            timeCur.ZIndex = 7
+            timeCur.Parent = seekRow
+            local seekContainer = Instance.new("Frame")
+            seekContainer.Size = UDim2.new(1,-84,0,16)
+            seekContainer.Position = UDim2.fromOffset(40,0)
+            seekContainer.BackgroundTransparency = 1
+            seekContainer.ZIndex = 6
+            seekContainer.Parent = seekRow
+            local seekRail = Instance.new("TextButton")
+            seekRail.Size = UDim2.new(1,0,0,5)
+            seekRail.Position = UDim2.new(0,0,0.5,-2)
+            seekRail.BackgroundColor3 = Color3.fromRGB(80,80,90)
+            seekRail.BorderSizePixel = 0
+            seekRail.ZIndex = 7
+            seekRail.Text = ""
+            seekRail.AutoButtonColor = false
+            seekRail.Parent = seekContainer
+            Instance.new("UICorner", seekRail).CornerRadius = UDim.new(1,0)
+            local seekFill = Instance.new("Frame")
+            seekFill.Size = UDim2.new(0,0,1,0)
+            seekFill.BackgroundColor3 = CurrentTheme.Accent
+            seekFill.BorderSizePixel = 0
+            seekFill.ZIndex = 8
+            seekFill.Parent = seekRail
+            Instance.new("UICorner", seekFill).CornerRadius = UDim.new(1,0)
+            local seekKnob = Instance.new("Frame")
+            seekKnob.Size = UDim2.fromOffset(12,12)
+            seekKnob.Position = UDim2.new(0,0,0.5,0)
+            seekKnob.AnchorPoint = Vector2.new(0.5,0.5)
+            seekKnob.BackgroundColor3 = Color3.fromRGB(255,255,255)
+            seekKnob.BorderSizePixel = 0
+            seekKnob.ZIndex = 9
+            seekKnob.Parent = seekRail
+            Instance.new("UICorner", seekKnob).CornerRadius = UDim.new(1,0)
+            local timeDur = Instance.new("TextLabel")
+            timeDur.Size = UDim2.fromOffset(36,16)
+            timeDur.Position = UDim2.new(1,-36,0,0)
+            timeDur.BackgroundTransparency = 1
+            timeDur.Text = "0:00"
+            timeDur.TextSize = 10
+            timeDur.Font = Enum.Font.GothamMedium
+            timeDur.TextColor3 = Color3.fromRGB(160,160,170)
+            timeDur.ZIndex = 7
+            timeDur.Parent = seekRow
+            local ctrlRow = Instance.new("Frame")
+            ctrlRow.Size = UDim2.new(1,-12,0,26)
+            ctrlRow.Position = UDim2.new(0,6,0,24)
+            ctrlRow.BackgroundTransparency = 1
+            ctrlRow.ZIndex = 6
+            ctrlRow.Parent = overlay
+            local function ctrlBtn(iconName, cb)
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.fromOffset(22,22)
+                btn.BackgroundTransparency = 1
+                btn.Text = ""
+                btn.ZIndex = 7
+                btn.AutoButtonColor = false
+                btn.Parent = ctrlRow
+                local ic = Instance.new("ImageLabel")
+                ic.Size = UDim2.fromOffset(16,16)
+                ic.Position = UDim2.new(0.5,0,0.5,0)
+                ic.AnchorPoint = Vector2.new(0.5,0.5)
+                ic.BackgroundTransparency = 1
+                ic.ZIndex = 8
+                ic.Parent = btn
+                AddToRegistry(ic, "ImageColor3", "Text")
+                applyIcon(ic, iconName)
+                btn.MouseButton1Click:Connect(function() pcall(cb) end)
+                return btn, ic
+            end
+            local playing = auto
+            local playBtn, playIco = ctrlBtn("play", function() end)
+            local pauseBtn, pauseIco = ctrlBtn("pause", function() end)
+            local stopBtn, stopIco = ctrlBtn("stop", function() end)
+            local volIco = Instance.new("ImageLabel")
+            volIco.Size = UDim2.fromOffset(14,14)
+            volIco.Position = UDim2.fromOffset(68,4)
+            volIco.BackgroundTransparency = 1
+            volIco.ZIndex = 7
+            volIco.Parent = ctrlRow
+            AddToRegistry(volIco, "ImageColor3", "SubText")
+            applyIcon(volIco, "volume")
+            local volLbl = Instance.new("TextLabel")
+            volLbl.Size = UDim2.fromOffset(32,22)
+            volLbl.Position = UDim2.fromOffset(84,0)
+            volLbl.BackgroundTransparency = 1
+            volLbl.Text = tostring(math.floor(vol*100)).."%"
+            volLbl.TextSize = 10
+            volLbl.Font = Enum.Font.Gotham
+            volLbl.ZIndex = 7
+            volLbl.Parent = ctrlRow
+            AddToRegistry(volLbl, "TextColor3", "SubText")
+            local btnLayout = Instance.new("UIListLayout")
+            btnLayout.FillDirection = Enum.FillDirection.Horizontal
+            btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            btnLayout.Padding = UDim.new(0,2)
+            btnLayout.Parent = ctrlRow
+            local ctrlVisible = false
+            local fadeTimer = 0
+            local fadingOut = false
+            local function showOverlay()
+                ctrlVisible = true; fadingOut = false; fadeTimer = 3
+                Tween(overlay, {GroupTransparency=0}, 0.18)
+            end
+            local function hideOverlay()
+                ctrlVisible = false; fadingOut = true
+                Tween(overlay, {GroupTransparency=1}, 0.3)
+            end
+            local vidClickBtn = Instance.new("TextButton")
+            vidClickBtn.Size = UDim2.fromScale(1,1)
+            vidClickBtn.BackgroundTransparency = 1
+            vidClickBtn.Text = ""
+            vidClickBtn.ZIndex = 4
+            vidClickBtn.AutoButtonColor = false
+            vidClickBtn.Parent = wrap
+            vidClickBtn.MouseButton1Click:Connect(function()
+                if ctrlVisible then fadeTimer = 3 else showOverlay() end
+            end)
+            local function resetFade() fadeTimer = 3; fadingOut = false end
+            playBtn.MouseButton1Click:Connect(function()
+                if vid then pcall(function() vid:Play() end) end
+                playing = true; playBtn.Visible = false; pauseBtn.Visible = true; resetFade()
+            end)
+            pauseBtn.MouseButton1Click:Connect(function()
+                if vid then pcall(function() vid:Pause() end) end
+                playing = false; playBtn.Visible = true; pauseBtn.Visible = false; resetFade()
+            end)
+            stopBtn.MouseButton1Click:Connect(function()
+                if vid then pcall(function() vid:Stop() end) end
+                playing = false; playBtn.Visible = true; pauseBtn.Visible = false; resetFade()
+            end)
+            pauseBtn.Visible = auto; playBtn.Visible = not auto
+            local seeking = false
+            local function vidSeek(posX)
+                resetFade()
+                local rx = seekRail.AbsolutePosition.X
+                local rw = seekRail.AbsoluteSize.X
+                local pct = math.clamp((posX-rx)/rw,0,1)
+                seekFill.Size = UDim2.new(pct,0,1,0)
+                seekKnob.Position = UDim2.new(pct,0,0.5,0)
+                if vid and vid.TimeLength and vid.TimeLength>0 then
+                    pcall(function() vid.TimePosition = vid.TimeLength * pct end)
+                end
+            end
+            seekRail.InputBegan:Connect(function(inp)
+                if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
+                    seeking = true
+                    vidSeek(inp.Position.X)
+                    resetFade()
+                    inp.Changed:Connect(function()
+                        if inp.UserInputState==Enum.UserInputState.End then seeking = false end
+                    end)
+                end
+            end)
+            UserInputService.InputChanged:Connect(function(inp)
+                if seeking and (inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch) then
+                    vidSeek(inp.Position.X)
+                end
+            end)
+            local function fmtTime(s) s = math.max(0, math.floor(s or 0)); return string.format("%d:%02d", math.floor(s/60), s%60) end
+            local hbConn = RunService.Heartbeat:Connect(function(dt)
+                if not wrap.Parent then return end
+                if ctrlVisible then
+                    fadeTimer = fadeTimer - dt
+                    if fadeTimer <= 0 and not seeking then hideOverlay() end
+                end
+                if not vid then return end
+                local dur = vid.TimeLength or 0
+                local pos = 0; pcall(function() pos = vid.TimePosition end)
+                if dur > 0 and not seeking then
+                    local pct = math.clamp(pos/dur,0,1)
+                    seekFill.Size = UDim2.new(pct,0,1,0)
+                    seekKnob.Position = UDim2.new(pct,0,0.5,0)
+                end
+                timeCur.Text = fmtTime(pos)
+                timeDur.Text = fmtTime(dur)
+            end)
+            if auto and hasVideo then
+                task.spawn(function()
+                    task.wait(0.08)
+                    if vid and vid.Parent then
+                        pcall(function() vid:Play() end)
+                        playing = true
+                        pauseBtn.Visible = true
+                        playBtn.Visible = false
+                    end
+                end)
+            end
+            local mod = {Frame=wrap, Type="Video", VideoFrame=vid}
+            function mod:Play() if vid then pcall(function() vid:Play() end); playing=true; playBtn.Visible=false; pauseBtn.Visible=true end end
+            function mod:Pause() if vid then pcall(function() vid:Pause() end); playing=false; playBtn.Visible=true; pauseBtn.Visible=false end end
+            function mod:Stop() if vid then pcall(function() vid:Stop() end); playing=false; playBtn.Visible=true; pauseBtn.Visible=false end end
+            function mod:SetVideo(s) local r=resolveMedia(s); if r~="" then vid.Video=r; placeholder.Visible=false else placeholder.Visible=true end end
+            function mod:SetVolume(v) vid.Volume=math.clamp(v,0,1); volLbl.Text=tostring(math.floor(math.clamp(v,0,1)*100)).."%" end
+            function mod:SetAspectRatio(r) ratioNum=parseRatio(r); recalcAspect() end
+            function mod:Destroy() safeDisconnect(hbConn); wrap:Destroy() end
+            return mod
+        end
+
+        child.Audio = function(_, config)
+            local opts = config or {}
+            local parent = opts.Parent or contentHolder
+            if not parent then return end
+            local title = opts.Name or opts.Title or "Audio"
+            local subtitle = opts.SubName or opts.SubTitle or ""
+            local src = opts.Audio or opts.Sound or ""
+            local vol = (opts.Volume~=nil) and math.clamp(opts.Volume,0,10) or 0.5
+            local looped = opts.Looped ~= false
+            local auto = opts.AutoPlay ~= false
+            local playOutside = opts.PlayOutsideWindow == true
+            local function resolve(s, noDownload)
+                local mm = MediaManager
+                if mm then return mm:Audio(s, noDownload) end
+                if type(s)~="string" or s=="" then return "" end
+                if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
+                if s:match("^%d+$") then return "rbxassetid://"..s end
+                return ""
+            end
+            local function fmtTime(s) s = math.max(0, math.floor(s or 0)); return string.format("%d:%02d", math.floor(s/60), s%60) end
+            local isHttp = type(src)=="string" and src:match("^https?://")
+            local resolved = isHttp and resolve(src, true) or resolve(src, false)
+            local pendingDownload = isHttp and (not resolved or resolved=="")
+            local hasAudio = (resolved~=nil and resolved~="") or pendingDownload
+            local snd = nil
+            local function initSound(resolvedId)
+                local s2 = Instance.new("Sound")
+                s2.Name = "FengAudio"
+                pcall(function() s2.SoundId = resolvedId end)
+                s2.Volume = vol
+                s2.Looped = looped
+                if playOutside then
+                    s2.RollOffMaxDistance = 10000
+                    s2.Parent = game:GetService("SoundService")
+                else
+                    s2.Parent = workspace
+                end
+                return s2
+            end
+            if hasAudio and not pendingDownload then snd = initSound(resolved) end
+            local wrapHeight = (title~="" or subtitle~="") and 118 or 96
+            local wrap = Instance.new("Frame")
+            wrap.Size = UDim2.new(1,-16,0,wrapHeight)
+            wrap.BackgroundTransparency = 0.92
+            wrap.BackgroundColor3 = CurrentTheme.Top
+            wrap.BorderSizePixel = 0
+            wrap.Parent = parent
+            AddToRegistry(wrap, "BackgroundColor3", "Top")
+            local wrapStroke = Instance.new("UIStroke")
+            wrapStroke.Thickness = 1
+            wrapStroke.Color = CurrentTheme.Stroke
+            wrapStroke.Transparency = 0.6
+            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            wrapStroke.Parent = wrap
+            table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
+            local wrapCorner = Instance.new("UICorner")
+            wrapCorner.CornerRadius = UDim.new(0,8)
+            wrapCorner.Parent = wrap
+            local padding = Instance.new("UIPadding")
+            padding.PaddingLeft = UDim.new(0,10)
+            padding.PaddingRight = UDim.new(0,10)
+            padding.PaddingTop = UDim.new(0,10)
+            padding.PaddingBottom = UDim.new(0,10)
+            padding.Parent = wrap
+            local topRow = Instance.new("Frame")
+            topRow.Size = UDim2.new(1,0,0,(title~="" or subtitle~="") and 38 or 28)
+            topRow.BackgroundTransparency = 1
+            topRow.Parent = wrap
+            local audioIcon = Instance.new("ImageLabel")
+            audioIcon.Size = UDim2.fromOffset(20,20)
+            audioIcon.Position = UDim2.new(0,0,0.5,0)
+            audioIcon.AnchorPoint = Vector2.new(0,0.5)
+            audioIcon.BackgroundTransparency = 1
+            audioIcon.ZIndex = 2
+            audioIcon.Parent = topRow
+            AddToRegistry(audioIcon, "ImageColor3", hasAudio and "Accent" or "SubText")
+            audioIcon.Image = "rbxassetid://10747376008"
+            local titleHolder = Instance.new("Frame")
+            titleHolder.Size = UDim2.new(1,-110,1,0)
+            titleHolder.Position = UDim2.new(0,28,0,0)
+            titleHolder.BackgroundTransparency = 1
+            titleHolder.ZIndex = 2
+            titleHolder.Parent = topRow
+            local statusLbl = Instance.new("TextLabel")
+            statusLbl.Size = UDim2.new(1,0,0,16)
+            statusLbl.Position = UDim2.new(0,0,0,(title~="" or subtitle~="") and 2 or 0)
+            statusLbl.AnchorPoint = Vector2.new(0,0)
+            statusLbl.BackgroundTransparency = 1
+            statusLbl.Text = (title~="" and title) or (hasAudio and "Audio" or "No audio source")
+            statusLbl.TextSize = (title~="" or subtitle~="") and 12 or 11
+            statusLbl.Font = (title~="" or subtitle~="") and Enum.Font.GothamBold or Enum.Font.Gotham
+            statusLbl.TextXAlignment = Enum.TextXAlignment.Left
+            statusLbl.TextTruncate = Enum.TextTruncate.AtEnd
+            statusLbl.ZIndex = 2
+            statusLbl.Parent = titleHolder
+            AddToRegistry(statusLbl, "TextColor3", hasAudio and "Text" or "SubText")
+            local subtitleLbl = nil
+            if subtitle~="" then
+                subtitleLbl = Instance.new("TextLabel")
+                subtitleLbl.Size = UDim2.new(1,0,0,13)
+                subtitleLbl.Position = UDim2.new(0,0,0,20)
+                subtitleLbl.AnchorPoint = Vector2.new(0,0)
+                subtitleLbl.BackgroundTransparency = 1
+                subtitleLbl.Text = subtitle
+                subtitleLbl.TextSize = 10
+                subtitleLbl.Font = Enum.Font.Gotham
+                subtitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+                subtitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
+                subtitleLbl.Visible = true
+                subtitleLbl.ZIndex = 2
+                subtitleLbl.Parent = titleHolder
+                AddToRegistry(subtitleLbl, "TextColor3", "SubText")
+            end
+
+            local controls = Instance.new("Frame")
+            controls.Size = UDim2.new(0,116,1,0)
+            controls.Position = UDim2.new(1,0,0,0)
+            controls.AnchorPoint = Vector2.new(1,0)
+            controls.BackgroundTransparency = 1
+            controls.Visible = hasAudio
+            controls.Parent = topRow
+            local ctrlLayout = Instance.new("UIListLayout")
+            ctrlLayout.FillDirection = Enum.FillDirection.Horizontal
+            ctrlLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            ctrlLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+            ctrlLayout.Padding = UDim.new(0,4)
+            ctrlLayout.Parent = controls
+            local function ctrlBtn(iconId, cb)
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.fromOffset(24,24)
+                btn.BackgroundTransparency = 1
+                btn.Text = ""
+                btn.ZIndex = 3
+                btn.Parent = controls
+                local ic = Instance.new("ImageLabel")
+                ic.Size = UDim2.fromOffset(16,16)
+                ic.Position = UDim2.new(0.5,0,0.5,0)
+                ic.AnchorPoint = Vector2.new(0.5,0.5)
+                ic.BackgroundTransparency = 1
+                ic.ZIndex = 4
+                ic.Parent = btn
+                AddToRegistry(ic, "ImageColor3", "Text")
+                local icons = {play="rbxassetid://10734923549", pause="rbxassetid://10734919336", stop="rbxassetid://10734972621", external="rbxassetid://10747366266", import="rbxassetid://10747366266"}
+                ic.Image = icons[iconId] or "rbxassetid://10734923549"
+                btn.MouseButton1Click:Connect(function() pcall(cb) end)
+                return btn, ic
+            end
+            local playing = false
+            local playBtn, playIco
+            local pauseBtn, pauseIco
+            local outsideBtn, outsideIco
+            if hasAudio then
+                local _downloading = false
+                local function _doPlay()
+                    if not snd then return end
+                    pcall(function() snd:Play() end)
+                    playing = true
+                    if playBtn then playBtn.Visible = false end
+                    if pauseBtn then pauseBtn.Visible = true end
+                end
+                local function _triggerPlay()
+                    if _downloading then return end
+                    if snd then _doPlay(); return end
+                    if pendingDownload then
+                        _downloading = true
+                        if win then win:Notification("Audio", "Downloading audio, please wait...", "Info", 4) end
+                        task.spawn(function()
+                            local got = resolve(src, false)
+                            _downloading = false
+                            if got and got~="" then
+                                pendingDownload = false
+                                snd = initSound(got)
+                                _doPlay()
+                                if win then win:Notification("Audio", "Audio ready — playing now", "Success", 2) end
+                            else
+                                if win then win:Notification("Audio", "Failed to download audio", "Error", 3) end
+                            end
+                        end)
+                    end
+                end
+                playBtn, playIco = ctrlBtn("play", _triggerPlay)
+                pauseBtn, pauseIco = ctrlBtn("pause", function()
+                    if snd then snd:Pause() end
+                    playing = false
+                    if playBtn then playBtn.Visible = true end
+                    if pauseBtn then pauseBtn.Visible = false end
+                end)
+                pauseBtn.Visible = false
+                local stopBtn, stopIco = ctrlBtn("stop", function()
+                    if snd then pcall(function() snd:Stop(); snd.TimePosition=0 end) end
+                    playing = false
+                    if playBtn then playBtn.Visible = true end
+                    if pauseBtn then pauseBtn.Visible = false end
+                end)
+                local function toggleOutside()
+                    playOutside = not playOutside
+                    local iconName = playOutside and "external" or "import"
+                    if outsideIco then outsideIco.Image = icons[iconName] or "rbxassetid://10747366266" end
+                    if snd then
+                        local wasPlaying = playing
+                        pcall(function() if wasPlaying then snd:Stop() end end)
+                        if playOutside then
+                            snd.RollOffMaxDistance = 10000
+                            snd.Parent = game:GetService("SoundService")
+                        else
+                            snd.Parent = workspace
+                        end
+                        if wasPlaying then pcall(function() snd:Play() end) end
+                    end
+                    if win then win:Notification("Audio", playOutside and "Play Outside Window: ON" or "Play Outside Window: OFF", "Info", 2) end
+                end
+                outsideBtn, outsideIco = ctrlBtn("external", toggleOutside)
+                if outsideIco then outsideIco.Image = playOutside and "rbxassetid://10747366266" or "rbxassetid://10747366266" end
+                if auto and snd then _doPlay() end
+            end
+            local seekRowOffset = (title~="" or subtitle~="") and 56 or 36
+            local seekRow = Instance.new("Frame")
+            seekRow.Size = UDim2.new(1,0,0,24)
+            seekRow.Position = UDim2.new(0,0,0,seekRowOffset)
+            seekRow.BackgroundTransparency = 1
+            seekRow.Visible = hasAudio
+            seekRow.Parent = wrap
+            local curLbl = Instance.new("TextLabel")
+            curLbl.Size = UDim2.fromOffset(34,20)
+            curLbl.Position = UDim2.new(0,0,0.5,0)
+            curLbl.AnchorPoint = Vector2.new(0,0.5)
+            curLbl.BackgroundTransparency = 1
+            curLbl.Text = "0:00"
+            curLbl.TextSize = 10
+            curLbl.Font = Enum.Font.Gotham
+            curLbl.TextXAlignment = Enum.TextXAlignment.Left
+            curLbl.ZIndex = 3
+            curLbl.Parent = seekRow
+            AddToRegistry(curLbl, "TextColor3", "SubText")
+            local durLbl = Instance.new("TextLabel")
+            durLbl.Size = UDim2.fromOffset(34,20)
+            durLbl.Position = UDim2.new(1,0,0.5,0)
+            durLbl.AnchorPoint = Vector2.new(1,0.5)
+            durLbl.BackgroundTransparency = 1
+            durLbl.Text = "0:00"
+            durLbl.TextSize = 10
+            durLbl.Font = Enum.Font.Gotham
+            durLbl.TextXAlignment = Enum.TextXAlignment.Right
+            durLbl.ZIndex = 3
+            durLbl.Parent = seekRow
+            AddToRegistry(durLbl, "TextColor3", "SubText")
+            local rail = Instance.new("Frame")
+            rail.Size = UDim2.new(1,-76,0,4)
+            rail.Position = UDim2.new(0,38,0.5,0)
+            rail.AnchorPoint = Vector2.new(0,0.5)
+            rail.BackgroundTransparency = 0.65
+            rail.ZIndex = 2
+            rail.Parent = seekRow
+            AddToRegistry(rail, "BackgroundColor3", "SubText")
+            Instance.new("UICorner", rail).CornerRadius = UDim.new(1,0)
+            local fill = Instance.new("Frame")
+            fill.Size = UDim2.new(0,0,1,0)
+            fill.BackgroundTransparency = 0
+            fill.ZIndex = 3
+            fill.Parent = rail
+            AddToRegistry(fill, "BackgroundColor3", "Accent")
+            Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
+            local knob = Instance.new("Frame")
+            knob.Size = UDim2.fromOffset(12,12)
+            knob.Position = UDim2.new(0,0,0.5,0)
+            knob.AnchorPoint = Vector2.new(0.5,0.5)
+            knob.ZIndex = 4
+            knob.Parent = rail
+            AddToRegistry(knob, "BackgroundColor3", "Accent")
+            Instance.new("UICorner", knob).CornerRadius = UDim.new(1,0)
+            local dragging = false
+            local function seekTo(inputX)
+                if not snd then return end
+                local railX = rail.AbsolutePosition.X
+                local railW = rail.AbsoluteSize.X
+                if railW <= 0 then return end
+                local pct = math.clamp((inputX - railX)/railW,0,1)
+                local dur = snd.TimeLength or 0
+                if dur > 0 then pcall(function() snd.TimePosition = pct * dur end) end
+            end
+            rail.InputBegan:Connect(function(inp)
+                if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
+                    dragging = true
+                    seekTo(inp.Position.X)
+                end
+            end)
+            rail.InputEnded:Connect(function(inp)
+                if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
+                    dragging = false
+                end
+            end)
+            UserInputService.InputChanged:Connect(function(inp)
+                if dragging and (inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch) then
+                    seekTo(inp.Position.X)
+                end
+            end)
+            local hbConn = RunService.Heartbeat:Connect(function()
+                if not wrap.Parent then return end
+                if not snd then return end
+                local dur = snd.TimeLength or 0
+                local pos = snd.TimePosition or 0
+                curLbl.Text = fmtTime(pos)
+                durLbl.Text = fmtTime(dur)
+                local pct = dur > 0 and (pos/dur) or 0
+                fill.Size = UDim2.new(pct,0,1,0)
+                knob.Position = UDim2.new(pct,0,0.5,0)
+            end)
+            local mod = {Frame=wrap, Type="Audio", Sound=snd}
+            function mod:Play() if snd then pcall(function() snd:Play() end) end end
+            function mod:Pause() if snd then pcall(function() snd:Pause() end) end end
+            function mod:Stop() if snd then pcall(function() snd:Stop() end) end end
+            function mod:SetVolume(v) if snd then snd.Volume = math.clamp(v,0,10) end end
+            function mod:SetAudio(src) local r=resolve(src); if snd then pcall(function() snd:Stop(); snd.SoundId = r end) else snd=initSound(r) end; hasAudio = r~=""; controls.Visible = hasAudio; seekRow.Visible = hasAudio; statusLbl.Text = hasAudio and (title or "Audio") or "No audio source"; if playBtn then playBtn.Visible = hasAudio end; if pauseBtn then pauseBtn.Visible = false end end
+            function mod:SetAudioTitle(title, subtitle) statusLbl.Text = title or (hasAudio and "Audio" or "No audio source"); if subtitleLbl then subtitleLbl.Text = subtitle or ""; subtitleLbl.Visible = subtitle and subtitle~="" end end
+            function mod:SetPlayOutside(enabled) playOutside = enabled; if snd then local wasPlaying=playing; pcall(function() snd:Stop() end); if enabled then snd.Parent=game:GetService("SoundService") else snd.Parent=workspace end; if wasPlaying then pcall(function() snd:Play() end) end end end
+            function mod:Destroy() safeDisconnect(hbConn); if snd then pcall(function() snd:Stop(); snd:Destroy() end) end; wrap:Destroy() end
+            return mod
+        end
+
+        child.Viewport = function(_, config)
+            local opts = config or {}
+            local parent = opts.Parent or contentHolder
+            if not parent then return end
+            local UIS = UserInputService
+            local RS = RunService
+            local TS = TweenService
+            local height = opts.Height or 200
+            local focused = (opts.Focused ~= false)
+            local interactive = (opts.Interactive ~= false)
+            local camera = opts.Camera or Instance.new("Camera")
+            local obj = opts.Object
+            local aspectRatio = opts.AspectRatio
+            local radius = opts.Radius or 8
+            assert(obj, "Viewport - Missing Object")
+            local function parseRatio(r)
+                if type(r)=="number" then return r end
+                if type(r)=="string" then
+                    local w,h = r:match("(%d+):(%d+)")
+                    if w and h and tonumber(h)~=0 then return tonumber(w)/tonumber(h) end
+                end
+                return nil
+            end
+            local wrap = Instance.new("Frame")
+            wrap.Name = "ViewportHolder"
+            wrap.Size = UDim2.new(1,-16,0,height)
+            wrap.BackgroundTransparency = 0.92
+            wrap.BackgroundColor3 = CurrentTheme.Main
+            wrap.BorderSizePixel = 0
+            wrap.ClipsDescendants = true
+            wrap.Parent = parent
+            AddToRegistry(wrap, "BackgroundColor3", "Main")
+            local wrapStroke = Instance.new("UIStroke")
+            wrapStroke.Thickness = 1
+            wrapStroke.Color = CurrentTheme.Stroke
+            wrapStroke.Transparency = 0.6
+            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            wrapStroke.Parent = wrap
+            table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
+            local wrapCorner = Instance.new("UICorner")
+            wrapCorner.CornerRadius = UDim.new(0,radius)
+            wrapCorner.Parent = wrap
+            local ratioNum = parseRatio(aspectRatio)
+            local function recalcAspect()
+                if not ratioNum or ratioNum<=0 then return end
+                local w = wrap.AbsoluteSize.X
+                if w>0 then wrap.Size = UDim2.new(1,-16,0,math.floor(w/ratioNum)) end
+            end
+            wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
+            task.defer(recalcAspect)
+            local bg = Instance.new("ImageLabel")
+            bg.Size = UDim2.fromScale(1,1)
+            bg.BackgroundTransparency = 0.1
+            bg.BorderSizePixel = 0
+            bg.Image = ""
+            bg.BackgroundColor3 = Color3.fromRGB(15,15,20)
+            bg.Parent = wrap
+            local bgCorner = Instance.new("UICorner")
+            bgCorner.CornerRadius = UDim.new(0,radius)
+            bgCorner.Parent = bg
+            AddToRegistry(bg, "BackgroundColor3", "Main")
+            local vp = Instance.new("ViewportFrame")
+            vp.Name = "Viewport"
+            vp.Size = UDim2.fromScale(1,1)
+            vp.BackgroundTransparency = 1
+            vp.CurrentCamera = camera
+            vp.Active = interactive
+            vp.Parent = wrap
+            obj.Parent = vp
+            local Dragging = false
+            local Pinching = false
+            local LastMousePos = nil
+            local LastPinchDist = 0
+            local ScrollFrameRef = nil
+            local function findScrollFrame(inst)
+                while inst do
+                    if inst:IsA("ScrollingFrame") then return inst end
+                    inst = inst.Parent
+                end
+                return nil
+            end
+            ScrollFrameRef = findScrollFrame(wrap)
+            local function isMouseInViewport(pos)
+                local ap = vp.AbsolutePosition
+                local as = vp.AbsoluteSize
+                return pos.X>=ap.X and pos.X<=ap.X+as.X and pos.Y>=ap.Y and pos.Y<=ap.Y+as.Y
+            end
+            local function updateZoomValue()
+                local ok, mpos = pcall(function() return obj:GetPivot().Position end)
+                if ok and camera then
+                    local dist = (camera.CFrame.Position - mpos).Magnitude
+                    if self then self.Value = dist end
+                end
+            end
+            local function focusCamera()
+                local mpos = obj:GetPivot().Position
+                local size = obj:IsA("BasePart") and obj.Size or select(2, obj:GetBoundingBox(0))
+                local ext = math.max(size.X, size.Y, size.Z)
+                camera.CFrame = CFrame.new(mpos + Vector3.new(0, ext/2, ext*2), mpos)
+                updateZoomValue()
+            end
+            if focused then task.defer(focusCamera) end
+            vp.MouseEnter:Connect(function()
+                if interactive and ScrollFrameRef then ScrollFrameRef.ScrollingEnabled = false end
+            end)
+            vp.InputEnded:Connect(function(inp)
+                if inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch then
+                    if ScrollFrameRef then ScrollFrameRef.ScrollingEnabled = true end
+                end
+            end)
+            vp.InputBegan:Connect(function(inp)
+                if interactive then
+                    if inp.UserInputType==Enum.UserInputType.MouseButton1 or (inp.UserInputType==Enum.UserInputType.Touch and not Pinching) then
+                        Dragging = true
+                        LastMousePos = inp.Position
+                    end
+                end
+            end)
+            UIS.InputEnded:Connect(function(inp)
+                if interactive then
+                    if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
+                        Dragging = false
+                    end
+                end
+            end)
+            UIS.InputChanged:Connect(function(inp)
+                if interactive and Dragging and not Pinching then
+                    if inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch then
+                        local delta = inp.Position - LastMousePos
+                        LastMousePos = inp.Position
+                        local pos = obj:GetPivot().Position
+                        local ry = CFrame.fromAxisAngle(Vector3.new(0,1,0), -delta.X*0.02)
+                        camera.CFrame = CFrame.new(pos) * ry * CFrame.new(-pos) * camera.CFrame
+                        local rx = CFrame.fromAxisAngle(camera.CFrame.RightVector, -delta.Y*0.02)
+                        local pitched = CFrame.new(pos) * rx * CFrame.new(-pos) * camera.CFrame
+                        if pitched.UpVector.Y > 0.1 then camera.CFrame = pitched end
+                        updateZoomValue()
+                    end
+                end
+            end)
+            vp.InputChanged:Connect(function(inp)
+                if interactive then
+                    if inp.UserInputType==Enum.UserInputType.MouseWheel then
+                        if not isMouseInViewport(UIS:GetMouseLocation()) then return end
+                        local zoom = inp.Position.Z * 2
+                        camera.CFrame = camera.CFrame + camera.CFrame.LookVector * zoom
+                        updateZoomValue()
+                    end
+                end
+            end)
+            UIS.TouchPinch:Connect(function(touches, scale, vel, state)
+                if interactive then
+                    if state==Enum.UserInputState.Begin then
+                        local mid = (touches[1]+touches[2])/2
+                        if not isMouseInViewport(mid) then return end
+                        Pinching = true; Dragging = false
+                        LastPinchDist = (touches[1]-touches[2]).Magnitude
+                    elseif state==Enum.UserInputState.Change then
+                        if not Pinching then return end
+                        local cur = (touches[1]-touches[2]).Magnitude
+                        local d = (cur - LastPinchDist) * 0.03
+                        LastPinchDist = cur
+                        camera.CFrame = camera.CFrame + camera.CFrame.LookVector * d
+                        updateZoomValue()
+                    elseif state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
+                        Pinching = false
+                    end
+                end
+            end)
+            local self = {
+                Frame=wrap, Type="Viewport", Object=obj, Camera=camera,
+                Interactive=interactive, Height=height, Focused=focused, Value=nil
+            }
+            function self:SetObject(newObj, clone)
+                if clone then newObj = newObj:Clone() end
+                if self.Object then self.Object:Destroy() end
+                self.Object = newObj
+                self.Object.Parent = vp
+                if self.Focused then focusCamera() end
+            end
+            function self:SetHeight(h) self.Height = h; wrap.Size = UDim2.new(1,-16,0,h) end
+            function self:SetAspectRatio(ratio) ratioNum = parseRatio(ratio); if ratioNum then recalcAspect() else wrap.Size = UDim2.new(1,-16,0,self.Height) end end
+            function self:Focus() if self.Object then focusCamera() end end
+            function self:SetCamera(cam) self.Camera = cam; vp.CurrentCamera = cam end
+            function self:SetInteractive(val) self.Interactive = val; vp.Active = val end
+            function self:SetValue(dist) local ok, mpos = pcall(function() return self.Object:GetPivot().Position end); if not ok then return end; local dir = (self.Camera.CFrame.Position - mpos); if dir.Magnitude < 1e-4 then dir = Vector3.new(0,0,1) end; dir = dir.Unit; self.Camera.CFrame = CFrame.new(mpos + dir * dist, mpos); self.Value = dist end
+            function self:Destroy() wrap:Destroy() end
+            updateZoomValue()
+            return self
         end
 
         child.Paragraph = function(_, config)
@@ -3804,7 +3441,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return colObj
             end
             function mod:Destroy() outerWrap:Destroy() end
-            -- Lock not applied to Group itself, but elements inside can be locked.
+            -- Group itself has no lock, but elements inside may be locked.
             return mod
         end
 
@@ -4893,6 +4530,7 @@ function Fenglib:CreateWindow(Config)
     return Window
 end
 
+-- Custom cursor support
 do
     local cursorScreen = Instance.new("ScreenGui")
     cursorScreen.Name = "FengCustomCursor"
