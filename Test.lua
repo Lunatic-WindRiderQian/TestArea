@@ -352,7 +352,7 @@ local function styleContainer(frame)
     table.insert(ThemeListeners, function() stroke.Color = CurrentTheme.Stroke end)
 end
 
--- Helper to create lock overlay (with rounded corners and horizontal layout + click blocker)
+-- Helper to create lock overlay (improved with rounded corners and horizontal layout)
 local function createLockOverlay(parent, defaultTitle)
     -- 获取父元素的圆角半径（如果没有则使用默认 8）
     local cornerRadius = UDim.new(0, 8)
@@ -375,14 +375,6 @@ local function createLockOverlay(parent, defaultTitle)
     local corner = Instance.new("UICorner")
     corner.CornerRadius = cornerRadius
     corner.Parent = lockFrame
-
-    -- 透明点击拦截器，确保任何点击/拖动无法穿透
-    local blocker = Instance.new("TextButton")
-    blocker.Size = UDim2.new(1, 0, 1, 0)
-    blocker.BackgroundTransparency = 1
-    blocker.Text = ""
-    blocker.ZIndex = 11
-    blocker.Parent = lockFrame
 
     -- 水平布局容器
     local container = Instance.new("Frame")
@@ -418,6 +410,7 @@ local function createLockOverlay(parent, defaultTitle)
     lockLabel.AutomaticSize = Enum.AutomaticSize.X
     lockLabel.Parent = container
 
+    -- 返回锁框架和标签（以便后续更新文字）
     return lockFrame, lockLabel
 end
 
@@ -977,6 +970,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             if Bar then
                 Bar.InputBegan:Connect(function(input)
+                    if locked then return end
                     if unlimited then return end
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         SetDragging(true)
@@ -984,12 +978,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end
                 end)
                 Bar.InputEnded:Connect(function(input)
+                    if locked then return end
                     if unlimited then return end
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         SetDragging(false)
                     end
                 end)
                 UserInputService.InputChanged:Connect(function(input)
+                    if locked then return end
                     if unlimited then return end
                     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                         UpdateSlider(GetValueFromInput(input))
@@ -997,6 +993,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
             end
             Num.FocusLost:Connect(function()
+                if locked then return end
                 Tween(NumStroke, {Transparency=0.75}, 0.15)
                 SetFocused(false)
                 local typed = tonumber(Num.Text)
@@ -2129,7 +2126,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- NOTE: Image, Social, Video, Audio, Viewport do NOT have locking support.
+        -- Image: No locking support (removed)
         child.Image = function(_, config)
             config = config or {}
             local title = config.Name or "Image"
@@ -2246,7 +2243,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             clickBtn.MouseLeave:Connect(function() Tween(imageFrame, {BackgroundTransparency=1}, 0.18) end)
             clickBtn.MouseButton1Down:Connect(function() Tween(imageFrame, {BackgroundTransparency=0.2}, 0.1) end)
             clickBtn.MouseButton1Up:Connect(function() Tween(imageFrame, {BackgroundTransparency=0.05}, 0.1) end)
-
             local self = {}
             function self.UpdateTitle(newTitle) titleLabel.Text = newTitle end
             function self.UpdateSubtitle(newSubtitle)
@@ -2296,24 +2292,179 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        child.Social = function(_, config)
+        -- Divider (no lock)
+        child.Divider = function(_, config)
             config = config or {}
             local parent = config.Parent or contentHolder
-            if not parent then return end
-            local displayName = tostring(config.Name or config.DisplayName or "")
-            local subName = tostring(config.SubName or config.Subtitle or "")
-            local platform = tostring(config.SmlName or config.Platform or "")
-            local avatarSrc = config.Logo or config.Avatar or ""
-            local copyText = tostring(config.copy or "")
-            local buttonText = tostring(config.Cbn or "复制")
-            if displayName == "" then displayName = "用户" end
+            local labelText = config.Name or ""
+            local hasText = (labelText ~= "")
+
+            local containerHeight = hasText and 24 or 12
+            local container = Instance.new("Frame")
+            container.Size = UDim2.new(1, 0, 0, containerHeight)
+            container.BackgroundTransparency = 1
+            container.Parent = parent
+
+            local line = Instance.new("Frame")
+            line.Size = UDim2.new(1, -10, 0, 1)
+            line.Position = UDim2.new(0, 5, 0.5, 0)
+            line.AnchorPoint = Vector2.new(0, 0.5)
+            line.BackgroundTransparency = 0.5
+            line.BorderSizePixel = 0
+            line.Parent = container
+            AddToRegistry(line, "BackgroundColor3", "Stroke")
+
+            if hasText then
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(0, 0, 0, 16)
+                label.AutomaticSize = Enum.AutomaticSize.X
+                label.AnchorPoint = Vector2.new(0.5, 0.5)
+                label.Position = UDim2.new(0.5, 0, 0.5, 0)
+                label.BackgroundTransparency = 1
+                label.Font = Enum.Font.GothamMedium
+                label.Text = labelText
+                label.TextSize = 12
+                label.TextColor3 = CurrentTheme.Text
+                label.TextTransparency = 0.4
+                label.Parent = container
+                AddToRegistry(label, "TextColor3", "Text")
+            end
+
+            local self = {}
+            function self.SetVisible(state) container.Visible = state end
+            function self.UpdateText(newText)
+                local lbl = container:FindFirstChildOfClass("TextLabel")
+                if lbl then lbl.Text = newText or "" end
+            end
+            return self
+        end
+
+        child.Space = function(_, config)
+            local height = (config and config.Height) or 8
+            local parent = config and config.Parent or contentHolder
+            local sp = Instance.new("Frame")
+            sp.Size = UDim2.new(1,0,0,height)
+            sp.BackgroundTransparency = 1
+            sp.BorderSizePixel = 0
+            sp.Parent = parent
+            local self = {}
+            function self.SetHeight(h) height=h; sp.Size=UDim2.new(1,0,0,height) end
+            function self.SetVisible(state) sp.Visible = state end
+            function self.Destroy() sp:Destroy() end
+            return self
+        end
+
+        child.Checkbox = function(_, config)
+            local title = config.Name or ""
+            local default = config.Default or false
+            local callback = config.Callback or function() end
+            local controlId = title.."_"..tostring(#Registry)
+            local parent = config.Parent or contentHolder
+            local Tile = Instance.new("Frame")
+            Tile.Size = UDim2.new(1,0,0,42)
+            Tile.Parent = parent
+            styleContainer(Tile)
+            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0,4)
+            AddToRegistry(Tile, "BackgroundColor3", "Top")
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1,0,1,0)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = ""
+            ClickBtn.Parent = Tile
+            local TitleLbl = Instance.new("TextLabel")
+            TitleLbl.Text = title
+            TitleLbl.Size = UDim2.new(0.7,0,1,0)
+            TitleLbl.Position = UDim2.new(0,15,0,0)
+            TitleLbl.BackgroundTransparency = 1
+            TitleLbl.Font = Enum.Font.GothamMedium
+            TitleLbl.TextSize = 13
+            TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+            TitleLbl.Parent = Tile
+            AddToRegistry(TitleLbl, "TextColor3", "Text")
+            local box = Instance.new("Frame")
+            box.Size = UDim2.fromOffset(20,20)
+            box.AnchorPoint = Vector2.new(1,0.5)
+            box.Position = UDim2.new(1,-12,0.5,0)
+            box.BackgroundTransparency = 0
+            box.Parent = Tile
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0,5)
+            local boxStroke = Instance.new("UIStroke")
+            boxStroke.Thickness = 1.4
+            boxStroke.Transparency = 0.4
+            boxStroke.Parent = box
+            local check = Instance.new("ImageLabel")
+            check.Size = UDim2.fromOffset(14,14)
+            check.AnchorPoint = Vector2.new(0.5,0.5)
+            check.Position = UDim2.new(0.5,0,0.5,0)
+            check.BackgroundTransparency = 1
+            check.Image = "rbxassetid://10709790644"
+            check.ImageTransparency = 1
+            check.Parent = box
+            local h = {Value=default, Callback=callback, Type="Checkbox"}
+
+            -- Lock
+            local locked = config.Locked == true
+            local lockedTitle = config.LockedTitle or "Locked"
+            local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
+            lockFrame.Visible = locked
+            ClickBtn.Active = not locked
+
+            local function updateLock(state)
+                locked = state
+                lockFrame.Visible = state
+                ClickBtn.Active = not state
+            end
+
+            local function updateColors()
+                if locked then return end
+                if h.Value then
+                    box.BackgroundColor3 = CurrentTheme.Accent
+                    boxStroke.Color = CurrentTheme.Accent
+                    check.ImageTransparency = 0
+                else
+                    box.BackgroundColor3 = CurrentTheme.Stroke
+                    boxStroke.Color = CurrentTheme.Stroke
+                    check.ImageTransparency = 1
+                end
+            end
+            table.insert(ThemeListeners, updateColors)
+            function h:SetValue(val)
+                if locked then return end
+                val = not (not val)
+                h.Value = val
+                updateColors()
+                if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
+                pcall(callback, val)
+                pcall(h.Changed, val)
+            end
+            function h:OnChanged(_, cb) h.Changed = cb; cb(h.Value) end
+            function h:GetValue() return h.Value end
+            function h:SetVisible(vis) Tile.Visible = vis end
+            function h:Destroy() Tile:Destroy(); ConfigObjects[controlId]=nil end
+            function h:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
+            function h:Unlock() updateLock(false) end
+            function h:IsLocked() return locked end
+            ClickBtn.MouseButton1Click:Connect(function() if not locked then h:SetValue(not h.Value) end end)
+            h:SetValue(default)
+            ConfigObjects[controlId] = {Type="Checkbox", Value=h.Value, Set=function(val) h:SetValue(val) end}
+            return h
+        end
+
+        child.ProgressBar = function(_, config)
+            local name = config.Name or ""
+            local valueConfig = config.Value or {}
+            local min = valueConfig.Min or 0
+            local max = valueConfig.Max or 100
+            local default = valueConfig.Default or min
+            local showPercent = config.ShowPercent ~= false
+            local callback = config.Callback or function() end
+            local controlId = name.."_"..tostring(#Registry)
+            local parent = config.Parent or contentHolder
+            local containerHeight = (name~="" and 46 or 26)
             local wrap = Instance.new("Frame")
-            wrap.Size = UDim2.new(1,0,0,64)
+            wrap.Size = UDim2.new(1,0,0,containerHeight)
             wrap.BackgroundTransparency = 0.92
             wrap.BackgroundColor3 = CurrentTheme.Top
-            wrap.BorderSizePixel = 0
-            wrap.Parent = parent
-            AddToRegistry(wrap, "BackgroundColor3", "Top")
             local wrapStroke = Instance.new("UIStroke")
             wrapStroke.Thickness = 1
             wrapStroke.Color = CurrentTheme.Stroke
@@ -2321,125 +2472,84 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
             wrapStroke.Parent = wrap
             table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
-            local corner = Instance.new("UICorner")
-            corner.CornerRadius = UDim.new(0,12)
-            corner.Parent = wrap
-            local avatarBg = Instance.new("Frame")
-            avatarBg.Name = "AvatarBg"
-            avatarBg.Size = UDim2.fromOffset(42,42)
-            avatarBg.Position = UDim2.new(0,11,0.5,0)
-            avatarBg.AnchorPoint = Vector2.new(0,0.5)
-            avatarBg.BackgroundColor3 = Color3.fromRGB(90,90,90)
-            avatarBg.Parent = wrap
-            avatarBg.ClipsDescendants = true
-            local avatarCorner = Instance.new("UICorner")
-            avatarCorner.CornerRadius = UDim.new(0,8)
-            avatarCorner.Parent = avatarBg
-            local avatarImg = Instance.new("ImageLabel")
-            avatarImg.Size = UDim2.fromScale(1,1)
-            avatarImg.BackgroundTransparency = 1
-            avatarImg.Parent = avatarBg
-            local avatarImgCorner = Instance.new("UICorner")
-            avatarImgCorner.CornerRadius = UDim.new(0,8)
-            avatarImgCorner.Parent = avatarImg
-            if avatarSrc ~= "" then
-                avatarCorner.CornerRadius = UDim.new(1,0)
-                avatarImgCorner.CornerRadius = UDim.new(1,0)
+            wrap.Parent = parent
+            local titleLbl = nil
+            if name~="" then
+                titleLbl = Instance.new("TextLabel")
+                titleLbl.Size = UDim2.new(1,-50,0,16)
+                titleLbl.Position = UDim2.new(0,0,0,0)
+                titleLbl.BackgroundTransparency = 1
+                titleLbl.Font = Enum.Font.GothamMedium
+                titleLbl.Text = name
+                titleLbl.TextSize = 14
+                titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+                titleLbl.Parent = wrap
+                AddToRegistry(titleLbl, "TextColor3", "Text")
             end
-            local nameLbl = Instance.new("TextLabel")
-            nameLbl.Name = "DisplayName"
-            nameLbl.Text = displayName
-            nameLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold)
-            nameLbl.TextSize = 13
-            nameLbl.TextXAlignment = Enum.TextXAlignment.Left
-            nameLbl.TextTruncate = Enum.TextTruncate.AtEnd
-            nameLbl.BackgroundTransparency = 1
-            nameLbl.Size = UDim2.new(1,-140,0,16)
-            nameLbl.Position = UDim2.new(0,62,0,9)
-            nameLbl.Parent = wrap
-            AddToRegistry(nameLbl, "TextColor3", "Text")
-            if subName ~= "" then
-                local subNameLbl = Instance.new("TextLabel")
-                subNameLbl.Name = "SubName"
-                subNameLbl.Text = subName
-                subNameLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
-                subNameLbl.TextSize = 11
-                subNameLbl.TextXAlignment = Enum.TextXAlignment.Left
-                subNameLbl.TextTruncate = Enum.TextTruncate.AtEnd
-                subNameLbl.BackgroundTransparency = 1
-                subNameLbl.Size = UDim2.new(1,-140,0,13)
-                subNameLbl.Position = UDim2.new(0,62,0,27)
-                subNameLbl.Parent = wrap
-                AddToRegistry(subNameLbl, "TextColor3", "SubText")
+            local pctLbl = nil
+            if showPercent then
+                pctLbl = Instance.new("TextLabel")
+                pctLbl.Size = UDim2.new(0,50,0,16)
+                pctLbl.Position = UDim2.new(1,-50,0,0)
+                pctLbl.BackgroundTransparency = 1
+                pctLbl.Font = Enum.Font.Gotham
+                pctLbl.Text = "0%"
+                pctLbl.TextSize = 13
+                pctLbl.TextXAlignment = Enum.TextXAlignment.Right
+                pctLbl.TextTransparency = 0.5
+                pctLbl.Parent = wrap
+                AddToRegistry(pctLbl, "TextColor3", "Text")
             end
-            if platform ~= "" then
-                local platformLbl = Instance.new("TextLabel")
-                platformLbl.Name = "PlatformLabel"
-                platformLbl.Text = platform
-                platformLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
-                platformLbl.TextSize = 10
-                platformLbl.TextTransparency = 0.3
-                platformLbl.TextXAlignment = Enum.TextXAlignment.Left
-                platformLbl.BackgroundTransparency = 1
-                platformLbl.Size = UDim2.new(1,-140,0,12)
-                platformLbl.Position = UDim2.new(0,62,0, subName~="" and 42 or 27)
-                platformLbl.Parent = wrap
-                AddToRegistry(platformLbl, "TextColor3", "SubText")
-            end
-            if copyText ~= "" then
-                local copyBtn = Instance.new("TextButton")
-                copyBtn.Name = "CopyButton"
-                copyBtn.Text = buttonText
-                copyBtn.Size = UDim2.fromOffset(52,26)
-                copyBtn.Position = UDim2.new(1,-11,0.5,0)
-                copyBtn.AnchorPoint = Vector2.new(1,0.5)
-                copyBtn.TextColor3 = Color3.fromRGB(255,255,255)
-                copyBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold)
-                copyBtn.TextSize = 12
-                copyBtn.Parent = wrap
-                AddToRegistry(copyBtn, "BackgroundColor3", "Element")
-                local copyCorner = Instance.new("UICorner")
-                copyCorner.CornerRadius = UDim.new(0,8)
-                copyCorner.Parent = copyBtn
-                local copyStroke = Instance.new("UIStroke")
-                copyStroke.Transparency = 0.4
-                copyStroke.Thickness = 1
-                copyStroke.Parent = copyBtn
-                AddToRegistry(copyStroke, "Color", "Stroke")
-                copyBtn.MouseButton1Click:Connect(function()
-                    pcall(function() toclipboard(copyText) end)
-                end)
+            local rail = Instance.new("Frame")
+            rail.Size = UDim2.new(1,0,0,8)
+            rail.Position = UDim2.new(0,0,1,-8)
+            rail.BackgroundTransparency = 0.4
+            rail.BorderSizePixel = 0
+            rail.Parent = wrap
+            Instance.new("UICorner", rail).CornerRadius = UDim.new(1,0)
+            AddToRegistry(rail, "BackgroundColor3", "Stroke")
+            local fill = Instance.new("Frame")
+            fill.Size = UDim2.fromScale(0,1)
+            fill.BackgroundTransparency = 0
+            fill.BorderSizePixel = 0
+            fill.Parent = rail
+            Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
+            AddToRegistry(fill, "BackgroundColor3", "Accent")
+            local h = {Value=math.clamp(default,min,max), Min=min, Max=max, Type="ProgressBar", Frame=wrap}
+
+            -- Lock (mostly for consistency)
+            local locked = config.Locked == true
+            local lockedTitle = config.LockedTitle or "Locked"
+            local lockFrame, lockLabel = createLockOverlay(wrap, lockedTitle)
+            lockFrame.Visible = locked
+
+            local function updateLock(state)
+                locked = state
+                lockFrame.Visible = state
             end
 
-            task.spawn(function()
-                local imgUrl = nil
-                if avatarSrc ~= "" then
-                    if avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") or avatarSrc:match("^http") then
-                        imgUrl = avatarSrc
-                    elseif tonumber(avatarSrc) then
-                        imgUrl = "rbxassetid://"..avatarSrc
-                    end
-                end
-                if imgUrl and imgUrl~="" then
-                    local ok, asset = pcall(function() return MediaManager:Image(imgUrl) end)
-                    if ok and asset and asset~="" then
-                        avatarImg.Image = asset
-                        avatarCorner.CornerRadius = UDim.new(1,0)
-                        avatarImgCorner.CornerRadius = UDim.new(1,0)
-                    end
-                end
-            end)
-            local mod = {Frame=wrap, Type="Social"}
-            function mod:SetName(newName) displayName=tostring(newName or ""); local lbl=wrap:FindFirstChild("DisplayName"); if lbl then lbl.Text=displayName end end
-            function mod:SetSubName(newSubName) subName=tostring(newSubName or ""); local existing=wrap:FindFirstChild("SubName"); if existing then existing:Destroy() end; if subName~="" then local newLbl=Instance.new("TextLabel"); newLbl.Name="SubName"; newLbl.Text=subName; newLbl.FontFace=Font.new("rbxasset://fonts/families/GothamSSm.json"); newLbl.TextSize=11; newLbl.TextXAlignment=Enum.TextXAlignment.Left; newLbl.TextTruncate=Enum.TextTruncate.AtEnd; newLbl.BackgroundTransparency=1; newLbl.Size=UDim2.new(1,-140,0,13); newLbl.Position=UDim2.new(0,62,0,27); newLbl.Parent=wrap; AddToRegistry(newLbl, "TextColor3", "SubText") end end
-            function mod:SetSmlName(newPlatform) platform=tostring(newPlatform or ""); local existing=wrap:FindFirstChild("PlatformLabel"); if existing then existing:Destroy() end; if platform~="" then local newLbl=Instance.new("TextLabel"); newLbl.Name="PlatformLabel"; newLbl.Text=platform; newLbl.FontFace=Font.new("rbxasset://fonts/families/GothamSSm.json"); newLbl.TextSize=10; newLbl.TextTransparency=0.3; newLbl.TextXAlignment=Enum.TextXAlignment.Left; newLbl.BackgroundTransparency=1; newLbl.Size=UDim2.new(1,-140,0,12); newLbl.Position=UDim2.new(0,62,0, subName~="" and 42 or 27); newLbl.Parent=wrap; AddToRegistry(newLbl, "TextColor3", "SubText") end end
-            function mod:SetLogo(newLogo) avatarSrc=tostring(newLogo or ""); if avatarSrc~="" then local imgUrl; if avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") or avatarSrc:match("^http") then imgUrl=avatarSrc elseif tonumber(avatarSrc) then imgUrl="rbxassetid://"..avatarSrc end; if imgUrl then local ok, asset = pcall(function() return MediaManager:Image(imgUrl) end); if ok and asset and asset~="" then avatarImg.Image = asset end end end end
-            function mod:SetCopy(newText) copyText=tostring(newText or ""); local existing=wrap:FindFirstChild("CopyButton"); if existing then existing:Destroy() end; if copyText~="" then local newBtn=Instance.new("TextButton"); newBtn.Name="CopyButton"; newBtn.Text=buttonText; newBtn.Size=UDim2.fromOffset(52,26); newBtn.Position=UDim2.new(1,-11,0.5,0); newBtn.AnchorPoint=Vector2.new(1,0.5); newBtn.TextColor3=Color3.fromRGB(255,255,255); newBtn.FontFace=Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold); newBtn.TextSize=12; newBtn.Parent=wrap; AddToRegistry(newBtn, "BackgroundColor3", "Element"); local newCorner=Instance.new("UICorner"); newCorner.CornerRadius=UDim.new(0,8); newCorner.Parent=newBtn; local newStroke=Instance.new("UIStroke"); newStroke.Transparency=0.4; newStroke.Thickness=1; newStroke.Parent=newBtn; AddToRegistry(newStroke, "Color", "Stroke"); newBtn.MouseButton1Click:Connect(function() pcall(function() toclipboard(copyText) end) end) end end
-            function mod:SetCbn(newText) buttonText=tostring(newText or "复制"); local btn=wrap:FindFirstChild("CopyButton"); if btn then btn.Text=buttonText end end
-            function mod:Destroy() wrap:Destroy() end
-            return mod
+            function h:SetTitle(s) if titleLbl then titleLbl.Text = tostring(s or "") end end
+            function h:SetValue(val)
+                if locked then return end
+                val = math.clamp(tonumber(val) or h.Min, h.Min, h.Max)
+                h.Value = val
+                local alpha = (h.Max > h.Min) and (val - h.Min)/(h.Max - h.Min) or 0
+                Tween(fill, {Size=UDim2.fromScale(alpha,1)}, 0.2)
+                if pctLbl then pctLbl.Text = math.floor(alpha*100).."%" end
+                if callback then pcall(callback, val) end
+                if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
+            end
+            function h:Destroy() wrap:Destroy(); ConfigObjects[controlId]=nil end
+            function h:SetVisible(state) wrap.Visible = state end
+            function h:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
+            function h:Unlock() updateLock(false) end
+            function h:IsLocked() return locked end
+            h:SetValue(default)
+            ConfigObjects[controlId] = {Type="ProgressBar", Value=h.Value, Set=function(val) h:SetValue(val) end}
+            return h
         end
 
+        -- Video: No locking support (removed)
         child.Video = function(_, config)
             local opts = config or {}
             local parent = opts.Parent or contentHolder
@@ -2785,13 +2895,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             function mod:Play() if vid then pcall(function() vid:Play() end); playing=true; playBtn.Visible=false; pauseBtn.Visible=true end end
             function mod:Pause() if vid then pcall(function() vid:Pause() end); playing=false; playBtn.Visible=true; pauseBtn.Visible=false end end
             function mod:Stop() if vid then pcall(function() vid:Stop() end); playing=false; playBtn.Visible=true; pauseBtn.Visible=false end end
-            function mod:SetVideo(s) local r=resolveMedia(s); if r~="" then vid.Video=r; placeholder.Visible=false else placeholder.Visible=true end end
-            function mod:SetVolume(v) vid.Volume=math.clamp(v,0,1); volLbl.Text=tostring(math.floor(math.clamp(v,0,1)*100)).."%" end
+            function mod:SetVideo(s) if vid then local r=resolveMedia(s); if r~="" then vid.Video=r; placeholder.Visible=false else placeholder.Visible=true end end end
+            function mod:SetVolume(v) if vid then vid.Volume=math.clamp(v,0,1) end; volLbl.Text=tostring(math.floor(math.clamp(v,0,1)*100)).."%" end
             function mod:SetAspectRatio(r) ratioNum=parseRatio(r); recalcAspect() end
             function mod:Destroy() safeDisconnect(hbConn); wrap:Destroy() end
             return mod
         end
 
+        -- Audio: No locking support (removed)
         child.Audio = function(_, config)
             local opts = config or {}
             local parent = opts.Parent or contentHolder
@@ -3111,6 +3222,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
+        -- Viewport: No locking support (removed)
         child.Viewport = function(_, config)
             local opts = config or {}
             local parent = opts.Parent or contentHolder
@@ -3213,6 +3325,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 updateZoomValue()
             end
             if focused then task.defer(focusCamera) end
+
             vp.MouseEnter:Connect(function()
                 if interactive and ScrollFrameRef then ScrollFrameRef.ScrollingEnabled = false end
             end)
@@ -3296,10 +3409,161 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             function self:Focus() if self.Object then focusCamera() end end
             function self:SetCamera(cam) self.Camera = cam; vp.CurrentCamera = cam end
             function self:SetInteractive(val) self.Interactive = val; vp.Active = val end
-            function self:SetValue(dist) local ok, mpos = pcall(function() return self.Object:GetPivot().Position end); if not ok then return end; local dir = (self.Camera.CFrame.Position - mpos); if dir.Magnitude < 1e-4 then dir = Vector3.new(0,0,1) end; dir = dir.Unit; self.Camera.CFrame = CFrame.new(mpos + dir * dist, mpos); self.Value = dist end
+            function self:SetValue(dist)
+                local ok, mpos = pcall(function() return self.Object:GetPivot().Position end)
+                if not ok then return end
+                local dir = (self.Camera.CFrame.Position - mpos)
+                if dir.Magnitude < 1e-4 then dir = Vector3.new(0,0,1) end
+                dir = dir.Unit
+                self.Camera.CFrame = CFrame.new(mpos + dir * dist, mpos)
+                self.Value = dist
+            end
             function self:Destroy() wrap:Destroy() end
             updateZoomValue()
             return self
+        end
+
+        child.Social = function(_, config)
+            config = config or {}
+            local parent = config.Parent or contentHolder
+            if not parent then return end
+            local displayName = tostring(config.Name or config.DisplayName or "")
+            local subName = tostring(config.SubName or config.Subtitle or "")
+            local platform = tostring(config.SmlName or config.Platform or "")
+            local avatarSrc = config.Logo or config.Avatar or ""
+            local copyText = tostring(config.copy or "")
+            local buttonText = tostring(config.Cbn or "复制")
+            if displayName == "" then displayName = "用户" end
+            local wrap = Instance.new("Frame")
+            wrap.Size = UDim2.new(1,0,0,64)
+            wrap.BackgroundTransparency = 0.92
+            wrap.BackgroundColor3 = CurrentTheme.Top
+            wrap.BorderSizePixel = 0
+            wrap.Parent = parent
+            AddToRegistry(wrap, "BackgroundColor3", "Top")
+            local wrapStroke = Instance.new("UIStroke")
+            wrapStroke.Thickness = 1
+            wrapStroke.Color = CurrentTheme.Stroke
+            wrapStroke.Transparency = 0.6
+            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            wrapStroke.Parent = wrap
+            table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0,12)
+            corner.Parent = wrap
+            local avatarBg = Instance.new("Frame")
+            avatarBg.Name = "AvatarBg"
+            avatarBg.Size = UDim2.fromOffset(42,42)
+            avatarBg.Position = UDim2.new(0,11,0.5,0)
+            avatarBg.AnchorPoint = Vector2.new(0,0.5)
+            avatarBg.BackgroundColor3 = Color3.fromRGB(90,90,90)
+            avatarBg.Parent = wrap
+            avatarBg.ClipsDescendants = true
+            local avatarCorner = Instance.new("UICorner")
+            avatarCorner.CornerRadius = UDim.new(0,8)
+            avatarCorner.Parent = avatarBg
+            local avatarImg = Instance.new("ImageLabel")
+            avatarImg.Size = UDim2.fromScale(1,1)
+            avatarImg.BackgroundTransparency = 1
+            avatarImg.Parent = avatarBg
+            local avatarImgCorner = Instance.new("UICorner")
+            avatarImgCorner.CornerRadius = UDim.new(0,8)
+            avatarImgCorner.Parent = avatarImg
+            if avatarSrc ~= "" then
+                avatarCorner.CornerRadius = UDim.new(1,0)
+                avatarImgCorner.CornerRadius = UDim.new(1,0)
+            end
+            local nameLbl = Instance.new("TextLabel")
+            nameLbl.Name = "DisplayName"
+            nameLbl.Text = displayName
+            nameLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold)
+            nameLbl.TextSize = 13
+            nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+            nameLbl.TextTruncate = Enum.TextTruncate.AtEnd
+            nameLbl.BackgroundTransparency = 1
+            nameLbl.Size = UDim2.new(1,-140,0,16)
+            nameLbl.Position = UDim2.new(0,62,0,9)
+            nameLbl.Parent = wrap
+            AddToRegistry(nameLbl, "TextColor3", "Text")
+            if subName ~= "" then
+                local subNameLbl = Instance.new("TextLabel")
+                subNameLbl.Name = "SubName"
+                subNameLbl.Text = subName
+                subNameLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
+                subNameLbl.TextSize = 11
+                subNameLbl.TextXAlignment = Enum.TextXAlignment.Left
+                subNameLbl.TextTruncate = Enum.TextTruncate.AtEnd
+                subNameLbl.BackgroundTransparency = 1
+                subNameLbl.Size = UDim2.new(1,-140,0,13)
+                subNameLbl.Position = UDim2.new(0,62,0,27)
+                subNameLbl.Parent = wrap
+                AddToRegistry(subNameLbl, "TextColor3", "SubText")
+            end
+            if platform ~= "" then
+                local platformLbl = Instance.new("TextLabel")
+                platformLbl.Name = "PlatformLabel"
+                platformLbl.Text = platform
+                platformLbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
+                platformLbl.TextSize = 10
+                platformLbl.TextTransparency = 0.3
+                platformLbl.TextXAlignment = Enum.TextXAlignment.Left
+                platformLbl.BackgroundTransparency = 1
+                platformLbl.Size = UDim2.new(1,-140,0,12)
+                platformLbl.Position = UDim2.new(0,62,0, subName~="" and 42 or 27)
+                platformLbl.Parent = wrap
+                AddToRegistry(platformLbl, "TextColor3", "SubText")
+            end
+            if copyText ~= "" then
+                local copyBtn = Instance.new("TextButton")
+                copyBtn.Name = "CopyButton"
+                copyBtn.Text = buttonText
+                copyBtn.Size = UDim2.fromOffset(52,26)
+                copyBtn.Position = UDim2.new(1,-11,0.5,0)
+                copyBtn.AnchorPoint = Vector2.new(1,0.5)
+                copyBtn.TextColor3 = Color3.fromRGB(255,255,255)
+                copyBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold)
+                copyBtn.TextSize = 12
+                copyBtn.Parent = wrap
+                AddToRegistry(copyBtn, "BackgroundColor3", "Element")
+                local copyCorner = Instance.new("UICorner")
+                copyCorner.CornerRadius = UDim.new(0,8)
+                copyCorner.Parent = copyBtn
+                local copyStroke = Instance.new("UIStroke")
+                copyStroke.Transparency = 0.4
+                copyStroke.Thickness = 1
+                copyStroke.Parent = copyBtn
+                AddToRegistry(copyStroke, "Color", "Stroke")
+                copyBtn.MouseButton1Click:Connect(function()
+                    pcall(function() toclipboard(copyText) end)
+                end)
+            end
+            task.spawn(function()
+                local imgUrl = nil
+                if avatarSrc ~= "" then
+                    if avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") or avatarSrc:match("^http") then
+                        imgUrl = avatarSrc
+                    elseif tonumber(avatarSrc) then
+                        imgUrl = "rbxassetid://"..avatarSrc
+                    end
+                end
+                if imgUrl and imgUrl~="" then
+                    local ok, asset = pcall(function() return MediaManager:Image(imgUrl) end)
+                    if ok and asset and asset~="" then
+                        avatarImg.Image = asset
+                        avatarCorner.CornerRadius = UDim.new(1,0)
+                        avatarImgCorner.CornerRadius = UDim.new(1,0)
+                    end
+                end
+            end)
+            local mod = {Frame=wrap, Type="Social"}
+            function mod:SetName(newName) displayName=tostring(newName or ""); local lbl=wrap:FindFirstChild("DisplayName"); if lbl then lbl.Text=displayName end end
+            function mod:SetSubName(newSubName) subName=tostring(newSubName or ""); local existing=wrap:FindFirstChild("SubName"); if existing then existing:Destroy() end; if subName~="" then local newLbl=Instance.new("TextLabel"); newLbl.Name="SubName"; newLbl.Text=subName; newLbl.FontFace=Font.new("rbxasset://fonts/families/GothamSSm.json"); newLbl.TextSize=11; newLbl.TextXAlignment=Enum.TextXAlignment.Left; newLbl.TextTruncate=Enum.TextTruncate.AtEnd; newLbl.BackgroundTransparency=1; newLbl.Size=UDim2.new(1,-140,0,13); newLbl.Position=UDim2.new(0,62,0,27); newLbl.Parent=wrap; AddToRegistry(newLbl, "TextColor3", "SubText") end end
+            function mod:SetSmlName(newPlatform) platform=tostring(newPlatform or ""); local existing=wrap:FindFirstChild("PlatformLabel"); if existing then existing:Destroy() end; if platform~="" then local newLbl=Instance.new("TextLabel"); newLbl.Name="PlatformLabel"; newLbl.Text=platform; newLbl.FontFace=Font.new("rbxasset://fonts/families/GothamSSm.json"); newLbl.TextSize=10; newLbl.TextTransparency=0.3; newLbl.TextXAlignment=Enum.TextXAlignment.Left; newLbl.BackgroundTransparency=1; newLbl.Size=UDim2.new(1,-140,0,12); newLbl.Position=UDim2.new(0,62,0, subName~="" and 42 or 27); newLbl.Parent=wrap; AddToRegistry(newLbl, "TextColor3", "SubText") end end
+            function mod:SetLogo(newLogo) avatarSrc=tostring(newLogo or ""); if avatarSrc~="" then local imgUrl; if avatarSrc:match("^rbxassetid://") or avatarSrc:match("^rbxasset://") or avatarSrc:match("^http") then imgUrl=avatarSrc elseif tonumber(avatarSrc) then imgUrl="rbxassetid://"..avatarSrc end; if imgUrl then local ok, asset = pcall(function() return MediaManager:Image(imgUrl) end); if ok and asset and asset~="" then avatarImg.Image = asset end end end end
+            function mod:SetCopy(newText) copyText=tostring(newText or ""); local existing=wrap:FindFirstChild("CopyButton"); if existing then existing:Destroy() end; if copyText~="" then local newBtn=Instance.new("TextButton"); newBtn.Name="CopyButton"; newBtn.Text=buttonText; newBtn.Size=UDim2.fromOffset(52,26); newBtn.Position=UDim2.new(1,-11,0.5,0); newBtn.AnchorPoint=Vector2.new(1,0.5); newBtn.TextColor3=Color3.fromRGB(255,255,255); newBtn.FontFace=Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold); newBtn.TextSize=12; newBtn.Parent=wrap; AddToRegistry(newBtn, "BackgroundColor3", "Element"); local newCorner=Instance.new("UICorner"); newCorner.CornerRadius=UDim.new(0,8); newCorner.Parent=newBtn; local newStroke=Instance.new("UIStroke"); newStroke.Transparency=0.4; newStroke.Thickness=1; newStroke.Parent=newBtn; AddToRegistry(newStroke, "Color", "Stroke"); newBtn.MouseButton1Click:Connect(function() pcall(function() toclipboard(copyText) end) end) end end
+            function mod:SetCbn(newText) buttonText=tostring(newText or "复制"); local btn=wrap:FindFirstChild("CopyButton"); if btn then btn.Text=buttonText end end
+            function mod:Destroy() wrap:Destroy() end
+            return mod
         end
 
         child.Paragraph = function(_, config)
@@ -3441,7 +3705,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return colObj
             end
             function mod:Destroy() outerWrap:Destroy() end
-            -- Group itself has no lock, but elements inside may be locked.
             return mod
         end
 
@@ -4530,7 +4793,6 @@ function Fenglib:CreateWindow(Config)
     return Window
 end
 
--- Custom cursor support
 do
     local cursorScreen = Instance.new("ScreenGui")
     cursorScreen.Name = "FengCustomCursor"
