@@ -352,9 +352,8 @@ local function styleContainer(frame)
     table.insert(ThemeListeners, function() stroke.Color = CurrentTheme.Stroke end)
 end
 
--- Helper to create lock overlay (improved with rounded corners and horizontal layout)
+-- Helper to create lock overlay (only used for controls that support locking)
 local function createLockOverlay(parent, defaultTitle)
-    -- 获取父元素的圆角半径（如果没有则使用默认 8）
     local cornerRadius = UDim.new(0, 8)
     for _, child in ipairs(parent:GetChildren()) do
         if child:IsA("UICorner") then
@@ -371,12 +370,10 @@ local function createLockOverlay(parent, defaultTitle)
     lockFrame.ZIndex = 10
     lockFrame.Parent = parent
 
-    -- 圆角与父元素一致
     local corner = Instance.new("UICorner")
     corner.CornerRadius = cornerRadius
     corner.Parent = lockFrame
 
-    -- 水平布局容器
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1, 0, 1, 0)
     container.BackgroundTransparency = 1
@@ -389,7 +386,6 @@ local function createLockOverlay(parent, defaultTitle)
     layout.Padding = UDim.new(0, 8)
     layout.Parent = container
 
-    -- 锁图标（使用指定 ID）
     local lockIcon = Instance.new("ImageLabel")
     lockIcon.Size = UDim2.new(0, 18, 0, 18)
     lockIcon.BackgroundTransparency = 1
@@ -398,7 +394,6 @@ local function createLockOverlay(parent, defaultTitle)
     lockIcon.ImageTransparency = 0.1
     lockIcon.Parent = container
 
-    -- 锁文字
     local lockLabel = Instance.new("TextLabel")
     lockLabel.Size = UDim2.new(0, 0, 0, 20)
     lockLabel.BackgroundTransparency = 1
@@ -410,7 +405,6 @@ local function createLockOverlay(parent, defaultTitle)
     lockLabel.AutomaticSize = Enum.AutomaticSize.X
     lockLabel.Parent = container
 
-    -- 返回锁框架和标签（以便后续更新文字）
     return lockFrame, lockLabel
 end
 
@@ -970,7 +964,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             if Bar then
                 Bar.InputBegan:Connect(function(input)
-                    if locked then return end
                     if unlimited then return end
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         SetDragging(true)
@@ -978,14 +971,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end
                 end)
                 Bar.InputEnded:Connect(function(input)
-                    if locked then return end
                     if unlimited then return end
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         SetDragging(false)
                     end
                 end)
                 UserInputService.InputChanged:Connect(function(input)
-                    if locked then return end
                     if unlimited then return end
                     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                         UpdateSlider(GetValueFromInput(input))
@@ -993,7 +984,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
             end
             Num.FocusLost:Connect(function()
-                if locked then return end
                 Tween(NumStroke, {Transparency=0.75}, 0.15)
                 SetFocused(false)
                 local typed = tonumber(Num.Text)
@@ -2126,7 +2116,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Image: No locking support (removed)
+        -- Image control (NO LOCK SUPPORT)
         child.Image = function(_, config)
             config = config or {}
             local title = config.Name or "Image"
@@ -2243,6 +2233,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             clickBtn.MouseLeave:Connect(function() Tween(imageFrame, {BackgroundTransparency=1}, 0.18) end)
             clickBtn.MouseButton1Down:Connect(function() Tween(imageFrame, {BackgroundTransparency=0.2}, 0.1) end)
             clickBtn.MouseButton1Up:Connect(function() Tween(imageFrame, {BackgroundTransparency=0.05}, 0.1) end)
+
             local self = {}
             function self.UpdateTitle(newTitle) titleLabel.Text = newTitle end
             function self.UpdateSubtitle(newSubtitle)
@@ -2292,7 +2283,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- Divider (no lock)
         child.Divider = function(_, config)
             config = config or {}
             local parent = config.Parent or contentHolder
@@ -2517,7 +2507,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(fill, "BackgroundColor3", "Accent")
             local h = {Value=math.clamp(default,min,max), Min=min, Max=max, Type="ProgressBar", Frame=wrap}
 
-            -- Lock (mostly for consistency)
+            -- Lock (mostly for consistency - visual only)
             local locked = config.Locked == true
             local lockedTitle = config.LockedTitle or "Locked"
             local lockFrame, lockLabel = createLockOverlay(wrap, lockedTitle)
@@ -2549,7 +2539,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return h
         end
 
-        -- Video: No locking support (removed)
+        -- Video control (NO LOCK SUPPORT)
         child.Video = function(_, config)
             local opts = config or {}
             local parent = opts.Parent or contentHolder
@@ -2658,7 +2648,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             phText.ZIndex = 3
             phText.Parent = placeholder
             AddToRegistry(phText, "TextColor3", "SubText")
-
             if not hasVideo then
                 local mod = {Frame=wrap, Type="Video", VideoFrame=nil}
                 function mod:Destroy() wrap:Destroy() end
@@ -2902,7 +2891,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
-        -- Audio: No locking support (removed)
+        -- Audio control (NO LOCK SUPPORT)
         child.Audio = function(_, config)
             local opts = config or {}
             local parent = opts.Parent or contentHolder
@@ -3222,207 +3211,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
-        -- Viewport: No locking support (removed)
-        child.Viewport = function(_, config)
-            local opts = config or {}
-            local parent = opts.Parent or contentHolder
-            if not parent then return end
-            local UIS = UserInputService
-            local RS = RunService
-            local TS = TweenService
-            local height = opts.Height or 200
-            local focused = (opts.Focused ~= false)
-            local interactive = (opts.Interactive ~= false)
-            local camera = opts.Camera or Instance.new("Camera")
-            local obj = opts.Object
-            local aspectRatio = opts.AspectRatio
-            local radius = opts.Radius or 8
-            assert(obj, "Viewport - Missing Object")
-            local function parseRatio(r)
-                if type(r)=="number" then return r end
-                if type(r)=="string" then
-                    local w,h = r:match("(%d+):(%d+)")
-                    if w and h and tonumber(h)~=0 then return tonumber(w)/tonumber(h) end
-                end
-                return nil
-            end
-            local wrap = Instance.new("Frame")
-            wrap.Name = "ViewportHolder"
-            wrap.Size = UDim2.new(1,-16,0,height)
-            wrap.BackgroundTransparency = 0.92
-            wrap.BackgroundColor3 = CurrentTheme.Main
-            wrap.BorderSizePixel = 0
-            wrap.ClipsDescendants = true
-            wrap.Parent = parent
-            AddToRegistry(wrap, "BackgroundColor3", "Main")
-            local wrapStroke = Instance.new("UIStroke")
-            wrapStroke.Thickness = 1
-            wrapStroke.Color = CurrentTheme.Stroke
-            wrapStroke.Transparency = 0.6
-            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-            wrapStroke.Parent = wrap
-            table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
-            local wrapCorner = Instance.new("UICorner")
-            wrapCorner.CornerRadius = UDim.new(0,radius)
-            wrapCorner.Parent = wrap
-            local ratioNum = parseRatio(aspectRatio)
-            local function recalcAspect()
-                if not ratioNum or ratioNum<=0 then return end
-                local w = wrap.AbsoluteSize.X
-                if w>0 then wrap.Size = UDim2.new(1,-16,0,math.floor(w/ratioNum)) end
-            end
-            wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
-            task.defer(recalcAspect)
-            local bg = Instance.new("ImageLabel")
-            bg.Size = UDim2.fromScale(1,1)
-            bg.BackgroundTransparency = 0.1
-            bg.BorderSizePixel = 0
-            bg.Image = ""
-            bg.BackgroundColor3 = Color3.fromRGB(15,15,20)
-            bg.Parent = wrap
-            local bgCorner = Instance.new("UICorner")
-            bgCorner.CornerRadius = UDim.new(0,radius)
-            bgCorner.Parent = bg
-            AddToRegistry(bg, "BackgroundColor3", "Main")
-            local vp = Instance.new("ViewportFrame")
-            vp.Name = "Viewport"
-            vp.Size = UDim2.fromScale(1,1)
-            vp.BackgroundTransparency = 1
-            vp.CurrentCamera = camera
-            vp.Active = interactive
-            vp.Parent = wrap
-            obj.Parent = vp
-            local Dragging = false
-            local Pinching = false
-            local LastMousePos = nil
-            local LastPinchDist = 0
-            local ScrollFrameRef = nil
-            local function findScrollFrame(inst)
-                while inst do
-                    if inst:IsA("ScrollingFrame") then return inst end
-                    inst = inst.Parent
-                end
-                return nil
-            end
-            ScrollFrameRef = findScrollFrame(wrap)
-            local function isMouseInViewport(pos)
-                local ap = vp.AbsolutePosition
-                local as = vp.AbsoluteSize
-                return pos.X>=ap.X and pos.X<=ap.X+as.X and pos.Y>=ap.Y and pos.Y<=ap.Y+as.Y
-            end
-            local function updateZoomValue()
-                local ok, mpos = pcall(function() return obj:GetPivot().Position end)
-                if ok and camera then
-                    local dist = (camera.CFrame.Position - mpos).Magnitude
-                    if self then self.Value = dist end
-                end
-            end
-            local function focusCamera()
-                local mpos = obj:GetPivot().Position
-                local size = obj:IsA("BasePart") and obj.Size or select(2, obj:GetBoundingBox(0))
-                local ext = math.max(size.X, size.Y, size.Z)
-                camera.CFrame = CFrame.new(mpos + Vector3.new(0, ext/2, ext*2), mpos)
-                updateZoomValue()
-            end
-            if focused then task.defer(focusCamera) end
-
-            vp.MouseEnter:Connect(function()
-                if interactive and ScrollFrameRef then ScrollFrameRef.ScrollingEnabled = false end
-            end)
-            vp.InputEnded:Connect(function(inp)
-                if inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch then
-                    if ScrollFrameRef then ScrollFrameRef.ScrollingEnabled = true end
-                end
-            end)
-            vp.InputBegan:Connect(function(inp)
-                if interactive then
-                    if inp.UserInputType==Enum.UserInputType.MouseButton1 or (inp.UserInputType==Enum.UserInputType.Touch and not Pinching) then
-                        Dragging = true
-                        LastMousePos = inp.Position
-                    end
-                end
-            end)
-            UIS.InputEnded:Connect(function(inp)
-                if interactive then
-                    if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
-                        Dragging = false
-                    end
-                end
-            end)
-            UIS.InputChanged:Connect(function(inp)
-                if interactive and Dragging and not Pinching then
-                    if inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch then
-                        local delta = inp.Position - LastMousePos
-                        LastMousePos = inp.Position
-                        local pos = obj:GetPivot().Position
-                        local ry = CFrame.fromAxisAngle(Vector3.new(0,1,0), -delta.X*0.02)
-                        camera.CFrame = CFrame.new(pos) * ry * CFrame.new(-pos) * camera.CFrame
-                        local rx = CFrame.fromAxisAngle(camera.CFrame.RightVector, -delta.Y*0.02)
-                        local pitched = CFrame.new(pos) * rx * CFrame.new(-pos) * camera.CFrame
-                        if pitched.UpVector.Y > 0.1 then camera.CFrame = pitched end
-                        updateZoomValue()
-                    end
-                end
-            end)
-            vp.InputChanged:Connect(function(inp)
-                if interactive then
-                    if inp.UserInputType==Enum.UserInputType.MouseWheel then
-                        if not isMouseInViewport(UIS:GetMouseLocation()) then return end
-                        local zoom = inp.Position.Z * 2
-                        camera.CFrame = camera.CFrame + camera.CFrame.LookVector * zoom
-                        updateZoomValue()
-                    end
-                end
-            end)
-            UIS.TouchPinch:Connect(function(touches, scale, vel, state)
-                if interactive then
-                    if state==Enum.UserInputState.Begin then
-                        local mid = (touches[1]+touches[2])/2
-                        if not isMouseInViewport(mid) then return end
-                        Pinching = true; Dragging = false
-                        LastPinchDist = (touches[1]-touches[2]).Magnitude
-                    elseif state==Enum.UserInputState.Change then
-                        if not Pinching then return end
-                        local cur = (touches[1]-touches[2]).Magnitude
-                        local d = (cur - LastPinchDist) * 0.03
-                        LastPinchDist = cur
-                        camera.CFrame = camera.CFrame + camera.CFrame.LookVector * d
-                        updateZoomValue()
-                    elseif state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
-                        Pinching = false
-                    end
-                end
-            end)
-            local self = {
-                Frame=wrap, Type="Viewport", Object=obj, Camera=camera,
-                Interactive=interactive, Height=height, Focused=focused, Value=nil
-            }
-            function self:SetObject(newObj, clone)
-                if clone then newObj = newObj:Clone() end
-                if self.Object then self.Object:Destroy() end
-                self.Object = newObj
-                self.Object.Parent = vp
-                if self.Focused then focusCamera() end
-            end
-            function self:SetHeight(h) self.Height = h; wrap.Size = UDim2.new(1,-16,0,h) end
-            function self:SetAspectRatio(ratio) ratioNum = parseRatio(ratio); if ratioNum then recalcAspect() else wrap.Size = UDim2.new(1,-16,0,self.Height) end end
-            function self:Focus() if self.Object then focusCamera() end end
-            function self:SetCamera(cam) self.Camera = cam; vp.CurrentCamera = cam end
-            function self:SetInteractive(val) self.Interactive = val; vp.Active = val end
-            function self:SetValue(dist)
-                local ok, mpos = pcall(function() return self.Object:GetPivot().Position end)
-                if not ok then return end
-                local dir = (self.Camera.CFrame.Position - mpos)
-                if dir.Magnitude < 1e-4 then dir = Vector3.new(0,0,1) end
-                dir = dir.Unit
-                self.Camera.CFrame = CFrame.new(mpos + dir * dist, mpos)
-                self.Value = dist
-            end
-            function self:Destroy() wrap:Destroy() end
-            updateZoomValue()
-            return self
-        end
-
+        -- Social control (NO LOCK SUPPORT)
         child.Social = function(_, config)
             config = config or {}
             local parent = config.Parent or contentHolder
@@ -3537,6 +3326,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     pcall(function() toclipboard(copyText) end)
                 end)
             end
+
             task.spawn(function()
                 local imgUrl = nil
                 if avatarSrc ~= "" then
@@ -3566,6 +3356,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return mod
         end
 
+        -- Paragraph (with lock support - visual only)
         child.Paragraph = function(_, config)
             config = config or {}
             local title = config.Name or ""
@@ -3626,7 +3417,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             contentLabel.Parent = labelHolder
             AddToRegistry(contentLabel, "TextColor3", "SubText")
 
-            -- Lock (optional)
+            -- Lock (visual only)
             local locked = config.Locked == true
             local lockedTitle = config.LockedTitle or "Locked"
             local lockFrame, lockLabel = createLockOverlay(frame, lockedTitle)
@@ -3645,6 +3436,197 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             function self.Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
             function self.Unlock() updateLock(false) end
             function self.IsLocked() return locked end
+            return self
+        end
+
+        -- Viewport control (NO LOCK SUPPORT)
+        child.Viewport = function(_, config)
+            local opts = config or {}
+            local parent = opts.Parent or contentHolder
+            if not parent then return end
+            local UIS = UserInputService
+            local RS = RunService
+            local TS = TweenService
+            local height = opts.Height or 200
+            local focused = (opts.Focused ~= false)
+            local interactive = (opts.Interactive ~= false)
+            local camera = opts.Camera or Instance.new("Camera")
+            local obj = opts.Object
+            local aspectRatio = opts.AspectRatio
+            local radius = opts.Radius or 8
+            assert(obj, "Viewport - Missing Object")
+            local function parseRatio(r)
+                if type(r)=="number" then return r end
+                if type(r)=="string" then
+                    local w,h = r:match("(%d+):(%d+)")
+                    if w and h and tonumber(h)~=0 then return tonumber(w)/tonumber(h) end
+                end
+                return nil
+            end
+            local wrap = Instance.new("Frame")
+            wrap.Name = "ViewportHolder"
+            wrap.Size = UDim2.new(1,-16,0,height)
+            wrap.BackgroundTransparency = 0.92
+            wrap.BackgroundColor3 = CurrentTheme.Main
+            wrap.BorderSizePixel = 0
+            wrap.ClipsDescendants = true
+            wrap.Parent = parent
+            AddToRegistry(wrap, "BackgroundColor3", "Main")
+            local wrapStroke = Instance.new("UIStroke")
+            wrapStroke.Thickness = 1
+            wrapStroke.Color = CurrentTheme.Stroke
+            wrapStroke.Transparency = 0.6
+            wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            wrapStroke.Parent = wrap
+            table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
+            local wrapCorner = Instance.new("UICorner")
+            wrapCorner.CornerRadius = UDim.new(0,radius)
+            wrapCorner.Parent = wrap
+            local ratioNum = parseRatio(aspectRatio)
+            local function recalcAspect()
+                if not ratioNum or ratioNum<=0 then return end
+                local w = wrap.AbsoluteSize.X
+                if w>0 then wrap.Size = UDim2.new(1,-16,0,math.floor(w/ratioNum)) end
+            end
+            wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
+            task.defer(recalcAspect)
+            local bg = Instance.new("ImageLabel")
+            bg.Size = UDim2.fromScale(1,1)
+            bg.BackgroundTransparency = 0.1
+            bg.BorderSizePixel = 0
+            bg.Image = ""
+            bg.BackgroundColor3 = Color3.fromRGB(15,15,20)
+            bg.Parent = wrap
+            local bgCorner = Instance.new("UICorner")
+            bgCorner.CornerRadius = UDim.new(0,radius)
+            bgCorner.Parent = bg
+            AddToRegistry(bg, "BackgroundColor3", "Main")
+            local vp = Instance.new("ViewportFrame")
+            vp.Name = "Viewport"
+            vp.Size = UDim2.fromScale(1,1)
+            vp.BackgroundTransparency = 1
+            vp.CurrentCamera = camera
+            vp.Active = interactive
+            vp.Parent = wrap
+            obj.Parent = vp
+            local Dragging = false
+            local Pinching = false
+            local LastMousePos = nil
+            local LastPinchDist = 0
+            local ScrollFrameRef = nil
+            local function findScrollFrame(inst)
+                while inst do
+                    if inst:IsA("ScrollingFrame") then return inst end
+                    inst = inst.Parent
+                end
+                return nil
+            end
+            ScrollFrameRef = findScrollFrame(wrap)
+            local function isMouseInViewport(pos)
+                local ap = vp.AbsolutePosition
+                local as = vp.AbsoluteSize
+                return pos.X>=ap.X and pos.X<=ap.X+as.X and pos.Y>=ap.Y and pos.Y<=ap.Y+as.Y
+            end
+            local function updateZoomValue()
+                local ok, mpos = pcall(function() return obj:GetPivot().Position end)
+                if ok and camera then
+                    local dist = (camera.CFrame.Position - mpos).Magnitude
+                    if self then self.Value = dist end
+                end
+            end
+            local function focusCamera()
+                local mpos = obj:GetPivot().Position
+                local size = obj:IsA("BasePart") and obj.Size or select(2, obj:GetBoundingBox(0))
+                local ext = math.max(size.X, size.Y, size.Z)
+                camera.CFrame = CFrame.new(mpos + Vector3.new(0, ext/2, ext*2), mpos)
+                updateZoomValue()
+            end
+            if focused then task.defer(focusCamera) end
+            vp.MouseEnter:Connect(function()
+                if interactive and ScrollFrameRef then ScrollFrameRef.ScrollingEnabled = false end
+            end)
+            vp.InputEnded:Connect(function(inp)
+                if inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch then
+                    if ScrollFrameRef then ScrollFrameRef.ScrollingEnabled = true end
+                end
+            end)
+            vp.InputBegan:Connect(function(inp)
+                if interactive then
+                    if inp.UserInputType==Enum.UserInputType.MouseButton1 or (inp.UserInputType==Enum.UserInputType.Touch and not Pinching) then
+                        Dragging = true
+                        LastMousePos = inp.Position
+                    end
+                end
+            end)
+            UIS.InputEnded:Connect(function(inp)
+                if interactive then
+                    if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
+                        Dragging = false
+                    end
+                end
+            end)
+            UIS.InputChanged:Connect(function(inp)
+                if interactive and Dragging and not Pinching then
+                    if inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch then
+                        local delta = inp.Position - LastMousePos
+                        LastMousePos = inp.Position
+                        local pos = obj:GetPivot().Position
+                        local ry = CFrame.fromAxisAngle(Vector3.new(0,1,0), -delta.X*0.02)
+                        camera.CFrame = CFrame.new(pos) * ry * CFrame.new(-pos) * camera.CFrame
+                        local rx = CFrame.fromAxisAngle(camera.CFrame.RightVector, -delta.Y*0.02)
+                        local pitched = CFrame.new(pos) * rx * CFrame.new(-pos) * camera.CFrame
+                        if pitched.UpVector.Y > 0.1 then camera.CFrame = pitched end
+                        updateZoomValue()
+                    end
+                end
+            end)
+            vp.InputChanged:Connect(function(inp)
+                if interactive then
+                    if inp.UserInputType==Enum.UserInputType.MouseWheel then
+                        if not isMouseInViewport(UIS:GetMouseLocation()) then return end
+                        local zoom = inp.Position.Z * 2
+                        camera.CFrame = camera.CFrame + camera.CFrame.LookVector * zoom
+                        updateZoomValue()
+                    end
+                end
+            end)
+            UIS.TouchPinch:Connect(function(touches, scale, vel, state)
+                if interactive then
+                    if state==Enum.UserInputState.Begin then
+                        local mid = (touches[1]+touches[2])/2
+                        if not isMouseInViewport(mid) then return end
+                        Pinching = true; Dragging = false
+                        LastPinchDist = (touches[1]-touches[2]).Magnitude
+                    elseif state==Enum.UserInputState.Change then
+                        if not Pinching then return end
+                        local cur = (touches[1]-touches[2]).Magnitude
+                        local d = (cur - LastPinchDist) * 0.03
+                        LastPinchDist = cur
+                        camera.CFrame = camera.CFrame + camera.CFrame.LookVector * d
+                        updateZoomValue()
+                    elseif state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
+                        Pinching = false
+                    end
+                end
+            end)
+            local self = {
+                Frame=wrap, Type="Viewport", Object=obj, Camera=camera,
+                Interactive=interactive, Height=height, Focused=focused, Value=nil
+            }
+            function self:SetObject(newObj, clone)
+                if clone then newObj = newObj:Clone() end
+                if self.Object then self.Object:Destroy() end
+                self.Object = newObj
+                self.Object.Parent = vp
+                if self.Focused then focusCamera() end
+            end
+            function self:SetHeight(h) self.Height = h; wrap.Size = UDim2.new(1,-16,0,h) end
+            function self:SetAspectRatio(ratio) ratioNum = parseRatio(ratio); if ratioNum then recalcAspect() else wrap.Size = UDim2.new(1,-16,0,self.Height) end end
+            function self:Focus() if self.Object then focusCamera() end end
+            function self:SetCamera(cam) self.Camera = cam; vp.CurrentCamera = cam end
+            function self:SetInteractive(val) self.Interactive = val; vp.Active = val end
+            function self:SetValue(dist) local ok, mpos = pcall(function() return self.Object:GetPivot().Position end); if not ok then return end; local dir = (self.Camera.CFrame.Position - mpos); if dir.Magnitude < 1e-4 then dir = Vector3.new(0,0,1) end; dir = dir.Unit; self.Camera.CFrame = CFrame.new(mpos + dir * dist, mpos); self.Value = dist end
+            function self:Destroy() wrap:Destroy() end
             return self
         end
 
