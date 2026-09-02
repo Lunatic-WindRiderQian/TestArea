@@ -1454,8 +1454,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 if state.Mode == "Hold" then
                     local key = state.Key
                     if key=="MouseLeft" and input.UserInputType==Enum.UserInputType.MouseButton1 then doRelease()
-                    elseif key=="MouseRight" and input.UserInputType==Enum.UserInputType.MouseButton2 then doRelease()
-                    elseif input.UserInputType==Enum.UserInputType.Keyboard and input.KeyCode.Name==key then doRelease() end
+                    elif key=="MouseRight" and input.UserInputType==Enum.UserInputType.MouseButton2 then doRelease()
+                    elif input.UserInputType==Enum.UserInputType.Keyboard and input.KeyCode.Name==key then doRelease() end
                 end
             end)
             local function cleanup()
@@ -1476,8 +1476,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- ColorPicker (缩放至 0.80，尺寸小于主框架 500x299)
-        -- 使用 UIScale 整体缩放，所有内部控件保持原样
+        -- ColorPicker (与主框架同级，遮罩覆盖主框架，跟随拖动)
         -- ============================================================
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
@@ -1540,41 +1539,50 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 ClickBtn.Active = not state
             end
 
-            -- ===== 颜色选择器对话框（原版完整移植，外部包一层缩放容器） =====
+            -- ========== 颜色选择器对话框（与主框架同级，遮罩覆盖主框架） ==========
             local function openPicker()
                 if locked then return end
 
-                local pickerGui = Instance.new("ScreenGui")
-                pickerGui.Name = "FengColorPicker"
-                pickerGui.ResetOnSpawn = false
-                pickerGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-                pickerGui.Parent = CoreGui
-                if syn and syn.protect_gui then syn.protect_gui(pickerGui) end
+                -- 获取主框架和 ScreenGui
+                local mainFrame = win.MainFrame
+                local screenGui = win.ScreenGui
+                if not mainFrame or not screenGui then return end
 
-                -- 遮罩
-                local mask = Instance.new("TextButton")
-                mask.Size = UDim2.new(1,0,1,0)
-                mask.BackgroundColor3 = Color3.fromRGB(0,0,0)
+                -- 遮罩（作为主框架的子级，覆盖整个主框架）
+                local mask = Instance.new("Frame")
+                mask.Size = UDim2.new(1, 0, 1, 0)
+                mask.Position = UDim2.new(0, 0, 0, 0)
+                mask.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
                 mask.BackgroundTransparency = 0.6
-                mask.Text = ""
-                mask.AutoButtonColor = false
-                mask.ZIndex = 1
-                mask.Parent = pickerGui
-                mask.MouseButton1Click:Connect(function() pickerGui:Destroy() end)
+                mask.ZIndex = 150
+                mask.ClipsDescendants = true
+                mask.Parent = mainFrame
 
-                -- 缩放容器 (0.80 倍)
+                -- 点击遮罩关闭
+                local maskBtn = Instance.new("TextButton")
+                maskBtn.Size = UDim2.new(1, 0, 1, 0)
+                maskBtn.BackgroundTransparency = 1
+                maskBtn.Text = ""
+                maskBtn.ZIndex = 151
+                maskBtn.Parent = mask
+                maskBtn.MouseButton1Click:Connect(function()
+                    mask:Destroy()
+                end)
+
+                -- 缩放容器（弹窗整体缩放 0.80）
                 local scaleContainer = Instance.new("Frame")
-                scaleContainer.Size = UDim2.new(0, 430 * 0.80, 0, 360 * 0.80)  -- 344 x 288
+                scaleContainer.Size = UDim2.new(0, 430 * 0.80, 0, 360 * 0.80)
                 scaleContainer.AnchorPoint = Vector2.new(0.5, 0.5)
                 scaleContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
                 scaleContainer.BackgroundTransparency = 1
+                scaleContainer.ZIndex = 160
                 scaleContainer.Parent = mask
 
                 local uiScale = Instance.new("UIScale")
                 uiScale.Scale = 0.80
                 uiScale.Parent = scaleContainer
 
-                -- 对话框主框架（尺寸保持原样 430x360，由 UIScale 缩放）
+                -- 对话框
                 local dialog = Instance.new("Frame")
                 dialog.Size = UDim2.fromOffset(430, 360)
                 dialog.BackgroundColor3 = CurrentTheme.Main
@@ -1613,11 +1621,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 closeBtn.TextSize = 16
                 closeBtn.Font = Enum.Font.GothamBold
                 closeBtn.Parent = dialog
-                closeBtn.MouseButton1Click:Connect(function() pickerGui:Destroy() end)
+                closeBtn.MouseButton1Click:Connect(function() mask:Destroy() end)
                 AddToRegistry(closeBtn, "TextColor3", "Text")
 
-                ---- 颜色控件（完全复制 FluentPro 原版） ----
-
+                ---- 颜色控件（完整复制 FluentPro 原版） ----
                 -- 饱和度/明度面板
                 local svBox = Instance.new("ImageLabel")
                 svBox.Size = UDim2.fromOffset(180, 160)
@@ -1669,9 +1676,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 hueDot.Parent = hueBar
                 Instance.new("UICorner", hueDot).CornerRadius = UDim.new(1,0)
 
-                -- 透明度条 (只有 config.Transparency 存在时才显示)
+                -- 透明度条（可选）
                 if config.Transparency ~= nil then
-                    -- 透明度面板
                     local alphaBarBg = Instance.new("Frame")
                     alphaBarBg.Size = UDim2.fromOffset(12, 190)
                     alphaBarBg.Position = UDim2.fromOffset(230, 55)
@@ -1737,12 +1743,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     AddToRegistry(alphaLabel, "TextColor3", "Text")
                 end
 
-                -- Hex / RGB 输入（原版位置）
-                local inputOffsetX = config.Transparency and 20 or 0  -- 有透明度时右移
+                -- Hex / RGB 输入
+                local offsetX = config.Transparency and 20 or 0
                 -- Hex
                 local hexBox = Instance.new("TextBox")
                 hexBox.Size = UDim2.fromOffset(90,32)
-                hexBox.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 55)
+                hexBox.Position = UDim2.fromOffset(340 + offsetX, 95)
                 hexBox.BackgroundColor3 = CurrentTheme.Element
                 hexBox.BackgroundTransparency = 0.1
                 hexBox.Font = Enum.Font.GothamBold
@@ -1757,7 +1763,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AddToRegistry(hexBox, "TextColor3", "Text")
                 local hexLabel = Instance.new("TextLabel")
                 hexLabel.Size = UDim2.fromOffset(90,32)
-                hexLabel.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 55)
+                hexLabel.Position = UDim2.fromOffset(340 + offsetX, 55)
                 hexLabel.BackgroundTransparency = 1
                 hexLabel.Font = Enum.Font.GothamMedium
                 hexLabel.Text = "Hex"
@@ -1766,14 +1772,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 hexLabel.TextColor3 = CurrentTheme.Text
                 hexLabel.Parent = dialog
                 AddToRegistry(hexLabel, "TextColor3", "Text")
-                -- 原版是标签在上方，文本框在下方，我们将文本框放在标签下方，调整位置
-                hexBox.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 95)
-                hexLabel.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 55)
 
                 -- Red
                 local rBox = Instance.new("TextBox")
                 rBox.Size = UDim2.fromOffset(90,32)
-                rBox.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 135)
+                rBox.Position = UDim2.fromOffset(340 + offsetX, 135)
                 rBox.BackgroundColor3 = CurrentTheme.Element
                 rBox.BackgroundTransparency = 0.1
                 rBox.Font = Enum.Font.GothamBold
@@ -1788,7 +1791,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AddToRegistry(rBox, "TextColor3", "Text")
                 local rLabel = Instance.new("TextLabel")
                 rLabel.Size = UDim2.fromOffset(90,32)
-                rLabel.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 95)
+                rLabel.Position = UDim2.fromOffset(340 + offsetX, 95)
                 rLabel.BackgroundTransparency = 1
                 rLabel.Font = Enum.Font.GothamMedium
                 rLabel.Text = "Red"
@@ -1801,7 +1804,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 -- Green
                 local gBox = Instance.new("TextBox")
                 gBox.Size = UDim2.fromOffset(90,32)
-                gBox.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 175)
+                gBox.Position = UDim2.fromOffset(340 + offsetX, 175)
                 gBox.BackgroundColor3 = CurrentTheme.Element
                 gBox.BackgroundTransparency = 0.1
                 gBox.Font = Enum.Font.GothamBold
@@ -1816,7 +1819,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AddToRegistry(gBox, "TextColor3", "Text")
                 local gLabel = Instance.new("TextLabel")
                 gLabel.Size = UDim2.fromOffset(90,32)
-                gLabel.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 135)
+                gLabel.Position = UDim2.fromOffset(340 + offsetX, 135)
                 gLabel.BackgroundTransparency = 1
                 gLabel.Font = Enum.Font.GothamMedium
                 gLabel.Text = "Green"
@@ -1829,7 +1832,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 -- Blue
                 local bBox = Instance.new("TextBox")
                 bBox.Size = UDim2.fromOffset(90,32)
-                bBox.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 215)
+                bBox.Position = UDim2.fromOffset(340 + offsetX, 215)
                 bBox.BackgroundColor3 = CurrentTheme.Element
                 bBox.BackgroundTransparency = 0.1
                 bBox.Font = Enum.Font.GothamBold
@@ -1844,7 +1847,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AddToRegistry(bBox, "TextColor3", "Text")
                 local bLabel = Instance.new("TextLabel")
                 bLabel.Size = UDim2.fromOffset(90,32)
-                bLabel.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 175)
+                bLabel.Position = UDim2.fromOffset(340 + offsetX, 175)
                 bLabel.BackgroundTransparency = 1
                 bLabel.Font = Enum.Font.GothamMedium
                 bLabel.Text = "Blue"
@@ -1854,7 +1857,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 bLabel.Parent = dialog
                 AddToRegistry(bLabel, "TextColor3", "Text")
 
-                -- 预设色板（原版在底部）
+                -- 预设色板
                 local presetContainer = Instance.new("ScrollingFrame")
                 presetContainer.Size = UDim2.new(1,0,0,60)
                 presetContainer.Position = UDim2.new(0,0,1,-70)
@@ -1889,13 +1892,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     btn.Text = ""
                     btn.Parent = presetContainer
                     Instance.new("UICorner", btn).CornerRadius = UDim.new(0,4)
-                    local stroke = Instance.new("UIStroke")
-                    stroke.Thickness = 1.5
-                    stroke.Color = Color3.new(1,1,1)
-                    stroke.Transparency = 1
-                    stroke.Parent = btn
-                    btn.MouseEnter:Connect(function() Tween(stroke, {Transparency=0}, 0.15) end)
-                    btn.MouseLeave:Connect(function() Tween(stroke, {Transparency=1}, 0.15) end)
+                    local stroke2 = Instance.new("UIStroke")
+                    stroke2.Thickness = 1.5
+                    stroke2.Color = Color3.new(1,1,1)
+                    stroke2.Transparency = 1
+                    stroke2.Parent = btn
+                    btn.MouseEnter:Connect(function() Tween(stroke2, {Transparency=0}, 0.15) end)
+                    btn.MouseLeave:Connect(function() Tween(stroke2, {Transparency=1}, 0.15) end)
                     btn.MouseButton1Click:Connect(function()
                         currentColor = col
                         hue, sat, val = Color3.toHSV(col)
@@ -1922,7 +1925,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     bBox.Text = tostring(math.floor(currentColor.b * 255))
                 end
 
-                -- 拖动交互（只对可见控件）
+                -- 拖动交互
                 local function setupDrag(draggable, property, min, max)
                     local dragging = false
                     local startPos, startVal
@@ -1973,7 +1976,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     setupDrag(alphaBarBg, "alpha", 0, 1)
                 end
 
-                -- 输入框修改更新
+                -- 输入修改更新
                 hexBox.FocusLost:Connect(function()
                     local txt = hexBox.Text:gsub("#","")
                     if #txt == 6 or #txt == 3 then
@@ -2064,16 +2067,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     if ConfigObjects[controlId] then
                         ConfigObjects[controlId].Value = {R=currentColor.r, G=currentColor.g, B=currentColor.b, A=currentAlpha}
                     end
-                    pickerGui:Destroy()
+                    mask:Destroy()
                 end)
 
                 createActionButton("取消", nil, function()
-                    pickerGui:Destroy()
+                    mask:Destroy()
                 end)
 
                 updateAll()
 
-                -- 窗口打开动画（缩放容器已就位，直接显示）
+                -- 动画
                 scaleContainer.Size = UDim2.new(0,0,0,0)
                 Tween(scaleContainer, {Size = UDim2.new(0, 430*0.80, 0, 360*0.80)}, 0.4)
             end
@@ -4211,6 +4214,7 @@ function Fenglib:CreateWindow(Config)
     Topbar.Size = UDim2.new(1,0,0,topbarHeight)
     Topbar.BackgroundTransparency = 1
     Topbar.Parent = MainFrame
+    Topbar.ZIndex = 200   -- 标题栏位于遮罩之上
 
     local TopbarDivider = Instance.new("Frame")
     TopbarDivider.Name = "TopbarDivider"
@@ -5040,6 +5044,10 @@ function Fenglib:CreateWindow(Config)
         end
         return getElements()
     end
+
+    -- 保存主框架和 ScreenGui 供 ColorPicker 使用
+    Window.MainFrame = MainFrame
+    Window.ScreenGui = ScreenGui
 
     return Window
 end
