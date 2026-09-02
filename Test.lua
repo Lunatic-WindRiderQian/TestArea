@@ -1476,7 +1476,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- 新的 ColorPicker (独立弹窗，保留主框架)
+        -- ColorPicker (缩放至 0.80，尺寸小于主框架 500x299)
+        -- 使用 UIScale 整体缩放，所有内部控件保持原样
         -- ============================================================
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
@@ -1486,7 +1487,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local parent = config.Parent or contentHolder
 
             local currentColor = initialColor
-            local currentAlpha = 1.0
+            local currentAlpha = config.Transparency or 0
             local hue, sat, val = Color3.toHSV(currentColor)
 
             local locked = config.Locked == true
@@ -1539,7 +1540,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 ClickBtn.Active = not state
             end
 
-            -- 颜色选择器弹窗
+            -- ===== 颜色选择器对话框（原版完整移植，外部包一层缩放容器） =====
             local function openPicker()
                 if locked then return end
 
@@ -1550,6 +1551,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 pickerGui.Parent = CoreGui
                 if syn and syn.protect_gui then syn.protect_gui(pickerGui) end
 
+                -- 遮罩
                 local mask = Instance.new("TextButton")
                 mask.Size = UDim2.new(1,0,1,0)
                 mask.BackgroundColor3 = Color3.fromRGB(0,0,0)
@@ -1560,68 +1562,73 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 mask.Parent = pickerGui
                 mask.MouseButton1Click:Connect(function() pickerGui:Destroy() end)
 
-                local mainFrame = Instance.new("Frame")
-                mainFrame.Size = UDim2.new(0,400,0,340)
-                mainFrame.AnchorPoint = Vector2.new(0.5,0.5)
-                mainFrame.Position = UDim2.new(0.5,0,0.5,0)
-                mainFrame.BackgroundColor3 = CurrentTheme.Main
-                mainFrame.BackgroundTransparency = 0.05
-                mainFrame.ClipsDescendants = true
-                mainFrame.ZIndex = 2
-                mainFrame.Parent = mask
-                Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,16)
-                AddToRegistry(mainFrame, "BackgroundColor3", "Main")
+                -- 缩放容器 (0.80 倍)
+                local scaleContainer = Instance.new("Frame")
+                scaleContainer.Size = UDim2.new(0, 430 * 0.80, 0, 360 * 0.80)  -- 344 x 288
+                scaleContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+                scaleContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
+                scaleContainer.BackgroundTransparency = 1
+                scaleContainer.Parent = mask
+
+                local uiScale = Instance.new("UIScale")
+                uiScale.Scale = 0.80
+                uiScale.Parent = scaleContainer
+
+                -- 对话框主框架（尺寸保持原样 430x360，由 UIScale 缩放）
+                local dialog = Instance.new("Frame")
+                dialog.Size = UDim2.fromOffset(430, 360)
+                dialog.BackgroundColor3 = CurrentTheme.Main
+                dialog.BackgroundTransparency = 0.05
+                dialog.ClipsDescendants = true
+                dialog.Parent = scaleContainer
+                Instance.new("UICorner", dialog).CornerRadius = UDim.new(0,8)
+                AddToRegistry(dialog, "BackgroundColor3", "Main")
                 local stroke = Instance.new("UIStroke")
                 stroke.Thickness = 1.5
                 stroke.Transparency = 0.6
-                stroke.Parent = mainFrame
+                stroke.Parent = dialog
                 AddToRegistry(stroke, "Color", "Stroke")
 
-                local titleBar = Instance.new("Frame")
-                titleBar.Size = UDim2.new(1,0,0,40)
-                titleBar.BackgroundTransparency = 1
-                titleBar.Parent = mainFrame
+                -- 标题
                 local titleLabel = Instance.new("TextLabel")
-                titleLabel.Size = UDim2.new(1,-20,0,40)
-                titleLabel.Position = UDim2.new(0,10,0,0)
+                titleLabel.Size = UDim2.new(1,-40,0,32)
+                titleLabel.Position = UDim2.fromOffset(20, 55)
                 titleLabel.BackgroundTransparency = 1
                 titleLabel.Font = Enum.Font.GothamBold
                 titleLabel.Text = pickerText
-                titleLabel.TextSize = 16
+                titleLabel.TextSize = 22
                 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-                titleLabel.Parent = titleBar
+                titleLabel.TextYAlignment = Enum.TextYAlignment.Center
+                titleLabel.Parent = dialog
                 AddToRegistry(titleLabel, "TextColor3", "Text")
 
+                -- 关闭按钮
                 local closeBtn = Instance.new("TextButton")
-                closeBtn.Size = UDim2.new(0,32,0,32)
-                closeBtn.Position = UDim2.new(1,-10,0,4)
+                closeBtn.Size = UDim2.fromOffset(24,24)
+                closeBtn.Position = UDim2.new(1,-14,0,13)
                 closeBtn.AnchorPoint = Vector2.new(1,0)
                 closeBtn.BackgroundTransparency = 1
                 closeBtn.Text = "✕"
                 closeBtn.TextColor3 = CurrentTheme.Text
                 closeBtn.TextSize = 16
                 closeBtn.Font = Enum.Font.GothamBold
-                closeBtn.Parent = titleBar
+                closeBtn.Parent = dialog
                 closeBtn.MouseButton1Click:Connect(function() pickerGui:Destroy() end)
                 AddToRegistry(closeBtn, "TextColor3", "Text")
 
-                local controlsFrame = Instance.new("Frame")
-                controlsFrame.Size = UDim2.new(1,0,1,-40)
-                controlsFrame.Position = UDim2.new(0,0,0,40)
-                controlsFrame.BackgroundTransparency = 1
-                controlsFrame.Parent = mainFrame
+                ---- 颜色控件（完全复制 FluentPro 原版） ----
 
-                -- Saturation/Value panel
+                -- 饱和度/明度面板
                 local svBox = Instance.new("ImageLabel")
-                svBox.Size = UDim2.new(0.65,-10,0.7,-10)
-                svBox.Position = UDim2.new(0,10,0,10)
+                svBox.Size = UDim2.fromOffset(180, 160)
+                svBox.Position = UDim2.fromOffset(20, 55)
                 svBox.BackgroundColor3 = Color3.fromHSV(hue,1,1)
                 svBox.Image = "rbxassetid://4155801252"
                 svBox.ScaleType = Enum.ScaleType.Crop
-                svBox.Parent = controlsFrame
-                Instance.new("UICorner", svBox).CornerRadius = UDim.new(0,8)
+                svBox.Parent = dialog
+                Instance.new("UICorner", svBox).CornerRadius = UDim.new(0,4)
                 local svDot = Instance.new("Frame")
-                svDot.Size = UDim2.new(0,12,0,12)
+                svDot.Size = UDim2.fromOffset(14,14)
                 svDot.AnchorPoint = Vector2.new(0.5,0.5)
                 svDot.Position = UDim2.new(sat,0,1-val,0)
                 svDot.BackgroundColor3 = Color3.new(1,1,1)
@@ -1633,15 +1640,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 svDotStroke.Color = Color3.fromRGB(80,80,80)
                 svDotStroke.Parent = svDot
 
-                -- Hue bar
+                -- 色相条
                 local hueBar = Instance.new("Frame")
-                hueBar.Size = UDim2.new(0,16,0,0.7)
-                hueBar.Position = UDim2.new(0.65,-8,0,10)
-                hueBar.AnchorPoint = Vector2.new(1,0)
+                hueBar.Size = UDim2.fromOffset(12, 190)
+                hueBar.Position = UDim2.fromOffset(210, 55)
                 hueBar.BackgroundColor3 = Color3.new(1,1,1)
                 hueBar.BorderSizePixel = 0
-                hueBar.Parent = controlsFrame
-                Instance.new("UICorner", hueBar).CornerRadius = UDim.new(0,6)
+                hueBar.Parent = dialog
+                Instance.new("UICorner", hueBar).CornerRadius = UDim.new(1,0)
                 local hueGrad = Instance.new("UIGradient")
                 hueGrad.Rotation = 90
                 hueGrad.Color = ColorSequence.new({
@@ -1655,7 +1661,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 })
                 hueGrad.Parent = hueBar
                 local hueDot = Instance.new("Frame")
-                hueDot.Size = UDim2.new(1,6,0,4)
+                hueDot.Size = UDim2.fromOffset(14,4)
                 hueDot.AnchorPoint = Vector2.new(0.5,0.5)
                 hueDot.Position = UDim2.new(0.5,0,hue,0)
                 hueDot.BackgroundColor3 = Color3.new(1,1,1)
@@ -1663,136 +1669,198 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 hueDot.Parent = hueBar
                 Instance.new("UICorner", hueDot).CornerRadius = UDim.new(1,0)
 
-                -- Alpha bar
-                local alphaBar = Instance.new("Frame")
-                alphaBar.Size = UDim2.new(0.65,-10,0,8)
-                alphaBar.Position = UDim2.new(0,10,0.85,0)
-                alphaBar.BackgroundColor3 = Color3.fromHSV(hue,1,1)
-                alphaBar.Parent = controlsFrame
-                Instance.new("UICorner", alphaBar).CornerRadius = UDim.new(1,0)
-                local alphaGrad = Instance.new("UIGradient")
-                alphaGrad.Rotation = 0
-                alphaGrad.Color = ColorSequence.new(Color3.new(0,0,0), Color3.new(1,1,1))
-                alphaGrad.Parent = alphaBar
-                local alphaDot = Instance.new("Frame")
-                alphaDot.Size = UDim2.new(0,14,0,14)
-                alphaDot.AnchorPoint = Vector2.new(0.5,0.5)
-                alphaDot.Position = UDim2.new(currentAlpha,0,0.5,0)
-                alphaDot.BackgroundColor3 = Color3.new(1,1,1)
-                alphaDot.ZIndex = 2
-                alphaDot.Parent = alphaBar
-                Instance.new("UICorner", alphaDot).CornerRadius = UDim.new(1,0)
+                -- 透明度条 (只有 config.Transparency 存在时才显示)
+                if config.Transparency ~= nil then
+                    -- 透明度面板
+                    local alphaBarBg = Instance.new("Frame")
+                    alphaBarBg.Size = UDim2.fromOffset(12, 190)
+                    alphaBarBg.Position = UDim2.fromOffset(230, 55)
+                    alphaBarBg.BackgroundColor3 = Color3.new(1,1,1)
+                    alphaBarBg.BorderSizePixel = 0
+                    alphaBarBg.Parent = dialog
+                    Instance.new("UICorner", alphaBarBg).CornerRadius = UDim.new(1,0)
+                    local alphaBgImg = Instance.new("ImageLabel")
+                    alphaBgImg.Size = UDim2.fromScale(1,1)
+                    alphaBgImg.Image = "http://www.roblox.com/asset/?id=14204231522"
+                    alphaBgImg.ImageTransparency = 0.45
+                    alphaBgImg.ScaleType = Enum.ScaleType.Tile
+                    alphaBgImg.TileSize = UDim2.fromOffset(40,40)
+                    alphaBgImg.BackgroundTransparency = 1
+                    alphaBgImg.Parent = alphaBarBg
+                    local alphaFill = Instance.new("Frame")
+                    alphaFill.Size = UDim2.fromScale(1,1)
+                    alphaFill.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                    alphaFill.BackgroundTransparency = 0
+                    alphaFill.Parent = alphaBarBg
+                    local alphaGrad = Instance.new("UIGradient")
+                    alphaGrad.Rotation = 270
+                    alphaGrad.Transparency = NumberSequence.new({
+                        NumberSequenceKeypoint.new(0,0),
+                        NumberSequenceKeypoint.new(1,1)
+                    })
+                    alphaGrad.Parent = alphaFill
+                    local alphaDot = Instance.new("Frame")
+                    alphaDot.Size = UDim2.fromOffset(14,4)
+                    alphaDot.AnchorPoint = Vector2.new(0.5,0.5)
+                    alphaDot.Position = UDim2.new(0.5,0,1-currentAlpha,0)
+                    alphaDot.BackgroundColor3 = Color3.new(1,1,1)
+                    alphaDot.ZIndex = 2
+                    alphaDot.Parent = alphaBarBg
+                    Instance.new("UICorner", alphaDot).CornerRadius = UDim.new(1,0)
 
-                -- Input area
-                local inputFrame = Instance.new("Frame")
-                inputFrame.Size = UDim2.new(0.35,-10,0.85,-10)
-                inputFrame.Position = UDim2.new(0.65,10,0,10)
-                inputFrame.BackgroundTransparency = 1
-                inputFrame.Parent = controlsFrame
+                    -- 透明度输入
+                    local alphaInput = Instance.new("TextBox")
+                    alphaInput.Size = UDim2.fromOffset(90,32)
+                    alphaInput.Position = UDim2.fromOffset(260,215)
+                    alphaInput.BackgroundColor3 = CurrentTheme.Element
+                    alphaInput.BackgroundTransparency = 0.1
+                    alphaInput.Font = Enum.Font.GothamBold
+                    alphaInput.Text = tostring(math.floor((1-currentAlpha)*100)).."%"
+                    alphaInput.TextSize = 13
+                    alphaInput.TextColor3 = CurrentTheme.Text
+                    alphaInput.TextXAlignment = Enum.TextXAlignment.Center
+                    alphaInput.ClearTextOnFocus = false
+                    alphaInput.Parent = dialog
+                    Instance.new("UICorner", alphaInput).CornerRadius = UDim.new(0,4)
+                    AddToRegistry(alphaInput, "BackgroundColor3", "Main")
+                    AddToRegistry(alphaInput, "TextColor3", "Text")
+                    local alphaLabel = Instance.new("TextLabel")
+                    alphaLabel.Size = UDim2.fromOffset(90,32)
+                    alphaLabel.Position = UDim2.fromOffset(260,55)
+                    alphaLabel.BackgroundTransparency = 1
+                    alphaLabel.Font = Enum.Font.GothamMedium
+                    alphaLabel.Text = "Alpha"
+                    alphaLabel.TextSize = 13
+                    alphaLabel.TextXAlignment = Enum.TextXAlignment.Left
+                    alphaLabel.TextColor3 = CurrentTheme.Text
+                    alphaLabel.Parent = dialog
+                    AddToRegistry(alphaLabel, "TextColor3", "Text")
+                end
 
-                local inputLayout = Instance.new("UIListLayout")
-                inputLayout.Padding = UDim.new(0,6)
-                inputLayout.FillDirection = Enum.FillDirection.Vertical
-                inputLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                inputLayout.Parent = inputFrame
-
+                -- Hex / RGB 输入（原版位置）
+                local inputOffsetX = config.Transparency and 20 or 0  -- 有透明度时右移
                 -- Hex
                 local hexBox = Instance.new("TextBox")
-                hexBox.Size = UDim2.new(1,0,0,24)
+                hexBox.Size = UDim2.fromOffset(90,32)
+                hexBox.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 55)
                 hexBox.BackgroundColor3 = CurrentTheme.Element
                 hexBox.BackgroundTransparency = 0.1
-                hexBox.Text = "#"..currentColor:ToHex()
                 hexBox.Font = Enum.Font.GothamBold
-                hexBox.TextSize = 12
+                hexBox.Text = "#"..currentColor:ToHex()
+                hexBox.TextSize = 13
                 hexBox.TextColor3 = CurrentTheme.Text
+                hexBox.TextXAlignment = Enum.TextXAlignment.Center
                 hexBox.ClearTextOnFocus = false
-                hexBox.Parent = inputFrame
-                Instance.new("UICorner", hexBox).CornerRadius = UDim.new(0,6)
+                hexBox.Parent = dialog
+                Instance.new("UICorner", hexBox).CornerRadius = UDim.new(0,4)
                 AddToRegistry(hexBox, "BackgroundColor3", "Main")
                 AddToRegistry(hexBox, "TextColor3", "Text")
+                local hexLabel = Instance.new("TextLabel")
+                hexLabel.Size = UDim2.fromOffset(90,32)
+                hexLabel.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 55)
+                hexLabel.BackgroundTransparency = 1
+                hexLabel.Font = Enum.Font.GothamMedium
+                hexLabel.Text = "Hex"
+                hexLabel.TextSize = 13
+                hexLabel.TextXAlignment = Enum.TextXAlignment.Left
+                hexLabel.TextColor3 = CurrentTheme.Text
+                hexLabel.Parent = dialog
+                AddToRegistry(hexLabel, "TextColor3", "Text")
+                -- 原版是标签在上方，文本框在下方，我们将文本框放在标签下方，调整位置
+                hexBox.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 95)
+                hexLabel.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 55)
 
-                -- RGB rows
-                local function createRGBBox(label, initial, cb)
-                    local row = Instance.new("Frame")
-                    row.Size = UDim2.new(1,0,0,24)
-                    row.BackgroundTransparency = 1
-                    row.Parent = inputFrame
+                -- Red
+                local rBox = Instance.new("TextBox")
+                rBox.Size = UDim2.fromOffset(90,32)
+                rBox.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 135)
+                rBox.BackgroundColor3 = CurrentTheme.Element
+                rBox.BackgroundTransparency = 0.1
+                rBox.Font = Enum.Font.GothamBold
+                rBox.Text = tostring(math.floor(currentColor.r * 255))
+                rBox.TextSize = 13
+                rBox.TextColor3 = CurrentTheme.Text
+                rBox.TextXAlignment = Enum.TextXAlignment.Center
+                rBox.ClearTextOnFocus = false
+                rBox.Parent = dialog
+                Instance.new("UICorner", rBox).CornerRadius = UDim.new(0,4)
+                AddToRegistry(rBox, "BackgroundColor3", "Main")
+                AddToRegistry(rBox, "TextColor3", "Text")
+                local rLabel = Instance.new("TextLabel")
+                rLabel.Size = UDim2.fromOffset(90,32)
+                rLabel.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 95)
+                rLabel.BackgroundTransparency = 1
+                rLabel.Font = Enum.Font.GothamMedium
+                rLabel.Text = "Red"
+                rLabel.TextSize = 13
+                rLabel.TextXAlignment = Enum.TextXAlignment.Left
+                rLabel.TextColor3 = CurrentTheme.Text
+                rLabel.Parent = dialog
+                AddToRegistry(rLabel, "TextColor3", "Text")
 
-                    local lbl = Instance.new("TextLabel")
-                    lbl.Size = UDim2.new(0,20,1,0)
-                    lbl.BackgroundTransparency = 1
-                    lbl.Font = Enum.Font.GothamBold
-                    lbl.Text = label
-                    lbl.TextSize = 11
-                    lbl.TextColor3 = CurrentTheme.Text
-                    lbl.TextTransparency = 0.4
-                    lbl.Parent = row
-                    AddToRegistry(lbl, "TextColor3", "Text")
+                -- Green
+                local gBox = Instance.new("TextBox")
+                gBox.Size = UDim2.fromOffset(90,32)
+                gBox.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 175)
+                gBox.BackgroundColor3 = CurrentTheme.Element
+                gBox.BackgroundTransparency = 0.1
+                gBox.Font = Enum.Font.GothamBold
+                gBox.Text = tostring(math.floor(currentColor.g * 255))
+                gBox.TextSize = 13
+                gBox.TextColor3 = CurrentTheme.Text
+                gBox.TextXAlignment = Enum.TextXAlignment.Center
+                gBox.ClearTextOnFocus = false
+                gBox.Parent = dialog
+                Instance.new("UICorner", gBox).CornerRadius = UDim.new(0,4)
+                AddToRegistry(gBox, "BackgroundColor3", "Main")
+                AddToRegistry(gBox, "TextColor3", "Text")
+                local gLabel = Instance.new("TextLabel")
+                gLabel.Size = UDim2.fromOffset(90,32)
+                gLabel.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 135)
+                gLabel.BackgroundTransparency = 1
+                gLabel.Font = Enum.Font.GothamMedium
+                gLabel.Text = "Green"
+                gLabel.TextSize = 13
+                gLabel.TextXAlignment = Enum.TextXAlignment.Left
+                gLabel.TextColor3 = CurrentTheme.Text
+                gLabel.Parent = dialog
+                AddToRegistry(gLabel, "TextColor3", "Text")
 
-                    local box = Instance.new("TextBox")
-                    box.Size = UDim2.new(1,-25,1,0)
-                    box.Position = UDim2.new(0,22,0,0)
-                    box.BackgroundColor3 = CurrentTheme.Element
-                    box.BackgroundTransparency = 0.1
-                    box.Text = tostring(initial)
-                    box.Font = Enum.Font.GothamBold
-                    box.TextSize = 12
-                    box.TextColor3 = CurrentTheme.Text
-                    box.ClearTextOnFocus = false
-                    box.Parent = row
-                    Instance.new("UICorner", box).CornerRadius = UDim.new(0,6)
-                    AddToRegistry(box, "BackgroundColor3", "Main")
-                    AddToRegistry(box, "TextColor3", "Text")
+                -- Blue
+                local bBox = Instance.new("TextBox")
+                bBox.Size = UDim2.fromOffset(90,32)
+                bBox.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 215)
+                bBox.BackgroundColor3 = CurrentTheme.Element
+                bBox.BackgroundTransparency = 0.1
+                bBox.Font = Enum.Font.GothamBold
+                bBox.Text = tostring(math.floor(currentColor.b * 255))
+                bBox.TextSize = 13
+                bBox.TextColor3 = CurrentTheme.Text
+                bBox.TextXAlignment = Enum.TextXAlignment.Center
+                bBox.ClearTextOnFocus = false
+                bBox.Parent = dialog
+                Instance.new("UICorner", bBox).CornerRadius = UDim.new(0,4)
+                AddToRegistry(bBox, "BackgroundColor3", "Main")
+                AddToRegistry(bBox, "TextColor3", "Text")
+                local bLabel = Instance.new("TextLabel")
+                bLabel.Size = UDim2.fromOffset(90,32)
+                bLabel.Position = UDim2.fromOffset(340 + (config.Transparency and 20 or 0), 175)
+                bLabel.BackgroundTransparency = 1
+                bLabel.Font = Enum.Font.GothamMedium
+                bLabel.Text = "Blue"
+                bLabel.TextSize = 13
+                bLabel.TextXAlignment = Enum.TextXAlignment.Left
+                bLabel.TextColor3 = CurrentTheme.Text
+                bLabel.Parent = dialog
+                AddToRegistry(bLabel, "TextColor3", "Text")
 
-                    box.FocusLost:Connect(function()
-                        local num = tonumber(box.Text)
-                        if num then
-                            local clamped = math.clamp(math.floor(num), 0, 255)
-                            box.Text = tostring(clamped)
-                            cb(clamped)
-                        else
-                            box.Text = tostring(initial)
-                        end
-                    end)
-                    return box
-                end
-
-                local rBox, gBox, bBox
-                local function updateRGBBoxes()
-                    local r = math.floor(currentColor.r * 255)
-                    local g = math.floor(currentColor.g * 255)
-                    local b = math.floor(currentColor.b * 255)
-                    if rBox then rBox.Text = tostring(r) end
-                    if gBox then gBox.Text = tostring(g) end
-                    if bBox then bBox.Text = tostring(b) end
-                end
-
-                rBox = createRGBBox("R", math.floor(currentColor.r * 255), function(v)
-                    local c = Color3.fromRGB(v, math.floor(currentColor.g * 255), math.floor(currentColor.b * 255))
-                    currentColor = c
-                    hue, sat, val = Color3.toHSV(c)
-                    updateAll()
-                end)
-                gBox = createRGBBox("G", math.floor(currentColor.g * 255), function(v)
-                    local c = Color3.fromRGB(math.floor(currentColor.r * 255), v, math.floor(currentColor.b * 255))
-                    currentColor = c
-                    hue, sat, val = Color3.toHSV(c)
-                    updateAll()
-                end)
-                bBox = createRGBBox("B", math.floor(currentColor.b * 255), function(v)
-                    local c = Color3.fromRGB(math.floor(currentColor.r * 255), math.floor(currentColor.g * 255), v)
-                    currentColor = c
-                    hue, sat, val = Color3.toHSV(c)
-                    updateAll()
-                end)
-
-                -- Presets
+                -- 预设色板（原版在底部）
                 local presetContainer = Instance.new("ScrollingFrame")
                 presetContainer.Size = UDim2.new(1,0,0,60)
-                presetContainer.Position = UDim2.new(0,0,0.85,8)
+                presetContainer.Position = UDim2.new(0,0,1,-70)
                 presetContainer.BackgroundTransparency = 1
                 presetContainer.ScrollBarThickness = 0
-                presetContainer.Parent = controlsFrame
+                presetContainer.Parent = dialog
 
                 local grid = Instance.new("UIGridLayout")
                 grid.CellSize = UDim2.new(0,22,0,22)
@@ -1835,7 +1903,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
 
-                -- Update function
+                -- 更新函数
                 local function updateAll()
                     local col = Color3.fromHSV(hue, sat, val)
                     currentColor = Color3.new(col.r, col.g, col.b)
@@ -1843,13 +1911,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     svBox.BackgroundColor3 = Color3.fromHSV(hue,1,1)
                     svDot.Position = UDim2.new(sat,0,1-val,0)
                     hueDot.Position = UDim2.new(0.5,0,hue,0)
-                    alphaBar.BackgroundColor3 = Color3.fromHSV(hue,1,1)
-                    alphaDot.Position = UDim2.new(currentAlpha,0,0.5,0)
+                    if config.Transparency then
+                        alphaFill.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                        alphaDot.Position = UDim2.new(0.5,0,1-currentAlpha,0)
+                        alphaInput.Text = tostring(math.floor((1-currentAlpha)*100)).."%"
+                    end
                     hexBox.Text = "#"..currentColor:ToHex()
-                    updateRGBBoxes()
+                    rBox.Text = tostring(math.floor(currentColor.r * 255))
+                    gBox.Text = tostring(math.floor(currentColor.g * 255))
+                    bBox.Text = tostring(math.floor(currentColor.b * 255))
                 end
 
-                -- Drag handlers
+                -- 拖动交互（只对可见控件）
                 local function setupDrag(draggable, property, min, max)
                     local dragging = false
                     local startPos, startVal
@@ -1896,8 +1969,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 setupDrag(svBox, "sat", 0, 1)
                 setupDrag(svBox, "val", 0, 1)
                 setupDrag(hueBar, "hue", 0, 1)
-                setupDrag(alphaBar, "alpha", 0, 1)
+                if config.Transparency then
+                    setupDrag(alphaBarBg, "alpha", 0, 1)
+                end
 
+                -- 输入框修改更新
                 hexBox.FocusLost:Connect(function()
                     local txt = hexBox.Text:gsub("#","")
                     if #txt == 6 or #txt == 3 then
@@ -1909,13 +1985,49 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                         end
                     end
                 end)
+                rBox.FocusLost:Connect(function()
+                    local num = tonumber(rBox.Text)
+                    if num then
+                        local c = Color3.fromRGB(math.clamp(math.floor(num),0,255), math.floor(currentColor.g*255), math.floor(currentColor.b*255))
+                        currentColor = c
+                        hue, sat, val = Color3.toHSV(c)
+                        updateAll()
+                    end
+                end)
+                gBox.FocusLost:Connect(function()
+                    local num = tonumber(gBox.Text)
+                    if num then
+                        local c = Color3.fromRGB(math.floor(currentColor.r*255), math.clamp(math.floor(num),0,255), math.floor(currentColor.b*255))
+                        currentColor = c
+                        hue, sat, val = Color3.toHSV(c)
+                        updateAll()
+                    end
+                end)
+                bBox.FocusLost:Connect(function()
+                    local num = tonumber(bBox.Text)
+                    if num then
+                        local c = Color3.fromRGB(math.floor(currentColor.r*255), math.floor(currentColor.g*255), math.clamp(math.floor(num),0,255))
+                        currentColor = c
+                        hue, sat, val = Color3.toHSV(c)
+                        updateAll()
+                    end
+                end)
+                if config.Transparency then
+                    alphaInput.FocusLost:Connect(function()
+                        local num = tonumber(alphaInput.Text:gsub("%%",""))
+                        if num then
+                            currentAlpha = 1 - math.clamp(num/100, 0, 1)
+                            updateAll()
+                        end
+                    end)
+                end
 
-                -- Buttons row
+                -- 确认/取消按钮
                 local btnRow = Instance.new("Frame")
                 btnRow.Size = UDim2.new(1,0,0,40)
                 btnRow.Position = UDim2.new(0,0,1,-40)
                 btnRow.BackgroundTransparency = 1
-                btnRow.Parent = mainFrame
+                btnRow.Parent = dialog
 
                 local btnLayout = Instance.new("UIListLayout")
                 btnLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -1961,8 +2073,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
                 updateAll()
 
-                mainFrame.Size = UDim2.new(0,0,0,0)
-                Tween(mainFrame, {Size = UDim2.new(0,400,0,340)}, 0.4)
+                -- 窗口打开动画（缩放容器已就位，直接显示）
+                scaleContainer.Size = UDim2.new(0,0,0,0)
+                Tween(scaleContainer, {Size = UDim2.new(0, 430*0.80, 0, 360*0.80)}, 0.4)
             end
 
             ClickBtn.MouseButton1Click:Connect(openPicker)
@@ -1980,18 +2093,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     if type(val) == "table" then
                         local c = Color3.new(val.R or 0, val.G or 0, val.B or 0)
                         currentColor = c
-                        currentAlpha = val.A or 1
+                        currentAlpha = val.A or 0
                         hue, sat, val = Color3.toHSV(c)
                         Swatch.BackgroundColor3 = c
                         if callback then callback(c, currentAlpha) end
                         ConfigObjects[controlId].Value = {R=c.r, G=c.g, B=c.b, A=currentAlpha}
                     elseif type(val) == "userdata" and val.ClassName == "Color3" then
                         currentColor = val
-                        currentAlpha = 1
+                        currentAlpha = 0
                         hue, sat, val = Color3.toHSV(val)
                         Swatch.BackgroundColor3 = val
-                        if callback then callback(val, 1) end
-                        ConfigObjects[controlId].Value = {R=val.r, G=val.g, B=val.b, A=1}
+                        if callback then callback(val, 0) end
+                        ConfigObjects[controlId].Value = {R=val.r, G=val.g, B=val.b, A=0}
                     end
                 end
             }
