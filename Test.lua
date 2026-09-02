@@ -1454,8 +1454,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 if state.Mode == "Hold" then
                     local key = state.Key
                     if key=="MouseLeft" and input.UserInputType==Enum.UserInputType.MouseButton1 then doRelease()
-                    elif key=="MouseRight" and input.UserInputType==Enum.UserInputType.MouseButton2 then doRelease()
-                    elif input.UserInputType==Enum.UserInputType.Keyboard and input.KeyCode.Name==key then doRelease() end
+                    elseif key=="MouseRight" and input.UserInputType==Enum.UserInputType.MouseButton2 then doRelease()
+                    elseif input.UserInputType==Enum.UserInputType.Keyboard and input.KeyCode.Name==key then doRelease() end
                 end
             end)
             local function cleanup()
@@ -1475,403 +1475,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ============================================================
-        -- ColorPicker (与主框架同级，遮罩覆盖主框架，跟随拖动)
-        -- ============================================================
         child.ColorPicker = function(_, config)
             local pickerText = config.Name or ""
-            local initialColor = config.Default or Color3.fromRGB(255,255,255)
+            local Color = config.Default or Color3.fromRGB(255,255,255)
             local callback = config.Callback or function() end
             local controlId = pickerText.."_"..tostring(#Registry)
             local parent = config.Parent or contentHolder
-
-            local currentColor = initialColor
-            local currentAlpha = config.Transparency or 0
-            local hue, sat, val = Color3.toHSV(currentColor)
-
-            local locked = config.Locked == true
-            local lockedTitle = config.LockedTitle or "Locked"
-
-            -- 主框架（列表项）
-            local Tile = Instance.new("Frame")
-            Tile.Size = UDim2.new(1,0,0,44)
-            Tile.Parent = parent
-            styleContainer(Tile)
-            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0,4)
-            AddToRegistry(Tile, "BackgroundColor3", "Top")
-
-            local ClickBtn = Instance.new("TextButton")
-            ClickBtn.Size = UDim2.new(1,0,1,0)
-            ClickBtn.BackgroundTransparency = 1
-            ClickBtn.Text = ""
-            ClickBtn.Parent = Tile
-
-            local TitleLbl = Instance.new("TextLabel")
-            TitleLbl.Text = pickerText
-            TitleLbl.Size = UDim2.new(0.6,0,1,0)
-            TitleLbl.Position = UDim2.new(0,15,0,0)
-            TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-            TitleLbl.Font = Enum.Font.GothamMedium
-            TitleLbl.TextSize = 13
-            TitleLbl.BackgroundTransparency = 1
-            TitleLbl.Parent = Tile
-            AddToRegistry(TitleLbl, "TextColor3", "Text")
-
-            local Swatch = Instance.new("Frame")
-            Swatch.Size = UDim2.new(0,32,0,22)
-            Swatch.Position = UDim2.new(1,-46,0.5,-11)
-            Swatch.BackgroundColor3 = currentColor
-            Swatch.Parent = Tile
-            Instance.new("UICorner", Swatch).CornerRadius = UDim.new(0,6)
-            local SwStroke = Instance.new("UIStroke")
-            SwStroke.Thickness = 1
-            SwStroke.Transparency = 0.6
-            SwStroke.Parent = Swatch
-            AddToRegistry(SwStroke, "Color", "Stroke")
-
-            local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
-            lockFrame.Visible = locked
-            ClickBtn.Active = not locked
-
-            local function updateLock(state)
-                locked = state
-                lockFrame.Visible = state
-                ClickBtn.Active = not state
-            end
-
-            -- ========== 颜色选择器对话框（与主框架同级，遮罩覆盖主框架） ==========
-            local function openPicker()
-                if locked then return end
-
-                -- 获取主框架和 ScreenGui
-                local mainFrame = win.MainFrame
-                local screenGui = win.ScreenGui
-                if not mainFrame or not screenGui then return end
-
-                -- 遮罩（作为主框架的子级，覆盖整个主框架）
-                local mask = Instance.new("Frame")
-                mask.Size = UDim2.new(1, 0, 1, 0)
-                mask.Position = UDim2.new(0, 0, 0, 0)
-                mask.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                mask.BackgroundTransparency = 0.6
-                mask.ZIndex = 150
-                mask.ClipsDescendants = true
-                mask.Parent = mainFrame
-
-                -- 点击遮罩关闭
-                local maskBtn = Instance.new("TextButton")
-                maskBtn.Size = UDim2.new(1, 0, 1, 0)
-                maskBtn.BackgroundTransparency = 1
-                maskBtn.Text = ""
-                maskBtn.ZIndex = 151
-                maskBtn.Parent = mask
-                maskBtn.MouseButton1Click:Connect(function()
-                    mask:Destroy()
-                end)
-
-                -- 缩放容器（弹窗整体缩放 0.80）
-                local scaleContainer = Instance.new("Frame")
-                scaleContainer.Size = UDim2.new(0, 430 * 0.80, 0, 360 * 0.80)
-                scaleContainer.AnchorPoint = Vector2.new(0.5, 0.5)
-                scaleContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
-                scaleContainer.BackgroundTransparency = 1
-                scaleContainer.ZIndex = 160
-                scaleContainer.Parent = mask
-
-                local uiScale = Instance.new("UIScale")
-                uiScale.Scale = 0.80
-                uiScale.Parent = scaleContainer
-
-                -- 对话框
-                local dialog = Instance.new("Frame")
-                dialog.Size = UDim2.fromOffset(430, 360)
-                dialog.BackgroundColor3 = CurrentTheme.Main
-                dialog.BackgroundTransparency = 0.05
-                dialog.ClipsDescendants = true
-                dialog.Parent = scaleContainer
-                Instance.new("UICorner", dialog).CornerRadius = UDim.new(0,8)
-                AddToRegistry(dialog, "BackgroundColor3", "Main")
-                local stroke = Instance.new("UIStroke")
-                stroke.Thickness = 1.5
-                stroke.Transparency = 0.6
-                stroke.Parent = dialog
-                AddToRegistry(stroke, "Color", "Stroke")
-
-                -- 标题
-                local titleLabel = Instance.new("TextLabel")
-                titleLabel.Size = UDim2.new(1,-40,0,32)
-                titleLabel.Position = UDim2.fromOffset(20, 55)
-                titleLabel.BackgroundTransparency = 1
-                titleLabel.Font = Enum.Font.GothamBold
-                titleLabel.Text = pickerText
-                titleLabel.TextSize = 22
-                titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-                titleLabel.TextYAlignment = Enum.TextYAlignment.Center
-                titleLabel.Parent = dialog
-                AddToRegistry(titleLabel, "TextColor3", "Text")
-
-                -- 关闭按钮
-                local closeBtn = Instance.new("TextButton")
-                closeBtn.Size = UDim2.fromOffset(24,24)
-                closeBtn.Position = UDim2.new(1,-14,0,13)
-                closeBtn.AnchorPoint = Vector2.new(1,0)
-                closeBtn.BackgroundTransparency = 1
-                closeBtn.Text = "✕"
-                closeBtn.TextColor3 = CurrentTheme.Text
-                closeBtn.TextSize = 16
-                closeBtn.Font = Enum.Font.GothamBold
-                closeBtn.Parent = dialog
-                closeBtn.MouseButton1Click:Connect(function() mask:Destroy() end)
-                AddToRegistry(closeBtn, "TextColor3", "Text")
-
-                ---- 颜色控件（完整复制 FluentPro 原版） ----
-                -- 饱和度/明度面板
-                local svBox = Instance.new("ImageLabel")
-                svBox.Size = UDim2.fromOffset(180, 160)
-                svBox.Position = UDim2.fromOffset(20, 55)
-                svBox.BackgroundColor3 = Color3.fromHSV(hue,1,1)
-                svBox.Image = "rbxassetid://4155801252"
-                svBox.ScaleType = Enum.ScaleType.Crop
-                svBox.Parent = dialog
-                Instance.new("UICorner", svBox).CornerRadius = UDim.new(0,4)
-                local svDot = Instance.new("Frame")
-                svDot.Size = UDim2.fromOffset(14,14)
-                svDot.AnchorPoint = Vector2.new(0.5,0.5)
-                svDot.Position = UDim2.new(sat,0,1-val,0)
-                svDot.BackgroundColor3 = Color3.new(1,1,1)
-                svDot.ZIndex = 2
-                svDot.Parent = svBox
-                Instance.new("UICorner", svDot).CornerRadius = UDim.new(1,0)
-                local svDotStroke = Instance.new("UIStroke")
-                svDotStroke.Thickness = 1.5
-                svDotStroke.Color = Color3.fromRGB(80,80,80)
-                svDotStroke.Parent = svDot
-
-                -- 色相条
-                local hueBar = Instance.new("Frame")
-                hueBar.Size = UDim2.fromOffset(12, 190)
-                hueBar.Position = UDim2.fromOffset(210, 55)
-                hueBar.BackgroundColor3 = Color3.new(1,1,1)
-                hueBar.BorderSizePixel = 0
-                hueBar.Parent = dialog
-                Instance.new("UICorner", hueBar).CornerRadius = UDim.new(1,0)
-                local hueGrad = Instance.new("UIGradient")
-                hueGrad.Rotation = 90
-                hueGrad.Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
-                    ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255,255,0)),
-                    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0,255,0)),
-                    ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0,255,255)),
-                    ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0,0,255)),
-                    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255,0,255)),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,0))
-                })
-                hueGrad.Parent = hueBar
-                local hueDot = Instance.new("Frame")
-                hueDot.Size = UDim2.fromOffset(14,4)
-                hueDot.AnchorPoint = Vector2.new(0.5,0.5)
-                hueDot.Position = UDim2.new(0.5,0,hue,0)
-                hueDot.BackgroundColor3 = Color3.new(1,1,1)
-                hueDot.ZIndex = 2
-                hueDot.Parent = hueBar
-                Instance.new("UICorner", hueDot).CornerRadius = UDim.new(1,0)
-
-                -- 透明度条（可选）
-                if config.Transparency ~= nil then
-                    local alphaBarBg = Instance.new("Frame")
-                    alphaBarBg.Size = UDim2.fromOffset(12, 190)
-                    alphaBarBg.Position = UDim2.fromOffset(230, 55)
-                    alphaBarBg.BackgroundColor3 = Color3.new(1,1,1)
-                    alphaBarBg.BorderSizePixel = 0
-                    alphaBarBg.Parent = dialog
-                    Instance.new("UICorner", alphaBarBg).CornerRadius = UDim.new(1,0)
-                    local alphaBgImg = Instance.new("ImageLabel")
-                    alphaBgImg.Size = UDim2.fromScale(1,1)
-                    alphaBgImg.Image = "http://www.roblox.com/asset/?id=14204231522"
-                    alphaBgImg.ImageTransparency = 0.45
-                    alphaBgImg.ScaleType = Enum.ScaleType.Tile
-                    alphaBgImg.TileSize = UDim2.fromOffset(40,40)
-                    alphaBgImg.BackgroundTransparency = 1
-                    alphaBgImg.Parent = alphaBarBg
-                    local alphaFill = Instance.new("Frame")
-                    alphaFill.Size = UDim2.fromScale(1,1)
-                    alphaFill.BackgroundColor3 = Color3.fromHSV(hue,1,1)
-                    alphaFill.BackgroundTransparency = 0
-                    alphaFill.Parent = alphaBarBg
-                    local alphaGrad = Instance.new("UIGradient")
-                    alphaGrad.Rotation = 270
-                    alphaGrad.Transparency = NumberSequence.new({
-                        NumberSequenceKeypoint.new(0,0),
-                        NumberSequenceKeypoint.new(1,1)
-                    })
-                    alphaGrad.Parent = alphaFill
-                    local alphaDot = Instance.new("Frame")
-                    alphaDot.Size = UDim2.fromOffset(14,4)
-                    alphaDot.AnchorPoint = Vector2.new(0.5,0.5)
-                    alphaDot.Position = UDim2.new(0.5,0,1-currentAlpha,0)
-                    alphaDot.BackgroundColor3 = Color3.new(1,1,1)
-                    alphaDot.ZIndex = 2
-                    alphaDot.Parent = alphaBarBg
-                    Instance.new("UICorner", alphaDot).CornerRadius = UDim.new(1,0)
-
-                    -- 透明度输入
-                    local alphaInput = Instance.new("TextBox")
-                    alphaInput.Size = UDim2.fromOffset(90,32)
-                    alphaInput.Position = UDim2.fromOffset(260,215)
-                    alphaInput.BackgroundColor3 = CurrentTheme.Element
-                    alphaInput.BackgroundTransparency = 0.1
-                    alphaInput.Font = Enum.Font.GothamBold
-                    alphaInput.Text = tostring(math.floor((1-currentAlpha)*100)).."%"
-                    alphaInput.TextSize = 13
-                    alphaInput.TextColor3 = CurrentTheme.Text
-                    alphaInput.TextXAlignment = Enum.TextXAlignment.Center
-                    alphaInput.ClearTextOnFocus = false
-                    alphaInput.Parent = dialog
-                    Instance.new("UICorner", alphaInput).CornerRadius = UDim.new(0,4)
-                    AddToRegistry(alphaInput, "BackgroundColor3", "Main")
-                    AddToRegistry(alphaInput, "TextColor3", "Text")
-                    local alphaLabel = Instance.new("TextLabel")
-                    alphaLabel.Size = UDim2.fromOffset(90,32)
-                    alphaLabel.Position = UDim2.fromOffset(260,55)
-                    alphaLabel.BackgroundTransparency = 1
-                    alphaLabel.Font = Enum.Font.GothamMedium
-                    alphaLabel.Text = "Alpha"
-                    alphaLabel.TextSize = 13
-                    alphaLabel.TextXAlignment = Enum.TextXAlignment.Left
-                    alphaLabel.TextColor3 = CurrentTheme.Text
-                    alphaLabel.Parent = dialog
-                    AddToRegistry(alphaLabel, "TextColor3", "Text")
-                end
-
-                -- Hex / RGB 输入
-                local offsetX = config.Transparency and 20 or 0
-                -- Hex
-                local hexBox = Instance.new("TextBox")
-                hexBox.Size = UDim2.fromOffset(90,32)
-                hexBox.Position = UDim2.fromOffset(340 + offsetX, 95)
-                hexBox.BackgroundColor3 = CurrentTheme.Element
-                hexBox.BackgroundTransparency = 0.1
-                hexBox.Font = Enum.Font.GothamBold
-                hexBox.Text = "#"..currentColor:ToHex()
-                hexBox.TextSize = 13
-                hexBox.TextColor3 = CurrentTheme.Text
-                hexBox.TextXAlignment = Enum.TextXAlignment.Center
-                hexBox.ClearTextOnFocus = false
-                hexBox.Parent = dialog
-                Instance.new("UICorner", hexBox).CornerRadius = UDim.new(0,4)
-                AddToRegistry(hexBox, "BackgroundColor3", "Main")
-                AddToRegistry(hexBox, "TextColor3", "Text")
-                local hexLabel = Instance.new("TextLabel")
-                hexLabel.Size = UDim2.fromOffset(90,32)
-                hexLabel.Position = UDim2.fromOffset(340 + offsetX, 55)
-                hexLabel.BackgroundTransparency = 1
-                hexLabel.Font = Enum.Font.GothamMedium
-                hexLabel.Text = "Hex"
-                hexLabel.TextSize = 13
-                hexLabel.TextXAlignment = Enum.TextXAlignment.Left
-                hexLabel.TextColor3 = CurrentTheme.Text
-                hexLabel.Parent = dialog
-                AddToRegistry(hexLabel, "TextColor3", "Text")
-
-                -- Red
-                local rBox = Instance.new("TextBox")
-                rBox.Size = UDim2.fromOffset(90,32)
-                rBox.Position = UDim2.fromOffset(340 + offsetX, 135)
-                rBox.BackgroundColor3 = CurrentTheme.Element
-                rBox.BackgroundTransparency = 0.1
-                rBox.Font = Enum.Font.GothamBold
-                rBox.Text = tostring(math.floor(currentColor.r * 255))
-                rBox.TextSize = 13
-                rBox.TextColor3 = CurrentTheme.Text
-                rBox.TextXAlignment = Enum.TextXAlignment.Center
-                rBox.ClearTextOnFocus = false
-                rBox.Parent = dialog
-                Instance.new("UICorner", rBox).CornerRadius = UDim.new(0,4)
-                AddToRegistry(rBox, "BackgroundColor3", "Main")
-                AddToRegistry(rBox, "TextColor3", "Text")
-                local rLabel = Instance.new("TextLabel")
-                rLabel.Size = UDim2.fromOffset(90,32)
-                rLabel.Position = UDim2.fromOffset(340 + offsetX, 95)
-                rLabel.BackgroundTransparency = 1
-                rLabel.Font = Enum.Font.GothamMedium
-                rLabel.Text = "Red"
-                rLabel.TextSize = 13
-                rLabel.TextXAlignment = Enum.TextXAlignment.Left
-                rLabel.TextColor3 = CurrentTheme.Text
-                rLabel.Parent = dialog
-                AddToRegistry(rLabel, "TextColor3", "Text")
-
-                -- Green
-                local gBox = Instance.new("TextBox")
-                gBox.Size = UDim2.fromOffset(90,32)
-                gBox.Position = UDim2.fromOffset(340 + offsetX, 175)
-                gBox.BackgroundColor3 = CurrentTheme.Element
-                gBox.BackgroundTransparency = 0.1
-                gBox.Font = Enum.Font.GothamBold
-                gBox.Text = tostring(math.floor(currentColor.g * 255))
-                gBox.TextSize = 13
-                gBox.TextColor3 = CurrentTheme.Text
-                gBox.TextXAlignment = Enum.TextXAlignment.Center
-                gBox.ClearTextOnFocus = false
-                gBox.Parent = dialog
-                Instance.new("UICorner", gBox).CornerRadius = UDim.new(0,4)
-                AddToRegistry(gBox, "BackgroundColor3", "Main")
-                AddToRegistry(gBox, "TextColor3", "Text")
-                local gLabel = Instance.new("TextLabel")
-                gLabel.Size = UDim2.fromOffset(90,32)
-                gLabel.Position = UDim2.fromOffset(340 + offsetX, 135)
-                gLabel.BackgroundTransparency = 1
-                gLabel.Font = Enum.Font.GothamMedium
-                gLabel.Text = "Green"
-                gLabel.TextSize = 13
-                gLabel.TextXAlignment = Enum.TextXAlignment.Left
-                gLabel.TextColor3 = CurrentTheme.Text
-                gLabel.Parent = dialog
-                AddToRegistry(gLabel, "TextColor3", "Text")
-
-                -- Blue
-                local bBox = Instance.new("TextBox")
-                bBox.Size = UDim2.fromOffset(90,32)
-                bBox.Position = UDim2.fromOffset(340 + offsetX, 215)
-                bBox.BackgroundColor3 = CurrentTheme.Element
-                bBox.BackgroundTransparency = 0.1
-                bBox.Font = Enum.Font.GothamBold
-                bBox.Text = tostring(math.floor(currentColor.b * 255))
-                bBox.TextSize = 13
-                bBox.TextColor3 = CurrentTheme.Text
-                bBox.TextXAlignment = Enum.TextXAlignment.Center
-                bBox.ClearTextOnFocus = false
-                bBox.Parent = dialog
-                Instance.new("UICorner", bBox).CornerRadius = UDim.new(0,4)
-                AddToRegistry(bBox, "BackgroundColor3", "Main")
-                AddToRegistry(bBox, "TextColor3", "Text")
-                local bLabel = Instance.new("TextLabel")
-                bLabel.Size = UDim2.fromOffset(90,32)
-                bLabel.Position = UDim2.fromOffset(340 + offsetX, 175)
-                bLabel.BackgroundTransparency = 1
-                bLabel.Font = Enum.Font.GothamMedium
-                bLabel.Text = "Blue"
-                bLabel.TextSize = 13
-                bLabel.TextXAlignment = Enum.TextXAlignment.Left
-                bLabel.TextColor3 = CurrentTheme.Text
-                bLabel.Parent = dialog
-                AddToRegistry(bLabel, "TextColor3", "Text")
-
-                -- 预设色板
-                local presetContainer = Instance.new("ScrollingFrame")
-                presetContainer.Size = UDim2.new(1,0,0,60)
-                presetContainer.Position = UDim2.new(0,0,1,-70)
-                presetContainer.BackgroundTransparency = 1
-                presetContainer.ScrollBarThickness = 0
-                presetContainer.Parent = dialog
-
-                local grid = Instance.new("UIGridLayout")
-                grid.CellSize = UDim2.new(0,22,0,22)
-                grid.CellPadding = UDim2.new(0,4,0,4)
-                grid.FillDirection = Enum.FillDirection.Horizontal
-                grid.SortOrder = Enum.SortOrder.LayoutOrder
-                grid.Parent = presetContainer
-
+            local hue, sat, val = Color3.toHSV(Color)
+            local alpha = 1.0
+            local isOpen = false
+            local savedColors = {}
+            local function addPresetColors()
                 local presets = {
                     Color3.fromRGB(245,114,66), Color3.fromRGB(245,66,191),
                     Color3.fromRGB(124,54,245), Color3.fromRGB(202,110,255),
@@ -1882,256 +1496,370 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     Color3.fromRGB(255,255,255), Color3.fromRGB(255,0,0),
                     Color3.fromRGB(171,209,255)
                 }
-
-                for _, col in ipairs(presets) do
-                    local btn = Instance.new("TextButton")
-                    btn.Size = UDim2.new(1,0,1,0)
-                    btn.BackgroundColor3 = col
-                    btn.BackgroundTransparency = 0
-                    btn.AutoButtonColor = false
-                    btn.Text = ""
-                    btn.Parent = presetContainer
-                    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,4)
-                    local stroke2 = Instance.new("UIStroke")
-                    stroke2.Thickness = 1.5
-                    stroke2.Color = Color3.new(1,1,1)
-                    stroke2.Transparency = 1
-                    stroke2.Parent = btn
-                    btn.MouseEnter:Connect(function() Tween(stroke2, {Transparency=0}, 0.15) end)
-                    btn.MouseLeave:Connect(function() Tween(stroke2, {Transparency=1}, 0.15) end)
-                    btn.MouseButton1Click:Connect(function()
-                        currentColor = col
-                        hue, sat, val = Color3.toHSV(col)
-                        updateAll()
-                    end)
-                end
-
-                -- 更新函数
-                local function updateAll()
-                    local col = Color3.fromHSV(hue, sat, val)
-                    currentColor = Color3.new(col.r, col.g, col.b)
-                    Swatch.BackgroundColor3 = currentColor
-                    svBox.BackgroundColor3 = Color3.fromHSV(hue,1,1)
-                    svDot.Position = UDim2.new(sat,0,1-val,0)
-                    hueDot.Position = UDim2.new(0.5,0,hue,0)
-                    if config.Transparency then
-                        alphaFill.BackgroundColor3 = Color3.fromHSV(hue,1,1)
-                        alphaDot.Position = UDim2.new(0.5,0,1-currentAlpha,0)
-                        alphaInput.Text = tostring(math.floor((1-currentAlpha)*100)).."%"
-                    end
-                    hexBox.Text = "#"..currentColor:ToHex()
-                    rBox.Text = tostring(math.floor(currentColor.r * 255))
-                    gBox.Text = tostring(math.floor(currentColor.g * 255))
-                    bBox.Text = tostring(math.floor(currentColor.b * 255))
-                end
-
-                -- 拖动交互
-                local function setupDrag(draggable, property, min, max)
-                    local dragging = false
-                    local startPos, startVal
-                    local function onInputBegan(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                            dragging = true
-                            startPos = input.Position
-                            if property == "hue" then startVal = hue
-                            elseif property == "sat" then startVal = sat
-                            elseif property == "val" then startVal = val
-                            elseif property == "alpha" then startVal = currentAlpha end
-                        end
-                    end
-                    local function onInputChanged(input)
-                        if not dragging then return end
-                        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                            local delta = (input.Position - startPos)[property == "hue" and "Y" or "X"]
-                            local size = draggable.AbsoluteSize[property == "hue" and "Y" or "X"]
-                            if size <= 0 then return end
-                            local newVal = math.clamp(startVal + delta / size, min, max)
-                            if property == "hue" then hue = newVal
-                            elseif property == "sat" then sat = newVal
-                            elseif property == "val" then val = newVal
-                            elseif property == "alpha" then currentAlpha = newVal end
-                            updateAll()
-                        end
-                    end
-                    local function onInputEnded(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                            dragging = false
-                        end
-                    end
-                    local btn = Instance.new("TextButton")
-                    btn.Size = UDim2.new(1,0,1,0)
-                    btn.BackgroundTransparency = 1
-                    btn.Text = ""
-                    btn.ZIndex = 3
-                    btn.Parent = draggable
-                    btn.InputBegan:Connect(onInputBegan)
-                    UserInputService.InputChanged:Connect(onInputChanged)
-                    UserInputService.InputEnded:Connect(onInputEnded)
-                end
-
-                setupDrag(svBox, "sat", 0, 1)
-                setupDrag(svBox, "val", 0, 1)
-                setupDrag(hueBar, "hue", 0, 1)
-                if config.Transparency then
-                    setupDrag(alphaBarBg, "alpha", 0, 1)
-                end
-
-                -- 输入修改更新
-                hexBox.FocusLost:Connect(function()
-                    local txt = hexBox.Text:gsub("#","")
-                    if #txt == 6 or #txt == 3 then
-                        local ok, c = pcall(Color3.fromHex, "#"..txt)
-                        if ok then
-                            currentColor = c
-                            hue, sat, val = Color3.toHSV(c)
-                            updateAll()
-                        end
-                    end
-                end)
-                rBox.FocusLost:Connect(function()
-                    local num = tonumber(rBox.Text)
-                    if num then
-                        local c = Color3.fromRGB(math.clamp(math.floor(num),0,255), math.floor(currentColor.g*255), math.floor(currentColor.b*255))
-                        currentColor = c
-                        hue, sat, val = Color3.toHSV(c)
-                        updateAll()
-                    end
-                end)
-                gBox.FocusLost:Connect(function()
-                    local num = tonumber(gBox.Text)
-                    if num then
-                        local c = Color3.fromRGB(math.floor(currentColor.r*255), math.clamp(math.floor(num),0,255), math.floor(currentColor.b*255))
-                        currentColor = c
-                        hue, sat, val = Color3.toHSV(c)
-                        updateAll()
-                    end
-                end)
-                bBox.FocusLost:Connect(function()
-                    local num = tonumber(bBox.Text)
-                    if num then
-                        local c = Color3.fromRGB(math.floor(currentColor.r*255), math.floor(currentColor.g*255), math.clamp(math.floor(num),0,255))
-                        currentColor = c
-                        hue, sat, val = Color3.toHSV(c)
-                        updateAll()
-                    end
-                end)
-                if config.Transparency then
-                    alphaInput.FocusLost:Connect(function()
-                        local num = tonumber(alphaInput.Text:gsub("%%",""))
-                        if num then
-                            currentAlpha = 1 - math.clamp(num/100, 0, 1)
-                            updateAll()
-                        end
-                    end)
-                end
-
-                -- 确认/取消按钮
-                local btnRow = Instance.new("Frame")
-                btnRow.Size = UDim2.new(1,0,0,40)
-                btnRow.Position = UDim2.new(0,0,1,-40)
-                btnRow.BackgroundTransparency = 1
-                btnRow.Parent = dialog
-
-                local btnLayout = Instance.new("UIListLayout")
-                btnLayout.FillDirection = Enum.FillDirection.Horizontal
-                btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-                btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-                btnLayout.Padding = UDim.new(0,8)
-                btnLayout.Parent = btnRow
-                local btnPadding = Instance.new("UIPadding")
-                btnPadding.PaddingRight = UDim.new(0,10)
-                btnPadding.Parent = btnRow
-
-                local function createActionButton(text, color, cb)
-                    local btn = Instance.new("TextButton")
-                    btn.Size = UDim2.new(0,60,0,30)
-                    btn.BackgroundColor3 = color or CurrentTheme.Element
-                    btn.BackgroundTransparency = 0.1
-                    btn.Text = text
-                    btn.TextColor3 = CurrentTheme.Text
-                    btn.Font = Enum.Font.GothamBold
-                    btn.TextSize = 12
-                    btn.AutoButtonColor = false
-                    btn.Parent = btnRow
-                    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
-                    AddToRegistry(btn, "BackgroundColor3", "Main")
-                    AddToRegistry(btn, "TextColor3", "Text")
-                    btn.MouseEnter:Connect(function() Tween(btn, {BackgroundTransparency=0.05}, 0.15) end)
-                    btn.MouseLeave:Connect(function() Tween(btn, {BackgroundTransparency=0.1}, 0.15) end)
-                    btn.MouseButton1Click:Connect(cb)
-                    return btn
-                end
-
-                createActionButton("OK", CurrentTheme.Accent, function()
-                    callback(currentColor, currentAlpha)
-                    if ConfigObjects[controlId] then
-                        ConfigObjects[controlId].Value = {R=currentColor.r, G=currentColor.g, B=currentColor.b, A=currentAlpha}
-                    end
-                    mask:Destroy()
-                end)
-
-                createActionButton("取消", nil, function()
-                    mask:Destroy()
-                end)
-
-                updateAll()
-
-                -- 动画
-                scaleContainer.Size = UDim2.new(0,0,0,0)
-                Tween(scaleContainer, {Size = UDim2.new(0, 430*0.80, 0, 360*0.80)}, 0.4)
+                for _, c in ipairs(presets) do table.insert(savedColors, {Color=c, Alpha=1}) end
             end
-
-            ClickBtn.MouseButton1Click:Connect(openPicker)
-            Swatch.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    openPicker()
+            addPresetColors()
+            local Tile = Instance.new("Frame")
+            Tile.Size = UDim2.new(1,0,0,44)
+            Tile.Parent = parent
+            styleContainer(Tile)
+            Instance.new("UICorner", Tile).CornerRadius = UDim.new(0,4)
+            AddToRegistry(Tile, "BackgroundColor3", "Top")
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1,0,1,0)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = ""
+            ClickBtn.Parent = Tile
+            local TitleLbl = Instance.new("TextLabel")
+            TitleLbl.Text = pickerText
+            TitleLbl.Size = UDim2.new(0.6,0,1,0)
+            TitleLbl.Position = UDim2.new(0,15,0,0)
+            TitleLbl.BackgroundTransparency = 1
+            TitleLbl.Font = Enum.Font.GothamMedium
+            TitleLbl.TextSize = 13
+            TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+            TitleLbl.Parent = Tile
+            AddToRegistry(TitleLbl, "TextColor3", "Text")
+            local Swatch = Instance.new("Frame")
+            Swatch.Size = UDim2.new(0,32,0,22)
+            Swatch.Position = UDim2.new(1,-46,0.5,-11)
+            Swatch.BackgroundColor3 = Color
+            Swatch.Parent = Tile
+            Instance.new("UICorner", Swatch).CornerRadius = UDim.new(0,6)
+            local SwStroke = Instance.new("UIStroke")
+            SwStroke.Thickness = 1
+            SwStroke.Transparency = 0.6
+            SwStroke.Parent = Swatch
+            AddToRegistry(SwStroke, "Color", "Stroke")
+            local Panel = Instance.new("Frame")
+            Panel.Size = UDim2.new(1,0,0,0)
+            Panel.Visible = false
+            Panel.ClipsDescendants = true
+            Panel.Parent = parent
+            styleContainer(Panel)
+            Instance.new("UICorner", Panel).CornerRadius = UDim.new(0,4)
+            AddToRegistry(Panel, "BackgroundColor3", "Top")
+            local PSt = Instance.new("UIStroke")
+            PSt.Thickness = 1
+            PSt.Transparency = 0.65
+            PSt.Parent = Panel
+            AddToRegistry(PSt, "Color", "Accent")
+            local SVBox = Instance.new("ImageLabel")
+            SVBox.Size = UDim2.new(1,-52,0,110)
+            SVBox.Position = UDim2.new(0,10,0,10)
+            SVBox.Image = "rbxassetid://4155801252"
+            SVBox.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+            SVBox.Parent = Panel
+            Instance.new("UICorner", SVBox).CornerRadius = UDim.new(0,6)
+            local SVDot = Instance.new("Frame")
+            SVDot.Size = UDim2.new(0,10,0,10)
+            SVDot.AnchorPoint = Vector2.new(0.5,0.5)
+            SVDot.Position = UDim2.new(sat,0,1-val,0)
+            SVDot.BackgroundColor3 = Color3.new(1,1,1)
+            SVDot.ZIndex = 2
+            SVDot.Parent = SVBox
+            Instance.new("UICorner", SVDot).CornerRadius = UDim.new(1,0)
+            local DotStroke = Instance.new("UIStroke")
+            DotStroke.Thickness = 1.5
+            DotStroke.Color = Color3.fromRGB(80,80,80)
+            DotStroke.Parent = SVDot
+            local HueBar = Instance.new("Frame")
+            HueBar.Size = UDim2.new(0,16,0,110)
+            HueBar.Position = UDim2.new(1,-30,0,10)
+            HueBar.BackgroundColor3 = Color3.new(1,1,1)
+            HueBar.BorderSizePixel = 0
+            HueBar.Parent = Panel
+            Instance.new("UICorner", HueBar).CornerRadius = UDim.new(0,6)
+            local HueGradient = Instance.new("UIGradient")
+            HueGradient.Rotation = 90
+            HueGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0,Color3.fromRGB(255,0,0)),
+                ColorSequenceKeypoint.new(0.17,Color3.fromRGB(255,255,0)),
+                ColorSequenceKeypoint.new(0.33,Color3.fromRGB(0,255,0)),
+                ColorSequenceKeypoint.new(0.50,Color3.fromRGB(0,255,255)),
+                ColorSequenceKeypoint.new(0.67,Color3.fromRGB(0,0,255)),
+                ColorSequenceKeypoint.new(0.83,Color3.fromRGB(255,0,255)),
+                ColorSequenceKeypoint.new(1,Color3.fromRGB(255,0,0))
+            })
+            HueGradient.Parent = HueBar
+            local HueDot = Instance.new("Frame")
+            HueDot.Size = UDim2.new(1,6,0,4)
+            HueDot.AnchorPoint = Vector2.new(0.5,0.5)
+            HueDot.Position = UDim2.new(0.5,0,hue,0)
+            HueDot.BackgroundColor3 = Color3.new(1,1,1)
+            HueDot.ZIndex = 2
+            HueDot.Parent = HueBar
+            Instance.new("UICorner", HueDot).CornerRadius = UDim.new(1,0)
+            local AlphaBar = Instance.new("Frame")
+            AlphaBar.Size = UDim2.new(1,-52,0,6)
+            AlphaBar.Position = UDim2.new(0,10,0,128)
+            AlphaBar.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+            AlphaBar.Parent = Panel
+            Instance.new("UICorner", AlphaBar).CornerRadius = UDim.new(1,0)
+            local AlphaGrad = Instance.new("UIGradient")
+            AlphaGrad.Rotation = 0
+            AlphaGrad.Color = ColorSequence.new(Color3.new(0,0,0), Color3.new(1,1,1))
+            AlphaGrad.Parent = AlphaBar
+            local AlphaDot = Instance.new("Frame")
+            AlphaDot.Size = UDim2.new(0,12,0,12)
+            AlphaDot.AnchorPoint = Vector2.new(0.5,0.5)
+            AlphaDot.Position = UDim2.new(alpha,0,0.5,0)
+            AlphaDot.BackgroundColor3 = Color3.new(1,1,1)
+            AlphaDot.ZIndex = 2
+            AlphaDot.Parent = AlphaBar
+            Instance.new("UICorner", AlphaDot).CornerRadius = UDim.new(1,0)
+            local HexBox = Instance.new("TextBox")
+            HexBox.Size = UDim2.new(0.5,-20,0,24)
+            HexBox.Position = UDim2.new(0,10,0,142)
+            HexBox.Text = "#"..Color:ToHex()
+            HexBox.Font = Enum.Font.GothamBold
+            HexBox.TextSize = 12
+            HexBox.TextColor3 = CurrentTheme.Text
+            HexBox.BackgroundTransparency = 0.1
+            HexBox.Parent = Panel
+            Instance.new("UICorner", HexBox).CornerRadius = UDim.new(0,6)
+            AddToRegistry(HexBox, "BackgroundColor3", "Main")
+            AddToRegistry(HexBox, "TextColor3", "Text")
+            local HexStroke = Instance.new("UIStroke")
+            HexStroke.Thickness = 1
+            HexStroke.Transparency = 0.75
+            HexStroke.Parent = HexBox
+            AddToRegistry(HexStroke, "Color", "Stroke")
+            local PresetContainer = Instance.new("ScrollingFrame")
+            PresetContainer.Size = UDim2.new(0.5,-10,0,70)
+            PresetContainer.Position = UDim2.new(0.5,10,0,140)
+            PresetContainer.BackgroundTransparency = 1
+            PresetContainer.ScrollBarThickness = 0
+            PresetContainer.Parent = Panel
+            local Grid = Instance.new("UIGridLayout")
+            Grid.CellSize = UDim2.new(0,20,0,20)
+            Grid.CellPadding = UDim2.new(0,4,0,4)
+            Grid.FillDirection = Enum.FillDirection.Horizontal
+            Grid.SortOrder = Enum.SortOrder.LayoutOrder
+            Grid.Parent = PresetContainer
+            for _, data in ipairs(savedColors) do
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.new(1,0,1,0)
+                btn.BackgroundColor3 = data.Color
+                btn.BackgroundTransparency = 0
+                btn.AutoButtonColor = false
+                btn.Text = ""
+                btn.Parent = PresetContainer
+                Instance.new("UICorner", btn).CornerRadius = UDim.new(0,4)
+                local stroke = Instance.new("UIStroke")
+                stroke.Thickness = 1.5
+                stroke.Color = Color3.new(1,1,1)
+                stroke.Transparency = 1
+                stroke.Parent = btn
+                btn.MouseEnter:Connect(function() Tween(stroke, {Transparency=0}, 0.15) end)
+                btn.MouseLeave:Connect(function() Tween(stroke, {Transparency=1}, 0.15) end)
+                btn.MouseButton1Click:Connect(function()
+                    if locked then return end
+                    Color = data.Color
+                    hue, sat, val = Color3.toHSV(Color)
+                    SVDot.Position = UDim2.new(sat,0,1-val,0)
+                    HueDot.Position = UDim2.new(0.5,0,hue,0)
+                    AlphaBar.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                    SVBox.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                    Swatch.BackgroundColor3 = Color
+                    HexBox.Text = "#"..Color:ToHex()
+                    ApplyColor()
+                end)
+            end
+            local function ApplyColor()
+                if locked then return end
+                Color = Color3.fromHSV(hue,sat,val)
+                Swatch.BackgroundColor3 = Color
+                SVBox.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                AlphaBar.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                HexBox.Text = "#"..Color:ToHex()
+                ConfigObjects[controlId].Value = {R=Color.R, G=Color.G, B=Color.B, A=alpha}
+                callback(Color, alpha)
+            end
+            local svDragging = false
+            local SVBtn = Instance.new("TextButton")
+            SVBtn.Size = UDim2.new(1,0,1,0)
+            SVBtn.BackgroundTransparency = 1
+            SVBtn.Text = ""
+            SVBtn.ZIndex = 3
+            SVBtn.Parent = SVBox
+            SVBtn.InputBegan:Connect(function(i)
+                if locked then return end
+                if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
+                    svDragging = true
+                    local x = (i.Position.X - SVBox.AbsolutePosition.X)/SVBox.AbsoluteSize.X
+                    local y = (i.Position.Y - SVBox.AbsolutePosition.Y)/SVBox.AbsoluteSize.Y
+                    sat = math.clamp(x,0,1)
+                    val = 1 - math.clamp(y,0,1)
+                    SVDot.Position = UDim2.new(sat,0,1-val,0)
+                    ApplyColor()
+                end
+            end)
+            UserInputService.InputChanged:Connect(function(i)
+                if locked then return end
+                if svDragging and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then
+                    local x = (i.Position.X - SVBox.AbsolutePosition.X)/SVBox.AbsoluteSize.X
+                    local y = (i.Position.Y - SVBox.AbsolutePosition.Y)/SVBox.AbsoluteSize.Y
+                    sat = math.clamp(x,0,1)
+                    val = 1 - math.clamp(y,0,1)
+                    SVDot.Position = UDim2.new(sat,0,1-val,0)
+                    ApplyColor()
+                end
+            end)
+            UserInputService.InputEnded:Connect(function(i)
+                if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then svDragging = false end
+            end)
+            local hueDragging = false
+            local HueBtn = Instance.new("TextButton")
+            HueBtn.Size = UDim2.new(1,0,1,0)
+            HueBtn.BackgroundTransparency = 1
+            HueBtn.Text = ""
+            HueBtn.ZIndex = 3
+            HueBtn.Parent = HueBar
+            HueBtn.InputBegan:Connect(function(i)
+                if locked then return end
+                if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
+                    hueDragging = true
+                    local y = (i.Position.Y - HueBar.AbsolutePosition.Y)/HueBar.AbsoluteSize.Y
+                    hue = math.clamp(y,0,1)
+                    HueDot.Position = UDim2.new(0.5,0,hue,0)
+                    SVBox.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                    AlphaBar.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                    ApplyColor()
+                end
+            end)
+            UserInputService.InputChanged:Connect(function(i)
+                if locked then return end
+                if hueDragging and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then
+                    local y = (i.Position.Y - HueBar.AbsolutePosition.Y)/HueBar.AbsoluteSize.Y
+                    hue = math.clamp(y,0,1)
+                    HueDot.Position = UDim2.new(0.5,0,hue,0)
+                    SVBox.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                    AlphaBar.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                    ApplyColor()
+                end
+            end)
+            UserInputService.InputEnded:Connect(function(i)
+                if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then hueDragging = false end
+            end)
+            local alphaDragging = false
+            local AlphaBtn = Instance.new("TextButton")
+            AlphaBtn.Size = UDim2.new(1,0,1,0)
+            AlphaBtn.BackgroundTransparency = 1
+            AlphaBtn.Text = ""
+            AlphaBtn.ZIndex = 3
+            AlphaBtn.Parent = AlphaBar
+            AlphaBtn.InputBegan:Connect(function(i)
+                if locked then return end
+                if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
+                    alphaDragging = true
+                    local x = (i.Position.X - AlphaBar.AbsolutePosition.X)/AlphaBar.AbsoluteSize.X
+                    alpha = math.clamp(x,0,1)
+                    AlphaDot.Position = UDim2.new(alpha,0,0.5,0)
+                    ApplyColor()
+                end
+            end)
+            UserInputService.InputChanged:Connect(function(i)
+                if locked then return end
+                if alphaDragging and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then
+                    local x = (i.Position.X - AlphaBar.AbsolutePosition.X)/AlphaBar.AbsoluteSize.X
+                    alpha = math.clamp(x,0,1)
+                    AlphaDot.Position = UDim2.new(alpha,0,0.5,0)
+                    ApplyColor()
+                end
+            end)
+            UserInputService.InputEnded:Connect(function(i)
+                if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then alphaDragging = false end
+            end)
+            HexBox.FocusLost:Connect(function()
+                if locked then return end
+                local txt = HexBox.Text:gsub("#","")
+                if #txt==6 or #txt==3 then
+                    local success, c = pcall(Color3.fromHex, "#"..txt)
+                    if success then
+                        Color = c
+                        hue, sat, val = Color3.toHSV(Color)
+                        SVDot.Position = UDim2.new(sat,0,1-val,0)
+                        HueDot.Position = UDim2.new(0.5,0,hue,0)
+                        SVBox.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                        AlphaBar.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                        Swatch.BackgroundColor3 = Color
+                        ApplyColor()
+                    end
                 end
             end)
 
+            -- Lock
+            local locked = config.Locked == true
+            local lockedTitle = config.LockedTitle or "Locked"
+            local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
+            lockFrame.Visible = locked
+            ClickBtn.Active = not locked
+
+            local function updateLock(state)
+                locked = state
+                lockFrame.Visible = state
+                ClickBtn.Active = not state
+                if state then Panel.Visible = false; isOpen = false; Tween(Panel, {Size=UDim2.new(1,0,0,0)}, 0.1) end
+            end
+
+            local function togglePanel()
+                if locked then return end
+                isOpen = not isOpen
+                if isOpen then
+                    Panel.Visible = true
+                    Tween(Panel, {Size=UDim2.new(1,0,0,190)}, 0.32)
+                else
+                    Tween(Panel, {Size=UDim2.new(1,0,0,0)}, 0.28)
+                    task.wait(0.3)
+                    Panel.Visible = false
+                end
+            end
+            ClickBtn.MouseButton1Click:Connect(togglePanel)
             ConfigObjects[controlId] = {
-                Type = "ColorPicker",
-                Value = {R = currentColor.r, G = currentColor.g, B = currentColor.b, A = currentAlpha},
-                Set = function(val)
+                Type="ColorPicker", Value={R=Color.R, G=Color.G, B=Color.B, A=alpha},
+                Set=function(val)
                     if locked then return end
-                    if type(val) == "table" then
-                        local c = Color3.new(val.R or 0, val.G or 0, val.B or 0)
-                        currentColor = c
-                        currentAlpha = val.A or 0
-                        hue, sat, val = Color3.toHSV(c)
-                        Swatch.BackgroundColor3 = c
-                        if callback then callback(c, currentAlpha) end
-                        ConfigObjects[controlId].Value = {R=c.r, G=c.g, B=c.b, A=currentAlpha}
-                    elseif type(val) == "userdata" and val.ClassName == "Color3" then
-                        currentColor = val
-                        currentAlpha = 0
-                        hue, sat, val = Color3.toHSV(val)
-                        Swatch.BackgroundColor3 = val
-                        if callback then callback(val, 0) end
-                        ConfigObjects[controlId].Value = {R=val.r, G=val.g, B=val.b, A=0}
+                    if type(val)=="table" then
+                        Color = Color3.new(val.R or 0, val.G or 0, val.B or 0)
+                        alpha = val.A or 1
+                        hue, sat, val = Color3.toHSV(Color)
+                        SVDot.Position = UDim2.new(sat,0,1-val,0)
+                        HueDot.Position = UDim2.new(0.5,0,hue,0)
+                        AlphaDot.Position = UDim2.new(alpha,0,0.5,0)
+                        SVBox.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                        AlphaBar.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                        Swatch.BackgroundColor3 = Color
+                        HexBox.Text = "#"..Color:ToHex()
+                        ApplyColor()
+                    elseif type(val)=="userdata" and val.ClassName=="Color3" then
+                        Color = val
+                        hue, sat, val = Color3.toHSV(Color)
+                        SVDot.Position = UDim2.new(sat,0,1-val,0)
+                        HueDot.Position = UDim2.new(0.5,0,hue,0)
+                        SVBox.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                        AlphaBar.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                        Swatch.BackgroundColor3 = Color
+                        HexBox.Text = "#"..Color:ToHex()
+                        ApplyColor()
                     end
                 end
             }
-
             table.insert(ThemeListeners, function()
                 SwStroke.Color = CurrentTheme.Stroke
-                if lockFrame then
-                    lockFrame.BackgroundColor3 = CurrentTheme.Main
-                    local lbl = lockFrame:FindFirstChildOfClass("TextLabel")
-                    if lbl then lbl.TextColor3 = CurrentTheme.Text end
-                end
+                PSt.Color = CurrentTheme.Accent
+                HexStroke.Color = CurrentTheme.Stroke
+                HexBox.TextColor3 = CurrentTheme.Text
             end)
-
             local self = {}
             function self.SetValue(val) if not locked then ConfigObjects[controlId].Set(val) end end
             function self.GetValue() return ConfigObjects[controlId].Value end
-            function self.SetVisible(vis) Tile.Visible = vis end
-            function self.Lock(title) updateLock(true); if title then lockLabel.Text = title end end
+            function self.SetVisible(state) Tile.Visible = state end
+            function self.Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
             function self.Unlock() updateLock(false) end
             function self.IsLocked() return locked end
-            function self.Destroy() Tile:Destroy(); ConfigObjects[controlId] = nil end
             return self
         end
-        -- ============================================================
 
         child.Input = function(_, config)
             local inputText = config.Name or ""
@@ -4214,7 +3942,6 @@ function Fenglib:CreateWindow(Config)
     Topbar.Size = UDim2.new(1,0,0,topbarHeight)
     Topbar.BackgroundTransparency = 1
     Topbar.Parent = MainFrame
-    Topbar.ZIndex = 200   -- 标题栏位于遮罩之上
 
     local TopbarDivider = Instance.new("Frame")
     TopbarDivider.Name = "TopbarDivider"
@@ -5044,10 +4771,6 @@ function Fenglib:CreateWindow(Config)
         end
         return getElements()
     end
-
-    -- 保存主框架和 ScreenGui 供 ColorPicker 使用
-    Window.MainFrame = MainFrame
-    Window.ScreenGui = ScreenGui
 
     return Window
 end
