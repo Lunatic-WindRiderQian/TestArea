@@ -3287,7 +3287,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================
-        -- 新增 Colorpicker 组件
+        -- Colorpicker 组件（已修复 dialogRoot 尺寸）
         -- ============================
         child.Colorpicker = function(_, config)
             assert(config.Title, "Colorpicker - Missing Title")
@@ -3373,10 +3373,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 clickBtn.Active = not state
             end
 
-            -- 对话框创建
+            -- 对话框创建（修复：dialogRoot 尺寸改为全屏）
             local function createDialog()
                 local dialogRoot = Instance.new("Frame")
-                dialogRoot.Size = UDim2.new(0,0,0,0)
+                dialogRoot.Size = UDim2.new(1,0,1,0)   -- 关键修复：全屏尺寸
                 dialogRoot.BackgroundTransparency = 1
                 dialogRoot.ZIndex = 100
                 dialogRoot.Parent = CoreGui
