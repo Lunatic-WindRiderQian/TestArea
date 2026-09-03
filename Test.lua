@@ -1,6 +1,6 @@
 --[[
-   Fenglib – 轻量级 UI 库（含完整 Colorpicker）
-   修复：Colorpicker 中 updatePreview 判空 self.Changed
+   Fenglib – 完整 UI 库（含 Colorpicker）
+   修复：Colorpicker 面板父级设为 window.Root.Parent
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -3292,7 +3292,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        --  COLORPICKER (修复 self.Changed 判空)
+        --  COLORPICKER (完整移植，修复父级)
         -- ============================================================
         child.Colorpicker = function(_, config)
             local title = config.Name or "Colorpicker"
@@ -3399,14 +3399,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
 
-            -- Dialog
+            -- Dialog – 使用 window.Root.Parent 作为父级
             local function openDialog()
+                local parentGui = window.Root and window.Root.Parent or CoreGui
+                if not parentGui then return end
+
                 local dialogRoot = Instance.new("Frame")
                 dialogRoot.Size = UDim2.new(1,0,1,0)
                 dialogRoot.BackgroundTransparency = 0.4
                 dialogRoot.BackgroundColor3 = Color3.fromRGB(0,0,0)
                 dialogRoot.ZIndex = 100
-                dialogRoot.Parent = ScreenGui
+                dialogRoot.Parent = parentGui
                 local dialogRootCorner = Instance.new("UICorner")
                 dialogRootCorner.CornerRadius = UDim.new(0,0)
                 dialogRootCorner.Parent = dialogRoot
