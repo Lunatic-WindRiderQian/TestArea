@@ -1,3 +1,8 @@
+--[[
+   Fenglib – 轻量级 UI 库（含完整 Colorpicker）
+   修复：Colorpicker 中 updatePreview 判空 self.Changed
+]]
+
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -3287,7 +3292,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        --  COLORPICKER (移植自 FluentPro)
+        --  COLORPICKER (修复 self.Changed 判空)
         -- ============================================================
         child.Colorpicker = function(_, config)
             local title = config.Name or "Colorpicker"
@@ -3298,7 +3303,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local controlId = title.."_"..tostring(#Registry)
             local parent = config.Parent or contentHolder
 
-            -- Internal state (HSV)
+            -- HSV helpers
             local function rgbToHSV(c)
                 local r,g,b = c.r, c.g, c.b
                 local max, min = math.max(r,g,b), math.min(r,g,b)
@@ -3359,7 +3364,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- Preview box
             local Preview = Instance.new("Frame")
             Preview.Size = UDim2.fromOffset(26,26)
             Preview.Position = UDim2.new(1,-10,0.5,0)
@@ -3380,7 +3384,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             previewBg.TileSize = UDim2.fromOffset(40,40)
             previewBg.Parent = Preview
 
-            -- Update preview
+            local self = {}
+
             local function updatePreview()
                 local col = hsvToRGB(h_val, s_val, v_val)
                 Preview.BackgroundColor3 = col
@@ -3389,12 +3394,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     ConfigObjects[controlId].Value = {Color=col, Transparency=trans_val}
                 end
                 pcall(callback, col, trans_val)
-                pcall(self.Changed, col, trans_val)
+                if self.Changed then
+                    pcall(self.Changed, col, trans_val)
+                end
             end
 
-            -- Dialog creation
+            -- Dialog
             local function openDialog()
-                -- Dialog root
                 local dialogRoot = Instance.new("Frame")
                 dialogRoot.Size = UDim2.new(1,0,1,0)
                 dialogRoot.BackgroundTransparency = 0.4
@@ -3439,7 +3445,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 titlePad.PaddingTop = UDim.new(0,8)
                 titlePad.Parent = dialogTitle
 
-                -- Color panel (HSV)
+                -- Panel
                 local panel = Instance.new("ImageLabel")
                 panel.Size = UDim2.fromOffset(180,160)
                 panel.Position = UDim2.new(0,20,0,55)
@@ -3451,7 +3457,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 panelCorner.CornerRadius = UDim.new(0,4)
                 panelCorner.Parent = panel
 
-                -- Panel overlay for transparency (if needed, but we use background)
                 local panelOverlay = Instance.new("Frame")
                 panelOverlay.Size = UDim2.fromScale(1,1)
                 panelOverlay.BackgroundColor3 = hsvToRGB(h_val, s_val, v_val)
@@ -3461,7 +3466,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 overlayCorner.CornerRadius = UDim.new(0,4)
                 overlayCorner.Parent = panelOverlay
 
-                -- Crosshair indicator
                 local crosshair = Instance.new("ImageLabel")
                 crosshair.Size = UDim2.fromOffset(14,14)
                 crosshair.Image = "rbxassetid://12266946128"
@@ -3497,7 +3501,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 hueIndCorner.CornerRadius = UDim.new(1,0)
                 hueIndCorner.Parent = hueIndicator
 
-                -- Transparency strip (if transparency enabled)
+                -- Transparency strip (if enabled)
                 local transStrip = nil
                 local transIndicator = nil
                 if config.Transparency ~= nil then
@@ -3578,7 +3582,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     aFrame, aBox = makeInput("A", 340, 135, 70)
                 end
 
-                -- Update all inputs from HSV
                 local function updateInputs()
                     local col = hsvToRGB(h_val, s_val, v_val)
                     hexBox.Text = "#"..col:ToHex()
@@ -3598,7 +3601,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     updatePreview()
                 end
 
-                -- Mouse handling for panel
+                -- Panel dragging
                 local draggingPanel = false
                 panel.InputBegan:Connect(function(inp)
                     if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
@@ -3625,7 +3628,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end
                 end)
 
-                -- Hue strip dragging
+                -- Hue dragging
                 local draggingHue = false
                 hueStrip.InputBegan:Connect(function(inp)
                     if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
@@ -3650,7 +3653,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end
                 end)
 
-                -- Transparency strip dragging
+                -- Transparency dragging
                 if transStrip then
                     local draggingTrans = false
                     transStrip.InputBegan:Connect(function(inp)
@@ -3677,7 +3680,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
 
-                -- Input box focus handlers
+                -- Input focus handlers
                 local function onHexFocusLost()
                     local txt = hexBox.Text:gsub("#","")
                     local ok, col = pcall(Color3.fromHex, txt)
@@ -3686,7 +3689,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                         h_val = h; s_val = s; v_val = v
                         updateInputs()
                     else
-                        updateInputs() -- revert
+                        updateInputs()
                     end
                 end
                 hexBox.FocusLost:Connect(onHexFocusLost)
@@ -3770,8 +3773,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             -- Click to open
             ClickBtn.MouseButton1Click:Connect(openDialog)
 
-            -- External API
-            local self = {}
+            -- API
             function self.SetValueRGB(col, trans)
                 if trans ~= nil then trans_val = math.clamp(trans,0,1) end
                 local h,s,v = rgbToHSV(col)
@@ -3794,7 +3796,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 ConfigObjects[controlId] = nil
             end
 
-            -- Config save
+            -- Config
             ConfigObjects[controlId] = {
                 Type="Colorpicker",
                 Value={Color=hsvToRGB(h_val, s_val, v_val), Transparency=trans_val},
