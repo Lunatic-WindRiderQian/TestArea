@@ -3287,7 +3287,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================
-        -- Colorpicker 组件（已修复 dialogRoot 尺寸）
+        -- Colorpicker 组件（修复：使用 ScreenGui 作为容器）
         -- ============================
         child.Colorpicker = function(_, config)
             assert(config.Title, "Colorpicker - Missing Title")
@@ -3373,31 +3373,37 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 clickBtn.Active = not state
             end
 
-            -- 对话框创建（修复：dialogRoot 尺寸改为全屏）
+            -- 对话框创建（修复：使用独立的 ScreenGui）
             local function createDialog()
+                -- 创建独立的 ScreenGui
+                local dialogScreen = Instance.new("ScreenGui")
+                dialogScreen.Name = "ColorpickerDialog"
+                dialogScreen.Parent = CoreGui
+                dialogScreen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
                 local dialogRoot = Instance.new("Frame")
-                dialogRoot.Size = UDim2.new(1,0,1,0)   -- 关键修复：全屏尺寸
+                dialogRoot.Size = UDim2.new(1, 0, 1, 0)
                 dialogRoot.BackgroundTransparency = 1
                 dialogRoot.ZIndex = 100
-                dialogRoot.Parent = CoreGui
+                dialogRoot.Parent = dialogScreen
 
                 local overlay = Instance.new("Frame")
-                overlay.Size = UDim2.new(1,0,1,0)
-                overlay.BackgroundColor3 = Color3.fromRGB(0,0,0)
+                overlay.Size = UDim2.new(1, 0, 1, 0)
+                overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
                 overlay.BackgroundTransparency = 0.4
                 overlay.Parent = dialogRoot
                 overlay.ZIndex = 101
 
                 local dialog = Instance.new("Frame")
-                dialog.Size = UDim2.new(0,430,0,330)
-                dialog.Position = UDim2.new(0.5,0,0.5,0)
-                dialog.AnchorPoint = Vector2.new(0.5,0.5)
+                dialog.Size = UDim2.new(0, 430, 0, 330)
+                dialog.Position = UDim2.new(0.5, 0, 0.5, 0)
+                dialog.AnchorPoint = Vector2.new(0.5, 0.5)
                 dialog.BackgroundColor3 = CurrentTheme.Main
                 dialog.BackgroundTransparency = 0.08
                 dialog.ClipsDescendants = true
                 dialog.Parent = overlay
                 dialog.ZIndex = 102
-                Instance.new("UICorner", dialog).CornerRadius = UDim.new(0,16)
+                Instance.new("UICorner", dialog).CornerRadius = UDim.new(0, 16)
                 AddToRegistry(dialog, "BackgroundColor3", "Main")
                 local dialogStroke = Instance.new("UIStroke")
                 dialogStroke.Thickness = 1
@@ -3501,15 +3507,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     transBg.ScaleType = Enum.ScaleType.Tile
                     transBg.TileSize = UDim2.fromOffset(40,40)
                     transBg.BackgroundTransparency = 1
-                    transBg.Parent = Instance.new("Frame", dialog) -- wrapper
-                    transBg.Parent.Size = UDim2.fromOffset(12,190)
-                    transBg.Parent.Position = UDim2.fromOffset(230,55)
-                    transBg.Parent.Parent = dialog
-                    transBg.Parent.BackgroundTransparency = 1
-                    Instance.new("UICorner", transBg.Parent).CornerRadius = UDim.new(1,0)
+                    local wrapper = Instance.new("Frame")
+                    wrapper.Size = UDim2.fromOffset(12,190)
+                    wrapper.Position = UDim2.fromOffset(230,55)
+                    wrapper.Parent = dialog
+                    wrapper.BackgroundTransparency = 1
+                    Instance.new("UICorner", wrapper).CornerRadius = UDim.new(1,0)
+                    transBg.Parent = wrapper
                     transColor.Parent = transBg
 
-                    transparencySlider = transBg.Parent
+                    transparencySlider = wrapper
                     local transDragHolder = Instance.new("Frame")
                     transDragHolder.Size = UDim2.new(1,0,1,-10)
                     transDragHolder.Position = UDim2.fromOffset(0,5)
@@ -3758,14 +3765,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     colorBlock.BackgroundTransparency = currentTransparency
                     pcall(callback, currentColor, currentTransparency)
                     if onChanged then pcall(onChanged, currentColor) end
-                    dialogRoot:Destroy()
+                    dialogScreen:Destroy()
                 end)
 
                 local cancelBtn = createActionButton("Cancel", CurrentTheme.Stroke, function()
-                    dialogRoot:Destroy()
+                    dialogScreen:Destroy()
                 end)
 
-                closeBtnDlg.MouseButton1Click:Connect(function() dialogRoot:Destroy() end)
+                closeBtnDlg.MouseButton1Click:Connect(function()
+                    dialogScreen:Destroy()
+                end)
 
                 updateDisplay()
             end
