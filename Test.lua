@@ -3036,7 +3036,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== 新增 Colorpicker ==========
+        -- ========== 颜色选择器（已修正父级问题） ==========
         child.Colorpicker = function(_, config)
             config = config or {}
             local parent = config.Parent or contentHolder
@@ -3046,13 +3046,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local callback = config.Callback or function() end
             local controlId = title.."_"..tostring(#Registry)
 
-            -- 当前颜色值（HSV 和透明度）
             local h, s, v = Color3.toHSV(defaultColor)
-            local alpha = 1   -- 透明度 0~1
+            local alpha = 1
             local currentColor = defaultColor
             local isOpen = false
 
-            -- 元素主体框架
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1,0,0,42)
             Tile.Parent = parent
@@ -3060,7 +3058,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Instance.new("UICorner", Tile).CornerRadius = UDim.new(0,4)
             AddToRegistry(Tile, "BackgroundColor3", "Top")
 
-            -- 标题
             local TitleLbl = Instance.new("TextLabel")
             TitleLbl.Text = title
             TitleLbl.Size = UDim2.new(0.7,0,1,0)
@@ -3072,7 +3069,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
-            -- 颜色预览块（点击打开选择器）
             local Preview = Instance.new("Frame")
             Preview.Size = UDim2.fromOffset(26,26)
             Preview.Position = UDim2.new(1,-10,0.5,0)
@@ -3098,19 +3094,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ColorFill.Parent = Checker
             Instance.new("UICorner", ColorFill).CornerRadius = UDim.new(0,4)
 
-            -- 存储控制对象
             local self = {
                 Type = "Colorpicker",
                 Value = defaultColor,
                 Transparency = 0,
             }
 
-            -- ----- 颜色选择器弹出窗口 -----
             local function openPicker()
                 if isOpen then return end
                 isOpen = true
 
-                -- 全屏遮罩
+                -- 使用 win.ScreenGui（由 createSectionBuilder 传入）
                 local overlay = Instance.new("TextButton")
                 overlay.Size = UDim2.fromScale(1,1)
                 overlay.BackgroundColor3 = Color3.fromRGB(0,0,0)
@@ -3118,9 +3112,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 overlay.Text = ""
                 overlay.AutoButtonColor = false
                 overlay.ZIndex = 50
-                overlay.Parent = ScreenGui
+                overlay.Parent = win.ScreenGui   -- 修正：使用 win.ScreenGui
 
-                -- 选择器主面板
                 local panel = Instance.new("Frame")
                 panel.Size = UDim2.fromOffset(430,420)
                 panel.Position = UDim2.new(0.5,0,0.5,0)
@@ -3139,7 +3132,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 panelStroke.Parent = panel
                 AddToRegistry(panelStroke, "Color", "Stroke")
 
-                -- 标题
                 local titleLabel = Instance.new("TextLabel")
                 titleLabel.Size = UDim2.new(1,0,0,32)
                 titleLabel.Position = UDim2.new(0,0,0,0)
@@ -3152,7 +3144,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 titleLabel.Parent = panel
                 AddToRegistry(titleLabel, "TextColor3", "Text")
 
-                -- 饱和度/明度选择器 (正方形)
                 local satPicker = Instance.new("ImageLabel")
                 satPicker.Size = UDim2.fromOffset(180,160)
                 satPicker.Position = UDim2.fromOffset(20,50)
@@ -3168,7 +3159,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 satFill.Parent = satPicker
                 Instance.new("UICorner", satFill).CornerRadius = UDim.new(0,4)
 
-                -- 光标圆圈
                 local cursor = Instance.new("ImageLabel")
                 cursor.Size = UDim2.fromOffset(14,14)
                 cursor.BackgroundTransparency = 1
@@ -3177,7 +3167,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 cursor.Position = UDim2.new(s,0,1-v,0)
                 AddToRegistry(cursor, "ImageColor3", "Accent")
 
-                -- 色相条 (垂直)
                 local hueBar = Instance.new("Frame")
                 hueBar.Size = UDim2.fromOffset(12,190)
                 hueBar.Position = UDim2.fromOffset(210,50)
@@ -3207,7 +3196,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 hueCursor.Position = UDim2.new(0,-1,h,-6)
                 AddToRegistry(hueCursor, "ImageColor3", "Accent")
 
-                -- 透明度条 (可选)
                 local alphaBar, alphaFill, alphaSlider
                 if hasTransparency then
                     alphaBar = Instance.new("Frame")
@@ -3255,7 +3243,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     AddToRegistry(alphaCursor, "ImageColor3", "Accent")
                 end
 
-                -- 输入区域：Hex, R, G, B, A
                 local inputY = 260
                 local function createInput(labelText, xOffset, defaultText)
                     local lbl = Instance.new("TextLabel")
@@ -3295,7 +3282,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     aBox = createInput("A", 420, tostring(math.floor(alpha*100)))
                 end
 
-                -- 按钮：确认 / 取消
                 local btnY = 340
                 local function makeButton(text, x, cb)
                     local btn = Instance.new("TextButton")
@@ -3337,7 +3323,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     ColorFill.BackgroundColor3 = col
                 end
 
-                -- 拖动逻辑
                 local function startDrag(element, callback)
                     local dragging = false
                     local conn
@@ -3361,7 +3346,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
 
-                -- 饱和度/明度拖动
                 startDrag(satPicker, function(pos)
                     local absPos = satPicker.AbsolutePosition
                     local size = satPicker.AbsoluteSize
@@ -3373,7 +3357,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     updateColorDisplay()
                 end)
 
-                -- 色相拖动
                 startDrag(hueBar, function(pos)
                     local absPos = hueBar.AbsolutePosition
                     local size = hueBar.AbsoluteSize
@@ -3383,7 +3366,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     updateColorDisplay()
                 end)
 
-                -- 透明度拖动
                 if alphaBar then
                     startDrag(alphaBar, function(pos)
                         local absPos = alphaBar.AbsolutePosition
@@ -3395,7 +3377,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
 
-                -- 输入框更新
                 local function setFromHex(text)
                     local col = Color3.fromHex(text)
                     if col then
@@ -3433,7 +3414,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
 
-                -- 确认按钮
                 makeButton("Confirm", 120, function()
                     local finalColor = Color3.fromHSV(h,s,v)
                     self.Value = finalColor
@@ -3448,30 +3428,25 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     isOpen = false
                 end)
 
-                -- 取消按钮
                 makeButton("Cancel", 230, function()
                     overlay:Destroy()
                     isOpen = false
                 end)
 
-                -- 点击遮罩关闭
                 overlay.MouseButton1Click:Connect(function()
                     overlay:Destroy()
                     isOpen = false
                 end)
 
-                -- 初始化显示
                 updateColorDisplay()
             end
 
-            -- 点击预览打开选择器
             Tile.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     openPicker()
                 end
             end)
 
-            -- 外部接口
             function self.SetValue(newColor)
                 if type(newColor) == "userdata" and newColor.ClassName == "Color3" then
                     h,s,v = Color3.toHSV(newColor)
@@ -3501,16 +3476,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Tile.Visible = state
             end
 
-            -- 注册配置对象
             ConfigObjects[controlId] = {
                 Type = "Colorpicker",
                 Value = currentColor,
                 Set = function(val) self.SetValue(val) end,
             }
 
-            table.insert(ThemeListeners, function()
-                -- 主题更新时刷新颜色
-            end)
+            table.insert(ThemeListeners, function() end)
 
             return self
         end
@@ -3818,6 +3790,9 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
+
+    -- 将 ScreenGui 存入 Window，供所有元素（如颜色选择器）使用
+    Window.ScreenGui = ScreenGui
 
     local NotificationHolder = Instance.new("Frame")
     NotificationHolder.Name = "NotificationHolder"
