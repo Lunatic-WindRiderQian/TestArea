@@ -3036,7 +3036,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return self
         end
 
-        -- ========== 颜色选择器（已修正父级问题） ==========
+        -- ========== 颜色选择器（完全搬运自 FluentPro，布局一致） ==========
         child.Colorpicker = function(_, config)
             config = config or {}
             local parent = config.Parent or contentHolder
@@ -3046,11 +3046,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local callback = config.Callback or function() end
             local controlId = title.."_"..tostring(#Registry)
 
+            -- 当前颜色状态（与 FluentPro 完全一致）
             local h, s, v = Color3.toHSV(defaultColor)
-            local alpha = 1
+            local alpha = 0  -- 透明度 0~1（原版默认0）
             local currentColor = defaultColor
             local isOpen = false
 
+            -- 主体框架（模仿 FluentPro 的 Element 结构）
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1,0,0,42)
             Tile.Parent = parent
@@ -3069,6 +3071,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TitleLbl.Parent = Tile
             AddToRegistry(TitleLbl, "TextColor3", "Text")
 
+            -- 颜色预览块（点击打开选择器）
             local Preview = Instance.new("Frame")
             Preview.Size = UDim2.fromOffset(26,26)
             Preview.Position = UDim2.new(1,-10,0.5,0)
@@ -3077,6 +3080,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Preview.Parent = Tile
             Instance.new("UICorner", Preview).CornerRadius = UDim.new(0,4)
 
+            -- 棋盘格背景（透明度显示）
             local Checker = Instance.new("ImageLabel")
             Checker.Size = UDim2.fromScale(1,1)
             Checker.BackgroundTransparency = 1
@@ -3094,17 +3098,19 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ColorFill.Parent = Checker
             Instance.new("UICorner", ColorFill).CornerRadius = UDim.new(0,4)
 
+            -- 对外接口
             local self = {
                 Type = "Colorpicker",
                 Value = defaultColor,
                 Transparency = 0,
             }
 
+            -- 打开选择器（布局与 FluentPro 完全一致）
             local function openPicker()
                 if isOpen then return end
                 isOpen = true
 
-                -- 使用 win.ScreenGui（由 createSectionBuilder 传入）
+                -- 遮罩
                 local overlay = Instance.new("TextButton")
                 overlay.Size = UDim2.fromScale(1,1)
                 overlay.BackgroundColor3 = Color3.fromRGB(0,0,0)
@@ -3112,10 +3118,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 overlay.Text = ""
                 overlay.AutoButtonColor = false
                 overlay.ZIndex = 50
-                overlay.Parent = win.ScreenGui   -- 修正：使用 win.ScreenGui
+                overlay.Parent = win.ScreenGui   -- 适配：挂到窗口的 ScreenGui
 
+                -- 主面板（尺寸 430x360，与原版一致）
                 local panel = Instance.new("Frame")
-                panel.Size = UDim2.fromOffset(430,420)
+                panel.Size = UDim2.fromOffset(430, 360)
                 panel.Position = UDim2.new(0.5,0,0.5,0)
                 panel.AnchorPoint = Vector2.new(0.5,0.5)
                 panel.BackgroundColor3 = CurrentTheme.Main
@@ -3132,6 +3139,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 panelStroke.Parent = panel
                 AddToRegistry(panelStroke, "Color", "Stroke")
 
+                -- 标题
                 local titleLabel = Instance.new("TextLabel")
                 titleLabel.Size = UDim2.new(1,0,0,32)
                 titleLabel.Position = UDim2.new(0,0,0,0)
@@ -3144,9 +3152,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 titleLabel.Parent = panel
                 AddToRegistry(titleLabel, "TextColor3", "Text")
 
+                -- 饱和度/明度选择器（180x160，位置 (20,55)）
                 local satPicker = Instance.new("ImageLabel")
                 satPicker.Size = UDim2.fromOffset(180,160)
-                satPicker.Position = UDim2.fromOffset(20,50)
+                satPicker.Position = UDim2.fromOffset(20,55)
                 satPicker.BackgroundColor3 = Color3.fromHSV(h,1,1)
                 satPicker.Image = "rbxassetid://4155801252"
                 satPicker.Parent = panel
@@ -3159,6 +3168,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 satFill.Parent = satPicker
                 Instance.new("UICorner", satFill).CornerRadius = UDim.new(0,4)
 
+                -- 光标
                 local cursor = Instance.new("ImageLabel")
                 cursor.Size = UDim2.fromOffset(14,14)
                 cursor.BackgroundTransparency = 1
@@ -3167,9 +3177,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 cursor.Position = UDim2.new(s,0,1-v,0)
                 AddToRegistry(cursor, "ImageColor3", "Accent")
 
+                -- 色相条（垂直，宽12高190，位置 (210,55)）
                 local hueBar = Instance.new("Frame")
                 hueBar.Size = UDim2.fromOffset(12,190)
-                hueBar.Position = UDim2.fromOffset(210,50)
+                hueBar.Position = UDim2.fromOffset(210,55)
                 hueBar.BackgroundColor3 = Color3.fromRGB(255,255,255)
                 hueBar.Parent = panel
                 Instance.new("UICorner", hueBar).CornerRadius = UDim.new(1,0)
@@ -3196,11 +3207,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 hueCursor.Position = UDim2.new(0,-1,h,-6)
                 AddToRegistry(hueCursor, "ImageColor3", "Accent")
 
+                -- 透明度条（可选，位置 (230,55)）
                 local alphaBar, alphaFill, alphaSlider
                 if hasTransparency then
                     alphaBar = Instance.new("Frame")
                     alphaBar.Size = UDim2.fromOffset(12,190)
-                    alphaBar.Position = UDim2.fromOffset(230,50)
+                    alphaBar.Position = UDim2.fromOffset(230,55)
                     alphaBar.BackgroundColor3 = Color3.fromRGB(255,255,255)
                     alphaBar.Parent = panel
                     Instance.new("UICorner", alphaBar).CornerRadius = UDim.new(1,0)
@@ -3243,6 +3255,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     AddToRegistry(alphaCursor, "ImageColor3", "Accent")
                 end
 
+                -- 输入框区域（Hex、R、G、B、A，Y=260，与原版一致）
                 local inputY = 260
                 local function createInput(labelText, xOffset, defaultText)
                     local lbl = Instance.new("TextLabel")
@@ -3282,6 +3295,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     aBox = createInput("A", 420, tostring(math.floor(alpha*100)))
                 end
 
+                -- 按钮（确认/取消，Y=340）
                 local btnY = 340
                 local function makeButton(text, x, cb)
                     local btn = Instance.new("TextButton")
@@ -3303,6 +3317,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     return btn
                 end
 
+                -- 更新显示
                 local function updateColorDisplay()
                     local col = Color3.fromHSV(h,s,v)
                     currentColor = col
@@ -3323,6 +3338,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     ColorFill.BackgroundColor3 = col
                 end
 
+                -- 拖动逻辑（与 FluentPro 实现相同）
                 local function startDrag(element, callback)
                     local dragging = false
                     local conn
@@ -3377,6 +3393,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
 
+                -- 输入框更新
                 local function setFromHex(text)
                     local col = Color3.fromHex(text)
                     if col then
@@ -3414,10 +3431,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
 
+                -- 确认按钮
                 makeButton("Confirm", 120, function()
                     local finalColor = Color3.fromHSV(h,s,v)
                     self.Value = finalColor
-                    self.Transparency = 1 - alpha
+                    self.Transparency = alpha
                     Preview.BackgroundColor3 = finalColor
                     ColorFill.BackgroundColor3 = finalColor
                     pcall(callback, finalColor)
@@ -3428,11 +3446,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     isOpen = false
                 end)
 
+                -- 取消按钮
                 makeButton("Cancel", 230, function()
                     overlay:Destroy()
                     isOpen = false
                 end)
 
+                -- 遮罩关闭
                 overlay.MouseButton1Click:Connect(function()
                     overlay:Destroy()
                     isOpen = false
@@ -3441,12 +3461,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 updateColorDisplay()
             end
 
+            -- 点击预览打开选择器
             Tile.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     openPicker()
                 end
             end)
 
+            -- 外部方法（与 FluentPro 一致）
             function self.SetValue(newColor)
                 if type(newColor) == "userdata" and newColor.ClassName == "Color3" then
                     h,s,v = Color3.toHSV(newColor)
@@ -3459,12 +3481,29 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
 
+            function self.SetValueRGB(newColor, newAlpha)
+                if type(newColor) == "userdata" and newColor.ClassName == "Color3" then
+                    h,s,v = Color3.toHSV(newColor)
+                    currentColor = newColor
+                    self.Value = newColor
+                    if newAlpha ~= nil then
+                        self.Transparency = newAlpha
+                        alpha = newAlpha
+                    end
+                    Preview.BackgroundColor3 = newColor
+                    ColorFill.BackgroundColor3 = newColor
+                    if ConfigObjects[controlId] then ConfigObjects[controlId].Value = newColor end
+                    pcall(callback, newColor)
+                end
+            end
+
             function self.GetValue()
                 return self.Value
             end
 
             function self.SetTransparency(val)
                 self.Transparency = math.clamp(val, 0, 1)
+                alpha = self.Transparency
             end
 
             function self.Destroy()
@@ -3791,7 +3830,7 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
-    -- 将 ScreenGui 存入 Window，供所有元素（如颜色选择器）使用
+    -- 保存 ScreenGui 供颜色选择器使用
     Window.ScreenGui = ScreenGui
 
     local NotificationHolder = Instance.new("Frame")
