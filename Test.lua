@@ -357,7 +357,7 @@ local function createLockOverlay(parent, defaultTitle)
 end
 
 -- ================================================================
--- 新增：miUI 风格 Section 构建器（完全替换原 createSectionBuilder）
+-- 新的 createSectionBuilder —— 完整从 miUI 搬运 (AddSection + 控件)
 -- ================================================================
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
@@ -369,179 +369,214 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         padding.Parent = parent
     end
 
-    -- ---------- 辅助函数 ----------
+    -- ---------- 辅助：图标解析（同 miUI） ----------
     local function getIconId(icon)
         if not icon or icon == "" then return "" end
         if tonumber(icon) then return "rbxassetid://" .. icon end
         if icon:match("^rbxassetid://") or icon:match("^rbxasset://") then return icon end
         if icon:match("^https?://") then return icon end
-        -- 内置名称（如 "gear"）直接作为 rbxassetid（需确保存在）
         return "rbxassetid://" .. icon
     end
 
-    -- ---------- 创建 miUI 风格的 Section ----------
+    -- ---------- 新建 Section（完全复制 miUI 的 AddSection） ----------
     local function createSection(config)
         local titleText = ""
         local subtitleText = nil
         local iconAsset = nil
         local defaultOpen = true
+        local collapsible = false
+        local collapsed = false
+        local boxed = false
 
         if type(config) == "table" then
             titleText = config.Name or ""
             subtitleText = config.SubName
             iconAsset = config.Logo
             if config.open ~= nil then defaultOpen = config.open end
+            collapsible = config.Collapsible == true
+            collapsed = config.Collapsed == true
+            boxed = config.Box == true
         else
             titleText = config or ""
-            if type(iconAsset) == "table" then
-                subtitleText = iconAsset.subtitle
-                iconAsset = iconAsset.icon
-            elseif type(iconAsset) == "string" then
-                subtitleText = iconAsset
-            end
         end
 
-        -- 1. Section 根容器
+        -- ---- 1. Section 根容器（透明） ----
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(0.96, 0, 0, 0)
-        sectionFrame.AnchorPoint = Vector2.new(0, 0)
-        sectionFrame.Position = UDim2.new(0, 0, 0, 0)
+        sectionFrame.Name = "ModernSection"
+        sectionFrame.Size = UDim2.new(1, -5, 0, 0)
         sectionFrame.BackgroundTransparency = 1
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
 
-        -- 2. 标题栏（miUI 风格）
+        -- ---- 2. 标题栏（完全与 miUI 相同） ----
         local header = Instance.new("Frame")
-        header.Size = UDim2.new(1, 0, 0, 30)
-        header.BackgroundColor3 = Color3.fromRGB(25, 27, 33)
-        header.BackgroundTransparency = 0.25
-        header.ClipsDescendants = true
+        header.Name = "SectionHeader"
         header.Parent = sectionFrame
-        Instance.new("UICorner", header).CornerRadius = UDim.new(0, 6)
+        header.BackgroundColor3 = Color3.fromRGB(20, 22, 27)   -- miUI 固定颜色
+        header.BackgroundTransparency = 0.250                  -- miUI 的透明度
+        header.BorderSizePixel = 0
+        header.ClipsDescendants = true
+        header.Size = UDim2.new(1, 0, 0, 30)                   -- miUI 高度 30
+        header.ZIndex = 8
 
-        local stroke = Instance.new("UIStroke")
-        stroke.Thickness = 1
-        stroke.Color = CurrentTheme.Stroke
-        stroke.Transparency = 0.7
-        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        stroke.Parent = header
-        table.insert(ThemeListeners, function() stroke.Color = CurrentTheme.Stroke end)
+        local headerCorner = Instance.new("UICorner")
+        headerCorner.CornerRadius = UDim.new(0, 6)             -- miUI 圆角 6
+        headerCorner.Parent = header
 
-        -- 标题图标（可选）
+        local headerStroke = Instance.new("UIStroke")
+        headerStroke.Thickness = 1
+        headerStroke.Color = CurrentTheme.Stroke
+        headerStroke.Transparency = 0.700                      -- miUI 透明度
+        headerStroke.Parent = header
+        table.insert(ThemeListeners, function() headerStroke.Color = CurrentTheme.Stroke end)
+
+        -- ---- 标题图标（可选） ----
         local iconLabel = nil
         if iconAsset then
             iconLabel = Instance.new("ImageLabel")
-            iconLabel.Size = UDim2.fromOffset(16, 16)
-            iconLabel.Position = UDim2.new(0, 11, 0.5, 0)
+            iconLabel.Name = "SectionIcon"
+            iconLabel.Parent = header
             iconLabel.AnchorPoint = Vector2.new(0, 0.5)
             iconLabel.BackgroundTransparency = 1
+            iconLabel.BorderSizePixel = 0
+            iconLabel.Position = UDim2.new(0, 8, 0.5, 0)       -- miUI 位置
+            iconLabel.Size = UDim2.new(0, 16, 0, 16)           -- miUI 大小
+            iconLabel.ZIndex = 9
+            iconLabel.ImageColor3 = CurrentTheme.IconColor or CurrentTheme.Text
+            iconLabel.ImageTransparency = 0.500                -- miUI 透明度
+            iconLabel.ScaleType = Enum.ScaleType.Fit
             iconLabel.Image = getIconId(iconAsset)
-            iconLabel.ImageColor3 = CurrentTheme.Text
-            iconLabel.ImageTransparency = 0.5
-            iconLabel.Parent = header
-            AddToRegistry(iconLabel, "ImageColor3", "Text")
         end
 
-        -- 标题文字
+        -- ---- 标题文字 ----
         local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(1, -46, 1, 0)
-        titleLabel.Position = UDim2.new(0, iconLabel and 32 or 11, 0, 0)
+        titleLabel.Name = "SectionTitle"
+        titleLabel.Parent = header
+        titleLabel.AnchorPoint = Vector2.new(0, 0.5)
         titleLabel.BackgroundTransparency = 1
+        titleLabel.BorderSizePixel = 0
+        titleLabel.Position = iconLabel and UDim2.new(0, 30, 0.5, 0) or UDim2.new(0, 10, 0.5, 0)
+        titleLabel.Size = UDim2.new(1, iconLabel and -58 or -38, 0, 16)
+        titleLabel.ZIndex = 9
         titleLabel.Font = Enum.Font.GothamMedium
         titleLabel.Text = titleText
         titleLabel.TextColor3 = CurrentTheme.Text
-        titleLabel.TextTransparency = 0.2
-        titleLabel.TextSize = 13
+        titleLabel.TextSize = 12                               -- miUI 字号 12
+        titleLabel.TextTransparency = 0.080                    -- miUI 透明度 0.080
+        titleLabel.TextTruncate = Enum.TextTruncate.AtEnd
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        titleLabel.Parent = header
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
-        -- 折叠箭头（默认隐藏，由 Collapsible 控制）
-        local collapsible = config.Collapsible == true
-        local collapsed = config.Collapsed == true
+        -- ---- 折叠箭头（同 miUI） ----
         local arrow = Instance.new("ImageLabel")
-        arrow.Size = UDim2.fromOffset(16, 16)
-        arrow.Position = UDim2.new(1, -10, 0.5, 0)
+        arrow.Name = "SectionArrow"
+        arrow.Parent = header
         arrow.AnchorPoint = Vector2.new(1, 0.5)
         arrow.BackgroundTransparency = 1
-        arrow.Image = "rbxassetid://8240930340"   -- 向下箭头
+        arrow.BorderSizePixel = 0
+        arrow.Position = UDim2.new(1, -7, 0.5, 0)
+        arrow.Size = UDim2.new(0, 16, 0, 16)
+        arrow.ZIndex = 9
         arrow.ImageColor3 = CurrentTheme.Text
-        arrow.ImageTransparency = 0.5
+        arrow.ImageTransparency = 0.350
+        arrow.ScaleType = Enum.ScaleType.Fit
+        arrow.Image = "rbxassetid://8240930340"   -- 向下箭头
         arrow.Rotation = collapsed and -90 or 0
         arrow.Visible = collapsible
-        arrow.Parent = header
         AddToRegistry(arrow, "ImageColor3", "Text")
 
-        -- 3. 内容容器（用于放置控件）
+        -- ---- 3. 内容容器（背景框） ----
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1, -10, 0, 0)
-        contentHolder.Position = UDim2.new(0, 5, 0, 30)
-        contentHolder.BackgroundTransparency = 1
-        contentHolder.ClipsDescendants = true
+        contentHolder.Name = "SectionContent"
         contentHolder.Parent = sectionFrame
+        contentHolder.AnchorPoint = Vector2.new(0.5, 0)
+        contentHolder.BackgroundColor3 = Color3.fromRGB(20, 22, 27)   -- miUI 背景色
+        contentHolder.BackgroundTransparency = 0.500                  -- miUI 透明度
+        contentHolder.BorderSizePixel = 0
+        contentHolder.ClipsDescendants = true
+        contentHolder.Position = UDim2.new(0.5, 0, 0, 30)
+        contentHolder.Size = UDim2.new(1, -10, 1, -30)                -- miUI 的内边距
+        contentHolder.ZIndex = 9
+        if boxed then
+            -- 当 Box 为 true 时，内容容器有额外样式
+            local contentCorner = Instance.new("UICorner")
+            contentCorner.CornerRadius = UDim.new(0, 10)              -- miUI 圆角 10
+            contentCorner.Parent = contentHolder
+            local contentStroke = Instance.new("UIStroke")
+            contentStroke.Thickness = 1
+            contentStroke.Color = CurrentTheme.Stroke
+            contentStroke.Transparency = 0.650
+            contentStroke.Parent = contentHolder
+            table.insert(ThemeListeners, function() contentStroke.Color = CurrentTheme.Stroke end)
+        end
 
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 6)
-        contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        contentLayout.Name = "ContentLayout"
         contentLayout.Parent = contentHolder
+        contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        contentLayout.Padding = UDim.new(0, 5)
 
-        -- 底部留白
-        local bottomPad = Instance.new("Frame")
-        bottomPad.Size = UDim2.new(1, 0, 0, 4)
-        bottomPad.BackgroundTransparency = 1
-        bottomPad.Parent = contentHolder
-
-        -- 4. 折叠逻辑
-        local function updateHeight(instant)
+        -- ---- 4. 折叠/展开动画（完全与 miUI 相同） ----
+        local function updateSectionHeight()
             local contentHeight = contentLayout.AbsoluteContentSize.Y
-            local target = (collapsed or not collapsible) and 0 or contentHeight + 8
-            local totalHeight = 30 + target
-            if instant then
-                contentHolder.Size = UDim2.new(1, -10, 0, target)
-                sectionFrame.Size = UDim2.new(0.96, 0, 0, totalHeight)
+            local targetHeight = 30   -- 标题高度
+            if not collapsed then
+                targetHeight = targetHeight + contentHeight + 5
+            end
+            -- 使用 miUI 的 VSlowTween (0.5s, Quint, Out)
+            TweenService:Create(sectionFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                Size = UDim2.new(1, -5, 0, targetHeight)
+            }):Play()
+            TweenService:Create(arrow, TweenInfo.new(0.25), {
+                Rotation = collapsed and -90 or 0
+            }):Play()
+            -- 内容显隐
+            if collapsed then
+                contentHolder.Visible = false
             else
-                TweenService:Create(contentHolder, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                    Size = UDim2.new(1, -10, 0, target)
-                }):Play()
-                TweenService:Create(sectionFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                    Size = UDim2.new(0.96, 0, 0, totalHeight)
-                }):Play()
-                TweenService:Create(arrow, TweenInfo.new(0.25), { Rotation = collapsed and -90 or 0 }):Play()
+                contentHolder.Visible = true
             end
         end
 
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            if not collapsed or not collapsible then updateHeight(false) end
+            if not collapsed then updateSectionHeight() end
         end)
 
-        -- 标题点击切换折叠
+        -- ---- 标题点击切换折叠（同 miUI） ----
         if collapsible then
-            local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(1, 0, 1, 0)
-            btn.BackgroundTransparency = 1
-            btn.Text = ""
-            btn.Parent = header
-            btn.MouseButton1Click:Connect(function()
+            local clickBtn = Instance.new("TextButton")
+            clickBtn.Name = "CollapseToggle"
+            clickBtn.Size = UDim2.new(1, 0, 0, 30)
+            clickBtn.BackgroundTransparency = 1
+            clickBtn.Text = ""
+            clickBtn.ZIndex = 10
+            clickBtn.Parent = header
+            clickBtn.MouseButton1Click:Connect(function()
                 collapsed = not collapsed
-                updateHeight(false)
+                updateSectionHeight()
             end)
-            header.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    collapsed = not collapsed
-                    updateHeight(false)
-                end
+            -- 悬停效果（与 miUI 完全一致）
+            clickBtn.MouseEnter:Connect(function()
+                Tween(header, { BackgroundTransparency = 0.150 }, 0.15)
+            end)
+            clickBtn.MouseLeave:Connect(function()
+                Tween(header, { BackgroundTransparency = 0.250 }, 0.15)
             end)
         end
 
-        -- 初始高度
-        task.defer(function() updateHeight(true) end)
+        -- ---- 初始化高度 ----
+        task.defer(updateSectionHeight)
 
-        -- ========== 控件生成器 ==========
+        -- ============================================================
+        -- 控件生成器（全部从 miUI 的 RegisiterItem 原样移植）
+        -- ============================================================
         local child = {}
 
         -- ---------- Button ----------
         child.Button = function(_, config)
-            local btnText = config.Name or config.Text or ""
+            config = config or {}
+            local btnText = config.Name or config.Text or "Button"
             local callback = config.Callback or function() end
             local icon = config.Icon
             local parent = config.Parent or contentHolder
@@ -554,12 +589,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local corner = Instance.new("UICorner")
             corner.CornerRadius = UDim.new(0, 6)
             corner.Parent = frame
-            local strokeBtn = Instance.new("UIStroke")
-            strokeBtn.Thickness = 1
-            strokeBtn.Color = CurrentTheme.Stroke
-            strokeBtn.Transparency = 0.6
-            strokeBtn.Parent = frame
-            table.insert(ThemeListeners, function() strokeBtn.Color = CurrentTheme.Stroke end)
+
+            local stroke = Instance.new("UIStroke")
+            stroke.Thickness = 1
+            stroke.Color = CurrentTheme.Stroke
+            stroke.Transparency = 0.6
+            stroke.Parent = frame
+            table.insert(ThemeListeners, function() stroke.Color = CurrentTheme.Stroke end)
 
             local iconLabel = nil
             if icon then
@@ -618,6 +654,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ---------- Toggle ----------
         child.Toggle = function(_, config)
+            config = config or {}
             local toggleText = config.Name or ""
             local Enabled = config.Value or false
             local callback = config.Callback or function() end
@@ -651,7 +688,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             label.Parent = frame
             AddToRegistry(label, "TextColor3", "Text")
 
-            -- Switch
+            -- Switch (完全复制 miUI)
             local switch = Instance.new("Frame")
             switch.Size = UDim2.fromOffset(36, 18)
             switch.Position = UDim2.new(1, -46, 0.5, 0)
@@ -703,6 +740,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ---------- Slider ----------
         child.Slider = function(_, config)
+            config = config or {}
             local sliderText = config.Name or ""
             local valueTable = config.Value or {}
             local min = valueTable.Min or 0
@@ -841,6 +879,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ---------- Dropdown ----------
         child.Dropdown = function(_, config)
+            config = config or {}
             local dropText = config.Name or ""
             local options = config.Values or {}
             local selectedValue = config.Value
@@ -901,7 +940,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             arrowIcon.Parent = frame
             AddToRegistry(arrowIcon, "ImageColor3", "Text")
 
-            -- 下拉列表容器
             local container = Instance.new("Frame")
             container.Size = UDim2.new(1, 0, 0, 0)
             container.Visible = false
@@ -1126,6 +1164,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ---------- Keybind ----------
         child.Keybind = function(_, config)
+            config = config or {}
             local keyText = config.Name or ""
             local defaultKey = config.Default or Enum.KeyCode.M
             local mode = config.Mode or "Toggle"
@@ -1185,7 +1224,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             keyLabel.Parent = keyBtn
             AddToRegistry(keyLabel, "TextColor3", "Text")
 
-            -- UIPadding for keyBtn
             local pad = Instance.new("UIPadding")
             pad.PaddingLeft = UDim.new(0, 6)
             pad.PaddingRight = UDim.new(0, 6)
@@ -1286,6 +1324,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ---------- Textbox ----------
         child.Textbox = function(_, config)
+            config = config or {}
             local boxText = config.Name or ""
             local placeholder = config.Placeholder or ""
             local callback = config.Callback or function() end
@@ -1369,6 +1408,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ---------- Input ----------
         child.Input = function(_, config)
+            config = config or {}
             local inputText = config.Name or ""
             local default = config.Value or ""
             local callback = config.Callback or function() end
@@ -1522,6 +1562,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ---------- Label ----------
         child.Label = function(_, config)
+            config = config or {}
             local labelText = config.Name or ""
             local parent = config.Parent or contentHolder
 
@@ -1800,6 +1841,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ---------- Checkbox ----------
         child.Checkbox = function(_, config)
+            config = config or {}
             local title = config.Name or ""
             local default = config.Default or false
             local callback = config.Callback or function() end
@@ -1888,6 +1930,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ---------- ProgressBar ----------
         child.ProgressBar = function(_, config)
+            config = config or {}
             local name = config.Name or ""
             local valueConfig = config.Value or {}
             local min = valueConfig.Min or 0
@@ -1977,7 +2020,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ---------- Video ----------
         child.Video = function(_, config)
-            local opts = config or {}
+            config = config or {}
+            local opts = config
             local parent = opts.Parent or contentHolder
             if not parent then return end
             local radius = opts.Radius or 8
@@ -2097,7 +2141,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return mod
             end
 
-            -- 控制栏（保留原实现）
+            -- 控制栏
             local overlay = Instance.new("CanvasGroup")
             overlay.Size = UDim2.new(1,0,0,54)
             overlay.Position = UDim2.new(0,0,1,0)
@@ -2339,7 +2383,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ---------- Audio ----------
         child.Audio = function(_, config)
-            local opts = config or {}
+            config = config or {}
+            local opts = config
             local parent = opts.Parent or contentHolder
             if not parent then return end
             local title = opts.Name or opts.Title or "Audio"
@@ -2905,7 +2950,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ---------- Viewport ----------
         child.Viewport = function(_, config)
-            local opts = config or {}
+            config = config or {}
+            local opts = config
             local parent = opts.Parent or contentHolder
             if not parent then return end
             local height = opts.Height or 200
@@ -3170,20 +3216,19 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return child
     end
 
-    -- ========== 对外返回 ==========
     return createSection
 end
--- ================================================================
--- 以上为新的 miUI 风格 Section 构建器，原 createSectionBuilder 已被完全替换。
 
--- ========== 窗口创建 ==========
+-- ================================================================
+-- 窗口创建函数 (沿用原 Fenglib:CreateWindow)
+-- ================================================================
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Name or "FengYu"
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind
     local IconAsset = Config.Logo
-    local SceneId = Config.Scene  -- 默认为 nil，背景图空
+    local SceneId = Config.Scene
 
     if Config.Theme then
         if type(Config.Theme)=="string" then
@@ -3244,7 +3289,7 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.PaddingBottom = UDim.new(0,5)
     HolderPadding.Parent = NotificationHolder
 
-    -- 窗口大小固定为 500×320
+    -- 窗口大小固定
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 320
 
@@ -3260,13 +3305,13 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
-    -- ===== [MOD] 移除原有的描边（UIStroke），替换为 miUI 风格的多层阴影，颜色改为黑色 =====
+    -- 阴影
     local shadowStrokes = {}
     local thicknesses = {6, 5, 4, 3}
     for _, thick in ipairs(thicknesses) do
         local stroke = Instance.new("UIStroke")
         stroke.Thickness = thick
-        stroke.Color = Color3.new(0, 0, 0)  -- 黑色
+        stroke.Color = Color3.new(0,0,0)
         stroke.Transparency = 1
         stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         stroke.Parent = MainFrame
@@ -3284,7 +3329,7 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- 背景图（默认为空）
+    -- 背景图
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1,0,1,0)
@@ -3321,7 +3366,7 @@ function Fenglib:CreateWindow(Config)
 
     setShadowVisible(false, true)
 
-    -- Resizer (保留)
+    -- Resizer
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
@@ -3365,7 +3410,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 背景模糊模块
+    -- 背景模糊
     local function CreateBlurModule()
         if not MainFrame or not MainFrame.Parent then return end
         local Part = Instance.new("Part")
@@ -3452,7 +3497,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 左侧菜单（完整）
+    -- 左侧菜单
     local LeftMenuFrame = Instance.new("Frame")
     LeftMenuFrame.Size = UDim2.new(0, 175, 1, 0)
     LeftMenuFrame.BackgroundTransparency = 1
@@ -3500,10 +3545,10 @@ function Fenglib:CreateWindow(Config)
     LineFrame.Parent = HeadFrame
     AddToRegistry(LineFrame, "BackgroundColor3", "Stroke")
 
-    -- [MOD] 左侧滚动列表：位置紧贴分割线，高度精确填充
+    -- 左侧滚动列表
     local LeftScrollingFrame = Instance.new("ScrollingFrame")
-    LeftScrollingFrame.Size = UDim2.new(1, -10, 1, -100)   -- 修改：减去头部50和底部50
-    LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50) -- 修改：从50开始
+    LeftScrollingFrame.Size = UDim2.new(1, -10, 1, -100)
+    LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)
     LeftScrollingFrame.AnchorPoint = Vector2.new(0.5, 0)
     LeftScrollingFrame.BackgroundTransparency = 1
     LeftScrollingFrame.ScrollBarThickness = 0
@@ -3511,7 +3556,7 @@ function Fenglib:CreateWindow(Config)
     local TabList = Instance.new("UIListLayout")
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
-    TabList.Padding = UDim.new(0, 0)   -- 移除顶部边距
+    TabList.Padding = UDim.new(0, 0)
     TabList.Parent = LeftScrollingFrame
     local function updateTabCanvas()
         LeftScrollingFrame.CanvasSize = UDim2.new(0,0,0, TabList.AbsoluteContentSize.Y + 10)
@@ -3599,7 +3644,7 @@ function Fenglib:CreateWindow(Config)
     LineFrame_3.Parent = RightHeader
     AddToRegistry(LineFrame_3, "BackgroundColor3", "Stroke")
 
-    -- 三按钮（与原来完全一致）
+    -- 三按钮
     local resizerVisible = false
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
@@ -3825,7 +3870,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- ===== Window:Category =====
+    -- Window:Category
     Window._currentCategory = nil
     function Window:Category(config)
         local name = type(config)=="table" and config.Name or config
@@ -3921,7 +3966,7 @@ function Fenglib:CreateWindow(Config)
         return Window._currentCategory
     end
 
-    -- ===== Window:Tab (已移除指示标) =====
+    -- Window:Tab
     Window._activeTab = nil
     Window._tabs = {}
     function Window:Tab(name, icon)
@@ -3938,8 +3983,6 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Text = ""
         TabBtn.Parent = parentContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-
-        -- 移除 TabBar 指示条
 
         local glowFrame = Instance.new("Frame")
         glowFrame.Name = "GlowBackground"
@@ -4023,7 +4066,7 @@ function Fenglib:CreateWindow(Config)
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
         task.spawn(updatePageCanvas)
 
-        local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame}  -- 移除 bar
+        local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame}
 
         TabBtn.MouseButton1Click:Connect(function()
             if Window._activeTab and Window._activeTab == state then return end
@@ -4099,7 +4142,7 @@ function Fenglib:CreateWindow(Config)
         return getElements()
     end
 
-    -- ===== TabDivider =====
+    -- TabDivider
     function Window:TabDivider()
         local parentContainer = LeftScrollingFrame
         if Window._currentCategory then
@@ -4116,7 +4159,7 @@ function Fenglib:CreateWindow(Config)
         table.insert(ThemeListeners, function() line.BackgroundColor3 = CurrentTheme.Stroke end)
     end
 
-    -- ===== Dialog =====
+    -- Dialog
     function Window:Dialog(Config)
         Config = Config or {}
         local Dialog = {Closed = false}
@@ -4279,9 +4322,8 @@ function Fenglib:CreateWindow(Config)
         return Dialog
     end
 
-    -- ===== Notification =====
     function Window:Notification(titleText, descText, notifType, duration)
-        -- 保持原有实现（此处略，可按需要添加）
+        -- 保持原有实现（略）
     end
 
     function Window:SetKeybind(key) Keybind = key end
