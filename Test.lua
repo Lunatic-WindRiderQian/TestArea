@@ -3561,9 +3561,11 @@ function Fenglib:CreateWindow(Config)
     LineFrame.BorderSizePixel = 0
     LineFrame.Parent = HeadFrame
     AddToRegistry(LineFrame, "BackgroundColor3", "Stroke")
+
+    -- [MOD] 左侧滚动列表：位置紧贴分割线，高度精确填充
     local LeftScrollingFrame = Instance.new("ScrollingFrame")
-    LeftScrollingFrame.Size = UDim2.new(1, -10, 1, -100)  -- 减去头部50和底部50
-LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)  -- 紧贴分割线
+    LeftScrollingFrame.Size = UDim2.new(1, -10, 1, -100)   -- 修改：减去头部50和底部50
+    LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50) -- 修改：从50开始
     LeftScrollingFrame.AnchorPoint = Vector2.new(0.5, 0)
     LeftScrollingFrame.BackgroundTransparency = 1
     LeftScrollingFrame.ScrollBarThickness = 0
@@ -3571,13 +3573,14 @@ LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)  -- 紧贴分割线
     local TabList = Instance.new("UIListLayout")
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
-    TabList.Padding = UDim.new(0, 0)
+    TabList.Padding = UDim.new(0, 0)   -- 移除顶部边距
     TabList.Parent = LeftScrollingFrame
     local function updateTabCanvas()
         LeftScrollingFrame.CanvasSize = UDim2.new(0,0,0, TabList.AbsoluteContentSize.Y + 10)
     end
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
+
     local BottomFrame = Instance.new("Frame")
     BottomFrame.Size = UDim2.new(1, 0, 0, 50)
     BottomFrame.Position = UDim2.new(0, 0, 1, 0)
@@ -3980,7 +3983,7 @@ LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)  -- 紧贴分割线
         return Window._currentCategory
     end
 
-    -- ===== Window:Tab =====
+    -- ===== Window:Tab (已移除指示标) =====
     Window._activeTab = nil
     Window._tabs = {}
     function Window:Tab(name, icon)
@@ -3998,6 +4001,8 @@ LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)  -- 紧贴分割线
         TabBtn.Parent = parentContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
+        -- 移除 TabBar 指示条
+
         local glowFrame = Instance.new("Frame")
         glowFrame.Name = "GlowBackground"
         glowFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -4012,15 +4017,6 @@ LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)  -- 紧贴分割线
         glowGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
         glowGrad.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.55), NumberSequenceKeypoint.new(1, 1)})
         glowGrad.Parent = glowFrame
-
-        local TabBar = Instance.new("Frame")
-        TabBar.Size = UDim2.new(0, 3, 0, 0)
-        TabBar.Position = UDim2.new(0, 0, 0.2, 0)
-        TabBar.BackgroundTransparency = 1
-        TabBar.BorderSizePixel = 0
-        TabBar.Parent = TabBtn
-        Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
-        AddToRegistry(TabBar, "BackgroundColor3", "Accent")
 
         local ContentFrame = Instance.new("Frame")
         ContentFrame.Name = "ContentFrame"
@@ -4089,7 +4085,7 @@ LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)  -- 紧贴分割线
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
         task.spawn(updatePageCanvas)
 
-        local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, bar = TabBar, glow = glowFrame}
+        local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame}  -- 移除 bar
 
         TabBtn.MouseButton1Click:Connect(function()
             if Window._activeTab and Window._activeTab == state then return end
@@ -4097,15 +4093,12 @@ LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)  -- 紧贴分割线
                 s.btn.BackgroundTransparency = 1
                 s.isActive = false
                 s.glow.BackgroundTransparency = 1
-                local bar = s.bar
-                if bar then Tween(bar, {BackgroundTransparency = 1, Size = UDim2.new(0, 3, 0, 0)}, 0.2) end
                 local txt = s.textLabel
                 if txt then Tween(txt, {TextTransparency = 0.3}, 0.2) end
             end
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
-            if TabBar then Tween(TabBar, {BackgroundTransparency = 0, Size = UDim2.new(0, 3, 0.65, 0)}, 0.2) end
             Tween(TabText, {TextTransparency = 0}, 0.2)
             if Window._activeTab then Window._activeTab.page.Visible = false end
             Page.Visible = true
@@ -4117,8 +4110,6 @@ LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)  -- 紧贴分割线
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
-            TabBar.BackgroundTransparency = 0
-            TabBar.Size = UDim2.new(0, 3, 0.65, 0)
             TabText.TextTransparency = 0
             Page.Visible = true
             Page.Position = UDim2.new(0, 0, 0, 0)
@@ -4352,7 +4343,7 @@ LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)  -- 紧贴分割线
 
     -- ===== Notification =====
     function Window:Notification(titleText, descText, notifType, duration)
-        -- 保留原功能（略）
+        -- 保持原有实现（此处略，可按需要添加）
     end
 
     function Window:SetKeybind(key) Keybind = key end
