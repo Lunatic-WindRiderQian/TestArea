@@ -3562,8 +3562,8 @@ function Fenglib:CreateWindow(Config)
     LineFrame.Parent = HeadFrame
     AddToRegistry(LineFrame, "BackgroundColor3", "Stroke")
     local LeftScrollingFrame = Instance.new("ScrollingFrame")
-    LeftScrollingFrame.Size = UDim2.new(1, -10, 1, -115)
-    LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 60)
+    LeftScrollingFrame.Size = UDim2.new(1, -10, 1, -100)  -- 减去头部50和底部50
+LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)  -- 紧贴分割线
     LeftScrollingFrame.AnchorPoint = Vector2.new(0.5, 0)
     LeftScrollingFrame.BackgroundTransparency = 1
     LeftScrollingFrame.ScrollBarThickness = 0
@@ -3571,7 +3571,7 @@ function Fenglib:CreateWindow(Config)
     local TabList = Instance.new("UIListLayout")
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
-    TabList.Padding = UDim.new(0, 5)
+    TabList.Padding = UDim.new(0, 0)
     TabList.Parent = LeftScrollingFrame
     local function updateTabCanvas()
         LeftScrollingFrame.CanvasSize = UDim2.new(0,0,0, TabList.AbsoluteContentSize.Y + 10)
