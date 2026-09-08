@@ -3008,11 +3008,29 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section（纯内容容器，无任何头部） ==========
+    -- ========== 创建 Section（miUI 风格：带标题、副标题、图标、折叠，无头部背景框） ==========
     local function createSection(text, icons, defaultOpen)
-        -- 参数完全忽略，纯内容容器
+        -- 参数解析
+        local titleText = ""
+        local subtitleText = nil
+        local iconAsset = nil
+        if defaultOpen == nil then defaultOpen = true end
+        if type(text)=="table" then
+            titleText = text.Name or text.Title or ""
+            subtitleText = text.SubName or text.Subtitle
+            iconAsset = text.Icon or text.Logo
+            if text.open ~= nil then defaultOpen = text.open end
+        else
+            titleText = text or ""
+            if type(icons)=="table" then
+                subtitleText = icons.subtitle
+                iconAsset = icons.icon
+            elseif type(icons)=="string" then
+                subtitleText = icons
+            end
+        end
 
-        -- 主容器（透明，自动适应高度）
+        -- 主容器（透明，负责裁剪和大小）
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(0.96, 0, 0, 0)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
@@ -3020,12 +3038,74 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionFrame.BackgroundTransparency = 1
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
-        sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
 
-        -- 内容容器（带边框和背景，无顶部偏移）
+        -- 头部高度固定（miUI 风格）
+        local HEADER_HEIGHT = 46
+        local leftOffset = 16
+
+        -- 图标（可选）
+        if iconAsset and tostring(iconAsset) ~= "" then
+            local icon = Instance.new("ImageLabel")
+            icon.Size = UDim2.new(0, 32, 0, 32)
+            icon.Position = UDim2.new(0, 10, 0.5, -16)
+            icon.BackgroundTransparency = 1
+            if tonumber(iconAsset) then
+                icon.Image = "rbxassetid://"..iconAsset
+            elseif iconAsset:match("^rbxassetid://") or iconAsset:match("^rbxasset://") then
+                icon.Image = iconAsset
+            else
+                icon.Image = "rbxassetid://"..iconAsset
+            end
+            Instance.new("UICorner", icon).CornerRadius = UDim.new(0, 8)
+            icon.Parent = sectionFrame
+            AddToRegistry(icon, "ImageColor3", "Text")
+            leftOffset = 50
+        end
+
+        -- 主标题
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Size = UDim2.new(1, -80, 0, 19)
+        titleLabel.Position = subtitleText and UDim2.new(0, leftOffset, 0, 4) or UDim2.new(0, leftOffset, 0, 14)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.Text = titleText
+        titleLabel.TextSize = 15
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.Parent = sectionFrame
+        AddToRegistry(titleLabel, "TextColor3", "Text")
+
+        -- 副标题（可选）
+        if subtitleText and tostring(subtitleText) ~= "" then
+            local subLabel = Instance.new("TextLabel")
+            subLabel.Size = UDim2.new(1, -80, 0, 17)
+            subLabel.Position = UDim2.new(0, leftOffset, 0, 25)
+            subLabel.BackgroundTransparency = 1
+            subLabel.Font = Enum.Font.Gotham
+            subLabel.Text = subtitleText
+            subLabel.TextSize = 12
+            subLabel.TextTransparency = 0.5
+            subLabel.TextXAlignment = Enum.TextXAlignment.Left
+            subLabel.Parent = sectionFrame
+            AddToRegistry(subLabel, "TextColor3", "Text")
+        end
+
+        -- 折叠箭头
+        local arrow = Instance.new("ImageLabel")
+        arrow.Size = UDim2.new(0, 24, 0, 24)
+        arrow.Position = UDim2.new(1, -8, 0.5, -12)
+        arrow.AnchorPoint = Vector2.new(1, 0.5)
+        arrow.BackgroundTransparency = 1
+        arrow.Image = "rbxassetid://8240930340"
+        arrow.ImageColor3 = CurrentTheme.Text
+        arrow.ImageTransparency = 0.5
+        arrow.Parent = sectionFrame
+        AddToRegistry(arrow, "ImageColor3", "Text")
+        arrow.Rotation = defaultOpen and 0 or -90
+
+        -- 内容容器（带边框和背景，独立于头部）
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, -10, 0, 0)
-        contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
+        contentContainer.Position = UDim2.new(0.5, 0, 0, HEADER_HEIGHT)
         contentContainer.AnchorPoint = Vector2.new(0.5, 0)
         contentContainer.BackgroundTransparency = 0.5
         contentContainer.ClipsDescendants = true
@@ -3055,7 +3135,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentHolder.ClipsDescendants = false
         contentHolder.Parent = contentContainer
 
-        -- 布局
+        -- 子控件布局
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Padding = UDim.new(0, 6)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -3068,28 +3148,76 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.Parent = contentHolder
 
-        -- 内容可见
-        contentContainer.Visible = true
-        contentHolder.Visible = true
+        -- 展开状态
+        local isOpen = defaultOpen
+        local currentSectionTween = nil
+        local currentContainerTween = nil
 
-        -- 动态调整容器高度以适应子控件
-        local function updateHeight()
-            local actual = contentLayout.AbsoluteContentSize.Y or 0
-            local targetContainerHeight = actual + 8  -- 上下内边距 4+4
-            contentContainer.Size = UDim2.new(1, -10, 0, targetContainerHeight)
-            sectionFrame.Size = UDim2.new(0.96, 0, 0, targetContainerHeight)
+        local function getContentHeight()
+            return contentLayout.AbsoluteContentSize.Y or 0
         end
 
-        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateHeight)
+        local function updateSectionHeight(instant)
+            local actual = getContentHeight()
+            local targetContainerHeight = isOpen and (actual + 8) or 0
+            local targetSectionHeight = HEADER_HEIGHT + targetContainerHeight
+
+            if currentSectionTween then currentSectionTween:Cancel() end
+            if currentContainerTween then currentContainerTween:Cancel() end
+
+            local ti = TweenInfo.new(instant and 0 or 0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+            if isOpen then
+                contentContainer.Visible = true
+                contentHolder.Visible = true
+            end
+
+            currentContainerTween = TweenService:Create(contentContainer, ti, {
+                Size = UDim2.new(1, -10, 0, targetContainerHeight)
+            })
+            currentContainerTween:Play()
+
+            currentSectionTween = TweenService:Create(sectionFrame, ti, {
+                Size = UDim2.new(0.96, 0, 0, targetSectionHeight)
+            })
+            currentSectionTween:Play()
+
+            if not isOpen then
+                task.delay(0.45, function()
+                    if not isOpen then
+                        contentContainer.Visible = false
+                        contentHolder.Visible = false
+                    end
+                end)
+            end
+        end
+
+        local function toggleSection()
+            isOpen = not isOpen
+            Tween(arrow, {Rotation = isOpen and 0 or -90}, 0.25)
+            updateSectionHeight(false)
+        end
+
+        -- 点击头部切换（透明按钮覆盖头部区域）
+        local clickBtn = Instance.new("TextButton")
+        clickBtn.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT)
+        clickBtn.BackgroundTransparency = 1
+        clickBtn.Text = ""
+        clickBtn.Parent = sectionFrame
+        clickBtn.MouseButton1Click:Connect(toggleSection)
+
+        -- 初始状态
+        updateSectionHeight(true)
+
+        -- 监听内容变化
+        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if isOpen then updateSectionHeight(false) end
+        end)
+
         contentHolder.ChildAdded:Connect(function()
             task.wait(0.05)
-            updateHeight()
+            if isOpen then updateSectionHeight(false) end
         end)
-        contentHolder.ChildRemoved:Connect(function()
-            task.wait(0.05)
-            updateHeight()
-        end)
-        task.defer(updateHeight)
 
         -- 返回控件构建接口
         local sectionObj = {}
@@ -3101,8 +3229,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- 仅保留可见性控制（无折叠、无标题）
+        -- 管理方法
         sectionObj.SetVisible = function(_, vis) sectionFrame.Visible = vis end
+        sectionObj.SetCollapsed = function(_, state)
+            isOpen = not state
+            Tween(arrow, {Rotation = isOpen and 0 or -90}, 0.25)
+            updateSectionHeight(false)
+        end
+        sectionObj.ToggleCollapsed = toggleSection
+        sectionObj.GetCollapsed = function() return not isOpen end
+        sectionObj.SetOpen = function(_, state)
+            isOpen = state
+            Tween(arrow, {Rotation = isOpen and 0 or -90}, 0.25)
+            updateSectionHeight(false)
+        end
+        sectionObj.Toggle = toggleSection
+        sectionObj.IsOpen = function() return isOpen end
 
         return sectionObj
     end
