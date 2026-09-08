@@ -12,9 +12,10 @@
       - 背景图默认为空（不显示任何图片）
       - 主题仅保留 Dark、Charcoal、AMOLED
     [外观修改] Section 完全按照 miUI.lua AddSection 实现：
-      - 头部无背景框，只有文字 + 图标 + 折叠箭头
+      - 头部无背景框，只有文字 + 图标 + 折叠箭头（始终显示）
       - 内容容器背景不透明，有圆角、描边
       - 点击头部任意位置切换，箭头旋转动画
+      - SubName（副标题）在头部显示，始终可见
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -392,8 +393,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ============================================================
         -- 完全按照 miUI.lua AddSection 实现
-        -- 交互方式：点击头部任意位置切换展开/折叠
-        -- 背景不透明，边框清晰可见
+        -- 头部：图标 + 标题 + 副标题（始终显示）
+        -- 内容容器：背景不透明，有圆角、描边（可折叠）
         -- ============================================================
 
         -- 计算头部高度（与 miUI 完全一致）
@@ -414,7 +415,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         SectionFrame.Size = UDim2.new(1, -5, 0, 0)
         SectionFrame.ZIndex = 9
 
-        -- 2. SectionIcon（图标，直接放在 SectionFrame 上）
+        -- 2. SectionIcon（图标，头部，始终显示）
         local SectionIcon = Instance.new("ImageLabel")
         SectionIcon.Name = "SectionIcon"
         SectionIcon.Parent = SectionFrame
@@ -432,7 +433,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         AddToRegistry(SectionIcon, "ImageColor3", "Text")
 
-        -- 3. SectionLabel（标题，直接放在 SectionFrame 上）
+        -- 3. SectionLabel（标题，头部，始终显示）
         local SectionLabel = Instance.new("TextLabel")
         SectionLabel.Name = "SectionLabel"
         SectionLabel.Parent = SectionFrame
@@ -453,7 +454,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         SectionLabel.Parent = SectionFrame
         AddToRegistry(SectionLabel, "TextColor3", "Text")
 
-        -- 副标题
+        -- 副标题（头部，始终显示）
         if subtitleText then
             local subLabel = Instance.new("TextLabel")
             subLabel.Name = "SubLabel"
@@ -476,7 +477,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(subLabel, "TextColor3", "SubText")
         end
 
-        -- 4. SectionCollapseIcon（折叠箭头，直接放在 SectionFrame 上）
+        -- 4. SectionCollapseIcon（折叠箭头，头部，始终显示）
         local SectionCollapseIcon = Instance.new("ImageLabel")
         SectionCollapseIcon.Name = "SectionCollapseIcon"
         SectionCollapseIcon.Parent = SectionFrame
@@ -521,10 +522,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         HandlerCorner.CornerRadius = UDim.new(0, 8)
         HandlerCorner.Parent = SectionHandler
 
-        -- 内容容器描边（边框）
+        -- 内容容器描边（边框清晰可见）
         local HandlerStroke = Instance.new("UIStroke")
         HandlerStroke.Thickness = 1
-        HandlerStroke.Transparency = 0.3  -- 更不透明，边框清晰可见
+        HandlerStroke.Transparency = 0.3
         HandlerStroke.Color = CurrentTheme.Stroke or Color3.fromRGB(45, 48, 58)
         HandlerStroke.Parent = SectionHandler
         table.insert(ThemeListeners, function()
@@ -550,7 +551,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         -- ====== 展开/折叠状态 ======
         local open = defaultOpen
 
-        -- ====== 更新高度函数（与 miUI 一致） ======
+        -- ====== 更新高度函数 ======
         local function updateSectionHeight(instant)
             local actualHeight = ContentLayout.AbsoluteContentSize.Y
             local targetContentHeight = (open and actualHeight > 0) and (actualHeight + 8) or 0
@@ -571,7 +572,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Size = UDim2.new(1, -5, 0, HeaderHeight + targetContentHeight)
             }):Play()
 
-            -- 箭头旋转（与 miUI 完全一致：折叠时旋转 -90°）
+            -- 箭头旋转（折叠时旋转 -90°）
             local targetRotation = open and 0 or -90
             TweenService:Create(SectionCollapseIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
                 Rotation = targetRotation
@@ -1413,8 +1414,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 if state.Mode == "Hold" then
                     local key = state.Key
                     if key=="MouseLeft" and input.UserInputType==Enum.UserInputType.MouseButton1 then doRelease()
-                    elseif key=="MouseRight" and input.UserInputType==Enum.UserInputType.MouseButton2 then doRelease()
-                    elseif input.UserInputType==Enum.UserInputType.Keyboard and input.KeyCode.Name==key then doRelease() end
+                    elif key=="MouseRight" and input.UserInputType==Enum.UserInputType.MouseButton2 then doRelease()
+                    elif input.UserInputType==Enum.UserInputType.Keyboard and input.KeyCode.Name==key then doRelease() end
                 end
             end)
             local function cleanup() safeDisconnect(inputConn); safeDisconnect(inputEndConn) end
@@ -3590,8 +3591,8 @@ function Fenglib:CreateWindow(Config)
 
     -- [MOD] 左侧滚动列表：位置紧贴分割线，高度精确填充
     local LeftScrollingFrame = Instance.new("ScrollingFrame")
-    LeftScrollingFrame.Size = UDim2.new(1, -10, 1, -100)   -- 修改：减去头部50和底部50
-    LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50) -- 修改：从50开始
+    LeftScrollingFrame.Size = UDim2.new(1, -10, 1, -100)
+    LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)
     LeftScrollingFrame.AnchorPoint = Vector2.new(0.5, 0)
     LeftScrollingFrame.BackgroundTransparency = 1
     LeftScrollingFrame.ScrollBarThickness = 0
@@ -3599,7 +3600,7 @@ function Fenglib:CreateWindow(Config)
     local TabList = Instance.new("UIListLayout")
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
-    TabList.Padding = UDim.new(0, 0)   -- 移除顶部边距
+    TabList.Padding = UDim.new(0, 0)
     TabList.Parent = LeftScrollingFrame
     local function updateTabCanvas()
         LeftScrollingFrame.CanvasSize = UDim2.new(0,0,0, TabList.AbsoluteContentSize.Y + 10)
@@ -4027,8 +4028,6 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Parent = parentContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
-        -- 移除 TabBar 指示条
-
         local glowFrame = Instance.new("Frame")
         glowFrame.Name = "GlowBackground"
         glowFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -4111,7 +4110,7 @@ function Fenglib:CreateWindow(Config)
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
         task.spawn(updatePageCanvas)
 
-        local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame}  -- 移除 bar
+        local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame}
 
         TabBtn.MouseButton1Click:Connect(function()
             if Window._activeTab and Window._activeTab == state then return end
@@ -4369,7 +4368,7 @@ function Fenglib:CreateWindow(Config)
 
     -- ===== Notification =====
     function Window:Notification(titleText, descText, notifType, duration)
-        -- 保持原有实现（此处略，可按需要添加）
+        -- 保持原有实现
     end
 
     function Window:SetKeybind(key) Keybind = key end
