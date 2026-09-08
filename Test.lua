@@ -3008,21 +3008,69 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section（纯内容容器，无头部） ==========
+    -- ========== 创建 Section ==========
+    -- 图标、标题、副标题作为内容的一部分，仅当 Collapsible = true 时显示
+    -- 折叠箭头在右上角，点击切换折叠状态
     local function createSection(text, icons, defaultOpen)
-        -- 参数完全忽略
+        -- 解析参数
+        local titleText = ""
+        local subtitleText = nil
+        local iconAsset = nil
+        local collapsible = false
+        if defaultOpen == nil then defaultOpen = true end
+        if type(text)=="table" then
+            titleText = text.Name or ""
+            subtitleText = text.SubName
+            iconAsset = text.Logo
+            collapsible = text.Collapsible == true
+            if text.open ~= nil then defaultOpen = text.open end
+        else
+            titleText = text or ""
+            if type(icons)=="table" then
+                subtitleText = icons.subtitle
+                iconAsset = icons.icon
+                collapsible = icons.Collapsible == true
+            elseif type(icons)=="string" then
+                subtitleText = icons
+            end
+        end
 
-        -- 主容器（透明，自动适应高度）
+        -- 主容器（透明，负责整体尺寸）
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(0.96, 0, 0, 0)
+        sectionFrame.Size = UDim2.new(0.96, 0, 0, 46)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         sectionFrame.BackgroundTransparency = 1
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
-        sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
 
-        -- 内容容器（带边框和背景，无顶部偏移）
+        -- 折叠箭头（仅在 Collapsible = true 时显示）
+        local arrow = nil
+        local clickBtn = nil
+        if collapsible then
+            arrow = Instance.new("ImageLabel")
+            arrow.Size = UDim2.new(0, 24, 0, 24)
+            arrow.Position = UDim2.new(1, -8, 0, 8)
+            arrow.AnchorPoint = Vector2.new(1, 0)
+            arrow.BackgroundTransparency = 1
+            arrow.Image = "rbxassetid://8240930340"
+            arrow.ImageColor3 = CurrentTheme.Text
+            arrow.ImageTransparency = 0.5
+            arrow.Parent = sectionFrame
+            AddToRegistry(arrow, "ImageColor3", "Text")
+            arrow.Rotation = defaultOpen and 0 or 180
+            arrow.ZIndex = 5
+
+            clickBtn = Instance.new("TextButton")
+            clickBtn.Size = UDim2.new(0, 40, 0, 40)
+            clickBtn.Position = UDim2.new(1, -10, 0, 6)
+            clickBtn.AnchorPoint = Vector2.new(1, 0)
+            clickBtn.BackgroundTransparency = 1
+            clickBtn.Text = ""
+            clickBtn.Parent = sectionFrame
+        end
+
+        -- 内容容器（带边框和背景）
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, -10, 0, 0)
         contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
@@ -3045,7 +3093,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentCorner.CornerRadius = UDim.new(0, 10)
         contentCorner.Parent = contentContainer
 
-        -- 内部内容持有者（子控件实际父级）
+        -- 内部内容持有者
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -10, 0, 0)
         contentHolder.Position = UDim2.new(0.5, 0, 0, 4)
@@ -3068,30 +3116,132 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.Parent = contentHolder
 
-        -- 内容可见
-        contentContainer.Visible = true
-        contentHolder.Visible = true
+        -- ===== 仅在 Collapsible = true 时添加图标、标题、副标题作为内容的一部分 =====
+        local nextOrder = -100
+        if collapsible then
+            if iconAsset then
+                local icon = Instance.new("ImageLabel")
+                icon.Size = UDim2.new(0, 32, 0, 32)
+                icon.AnchorPoint = Vector2.new(0.5, 0)
+                icon.Position = UDim2.new(0.5, 0, 0, 0)
+                icon.BackgroundTransparency = 1
+                if tonumber(iconAsset) then icon.Image = "rbxassetid://"..iconAsset else icon.Image = iconAsset end
+                Instance.new("UICorner", icon).CornerRadius = UDim.new(0, 8)
+                icon.Parent = contentHolder
+                AddToRegistry(icon, "ImageColor3", "Text")
+                icon.LayoutOrder = nextOrder
+                nextOrder = nextOrder + 1
+            end
 
-        -- 动态调整容器高度以适应子控件
-        local function updateHeight()
-            local actual = contentLayout.AbsoluteContentSize.Y or 0
-            local targetContainerHeight = actual + 8  -- 上下内边距 4+4
-            contentContainer.Size = UDim2.new(1, -10, 0, targetContainerHeight)
-            sectionFrame.Size = UDim2.new(0.96, 0, 0, targetContainerHeight)
+            if titleText ~= "" then
+                local titleLabel = Instance.new("TextLabel")
+                titleLabel.Size = UDim2.new(1, -20, 0, 19)
+                titleLabel.AnchorPoint = Vector2.new(0.5, 0)
+                titleLabel.Position = UDim2.new(0.5, 0, 0, 0)
+                titleLabel.BackgroundTransparency = 1
+                titleLabel.Font = Enum.Font.GothamBold
+                titleLabel.Text = titleText
+                titleLabel.TextSize = 15
+                titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+                titleLabel.Parent = contentHolder
+                AddToRegistry(titleLabel, "TextColor3", "Text")
+                titleLabel.LayoutOrder = nextOrder
+                nextOrder = nextOrder + 1
+            end
+
+            if subtitleText then
+                local subLabel = Instance.new("TextLabel")
+                subLabel.Size = UDim2.new(1, -20, 0, 17)
+                subLabel.AnchorPoint = Vector2.new(0.5, 0)
+                subLabel.Position = UDim2.new(0.5, 0, 0, 0)
+                subLabel.BackgroundTransparency = 1
+                subLabel.Font = Enum.Font.Gotham
+                subLabel.Text = subtitleText
+                subLabel.TextSize = 12
+                subLabel.TextTransparency = 0.5
+                subLabel.TextXAlignment = Enum.TextXAlignment.Center
+                subLabel.Parent = contentHolder
+                AddToRegistry(subLabel, "TextColor3", "Text")
+                subLabel.LayoutOrder = nextOrder
+                nextOrder = nextOrder + 1
+            end
         end
 
-        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateHeight)
+        -- ===== 折叠状态 =====
+        local open = defaultOpen
+        local currentSectionTween = nil
+        local currentContainerTween = nil
+
+        local function getContentHeight()
+            return contentLayout.AbsoluteContentSize.Y or 0
+        end
+
+        local function updateSectionHeight(instant)
+            local actual = getContentHeight()
+            local targetContainerHeight = open and (actual + 8) or 0
+            local targetSectionHeight = targetContainerHeight
+
+            if currentSectionTween then currentSectionTween:Cancel() end
+            if currentContainerTween then currentContainerTween:Cancel() end
+
+            local ti = TweenInfo.new(instant and 0 or 0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+            if open then
+                contentContainer.Visible = true
+                contentHolder.Visible = true
+            end
+
+            currentContainerTween = TweenService:Create(contentContainer, ti, {
+                Size = UDim2.new(1, -10, 0, targetContainerHeight)
+            })
+            currentContainerTween:Play()
+
+            currentSectionTween = TweenService:Create(sectionFrame, ti, {
+                Size = UDim2.new(0.96, 0, 0, targetSectionHeight)
+            })
+            currentSectionTween:Play()
+
+            if not open then
+                task.delay(0.55, function()
+                    if not open then
+                        contentContainer.Visible = false
+                        contentHolder.Visible = false
+                    end
+                end)
+            end
+        end
+
+        local function toggleSection()
+            if not collapsible then return end
+            open = not open
+            if arrow then
+                Tween(arrow, {Rotation = open and 0 or 180}, 0.3)
+            end
+            updateSectionHeight(false)
+        end
+
+        if clickBtn then
+            clickBtn.MouseButton1Click:Connect(toggleSection)
+        end
+
+        -- 初始状态
+        updateSectionHeight(true)
+
+        -- 监听内容变化
+        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if open then updateSectionHeight(false) end
+        end)
+
         contentHolder.ChildAdded:Connect(function()
             task.wait(0.05)
-            updateHeight()
+            if open then updateSectionHeight(false) end
         end)
         contentHolder.ChildRemoved:Connect(function()
             task.wait(0.05)
-            updateHeight()
+            if open then updateSectionHeight(false) end
         end)
-        task.defer(updateHeight)
 
-        -- 返回控件构建接口
+        -- ===== 返回控件构建接口 =====
         local sectionObj = {}
         for methodName, methodFn in pairs(child) do
             sectionObj[methodName] = function(_, config)
@@ -3101,8 +3251,28 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- 仅保留可见性控制
+        -- 额外控制
         sectionObj.SetVisible = function(_, vis) sectionFrame.Visible = vis end
+        sectionObj.SetOpen = function(_, state)
+            if collapsible then
+                open = state
+                toggleSection()
+            end
+        end
+        sectionObj.Toggle = toggleSection
+        sectionObj.IsOpen = function() return open end
+        sectionObj.SetCollapsible = function(_, state)
+            collapsible = state
+            if not collapsible then
+                if arrow then arrow.Visible = false end
+                if clickBtn then clickBtn.Visible = false end
+                open = true
+                toggleSection()
+            else
+                if arrow then arrow.Visible = true end
+                if clickBtn then clickBtn.Visible = true end
+            end
+        end
 
         return sectionObj
     end
@@ -3118,7 +3288,7 @@ function Fenglib:CreateWindow(Config)
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind
     local IconAsset = Config.Logo
-    local SceneId = Config.Scene  -- 默认为 nil，背景图空
+    local SceneId = Config.Scene
 
     if Config.Theme then
         if type(Config.Theme)=="string" then
@@ -3195,13 +3365,13 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
-    -- ===== [MOD] 移除原有的描边（UIStroke），替换为 miUI 风格的多层阴影，颜色改为黑色 =====
+    -- 多层阴影
     local shadowStrokes = {}
     local thicknesses = {6, 5, 4, 3}
     for _, thick in ipairs(thicknesses) do
         local stroke = Instance.new("UIStroke")
         stroke.Thickness = thick
-        stroke.Color = Color3.new(0, 0, 0)  -- 黑色
+        stroke.Color = Color3.new(0, 0, 0)
         stroke.Transparency = 1
         stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         stroke.Parent = MainFrame
@@ -3219,7 +3389,7 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- 背景图（默认为空）
+    -- 背景图
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1,0,1,0)
@@ -3256,7 +3426,7 @@ function Fenglib:CreateWindow(Config)
 
     setShadowVisible(false, true)
 
-    -- Resizer (保留)
+    -- Resizer
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
@@ -3387,7 +3557,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 左侧菜单（完整）
+    -- 左侧菜单
     local LeftMenuFrame = Instance.new("Frame")
     LeftMenuFrame.Size = UDim2.new(0, 175, 1, 0)
     LeftMenuFrame.BackgroundTransparency = 1
@@ -3534,7 +3704,7 @@ function Fenglib:CreateWindow(Config)
     LineFrame_3.Parent = RightHeader
     AddToRegistry(LineFrame_3, "BackgroundColor3", "Stroke")
 
-    -- 三按钮（与原来完全一致）
+    -- 三按钮
     local resizerVisible = false
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
@@ -3760,7 +3930,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- ===== Window:Category =====
+    -- Window:Category
     Window._currentCategory = nil
     function Window:Category(config)
         local name = type(config)=="table" and config.Name or config
@@ -3856,7 +4026,7 @@ function Fenglib:CreateWindow(Config)
         return Window._currentCategory
     end
 
-    -- ===== Window:Tab =====
+    -- Window:Tab
     Window._activeTab = nil
     Window._tabs = {}
     function Window:Tab(name, icon)
@@ -3874,8 +4044,6 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Parent = parentContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
-        -- 移除 TabBar 指示条
-        -- 改用发光背景（可保留或移除，这里保留与原来一致）
         local glowFrame = Instance.new("Frame")
         glowFrame.Name = "GlowBackground"
         glowFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -4006,12 +4174,11 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        -- 获取构建器函数（返回一个表，包含 Section 和所有控件方法）
         local builder = createSectionBuilder(PageContent, PageContent, 330, 1, Window)
         return builder
     end
 
-    -- ===== TabDivider =====
+    -- TabDivider
     function Window:TabDivider()
         local parentContainer = LeftScrollingFrame
         if Window._currentCategory then
@@ -4028,7 +4195,7 @@ function Fenglib:CreateWindow(Config)
         table.insert(ThemeListeners, function() line.BackgroundColor3 = CurrentTheme.Stroke end)
     end
 
-    -- ===== Dialog =====
+    -- Dialog
     function Window:Dialog(Config)
         Config = Config or {}
         local Dialog = {Closed = false}
@@ -4191,9 +4358,8 @@ function Fenglib:CreateWindow(Config)
         return Dialog
     end
 
-    -- ===== Notification =====
     function Window:Notification(titleText, descText, notifType, duration)
-        -- 保持原有实现（此处略，可按需要添加）
+        -- 保持原有实现
     end
 
     function Window:SetKeybind(key) Keybind = key end
