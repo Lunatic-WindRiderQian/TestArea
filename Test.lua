@@ -11,10 +11,10 @@
       - 窗口大小固定为 500×320
       - 背景图默认为空（不显示任何图片）
       - 主题仅保留 Dark、Charcoal、AMOLED
-    [外观修改] Section 完全按照 miUI.lua 的 AddSection 实现：
+    [外观修改] Section 完全按照 miUI.lua AddSection 实现：
       - 头部无背景框，只有文字 + 图标 + 折叠箭头
-      - 内容容器有独立背景、圆角、描边
-      - 箭头旋转动画，点击头部切换折叠
+      - 内容容器背景不透明，有圆角、描边
+      - 点击头部任意位置切换，箭头旋转动画
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -391,12 +391,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- 完全按照 miUI.lua AddSection 的真实结构
-        -- 头部没有背景框，只有文字 + 图标 + 箭头
-        -- 内容容器有背景、圆角、描边
+        -- 完全按照 miUI.lua AddSection 实现
+        -- 交互方式：点击头部任意位置切换展开/折叠
+        -- 背景不透明，边框清晰可见
         -- ============================================================
 
-        -- Section 主容器（透明）
+        -- 计算头部高度（与 miUI 完全一致）
+        local TextSize = 13
+        local HasIcon = iconAsset ~= nil and iconAsset ~= ""
+        local HeaderHeight = math.max(20, TextSize + 9, HasIcon and 25 or 20)
+        if subtitleText then HeaderHeight = HeaderHeight + 18 end
+
+        -- 1. SectionFrame（透明容器）
         local SectionFrame = Instance.new("Frame")
         SectionFrame.Name = "ModernSection"
         SectionFrame.Parent = parent
@@ -408,12 +414,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         SectionFrame.Size = UDim2.new(1, -5, 0, 0)
         SectionFrame.ZIndex = 9
 
-        -- ====== 计算头部高度（与 miUI 一致） ======
-        local TextSize = 13
-        local HasIcon = iconAsset ~= nil and iconAsset ~= ""
-        local HeaderHeight = math.max(20, TextSize + 9, HasIcon and 25 or 20)
-
-        -- ====== 图标（直接放在 SectionFrame 上） ======
+        -- 2. SectionIcon（图标，直接放在 SectionFrame 上）
         local SectionIcon = Instance.new("ImageLabel")
         SectionIcon.Name = "SectionIcon"
         SectionIcon.Parent = SectionFrame
@@ -431,7 +432,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         AddToRegistry(SectionIcon, "ImageColor3", "Text")
 
-        -- ====== 标题文字（直接放在 SectionFrame 上） ======
+        -- 3. SectionLabel（标题，直接放在 SectionFrame 上）
         local SectionLabel = Instance.new("TextLabel")
         SectionLabel.Name = "SectionLabel"
         SectionLabel.Parent = SectionFrame
@@ -452,7 +453,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         SectionLabel.Parent = SectionFrame
         AddToRegistry(SectionLabel, "TextColor3", "Text")
 
-        -- 副标题（如果有）
+        -- 副标题
         if subtitleText then
             local subLabel = Instance.new("TextLabel")
             subLabel.Name = "SubLabel"
@@ -467,16 +468,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subLabel.ZIndex = 11
             subLabel.Font = Enum.Font.GothamMedium
             subLabel.Text = subtitleText
-            subLabel.TextColor3 = CurrentTheme.SubText
+            subLabel.TextColor3 = CurrentTheme.SubText or Color3.fromRGB(160, 160, 170)
             subLabel.TextSize = 11
             subLabel.TextTransparency = 0.5
             subLabel.TextXAlignment = Enum.TextXAlignment.Left
             subLabel.Parent = SectionFrame
             AddToRegistry(subLabel, "TextColor3", "SubText")
-            HeaderHeight = math.max(20, TextSize + 9, HasIcon and 25 or 20) + 18
         end
 
-        -- ====== 折叠箭头（直接放在 SectionFrame 上） ======
+        -- 4. SectionCollapseIcon（折叠箭头，直接放在 SectionFrame 上）
         local SectionCollapseIcon = Instance.new("ImageLabel")
         SectionCollapseIcon.Name = "SectionCollapseIcon"
         SectionCollapseIcon.Parent = SectionFrame
@@ -494,7 +494,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         SectionCollapseIcon.ScaleType = Enum.ScaleType.Fit
         AddToRegistry(SectionCollapseIcon, "ImageColor3", "Text")
 
-        -- ====== 点击区域（透明按钮覆盖头部） ======
+        -- 5. 点击区域（透明按钮覆盖头部，与 miUI 完全一致）
         local ClickBtn = Instance.new("TextButton")
         ClickBtn.Size = UDim2.new(1, 0, 0, HeaderHeight)
         ClickBtn.BackgroundTransparency = 1
@@ -502,13 +502,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ClickBtn.ZIndex = 20
         ClickBtn.Parent = SectionFrame
 
-        -- ====== 内容容器（有背景、圆角、描边） ======
+        -- 6. SectionHandler（内容容器，背景不透明，有圆角、描边）
         local SectionHandler = Instance.new("Frame")
         SectionHandler.Name = "SectionHandler"
         SectionHandler.Parent = SectionFrame
         SectionHandler.AnchorPoint = Vector2.new(0.5, 0)
         SectionHandler.BackgroundColor3 = CurrentTheme.Top or Color3.fromRGB(20, 22, 27)
-        SectionHandler.BackgroundTransparency = 0.5
+        SectionHandler.BackgroundTransparency = 0  -- 不透明
         SectionHandler.BorderColor3 = Color3.fromRGB(0, 0, 0)
         SectionHandler.BorderSizePixel = 0
         SectionHandler.ClipsDescendants = true
@@ -516,28 +516,30 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         SectionHandler.Size = UDim2.new(1, -10, 0, 0)
         SectionHandler.ZIndex = 9
 
+        -- 内容容器圆角
         local HandlerCorner = Instance.new("UICorner")
         HandlerCorner.CornerRadius = UDim.new(0, 8)
         HandlerCorner.Parent = SectionHandler
 
+        -- 内容容器描边（边框）
         local HandlerStroke = Instance.new("UIStroke")
         HandlerStroke.Thickness = 1
-        HandlerStroke.Transparency = 0.65
+        HandlerStroke.Transparency = 0.3  -- 更不透明，边框清晰可见
         HandlerStroke.Color = CurrentTheme.Stroke or Color3.fromRGB(45, 48, 58)
         HandlerStroke.Parent = SectionHandler
         table.insert(ThemeListeners, function()
             HandlerStroke.Color = CurrentTheme.Stroke
-            HandlerStroke.Transparency = 0.65
+            HandlerStroke.Transparency = 0.3
         end)
 
-        -- 内容列表
+        -- 内容布局
         local ContentLayout = Instance.new("UIListLayout")
         ContentLayout.Padding = UDim.new(0, 5)
         ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         ContentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         ContentLayout.Parent = SectionHandler
 
-        -- 内边距
+        -- 内边距（与 miUI 完全一致）
         local ContentPadding = Instance.new("UIPadding")
         ContentPadding.PaddingTop = UDim.new(0, 4)
         ContentPadding.PaddingBottom = UDim.new(0, 4)
@@ -548,7 +550,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         -- ====== 展开/折叠状态 ======
         local open = defaultOpen
 
-        -- ====== 更新高度函数 ======
+        -- ====== 更新高度函数（与 miUI 一致） ======
         local function updateSectionHeight(instant)
             local actualHeight = ContentLayout.AbsoluteContentSize.Y
             local targetContentHeight = (open and actualHeight > 0) and (actualHeight + 8) or 0
@@ -559,14 +561,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
+            -- 内容容器高度
             TweenService:Create(SectionHandler, tweenInfo, {
                 Size = UDim2.new(1, -10, 0, targetContentHeight)
             }):Play()
 
+            -- 外层高度
             TweenService:Create(SectionFrame, tweenInfo, {
                 Size = UDim2.new(1, -5, 0, HeaderHeight + targetContentHeight)
             }):Play()
 
+            -- 箭头旋转（与 miUI 完全一致：折叠时旋转 -90°）
             local targetRotation = open and 0 or -90
             TweenService:Create(SectionCollapseIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
                 Rotation = targetRotation
@@ -589,18 +594,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         ClickBtn.MouseButton1Click:Connect(toggleSection)
 
-        -- 鼠标悬停效果（头部背景微变）
-        ClickBtn.MouseEnter:Connect(function()
-            TweenService:Create(SectionFrame, TweenInfo.new(0.15), {
-                BackgroundTransparency = 0.9
-            }):Play()
-        end)
-        ClickBtn.MouseLeave:Connect(function()
-            TweenService:Create(SectionFrame, TweenInfo.new(0.15), {
-                BackgroundTransparency = 1
-            }):Play()
-        end)
-
         -- ====== 初始化高度 ======
         task.spawn(function()
             task.wait()
@@ -612,6 +605,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             SectionCollapseIcon.Rotation = open and 0 or -90
         end)
 
+        -- 内容变化自动更新
         ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             if open then updateSectionHeight(false) end
         end)
@@ -620,6 +614,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         table.insert(ThemeListeners, function()
             SectionHandler.BackgroundColor3 = CurrentTheme.Top
             HandlerStroke.Color = CurrentTheme.Stroke
+            HandlerStroke.Transparency = 0.3
             SectionCollapseIcon.ImageColor3 = CurrentTheme.Text
             SectionIcon.ImageColor3 = CurrentTheme.Text
             SectionLabel.TextColor3 = CurrentTheme.Text
