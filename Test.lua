@@ -11,7 +11,10 @@
       - 窗口大小固定为 500×320
       - 背景图默认为空（不显示任何图片）
       - 主题仅保留 Dark、Charcoal、AMOLED
-    [外观修改] Section 整体采用 ModernV2 样式：半透明卡片 + 折叠箭头
+    [外观修改] Section 完全按照 miUI.lua 的 AddSection 实现：
+      - 头部无背景框，只有文字 + 图标 + 折叠箭头
+      - 内容容器有独立背景、圆角、描边
+      - 箭头旋转动画，点击头部切换折叠
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -388,222 +391,238 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         -- ============================================================
-        -- 从 ModernV2 移植的 Section 外观
+        -- 完全按照 miUI.lua AddSection 的真实结构
+        -- 头部没有背景框，只有文字 + 图标 + 箭头
+        -- 内容容器有背景、圆角、描边
         -- ============================================================
 
-        -- Section 主容器
-        local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(1, 0, 0, 0)
-        sectionFrame.BackgroundTransparency = 1
-        sectionFrame.BorderSizePixel = 0
-        sectionFrame.ClipsDescendants = true
-        sectionFrame.Parent = parent
+        -- Section 主容器（透明）
+        local SectionFrame = Instance.new("Frame")
+        SectionFrame.Name = "ModernSection"
+        SectionFrame.Parent = parent
+        SectionFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        SectionFrame.BackgroundTransparency = 1
+        SectionFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        SectionFrame.BorderSizePixel = 0
+        SectionFrame.ClipsDescendants = true
+        SectionFrame.Size = UDim2.new(1, -5, 0, 0)
+        SectionFrame.ZIndex = 9
 
-        -- 头部高度
-        local headerHeight = 28
-        if subtitleText then headerHeight = 42 end
+        -- ====== 计算头部高度（与 miUI 一致） ======
+        local TextSize = 13
+        local HasIcon = iconAsset ~= nil and iconAsset ~= ""
+        local HeaderHeight = math.max(20, TextSize + 9, HasIcon and 25 or 20)
 
-        -- ====== 头部区域 ======
-        local header = Instance.new("Frame")
-        header.Name = "SectionHeader"
-        header.Size = UDim2.new(1, 0, 0, headerHeight)
-        header.BackgroundTransparency = 0.25
-        header.BorderSizePixel = 0
-        header.ClipsDescendants = true
-        header.Parent = sectionFrame
-        AddToRegistry(header, "BackgroundColor3", "Top")
-
-        local headerCorner = Instance.new("UICorner")
-        headerCorner.CornerRadius = UDim.new(0, 6)
-        headerCorner.Parent = header
-
-        local headerStroke = Instance.new("UIStroke")
-        headerStroke.Thickness = 1
-        headerStroke.Transparency = 0.7
-        headerStroke.Color = CurrentTheme.Stroke
-        headerStroke.Parent = header
-        table.insert(ThemeListeners, function() headerStroke.Color = CurrentTheme.Stroke end)
-
-        -- 头部图标
-        local leftOffset = 10
-        if iconAsset then
-            local icon = Instance.new("ImageLabel")
-            icon.Size = UDim2.new(0, 16, 0, 16)
-            icon.Position = UDim2.new(0, 8, 0.5, -8)
-            icon.BackgroundTransparency = 1
-            icon.BorderSizePixel = 0
-            icon.Parent = header
-            if tonumber(iconAsset) then icon.Image = "rbxassetid://"..iconAsset else icon.Image = iconAsset end
-            AddToRegistry(icon, "ImageColor3", "Text")
-            leftOffset = 30
+        -- ====== 图标（直接放在 SectionFrame 上） ======
+        local SectionIcon = Instance.new("ImageLabel")
+        SectionIcon.Name = "SectionIcon"
+        SectionIcon.Parent = SectionFrame
+        SectionIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        SectionIcon.BackgroundTransparency = 1
+        SectionIcon.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        SectionIcon.BorderSizePixel = 0
+        SectionIcon.Size = UDim2.new(0, 15, 0, 15)
+        SectionIcon.ZIndex = 11
+        SectionIcon.ImageColor3 = CurrentTheme.Text or Color3.fromRGB(223, 223, 223)
+        SectionIcon.ImageTransparency = HasIcon and 0.5 or 1
+        SectionIcon.ScaleType = Enum.ScaleType.Fit
+        if HasIcon then
+            if tonumber(iconAsset) then SectionIcon.Image = "rbxassetid://"..iconAsset else SectionIcon.Image = iconAsset end
         end
+        AddToRegistry(SectionIcon, "ImageColor3", "Text")
 
-        -- 标题文字
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(1, -(leftOffset + 38), 0, 16)
-        titleLabel.Position = UDim2.new(0, leftOffset, 0, 6)
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.BorderSizePixel = 0
-        titleLabel.Font = Enum.Font.GothamMedium
-        titleLabel.Text = titleText
-        titleLabel.TextSize = 13
-        titleLabel.TextColor3 = CurrentTheme.Text
-        titleLabel.TextTransparency = 0.08
-        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        titleLabel.Parent = header
-        AddToRegistry(titleLabel, "TextColor3", "Text")
+        -- ====== 标题文字（直接放在 SectionFrame 上） ======
+        local SectionLabel = Instance.new("TextLabel")
+        SectionLabel.Name = "SectionLabel"
+        SectionLabel.Parent = SectionFrame
+        SectionLabel.AnchorPoint = Vector2.new(0, 0)
+        SectionLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        SectionLabel.BackgroundTransparency = 1
+        SectionLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        SectionLabel.BorderSizePixel = 0
+        SectionLabel.Position = UDim2.new(0, HasIcon and 32 or 11, 0, 0)
+        SectionLabel.Size = UDim2.new(1, -46, 0, 15)
+        SectionLabel.ZIndex = 11
+        SectionLabel.Font = Enum.Font.GothamMedium
+        SectionLabel.Text = titleText
+        SectionLabel.TextColor3 = CurrentTheme.Text
+        SectionLabel.TextSize = TextSize
+        SectionLabel.TextTransparency = 0.08
+        SectionLabel.TextXAlignment = Enum.TextXAlignment.Left
+        SectionLabel.Parent = SectionFrame
+        AddToRegistry(SectionLabel, "TextColor3", "Text")
 
-        -- 副标题
+        -- 副标题（如果有）
         if subtitleText then
             local subLabel = Instance.new("TextLabel")
-            subLabel.Size = UDim2.new(1, -(leftOffset + 38), 0, 13)
-            subLabel.Position = UDim2.new(0, leftOffset, 0, 24)
+            subLabel.Name = "SubLabel"
+            subLabel.Parent = SectionFrame
+            subLabel.AnchorPoint = Vector2.new(0, 0)
+            subLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             subLabel.BackgroundTransparency = 1
+            subLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
             subLabel.BorderSizePixel = 0
+            subLabel.Position = UDim2.new(0, HasIcon and 32 or 11, 0, 18)
+            subLabel.Size = UDim2.new(1, -46, 0, 13)
+            subLabel.ZIndex = 11
             subLabel.Font = Enum.Font.GothamMedium
             subLabel.Text = subtitleText
-            subLabel.TextSize = 11
             subLabel.TextColor3 = CurrentTheme.SubText
+            subLabel.TextSize = 11
             subLabel.TextTransparency = 0.5
             subLabel.TextXAlignment = Enum.TextXAlignment.Left
-            subLabel.Parent = header
+            subLabel.Parent = SectionFrame
             AddToRegistry(subLabel, "TextColor3", "SubText")
+            HeaderHeight = math.max(20, TextSize + 9, HasIcon and 25 or 20) + 18
         end
 
-        -- 折叠箭头
-        local collapseIcon = Instance.new("ImageLabel")
-        collapseIcon.Size = UDim2.new(0, 22, 0, 22)
-        collapseIcon.Position = UDim2.new(1, -8, 0, 2)
-        collapseIcon.AnchorPoint = Vector2.new(1, 0)
-        collapseIcon.BackgroundTransparency = 1
-        collapseIcon.BorderSizePixel = 0
-        collapseIcon.Parent = header
-        collapseIcon.Image = "rbxassetid://10709857508"
-        collapseIcon.ImageColor3 = CurrentTheme.Text
-        collapseIcon.ImageTransparency = 0.5
-        collapseIcon.ScaleType = Enum.ScaleType.Fit
-        AddToRegistry(collapseIcon, "ImageColor3", "Text")
+        -- ====== 折叠箭头（直接放在 SectionFrame 上） ======
+        local SectionCollapseIcon = Instance.new("ImageLabel")
+        SectionCollapseIcon.Name = "SectionCollapseIcon"
+        SectionCollapseIcon.Parent = SectionFrame
+        SectionCollapseIcon.AnchorPoint = Vector2.new(1, 0)
+        SectionCollapseIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        SectionCollapseIcon.BackgroundTransparency = 1
+        SectionCollapseIcon.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        SectionCollapseIcon.BorderSizePixel = 0
+        SectionCollapseIcon.Position = UDim2.new(1, -8, 0, math.floor((HeaderHeight - 24) / 2))
+        SectionCollapseIcon.Size = UDim2.new(0, 24, 0, 24)
+        SectionCollapseIcon.ZIndex = 12
+        SectionCollapseIcon.Image = "rbxassetid://10709857508"  -- chevron-small-down
+        SectionCollapseIcon.ImageColor3 = CurrentTheme.Text
+        SectionCollapseIcon.ImageTransparency = 0.5
+        SectionCollapseIcon.ScaleType = Enum.ScaleType.Fit
+        AddToRegistry(SectionCollapseIcon, "ImageColor3", "Text")
 
-        -- ====== 内容容器 ======
-        local contentContainer = Instance.new("Frame")
-        contentContainer.Name = "SectionHandler"
-        contentContainer.Size = UDim2.new(1, -10, 0, 0)
-        contentContainer.Position = UDim2.new(0.5, 0, 0, headerHeight)
-        contentContainer.AnchorPoint = Vector2.new(0.5, 0)
-        contentContainer.BackgroundTransparency = 0.5
-        contentContainer.BorderSizePixel = 0
-        contentContainer.ClipsDescendants = true
-        contentContainer.Parent = sectionFrame
-        AddToRegistry(contentContainer, "BackgroundColor3", "Top")
+        -- ====== 点击区域（透明按钮覆盖头部） ======
+        local ClickBtn = Instance.new("TextButton")
+        ClickBtn.Size = UDim2.new(1, 0, 0, HeaderHeight)
+        ClickBtn.BackgroundTransparency = 1
+        ClickBtn.Text = ""
+        ClickBtn.ZIndex = 20
+        ClickBtn.Parent = SectionFrame
 
-        local contentCorner = Instance.new("UICorner")
-        contentCorner.CornerRadius = UDim.new(0, 8)
-        contentCorner.Parent = contentContainer
+        -- ====== 内容容器（有背景、圆角、描边） ======
+        local SectionHandler = Instance.new("Frame")
+        SectionHandler.Name = "SectionHandler"
+        SectionHandler.Parent = SectionFrame
+        SectionHandler.AnchorPoint = Vector2.new(0.5, 0)
+        SectionHandler.BackgroundColor3 = CurrentTheme.Top or Color3.fromRGB(20, 22, 27)
+        SectionHandler.BackgroundTransparency = 0.5
+        SectionHandler.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        SectionHandler.BorderSizePixel = 0
+        SectionHandler.ClipsDescendants = true
+        SectionHandler.Position = UDim2.new(0.5, 0, 0, HeaderHeight)
+        SectionHandler.Size = UDim2.new(1, -10, 0, 0)
+        SectionHandler.ZIndex = 9
 
-        local contentStroke = Instance.new("UIStroke")
-        contentStroke.Thickness = 1
-        contentStroke.Transparency = 0.65
-        contentStroke.Color = CurrentTheme.Stroke
-        contentStroke.Parent = contentContainer
-        table.insert(ThemeListeners, function() contentStroke.Color = CurrentTheme.Stroke end)
+        local HandlerCorner = Instance.new("UICorner")
+        HandlerCorner.CornerRadius = UDim.new(0, 8)
+        HandlerCorner.Parent = SectionHandler
+
+        local HandlerStroke = Instance.new("UIStroke")
+        HandlerStroke.Thickness = 1
+        HandlerStroke.Transparency = 0.65
+        HandlerStroke.Color = CurrentTheme.Stroke or Color3.fromRGB(45, 48, 58)
+        HandlerStroke.Parent = SectionHandler
+        table.insert(ThemeListeners, function()
+            HandlerStroke.Color = CurrentTheme.Stroke
+            HandlerStroke.Transparency = 0.65
+        end)
 
         -- 内容列表
-        local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 5)
-        contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        contentLayout.Parent = contentContainer
+        local ContentLayout = Instance.new("UIListLayout")
+        ContentLayout.Padding = UDim.new(0, 5)
+        ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        ContentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        ContentLayout.Parent = SectionHandler
 
         -- 内边距
-        local contentPadding = Instance.new("UIPadding")
-        contentPadding.PaddingTop = UDim.new(0, 4)
-        contentPadding.PaddingBottom = UDim.new(0, 4)
-        contentPadding.PaddingLeft = UDim.new(0, 8)
-        contentPadding.PaddingRight = UDim.new(0, 8)
-        contentPadding.Parent = contentContainer
+        local ContentPadding = Instance.new("UIPadding")
+        ContentPadding.PaddingTop = UDim.new(0, 4)
+        ContentPadding.PaddingBottom = UDim.new(0, 4)
+        ContentPadding.PaddingLeft = UDim.new(0, 8)
+        ContentPadding.PaddingRight = UDim.new(0, 8)
+        ContentPadding.Parent = SectionHandler
 
         -- ====== 展开/折叠状态 ======
         local open = defaultOpen
-        local isCollapsed = not open
 
         -- ====== 更新高度函数 ======
         local function updateSectionHeight(instant)
-            local actualHeight = contentLayout.AbsoluteContentSize.Y
+            local actualHeight = ContentLayout.AbsoluteContentSize.Y
             local targetContentHeight = (open and actualHeight > 0) and (actualHeight + 8) or 0
-            local targetSectionHeight = headerHeight + targetContentHeight
 
             if open then
-                contentContainer.Visible = true
+                SectionHandler.Visible = true
             end
 
             local tweenInfo = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-            TweenService:Create(contentContainer, tweenInfo, {
+            TweenService:Create(SectionHandler, tweenInfo, {
                 Size = UDim2.new(1, -10, 0, targetContentHeight)
             }):Play()
 
-            TweenService:Create(sectionFrame, tweenInfo, {
-                Size = UDim2.new(1, 0, 0, targetSectionHeight)
+            TweenService:Create(SectionFrame, tweenInfo, {
+                Size = UDim2.new(1, -5, 0, HeaderHeight + targetContentHeight)
             }):Play()
 
             local targetRotation = open and 0 or -90
-            TweenService:Create(collapseIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                Rotation = targetRotation,
-                ImageTransparency = open and 0.5 or 0.3
+            TweenService:Create(SectionCollapseIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                Rotation = targetRotation
             }):Play()
 
             if not open then
                 task.delay(0.25, function()
-                    if not open and contentContainer then
-                        contentContainer.Visible = false
+                    if not open and SectionHandler then
+                        SectionHandler.Visible = false
                     end
                 end)
             end
         end
 
-        -- ====== 点击头部切换 ======
+        -- ====== 切换函数 ======
         local function toggleSection()
             open = not open
             updateSectionHeight(false)
         end
 
-        local clickBtn = Instance.new("TextButton")
-        clickBtn.Size = UDim2.new(1, 0, 1, 0)
-        clickBtn.BackgroundTransparency = 1
-        clickBtn.Text = ""
-        clickBtn.ZIndex = 10
-        clickBtn.Parent = header
-        clickBtn.MouseButton1Click:Connect(toggleSection)
+        ClickBtn.MouseButton1Click:Connect(toggleSection)
 
-        clickBtn.MouseEnter:Connect(function()
-            Tween(header, { BackgroundTransparency = 0.15 }, 0.15)
+        -- 鼠标悬停效果（头部背景微变）
+        ClickBtn.MouseEnter:Connect(function()
+            TweenService:Create(SectionFrame, TweenInfo.new(0.15), {
+                BackgroundTransparency = 0.9
+            }):Play()
         end)
-        clickBtn.MouseLeave:Connect(function()
-            Tween(header, { BackgroundTransparency = 0.25 }, 0.15)
+        ClickBtn.MouseLeave:Connect(function()
+            TweenService:Create(SectionFrame, TweenInfo.new(0.15), {
+                BackgroundTransparency = 1
+            }):Play()
         end)
 
         -- ====== 初始化高度 ======
         task.spawn(function()
             task.wait()
-            local actualHeight = contentLayout.AbsoluteContentSize.Y
+            local actualHeight = ContentLayout.AbsoluteContentSize.Y
             local targetContentHeight = (open and actualHeight > 0) and (actualHeight + 8) or 0
-            local targetSectionHeight = headerHeight + targetContentHeight
-            contentContainer.Size = UDim2.new(1, -10, 0, targetContentHeight)
-            sectionFrame.Size = UDim2.new(1, 0, 0, targetSectionHeight)
-            contentContainer.Visible = open
-            collapseIcon.Rotation = open and 0 or -90
+            SectionHandler.Size = UDim2.new(1, -10, 0, targetContentHeight)
+            SectionFrame.Size = UDim2.new(1, -5, 0, HeaderHeight + targetContentHeight)
+            SectionHandler.Visible = open
+            SectionCollapseIcon.Rotation = open and 0 or -90
         end)
 
-        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             if open then updateSectionHeight(false) end
         end)
 
+        -- ====== 主题监听 ======
         table.insert(ThemeListeners, function()
-            header.BackgroundColor3 = CurrentTheme.Top
-            headerStroke.Color = CurrentTheme.Stroke
-            contentContainer.BackgroundColor3 = CurrentTheme.Top
-            contentStroke.Color = CurrentTheme.Stroke
-            collapseIcon.ImageColor3 = CurrentTheme.Text
+            SectionHandler.BackgroundColor3 = CurrentTheme.Top
+            HandlerStroke.Color = CurrentTheme.Stroke
+            SectionCollapseIcon.ImageColor3 = CurrentTheme.Text
+            SectionIcon.ImageColor3 = CurrentTheme.Text
+            SectionLabel.TextColor3 = CurrentTheme.Text
         end)
 
         -- ============================================================
@@ -615,7 +634,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         child.Button = function(_, config)
             local btnText = config.Name or config.Text or ""
             local callback = config.Callback or function() end
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1,0,0,42)
             Tile.Parent = parent
@@ -682,7 +701,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Enabled = config.Value or false
             local callback = config.Callback or function() end
             local controlId = toggleText.."_"..tostring(#Registry)
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1,0,0,42)
             Tile.Parent = parent
@@ -773,7 +792,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Rounding = config.Rounding or 0
             local Val = tonumber(default) or (min or 0)
             local controlId = sliderText.."_"..tostring(#Registry)
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local tileH = unlimited and 42 or 60
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1,0,0,tileH)
@@ -967,7 +986,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local multi = config.Multi == true
             local callback = config.Callback or function() end
             local controlId = dropText.."_"..tostring(#Registry)
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local selected = multi and {} or nil
             local function initSelected()
                 if multi then
@@ -1244,7 +1263,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local mode = config.Mode or "Toggle"
             local callback = config.Callback or function() end
             local controlId = keyText.."_"..tostring(#Registry)
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local state = {Key=defaultKey.Name, Mode=mode, Toggled=false, IsWaiting=false}
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1,0,0,42)
@@ -1430,7 +1449,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local acceptedChars = options.AcceptedCharacters
             local onChanged = options.OnChanged
             local controlId = inputText.."_"..tostring(#Registry)
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local InputFrame = Instance.new("Frame")
             InputFrame.Size = UDim2.new(1,0,0,42)
             InputFrame.Parent = parent
@@ -1570,7 +1589,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local placeholder = config.Placeholder or ""
             local callback = config.Callback or function() end
             local controlId = boxText.."_"..tostring(#Registry)
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local Frame = Instance.new("Frame")
             Frame.Size = UDim2.new(1,0,0,70)
             Frame.Parent = parent
@@ -1642,7 +1661,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         -- ========== Label ==========
         child.Label = function(_, config)
             local labelText = config.Name or ""
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local LabelFrame = Instance.new("Frame")
             LabelFrame.Size = UDim2.new(1,0,0,42)
             LabelFrame.Parent = parent
@@ -1695,7 +1714,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local iconColor = config.IconColor or CurrentTheme.Text
             local callback = config.Callback or function() end
             local strokeColor = config.StrokeColor or CurrentTheme.Stroke
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local function formatIcon(asset)
                 if type(asset)=="number" then return "rbxassetid://"..tostring(asset)
                 elseif type(asset)=="string" then
@@ -1854,7 +1873,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         -- ========== Divider ==========
         child.Divider = function(_, config)
             config = config or {}
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local labelText = config.Name or ""
             local hasText = (labelText ~= "")
             local containerHeight = hasText and 24 or 12
@@ -1897,7 +1916,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         -- ========== Space ==========
         child.Space = function(_, config)
             local height = (config and config.Height) or 8
-            local parent = config and config.Parent or contentContainer
+            local parent = config and config.Parent or SectionHandler
             local sp = Instance.new("Frame")
             sp.Size = UDim2.new(1,0,0,height)
             sp.BackgroundTransparency = 1
@@ -1916,7 +1935,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local default = config.Default or false
             local callback = config.Callback or function() end
             local controlId = title.."_"..tostring(#Registry)
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local Tile = Instance.new("Frame")
             Tile.Size = UDim2.new(1,0,0,42)
             Tile.Parent = parent
@@ -2020,7 +2039,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local showPercent = config.ShowPercent ~= false
             local callback = config.Callback or function() end
             local controlId = name.."_"..tostring(#Registry)
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local containerHeight = (name~="" and 46 or 26)
             local wrap = Instance.new("Frame")
             wrap.Size = UDim2.new(1,0,0,containerHeight)
@@ -2109,7 +2128,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         -- ========== Video ==========
         child.Video = function(_, config)
             local opts = config or {}
-            local parent = opts.Parent or contentContainer
+            local parent = opts.Parent or SectionHandler
             if not parent then return end
             local radius = opts.Radius or 8
             local src = opts.Video or ""
@@ -2454,7 +2473,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         -- ========== Audio ==========
         child.Audio = function(_, config)
             local opts = config or {}
-            local parent = opts.Parent or contentContainer
+            local parent = opts.Parent or SectionHandler
             if not parent then return end
             local title = opts.Name or opts.Title or "Audio"
             local subtitle = opts.SubName or opts.SubTitle or ""
@@ -2773,7 +2792,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         -- ========== Social ==========
         child.Social = function(_, config)
             config = config or {}
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             if not parent then return end
             local displayName = tostring(config.Name or config.DisplayName or "")
             local subName = tostring(config.SubName or config.Subtitle or "")
@@ -2919,7 +2938,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             config = config or {}
             local title = config.Name or ""
             local content = config.Content or ""
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local frame = Instance.new("Frame")
             frame.Size = UDim2.new(1,0,0,0)
             frame.AutomaticSize = Enum.AutomaticSize.Y
@@ -2996,7 +3015,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         -- ========== Viewport ==========
         child.Viewport = function(_, config)
             local opts = config or {}
-            local parent = opts.Parent or contentContainer
+            local parent = opts.Parent or SectionHandler
             if not parent then return end
             local UIS = UserInputService
             local RS = RunService
@@ -3189,7 +3208,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             config = config or {}
             local columns = config.Columns or 2
             local gap = config.Gap or 6
-            local parent = config.Parent or contentContainer
+            local parent = config.Parent or SectionHandler
             local outerWrap = Instance.new("Frame")
             outerWrap.Size = UDim2.new(1,0,0,0)
             outerWrap.BackgroundTransparency = 1
