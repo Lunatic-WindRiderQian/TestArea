@@ -11,6 +11,7 @@
       - 窗口大小固定为 500×320
       - 背景图默认为空（不显示任何图片）
       - 主题仅保留 Dark、Charcoal、AMOLED
+    [外观修改] Section 头部改为 ModernV2 风格：深色卡片 + 右侧箭头折叠
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -385,15 +386,19 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 subtitleText = icons
             end
         end
+
+        -- ======== 替换 Section 头部（ModernV2 风格） ========
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(0.96,0,0,46)
-        sectionFrame.AnchorPoint = Vector2.new(0,0)
-        sectionFrame.Position = UDim2.new(0,0,0,0)
-        sectionFrame.BackgroundTransparency = 0.92
+        sectionFrame.Size = UDim2.new(0.96, 0, 0, 46)
+        sectionFrame.AnchorPoint = Vector2.new(0, 0)
+        sectionFrame.Position = UDim2.new(0, 0, 0, 0)
+        sectionFrame.BackgroundTransparency = 0.5
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
-        Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0,4)
-        AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
+        Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0, 8)
+        AddToRegistry(sectionFrame, "BackgroundColor3", "Top")
+
+        -- 外描边
         local sectionStroke = Instance.new("UIStroke")
         sectionStroke.Thickness = 1
         sectionStroke.Color = CurrentTheme.Stroke
@@ -401,157 +406,133 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         sectionStroke.Parent = sectionFrame
         table.insert(ThemeListeners, function() sectionStroke.Color = CurrentTheme.Stroke end)
+
+        -- 头部容器（透明）
         local titleBar = Instance.new("Frame")
-        titleBar.Size = UDim2.new(1,0,0,46)
-        titleBar.BackgroundTransparency = 0.65
+        titleBar.Size = UDim2.new(1, 0, 0, 46)
+        titleBar.BackgroundTransparency = 1
         titleBar.ClipsDescendants = true
         titleBar.Parent = sectionFrame
-        Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0,4)
-        AddToRegistry(titleBar, "BackgroundColor3", "Stroke")
-        local topBg = Instance.new("Frame")
-        topBg.Size = UDim2.new(1,-2,1,-2)
-        topBg.Position = UDim2.new(0,1,0,1)
-        topBg.BackgroundTransparency = 0.65
-        topBg.ClipsDescendants = true
-        topBg.Parent = titleBar
-        Instance.new("UICorner", topBg).CornerRadius = UDim.new(0,4)
-        AddToRegistry(topBg, "BackgroundColor3", "Top")
+
         local leftOffset = 16
         if iconAsset then
             local icon = Instance.new("ImageLabel")
-            icon.Size = UDim2.new(0,32,0,32)
-            icon.Position = UDim2.new(0,10,0.5,-16)
+            icon.Size = UDim2.new(0, 28, 0, 28)
+            icon.Position = UDim2.new(0, 10, 0.5, -14)
             icon.BackgroundTransparency = 1
             if tonumber(iconAsset) then icon.Image = "rbxassetid://"..iconAsset else icon.Image = iconAsset end
-            Instance.new("UICorner", icon).CornerRadius = UDim.new(0,8)
-            icon.Parent = topBg
+            Instance.new("UICorner", icon).CornerRadius = UDim.new(0, 6)
+            icon.Parent = titleBar
             AddToRegistry(icon, "ImageColor3", "Text")
-            leftOffset = 50
+            leftOffset = 46
         end
+
         local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(1,-80,0,19)
-        titleLabel.Position = subtitleText and UDim2.new(0,leftOffset,0,4) or UDim2.new(0,leftOffset,0,14)
+        titleLabel.Size = UDim2.new(1, -(leftOffset + 50), 0, 20)
+        titleLabel.Position = UDim2.new(0, leftOffset, 0, 13)
         titleLabel.BackgroundTransparency = 1
         titleLabel.Font = Enum.Font.GothamBold
         titleLabel.Text = titleText
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        titleLabel.Parent = topBg
+        titleLabel.Parent = titleBar
         AddToRegistry(titleLabel, "TextColor3", "Text")
+
         if subtitleText then
             local subLabel = Instance.new("TextLabel")
-            subLabel.Size = UDim2.new(1,-80,0,17)
-            subLabel.Position = UDim2.new(0,leftOffset,0,25)
+            subLabel.Size = UDim2.new(1, -(leftOffset + 50), 0, 15)
+            subLabel.Position = UDim2.new(0, leftOffset, 0, 30)
             subLabel.BackgroundTransparency = 1
             subLabel.Font = Enum.Font.Gotham
             subLabel.Text = subtitleText
-            subLabel.TextSize = 12
+            subLabel.TextSize = 11
             subLabel.TextTransparency = 0.5
             subLabel.TextXAlignment = Enum.TextXAlignment.Left
-            subLabel.Parent = topBg
-            AddToRegistry(subLabel, "TextColor3", "Text")
+            subLabel.Parent = titleBar
+            AddToRegistry(subLabel, "TextColor3", "SubText")
         end
-        local open = defaultOpen
+
+        -- 折叠箭头
         local toggleBtn = Instance.new("TextButton")
-        toggleBtn.Size = UDim2.new(0,42,0,22)
-        toggleBtn.Position = UDim2.new(1,-52,0.5,-11)
+        toggleBtn.Size = UDim2.new(0, 30, 0, 30)
+        toggleBtn.Position = UDim2.new(1, -38, 0.5, -15)
         toggleBtn.BackgroundTransparency = 1
         toggleBtn.Text = ""
-        toggleBtn.Parent = topBg
+        toggleBtn.Parent = titleBar
         toggleBtn.ZIndex = 3
-        local switchBg = Instance.new("Frame")
-        switchBg.Size = UDim2.new(1,0,1,0)
-        switchBg.BackgroundColor3 = open and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
-        switchBg.Parent = toggleBtn
-        Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1,0)
-        local swStroke = Instance.new("UIStroke")
-        swStroke.Thickness = 1
-        swStroke.Transparency = 0.6
-        swStroke.Parent = switchBg
-        AddToRegistry(swStroke, "Color", "Stroke")
-        local leftLabel = Instance.new("TextLabel")
-        leftLabel.Size = UDim2.new(0.5,0,1,0)
-        leftLabel.Position = UDim2.new(0,4,0,0)
-        leftLabel.BackgroundTransparency = 1
-        leftLabel.Font = Enum.Font.GothamBold
-        leftLabel.Text = "I"
-        leftLabel.TextSize = 12
-        leftLabel.TextColor3 = open and Color3.new(1,1,1) or Color3.fromRGB(150,150,150)
-        leftLabel.TextTransparency = open and 0 or 0.6
-        leftLabel.TextXAlignment = Enum.TextXAlignment.Left
-        leftLabel.TextYAlignment = Enum.TextYAlignment.Center
-        leftLabel.Parent = switchBg
-        local rightLabel = Instance.new("TextLabel")
-        rightLabel.Size = UDim2.new(0.5,0,1,0)
-        rightLabel.Position = UDim2.new(0.5,-4,0,0)
-        rightLabel.BackgroundTransparency = 1
-        rightLabel.Font = Enum.Font.GothamBold
-        rightLabel.Text = "O"
-        rightLabel.TextSize = 12
-        rightLabel.TextColor3 = open and Color3.fromRGB(150,150,150) or Color3.new(1,1,1)
-        rightLabel.TextTransparency = open and 0.6 or 0
-        rightLabel.TextXAlignment = Enum.TextXAlignment.Right
-        rightLabel.TextYAlignment = Enum.TextYAlignment.Center
-        rightLabel.Parent = switchBg
-        local dot = Instance.new("Frame")
-        dot.Size = UDim2.new(0,16,0,16)
-        dot.Position = open and UDim2.new(1,-19,0.5,-8) or UDim2.new(0,3,0.5,-8)
-        dot.BackgroundColor3 = Color3.new(1,1,1)
-        dot.Parent = switchBg
-        Instance.new("UICorner", dot).CornerRadius = UDim.new(1,0)
-        local function updateSwitch(animate)
-            local targetBg = open and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
-            local dotTarget = open and UDim2.new(1,-19,0.5,-8) or UDim2.new(0,3,0.5,-8)
-            local leftColor = open and Color3.new(1,1,1) or Color3.fromRGB(150,150,150)
-            local rightColor = open and Color3.fromRGB(150,150,150) or Color3.new(1,1,1)
-            local leftTrans = open and 0 or 0.6
-            local rightTrans = open and 0.6 or 0
+
+        local arrowIcon = Instance.new("ImageLabel")
+        arrowIcon.Size = UDim2.new(0, 20, 0, 20)
+        arrowIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+        arrowIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+        arrowIcon.BackgroundTransparency = 1
+        arrowIcon.Image = "rbxassetid://10709857508"   -- 向下箭头
+        arrowIcon.ImageColor3 = CurrentTheme.Text
+        arrowIcon.ImageTransparency = 0.3
+        arrowIcon.Parent = toggleBtn
+        AddToRegistry(arrowIcon, "ImageColor3", "Text")
+
+        local open = defaultOpen
+
+        local function updateArrow(animate)
+            local targetRot = open and 0 or 180
             if animate then
-                Tween(switchBg, {BackgroundColor3 = targetBg})
-                Tween(dot, {Position = dotTarget})
-                Tween(leftLabel, {TextColor3 = leftColor, TextTransparency = leftTrans})
-                Tween(rightLabel, {TextColor3 = rightColor, TextTransparency = rightTrans})
+                Tween(arrowIcon, { Rotation = targetRot }, 0.25)
             else
-                switchBg.BackgroundColor3 = targetBg
-                dot.Position = dotTarget
-                leftLabel.TextColor3 = leftColor
-                leftLabel.TextTransparency = leftTrans
-                rightLabel.TextColor3 = rightColor
-                rightLabel.TextTransparency = rightTrans
+                arrowIcon.Rotation = targetRot
             end
         end
-        updateSwitch(false)
+        updateArrow(false)
+
+        local function toggleSection()
+            open = not open
+            updateArrow(true)
+            updateSectionHeight(false)
+        end
+
+        toggleBtn.MouseButton1Click:Connect(toggleSection)
+        titleBar.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then toggleSection() end
+        end)
+
+        -- ======== 内容容器 ========
         local contentContainerSection = Instance.new("Frame")
-        contentContainerSection.Size = UDim2.new(1,-2,0,0)
-        contentContainerSection.Position = UDim2.new(0,1,0,46)
-        contentContainerSection.BackgroundTransparency = 0.65
+        contentContainerSection.Size = UDim2.new(1, -2, 0, 0)
+        contentContainerSection.Position = UDim2.new(0, 1, 0, 46)
+        contentContainerSection.BackgroundTransparency = 0.7
         contentContainerSection.ClipsDescendants = false
         contentContainerSection.Parent = sectionFrame
         AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
-        Instance.new("UICorner", contentContainerSection).CornerRadius = UDim.new(0,4)
+        Instance.new("UICorner", contentContainerSection).CornerRadius = UDim.new(0, 8)
+
         local contentStroke = Instance.new("UIStroke")
         contentStroke.Thickness = 1
         contentStroke.Transparency = 0.6
         contentStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         contentStroke.Parent = contentContainerSection
         AddToRegistry(contentStroke, "Color", "Stroke")
+
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1,-20,0,0)
-        contentHolder.Position = UDim2.new(0,10,0,4)
+        contentHolder.Size = UDim2.new(1, -20, 0, 0)
+        contentHolder.Position = UDim2.new(0, 10, 0, 4)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = false
         contentHolder.Parent = contentContainerSection
+
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0,6)
+        contentLayout.Padding = UDim.new(0, 6)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Parent = contentHolder
+
         local bottomPadding = Instance.new("Frame")
-        bottomPadding.Size = UDim2.new(1,0,0,4)
+        bottomPadding.Size = UDim2.new(1, 0, 0, 4)
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.Parent = contentHolder
+
         local currentContentTween, currentSectionTween, currentHolderTween, currentBgTween
         local function getContentHeight() return contentLayout.AbsoluteContentSize.Y end
+
         local function updateSectionHeight(instant)
             local actual = getContentHeight()
             local targetContent = open and math.max(0, actual) or 0
@@ -565,16 +546,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if open then
                 contentContainerSection.Visible = true
                 contentHolder.Visible = true
-                currentBgTween = TweenService:Create(contentContainerSection, ti, {BackgroundTransparency = 0.65})
-                currentContentTween = TweenService:Create(contentContainerSection, ti, {Size = UDim2.new(1,-2,0,targetContainer)})
-                currentHolderTween = TweenService:Create(contentHolder, ti, {Size = UDim2.new(1,-20,0,math.max(0,targetContent))})
-                currentSectionTween = TweenService:Create(sectionFrame, ti, {Size = UDim2.new(0.96,0,0,targetSection)})
+                currentBgTween = TweenService:Create(contentContainerSection, ti, {BackgroundTransparency = 0.7})
+                currentContentTween = TweenService:Create(contentContainerSection, ti, {Size = UDim2.new(1, -2, 0, targetContainer)})
+                currentHolderTween = TweenService:Create(contentHolder, ti, {Size = UDim2.new(1, -20, 0, math.max(0, targetContent))})
+                currentSectionTween = TweenService:Create(sectionFrame, ti, {Size = UDim2.new(0.96, 0, 0, targetSection)})
             else
                 currentBgTween = TweenService:Create(contentContainerSection, ti, {BackgroundTransparency = 1})
-                currentContentTween = TweenService:Create(contentContainerSection, ti, {Size = UDim2.new(1,-2,0,0)})
-                currentHolderTween = TweenService:Create(contentHolder, ti, {Size = UDim2.new(1,-20,0,0)})
-                currentSectionTween = TweenService:Create(sectionFrame, ti, {Size = UDim2.new(0.96,0,0,46)})
-                task.delay((instant and 0 or 0.3)+0.05, function()
+                currentContentTween = TweenService:Create(contentContainerSection, ti, {Size = UDim2.new(1, -2, 0, 0)})
+                currentHolderTween = TweenService:Create(contentHolder, ti, {Size = UDim2.new(1, -20, 0, 0)})
+                currentSectionTween = TweenService:Create(sectionFrame, ti, {Size = UDim2.new(0.96, 0, 0, 46)})
+                task.delay((instant and 0 or 0.3) + 0.05, function()
                     if not open and contentContainerSection then
                         contentContainerSection.Visible = false
                         contentHolder.Visible = false
@@ -586,17 +567,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             currentHolderTween:Play()
             currentSectionTween:Play()
         end
+
         task.spawn(function() task.wait(); updateSectionHeight(true) end)
-        local function toggleSection()
-            open = not open
-            updateSwitch(true)
-            updateSectionHeight(false)
-        end
-        toggleBtn.MouseButton1Click:Connect(toggleSection)
-        topBg.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then toggleSection() end end)
-        table.insert(ThemeListeners, function() swStroke.Color = CurrentTheme.Stroke end)
-        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() if open then updateSectionHeight(false) end end)
-        contentHolder.ChildAdded:Connect(function() task.wait(0.05); if open then updateSectionHeight(false) end end)
+        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if open then updateSectionHeight(false) end
+        end)
+        contentHolder.ChildAdded:Connect(function()
+            task.wait(0.05)
+            if open then updateSectionHeight(false) end
+        end)
+
+        -- ======== 所有子控件定义（完全保留原样） ========
         local child = {}
 
         -- ========== Button ==========
