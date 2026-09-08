@@ -3008,34 +3008,36 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section ==========
-    -- 图标、标题、副标题作为内容的一部分，仅当 Collapsible = true 时显示
-    -- 折叠箭头在右上角，点击切换折叠状态
+    -- ========== 创建 Section（完整移植 miUI AddSection） ==========
     local function createSection(text, icons, defaultOpen)
-        -- 解析参数
+        -- 参数解析
         local titleText = ""
         local subtitleText = nil
         local iconAsset = nil
         local collapsible = false
+        local box = false
+        local open = true
+
         if defaultOpen == nil then defaultOpen = true end
-        if type(text)=="table" then
-            titleText = text.Name or ""
-            subtitleText = text.SubName
-            iconAsset = text.Logo
+
+        if type(text) == "table" then
+            titleText = text.Name or text.Title or ""
+            subtitleText = text.SubName or text.Subtitle
+            iconAsset = text.Logo or text.Icon
             collapsible = text.Collapsible == true
-            if text.open ~= nil then defaultOpen = text.open end
+            box = text.Box == true
+            if text.open ~= nil then open = text.open else open = defaultOpen end
         else
             titleText = text or ""
-            if type(icons)=="table" then
+            if type(icons) == "table" then
                 subtitleText = icons.subtitle
                 iconAsset = icons.icon
-                collapsible = icons.Collapsible == true
-            elseif type(icons)=="string" then
+            elseif type(icons) == "string" then
                 subtitleText = icons
             end
         end
 
-        -- 主容器（透明，负责整体尺寸）
+        -- 主容器
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(0.96, 0, 0, 46)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
@@ -3044,60 +3046,106 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
 
-        -- 折叠箭头（仅在 Collapsible = true 时显示）
-        local arrow = nil
-        local clickBtn = nil
-        if collapsible then
-            arrow = Instance.new("ImageLabel")
-            arrow.Size = UDim2.new(0, 24, 0, 24)
-            arrow.Position = UDim2.new(1, -8, 0, 8)
-            arrow.AnchorPoint = Vector2.new(1, 0)
-            arrow.BackgroundTransparency = 1
-            arrow.Image = "rbxassetid://8240930340"
-            arrow.ImageColor3 = CurrentTheme.Text
-            arrow.ImageTransparency = 0.5
-            arrow.Parent = sectionFrame
-            AddToRegistry(arrow, "ImageColor3", "Text")
-            arrow.Rotation = defaultOpen and 0 or 180
-            arrow.ZIndex = 5
+        -- 头部高度
+        local HEADER_HEIGHT = 46
+        local leftOffset = 16
 
-            clickBtn = Instance.new("TextButton")
-            clickBtn.Size = UDim2.new(0, 40, 0, 40)
-            clickBtn.Position = UDim2.new(1, -10, 0, 6)
-            clickBtn.AnchorPoint = Vector2.new(1, 0)
-            clickBtn.BackgroundTransparency = 1
-            clickBtn.Text = ""
-            clickBtn.Parent = sectionFrame
+        -- ===== 头部元素（直接挂在 sectionFrame 上，无独立背景框） =====
+
+        -- 图标（可选）
+        if iconAsset then
+            local icon = Instance.new("ImageLabel")
+            icon.Size = UDim2.new(0, 32, 0, 32)
+            icon.Position = UDim2.new(0, 10, 0.5, -16)
+            icon.BackgroundTransparency = 1
+            if tonumber(iconAsset) then icon.Image = "rbxassetid://"..iconAsset else icon.Image = iconAsset end
+            Instance.new("UICorner", icon).CornerRadius = UDim.new(0, 8)
+            icon.Parent = sectionFrame
+            AddToRegistry(icon, "ImageColor3", "Text")
+            leftOffset = 50
         end
 
-        -- 内容容器（带边框和背景）
+        -- 标题
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Size = UDim2.new(1, -80, 0, 19)
+        titleLabel.Position = subtitleText and UDim2.new(0, leftOffset, 0, 4) or UDim2.new(0, leftOffset, 0, 14)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.Text = titleText
+        titleLabel.TextSize = 15
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.Parent = sectionFrame
+        AddToRegistry(titleLabel, "TextColor3", "Text")
+
+        -- 副标题（可选）
+        if subtitleText then
+            local subLabel = Instance.new("TextLabel")
+            subLabel.Size = UDim2.new(1, -80, 0, 17)
+            subLabel.Position = UDim2.new(0, leftOffset, 0, 25)
+            subLabel.BackgroundTransparency = 1
+            subLabel.Font = Enum.Font.Gotham
+            subLabel.Text = subtitleText
+            subLabel.TextSize = 12
+            subLabel.TextTransparency = 0.5
+            subLabel.TextXAlignment = Enum.TextXAlignment.Left
+            subLabel.Parent = sectionFrame
+            AddToRegistry(subLabel, "TextColor3", "Text")
+        end
+
+        -- 折叠箭头（仅当 Collapsible = true 时显示）
+        local arrow = Instance.new("ImageLabel")
+        arrow.Size = UDim2.new(0, 24, 0, 24)
+        arrow.Position = UDim2.new(1, -8, 0.5, -12)
+        arrow.AnchorPoint = Vector2.new(1, 0.5)
+        arrow.BackgroundTransparency = 1
+        arrow.Image = "rbxassetid://8240930340"
+        arrow.ImageColor3 = CurrentTheme.Text
+        arrow.ImageTransparency = 0.5
+        arrow.Visible = collapsible
+        arrow.Parent = sectionFrame
+        AddToRegistry(arrow, "ImageColor3", "Text")
+        arrow.Rotation = open and 0 or 180
+
+        -- ===== 内容容器 =====
         local contentContainer = Instance.new("Frame")
-        contentContainer.Size = UDim2.new(1, -10, 0, 0)
-        contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
-        contentContainer.AnchorPoint = Vector2.new(0.5, 0)
-        contentContainer.BackgroundTransparency = 0.5
-        contentContainer.ClipsDescendants = true
+
+        if box then
+            -- Box 模式：带边框和背景，居中
+            contentContainer.Size = UDim2.new(1, -10, 0, 0)
+            contentContainer.Position = UDim2.new(0.5, 0, 0, HEADER_HEIGHT)
+            contentContainer.AnchorPoint = Vector2.new(0.5, 0)
+            contentContainer.BackgroundTransparency = 0.5
+            contentContainer.ClipsDescendants = true
+            AddToRegistry(contentContainer, "BackgroundColor3", "Main")
+
+            -- 边框描边
+            local contentStroke = Instance.new("UIStroke")
+            contentStroke.Thickness = 1
+            contentStroke.Transparency = 0.65
+            contentStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            contentStroke.Parent = contentContainer
+            AddToRegistry(contentStroke, "Color", "Stroke")
+
+            -- 圆角
+            local contentCorner = Instance.new("UICorner")
+            contentCorner.CornerRadius = UDim.new(0, 10)
+            contentCorner.Parent = contentContainer
+        else
+            -- 非 Box 模式：无边框，直接透明
+            contentContainer.Size = UDim2.new(1, 0, 0, 0)
+            contentContainer.Position = UDim2.new(0, 0, 0, HEADER_HEIGHT)
+            contentContainer.AnchorPoint = Vector2.new(0, 0)
+            contentContainer.BackgroundTransparency = 1
+            contentContainer.ClipsDescendants = true
+        end
+
         contentContainer.Parent = sectionFrame
-        AddToRegistry(contentContainer, "BackgroundColor3", "Main")
 
-        -- 边框描边
-        local contentStroke = Instance.new("UIStroke")
-        contentStroke.Thickness = 1
-        contentStroke.Transparency = 0.65
-        contentStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        contentStroke.Parent = contentContainer
-        AddToRegistry(contentStroke, "Color", "Stroke")
-
-        -- 圆角
-        local contentCorner = Instance.new("UICorner")
-        contentCorner.CornerRadius = UDim.new(0, 10)
-        contentCorner.Parent = contentContainer
-
-        -- 内部内容持有者
+        -- 内部内容持有者（子控件实际父级）
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1, -10, 0, 0)
-        contentHolder.Position = UDim2.new(0.5, 0, 0, 4)
-        contentHolder.AnchorPoint = Vector2.new(0.5, 0)
+        contentHolder.Size = UDim2.new(1, box and -10 or 0, 0, 0)
+        contentHolder.Position = box and UDim2.new(0.5, 0, 0, 4) or UDim2.new(0, 0, 0, 0)
+        contentHolder.AnchorPoint = box and Vector2.new(0.5, 0) or Vector2.new(0, 0)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = false
@@ -3116,59 +3164,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.Parent = contentHolder
 
-        -- ===== 仅在 Collapsible = true 时添加图标、标题、副标题作为内容的一部分 =====
-        local nextOrder = -100
-        if collapsible then
-            if iconAsset then
-                local icon = Instance.new("ImageLabel")
-                icon.Size = UDim2.new(0, 32, 0, 32)
-                icon.AnchorPoint = Vector2.new(0.5, 0)
-                icon.Position = UDim2.new(0.5, 0, 0, 0)
-                icon.BackgroundTransparency = 1
-                if tonumber(iconAsset) then icon.Image = "rbxassetid://"..iconAsset else icon.Image = iconAsset end
-                Instance.new("UICorner", icon).CornerRadius = UDim.new(0, 8)
-                icon.Parent = contentHolder
-                AddToRegistry(icon, "ImageColor3", "Text")
-                icon.LayoutOrder = nextOrder
-                nextOrder = nextOrder + 1
-            end
-
-            if titleText ~= "" then
-                local titleLabel = Instance.new("TextLabel")
-                titleLabel.Size = UDim2.new(1, -20, 0, 19)
-                titleLabel.AnchorPoint = Vector2.new(0.5, 0)
-                titleLabel.Position = UDim2.new(0.5, 0, 0, 0)
-                titleLabel.BackgroundTransparency = 1
-                titleLabel.Font = Enum.Font.GothamBold
-                titleLabel.Text = titleText
-                titleLabel.TextSize = 15
-                titleLabel.TextXAlignment = Enum.TextXAlignment.Center
-                titleLabel.Parent = contentHolder
-                AddToRegistry(titleLabel, "TextColor3", "Text")
-                titleLabel.LayoutOrder = nextOrder
-                nextOrder = nextOrder + 1
-            end
-
-            if subtitleText then
-                local subLabel = Instance.new("TextLabel")
-                subLabel.Size = UDim2.new(1, -20, 0, 17)
-                subLabel.AnchorPoint = Vector2.new(0.5, 0)
-                subLabel.Position = UDim2.new(0.5, 0, 0, 0)
-                subLabel.BackgroundTransparency = 1
-                subLabel.Font = Enum.Font.Gotham
-                subLabel.Text = subtitleText
-                subLabel.TextSize = 12
-                subLabel.TextTransparency = 0.5
-                subLabel.TextXAlignment = Enum.TextXAlignment.Center
-                subLabel.Parent = contentHolder
-                AddToRegistry(subLabel, "TextColor3", "Text")
-                subLabel.LayoutOrder = nextOrder
-                nextOrder = nextOrder + 1
-            end
-        end
-
-        -- ===== 折叠状态 =====
-        local open = defaultOpen
+        -- ===== 展开/收缩状态与动画 =====
         local currentSectionTween = nil
         local currentContainerTween = nil
 
@@ -3179,7 +3175,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function updateSectionHeight(instant)
             local actual = getContentHeight()
             local targetContainerHeight = open and (actual + 8) or 0
-            local targetSectionHeight = targetContainerHeight
+            local targetSectionHeight = HEADER_HEIGHT + targetContainerHeight
 
             if currentSectionTween then currentSectionTween:Cancel() end
             if currentContainerTween then currentContainerTween:Cancel() end
@@ -3191,8 +3187,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 contentHolder.Visible = true
             end
 
+            local containerSize = box and UDim2.new(1, -10, 0, targetContainerHeight) or UDim2.new(1, 0, 0, targetContainerHeight)
+
             currentContainerTween = TweenService:Create(contentContainer, ti, {
-                Size = UDim2.new(1, -10, 0, targetContainerHeight)
+                Size = containerSize
             })
             currentContainerTween:Play()
 
@@ -3214,13 +3212,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function toggleSection()
             if not collapsible then return end
             open = not open
-            if arrow then
-                Tween(arrow, {Rotation = open and 0 or 180}, 0.3)
-            end
+            Tween(arrow, {Rotation = open and 0 or 180}, 0.3)
             updateSectionHeight(false)
         end
 
-        if clickBtn then
+        -- 点击头部切换（仅当 Collapsible 为 true 时）
+        if collapsible then
+            local clickBtn = Instance.new("TextButton")
+            clickBtn.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT)
+            clickBtn.BackgroundTransparency = 1
+            clickBtn.Text = ""
+            clickBtn.Parent = sectionFrame
             clickBtn.MouseButton1Click:Connect(toggleSection)
         end
 
@@ -3236,6 +3238,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             task.wait(0.05)
             if open then updateSectionHeight(false) end
         end)
+
         contentHolder.ChildRemoved:Connect(function()
             task.wait(0.05)
             if open then updateSectionHeight(false) end
@@ -3251,27 +3254,72 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- 额外控制
+        -- 管理方法
         sectionObj.SetVisible = function(_, vis) sectionFrame.Visible = vis end
         sectionObj.SetOpen = function(_, state)
-            if collapsible then
-                open = state
-                toggleSection()
-            end
+            if not collapsible then return sectionObj end
+            open = state
+            Tween(arrow, {Rotation = open and 0 or 180}, 0.3)
+            updateSectionHeight(false)
+            return sectionObj
         end
-        sectionObj.Toggle = toggleSection
+        sectionObj.Toggle = function()
+            if collapsible then toggleSection() end
+            return sectionObj
+        end
         sectionObj.IsOpen = function() return open end
-        sectionObj.SetCollapsible = function(_, state)
-            collapsible = state
-            if not collapsible then
-                if arrow then arrow.Visible = false end
-                if clickBtn then clickBtn.Visible = false end
+        sectionObj.SetCollapsible = function(_, val)
+            collapsible = val == true
+            arrow.Visible = collapsible
+            if not collapsible and not open then
                 open = true
-                toggleSection()
-            else
-                if arrow then arrow.Visible = true end
-                if clickBtn then clickBtn.Visible = true end
+                updateSectionHeight(false)
             end
+            return sectionObj
+        end
+        sectionObj.SetBox = function(_, val)
+            box = val == true
+            -- 需要重建 contentContainer 样式
+            if box then
+                contentContainer.Size = UDim2.new(1, -10, 0, contentContainer.Size.Y.Offset)
+                contentContainer.Position = UDim2.new(0.5, 0, 0, HEADER_HEIGHT)
+                contentContainer.AnchorPoint = Vector2.new(0.5, 0)
+                contentContainer.BackgroundTransparency = 0.5
+                AddToRegistry(contentContainer, "BackgroundColor3", "Main")
+                -- 添加边框和圆角（如果不存在）
+                if not contentContainer:FindFirstChildOfClass("UIStroke") then
+                    local stroke = Instance.new("UIStroke")
+                    stroke.Thickness = 1
+                    stroke.Transparency = 0.65
+                    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                    stroke.Parent = contentContainer
+                    AddToRegistry(stroke, "Color", "Stroke")
+                end
+                if not contentContainer:FindFirstChildOfClass("UICorner") then
+                    local corner = Instance.new("UICorner")
+                    corner.CornerRadius = UDim.new(0, 10)
+                    corner.Parent = contentContainer
+                end
+                contentHolder.Size = UDim2.new(1, -10, 0, contentHolder.Size.Y.Offset)
+                contentHolder.Position = UDim2.new(0.5, 0, 0, 4)
+                contentHolder.AnchorPoint = Vector2.new(0.5, 0)
+            else
+                contentContainer.Size = UDim2.new(1, 0, 0, contentContainer.Size.Y.Offset)
+                contentContainer.Position = UDim2.new(0, 0, 0, HEADER_HEIGHT)
+                contentContainer.AnchorPoint = Vector2.new(0, 0)
+                contentContainer.BackgroundTransparency = 1
+                -- 移除边框和圆角
+                for _, child in ipairs(contentContainer:GetChildren()) do
+                    if child:IsA("UIStroke") or child:IsA("UICorner") then
+                        child:Destroy()
+                    end
+                end
+                contentHolder.Size = UDim2.new(1, 0, 0, contentHolder.Size.Y.Offset)
+                contentHolder.Position = UDim2.new(0, 0, 0, 0)
+                contentHolder.AnchorPoint = Vector2.new(0, 0)
+            end
+            updateSectionHeight(false)
+            return sectionObj
         end
 
         return sectionObj
@@ -3288,7 +3336,7 @@ function Fenglib:CreateWindow(Config)
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind
     local IconAsset = Config.Logo
-    local SceneId = Config.Scene
+    local SceneId = Config.Scene  -- 默认为 nil，背景图空
 
     if Config.Theme then
         if type(Config.Theme)=="string" then
@@ -3365,13 +3413,13 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
-    -- 多层阴影
+    -- ===== [MOD] 移除原有的描边（UIStroke），替换为 miUI 风格的多层阴影，颜色改为黑色 =====
     local shadowStrokes = {}
     local thicknesses = {6, 5, 4, 3}
     for _, thick in ipairs(thicknesses) do
         local stroke = Instance.new("UIStroke")
         stroke.Thickness = thick
-        stroke.Color = Color3.new(0, 0, 0)
+        stroke.Color = Color3.new(0, 0, 0)  -- 黑色
         stroke.Transparency = 1
         stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         stroke.Parent = MainFrame
@@ -3389,7 +3437,7 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- 背景图
+    -- 背景图（默认为空）
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1,0,1,0)
@@ -3426,7 +3474,7 @@ function Fenglib:CreateWindow(Config)
 
     setShadowVisible(false, true)
 
-    -- Resizer
+    -- Resizer (保留)
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
@@ -3557,7 +3605,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 左侧菜单
+    -- 左侧菜单（完整）
     local LeftMenuFrame = Instance.new("Frame")
     LeftMenuFrame.Size = UDim2.new(0, 175, 1, 0)
     LeftMenuFrame.BackgroundTransparency = 1
@@ -3704,7 +3752,7 @@ function Fenglib:CreateWindow(Config)
     LineFrame_3.Parent = RightHeader
     AddToRegistry(LineFrame_3, "BackgroundColor3", "Stroke")
 
-    -- 三按钮
+    -- 三按钮（与原来完全一致）
     local resizerVisible = false
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
@@ -3930,7 +3978,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- Window:Category
+    -- ===== Window:Category =====
     Window._currentCategory = nil
     function Window:Category(config)
         local name = type(config)=="table" and config.Name or config
@@ -4026,7 +4074,7 @@ function Fenglib:CreateWindow(Config)
         return Window._currentCategory
     end
 
-    -- Window:Tab
+    -- ===== Window:Tab =====
     Window._activeTab = nil
     Window._tabs = {}
     function Window:Tab(name, icon)
@@ -4044,6 +4092,8 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Parent = parentContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
+        -- 移除 TabBar 指示条
+        -- 改用发光背景（可保留或移除，这里保留与原来一致）
         local glowFrame = Instance.new("Frame")
         glowFrame.Name = "GlowBackground"
         glowFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -4174,11 +4224,12 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
+        -- 获取构建器函数（返回一个表，包含 Section 和所有控件方法）
         local builder = createSectionBuilder(PageContent, PageContent, 330, 1, Window)
         return builder
     end
 
-    -- TabDivider
+    -- ===== TabDivider =====
     function Window:TabDivider()
         local parentContainer = LeftScrollingFrame
         if Window._currentCategory then
@@ -4195,7 +4246,7 @@ function Fenglib:CreateWindow(Config)
         table.insert(ThemeListeners, function() line.BackgroundColor3 = CurrentTheme.Stroke end)
     end
 
-    -- Dialog
+    -- ===== Dialog =====
     function Window:Dialog(Config)
         Config = Config or {}
         local Dialog = {Closed = false}
@@ -4358,8 +4409,9 @@ function Fenglib:CreateWindow(Config)
         return Dialog
     end
 
+    -- ===== Notification =====
     function Window:Notification(titleText, descText, notifType, duration)
-        -- 保持原有实现
+        -- 保持原有实现（此处略，可按需要添加）
     end
 
     function Window:SetKeybind(key) Keybind = key end
