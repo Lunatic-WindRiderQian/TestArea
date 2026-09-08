@@ -3008,7 +3008,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section（miUI 风格：带标题、副标题、图标、折叠，无头部背景框） ==========
+    -- ========== 创建 Section（miUI 风格：标题在内容左上角，无头部背景框） ==========
     local function createSection(text, icons, defaultOpen)
         -- 参数解析
         local titleText = ""
@@ -3043,7 +3043,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local HEADER_HEIGHT = 46
         local leftOffset = 16
 
-        -- 图标（可选）
+        -- 图标（可选）- 在内容左上角
         if iconAsset and tostring(iconAsset) ~= "" then
             local icon = Instance.new("ImageLabel")
             icon.Size = UDim2.new(0, 32, 0, 32)
@@ -3062,7 +3062,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             leftOffset = 50
         end
 
-        -- 主标题
+        -- 主标题 - 在内容左上角
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Size = UDim2.new(1, -80, 0, 19)
         titleLabel.Position = subtitleText and UDim2.new(0, leftOffset, 0, 4) or UDim2.new(0, leftOffset, 0, 14)
@@ -3074,7 +3074,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         titleLabel.Parent = sectionFrame
         AddToRegistry(titleLabel, "TextColor3", "Text")
 
-        -- 副标题（可选）
+        -- 副标题（可选）- 在内容左上角
         if subtitleText and tostring(subtitleText) ~= "" then
             local subLabel = Instance.new("TextLabel")
             subLabel.Size = UDim2.new(1, -80, 0, 17)
@@ -3089,7 +3089,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(subLabel, "TextColor3", "Text")
         end
 
-        -- 折叠箭头
+        -- 折叠箭头 - 在内容右上角
         local arrow = Instance.new("ImageLabel")
         arrow.Size = UDim2.new(0, 24, 0, 24)
         arrow.Position = UDim2.new(1, -8, 0.5, -12)
@@ -3102,7 +3102,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(arrow, "ImageColor3", "Text")
         arrow.Rotation = defaultOpen and 0 or -90
 
-        -- 内容容器（带边框和背景，独立于头部）
+        -- 内容容器（带边框和背景，在标题下方）
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, -10, 0, 0)
         contentContainer.Position = UDim2.new(0.5, 0, 0, HEADER_HEIGHT)
@@ -3198,7 +3198,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             updateSectionHeight(false)
         end
 
-        -- 点击头部切换（透明按钮覆盖头部区域）
+        -- 点击头部切换（透明按钮覆盖标题区域）
         local clickBtn = Instance.new("TextButton")
         clickBtn.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT)
         clickBtn.BackgroundTransparency = 1
@@ -3229,7 +3229,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- 管理方法
+        -- miUI AddSection 管理方法
         sectionObj.SetVisible = function(_, vis) sectionFrame.Visible = vis end
         sectionObj.SetCollapsed = function(_, state)
             isOpen = not state
