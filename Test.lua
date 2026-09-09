@@ -861,7 +861,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     if locked then return end
                     if multi then
                         local idx = table.find(selected, opt)
-                        if idx then table.remove(selected, opt); optData.selected=false
+                        if idx then table.remove(selected, idx); optData.selected=false
                         else table.insert(selected, opt); optData.selected=true end
                         optData.check.BackgroundTransparency = optData.selected and 0 or 1
                         optData.checkGrad.Transparency = optData.selected and NumberSequence.new(0,0,1,0.7) or NumberSequence.new(1)
@@ -3008,167 +3008,101 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Groupbox（替换原 Section） ==========
-    local function createSection(config)
-        -- 参数解析
-        local titleText = "Group"
-        local collapsible = false
-        local opened = true
-        if type(config) == "string" then
-            titleText = config
-        elseif type(config) == "table" then
-            titleText = config.Name or "Group"
-            collapsible = config.Collapsible == true
-            if config.Opened ~= nil then opened = config.Opened end
-        end
+    -- ========== 创建 Section（纯内容容器，无头部） ==========
+    local function createSection(text, icons, defaultOpen)
+        -- 参数完全忽略
 
-        -- 主容器（Groupbox）
-        local box = Instance.new("Frame")
-        box.Size = UDim2.new(1, 0, 0, 100)
-        box.BackgroundTransparency = 0.05
-        box.ClipsDescendants = true
-        box.Parent = parent
-        AddToRegistry(box, "BackgroundColor3", "Top")
+        -- 主容器（透明，自动适应高度）
+        local sectionFrame = Instance.new("Frame")
+        sectionFrame.Size = UDim2.new(0.96, 0, 0, 0)
+        sectionFrame.AnchorPoint = Vector2.new(0, 0)
+        sectionFrame.Position = UDim2.new(0, 0, 0, 0)
+        sectionFrame.BackgroundTransparency = 1
+        sectionFrame.ClipsDescendants = true
+        sectionFrame.Parent = parent
+        sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
 
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 8)
-        corner.Parent = box
+        -- 内容容器（带边框和背景，无顶部偏移）
+        local contentContainer = Instance.new("Frame")
+        contentContainer.Size = UDim2.new(1, -10, 0, 0)
+        contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
+        contentContainer.AnchorPoint = Vector2.new(0.5, 0)
+        contentContainer.BackgroundTransparency = 0.5
+        contentContainer.ClipsDescendants = true
+        contentContainer.Parent = sectionFrame
+        AddToRegistry(contentContainer, "BackgroundColor3", "Main")
 
-        local stroke = Instance.new("UIStroke")
-        stroke.Thickness = 1
-        stroke.Transparency = 0.6
-        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        stroke.Parent = box
-        AddToRegistry(stroke, "Color", "Stroke")
+        -- 边框描边
+        local contentStroke = Instance.new("UIStroke")
+        contentStroke.Thickness = 1
+        contentStroke.Transparency = 0.65
+        contentStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        contentStroke.Parent = contentContainer
+        AddToRegistry(contentStroke, "Color", "Stroke")
 
-        -- 标题和折叠箭头
-        local headerOffset = 10
-        local header = Instance.new("TextLabel")
-        header.Size = UDim2.new(1, -20, 0, 28)
-        header.Position = UDim2.new(0, headerOffset, 0, 0)
-        header.BackgroundTransparency = 1
-        header.Text = titleText
-        header.Font = Enum.Font.GothamBold
-        header.TextSize = 14
-        header.TextXAlignment = Enum.TextXAlignment.Left
-        header.Parent = box
-        AddToRegistry(header, "TextColor3", "Accent")
+        -- 圆角
+        local contentCorner = Instance.new("UICorner")
+        contentCorner.CornerRadius = UDim.new(0, 10)
+        contentCorner.Parent = contentContainer
 
-        local arrow = nil
-        if collapsible then
-            arrow = Instance.new("ImageLabel")
-            arrow.Size = UDim2.new(0, 16, 0, 16)
-            arrow.Position = UDim2.new(1, -20, 0, 6)
-            arrow.BackgroundTransparency = 1
-            arrow.Image = "rbxassetid://122444883127455"  -- 向下箭头
-            arrow.Rotation = opened and 0 or 180
-            arrow.Parent = box
-            AddToRegistry(arrow, "ImageColor3", "Text")
-        end
+        -- 内部内容持有者（子控件实际父级）
+        local contentHolder = Instance.new("Frame")
+        contentHolder.Size = UDim2.new(1, -10, 0, 0)
+        contentHolder.Position = UDim2.new(0.5, 0, 0, 4)
+        contentHolder.AnchorPoint = Vector2.new(0.5, 0)
+        contentHolder.BackgroundTransparency = 1
+        contentHolder.AutomaticSize = Enum.AutomaticSize.None
+        contentHolder.ClipsDescendants = false
+        contentHolder.Parent = contentContainer
 
-        -- 内容区域
-        local content = Instance.new("Frame")
-        content.Name = "Content"
-        content.Size = UDim2.new(1, 0, 0, 0)
-        content.Position = UDim2.new(0, 0, 0, 32)
-        content.BackgroundTransparency = 1
-        content.Parent = box
-
+        -- 布局
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 8)
+        contentLayout.Padding = UDim.new(0, 6)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        contentLayout.Parent = content
+        contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        contentLayout.Parent = contentHolder
 
-        local contentPadding = Instance.new("UIPadding")
-        contentPadding.PaddingLeft = UDim.new(0, 12)
-        contentPadding.PaddingRight = UDim.new(0, 12)
-        contentPadding.PaddingBottom = UDim.new(0, 10)
-        contentPadding.PaddingTop = UDim.new(0, 4)
-        contentPadding.Parent = content
+        -- 底部留白
+        local bottomPadding = Instance.new("Frame")
+        bottomPadding.Size = UDim2.new(1, 0, 0, 4)
+        bottomPadding.BackgroundTransparency = 1
+        bottomPadding.Parent = contentHolder
 
-        -- 高度更新逻辑
-        local contentHeight = 0
-        local isOpen = opened
+        -- 内容可见
+        contentContainer.Visible = true
+        contentHolder.Visible = true
 
-        local function updateSize()
-            contentHeight = contentLayout.AbsoluteContentSize.Y or 0
-            local totalHeight = 32 + contentHeight + 10
-            if isOpen then
-                box.Size = UDim2.new(1, 0, 0, totalHeight)
-            else
-                box.Size = UDim2.new(1, 0, 0, 32)
-            end
-            content.Size = UDim2.new(1, 0, 0, contentHeight + 10)
+        -- 动态调整容器高度以适应子控件
+        local function updateHeight()
+            local actual = contentLayout.AbsoluteContentSize.Y or 0
+            local targetContainerHeight = actual + 8  -- 上下内边距 4+4
+            contentContainer.Size = UDim2.new(1, -10, 0, targetContainerHeight)
+            sectionFrame.Size = UDim2.new(0.96, 0, 0, targetContainerHeight)
         end
 
-        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSize)
-        content.ChildAdded:Connect(function() task.wait(0.05); updateSize() end)
-        content.ChildRemoved:Connect(function() task.wait(0.05); updateSize() end)
-        task.defer(updateSize)
+        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateHeight)
+        contentHolder.ChildAdded:Connect(function()
+            task.wait(0.05)
+            updateHeight()
+        end)
+        contentHolder.ChildRemoved:Connect(function()
+            task.wait(0.05)
+            updateHeight()
+        end)
+        task.defer(updateHeight)
 
-        -- 折叠切换
-        local function toggleGroup()
-            if not collapsible then return end
-            isOpen = not isOpen
-            if arrow then
-                Tween(arrow, {Rotation = isOpen and 0 or 180}, 0.3)
-            end
-            updateSize()
-        end
-
-        if collapsible then
-            -- 点击标题切换
-            local headerBtn = Instance.new("TextButton")
-            headerBtn.Size = UDim2.new(1, 0, 0, 28)
-            headerBtn.Position = UDim2.new(0, 0, 0, 0)
-            headerBtn.BackgroundTransparency = 1
-            headerBtn.Text = ""
-            headerBtn.ZIndex = 5
-            headerBtn.Parent = box
-            headerBtn.MouseButton1Click:Connect(toggleGroup)
-        end
-
-        -- 构建子控件方法表
+        -- 返回控件构建接口
         local sectionObj = {}
         for methodName, methodFn in pairs(child) do
-            sectionObj[methodName] = function(_, cfg)
-                cfg = cfg or {}
-                cfg.Parent = content
-                return methodFn(_, cfg)
+            sectionObj[methodName] = function(_, config)
+                config = config or {}
+                config.Parent = contentHolder
+                return methodFn(_, config)
             end
         end
 
-        -- 额外方法
-        sectionObj.SetVisible = function(_, vis)
-            box.Visible = vis
-        end
-
-        -- ★ 新增：更新标题
-        sectionObj.SetTitle = function(_, newTitle)
-            header.Text = newTitle
-        end
-
-        -- 锁功能（保留）
-        local locked = false
-        local lockedTitle = "Locked"
-        local lockFrame, lockLabel = createLockOverlay(box, lockedTitle)
-        lockFrame.Visible = false
-        local function updateLock(state, title)
-            locked = state
-            lockFrame.Visible = state
-            if title then lockLabel.Text = title end
-        end
-        sectionObj.Lock = function(_, title) updateLock(true, title) end
-        sectionObj.Unlock = function() updateLock(false) end
-        sectionObj.IsLocked = function() return locked end
-
-        -- 折叠状态控制
-        sectionObj.SetOpen = function(_, open)
-            isOpen = open
-            if arrow then Tween(arrow, {Rotation = isOpen and 0 or 180}, 0.3) end
-            updateSize()
-        end
-        sectionObj.IsOpen = function() return isOpen end
+        -- 仅保留可见性控制
+        sectionObj.SetVisible = function(_, vis) sectionFrame.Visible = vis end
 
         return sectionObj
     end
