@@ -3008,9 +3008,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section（纯内容容器，无头部） ==========
+    -- ========== Section（替换为 Groupbox 样式） ==========
     local function createSection(text, icons, defaultOpen)
-        -- 参数完全忽略
+        local collapsible = (defaultOpen ~= nil)
+        local opened = (defaultOpen ~= false) -- 未指定时默认展开
+        if defaultOpen == nil then opened = true end
 
         -- 主容器（透明，自动适应高度）
         local sectionFrame = Instance.new("Frame")
@@ -3020,9 +3022,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionFrame.BackgroundTransparency = 1
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
-        sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
+        sectionFrame.AutomaticSize = Enum.AutomaticSize.None
 
-        -- 内容容器（带边框和背景，无顶部偏移）
+        -- 内容容器（带背景、边框、圆角）
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, -10, 0, 0)
         contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
@@ -3032,7 +3034,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainer.Parent = sectionFrame
         AddToRegistry(contentContainer, "BackgroundColor3", "Main")
 
-        -- 边框描边
         local contentStroke = Instance.new("UIStroke")
         contentStroke.Thickness = 1
         contentStroke.Transparency = 0.65
@@ -3040,15 +3041,74 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainer
         AddToRegistry(contentStroke, "Color", "Stroke")
 
-        -- 圆角
         local contentCorner = Instance.new("UICorner")
         contentCorner.CornerRadius = UDim.new(0, 10)
         contentCorner.Parent = contentContainer
 
-        -- 内部内容持有者（子控件实际父级）
+        -- 头部（标题 + 折叠箭头）
+        local headerHeight = 32
+        local header = nil
+        local arrow = nil
+        local headerBtn = nil
+        local titleLabel = nil
+
+        if text and text ~= "" then
+            header = Instance.new("Frame")
+            header.Size = UDim2.new(1, 0, 0, headerHeight)
+            header.BackgroundTransparency = 1
+            header.Parent = contentContainer
+
+            titleLabel = Instance.new("TextLabel")
+            titleLabel.Size = UDim2.new(1, -40, 1, 0)
+            titleLabel.Position = UDim2.new(0, 12, 0, 0)
+            titleLabel.BackgroundTransparency = 1
+            titleLabel.Font = Enum.Font.GothamBold
+            titleLabel.Text = text
+            titleLabel.TextSize = 14
+            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            titleLabel.Parent = header
+            AddToRegistry(titleLabel, "TextColor3", "Text")
+
+            -- 图标
+            if icons and icons ~= "" then
+                local iconImg = Instance.new("ImageLabel")
+                iconImg.Size = UDim2.new(0, 16, 0, 16)
+                iconImg.Position = UDim2.new(0, 12, 0.5, -8)
+                iconImg.BackgroundTransparency = 1
+                if tonumber(icons) then
+                    iconImg.Image = "rbxassetid://" .. icons
+                else
+                    iconImg.Image = icons
+                end
+                iconImg.Parent = header
+                AddToRegistry(iconImg, "ImageColor3", "Accent")
+                titleLabel.Position = UDim2.new(0, 36, 0, 0)
+            end
+
+            -- 折叠箭头
+            if collapsible then
+                arrow = Instance.new("ImageLabel")
+                arrow.Size = UDim2.new(0, 16, 0, 16)
+                arrow.Position = UDim2.new(1, -20, 0.5, -8)
+                arrow.AnchorPoint = Vector2.new(1, 0.5)
+                arrow.BackgroundTransparency = 1
+                arrow.Image = "rbxassetid://122444883127455" -- 向下箭头
+                arrow.Rotation = opened and 0 or 180
+                arrow.Parent = header
+                AddToRegistry(arrow, "ImageColor3", "Text")
+
+                headerBtn = Instance.new("TextButton")
+                headerBtn.Size = UDim2.new(1, 0, 1, 0)
+                headerBtn.BackgroundTransparency = 1
+                headerBtn.Text = ""
+                headerBtn.Parent = header
+            end
+        end
+
+        -- 内容持有者（子控件实际父级）
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -10, 0, 0)
-        contentHolder.Position = UDim2.new(0.5, 0, 0, 4)
+        contentHolder.Position = UDim2.new(0.5, 0, header and headerHeight or 0)
         contentHolder.AnchorPoint = Vector2.new(0.5, 0)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
@@ -3068,14 +3128,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.Parent = contentHolder
 
-        -- 内容可见
-        contentContainer.Visible = true
-        contentHolder.Visible = true
-
-        -- 动态调整容器高度以适应子控件
+        -- 动态更新高度
         local function updateHeight()
+            if not opened then return end
             local actual = contentLayout.AbsoluteContentSize.Y or 0
-            local targetContainerHeight = actual + 8  -- 上下内边距 4+4
+            local headerOffset = header and headerHeight or 0
+            local targetContainerHeight = actual + 8 + headerOffset
             contentContainer.Size = UDim2.new(1, -10, 0, targetContainerHeight)
             sectionFrame.Size = UDim2.new(0.96, 0, 0, targetContainerHeight)
         end
@@ -3089,9 +3147,37 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             task.wait(0.05)
             updateHeight()
         end)
-        task.defer(updateHeight)
 
-        -- 返回控件构建接口
+        -- 初始折叠状态
+        if not opened then
+            local headerOffset = header and headerHeight or 0
+            contentContainer.Size = UDim2.new(1, -10, 0, headerOffset + 4)
+            sectionFrame.Size = UDim2.new(0.96, 0, 0, headerOffset + 4)
+        else
+            task.defer(updateHeight)
+        end
+
+        -- 折叠切换逻辑
+        if collapsible and headerBtn then
+            headerBtn.MouseButton1Click:Connect(function()
+                opened = not opened
+                local headerOffset = header and headerHeight or 0
+                local targetHeight
+                if opened then
+                    local actual = contentLayout.AbsoluteContentSize.Y or 0
+                    targetHeight = actual + 8 + headerOffset
+                else
+                    targetHeight = headerOffset + 4
+                end
+                Tween(contentContainer, {Size = UDim2.new(1, -10, 0, targetHeight)}, 0.3)
+                Tween(sectionFrame, {Size = UDim2.new(0.96, 0, 0, targetHeight)}, 0.3)
+                if arrow then
+                    Tween(arrow, {Rotation = opened and 0 or 180}, 0.3)
+                end
+            end)
+        end
+
+        -- 返回控件构建接口（与原来完全一致）
         local sectionObj = {}
         for methodName, methodFn in pairs(child) do
             sectionObj[methodName] = function(_, config)
@@ -3101,9 +3187,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- 仅保留可见性控制
         sectionObj.SetVisible = function(_, vis) sectionFrame.Visible = vis end
-
         return sectionObj
     end
 
