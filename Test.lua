@@ -11,6 +11,7 @@
       - 窗口大小固定为 500×320
       - 背景图默认为空（不显示任何图片）
       - 主题仅保留 Dark、Charcoal、AMOLED
+      - Section 的标题样式从 RedOnyx 的 Groupbox 移植，仅接受表参数 { Name = "标题" }
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -861,7 +862,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     if locked then return end
                     if multi then
                         local idx = table.find(selected, opt)
-                        if idx then table.remove(selected, opt); optData.selected=false
+                        if idx then table.remove(selected, idx); optData.selected=false
                         else table.insert(selected, opt); optData.selected=true end
                         optData.check.BackgroundTransparency = optData.selected and 0 or 1
                         optData.checkGrad.Transparency = optData.selected and NumberSequence.new(0,0,1,0.7) or NumberSequence.new(1)
@@ -3004,310 +3005,115 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return mod
     end
 
-    -- ========== 返回构建器 ==========
-    local functions = {}
-    for k, v in pairs(child) do functions[k] = v end
+    -- ========== 修改后的 Section（仅接受表参数 { Name = "标题" }） ==========
+    local function createSection(config)
+        -- 只接受表参数，提取 Name 字段
+        local text = (type(config) == "table" and config.Name) or ""
 
-    -- ========== 创建 Section（完全采用 UI.lua 样式） ==========
-    local function createSection(text, icons, defaultOpen)
-        -- 参数解析（兼容字符串、表、以及原有的 icons 结构）
-        local titleText = ""
-        local subtitleText = nil
-        local iconAsset = nil
-        if defaultOpen == nil then defaultOpen = true end
-        if type(text) == "table" then
-            titleText = text.Name or ""
-            subtitleText = text.SubName
-            iconAsset = text.Logo
-            if text.open ~= nil then defaultOpen = text.open end
-            -- 额外支持 Collapsible 和 Opened（来自 Test.lua 原有调用）
-            if text.Collapsible ~= nil then defaultOpen = text.Opened end
-        else
-            titleText = text or ""
-            if type(icons) == "table" then
-                subtitleText = icons.subtitle
-                iconAsset = icons.icon
-            elseif type(icons) == "string" then
-                subtitleText = icons
-            end
-        end
-
+        -- 主容器（透明，自动适应高度）
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(0.96,0,0,46)
-        sectionFrame.AnchorPoint = Vector2.new(0,0)
-        sectionFrame.Position = UDim2.new(0,0,0,0)
-        sectionFrame.BackgroundTransparency = 0.92
+        sectionFrame.Size = UDim2.new(0.96, 0, 0, 0)
+        sectionFrame.AnchorPoint = Vector2.new(0, 0)
+        sectionFrame.Position = UDim2.new(0, 0, 0, 0)
+        sectionFrame.BackgroundTransparency = 1
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
-        Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0,4)
-        AddToRegistry(sectionFrame, "BackgroundColor3", "Main")
-        local sectionStroke = Instance.new("UIStroke")
-        sectionStroke.Thickness = 1
-        sectionStroke.Color = CurrentTheme.Stroke
-        sectionStroke.Transparency = 0.6
-        sectionStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        sectionStroke.Parent = sectionFrame
-        table.insert(ThemeListeners, function() sectionStroke.Color = CurrentTheme.Stroke end)
+        sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
 
-        local titleBar = Instance.new("Frame")
-        titleBar.Size = UDim2.new(1,0,0,46)
-        titleBar.BackgroundTransparency = 0.65
-        titleBar.ClipsDescendants = true
-        titleBar.Parent = sectionFrame
-        Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0,4)
-        AddToRegistry(titleBar, "BackgroundColor3", "Stroke")
+        -- 内容容器（带边框和背景）
+        local contentContainer = Instance.new("Frame")
+        contentContainer.Size = UDim2.new(1, -10, 0, 0)
+        contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
+        contentContainer.AnchorPoint = Vector2.new(0.5, 0)
+        contentContainer.BackgroundTransparency = 0.5
+        contentContainer.ClipsDescendants = true
+        contentContainer.Parent = sectionFrame
+        AddToRegistry(contentContainer, "BackgroundColor3", "Main")
 
-        local topBg = Instance.new("Frame")
-        topBg.Size = UDim2.new(1,-2,1,-2)
-        topBg.Position = UDim2.new(0,1,0,1)
-        topBg.BackgroundTransparency = 0.65
-        topBg.ClipsDescendants = true
-        topBg.Parent = titleBar
-        Instance.new("UICorner", topBg).CornerRadius = UDim.new(0,4)
-        AddToRegistry(topBg, "BackgroundColor3", "Top")
-
-        local leftOffset = 16
-        if iconAsset then
-            local icon = Instance.new("ImageLabel")
-            icon.Size = UDim2.new(0,32,0,32)
-            icon.Position = UDim2.new(0,10,0.5,-16)
-            icon.BackgroundTransparency = 1
-            if tonumber(iconAsset) then icon.Image = "rbxassetid://"..iconAsset else icon.Image = iconAsset end
-            Instance.new("UICorner", icon).CornerRadius = UDim.new(0,8)
-            icon.Parent = topBg
-            AddToRegistry(icon, "ImageColor3", "Text")
-            leftOffset = 50
-        end
-
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(1,-80,0,19)
-        titleLabel.Position = subtitleText and UDim2.new(0,leftOffset,0,4) or UDim2.new(0,leftOffset,0,14)
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.Font = Enum.Font.GothamBold
-        titleLabel.Text = titleText
-        titleLabel.TextSize = 15
-        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        titleLabel.Parent = topBg
-        AddToRegistry(titleLabel, "TextColor3", "Text")
-        if subtitleText then
-            local subLabel = Instance.new("TextLabel")
-            subLabel.Size = UDim2.new(1,-80,0,17)
-            subLabel.Position = UDim2.new(0,leftOffset,0,25)
-            subLabel.BackgroundTransparency = 1
-            subLabel.Font = Enum.Font.Gotham
-            subLabel.Text = subtitleText
-            subLabel.TextSize = 12
-            subLabel.TextTransparency = 0.5
-            subLabel.TextXAlignment = Enum.TextXAlignment.Left
-            subLabel.Parent = topBg
-            AddToRegistry(subLabel, "TextColor3", "Text")
-        end
-
-        local open = defaultOpen
-        local toggleBtn = Instance.new("TextButton")
-        toggleBtn.Size = UDim2.new(0,42,0,22)
-        toggleBtn.Position = UDim2.new(1,-52,0.5,-11)
-        toggleBtn.BackgroundTransparency = 1
-        toggleBtn.Text = ""
-        toggleBtn.Parent = topBg
-        toggleBtn.ZIndex = 3
-
-        local switchBg = Instance.new("Frame")
-        switchBg.Size = UDim2.new(1,0,1,0)
-        switchBg.BackgroundColor3 = open and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
-        switchBg.Parent = toggleBtn
-        Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1,0)
-
-        local swStroke = Instance.new("UIStroke")
-        swStroke.Thickness = 1
-        swStroke.Transparency = 0.6
-        swStroke.Parent = switchBg
-        AddToRegistry(swStroke, "Color", "Stroke")
-
-        local leftLabel = Instance.new("TextLabel")
-        leftLabel.Size = UDim2.new(0.5,0,1,0)
-        leftLabel.Position = UDim2.new(0,4,0,0)
-        leftLabel.BackgroundTransparency = 1
-        leftLabel.Font = Enum.Font.GothamBold
-        leftLabel.Text = "I"
-        leftLabel.TextSize = 12
-        leftLabel.TextColor3 = open and Color3.new(1,1,1) or Color3.fromRGB(150,150,150)
-        leftLabel.TextTransparency = open and 0 or 0.6
-        leftLabel.TextXAlignment = Enum.TextXAlignment.Left
-        leftLabel.TextYAlignment = Enum.TextYAlignment.Center
-        leftLabel.Parent = switchBg
-
-        local rightLabel = Instance.new("TextLabel")
-        rightLabel.Size = UDim2.new(0.5,0,1,0)
-        rightLabel.Position = UDim2.new(0.5,-4,0,0)
-        rightLabel.BackgroundTransparency = 1
-        rightLabel.Font = Enum.Font.GothamBold
-        rightLabel.Text = "O"
-        rightLabel.TextSize = 12
-        rightLabel.TextColor3 = open and Color3.fromRGB(150,150,150) or Color3.new(1,1,1)
-        rightLabel.TextTransparency = open and 0.6 or 0
-        rightLabel.TextXAlignment = Enum.TextXAlignment.Right
-        rightLabel.TextYAlignment = Enum.TextYAlignment.Center
-        rightLabel.Parent = switchBg
-
-        local dot = Instance.new("Frame")
-        dot.Size = UDim2.new(0,16,0,16)
-        dot.Position = open and UDim2.new(1,-19,0.5,-8) or UDim2.new(0,3,0.5,-8)
-        dot.BackgroundColor3 = Color3.new(1,1,1)
-        dot.Parent = switchBg
-        Instance.new("UICorner", dot).CornerRadius = UDim.new(1,0)
-
-        local function updateSwitch(animate)
-            local targetBg = open and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
-            local dotTarget = open and UDim2.new(1,-19,0.5,-8) or UDim2.new(0,3,0.5,-8)
-            local leftColor = open and Color3.new(1,1,1) or Color3.fromRGB(150,150,150)
-            local rightColor = open and Color3.fromRGB(150,150,150) or Color3.new(1,1,1)
-            local leftTrans = open and 0 or 0.6
-            local rightTrans = open and 0.6 or 0
-            if animate then
-                Tween(switchBg, {BackgroundColor3 = targetBg})
-                Tween(dot, {Position = dotTarget})
-                Tween(leftLabel, {TextColor3 = leftColor, TextTransparency = leftTrans})
-                Tween(rightLabel, {TextColor3 = rightColor, TextTransparency = rightTrans})
-            else
-                switchBg.BackgroundColor3 = targetBg
-                dot.Position = dotTarget
-                leftLabel.TextColor3 = leftColor
-                leftLabel.TextTransparency = leftTrans
-                rightLabel.TextColor3 = rightColor
-                rightLabel.TextTransparency = rightTrans
-            end
-        end
-        updateSwitch(false)
-
-        local contentContainerSection = Instance.new("Frame")
-        contentContainerSection.Size = UDim2.new(1,-2,0,0)
-        contentContainerSection.Position = UDim2.new(0,1,0,46)
-        contentContainerSection.BackgroundTransparency = 0.65
-        contentContainerSection.ClipsDescendants = false
-        contentContainerSection.Parent = sectionFrame
-        AddToRegistry(contentContainerSection, "BackgroundColor3", "Main")
-        Instance.new("UICorner", contentContainerSection).CornerRadius = UDim.new(0,4)
+        -- 边框描边
         local contentStroke = Instance.new("UIStroke")
         contentStroke.Thickness = 1
-        contentStroke.Transparency = 0.6
+        contentStroke.Transparency = 0.65
         contentStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        contentStroke.Parent = contentContainerSection
+        contentStroke.Parent = contentContainer
         AddToRegistry(contentStroke, "Color", "Stroke")
 
+        -- 圆角
+        local contentCorner = Instance.new("UICorner")
+        contentCorner.CornerRadius = UDim.new(0, 10)
+        contentCorner.Parent = contentContainer
+
+        -- ===== 标题标签（来自 RedOnyx 的 Groupbox 样式） =====
+        local titleLabel = nil
+        local titleHeight = 0
+        if text ~= "" then
+            titleLabel = Instance.new("TextLabel")
+            titleLabel.Size = UDim2.new(1, -20, 0, 25)
+            titleLabel.Position = UDim2.new(0, 10, 0, 0)
+            titleLabel.BackgroundTransparency = 1
+            titleLabel.Font = Enum.Font.GothamBold
+            titleLabel.TextSize = 13
+            titleLabel.Text = text
+            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            titleLabel.Parent = contentContainer
+            AddToRegistry(titleLabel, "TextColor3", "Accent")
+            titleHeight = 30  -- 标题高度(25) + 底部间距(5)
+        end
+
+        -- 内部内容持有者（子控件实际父级）
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1,-20,0,0)
-        contentHolder.Position = UDim2.new(0,10,0,4)
+        contentHolder.Size = UDim2.new(1, -10, 0, 0)
+        contentHolder.Position = UDim2.new(0.5, 0, 0, titleHeight)
+        contentHolder.AnchorPoint = Vector2.new(0.5, 0)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = false
-        contentHolder.Parent = contentContainerSection
+        contentHolder.Parent = contentContainer
 
+        -- 内容布局
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0,6)
+        contentLayout.Padding = UDim.new(0, 6)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         contentLayout.Parent = contentHolder
 
+        -- 底部留白
         local bottomPadding = Instance.new("Frame")
-        bottomPadding.Size = UDim2.new(1,0,0,4)
+        bottomPadding.Size = UDim2.new(1, 0, 0, 4)
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.Parent = contentHolder
 
-        local currentContentTween, currentSectionTween, currentHolderTween, currentBgTween
-
-        local function getContentHeight() return contentLayout.AbsoluteContentSize.Y end
-
-        local function updateSectionHeight(instant)
-            local actual = getContentHeight()
-            local targetContent = open and math.max(0, actual) or 0
-            local targetContainer = targetContent + 16
-            local targetSection = 46 + targetContainer
-            if currentContentTween then currentContentTween:Cancel() end
-            if currentSectionTween then currentSectionTween:Cancel() end
-            if currentHolderTween then currentHolderTween:Cancel() end
-            if currentBgTween then currentBgTween:Cancel() end
-            local ti = TweenInfo.new(instant and 0 or 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-            if open then
-                contentContainerSection.Visible = true
-                contentHolder.Visible = true
-                currentBgTween = TweenService:Create(contentContainerSection, ti, {BackgroundTransparency = 0.65})
-                currentContentTween = TweenService:Create(contentContainerSection, ti, {Size = UDim2.new(1,-2,0,targetContainer)})
-                currentHolderTween = TweenService:Create(contentHolder, ti, {Size = UDim2.new(1,-20,0,math.max(0,targetContent))})
-                currentSectionTween = TweenService:Create(sectionFrame, ti, {Size = UDim2.new(0.96,0,0,targetSection)})
-            else
-                currentBgTween = TweenService:Create(contentContainerSection, ti, {BackgroundTransparency = 1})
-                currentContentTween = TweenService:Create(contentContainerSection, ti, {Size = UDim2.new(1,-2,0,0)})
-                currentHolderTween = TweenService:Create(contentHolder, ti, {Size = UDim2.new(1,-20,0,0)})
-                currentSectionTween = TweenService:Create(sectionFrame, ti, {Size = UDim2.new(0.96,0,0,46)})
-                task.delay((instant and 0 or 0.3)+0.05, function()
-                    if not open and contentContainerSection then
-                        contentContainerSection.Visible = false
-                        contentHolder.Visible = false
-                    end
-                end)
-            end
-            currentBgTween:Play()
-            currentContentTween:Play()
-            currentHolderTween:Play()
-            currentSectionTween:Play()
+        -- 动态调整容器高度
+        local function updateHeight()
+            local actual = contentLayout.AbsoluteContentSize.Y or 0
+            local targetContainerHeight = actual + 8 + titleHeight
+            contentContainer.Size = UDim2.new(1, -10, 0, targetContainerHeight)
+            sectionFrame.Size = UDim2.new(0.96, 0, 0, targetContainerHeight)
         end
 
-        task.spawn(function()
-            task.wait()
-            updateSectionHeight(true)
-        end)
-
-        local function toggleSection()
-            open = not open
-            updateSwitch(true)
-            updateSectionHeight(false)
-        end
-
-        toggleBtn.MouseButton1Click:Connect(toggleSection)
-        topBg.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then toggleSection() end
-        end)
-
-        table.insert(ThemeListeners, function() swStroke.Color = CurrentTheme.Stroke end)
-        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            if open then updateSectionHeight(false) end
-        end)
+        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateHeight)
         contentHolder.ChildAdded:Connect(function()
             task.wait(0.05)
-            if open then updateSectionHeight(false) end
+            updateHeight()
         end)
+        contentHolder.ChildRemoved:Connect(function()
+            task.wait(0.05)
+            updateHeight()
+        end)
+        task.defer(updateHeight)
 
-        -- 返回子控件方法表（与 child 相同）
-        local sectionMethods = {}
+        -- 返回控件构建接口
+        local sectionObj = {}
         for methodName, methodFn in pairs(child) do
-            sectionMethods[methodName] = function(_, cfg)
-                cfg = cfg or {}
-                cfg.Parent = contentHolder
-                return methodFn(_, cfg)
+            sectionObj[methodName] = function(_, config)
+                config = config or {}
+                config.Parent = contentHolder
+                return methodFn(_, config)
             end
         end
-        -- 额外添加锁、标题更新等方法
-        sectionMethods.SetVisible = function(_, vis) sectionFrame.Visible = vis end
-        sectionMethods.SetTitle = function(_, newTitle) titleLabel.Text = newTitle end
-        sectionMethods.SetOpen = function(_, openState) 
-            if openState ~= open then toggleSection() end
-        end
-        sectionMethods.IsOpen = function() return open end
-        -- 锁功能（保留）
-        local locked = false
-        local lockedTitle = "Locked"
-        local lockFrame, lockLabel = createLockOverlay(sectionFrame, lockedTitle)
-        lockFrame.Visible = false
-        local function updateLock(state, title)
-            locked = state
-            lockFrame.Visible = state
-            if title then lockLabel.Text = title end
-        end
-        sectionMethods.Lock = function(_, title) updateLock(true, title) end
-        sectionMethods.Unlock = function() updateLock(false) end
-        sectionMethods.IsLocked = function() return locked end
 
-        return sectionMethods
+        sectionObj.SetVisible = function(_, vis) sectionFrame.Visible = vis end
+        return sectionObj
     end
 
     functions.Section = createSection
@@ -4396,8 +4202,7 @@ function Fenglib:CreateWindow(Config)
 
     -- ===== Notification =====
     function Window:Notification(titleText, descText, notifType, duration)
-        -- 可参考 UI.lua 中的完整实现，此处省略以保持简洁
-        -- 实际使用中可自行添加完整通知逻辑
+        -- 保持原有实现（此处略，可按需要添加）
     end
 
     function Window:SetKeybind(key) Keybind = key end
