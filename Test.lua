@@ -3024,10 +3024,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- 主容器（Groupbox）
         local box = Instance.new("Frame")
-        box.Size = UDim2.new(1, 0, 0, 100) -- 初始高度，动态调整
+        box.Size = UDim2.new(1, 0, 0, 100)
         box.BackgroundTransparency = 0.05
         box.ClipsDescendants = true
-        box.Parent = parent  -- parent 来自 createSectionBuilder 的闭包
+        box.Parent = parent
         AddToRegistry(box, "BackgroundColor3", "Top")
 
         local corner = Instance.new("UICorner")
@@ -3060,7 +3060,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             arrow.Size = UDim2.new(0, 16, 0, 16)
             arrow.Position = UDim2.new(1, -20, 0, 6)
             arrow.BackgroundTransparency = 1
-            arrow.Image = "rbxassetid://122444883127455"  -- 下箭头
+            arrow.Image = "rbxassetid://122444883127455"  -- 向下箭头
             arrow.Rotation = opened and 0 or 180
             arrow.Parent = box
             AddToRegistry(arrow, "ImageColor3", "Text")
@@ -3070,7 +3070,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local content = Instance.new("Frame")
         content.Name = "Content"
         content.Size = UDim2.new(1, 0, 0, 0)
-        content.Position = UDim2.new(0, 0, 0, 32)  -- 标题下方
+        content.Position = UDim2.new(0, 0, 0, 32)
         content.BackgroundTransparency = 1
         content.Parent = box
 
@@ -3092,11 +3092,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local function updateSize()
             contentHeight = contentLayout.AbsoluteContentSize.Y or 0
-            local totalHeight = 32 + contentHeight + 10  -- 标题高度 + 内边距
+            local totalHeight = 32 + contentHeight + 10
             if isOpen then
                 box.Size = UDim2.new(1, 0, 0, totalHeight)
             else
-                box.Size = UDim2.new(1, 0, 0, 32)  -- 仅标题高度
+                box.Size = UDim2.new(1, 0, 0, 32)
             end
             content.Size = UDim2.new(1, 0, 0, contentHeight + 10)
         end
@@ -3123,11 +3123,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             headerBtn.Position = UDim2.new(0, 0, 0, 0)
             headerBtn.BackgroundTransparency = 1
             headerBtn.Text = ""
+            headerBtn.ZIndex = 5
             headerBtn.Parent = box
             headerBtn.MouseButton1Click:Connect(toggleGroup)
         end
 
-        -- 构建子控件方法表（所有方法都添加到 content 中）
+        -- 构建子控件方法表
         local sectionObj = {}
         for methodName, methodFn in pairs(child) do
             sectionObj[methodName] = function(_, cfg)
@@ -3137,12 +3138,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        -- 额外方法：可见性
+        -- 额外方法
         sectionObj.SetVisible = function(_, vis)
             box.Visible = vis
         end
 
-        -- 锁功能（保留原有兼容）
+        -- ★ 新增：更新标题
+        sectionObj.SetTitle = function(_, newTitle)
+            header.Text = newTitle
+        end
+
+        -- 锁功能（保留）
         local locked = false
         local lockedTitle = "Locked"
         local lockFrame, lockLabel = createLockOverlay(box, lockedTitle)
