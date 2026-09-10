@@ -11,6 +11,7 @@
       - 窗口大小固定为 500×320
       - 背景图默认为空（不显示任何图片）
       - 主题仅保留 Dark、Charcoal、AMOLED
+      - Section 标题固定在内容左上角（类似 Groupbox）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -3008,9 +3009,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section（纯内容容器，无头部） ==========
-    local function createSection(text, icons, defaultOpen)
-        -- 参数完全忽略
+    -- ========== 创建 Section（标题固定在左上角，像 Groupbox） ==========
+    local function createSection(_, config)
+        if type(config) == "string" then
+            config = { Name = config }
+        elseif type(config) ~= "table" then
+            config = {}
+        end
+
+        local sectionTitle = config.Name or config.Title or ""
+        local sectionIcon  = config.Icon or nil
+        local hasHeader    = (sectionTitle ~= "" or sectionIcon ~= nil)
 
         -- 主容器（透明，自动适应高度）
         local sectionFrame = Instance.new("Frame")
@@ -3022,7 +3031,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionFrame.Parent = parent
         sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
 
-        -- 内容容器（带边框和背景，无顶部偏移）
+        -- 内容容器（带背景、描边、圆角）
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, -10, 0, 0)
         contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
@@ -3032,7 +3041,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainer.Parent = sectionFrame
         AddToRegistry(contentContainer, "BackgroundColor3", "Main")
 
-        -- 边框描边
         local contentStroke = Instance.new("UIStroke")
         contentStroke.Thickness = 1
         contentStroke.Transparency = 0.65
@@ -3040,22 +3048,60 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentStroke.Parent = contentContainer
         AddToRegistry(contentStroke, "Color", "Stroke")
 
-        -- 圆角
         local contentCorner = Instance.new("UICorner")
         contentCorner.CornerRadius = UDim.new(0, 10)
         contentCorner.Parent = contentContainer
 
-        -- 内部内容持有者（子控件实际父级）
+        -- ===== 标题栏（像 Groupbox 一样固定在左上角） =====
+        local CONTENT_TOP = hasHeader and 30 or 4
+        local HEADER_LEFT = 12
+        local iconOffset  = 0
+
+        local titleLabel = nil
+        local iconLabel  = nil
+
+        if sectionIcon then
+            iconLabel = Instance.new("ImageLabel")
+            iconLabel.Size = UDim2.new(0, 16, 0, 16)
+            iconLabel.Position = UDim2.new(0, HEADER_LEFT, 0, 6)
+            iconLabel.BackgroundTransparency = 1
+            if tonumber(sectionIcon) then
+                iconLabel.Image = "rbxassetid://" .. tostring(sectionIcon)
+            else
+                iconLabel.Image = tostring(sectionIcon)
+            end
+            iconLabel.Parent = contentContainer
+            AddToRegistry(iconLabel, "ImageColor3", "Accent")
+            iconOffset = 20
+        end
+
+        if sectionTitle ~= "" then
+            titleLabel = Instance.new("TextLabel")
+            titleLabel.Name = "SectionTitle"
+            titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconOffset), 0, 25)
+            titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconOffset, 0, 0)
+            titleLabel.BackgroundTransparency = 1
+            titleLabel.Font = Enum.Font.GothamBold
+            titleLabel.Text = sectionTitle
+            titleLabel.TextSize = 13
+            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            titleLabel.TextYAlignment = Enum.TextYAlignment.Center
+            titleLabel.TextTruncate = Enum.TextTruncate.AtEnd
+            titleLabel.TextColor3 = CurrentTheme.Accent
+            titleLabel.Parent = contentContainer
+            AddToRegistry(titleLabel, "TextColor3", "Accent")
+        end
+
+        -- ===== 内容持有者（子控件实际父级） =====
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -10, 0, 0)
-        contentHolder.Position = UDim2.new(0.5, 0, 0, 4)
+        contentHolder.Position = UDim2.new(0.5, 0, 0, CONTENT_TOP)
         contentHolder.AnchorPoint = Vector2.new(0.5, 0)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = false
         contentHolder.Parent = contentContainer
 
-        -- 布局
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Padding = UDim.new(0, 6)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -3066,16 +3112,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local bottomPadding = Instance.new("Frame")
         bottomPadding.Size = UDim2.new(1, 0, 0, 4)
         bottomPadding.BackgroundTransparency = 1
+        bottomPadding.LayoutOrder = 9999
         bottomPadding.Parent = contentHolder
 
-        -- 内容可见
         contentContainer.Visible = true
         contentHolder.Visible = true
 
-        -- 动态调整容器高度以适应子控件
+        -- 动态高度：内容高 + 顶部偏移 + 底部 4px
         local function updateHeight()
             local actual = contentLayout.AbsoluteContentSize.Y or 0
-            local targetContainerHeight = actual + 8  -- 上下内边距 4+4
+            local targetContainerHeight = actual + CONTENT_TOP + 4
             contentContainer.Size = UDim2.new(1, -10, 0, targetContainerHeight)
             sectionFrame.Size = UDim2.new(0.96, 0, 0, targetContainerHeight)
         end
@@ -3091,18 +3137,27 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end)
         task.defer(updateHeight)
 
-        -- 返回控件构建接口
+        -- 返回接口
         local sectionObj = {}
         for methodName, methodFn in pairs(child) do
-            sectionObj[methodName] = function(_, config)
-                config = config or {}
-                config.Parent = contentHolder
-                return methodFn(_, config)
+            sectionObj[methodName] = function(_, cfg)
+                cfg = cfg or {}
+                cfg.Parent = contentHolder
+                return methodFn(_, cfg)
             end
         end
 
-        -- 仅保留可见性控制
-        sectionObj.SetVisible = function(_, vis) sectionFrame.Visible = vis end
+        sectionObj.SetVisible = function(_, vis)
+            sectionFrame.Visible = vis
+        end
+
+        -- 动态修改标题
+        sectionObj.SetTitle = function(_, text)
+            if titleLabel then
+                titleLabel.Text = text or ""
+                titleLabel.Visible = (text ~= nil and text ~= "")
+            end
+        end
 
         return sectionObj
     end
@@ -3874,8 +3929,6 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Parent = parentContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
-        -- 移除 TabBar 指示条
-        -- 改用发光背景（可保留或移除，这里保留与原来一致）
         local glowFrame = Instance.new("Frame")
         glowFrame.Name = "GlowBackground"
         glowFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -4006,7 +4059,6 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        -- 获取构建器函数（返回一个表，包含 Section 和所有控件方法）
         local builder = createSectionBuilder(PageContent, PageContent, 330, 1, Window)
         return builder
     end
