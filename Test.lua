@@ -12,8 +12,10 @@
       - 背景图默认为空（不显示任何图片）
       - 主题仅保留 Dark、Charcoal、AMOLED
       - Section 支持 Name / SubName / Logo（与 UI.lua Groupbox 一致）
-      - Section 图标保持原色 + 圆角 + 更大尺寸
+      - Section 图标保持原色 + 圆角 + 放大尺寸
       - Section 支持 Collapsible / Collapsed（从 miUI AddSection 移植）
+      - 折叠后高度紧凑（对齐 UI.lua Groupbox 标题栏）
+      - 标题 15 号加粗 / 副标题 12 号 / 图标 40px
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -3011,7 +3013,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section（支持 Name / SubName / Logo + Collapsible） ==========
+    -- ========== 创建 Section（Name / SubName / Logo + Collapsible + 放大版布局） ==========
     local function createSection(_, config)
         if type(config) == "string" then
             config = { Name = config }
@@ -3029,6 +3031,44 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local hasSubtitle = (sectionSubtitle ~= "")
         local hasIcon     = (sectionIcon ~= nil)
         local hasHeader   = hasTitle or hasSubtitle or hasIcon
+
+        -- ===== 尺寸常量（放大版） =====
+        local HEADER_LEFT = 12
+        local ARROW_W     = collapsible and 26 or 0
+
+        -- 图标
+        local ICON_SIZE = hasSubtitle and 40 or 32
+        local ICON_TOP  = hasSubtitle and 8  or 5
+
+        -- 标题
+        local TITLE_SIZE = 15
+        local TITLE_TOP  = hasSubtitle and 8  or 11
+        local TITLE_H    = 20
+
+        -- 副标题
+        local SUB_SIZE = 12
+        local SUB_TOP  = 30
+        local SUB_H    = 16
+
+        -- 展开头部高度
+        local HEADER_H
+        if hasHeader then
+            HEADER_H = hasSubtitle and 56 or 44
+        else
+            HEADER_H = 4
+        end
+
+        -- 折叠时的高度（紧凑，视觉对齐 UI.lua Groupbox）
+        local COLLAPSED_H
+        if hasSubtitle then
+            COLLAPSED_H = 50
+        elseif hasHeader then
+            COLLAPSED_H = 40
+        else
+            COLLAPSED_H = collapsible and 40 or 4
+        end
+
+        local CONTENT_TOP = hasHeader and (HEADER_H + 4) or 4
 
         -- 主容器
         local sectionFrame = Instance.new("Frame")
@@ -3060,26 +3100,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentCorner.CornerRadius = UDim.new(0, 10)
         contentCorner.Parent = contentContainer
 
-        -- ===== 头部尺寸 =====
-        local HEADER_LEFT = 12
-        local ARROW_WIDTH = collapsible and 26 or 0
-        local HEADER_H
-        if hasHeader then
-            HEADER_H = hasSubtitle and 54 or 40
-        else
-            HEADER_H = collapsible and 30 or 4
-        end
-        local CONTENT_TOP = hasHeader and (HEADER_H + 4) or 4
-
-        -- ===== 图标（原色 + 圆角 + 更大） =====
+        -- ===== 图标（放大 + 原色 + 圆角） =====
         local iconLabel = nil
         local iconGap = 0
         if hasIcon then
-            local iconSize = hasSubtitle and 36 or 30
             iconLabel = Instance.new("ImageLabel")
             iconLabel.Name = "SectionLogo"
-            iconLabel.Size = UDim2.new(0, iconSize, 0, iconSize)
-            iconLabel.Position = UDim2.new(0, HEADER_LEFT, 0, (HEADER_H - iconSize) / 2)
+            iconLabel.Size = UDim2.new(0, ICON_SIZE, 0, ICON_SIZE)
+            iconLabel.Position = UDim2.new(0, HEADER_LEFT, 0, ICON_TOP)
             iconLabel.BackgroundTransparency = 1
             iconLabel.ImageColor3 = Color3.new(1, 1, 1)
             if tonumber(sectionIcon) then
@@ -3088,28 +3116,24 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 iconLabel.Image = tostring(sectionIcon)
             end
             local iconCorner = Instance.new("UICorner")
-            iconCorner.CornerRadius = UDim.new(0, 6)
+            iconCorner.CornerRadius = UDim.new(0, 8)
             iconCorner.Parent = iconLabel
             iconLabel.Parent = contentContainer
-            iconGap = iconSize + 8
+            AddToRegistry(iconLabel, "ImageColor3", "Text")
+            iconGap = ICON_SIZE + 10
         end
 
-        -- ===== 标题 =====
+        -- ===== 标题（15 号加粗，强调色） =====
         local titleLabel = nil
         if hasTitle then
             titleLabel = Instance.new("TextLabel")
             titleLabel.Name = "SectionTitle"
-            if hasSubtitle then
-                titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap + ARROW_WIDTH), 0, 20)
-                titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 8)
-            else
-                titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap + ARROW_WIDTH), 0, 25)
-                titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, (HEADER_H - 25) / 2)
-            end
+            titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap + ARROW_W), 0, TITLE_H)
+            titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, TITLE_TOP)
             titleLabel.BackgroundTransparency = 1
             titleLabel.Font = Enum.Font.GothamBold
             titleLabel.Text = sectionTitle
-            titleLabel.TextSize = 13
+            titleLabel.TextSize = TITLE_SIZE
             titleLabel.TextXAlignment = Enum.TextXAlignment.Left
             titleLabel.TextYAlignment = Enum.TextYAlignment.Center
             titleLabel.TextTruncate = Enum.TextTruncate.AtEnd
@@ -3118,17 +3142,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(titleLabel, "TextColor3", "Accent")
         end
 
-        -- ===== 副标题 =====
+        -- ===== 副标题（12 号） =====
         local subtitleLabel = nil
         if hasSubtitle then
             subtitleLabel = Instance.new("TextLabel")
             subtitleLabel.Name = "SectionSubName"
-            subtitleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap + ARROW_WIDTH), 0, 16)
-            subtitleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 28)
+            subtitleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap + ARROW_W), 0, SUB_H)
+            subtitleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, SUB_TOP)
             subtitleLabel.BackgroundTransparency = 1
             subtitleLabel.Font = Enum.Font.Gotham
             subtitleLabel.Text = sectionSubtitle
-            subtitleLabel.TextSize = 11
+            subtitleLabel.TextSize = SUB_SIZE
             subtitleLabel.TextTransparency = 0.4
             subtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
             subtitleLabel.TextYAlignment = Enum.TextYAlignment.Center
@@ -3137,14 +3161,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(subtitleLabel, "TextColor3", "SubText")
         end
 
-        -- ===== 折叠箭头 =====
+        -- ===== 折叠箭头（居中于折叠高度） =====
         local collapseArrow = nil
         if collapsible then
             collapseArrow = Instance.new("ImageLabel")
             collapseArrow.Name = "SectionCollapseArrow"
-            collapseArrow.Size = UDim2.new(0, 16, 0, 16)
+            collapseArrow.Size = UDim2.new(0, 18, 0, 18)
             collapseArrow.AnchorPoint = Vector2.new(1, 0.5)
-            collapseArrow.Position = UDim2.new(1, -10, 0, HEADER_H / 2)
+            collapseArrow.Position = UDim2.new(1, -10, 0, (COLLAPSED_H - 18) / 2)
             collapseArrow.BackgroundTransparency = 1
             collapseArrow.Image = "rbxassetid://8240930340"
             collapseArrow.ImageColor3 = CurrentTheme.Text
@@ -3187,13 +3211,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return contentLayout.AbsoluteContentSize.Y or 0
         end
 
-        local function getHeaderHeight()
-            return HEADER_H + 4
-        end
-
         local function getTargetHeight()
             if collapsedState then
-                return getHeaderHeight()
+                return COLLAPSED_H
             end
             return getContentHeight() + CONTENT_TOP + 4
         end
