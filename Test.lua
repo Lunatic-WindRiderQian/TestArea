@@ -12,7 +12,7 @@
       - 背景图默认为空（不显示任何图片）
       - 主题仅保留 Dark、Charcoal、AMOLED
       - Section 支持 Name / SubName / Logo（与 UI.lua Groupbox 一致）
-      - Section 图标保持原色 + 圆角
+      - Section 图标保持原色 + 圆角 + 更大尺寸
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -3062,17 +3062,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local HEADER_LEFT = 12
         local HEADER_H
         if hasHeader then
-            HEADER_H = hasSubtitle and 48 or 34
+            HEADER_H = hasSubtitle and 54 or 40
         else
             HEADER_H = 4
         end
         local CONTENT_TOP = hasHeader and (HEADER_H + 4) or 4
 
-        -- ===== 图标（保持原色 + 圆角） =====
+        -- ===== 图标（保持原色 + 圆角 + 更大尺寸） =====
         local iconLabel = nil
         local iconGap = 0
         if hasIcon then
-            local iconSize = hasSubtitle and 28 or 22
+            local iconSize = hasSubtitle and 36 or 30
             iconLabel = Instance.new("ImageLabel")
             iconLabel.Name = "SectionLogo"
             iconLabel.Size = UDim2.new(0, iconSize, 0, iconSize)
@@ -3098,7 +3098,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             titleLabel.Name = "SectionTitle"
             if hasSubtitle then
                 titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap), 0, 20)
-                titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 6)
+                titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 8)
             else
                 titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap), 0, 25)
                 titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 0)
@@ -3121,7 +3121,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subtitleLabel = Instance.new("TextLabel")
             subtitleLabel.Name = "SectionSubName"
             subtitleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap), 0, 16)
-            subtitleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 25)
+            subtitleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 28)
             subtitleLabel.BackgroundTransparency = 1
             subtitleLabel.Font = Enum.Font.Gotham
             subtitleLabel.Text = sectionSubtitle
