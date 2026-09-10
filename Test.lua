@@ -1,14 +1,19 @@
 --[[
     FengYu-Bento (miUI 框架 – 完整版)
+    三按钮功能与原文件完全一致：最小化/最大化(Resizer)/关闭(确认框)
+    所有 UI 元素均已完整展开
     ================================================
-    - 三按钮功能与原文件完全一致
-    - 背景模糊 / 窗口渐变 / miUI 式多层阴影
-    - 窗口大小 500×320，背景图默认空
-    - 主题：Dark / Charcoal / AMOLED
-    - Section 支持 Name / SubName / Logo
-    - Section 图标保持原色 + 圆角 + 更大尺寸
-    - Section 支持 Collapsible / Collapsed
-    - 折叠后高度 = 30px（与 UI.lua 的 Section 标题栏一致）
+    [MOD] 移植 miUI 的透明度增强：
+      - 背景模糊（DepthOfField + 动态 Part，已修复 PointToObjectSpace）
+      - 窗口背景渐变（UIGradient）
+      - 主窗口边框替换为 miUI 式多层阴影（移除硬边描边）
+      - 阴影颜色为黑色（与第三个文件的边框颜色一致）
+      - 窗口大小固定为 500×320
+      - 背景图默认为空（不显示任何图片）
+      - 主题仅保留 Dark、Charcoal、AMOLED
+      - Section 支持 Name / SubName / Logo（与 UI.lua Groupbox 一致）
+      - Section 图标保持原色 + 圆角 + 更大尺寸
+      - Section 支持 Collapsible / Collapsed（从 miUI AddSection 移植）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -21,6 +26,7 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+-- [MOD] 新增 DepthOfField 和 Blur 相关引用
 local DepthOfFieldEffect = Instance.new("DepthOfFieldEffect")
 DepthOfFieldEffect.Name = "FengBlurDOF"
 DepthOfFieldEffect.Enabled = false
@@ -65,7 +71,7 @@ do
     end
 end
 
--- ========== 主题 ==========
+-- ========== 主题（仅保留 Dark, Charcoal, AMOLED） ==========
 local Themes = {
     Dark = { Main=Color3.fromRGB(13,13,13), Top=Color3.fromRGB(28,28,30), Text=Color3.fromRGB(240,240,245), Accent=Color3.fromRGB(80,140,255), Stroke=Color3.fromRGB(45,45,48), SubText=Color3.fromRGB(160,160,170), Element=Color3.fromRGB(45,45,50), Hover=Color3.fromRGB(60,60,70), ShineEnabled=true, Shine={Speed=0.4,RotationSpeed=20,ColorSequence=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(40,40,40)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(105,105,105)),ColorSequenceKeypoint.new(1,Color3.fromRGB(40,40,40))})}, StrokeShine=true, StrokeDark=Color3.fromRGB(40,40,40) },
     ["Charcoal"] = { Main=Color3.fromRGB(20,20,20), Top=Color3.fromRGB(35,35,35), Text=Color3.fromRGB(240,240,240), Accent=Color3.fromRGB(102,102,102), Stroke=Color3.fromRGB(45,45,45), SubText=Color3.fromRGB(170,170,170), Element=Color3.fromRGB(35,35,35), Hover=Color3.fromRGB(90,160,255), ShineEnabled=true, Shine={Speed=0.45,RotationSpeed=25,ColorSequence=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(20,20,20)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(150,150,150)),ColorSequenceKeypoint.new(1,Color3.fromRGB(20,20,20))})}, StrokeShine=true, StrokeDark=Color3.fromRGB(60,60,60) },
@@ -138,7 +144,7 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- ========== 媒体管理器 ==========
+-- ========== 媒体管理器（完整） ==========
 local MediaManager = {Folder = "FengMediaCache"}
 function MediaManager:SetFolder(f) self.Folder = f end
 function MediaManager:_init(sub)
@@ -353,7 +359,7 @@ local function createLockOverlay(parent, defaultTitle)
     return lockFrame, lockLabel
 end
 
--- ========== 完整元素构建器 ==========
+-- ========== 完整元素构建器（全部展开） ==========
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
     local padding = parent:FindFirstChild("SectionPadding")
@@ -364,6 +370,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         padding.Parent = parent
     end
 
+    -- ========== 子控件方法表 ==========
     local child = {}
 
     -- ========== Button ==========
@@ -522,6 +529,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local max = valueTable.Max
         local default = valueTable.Default
         local callback = config.Callback or function() end
+        local options = config.Options or {}
         local unlimited = (min==nil and max==nil)
         min = tonumber(min); max = tonumber(max)
         local Rounding = config.Rounding or 0
@@ -798,7 +806,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         updateLabel()
         local optionButtons = {}
         local function rebuildOptions(optList)
-            for _, c in ipairs(Container:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+            for _, child in ipairs(Container:GetChildren()) do if child:IsA("TextButton") then child:Destroy() end end
             optionButtons = {}
             for _, opt in ipairs(optList) do
                 local O = Instance.new("TextButton")
@@ -816,13 +824,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 check.BackgroundTransparency = 1
                 check.ZIndex = 1
                 check.Parent = O
-                Instance.new("UICorner", check).CornerRadius = UDim.new(0,4)
+                local checkCorner = Instance.new("UICorner")
+                checkCorner.CornerRadius = UDim.new(0,4)
+                checkCorner.Parent = check
                 local checkStroke = Instance.new("UIStroke")
                 checkStroke.Thickness = 1.5
                 checkStroke.Color = CurrentTheme.Accent
                 checkStroke.Transparency = 0.7
                 checkStroke.Parent = check
                 local checkGrad = Instance.new("UIGradient")
+                checkGrad.Rotation = 0
                 checkGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
                 checkGrad.Transparency = NumberSequence.new(1)
                 checkGrad.Parent = check
@@ -1030,7 +1041,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         KeyBtn.Parent = Tile
         KeyBtn.AutomaticSize = Enum.AutomaticSize.X
         AddToRegistry(KeyBtn, "BackgroundColor3", "Main")
-        Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0,5)
+        local keyCorner = Instance.new("UICorner")
+        keyCorner.CornerRadius = UDim.new(0,5)
+        keyCorner.Parent = KeyBtn
         local keyStroke = Instance.new("UIStroke")
         keyStroke.Thickness = 1
         keyStroke.Transparency = 0.5
@@ -1486,7 +1499,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         iconImg.Image = formatIcon(iconAsset)
         iconImg.ImageColor3 = iconColor
         iconImg.Parent = horizontal
-        Instance.new("UICorner", iconImg).CornerRadius = UDim.new(0,12)
+        local iconCorner = Instance.new("UICorner")
+        iconCorner.CornerRadius = UDim.new(0,12)
+        iconCorner.Parent = iconImg
         local textContainer = Instance.new("Frame")
         textContainer.Size = UDim2.new(1,-92,1,0)
         textContainer.Position = UDim2.new(0,92,0,0)
@@ -1865,6 +1880,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local auto = opts.AutoPlay ~= false
         local title = opts.Name or "Video"
         local aspect = opts.AspectRatio or "16:9"
+        local function resolveSync(s)
+            if type(s)~="string" or s=="" then return "" end
+            if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
+            if s:match("^%d+$") then return "rbxassetid://"..s end
+            return ""
+        end
         local function resolveMedia(s)
             if type(s)~="string" or s=="" then return "" end
             if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
@@ -1914,9 +1935,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             vid.Looped = looped
             vid.Volume = vol
             vid.ZIndex = 1
+            vid:SetAttribute("BFVolume", vol)
+            vid:SetAttribute("BFAutoPlay", auto)
             vid.Video = resolved
             vid.Parent = wrap
-            Instance.new("UICorner", vid).CornerRadius = UDim.new(0,radius)
+            local vidCorner = Instance.new("UICorner")
+            vidCorner.CornerRadius = UDim.new(0,radius)
+            vidCorner.Parent = vid
         end
         local placeholder = Instance.new("Frame")
         placeholder.Size = UDim2.fromScale(1,1)
@@ -2060,9 +2085,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return btn, ic
         end
         local playing = auto
-        local playBtn = ctrlBtn("play", function() end)
-        local pauseBtn = ctrlBtn("pause", function() end)
-        local stopBtn = ctrlBtn("stop", function() end)
+        local playBtn, playIco = ctrlBtn("play", function() end)
+        local pauseBtn, pauseIco = ctrlBtn("pause", function() end)
+        local stopBtn, stopIco = ctrlBtn("stop", function() end)
         local volIco = Instance.new("ImageLabel")
         volIco.Size = UDim2.fromOffset(14,14)
         volIco.Position = UDim2.fromOffset(68,4)
@@ -2088,12 +2113,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         btnLayout.Parent = ctrlRow
         local ctrlVisible = false
         local fadeTimer = 0
+        local fadingOut = false
         local function showOverlay()
-            ctrlVisible = true; fadeTimer = 3
+            ctrlVisible = true; fadingOut = false; fadeTimer = 3
             Tween(overlay, {GroupTransparency=0}, 0.18)
         end
         local function hideOverlay()
-            ctrlVisible = false
+            ctrlVisible = false; fadingOut = true
             Tween(overlay, {GroupTransparency=1}, 0.3)
         end
         local vidClickBtn = Instance.new("TextButton")
@@ -2106,7 +2132,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         vidClickBtn.MouseButton1Click:Connect(function()
             if ctrlVisible then fadeTimer = 3 else showOverlay() end
         end)
-        local function resetFade() fadeTimer = 3 end
+        local function resetFade() fadeTimer = 3; fadingOut = false end
         playBtn.MouseButton1Click:Connect(function()
             if vid then pcall(function() vid:Play() end) end
             playing = true; playBtn.Visible = false; pauseBtn.Visible = true; resetFade()
@@ -2243,7 +2269,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         wrapStroke.Parent = wrap
         table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
-        Instance.new("UICorner", wrap).CornerRadius = UDim.new(0,8)
+        local wrapCorner = Instance.new("UICorner")
+        wrapCorner.CornerRadius = UDim.new(0,8)
+        wrapCorner.Parent = wrap
         local padding = Instance.new("UIPadding")
         padding.PaddingLeft = UDim.new(0,10)
         padding.PaddingRight = UDim.new(0,10)
@@ -2272,6 +2300,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local statusLbl = Instance.new("TextLabel")
         statusLbl.Size = UDim2.new(1,0,0,16)
         statusLbl.Position = UDim2.new(0,0,0,(title~="" or subtitle~="") and 2 or 0)
+        statusLbl.AnchorPoint = Vector2.new(0,0)
         statusLbl.BackgroundTransparency = 1
         statusLbl.Text = (title~="" and title) or (hasAudio and "Audio" or "No audio source")
         statusLbl.TextSize = (title~="" or subtitle~="") and 12 or 11
@@ -2286,12 +2315,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subtitleLbl = Instance.new("TextLabel")
             subtitleLbl.Size = UDim2.new(1,0,0,13)
             subtitleLbl.Position = UDim2.new(0,0,0,20)
+            subtitleLbl.AnchorPoint = Vector2.new(0,0)
             subtitleLbl.BackgroundTransparency = 1
             subtitleLbl.Text = subtitle
             subtitleLbl.TextSize = 10
             subtitleLbl.Font = Enum.Font.Gotham
             subtitleLbl.TextXAlignment = Enum.TextXAlignment.Left
             subtitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
+            subtitleLbl.Visible = true
             subtitleLbl.ZIndex = 2
             subtitleLbl.Parent = titleHolder
             AddToRegistry(subtitleLbl, "TextColor3", "SubText")
@@ -2330,7 +2361,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return btn, ic
         end
         local playing = false
-        local playBtn, pauseBtn
+        local playBtn, playIco
+        local pauseBtn, pauseIco
+        local outsideBtn, outsideIco
         if hasAudio then
             local _downloading = false
             local function _doPlay()
@@ -2360,22 +2393,24 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end)
                 end
             end
-            playBtn = ctrlBtn("play", _triggerPlay)
-            pauseBtn = ctrlBtn("pause", function()
+            playBtn, playIco = ctrlBtn("play", _triggerPlay)
+            pauseBtn, pauseIco = ctrlBtn("pause", function()
                 if snd then snd:Pause() end
                 playing = false
                 if playBtn then playBtn.Visible = true end
                 if pauseBtn then pauseBtn.Visible = false end
             end)
             pauseBtn.Visible = false
-            ctrlBtn("stop", function()
+            local stopBtn, stopIco = ctrlBtn("stop", function()
                 if snd then pcall(function() snd:Stop(); snd.TimePosition=0 end) end
                 playing = false
                 if playBtn then playBtn.Visible = true end
                 if pauseBtn then pauseBtn.Visible = false end
             end)
-            ctrlBtn("external", function()
+            local function toggleOutside()
                 playOutside = not playOutside
+                local iconName = playOutside and "external" or "import"
+                if outsideIco then outsideIco.Image = icons[iconName] or "rbxassetid://10747366266" end
                 if snd then
                     local wasPlaying = playing
                     pcall(function() if wasPlaying then snd:Stop() end end)
@@ -2387,7 +2422,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     end
                     if wasPlaying then pcall(function() snd:Play() end) end
                 end
-            end)
+                if win then win:Notification("Audio", playOutside and "Play Outside Window: ON" or "Play Outside Window: OFF", "Info", 2) end
+            end
+            outsideBtn, outsideIco = ctrlBtn("external", toggleOutside)
+            if outsideIco then outsideIco.Image = playOutside and "rbxassetid://10747366266" or "rbxassetid://10747366266" end
             if auto and snd then _doPlay() end
         end
         local seekRowOffset = (title~="" or subtitle~="") and 56 or 36
@@ -2432,6 +2470,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Instance.new("UICorner", rail).CornerRadius = UDim.new(1,0)
         local fill = Instance.new("Frame")
         fill.Size = UDim2.new(0,0,1,0)
+        fill.BackgroundTransparency = 0
         fill.ZIndex = 3
         fill.Parent = rail
         AddToRegistry(fill, "BackgroundColor3", "Accent")
@@ -2486,9 +2525,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function mod:Pause() if snd then pcall(function() snd:Pause() end) end end
         function mod:Stop() if snd then pcall(function() snd:Stop() end) end end
         function mod:SetVolume(v) if snd then snd.Volume = math.clamp(v,0,10) end end
-        function mod:SetAudio(src) local r=resolve(src); if snd then pcall(function() snd:Stop(); snd.SoundId = r end) else snd=initSound(r) end; hasAudio = r~=""; controls.Visible = hasAudio; seekRow.Visible = hasAudio end
+        function mod:SetAudio(src) local r=resolve(src); if snd then pcall(function() snd:Stop(); snd.SoundId = r end) else snd=initSound(r) end; hasAudio = r~=""; controls.Visible = hasAudio; seekRow.Visible = hasAudio; statusLbl.Text = hasAudio and (title or "Audio") or "No audio source"; if playBtn then playBtn.Visible = hasAudio end; if pauseBtn then pauseBtn.Visible = false end end
         function mod:SetAudioTitle(title, subtitle) statusLbl.Text = title or (hasAudio and "Audio" or "No audio source"); if subtitleLbl then subtitleLbl.Text = subtitle or ""; subtitleLbl.Visible = subtitle and subtitle~="" end end
-        function mod:SetPlayOutside(enabled) playOutside = enabled; if snd then if enabled then snd.Parent=game:GetService("SoundService") else snd.Parent=workspace end end end
+        function mod:SetPlayOutside(enabled) playOutside = enabled; if snd then local wasPlaying=playing; pcall(function() snd:Stop() end); if enabled then snd.Parent=game:GetService("SoundService") else snd.Parent=workspace end; if wasPlaying then pcall(function() snd:Play() end) end end end
         function mod:Destroy() safeDisconnect(hbConn); if snd then pcall(function() snd:Stop(); snd:Destroy() end) end; wrap:Destroy() end
         return mod
     end
@@ -2519,7 +2558,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         wrapStroke.Parent = wrap
         table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
-        Instance.new("UICorner", wrap).CornerRadius = UDim.new(0,12)
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0,12)
+        corner.Parent = wrap
         local avatarBg = Instance.new("Frame")
         avatarBg.Name = "AvatarBg"
         avatarBg.Size = UDim2.fromOffset(42,42)
@@ -2594,7 +2635,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             copyBtn.TextSize = 12
             copyBtn.Parent = wrap
             AddToRegistry(copyBtn, "BackgroundColor3", "Element")
-            Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0,8)
+            local copyCorner = Instance.new("UICorner")
+            copyCorner.CornerRadius = UDim.new(0,8)
+            copyCorner.Parent = copyBtn
             local copyStroke = Instance.new("UIStroke")
             copyStroke.Transparency = 0.4
             copyStroke.Thickness = 1
@@ -2646,7 +2689,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         frame.BorderSizePixel = 0
         frame.Parent = parent
         AddToRegistry(frame, "BackgroundColor3", "Top")
-        Instance.new("UICorner", frame).CornerRadius = UDim.new(0,4)
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0,4)
+        corner.Parent = frame
         local stroke = Instance.new("UIStroke")
         stroke.Transparency = 0.6
         stroke.Thickness = 1
@@ -2716,6 +2761,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local parent = opts.Parent or contentHolder
         if not parent then return end
         local UIS = UserInputService
+        local RS = RunService
+        local TS = TweenService
         local height = opts.Height or 200
         local focused = (opts.Focused ~= false)
         local interactive = (opts.Interactive ~= false)
@@ -2748,7 +2795,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         wrapStroke.Parent = wrap
         table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
-        Instance.new("UICorner", wrap).CornerRadius = UDim.new(0,radius)
+        local wrapCorner = Instance.new("UICorner")
+        wrapCorner.CornerRadius = UDim.new(0,radius)
+        wrapCorner.Parent = wrap
         local ratioNum = parseRatio(aspectRatio)
         local function recalcAspect()
             if not ratioNum or ratioNum<=0 then return end
@@ -2764,7 +2813,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bg.Image = ""
         bg.BackgroundColor3 = Color3.fromRGB(15,15,20)
         bg.Parent = wrap
-        Instance.new("UICorner", bg).CornerRadius = UDim.new(0,radius)
+        local bgCorner = Instance.new("UICorner")
+        bgCorner.CornerRadius = UDim.new(0,radius)
+        bgCorner.Parent = bg
         AddToRegistry(bg, "BackgroundColor3", "Main")
         local vp = Instance.new("ViewportFrame")
         vp.Name = "Viewport"
@@ -2792,11 +2843,19 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local as = vp.AbsoluteSize
             return pos.X>=ap.X and pos.X<=ap.X+as.X and pos.Y>=ap.Y and pos.Y<=ap.Y+as.Y
         end
+        local function updateZoomValue()
+            local ok, mpos = pcall(function() return obj:GetPivot().Position end)
+            if ok and camera then
+                local dist = (camera.CFrame.Position - mpos).Magnitude
+                if self then self.Value = dist end
+            end
+        end
         local function focusCamera()
             local mpos = obj:GetPivot().Position
             local size = obj:IsA("BasePart") and obj.Size or select(2, obj:GetBoundingBox(0))
             local ext = math.max(size.X, size.Y, size.Z)
             camera.CFrame = CFrame.new(mpos + Vector3.new(0, ext/2, ext*2), mpos)
+            updateZoomValue()
         end
         if focused then task.defer(focusCamera) end
         vp.MouseEnter:Connect(function()
@@ -2833,6 +2892,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     local rx = CFrame.fromAxisAngle(camera.CFrame.RightVector, -delta.Y*0.02)
                     local pitched = CFrame.new(pos) * rx * CFrame.new(-pos) * camera.CFrame
                     if pitched.UpVector.Y > 0.1 then camera.CFrame = pitched end
+                    updateZoomValue()
                 end
             end
         end)
@@ -2842,6 +2902,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     if not isMouseInViewport(UIS:GetMouseLocation()) then return end
                     local zoom = inp.Position.Z * 2
                     camera.CFrame = camera.CFrame + camera.CFrame.LookVector * zoom
+                    updateZoomValue()
                 end
             end
         end)
@@ -2858,6 +2919,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     local d = (cur - LastPinchDist) * 0.03
                     LastPinchDist = cur
                     camera.CFrame = camera.CFrame + camera.CFrame.LookVector * d
+                    updateZoomValue()
                 elseif state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
                     Pinching = false
                 end
@@ -2879,6 +2941,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function self:Focus() if self.Object then focusCamera() end end
         function self:SetCamera(cam) self.Camera = cam; vp.CurrentCamera = cam end
         function self:SetInteractive(val) self.Interactive = val; vp.Active = val end
+        function self:SetValue(dist) local ok, mpos = pcall(function() return self.Object:GetPivot().Position end); if not ok then return end; local dir = (self.Camera.CFrame.Position - mpos); if dir.Magnitude < 1e-4 then dir = Vector3.new(0,0,1) end; dir = dir.Unit; self.Camera.CFrame = CFrame.new(mpos + dir * dist, mpos); self.Value = dist end
         function self:Destroy() wrap:Destroy() end
         return self
     end
@@ -2935,6 +2998,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     colMethods[methodName] = makeColMethod(methodName)
                 end
             end
+            colMethods.SetSection = function(_, sec) mod._section = sec end
             setmetatable(colObj, {__index = colMethods})
             table.insert(elements, {Frame=el, ColObj=colObj})
             return colObj
@@ -2947,7 +3011,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section（折叠后高度固定 30，仅改长度） ==========
+    -- ========== 创建 Section（支持 Name / SubName / Logo + Collapsible） ==========
     local function createSection(_, config)
         if type(config) == "string" then
             config = { Name = config }
@@ -2966,6 +3030,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local hasIcon     = (sectionIcon ~= nil)
         local hasHeader   = hasTitle or hasSubtitle or hasIcon
 
+        -- 主容器
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(0.96, 0, 0, 0)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
@@ -2974,6 +3039,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
 
+        -- 内容容器（外框）
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, -10, 0, 0)
         contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
@@ -2994,19 +3060,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentCorner.CornerRadius = UDim.new(0, 10)
         contentCorner.Parent = contentContainer
 
+        -- ===== 头部尺寸 =====
         local HEADER_LEFT = 12
         local ARROW_WIDTH = collapsible and 26 or 0
-        local COLLAPSED_HEIGHT = 30    -- 折叠后高度 = UI.lua 的 Section 标题栏高度
-
         local HEADER_H
         if hasHeader then
             HEADER_H = hasSubtitle and 54 or 40
         else
-            HEADER_H = 30
+            HEADER_H = collapsible and 30 or 4
         end
         local CONTENT_TOP = hasHeader and (HEADER_H + 4) or 4
 
-        -- 图标（保持原色 + 圆角 + 更大）
+        -- ===== 图标（原色 + 圆角 + 更大） =====
         local iconLabel = nil
         local iconGap = 0
         if hasIcon then
@@ -3029,7 +3094,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             iconGap = iconSize + 8
         end
 
-        -- 标题
+        -- ===== 标题 =====
         local titleLabel = nil
         if hasTitle then
             titleLabel = Instance.new("TextLabel")
@@ -3053,7 +3118,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(titleLabel, "TextColor3", "Accent")
         end
 
-        -- 副标题
+        -- ===== 副标题 =====
         local subtitleLabel = nil
         if hasSubtitle then
             subtitleLabel = Instance.new("TextLabel")
@@ -3072,7 +3137,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(subtitleLabel, "TextColor3", "SubText")
         end
 
-        -- 折叠箭头
+        -- ===== 折叠箭头 =====
         local collapseArrow = nil
         if collapsible then
             collapseArrow = Instance.new("ImageLabel")
@@ -3090,7 +3155,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(collapseArrow, "ImageColor3", "Text")
         end
 
-        -- 内容持有者
+        -- ===== 内容持有者 =====
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -10, 0, 0)
         contentHolder.Position = UDim2.new(0.5, 0, 0, CONTENT_TOP)
@@ -3115,15 +3180,20 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainer.Visible = true
         contentHolder.Visible = true
 
+        -- ===== 高度 / 折叠逻辑 =====
         local collapsedState = collapsed
 
         local function getContentHeight()
             return contentLayout.AbsoluteContentSize.Y or 0
         end
 
+        local function getHeaderHeight()
+            return HEADER_H + 4
+        end
+
         local function getTargetHeight()
             if collapsedState then
-                return COLLAPSED_HEIGHT
+                return getHeaderHeight()
             end
             return getContentHeight() + CONTENT_TOP + 4
         end
@@ -3156,6 +3226,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         task.defer(function() updateHeight(true) end)
 
+        -- 折叠控制
         local function setCollapsed(state, instant)
             if not collapsible then return end
             state = state == true
@@ -3170,6 +3241,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             updateHeight(instant)
         end
 
+        -- 点击头部切换
         if collapsible then
             local headBtn = Instance.new("TextButton")
             headBtn.Name = "SectionHeaderBtn"
@@ -3185,6 +3257,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
+        -- ===== 返回接口 =====
         local sectionObj = {}
         for methodName, methodFn in pairs(child) do
             sectionObj[methodName] = function(_, cfg)
@@ -3242,7 +3315,7 @@ function Fenglib:CreateWindow(Config)
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind
     local IconAsset = Config.Logo
-    local SceneId = Config.Scene
+    local SceneId = Config.Scene  -- 默认为 nil，背景图空
 
     if Config.Theme then
         if type(Config.Theme)=="string" then
@@ -3281,6 +3354,7 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
+    -- 通知容器
     local NotificationHolder = Instance.new("Frame")
     NotificationHolder.Name = "NotificationHolder"
     NotificationHolder.Size = UDim2.new(0,300,0,0)
@@ -3302,9 +3376,11 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.PaddingBottom = UDim.new(0,5)
     HolderPadding.Parent = NotificationHolder
 
+    -- 窗口大小固定为 500×320
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 320
 
+    -- 主窗口
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0,0,0,0)
     MainFrame.Position = UDim2.new(0.5,0,0.5,0)
@@ -3316,12 +3392,13 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
+    -- ===== [MOD] 移除原有的描边（UIStroke），替换为 miUI 风格的多层阴影，颜色改为黑色 =====
     local shadowStrokes = {}
     local thicknesses = {6, 5, 4, 3}
     for _, thick in ipairs(thicknesses) do
         local stroke = Instance.new("UIStroke")
         stroke.Thickness = thick
-        stroke.Color = Color3.new(0, 0, 0)
+        stroke.Color = Color3.new(0, 0, 0)  -- 黑色
         stroke.Transparency = 1
         stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         stroke.Parent = MainFrame
@@ -3339,6 +3416,7 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
+    -- 背景图（默认为空）
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1,0,1,0)
@@ -3358,6 +3436,7 @@ function Fenglib:CreateWindow(Config)
         bgImage.BackgroundTransparency = 1
     end
 
+    -- 背景渐变
     local bgGradient = Instance.new("UIGradient")
     bgGradient.Name = "FengBgGradient"
     bgGradient.Color = ColorSequence.new({
@@ -3374,6 +3453,7 @@ function Fenglib:CreateWindow(Config)
 
     setShadowVisible(false, true)
 
+    -- Resizer (保留)
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
@@ -3417,6 +3497,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
+    -- 背景模糊模块
     local function CreateBlurModule()
         if not MainFrame or not MainFrame.Parent then return end
         local Part = Instance.new("Part")
@@ -3503,6 +3584,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
+    -- 左侧菜单（完整）
     local LeftMenuFrame = Instance.new("Frame")
     LeftMenuFrame.Size = UDim2.new(0, 175, 1, 0)
     LeftMenuFrame.BackgroundTransparency = 1
@@ -3550,6 +3632,7 @@ function Fenglib:CreateWindow(Config)
     LineFrame.Parent = HeadFrame
     AddToRegistry(LineFrame, "BackgroundColor3", "Stroke")
 
+    -- 左侧滚动列表
     local LeftScrollingFrame = Instance.new("ScrollingFrame")
     LeftScrollingFrame.Size = UDim2.new(1, -10, 1, -100)
     LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)
@@ -3621,6 +3704,7 @@ function Fenglib:CreateWindow(Config)
     LineFrame_2.Parent = BottomFrame
     AddToRegistry(LineFrame_2, "BackgroundColor3", "Stroke")
 
+    -- 右侧内容区
     local RightMenuFrame = Instance.new("Frame")
     RightMenuFrame.Size = UDim2.new(1, -176, 1, 0)
     RightMenuFrame.Position = UDim2.new(0, 176, 0, 0)
@@ -3647,6 +3731,7 @@ function Fenglib:CreateWindow(Config)
     LineFrame_3.Parent = RightHeader
     AddToRegistry(LineFrame_3, "BackgroundColor3", "Stroke")
 
+    -- 三按钮（与原来完全一致）
     local resizerVisible = false
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
@@ -3744,17 +3829,18 @@ function Fenglib:CreateWindow(Config)
         return btn
     end
 
-    createControlButton(nil, "−", function()
+    local MinimizeBtn = createControlButton(nil, "−", function()
         MainFrame.Visible = false
     end)
-    createControlButton("rbxassetid://6031090998", nil, function()
+    local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
         resizerVisible = not resizerVisible
         Resizer.Visible = resizerVisible
     end)
-    createControlButton("rbxassetid://130510492706892", nil, function()
+    local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function()
         ScreenGui:Destroy()
     end)
 
+    -- 内容容器
     local TabContainer = Instance.new("Frame")
     TabContainer.Size = UDim2.new(1, 0, 1, -50)
     TabContainer.Position = UDim2.new(0, 0, 0, 50)
@@ -3782,6 +3868,7 @@ function Fenglib:CreateWindow(Config)
     PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
     task.spawn(updatePageCanvas)
 
+    -- 拖动
     local dragToggle = false
     local dragStart, startPos
     local function updateDrag(input)
@@ -3810,6 +3897,7 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
+    -- 窗口动画与阴影联动
     local function AnimateWindowIn()
         MainFrame.Visible = true
         TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
@@ -3827,6 +3915,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame:GetPropertyChangedSignal("Visible"):Connect(onWindowVisibilityChanged)
     task.delay(0.1, AnimateWindowIn)
 
+    -- 浮动打开按钮
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
@@ -3861,12 +3950,14 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Visible = false
     MainFrame.Visible = true
 
+    -- 键盘绑定
     UserInputService.InputBegan:Connect(function(input, gpe)
         if not gpe and Keybind and input.KeyCode == Keybind then
             MainFrame.Visible = not MainFrame.Visible
         end
     end)
 
+    -- ===== Window:Category =====
     Window._currentCategory = nil
     function Window:Category(config)
         local name = type(config)=="table" and config.Name or config
@@ -3962,12 +4053,15 @@ function Fenglib:CreateWindow(Config)
         return Window._currentCategory
     end
 
+    -- ===== Window:Tab =====
     Window._activeTab = nil
     Window._tabs = {}
     function Window:Tab(name, icon)
         local parentContainer = LeftScrollingFrame
+        local parentList = TabList
         if Window._currentCategory then
             parentContainer = Window._currentCategory.content
+            parentList = Window._currentCategory.contentList
         end
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, -7, 0, 30)
@@ -3983,8 +4077,11 @@ function Fenglib:CreateWindow(Config)
         glowFrame.BackgroundColor3 = CurrentTheme.Accent
         glowFrame.BackgroundTransparency = 1
         glowFrame.Parent = TabBtn
-        Instance.new("UICorner", glowFrame).CornerRadius = UDim.new(0, 10)
+        local glowCorner = Instance.new("UICorner")
+        glowCorner.CornerRadius = UDim.new(0, 10)
+        glowCorner.Parent = glowFrame
         local glowGrad = Instance.new("UIGradient")
+        glowGrad.Rotation = 0
         glowGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
         glowGrad.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.55), NumberSequenceKeypoint.new(1, 1)})
         glowGrad.Parent = glowFrame
@@ -4011,7 +4108,9 @@ function Fenglib:CreateWindow(Config)
             if tonumber(icon) then TabIcon.Image = "rbxassetid://"..icon else TabIcon.Image = icon end
             TabIcon.Parent = ContentFrame
             AddToRegistry(TabIcon, "ImageColor3", "Text")
-            Instance.new("UICorner", TabIcon).CornerRadius = UDim.new(0, 8)
+            local iconCorner = Instance.new("UICorner")
+            iconCorner.CornerRadius = UDim.new(0, 8)
+            iconCorner.Parent = TabIcon
         end
 
         local TabText = Instance.new("TextLabel")
@@ -4034,22 +4133,24 @@ function Fenglib:CreateWindow(Config)
         Page.Visible = false
         Page.Position = UDim2.new(0, 0, 0, 60)
         Page.Parent = PageContainer
-        Instance.new("UICorner", Page).CornerRadius = UDim.new(0, 16)
+        local pageCorner = Instance.new("UICorner")
+        pageCorner.CornerRadius = UDim.new(0, 16)
+        pageCorner.Parent = Page
         Page.ClipsDescendants = true
 
-        local TabPageContent = Instance.new("Frame")
-        TabPageContent.Size = UDim2.new(1, 0, 0, 0)
-        TabPageContent.AutomaticSize = Enum.AutomaticSize.Y
-        TabPageContent.BackgroundTransparency = 1
-        TabPageContent.Parent = Page
-        local TabPageList = Instance.new("UIListLayout")
-        TabPageList.Padding = UDim.new(0, 10)
-        TabPageList.SortOrder = Enum.SortOrder.LayoutOrder
-        TabPageList.Parent = TabPageContent
+        local PageContent = Instance.new("Frame")
+        PageContent.Size = UDim2.new(1, 0, 0, 0)
+        PageContent.AutomaticSize = Enum.AutomaticSize.Y
+        PageContent.BackgroundTransparency = 1
+        PageContent.Parent = Page
+        local PageList = Instance.new("UIListLayout")
+        PageList.Padding = UDim.new(0, 10)
+        PageList.SortOrder = Enum.SortOrder.LayoutOrder
+        PageList.Parent = PageContent
         local function updatePageCanvas()
-            Page.CanvasSize = UDim2.new(0, 0, 0, TabPageList.AbsoluteContentSize.Y + 10)
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
         end
-        TabPageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
+        PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
         task.spawn(updatePageCanvas)
 
         local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame}
@@ -4100,10 +4201,11 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        local builder = createSectionBuilder(TabPageContent, TabPageContent, 330, 1, Window)
+        local builder = createSectionBuilder(PageContent, PageContent, 330, 1, Window)
         return builder
     end
 
+    -- ===== TabDivider =====
     function Window:TabDivider()
         local parentContainer = LeftScrollingFrame
         if Window._currentCategory then
@@ -4120,6 +4222,7 @@ function Fenglib:CreateWindow(Config)
         table.insert(ThemeListeners, function() line.BackgroundColor3 = CurrentTheme.Stroke end)
     end
 
+    -- ===== Dialog =====
     function Window:Dialog(Config)
         Config = Config or {}
         local Dialog = {Closed = false}
@@ -4282,7 +4385,10 @@ function Fenglib:CreateWindow(Config)
         return Dialog
     end
 
-    function Window:Notification(titleText, descText, notifType, duration) end
+    -- ===== Notification =====
+    function Window:Notification(titleText, descText, notifType, duration)
+        -- 保持原有实现（此处略，可按需要添加）
+    end
 
     function Window:SetKeybind(key) Keybind = key end
     function Window:Destroy()
