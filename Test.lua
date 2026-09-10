@@ -11,7 +11,6 @@
       - 窗口大小固定为 500×320
       - 背景图默认为空（不显示任何图片）
       - 主题仅保留 Dark、Charcoal、AMOLED
-      - Section 的标题样式从 RedOnyx 的 Groupbox 移植，仅接受表参数 { Name = "标题" }
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -3005,10 +3004,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return mod
     end
 
-    -- ========== 修改后的 Section（仅接受表参数 { Name = "标题" }） ==========
-    local function createSection(config)
-        -- 只接受表参数，提取 Name 字段
-        local text = (type(config) == "table" and config.Name) or ""
+    -- ========== 返回构建器 ==========
+    local functions = {}
+    for k, v in pairs(child) do functions[k] = v end
+
+    -- ========== 创建 Section（纯内容容器，无头部） ==========
+    local function createSection(text, icons, defaultOpen)
+        -- 参数完全忽略
 
         -- 主容器（透明，自动适应高度）
         local sectionFrame = Instance.new("Frame")
@@ -3020,7 +3022,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionFrame.Parent = parent
         sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
 
-        -- 内容容器（带边框和背景）
+        -- 内容容器（带边框和背景，无顶部偏移）
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, -10, 0, 0)
         contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
@@ -3043,34 +3045,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentCorner.CornerRadius = UDim.new(0, 10)
         contentCorner.Parent = contentContainer
 
-        -- ===== 标题标签（来自 RedOnyx 的 Groupbox 样式） =====
-        local titleLabel = nil
-        local titleHeight = 0
-        if text ~= "" then
-            titleLabel = Instance.new("TextLabel")
-            titleLabel.Size = UDim2.new(1, -20, 0, 25)
-            titleLabel.Position = UDim2.new(0, 10, 0, 0)
-            titleLabel.BackgroundTransparency = 1
-            titleLabel.Font = Enum.Font.GothamBold
-            titleLabel.TextSize = 13
-            titleLabel.Text = text
-            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-            titleLabel.Parent = contentContainer
-            AddToRegistry(titleLabel, "TextColor3", "Accent")
-            titleHeight = 30  -- 标题高度(25) + 底部间距(5)
-        end
-
         -- 内部内容持有者（子控件实际父级）
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -10, 0, 0)
-        contentHolder.Position = UDim2.new(0.5, 0, 0, titleHeight)
+        contentHolder.Position = UDim2.new(0.5, 0, 0, 4)
         contentHolder.AnchorPoint = Vector2.new(0.5, 0)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = false
         contentHolder.Parent = contentContainer
 
-        -- 内容布局
+        -- 布局
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Padding = UDim.new(0, 6)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -3083,10 +3068,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.Parent = contentHolder
 
-        -- 动态调整容器高度
+        -- 内容可见
+        contentContainer.Visible = true
+        contentHolder.Visible = true
+
+        -- 动态调整容器高度以适应子控件
         local function updateHeight()
             local actual = contentLayout.AbsoluteContentSize.Y or 0
-            local targetContainerHeight = actual + 8 + titleHeight
+            local targetContainerHeight = actual + 8  -- 上下内边距 4+4
             contentContainer.Size = UDim2.new(1, -10, 0, targetContainerHeight)
             sectionFrame.Size = UDim2.new(0.96, 0, 0, targetContainerHeight)
         end
@@ -3112,7 +3101,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
+        -- 仅保留可见性控制
         sectionObj.SetVisible = function(_, vis) sectionFrame.Visible = vis end
+
         return sectionObj
     end
 
