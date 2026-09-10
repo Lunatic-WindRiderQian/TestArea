@@ -13,6 +13,7 @@
       - 主题仅保留 Dark、Charcoal、AMOLED
       - Section 支持 Name / SubName / Logo（与 UI.lua Groupbox 一致）
       - Section 图标保持原色 + 圆角 + 更大尺寸
+      - Section 支持 Collapsible / Collapsed（从 miUI AddSection 移植）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -3010,7 +3011,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section（Name / SubName / Logo，与 UI.lua Groupbox 一致） ==========
+    -- ========== 创建 Section（支持 Name / SubName / Logo + Collapsible） ==========
     local function createSection(_, config)
         if type(config) == "string" then
             config = { Name = config }
@@ -3021,6 +3022,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local sectionTitle    = config.Name or config.Title or ""
         local sectionSubtitle = config.SubName or config.Subtitle or ""
         local sectionIcon     = config.Logo or config.Icon or nil
+        local collapsible     = config.Collapsible == true
+        local collapsed       = (config.Collapsed == true) and collapsible
 
         local hasTitle    = (sectionTitle ~= "")
         local hasSubtitle = (sectionSubtitle ~= "")
@@ -3035,9 +3038,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionFrame.BackgroundTransparency = 1
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
-        sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
 
-        -- 内容容器
+        -- 内容容器（外框）
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, -10, 0, 0)
         contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
@@ -3058,17 +3060,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentCorner.CornerRadius = UDim.new(0, 10)
         contentCorner.Parent = contentContainer
 
-        -- ===== 头部布局 =====
+        -- ===== 头部尺寸 =====
         local HEADER_LEFT = 12
+        local ARROW_WIDTH = collapsible and 26 or 0
         local HEADER_H
         if hasHeader then
             HEADER_H = hasSubtitle and 54 or 40
         else
-            HEADER_H = 4
+            HEADER_H = collapsible and 30 or 4
         end
         local CONTENT_TOP = hasHeader and (HEADER_H + 4) or 4
 
-        -- ===== 图标（保持原色 + 圆角 + 更大尺寸） =====
+        -- ===== 图标（原色 + 圆角 + 更大） =====
         local iconLabel = nil
         local iconGap = 0
         if hasIcon then
@@ -3078,7 +3081,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             iconLabel.Size = UDim2.new(0, iconSize, 0, iconSize)
             iconLabel.Position = UDim2.new(0, HEADER_LEFT, 0, (HEADER_H - iconSize) / 2)
             iconLabel.BackgroundTransparency = 1
-            iconLabel.ImageColor3 = Color3.new(1, 1, 1)   -- 保持原色，不着色
+            iconLabel.ImageColor3 = Color3.new(1, 1, 1)
             if tonumber(sectionIcon) then
                 iconLabel.Image = "rbxassetid://" .. tostring(sectionIcon)
             else
@@ -3097,11 +3100,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             titleLabel = Instance.new("TextLabel")
             titleLabel.Name = "SectionTitle"
             if hasSubtitle then
-                titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap), 0, 20)
+                titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap + ARROW_WIDTH), 0, 20)
                 titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 8)
             else
-                titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap), 0, 25)
-                titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 0)
+                titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap + ARROW_WIDTH), 0, 25)
+                titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, (HEADER_H - 25) / 2)
             end
             titleLabel.BackgroundTransparency = 1
             titleLabel.Font = Enum.Font.GothamBold
@@ -3120,7 +3123,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         if hasSubtitle then
             subtitleLabel = Instance.new("TextLabel")
             subtitleLabel.Name = "SectionSubName"
-            subtitleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap), 0, 16)
+            subtitleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap + ARROW_WIDTH), 0, 16)
             subtitleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 28)
             subtitleLabel.BackgroundTransparency = 1
             subtitleLabel.Font = Enum.Font.Gotham
@@ -3132,6 +3135,24 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subtitleLabel.TextTruncate = Enum.TextTruncate.AtEnd
             subtitleLabel.Parent = contentContainer
             AddToRegistry(subtitleLabel, "TextColor3", "SubText")
+        end
+
+        -- ===== 折叠箭头 =====
+        local collapseArrow = nil
+        if collapsible then
+            collapseArrow = Instance.new("ImageLabel")
+            collapseArrow.Name = "SectionCollapseArrow"
+            collapseArrow.Size = UDim2.new(0, 16, 0, 16)
+            collapseArrow.AnchorPoint = Vector2.new(1, 0.5)
+            collapseArrow.Position = UDim2.new(1, -10, 0, HEADER_H / 2)
+            collapseArrow.BackgroundTransparency = 1
+            collapseArrow.Image = "rbxassetid://8240930340"
+            collapseArrow.ImageColor3 = CurrentTheme.Text
+            collapseArrow.ImageTransparency = 0.35
+            collapseArrow.ScaleType = Enum.ScaleType.Fit
+            collapseArrow.Rotation = collapsed and -90 or 0
+            collapseArrow.Parent = contentContainer
+            AddToRegistry(collapseArrow, "ImageColor3", "Text")
         end
 
         -- ===== 内容持有者 =====
@@ -3159,24 +3180,84 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainer.Visible = true
         contentHolder.Visible = true
 
-        local function updateHeight()
-            local actual = contentLayout.AbsoluteContentSize.Y or 0
-            local targetContainerHeight = actual + CONTENT_TOP + 4
-            contentContainer.Size = UDim2.new(1, -10, 0, targetContainerHeight)
-            sectionFrame.Size = UDim2.new(0.96, 0, 0, targetContainerHeight)
+        -- ===== 高度 / 折叠逻辑 =====
+        local collapsedState = collapsed
+
+        local function getContentHeight()
+            return contentLayout.AbsoluteContentSize.Y or 0
         end
 
-        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateHeight)
+        local function getHeaderHeight()
+            return HEADER_H + 4
+        end
+
+        local function getTargetHeight()
+            if collapsedState then
+                return getHeaderHeight()
+            end
+            return getContentHeight() + CONTENT_TOP + 4
+        end
+
+        local function updateHeight(instant)
+            local targetH = getTargetHeight()
+            if instant then
+                contentContainer.Size = UDim2.new(1, -10, 0, targetH)
+                sectionFrame.Size = UDim2.new(0.96, 0, 0, targetH)
+            else
+                Tween(contentContainer, {Size = UDim2.new(1, -10, 0, targetH)}, 0.3)
+                Tween(sectionFrame, {Size = UDim2.new(0.96, 0, 0, targetH)}, 0.3)
+            end
+        end
+
+        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if not collapsedState then updateHeight(false) end
+        end)
         contentHolder.ChildAdded:Connect(function()
             task.wait(0.05)
-            updateHeight()
+            if not collapsedState then updateHeight(false) end
         end)
         contentHolder.ChildRemoved:Connect(function()
             task.wait(0.05)
-            updateHeight()
+            if not collapsedState then updateHeight(false) end
         end)
-        task.defer(updateHeight)
 
+        if collapsedState then
+            contentHolder.Visible = false
+        end
+        task.defer(function() updateHeight(true) end)
+
+        -- 折叠控制
+        local function setCollapsed(state, instant)
+            if not collapsible then return end
+            state = state == true
+            if collapsedState == state then return end
+            collapsedState = state
+
+            if collapseArrow then
+                Tween(collapseArrow, {Rotation = state and -90 or 0}, 0.25)
+            end
+
+            contentHolder.Visible = not state
+            updateHeight(instant)
+        end
+
+        -- 点击头部切换
+        if collapsible then
+            local headBtn = Instance.new("TextButton")
+            headBtn.Name = "SectionHeaderBtn"
+            headBtn.Size = UDim2.new(1, 0, 0, HEADER_H)
+            headBtn.Position = UDim2.new(0, 0, 0, 0)
+            headBtn.BackgroundTransparency = 1
+            headBtn.Text = ""
+            headBtn.ZIndex = 5
+            headBtn.AutoButtonColor = false
+            headBtn.Parent = contentContainer
+            headBtn.MouseButton1Click:Connect(function()
+                setCollapsed(not collapsedState, false)
+            end)
+        end
+
+        -- ===== 返回接口 =====
         local sectionObj = {}
         for methodName, methodFn in pairs(child) do
             sectionObj[methodName] = function(_, cfg)
@@ -3200,6 +3281,24 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 subtitleLabel.Text = text or ""
                 subtitleLabel.Visible = (text ~= nil and text ~= "")
             end
+        end
+        sectionObj.SetCollapsed = function(_, state)
+            setCollapsed(state, false)
+            return sectionObj
+        end
+        sectionObj.ToggleCollapsed = function(_)
+            setCollapsed(not collapsedState, false)
+            return sectionObj
+        end
+        sectionObj.GetCollapsed = function(_)
+            return collapsedState
+        end
+        sectionObj.SetCollapsible = function(_, state)
+            collapsible = state == true
+            return sectionObj
+        end
+        sectionObj.IsCollapsible = function(_)
+            return collapsible
         end
 
         return sectionObj
