@@ -11,7 +11,7 @@
       - 窗口大小固定为 500×320
       - 背景图默认为空（不显示任何图片）
       - 主题仅保留 Dark、Charcoal、AMOLED
-      - Section 标题固定在内容左上角（类似 Groupbox）
+      - Section 支持 Name / SubName / Logo（与 UI.lua Groupbox 一致）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -3009,7 +3009,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section（标题固定在左上角，像 Groupbox） ==========
+    -- ========== 创建 Section（Name / SubName / Logo，与 UI.lua Groupbox 一致） ==========
     local function createSection(_, config)
         if type(config) == "string" then
             config = { Name = config }
@@ -3017,11 +3017,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             config = {}
         end
 
-        local sectionTitle = config.Name or config.Title or ""
-        local sectionIcon  = config.Icon or nil
-        local hasHeader    = (sectionTitle ~= "" or sectionIcon ~= nil)
+        local sectionTitle    = config.Name or config.Title or ""
+        local sectionSubtitle = config.SubName or config.Subtitle or ""
+        local sectionIcon     = config.Logo or config.Icon or nil
 
-        -- 主容器（透明，自动适应高度）
+        local hasTitle    = (sectionTitle ~= "")
+        local hasSubtitle = (sectionSubtitle ~= "")
+        local hasIcon     = (sectionIcon ~= nil)
+        local hasHeader   = hasTitle or hasSubtitle or hasIcon
+
+        -- 主容器
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(0.96, 0, 0, 0)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
@@ -3031,7 +3036,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionFrame.Parent = parent
         sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
 
-        -- 内容容器（带背景、描边、圆角）
+        -- 内容容器
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, -10, 0, 0)
         contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
@@ -3052,18 +3057,25 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentCorner.CornerRadius = UDim.new(0, 10)
         contentCorner.Parent = contentContainer
 
-        -- ===== 标题栏（像 Groupbox 一样固定在左上角） =====
-        local CONTENT_TOP = hasHeader and 30 or 4
+        -- ===== 头部布局 =====
         local HEADER_LEFT = 12
-        local iconOffset  = 0
+        local HEADER_H
+        if hasHeader then
+            HEADER_H = hasSubtitle and 48 or 34
+        else
+            HEADER_H = 4
+        end
+        local CONTENT_TOP = hasHeader and (HEADER_H + 4) or 4
 
-        local titleLabel = nil
-        local iconLabel  = nil
-
-        if sectionIcon then
+        -- ===== 图标 =====
+        local iconLabel = nil
+        local iconGap = 0
+        if hasIcon then
+            local iconSize = hasSubtitle and 28 or 22
             iconLabel = Instance.new("ImageLabel")
-            iconLabel.Size = UDim2.new(0, 16, 0, 16)
-            iconLabel.Position = UDim2.new(0, HEADER_LEFT, 0, 6)
+            iconLabel.Name = "SectionLogo"
+            iconLabel.Size = UDim2.new(0, iconSize, 0, iconSize)
+            iconLabel.Position = UDim2.new(0, HEADER_LEFT, 0, (HEADER_H - iconSize) / 2)
             iconLabel.BackgroundTransparency = 1
             if tonumber(sectionIcon) then
                 iconLabel.Image = "rbxassetid://" .. tostring(sectionIcon)
@@ -3072,14 +3084,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             iconLabel.Parent = contentContainer
             AddToRegistry(iconLabel, "ImageColor3", "Accent")
-            iconOffset = 20
+            iconGap = iconSize + 8
         end
 
-        if sectionTitle ~= "" then
+        -- ===== 标题 =====
+        local titleLabel = nil
+        if hasTitle then
             titleLabel = Instance.new("TextLabel")
             titleLabel.Name = "SectionTitle"
-            titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconOffset), 0, 25)
-            titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconOffset, 0, 0)
+            if hasSubtitle then
+                titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap), 0, 20)
+                titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 6)
+            else
+                titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap), 0, 25)
+                titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 0)
+            end
             titleLabel.BackgroundTransparency = 1
             titleLabel.Font = Enum.Font.GothamBold
             titleLabel.Text = sectionTitle
@@ -3092,7 +3111,26 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(titleLabel, "TextColor3", "Accent")
         end
 
-        -- ===== 内容持有者（子控件实际父级） =====
+        -- ===== 副标题 =====
+        local subtitleLabel = nil
+        if hasSubtitle then
+            subtitleLabel = Instance.new("TextLabel")
+            subtitleLabel.Name = "SectionSubName"
+            subtitleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap), 0, 16)
+            subtitleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, 25)
+            subtitleLabel.BackgroundTransparency = 1
+            subtitleLabel.Font = Enum.Font.Gotham
+            subtitleLabel.Text = sectionSubtitle
+            subtitleLabel.TextSize = 11
+            subtitleLabel.TextTransparency = 0.4
+            subtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            subtitleLabel.TextYAlignment = Enum.TextYAlignment.Center
+            subtitleLabel.TextTruncate = Enum.TextTruncate.AtEnd
+            subtitleLabel.Parent = contentContainer
+            AddToRegistry(subtitleLabel, "TextColor3", "SubText")
+        end
+
+        -- ===== 内容持有者 =====
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -10, 0, 0)
         contentHolder.Position = UDim2.new(0.5, 0, 0, CONTENT_TOP)
@@ -3108,7 +3146,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         contentLayout.Parent = contentHolder
 
-        -- 底部留白
         local bottomPadding = Instance.new("Frame")
         bottomPadding.Size = UDim2.new(1, 0, 0, 4)
         bottomPadding.BackgroundTransparency = 1
@@ -3118,7 +3155,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainer.Visible = true
         contentHolder.Visible = true
 
-        -- 动态高度：内容高 + 顶部偏移 + 底部 4px
         local function updateHeight()
             local actual = contentLayout.AbsoluteContentSize.Y or 0
             local targetContainerHeight = actual + CONTENT_TOP + 4
@@ -3137,7 +3173,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end)
         task.defer(updateHeight)
 
-        -- 返回接口
         local sectionObj = {}
         for methodName, methodFn in pairs(child) do
             sectionObj[methodName] = function(_, cfg)
@@ -3150,12 +3185,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionObj.SetVisible = function(_, vis)
             sectionFrame.Visible = vis
         end
-
-        -- 动态修改标题
         sectionObj.SetTitle = function(_, text)
             if titleLabel then
                 titleLabel.Text = text or ""
                 titleLabel.Visible = (text ~= nil and text ~= "")
+            end
+        end
+        sectionObj.SetSubtitle = function(_, text)
+            if subtitleLabel then
+                subtitleLabel.Text = text or ""
+                subtitleLabel.Visible = (text ~= nil and text ~= "")
             end
         end
 
