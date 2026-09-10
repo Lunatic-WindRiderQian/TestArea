@@ -12,6 +12,7 @@
       - 背景图默认为空（不显示任何图片）
       - 主题仅保留 Dark、Charcoal、AMOLED
       - Section 支持 Name / SubName / Logo（与 UI.lua Groupbox 一致）
+      - Section 图标保持原色 + 圆角
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -3067,7 +3068,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         local CONTENT_TOP = hasHeader and (HEADER_H + 4) or 4
 
-        -- ===== 图标 =====
+        -- ===== 图标（保持原色 + 圆角） =====
         local iconLabel = nil
         local iconGap = 0
         if hasIcon then
@@ -3077,13 +3078,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             iconLabel.Size = UDim2.new(0, iconSize, 0, iconSize)
             iconLabel.Position = UDim2.new(0, HEADER_LEFT, 0, (HEADER_H - iconSize) / 2)
             iconLabel.BackgroundTransparency = 1
+            iconLabel.ImageColor3 = Color3.new(1, 1, 1)   -- 保持原色，不着色
             if tonumber(sectionIcon) then
                 iconLabel.Image = "rbxassetid://" .. tostring(sectionIcon)
             else
                 iconLabel.Image = tostring(sectionIcon)
             end
+            local iconCorner = Instance.new("UICorner")
+            iconCorner.CornerRadius = UDim.new(0, 6)
+            iconCorner.Parent = iconLabel
             iconLabel.Parent = contentContainer
-            AddToRegistry(iconLabel, "ImageColor3", "Accent")
             iconGap = iconSize + 8
         end
 
