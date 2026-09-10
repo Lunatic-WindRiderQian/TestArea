@@ -14,8 +14,9 @@
       - Section 支持 Name / SubName / Logo（与 UI.lua Groupbox 一致）
       - Section 图标保持原色 + 圆角 + 放大尺寸
       - Section 支持 Collapsible / Collapsed（从 miUI AddSection 移植）
-      - 折叠后高度紧凑（对齐 UI.lua Groupbox 标题栏）
-      - 标题 15 号加粗 / 副标题 12 号 / 图标 40px
+      - Section 折叠后高度紧凑（对齐 UI.lua Groupbox 标题栏）
+      - Section 标题 15 号加粗 / 副标题 12 号 / 图标 40px
+      - Section 头部所有元素（图标 / 标题 / 副标题 / 折叠箭头）垂直居中
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -28,7 +29,6 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- [MOD] 新增 DepthOfField 和 Blur 相关引用
 local DepthOfFieldEffect = Instance.new("DepthOfFieldEffect")
 DepthOfFieldEffect.Name = "FengBlurDOF"
 DepthOfFieldEffect.Enabled = false
@@ -73,7 +73,7 @@ do
     end
 end
 
--- ========== 主题（仅保留 Dark, Charcoal, AMOLED） ==========
+-- ========== 主题 ==========
 local Themes = {
     Dark = { Main=Color3.fromRGB(13,13,13), Top=Color3.fromRGB(28,28,30), Text=Color3.fromRGB(240,240,245), Accent=Color3.fromRGB(80,140,255), Stroke=Color3.fromRGB(45,45,48), SubText=Color3.fromRGB(160,160,170), Element=Color3.fromRGB(45,45,50), Hover=Color3.fromRGB(60,60,70), ShineEnabled=true, Shine={Speed=0.4,RotationSpeed=20,ColorSequence=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(40,40,40)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(105,105,105)),ColorSequenceKeypoint.new(1,Color3.fromRGB(40,40,40))})}, StrokeShine=true, StrokeDark=Color3.fromRGB(40,40,40) },
     ["Charcoal"] = { Main=Color3.fromRGB(20,20,20), Top=Color3.fromRGB(35,35,35), Text=Color3.fromRGB(240,240,240), Accent=Color3.fromRGB(102,102,102), Stroke=Color3.fromRGB(45,45,45), SubText=Color3.fromRGB(170,170,170), Element=Color3.fromRGB(35,35,35), Hover=Color3.fromRGB(90,160,255), ShineEnabled=true, Shine={Speed=0.45,RotationSpeed=25,ColorSequence=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(20,20,20)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(150,150,150)),ColorSequenceKeypoint.new(1,Color3.fromRGB(20,20,20))})}, StrokeShine=true, StrokeDark=Color3.fromRGB(60,60,60) },
@@ -146,7 +146,7 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- ========== 媒体管理器（完整） ==========
+-- ========== 媒体管理器 ==========
 local MediaManager = {Folder = "FengMediaCache"}
 function MediaManager:SetFolder(f) self.Folder = f end
 function MediaManager:_init(sub)
@@ -361,7 +361,7 @@ local function createLockOverlay(parent, defaultTitle)
     return lockFrame, lockLabel
 end
 
--- ========== 完整元素构建器（全部展开） ==========
+-- ========== 完整元素构建器 ==========
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
     local padding = parent:FindFirstChild("SectionPadding")
@@ -372,7 +372,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         padding.Parent = parent
     end
 
-    -- ========== 子控件方法表 ==========
     local child = {}
 
     -- ========== Button ==========
@@ -1882,12 +1881,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local auto = opts.AutoPlay ~= false
         local title = opts.Name or "Video"
         local aspect = opts.AspectRatio or "16:9"
-        local function resolveSync(s)
-            if type(s)~="string" or s=="" then return "" end
-            if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
-            if s:match("^%d+$") then return "rbxassetid://"..s end
-            return ""
-        end
         local function resolveMedia(s)
             if type(s)~="string" or s=="" then return "" end
             if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
@@ -2763,8 +2756,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local parent = opts.Parent or contentHolder
         if not parent then return end
         local UIS = UserInputService
-        local RS = RunService
-        local TS = TweenService
         local height = opts.Height or 200
         local focused = (opts.Focused ~= false)
         local interactive = (opts.Interactive ~= false)
@@ -2845,19 +2836,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local as = vp.AbsoluteSize
             return pos.X>=ap.X and pos.X<=ap.X+as.X and pos.Y>=ap.Y and pos.Y<=ap.Y+as.Y
         end
-        local function updateZoomValue()
-            local ok, mpos = pcall(function() return obj:GetPivot().Position end)
-            if ok and camera then
-                local dist = (camera.CFrame.Position - mpos).Magnitude
-                if self then self.Value = dist end
-            end
-        end
         local function focusCamera()
             local mpos = obj:GetPivot().Position
             local size = obj:IsA("BasePart") and obj.Size or select(2, obj:GetBoundingBox(0))
             local ext = math.max(size.X, size.Y, size.Z)
             camera.CFrame = CFrame.new(mpos + Vector3.new(0, ext/2, ext*2), mpos)
-            updateZoomValue()
         end
         if focused then task.defer(focusCamera) end
         vp.MouseEnter:Connect(function()
@@ -2894,7 +2877,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     local rx = CFrame.fromAxisAngle(camera.CFrame.RightVector, -delta.Y*0.02)
                     local pitched = CFrame.new(pos) * rx * CFrame.new(-pos) * camera.CFrame
                     if pitched.UpVector.Y > 0.1 then camera.CFrame = pitched end
-                    updateZoomValue()
                 end
             end
         end)
@@ -2904,26 +2886,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     if not isMouseInViewport(UIS:GetMouseLocation()) then return end
                     local zoom = inp.Position.Z * 2
                     camera.CFrame = camera.CFrame + camera.CFrame.LookVector * zoom
-                    updateZoomValue()
-                end
-            end
-        end)
-        UIS.TouchPinch:Connect(function(touches, scale, vel, state)
-            if interactive then
-                if state==Enum.UserInputState.Begin then
-                    local mid = (touches[1]+touches[2])/2
-                    if not isMouseInViewport(mid) then return end
-                    Pinching = true; Dragging = false
-                    LastPinchDist = (touches[1]-touches[2]).Magnitude
-                elseif state==Enum.UserInputState.Change then
-                    if not Pinching then return end
-                    local cur = (touches[1]-touches[2]).Magnitude
-                    local d = (cur - LastPinchDist) * 0.03
-                    LastPinchDist = cur
-                    camera.CFrame = camera.CFrame + camera.CFrame.LookVector * d
-                    updateZoomValue()
-                elseif state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
-                    Pinching = false
                 end
             end
         end)
@@ -3013,7 +2975,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section（Name / SubName / Logo + Collapsible + 放大版布局） ==========
+    -- ========== 创建 Section（垂直居中版本） ==========
     local function createSection(_, config)
         if type(config) == "string" then
             config = { Name = config }
@@ -3032,23 +2994,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local hasIcon     = (sectionIcon ~= nil)
         local hasHeader   = hasTitle or hasSubtitle or hasIcon
 
-        -- ===== 尺寸常量（放大版） =====
+        -- ===== 尺寸常量 =====
         local HEADER_LEFT = 12
         local ARROW_W     = collapsible and 26 or 0
 
         -- 图标
         local ICON_SIZE = hasSubtitle and 40 or 32
-        local ICON_TOP  = hasSubtitle and 8  or 5
 
         -- 标题
         local TITLE_SIZE = 15
-        local TITLE_TOP  = hasSubtitle and 8  or 11
         local TITLE_H    = 20
 
         -- 副标题
         local SUB_SIZE = 12
-        local SUB_TOP  = 30
         local SUB_H    = 16
+        local SUB_GAP  = 2
 
         -- 展开头部高度
         local HEADER_H
@@ -3058,7 +3018,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             HEADER_H = 4
         end
 
-        -- 折叠时的高度（紧凑，视觉对齐 UI.lua Groupbox）
+        -- 折叠后高度（同时作为垂直居中基准）
         local COLLAPSED_H
         if hasSubtitle then
             COLLAPSED_H = 50
@@ -3069,6 +3029,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
 
         local CONTENT_TOP = hasHeader and (HEADER_H + 4) or 4
+
+        -- ===== 垂直居中计算（基于 COLLAPSED_H） =====
+        local ICON_TOP       = math.floor((COLLAPSED_H - ICON_SIZE) / 2)
+        local TEXT_BLOCK_H   = hasSubtitle and (TITLE_H + SUB_GAP + SUB_H) or TITLE_H
+        local TEXT_BLOCK_TOP = math.floor((COLLAPSED_H - TEXT_BLOCK_H) / 2)
+        local TITLE_TOP      = TEXT_BLOCK_TOP
+        local SUB_TOP        = TEXT_BLOCK_TOP + TITLE_H + SUB_GAP
+        local ARROW_TOP      = math.floor((COLLAPSED_H - 18) / 2)
 
         -- 主容器
         local sectionFrame = Instance.new("Frame")
@@ -3100,7 +3068,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentCorner.CornerRadius = UDim.new(0, 10)
         contentCorner.Parent = contentContainer
 
-        -- ===== 图标（放大 + 原色 + 圆角） =====
+        -- ===== 图标（原色 + 圆角 + 垂直居中） =====
         local iconLabel = nil
         local iconGap = 0
         if hasIcon then
@@ -3123,7 +3091,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             iconGap = ICON_SIZE + 10
         end
 
-        -- ===== 标题（15 号加粗，强调色） =====
+        -- ===== 标题（垂直居中） =====
         local titleLabel = nil
         if hasTitle then
             titleLabel = Instance.new("TextLabel")
@@ -3142,7 +3110,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(titleLabel, "TextColor3", "Accent")
         end
 
-        -- ===== 副标题（12 号） =====
+        -- ===== 副标题（垂直居中） =====
         local subtitleLabel = nil
         if hasSubtitle then
             subtitleLabel = Instance.new("TextLabel")
@@ -3161,14 +3129,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(subtitleLabel, "TextColor3", "SubText")
         end
 
-        -- ===== 折叠箭头（居中于折叠高度） =====
+        -- ===== 折叠箭头（垂直居中） =====
         local collapseArrow = nil
         if collapsible then
             collapseArrow = Instance.new("ImageLabel")
             collapseArrow.Name = "SectionCollapseArrow"
             collapseArrow.Size = UDim2.new(0, 18, 0, 18)
             collapseArrow.AnchorPoint = Vector2.new(1, 0.5)
-            collapseArrow.Position = UDim2.new(1, -10, 0, (COLLAPSED_H - 18) / 2)
+            collapseArrow.Position = UDim2.new(1, -10, 0, ARROW_TOP + 9)
             collapseArrow.BackgroundTransparency = 1
             collapseArrow.Image = "rbxassetid://8240930340"
             collapseArrow.ImageColor3 = CurrentTheme.Text
@@ -3335,7 +3303,7 @@ function Fenglib:CreateWindow(Config)
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind
     local IconAsset = Config.Logo
-    local SceneId = Config.Scene  -- 默认为 nil，背景图空
+    local SceneId = Config.Scene
 
     if Config.Theme then
         if type(Config.Theme)=="string" then
@@ -3374,7 +3342,6 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
-    -- 通知容器
     local NotificationHolder = Instance.new("Frame")
     NotificationHolder.Name = "NotificationHolder"
     NotificationHolder.Size = UDim2.new(0,300,0,0)
@@ -3396,11 +3363,9 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.PaddingBottom = UDim.new(0,5)
     HolderPadding.Parent = NotificationHolder
 
-    -- 窗口大小固定为 500×320
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 320
 
-    -- 主窗口
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0,0,0,0)
     MainFrame.Position = UDim2.new(0.5,0,0.5,0)
@@ -3412,13 +3377,12 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
-    -- ===== [MOD] 移除原有的描边（UIStroke），替换为 miUI 风格的多层阴影，颜色改为黑色 =====
     local shadowStrokes = {}
     local thicknesses = {6, 5, 4, 3}
     for _, thick in ipairs(thicknesses) do
         local stroke = Instance.new("UIStroke")
         stroke.Thickness = thick
-        stroke.Color = Color3.new(0, 0, 0)  -- 黑色
+        stroke.Color = Color3.new(0, 0, 0)
         stroke.Transparency = 1
         stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         stroke.Parent = MainFrame
@@ -3436,7 +3400,6 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- 背景图（默认为空）
     local bgImage = Instance.new("ImageLabel")
     bgImage.Name = "FluentBG"
     bgImage.Size = UDim2.new(1,0,1,0)
@@ -3456,7 +3419,6 @@ function Fenglib:CreateWindow(Config)
         bgImage.BackgroundTransparency = 1
     end
 
-    -- 背景渐变
     local bgGradient = Instance.new("UIGradient")
     bgGradient.Name = "FengBgGradient"
     bgGradient.Color = ColorSequence.new({
@@ -3473,7 +3435,6 @@ function Fenglib:CreateWindow(Config)
 
     setShadowVisible(false, true)
 
-    -- Resizer (保留)
     local Resizer = Instance.new("TextButton")
     Resizer.Name = "WindowResizer"
     Resizer.Parent = MainFrame
@@ -3517,7 +3478,6 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 背景模糊模块
     local function CreateBlurModule()
         if not MainFrame or not MainFrame.Parent then return end
         local Part = Instance.new("Part")
@@ -3604,7 +3564,6 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 左侧菜单（完整）
     local LeftMenuFrame = Instance.new("Frame")
     LeftMenuFrame.Size = UDim2.new(0, 175, 1, 0)
     LeftMenuFrame.BackgroundTransparency = 1
@@ -3652,7 +3611,6 @@ function Fenglib:CreateWindow(Config)
     LineFrame.Parent = HeadFrame
     AddToRegistry(LineFrame, "BackgroundColor3", "Stroke")
 
-    -- 左侧滚动列表
     local LeftScrollingFrame = Instance.new("ScrollingFrame")
     LeftScrollingFrame.Size = UDim2.new(1, -10, 1, -100)
     LeftScrollingFrame.Position = UDim2.new(0.5, 0, 0, 50)
@@ -3724,7 +3682,6 @@ function Fenglib:CreateWindow(Config)
     LineFrame_2.Parent = BottomFrame
     AddToRegistry(LineFrame_2, "BackgroundColor3", "Stroke")
 
-    -- 右侧内容区
     local RightMenuFrame = Instance.new("Frame")
     RightMenuFrame.Size = UDim2.new(1, -176, 1, 0)
     RightMenuFrame.Position = UDim2.new(0, 176, 0, 0)
@@ -3751,7 +3708,6 @@ function Fenglib:CreateWindow(Config)
     LineFrame_3.Parent = RightHeader
     AddToRegistry(LineFrame_3, "BackgroundColor3", "Stroke")
 
-    -- 三按钮（与原来完全一致）
     local resizerVisible = false
     local ButtonGroup = Instance.new("Frame")
     ButtonGroup.Name = "WindowButtons"
@@ -3860,7 +3816,6 @@ function Fenglib:CreateWindow(Config)
         ScreenGui:Destroy()
     end)
 
-    -- 内容容器
     local TabContainer = Instance.new("Frame")
     TabContainer.Size = UDim2.new(1, 0, 1, -50)
     TabContainer.Position = UDim2.new(0, 0, 0, 50)
@@ -3888,7 +3843,6 @@ function Fenglib:CreateWindow(Config)
     PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
     task.spawn(updatePageCanvas)
 
-    -- 拖动
     local dragToggle = false
     local dragStart, startPos
     local function updateDrag(input)
@@ -3917,7 +3871,6 @@ function Fenglib:CreateWindow(Config)
         end
     end)
 
-    -- 窗口动画与阴影联动
     local function AnimateWindowIn()
         MainFrame.Visible = true
         TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
@@ -3935,7 +3888,6 @@ function Fenglib:CreateWindow(Config)
     MainFrame:GetPropertyChangedSignal("Visible"):Connect(onWindowVisibilityChanged)
     task.delay(0.1, AnimateWindowIn)
 
-    -- 浮动打开按钮
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "FloatingOpenButton"
     OpenButton.Parent = ScreenGui
@@ -3970,14 +3922,12 @@ function Fenglib:CreateWindow(Config)
     OpenButton.Visible = false
     MainFrame.Visible = true
 
-    -- 键盘绑定
     UserInputService.InputBegan:Connect(function(input, gpe)
         if not gpe and Keybind and input.KeyCode == Keybind then
             MainFrame.Visible = not MainFrame.Visible
         end
     end)
 
-    -- ===== Window:Category =====
     Window._currentCategory = nil
     function Window:Category(config)
         local name = type(config)=="table" and config.Name or config
@@ -4073,7 +4023,6 @@ function Fenglib:CreateWindow(Config)
         return Window._currentCategory
     end
 
-    -- ===== Window:Tab =====
     Window._activeTab = nil
     Window._tabs = {}
     function Window:Tab(name, icon)
@@ -4225,7 +4174,6 @@ function Fenglib:CreateWindow(Config)
         return builder
     end
 
-    -- ===== TabDivider =====
     function Window:TabDivider()
         local parentContainer = LeftScrollingFrame
         if Window._currentCategory then
@@ -4242,7 +4190,6 @@ function Fenglib:CreateWindow(Config)
         table.insert(ThemeListeners, function() line.BackgroundColor3 = CurrentTheme.Stroke end)
     end
 
-    -- ===== Dialog =====
     function Window:Dialog(Config)
         Config = Config or {}
         local Dialog = {Closed = false}
@@ -4405,9 +4352,7 @@ function Fenglib:CreateWindow(Config)
         return Dialog
     end
 
-    -- ===== Notification =====
     function Window:Notification(titleText, descText, notifType, duration)
-        -- 保持原有实现（此处略，可按需要添加）
     end
 
     function Window:SetKeybind(key) Keybind = key end
