@@ -14,7 +14,7 @@
       - Section 支持 Name / SubName / Logo（与 UI.lua Groupbox 一致）
       - Section 图标保持原色 + 圆角 + 放大尺寸
       - Section 支持 Collapsible / Collapsed（从 miUI AddSection 移植）
-      - Section 折叠后高度紧凑（对齐 UI.lua Groupbox 标题栏）
+      - Section 折叠动画与 miUI 完全一致（122444883127455 箭头 / 0°↔180° / 0.3s Quart）
       - Section 标题 15 号加粗 / 副标题 12 号 / 图标 40px
       - Section 头部所有元素（图标 / 标题 / 副标题 / 折叠箭头）垂直居中
 ]]
@@ -1879,7 +1879,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local looped = opts.Looped ~= false
         local vol = opts.Volume or 0
         local auto = opts.AutoPlay ~= false
-        local title = opts.Name or "Video"
         local aspect = opts.AspectRatio or "16:9"
         local function resolveMedia(s)
             if type(s)~="string" or s=="" then return "" end
@@ -2975,7 +2974,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section（垂直居中版本） ==========
+    -- ========== 创建 Section（垂直居中 + miUI 折叠动画） ==========
     local function createSection(_, config)
         if type(config) == "string" then
             config = { Name = config }
@@ -3038,6 +3037,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local SUB_TOP        = TEXT_BLOCK_TOP + TITLE_H + SUB_GAP
         local ARROW_TOP      = math.floor((COLLAPSED_H - 18) / 2)
 
+        -- ===== miUI 折叠动画参数（与 AddSection 完全一致） =====
+        local MIUI_TWEEN = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
+
         -- 主容器
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(0.96, 0, 0, 0)
@@ -3068,7 +3070,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentCorner.CornerRadius = UDim.new(0, 10)
         contentCorner.Parent = contentContainer
 
-        -- ===== 图标（原色 + 圆角 + 垂直居中） =====
+        -- ===== 图标 =====
         local iconLabel = nil
         local iconGap = 0
         if hasIcon then
@@ -3091,7 +3093,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             iconGap = ICON_SIZE + 10
         end
 
-        -- ===== 标题（垂直居中） =====
+        -- ===== 标题 =====
         local titleLabel = nil
         if hasTitle then
             titleLabel = Instance.new("TextLabel")
@@ -3110,7 +3112,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(titleLabel, "TextColor3", "Accent")
         end
 
-        -- ===== 副标题（垂直居中） =====
+        -- ===== 副标题 =====
         local subtitleLabel = nil
         if hasSubtitle then
             subtitleLabel = Instance.new("TextLabel")
@@ -3129,7 +3131,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(subtitleLabel, "TextColor3", "SubText")
         end
 
-        -- ===== 折叠箭头（垂直居中） =====
+        -- ===== 折叠箭头（miUI 资源 ID） =====
         local collapseArrow = nil
         if collapsible then
             collapseArrow = Instance.new("ImageLabel")
@@ -3138,11 +3140,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             collapseArrow.AnchorPoint = Vector2.new(1, 0.5)
             collapseArrow.Position = UDim2.new(1, -10, 0, ARROW_TOP + 9)
             collapseArrow.BackgroundTransparency = 1
-            collapseArrow.Image = "rbxassetid://8240930340"
+            collapseArrow.Image = "rbxassetid://122444883127455"   -- miUI 用的箭头
             collapseArrow.ImageColor3 = CurrentTheme.Text
             collapseArrow.ImageTransparency = 0.35
             collapseArrow.ScaleType = Enum.ScaleType.Fit
-            collapseArrow.Rotation = collapsed and -90 or 0
+            collapseArrow.Rotation = collapsed and 180 or 0
             collapseArrow.Parent = contentContainer
             AddToRegistry(collapseArrow, "ImageColor3", "Text")
         end
@@ -3172,7 +3174,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainer.Visible = true
         contentHolder.Visible = true
 
-        -- ===== 高度 / 折叠逻辑 =====
+        -- ===== 高度 / 折叠逻辑（miUI 动画） =====
         local collapsedState = collapsed
 
         local function getContentHeight()
@@ -3192,8 +3194,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 contentContainer.Size = UDim2.new(1, -10, 0, targetH)
                 sectionFrame.Size = UDim2.new(0.96, 0, 0, targetH)
             else
-                Tween(contentContainer, {Size = UDim2.new(1, -10, 0, targetH)}, 0.3)
-                Tween(sectionFrame, {Size = UDim2.new(0.96, 0, 0, targetH)}, 0.3)
+                -- miUI 用 0.3s Quart 缓动
+                TweenService:Create(contentContainer, MIUI_TWEEN, {Size = UDim2.new(1, -10, 0, targetH)}):Play()
+                TweenService:Create(sectionFrame, MIUI_TWEEN, {Size = UDim2.new(0.96, 0, 0, targetH)}):Play()
             end
         end
 
@@ -3214,7 +3217,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         task.defer(function() updateHeight(true) end)
 
-        -- 折叠控制
+        -- 折叠控制（miUI 旋转 0 ↔ 180，0.3s Quart）
         local function setCollapsed(state, instant)
             if not collapsible then return end
             state = state == true
@@ -3222,7 +3225,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             collapsedState = state
 
             if collapseArrow then
-                Tween(collapseArrow, {Rotation = state and -90 or 0}, 0.25)
+                -- miUI: 展开 = 0°，折叠 = 180°
+                TweenService:Create(collapseArrow, MIUI_TWEEN, {
+                    Rotation = state and 180 or 0,
+                }):Play()
             end
 
             contentHolder.Visible = not state
