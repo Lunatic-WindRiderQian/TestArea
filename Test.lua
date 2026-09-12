@@ -1,9 +1,8 @@
 --[[
     FengYu-Bento (miUI 框架 – 完整版)
-    - 控件大小 = 原文件尺寸
-    - 视觉框架 = miUI 风格
+    - Slider = miUI 单行布局（名称 + 滑轨 + 数值框同一水平线）
+    - 其他控件 = miUI 风格视觉框架
     - Video/Viewport = 原文件核心
-    - Slider = 原文件布局 + miUI 外观
     - Keybind = 带原文件鼠标图标
 ]]
 local TweenService = game:GetService("TweenService")
@@ -325,7 +324,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         row.BorderSizePixel = 0
         row.ClipsDescendants = false
         row.Parent = parentFrame
-
         local line = Instance.new("Frame")
         line.Size = UDim2.new(1, -20, 0, 1)
         line.Position = UDim2.new(0, 10, 1, -1)
@@ -373,7 +371,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return lbl
     end
 
-    -- ═══════ Button ═══════
+    -- Button
     child.Button = function(_, config)
         local btnText = config.Name or config.Text or ""
         local callback = config.Callback or function() end
@@ -431,7 +429,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Toggle ═══════
+    -- Toggle
     child.Toggle = function(_, config)
         local toggleText = config.Name or ""
         local Enabled = config.Value or false
@@ -524,7 +522,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Slider (原文件布局 + miUI 外观) ═══════
+    -- ═══════ Slider (miUI 单行布局：名称 + 滑轨 + 数值框同一行) ═══════
     child.Slider = function(_, config)
         local sliderText = config.Name or ""
         local valueTable = config.Value or {}
@@ -542,39 +540,54 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local Tile = miRow(parent, tileH)
 
-        -- 原文件布局：标题 (15, unlimited?11:10) 宽 (1,-30) 高 20
-        local TitleLbl = miLabel(Tile, sliderText, 15, unlimited and 11 or 10, UDim2.new(1, -30, 0, 20), 13)
+        -- miUI 单行布局：所有元素垂直居中，都在同一水平线上
+        local rowH = 18
+        local rowY = math.floor((tileH - rowH) / 2)
 
-        -- 原文件布局：数值框高 22，位置右上
+        -- 左侧：名称
+        local TitleLbl = miLabel(Tile, sliderText, 15, rowY, UDim2.new(0, 90, 0, rowH), 13)
+
+        -- 右侧：数值框
         local numW = unlimited and 72 or 52
-        local Num = Instance.new("TextBox")
-        Num.Text = tostring(Val)
-        Num.Size = UDim2.new(0, numW, 0, 22)
-        Num.Position = UDim2.new(1, -(numW + 10), 0, unlimited and 10 or 9)
-        Num.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
-        Num.BackgroundTransparency = 0
-        Num.BorderSizePixel = 0
-        Num.Font = Enum.Font.GothamBold
-        Num.TextSize = 12
-        Num.TextColor3 = CurrentTheme.Accent
-        Num.TextXAlignment = Enum.TextXAlignment.Center
-        Num.Parent = Tile
-        Num.ClearTextOnFocus = false
-        Instance.new("UICorner", Num).CornerRadius = UDim.new(0, 6)
-        local NumStroke = Instance.new("UIStroke")
-        NumStroke.Thickness = 1
-        NumStroke.Transparency = 0.65
-        NumStroke.Color = CurrentTheme.Stroke
-        NumStroke.Parent = Num
-        table.insert(ThemeListeners, function() NumStroke.Color = CurrentTheme.Stroke end)
-        Num.Focused:Connect(function() Tween(NumStroke, {Transparency = 0.2}, 0.15) end)
+        local ValueFrame = Instance.new("Frame")
+        ValueFrame.Size = UDim2.new(0, numW, 0, rowH)
+        ValueFrame.Position = UDim2.new(1, -(numW + 10), 0.5, -rowH/2)
+        ValueFrame.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+        ValueFrame.BackgroundTransparency = 0
+        ValueFrame.BorderSizePixel = 0
+        ValueFrame.ClipsDescendants = true
+        ValueFrame.Parent = Tile
+        Instance.new("UICorner", ValueFrame).CornerRadius = UDim.new(0, 4)
 
-        -- 原文件布局：滑轨 (0,15,0,44)，宽 (1,-30)，高 5
+        local ValueStroke = Instance.new("UIStroke")
+        ValueStroke.Thickness = 1
+        ValueStroke.Transparency = 0.65
+        ValueStroke.Color = CurrentTheme.Stroke
+        ValueStroke.Parent = ValueFrame
+        table.insert(ThemeListeners, function() ValueStroke.Color = CurrentTheme.Stroke end)
+
+        local ValueLabel = Instance.new("TextBox")
+        ValueLabel.Text = tostring(Val)
+        ValueLabel.Size = UDim2.new(1, 0, 1, 0)
+        ValueLabel.BackgroundTransparency = 1
+        ValueLabel.Font = Enum.Font.GothamMedium
+        ValueLabel.TextSize = 10
+        ValueLabel.TextColor3 = CurrentTheme.Text
+        ValueLabel.TextXAlignment = Enum.TextXAlignment.Center
+        ValueLabel.TextYAlignment = Enum.TextYAlignment.Center
+        ValueLabel.ClearTextOnFocus = false
+        ValueLabel.Parent = ValueFrame
+        AddToRegistry(ValueLabel, "TextColor3", "Text")
+        ValueLabel.Focused:Connect(function() Tween(ValueStroke, {Transparency = 0.2}, 0.15) end)
+
+        -- 中间：滑轨（在名称右侧到数值框左侧之间，垂直居中）
+        local trackLeft = 15 + 90 + 12
+        local trackRight = numW + 10 + 10
         local Track, Fill, Knob, Bar
         if not unlimited then
             Track = Instance.new("Frame")
-            Track.Size = UDim2.new(1, -30, 0, 5)
-            Track.Position = UDim2.new(0, 15, 0, 44)
+            Track.Size = UDim2.new(1, -(trackLeft + trackRight), 0, 5)
+            Track.Position = UDim2.new(0, trackLeft, 0.5, -2.5)
             Track.BackgroundColor3 = CurrentTheme.Stroke
             Track.BorderSizePixel = 0
             Track.Parent = Tile
@@ -591,9 +604,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
             AddToRegistry(Fill, "BackgroundColor3", "Accent")
 
-            -- 原文件：Knob 12×12 白圆
             Knob = Instance.new("Frame")
-            Knob.Size = UDim2.new(0, 12, 0, 12)
+            Knob.Size = UDim2.new(0, 10, 0, 10)
             Knob.AnchorPoint = Vector2.new(0.5, 0.5)
             Knob.Position = UDim2.new(initP, 0, 0.5, 0)
             Knob.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -620,7 +632,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function UpdateSlider(val)
             if unlimited then
                 Val = tonumber(val) or Val
-                Num.Text = tostring(Val)
+                ValueLabel.Text = tostring(Val)
                 if ConfigObjects[controlId] then ConfigObjects[controlId].Value = Val end
                 callback(Val)
                 return
@@ -630,7 +642,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local ratio = (val - min) / (max - min)
             TweenService:Create(Fill, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {Size = UDim2.new(ratio, 0, 1, 0)}):Play()
             TweenService:Create(Knob, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {Position = UDim2.new(ratio, 0, 0.5, 0)}):Play()
-            Num.Text = tostring(val)
+            ValueLabel.Text = tostring(val)
             Val = val
             if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
             callback(val)
@@ -664,10 +676,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        Num.FocusLost:Connect(function()
-            Tween(NumStroke, {Transparency = 0.65}, 0.15)
-            local typed = tonumber(Num.Text)
-            if typed then UpdateSlider(typed) else Num.Text = tostring(Val) end
+        ValueLabel.FocusLost:Connect(function()
+            Tween(ValueStroke, {Transparency = 0.65}, 0.15)
+            local typed = tonumber(ValueLabel.Text)
+            if typed then UpdateSlider(typed) else ValueLabel.Text = tostring(Val) end
         end)
 
         local locked = config.Locked == true
@@ -675,20 +687,20 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         if Bar then Bar.Active = not locked end
-        Num.Active = not locked
+        ValueLabel.Active = not locked
 
         local function updateLock(state)
             locked = state
             lockFrame.Visible = state
             if Bar then Bar.Active = not state end
-            Num.Active = not state
+            ValueLabel.Active = not state
         end
 
         ConfigObjects[controlId] = { Type = "Slider", Value = Val, Set = function(v) if not locked then UpdateSlider(tonumber(v) or Val) end end }
         table.insert(ThemeListeners, function()
             if Fill then Fill.BackgroundColor3 = CurrentTheme.Accent end
             if Track then Track.BackgroundColor3 = CurrentTheme.Stroke end
-            Num.TextColor3 = CurrentTheme.Accent
+            ValueLabel.TextColor3 = CurrentTheme.Text
         end)
         UpdateSlider(Val)
 
@@ -702,7 +714,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Dropdown ═══════
+    -- Dropdown
     child.Dropdown = function(_, config)
         local dropText = config.Name or ""
         local options = config.Values or {}
@@ -779,7 +791,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 O.BackgroundTransparency = 1
                 O.AutoButtonColor = false
                 O.Parent = Container
-
                 local check = Instance.new("Frame")
                 check.Size = UDim2.new(0, 16, 0, 16)
                 check.Position = UDim2.new(0, 10, 0.5, -8)
@@ -788,7 +799,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 check.ZIndex = 1
                 check.Parent = O
                 Instance.new("UICorner", check).CornerRadius = UDim.new(0, 4)
-
                 local checkMark = Instance.new("ImageLabel")
                 checkMark.Size = UDim2.new(0, 12, 0, 12)
                 checkMark.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -798,7 +808,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 checkMark.ImageTransparency = 1
                 checkMark.Parent = check
                 AddToRegistry(checkMark, "ImageColor3", "Accent")
-
                 local label = Instance.new("TextLabel")
                 label.Size = UDim2.new(1, -40, 1, 0)
                 label.Position = UDim2.new(0, 36, 0, 0)
@@ -809,13 +818,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 label.TextXAlignment = Enum.TextXAlignment.Left
                 label.Parent = O
                 AddToRegistry(label, "TextColor3", "Text")
-
                 O.MouseEnter:Connect(function() Tween(O, {BackgroundTransparency = 0.1}, 0.15) end)
                 O.MouseLeave:Connect(function() Tween(O, {BackgroundTransparency = 1}, 0.15) end)
-
                 local optData = { button = O, label = label, check = check, checkMark = checkMark, value = opt, selected = false }
                 table.insert(optionButtons, optData)
-
                 O.MouseButton1Click:Connect(function()
                     if locked then return end
                     if multi then
@@ -952,7 +958,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Keybind (含原文件鼠标图标) ═══════
+    -- Keybind (含原文件鼠标图标)
     child.Keybind = function(_, config)
         local keyText = config.Name or ""
         local defaultKey = config.Default or Enum.KeyCode.M
@@ -995,7 +1001,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         keyPadding.PaddingRight = UDim.new(0, 8)
         keyPadding.Parent = KeyBtn
 
-        -- ★ 原文件的鼠标图标
         local mouseIco = Instance.new("ImageLabel")
         mouseIco.Size = UDim2.fromOffset(13, 13)
         mouseIco.BackgroundTransparency = 1
@@ -1105,7 +1110,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Input ═══════
+    -- Input
     child.Input = function(_, config)
         local inputText = config.Name or ""
         local default = config.Value or ""
@@ -1132,14 +1137,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         BoxContainer.BorderSizePixel = 0
         BoxContainer.Parent = Tile
         Instance.new("UICorner", BoxContainer).CornerRadius = UDim.new(0, 6)
-
         local boxStroke = Instance.new("UIStroke")
         boxStroke.Thickness = 1
         boxStroke.Transparency = 0.65
         boxStroke.Color = CurrentTheme.Stroke
         boxStroke.Parent = BoxContainer
         table.insert(ThemeListeners, function() boxStroke.Color = CurrentTheme.Stroke end)
-
         local InputBox = Instance.new("TextBox")
         InputBox.Text = tostring(default)
         InputBox.PlaceholderText = placeholder
@@ -1228,7 +1231,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Textbox ═══════
+    -- Textbox
     child.Textbox = function(_, config)
         local boxText = config.Name or ""
         local placeholder = config.Placeholder or ""
@@ -1257,14 +1260,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Box.BorderSizePixel = 0
         Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 6)
         AddToRegistry(Box, "TextColor3", "Text")
-
         local BoxStroke = Instance.new("UIStroke")
         BoxStroke.Thickness = 1
         BoxStroke.Transparency = 0.65
         BoxStroke.Color = CurrentTheme.Stroke
         BoxStroke.Parent = Box
         table.insert(ThemeListeners, function() BoxStroke.Color = CurrentTheme.Stroke end)
-
         Box.Focused:Connect(function() Tween(BoxStroke, {Transparency = 0.2}, 0.15) end)
         Box.FocusLost:Connect(function()
             if locked then return end
@@ -1272,21 +1273,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ConfigObjects[controlId].Value = Box.Text
             callback(Box.Text)
         end)
-
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "Locked"
         local lockFrame, lockLabel = createLockOverlay(Frame, lockedTitle)
         lockFrame.Visible = locked
         Box.Active = not locked
-
-        local function updateLock(st)
-            locked = st
-            lockFrame.Visible = st
-            Box.Active = not st
-        end
-
+        local function updateLock(st) locked = st; lockFrame.Visible = st; Box.Active = not st end
         ConfigObjects[controlId] = { Type = "Textbox", Value = "", Set = function(val) if not locked then Box.Text = val; callback(val) end end }
-
         local self = {}
         function self.SetValue(v) if not locked then ConfigObjects[controlId].Set(v) end end
         function self.GetValue() return Box.Text end
@@ -1297,21 +1290,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Label ═══════
+    -- Label
     child.Label = function(_, config)
         local labelText = config.Name or ""
         local parent = config.Parent or contentHolder
-
         local Tile = miRow(parent, 42)
         local TextLabel = miLabel(Tile, labelText, 15, 12, UDim2.new(1, -30, 0, 18), 13)
-
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "Locked"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
-
         local function updateLock(st) locked = st; lockFrame.Visible = st end
-
         local self = {}
         function self.UpdateText(newText) TextLabel.Text = newText end
         function self.SetVisible(state) Tile.Visible = state end
@@ -1321,7 +1310,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Image ═══════
+    -- Image
     child.Image = function(_, config)
         config = config or {}
         local title = config.Name or "Image"
@@ -1332,7 +1321,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local iconColor = config.IconColor or CurrentTheme.Text
         local callback = config.Callback or function() end
         local parent = config.Parent or contentHolder
-
         local function formatIcon(asset)
             if type(asset) == "number" then return "rbxassetid://"..tostring(asset)
             elseif type(asset) == "string" then
@@ -1343,26 +1331,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             return "rbxassetid://78229538488090"
         end
-
         local imageFrame = Instance.new("Frame")
         imageFrame.Size = UDim2.new(1, 0, 0, 0)
         imageFrame.AutomaticSize = Enum.AutomaticSize.Y
         imageFrame.BackgroundTransparency = 1
         imageFrame.BorderSizePixel = 0
         imageFrame.Parent = parent
-
         local padding = Instance.new("UIPadding")
         padding.PaddingLeft = UDim.new(0, 12)
         padding.PaddingRight = UDim.new(0, 12)
         padding.PaddingTop = UDim.new(0, 12)
         padding.PaddingBottom = UDim.new(0, 12)
         padding.Parent = imageFrame
-
         local horizontal = Instance.new("Frame")
         horizontal.Size = UDim2.new(1, 0, 1, 0)
         horizontal.BackgroundTransparency = 1
         horizontal.Parent = imageFrame
-
         local iconImg = Instance.new("ImageLabel")
         iconImg.Size = UDim2.new(0, 80, 0, 80)
         iconImg.Position = UDim2.new(0, 0, 0, 0)
@@ -1371,19 +1355,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         iconImg.ImageColor3 = iconColor
         iconImg.Parent = horizontal
         Instance.new("UICorner", iconImg).CornerRadius = UDim.new(0, 12)
-
         local textContainer = Instance.new("Frame")
         textContainer.Size = UDim2.new(1, -92, 1, 0)
         textContainer.Position = UDim2.new(0, 92, 0, 0)
         textContainer.BackgroundTransparency = 1
         textContainer.AutomaticSize = Enum.AutomaticSize.Y
         textContainer.Parent = horizontal
-
         local textLayout = Instance.new("UIListLayout")
         textLayout.Padding = UDim.new(0, 6)
         textLayout.SortOrder = Enum.SortOrder.LayoutOrder
         textLayout.Parent = textContainer
-
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Size = UDim2.new(1, 0, 0, 0)
         titleLabel.AutomaticSize = Enum.AutomaticSize.Y
@@ -1395,7 +1376,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         titleLabel.TextWrapped = true
         titleLabel.Parent = textContainer
         AddToRegistry(titleLabel, "TextColor3", "Text")
-
         if subtitle ~= "" then
             local subtitleLabel = Instance.new("TextLabel")
             subtitleLabel.Size = UDim2.new(1, 0, 0, 0)
@@ -1410,7 +1390,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subtitleLabel.Parent = textContainer
             AddToRegistry(subtitleLabel, "TextColor3", "Text")
         end
-
         for _, line in ipairs(description) do
             local descLabel = Instance.new("TextLabel")
             descLabel.Size = UDim2.new(1, 0, 0, 0)
@@ -1425,14 +1404,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             descLabel.Parent = textContainer
             AddToRegistry(descLabel, "TextColor3", "Text")
         end
-
         local clickBtn = Instance.new("TextButton")
         clickBtn.Size = UDim2.new(1, 0, 1, 0)
         clickBtn.BackgroundTransparency = 1
         clickBtn.Text = ""
         clickBtn.Parent = imageFrame
         clickBtn.MouseButton1Click:Connect(callback)
-
         local self = {}
         function self.UpdateTitle(newTitle) titleLabel.Text = newTitle end
         function self.SetIcon(newIcon, newColor)
@@ -1443,7 +1420,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Divider ═══════
+    -- Divider
     child.Divider = function(_, config)
         config = config or {}
         local parent = config.Parent or contentHolder
@@ -1487,7 +1464,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Space ═══════
+    -- Space
     child.Space = function(_, config)
         local height = (config and config.Height) or 8
         local parent = config and config.Parent or contentHolder
@@ -1503,17 +1480,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Checkbox ═══════
+    -- Checkbox
     child.Checkbox = function(_, config)
         local title = config.Name or ""
         local default = config.Default or false
         local callback = config.Callback or function() end
         local controlId = title.."_"..tostring(#Registry)
         local parent = config.Parent or contentHolder
-
         local Tile = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, title, 15, 12, UDim2.new(1, -60, 0, 18), 13)
-
         local box = Instance.new("Frame")
         box.Size = UDim2.fromOffset(20, 20)
         box.AnchorPoint = Vector2.new(1, 0.5)
@@ -1522,13 +1497,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         box.BorderSizePixel = 0
         box.Parent = Tile
         Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5)
-
         local boxStroke = Instance.new("UIStroke")
         boxStroke.Thickness = 1.4
         boxStroke.Transparency = default and 1 or 0.4
         boxStroke.Color = default and CurrentTheme.Accent or CurrentTheme.Stroke
         boxStroke.Parent = box
-
         local check = Instance.new("ImageLabel")
         check.Size = UDim2.fromOffset(14, 14)
         check.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -1538,13 +1511,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         check.ImageColor3 = Color3.new(1, 1, 1)
         check.ImageTransparency = default and 0 or 1
         check.Parent = box
-
         local h = { Value = default, Callback = callback, Type = "Checkbox" }
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "Locked"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
-
         local ClickBtn = Instance.new("TextButton")
         ClickBtn.Size = UDim2.new(1, 0, 1, 0)
         ClickBtn.BackgroundTransparency = 1
@@ -1552,9 +1523,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ClickBtn.AutoButtonColor = false
         ClickBtn.Parent = Tile
         ClickBtn.Active = not locked
-
         local function updateLock(st) locked = st; lockFrame.Visible = st; ClickBtn.Active = not st end
-
         local function updateColors()
             if h.Value then
                 box.BackgroundColor3 = CurrentTheme.Accent
@@ -1569,7 +1538,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
         table.insert(ThemeListeners, updateColors)
-
         function h:SetValue(val)
             if locked then return end
             val = not (not val)
@@ -1586,17 +1554,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function h:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
         function h:Unlock() updateLock(false) end
         function h:IsLocked() return locked end
-
         ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
         ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function() if not locked then h:SetValue(not h.Value) end end)
-
         h:SetValue(default)
         ConfigObjects[controlId] = { Type = "Checkbox", Value = h.Value, Set = function(val) h:SetValue(val) end }
         return h
     end
 
-    -- ═══════ ProgressBar ═══════
+    -- ProgressBar
     child.ProgressBar = function(_, config)
         local name = config.Name or ""
         local valueConfig = config.Value or {}
@@ -1608,13 +1574,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local controlId = name.."_"..tostring(#Registry)
         local parent = config.Parent or contentHolder
         local containerHeight = (name ~= "" and 46 or 26)
-
         local wrap = Instance.new("Frame")
         wrap.Size = UDim2.new(1, 0, 0, containerHeight)
         wrap.BackgroundTransparency = 1
         wrap.BorderSizePixel = 0
         wrap.Parent = parent
-
         local titleLbl = nil
         if name ~= "" then
             titleLbl = Instance.new("TextLabel")
@@ -1628,7 +1592,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             titleLbl.Parent = wrap
             AddToRegistry(titleLbl, "TextColor3", "Text")
         end
-
         local pctLbl = nil
         if showPercent then
             pctLbl = Instance.new("TextLabel")
@@ -1643,7 +1606,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             pctLbl.Parent = wrap
             AddToRegistry(pctLbl, "TextColor3", "Text")
         end
-
         local rail = Instance.new("Frame")
         rail.Size = UDim2.new(1, -30, 0, 8)
         rail.Position = UDim2.new(0, 15, 1, -14)
@@ -1653,7 +1615,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         rail.Parent = wrap
         Instance.new("UICorner", rail).CornerRadius = UDim.new(1, 0)
         AddToRegistry(rail, "BackgroundColor3", "Stroke")
-
         local fill = Instance.new("Frame")
         fill.Size = UDim2.fromScale(0, 1)
         fill.BackgroundColor3 = CurrentTheme.Accent
@@ -1661,15 +1622,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         fill.Parent = rail
         Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
         AddToRegistry(fill, "BackgroundColor3", "Accent")
-
         local h = { Value = math.clamp(default, min, max), Min = min, Max = max, Type = "ProgressBar", Frame = wrap }
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "Locked"
         local lockFrame, lockLabel = createLockOverlay(wrap, lockedTitle)
         lockFrame.Visible = locked
-
         local function updateLock(st) locked = st; lockFrame.Visible = st end
-
         function h:SetTitle(s) if titleLbl then titleLbl.Text = tostring(s or "") end end
         function h:SetValue(val)
             if locked then return end
@@ -1686,15 +1644,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function h:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
         function h:Unlock() updateLock(false) end
         function h:IsLocked() return locked end
-
         h:SetValue(default)
         ConfigObjects[controlId] = { Type = "ProgressBar", Value = h.Value, Set = function(val) h:SetValue(val) end }
         return h
     end
 
-    -- ═══════════════════════════════════════════════════════════════
-    -- Video —— 原文件核心实现
-    -- ═══════════════════════════════════════════════════════════════
+    -- Video (原文件核心)
     child.Video = function(_, config)
         local opts = config or {}
         local parent = opts.Parent or contentHolder
@@ -1705,7 +1660,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local vol = opts.Volume or 0
         local auto = opts.AutoPlay ~= false
         local aspect = opts.AspectRatio or "16:9"
-
         local function resolveMedia(s)
             if type(s) ~= "string" or s == "" then return "" end
             if s:match("^rbxassetid://") or s:match("^rbxasset://") then return s end
@@ -1727,7 +1681,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return 16/9
         end
         local ratioNum = parseRatio(aspect)
-
         local wrap = Instance.new("Frame")
         wrap.Size = UDim2.new(1,-16,0,180)
         wrap.BackgroundColor3 = CurrentTheme.Main
@@ -1736,7 +1689,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         wrap.ClipsDescendants = true
         wrap.Parent = parent
         AddToRegistry(wrap, "BackgroundColor3", "Main")
-
         local function recalcAspect()
             local w = wrap.AbsoluteSize.X
             if w > 0 and ratioNum and ratioNum > 0 then
@@ -1745,11 +1697,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
         task.defer(recalcAspect)
-
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0,radius)
         corner.Parent = wrap
-
         local resolved = resolveMedia(src)
         local hasVideo = (resolved ~= "")
         local vid = nil
@@ -1760,22 +1710,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             vid.Looped = looped
             vid.Volume = vol
             vid.ZIndex = 1
-            vid:SetAttribute("BFVolume", vol)
-            vid:SetAttribute("BFAutoPlay", auto)
             vid.Video = resolved
             vid.Parent = wrap
             local vidCorner = Instance.new("UICorner")
             vidCorner.CornerRadius = UDim.new(0,radius)
             vidCorner.Parent = vid
         end
-
         local placeholder = Instance.new("Frame")
         placeholder.Size = UDim2.fromScale(1,1)
         placeholder.BackgroundTransparency = 1
         placeholder.Visible = not hasVideo
         placeholder.ZIndex = 2
         placeholder.Parent = wrap
-
         local phImg = Instance.new("ImageLabel")
         phImg.Size = UDim2.fromOffset(32,32)
         phImg.Position = UDim2.new(0.5,0,0.5,-14)
@@ -1786,7 +1732,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         phImg.Parent = placeholder
         AddToRegistry(phImg, "ImageColor3", "SubText")
         applyIcon(phImg, "play")
-
         local phText = Instance.new("TextLabel")
         phText.Size = UDim2.new(1,0,0,16)
         phText.Position = UDim2.new(0,0,0.5,20)
@@ -1799,7 +1744,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         phText.ZIndex = 3
         phText.Parent = placeholder
         AddToRegistry(phText, "TextColor3", "SubText")
-
         if not hasVideo then
             local mod = {Frame=wrap, Type="Video", VideoFrame=nil}
             function mod:Destroy() wrap:Destroy() end
@@ -1811,7 +1755,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             function mod:SetAspectRatio(r) end
             return mod
         end
-
         local overlay = Instance.new("CanvasGroup")
         overlay.Size = UDim2.new(1,0,0,54)
         overlay.Position = UDim2.new(0,0,1,0)
@@ -1820,7 +1763,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         overlay.GroupTransparency = 1
         overlay.ZIndex = 5
         overlay.Parent = wrap
-
         local gradFr = Instance.new("Frame")
         gradFr.Size = UDim2.fromScale(1,1)
         gradFr.BackgroundColor3 = Color3.fromRGB(0,0,0)
@@ -1832,14 +1774,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         grad.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.3), NumberSequenceKeypoint.new(1,1)})
         grad.Rotation = 90
         grad.Parent = gradFr
-
         local seekRow = Instance.new("Frame")
         seekRow.Size = UDim2.new(1,-12,0,16)
         seekRow.Position = UDim2.new(0,6,0,4)
         seekRow.BackgroundTransparency = 1
         seekRow.ZIndex = 6
         seekRow.Parent = overlay
-
         local timeCur = Instance.new("TextLabel")
         timeCur.Size = UDim2.fromOffset(36,16)
         timeCur.BackgroundTransparency = 1
@@ -1849,14 +1789,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         timeCur.TextColor3 = Color3.fromRGB(220,220,220)
         timeCur.ZIndex = 7
         timeCur.Parent = seekRow
-
         local seekContainer = Instance.new("Frame")
         seekContainer.Size = UDim2.new(1,-84,0,16)
         seekContainer.Position = UDim2.fromOffset(40,0)
         seekContainer.BackgroundTransparency = 1
         seekContainer.ZIndex = 6
         seekContainer.Parent = seekRow
-
         local seekRail = Instance.new("TextButton")
         seekRail.Size = UDim2.new(1,0,0,5)
         seekRail.Position = UDim2.new(0,0,0.5,-2)
@@ -1867,7 +1805,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         seekRail.AutoButtonColor = false
         seekRail.Parent = seekContainer
         Instance.new("UICorner", seekRail).CornerRadius = UDim.new(1,0)
-
         local seekFill = Instance.new("Frame")
         seekFill.Size = UDim2.new(0,0,1,0)
         seekFill.BackgroundColor3 = CurrentTheme.Accent
@@ -1875,7 +1812,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         seekFill.ZIndex = 8
         seekFill.Parent = seekRail
         Instance.new("UICorner", seekFill).CornerRadius = UDim.new(1,0)
-
         local seekKnob = Instance.new("Frame")
         seekKnob.Size = UDim2.fromOffset(12,12)
         seekKnob.Position = UDim2.new(0,0,0.5,0)
@@ -1885,7 +1821,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         seekKnob.ZIndex = 9
         seekKnob.Parent = seekRail
         Instance.new("UICorner", seekKnob).CornerRadius = UDim.new(1,0)
-
         local timeDur = Instance.new("TextLabel")
         timeDur.Size = UDim2.fromOffset(36,16)
         timeDur.Position = UDim2.new(1,-36,0,0)
@@ -1896,14 +1831,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         timeDur.TextColor3 = Color3.fromRGB(160,160,170)
         timeDur.ZIndex = 7
         timeDur.Parent = seekRow
-
         local ctrlRow = Instance.new("Frame")
         ctrlRow.Size = UDim2.new(1,-12,0,26)
         ctrlRow.Position = UDim2.new(0,6,0,24)
         ctrlRow.BackgroundTransparency = 1
         ctrlRow.ZIndex = 6
         ctrlRow.Parent = overlay
-
         local function ctrlBtn(iconName, cb)
             local btn = Instance.new("TextButton")
             btn.Size = UDim2.fromOffset(22,22)
@@ -1924,12 +1857,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             btn.MouseButton1Click:Connect(function() pcall(cb) end)
             return btn, ic
         end
-
         local playing = auto
         local playBtn, playIco = ctrlBtn("play", function() end)
         local pauseBtn, pauseIco = ctrlBtn("pause", function() end)
         local stopBtn, stopIco = ctrlBtn("stop", function() end)
-
         local volIco = Instance.new("ImageLabel")
         volIco.Size = UDim2.fromOffset(14,14)
         volIco.Position = UDim2.fromOffset(68,4)
@@ -1938,7 +1869,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         volIco.Parent = ctrlRow
         AddToRegistry(volIco, "ImageColor3", "SubText")
         applyIcon(volIco, "volume")
-
         local volLbl = Instance.new("TextLabel")
         volLbl.Size = UDim2.fromOffset(32,22)
         volLbl.Position = UDim2.fromOffset(84,0)
@@ -1949,25 +1879,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         volLbl.ZIndex = 7
         volLbl.Parent = ctrlRow
         AddToRegistry(volLbl, "TextColor3", "SubText")
-
         local btnLayout = Instance.new("UIListLayout")
         btnLayout.FillDirection = Enum.FillDirection.Horizontal
         btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
         btnLayout.Padding = UDim.new(0,2)
         btnLayout.Parent = ctrlRow
-
         local ctrlVisible = false
         local fadeTimer = 0
-        local fadingOut = false
         local function showOverlay()
-            ctrlVisible = true; fadingOut = false; fadeTimer = 3
+            ctrlVisible = true; fadeTimer = 3
             Tween(overlay, {GroupTransparency=0}, 0.18)
         end
         local function hideOverlay()
-            ctrlVisible = false; fadingOut = true
+            ctrlVisible = false
             Tween(overlay, {GroupTransparency=1}, 0.3)
         end
-
         local vidClickBtn = Instance.new("TextButton")
         vidClickBtn.Size = UDim2.fromScale(1,1)
         vidClickBtn.BackgroundTransparency = 1
@@ -1978,9 +1904,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         vidClickBtn.MouseButton1Click:Connect(function()
             if ctrlVisible then fadeTimer = 3 else showOverlay() end
         end)
-
-        local function resetFade() fadeTimer = 3; fadingOut = false end
-
+        local function resetFade() fadeTimer = 3 end
         playBtn.MouseButton1Click:Connect(function()
             if vid then pcall(function() vid:Play() end) end
             playing = true; playBtn.Visible = false; pauseBtn.Visible = true; resetFade()
@@ -1994,7 +1918,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             playing = false; playBtn.Visible = true; pauseBtn.Visible = false; resetFade()
         end)
         pauseBtn.Visible = auto; playBtn.Visible = not auto
-
         local seeking = false
         local function vidSeek(posX)
             resetFade()
@@ -2007,7 +1930,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 pcall(function() vid.TimePosition = vid.TimeLength * pct end)
             end
         end
-
         seekRail.InputBegan:Connect(function(inp)
             if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
                 seeking = true
@@ -2023,9 +1945,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 vidSeek(inp.Position.X)
             end
         end)
-
         local function fmtTime(s) s = math.max(0, math.floor(s or 0)); return string.format("%d:%02d", math.floor(s/60), s%60) end
-
         local hbConn = RunService.Heartbeat:Connect(function(dt)
             if not wrap.Parent then return end
             if ctrlVisible then
@@ -2043,7 +1963,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             timeCur.Text = fmtTime(pos)
             timeDur.Text = fmtTime(dur)
         end)
-
         if auto and hasVideo then
             task.spawn(function()
                 task.wait(0.08)
@@ -2055,7 +1974,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
         end
-
         local mod = {Frame=wrap, Type="Video", VideoFrame=vid}
         function mod:Play() if vid then pcall(function() vid:Play() end); playing=true; playBtn.Visible=false; pauseBtn.Visible=true end end
         function mod:Pause() if vid then pcall(function() vid:Pause() end); playing=false; playBtn.Visible=true; pauseBtn.Visible=false end end
@@ -2067,7 +1985,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return mod
     end
 
-    -- ═══════ Audio ═══════
+    -- Audio
     child.Audio = function(_, config)
         local opts = config or {}
         local parent = opts.Parent or contentHolder
@@ -2079,7 +1997,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local looped = opts.Looped ~= false
         local auto = opts.AutoPlay ~= false
         local playOutside = opts.PlayOutsideWindow == true
-
         local function resolve(s, noDownload)
             local mm = MediaManager
             if mm then return mm:Audio(s, noDownload) end
@@ -2088,12 +2005,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if s:match("^%d+$") then return "rbxassetid://"..s end
             return ""
         end
-
         local isHttp = type(src) == "string" and src:match("^https?://")
         local resolved = isHttp and resolve(src, true) or resolve(src, false)
         local pendingDownload = isHttp and (not resolved or resolved == "")
         local hasAudio = (resolved ~= nil and resolved ~= "") or pendingDownload
-
         local snd = nil
         local function initSound(resolvedId)
             local s2 = Instance.new("Sound")
@@ -2106,7 +2021,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return s2
         end
         if hasAudio and not pendingDownload then snd = initSound(resolved) end
-
         local wrapHeight = (title ~= "" or subtitle ~= "") and 118 or 96
         local wrap = Instance.new("Frame")
         wrap.Size = UDim2.new(1, -16, 0, wrapHeight)
@@ -2116,19 +2030,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         wrap.Parent = parent
         Instance.new("UICorner", wrap).CornerRadius = UDim.new(0, 8)
         AddToRegistry(wrap, "BackgroundColor3", "Top")
-
         local padding = Instance.new("UIPadding")
         padding.PaddingLeft = UDim.new(0, 10)
         padding.PaddingRight = UDim.new(0, 10)
         padding.PaddingTop = UDim.new(0, 10)
         padding.PaddingBottom = UDim.new(0, 10)
         padding.Parent = wrap
-
         local topRow = Instance.new("Frame")
         topRow.Size = UDim2.new(1, 0, 0, (title ~= "" or subtitle ~= "") and 38 or 28)
         topRow.BackgroundTransparency = 1
         topRow.Parent = wrap
-
         local audioIcon = Instance.new("ImageLabel")
         audioIcon.Size = UDim2.fromOffset(20, 20)
         audioIcon.Position = UDim2.new(0, 0, 0.5, 0)
@@ -2138,14 +2049,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         audioIcon.ZIndex = 2
         audioIcon.Parent = topRow
         AddToRegistry(audioIcon, "ImageColor3", hasAudio and "Accent" or "SubText")
-
         local titleHolder = Instance.new("Frame")
         titleHolder.Size = UDim2.new(1, -110, 1, 0)
         titleHolder.Position = UDim2.new(0, 28, 0, 0)
         titleHolder.BackgroundTransparency = 1
         titleHolder.ZIndex = 2
         titleHolder.Parent = topRow
-
         local statusLbl = Instance.new("TextLabel")
         statusLbl.Size = UDim2.new(1, 0, 0, 16)
         statusLbl.Position = UDim2.new(0, 0, 0, (title ~= "" or subtitle ~= "") and 2 or 0)
@@ -2158,7 +2067,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         statusLbl.ZIndex = 2
         statusLbl.Parent = titleHolder
         AddToRegistry(statusLbl, "TextColor3", "Text")
-
         if subtitle ~= "" then
             local subtitleLbl = Instance.new("TextLabel")
             subtitleLbl.Size = UDim2.new(1, 0, 0, 13)
@@ -2172,7 +2080,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subtitleLbl.Parent = titleHolder
             AddToRegistry(subtitleLbl, "TextColor3", "SubText")
         end
-
         local controls = Instance.new("Frame")
         controls.Size = UDim2.new(0, 116, 1, 0)
         controls.Position = UDim2.new(1, 0, 0, 0)
@@ -2180,14 +2087,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         controls.BackgroundTransparency = 1
         controls.Visible = hasAudio
         controls.Parent = topRow
-
         local ctrlLayout = Instance.new("UIListLayout")
         ctrlLayout.FillDirection = Enum.FillDirection.Horizontal
         ctrlLayout.VerticalAlignment = Enum.VerticalAlignment.Center
         ctrlLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
         ctrlLayout.Padding = UDim.new(0, 4)
         ctrlLayout.Parent = controls
-
         local function ctrlBtn(iconId, cb)
             local btn = Instance.new("TextButton")
             btn.Size = UDim2.fromOffset(24, 24)
@@ -2209,7 +2114,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             btn.MouseButton1Click:Connect(function() pcall(cb) end)
             return btn, ic
         end
-
         local playing = false
         local playBtn, pauseBtn
         if hasAudio then
@@ -2253,7 +2157,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
             if auto and snd then _doPlay() end
         end
-
         local seekRowOffset = (title ~= "" or subtitle ~= "") and 56 or 36
         local seekRow = Instance.new("Frame")
         seekRow.Size = UDim2.new(1, 0, 0, 24)
@@ -2261,7 +2164,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         seekRow.BackgroundTransparency = 1
         seekRow.Visible = hasAudio
         seekRow.Parent = wrap
-
         local curLbl = Instance.new("TextLabel")
         curLbl.Size = UDim2.fromOffset(34, 20)
         curLbl.Position = UDim2.new(0, 0, 0.5, 0)
@@ -2273,7 +2175,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         curLbl.TextXAlignment = Enum.TextXAlignment.Left
         curLbl.Parent = seekRow
         AddToRegistry(curLbl, "TextColor3", "SubText")
-
         local durLbl = Instance.new("TextLabel")
         durLbl.Size = UDim2.fromOffset(34, 20)
         durLbl.Position = UDim2.new(1, 0, 0.5, 0)
@@ -2285,7 +2186,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         durLbl.TextXAlignment = Enum.TextXAlignment.Right
         durLbl.Parent = seekRow
         AddToRegistry(durLbl, "TextColor3", "SubText")
-
         local rail = Instance.new("Frame")
         rail.Size = UDim2.new(1, -76, 0, 4)
         rail.Position = UDim2.new(0, 38, 0.5, 0)
@@ -2295,14 +2195,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         rail.Parent = seekRow
         AddToRegistry(rail, "BackgroundColor3", "SubText")
         Instance.new("UICorner", rail).CornerRadius = UDim.new(1, 0)
-
         local fill = Instance.new("Frame")
         fill.Size = UDim2.new(0, 0, 1, 0)
         fill.BackgroundColor3 = CurrentTheme.Accent
         fill.Parent = rail
         AddToRegistry(fill, "BackgroundColor3", "Accent")
         Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-
         local knob = Instance.new("Frame")
         knob.Size = UDim2.fromOffset(12, 12)
         knob.Position = UDim2.new(0, 0, 0.5, 0)
@@ -2311,9 +2209,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         knob.Parent = rail
         AddToRegistry(knob, "BackgroundColor3", "Accent")
         Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
-
         local function fmtTime(s) s = math.max(0, math.floor(s or 0)); return string.format("%d:%02d", math.floor(s/60), s%60) end
-
         local dragging = false
         local function seekTo(inputX)
             if not snd then return end
@@ -2324,7 +2220,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local dur = snd.TimeLength or 0
             if dur > 0 then pcall(function() snd.TimePosition = pct * dur end) end
         end
-
         rail.InputBegan:Connect(function(inp)
             if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
@@ -2341,7 +2236,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 seekTo(inp.Position.X)
             end
         end)
-
         local hbConn = RunService.Heartbeat:Connect(function()
             if not wrap.Parent then return end
             if not snd then return end
@@ -2353,7 +2247,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             fill.Size = UDim2.new(pct, 0, 1, 0)
             knob.Position = UDim2.new(pct, 0, 0.5, 0)
         end)
-
         local mod = { Frame = wrap, Type = "Audio", Sound = snd }
         function mod:Play() if snd then pcall(function() snd:Play() end) end end
         function mod:Pause() if snd then pcall(function() snd:Pause() end) end end
@@ -2363,7 +2256,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return mod
     end
 
-    -- ═══════ Social ═══════
+    -- Social
     child.Social = function(_, config)
         config = config or {}
         local parent = config.Parent or contentHolder
@@ -2375,13 +2268,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local copyText = tostring(config.copy or "")
         local buttonText = tostring(config.Cbn or "复制")
         if displayName == "" then displayName = "用户" end
-
         local wrap = Instance.new("Frame")
         wrap.Size = UDim2.new(1, 0, 0, 64)
         wrap.BackgroundTransparency = 1
         wrap.BorderSizePixel = 0
         wrap.Parent = parent
-
         local avatarBg = Instance.new("Frame")
         avatarBg.Size = UDim2.fromOffset(42, 42)
         avatarBg.Position = UDim2.new(0, 11, 0.5, 0)
@@ -2391,13 +2282,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         avatarBg.Parent = wrap
         avatarBg.ClipsDescendants = true
         Instance.new("UICorner", avatarBg).CornerRadius = UDim.new(1, 0)
-
         local avatarImg = Instance.new("ImageLabel")
         avatarImg.Size = UDim2.fromScale(1, 1)
         avatarImg.BackgroundTransparency = 1
         avatarImg.Parent = avatarBg
         Instance.new("UICorner", avatarImg).CornerRadius = UDim.new(1, 0)
-
         local nameLbl = Instance.new("TextLabel")
         nameLbl.Text = displayName
         nameLbl.Font = Enum.Font.GothamBold
@@ -2409,7 +2298,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         nameLbl.Position = UDim2.new(0, 62, 0, 9)
         nameLbl.Parent = wrap
         AddToRegistry(nameLbl, "TextColor3", "Text")
-
         if subName ~= "" then
             local subNameLbl = Instance.new("TextLabel")
             subNameLbl.Text = subName
@@ -2423,7 +2311,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subNameLbl.Parent = wrap
             AddToRegistry(subNameLbl, "TextColor3", "SubText")
         end
-
         if platform ~= "" then
             local platformLbl = Instance.new("TextLabel")
             platformLbl.Text = platform
@@ -2437,7 +2324,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             platformLbl.Parent = wrap
             AddToRegistry(platformLbl, "TextColor3", "SubText")
         end
-
         if copyText ~= "" then
             local copyBtn = Instance.new("TextButton")
             copyBtn.Text = buttonText
@@ -2455,7 +2341,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 pcall(function() toclipboard(copyText) end)
             end)
         end
-
         task.spawn(function()
             local imgUrl = nil
             if avatarSrc ~= "" then
@@ -2472,43 +2357,37 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
         end)
-
         local mod = { Frame = wrap, Type = "Social" }
         function mod:SetName(n) displayName = tostring(n or ""); nameLbl.Text = displayName end
         function mod:Destroy() wrap:Destroy() end
         return mod
     end
 
-    -- ═══════ Paragraph ═══════
+    -- Paragraph
     child.Paragraph = function(_, config)
         config = config or {}
         local title = config.Name or ""
         local content = config.Content or ""
         local parent = config.Parent or contentHolder
-
         local frame = Instance.new("Frame")
         frame.Size = UDim2.new(1, 0, 0, 0)
         frame.AutomaticSize = Enum.AutomaticSize.Y
         frame.BackgroundTransparency = 1
         frame.BorderSizePixel = 0
         frame.Parent = parent
-
         local labelHolder = Instance.new("Frame")
         labelHolder.Size = UDim2.new(1, -20, 0, 0)
         labelHolder.Position = UDim2.new(0, 10, 0, 0)
         labelHolder.BackgroundTransparency = 1
         labelHolder.AutomaticSize = Enum.AutomaticSize.Y
         labelHolder.Parent = frame
-
         local holderLayout = Instance.new("UIListLayout")
         holderLayout.SortOrder = Enum.SortOrder.LayoutOrder
         holderLayout.Parent = labelHolder
-
         local padding = Instance.new("UIPadding")
         padding.PaddingTop = UDim.new(0, 13)
         padding.PaddingBottom = UDim.new(0, 13)
         padding.Parent = labelHolder
-
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Size = UDim2.new(1, 0, 0, 14)
         titleLabel.BackgroundTransparency = 1
@@ -2520,7 +2399,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         titleLabel.RichText = true
         titleLabel.Parent = labelHolder
         AddToRegistry(titleLabel, "TextColor3", "Text")
-
         local contentLabel = Instance.new("TextLabel")
         contentLabel.Size = UDim2.new(1, 0, 0, 14)
         contentLabel.BackgroundTransparency = 1
@@ -2533,14 +2411,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentLabel.RichText = true
         contentLabel.Parent = labelHolder
         AddToRegistry(contentLabel, "TextColor3", "SubText")
-
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "Locked"
         local lockFrame, lockLabel = createLockOverlay(frame, lockedTitle)
         lockFrame.Visible = locked
-
         local function updateLock(st) locked = st; lockFrame.Visible = st end
-
         local self = {}
         function self.SetName(n) titleLabel.Text = n end
         function self.SetContent(c) contentLabel.Text = c end
@@ -2552,9 +2427,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════════════════════════════════════════════════════════════
-    -- Viewport —— 原文件核心实现
-    -- ═══════════════════════════════════════════════════════════════
+    -- Viewport (原文件核心)
     child.Viewport = function(_, config)
         local opts = config or {}
         local parent = opts.Parent or contentHolder
@@ -2568,7 +2441,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local aspectRatio = opts.AspectRatio
         local radius = opts.Radius or 8
         assert(obj, "Viewport - Missing Object")
-
         local function parseRatio(r)
             if type(r) == "number" then return r end
             if type(r) == "string" then
@@ -2577,7 +2449,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             return nil
         end
-
         local wrap = Instance.new("Frame")
         wrap.Name = "ViewportHolder"
         wrap.Size = UDim2.new(1,-16,0,height)
@@ -2587,7 +2458,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         wrap.ClipsDescendants = true
         wrap.Parent = parent
         AddToRegistry(wrap, "BackgroundColor3", "Main")
-
         local wrapStroke = Instance.new("UIStroke")
         wrapStroke.Thickness = 1
         wrapStroke.Color = CurrentTheme.Stroke
@@ -2595,11 +2465,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         wrapStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         wrapStroke.Parent = wrap
         table.insert(ThemeListeners, function() wrapStroke.Color = CurrentTheme.Stroke end)
-
         local wrapCorner = Instance.new("UICorner")
         wrapCorner.CornerRadius = UDim.new(0,radius)
         wrapCorner.Parent = wrap
-
         local ratioNum = parseRatio(aspectRatio)
         local function recalcAspect()
             if not ratioNum or ratioNum<=0 then return end
@@ -2608,7 +2476,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
         task.defer(recalcAspect)
-
         local bg = Instance.new("ImageLabel")
         bg.Size = UDim2.fromScale(1,1)
         bg.BackgroundTransparency = 0.1
@@ -2620,7 +2487,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bgCorner.CornerRadius = UDim.new(0,radius)
         bgCorner.Parent = bg
         AddToRegistry(bg, "BackgroundColor3", "Main")
-
         local vp = Instance.new("ViewportFrame")
         vp.Name = "Viewport"
         vp.Size = UDim2.fromScale(1,1)
@@ -2629,11 +2495,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         vp.Active = interactive
         vp.Parent = wrap
         obj.Parent = vp
-
         local Dragging = false
         local Pinching = false
         local LastMousePos = nil
-        local LastPinchDist = 0
         local ScrollFrameRef = nil
         local function findScrollFrame(inst)
             while inst do
@@ -2655,7 +2519,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             camera.CFrame = CFrame.new(mpos + Vector3.new(0, ext/2, ext*2), mpos)
         end
         if focused then task.defer(focusCamera) end
-
         vp.MouseEnter:Connect(function()
             if interactive and ScrollFrameRef then ScrollFrameRef.ScrollingEnabled = false end
         end)
@@ -2702,7 +2565,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
         end)
-
         local self = {
             Frame=wrap, Type="Viewport", Object=obj, Camera=camera,
             Interactive=interactive, Height=height, Focused=focused, Value=nil
@@ -2732,36 +2594,31 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Group ═══════
+    -- Group
     child.Group = function(_, config)
         config = config or {}
         local columns = config.Columns or 2
         local gap = config.Gap or 6
         local parent = config.Parent or contentHolder
-
         local outerWrap = Instance.new("Frame")
         outerWrap.Size = UDim2.new(1, 0, 0, 0)
         outerWrap.BackgroundTransparency = 1
         outerWrap.AutomaticSize = Enum.AutomaticSize.Y
         outerWrap.Parent = parent
-
         local wrap = Instance.new("Frame")
         wrap.Size = UDim2.new(1, 0, 0, 0)
         wrap.BackgroundTransparency = 1
         wrap.AutomaticSize = Enum.AutomaticSize.Y
         wrap.Parent = outerWrap
-
         local totalGap = gap * (columns - 1)
         local colScale = 1 / columns
         local colOffset = -math.floor(totalGap / columns + 0.5)
-
         local layout = Instance.new("UIListLayout")
         layout.FillDirection = Enum.FillDirection.Horizontal
         layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
         layout.VerticalAlignment = Enum.VerticalAlignment.Top
         layout.Padding = UDim.new(0, gap)
         layout.Parent = wrap
-
         local elements = {}
         local mod = { Frame = outerWrap, Type = "Group", Elements = elements }
         function mod:AddElement()
@@ -2803,50 +2660,39 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local function createSection(_, config)
         if type(config) == "string" then config = { Name = config }
         elseif type(config) ~= "table" then config = {} end
-
         local sectionTitle    = config.Name or config.Title or ""
         local sectionSubtitle = config.SubName or config.Subtitle or ""
         local sectionIcon     = config.Logo or config.Icon or nil
         local collapsible     = config.Collapsible == true
         local collapsed       = collapsible and (config.Collapsed == false)
-
         local locked      = config.Locked == true
         local lockedTitle = config.TextLocked or config.LockMessage or "Locked"
-
         local hasTitle    = (sectionTitle ~= "")
         local hasSubtitle = (sectionSubtitle ~= "")
         local hasIcon     = (sectionIcon ~= nil)
         local hasHeader   = hasTitle or hasSubtitle or hasIcon
-
         local HEADER_LEFT = 12
         local ARROW_W     = collapsible and 26 or 0
-
         local ICON_SIZE = hasSubtitle and 40 or 32
         local TITLE_SIZE = 15
         local TITLE_H    = 20
         local SUB_SIZE = 12
         local SUB_H    = 16
         local SUB_GAP  = 2
-
         local HEADER_H
         if hasHeader then HEADER_H = hasSubtitle and 56 or 44 else HEADER_H = 4 end
-
         local COLLAPSED_H
         if hasSubtitle then COLLAPSED_H = 50
         elseif hasHeader then COLLAPSED_H = 40
         else COLLAPSED_H = collapsible and 40 or 4 end
-
         local CONTENT_TOP = hasHeader and (HEADER_H + 4) or 4
-
         local ICON_TOP       = math.floor((COLLAPSED_H - ICON_SIZE) / 2)
         local TEXT_BLOCK_H   = hasSubtitle and (TITLE_H + SUB_GAP + SUB_H) or TITLE_H
         local TEXT_BLOCK_TOP = math.floor((COLLAPSED_H - TEXT_BLOCK_H) / 2)
         local TITLE_TOP      = TEXT_BLOCK_TOP
         local SUB_TOP        = TEXT_BLOCK_TOP + TITLE_H + SUB_GAP
         local ARROW_TOP      = math.floor((COLLAPSED_H - 18) / 2)
-
         local MIUI_TWEEN = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
-
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(0.96, 0, 0, 0)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
@@ -2854,7 +2700,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionFrame.BackgroundTransparency = 1
         sectionFrame.ClipsDescendants = true
         sectionFrame.Parent = parent
-
         local contentContainer = Instance.new("Frame")
         contentContainer.Size = UDim2.new(1, -10, 0, 0)
         contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
@@ -2863,23 +2708,19 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainer.ClipsDescendants = true
         contentContainer.Parent = sectionFrame
         AddToRegistry(contentContainer, "BackgroundColor3", "Main")
-
         local contentStroke = Instance.new("UIStroke")
         contentStroke.Thickness = 1
         contentStroke.Transparency = 0.65
         contentStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         contentStroke.Parent = contentContainer
         AddToRegistry(contentStroke, "Color", "Stroke")
-
         local contentCorner = Instance.new("UICorner")
         contentCorner.CornerRadius = UDim.new(0, 10)
         contentCorner.Parent = contentContainer
-
         local iconLabel = nil
         local iconGap = 0
         if hasIcon then
             iconLabel = Instance.new("ImageLabel")
-            iconLabel.Name = "SectionLogo"
             iconLabel.Size = UDim2.new(0, ICON_SIZE, 0, ICON_SIZE)
             iconLabel.Position = UDim2.new(0, HEADER_LEFT, 0, ICON_TOP)
             iconLabel.BackgroundTransparency = 1
@@ -2891,11 +2732,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(iconLabel, "ImageColor3", "Text")
             iconGap = ICON_SIZE + 10
         end
-
         local titleLabel = nil
         if hasTitle then
             titleLabel = Instance.new("TextLabel")
-            titleLabel.Name = "SectionTitle"
             titleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap + ARROW_W), 0, TITLE_H)
             titleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, TITLE_TOP)
             titleLabel.BackgroundTransparency = 1
@@ -2909,11 +2748,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             titleLabel.Parent = contentContainer
             AddToRegistry(titleLabel, "TextColor3", "Accent")
         end
-
         local subtitleLabel = nil
         if hasSubtitle then
             subtitleLabel = Instance.new("TextLabel")
-            subtitleLabel.Name = "SectionSubName"
             subtitleLabel.Size = UDim2.new(1, -(HEADER_LEFT * 2 + iconGap + ARROW_W), 0, SUB_H)
             subtitleLabel.Position = UDim2.new(0, HEADER_LEFT + iconGap, 0, SUB_TOP)
             subtitleLabel.BackgroundTransparency = 1
@@ -2927,11 +2764,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subtitleLabel.Parent = contentContainer
             AddToRegistry(subtitleLabel, "TextColor3", "SubText")
         end
-
         local collapseArrow = nil
         if collapsible then
             collapseArrow = Instance.new("ImageLabel")
-            collapseArrow.Name = "SectionCollapseArrow"
             collapseArrow.Size = UDim2.new(0, 18, 0, 18)
             collapseArrow.AnchorPoint = Vector2.new(1, 0.5)
             collapseArrow.Position = UDim2.new(1, -10, 0, ARROW_TOP + 9)
@@ -2944,7 +2779,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             collapseArrow.Parent = contentContainer
             AddToRegistry(collapseArrow, "ImageColor3", "Text")
         end
-
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -10, 0, 0)
         contentHolder.Position = UDim2.new(0.5, 0, 0, CONTENT_TOP)
@@ -2953,28 +2787,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = false
         contentHolder.Parent = contentContainer
-
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Padding = UDim.new(0, 6)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         contentLayout.Parent = contentHolder
-
         local bottomPadding = Instance.new("Frame")
         bottomPadding.Size = UDim2.new(1, 0, 0, 4)
         bottomPadding.BackgroundTransparency = 1
         bottomPadding.LayoutOrder = 9999
         bottomPadding.Parent = contentHolder
-
         contentContainer.Visible = true
         contentHolder.Visible = true
-
         local lockFrame, lockLabel = createLockOverlay(sectionFrame, lockedTitle)
         lockFrame.ZIndex = 200
         lockFrame.Visible = locked
-
         local collapsedState = collapsed
-
         local function getContentHeight() return contentLayout.AbsoluteContentSize.Y or 0 end
         local function getTargetHeight()
             if collapsedState then return COLLAPSED_H end
@@ -2990,7 +2818,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 TweenService:Create(sectionFrame, MIUI_TWEEN, {Size = UDim2.new(0.96, 0, 0, targetH)}):Play()
             end
         end
-
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             if not collapsedState then updateHeight(false) end
         end)
@@ -3002,10 +2829,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             task.wait(0.05)
             if not collapsedState then updateHeight(false) end
         end)
-
         if collapsedState then contentHolder.Visible = false end
         task.defer(function() updateHeight(true) end)
-
         local function setCollapsed(state, instant)
             if not collapsible then return end
             state = state == true
@@ -3017,10 +2842,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             contentHolder.Visible = not state
             updateHeight(instant)
         end
-
         if collapsible then
             local headBtn = Instance.new("TextButton")
-            headBtn.Name = "SectionHeaderBtn"
             headBtn.Size = UDim2.new(1, 0, 0, HEADER_H)
             headBtn.Position = UDim2.new(0, 0, 0, 0)
             headBtn.BackgroundTransparency = 1
@@ -3033,7 +2856,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 setCollapsed(not collapsedState, false)
             end)
         end
-
         local sectionObj = {}
         for methodName, methodFn in pairs(child) do
             sectionObj[methodName] = function(_, cfg)
@@ -3042,7 +2864,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return methodFn(_, cfg)
             end
         end
-
         sectionObj.SetVisible = function(_, vis) sectionFrame.Visible = vis end
         sectionObj.SetTitle = function(_, text)
             if titleLabel then titleLabel.Text = text or ""; titleLabel.Visible = (text ~= nil and text ~= "") end
@@ -3066,7 +2887,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return sectionObj
         end
         sectionObj.Unlock = function(_) locked = false; lockFrame.Visible = false; return sectionObj end
-
         return sectionObj
     end
 
@@ -3134,10 +2954,6 @@ function Fenglib:CreateWindow(Config)
     HolderList.SortOrder = Enum.SortOrder.LayoutOrder
     HolderList.Padding = UDim.new(0, 5)
     HolderList.Parent = NotificationHolder
-    local HolderPadding = Instance.new("UIPadding")
-    HolderPadding.PaddingRight = UDim.new(0, 5)
-    HolderPadding.PaddingBottom = UDim.new(0, 5)
-    HolderPadding.Parent = NotificationHolder
 
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 320
@@ -3198,7 +3014,6 @@ function Fenglib:CreateWindow(Config)
         NumberSequenceKeypoint.new(1, 0.3)
     })
     bgGradient.Parent = MainFrame
-
     setShadowVisible(false, true)
 
     local Resizer = Instance.new("TextButton")
@@ -3642,7 +3457,6 @@ function Fenglib:CreateWindow(Config)
     function Window:Tab(name, icon)
         local parentContainer = LeftScrollingFrame
         if Window._currentCategory then parentContainer = Window._currentCategory.content end
-
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, -7, 0, 30)
         TabBtn.BackgroundTransparency = 1
@@ -3650,7 +3464,6 @@ function Fenglib:CreateWindow(Config)
         TabBtn.Text = ""
         TabBtn.Parent = parentContainer
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
-
         local glowFrame = Instance.new("Frame")
         glowFrame.Size = UDim2.new(1, 0, 1, 0)
         glowFrame.BackgroundColor3 = CurrentTheme.Accent
@@ -3661,7 +3474,6 @@ function Fenglib:CreateWindow(Config)
         glowGrad.Color = ColorSequence.new(CurrentTheme.Accent, CurrentTheme.Accent)
         glowGrad.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.55), NumberSequenceKeypoint.new(1, 1)})
         glowGrad.Parent = glowFrame
-
         local ContentFrame = Instance.new("Frame")
         ContentFrame.Size = UDim2.new(1, 0, 1, 0)
         ContentFrame.BackgroundTransparency = 1
@@ -3674,7 +3486,6 @@ function Fenglib:CreateWindow(Config)
         local Padding = Instance.new("UIPadding")
         Padding.PaddingLeft = UDim.new(0, 10)
         Padding.Parent = ContentFrame
-
         if icon then
             local TabIcon = Instance.new("ImageLabel")
             TabIcon.Size = UDim2.new(0, 28, 0, 28)
@@ -3684,7 +3495,6 @@ function Fenglib:CreateWindow(Config)
             AddToRegistry(TabIcon, "ImageColor3", "Text")
             Instance.new("UICorner", TabIcon).CornerRadius = UDim.new(0, 8)
         end
-
         local TabText = Instance.new("TextLabel")
         TabText.Size = UDim2.new(1, -40, 0, 15)
         TabText.BackgroundTransparency = 1
@@ -3696,7 +3506,6 @@ function Fenglib:CreateWindow(Config)
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
-
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
@@ -3707,7 +3516,6 @@ function Fenglib:CreateWindow(Config)
         Page.Parent = PageContainer
         Instance.new("UICorner", Page).CornerRadius = UDim.new(0, 16)
         Page.ClipsDescendants = true
-
         local PageContent = Instance.new("Frame")
         PageContent.Size = UDim2.new(1, 0, 0, 0)
         PageContent.AutomaticSize = Enum.AutomaticSize.Y
@@ -3722,7 +3530,6 @@ function Fenglib:CreateWindow(Config)
         end
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
         task.spawn(updatePageCanvas)
-
         local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame}
         TabBtn.MouseButton1Click:Connect(function()
             if Window._activeTab == state then return end
@@ -3792,14 +3599,12 @@ function Fenglib:CreateWindow(Config)
         local Divider = Instance.new("Frame")
         local ButtonHolder = Instance.new("Frame")
         local ButtonLayout = Instance.new("UIListLayout")
-
         Overlay.Parent = MainFrame
         Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
         Overlay.BackgroundTransparency = 1
         Overlay.Size = UDim2.fromScale(1, 1)
         Overlay.ZIndex = 180
         Overlay.Active = true
-
         Panel.Parent = Overlay
         Panel.AnchorPoint = Vector2.new(0.5, 0.5)
         Panel.Position = UDim2.fromScale(0.5, 0.5)
@@ -3813,7 +3618,6 @@ function Fenglib:CreateWindow(Config)
         UIStroke.Transparency = 1
         UIStroke.Color = Color3.fromRGB(45, 48, 58)
         UIStroke.Parent = Panel
-
         DTitle.Parent = Panel
         DTitle.BackgroundTransparency = 1
         DTitle.Position = UDim2.new(0, 18, 0, 18)
@@ -3825,7 +3629,6 @@ function Fenglib:CreateWindow(Config)
         DTitle.TextTransparency = 1
         DTitle.TextXAlignment = Enum.TextXAlignment.Left
         AddToRegistry(DTitle, "TextColor3", "Text")
-
         Content.Parent = Panel
         Content.BackgroundTransparency = 1
         Content.Position = UDim2.new(0, 18, 0, 48)
@@ -3839,7 +3642,6 @@ function Fenglib:CreateWindow(Config)
         Content.TextXAlignment = Enum.TextXAlignment.Left
         Content.TextYAlignment = Enum.TextYAlignment.Top
         AddToRegistry(Content, "TextColor3", "Text")
-
         Divider.Parent = Panel
         Divider.BackgroundColor3 = Color3.fromRGB(45, 48, 58)
         Divider.BackgroundTransparency = 1
@@ -3847,7 +3649,6 @@ function Fenglib:CreateWindow(Config)
         Divider.Size = UDim2.new(1, -28, 0, 1)
         Divider.ZIndex = 182
         AddToRegistry(Divider, "BackgroundColor3", "Stroke")
-
         ButtonHolder.Parent = Panel
         ButtonHolder.AnchorPoint = Vector2.new(1, 1)
         ButtonHolder.BackgroundTransparency = 1
@@ -3859,7 +3660,6 @@ function Fenglib:CreateWindow(Config)
         ButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
         ButtonLayout.SortOrder = Enum.SortOrder.LayoutOrder
         ButtonLayout.Padding = UDim.new(0, 8)
-
         function Dialog:Close(Result)
             if Dialog.Closed then return Result end
             Dialog.Closed = true
@@ -3869,7 +3669,6 @@ function Fenglib:CreateWindow(Config)
             pcall(Config.Callback, Result)
             return Result
         end
-
         local function AddDialogButton(Text, Primary, Callback)
             local Button = Instance.new("Frame")
             Button.Parent = ButtonHolder
@@ -3909,11 +3708,9 @@ function Fenglib:CreateWindow(Config)
             Tween(Stroke, {Transparency = Primary and 1 or 0.65}, 0.1)
             Tween(Label, {TextTransparency = 0}, 0.1)
         end
-
         for _, BtnConfig in ipairs(Config.Buttons or {{Text = "OK", Primary = true}}) do
             AddDialogButton(BtnConfig.Text, BtnConfig.Primary, BtnConfig.Callback)
         end
-
         Tween(Overlay, {BackgroundTransparency = 0.28}, 0.25)
         Tween(Panel, {BackgroundTransparency = 0.025, Size = UDim2.new(0, 392, 0, 200)}, 0.25)
         Tween(UIStroke, {Transparency = 0.65}, 0.25)
@@ -3927,7 +3724,6 @@ function Fenglib:CreateWindow(Config)
     function Window:SetKeybind(key) Keybind = key end
     function Window:Destroy() ScreenGui:Destroy() end
     function Window:SetSubtitle(newSubtitle) WindowContent.Text = newSubtitle or "" end
-
     return Window
 end
 
@@ -3941,14 +3737,12 @@ do
     cursorScreen.ResetOnSpawn = false
     cursorScreen.Enabled = false
     cursorScreen.Parent = CoreGui
-
     local cursorRoot = Instance.new("Frame")
     cursorRoot.BackgroundTransparency = 1
     cursorRoot.Size = UDim2.new(0, 20, 0, 20)
     cursorRoot.ZIndex = 2147483647
     cursorRoot.Visible = false
     cursorRoot.Parent = cursorScreen
-
     local img = Instance.new("ImageLabel")
     img.BackgroundTransparency = 1
     img.Size = UDim2.new(1, 0, 1, 0)
@@ -3957,15 +3751,12 @@ do
     img.ScaleType = Enum.ScaleType.Fit
     img.Rotation = -90
     img.Parent = cursorRoot
-
     local cursorConn = RunService.RenderStepped:Connect(function()
         if not cursorRoot.Visible then return end
         local loc = UserInputService:GetMouseLocation()
         cursorRoot.Position = UDim2.new(0, loc.X - 2, 0, loc.Y - 2)
     end)
-
     Fenglib._cursorObjects = { Screen = cursorScreen, Root = cursorRoot, Image = img, Connection = cursorConn, Enabled = false }
-
     function Fenglib:SetCustomCursor(enabled)
         enabled = enabled == true
         if Fenglib._cursorObjects then
