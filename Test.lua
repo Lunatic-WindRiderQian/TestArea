@@ -1,6 +1,6 @@
 --[[
     FengYu-Bento (miUI 框架 – 完整版)
-    - Slider = miUI 单行布局 + 原文件尺寸（滑轨 6 / 滑块 12）
+    - Slider = 42 高（与 Button 一致），miUI 单行布局
     - 其他控件 = miUI 风格视觉框架
     - Video/Viewport = 原文件核心
     - Keybind = 带原文件鼠标图标
@@ -474,7 +474,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Slider (miUI 单行布局 + 原文件尺寸，滑轨 6 / 滑块 12) ═══════
+    -- ═══════ Slider (42 高，与 Button 一致) ═══════
     child.Slider = function(_, config)
         local sliderText = config.Name or ""
         local valueTable = config.Value or {}
@@ -488,9 +488,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local Val = tonumber(default) or (min or 0)
         local controlId = sliderText.."_"..tostring(#Registry)
         local parent = config.Parent or contentHolder
-        local tileH = unlimited and 42 or 60
 
-        local Tile = miRow(parent, tileH)
+        local Tile = miRow(parent, 42)
         local rowH = 22
 
         local TitleLbl = miLabel(Tile, sliderText, 15, 0, UDim2.new(0, 90, 0, rowH), 13)
