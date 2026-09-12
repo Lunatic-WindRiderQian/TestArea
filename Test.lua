@@ -17,6 +17,7 @@
       - Section 折叠动画与 miUI 完全一致（122444883127455 箭头 / 0°↔180° / 0.3s Quart）
       - Section 标题 15 号加粗 / 副标题 12 号 / 图标 40px
       - Section 头部所有元素（图标 / 标题 / 副标题 / 折叠箭头）垂直居中
+      - Section 支持 Locked / TextLocked（从 miUI AddSection 移植）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -2974,7 +2975,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ========== 创建 Section（垂直居中 + miUI 折叠动画） ==========
+    -- ========== 创建 Section（垂直居中 + miUI 折叠动画 + Locked） ==========
     local function createSection(_, config)
         if type(config) == "string" then
             config = { Name = config }
@@ -2988,6 +2989,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local collapsible     = config.Collapsible == true
         local collapsed       = (config.Collapsed == true) and collapsible
 
+        -- 从 miUI AddSection 搬运：Locked / TextLocked
+        local locked      = config.Locked == true
+        local lockedTitle = config.TextLocked or config.LockMessage or "Locked"
+
         local hasTitle    = (sectionTitle ~= "")
         local hasSubtitle = (sectionSubtitle ~= "")
         local hasIcon     = (sectionIcon ~= nil)
@@ -2997,19 +3002,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local HEADER_LEFT = 12
         local ARROW_W     = collapsible and 26 or 0
 
-        -- 图标
         local ICON_SIZE = hasSubtitle and 40 or 32
-
-        -- 标题
         local TITLE_SIZE = 15
         local TITLE_H    = 20
-
-        -- 副标题
         local SUB_SIZE = 12
         local SUB_H    = 16
         local SUB_GAP  = 2
 
-        -- 展开头部高度
         local HEADER_H
         if hasHeader then
             HEADER_H = hasSubtitle and 56 or 44
@@ -3017,7 +3016,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             HEADER_H = 4
         end
 
-        -- 折叠后高度（同时作为垂直居中基准）
         local COLLAPSED_H
         if hasSubtitle then
             COLLAPSED_H = 50
@@ -3037,7 +3035,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local SUB_TOP        = TEXT_BLOCK_TOP + TITLE_H + SUB_GAP
         local ARROW_TOP      = math.floor((COLLAPSED_H - 18) / 2)
 
-        -- ===== miUI 折叠动画参数（与 AddSection 完全一致） =====
+        -- ===== miUI 折叠动画参数 =====
         local MIUI_TWEEN = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
 
         -- 主容器
@@ -3140,7 +3138,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             collapseArrow.AnchorPoint = Vector2.new(1, 0.5)
             collapseArrow.Position = UDim2.new(1, -10, 0, ARROW_TOP + 9)
             collapseArrow.BackgroundTransparency = 1
-            collapseArrow.Image = "rbxassetid://122444883127455"   -- miUI 用的箭头
+            collapseArrow.Image = "rbxassetid://122444883127455"
             collapseArrow.ImageColor3 = CurrentTheme.Text
             collapseArrow.ImageTransparency = 0.35
             collapseArrow.ScaleType = Enum.ScaleType.Fit
@@ -3174,7 +3172,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainer.Visible = true
         contentHolder.Visible = true
 
-        -- ===== 高度 / 折叠逻辑（miUI 动画） =====
+        -- ===== Locked 覆盖层（从 miUI 搬运） =====
+        local lockFrame, lockLabel = createLockOverlay(sectionFrame, lockedTitle)
+        lockFrame.ZIndex = 200
+        lockFrame.Visible = locked
+
+        -- ===== 高度 / 折叠逻辑 =====
         local collapsedState = collapsed
 
         local function getContentHeight()
@@ -3194,7 +3197,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 contentContainer.Size = UDim2.new(1, -10, 0, targetH)
                 sectionFrame.Size = UDim2.new(0.96, 0, 0, targetH)
             else
-                -- miUI 用 0.3s Quart 缓动
                 TweenService:Create(contentContainer, MIUI_TWEEN, {Size = UDim2.new(1, -10, 0, targetH)}):Play()
                 TweenService:Create(sectionFrame, MIUI_TWEEN, {Size = UDim2.new(0.96, 0, 0, targetH)}):Play()
             end
@@ -3217,7 +3219,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         task.defer(function() updateHeight(true) end)
 
-        -- 折叠控制（miUI 旋转 0 ↔ 180，0.3s Quart）
+        -- 折叠控制
         local function setCollapsed(state, instant)
             if not collapsible then return end
             state = state == true
@@ -3225,7 +3227,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             collapsedState = state
 
             if collapseArrow then
-                -- miUI: 展开 = 0°，折叠 = 180°
                 TweenService:Create(collapseArrow, MIUI_TWEEN, {
                     Rotation = state and 180 or 0,
                 }):Play()
@@ -3235,7 +3236,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             updateHeight(instant)
         end
 
-        -- 点击头部切换
+        -- 点击头部切换（锁定时不响应）
         if collapsible then
             local headBtn = Instance.new("TextButton")
             headBtn.Name = "SectionHeaderBtn"
@@ -3247,6 +3248,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             headBtn.AutoButtonColor = false
             headBtn.Parent = contentContainer
             headBtn.MouseButton1Click:Connect(function()
+                if locked then return end
                 setCollapsed(not collapsedState, false)
             end)
         end
@@ -3293,6 +3295,40 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         sectionObj.IsCollapsible = function(_)
             return collapsible
+        end
+
+        -- ===== Locked API（从 miUI 搬运） =====
+        sectionObj.SetLocked = function(_, state)
+            locked = state == true
+            lockFrame.Visible = locked
+            return sectionObj
+        end
+        sectionObj.SetTextLocked = function(_, text)
+            lockedTitle = text or "Locked"
+            lockLabel.Text = lockedTitle
+            return sectionObj
+        end
+        sectionObj.SetMessage = function(_, text)
+            lockedTitle = text or "Locked"
+            lockLabel.Text = lockedTitle
+            return sectionObj
+        end
+        sectionObj.GetLocked = function(_)
+            return locked
+        end
+        sectionObj.Lock = function(_, text)
+            if text then
+                lockedTitle = text
+                lockLabel.Text = lockedTitle
+            end
+            locked = true
+            lockFrame.Visible = true
+            return sectionObj
+        end
+        sectionObj.Unlock = function(_)
+            locked = false
+            lockFrame.Visible = false
+            return sectionObj
         end
 
         return sectionObj
