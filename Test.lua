@@ -1,6 +1,6 @@
 --[[
     FengYu-Bento (miUI 框架 – 完整版)
-    - Slider = miUI 单行布局 + 原文件尺寸（仅滑轨/滑块加大）
+    - Slider = miUI 单行布局 + 原文件尺寸（滑轨 6 / 滑块 12）
     - 其他控件 = miUI 风格视觉框架
     - Video/Viewport = 原文件核心
     - Keybind = 带原文件鼠标图标
@@ -474,7 +474,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- Slider (miUI 单行布局 + 原文件尺寸，仅滑轨/滑块加大)
+    -- ═══════ Slider (miUI 单行布局 + 原文件尺寸，滑轨 6 / 滑块 12) ═══════
     child.Slider = function(_, config)
         local sliderText = config.Name or ""
         local valueTable = config.Value or {}
@@ -489,10 +489,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local controlId = sliderText.."_"..tostring(#Registry)
         local parent = config.Parent or contentHolder
         local tileH = unlimited and 42 or 60
+
         local Tile = miRow(parent, tileH)
         local rowH = 22
+
         local TitleLbl = miLabel(Tile, sliderText, 15, 0, UDim2.new(0, 90, 0, rowH), 13)
         TitleLbl.Position = UDim2.new(0, 15, 0.5, -rowH/2)
+
         local numW = unlimited and 72 or 52
         local ValueFrame = Instance.new("Frame")
         ValueFrame.Size = UDim2.new(0, numW, 0, rowH)
@@ -503,12 +506,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ValueFrame.ClipsDescendants = true
         ValueFrame.Parent = Tile
         Instance.new("UICorner", ValueFrame).CornerRadius = UDim.new(0, 4)
+
         local ValueStroke = Instance.new("UIStroke")
         ValueStroke.Thickness = 1
         ValueStroke.Transparency = 0.65
         ValueStroke.Color = CurrentTheme.Stroke
         ValueStroke.Parent = ValueFrame
         table.insert(ThemeListeners, function() ValueStroke.Color = CurrentTheme.Stroke end)
+
         local ValueLabel = Instance.new("TextBox")
         ValueLabel.Text = tostring(Val)
         ValueLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -522,19 +527,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ValueLabel.Parent = ValueFrame
         AddToRegistry(ValueLabel, "TextColor3", "Text")
         ValueLabel.Focused:Connect(function() Tween(ValueStroke, {Transparency = 0.2}, 0.15) end)
+
         local trackLeft = 15 + 90 + 12
         local trackRight = numW + 10 + 10
         local Track, Fill, Knob, Bar
         if not unlimited then
             Track = Instance.new("Frame")
-            Track.Size = UDim2.new(1, -(trackLeft + trackRight), 0, 8)
-            Track.Position = UDim2.new(0, trackLeft, 0.5, -4)
+            Track.Size = UDim2.new(1, -(trackLeft + trackRight), 0, 6)
+            Track.Position = UDim2.new(0, trackLeft, 0.5, -3)
             Track.BackgroundColor3 = CurrentTheme.Stroke
             Track.BorderSizePixel = 0
             Track.Parent = Tile
             Instance.new("UICorner", Track).CornerRadius = UDim.new(1, 0)
             AddToRegistry(Track, "BackgroundColor3", "Stroke")
+
             local initP = (min and max and max ~= min) and ((Val - min) / (max - min)) or 0
+
             Fill = Instance.new("Frame")
             Fill.Size = UDim2.new(initP, 0, 1, 0)
             Fill.BackgroundColor3 = CurrentTheme.Accent
@@ -542,8 +550,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Fill.Parent = Track
             Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
             AddToRegistry(Fill, "BackgroundColor3", "Accent")
+
             Knob = Instance.new("Frame")
-            Knob.Size = UDim2.new(0, 16, 0, 16)
+            Knob.Size = UDim2.new(0, 12, 0, 12)
             Knob.AnchorPoint = Vector2.new(0.5, 0.5)
             Knob.Position = UDim2.new(initP, 0, 0.5, 0)
             Knob.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -551,6 +560,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Knob.ZIndex = 3
             Knob.Parent = Track
             Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
+
             Bar = Instance.new("TextButton")
             Bar.Size = UDim2.new(1, 0, 0, 20)
             Bar.Position = UDim2.new(0, 0, 0.5, -10)
@@ -559,11 +569,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Bar.ZIndex = 4
             Bar.Parent = Track
         end
+
         local dragging = false
         local function Round(n, decimals)
             local factor = 10^decimals
             return math.floor(n * factor + 0.5) / factor
         end
+
         local function UpdateSlider(val)
             if unlimited then
                 Val = tonumber(val) or Val
@@ -583,6 +595,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             callback(val)
             return val
         end
+
         local function GetValueFromInput(input)
             if unlimited or not Track then return Val end
             local absX = Track.AbsolutePosition.X
@@ -590,6 +603,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local ratio = math.clamp((input.Position.X - absX) / absW, 0, 1)
             return ratio * (max - min) + min
         end
+
         if Bar then
             Bar.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -598,7 +612,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
             Bar.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = false
+                end
             end)
             UserInputService.InputChanged:Connect(function(input)
                 if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
@@ -606,23 +622,27 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
         end
+
         ValueLabel.FocusLost:Connect(function()
             Tween(ValueStroke, {Transparency = 0.65}, 0.15)
             local typed = tonumber(ValueLabel.Text)
             if typed then UpdateSlider(typed) else ValueLabel.Text = tostring(Val) end
         end)
+
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "Locked"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         if Bar then Bar.Active = not locked end
         ValueLabel.Active = not locked
+
         local function updateLock(state)
             locked = state
             lockFrame.Visible = state
             if Bar then Bar.Active = not state end
             ValueLabel.Active = not state
         end
+
         ConfigObjects[controlId] = { Type = "Slider", Value = Val, Set = function(v) if not locked then UpdateSlider(tonumber(v) or Val) end end }
         table.insert(ThemeListeners, function()
             if Fill then Fill.BackgroundColor3 = CurrentTheme.Accent end
@@ -630,6 +650,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ValueLabel.TextColor3 = CurrentTheme.Text
         end)
         UpdateSlider(Val)
+
         local self = {}
         function self.GetValue() return Val end
         function self.SetValue(v) if not locked then ConfigObjects[controlId].Set(v) end end
