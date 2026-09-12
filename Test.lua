@@ -4,6 +4,7 @@
     - Category = UI.lua 实现（collapsible 折叠 + arrow + contentList）
     - Slider = 42 高 miUI 单行 + 滑轨 6 / 滑块 12
     - Keybind = 带原文件鼠标图标
+    - BottomFrame = 玩家卡片（悬停反馈 + 点击设置面板 + SetAccount 动态更新）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -2999,6 +3000,9 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
+    -- ═══════════════════════════════════════════════════════════════
+    -- 左下角玩家卡片（悬停反馈 + 点击弹出设置面板）
+    -- ═══════════════════════════════════════════════════════════════
     local BottomFrame = Instance.new("Frame")
     BottomFrame.Size = UDim2.new(1, 0, 0, 50)
     BottomFrame.Position = UDim2.new(0, 0, 1, 0)
@@ -3006,28 +3010,44 @@ function Fenglib:CreateWindow(Config)
     BottomFrame.BackgroundTransparency = 1
     BottomFrame.Parent = LeftMenuFrame
 
+    -- 悬停背景高亮
+    local BottomHover = Instance.new("Frame")
+    BottomHover.Size = UDim2.new(1, -14, 1, -6)
+    BottomHover.Position = UDim2.new(0.5, 0, 0.5, 0)
+    BottomHover.AnchorPoint = Vector2.new(0.5, 0.5)
+    BottomHover.BackgroundColor3 = CurrentTheme.Top
+    BottomHover.BackgroundTransparency = 1
+    BottomHover.BorderSizePixel = 0
+    BottomHover.ZIndex = 0
+    BottomHover.Parent = BottomFrame
+    Instance.new("UICorner", BottomHover).CornerRadius = UDim.new(0, 8)
+    AddToRegistry(BottomHover, "BackgroundColor3", "Top")
+
     local AccountProfile = Instance.new("ImageLabel")
     AccountProfile.Size = UDim2.new(0, 35, 0, 35)
     AccountProfile.Position = UDim2.new(0, 10, 0.5, -17.5)
     AccountProfile.BackgroundTransparency = 1
     AccountProfile.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+    AccountProfile.ZIndex = 2
     AccountProfile.Parent = BottomFrame
-    AddToRegistry(AccountProfile, "ImageColor3", "Text")
+    -- 修复：不再绑定 ImageColor3 到 Text 主题，避免换主题时头像染色
     Instance.new("UICorner", AccountProfile).CornerRadius = UDim.new(1, 0)
 
     local AccountName = Instance.new("TextLabel")
-    AccountName.Size = UDim2.new(0, 120, 0, 25)
+    AccountName.Size = UDim2.new(1, -100, 0, 25)
     AccountName.Position = UDim2.new(0, 55, 0, 5)
     AccountName.BackgroundTransparency = 1
     AccountName.Font = Enum.Font.GothamBold
     AccountName.Text = LocalPlayer.DisplayName
     AccountName.TextSize = 14
     AccountName.TextXAlignment = Enum.TextXAlignment.Left
+    AccountName.TextTruncate = Enum.TextTruncate.AtEnd
+    AccountName.ZIndex = 2
     AccountName.Parent = BottomFrame
     AddToRegistry(AccountName, "TextColor3", "Text")
 
     local ExpireLabel = Instance.new("TextLabel")
-    ExpireLabel.Size = UDim2.new(0, 120, 0, 15)
+    ExpireLabel.Size = UDim2.new(1, -100, 0, 15)
     ExpireLabel.Position = UDim2.new(0, 55, 0, 25)
     ExpireLabel.BackgroundTransparency = 1
     ExpireLabel.Font = Enum.Font.GothamMedium
@@ -3035,18 +3055,163 @@ function Fenglib:CreateWindow(Config)
     ExpireLabel.TextSize = 10
     ExpireLabel.TextTransparency = 0.65
     ExpireLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ExpireLabel.TextTruncate = Enum.TextTruncate.AtEnd
+    ExpireLabel.ZIndex = 2
     ExpireLabel.Parent = BottomFrame
     AddToRegistry(ExpireLabel, "TextColor3", "SubText")
 
     local UserSettingButton = Instance.new("ImageLabel")
-    UserSettingButton.Size = UDim2.new(0, 25, 0, 25)
-    UserSettingButton.Position = UDim2.new(1, -7, 0.5, -12.5)
-    UserSettingButton.AnchorPoint = Vector2.new(1, 0.5)
+    UserSettingButton.Size = UDim2.new(0, 20, 0, 20)
+    UserSettingButton.Position = UDim2.new(1, -12, 0.5, -10)
     UserSettingButton.BackgroundTransparency = 1
     UserSettingButton.Image = "rbxassetid://134724289526879"
     UserSettingButton.ImageTransparency = 0.5
+    UserSettingButton.ZIndex = 2
     UserSettingButton.Parent = BottomFrame
     AddToRegistry(UserSettingButton, "ImageColor3", "Text")
+
+    -- 点击热区（覆盖整块 BottomFrame）
+    local BottomClick = Instance.new("TextButton")
+    BottomClick.Size = UDim2.new(1, 0, 1, 0)
+    BottomClick.BackgroundTransparency = 1
+    BottomClick.Text = ""
+    BottomClick.AutoButtonColor = false
+    BottomClick.ZIndex = 5
+    BottomClick.Parent = BottomFrame
+
+    -- ═══════════════════════════════════════════════════════════
+    -- 设置弹出面板（跟随 BottomFrame）
+    -- ═══════════════════════════════════════════════════════════
+    local SettingsPanel = Instance.new("Frame")
+    SettingsPanel.Size = UDim2.new(0, 210, 0, 0)
+    SettingsPanel.AnchorPoint = Vector2.new(0, 1)
+    SettingsPanel.Position = UDim2.new(0, 8, 1, -54)
+    SettingsPanel.BackgroundColor3 = CurrentTheme.Main
+    SettingsPanel.BackgroundTransparency = 0.05
+    SettingsPanel.BorderSizePixel = 0
+    SettingsPanel.ClipsDescendants = true
+    SettingsPanel.Visible = false
+    SettingsPanel.ZIndex = 60
+    SettingsPanel.Parent = MainFrame
+    Instance.new("UICorner", SettingsPanel).CornerRadius = UDim.new(0, 10)
+    AddToRegistry(SettingsPanel, "BackgroundColor3", "Main")
+
+    local SettingsStroke = Instance.new("UIStroke")
+    SettingsStroke.Thickness = 1
+    SettingsStroke.Transparency = 0.65
+    SettingsStroke.Color = CurrentTheme.Stroke
+    SettingsStroke.Parent = SettingsPanel
+    table.insert(ThemeListeners, function() SettingsStroke.Color = CurrentTheme.Stroke end)
+
+    local SettingsList = Instance.new("UIListLayout")
+    SettingsList.Padding = UDim.new(0, 5)
+    SettingsList.SortOrder = Enum.SortOrder.LayoutOrder
+    SettingsList.Parent = SettingsPanel
+
+    local SettingsPad = Instance.new("UIPadding")
+    SettingsPad.PaddingTop = UDim.new(0, 8)
+    SettingsPad.PaddingBottom = UDim.new(0, 8)
+    SettingsPad.PaddingLeft = UDim.new(0, 6)
+    SettingsPad.PaddingRight = UDim.new(0, 6)
+    SettingsPad.Parent = SettingsPanel
+
+    local function addSettingRow(text, onClick)
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, 0, 0, 32)
+        row.BackgroundColor3 = CurrentTheme.Top
+        row.BackgroundTransparency = 1
+        row.BorderSizePixel = 0
+        row.Parent = SettingsPanel
+        Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
+        AddToRegistry(row, "BackgroundColor3", "Top")
+
+        local lbl = Instance.new("TextLabel")
+        lbl.Size = UDim2.new(1, -20, 1, 0)
+        lbl.Position = UDim2.new(0, 12, 0, 0)
+        lbl.BackgroundTransparency = 1
+        lbl.Font = Enum.Font.GothamMedium
+        lbl.TextSize = 12
+        lbl.Text = text
+        lbl.TextXAlignment = Enum.TextXAlignment.Left
+        lbl.Parent = row
+        AddToRegistry(lbl, "TextColor3", "Text")
+
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, 0, 1, 0)
+        btn.BackgroundTransparency = 1
+        btn.Text = ""
+        btn.AutoButtonColor = false
+        btn.Parent = row
+
+        btn.MouseEnter:Connect(function() Tween(row, {BackgroundTransparency = 0.6}, 0.12) end)
+        btn.MouseLeave:Connect(function() Tween(row, {BackgroundTransparency = 1}, 0.12) end)
+        btn.MouseButton1Click:Connect(onClick)
+        return row
+    end
+
+    addSettingRow("Theme: Dark", function() Fenglib:SetTheme("Dark") end)
+    addSettingRow("Theme: Charcoal", function() Fenglib:SetTheme("Charcoal") end)
+    addSettingRow("Theme: AMOLED", function() Fenglib:SetTheme("AMOLED") end)
+    addSettingRow("Toggle Custom Cursor", function()
+        if Fenglib.ToggleCustomCursor then Fenglib:ToggleCustomCursor() end
+    end)
+    addSettingRow("Reset Window Position", function()
+        Tween(MainFrame, {Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.3)
+    end)
+
+    local settingsOpen = false
+    local outsideConn = nil
+    local function updateSettingsHeight()
+        local h = SettingsList.AbsoluteContentSize.Y + 16
+        if settingsOpen then
+            Tween(SettingsPanel, {Size = UDim2.new(0, 210, 0, h)}, 0.2)
+        end
+    end
+    SettingsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSettingsHeight)
+
+    local function isInside(mp, frame)
+        if not frame then return false end
+        local ap, as = frame.AbsolutePosition, frame.AbsoluteSize
+        return mp.X >= ap.X and mp.X <= ap.X + as.X and mp.Y >= ap.Y and mp.Y <= ap.Y + as.Y
+    end
+
+    local function closeSettings()
+        settingsOpen = false
+        if outsideConn then outsideConn:Disconnect(); outsideConn = nil end
+        Tween(SettingsPanel, {Size = UDim2.new(0, 210, 0, 0)}, 0.18)
+        task.delay(0.2, function()
+            if not settingsOpen then SettingsPanel.Visible = false end
+        end)
+    end
+
+    local function openSettings()
+        settingsOpen = true
+        SettingsPanel.Visible = true
+        SettingsPanel.Size = UDim2.new(0, 210, 0, 0)
+        updateSettingsHeight()
+        if outsideConn then outsideConn:Disconnect() end
+        outsideConn = UserInputService.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+                local mp = UserInputService:GetMouseLocation()
+                if not isInside(mp, SettingsPanel) and not isInside(mp, BottomFrame) then
+                    closeSettings()
+                end
+            end
+        end)
+    end
+
+    BottomClick.MouseEnter:Connect(function()
+        Tween(BottomHover, {BackgroundTransparency = 0.6}, 0.15)
+        Tween(UserSettingButton, {ImageTransparency = 0.15}, 0.15)
+    end)
+    BottomClick.MouseLeave:Connect(function()
+        Tween(BottomHover, {BackgroundTransparency = 1}, 0.15)
+        Tween(UserSettingButton, {ImageTransparency = 0.5}, 0.15)
+    end)
+    BottomClick.MouseButton1Click:Connect(function()
+        if settingsOpen then closeSettings() else openSettings() end
+    end)
 
     local RightMenuFrame = Instance.new("Frame")
     RightMenuFrame.Size = UDim2.new(1, -176, 1, 0)
@@ -3623,6 +3788,36 @@ function Fenglib:CreateWindow(Config)
     function Window:SetKeybind(key) Keybind = key end
     function Window:Destroy() ScreenGui:Destroy() end
     function Window:SetSubtitle(newSubtitle) WindowContent.Text = newSubtitle or "" end
+
+    -- ═══════════════════════════════════════════════════════════════
+    -- 玩家卡片动态更新
+    -- ═══════════════════════════════════════════════════════════════
+    function Window:SetAccount(cfg)
+        cfg = cfg or {}
+        local profile = cfg.Profile
+            or Players:GetUserThumbnailAsync(LocalPlayer.UserId,
+                Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+
+        -- ShowUser = false 降级为"设置入口按钮"
+        if cfg.ShowUser == false then
+            AccountProfile.Image = ""
+            AccountProfile.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+            AccountProfile.BackgroundTransparency = 0.25
+            AccountProfile.ImageColor3 = CurrentTheme.Accent
+            AccountName.Text = cfg.Username or "Settings"
+            ExpireLabel.Text = cfg.Expires  or "Customize menu"
+        else
+            AccountProfile.Image = profile
+            AccountProfile.BackgroundColor3 = Color3.new(1, 1, 1)
+            AccountProfile.BackgroundTransparency = 1
+            AccountName.Text = cfg.Username or LocalPlayer.DisplayName
+            ExpireLabel.Text = cfg.Expires  or "never"
+        end
+    end
+
+    -- 初始调用：如果用户在 Config 里传了 ShowUser = false 就自动降级
+    Window:SetAccount({ ShowUser = (Config.ShowUser ~= false) })
+
     return Window
 end
 
