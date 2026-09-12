@@ -1,7 +1,8 @@
 --[[
-    FengYu-Bento (Test.lua 骨架 + UI.lua Category)
+    FengYu-Bento (Test.lua)
     - BottomFrame = miUI 同款玩家卡片（悬停反馈 + 点击设置面板）
     - 设置面板仅含：Menu Scale / Text Gradient（无主题切换）
+    - 已修复 config 为 nil 导致的 "attempt to index nil with 'Name'" 报错
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -347,7 +348,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return lbl
     end
 
+    -- 通用保护：如果 config 是 nil，用空表代替
+    local function safeConfig(config)
+        if type(config) ~= "table" then
+            return { Name = tostring(config or "") }
+        end
+        return config
+    end
+
     child.Button = function(_, config)
+        config = safeConfig(config)
         local btnText = config.Name or config.Text or ""
         local callback = config.Callback or function() end
         local parent = config.Parent or contentHolder
@@ -381,6 +391,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Toggle = function(_, config)
+        config = safeConfig(config)
         local toggleText = config.Name or ""
         local Enabled = config.Value or false
         local callback = config.Callback or function() end
@@ -442,6 +453,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Slider = function(_, config)
+        config = safeConfig(config)
         local sliderText = config.Name or ""
         local valueTable = config.Value or {}
         local min = valueTable.Min
@@ -598,6 +610,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Dropdown = function(_, config)
+        config = safeConfig(config)
         local dropText = config.Name or ""
         local options = config.Values or {}
         local selectedValue = config.Value
@@ -813,6 +826,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Keybind = function(_, config)
+        config = safeConfig(config)
         local keyText = config.Name or ""
         local defaultKey = config.Default or Enum.KeyCode.M
         local mode = config.Mode or "Toggle"
@@ -937,6 +951,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Input = function(_, config)
+        config = safeConfig(config)
         local inputText = config.Name or ""
         local default = config.Value or ""
         local callback = config.Callback or function() end
@@ -1040,6 +1055,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Textbox = function(_, config)
+        config = safeConfig(config)
         local boxText = config.Name or ""
         local placeholder = config.Placeholder or ""
         local callback = config.Callback or function() end
@@ -1089,6 +1105,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Label = function(_, config)
+        config = safeConfig(config)
         local labelText = config.Name or ""
         local parent = config.Parent or contentHolder
         local Tile = miRow(parent, 42)
@@ -1108,7 +1125,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Image = function(_, config)
-        config = config or {}
+        config = safeConfig(config)
         local title = config.Name or "Image"
         local subtitle = config.SubName or ""
         local description = config.Description or {}
@@ -1207,7 +1224,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Divider = function(_, config)
-        config = config or {}
+        config = safeConfig(config)
         local parent = config.Parent or contentHolder
         local labelText = config.Name or ""
         local hasText = (labelText ~= "")
@@ -1246,6 +1263,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Space = function(_, config)
+        config = safeConfig(config)
         local height = (config and config.Height) or 8
         local parent = config and config.Parent or contentHolder
         local sp = Instance.new("Frame")
@@ -1260,6 +1278,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Checkbox = function(_, config)
+        config = safeConfig(config)
         local title = config.Name or ""
         local default = config.Default or false
         local callback = config.Callback or function() end
@@ -1336,6 +1355,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.ProgressBar = function(_, config)
+        config = safeConfig(config)
         local name = config.Name or ""
         local valueConfig = config.Value or {}
         local min = valueConfig.Min or 0
@@ -1416,6 +1436,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Video = function(_, config)
+        config = safeConfig(config)
         local opts = config or {}
         local parent = opts.Parent or contentHolder
         if not parent then return end
@@ -1717,6 +1738,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Audio = function(_, config)
+        config = safeConfig(config)
         local opts = config or {}
         local parent = opts.Parent or contentHolder
         if not parent then return end
@@ -1966,7 +1988,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Social = function(_, config)
-        config = config or {}
+        config = safeConfig(config)
         local parent = config.Parent or contentHolder
         if not parent then return end
         local displayName = tostring(config.Name or config.DisplayName or "")
@@ -2066,7 +2088,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Paragraph = function(_, config)
-        config = config or {}
+        config = safeConfig(config)
         local title = config.Name or ""
         local content = config.Content or ""
         local parent = config.Parent or contentHolder
@@ -2123,6 +2145,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Viewport = function(_, config)
+        config = safeConfig(config)
         local opts = config or {}
         local parent = opts.Parent or contentHolder
         if not parent then return end
@@ -2282,7 +2305,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     child.Group = function(_, config)
-        config = config or {}
+        config = safeConfig(config)
         local columns = config.Columns or 2
         local gap = config.Gap or 6
         local parent = config.Parent or contentHolder
@@ -2810,7 +2833,6 @@ function Fenglib:CreateWindow(Config)
     AccountProfile.BackgroundTransparency = 1
     AccountProfile.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
     AccountProfile.Parent = BottomFrame
-    -- 头像不注册 ImageColor3，避免主题切换时染色
     Instance.new("UICorner", AccountProfile).CornerRadius = UDim.new(1, 0)
 
     local AccountName = Instance.new("TextLabel")
@@ -2878,7 +2900,8 @@ function Fenglib:CreateWindow(Config)
 
     local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
 
-    settingsBuilder.Dropdown({
+    -- ★ 注意：这里必须用冒号 settingsBuilder:Dropdown(...)，不能用点号
+    settingsBuilder:Dropdown({
         Name = "Menu Scale",
         Values = { "Large", "Default", "Mobile", "Small", "Compact" },
         Value = "Large",
@@ -2918,7 +2941,8 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    settingsBuilder.Toggle({
+    -- ★ 这里也一样，必须用冒号
+    settingsBuilder:Toggle({
         Name = "Text Gradient",
         Value = true,
         Parent = SettingsPanel,
