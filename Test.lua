@@ -3,7 +3,8 @@
     - 控件大小 = 原文件尺寸
     - 视觉框架 = miUI 风格
     - Video/Viewport = 原文件核心
-    - Slider = miUI 单行外观
+    - Slider = 原文件布局 + miUI 外观
+    - Keybind = 带原文件鼠标图标
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -316,7 +317,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
     local child = {}
 
-    -- miUI 基础行
     local function miRow(parentFrame, height)
         height = height or 42
         local row = Instance.new("Frame")
@@ -524,7 +524,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Slider (miUI 单行外观) ═══════
+    -- ═══════ Slider (原文件布局 + miUI 外观) ═══════
     child.Slider = function(_, config)
         local sliderText = config.Name or ""
         local valueTable = config.Value or {}
@@ -541,49 +541,37 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local tileH = unlimited and 42 or 60
 
         local Tile = miRow(parent, tileH)
-        -- miUI Slider 视觉：标题在左上
-        local TitleLbl = miLabel(Tile, sliderText, 15, 8, UDim2.new(1, -110, 0, 15), 13)
 
-        -- 数值框宽度（miUI 使用紧凑数值框）
+        -- 原文件布局：标题 (15, unlimited?11:10) 宽 (1,-30) 高 20
+        local TitleLbl = miLabel(Tile, sliderText, 15, unlimited and 11 or 10, UDim2.new(1, -30, 0, 20), 13)
+
+        -- 原文件布局：数值框高 22，位置右上
         local numW = unlimited and 72 or 52
+        local Num = Instance.new("TextBox")
+        Num.Text = tostring(Val)
+        Num.Size = UDim2.new(0, numW, 0, 22)
+        Num.Position = UDim2.new(1, -(numW + 10), 0, unlimited and 10 or 9)
+        Num.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+        Num.BackgroundTransparency = 0
+        Num.BorderSizePixel = 0
+        Num.Font = Enum.Font.GothamBold
+        Num.TextSize = 12
+        Num.TextColor3 = CurrentTheme.Accent
+        Num.TextXAlignment = Enum.TextXAlignment.Center
+        Num.Parent = Tile
+        Num.ClearTextOnFocus = false
+        Instance.new("UICorner", Num).CornerRadius = UDim.new(0, 6)
+        local NumStroke = Instance.new("UIStroke")
+        NumStroke.Thickness = 1
+        NumStroke.Transparency = 0.65
+        NumStroke.Color = CurrentTheme.Stroke
+        NumStroke.Parent = Num
+        table.insert(ThemeListeners, function() NumStroke.Color = CurrentTheme.Stroke end)
+        Num.Focused:Connect(function() Tween(NumStroke, {Transparency = 0.2}, 0.15) end)
 
-        -- ═══ miUI 数值框（右侧，带描边） ═══
-        local ValueFrame = Instance.new("Frame")
-        ValueFrame.Size = UDim2.new(0, numW, 0, 18)
-        ValueFrame.Position = UDim2.new(1, -(numW + 10), 0, 8)
-        ValueFrame.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
-        ValueFrame.BackgroundTransparency = 0
-        ValueFrame.BorderSizePixel = 0
-        ValueFrame.ClipsDescendants = true
-        ValueFrame.Parent = Tile
-        Instance.new("UICorner", ValueFrame).CornerRadius = UDim.new(0, 4)
-
-        local ValueStroke = Instance.new("UIStroke")
-        ValueStroke.Thickness = 1
-        ValueStroke.Transparency = 0.65
-        ValueStroke.Color = CurrentTheme.Stroke
-        ValueStroke.Parent = ValueFrame
-        table.insert(ThemeListeners, function() ValueStroke.Color = CurrentTheme.Stroke end)
-
-        local ValueLabel = Instance.new("TextBox")
-        ValueLabel.Text = tostring(Val)
-        ValueLabel.Size = UDim2.new(1, 0, 1, 0)
-        ValueLabel.Position = UDim2.new(0, 0, 0, 0)
-        ValueLabel.BackgroundTransparency = 1
-        ValueLabel.Font = Enum.Font.GothamMedium
-        ValueLabel.TextSize = 10
-        ValueLabel.TextColor3 = CurrentTheme.Text
-        ValueLabel.TextXAlignment = Enum.TextXAlignment.Center
-        ValueLabel.TextYAlignment = Enum.TextYAlignment.Center
-        ValueLabel.ClearTextOnFocus = false
-        ValueLabel.Parent = ValueFrame
-        AddToRegistry(ValueLabel, "TextColor3", "Text")
-        ValueLabel.Focused:Connect(function() Tween(ValueStroke, {Transparency = 0.2}, 0.15) end)
-
-        -- ═══ miUI 滑轨（下方，5 高） ═══
+        -- 原文件布局：滑轨 (0,15,0,44)，宽 (1,-30)，高 5
         local Track, Fill, Knob, Bar
         if not unlimited then
-            -- miUI：细轨 5px，圆形小 knob 10px
             Track = Instance.new("Frame")
             Track.Size = UDim2.new(1, -30, 0, 5)
             Track.Position = UDim2.new(0, 15, 0, 44)
@@ -603,9 +591,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
             AddToRegistry(Fill, "BackgroundColor3", "Accent")
 
-            -- miUI 风格的白色圆点
+            -- 原文件：Knob 12×12 白圆
             Knob = Instance.new("Frame")
-            Knob.Size = UDim2.new(0, 10, 0, 10)
+            Knob.Size = UDim2.new(0, 12, 0, 12)
             Knob.AnchorPoint = Vector2.new(0.5, 0.5)
             Knob.Position = UDim2.new(initP, 0, 0.5, 0)
             Knob.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -632,7 +620,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function UpdateSlider(val)
             if unlimited then
                 Val = tonumber(val) or Val
-                ValueLabel.Text = tostring(Val)
+                Num.Text = tostring(Val)
                 if ConfigObjects[controlId] then ConfigObjects[controlId].Value = Val end
                 callback(Val)
                 return
@@ -642,7 +630,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local ratio = (val - min) / (max - min)
             TweenService:Create(Fill, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {Size = UDim2.new(ratio, 0, 1, 0)}):Play()
             TweenService:Create(Knob, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {Position = UDim2.new(ratio, 0, 0.5, 0)}):Play()
-            ValueLabel.Text = tostring(val)
+            Num.Text = tostring(val)
             Val = val
             if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
             callback(val)
@@ -676,10 +664,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        ValueLabel.FocusLost:Connect(function()
-            Tween(ValueStroke, {Transparency = 0.65}, 0.15)
-            local typed = tonumber(ValueLabel.Text)
-            if typed then UpdateSlider(typed) else ValueLabel.Text = tostring(Val) end
+        Num.FocusLost:Connect(function()
+            Tween(NumStroke, {Transparency = 0.65}, 0.15)
+            local typed = tonumber(Num.Text)
+            if typed then UpdateSlider(typed) else Num.Text = tostring(Val) end
         end)
 
         local locked = config.Locked == true
@@ -687,20 +675,20 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         if Bar then Bar.Active = not locked end
-        ValueLabel.Active = not locked
+        Num.Active = not locked
 
         local function updateLock(state)
             locked = state
             lockFrame.Visible = state
             if Bar then Bar.Active = not state end
-            ValueLabel.Active = not state
+            Num.Active = not state
         end
 
         ConfigObjects[controlId] = { Type = "Slider", Value = Val, Set = function(v) if not locked then UpdateSlider(tonumber(v) or Val) end end }
         table.insert(ThemeListeners, function()
             if Fill then Fill.BackgroundColor3 = CurrentTheme.Accent end
             if Track then Track.BackgroundColor3 = CurrentTheme.Stroke end
-            ValueLabel.TextColor3 = CurrentTheme.Text
+            Num.TextColor3 = CurrentTheme.Accent
         end)
         UpdateSlider(Val)
 
@@ -964,7 +952,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Keybind ═══════
+    -- ═══════ Keybind (含原文件鼠标图标) ═══════
     child.Keybind = function(_, config)
         local keyText = config.Name or ""
         local defaultKey = config.Default or Enum.KeyCode.M
@@ -999,21 +987,33 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         innerLayout.FillDirection = Enum.FillDirection.Horizontal
         innerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
         innerLayout.Padding = UDim.new(0, 4)
+        innerLayout.SortOrder = Enum.SortOrder.LayoutOrder
         innerLayout.Parent = KeyBtn
+
         local keyPadding = Instance.new("UIPadding")
         keyPadding.PaddingLeft = UDim.new(0, 7)
         keyPadding.PaddingRight = UDim.new(0, 8)
         keyPadding.Parent = KeyBtn
 
+        -- ★ 原文件的鼠标图标
+        local mouseIco = Instance.new("ImageLabel")
+        mouseIco.Size = UDim2.fromOffset(13, 13)
+        mouseIco.BackgroundTransparency = 1
+        mouseIco.Image = "rbxassetid://10734898592"
+        mouseIco.ImageTransparency = 0.35
+        mouseIco.LayoutOrder = 1
+        mouseIco.Parent = KeyBtn
+        AddToRegistry(mouseIco, "ImageColor3", "Text")
+
         local KeyLabel = Instance.new("TextLabel")
         KeyLabel.Text = state.Key
-        KeyLabel.Size = UDim2.new(0, 0, 1, 0)
+        KeyLabel.Size = UDim2.new(0, 0, 0, 14)
         KeyLabel.BackgroundTransparency = 1
         KeyLabel.Font = Enum.Font.GothamMedium
         KeyLabel.TextSize = 13
         KeyLabel.TextColor3 = CurrentTheme.Text
         KeyLabel.AutomaticSize = Enum.AutomaticSize.X
-        KeyLabel.LayoutOrder = 1
+        KeyLabel.LayoutOrder = 2
         KeyLabel.Parent = KeyBtn
         AddToRegistry(KeyLabel, "TextColor3", "Text")
 
@@ -3121,13 +3121,11 @@ function Fenglib:CreateWindow(Config)
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
     local NotificationHolder = Instance.new("Frame")
-    NotificationHolder.Name = "NotificationHolder"
     NotificationHolder.Size = UDim2.new(0, 300, 0, 0)
     NotificationHolder.AutomaticSize = Enum.AutomaticSize.Y
     NotificationHolder.Position = UDim2.new(1, -20, 1, -20)
     NotificationHolder.AnchorPoint = Vector2.new(1, 1)
     NotificationHolder.BackgroundTransparency = 1
-    NotificationHolder.BorderSizePixel = 0
     NotificationHolder.Parent = ScreenGui
     NotificationHolder.ZIndex = 100
     local HolderList = Instance.new("UIListLayout")
@@ -3224,9 +3222,7 @@ function Fenglib:CreateWindow(Config)
     UserInputService.InputChanged:Connect(function(input)
         if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - resizeStart
-            local newWidth = math.max(400, startSize.X.Offset + delta.X)
-            local newHeight = math.max(250, startSize.Y.Offset + delta.Y)
-            MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+            MainFrame.Size = UDim2.new(0, math.max(400, startSize.X.Offset + delta.X), 0, math.max(250, startSize.Y.Offset + delta.Y))
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
@@ -3609,8 +3605,7 @@ function Fenglib:CreateWindow(Config)
         local function getContentHeight() return contentList.AbsoluteContentSize.Y or 0 end
         local function setContentHeight(targetHeight, animate)
             targetHeight = math.max(0, targetHeight)
-            local currentHeight = content.Size.Y.Offset
-            if animate and currentHeight ~= targetHeight then
+            if animate and content.Size.Y.Offset ~= targetHeight then
                 if currentTween then currentTween:Cancel(); currentTween = nil end
                 currentTween = TweenService:Create(content, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, targetHeight)})
                 currentTween:Play()
