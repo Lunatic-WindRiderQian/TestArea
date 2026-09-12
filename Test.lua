@@ -1,6 +1,6 @@
 --[[
     FengYu-Bento (miUI 框架 – 完整版)
-    - Slider = miUI 单行布局（名称 + 滑轨 + 数值框同一行）+ 原文件文字大小 (12/GothamBold)
+    - Slider = miUI 单行布局（名称 + 滑轨 + 数值框同一行）+ 大号文字（名称 15 / 数值框 16）
     - 其他控件 = miUI 风格视觉框架
     - Video/Viewport = 原文件核心
     - Keybind = 带原文件鼠标图标
@@ -522,7 +522,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════ Slider (miUI 单行布局 + 原文件文字大小) ═══════
+    -- ═══════ Slider (miUI 单行布局 + 大号文字) ═══════
     child.Slider = function(_, config)
         local sliderText = config.Name or ""
         local valueTable = config.Value or {}
@@ -540,15 +540,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         local Tile = miRow(parent, tileH)
 
-        -- miUI 单行布局：所有元素垂直居中，同一水平线
-        local rowH = 18
+        -- miUI 单行布局：全部垂直居中，同一水平线
+        local rowH = 24
 
-        -- 左侧：名称（原文件大小 13）
-        local TitleLbl = miLabel(Tile, sliderText, 15, 0, UDim2.new(0, 90, 0, rowH), 13)
+        -- 左侧：名称
+        local TitleLbl = miLabel(Tile, sliderText, 15, 0, UDim2.new(0, 104, 0, rowH), 15)
         TitleLbl.Position = UDim2.new(0, 15, 0.5, -rowH/2)
 
-        -- 右侧：数值框（原文件大小 12 GothamBold）
-        local numW = unlimited and 72 or 52
+        -- 右侧：数值框
+        local numW = unlimited and 84 or 62
         local ValueFrame = Instance.new("Frame")
         ValueFrame.Size = UDim2.new(0, numW, 0, rowH)
         ValueFrame.Position = UDim2.new(1, -(numW + 10), 0.5, -rowH/2)
@@ -571,7 +571,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ValueLabel.Size = UDim2.new(1, 0, 1, 0)
         ValueLabel.BackgroundTransparency = 1
         ValueLabel.Font = Enum.Font.GothamBold
-        ValueLabel.TextSize = 12
+        ValueLabel.TextSize = 16
         ValueLabel.TextColor3 = CurrentTheme.Text
         ValueLabel.TextXAlignment = Enum.TextXAlignment.Center
         ValueLabel.TextYAlignment = Enum.TextYAlignment.Center
@@ -580,8 +580,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(ValueLabel, "TextColor3", "Text")
         ValueLabel.Focused:Connect(function() Tween(ValueStroke, {Transparency = 0.2}, 0.15) end)
 
-        -- 中间：滑轨（名称右侧到数值框左侧，垂直居中）
-        local trackLeft = 15 + 90 + 12
+        -- 中间：滑轨
+        local trackLeft = 15 + 104 + 12
         local trackRight = numW + 10 + 10
         local Track, Fill, Knob, Bar
         if not unlimited then
@@ -615,8 +615,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
             Bar = Instance.new("TextButton")
-            Bar.Size = UDim2.new(1, 0, 0, 18)
-            Bar.Position = UDim2.new(0, 0, 0.5, -9)
+            Bar.Size = UDim2.new(1, 0, 0, 20)
+            Bar.Position = UDim2.new(0, 0, 0.5, -10)
             Bar.BackgroundTransparency = 1
             Bar.Text = ""
             Bar.ZIndex = 4
