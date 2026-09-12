@@ -18,6 +18,8 @@
       - Section 标题 15 号加粗 / 副标题 12 号 / 图标 40px
       - Section 头部所有元素（图标 / 标题 / 副标题 / 折叠箭头）垂直居中
       - Section 支持 Locked / TextLocked（从 miUI AddSection 移植）
+      - Collapsed: true = 展开 (开) / false = 折叠 (关)
+      - Locked 时覆盖层拦截所有点击（TextButton 覆盖）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -316,16 +318,19 @@ function MediaManager:Image(src)
     return ""
 end
 
--- ========== 锁覆盖层 ==========
+-- ========== 锁覆盖层（用 TextButton 拦截点击） ==========
 local function createLockOverlay(parent, defaultTitle)
     local cornerRadius = UDim.new(0, 8)
     for _, child in ipairs(parent:GetChildren()) do
         if child:IsA("UICorner") then cornerRadius = child.CornerRadius; break end
     end
-    local lockFrame = Instance.new("Frame")
+    local lockFrame = Instance.new("TextButton")
     lockFrame.Size = UDim2.new(1, 0, 1, 0)
     lockFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     lockFrame.BackgroundTransparency = 0.6
+    lockFrame.Text = ""
+    lockFrame.AutoButtonColor = false
+    lockFrame.Active = true
     lockFrame.Visible = false
     lockFrame.ZIndex = 10
     lockFrame.Parent = parent
@@ -2987,7 +2992,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local sectionSubtitle = config.SubName or config.Subtitle or ""
         local sectionIcon     = config.Logo or config.Icon or nil
         local collapsible     = config.Collapsible == true
-        local collapsed       = (config.Collapsed == true) and collapsible
+        -- Collapsed: true = 展开 (开), false = 折叠 (关)
+        local collapsed       = collapsible and (config.Collapsed == false)
 
         -- 从 miUI AddSection 搬运：Locked / TextLocked
         local locked      = config.Locked == true
