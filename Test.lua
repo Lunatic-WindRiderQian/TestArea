@@ -20,6 +20,7 @@
       - Section 支持 Locked / TextLocked（从 miUI AddSection 移植）
       - Collapsed: true = 展开 (开) / false = 折叠 (关)
       - Locked 时覆盖层拦截所有点击（TextButton 覆盖）
+      - 控件背景/描边色值对齐 miUI（Top = 26,28,36 / Stroke = 45,48,58）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -76,11 +77,50 @@ do
     end
 end
 
--- ========== 主题 ==========
+-- ========== 主题（控件背景/描边对齐 miUI） ==========
 local Themes = {
-    Dark = { Main=Color3.fromRGB(13,13,13), Top=Color3.fromRGB(28,28,30), Text=Color3.fromRGB(240,240,245), Accent=Color3.fromRGB(80,140,255), Stroke=Color3.fromRGB(45,45,48), SubText=Color3.fromRGB(160,160,170), Element=Color3.fromRGB(45,45,50), Hover=Color3.fromRGB(60,60,70), ShineEnabled=true, Shine={Speed=0.4,RotationSpeed=20,ColorSequence=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(40,40,40)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(105,105,105)),ColorSequenceKeypoint.new(1,Color3.fromRGB(40,40,40))})}, StrokeShine=true, StrokeDark=Color3.fromRGB(40,40,40) },
-    ["Charcoal"] = { Main=Color3.fromRGB(20,20,20), Top=Color3.fromRGB(35,35,35), Text=Color3.fromRGB(240,240,240), Accent=Color3.fromRGB(102,102,102), Stroke=Color3.fromRGB(45,45,45), SubText=Color3.fromRGB(170,170,170), Element=Color3.fromRGB(35,35,35), Hover=Color3.fromRGB(90,160,255), ShineEnabled=true, Shine={Speed=0.45,RotationSpeed=25,ColorSequence=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(20,20,20)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(150,150,150)),ColorSequenceKeypoint.new(1,Color3.fromRGB(20,20,20))})}, StrokeShine=true, StrokeDark=Color3.fromRGB(60,60,60) },
-    ["AMOLED"] = { Main=Color3.fromRGB(0,0,0), Top=Color3.fromRGB(10,10,10), Text=Color3.fromRGB(255,255,255), Accent=Color3.fromRGB(255,255,255), Stroke=Color3.fromRGB(30,30,30), SubText=Color3.fromRGB(150,150,150), Element=Color3.fromRGB(10,10,10), Hover=Color3.fromRGB(22,22,22), ShineEnabled=false, StrokeShine=false, Shine={Speed=0,RotationSpeed=0,ColorSequence=ColorSequence.new(Color3.fromRGB(0,0,0),Color3.fromRGB(0,0,0))}, StrokeDark=Color3.fromRGB(18,18,18) },
+    Dark = {
+        Main=Color3.fromRGB(13,13,13),
+        Top=Color3.fromRGB(26, 28, 36),          -- miUI 控件背景
+        Text=Color3.fromRGB(240,240,245),
+        Accent=Color3.fromRGB(80,140,255),
+        Stroke=Color3.fromRGB(45, 48, 58),      -- miUI 描边
+        SubText=Color3.fromRGB(160,160,170),
+        Element=Color3.fromRGB(45,45,50),
+        Hover=Color3.fromRGB(60,60,70),
+        ShineEnabled=true,
+        Shine={Speed=0.4,RotationSpeed=20,ColorSequence=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(40,40,40)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(105,105,105)),ColorSequenceKeypoint.new(1,Color3.fromRGB(40,40,40))})},
+        StrokeShine=true,
+        StrokeDark=Color3.fromRGB(40,40,40)
+    },
+    ["Charcoal"] = {
+        Main=Color3.fromRGB(20,20,20),
+        Top=Color3.fromRGB(32, 34, 42),          -- miUI 风格深灰蓝
+        Text=Color3.fromRGB(240,240,240),
+        Accent=Color3.fromRGB(102,102,102),
+        Stroke=Color3.fromRGB(52, 55, 65),      -- miUI 风格描边
+        SubText=Color3.fromRGB(170,170,170),
+        Element=Color3.fromRGB(35,35,35),
+        Hover=Color3.fromRGB(90,160,255),
+        ShineEnabled=true,
+        Shine={Speed=0.45,RotationSpeed=25,ColorSequence=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(20,20,20)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(150,150,150)),ColorSequenceKeypoint.new(1,Color3.fromRGB(20,20,20))})},
+        StrokeShine=true,
+        StrokeDark=Color3.fromRGB(60,60,60)
+    },
+    ["AMOLED"] = {
+        Main=Color3.fromRGB(0,0,0),
+        Top=Color3.fromRGB(8, 10, 15),           -- AMOLED 蓝极黑
+        Text=Color3.fromRGB(255,255,255),
+        Accent=Color3.fromRGB(255,255,255),
+        Stroke=Color3.fromRGB(25, 28, 35),      -- AMOLED 描边
+        SubText=Color3.fromRGB(150,150,150),
+        Element=Color3.fromRGB(10,10,10),
+        Hover=Color3.fromRGB(22,22,22),
+        ShineEnabled=false,
+        StrokeShine=false,
+        Shine={Speed=0,RotationSpeed=0,ColorSequence=ColorSequence.new(Color3.fromRGB(0,0,0),Color3.fromRGB(0,0,0))},
+        StrokeDark=Color3.fromRGB(18,18,18)
+    },
 }
 local CurrentTheme = Themes.Dark
 
@@ -318,7 +358,7 @@ function MediaManager:Image(src)
     return ""
 end
 
--- ========== 锁覆盖层（用 TextButton 拦截点击） ==========
+-- ========== 锁覆盖层 ==========
 local function createLockOverlay(parent, defaultTitle)
     local cornerRadius = UDim.new(0, 8)
     for _, child in ipairs(parent:GetChildren()) do
