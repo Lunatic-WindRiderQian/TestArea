@@ -1,8 +1,8 @@
 --[[
     FengYu-Bento (Test.lua)
-    - BottomFrame = miUI 同款玩家卡片（悬停反馈 + 点击设置面板）
+    - BottomFrame = miUI 同款玩家卡片
     - UserSettingButton = miUI 同款 BuilderIcons 字体图标
-    - UserFrame = 玩家卡片 + 右侧按钮展开双输入框
+    - UserFrame = 玩家卡片 + 右侧按钮展开双 Input（miUI Input 样式）
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
 ]]
 local TweenService = game:GetService("TweenService")
@@ -79,7 +79,7 @@ local function Tween(obj, props, time)
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- 文字渐变系统（完整搬运自 miUI）
+-- 文字渐变系统
 -- ═══════════════════════════════════════════════════════════════
 local TextGradient = {
     Enabled = true, Time = 0, Accumulator = 0,
@@ -1569,7 +1569,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     -- ═══════════════════════════════════════════════════════════
-    -- UserFrame：miUI 同款玩家信息卡片 + 右侧按钮展开双输入框
+    -- UserFrame：玩家卡片 + 按钮展开双 Input（miUI Input 样式）
     -- ═══════════════════════════════════════════════════════════
     child.UserFrame = function(_, config)
         config = safeConfig(config)
@@ -1578,14 +1578,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local expires      = config.Expires or "Never"
         local parent       = config.Parent  or contentHolder
         local buttonIcon   = config.ButtonIcon
-        local placeholders = config.Placeholders or { "输入框 1", "输入框 2" }
-        local defaults     = config.Defaults    or { "", "" }
+        local names        = config.Names        or { "输入框 1", "输入框 2" }
+        local placeholders = config.Placeholders or { "", "" }
+        local defaults     = config.Defaults     or { "", "" }
         local onChanged    = config.OnChanged
 
-        local TOP_H    = 60
-        local BOX_H    = 28
-        local GAP      = 4
-        local EXPANDED_H = GAP + BOX_H + GAP + BOX_H + GAP  -- 68
+        local TOP_H = 60
+        local ROW_H = 42
+        local GAP   = 4
+        -- 两行输入：GAP + ROW + GAP + ROW + GAP
+        local EXPANDED_H = GAP + ROW_H + GAP + ROW_H + GAP
 
         local UserFrame = Instance.new("Frame")
         UserFrame.Size = UDim2.new(1, 0, 0, TOP_H)
@@ -1594,10 +1596,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         UserFrame.ClipsDescendants = true
         UserFrame.Parent = parent
 
-        -- 顶部行（头像 + 名字 + 到期 + 按钮）
+        -- 顶部玩家信息条
         local TopBar = Instance.new("Frame")
         TopBar.Size = UDim2.new(1, 0, 0, TOP_H)
-        TopBar.Position = UDim2.new(0, 0, 0, 0)
         TopBar.BackgroundTransparency = 1
         TopBar.BorderSizePixel = 0
         TopBar.Parent = UserFrame
@@ -1606,8 +1607,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         LogoImage.Size = UDim2.fromOffset(45, 45)
         LogoImage.Position = UDim2.fromOffset(10, 7)
         LogoImage.BackgroundTransparency = 1
-        LogoImage.Image = (profile ~= "" and profile)
-            or "rbxasset://textures/ui/clb_robux_20@3x.png"
+        LogoImage.Image = (profile ~= "" and profile) or "rbxasset://textures/ui/clb_robux_20@3x.png"
         LogoImage.Parent = TopBar
         Instance.new("UICorner", LogoImage).CornerRadius = UDim.new(1, 0)
 
@@ -1640,7 +1640,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(UserStatusLabel, "TextColor3", "Text")
         TextGradient:Skip(UserStatusLabel)
 
-        -- 右侧按钮（若有 icon）
+        -- 右侧按钮
         local Btn, BtnIcon = nil, nil
         if buttonIcon and tostring(buttonIcon) ~= "" then
             Btn = Instance.new("TextButton")
@@ -1664,15 +1664,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             BtnIcon.Parent = Btn
             AddToRegistry(BtnIcon, "ImageColor3", "Text")
 
-            Btn.MouseEnter:Connect(function()
-                Tween(BtnIcon, {ImageTransparency = 0.1}, 0.15)
-            end)
-            Btn.MouseLeave:Connect(function()
-                Tween(BtnIcon, {ImageTransparency = 0.4}, 0.15)
-            end)
+            Btn.MouseEnter:Connect(function() Tween(BtnIcon, {ImageTransparency = 0.1}, 0.15) end)
+            Btn.MouseLeave:Connect(function() Tween(BtnIcon, {ImageTransparency = 0.4}, 0.15) end)
         end
 
-        -- 展开容器（隐藏时高度 0）
+        -- 展开容器
         local Expanded = Instance.new("Frame")
         Expanded.Size = UDim2.new(1, 0, 0, 0)
         Expanded.Position = UDim2.new(0, 0, 0, TOP_H)
@@ -1681,36 +1677,70 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Expanded.ClipsDescendants = true
         Expanded.Parent = UserFrame
 
-        -- 两个输入框
+        -- 两行 miUI Input 样式
         local Boxes = {}
         for i = 1, 2 do
-            local Box = Instance.new("TextBox")
-            Box.Size = UDim2.new(1, -20, 0, BOX_H)
-            Box.Position = UDim2.new(0, 10, 0, GAP + (i - 1) * (BOX_H + GAP))
-            Box.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
-            Box.BackgroundTransparency = 0
-            Box.BorderSizePixel = 0
-            Box.Text = defaults[i] or ""
-            Box.PlaceholderText = placeholders[i] or ("输入框 " .. i)
-            Box.Font = Enum.Font.GothamMedium
-            Box.TextSize = 12
-            Box.TextColor3 = CurrentTheme.Text
-            Box.TextXAlignment = Enum.TextXAlignment.Left
-            Box.ClearTextOnFocus = false
-            Box.Parent = Expanded
-            Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 6)
+            local Row = Instance.new("Frame")
+            Row.Size = UDim2.new(1, 0, 0, ROW_H)
+            Row.Position = UDim2.new(0, 0, 0, GAP + (i - 1) * (ROW_H + GAP))
+            Row.BackgroundTransparency = 1
+            Row.BorderSizePixel = 0
+            Row.Parent = Expanded
+
+            local Line = Instance.new("Frame")
+            Line.Size = UDim2.new(1, -20, 0, 1)
+            Line.Position = UDim2.new(0, 10, 1, -1)
+            Line.BackgroundColor3 = CurrentTheme.Stroke
+            Line.BackgroundTransparency = 0.65
+            Line.BorderSizePixel = 0
+            Line.Parent = Row
+            AddToRegistry(Line, "BackgroundColor3", "Stroke")
+
+            local NameLbl = Instance.new("TextLabel")
+            NameLbl.Size = UDim2.new(0.6, 0, 0, 18)
+            NameLbl.Position = UDim2.new(0, 15, 0, 12)
+            NameLbl.BackgroundTransparency = 1
+            NameLbl.Font = Enum.Font.GothamMedium
+            NameLbl.TextSize = 13
+            NameLbl.Text = names[i] or ("输入框 " .. i)
+            NameLbl.TextXAlignment = Enum.TextXAlignment.Left
+            NameLbl.TextTruncate = Enum.TextTruncate.AtEnd
+            NameLbl.Parent = Row
+            AddToRegistry(NameLbl, "TextColor3", "Text")
+
+            local BoxContainer = Instance.new("Frame")
+            BoxContainer.Size = UDim2.new(0.3, 0, 0, 28)
+            BoxContainer.Position = UDim2.new(0.7, -10, 0.5, -14)
+            BoxContainer.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+            BoxContainer.BackgroundTransparency = 0
+            BoxContainer.ClipsDescendants = true
+            BoxContainer.BorderSizePixel = 0
+            BoxContainer.Parent = Row
+            Instance.new("UICorner", BoxContainer).CornerRadius = UDim.new(0, 6)
+
             local boxStroke = Instance.new("UIStroke")
             boxStroke.Thickness = 1
             boxStroke.Transparency = 0.65
             boxStroke.Color = CurrentTheme.Stroke
-            boxStroke.Parent = Box
-            AddToRegistry(Box, "TextColor3", "Text")
+            boxStroke.Parent = BoxContainer
             table.insert(ThemeListeners, function() boxStroke.Color = CurrentTheme.Stroke end)
+
+            local Box = Instance.new("TextBox")
+            Box.Text = defaults[i] or ""
+            Box.PlaceholderText = placeholders[i] or ""
+            Box.Size = UDim2.new(1, -10, 1, 0)
+            Box.Position = UDim2.new(0, 5, 0, 0)
+            Box.Font = Enum.Font.GothamBold
+            Box.TextSize = 13
+            Box.TextXAlignment = Enum.TextXAlignment.Left
+            Box.ClearTextOnFocus = false
+            Box.BackgroundTransparency = 1
+            Box.TextColor3 = CurrentTheme.Accent
+            Box.Parent = BoxContainer
+            AddToRegistry(Box, "TextColor3", "Accent")
             TextGradient:Skip(Box)
 
-            Box.Focused:Connect(function()
-                Tween(boxStroke, {Transparency = 0.2}, 0.15)
-            end)
+            Box.Focused:Connect(function() Tween(boxStroke, {Transparency = 0.2}, 0.15) end)
             Box.FocusLost:Connect(function()
                 Tween(boxStroke, {Transparency = 0.65}, 0.15)
                 if onChanged then pcall(onChanged, i, Box.Text) end
@@ -1719,7 +1749,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Boxes[i] = Box
         end
 
-        -- 展开切换
+        -- 展开 / 收起
         local opened = false
         local function toggle()
             opened = not opened
@@ -1731,21 +1761,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
 
-        if Btn then
-            Btn.MouseButton1Click:Connect(toggle)
-        end
+        if Btn then Btn.MouseButton1Click:Connect(toggle) end
 
         local self = {}
         function self:SetUsername(n) UserLabel.Text = tostring(n or "") end
-        function self:SetProfile(p)
-            LogoImage.Image = p or "rbxasset://textures/ui/clb_robux_20@3x.png"
-        end
+        function self:SetProfile(p) LogoImage.Image = p or "rbxasset://textures/ui/clb_robux_20@3x.png" end
         function self:SetExpires(e) UserStatusLabel.Text = tostring(e or "Never") end
         function self:SetVisible(v) UserFrame.Visible = v ~= false end
         function self:GetValue(idx) return Boxes[idx] and Boxes[idx].Text or "" end
-        function self:SetValue(idx, text)
-            if Boxes[idx] then Boxes[idx].Text = tostring(text or "") end
-        end
+        function self:SetValue(idx, text) if Boxes[idx] then Boxes[idx].Text = tostring(text or "") end end
         function self:GetOpened() return opened end
         function self:SetOpened(v)
             v = v == true
@@ -3250,17 +3274,18 @@ function Fenglib:CreateWindow(Config)
 
     local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
 
-    -- ① 玩家卡片（带展开双输入框）
+    -- ① 玩家卡片（带展开双 Input）
     local userCard = settingsBuilder:UserFrame({
         Name = LocalPlayer.DisplayName,
         Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
             Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150),
         Expires = "never",
         ButtonIcon = 9405931578,
-        Placeholders = { "输入框 1", "输入框 2" },
-        Defaults = { "", "" },
+        Names        = { "输入框 1", "输入框 2" },
+        Placeholders = { "请填写", "请填写" },
+        Defaults     = { "", "" },
         OnChanged = function(idx, text)
-            print(("[UserFrame] 输入框 %d: %s"):format(idx, text))
+            print(("[UserFrame] Input #%d = %s"):format(idx, text))
         end,
         Parent = SettingsPanel,
     })
