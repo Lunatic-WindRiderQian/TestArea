@@ -1,8 +1,8 @@
 --[[
     FengYu-Bento (Test.lua)
     - BottomFrame = miUI 同款玩家卡片（悬停反馈 + 点击设置面板）
-    - UserSettingButton = miUI 同款 BuilderIcons 字体图标（chevron-large-right）
-    - 设置面板顺序：玩家信息卡片 → 主题 → 文字渐变 → 自定义光标
+    - UserSettingButton = miUI 同款 BuilderIcons 字体图标
+    - UserFrame = 玩家卡片 + 右侧按钮展开双输入框
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
 ]]
 local TweenService = game:GetService("TweenService")
@@ -82,13 +82,8 @@ end
 -- 文字渐变系统（完整搬运自 miUI）
 -- ═══════════════════════════════════════════════════════════════
 local TextGradient = {
-    Enabled = true,
-    Time = 0,
-    Accumulator = 0,
-    Labels = {},
-    Objects = {},
-    Hooks = {},
-    Skipped = {},
+    Enabled = true, Time = 0, Accumulator = 0,
+    Labels = {}, Objects = {}, Hooks = {}, Skipped = {},
 }
 
 function TextGradient:Skip(Label)
@@ -108,23 +103,18 @@ end
 function TextGradient:_Apply(Label)
     if not Label or not Label.Parent then return end
     if TextGradient:IsSkipped(Label) then return end
-
     local Gradient = Label:FindFirstChild("FengTextGrad")
-
     if not TextGradient.Enabled then
         if Gradient then Gradient:Destroy() end
         return
     end
-
     if not Gradient then
         Gradient = Instance.new("UIGradient")
         Gradient.Name = "FengTextGrad"
         Gradient.Parent = Label
     end
-
     local Accent = CurrentTheme.Accent or Color3.fromRGB(80, 140, 255)
     local SweepX = ((TextGradient.Time * 0.9) % 2) - 1
-
     Gradient.Rotation = 0
     Gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Accent:Lerp(Color3.new(1, 1, 1), 0.2)),
@@ -132,11 +122,9 @@ function TextGradient:_Apply(Label)
         ColorSequenceKeypoint.new(1, Accent:Lerp(Color3.new(1, 1, 1), 0.35)),
     })
     Gradient.Offset = Vector2.new(SweepX, 0)
-
     if not table.find(TextGradient.Objects, Gradient) then
         table.insert(TextGradient.Objects, Gradient)
     end
-
     return Gradient
 end
 
@@ -164,25 +152,19 @@ end
 
 function TextGradient:SetEnabled(Enabled)
     TextGradient.Enabled = Enabled == true
-    if not TextGradient.Enabled then
-        TextGradient.Accumulator = 0
-    end
+    if not TextGradient.Enabled then TextGradient.Accumulator = 0 end
     TextGradient:RefreshAll()
 end
 
 function TextGradient:Animate(dt)
     if not TextGradient.Enabled then return end
-
     TextGradient.Accumulator = TextGradient.Accumulator + (dt or 0)
     if TextGradient.Accumulator < (1 / 30) then return end
-
     local ResolvedDt = TextGradient.Accumulator
     TextGradient.Accumulator = 0
     TextGradient.Time = TextGradient.Time + ResolvedDt
-
     local SweepX = ((TextGradient.Time * 0.9) % 2) - 1
     local Offset = Vector2.new(SweepX, 0)
-
     for Index = #TextGradient.Objects, 1, -1 do
         local Gradient = TextGradient.Objects[Index]
         if Gradient and Gradient.Parent then
@@ -196,18 +178,14 @@ end
 
 function TextGradient:AttachHook(root)
     if not root then return end
-
     local conn = root.DescendantAdded:Connect(function(Object)
         if Object:IsA("TextLabel") or Object:IsA("TextBox") or Object:IsA("TextButton") then
             task.defer(function()
-                if Object.Parent then
-                    TextGradient:Add(Object)
-                end
+                if Object.Parent then TextGradient:Add(Object) end
             end)
         end
     end)
     table.insert(TextGradient.Hooks, conn)
-
     task.spawn(function()
         for _, Object in ipairs(root:GetDescendants()) do
             if Object:IsA("TextLabel") or Object:IsA("TextBox") or Object:IsA("TextButton") then
@@ -217,9 +195,7 @@ function TextGradient:AttachHook(root)
     end)
 end
 
-RunService.RenderStepped:Connect(function(dt)
-    TextGradient:Animate(dt)
-end)
+RunService.RenderStepped:Connect(function(dt) TextGradient:Animate(dt) end)
 
 -- ═══════════════════════════════════════════════════════════════
 -- Fenglib
@@ -1593,34 +1569,51 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     -- ═══════════════════════════════════════════════════════════
-    -- UserFrame：miUI 同款玩家信息卡片（45×45 头像 + 名字 + 到期）
+    -- UserFrame：miUI 同款玩家信息卡片 + 右侧按钮展开双输入框
     -- ═══════════════════════════════════════════════════════════
     child.UserFrame = function(_, config)
         config = safeConfig(config)
-        local name    = config.Name    or "User"
-        local profile = config.Profile or ""
-        local expires = config.Expires or "Never"
-        local parent  = config.Parent  or contentHolder
+        local name         = config.Name    or "User"
+        local profile      = config.Profile or ""
+        local expires      = config.Expires or "Never"
+        local parent       = config.Parent  or contentHolder
+        local buttonIcon   = config.ButtonIcon
+        local placeholders = config.Placeholders or { "输入框 1", "输入框 2" }
+        local defaults     = config.Defaults    or { "", "" }
+        local onChanged    = config.OnChanged
+
+        local TOP_H    = 60
+        local BOX_H    = 28
+        local GAP      = 4
+        local EXPANDED_H = GAP + BOX_H + GAP + BOX_H + GAP  -- 68
 
         local UserFrame = Instance.new("Frame")
-        UserFrame.Size = UDim2.new(1, 0, 0, 60)
-        UserFrame.BackgroundColor3 = CurrentTheme.Top
+        UserFrame.Size = UDim2.new(1, 0, 0, TOP_H)
         UserFrame.BackgroundTransparency = 1
         UserFrame.BorderSizePixel = 0
+        UserFrame.ClipsDescendants = true
         UserFrame.Parent = parent
+
+        -- 顶部行（头像 + 名字 + 到期 + 按钮）
+        local TopBar = Instance.new("Frame")
+        TopBar.Size = UDim2.new(1, 0, 0, TOP_H)
+        TopBar.Position = UDim2.new(0, 0, 0, 0)
+        TopBar.BackgroundTransparency = 1
+        TopBar.BorderSizePixel = 0
+        TopBar.Parent = UserFrame
 
         local LogoImage = Instance.new("ImageLabel")
         LogoImage.Size = UDim2.fromOffset(45, 45)
-        LogoImage.Position = UDim2.fromOffset(10, 5)
+        LogoImage.Position = UDim2.fromOffset(10, 7)
         LogoImage.BackgroundTransparency = 1
         LogoImage.Image = (profile ~= "" and profile)
             or "rbxasset://textures/ui/clb_robux_20@3x.png"
-        LogoImage.Parent = UserFrame
+        LogoImage.Parent = TopBar
         Instance.new("UICorner", LogoImage).CornerRadius = UDim.new(1, 0)
 
         local UserLabel = Instance.new("TextLabel")
-        UserLabel.Size = UDim2.new(1, -75, 0, 15)
-        UserLabel.Position = UDim2.new(0, 65, 0, 10)
+        UserLabel.Size = UDim2.new(1, -110, 0, 15)
+        UserLabel.Position = UDim2.new(0, 65, 0, 12)
         UserLabel.BackgroundTransparency = 1
         UserLabel.Font = Enum.Font.GothamMedium
         UserLabel.Text = name
@@ -1629,12 +1622,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         UserLabel.TextTransparency = 0.2
         UserLabel.TextXAlignment = Enum.TextXAlignment.Left
         UserLabel.TextTruncate = Enum.TextTruncate.AtEnd
-        UserLabel.Parent = UserFrame
+        UserLabel.Parent = TopBar
         AddToRegistry(UserLabel, "TextColor3", "Text")
 
         local UserStatusLabel = Instance.new("TextLabel")
-        UserStatusLabel.Size = UDim2.new(1, -75, 0, 15)
-        UserStatusLabel.Position = UDim2.new(0, 65, 0, 25)
+        UserStatusLabel.Size = UDim2.new(1, -110, 0, 15)
+        UserStatusLabel.Position = UDim2.new(0, 65, 0, 27)
         UserStatusLabel.BackgroundTransparency = 1
         UserStatusLabel.Font = Enum.Font.GothamMedium
         UserStatusLabel.Text = expires
@@ -1643,19 +1636,104 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         UserStatusLabel.TextTransparency = 0.2
         UserStatusLabel.TextXAlignment = Enum.TextXAlignment.Left
         UserStatusLabel.TextTruncate = Enum.TextTruncate.AtEnd
-        UserStatusLabel.Parent = UserFrame
+        UserStatusLabel.Parent = TopBar
         AddToRegistry(UserStatusLabel, "TextColor3", "Text")
         TextGradient:Skip(UserStatusLabel)
 
-        local LineFrame = Instance.new("Frame")
-        LineFrame.Size = UDim2.new(1, -20, 0, 1)
-        LineFrame.AnchorPoint = Vector2.new(0.5, 1)
-        LineFrame.Position = UDim2.new(0.5, 0, 1, 0)
-        LineFrame.BackgroundColor3 = CurrentTheme.Stroke
-        LineFrame.BackgroundTransparency = 0.65
-        LineFrame.BorderSizePixel = 0
-        LineFrame.Parent = UserFrame
-        AddToRegistry(LineFrame, "BackgroundColor3", "Stroke")
+        -- 右侧按钮（若有 icon）
+        local Btn, BtnIcon = nil, nil
+        if buttonIcon and tostring(buttonIcon) ~= "" then
+            Btn = Instance.new("TextButton")
+            Btn.Size = UDim2.new(0, 26, 0, 26)
+            Btn.Position = UDim2.new(1, -10, 0, 17)
+            Btn.AnchorPoint = Vector2.new(1, 0)
+            Btn.BackgroundTransparency = 1
+            Btn.Text = ""
+            Btn.AutoButtonColor = false
+            Btn.Parent = TopBar
+
+            BtnIcon = Instance.new("ImageLabel")
+            BtnIcon.Size = UDim2.new(1, -2, 1, -2)
+            BtnIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+            BtnIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+            BtnIcon.BackgroundTransparency = 1
+            BtnIcon.Image = "rbxassetid://" .. tostring(buttonIcon)
+            BtnIcon.ImageColor3 = CurrentTheme.Text
+            BtnIcon.ImageTransparency = 0.4
+            BtnIcon.ScaleType = Enum.ScaleType.Fit
+            BtnIcon.Parent = Btn
+            AddToRegistry(BtnIcon, "ImageColor3", "Text")
+
+            Btn.MouseEnter:Connect(function()
+                Tween(BtnIcon, {ImageTransparency = 0.1}, 0.15)
+            end)
+            Btn.MouseLeave:Connect(function()
+                Tween(BtnIcon, {ImageTransparency = 0.4}, 0.15)
+            end)
+        end
+
+        -- 展开容器（隐藏时高度 0）
+        local Expanded = Instance.new("Frame")
+        Expanded.Size = UDim2.new(1, 0, 0, 0)
+        Expanded.Position = UDim2.new(0, 0, 0, TOP_H)
+        Expanded.BackgroundTransparency = 1
+        Expanded.BorderSizePixel = 0
+        Expanded.ClipsDescendants = true
+        Expanded.Parent = UserFrame
+
+        -- 两个输入框
+        local Boxes = {}
+        for i = 1, 2 do
+            local Box = Instance.new("TextBox")
+            Box.Size = UDim2.new(1, -20, 0, BOX_H)
+            Box.Position = UDim2.new(0, 10, 0, GAP + (i - 1) * (BOX_H + GAP))
+            Box.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+            Box.BackgroundTransparency = 0
+            Box.BorderSizePixel = 0
+            Box.Text = defaults[i] or ""
+            Box.PlaceholderText = placeholders[i] or ("输入框 " .. i)
+            Box.Font = Enum.Font.GothamMedium
+            Box.TextSize = 12
+            Box.TextColor3 = CurrentTheme.Text
+            Box.TextXAlignment = Enum.TextXAlignment.Left
+            Box.ClearTextOnFocus = false
+            Box.Parent = Expanded
+            Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 6)
+            local boxStroke = Instance.new("UIStroke")
+            boxStroke.Thickness = 1
+            boxStroke.Transparency = 0.65
+            boxStroke.Color = CurrentTheme.Stroke
+            boxStroke.Parent = Box
+            AddToRegistry(Box, "TextColor3", "Text")
+            table.insert(ThemeListeners, function() boxStroke.Color = CurrentTheme.Stroke end)
+            TextGradient:Skip(Box)
+
+            Box.Focused:Connect(function()
+                Tween(boxStroke, {Transparency = 0.2}, 0.15)
+            end)
+            Box.FocusLost:Connect(function()
+                Tween(boxStroke, {Transparency = 0.65}, 0.15)
+                if onChanged then pcall(onChanged, i, Box.Text) end
+            end)
+
+            Boxes[i] = Box
+        end
+
+        -- 展开切换
+        local opened = false
+        local function toggle()
+            opened = not opened
+            local targetH = opened and EXPANDED_H or 0
+            Tween(Expanded, {Size = UDim2.new(1, 0, 0, targetH)}, 0.28)
+            Tween(UserFrame, {Size = UDim2.new(1, 0, 0, TOP_H + targetH)}, 0.28)
+            if BtnIcon then
+                Tween(BtnIcon, {Rotation = opened and 180 or 0}, 0.28)
+            end
+        end
+
+        if Btn then
+            Btn.MouseButton1Click:Connect(toggle)
+        end
 
         local self = {}
         function self:SetUsername(n) UserLabel.Text = tostring(n or "") end
@@ -1664,6 +1742,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         function self:SetExpires(e) UserStatusLabel.Text = tostring(e or "Never") end
         function self:SetVisible(v) UserFrame.Visible = v ~= false end
+        function self:GetValue(idx) return Boxes[idx] and Boxes[idx].Text or "" end
+        function self:SetValue(idx, text)
+            if Boxes[idx] then Boxes[idx].Text = tostring(text or "") end
+        end
+        function self:GetOpened() return opened end
+        function self:SetOpened(v)
+            v = v == true
+            if v ~= opened then toggle() end
+        end
         return self
     end
 
@@ -3052,9 +3139,7 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- ═══════════════════════════════════════════════════════════════
     -- 左下角玩家卡片
-    -- ═══════════════════════════════════════════════════════════════
     local BottomFrame = Instance.new("Frame")
     BottomFrame.Size = UDim2.new(1, 0, 0, 50)
     BottomFrame.Position = UDim2.new(0, 0, 1, 0)
@@ -3103,7 +3188,6 @@ function Fenglib:CreateWindow(Config)
     AddToRegistry(ExpireLabel, "TextColor3", "SubText")
     TextGradient:Skip(ExpireLabel)
 
-    -- ★ miUI 同款字体图标按钮（BuilderIcons / chevron-large-right）
     local UserSettingButton = Instance.new("TextLabel")
     UserSettingButton.Size = UDim2.new(0, 25, 0, 25)
     UserSettingButton.Position = UDim2.new(1, -7, 0.5, 0)
@@ -3129,9 +3213,7 @@ function Fenglib:CreateWindow(Config)
     BottomClick.Text = ""; BottomClick.AutoButtonColor = false
     BottomClick.Parent = BottomFrame
 
-    -- ═══════════════════════════════════════════════════════════════
-    -- 设置面板：UserFrame(第一个) → 主题 → 文字渐变 → 自定义光标
-    -- ═══════════════════════════════════════════════════════════════
+    -- 设置面板
     local SettingsPanel = Instance.new("Frame")
     SettingsPanel.Size = UDim2.new(0, 220, 0, 220)
     SettingsPanel.AnchorPoint = Vector2.new(0, 1)
@@ -3168,25 +3250,29 @@ function Fenglib:CreateWindow(Config)
 
     local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
 
-    -- ① 玩家信息卡片（放最上面）
+    -- ① 玩家卡片（带展开双输入框）
     local userCard = settingsBuilder:UserFrame({
         Name = LocalPlayer.DisplayName,
         Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
             Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150),
         Expires = "never",
+        ButtonIcon = 9405931578,
+        Placeholders = { "输入框 1", "输入框 2" },
+        Defaults = { "", "" },
+        OnChanged = function(idx, text)
+            print(("[UserFrame] 输入框 %d: %s"):format(idx, text))
+        end,
         Parent = SettingsPanel,
     })
     Window._userCard = userCard
 
-    -- ② 主题切换
+    -- ② 主题
     settingsBuilder:Dropdown({
         Name = "主题",
         Values = { "Dark", "Charcoal", "AMOLED" },
         Value = "Dark",
         Parent = SettingsPanel,
-        Callback = function(v)
-            Fenglib:SetTheme(v)
-        end,
+        Callback = function(v) Fenglib:SetTheme(v) end,
     })
 
     -- ③ 文字渐变
@@ -3194,9 +3280,7 @@ function Fenglib:CreateWindow(Config)
         Name = "文字渐变",
         Value = true,
         Parent = SettingsPanel,
-        Callback = function(enabled)
-            TextGradient:SetEnabled(enabled)
-        end,
+        Callback = function(enabled) TextGradient:SetEnabled(enabled) end,
     })
 
     -- ④ 自定义光标
@@ -3204,9 +3288,7 @@ function Fenglib:CreateWindow(Config)
         Name = "自定义光标",
         Value = false,
         Parent = SettingsPanel,
-        Callback = function(enabled)
-            Fenglib:SetCustomCursor(enabled)
-        end,
+        Callback = function(enabled) Fenglib:SetCustomCursor(enabled) end,
     })
 
     SettingsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -3242,7 +3324,6 @@ function Fenglib:CreateWindow(Config)
         local h = SettingsList.AbsoluteContentSize.Y + 12
         Tween(SettingsPanel, {BackgroundTransparency = 0.035, Size = UDim2.new(0, 220, 0, h)}, 0.2)
         Tween(SettingsStroke, {Transparency = 0.65}, 0.2)
-
         if outsideConn then outsideConn:Disconnect() end
         outsideConn = UserInputService.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -3845,7 +3926,7 @@ function Fenglib:CreateWindow(Config)
     return Window
 end
 
--- ========== 自定义光标 ==========
+-- 自定义光标
 do
     local cursorScreen = Instance.new("ScreenGui")
     cursorScreen.Name = "FengCustomCursor"
