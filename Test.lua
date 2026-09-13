@@ -1,6 +1,6 @@
 --[[
     FengYu-Bento (Test.lua)
-    - 控件行高 30（miUI 同款紧凑）
+    - 悬浮高亮区域 = 内容高度（24px），不再占满整行
     - 设置面板：主题 / 文字渐变 / 自定义光标 / 玩家信息卡片
     - 文字渐变：扫光动画 + 自动 hook
 ]]
@@ -231,7 +231,7 @@ function Fenglib:LoadConfig(path)
     return true
 end
 
--- MediaManager (unchanged)
+-- MediaManager
 local MediaManager = {Folder = "FengMediaCache"}
 function MediaManager:SetFolder(f) self.Folder = f end
 function MediaManager:_init(sub)
@@ -424,13 +424,38 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
     local child = {}
 
-    -- ★ 行高 30（原本 42）
+    -- ★ miRow：行高 30，但新增 24px 高的 Hover 高亮层（贴合内容）
     local function miRow(parentFrame, height)
         height = height or 30
         local row = Instance.new("Frame")
         row.Size = UDim2.new(1, 0, 0, height)
         row.BackgroundTransparency = 1; row.BorderSizePixel = 0
         row.ClipsDescendants = false; row.Parent = parentFrame
+
+        -- ★ Hover 高亮层：只覆盖中间 24px，圆角 6
+        local hover = Instance.new("Frame")
+        hover.Name = "Hover"
+        hover.Size = UDim2.new(1, 0, 0, 24)
+        hover.Position = UDim2.new(0, 0, 0.5, -12)
+        hover.BackgroundColor3 = CurrentTheme.Element or CurrentTheme.Top
+        hover.BackgroundTransparency = 1
+        hover.BorderSizePixel = 0
+        hover.ZIndex = 0
+        hover.Parent = row
+        Instance.new("UICorner", hover).CornerRadius = UDim.new(0, 6)
+        AddToRegistry(hover, "BackgroundColor3", "Element")
+
+        -- 直接给 row 挂 hover 引用，供控件内部访问
+        row.Hover = hover
+
+        -- 自动 hover 动画（避免每个控件都写一遍）
+        row.MouseEnter:Connect(function()
+            Tween(hover, {BackgroundTransparency = 0.55}, 0.15)
+        end)
+        row.MouseLeave:Connect(function()
+            Tween(hover, {BackgroundTransparency = 1}, 0.15)
+        end)
+
         local line = Instance.new("Frame")
         line.Size = UDim2.new(1, -20, 0, 1)
         line.Position = UDim2.new(0, 10, 1, -1)
@@ -456,6 +481,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             elseif asset:match("^rbxassetid://") or asset:match("^http") or asset:match("^rbxasset://") then icon.Image = asset
             else icon.Image = "rbxassetid://"..asset end
         end
+        icon.ZIndex = 1
         icon.Parent = parentFrame
         AddToRegistry(icon, "ImageColor3", "Text")
         return icon
@@ -471,6 +497,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         lbl.TextSize = size or 13
         lbl.TextXAlignment = Enum.TextXAlignment.Left
         lbl.TextTruncate = Enum.TextTruncate.AtEnd
+        lbl.ZIndex = 1
         lbl.Parent = parentFrame
         AddToRegistry(lbl, "TextColor3", "Text")
         return lbl
@@ -500,13 +527,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local ClickBtn = Instance.new("TextButton")
         ClickBtn.Size = UDim2.new(1, 0, 1, 0)
         ClickBtn.BackgroundTransparency = 1; ClickBtn.Text = ""
-        ClickBtn.AutoButtonColor = false; ClickBtn.Parent = Tile
+        ClickBtn.AutoButtonColor = false; ClickBtn.ZIndex = 2
+        ClickBtn.Parent = Tile
         ClickBtn.Active = not locked
         local function updateLock(state) locked = state; lockFrame.Visible = state; ClickBtn.Active = not state end
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15); Tween(Icon, {ImageTransparency = 0}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15); Tween(Icon, {ImageTransparency = 0.25}, 0.15) end end)
-        ClickBtn.MouseButton1Down:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.45}, 0.08) end end)
-        ClickBtn.MouseButton1Up:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.08) end end)
+        ClickBtn.MouseButton1Down:Connect(function() if not locked then Tween(Tile.Hover, {BackgroundTransparency = 0.35}, 0.08) end end)
+        ClickBtn.MouseButton1Up:Connect(function() if not locked then Tween(Tile.Hover, {BackgroundTransparency = 0.55}, 0.08) end end)
         ClickBtn.MouseButton1Click:Connect(function() if not locked then callback() end end)
         local self = {}
         function self.UpdateText(t) TitleLbl.Text = t end
@@ -532,7 +558,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Switch.Size = UDim2.new(0, 28, 0, 16)
         Switch.Position = UDim2.new(1, -38, 0.5, -8)
         Switch.BackgroundColor3 = Enabled and CurrentTheme.Accent or Color3.fromRGB(10, 13, 21)
-        Switch.BorderSizePixel = 0; Switch.Parent = Tile
+        Switch.BorderSizePixel = 0; Switch.ZIndex = 1; Switch.Parent = Tile
         Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
         local SwStroke = Instance.new("UIStroke")
         SwStroke.Thickness = 1
@@ -543,7 +569,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Dot.Size = UDim2.new(0, 14, 0, 14)
         Dot.Position = Enabled and UDim2.new(1, -15, 0.5, -7) or UDim2.new(0, 1, 0.5, -7)
         Dot.BackgroundColor3 = Color3.new(1, 1, 1); Dot.BorderSizePixel = 0
-        Dot.Parent = Switch
+        Dot.ZIndex = 2; Dot.Parent = Switch
         Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "Locked"
@@ -552,7 +578,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local ClickBtn = Instance.new("TextButton")
         ClickBtn.Size = UDim2.new(1, 0, 1, 0)
         ClickBtn.BackgroundTransparency = 1; ClickBtn.Text = ""
-        ClickBtn.AutoButtonColor = false; ClickBtn.Parent = Tile
+        ClickBtn.AutoButtonColor = false; ClickBtn.ZIndex = 3
+        ClickBtn.Parent = Tile
         ClickBtn.Active = not locked
         local function updateLock(state) locked = state; lockFrame.Visible = state; ClickBtn.Active = not state end
         local function ApplyUI(v)
@@ -568,8 +595,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
         ConfigObjects[controlId] = { Type = "Toggle", Value = Enabled, Set = function(v) if not locked then ApplyUI(v); callback(v) end end }
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function() if locked then return end; ApplyUI(not Enabled); ConfigObjects[controlId].Value = Enabled; callback(Enabled) end)
         local self = {}
         function self.GetValue() return Enabled end
@@ -606,7 +631,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ValueFrame.Position = UDim2.new(1, -(numW + 10), 0.5, -rowH/2)
         ValueFrame.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
         ValueFrame.BackgroundTransparency = 0; ValueFrame.BorderSizePixel = 0
-        ValueFrame.ClipsDescendants = true; ValueFrame.Parent = Tile
+        ValueFrame.ClipsDescendants = true; ValueFrame.ZIndex = 1; ValueFrame.Parent = Tile
         Instance.new("UICorner", ValueFrame).CornerRadius = UDim.new(0, 4)
         local ValueStroke = Instance.new("UIStroke")
         ValueStroke.Thickness = 1; ValueStroke.Transparency = 0.65
@@ -622,6 +647,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ValueLabel.TextXAlignment = Enum.TextXAlignment.Center
         ValueLabel.TextYAlignment = Enum.TextYAlignment.Center
         ValueLabel.ClearTextOnFocus = false
+        ValueLabel.ZIndex = 2
         ValueLabel.Parent = ValueFrame
         AddToRegistry(ValueLabel, "TextColor3", "Text")
         TextGradient:Skip(ValueLabel)
@@ -634,7 +660,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Track.Size = UDim2.new(1, -(trackLeft + trackRight), 0, 5)
             Track.Position = UDim2.new(0, trackLeft, 0.5, -2.5)
             Track.BackgroundColor3 = CurrentTheme.Stroke
-            Track.BorderSizePixel = 0; Track.Parent = Tile
+            Track.BorderSizePixel = 0; Track.ZIndex = 1; Track.Parent = Tile
             Instance.new("UICorner", Track).CornerRadius = UDim.new(1, 0)
             AddToRegistry(Track, "BackgroundColor3", "Stroke")
             local initP = (min and max and max ~= min) and ((Val - min) / (max - min)) or 0
@@ -769,12 +795,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Icon.Image = "rbxassetid://18865373378"
         Icon.Size = UDim2.new(0, 18, 0, 18)
         Icon.Position = UDim2.new(1, -28, 0.5, -9)
-        Icon.BackgroundTransparency = 1; Icon.Parent = Btn
+        Icon.BackgroundTransparency = 1; Icon.ZIndex = 1; Icon.Parent = Btn
         AddToRegistry(Icon, "ImageColor3", "Accent")
         local ClickBtn = Instance.new("TextButton")
         ClickBtn.Size = UDim2.new(1, 0, 1, 0)
         ClickBtn.BackgroundTransparency = 1; ClickBtn.Text = ""
-        ClickBtn.AutoButtonColor = false; ClickBtn.Parent = Btn
+        ClickBtn.AutoButtonColor = false; ClickBtn.ZIndex = 2
+        ClickBtn.Parent = Btn
         local Container = Instance.new("Frame")
         Container.Size = UDim2.new(1, 0, 0, 0)
         Container.Visible = false; Container.ClipsDescendants = true
@@ -880,8 +907,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             locked = state; lockFrame.Visible = state; ClickBtn.Active = not state
             if state then Dropped = false; Container.Visible = false; Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.1) end
         end
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Btn, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Btn, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function()
             if locked then return end
             Dropped = not Dropped
@@ -975,7 +1000,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         KeyBtn.AnchorPoint = Vector2.new(1, 0.5)
         KeyBtn.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
         KeyBtn.BackgroundTransparency = 0; KeyBtn.Text = ""
-        KeyBtn.AutoButtonColor = false; KeyBtn.Parent = Tile
+        KeyBtn.AutoButtonColor = false; KeyBtn.ZIndex = 2; KeyBtn.Parent = Tile
         KeyBtn.AutomaticSize = Enum.AutomaticSize.X
         Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0, 5)
         local keyStroke = Instance.new("UIStroke")
@@ -1107,7 +1132,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         BoxContainer.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
         BoxContainer.BackgroundTransparency = 0
         BoxContainer.ClipsDescendants = true; BoxContainer.BorderSizePixel = 0
-        BoxContainer.Parent = Tile
+        BoxContainer.ZIndex = 1; BoxContainer.Parent = Tile
         Instance.new("UICorner", BoxContainer).CornerRadius = UDim.new(0, 5)
         local boxStroke = Instance.new("UIStroke")
         boxStroke.Thickness = 1; boxStroke.Transparency = 0.65
@@ -1123,6 +1148,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         InputBox.TextXAlignment = Enum.TextXAlignment.Left
         InputBox.ClearTextOnFocus = false
         InputBox.BackgroundTransparency = 1
+        InputBox.ZIndex = 2
         InputBox.Parent = BoxContainer
         AddToRegistry(InputBox, "TextColor3", "Accent")
         TextGradient:Skip(InputBox)
@@ -1434,7 +1460,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         box.AnchorPoint = Vector2.new(1, 0.5)
         box.Position = UDim2.new(1, -12, 0.5, 0)
         box.BackgroundColor3 = default and CurrentTheme.Accent or Color3.fromRGB(26, 28, 36)
-        box.BorderSizePixel = 0; box.Parent = Tile
+        box.BorderSizePixel = 0; box.ZIndex = 1; box.Parent = Tile
         Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
         local boxStroke = Instance.new("UIStroke")
         boxStroke.Thickness = 1.4
@@ -1458,7 +1484,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local ClickBtn = Instance.new("TextButton")
         ClickBtn.Size = UDim2.new(1, 0, 1, 0)
         ClickBtn.BackgroundTransparency = 1; ClickBtn.Text = ""
-        ClickBtn.AutoButtonColor = false; ClickBtn.Parent = Tile
+        ClickBtn.AutoButtonColor = false; ClickBtn.ZIndex = 2
+        ClickBtn.Parent = Tile
         ClickBtn.Active = not locked
         local function updateLock(st) locked = st; lockFrame.Visible = st; ClickBtn.Active = not st end
         local function updateColors()
@@ -1489,8 +1516,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function h:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
         function h:Unlock() updateLock(false) end
         function h:IsLocked() return locked end
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function() if not locked then h:SetValue(not h.Value) end end)
         h:SetValue(default)
         ConfigObjects[controlId] = { Type = "Checkbox", Value = h.Value, Set = function(val) h:SetValue(val) end }
@@ -2826,8 +2851,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     return functions
 end
 
--- ═══════════════════════════════════════════════════════════════
--- CreateWindow
 -- ═══════════════════════════════════════════════════════════════
 function Fenglib:CreateWindow(Config)
     local Window = {}
