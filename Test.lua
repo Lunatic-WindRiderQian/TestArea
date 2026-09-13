@@ -1,6 +1,8 @@
 --[[
     FengYu-Bento (Test.lua)
+    - BottomFrame = miUI 同款玩家卡片（悬停反馈 + 点击设置面板）
     - 设置面板：主题 / 文字渐变 / 自定义光标
+    - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook 所有 TextLabel/TextBox/TextButton
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -75,14 +77,165 @@ local function Tween(obj, props, time)
     TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
 
+-- ═══════════════════════════════════════════════════════════════
+-- 文字渐变系统（完整搬运自 miUI）
+-- ═══════════════════════════════════════════════════════════════
+local TextGradient = {
+    Enabled = true,
+    Time = 0,
+    Accumulator = 0,
+    Labels = {},
+    Objects = {},
+    Hooks = {},
+    Skipped = {},   -- 主动跳过的 Label（黑名单）
+}
+
+function TextGradient:Skip(Label)
+    if not Label then return end
+    table.insert(TextGradient.Skipped, Label)
+    local g = Label:FindFirstChild("FengTextGrad")
+    if g then g:Destroy() end
+    for i = #TextGradient.Labels, 1, -1 do
+        if TextGradient.Labels[i] == Label then table.remove(TextGradient.Labels, i) end
+    end
+end
+
+function TextGradient:IsSkipped(Label)
+    return table.find(TextGradient.Skipped, Label) ~= nil
+end
+
+function TextGradient:_Apply(Label)
+    if not Label or not Label.Parent then return end
+    if TextGradient:IsSkipped(Label) then return end
+
+    local Gradient = Label:FindFirstChild("FengTextGrad")
+
+    if not TextGradient.Enabled then
+        if Gradient then Gradient:Destroy() end
+        return
+    end
+
+    if not Gradient then
+        Gradient = Instance.new("UIGradient")
+        Gradient.Name = "FengTextGrad"
+        Gradient.Parent = Label
+    end
+
+    local Accent = CurrentTheme.Accent or Color3.fromRGB(80, 140, 255)
+    local SweepX = ((TextGradient.Time * 0.9) % 2) - 1
+
+    Gradient.Rotation = 0
+    Gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Accent:Lerp(Color3.new(1, 1, 1), 0.2)),
+        ColorSequenceKeypoint.new(0.55, Color3.new(1, 1, 1)),
+        ColorSequenceKeypoint.new(1, Accent:Lerp(Color3.new(1, 1, 1), 0.35)),
+    })
+    Gradient.Offset = Vector2.new(SweepX, 0)
+
+    if not table.find(TextGradient.Objects, Gradient) then
+        table.insert(TextGradient.Objects, Gradient)
+    end
+
+    return Gradient
+end
+
+function TextGradient:Add(Label)
+    if not Label then return Label end
+    if TextGradient:IsSkipped(Label) then return Label end
+    if not table.find(TextGradient.Labels, Label) then
+        table.insert(TextGradient.Labels, Label)
+    end
+    TextGradient:_Apply(Label)
+    return Label
+end
+
+function TextGradient:RefreshAll()
+    table.clear(TextGradient.Objects)
+    for Index = #TextGradient.Labels, 1, -1 do
+        local Label = TextGradient.Labels[Index]
+        if Label and Label.Parent then
+            TextGradient:_Apply(Label)
+        else
+            table.remove(TextGradient.Labels, Index)
+        end
+    end
+end
+
+function TextGradient:SetEnabled(Enabled)
+    TextGradient.Enabled = Enabled == true
+    if not TextGradient.Enabled then
+        TextGradient.Accumulator = 0
+    end
+    TextGradient:RefreshAll()
+end
+
+function TextGradient:Animate(dt)
+    if not TextGradient.Enabled then return end
+
+    TextGradient.Accumulator = TextGradient.Accumulator + (dt or 0)
+    if TextGradient.Accumulator < (1 / 30) then return end
+
+    local ResolvedDt = TextGradient.Accumulator
+    TextGradient.Accumulator = 0
+    TextGradient.Time = TextGradient.Time + ResolvedDt
+
+    local SweepX = ((TextGradient.Time * 0.9) % 2) - 1
+    local Offset = Vector2.new(SweepX, 0)
+
+    for Index = #TextGradient.Objects, 1, -1 do
+        local Gradient = TextGradient.Objects[Index]
+        if Gradient and Gradient.Parent then
+            Gradient.Rotation = 0
+            Gradient.Offset = Offset
+        else
+            table.remove(TextGradient.Objects, Index)
+        end
+    end
+end
+
+function TextGradient:AttachHook(root)
+    if not root then return end
+
+    local conn = root.DescendantAdded:Connect(function(Object)
+        if Object:IsA("TextLabel") or Object:IsA("TextBox") or Object:IsA("TextButton") then
+            task.defer(function()
+                if Object.Parent then
+                    TextGradient:Add(Object)
+                end
+            end)
+        end
+    end)
+    table.insert(TextGradient.Hooks, conn)
+
+    task.spawn(function()
+        for _, Object in ipairs(root:GetDescendants()) do
+            if Object:IsA("TextLabel") or Object:IsA("TextBox") or Object:IsA("TextButton") then
+                TextGradient:Add(Object)
+            end
+        end
+    end)
+end
+
+RunService.RenderStepped:Connect(function(dt)
+    TextGradient:Animate(dt)
+end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- Fenglib
+-- ═══════════════════════════════════════════════════════════════
 local Fenglib = {}
+Fenglib.TextGradient = TextGradient
+
 function Fenglib:SetTheme(name)
     if Themes[name] then
         CurrentTheme = Themes[name]
         for _, r in pairs(Registry) do if r.Object then Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]}) end end
         for _, fn in pairs(ThemeListeners) do pcall(fn) end
+        -- 刷新文字渐变颜色
+        TextGradient:RefreshAll()
     end
 end
+
 function Fenglib:SaveConfig(name, folder)
     local ok, err = pcall(function()
         if not isfolder(folder) then makefolder(folder) end
@@ -93,6 +246,7 @@ function Fenglib:SaveConfig(name, folder)
     if not ok then warn("SaveConfig error:", err) end
     return ok
 end
+
 function Fenglib:LoadConfig(path)
     if not pcall(isfile, path) then return false end
     if not isfile(path) then return false end
@@ -282,6 +436,8 @@ local function createLockOverlay(parent, defaultTitle)
     lockLabel.TextTransparency = 0.2; lockLabel.TextSize = 14
     lockLabel.AutomaticSize = Enum.AutomaticSize.X
     lockLabel.Parent = container
+    -- 锁文字不加渐变
+    TextGradient:Skip(lockLabel)
     return lockFrame, lockLabel
 end
 
@@ -491,6 +647,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ValueLabel.ClearTextOnFocus = false
         ValueLabel.Parent = ValueFrame
         AddToRegistry(ValueLabel, "TextColor3", "Text")
+        -- 数值框不加渐变（数值变化频繁，加了会花）
+        TextGradient:Skip(ValueLabel)
         ValueLabel.Focused:Connect(function() Tween(ValueStroke, {Transparency = 0.2}, 0.15) end)
         local trackLeft = 15 + 90 + 12
         local trackRight = numW + 10 + 10
@@ -872,6 +1030,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         KeyLabel.AutomaticSize = Enum.AutomaticSize.X
         KeyLabel.LayoutOrder = 2; KeyLabel.Parent = KeyBtn
         AddToRegistry(KeyLabel, "TextColor3", "Text")
+        TextGradient:Skip(KeyLabel)
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "Locked"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
@@ -987,6 +1146,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         InputBox.BackgroundTransparency = 1
         InputBox.Parent = BoxContainer
         AddToRegistry(InputBox, "TextColor3", "Accent")
+        TextGradient:Skip(InputBox)
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "Locked"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
@@ -1073,6 +1233,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Box.BackgroundTransparency = 0; Box.BorderSizePixel = 0
         Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 6)
         AddToRegistry(Box, "TextColor3", "Text")
+        TextGradient:Skip(Box)
         local BoxStroke = Instance.new("UIStroke")
         BoxStroke.Thickness = 1; BoxStroke.Transparency = 0.65
         BoxStroke.Color = CurrentTheme.Stroke; BoxStroke.Parent = Box
@@ -1390,6 +1551,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             pctLbl.TextXAlignment = Enum.TextXAlignment.Right
             pctLbl.TextTransparency = 0.5; pctLbl.Parent = wrap
             AddToRegistry(pctLbl, "TextColor3", "Text")
+            TextGradient:Skip(pctLbl)
         end
         local rail = Instance.new("Frame")
         rail.Size = UDim2.new(1, -30, 0, 8)
@@ -1557,6 +1719,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         timeCur.Font = Enum.Font.GothamMedium
         timeCur.TextColor3 = Color3.fromRGB(220,220,220)
         timeCur.ZIndex = 7; timeCur.Parent = seekRow
+        TextGradient:Skip(timeCur)
         local seekContainer = Instance.new("Frame")
         seekContainer.Size = UDim2.new(1,-84,0,16)
         seekContainer.Position = UDim2.fromOffset(40,0)
@@ -1592,6 +1755,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         timeDur.Font = Enum.Font.GothamMedium
         timeDur.TextColor3 = Color3.fromRGB(160,160,170)
         timeDur.ZIndex = 7; timeDur.Parent = seekRow
+        TextGradient:Skip(timeDur)
         local ctrlRow = Instance.new("Frame")
         ctrlRow.Size = UDim2.new(1,-12,0,26)
         ctrlRow.Position = UDim2.new(0,6,0,24)
@@ -1631,6 +1795,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         volLbl.Font = Enum.Font.Gotham
         volLbl.ZIndex = 7; volLbl.Parent = ctrlRow
         AddToRegistry(volLbl, "TextColor3", "SubText")
+        TextGradient:Skip(volLbl)
         local btnLayout = Instance.new("UIListLayout")
         btnLayout.FillDirection = Enum.FillDirection.Horizontal
         btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
@@ -1905,6 +2070,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         curLbl.TextXAlignment = Enum.TextXAlignment.Left
         curLbl.Parent = seekRow
         AddToRegistry(curLbl, "TextColor3", "SubText")
+        TextGradient:Skip(curLbl)
         local durLbl = Instance.new("TextLabel")
         durLbl.Size = UDim2.fromOffset(34, 20)
         durLbl.Position = UDim2.new(1, 0, 0.5, 0)
@@ -1915,6 +2081,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         durLbl.TextXAlignment = Enum.TextXAlignment.Right
         durLbl.Parent = seekRow
         AddToRegistry(durLbl, "TextColor3", "SubText")
+        TextGradient:Skip(durLbl)
         local rail = Instance.new("Frame")
         rail.Size = UDim2.new(1, -76, 0, 4)
         rail.Position = UDim2.new(0, 38, 0.5, 0)
@@ -2034,6 +2201,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subNameLbl.Position = UDim2.new(0, 62, 0, 27)
             subNameLbl.Parent = wrap
             AddToRegistry(subNameLbl, "TextColor3", "SubText")
+            TextGradient:Skip(subNameLbl)
         end
         if platform ~= "" then
             local platformLbl = Instance.new("TextLabel")
@@ -2047,6 +2215,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             platformLbl.Position = UDim2.new(0, 62, 0, subName ~= "" and 42 or 27)
             platformLbl.Parent = wrap
             AddToRegistry(platformLbl, "TextColor3", "SubText")
+            TextGradient:Skip(platformLbl)
         end
         if copyText ~= "" then
             local copyBtn = Instance.new("TextButton")
@@ -2125,6 +2294,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentLabel.AutomaticSize = Enum.AutomaticSize.Y
         contentLabel.RichText = true; contentLabel.Parent = labelHolder
         AddToRegistry(contentLabel, "TextColor3", "SubText")
+        TextGradient:Skip(contentLabel)
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "Locked"
         local lockFrame, lockLabel = createLockOverlay(frame, lockedTitle)
@@ -2462,6 +2632,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             subtitleLabel.TextTruncate = Enum.TextTruncate.AtEnd
             subtitleLabel.Parent = contentContainer
             AddToRegistry(subtitleLabel, "TextColor3", "SubText")
+            TextGradient:Skip(subtitleLabel)
         end
         local collapseArrow = nil
         if collapsible then
@@ -2634,6 +2805,9 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
+    -- ★ 挂载文字渐变 hook
+    TextGradient:AttachHook(ScreenGui)
+
     local NotificationHolder = Instance.new("Frame")
     NotificationHolder.Name = "NotificationHolder"
     NotificationHolder.Size = UDim2.new(0, 300, 0, 0)
@@ -2778,6 +2952,7 @@ function Fenglib:CreateWindow(Config)
     WindowContent.TextXAlignment = Enum.TextXAlignment.Left
     WindowContent.Parent = HeadFrame
     AddToRegistry(WindowContent, "TextColor3", "SubText")
+    TextGradient:Skip(WindowContent)
 
     local LineFrame = Instance.new("Frame")
     LineFrame.Size = UDim2.new(1, -10, 0, 1)
@@ -2854,6 +3029,7 @@ function Fenglib:CreateWindow(Config)
     ExpireLabel.TextXAlignment = Enum.TextXAlignment.Left
     ExpireLabel.Parent = BottomFrame
     AddToRegistry(ExpireLabel, "TextColor3", "SubText")
+    TextGradient:Skip(ExpireLabel)
 
     local UserSettingButton = Instance.new("ImageLabel")
     UserSettingButton.Size = UDim2.new(0, 25, 0, 25)
@@ -2921,34 +3097,14 @@ function Fenglib:CreateWindow(Config)
         end,
     })
 
-    -- ② 文字渐变开关（Toggle）
-    local function applyTextGradient(enabled)
-        for _, obj in ipairs(MainFrame:GetDescendants()) do
-            if obj:IsA("TextLabel") or obj:IsA("TextBox") then
-                local existing = obj:FindFirstChild("FengTextGrad")
-                if enabled then
-                    if not existing then
-                        local g = Instance.new("UIGradient")
-                        g.Name = "FengTextGrad"
-                        g.Color = ColorSequence.new({
-                            ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
-                            ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
-                            ColorSequenceKeypoint.new(1, CurrentTheme.Accent),
-                        })
-                        g.Parent = obj
-                    end
-                else
-                    if existing then existing:Destroy() end
-                end
-            end
-        end
-    end
-
+    -- ② 文字渐变开关（Toggle） —— 走 miUI 动画版
     settingsBuilder:Toggle({
         Name = "文字渐变",
         Value = true,
         Parent = SettingsPanel,
-        Callback = applyTextGradient,
+        Callback = function(enabled)
+            TextGradient:SetEnabled(enabled)
+        end,
     })
 
     -- ③ 自定义光标开关（Toggle）
