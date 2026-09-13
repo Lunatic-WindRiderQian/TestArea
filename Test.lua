@@ -1,7 +1,6 @@
 --[[
     FengYu-Bento (Test.lua)
-    - BottomFrame = miUI 同款玩家卡片
-    - 设置面板仅含 Menu Scale / Text Gradient（已修复布局重叠 + nil config 报错）
+    - 设置面板：主题 / 文字渐变 / 自定义光标
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -2807,7 +2806,7 @@ function Fenglib:CreateWindow(Config)
     task.spawn(updateTabCanvas)
 
     -- ═══════════════════════════════════════════════════════════════
-    -- 左下角玩家卡片（miUI 同款）
+    -- 左下角玩家卡片
     -- ═══════════════════════════════════════════════════════════════
     local BottomFrame = Instance.new("Frame")
     BottomFrame.Size = UDim2.new(1, 0, 0, 50)
@@ -2873,10 +2872,10 @@ function Fenglib:CreateWindow(Config)
     BottomClick.Parent = BottomFrame
 
     -- ═══════════════════════════════════════════════════════════════
-    -- 设置面板（★ 已修复布局：加了 UIListLayout + UIPadding）
+    -- 设置面板：主题 / 文字渐变 / 自定义光标
     -- ═══════════════════════════════════════════════════════════════
     local SettingsPanel = Instance.new("Frame")
-    SettingsPanel.Size = UDim2.new(0, 220, 0, 100)
+    SettingsPanel.Size = UDim2.new(0, 220, 0, 150)
     SettingsPanel.AnchorPoint = Vector2.new(0, 1)
     SettingsPanel.Position = UDim2.new(0, 18, 1, -54)
     SettingsPanel.BackgroundColor3 = CurrentTheme.Main
@@ -2896,14 +2895,12 @@ function Fenglib:CreateWindow(Config)
     SettingsStroke.Parent = SettingsPanel
     table.insert(ThemeListeners, function() SettingsStroke.Color = CurrentTheme.Stroke end)
 
-    -- ★ 关键：UIListLayout 让两个控件纵向排列，不会重叠
     local SettingsList = Instance.new("UIListLayout")
     SettingsList.Padding = UDim.new(0, 4)
     SettingsList.SortOrder = Enum.SortOrder.LayoutOrder
     SettingsList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     SettingsList.Parent = SettingsPanel
 
-    -- ★ 关键：UIPadding 让内容离面板边缘有间距
     local SettingsPad = Instance.new("UIPadding")
     SettingsPad.PaddingTop = UDim.new(0, 6)
     SettingsPad.PaddingBottom = UDim.new(0, 6)
@@ -2913,24 +2910,18 @@ function Fenglib:CreateWindow(Config)
 
     local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
 
+    -- ① 主题切换（Dropdown）
     settingsBuilder:Dropdown({
-        Name = "Menu Scale",
-        Values = { "Large", "Default", "Mobile", "Small", "Compact" },
-        Value = "Large",
+        Name = "主题",
+        Values = { "Dark", "Charcoal", "AMOLED" },
+        Value = "Dark",
         Parent = SettingsPanel,
         Callback = function(v)
-            local sizes = {
-                Large   = { 500, 320 },
-                Default = { 450, 300 },
-                Mobile  = { 400, 280 },
-                Small   = { 380, 260 },
-                Compact = { 360, 240 },
-            }
-            local s = sizes[v]
-            if s then Tween(MainFrame, {Size = UDim2.new(0, s[1], 0, s[2])}, 0.3) end
+            Fenglib:SetTheme(v)
         end,
     })
 
+    -- ② 文字渐变开关（Toggle）
     local function applyTextGradient(enabled)
         for _, obj in ipairs(MainFrame:GetDescendants()) do
             if obj:IsA("TextLabel") or obj:IsA("TextBox") then
@@ -2954,13 +2945,23 @@ function Fenglib:CreateWindow(Config)
     end
 
     settingsBuilder:Toggle({
-        Name = "Text Gradient",
+        Name = "文字渐变",
         Value = true,
         Parent = SettingsPanel,
         Callback = applyTextGradient,
     })
 
-    -- 面板高度随内容自适应
+    -- ③ 自定义光标开关（Toggle）
+    settingsBuilder:Toggle({
+        Name = "自定义光标",
+        Value = false,
+        Parent = SettingsPanel,
+        Callback = function(enabled)
+            Fenglib:SetCustomCursor(enabled)
+        end,
+    })
+
+    -- 面板高度自适应
     SettingsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         if SettingsPanel.Visible then
             local h = SettingsList.AbsoluteContentSize.Y + 12
