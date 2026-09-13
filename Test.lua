@@ -1,8 +1,7 @@
 --[[
     FengYu-Bento (Test.lua)
-    - BottomFrame = miUI 同款玩家卡片（悬停反馈 + 点击设置面板）
-    - 设置面板仅含：Menu Scale / Text Gradient（无主题切换）
-    - 已修复 config 为 nil 导致的 "attempt to index nil with 'Name'" 报错
+    - BottomFrame = miUI 同款玩家卡片
+    - 设置面板仅含 Menu Scale / Text Gradient（已修复布局重叠 + nil config 报错）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -348,7 +347,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return lbl
     end
 
-    -- 通用保护：如果 config 是 nil，用空表代替
     local function safeConfig(config)
         if type(config) ~= "table" then
             return { Name = tostring(config or "") }
@@ -2875,7 +2873,7 @@ function Fenglib:CreateWindow(Config)
     BottomClick.Parent = BottomFrame
 
     -- ═══════════════════════════════════════════════════════════════
-    -- 设置面板（miUI 同款：Menu Scale + Text Gradient，无主题切换）
+    -- 设置面板（★ 已修复布局：加了 UIListLayout + UIPadding）
     -- ═══════════════════════════════════════════════════════════════
     local SettingsPanel = Instance.new("Frame")
     SettingsPanel.Size = UDim2.new(0, 220, 0, 100)
@@ -2898,9 +2896,23 @@ function Fenglib:CreateWindow(Config)
     SettingsStroke.Parent = SettingsPanel
     table.insert(ThemeListeners, function() SettingsStroke.Color = CurrentTheme.Stroke end)
 
+    -- ★ 关键：UIListLayout 让两个控件纵向排列，不会重叠
+    local SettingsList = Instance.new("UIListLayout")
+    SettingsList.Padding = UDim.new(0, 4)
+    SettingsList.SortOrder = Enum.SortOrder.LayoutOrder
+    SettingsList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    SettingsList.Parent = SettingsPanel
+
+    -- ★ 关键：UIPadding 让内容离面板边缘有间距
+    local SettingsPad = Instance.new("UIPadding")
+    SettingsPad.PaddingTop = UDim.new(0, 6)
+    SettingsPad.PaddingBottom = UDim.new(0, 6)
+    SettingsPad.PaddingLeft = UDim.new(0, 4)
+    SettingsPad.PaddingRight = UDim.new(0, 4)
+    SettingsPad.Parent = SettingsPanel
+
     local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
 
-    -- ★ 注意：这里必须用冒号 settingsBuilder:Dropdown(...)，不能用点号
     settingsBuilder:Dropdown({
         Name = "Menu Scale",
         Values = { "Large", "Default", "Mobile", "Small", "Compact" },
@@ -2941,7 +2953,6 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- ★ 这里也一样，必须用冒号
     settingsBuilder:Toggle({
         Name = "Text Gradient",
         Value = true,
@@ -2949,15 +2960,13 @@ function Fenglib:CreateWindow(Config)
         Callback = applyTextGradient,
     })
 
-    local SettingsList = SettingsPanel:FindFirstChildOfClass("UIListLayout")
-    if SettingsList then
-        SettingsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            if SettingsPanel.Visible then
-                local h = SettingsList.AbsoluteContentSize.Y + 16
-                Tween(SettingsPanel, {Size = UDim2.new(0, 220, 0, h)}, 0.2)
-            end
-        end)
-    end
+    -- 面板高度随内容自适应
+    SettingsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        if SettingsPanel.Visible then
+            local h = SettingsList.AbsoluteContentSize.Y + 12
+            Tween(SettingsPanel, {Size = UDim2.new(0, 220, 0, h)}, 0.2)
+        end
+    end)
 
     local settingsOpen = false
     local outsideConn = nil
@@ -2982,7 +2991,7 @@ function Fenglib:CreateWindow(Config)
         settingsOpen = true
         SettingsPanel.Visible = true
         SettingsPanel.Size = UDim2.new(0, 220, 0, 0)
-        local h = SettingsList and (SettingsList.AbsoluteContentSize.Y + 16) or 100
+        local h = SettingsList.AbsoluteContentSize.Y + 12
         Tween(SettingsPanel, {BackgroundTransparency = 0.035, Size = UDim2.new(0, 220, 0, h)}, 0.2)
         Tween(SettingsStroke, {Transparency = 0.65}, 0.2)
 
