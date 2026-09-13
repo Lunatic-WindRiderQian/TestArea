@@ -3,6 +3,7 @@
     - BottomFrame = miUI 同款玩家卡片
     - UserSettingButton = miUI 同款 BuilderIcons 字体图标
     - UserFrame = 玩家卡片 + 右侧按钮展开双 Input（miUI Input 样式）
+    - Input 1 实时改名字 / Input 2 实时改到期
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
 ]]
 local TweenService = game:GetService("TweenService")
@@ -79,7 +80,7 @@ local function Tween(obj, props, time)
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- 文字渐变系统
+-- 文字渐变系统（完整搬运自 miUI）
 -- ═══════════════════════════════════════════════════════════════
 local TextGradient = {
     Enabled = true, Time = 0, Accumulator = 0,
@@ -1569,7 +1570,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     -- ═══════════════════════════════════════════════════════════
-    -- UserFrame：玩家卡片 + 按钮展开双 Input（miUI Input 样式）
+    -- UserFrame：玩家卡片 + 按钮展开双 Input（实时联动）
     -- ═══════════════════════════════════════════════════════════
     child.UserFrame = function(_, config)
         config = safeConfig(config)
@@ -1586,7 +1587,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local TOP_H = 60
         local ROW_H = 42
         local GAP   = 4
-        -- 两行输入：GAP + ROW + GAP + ROW + GAP
         local EXPANDED_H = GAP + ROW_H + GAP + ROW_H + GAP
 
         local UserFrame = Instance.new("Frame")
@@ -1741,9 +1741,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TextGradient:Skip(Box)
 
             Box.Focused:Connect(function() Tween(boxStroke, {Transparency = 0.2}, 0.15) end)
-            Box.FocusLost:Connect(function()
-                Tween(boxStroke, {Transparency = 0.65}, 0.15)
-                if onChanged then pcall(onChanged, i, Box.Text) end
+            Box.FocusLost:Connect(function() Tween(boxStroke, {Transparency = 0.65}, 0.15) end)
+
+            -- ★ 实时联动：input 1 → 名字 / input 2 → 到期
+            Box:GetPropertyChangedSignal("Text"):Connect(function()
+                local txt = Box.Text
+                if i == 1 then
+                    UserLabel.Text = txt
+                elseif i == 2 then
+                    UserStatusLabel.Text = txt
+                end
+                if onChanged then pcall(onChanged, i, txt) end
             end)
 
             Boxes[i] = Box
@@ -3274,18 +3282,22 @@ function Fenglib:CreateWindow(Config)
 
     local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
 
-    -- ① 玩家卡片（带展开双 Input）
+    -- ① 玩家卡片（Input 1 改名字 / Input 2 改到期）
     local userCard = settingsBuilder:UserFrame({
         Name = LocalPlayer.DisplayName,
         Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
             Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150),
         Expires = "never",
         ButtonIcon = 9405931578,
-        Names        = { "输入框 1", "输入框 2" },
-        Placeholders = { "请填写", "请填写" },
-        Defaults     = { "", "" },
+        Names        = { "名称", "到期" },
+        Placeholders = { "输入显示名", "如 never" },
+        Defaults     = { LocalPlayer.DisplayName, "never" },
         OnChanged = function(idx, text)
-            print(("[UserFrame] Input #%d = %s"):format(idx, text))
+            if idx == 1 then
+                AccountName.Text = (text ~= "" and text) or LocalPlayer.DisplayName
+            elseif idx == 2 then
+                ExpireLabel.Text = (text ~= "" and text) or "never"
+            end
         end,
         Parent = SettingsPanel,
     })
