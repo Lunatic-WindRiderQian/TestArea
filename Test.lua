@@ -3,7 +3,7 @@
     - BottomFrame = miUI 同款玩家卡片
     - UserSettingButton = miUI 同款 BuilderIcons 字体图标
     - UserFrame = 玩家卡片 + 右侧按钮展开双 Input（miUI Input 样式）
-    - Input 1 = 副名字 / Input 2 = 名字（实时联动）
+    - Input 1 = 副名字（LocalPlayer.Name） / Input 2 = 名字（DisplayName）
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
 ]]
 local TweenService = game:GetService("TweenService")
@@ -3208,7 +3208,7 @@ function Fenglib:CreateWindow(Config)
     ExpireLabel.Position = UDim2.new(0, 55, 0, 25)
     ExpireLabel.BackgroundTransparency = 1
     ExpireLabel.Font = Enum.Font.GothamMedium
-    ExpireLabel.Text = LocalPlayer.DisplayName
+    ExpireLabel.Text = LocalPlayer.Name
     ExpireLabel.TextSize = 10
     ExpireLabel.TextTransparency = 0.65
     ExpireLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -3278,19 +3278,19 @@ function Fenglib:CreateWindow(Config)
 
     local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
 
-    -- ① 玩家卡片（Input 1 = 副名字 / Input 2 = 名字）
+    -- ① 玩家卡片（Input 1 = 副名字 LocalPlayer.Name / Input 2 = 名字 DisplayName）
     local userCard = settingsBuilder:UserFrame({
         Name = LocalPlayer.DisplayName,
         Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
             Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150),
-        Expires = LocalPlayer.DisplayName,
+        Expires = LocalPlayer.Name,
         ButtonIcon = 9405931578,
         Names        = { "副名字", "名字" },
         Placeholders = { "输入副名字", "输入名字" },
-        Defaults     = { LocalPlayer.DisplayName, LocalPlayer.DisplayName },
+        Defaults     = { LocalPlayer.Name, LocalPlayer.DisplayName },
         OnChanged = function(idx, text)
             if idx == 1 then
-                ExpireLabel.Text = (text ~= "" and text) or LocalPlayer.DisplayName
+                ExpireLabel.Text = (text ~= "" and text) or LocalPlayer.Name
             elseif idx == 2 then
                 AccountName.Text = (text ~= "" and text) or LocalPlayer.DisplayName
             end
@@ -3945,12 +3945,12 @@ function Fenglib:CreateWindow(Config)
             AccountProfile.BackgroundColor3 = Color3.new(1, 1, 1)
             AccountProfile.BackgroundTransparency = 1
             AccountName.Text = cfg.Username or LocalPlayer.DisplayName
-            ExpireLabel.Text = cfg.Expires  or LocalPlayer.DisplayName
+            ExpireLabel.Text = cfg.Expires  or LocalPlayer.Name
         end
 
         if Window._userCard then
             Window._userCard:SetUsername(cfg.Username or LocalPlayer.DisplayName)
-            Window._userCard:SetExpires(cfg.Expires or LocalPlayer.DisplayName)
+            Window._userCard:SetExpires(cfg.Expires or LocalPlayer.Name)
             if cfg.Profile then Window._userCard:SetProfile(cfg.Profile) end
         end
     end
