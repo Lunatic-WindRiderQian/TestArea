@@ -1,7 +1,7 @@
 --[[
     FengYu-Bento (Test.lua)
     - BottomFrame = miUI 同款玩家卡片（悬停反馈 + 点击设置面板）
-    - 设置面板：主题 / 文字渐变 / 自定义光标
+    - 设置面板：主题 / 文字渐变 / 自定义光标 / 玩家信息卡片（UserFrame）
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook 所有 TextLabel/TextBox/TextButton
 ]]
 local TweenService = game:GetService("TweenService")
@@ -87,7 +87,7 @@ local TextGradient = {
     Labels = {},
     Objects = {},
     Hooks = {},
-    Skipped = {},   -- 主动跳过的 Label（黑名单）
+    Skipped = {},
 }
 
 function TextGradient:Skip(Label)
@@ -231,7 +231,6 @@ function Fenglib:SetTheme(name)
         CurrentTheme = Themes[name]
         for _, r in pairs(Registry) do if r.Object then Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]}) end end
         for _, fn in pairs(ThemeListeners) do pcall(fn) end
-        -- 刷新文字渐变颜色
         TextGradient:RefreshAll()
     end
 end
@@ -436,7 +435,6 @@ local function createLockOverlay(parent, defaultTitle)
     lockLabel.TextTransparency = 0.2; lockLabel.TextSize = 14
     lockLabel.AutomaticSize = Enum.AutomaticSize.X
     lockLabel.Parent = container
-    -- 锁文字不加渐变
     TextGradient:Skip(lockLabel)
     return lockFrame, lockLabel
 end
@@ -647,7 +645,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ValueLabel.ClearTextOnFocus = false
         ValueLabel.Parent = ValueFrame
         AddToRegistry(ValueLabel, "TextColor3", "Text")
-        -- 数值框不加渐变（数值变化频繁，加了会花）
         TextGradient:Skip(ValueLabel)
         ValueLabel.Focused:Connect(function() Tween(ValueStroke, {Transparency = 0.2}, 0.15) end)
         local trackLeft = 15 + 90 + 12
@@ -1592,6 +1589,81 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         h:SetValue(default)
         ConfigObjects[controlId] = { Type = "ProgressBar", Value = h.Value, Set = function(val) h:SetValue(val) end }
         return h
+    end
+
+    -- ═══════════════════════════════════════════════════════════
+    -- UserFrame：miUI 同款玩家信息卡片（45×45 头像 + 名字 + 到期）
+    -- ═══════════════════════════════════════════════════════════
+    child.UserFrame = function(_, config)
+        config = safeConfig(config)
+        local name    = config.Name    or "User"
+        local profile = config.Profile or ""
+        local expires = config.Expires or "Never"
+        local parent  = config.Parent  or contentHolder
+
+        local UserFrame = Instance.new("Frame")
+        UserFrame.Size = UDim2.new(1, 0, 0, 60)
+        UserFrame.BackgroundColor3 = CurrentTheme.Top
+        UserFrame.BackgroundTransparency = 1
+        UserFrame.BorderSizePixel = 0
+        UserFrame.Parent = parent
+
+        local LogoImage = Instance.new("ImageLabel")
+        LogoImage.Size = UDim2.fromOffset(45, 45)
+        LogoImage.Position = UDim2.fromOffset(10, 5)
+        LogoImage.BackgroundTransparency = 1
+        LogoImage.Image = (profile ~= "" and profile)
+            or "rbxasset://textures/ui/clb_robux_20@3x.png"
+        LogoImage.Parent = UserFrame
+        Instance.new("UICorner", LogoImage).CornerRadius = UDim.new(1, 0)
+
+        local UserLabel = Instance.new("TextLabel")
+        UserLabel.Size = UDim2.new(1, -75, 0, 15)
+        UserLabel.Position = UDim2.new(0, 65, 0, 10)
+        UserLabel.BackgroundTransparency = 1
+        UserLabel.Font = Enum.Font.GothamMedium
+        UserLabel.Text = name
+        UserLabel.TextColor3 = CurrentTheme.Text
+        UserLabel.TextSize = 13
+        UserLabel.TextTransparency = 0.2
+        UserLabel.TextXAlignment = Enum.TextXAlignment.Left
+        UserLabel.TextTruncate = Enum.TextTruncate.AtEnd
+        UserLabel.Parent = UserFrame
+        AddToRegistry(UserLabel, "TextColor3", "Text")
+
+        local UserStatusLabel = Instance.new("TextLabel")
+        UserStatusLabel.Size = UDim2.new(1, -75, 0, 15)
+        UserStatusLabel.Position = UDim2.new(0, 65, 0, 25)
+        UserStatusLabel.BackgroundTransparency = 1
+        UserStatusLabel.Font = Enum.Font.GothamMedium
+        UserStatusLabel.Text = expires
+        UserStatusLabel.TextColor3 = CurrentTheme.Text
+        UserStatusLabel.TextSize = 13
+        UserStatusLabel.TextTransparency = 0.2
+        UserStatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+        UserStatusLabel.TextTruncate = Enum.TextTruncate.AtEnd
+        UserStatusLabel.Parent = UserFrame
+        AddToRegistry(UserStatusLabel, "TextColor3", "Text")
+        TextGradient:Skip(UserStatusLabel)
+
+        local LineFrame = Instance.new("Frame")
+        LineFrame.Size = UDim2.new(1, -20, 0, 1)
+        LineFrame.AnchorPoint = Vector2.new(0.5, 1)
+        LineFrame.Position = UDim2.new(0.5, 0, 1, 0)
+        LineFrame.BackgroundColor3 = CurrentTheme.Stroke
+        LineFrame.BackgroundTransparency = 0.65
+        LineFrame.BorderSizePixel = 0
+        LineFrame.Parent = UserFrame
+        AddToRegistry(LineFrame, "BackgroundColor3", "Stroke")
+
+        local self = {}
+        function self:SetUsername(n) UserLabel.Text = tostring(n or "") end
+        function self:SetProfile(p)
+            LogoImage.Image = p or "rbxasset://textures/ui/clb_robux_20@3x.png"
+        end
+        function self:SetExpires(e) UserStatusLabel.Text = tostring(e or "Never") end
+        function self:SetVisible(v) UserFrame.Visible = v ~= false end
+        return self
     end
 
     child.Video = function(_, config)
@@ -2805,7 +2877,6 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
-    -- ★ 挂载文字渐变 hook
     TextGradient:AttachHook(ScreenGui)
 
     local NotificationHolder = Instance.new("Frame")
@@ -3048,10 +3119,10 @@ function Fenglib:CreateWindow(Config)
     BottomClick.Parent = BottomFrame
 
     -- ═══════════════════════════════════════════════════════════════
-    -- 设置面板：主题 / 文字渐变 / 自定义光标
+    -- 设置面板：主题 / 文字渐变 / 自定义光标 / 玩家信息卡片
     -- ═══════════════════════════════════════════════════════════════
     local SettingsPanel = Instance.new("Frame")
-    SettingsPanel.Size = UDim2.new(0, 220, 0, 150)
+    SettingsPanel.Size = UDim2.new(0, 220, 0, 220)
     SettingsPanel.AnchorPoint = Vector2.new(0, 1)
     SettingsPanel.Position = UDim2.new(0, 18, 1, -54)
     SettingsPanel.BackgroundColor3 = CurrentTheme.Main
@@ -3097,7 +3168,7 @@ function Fenglib:CreateWindow(Config)
         end,
     })
 
-    -- ② 文字渐变开关（Toggle） —— 走 miUI 动画版
+    -- ② 文字渐变开关（Toggle）
     settingsBuilder:Toggle({
         Name = "文字渐变",
         Value = true,
@@ -3116,6 +3187,16 @@ function Fenglib:CreateWindow(Config)
             Fenglib:SetCustomCursor(enabled)
         end,
     })
+
+    -- ④ 玩家信息卡片（miUI UserFrame 同款）
+    local userCard = settingsBuilder:UserFrame({
+        Name = LocalPlayer.DisplayName,
+        Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
+            Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150),
+        Expires = "never",
+        Parent = SettingsPanel,
+    })
+    Window._userCard = userCard
 
     -- 面板高度自适应
     SettingsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -3741,6 +3822,13 @@ function Fenglib:CreateWindow(Config)
             AccountProfile.BackgroundTransparency = 1
             AccountName.Text = cfg.Username or LocalPlayer.DisplayName
             ExpireLabel.Text = cfg.Expires  or "never"
+        end
+
+        -- 同步设置面板里的玩家卡片
+        if Window._userCard then
+            Window._userCard:SetUsername(cfg.Username or LocalPlayer.DisplayName)
+            Window._userCard:SetExpires(cfg.Expires or "never")
+            if cfg.Profile then Window._userCard:SetProfile(cfg.Profile) end
         end
     end
     Window:SetAccount({ ShowUser = (Config.ShowUser ~= false) })
