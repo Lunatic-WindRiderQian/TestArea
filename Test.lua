@@ -3,7 +3,7 @@
     - BottomFrame = miUI 同款玩家卡片
     - UserSettingButton = miUI 同款 BuilderIcons 字体图标
     - UserFrame = 玩家卡片 + 右侧按钮展开双 Input（miUI Input 样式）
-    - Input 1 实时改名字 / Input 2 实时改到期
+    - Input 1 = 副名字 / Input 2 = 名字（实时联动）
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
 ]]
 local TweenService = game:GetService("TweenService")
@@ -1576,7 +1576,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         config = safeConfig(config)
         local name         = config.Name    or "User"
         local profile      = config.Profile or ""
-        local expires      = config.Expires or "Never"
+        local expires      = config.Expires or ""
         local parent       = config.Parent  or contentHolder
         local buttonIcon   = config.ButtonIcon
         local names        = config.Names        or { "输入框 1", "输入框 2" }
@@ -1596,7 +1596,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         UserFrame.ClipsDescendants = true
         UserFrame.Parent = parent
 
-        -- 顶部玩家信息条
         local TopBar = Instance.new("Frame")
         TopBar.Size = UDim2.new(1, 0, 0, TOP_H)
         TopBar.BackgroundTransparency = 1
@@ -1640,7 +1639,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(UserStatusLabel, "TextColor3", "Text")
         TextGradient:Skip(UserStatusLabel)
 
-        -- 右侧按钮
         local Btn, BtnIcon = nil, nil
         if buttonIcon and tostring(buttonIcon) ~= "" then
             Btn = Instance.new("TextButton")
@@ -1668,7 +1666,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Btn.MouseLeave:Connect(function() Tween(BtnIcon, {ImageTransparency = 0.4}, 0.15) end)
         end
 
-        -- 展开容器
         local Expanded = Instance.new("Frame")
         Expanded.Size = UDim2.new(1, 0, 0, 0)
         Expanded.Position = UDim2.new(0, 0, 0, TOP_H)
@@ -1677,7 +1674,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Expanded.ClipsDescendants = true
         Expanded.Parent = UserFrame
 
-        -- 两行 miUI Input 样式
         local Boxes = {}
         for i = 1, 2 do
             local Row = Instance.new("Frame")
@@ -1743,13 +1739,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Box.Focused:Connect(function() Tween(boxStroke, {Transparency = 0.2}, 0.15) end)
             Box.FocusLost:Connect(function() Tween(boxStroke, {Transparency = 0.65}, 0.15) end)
 
-            -- ★ 实时联动：input 1 → 名字 / input 2 → 到期
+            -- ★ 实时联动：input 1 → 副名 / input 2 → 名字
             Box:GetPropertyChangedSignal("Text"):Connect(function()
                 local txt = Box.Text
                 if i == 1 then
-                    UserLabel.Text = txt
-                elseif i == 2 then
                     UserStatusLabel.Text = txt
+                elseif i == 2 then
+                    UserLabel.Text = txt
                 end
                 if onChanged then pcall(onChanged, i, txt) end
             end)
@@ -1757,7 +1753,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Boxes[i] = Box
         end
 
-        -- 展开 / 收起
         local opened = false
         local function toggle()
             opened = not opened
@@ -1774,7 +1769,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local self = {}
         function self:SetUsername(n) UserLabel.Text = tostring(n or "") end
         function self:SetProfile(p) LogoImage.Image = p or "rbxasset://textures/ui/clb_robux_20@3x.png" end
-        function self:SetExpires(e) UserStatusLabel.Text = tostring(e or "Never") end
+        function self:SetExpires(e) UserStatusLabel.Text = tostring(e or "") end
         function self:SetVisible(v) UserFrame.Visible = v ~= false end
         function self:GetValue(idx) return Boxes[idx] and Boxes[idx].Text or "" end
         function self:SetValue(idx, text) if Boxes[idx] then Boxes[idx].Text = tostring(text or "") end end
@@ -3213,7 +3208,8 @@ function Fenglib:CreateWindow(Config)
     ExpireLabel.Position = UDim2.new(0, 55, 0, 25)
     ExpireLabel.BackgroundTransparency = 1
     ExpireLabel.Font = Enum.Font.GothamMedium
-    ExpireLabel.Text = "never"; ExpireLabel.TextSize = 10
+    ExpireLabel.Text = LocalPlayer.DisplayName
+    ExpireLabel.TextSize = 10
     ExpireLabel.TextTransparency = 0.65
     ExpireLabel.TextXAlignment = Enum.TextXAlignment.Left
     ExpireLabel.Parent = BottomFrame
@@ -3282,21 +3278,21 @@ function Fenglib:CreateWindow(Config)
 
     local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
 
-    -- ① 玩家卡片（Input 1 改名字 / Input 2 改到期）
+    -- ① 玩家卡片（Input 1 = 副名字 / Input 2 = 名字）
     local userCard = settingsBuilder:UserFrame({
         Name = LocalPlayer.DisplayName,
         Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
             Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150),
-        Expires = "never",
+        Expires = LocalPlayer.DisplayName,
         ButtonIcon = 9405931578,
-        Names        = { "名称", "到期" },
-        Placeholders = { "输入显示名", "如 never" },
-        Defaults     = { LocalPlayer.DisplayName, "never" },
+        Names        = { "副名字", "名字" },
+        Placeholders = { "输入副名字", "输入名字" },
+        Defaults     = { LocalPlayer.DisplayName, LocalPlayer.DisplayName },
         OnChanged = function(idx, text)
             if idx == 1 then
-                AccountName.Text = (text ~= "" and text) or LocalPlayer.DisplayName
+                ExpireLabel.Text = (text ~= "" and text) or LocalPlayer.DisplayName
             elseif idx == 2 then
-                ExpireLabel.Text = (text ~= "" and text) or "never"
+                AccountName.Text = (text ~= "" and text) or LocalPlayer.DisplayName
             end
         end,
         Parent = SettingsPanel,
@@ -3949,12 +3945,12 @@ function Fenglib:CreateWindow(Config)
             AccountProfile.BackgroundColor3 = Color3.new(1, 1, 1)
             AccountProfile.BackgroundTransparency = 1
             AccountName.Text = cfg.Username or LocalPlayer.DisplayName
-            ExpireLabel.Text = cfg.Expires  or "never"
+            ExpireLabel.Text = cfg.Expires  or LocalPlayer.DisplayName
         end
 
         if Window._userCard then
             Window._userCard:SetUsername(cfg.Username or LocalPlayer.DisplayName)
-            Window._userCard:SetExpires(cfg.Expires or "never")
+            Window._userCard:SetExpires(cfg.Expires or LocalPlayer.DisplayName)
             if cfg.Profile then Window._userCard:SetProfile(cfg.Profile) end
         end
     end
