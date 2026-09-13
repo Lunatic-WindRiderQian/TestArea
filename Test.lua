@@ -2,7 +2,7 @@
     FengYu-Bento (Test.lua)
     - BottomFrame = miUI 同款玩家卡片（悬停反馈 + 点击设置面板）
     - UserSettingButton = miUI 同款 BuilderIcons 字体图标（chevron-large-right）
-    - 设置面板：主题 / 文字渐变 / 自定义光标 / 玩家信息卡片（UserFrame）
+    - 设置面板顺序：玩家信息卡片 → 主题 → 文字渐变 → 自定义光标
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
 ]]
 local TweenService = game:GetService("TweenService")
@@ -3103,9 +3103,7 @@ function Fenglib:CreateWindow(Config)
     AddToRegistry(ExpireLabel, "TextColor3", "SubText")
     TextGradient:Skip(ExpireLabel)
 
-    -- ═══════════════════════════════════════════════════════════════
     -- ★ miUI 同款字体图标按钮（BuilderIcons / chevron-large-right）
-    -- ═══════════════════════════════════════════════════════════════
     local UserSettingButton = Instance.new("TextLabel")
     UserSettingButton.Size = UDim2.new(0, 25, 0, 25)
     UserSettingButton.Position = UDim2.new(1, -7, 0.5, 0)
@@ -3132,7 +3130,7 @@ function Fenglib:CreateWindow(Config)
     BottomClick.Parent = BottomFrame
 
     -- ═══════════════════════════════════════════════════════════════
-    -- 设置面板：主题 / 文字渐变 / 自定义光标 / 玩家信息卡片
+    -- 设置面板：UserFrame(第一个) → 主题 → 文字渐变 → 自定义光标
     -- ═══════════════════════════════════════════════════════════════
     local SettingsPanel = Instance.new("Frame")
     SettingsPanel.Size = UDim2.new(0, 220, 0, 220)
@@ -3170,6 +3168,17 @@ function Fenglib:CreateWindow(Config)
 
     local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
 
+    -- ① 玩家信息卡片（放最上面）
+    local userCard = settingsBuilder:UserFrame({
+        Name = LocalPlayer.DisplayName,
+        Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
+            Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150),
+        Expires = "never",
+        Parent = SettingsPanel,
+    })
+    Window._userCard = userCard
+
+    -- ② 主题切换
     settingsBuilder:Dropdown({
         Name = "主题",
         Values = { "Dark", "Charcoal", "AMOLED" },
@@ -3180,6 +3189,7 @@ function Fenglib:CreateWindow(Config)
         end,
     })
 
+    -- ③ 文字渐变
     settingsBuilder:Toggle({
         Name = "文字渐变",
         Value = true,
@@ -3189,6 +3199,7 @@ function Fenglib:CreateWindow(Config)
         end,
     })
 
+    -- ④ 自定义光标
     settingsBuilder:Toggle({
         Name = "自定义光标",
         Value = false,
@@ -3197,15 +3208,6 @@ function Fenglib:CreateWindow(Config)
             Fenglib:SetCustomCursor(enabled)
         end,
     })
-
-    local userCard = settingsBuilder:UserFrame({
-        Name = LocalPlayer.DisplayName,
-        Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
-            Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150),
-        Expires = "never",
-        Parent = SettingsPanel,
-    })
-    Window._userCard = userCard
 
     SettingsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         if SettingsPanel.Visible then
