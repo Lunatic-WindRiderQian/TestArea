@@ -6,6 +6,7 @@
     - 面板内外双向同步：UserFrame 输入框 ↔ 左下角玩家卡片
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
     - Section Locked 覆盖层与容器等宽（修复：容器跟 Locked 一样长）
+    - Button 已移除图标，文字与其它控件左对齐
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -491,10 +492,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local btnText = config.Name or config.Text or ""
         local callback = config.Callback or function() end
         local parent = config.Parent or contentHolder
-        local iconAsset = config.Icon or "chevron-large-left"
         local Tile = miRow(parent, 42)
-        local Icon = miIcon(Tile, iconAsset, 18, 15, 12)
-        local TitleLbl = miLabel(Tile, btnText, 40, 12, UDim2.new(1, -55, 0, 18), 13)
+        local TitleLbl = miLabel(Tile, btnText, 15, 12, UDim2.new(1, -30, 0, 18), 13)
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "Locked"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
@@ -505,14 +504,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ClickBtn.AutoButtonColor = false; ClickBtn.Parent = Tile
         ClickBtn.Active = not locked
         local function updateLock(state) locked = state; lockFrame.Visible = state; ClickBtn.Active = not state end
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15); Tween(Icon, {ImageTransparency = 0}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15); Tween(Icon, {ImageTransparency = 0.25}, 0.15) end end)
+        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Down:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.45}, 0.08) end end)
         ClickBtn.MouseButton1Up:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.08) end end)
         ClickBtn.MouseButton1Click:Connect(function() if not locked then callback() end end)
         local self = {}
         function self.UpdateText(t) TitleLbl.Text = t end
-        function self.SetIcon(a) if tonumber(a) then Icon.Image = "rbxassetid://"..a else Icon.Image = tostring(a) end end
         function self.SetVisible(v) Tile.Visible = v end
         function self.Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
         function self.Unlock() updateLock(false) end
