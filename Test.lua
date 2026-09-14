@@ -5,7 +5,7 @@
     - UserFrame：Input 1 = 副名字（DisplayName，大字）/ Input 2 = 名字（Name，小字）
     - 面板内外双向同步：UserFrame 输入框 ↔ 左下角玩家卡片
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
-    - Section Locked 覆盖层与容器等宽（修复：容器跟 Locked 一样长）
+    - Section Locked 覆盖层与容器等宽（与 miUI 同款 -5px 缩进）
     - Button 已移除图标，文字与其它控件左对齐
     - 修复：UIListLayout 垂直间距导致控件上方“多出一块空”的问题
 ]]
@@ -2771,14 +2771,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local SUB_TOP        = TEXT_BLOCK_TOP + TITLE_H + SUB_GAP
         local ARROW_TOP      = math.floor((COLLAPSED_H - 18) / 2)
         local MIUI_TWEEN = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
+
+        -- ★ miUI 同款宽度：sectionFrame = 1, -5（父容器宽 - 5px）
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(0.96, 0, 0, 0)
+        sectionFrame.Size = UDim2.new(1, -5, 0, 0)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         sectionFrame.BackgroundTransparency = 1
         sectionFrame.ClipsDescendants = true; sectionFrame.Parent = parent
+
+        -- contentContainer：占满 sectionFrame
         local contentContainer = Instance.new("Frame")
-        contentContainer.Size = UDim2.new(1, -10, 0, 0)
+        contentContainer.Size = UDim2.new(1, 0, 0, 0)
         contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
         contentContainer.AnchorPoint = Vector2.new(0.5, 0)
         contentContainer.BackgroundTransparency = 0.5
@@ -2853,9 +2857,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             collapseArrow.Parent = contentContainer
             AddToRegistry(collapseArrow, "ImageColor3", "Text")
         end
-        -- ★ contentHolder：UIListLayout 的 Padding 设为 0，避免控件上方多出空白
+        -- ★ contentHolder：占满 contentContainer
         local contentHolder = Instance.new("Frame")
-        contentHolder.Size = UDim2.new(1, -10, 0, 0)
+        contentHolder.Size = UDim2.new(1, 0, 0, 0)
         contentHolder.Position = UDim2.new(0.5, 0, 0, CONTENT_TOP)
         contentHolder.AnchorPoint = Vector2.new(0.5, 0)
         contentHolder.BackgroundTransparency = 1
@@ -2875,7 +2879,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainer.Visible = true; contentHolder.Visible = true
         -- ★ Locked 覆盖层：贴合可见的圆角容器（contentContainer），与其等宽 + 同圆角 + 同位置
         local lockFrame, lockLabel = createLockOverlay(sectionFrame, lockedTitle)
-        lockFrame.Size = UDim2.new(1, -10, 1, 0)
+        lockFrame.Size = UDim2.new(1, 0, 1, 0)
         lockFrame.Position = UDim2.new(0.5, 0, 0, 0)
         lockFrame.AnchorPoint = Vector2.new(0.5, 0)
         local _lockCorner = lockFrame:FindFirstChildOfClass("UICorner")
@@ -2892,11 +2896,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function updateHeight(instant)
             local targetH = getTargetHeight()
             if instant then
-                contentContainer.Size = UDim2.new(1, -10, 0, targetH)
-                sectionFrame.Size = UDim2.new(0.96, 0, 0, targetH)
+                contentContainer.Size = UDim2.new(1, 0, 0, targetH)
+                sectionFrame.Size = UDim2.new(1, -5, 0, targetH)
             else
-                TweenService:Create(contentContainer, MIUI_TWEEN, {Size = UDim2.new(1, -10, 0, targetH)}):Play()
-                TweenService:Create(sectionFrame, MIUI_TWEEN, {Size = UDim2.new(0.96, 0, 0, targetH)}):Play()
+                TweenService:Create(contentContainer, MIUI_TWEEN, {Size = UDim2.new(1, 0, 0, targetH)}):Play()
+                TweenService:Create(sectionFrame, MIUI_TWEEN, {Size = UDim2.new(1, -5, 0, targetH)}):Play()
             end
         end
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
