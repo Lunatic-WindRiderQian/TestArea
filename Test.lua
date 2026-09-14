@@ -5,9 +5,9 @@
     - UserFrame：Input 1 = 副名字（DisplayName，大字）/ Input 2 = 名字（Name，小字）
     - 面板内外双向同步：UserFrame 输入框 ↔ 左下角玩家卡片
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
-    - Section Locked 覆盖层与容器等宽
+    - Section Locked 覆盖层与容器等宽（修复：容器跟 Locked 一样长）
     - Button 已移除图标，文字与其它控件左对齐
-    - 所有控件悬浮高亮贴合底部隔线（RowHighlight 比 row 少 1px）
+    - 修复：UIListLayout 垂直间距导致控件上方“多出一块空”的问题
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -430,23 +430,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
     local child = {}
 
-    -- ★ RowHighlight：悬浮高亮层，比 row 少 1px 高度，底边恰好贴合分隔线
+    -- ★ miRow 改为垂直居中，行内自带分隔线，不再需要外部 UIListLayout 的间距
     local function miRow(parentFrame, height)
         height = height or 42
         local row = Instance.new("Frame")
         row.Size = UDim2.new(1, 0, 0, height)
         row.BackgroundTransparency = 1; row.BorderSizePixel = 0
         row.ClipsDescendants = false; row.Parent = parentFrame
-
-        local hl = Instance.new("Frame")
-        hl.Name = "RowHighlight"
-        hl.Size = UDim2.new(1, 0, 1, -1)   -- 高度少 1px，不会盖住分隔线
-        hl.Position = UDim2.new(0, 0, 0, 0)
-        hl.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        hl.BackgroundTransparency = 1
-        hl.BorderSizePixel = 0
-        hl.Parent = row
-
         local line = Instance.new("Frame")
         line.Size = UDim2.new(1, -20, 0, 1)
         line.Position = UDim2.new(0, 10, 1, -1)
@@ -477,6 +467,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return icon
     end
 
+    -- ★ miLabel 默认按 y 参数定位，同时支持 AnchorPoint 垂直居中（当 h 传入 0.5 时）
     local function miLabel(parentFrame, text, x, y, w, size)
         local lbl = Instance.new("TextLabel")
         lbl.Text = text or ""
@@ -516,10 +507,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ClickBtn.AutoButtonColor = false; ClickBtn.Parent = Tile
         ClickBtn.Active = not locked
         local function updateLock(state) locked = state; lockFrame.Visible = state; ClickBtn.Active = not state end
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile.RowHighlight, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile.RowHighlight, {BackgroundTransparency = 1}, 0.15) end end)
-        ClickBtn.MouseButton1Down:Connect(function() if not locked then Tween(Tile.RowHighlight, {BackgroundTransparency = 0.45}, 0.08) end end)
-        ClickBtn.MouseButton1Up:Connect(function() if not locked then Tween(Tile.RowHighlight, {BackgroundTransparency = 0.65}, 0.08) end end)
+        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
+        ClickBtn.MouseButton1Down:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.45}, 0.08) end end)
+        ClickBtn.MouseButton1Up:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.08) end end)
         ClickBtn.MouseButton1Click:Connect(function() if not locked then callback() end end)
         local self = {}
         function self.UpdateText(t) TitleLbl.Text = t end
@@ -579,8 +570,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
         ConfigObjects[controlId] = { Type = "Toggle", Value = Enabled, Set = function(v) if not locked then ApplyUI(v); callback(v) end end }
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile.RowHighlight, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile.RowHighlight, {BackgroundTransparency = 1}, 0.15) end end)
+        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function() if locked then return end; ApplyUI(not Enabled); ConfigObjects[controlId].Value = Enabled; callback(Enabled) end)
         local self = {}
         function self.GetValue() return Enabled end
@@ -889,8 +880,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             locked = state; lockFrame.Visible = state; ClickBtn.Active = not state
             if state then Dropped = false; Container.Visible = false; Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.1) end
         end
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Btn.RowHighlight, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Btn.RowHighlight, {BackgroundTransparency = 1}, 0.15) end end)
+        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Btn, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Btn, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function()
             if locked then return end
             Dropped = not Dropped
@@ -1490,8 +1481,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function h:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
         function h:Unlock() updateLock(false) end
         function h:IsLocked() return locked end
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile.RowHighlight, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile.RowHighlight, {BackgroundTransparency = 1}, 0.15) end end)
+        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function() if not locked then h:SetValue(not h.Value) end end)
         h:SetValue(default)
         ConfigObjects[controlId] = { Type = "Checkbox", Value = h.Value, Set = function(val) h:SetValue(val) end }
@@ -2862,6 +2853,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             collapseArrow.Parent = contentContainer
             AddToRegistry(collapseArrow, "ImageColor3", "Text")
         end
+        -- ★ contentHolder：UIListLayout 的 Padding 设为 0，避免控件上方多出空白
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -10, 0, 0)
         contentHolder.Position = UDim2.new(0.5, 0, 0, CONTENT_TOP)
@@ -2871,7 +2863,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentHolder.ClipsDescendants = false
         contentHolder.Parent = contentContainer
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 6)
+        contentLayout.Padding = UDim.new(0, 0)   -- ← 修改：原来是 6
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         contentLayout.Parent = contentHolder
@@ -3545,7 +3537,7 @@ function Fenglib:CreateWindow(Config)
     PageContent.BackgroundTransparency = 1
     PageContent.Parent = PageContainer
     local PageList = Instance.new("UIListLayout")
-    PageList.Padding = UDim.new(0, 10)
+    PageList.Padding = UDim.new(0, 0)   -- ← 修改：原来是 10
     PageList.SortOrder = Enum.SortOrder.LayoutOrder
     PageList.Parent = PageContent
     local function updatePageCanvas()
@@ -3783,7 +3775,7 @@ function Fenglib:CreateWindow(Config)
         PageContent.BackgroundTransparency = 1
         PageContent.Parent = Page
         local PageList = Instance.new("UIListLayout")
-        PageList.Padding = UDim.new(0, 10)
+        PageList.Padding = UDim.new(0, 0)   -- ← 修改：原来是 10
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
         PageList.Parent = PageContent
         local function updatePageCanvas()
