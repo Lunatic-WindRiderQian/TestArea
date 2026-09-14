@@ -8,7 +8,7 @@
     - Section Locked 覆盖层与容器等宽（修复：容器跟 Locked 一样长）
     - Button 已移除图标，文字与其它控件左对齐
     - 修复：UIListLayout 垂直间距导致控件上方“多出一块空”的问题
-    - Section 宽度更宽 + 容器左移 + Section 之间加间距
+    - Section 宽度对齐到右侧背景圆角边缘（不超出）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -423,13 +423,13 @@ end
 
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
-    -- ★ Section 容器内边距最小化（让内容整体往左）
+    -- ★ 父容器内边距：左侧贴边 2px，右侧留出 13px 到背景圆角边缘
     local padding = parent:FindFirstChild("SectionPadding")
     if not padding then
         padding = Instance.new("UIPadding")
         padding.Name = "SectionPadding"
         padding.PaddingLeft = UDim.new(0, 2)
-        padding.PaddingRight = UDim.new(0, 2)
+        padding.PaddingRight = UDim.new(0, 13)
         padding.Parent = parent
     end
     local child = {}
@@ -2775,17 +2775,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local SUB_TOP        = TEXT_BLOCK_TOP + TITLE_H + SUB_GAP
         local ARROW_TOP      = math.floor((COLLAPSED_H - 18) / 2)
         local MIUI_TWEEN = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
-        -- ★ Section 加宽：满宽
+        -- ★ Section 宽度 = 父级可用宽度（父级 SectionPadding 已经控好左右边距）
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Size = UDim2.new(1, 0, 0, 0)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         sectionFrame.BackgroundTransparency = 1
         sectionFrame.ClipsDescendants = true; sectionFrame.Parent = parent
-        -- ★ 容器往左移：AnchorPoint 0,0 + 2px 左偏
+        -- ★ 可见容器：贴左，右侧留出 4px（让圆角看起来更自然）
         local contentContainer = Instance.new("Frame")
-        contentContainer.Size = UDim2.new(1, -6, 0, 0)
-        contentContainer.Position = UDim2.new(0, 2, 0, 0)
+        contentContainer.Size = UDim2.new(1, -4, 0, 0)
+        contentContainer.Position = UDim2.new(0, 0, 0, 0)
         contentContainer.AnchorPoint = Vector2.new(0, 0)
         contentContainer.BackgroundTransparency = 0.5
         contentContainer.ClipsDescendants = true
@@ -2881,8 +2881,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentContainer.Visible = true; contentHolder.Visible = true
         -- ★ Locked 覆盖层：贴合可见的圆角容器（contentContainer），与其等宽 + 同圆角 + 同位置
         local lockFrame, lockLabel = createLockOverlay(sectionFrame, lockedTitle)
-        lockFrame.Size = UDim2.new(1, -6, 1, 0)
-        lockFrame.Position = UDim2.new(0, 2, 0, 0)
+        lockFrame.Size = UDim2.new(1, -4, 1, 0)
+        lockFrame.Position = UDim2.new(0, 0, 0, 0)
         lockFrame.AnchorPoint = Vector2.new(0, 0)
         local _lockCorner = lockFrame:FindFirstChildOfClass("UICorner")
         if _lockCorner and contentCorner then
@@ -2898,10 +2898,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function updateHeight(instant)
             local targetH = getTargetHeight()
             if instant then
-                contentContainer.Size = UDim2.new(1, -6, 0, targetH)
+                contentContainer.Size = UDim2.new(1, -4, 0, targetH)
                 sectionFrame.Size = UDim2.new(1, 0, 0, targetH)
             else
-                TweenService:Create(contentContainer, MIUI_TWEEN, {Size = UDim2.new(1, -6, 0, targetH)}):Play()
+                TweenService:Create(contentContainer, MIUI_TWEEN, {Size = UDim2.new(1, -4, 0, targetH)}):Play()
                 TweenService:Create(sectionFrame, MIUI_TWEEN, {Size = UDim2.new(1, 0, 0, targetH)}):Play()
             end
         end
