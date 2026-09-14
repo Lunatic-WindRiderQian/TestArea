@@ -8,8 +8,7 @@
     - Section Locked 覆盖层与容器等宽（修复：容器跟 Locked 一样长）
     - Button 已移除图标，文字与其它控件左对齐
     - 修复：UIListLayout 垂直间距导致控件上方“多出一块空”的问题
-    - Section 宽度对齐 miUI：Section 撑满父容器，卡片左右对称留白
-    - Section 之间加 8px 垂直间距
+    - Section 靠左对齐（左侧贴边，右侧保留 5px），Section 之间 8px 间距
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -2774,8 +2773,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local ARROW_TOP      = math.floor((COLLAPSED_H - 18) / 2)
         local MIUI_TWEEN = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
         local sectionFrame = Instance.new("Frame")
-        -- ★ Section 撑满父容器（不再缩进），让内容卡片有对称的左右留白
-        sectionFrame.Size = UDim2.new(1, 0, 0, 0)
+        -- ★ Section 宽度 = 父容器 - 5px，靠左对齐（父 UIListLayout 需为 Left）
+        sectionFrame.Size = UDim2.new(1, -5, 0, 0)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         sectionFrame.BackgroundTransparency = 1
@@ -2896,10 +2895,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local targetH = getTargetHeight()
             if instant then
                 contentContainer.Size = UDim2.new(1, -10, 0, targetH)
-                sectionFrame.Size = UDim2.new(1, 0, 0, targetH)
+                sectionFrame.Size = UDim2.new(1, -5, 0, targetH)
             else
                 TweenService:Create(contentContainer, MIUI_TWEEN, {Size = UDim2.new(1, -10, 0, targetH)}):Play()
-                TweenService:Create(sectionFrame, MIUI_TWEEN, {Size = UDim2.new(1, 0, 0, targetH)}):Play()
+                TweenService:Create(sectionFrame, MIUI_TWEEN, {Size = UDim2.new(1, -5, 0, targetH)}):Play()
             end
         end
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -3781,6 +3780,8 @@ function Fenglib:CreateWindow(Config)
         -- ★ Section 之间保留 8px 垂直间距
         PageList.Padding = UDim.new(0, 8)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
+        -- ★ 关键：靠左对齐，让 Section 只往左侧扩展（右侧保留自身的 -5）
+        PageList.HorizontalAlignment = Enum.HorizontalAlignment.Left
         PageList.Parent = PageContent
         local function updatePageCanvas()
             Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
