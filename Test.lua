@@ -3,6 +3,7 @@
     - BottomFrame = miUI 同款玩家卡片
     - UserSettingButton = miUI 同款 BuilderIcons 字体图标
     - UserFrame：Input 1 = 副名字（DisplayName）/ Input 2 = 名字（Name）
+    - 面板内外双向同步：UserFrame 输入框 ↔ 左下角玩家卡片
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
 ]]
 local TweenService = game:GetService("TweenService")
@@ -1571,6 +1572,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     -- ═══════════════════════════════════════════════════════════
     -- UserFrame：玩家卡片 + 按钮展开双 Input
     -- Input 1 = 副名字（DisplayName，大字） / Input 2 = 名字（Name，小字）
+    -- 输入框 → 卡片：实时联动（通过 onChanged 回调）
+    -- 卡片 → 输入框：SetValue 写回（会再次触发 onChanged，天然同步）
     -- ═══════════════════════════════════════════════════════════
     child.UserFrame = function(_, config)
         config = safeConfig(config)
@@ -1769,9 +1772,19 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         if Btn then Btn.MouseButton1Click:Connect(toggle) end
 
         local self = {}
-        function self:SetUsername(n) UserLabel.Text = tostring(n or "") end
+        -- 兼容：SetUsername 语义对齐“名字”(Name) → Boxes[2]
+        function self:SetUsername(n)
+            local t = tostring(n or "")
+            if Boxes[2] then Boxes[2].Text = t end
+            UserStatusLabel.Text = t
+        end
+        -- 兼容：SetExpires 语义对齐“副名字”(DisplayName) → Boxes[1]
+        function self:SetExpires(e)
+            local t = tostring(e or "")
+            if Boxes[1] then Boxes[1].Text = t end
+            UserLabel.Text = t
+        end
         function self:SetProfile(p) LogoImage.Image = p or "rbxasset://textures/ui/clb_robux_20@3x.png" end
-        function self:SetExpires(e) UserStatusLabel.Text = tostring(e or "") end
         function self:SetVisible(v) UserFrame.Visible = v ~= false end
         function self:GetValue(idx) return Boxes[idx] and Boxes[idx].Text or "" end
         function self:SetValue(idx, text) if Boxes[idx] then Boxes[idx].Text = tostring(text or "") end end
@@ -3284,6 +3297,7 @@ function Fenglib:CreateWindow(Config)
 
     -- ① 玩家卡片
     -- Input 1 = 副名字 (DisplayName) / Input 2 = 名字 (Name)
+    -- OnChanged 保证：面板内输入框 → 左下角 BottomFrame 实时同步
     local userCard = settingsBuilder:UserFrame({
         Name    = LocalPlayer.DisplayName,
         Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
@@ -3945,22 +3959,28 @@ function Fenglib:CreateWindow(Config)
             AccountProfile.ImageColor3 = CurrentTheme.Accent
             AccountName.Text = cfg.Username or "Settings"
             ExpireLabel.Text = cfg.Expires  or "Customize menu"
+            -- 非玩家模式：把输入框也同步一下（保持内部一致）
+            if Window._userCard then
+                Window._userCard:SetValue(1, cfg.Expires  or "Customize menu")
+                Window._userCard:SetValue(2, cfg.Username or "Settings")
+            end
         else
             AccountProfile.Image = cfg.Profile
                 or Players:GetUserThumbnailAsync(LocalPlayer.UserId,
                     Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
             AccountProfile.BackgroundColor3 = Color3.new(1, 1, 1)
             AccountProfile.BackgroundTransparency = 1
-            -- 大字默认 = Name，小字默认 = DisplayName
             AccountName.Text = cfg.Username or LocalPlayer.Name
             ExpireLabel.Text = cfg.Expires  or LocalPlayer.DisplayName
-        end
-
-        if Window._userCard then
-            -- UserFrame 中 UserLabel 大字 = 副名字/DisplayName，UserStatusLabel 小字 = 名字/Name
-            Window._userCard:SetUsername(cfg.Username or LocalPlayer.DisplayName)
-            Window._userCard:SetExpires(cfg.Expires  or LocalPlayer.Name)
-            if cfg.Profile then Window._userCard:SetProfile(cfg.Profile) end
+            -- ★ 关键同步：把 SetAccount 传入的值写回两个输入框
+            --   Input 1 = 副名字(DisplayName) ← Expires
+            --   Input 2 = 名字(Name)         ← Username
+            --   SetValue → Box.Text 变化 → onChanged → 再写 BottomFrame，天然双向
+            if Window._userCard then
+                Window._userCard:SetValue(1, cfg.Expires  or LocalPlayer.DisplayName)
+                Window._userCard:SetValue(2, cfg.Username or LocalPlayer.Name)
+                if cfg.Profile then Window._userCard:SetProfile(cfg.Profile) end
+            end
         end
     end
     Window:SetAccount({ ShowUser = (Config.ShowUser ~= false) })
