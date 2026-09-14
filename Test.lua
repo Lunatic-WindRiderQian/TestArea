@@ -8,9 +8,8 @@
     - Section Locked 覆盖层与容器等宽（修复：容器跟 Locked 一样长）
     - Button 已移除图标，文字与其它控件左对齐
     - 修复：UIListLayout 垂直间距导致控件上方“多出一块空”的问题
-    - Section 宽度对齐 miUI：UDim2.new(1, -5, 0, 0)
-    - Section 容器左右各加 8px 内边距（左侧更宽）
-    - Section 之间加入 8px 垂直间距
+    - Section 宽度对齐 miUI：Section 撑满父容器，卡片左右对称留白
+    - Section 之间加 8px 垂直间距
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -2775,7 +2774,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local ARROW_TOP      = math.floor((COLLAPSED_H - 18) / 2)
         local MIUI_TWEEN = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Size = UDim2.new(1, -5, 0, 0)
+        -- ★ Section 撑满父容器（不再缩进），让内容卡片有对称的左右留白
+        sectionFrame.Size = UDim2.new(1, 0, 0, 0)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         sectionFrame.BackgroundTransparency = 1
@@ -2856,8 +2856,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             collapseArrow.Parent = contentContainer
             AddToRegistry(collapseArrow, "ImageColor3", "Text")
         end
-        -- ★ contentHolder：UIListLayout 的 Padding 设为 8，让多个 Section 之间有间距
-        --   并加入左右 UIPadding，让 Section 容器左侧（及右侧）再宽一点
+        -- ★ contentHolder：UIListLayout 的 Padding 设为 0，避免控件上方多出空白
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -10, 0, 0)
         contentHolder.Position = UDim2.new(0.5, 0, 0, CONTENT_TOP)
@@ -2866,14 +2865,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = false
         contentHolder.Parent = contentContainer
-        -- ★ 左右内边距：让 Section 容器左右各多 8px 空间（左侧更宽）
-        local holderPadding = Instance.new("UIPadding")
-        holderPadding.Name = "HolderPadding"
-        holderPadding.PaddingLeft = UDim.new(0, 8)
-        holderPadding.PaddingRight = UDim.new(0, 8)
-        holderPadding.Parent = contentHolder
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 8)   -- ← Section 之间的间距（之前是 0）
+        contentLayout.Padding = UDim.new(0, 0)   -- ← 修改：原来是 6
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         contentLayout.Parent = contentHolder
@@ -2903,10 +2896,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local targetH = getTargetHeight()
             if instant then
                 contentContainer.Size = UDim2.new(1, -10, 0, targetH)
-                sectionFrame.Size = UDim2.new(1, -5, 0, targetH)
+                sectionFrame.Size = UDim2.new(1, 0, 0, targetH)
             else
                 TweenService:Create(contentContainer, MIUI_TWEEN, {Size = UDim2.new(1, -10, 0, targetH)}):Play()
-                TweenService:Create(sectionFrame, MIUI_TWEEN, {Size = UDim2.new(1, -5, 0, targetH)}):Play()
+                TweenService:Create(sectionFrame, MIUI_TWEEN, {Size = UDim2.new(1, 0, 0, targetH)}):Play()
             end
         end
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -3785,7 +3778,8 @@ function Fenglib:CreateWindow(Config)
         PageContent.BackgroundTransparency = 1
         PageContent.Parent = Page
         local PageList = Instance.new("UIListLayout")
-        PageList.Padding = UDim.new(0, 0)   -- ← 修改：原来是 10
+        -- ★ Section 之间保留 8px 垂直间距
+        PageList.Padding = UDim.new(0, 8)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
         PageList.Parent = PageContent
         local function updatePageCanvas()
