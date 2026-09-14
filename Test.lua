@@ -9,6 +9,7 @@
     - Button 已移除图标，文字与其它控件左对齐
     - 修复：UIListLayout 垂直间距导致控件上方“多出一块空”的问题
     - Section 卡片左侧贴边（左侧无留白，右侧保留 5px），Section 之间 8px 间距
+    - Tab 切换：右侧页面不再从上往下滑入，改为 miUI 风格直接切换
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -3768,7 +3769,8 @@ function Fenglib:CreateWindow(Config)
         Page.ScrollBarThickness = 0
         Page.ScrollingEnabled = true
         Page.Visible = false
-        Page.Position = UDim2.new(0, 0, 0, 60)
+        -- ★ miUI 风格：页面不再从上往下滑入，初始位置直接 (0, 0)
+        Page.Position = UDim2.new(0, 0, 0, 0)
         Page.Parent = PageContainer
         Instance.new("UICorner", Page).CornerRadius = UDim.new(0, 16)
         Page.ClipsDescendants = true
@@ -3804,7 +3806,8 @@ function Fenglib:CreateWindow(Config)
             Tween(TabText, {TextTransparency = 0}, 0.2)
             if Window._activeTab then Window._activeTab.page.Visible = false end
             Page.Visible = true
-            Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
+            -- ★ miUI 风格：切换时无位移，直接置于 (0, 0)
+            Page.Position = UDim2.new(0, 0, 0, 0)
             Window._activeTab = state
         end)
         if not Window._activeTab then
