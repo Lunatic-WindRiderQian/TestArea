@@ -8,7 +8,7 @@
     - Section Locked 覆盖层与容器等宽（修复：容器跟 Locked 一样长）
     - Button 已移除图标，文字与其它控件左对齐
     - 修复：UIListLayout 垂直间距导致控件上方“多出一块空”的问题
-    - Section 靠左对齐（左侧贴边，右侧保留 5px），Section 之间 8px 间距
+    - Section 卡片左侧贴边（左侧无留白，右侧保留 5px），Section 之间 8px 间距
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -2773,16 +2773,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local ARROW_TOP      = math.floor((COLLAPSED_H - 18) / 2)
         local MIUI_TWEEN = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
         local sectionFrame = Instance.new("Frame")
-        -- ★ Section 宽度 = 父容器 - 5px，靠左对齐（父 UIListLayout 需为 Left）
+        -- ★ Section 外框 = 父容器 - 5px，靠左对齐
         sectionFrame.Size = UDim2.new(1, -5, 0, 0)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         sectionFrame.BackgroundTransparency = 1
         sectionFrame.ClipsDescendants = true; sectionFrame.Parent = parent
         local contentContainer = Instance.new("Frame")
-        contentContainer.Size = UDim2.new(1, -10, 0, 0)
-        contentContainer.Position = UDim2.new(0.5, 0, 0, 0)
-        contentContainer.AnchorPoint = Vector2.new(0.5, 0)
+        -- ★ 可见卡片：靠左贴边，右侧留 5px
+        contentContainer.Size = UDim2.new(1, -5, 0, 0)
+        contentContainer.Position = UDim2.new(0, 0, 0, 0)
+        contentContainer.AnchorPoint = Vector2.new(0, 0)
         contentContainer.BackgroundTransparency = 0.5
         contentContainer.ClipsDescendants = true
         contentContainer.Parent = sectionFrame
@@ -2855,17 +2856,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             collapseArrow.Parent = contentContainer
             AddToRegistry(collapseArrow, "ImageColor3", "Text")
         end
-        -- ★ contentHolder：UIListLayout 的 Padding 设为 0，避免控件上方多出空白
+        -- ★ contentHolder：卡片内左右各留 5px
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -10, 0, 0)
-        contentHolder.Position = UDim2.new(0.5, 0, 0, CONTENT_TOP)
-        contentHolder.AnchorPoint = Vector2.new(0.5, 0)
+        contentHolder.Position = UDim2.new(0, 5, 0, CONTENT_TOP)
+        contentHolder.AnchorPoint = Vector2.new(0, 0)
         contentHolder.BackgroundTransparency = 1
         contentHolder.AutomaticSize = Enum.AutomaticSize.None
         contentHolder.ClipsDescendants = false
         contentHolder.Parent = contentContainer
         local contentLayout = Instance.new("UIListLayout")
-        contentLayout.Padding = UDim.new(0, 0)   -- ← 修改：原来是 6
+        contentLayout.Padding = UDim.new(0, 0)
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         contentLayout.Parent = contentHolder
@@ -2875,11 +2876,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bottomPadding.LayoutOrder = 9999
         bottomPadding.Parent = contentHolder
         contentContainer.Visible = true; contentHolder.Visible = true
-        -- ★ Locked 覆盖层：贴合可见的圆角容器（contentContainer），与其等宽 + 同圆角 + 同位置
+        -- ★ Locked 覆盖层：贴合可见卡片（contentContainer），靠左贴边
         local lockFrame, lockLabel = createLockOverlay(sectionFrame, lockedTitle)
-        lockFrame.Size = UDim2.new(1, -10, 1, 0)
-        lockFrame.Position = UDim2.new(0.5, 0, 0, 0)
-        lockFrame.AnchorPoint = Vector2.new(0.5, 0)
+        lockFrame.Size = UDim2.new(1, -5, 1, 0)
+        lockFrame.Position = UDim2.new(0, 0, 0, 0)
+        lockFrame.AnchorPoint = Vector2.new(0, 0)
         local _lockCorner = lockFrame:FindFirstChildOfClass("UICorner")
         if _lockCorner and contentCorner then
             _lockCorner.CornerRadius = contentCorner.CornerRadius
@@ -2894,10 +2895,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function updateHeight(instant)
             local targetH = getTargetHeight()
             if instant then
-                contentContainer.Size = UDim2.new(1, -10, 0, targetH)
+                contentContainer.Size = UDim2.new(1, -5, 0, targetH)
                 sectionFrame.Size = UDim2.new(1, -5, 0, targetH)
             else
-                TweenService:Create(contentContainer, MIUI_TWEEN, {Size = UDim2.new(1, -10, 0, targetH)}):Play()
+                TweenService:Create(contentContainer, MIUI_TWEEN, {Size = UDim2.new(1, -5, 0, targetH)}):Play()
                 TweenService:Create(sectionFrame, MIUI_TWEEN, {Size = UDim2.new(1, -5, 0, targetH)}):Play()
             end
         end
@@ -3539,7 +3540,7 @@ function Fenglib:CreateWindow(Config)
     PageContent.BackgroundTransparency = 1
     PageContent.Parent = PageContainer
     local PageList = Instance.new("UIListLayout")
-    PageList.Padding = UDim.new(0, 0)   -- ← 修改：原来是 10
+    PageList.Padding = UDim.new(0, 0)
     PageList.SortOrder = Enum.SortOrder.LayoutOrder
     PageList.Parent = PageContent
     local function updatePageCanvas()
@@ -3780,7 +3781,7 @@ function Fenglib:CreateWindow(Config)
         -- ★ Section 之间保留 8px 垂直间距
         PageList.Padding = UDim.new(0, 8)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
-        -- ★ 关键：靠左对齐，让 Section 只往左侧扩展（右侧保留自身的 -5）
+        -- ★ Section 靠左对齐（左侧贴边）
         PageList.HorizontalAlignment = Enum.HorizontalAlignment.Left
         PageList.Parent = PageContent
         local function updatePageCanvas()
