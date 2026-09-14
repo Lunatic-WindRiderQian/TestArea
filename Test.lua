@@ -5,6 +5,7 @@
     - UserFrame：Input 1 = 副名字（DisplayName，大字）/ Input 2 = 名字（Name，小字）
     - 面板内外双向同步：UserFrame 输入框 ↔ 左下角玩家卡片
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
+    - Section Locked 覆盖层与容器等宽（修复：容器跟 Locked 一样长）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -2870,7 +2871,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bottomPadding.LayoutOrder = 9999
         bottomPadding.Parent = contentHolder
         contentContainer.Visible = true; contentHolder.Visible = true
+        -- ★ Locked 覆盖层：贴合可见的圆角容器（contentContainer），与其等宽 + 同圆角 + 同位置
         local lockFrame, lockLabel = createLockOverlay(sectionFrame, lockedTitle)
+        lockFrame.Size = UDim2.new(1, -10, 1, 0)
+        lockFrame.Position = UDim2.new(0.5, 0, 0, 0)
+        lockFrame.AnchorPoint = Vector2.new(0.5, 0)
+        local _lockCorner = lockFrame:FindFirstChildOfClass("UICorner")
+        if _lockCorner and contentCorner then
+            _lockCorner.CornerRadius = contentCorner.CornerRadius
+        end
         lockFrame.ZIndex = 200; lockFrame.Visible = locked
         local collapsedState = collapsed
         local function getContentHeight() return contentLayout.AbsoluteContentSize.Y or 0 end
