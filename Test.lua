@@ -1,8 +1,8 @@
 --[[
     FengYu-Bento (Test.lua)
-    - BottomFrame = miUI 同款玩家卡片
+    - BottomFrame = miUI 同款玩家卡片（大字=DisplayName，小字=Name）
     - UserSettingButton = miUI 同款 BuilderIcons 字体图标
-    - UserFrame：Input 1 = 副名字（DisplayName）/ Input 2 = 名字（Name）
+    - UserFrame：Input 1 = 副名字（DisplayName，大字）/ Input 2 = 名字（Name，小字）
     - 面板内外双向同步：UserFrame 输入框 ↔ 左下角玩家卡片
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
 ]]
@@ -3181,7 +3181,7 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- 左下角玩家卡片
+    -- 左下角玩家卡片（大字=DisplayName，小字=Name）
     local BottomFrame = Instance.new("Frame")
     BottomFrame.Size = UDim2.new(1, 0, 0, 50)
     BottomFrame.Position = UDim2.new(0, 0, 1, 0)
@@ -3206,26 +3206,26 @@ function Fenglib:CreateWindow(Config)
     AccountProfile.Parent = BottomFrame
     Instance.new("UICorner", AccountProfile).CornerRadius = UDim.new(1, 0)
 
-    -- 大字（名字）默认 = game.Players.LocalPlayer.Name
+    -- 大字（副名字）默认 = DisplayName
     local AccountName = Instance.new("TextLabel")
     AccountName.Size = UDim2.new(0, 100, 0, 25)
     AccountName.Position = UDim2.new(0, 55, 0, 5)
     AccountName.BackgroundTransparency = 1
     AccountName.Font = Enum.Font.GothamBold
-    AccountName.Text = LocalPlayer.Name
+    AccountName.Text = LocalPlayer.DisplayName
     AccountName.TextSize = 14
     AccountName.TextXAlignment = Enum.TextXAlignment.Left
     AccountName.TextTruncate = Enum.TextTruncate.SplitWord
     AccountName.Parent = BottomFrame
     AddToRegistry(AccountName, "TextColor3", "Text")
 
-    -- 小字（副名字）默认 = DisplayName
+    -- 小字（名字）默认 = Name
     local ExpireLabel = Instance.new("TextLabel")
     ExpireLabel.Size = UDim2.new(0, 120, 0, 15)
     ExpireLabel.Position = UDim2.new(0, 55, 0, 25)
     ExpireLabel.BackgroundTransparency = 1
     ExpireLabel.Font = Enum.Font.GothamMedium
-    ExpireLabel.Text = LocalPlayer.DisplayName
+    ExpireLabel.Text = LocalPlayer.Name
     ExpireLabel.TextSize = 10
     ExpireLabel.TextTransparency = 0.65
     ExpireLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -3296,8 +3296,8 @@ function Fenglib:CreateWindow(Config)
     local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
 
     -- ① 玩家卡片
-    -- Input 1 = 副名字 (DisplayName) / Input 2 = 名字 (Name)
-    -- OnChanged 保证：面板内输入框 → 左下角 BottomFrame 实时同步
+    -- Input 1 = 副名字 (DisplayName) → 左下角大字
+    -- Input 2 = 名字 (Name)         → 左下角小字
     local userCard = settingsBuilder:UserFrame({
         Name    = LocalPlayer.DisplayName,
         Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
@@ -3309,11 +3309,11 @@ function Fenglib:CreateWindow(Config)
         Defaults     = { LocalPlayer.DisplayName, LocalPlayer.Name },
         OnChanged = function(idx, text)
             if idx == 1 then
-                -- 副名字 → 左下角小字
-                ExpireLabel.Text = (text ~= "" and text) or LocalPlayer.DisplayName
+                -- 副名字(DisplayName) → 左下角大字
+                AccountName.Text = (text ~= "" and text) or LocalPlayer.DisplayName
             elseif idx == 2 then
-                -- 名字 → 左下角大字
-                AccountName.Text = (text ~= "" and text) or LocalPlayer.Name
+                -- 名字(Name) → 左下角小字
+                ExpireLabel.Text = (text ~= "" and text) or LocalPlayer.Name
             end
         end,
         Parent = SettingsPanel,
@@ -3957,9 +3957,8 @@ function Fenglib:CreateWindow(Config)
             AccountProfile.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
             AccountProfile.BackgroundTransparency = 0.25
             AccountProfile.ImageColor3 = CurrentTheme.Accent
-            AccountName.Text = cfg.Username or "Settings"
-            ExpireLabel.Text = cfg.Expires  or "Customize menu"
-            -- 非玩家模式：把输入框也同步一下（保持内部一致）
+            AccountName.Text = cfg.Expires  or "Customize menu"
+            ExpireLabel.Text = cfg.Username or "Settings"
             if Window._userCard then
                 Window._userCard:SetValue(1, cfg.Expires  or "Customize menu")
                 Window._userCard:SetValue(2, cfg.Username or "Settings")
@@ -3970,12 +3969,8 @@ function Fenglib:CreateWindow(Config)
                     Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
             AccountProfile.BackgroundColor3 = Color3.new(1, 1, 1)
             AccountProfile.BackgroundTransparency = 1
-            AccountName.Text = cfg.Username or LocalPlayer.Name
-            ExpireLabel.Text = cfg.Expires  or LocalPlayer.DisplayName
-            -- ★ 关键同步：把 SetAccount 传入的值写回两个输入框
-            --   Input 1 = 副名字(DisplayName) ← Expires
-            --   Input 2 = 名字(Name)         ← Username
-            --   SetValue → Box.Text 变化 → onChanged → 再写 BottomFrame，天然双向
+            AccountName.Text = cfg.Expires  or LocalPlayer.DisplayName
+            ExpireLabel.Text = cfg.Username or LocalPlayer.Name
             if Window._userCard then
                 Window._userCard:SetValue(1, cfg.Expires  or LocalPlayer.DisplayName)
                 Window._userCard:SetValue(2, cfg.Username or LocalPlayer.Name)
