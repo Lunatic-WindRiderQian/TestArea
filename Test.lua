@@ -2,7 +2,7 @@
     FengYu-Bento (Test.lua)
     - BottomFrame = miUI 同款玩家卡片
     - UserSettingButton = miUI 同款 BuilderIcons 字体图标
-    - UserFrame：Input 1 = 名字（LocalPlayer.Name）/ Input 2 = 副名字（DisplayName）
+    - UserFrame：Input 1 = 副名字（DisplayName）/ Input 2 = 名字（Name）
     - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
 ]]
 local TweenService = game:GetService("TweenService")
@@ -1570,7 +1570,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
     -- ═══════════════════════════════════════════════════════════
     -- UserFrame：玩家卡片 + 按钮展开双 Input
-    -- Input 1 = 名字（大字）/ Input 2 = 副名字（小字）
+    -- Input 1 = 副名字（DisplayName，大字） / Input 2 = 名字（Name，小字）
     -- ═══════════════════════════════════════════════════════════
     child.UserFrame = function(_, config)
         config = safeConfig(config)
@@ -1610,7 +1610,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         LogoImage.Parent = TopBar
         Instance.new("UICorner", LogoImage).CornerRadius = UDim.new(1, 0)
 
-        -- 大字（名字）
+        -- 大字（Input 1 → 副名字 / DisplayName）
         local UserLabel = Instance.new("TextLabel")
         UserLabel.Size = UDim2.new(1, -110, 0, 15)
         UserLabel.Position = UDim2.new(0, 65, 0, 12)
@@ -1625,7 +1625,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         UserLabel.Parent = TopBar
         AddToRegistry(UserLabel, "TextColor3", "Text")
 
-        -- 小字（副名字）
+        -- 小字（Input 2 → 名字 / Name）
         local UserStatusLabel = Instance.new("TextLabel")
         UserStatusLabel.Size = UDim2.new(1, -110, 0, 15)
         UserStatusLabel.Position = UDim2.new(0, 65, 0, 27)
@@ -1741,7 +1741,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Box.Focused:Connect(function() Tween(boxStroke, {Transparency = 0.2}, 0.15) end)
             Box.FocusLost:Connect(function() Tween(boxStroke, {Transparency = 0.65}, 0.15) end)
 
-            -- ★ 实时联动：input 1 → 名字（大字）/ input 2 → 副名字（小字）
+            -- ★ 实时联动：input 1 → 大字（副名字/DisplayName）/ input 2 → 小字（名字/Name）
             Box:GetPropertyChangedSignal("Text"):Connect(function()
                 local txt = Box.Text
                 if i == 1 then
@@ -3283,23 +3283,23 @@ function Fenglib:CreateWindow(Config)
     local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
 
     -- ① 玩家卡片
-    -- Input 1 = 名字 (LocalPlayer.Name) / Input 2 = 副名字 (LocalPlayer.DisplayName)
+    -- Input 1 = 副名字 (DisplayName) / Input 2 = 名字 (Name)
     local userCard = settingsBuilder:UserFrame({
-        Name    = LocalPlayer.Name,
+        Name    = LocalPlayer.DisplayName,
         Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
             Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150),
-        Expires = LocalPlayer.DisplayName,
+        Expires = LocalPlayer.Name,
         ButtonIcon = 9405931578,
-        Names        = { "名字", "副名字" },
-        Placeholders = { "输入名字", "输入副名字" },
-        Defaults     = { LocalPlayer.Name, LocalPlayer.DisplayName },
+        Names        = { "副名字", "名字" },
+        Placeholders = { "输入副名字", "输入名字" },
+        Defaults     = { LocalPlayer.DisplayName, LocalPlayer.Name },
         OnChanged = function(idx, text)
             if idx == 1 then
-                -- 名字 → 左下角大字
-                AccountName.Text = (text ~= "" and text) or LocalPlayer.Name
-            elseif idx == 2 then
                 -- 副名字 → 左下角小字
                 ExpireLabel.Text = (text ~= "" and text) or LocalPlayer.DisplayName
+            elseif idx == 2 then
+                -- 名字 → 左下角大字
+                AccountName.Text = (text ~= "" and text) or LocalPlayer.Name
             end
         end,
         Parent = SettingsPanel,
@@ -3957,8 +3957,9 @@ function Fenglib:CreateWindow(Config)
         end
 
         if Window._userCard then
-            Window._userCard:SetUsername(cfg.Username or LocalPlayer.Name)
-            Window._userCard:SetExpires(cfg.Expires or LocalPlayer.DisplayName)
+            -- UserFrame 中 UserLabel 大字 = 副名字/DisplayName，UserStatusLabel 小字 = 名字/Name
+            Window._userCard:SetUsername(cfg.Username or LocalPlayer.DisplayName)
+            Window._userCard:SetExpires(cfg.Expires  or LocalPlayer.Name)
             if cfg.Profile then Window._userCard:SetProfile(cfg.Profile) end
         end
     end
