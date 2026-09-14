@@ -9,7 +9,7 @@
     - Button 已移除图标，文字与其它控件左对齐
     - 修复：UIListLayout 垂直间距导致控件上方“多出一块空”的问题
     - Section 卡片左侧贴边（左侧无留白，右侧保留 5px），Section 之间 8px 间距
-    - Tab 切换：右侧页面不再从上往下滑入，改为 miUI 风格直接切换
+    - 新增：CreateHomeTab（从 miUI 搬运，适配 FengYu-Bento 主题）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -432,7 +432,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
     local child = {}
 
-    -- ★ miRow 改为垂直居中，行内自带分隔线，不再需要外部 UIListLayout 的间距
     local function miRow(parentFrame, height)
         height = height or 42
         local row = Instance.new("Frame")
@@ -469,7 +468,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return icon
     end
 
-    -- ★ miLabel 默认按 y 参数定位，同时支持 AnchorPoint 垂直居中（当 h 传入 0.5 时）
     local function miLabel(parentFrame, text, x, y, w, size)
         local lbl = Instance.new("TextLabel")
         lbl.Text = text or ""
@@ -1575,9 +1573,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
     -- ═══════════════════════════════════════════════════════════
     -- UserFrame：玩家卡片 + 按钮展开双 Input
-    -- Input 1 = 副名字（DisplayName，大字） / Input 2 = 名字（Name，小字）
-    -- 输入框 → 卡片：实时联动（通过 onChanged 回调）
-    -- 卡片 → 输入框：SetValue 写回（会再次触发 onChanged，天然同步）
     -- ═══════════════════════════════════════════════════════════
     child.UserFrame = function(_, config)
         config = safeConfig(config)
@@ -1617,7 +1612,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         LogoImage.Parent = TopBar
         Instance.new("UICorner", LogoImage).CornerRadius = UDim.new(1, 0)
 
-        -- 大字（Input 1 → 副名字 / DisplayName）
         local UserLabel = Instance.new("TextLabel")
         UserLabel.Size = UDim2.new(1, -110, 0, 15)
         UserLabel.Position = UDim2.new(0, 65, 0, 12)
@@ -1632,7 +1626,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         UserLabel.Parent = TopBar
         AddToRegistry(UserLabel, "TextColor3", "Text")
 
-        -- 小字（Input 2 → 名字 / Name）
         local UserStatusLabel = Instance.new("TextLabel")
         UserStatusLabel.Size = UDim2.new(1, -110, 0, 15)
         UserStatusLabel.Position = UDim2.new(0, 65, 0, 27)
@@ -1748,7 +1741,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Box.Focused:Connect(function() Tween(boxStroke, {Transparency = 0.2}, 0.15) end)
             Box.FocusLost:Connect(function() Tween(boxStroke, {Transparency = 0.65}, 0.15) end)
 
-            -- ★ 实时联动：input 1 → 大字（副名字/DisplayName）/ input 2 → 小字（名字/Name）
             Box:GetPropertyChangedSignal("Text"):Connect(function()
                 local txt = Box.Text
                 if i == 1 then
@@ -1776,13 +1768,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         if Btn then Btn.MouseButton1Click:Connect(toggle) end
 
         local self = {}
-        -- 兼容：SetUsername 语义对齐“名字”(Name) → Boxes[2]
         function self:SetUsername(n)
             local t = tostring(n or "")
             if Boxes[2] then Boxes[2].Text = t end
             UserStatusLabel.Text = t
         end
-        -- 兼容：SetExpires 语义对齐“副名字”(DisplayName) → Boxes[1]
         function self:SetExpires(e)
             local t = tostring(e or "")
             if Boxes[1] then Boxes[1].Text = t end
@@ -2774,14 +2764,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local ARROW_TOP      = math.floor((COLLAPSED_H - 18) / 2)
         local MIUI_TWEEN = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
         local sectionFrame = Instance.new("Frame")
-        -- ★ Section 外框 = 父容器 - 5px，靠左对齐
         sectionFrame.Size = UDim2.new(1, -5, 0, 0)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         sectionFrame.BackgroundTransparency = 1
         sectionFrame.ClipsDescendants = true; sectionFrame.Parent = parent
         local contentContainer = Instance.new("Frame")
-        -- ★ 可见卡片：靠左贴边，右侧留 5px
         contentContainer.Size = UDim2.new(1, -5, 0, 0)
         contentContainer.Position = UDim2.new(0, 0, 0, 0)
         contentContainer.AnchorPoint = Vector2.new(0, 0)
@@ -2857,7 +2845,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             collapseArrow.Parent = contentContainer
             AddToRegistry(collapseArrow, "ImageColor3", "Text")
         end
-        -- ★ contentHolder：卡片内左右各留 5px
         local contentHolder = Instance.new("Frame")
         contentHolder.Size = UDim2.new(1, -10, 0, 0)
         contentHolder.Position = UDim2.new(0, 5, 0, CONTENT_TOP)
@@ -2877,7 +2864,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         bottomPadding.LayoutOrder = 9999
         bottomPadding.Parent = contentHolder
         contentContainer.Visible = true; contentHolder.Visible = true
-        -- ★ Locked 覆盖层：贴合可见卡片（contentContainer），靠左贴边
         local lockFrame, lockLabel = createLockOverlay(sectionFrame, lockedTitle)
         lockFrame.Size = UDim2.new(1, -5, 1, 0)
         lockFrame.Position = UDim2.new(0, 0, 0, 0)
@@ -3196,7 +3182,6 @@ function Fenglib:CreateWindow(Config)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     task.spawn(updateTabCanvas)
 
-    -- 左下角玩家卡片（大字=DisplayName，小字=Name）
     local BottomFrame = Instance.new("Frame")
     BottomFrame.Size = UDim2.new(1, 0, 0, 50)
     BottomFrame.Position = UDim2.new(0, 0, 1, 0)
@@ -3221,7 +3206,6 @@ function Fenglib:CreateWindow(Config)
     AccountProfile.Parent = BottomFrame
     Instance.new("UICorner", AccountProfile).CornerRadius = UDim.new(1, 0)
 
-    -- 大字（副名字）默认 = DisplayName
     local AccountName = Instance.new("TextLabel")
     AccountName.Size = UDim2.new(0, 100, 0, 25)
     AccountName.Position = UDim2.new(0, 55, 0, 5)
@@ -3234,7 +3218,6 @@ function Fenglib:CreateWindow(Config)
     AccountName.Parent = BottomFrame
     AddToRegistry(AccountName, "TextColor3", "Text")
 
-    -- 小字（名字）默认 = Name
     local ExpireLabel = Instance.new("TextLabel")
     ExpireLabel.Size = UDim2.new(0, 120, 0, 15)
     ExpireLabel.Position = UDim2.new(0, 55, 0, 25)
@@ -3273,7 +3256,6 @@ function Fenglib:CreateWindow(Config)
     BottomClick.Text = ""; BottomClick.AutoButtonColor = false
     BottomClick.Parent = BottomFrame
 
-    -- 设置面板
     local SettingsPanel = Instance.new("Frame")
     SettingsPanel.Size = UDim2.new(0, 220, 0, 220)
     SettingsPanel.AnchorPoint = Vector2.new(0, 1)
@@ -3310,9 +3292,6 @@ function Fenglib:CreateWindow(Config)
 
     local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
 
-    -- ① 玩家卡片
-    -- Input 1 = 副名字 (DisplayName) → 左下角大字
-    -- Input 2 = 名字 (Name)         → 左下角小字
     local userCard = settingsBuilder:UserFrame({
         Name    = LocalPlayer.DisplayName,
         Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
@@ -3324,10 +3303,8 @@ function Fenglib:CreateWindow(Config)
         Defaults     = { LocalPlayer.DisplayName, LocalPlayer.Name },
         OnChanged = function(idx, text)
             if idx == 1 then
-                -- 副名字(DisplayName) → 左下角大字
                 AccountName.Text = (text ~= "" and text) or LocalPlayer.DisplayName
             elseif idx == 2 then
-                -- 名字(Name) → 左下角小字
                 ExpireLabel.Text = (text ~= "" and text) or LocalPlayer.Name
             end
         end,
@@ -3335,7 +3312,6 @@ function Fenglib:CreateWindow(Config)
     })
     Window._userCard = userCard
 
-    -- ② 主题
     settingsBuilder:Dropdown({
         Name = "主题",
         Values = { "Dark", "Charcoal", "AMOLED" },
@@ -3344,7 +3320,6 @@ function Fenglib:CreateWindow(Config)
         Callback = function(v) Fenglib:SetTheme(v) end,
     })
 
-    -- ③ 文字渐变
     settingsBuilder:Toggle({
         Name = "文字渐变",
         Value = true,
@@ -3352,7 +3327,6 @@ function Fenglib:CreateWindow(Config)
         Callback = function(enabled) TextGradient:SetEnabled(enabled) end,
     })
 
-    -- ④ 自定义光标
     settingsBuilder:Toggle({
         Name = "自定义光标",
         Value = false,
@@ -3415,7 +3389,6 @@ function Fenglib:CreateWindow(Config)
         if settingsOpen then closeSettings() else openSettings() end
     end)
 
-    -- 右侧菜单
     local RightMenuFrame = Instance.new("Frame")
     RightMenuFrame.Size = UDim2.new(1, -176, 1, 0)
     RightMenuFrame.Position = UDim2.new(0, 176, 0, 0)
@@ -3769,8 +3742,7 @@ function Fenglib:CreateWindow(Config)
         Page.ScrollBarThickness = 0
         Page.ScrollingEnabled = true
         Page.Visible = false
-        -- ★ miUI 风格：页面不再从上往下滑入，初始位置直接 (0, 0)
-        Page.Position = UDim2.new(0, 0, 0, 0)
+        Page.Position = UDim2.new(0, 0, 0, 60)
         Page.Parent = PageContainer
         Instance.new("UICorner", Page).CornerRadius = UDim.new(0, 16)
         Page.ClipsDescendants = true
@@ -3780,10 +3752,8 @@ function Fenglib:CreateWindow(Config)
         PageContent.BackgroundTransparency = 1
         PageContent.Parent = Page
         local PageList = Instance.new("UIListLayout")
-        -- ★ Section 之间保留 8px 垂直间距
         PageList.Padding = UDim.new(0, 8)
         PageList.SortOrder = Enum.SortOrder.LayoutOrder
-        -- ★ Section 靠左对齐（左侧贴边）
         PageList.HorizontalAlignment = Enum.HorizontalAlignment.Left
         PageList.Parent = PageContent
         local function updatePageCanvas()
@@ -3806,8 +3776,7 @@ function Fenglib:CreateWindow(Config)
             Tween(TabText, {TextTransparency = 0}, 0.2)
             if Window._activeTab then Window._activeTab.page.Visible = false end
             Page.Visible = true
-            -- ★ miUI 风格：切换时无位移，直接置于 (0, 0)
-            Page.Position = UDim2.new(0, 0, 0, 0)
+            Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
             Window._activeTab = state
         end)
         if not Window._activeTab then
@@ -3834,6 +3803,548 @@ function Fenglib:CreateWindow(Config)
             end
         end)
         return createSectionBuilder(PageContent, PageContent, 330, 1, Window)
+    end
+
+    -- ═══════════════════════════════════════════════════════════════
+    -- CreateHomeTab —— 从 miUI 搬运，适配 FengYu-Bento 主题
+    -- ═══════════════════════════════════════════════════════════════
+    function Window:CreateHomeTab(Config)
+        Config = Config or {}
+        local title           = Config.Title or Config.Name or "Dashboard"
+        local icon            = Config.Icon
+        local discordInvite   = tostring(Config.DiscordInvite or "")
+        local supportedExecutors   = Config.SupportedExecutors or {}
+        local unsupportedExecutors = Config.UnsupportedExecutors or {}
+        local scriptChangelog = Config.ScriptChangelog or Config.Changelog or {}
+        local uiChangelog     = Config.UIChangelog or Config.UiChangelog or {}
+        local showDetails     = Config.ShowDetailsSegment ~= false
+        local showScript      = Config.ShowScriptSegment ~= false
+        local showUI          = Config.ShowUISegment ~= false
+
+        local TabBuilder = Window:Tab(title, icon)
+        local tabState = Window._tabs[#Window._tabs]
+        if not tabState then return TabBuilder end
+        local Page = tabState.page
+        local PageContent = Page:FindFirstChildWhichIsA("Frame")
+        if not PageContent then return TabBuilder end
+
+        local Player = LocalPlayer
+        local ExecutorName = "Roblox Studio"
+        local PlaceName = "Unknown Place"
+        local Region = "Unknown"
+        local TimeFunction = RunService:IsRunning() and time or os.clock
+        local StartedAt = TimeFunction()
+        local FrameTimes = {}
+
+        pcall(function()
+            if identifyexecutor then
+                ExecutorName = tostring(select(1, identifyexecutor()))
+            end
+        end)
+        pcall(function()
+            PlaceName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+        end)
+        pcall(function()
+            Region = game:GetService("LocalizationService"):GetCountryRegionForPlayerAsync(Player)
+        end)
+
+        local function Panel(parent, size, pos)
+            local p = Instance.new("Frame")
+            p.BackgroundColor3 = CurrentTheme.Top
+            p.BackgroundTransparency = 0.25
+            p.BorderSizePixel = 0
+            p.ClipsDescendants = true
+            p.Size = size
+            p.Position = pos or UDim2.fromOffset(0, 0)
+            p.Parent = parent
+            Instance.new("UICorner", p).CornerRadius = UDim.new(0, 8)
+            local s = Instance.new("UIStroke")
+            s.Color = CurrentTheme.Stroke
+            s.Transparency = 0.68
+            s.Parent = p
+            table.insert(ThemeListeners, function()
+                p.BackgroundColor3 = CurrentTheme.Top
+                s.Color = CurrentTheme.Stroke
+            end)
+            return p
+        end
+
+        local function MakeText(parent, txt, sz, bold, transp)
+            local l = Instance.new("TextLabel")
+            l.BackgroundTransparency = 1
+            l.BorderSizePixel = 0
+            l.Font = bold and Enum.Font.GothamBold or Enum.Font.GothamMedium
+            l.Text = tostring(txt or "")
+            l.TextColor3 = CurrentTheme.Text
+            l.TextSize = sz or 12
+            l.TextTransparency = transp or 0
+            l.TextXAlignment = Enum.TextXAlignment.Left
+            l.TextYAlignment = Enum.TextYAlignment.Center
+            l.TextTruncate = Enum.TextTruncate.AtEnd
+            l.Parent = parent
+            AddToRegistry(l, "TextColor3", "Text")
+            return l
+        end
+
+        local function MakeIcon(parent, src, sz, color)
+            local i = Instance.new("ImageLabel")
+            i.BackgroundTransparency = 1
+            i.BorderSizePixel = 0
+            i.Size = UDim2.fromOffset(sz or 16, sz or 16)
+            i.ScaleType = Enum.ScaleType.Fit
+            i.ImageColor3 = color or CurrentTheme.Text
+            if type(src) == "number" then
+                i.Image = "rbxassetid://" .. src
+            elseif type(src) == "string" and src ~= "" then
+                if tonumber(src) then
+                    i.Image = "rbxassetid://" .. src
+                elseif src:match("^rbxasset") or src:match("^http") then
+                    i.Image = src
+                else
+                    i.Image = "rbxassetid://" .. src
+                end
+            end
+            i.Parent = parent
+            table.insert(ThemeListeners, function()
+                i.ImageColor3 = CurrentTheme.Text
+            end)
+            return i
+        end
+
+        local function Greeting()
+            local h = os.date("*t").hour
+            if h >= 4 and h < 12 then return "Good Morning" end
+            if h >= 12 and h < 19 then return "How's Your Day Going?" end
+            if h >= 19 and h <= 23 then return "Sweet Dreams" end
+            return "You should be asleep"
+        end
+
+        local function Elapsed()
+            local e = math.max(0, TimeFunction() - StartedAt)
+            if e < 60 then return math.floor(e) .. "s" end
+            if e < 3600 then return math.floor(e / 60) .. "m" end
+            return math.floor(e / 3600) .. "h"
+        end
+
+        local Root = Instance.new("Frame")
+        Root.Name = "HomeDashboard"
+        Root.Size = UDim2.new(1, -8, 0, 0)
+        Root.AutomaticSize = Enum.AutomaticSize.Y
+        Root.BackgroundTransparency = 1
+        Root.BorderSizePixel = 0
+        Root.Parent = PageContent
+        local RL = Instance.new("UIListLayout")
+        RL.Padding = UDim.new(0, 8)
+        RL.SortOrder = Enum.SortOrder.LayoutOrder
+        RL.Parent = Root
+
+        local Profile = Panel(Root, UDim2.new(1, 0, 0, 74))
+        Profile.LayoutOrder = 1
+
+        local AvBox = Panel(Profile, UDim2.fromOffset(58, 58), UDim2.fromOffset(10, 8))
+        AvBox.BackgroundTransparency = 0.2
+        local Av = Instance.new("ImageLabel")
+        Av.BackgroundTransparency = 1
+        Av.BorderSizePixel = 0
+        Av.Size = UDim2.fromScale(1, 1)
+        Av.Image = Players:GetUserThumbnailAsync(
+            Player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+        Av.Parent = AvBox
+        Instance.new("UICorner", Av).CornerRadius = UDim.new(0, 8)
+
+        local Welcome = MakeText(Profile, "Hello, " .. Player.DisplayName, 18, true, 0)
+        Welcome.Position = UDim2.new(0, 82, 0, 17)
+        Welcome.Size = UDim2.new(1, -98, 0, 24)
+        TextGradient:Add(Welcome)
+
+        local UserLbl = MakeText(Profile, "@" .. Player.Name, 12, false, 0.35)
+        UserLbl.Position = UDim2.new(0, 82, 0, 41)
+        UserLbl.Size = UDim2.new(1, -98, 0, 18)
+
+        local SegBox = Panel(Root, UDim2.new(1, 0, 0, 48))
+        SegBox.LayoutOrder = 2
+        local SL = Instance.new("UIListLayout")
+        SL.FillDirection = Enum.FillDirection.Horizontal
+        SL.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        SL.VerticalAlignment = Enum.VerticalAlignment.Center
+        SL.SortOrder = Enum.SortOrder.LayoutOrder
+        SL.Padding = UDim.new(0, 8)
+        SL.Parent = SegBox
+
+        local CH = Instance.new("Frame")
+        CH.BackgroundTransparency = 1
+        CH.BorderSizePixel = 0
+        CH.Size = UDim2.new(1, 0, 0, 0)
+        CH.AutomaticSize = Enum.AutomaticSize.Y
+        CH.LayoutOrder = 3
+        CH.Parent = Root
+
+        local function NewPage(parent)
+            local f = Instance.new("Frame")
+            f.BackgroundTransparency = 1
+            f.BorderSizePixel = 0
+            f.Size = UDim2.new(1, 0, 0, 0)
+            f.AutomaticSize = Enum.AutomaticSize.Y
+            f.Visible = false
+            f.Parent = parent
+            local l = Instance.new("UIListLayout")
+            l.Padding = UDim.new(0, 8)
+            l.SortOrder = Enum.SortOrder.LayoutOrder
+            l.Parent = f
+            return f, l
+        end
+
+        local DetailsPage = NewPage(CH)
+        local ScriptPage  = NewPage(CH)
+        local UiPage      = NewPage(CH)
+
+        local segButtons = {}
+        local function MakeSegment(name, text, ic)
+            local bt = Panel(SegBox, UDim2.new(0, 140, 0, 34))
+            bt.BackgroundTransparency = 0.55
+
+            local icn = MakeIcon(bt, ic, 16, CurrentTheme.Text)
+            icn.Position = UDim2.new(0, 12, 0.5, -8)
+            icn.ImageTransparency = 0.3
+
+            local lbl = MakeText(bt, text, 12, true, 0.25)
+            lbl.Position = UDim2.new(0, 36, 0, 0)
+            lbl.Size = UDim2.new(1, -44, 1, 0)
+
+            segButtons[name] = { Root = bt, Icon = icn, Label = lbl }
+
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.fromScale(1, 1)
+            btn.BackgroundTransparency = 1
+            btn.Text = ""
+            btn.AutoButtonColor = false
+            btn.Parent = bt
+
+            btn.MouseButton1Click:Connect(function()
+                DetailsPage.Visible = (name == "Details")
+                ScriptPage.Visible  = (name == "Script")
+                UiPage.Visible      = (name == "UI")
+                for n, s in pairs(segButtons) do
+                    local active = (n == name)
+                    Tween(s.Root, {BackgroundTransparency = active and 0.08 or 0.55}, 0.2)
+                    s.Icon.ImageColor3 = active and CurrentTheme.Accent or CurrentTheme.Text
+                    s.Label.TextColor3 = active and CurrentTheme.Accent or CurrentTheme.Text
+                    s.Label.TextTransparency = active and 0 or 0.25
+                end
+            end)
+
+            btn.MouseEnter:Connect(function()
+                if bt.BackgroundTransparency > 0.2 then
+                    Tween(bt, {BackgroundTransparency = 0.35}, 0.15)
+                end
+            end)
+            btn.MouseLeave:Connect(function()
+                local cur = DetailsPage.Visible and "Details"
+                    or (ScriptPage.Visible and "Script" or "UI")
+                if cur ~= name then
+                    Tween(bt, {BackgroundTransparency = 0.55}, 0.15)
+                end
+            end)
+        end
+
+        if showDetails then MakeSegment("Details", "Details And Info",   9904843409) end
+        if showScript  then MakeSegment("Script",  "Script Changelog",   9904743710) end
+        if showUI      then MakeSegment("UI",      "UI Changelog",       9904750236) end
+
+        local DetailsWrapper = Instance.new("Frame")
+        DetailsWrapper.BackgroundTransparency = 1
+        DetailsWrapper.BorderSizePixel = 0
+        DetailsWrapper.Size = UDim2.new(1, 0, 0, 0)
+        DetailsWrapper.AutomaticSize = Enum.AutomaticSize.Y
+        DetailsWrapper.LayoutOrder = 1
+        DetailsWrapper.Parent = DetailsPage
+        local DWL = Instance.new("UIListLayout")
+        DWL.FillDirection = Enum.FillDirection.Horizontal
+        DWL.SortOrder = Enum.SortOrder.LayoutOrder
+        DWL.Padding = UDim.new(0, 8)
+        DWL.Parent = DetailsWrapper
+
+        local LeftCol = Instance.new("Frame")
+        LeftCol.BackgroundTransparency = 1
+        LeftCol.BorderSizePixel = 0
+        LeftCol.Size = UDim2.new(0.52, -4, 0, 0)
+        LeftCol.AutomaticSize = Enum.AutomaticSize.Y
+        LeftCol.LayoutOrder = 1
+        LeftCol.Parent = DetailsWrapper
+        local LCL = Instance.new("UIListLayout")
+        LCL.Padding = UDim.new(0, 8)
+        LCL.SortOrder = Enum.SortOrder.LayoutOrder
+        LCL.Parent = LeftCol
+
+        local RightCol = Instance.new("Frame")
+        RightCol.BackgroundTransparency = 1
+        RightCol.BorderSizePixel = 0
+        RightCol.Size = UDim2.new(0.48, -4, 0, 0)
+        RightCol.AutomaticSize = Enum.AutomaticSize.Y
+        RightCol.LayoutOrder = 2
+        RightCol.Parent = DetailsWrapper
+        local RCL = Instance.new("UIListLayout")
+        RCL.Padding = UDim.new(0, 8)
+        RCL.SortOrder = Enum.SortOrder.LayoutOrder
+        RCL.Parent = RightCol
+
+        local ServerCard = Panel(LeftCol, UDim2.new(1, 0, 0, 162))
+        ServerCard.LayoutOrder = 1
+
+        local SvrT = MakeText(ServerCard, "Server", 15, true, 0)
+        SvrT.Position = UDim2.fromOffset(16, 12)
+        SvrT.Size = UDim2.new(1, -32, 0, 18)
+
+        local SvrS = MakeText(ServerCard, "Information about your current session",
+            10, false, 0.48)
+        SvrS.Position = UDim2.fromOffset(16, 30)
+        SvrS.Size = UDim2.new(1, -32, 0, 14)
+
+        local StatLabels = {}
+        local function MakeStat(parent, ttl, val, xScale, y, wScale)
+            local st = Panel(parent, UDim2.new(wScale, -6, 0, 42),
+                UDim2.new(xScale, 3, 0, y))
+            st.BackgroundTransparency = 0.3
+            local t = MakeText(st, ttl, 10, true, 0.13)
+            t.Position = UDim2.fromOffset(10, 6)
+            t.Size = UDim2.new(1, -20, 0, 13)
+            local v = MakeText(st, val, 10, false, 0.35)
+            v.Position = UDim2.fromOffset(10, 20)
+            v.Size = UDim2.new(1, -20, 0, 13)
+            return v
+        end
+
+        StatLabels.Players  = MakeStat(ServerCard, "Players",          "0 playing", 0,    58, 0.5)
+        StatLabels.Capacity = MakeStat(ServerCard, "Maximum Players",  tostring(Players.MaxPlayers).." can join", 0.5, 58, 0.5)
+        StatLabels.Latency  = MakeStat(ServerCard, "Latency",          "...",       0,    104, 0.33)
+        StatLabels.Region   = MakeStat(ServerCard, "Server Region",    tostring(Region), 0.33, 104, 0.34)
+        StatLabels.Runtime  = MakeStat(ServerCard, "In server for",    "0s",        0.67, 104, 0.33)
+
+        local DiscordCard = Panel(LeftCol, UDim2.new(1, 0, 0, 68))
+        DiscordCard.LayoutOrder = 2
+        DiscordCard.BackgroundColor3 = CurrentTheme.Accent
+        DiscordCard.BackgroundTransparency = 0.18
+        table.insert(ThemeListeners, function()
+            DiscordCard.BackgroundColor3 = CurrentTheme.Accent
+        end)
+        local DGrad = Instance.new("UIGradient")
+        DGrad.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, CurrentTheme.Accent),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(13, 17, 22)),
+        })
+        DGrad.Parent = DiscordCard
+
+        local DTitle = MakeText(DiscordCard, "Discord", 20, true, 0)
+        DTitle.Position = UDim2.fromOffset(18, 12)
+        DTitle.Size = UDim2.new(1, -36, 0, 25)
+
+        local DSub = MakeText(DiscordCard,
+            discordInvite ~= "" and "Tap to copy Discord invite" or "No Discord invite configured",
+            12, false, 0.25)
+        DSub.Position = UDim2.fromOffset(18, 38)
+        DSub.Size = UDim2.new(1, -36, 0, 18)
+
+        local DClic = Instance.new("TextButton")
+        DClic.Size = UDim2.fromScale(1, 1)
+        DClic.BackgroundTransparency = 1
+        DClic.Text = ""
+        DClic.AutoButtonColor = false
+        DClic.Parent = DiscordCard
+        DClic.MouseButton1Click:Connect(function()
+            if discordInvite == "" then return end
+            local Link = "https://discord.gg/" .. discordInvite
+            pcall(function()
+                if setclipboard then setclipboard(Link)
+                elseif toclipboard then toclipboard(Link)
+                elseif set_clipboard then set_clipboard(Link) end
+            end)
+        end)
+
+        local ExecutorCard = Panel(RightCol, UDim2.new(1, 0, 0, 92))
+        ExecutorCard.LayoutOrder = 1
+
+        local ExecStatus = "Unknown"
+        local ExecColor = CurrentTheme.Accent
+        if table.find(supportedExecutors, ExecutorName) then
+            ExecStatus = "Your executor seems to support this script."
+            ExecColor = Color3.fromRGB(45, 180, 115)
+        elseif table.find(unsupportedExecutors, ExecutorName) then
+            ExecStatus = "Your executor may not support this script."
+            ExecColor = Color3.fromRGB(220, 70, 70)
+        end
+
+        ExecutorCard.BackgroundColor3 = ExecColor
+        ExecutorCard.BackgroundTransparency = 0.18
+        local EGrad = Instance.new("UIGradient")
+        EGrad.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, ExecColor),
+            ColorSequenceKeypoint.new(0.58, Color3.fromRGB(13, 17, 22)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0)),
+        })
+        EGrad.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.08),
+            NumberSequenceKeypoint.new(0.55, 0),
+            NumberSequenceKeypoint.new(1, 0),
+        })
+        EGrad.Parent = ExecutorCard
+
+        local ETitle = MakeText(ExecutorCard, ExecutorName, 17, true, 0)
+        ETitle.Position = UDim2.fromOffset(18, 16)
+        ETitle.Size = UDim2.new(1, -36, 0, 22)
+
+        local ESub = MakeText(ExecutorCard, ExecStatus, 12, false, 0.15)
+        ESub.Position = UDim2.fromOffset(18, 42)
+        ESub.Size = UDim2.new(1, -36, 0, 40)
+        ESub.TextWrapped = true
+        ESub.TextTruncate = Enum.TextTruncate.None
+        ESub.TextYAlignment = Enum.TextYAlignment.Top
+
+        local FriendsCard = Panel(RightCol, UDim2.new(1, 0, 0, 166))
+        FriendsCard.LayoutOrder = 2
+
+        local FTitle = MakeText(FriendsCard, "Friends", 16, true, 0)
+        FTitle.Position = UDim2.fromOffset(16, 12)
+        FTitle.Size = UDim2.new(1, -32, 0, 20)
+
+        local FSub = MakeText(FriendsCard,
+            "Find out what your friends are currently doing",
+            10, false, 0.48)
+        FSub.Position = UDim2.fromOffset(16, 32)
+        FSub.Size = UDim2.new(1, -32, 0, 14)
+
+        local FriendLabels = {}
+        FriendLabels.InServer = MakeStat(FriendsCard, "In Server", "...", 0,    58, 0.5)
+        FriendLabels.Offline  = MakeStat(FriendsCard, "Offline",   "...", 0.5,  58, 0.5)
+        FriendLabels.Online   = MakeStat(FriendsCard, "Online",    "...", 0,    104, 0.5)
+        FriendLabels.All      = MakeStat(FriendsCard, "All",       "...", 0.5,  104, 0.5)
+
+        local function FillChangelog(Page, Entries, EmptyText)
+            local Holder = Panel(Page, UDim2.new(1, 0, 0, 40))
+            Holder.AutomaticSize = Enum.AutomaticSize.Y
+            local L = Instance.new("UIListLayout")
+            L.Padding = UDim.new(0, 8)
+            L.SortOrder = Enum.SortOrder.LayoutOrder
+            L.Parent = Holder
+            local P = Instance.new("UIPadding")
+            P.PaddingTop = UDim.new(0, 12)
+            P.PaddingBottom = UDim.new(0, 12)
+            P.PaddingLeft = UDim.new(0, 12)
+            P.PaddingRight = UDim.new(0, 12)
+            P.Parent = Holder
+
+            if type(Entries) ~= "table" or #Entries <= 0 then
+                local em = MakeText(Holder, EmptyText, 13, false, 0.25)
+                em.Size = UDim2.new(1, 0, 0, 26)
+                return
+            end
+
+            for i, Entry in ipairs(Entries) do
+                local Item = Panel(Holder, UDim2.new(1, 0, 0, 62))
+                Item.LayoutOrder = i
+                local t = MakeText(Item,
+                    tostring(Entry.Title or Entry.Name or ("Update " .. i)),
+                    14, true, 0)
+                t.Position = UDim2.fromOffset(14, 10)
+                t.Size = UDim2.new(1, -28, 0, 18)
+                local d = MakeText(Item,
+                    tostring(Entry.Description or Entry.Content or Entry.Date or ""),
+                    11, false, 0.3)
+                d.Position = UDim2.fromOffset(14, 30)
+                d.Size = UDim2.new(1, -28, 0, 22)
+                d.TextWrapped = true
+                d.TextTruncate = Enum.TextTruncate.None
+                d.TextYAlignment = Enum.TextYAlignment.Top
+            end
+        end
+
+        FillChangelog(ScriptPage, scriptChangelog, "No script changelog.")
+        FillChangelog(UiPage,     uiChangelog,     "No UI changelog.")
+
+        local FriendCache = {
+            All = "...", Online = "...", Offline = "...", InServer = "...",
+            Cooldown = 0,
+        }
+        local function UpdateFriends()
+            if FriendCache.Cooldown > 0 then
+                FriendCache.Cooldown = FriendCache.Cooldown - 1
+                return
+            end
+            FriendCache.Cooldown = 30
+            task.spawn(function()
+                local OnlineFriends, TotalFriends, InServer = 0, 0, 0
+                pcall(function()
+                    OnlineFriends = #Player:GetFriendsOnline()
+                end)
+                pcall(function()
+                    local Pages = Players:GetFriendsAsync(Player.UserId)
+                    while true do
+                        for _, Data in ipairs(Pages:GetCurrentPage()) do
+                            TotalFriends = TotalFriends + 1
+                            if Players:FindFirstChild(Data.Username) then
+                                InServer = InServer + 1
+                            end
+                        end
+                        if Pages.IsFinished then break end
+                        Pages:AdvanceToNextPageAsync()
+                    end
+                end)
+                FriendCache.All      = tostring(TotalFriends) .. " friends"
+                FriendCache.Online   = tostring(OnlineFriends) .. " friends"
+                FriendCache.Offline  = tostring(math.max(TotalFriends - OnlineFriends, 0)) .. " friends"
+                FriendCache.InServer = InServer > 0 and tostring(InServer) .. " friends" or "no friends"
+            end)
+        end
+
+        local Accumulator = 0
+        local function UpdateHome(dt)
+            local Now = TimeFunction()
+            for i = #FrameTimes, 1, -1 do
+                if FrameTimes[i] < Now - 1 then
+                    table.remove(FrameTimes, i)
+                end
+            end
+            table.insert(FrameTimes, Now)
+
+            Accumulator = Accumulator + (dt or 0)
+            if Accumulator < 0.5 then return end
+            Accumulator = 0
+
+            local Ping = "..."
+            pcall(function()
+                Ping = tostring(math.floor((Player:GetNetworkPing() * 1000) + 0.5)) .. "ms"
+            end)
+
+            Welcome.Text = "Hello, " .. Player.DisplayName
+            UserLbl.Text = Greeting() .. " | @" .. Player.Name
+            if StatLabels.Players  then StatLabels.Players.Text  = tostring(#Players:GetPlayers()) .. " playing" end
+            if StatLabels.Capacity then StatLabels.Capacity.Text = tostring(Players.MaxPlayers) .. " can join" end
+            if StatLabels.Latency  then StatLabels.Latency.Text  = Ping end
+            if StatLabels.Runtime  then StatLabels.Runtime.Text  = Elapsed() end
+            if FriendLabels.InServer then FriendLabels.InServer.Text = FriendCache.InServer end
+            if FriendLabels.Offline  then FriendLabels.Offline.Text  = FriendCache.Offline end
+            if FriendLabels.Online   then FriendLabels.Online.Text   = FriendCache.Online end
+            if FriendLabels.All      then FriendLabels.All.Text      = FriendCache.All end
+            UpdateFriends()
+        end
+
+        DetailsPage.Visible = true
+        if segButtons["Details"] then
+            segButtons["Details"].Root.BackgroundTransparency = 0.08
+            segButtons["Details"].Icon.ImageColor3 = CurrentTheme.Accent
+            segButtons["Details"].Label.TextColor3 = CurrentTheme.Accent
+            segButtons["Details"].Label.TextTransparency = 0
+        end
+
+        local HomeConn = RunService.RenderStepped:Connect(UpdateHome)
+        Window._homeCleanup = Window._homeCleanup or {}
+        table.insert(Window._homeCleanup, function()
+            safeDisconnect(HomeConn)
+        end)
+
+        TabBuilder.GetHomeSection = function() return Root end
+        TabBuilder.HomeRoot = Root
+
+        return TabBuilder
     end
 
     function Window:Dialog(Config)
@@ -3967,7 +4478,11 @@ function Fenglib:CreateWindow(Config)
 
     function Window:Notification(titleText, descText, notifType, duration) end
     function Window:SetKeybind(key) Keybind = key end
-    function Window:Destroy() ScreenGui:Destroy() end
+    function Window:Destroy()
+        for _, fn in ipairs(Window._homeCleanup or {}) do pcall(fn) end
+        Window._homeCleanup = nil
+        ScreenGui:Destroy()
+    end
     function Window:SetSubtitle(newSubtitle) WindowContent.Text = newSubtitle or "" end
 
     function Window:SetAccount(cfg)
