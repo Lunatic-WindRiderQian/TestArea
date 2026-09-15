@@ -1,10 +1,3 @@
---[[
-    FengYu-Bento (Test.lua)
-    - Section 直接支持 Tab 条目（布局 = miUI AddCenterTabbox）
-    - 图标大小 18×18 + UIScale 0.82（与 ModernV2:SetIconMode 一致，防止显示过大/扁）
-    - CreateWindow 图标：支持 Config.Logo / Config.Icon，自动规范化 ID，默认 84830962019412
-    - 新增 Colorpicker（完整搬运自 FluentPro.AddColorpicker）
-]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -2886,19 +2879,26 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local Tile     = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, cpTitle, 15, 12, UDim2.new(1, -60, 0, 18), 13)
 
-        local Preview = Instance.new("ImageLabel")
+        local Preview = Instance.new("Frame")
         Preview.Size                   = UDim2.fromOffset(26, 26)
         Preview.Position               = UDim2.new(1, -10, 0.5, 0)
         Preview.AnchorPoint            = Vector2.new(1, 0.5)
-        Preview.Image                  = "http://www.roblox.com/asset/?id=14204231522"
-        Preview.ImageTransparency      = 0.45
-        Preview.ScaleType              = Enum.ScaleType.Tile
-        Preview.TileSize               = UDim2.fromOffset(40, 40)
         Preview.BackgroundColor3       = defaultColor
         Preview.BackgroundTransparency = defaultTransparency
         Preview.BorderSizePixel        = 0
         Preview.Parent                 = Tile
         Instance.new("UICorner", Preview).CornerRadius = UDim.new(0, 4)
+
+        local PreviewChecker = Instance.new("ImageLabel")
+        PreviewChecker.Size                   = UDim2.fromScale(1, 1)
+        PreviewChecker.BackgroundTransparency = 1
+        PreviewChecker.Image                  = "http://www.roblox.com/asset/?id=14204231522"
+        PreviewChecker.ScaleType              = Enum.ScaleType.Tile
+        PreviewChecker.TileSize               = UDim2.fromOffset(8, 8)
+        PreviewChecker.ImageTransparency      = 1 - defaultTransparency
+        PreviewChecker.ZIndex                 = 2
+        PreviewChecker.Parent                 = Preview
+        Instance.new("UICorner", PreviewChecker).CornerRadius = UDim.new(0, 4)
 
         local ClickBtn = Instance.new("TextButton")
         ClickBtn.Size                    = UDim2.new(1, 0, 1, 0)
@@ -2923,6 +2923,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function updatePreview()
             Preview.BackgroundColor3        = h.Value
             Preview.BackgroundTransparency  = h.Transparency
+            PreviewChecker.ImageTransparency = 1 - h.Transparency
         end
 
         local function setColor(newColor, alpha)
@@ -2958,7 +2959,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Tween(Overlay, { BackgroundTransparency = 0.4 }, 0.2)
 
             local Panel = Instance.new("Frame")
-            Panel.Size                   = UDim2.fromOffset(400, 340)
+            Panel.Size                   = UDim2.fromOffset(340, 280)
             Panel.Position               = UDim2.new(0.5, 0, 0.5, 0)
             Panel.AnchorPoint            = Vector2.new(0.5, 0.5)
             Panel.BackgroundColor3       = CurrentTheme.Main
@@ -2976,25 +2977,25 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             PanelStroke.Transparency = 0.6
             PanelStroke.Parent       = Panel
 
-            Tween(Panel, { Size = UDim2.fromOffset(430, 360) }, 0.22)
+            Tween(Panel, { Size = UDim2.fromOffset(360, 295) }, 0.22)
 
             local PTitle = Instance.new("TextLabel")
-            PTitle.Size                   = UDim2.new(1, -40, 0, 24)
-            PTitle.Position               = UDim2.fromOffset(20, 18)
+            PTitle.Size                   = UDim2.new(1, -32, 0, 18)
+            PTitle.Position               = UDim2.fromOffset(14, 10)
             PTitle.BackgroundTransparency = 1
             PTitle.Font                   = Enum.Font.GothamBold
             PTitle.Text                   = cpTitle
-            PTitle.TextSize               = 18
+            PTitle.TextSize               = 14
             PTitle.TextColor3             = CurrentTheme.Text
             PTitle.TextXAlignment         = Enum.TextXAlignment.Left
             PTitle.ZIndex                 = 1002
             PTitle.Parent                 = Panel
             AddToRegistry(PTitle, "TextColor3", "Text")
 
-            local SV_W, SV_H = 180, 160
+            local SV_W, SV_H = 145, 128
             local L = Instance.new("Frame")
             L.Size             = UDim2.fromOffset(SV_W, SV_H)
-            L.Position         = UDim2.fromOffset(20, 55)
+            L.Position         = UDim2.fromOffset(14, 38)
             L.BackgroundColor3 = Color3.fromHSV(curH, 1, 1)
             L.BorderSizePixel  = 0
             L.ZIndex           = 1002
@@ -3031,7 +3032,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             svBlackGrad.Parent = svBlackLayer
 
             local svMarker = Instance.new("ImageLabel")
-            svMarker.Size                   = UDim2.fromOffset(16, 16)
+            svMarker.Size                   = UDim2.fromOffset(14, 14)
             svMarker.AnchorPoint            = Vector2.new(0.5, 0.5)
             svMarker.Position               = UDim2.new(curS, 0, 1 - curV, 0)
             svMarker.BackgroundTransparency = 1
@@ -3039,7 +3040,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             svMarker.ZIndex                 = 1005
             svMarker.Parent                 = L
 
-            local HUE_W, HUE_H = 12, 190
+            local HUE_W, HUE_H = 10, 128
 
             local hueKeys = {}
             for i = 0, 1, 0.1 do
@@ -3050,13 +3051,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             hueGrad.Rotation = 90
 
             local S = Instance.new("Frame")
-            S.Size                   = UDim2.new(1, 0, 1, -10)
-            S.Position               = UDim2.fromOffset(0, 5)
+            S.Size                   = UDim2.new(1, 0, 1, -8)
+            S.Position               = UDim2.fromOffset(0, 4)
             S.BackgroundTransparency = 1
             S.ZIndex                 = 1005
 
             local T = Instance.new("ImageLabel")
-            T.Size                   = UDim2.fromOffset(14, 14)
+            T.Size                   = UDim2.fromOffset(12, 12)
             T.AnchorPoint            = Vector2.new(0.5, 0.5)
             T.Position               = UDim2.new(0.5, 0, curH, 0)
             T.BackgroundTransparency = 1
@@ -3066,7 +3067,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local U = Instance.new("Frame")
             U.Size             = UDim2.fromOffset(HUE_W, HUE_H)
-            U.Position         = UDim2.fromOffset(210, 55)
+            U.Position         = UDim2.fromOffset(167, 38)
             U.BackgroundColor3 = Color3.new(1, 1, 1)
             U.BorderSizePixel  = 0
             U.ZIndex           = 1002
@@ -3079,7 +3080,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if showTransparency then
                 alphaBox = Instance.new("Frame")
                 alphaBox.Size             = UDim2.fromOffset(HUE_W, HUE_H)
-                alphaBox.Position         = UDim2.fromOffset(230, 55)
+                alphaBox.Position         = UDim2.fromOffset(183, 38)
                 alphaBox.BackgroundTransparency = 1
                 alphaBox.ZIndex           = 1002
                 alphaBox.Parent           = Panel
@@ -3090,7 +3091,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 alphaChecker.BackgroundTransparency = 1
                 alphaChecker.Image                  = "http://www.roblox.com/asset/?id=14204231522"
                 alphaChecker.ScaleType              = Enum.ScaleType.Tile
-                alphaChecker.TileSize               = UDim2.fromOffset(20, 20)
+                alphaChecker.TileSize               = UDim2.fromOffset(16, 16)
                 alphaChecker.ImageTransparency      = 0.45
                 alphaChecker.ZIndex                 = 1003
                 alphaChecker.Parent                 = alphaBox
@@ -3112,14 +3113,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 aGrad.Parent = alphaColorLayer
 
                 alphaInner = Instance.new("Frame")
-                alphaInner.Size                   = UDim2.new(1, 0, 1, -10)
-                alphaInner.Position               = UDim2.fromOffset(0, 5)
+                alphaInner.Size                   = UDim2.new(1, 0, 1, -8)
+                alphaInner.Position               = UDim2.fromOffset(0, 4)
                 alphaInner.BackgroundTransparency = 1
                 alphaInner.ZIndex                 = 1005
                 alphaInner.Parent                 = alphaBox
 
                 alphaMarker = Instance.new("ImageLabel")
-                alphaMarker.Size                   = UDim2.fromOffset(14, 14)
+                alphaMarker.Size                   = UDim2.fromOffset(12, 12)
                 alphaMarker.AnchorPoint            = Vector2.new(0.5, 0.5)
                 alphaMarker.Position               = UDim2.new(0.5, 0, curA, 0)
                 alphaMarker.BackgroundTransparency = 1
@@ -3132,45 +3133,57 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local oldH, oldS, oldV = curH, curS, curV
             local oldA             = curA
 
-            local P = Instance.new("ImageLabel")
-            P.Size                   = UDim2.fromOffset(88, 24)
-            P.Position               = UDim2.fromOffset(20, 220)
+            local P = Instance.new("Frame")
+            P.Size                   = UDim2.fromOffset(70, 20)
+            P.Position               = UDim2.fromOffset(14, 174)
             P.BackgroundColor3       = prevColor
             P.BackgroundTransparency = oldA
             P.BorderSizePixel        = 0
-            P.Image                  = "http://www.roblox.com/asset/?id=14204231522"
-            P.ImageTransparency      = 0.45
-            P.ScaleType              = Enum.ScaleType.Tile
-            P.TileSize               = UDim2.fromOffset(40, 40)
             P.ZIndex                 = 1002
             P.Parent                 = Panel
             Instance.new("UICorner", P).CornerRadius = UDim.new(0, 4)
+            local PChecker = Instance.new("ImageLabel")
+            PChecker.Size                   = UDim2.fromScale(1, 1)
+            PChecker.BackgroundTransparency = 1
+            PChecker.Image                  = "http://www.roblox.com/asset/?id=14204231522"
+            PChecker.ScaleType              = Enum.ScaleType.Tile
+            PChecker.TileSize               = UDim2.fromOffset(8, 8)
+            PChecker.ImageTransparency      = 1 - oldA
+            PChecker.ZIndex                 = 1003
+            PChecker.Parent                 = P
+            Instance.new("UICorner", PChecker).CornerRadius = UDim.new(0, 4)
             local PStroke = Instance.new("UIStroke")
-            PStroke.Thickness    = 2
-            PStroke.Transparency = 0.75
+            PStroke.Thickness    = 1
+            PStroke.Transparency = 0.7
             PStroke.Parent       = P
 
-            local N = Instance.new("ImageLabel")
-            N.Size                   = UDim2.fromOffset(88, 24)
-            N.Position               = UDim2.fromOffset(112, 220)
+            local N = Instance.new("Frame")
+            N.Size                   = UDim2.fromOffset(70, 20)
+            N.Position               = UDim2.fromOffset(90, 174)
             N.BackgroundColor3       = prevColor
             N.BackgroundTransparency = oldA
             N.BorderSizePixel        = 0
-            N.Image                  = "http://www.roblox.com/asset/?id=14204231522"
-            N.ImageTransparency      = 0.45
-            N.ScaleType              = Enum.ScaleType.Tile
-            N.TileSize               = UDim2.fromOffset(40, 40)
             N.ZIndex                 = 1002
             N.Parent                 = Panel
             Instance.new("UICorner", N).CornerRadius = UDim.new(0, 4)
+            local NChecker = Instance.new("ImageLabel")
+            NChecker.Size                   = UDim2.fromScale(1, 1)
+            NChecker.BackgroundTransparency = 1
+            NChecker.Image                  = "http://www.roblox.com/asset/?id=14204231522"
+            NChecker.ScaleType              = Enum.ScaleType.Tile
+            NChecker.TileSize               = UDim2.fromOffset(8, 8)
+            NChecker.ImageTransparency      = 1 - oldA
+            NChecker.ZIndex                 = 1003
+            NChecker.Parent                 = N
+            Instance.new("UICorner", NChecker).CornerRadius = UDim.new(0, 4)
             local NStroke = Instance.new("UIStroke")
-            NStroke.Thickness    = 2
-            NStroke.Transparency = 0.75
+            NStroke.Thickness    = 1
+            NStroke.Transparency = 0.7
             NStroke.Parent       = N
 
             local oldRevertBtn = Instance.new("TextButton")
-            oldRevertBtn.Size                    = UDim2.fromOffset(88, 24)
-            oldRevertBtn.Position                = UDim2.fromOffset(112, 220)
+            oldRevertBtn.Size                    = UDim2.fromOffset(70, 20)
+            oldRevertBtn.Position                = UDim2.fromOffset(90, 174)
             oldRevertBtn.BackgroundTransparency  = 1
             oldRevertBtn.Text                    = ""
             oldRevertBtn.AutoButtonColor         = false
@@ -3178,8 +3191,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             oldRevertBtn.Parent                  = Panel
 
             local prevLbl = Instance.new("TextLabel")
-            prevLbl.Size                   = UDim2.fromOffset(80, 14)
-            prevLbl.Position               = UDim2.fromOffset(20, 250)
+            prevLbl.Size                   = UDim2.fromOffset(70, 12)
+            prevLbl.Position               = UDim2.fromOffset(14, 197)
             prevLbl.BackgroundTransparency = 1
             prevLbl.Font                   = Enum.Font.GothamBold
             prevLbl.TextSize               = 9
@@ -3192,8 +3205,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             TextGradient:Skip(prevLbl)
 
             local oldLbl = Instance.new("TextLabel")
-            oldLbl.Size                   = UDim2.fromOffset(80, 14)
-            oldLbl.Position               = UDim2.fromOffset(112, 250)
+            oldLbl.Size                   = UDim2.fromOffset(70, 12)
+            oldLbl.Position               = UDim2.fromOffset(90, 197)
             oldLbl.BackgroundTransparency = 1
             oldLbl.Font                   = Enum.Font.Gotham
             oldLbl.TextSize               = 9
@@ -3205,17 +3218,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(oldLbl, "TextColor3", "SubText")
             TextGradient:Skip(oldLbl)
 
-            local inputX = showTransparency and 260 or 240
-            local labelX = showTransparency and 360 or 340
+            local inputX = showTransparency and 210 or 200
+            local labelX = showTransparency and 284 or 274
 
             local function mkInput(yPos)
                 local box = Instance.new("TextBox")
-                box.Size             = UDim2.fromOffset(90, 32)
+                box.Size             = UDim2.fromOffset(70, 24)
                 box.Position         = UDim2.fromOffset(inputX, yPos)
                 box.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
                 box.BorderSizePixel  = 0
                 box.Font             = Enum.Font.GothamBold
-                box.TextSize         = 12
+                box.TextSize         = 11
                 box.TextColor3       = CurrentTheme.Text
                 box.TextXAlignment   = Enum.TextXAlignment.Center
                 box.ClearTextOnFocus = false
@@ -3236,14 +3249,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local function mkLabel(text, yPos)
                 local lbl = Instance.new("TextLabel")
-                lbl.Size                   = UDim2.new(1, -(labelX + 20), 0, 32)
+                lbl.Size                   = UDim2.new(1, -(labelX + 10), 0, 24)
                 lbl.Position               = UDim2.fromOffset(labelX, yPos)
                 lbl.BackgroundTransparency = 1
                 lbl.Font                   = Enum.Font.GothamMedium
                 lbl.Text                   = text
-                lbl.TextSize               = 11
+                lbl.TextSize               = 10
                 lbl.TextColor3             = CurrentTheme.SubText
                 lbl.TextXAlignment         = Enum.TextXAlignment.Left
+                lbl.TextYAlignment         = Enum.TextYAlignment.Center
                 lbl.ZIndex                 = 1002
                 lbl.Parent                 = Panel
                 AddToRegistry(lbl, "TextColor3", "SubText")
@@ -3251,17 +3265,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return lbl
             end
 
-            local HexInput   = mkInput(55)
-            local RedInput   = mkInput(95)
-            local GreenInput = mkInput(135)
-            local BlueInput  = mkInput(175)
-            local AlphaInput = showTransparency and mkInput(215) or nil
+            local HexInput   = mkInput(38)
+            local RedInput   = mkInput(66)
+            local GreenInput = mkInput(94)
+            local BlueInput  = mkInput(122)
+            local AlphaInput = showTransparency and mkInput(150) or nil
 
-            mkLabel("Hex",   55)
-            mkLabel("Red",   95)
-            mkLabel("Green", 135)
-            mkLabel("Blue",  175)
-            if showTransparency then mkLabel("Alpha", 215) end
+            mkLabel("Hex",   38)
+            mkLabel("Red",   66)
+            mkLabel("Green", 94)
+            mkLabel("Blue",  122)
+            if showTransparency then mkLabel("Alpha", 150) end
 
             local function applyCurrent()
                 local cur = Color3.fromHSV(curH, curS, curV)
@@ -3270,6 +3284,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 T.Position                    = UDim2.new(0.5, 0, curH, 0)
                 N.BackgroundColor3            = cur
                 N.BackgroundTransparency      = curA
+                NChecker.ImageTransparency    = 1 - curA
                 prevLbl.Text                  = "#" .. cur:ToHex()
                 HexInput.Text                 = "#" .. cur:ToHex()
                 RedInput.Text                 = math.floor(cur.r * 255)
@@ -3396,11 +3411,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local function mkButton(text, primary, cb)
                 local btn = Instance.new("TextButton")
-                btn.Size             = UDim2.fromOffset(90, 32)
+                btn.Size             = UDim2.fromOffset(76, 26)
                 btn.BackgroundColor3 = primary and CurrentTheme.Accent or Color3.fromRGB(40, 42, 52)
                 btn.Text             = text
                 btn.Font             = primary and Enum.Font.GothamBold or Enum.Font.GothamMedium
-                btn.TextSize         = 12
+                btn.TextSize         = 11
                 btn.TextColor3       = Color3.new(1, 1, 1)
                 btn.AutoButtonColor  = false
                 btn.ZIndex           = 1002
@@ -3413,13 +3428,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local CancelBtn = mkButton("取消", false, function()
                 Overlay:Destroy()
             end)
-            CancelBtn.Position = UDim2.new(1, -106, 1, -46)
+            CancelBtn.Position = UDim2.new(1, -82, 1, -36)
 
             local OkBtn = mkButton("确定", true, function()
                 setColor(Color3.fromHSV(curH, curS, curV), curA)
                 Overlay:Destroy()
             end)
-            OkBtn.Position = UDim2.new(1, -204, 1, -46)
+            OkBtn.Position = UDim2.new(1, -166, 1, -36)
 
             Overlay.Destroying:Connect(function()
                 for _, c in ipairs(dragConns) do
@@ -5505,7 +5520,6 @@ function Fenglib:CreateWindow(Config)
     return Window
 end
 
--- 自定义光标
 do
     local cursorScreen = Instance.new("ScreenGui")
     cursorScreen.Name = "FengCustomCursor"
