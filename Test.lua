@@ -3,6 +3,7 @@
     - Section 直接支持 Tab 条目（布局 = miUI AddCenterTabbox）
     - 图标大小 18×18 + UIScale 0.82（与 ModernV2:SetIconMode 一致，防止显示过大/扁）
     - CreateWindow 图标：支持 Config.Logo / Config.Icon，自动规范化 ID，默认 84830962019412
+    - 新增 Colorpicker（移植自 FluentPro.AddColorpicker）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -2863,6 +2864,491 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
     child.AddCenterTabbox = function(self, name)
         return self:Tabbox({ Name = name })
+    end
+
+    -- ═══════════════════════════════════════════════════════════════
+    -- Colorpicker（移植自 FluentPro.AddColorpicker）
+    --   预览棋盘格 + 弹出式 HSV/Alpha 选择器 + Hex 输入
+    -- ═══════════════════════════════════════════════════════════════
+    child.Colorpicker = function(_, config)
+        config = safeConfig(config)
+        local cpTitle           = config.Name or "颜色选择器"
+        local defaultColor      = config.Default or Color3.fromRGB(255, 255, 255)
+        local defaultTransparency = config.Transparency or 0
+        local showTransparency  = (config.Transparency ~= nil)
+        local callback          = config.Callback or function() end
+        local controlId         = cpTitle .. "_" .. tostring(#Registry)
+        local parent            = config.Parent or contentHolder
+
+        local h = {
+            Value        = defaultColor,
+            Transparency = defaultTransparency,
+            Type         = "Colorpicker",
+            Callback     = callback,
+            Title        = cpTitle,
+        }
+
+        -- ── 行内元素 ────────────────────────────────────────────
+        local Tile     = miRow(parent, 42)
+        local TitleLbl = miLabel(Tile, cpTitle, 15, 12, UDim2.new(1, -60, 0, 18), 13)
+
+        -- 预览色块（棋盘格 + 底色）
+        local Preview = Instance.new("ImageLabel")
+        Preview.Size                = UDim2.fromOffset(26, 26)
+        Preview.Position            = UDim2.new(1, -10, 0.5, 0)
+        Preview.AnchorPoint         = Vector2.new(1, 0.5)
+        Preview.Image               = "http://www.roblox.com/asset/?id=14204231522"
+        Preview.ImageTransparency   = 0.45
+        Preview.ScaleType           = Enum.ScaleType.Tile
+        Preview.TileSize            = UDim2.fromOffset(40, 40)
+        Preview.BackgroundColor3    = defaultColor
+        Preview.BackgroundTransparency = defaultTransparency
+        Preview.BorderSizePixel     = 0
+        Preview.Parent              = Tile
+        Instance.new("UICorner", Preview).CornerRadius = UDim.new(0, 4)
+
+        local ClickBtn = Instance.new("TextButton")
+        ClickBtn.Size              = UDim2.new(1, 0, 1, 0)
+        ClickBtn.BackgroundTransparency = 1
+        ClickBtn.Text              = ""
+        ClickBtn.AutoButtonColor   = false
+        ClickBtn.Parent            = Tile
+
+        -- 锁定支持
+        local locked      = config.Locked == true
+        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
+        lockFrame.Visible = locked
+        ClickBtn.Active   = not locked
+
+        h.Frame = Tile
+
+        local function updatePreview()
+            Preview.BackgroundColor3      = h.Value
+            Preview.BackgroundTransparency = h.Transparency
+        end
+
+        local function setColor(newColor, alpha)
+            h.Value = newColor
+            if alpha ~= nil then h.Transparency = alpha end
+            updatePreview()
+            if ConfigObjects[controlId] then
+                ConfigObjects[controlId].Value = { color = h.Value, transparency = h.Transparency }
+            end
+            pcall(callback, h.Value, h.Transparency)
+        end
+
+        -- ── 弹出式选择器 ────────────────────────────────────────
+        local function openPicker()
+            if locked then return end
+            local sg = parent:FindFirstAncestorOfClass("ScreenGui")
+                        or Tile:FindFirstAncestorOfClass("ScreenGui")
+            if not sg then return end
+
+            local cH, cS, cV = Color3.toHSV(h.Value)
+            local cA         = h.Transparency
+
+            local dragConns = {}
+
+            -- 遮罩
+            local Overlay = Instance.new("TextButton")
+            Overlay.Name                 = "FengColorPickerOverlay"
+            Overlay.Size                 = UDim2.new(1, 0, 1, 0)
+            Overlay.BackgroundColor3     = Color3.new(0, 0, 0)
+            Overlay.BackgroundTransparency = 1
+            Overlay.Text                 = ""
+            Overlay.AutoButtonColor      = false
+            Overlay.ZIndex               = 1000
+            Overlay.Parent               = sg
+            Tween(Overlay, { BackgroundTransparency = 0.4 }, 0.2)
+
+            -- 面板
+            local Panel = Instance.new("Frame")
+            Panel.Size             = UDim2.fromOffset(380, 340)
+            Panel.Position         = UDim2.new(0.5, 0, 0.5, 0)
+            Panel.AnchorPoint      = Vector2.new(0.5, 0.5)
+            Panel.BackgroundColor3 = CurrentTheme.Main
+            Panel.BackgroundTransparency = 0.04
+            Panel.BorderSizePixel  = 0
+            Panel.ClipsDescendants = true
+            Panel.Active           = true
+            Panel.ZIndex           = 1001
+            Panel.Parent           = Overlay
+            Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 10)
+
+            local PanelStroke = Instance.new("UIStroke")
+            PanelStroke.Thickness     = 1
+            PanelStroke.Color         = CurrentTheme.Stroke
+            PanelStroke.Transparency  = 0.6
+            PanelStroke.Parent        = Panel
+
+            Tween(Panel, { Size = UDim2.fromOffset(420, 370) }, 0.22)
+
+            -- 标题
+            local PTitle = Instance.new("TextLabel")
+            PTitle.Size              = UDim2.new(1, -60, 0, 22)
+            PTitle.Position          = UDim2.fromOffset(18, 16)
+            PTitle.BackgroundTransparency = 1
+            PTitle.Font              = Enum.Font.GothamBold
+            PTitle.Text              = cpTitle
+            PTitle.TextSize          = 15
+            PTitle.TextColor3        = CurrentTheme.Text
+            PTitle.TextXAlignment    = Enum.TextXAlignment.Left
+            PTitle.ZIndex            = 1002
+            PTitle.Parent            = Panel
+            AddToRegistry(PTitle, "TextColor3", "Text")
+
+            -- ── SV 方块 ────────────────────────────────────────
+            local SV_W, SV_H = 200, 160
+            local SVBox = Instance.new("Frame")
+            SVBox.Size              = UDim2.fromOffset(SV_W, SV_H)
+            SVBox.Position          = UDim2.fromOffset(18, 55)
+            SVBox.BackgroundColor3  = Color3.fromHSV(cH, 1, 1)
+            SVBox.BorderSizePixel   = 0
+            SVBox.ZIndex            = 1002
+            SVBox.Parent            = Panel
+            Instance.new("UICorner", SVBox).CornerRadius = UDim.new(0, 4)
+
+            local whiteLayer = Instance.new("Frame")
+            whiteLayer.Size             = UDim2.fromScale(1, 1)
+            whiteLayer.BackgroundColor3 = Color3.new(1, 1, 1)
+            whiteLayer.BorderSizePixel  = 0
+            whiteLayer.ZIndex           = 1003
+            whiteLayer.Parent           = SVBox
+            Instance.new("UICorner", whiteLayer).CornerRadius = UDim.new(0, 4)
+            local wGrad = Instance.new("UIGradient")
+            wGrad.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0),
+                NumberSequenceKeypoint.new(1, 1)
+            })
+            wGrad.Parent = whiteLayer
+
+            local blackLayer = Instance.new("Frame")
+            blackLayer.Size             = UDim2.fromScale(1, 1)
+            blackLayer.BackgroundColor3 = Color3.new(0, 0, 0)
+            blackLayer.BorderSizePixel  = 0
+            blackLayer.ZIndex           = 1004
+            blackLayer.Parent           = SVBox
+            Instance.new("UICorner", blackLayer).CornerRadius = UDim.new(0, 4)
+            local bGrad = Instance.new("UIGradient")
+            bGrad.Rotation = 90
+            bGrad.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 1),
+                NumberSequenceKeypoint.new(1, 0)
+            })
+            bGrad.Parent = blackLayer
+
+            local svMarker = Instance.new("ImageLabel")
+            svMarker.Size             = UDim2.fromOffset(16, 16)
+            svMarker.AnchorPoint      = Vector2.new(0.5, 0.5)
+            svMarker.Position         = UDim2.new(cS, 0, 1 - cV, 0)
+            svMarker.BackgroundTransparency = 1
+            svMarker.Image            = "http://www.roblox.com/asset/?id=4805639000"
+            svMarker.ZIndex           = 1005
+            svMarker.Parent           = SVBox
+
+            -- ── 色相条 ─────────────────────────────────────────
+            local Hue_W, Hue_H = 14, SV_H
+            local HueBox = Instance.new("Frame")
+            HueBox.Size              = UDim2.fromOffset(Hue_W, Hue_H)
+            HueBox.Position          = UDim2.fromOffset(18 + SV_W + 12, 55)
+            HueBox.BackgroundColor3  = Color3.new(1, 1, 1)
+            HueBox.BorderSizePixel   = 0
+            HueBox.ZIndex            = 1002
+            HueBox.Parent            = Panel
+            Instance.new("UICorner", HueBox).CornerRadius = UDim.new(1, 0)
+
+            local hueKeys = {}
+            for i = 0, 1, 0.1 do
+                local v = math.min(i, 1)
+                table.insert(hueKeys, ColorSequenceKeypoint.new(v, Color3.fromHSV(v, 1, 1)))
+            end
+            local hueGrad = Instance.new("UIGradient")
+            hueGrad.Color    = ColorSequence.new(hueKeys)
+            hueGrad.Rotation = 90
+            hueGrad.Parent   = HueBox
+
+            local hueMarker = Instance.new("ImageLabel")
+            hueMarker.Size             = UDim2.fromOffset(16, 16)
+            hueMarker.AnchorPoint      = Vector2.new(0.5, 0.5)
+            hueMarker.Position         = UDim2.new(0.5, 0, cH, 0)
+            hueMarker.BackgroundTransparency = 1
+            hueMarker.Image            = "http://www.roblox.com/asset/?id=4805639000"
+            hueMarker.ZIndex           = 1005
+            hueMarker.Parent           = HueBox
+
+            -- ── 透明度条（仅当 config.Transparency 存在时） ────
+            local alphaBox, alphaColorLayer, alphaMarker
+            if showTransparency then
+                alphaBox = Instance.new("Frame")
+                alphaBox.Size             = UDim2.fromOffset(Hue_W, Hue_H)
+                alphaBox.Position         = UDim2.fromOffset(18 + SV_W + 12 + Hue_W + 12, 55)
+                alphaBox.BackgroundColor3 = Color3.new(1, 1, 1)
+                alphaBox.BorderSizePixel  = 0
+                alphaBox.ClipsDescendants = true
+                alphaBox.ZIndex           = 1002
+                alphaBox.Parent           = Panel
+                Instance.new("UICorner", alphaBox).CornerRadius = UDim.new(1, 0)
+
+                local checker = Instance.new("ImageLabel")
+                checker.Size             = UDim2.fromScale(1, 1)
+                checker.BackgroundTransparency = 1
+                checker.Image            = "http://www.roblox.com/asset/?id=14204231522"
+                checker.ScaleType        = Enum.ScaleType.Tile
+                checker.TileSize         = UDim2.fromOffset(16, 16)
+                checker.ImageTransparency = 0.4
+                checker.ZIndex           = 1003
+                checker.Parent           = alphaBox
+                Instance.new("UICorner", checker).CornerRadius = UDim.new(1, 0)
+
+                alphaColorLayer = Instance.new("Frame")
+                alphaColorLayer.Size             = UDim2.fromScale(1, 1)
+                alphaColorLayer.BackgroundColor3 = Color3.fromHSV(cH, cS, cV)
+                alphaColorLayer.BorderSizePixel  = 0
+                alphaColorLayer.ZIndex           = 1004
+                alphaColorLayer.Parent           = alphaBox
+                Instance.new("UICorner", alphaColorLayer).CornerRadius = UDim.new(1, 0)
+                local aGrad = Instance.new("UIGradient")
+                aGrad.Rotation = 90
+                aGrad.Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 0),
+                    NumberSequenceKeypoint.new(1, 1)
+                })
+                aGrad.Parent = alphaColorLayer
+
+                alphaMarker = Instance.new("ImageLabel")
+                alphaMarker.Size             = UDim2.fromOffset(16, 16)
+                alphaMarker.AnchorPoint      = Vector2.new(0.5, 0.5)
+                alphaMarker.Position         = UDim2.new(0.5, 0, cA, 0)
+                alphaMarker.BackgroundTransparency = 1
+                alphaMarker.Image            = "http://www.roblox.com/asset/?id=4805639000"
+                alphaMarker.ZIndex           = 1005
+                alphaMarker.Parent           = alphaBox
+            end
+
+            -- ── 大预览 ────────────────────────────────────────
+            local PreviewBig = Instance.new("ImageLabel")
+            PreviewBig.Size             = UDim2.fromOffset(50, 50)
+            PreviewBig.Position         = UDim2.fromOffset(20, 245)
+            PreviewBig.BackgroundColor3 = Color3.fromHSV(cH, cS, cV)
+            PreviewBig.BackgroundTransparency = cA
+            PreviewBig.Image            = "http://www.roblox.com/asset/?id=14204231522"
+            PreviewBig.ImageTransparency = 0.45
+            PreviewBig.ScaleType        = Enum.ScaleType.Tile
+            PreviewBig.TileSize         = UDim2.fromOffset(40, 40)
+            PreviewBig.BorderSizePixel  = 0
+            PreviewBig.ZIndex           = 1002
+            PreviewBig.Parent           = Panel
+            Instance.new("UICorner", PreviewBig).CornerRadius = UDim.new(0, 6)
+
+            -- ── Hex 输入 ──────────────────────────────────────
+            local HexLabel = Instance.new("TextLabel")
+            HexLabel.Size              = UDim2.fromOffset(60, 20)
+            HexLabel.Position          = UDim2.fromOffset(82, 248)
+            HexLabel.BackgroundTransparency = 1
+            HexLabel.Text              = "十六进制"
+            HexLabel.Font              = Enum.Font.Gotham
+            HexLabel.TextSize          = 11
+            HexLabel.TextColor3        = CurrentTheme.SubText
+            HexLabel.TextXAlignment    = Enum.TextXAlignment.Left
+            HexLabel.ZIndex            = 1002
+            HexLabel.Parent            = Panel
+
+            local HexInput = Instance.new("TextBox")
+            HexInput.Size              = UDim2.fromOffset(100, 26)
+            HexInput.Position          = UDim2.fromOffset(82, 270)
+            HexInput.BackgroundColor3  = Color3.fromRGB(26, 28, 36)
+            HexInput.Text              = "#" .. Color3.fromHSV(cH, cS, cV):ToHex()
+            HexInput.Font              = Enum.Font.GothamBold
+            HexInput.TextSize          = 12
+            HexInput.TextColor3        = CurrentTheme.Text
+            HexInput.ClearTextOnFocus  = false
+            HexInput.TextXAlignment    = Enum.TextXAlignment.Center
+            HexInput.ZIndex            = 1002
+            HexInput.Parent            = Panel
+            Instance.new("UICorner", HexInput).CornerRadius = UDim.new(0, 5)
+            local HexStroke = Instance.new("UIStroke")
+            HexStroke.Thickness     = 1
+            HexStroke.Color         = CurrentTheme.Stroke
+            HexStroke.Transparency  = 0.65
+            HexStroke.Parent        = HexInput
+
+            -- ── 应用当前颜色 ─────────────────────────────────
+            local function applyCurrent()
+                local cur = Color3.fromHSV(cH, cS, cV)
+                SVBox.BackgroundColor3        = Color3.fromHSV(cH, 1, 1)
+                svMarker.Position             = UDim2.new(cS, 0, 1 - cV, 0)
+                hueMarker.Position            = UDim2.new(0.5, 0, cH, 0)
+                PreviewBig.BackgroundColor3   = cur
+                PreviewBig.BackgroundTransparency = cA
+                if alphaColorLayer then
+                    alphaColorLayer.BackgroundColor3 = cur
+                end
+                if alphaMarker then
+                    alphaMarker.Position = UDim2.new(0.5, 0, cA, 0)
+                end
+                HexInput.Text = "#" .. cur:ToHex()
+            end
+
+            -- ── 拖动辅助 ─────────────────────────────────────
+            local function bindDrag(handle, onPos)
+                local dragging = false
+                local function process(input)
+                    local ax = handle.AbsolutePosition.X
+                    local ay = handle.AbsolutePosition.Y
+                    local aw = math.max(1, handle.AbsoluteSize.X)
+                    local ah = math.max(1, handle.AbsoluteSize.Y)
+                    local rx = math.clamp((input.Position.X - ax) / aw, 0, 1)
+                    local ry = math.clamp((input.Position.Y - ay) / ah, 0, 1)
+                    onPos(rx, ry)
+                end
+                table.insert(dragConns, handle.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1
+                    or input.UserInputType == Enum.UserInputType.Touch then
+                        dragging = true
+                        process(input)
+                    end
+                end))
+                table.insert(dragConns, UserInputService.InputChanged:Connect(function(input)
+                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+                    or input.UserInputType == Enum.UserInputType.Touch) then
+                        process(input)
+                    end
+                end))
+                table.insert(dragConns, UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1
+                    or input.UserInputType == Enum.UserInputType.Touch then
+                        dragging = false
+                    end
+                end))
+            end
+
+            bindDrag(SVBox, function(rx, ry)
+                cS = rx
+                cV = 1 - ry
+                applyCurrent()
+            end)
+            bindDrag(HueBox, function(_, ry)
+                cH = ry
+                applyCurrent()
+            end)
+            if alphaBox then
+                bindDrag(alphaBox, function(_, ry)
+                    cA = ry
+                    applyCurrent()
+                end)
+            end
+
+            -- ── Hex 输入事件 ─────────────────────────────────
+            HexInput.Focused:Connect(function()
+                Tween(HexStroke, { Transparency = 0.2 }, 0.15)
+            end)
+            HexInput.FocusLost:Connect(function()
+                Tween(HexStroke, { Transparency = 0.65 }, 0.15)
+                local raw = HexInput.Text:gsub("#", ""):gsub("%s", "")
+                local ok, col = pcall(Color3.fromHex, raw)
+                if ok and typeof(col) == "Color3" then
+                    cH, cS, cV = Color3.toHSV(col)
+                    applyCurrent()
+                else
+                    HexInput.Text = "#" .. Color3.fromHSV(cH, cS, cV):ToHex()
+                end
+            end)
+
+            -- ── 底部按钮 ─────────────────────────────────────
+            local function makeButton(text, primary, cb)
+                local btn = Instance.new("TextButton")
+                btn.Size             = UDim2.fromOffset(90, 32)
+                btn.BackgroundColor3 = primary and CurrentTheme.Accent or Color3.fromRGB(40, 42, 52)
+                btn.Text             = text
+                btn.Font             = primary and Enum.Font.GothamBold or Enum.Font.GothamMedium
+                btn.TextSize         = 12
+                btn.TextColor3       = Color3.new(1, 1, 1)
+                btn.AutoButtonColor  = false
+                btn.ZIndex           = 1002
+                btn.Parent           = Panel
+                Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+                btn.MouseButton1Click:Connect(cb)
+                return btn
+            end
+
+            local CancelBtn = makeButton("取消", false, function()
+                Overlay:Destroy()
+            end)
+            CancelBtn.Position = UDim2.new(1, -106, 1, -46)
+
+            local OkBtn = makeButton("确定", true, function()
+                setColor(Color3.fromHSV(cH, cS, cV), cA)
+                Overlay:Destroy()
+            end)
+            OkBtn.Position = UDim2.new(1, -204, 1, -46)
+
+            -- ── 清理 ────────────────────────────────────────
+            Overlay.Destroying:Connect(function()
+                for _, c in ipairs(dragConns) do
+                    pcall(function() c:Disconnect() end)
+                end
+                table.clear(dragConns)
+            end)
+
+            applyCurrent()
+        end
+
+        ClickBtn.MouseButton1Click:Connect(function()
+            if not locked then openPicker() end
+        end)
+
+        -- ── 锁定 / 值接口 ──────────────────────────────────────
+        local function updateLock(st)
+            locked           = st
+            lockFrame.Visible = st
+            ClickBtn.Active  = not st
+        end
+
+        function h:GetValue() return h.Value, h.Transparency end
+        function h:GetColor() return h.Value end
+        function h:GetTransparency() return h.Transparency end
+        function h:SetValue(hsvTable, alpha)
+            if locked then return end
+            if type(hsvTable) == "table" and #hsvTable == 3 then
+                setColor(Color3.fromHSV(hsvTable[1], hsvTable[2], hsvTable[3]), alpha)
+            end
+        end
+        function h:SetValueRGB(color, alpha)
+            if locked then return end
+            if typeof(color) == "Color3" then
+                setColor(color, alpha)
+            end
+        end
+        function h:SetVisible(state) Tile.Visible = state end
+        function h:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
+        function h:Unlock() updateLock(false) end
+        function h:IsLocked() return locked end
+        function h:Destroy()
+            Tile:Destroy()
+            ConfigObjects[controlId] = nil
+        end
+
+        updatePreview()
+
+        ConfigObjects[controlId] = {
+            Type  = "Colorpicker",
+            Value = { color = h.Value, transparency = h.Transparency },
+            Set   = function(val)
+                if locked then return end
+                if type(val) == "table" then
+                    if val.color then
+                        setColor(val.color, val.transparency)
+                    elseif #val == 3 then
+                        setColor(Color3.fromHSV(val[1], val[2], val[3]), h.Transparency)
+                    end
+                elseif typeof(val) == "Color3" then
+                    setColor(val, h.Transparency)
+                end
+            end
+        }
+
+        return h
     end
 
     local functions = {}
