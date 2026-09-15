@@ -9,6 +9,7 @@
     - 已移除 Section 模式分支，已清理死代码
     - 已彻底移除 Group / AddElement
     - 已移植 k.lua + miUI.lua 的 AddCenterTabbox / addCenterFeatureTabbox
+    - 已修复 attempt to call a nil value 错误（加固 Callback 与 Tween）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -79,7 +80,10 @@ local function AddToRegistry(obj, prop, key)
     table.insert(Registry, {Object = obj, Property = prop, Type = key})
     obj[prop] = val
 end
-local function Tween(obj, props, time)
+
+-- ⚠️ 重命名 Tween 为 FengTween，防止被外部覆盖
+local function FengTween(obj, props, time)
+    if not obj or not obj.Parent then return end
     TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
 
@@ -211,7 +215,7 @@ Fenglib.TextGradient = TextGradient
 function Fenglib:SetTheme(name)
     if Themes[name] then
         CurrentTheme = Themes[name]
-        for _, r in pairs(Registry) do if r.Object then Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]}) end end
+        for _, r in pairs(Registry) do if r.Object then FengTween(r.Object, {[r.Property] = CurrentTheme[r.Type]}) end end
         for _, fn in pairs(ThemeListeners) do pcall(fn) end
         TextGradient:RefreshAll()
     end
@@ -506,11 +510,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ClickBtn.AutoButtonColor = false; ClickBtn.Parent = Tile
         ClickBtn.Active = not locked
         local function updateLock(state) locked = state; lockFrame.Visible = state; ClickBtn.Active = not state end
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
-        ClickBtn.MouseButton1Down:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.45}, 0.08) end end)
-        ClickBtn.MouseButton1Up:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.08) end end)
-        ClickBtn.MouseButton1Click:Connect(function() if not locked then callback() end end)
+        ClickBtn.MouseEnter:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
+        ClickBtn.MouseButton1Down:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 0.45}, 0.08) end end)
+        ClickBtn.MouseButton1Up:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 0.65}, 0.08) end end)
+        ClickBtn.MouseButton1Click:Connect(function() 
+            if not locked then 
+                if callback then callback() end 
+            end 
+        end)
         local self = {}
         function self.UpdateText(t) TitleLbl.Text = t end
         function self.SetVisible(v) Tile.Visible = v end
@@ -559,19 +567,24 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function ApplyUI(v)
             Enabled = v
             if Enabled then
-                Tween(Switch, {BackgroundColor3 = CurrentTheme.Accent}, 0.18)
-                Tween(SwStroke, {Transparency = 1}, 0.18)
-                Tween(Dot, {Position = UDim2.new(1, -17, 0.5, -8)}, 0.18)
+                FengTween(Switch, {BackgroundColor3 = CurrentTheme.Accent}, 0.18)
+                FengTween(SwStroke, {Transparency = 1}, 0.18)
+                FengTween(Dot, {Position = UDim2.new(1, -17, 0.5, -8)}, 0.18)
             else
-                Tween(Switch, {BackgroundColor3 = Color3.fromRGB(10, 13, 21)}, 0.18)
-                Tween(SwStroke, {Transparency = 0.65}, 0.18)
-                Tween(Dot, {Position = UDim2.new(0, 1, 0.5, -8)}, 0.18)
+                FengTween(Switch, {BackgroundColor3 = Color3.fromRGB(10, 13, 21)}, 0.18)
+                FengTween(SwStroke, {Transparency = 0.65}, 0.18)
+                FengTween(Dot, {Position = UDim2.new(0, 1, 0.5, -8)}, 0.18)
             end
         end
-        ConfigObjects[controlId] = { Type = "Toggle", Value = Enabled, Set = function(v) if not locked then ApplyUI(v); callback(v) end end }
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
-        ClickBtn.MouseButton1Click:Connect(function() if locked then return end; ApplyUI(not Enabled); ConfigObjects[controlId].Value = Enabled; callback(Enabled) end)
+        ConfigObjects[controlId] = { Type = "Toggle", Value = Enabled, Set = function(v) if not locked then ApplyUI(v); if callback then callback(v) end end end }
+        ClickBtn.MouseEnter:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
+        ClickBtn.MouseButton1Click:Connect(function() 
+            if locked then return end
+            ApplyUI(not Enabled)
+            ConfigObjects[controlId].Value = Enabled
+            if callback then callback(Enabled) end
+        end)
         local self = {}
         function self.GetValue() return Enabled end
         function self.SetValue(v) if not locked then ConfigObjects[controlId].Set(v) end end
@@ -625,7 +638,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ValueLabel.Parent = ValueFrame
         AddToRegistry(ValueLabel, "TextColor3", "Text")
         TextGradient:Skip(ValueLabel)
-        ValueLabel.Focused:Connect(function() Tween(ValueStroke, {Transparency = 0.2}, 0.15) end)
+        ValueLabel.Focused:Connect(function() FengTween(ValueStroke, {Transparency = 0.2}, 0.15) end)
         local trackLeft = 15 + 90 + 12
         local trackRight = numW + 10 + 10
         local Track, Fill, Knob, Bar
@@ -667,7 +680,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Val = tonumber(val) or Val
                 ValueLabel.Text = tostring(Val)
                 if ConfigObjects[controlId] then ConfigObjects[controlId].Value = Val end
-                callback(Val)
+                if callback then callback(Val) end
                 return
             end
             val = math.clamp(val, min, max)
@@ -678,7 +691,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ValueLabel.Text = tostring(val)
             Val = val
             if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
-            callback(val)
+            if callback then callback(val) end
             return val
         end
         local function GetValueFromInput(input)
@@ -707,7 +720,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
         ValueLabel.FocusLost:Connect(function()
-            Tween(ValueStroke, {Transparency = 0.65}, 0.15)
+            FengTween(ValueStroke, {Transparency = 0.65}, 0.15)
             local typed = tonumber(ValueLabel.Text)
             if typed then UpdateSlider(typed) else ValueLabel.Text = tostring(Val) end
         end)
@@ -826,8 +839,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 label.TextXAlignment = Enum.TextXAlignment.Left
                 label.Parent = O
                 AddToRegistry(label, "TextColor3", "Text")
-                O.MouseEnter:Connect(function() Tween(O, {BackgroundTransparency = 0.1}, 0.15) end)
-                O.MouseLeave:Connect(function() Tween(O, {BackgroundTransparency = 1}, 0.15) end)
+                O.MouseEnter:Connect(function() FengTween(O, {BackgroundTransparency = 0.1}, 0.15) end)
+                O.MouseLeave:Connect(function() FengTween(O, {BackgroundTransparency = 1}, 0.15) end)
                 local optData = { button = O, label = label, check = check, checkMark = checkMark, value = opt, selected = false }
                 table.insert(optionButtons, optData)
                 O.MouseButton1Click:Connect(function()
@@ -840,7 +853,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                         optData.checkMark.ImageTransparency = optData.selected and 0 or 1
                         updateLabel()
                         if ConfigObjects[controlId] then ConfigObjects[controlId].Value = selected end
-                        callback(selected)
+                        if callback then callback(selected) end
                     else
                         selected = opt
                         for _, d in ipairs(optionButtons) do
@@ -850,10 +863,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                         end
                         updateLabel()
                         if ConfigObjects[controlId] then ConfigObjects[controlId].Value = selected end
-                        callback(selected)
+                        if callback then callback(selected) end
                         Dropped = false
-                        Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
-                        Tween(Icon, {Rotation = 0}, 0.28)
+                        FengTween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
+                        FengTween(Icon, {Rotation = 0}, 0.28)
                         task.wait(0.3)
                         Container.Visible = false
                     end
@@ -866,7 +879,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             if Dropped then
                 local targetHeight = #optionButtons * 34
-                Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
+                FengTween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
             end
         end
         rebuildOptions(options)
@@ -877,21 +890,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ClickBtn.Active = not locked
         local function updateLock(state)
             locked = state; lockFrame.Visible = state; ClickBtn.Active = not state
-            if state then Dropped = false; Container.Visible = false; Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.1) end
+            if state then Dropped = false; Container.Visible = false; FengTween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.1) end
         end
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Btn, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Btn, {BackgroundTransparency = 1}, 0.15) end end)
+        ClickBtn.MouseEnter:Connect(function() if not locked then FengTween(Btn, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then FengTween(Btn, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function()
             if locked then return end
             Dropped = not Dropped
             if Dropped then
                 Container.Visible = true
                 local targetHeight = #optionButtons * 34
-                Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.32)
-                Tween(Icon, {Rotation = 180}, 0.32)
+                FengTween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.32)
+                FengTween(Icon, {Rotation = 180}, 0.32)
             else
-                Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
-                Tween(Icon, {Rotation = 0}, 0.28)
+                FengTween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
+                FengTween(Icon, {Rotation = 0}, 0.28)
                 task.wait(0.3)
                 Container.Visible = false
             end
@@ -908,8 +921,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 if Dropped and not locked then
                     if not isMouseOver(Container) and not isMouseOver(Btn) then
                         Dropped = false
-                        Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
-                        Tween(Icon, {Rotation = 0}, 0.28)
+                        FengTween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
+                        FengTween(Icon, {Rotation = 0}, 0.28)
                         task.wait(0.3)
                         Container.Visible = false
                     end
@@ -934,7 +947,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     d.checkMark.ImageTransparency = d.selected and 0 or 1
                 end
                 updateLabel()
-                callback(selected)
+                if callback then callback(selected) end
             end,
             Refresh = function(newOptions)
                 if locked then return end
@@ -1051,22 +1064,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if UserInputService:GetFocusedTextBox() then return end
             local key = state.Key
             if state.Mode == "Toggle" then
-                if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then state.Toggled = not state.Toggled; pcall(callback, state.Toggled)
-                elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then state.Toggled = not state.Toggled; pcall(callback, state.Toggled)
-                elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then state.Toggled = not state.Toggled; pcall(callback, state.Toggled) end
+                if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then state.Toggled = not state.Toggled; if callback then pcall(callback, state.Toggled) end
+                elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then state.Toggled = not state.Toggled; if callback then pcall(callback, state.Toggled) end
+                elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then state.Toggled = not state.Toggled; if callback then pcall(callback, state.Toggled) end end
             elseif state.Mode == "Hold" then
-                if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then pcall(callback, true)
-                elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then pcall(callback, true)
-                elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then pcall(callback, true) end
+                if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then if callback then pcall(callback, true) end
+                elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then if callback then pcall(callback, true) end
+                elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then if callback then pcall(callback, true) end end
             end
         end)
         inputEndConn = UserInputService.InputEnded:Connect(function(input, gpe)
             if gpe or locked or state.IsWaiting then return end
             if state.Mode == "Hold" then
                 local key = state.Key
-                if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then pcall(callback, false)
-                elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then pcall(callback, false)
-                elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then pcall(callback, false) end
+                if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then if callback then pcall(callback, false) end
+                elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then if callback then pcall(callback, false) end
+                elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then if callback then pcall(callback, false) end end
             end
         end)
         local self = {}
@@ -1148,9 +1161,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if callback then pcall(callback, filtered) end
             if onChanged then pcall(onChanged, filtered) end
         end
-        InputBox.Focused:Connect(function() if not locked then Tween(boxStroke, {Transparency = 0.2}, 0.15) end end)
+        InputBox.Focused:Connect(function() if not locked then FengTween(boxStroke, {Transparency = 0.2}, 0.15) end end)
         InputBox.FocusLost:Connect(function()
-            Tween(boxStroke, {Transparency = 0.65}, 0.15)
+            FengTween(boxStroke, {Transparency = 0.65}, 0.15)
             if finished then updateValue() end
         end)
         if not finished then
@@ -1214,12 +1227,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         BoxStroke.Thickness = 1; BoxStroke.Transparency = 0.65
         BoxStroke.Color = CurrentTheme.Stroke; BoxStroke.Parent = Box
         table.insert(ThemeListeners, function() BoxStroke.Color = CurrentTheme.Stroke end)
-        Box.Focused:Connect(function() Tween(BoxStroke, {Transparency = 0.2}, 0.15) end)
+        Box.Focused:Connect(function() FengTween(BoxStroke, {Transparency = 0.2}, 0.15) end)
         Box.FocusLost:Connect(function()
             if locked then return end
-            Tween(BoxStroke, {Transparency = 0.65}, 0.15)
-            ConfigObjects[controlId].Value = Box.Text
-            callback(Box.Text)
+            FengTween(BoxStroke, {Transparency = 0.65}, 0.15)
+            if ConfigObjects[controlId] then ConfigObjects[controlId].Value = Box.Text end
+            if callback then callback(Box.Text) end
         end)
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "已锁定"
@@ -1227,7 +1240,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         lockFrame.Visible = locked
         Box.Active = not locked
         local function updateLock(st) locked = st; lockFrame.Visible = st; Box.Active = not st end
-        ConfigObjects[controlId] = { Type = "Textbox", Value = "", Set = function(val) if not locked then Box.Text = val; callback(val) end end }
+        ConfigObjects[controlId] = { Type = "Textbox", Value = "", Set = function(val) if not locked then Box.Text = val; if callback then callback(val) end end end }
         local self = {}
         function self.SetValue(v) if not locked then ConfigObjects[controlId].Set(v) end end
         function self.GetValue() return Box.Text end
@@ -1346,7 +1359,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         clickBtn.Size = UDim2.new(1, 0, 1, 0)
         clickBtn.BackgroundTransparency = 1; clickBtn.Text = ""
         clickBtn.Parent = imageFrame
-        clickBtn.MouseButton1Click:Connect(callback)
+        clickBtn.MouseButton1Click:Connect(function() if callback then callback() end end)
         local self = {}
         function self.UpdateTitle(newTitle) titleLabel.Text = newTitle end
         function self.SetIcon(newIcon, newColor)
@@ -1471,17 +1484,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             val = not (not val)
             h.Value = val; updateColors()
             if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
-            pcall(callback, val); pcall(h.Changed, val)
+            if callback then pcall(callback, val) end
+            if h.Changed then pcall(h.Changed, val) end
         end
-        function h:OnChanged(_, cb) h.Changed = cb; cb(h.Value) end
+        function h:OnChanged(_, cb) h.Changed = cb; if cb then cb(h.Value) end end
         function h:GetValue() return h.Value end
         function h:SetVisible(vis) Tile.Visible = vis end
         function h:Destroy() Tile:Destroy(); ConfigObjects[controlId] = nil end
         function h:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
         function h:Unlock() updateLock(false) end
         function h:IsLocked() return locked end
-        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
+        ClickBtn.MouseEnter:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function() if not locked then h:SetValue(not h.Value) end end)
         h:SetValue(default)
         ConfigObjects[controlId] = { Type = "Checkbox", Value = h.Value, Set = function(val) h:SetValue(val) end }
@@ -1555,7 +1569,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             val = math.clamp(tonumber(val) or h.Min, h.Min, h.Max)
             h.Value = val
             local alpha = (h.Max > h.Min) and (val - h.Min) / (h.Max - h.Min) or 0
-            Tween(fill, {Size = UDim2.fromScale(alpha, 1)}, 0.2)
+            FengTween(fill, {Size = UDim2.fromScale(alpha, 1)}, 0.2)
             if pctLbl then pctLbl.Text = math.floor(alpha * 100).."%" end
             if callback then pcall(callback, val) end
             if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
@@ -1660,8 +1674,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             BtnIcon.Parent = Btn
             AddToRegistry(BtnIcon, "ImageColor3", "Text")
 
-            Btn.MouseEnter:Connect(function() Tween(BtnIcon, {ImageTransparency = 0.1}, 0.15) end)
-            Btn.MouseLeave:Connect(function() Tween(BtnIcon, {ImageTransparency = 0.4}, 0.15) end)
+            Btn.MouseEnter:Connect(function() FengTween(BtnIcon, {ImageTransparency = 0.1}, 0.15) end)
+            Btn.MouseLeave:Connect(function() FengTween(BtnIcon, {ImageTransparency = 0.4}, 0.15) end)
         end
 
         local Expanded = Instance.new("Frame")
@@ -1734,8 +1748,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(Box, "TextColor3", "Accent")
             TextGradient:Skip(Box)
 
-            Box.Focused:Connect(function() Tween(boxStroke, {Transparency = 0.2}, 0.15) end)
-            Box.FocusLost:Connect(function() Tween(boxStroke, {Transparency = 0.65}, 0.15) end)
+            Box.Focused:Connect(function() FengTween(boxStroke, {Transparency = 0.2}, 0.15) end)
+            Box.FocusLost:Connect(function() FengTween(boxStroke, {Transparency = 0.65}, 0.15) end)
 
             Box:GetPropertyChangedSignal("Text"):Connect(function()
                 local txt = Box.Text
@@ -1754,10 +1768,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function toggle()
             opened = not opened
             local targetH = opened and EXPANDED_H or 0
-            Tween(Expanded, {Size = UDim2.new(1, 0, 0, targetH)}, 0.28)
-            Tween(UserFrame, {Size = UDim2.new(1, 0, 0, TOP_H + targetH)}, 0.28)
+            FengTween(Expanded, {Size = UDim2.new(1, 0, 0, targetH)}, 0.28)
+            FengTween(UserFrame, {Size = UDim2.new(1, 0, 0, TOP_H + targetH)}, 0.28)
             if BtnIcon then
-                Tween(BtnIcon, {Rotation = opened and 180 or 0}, 0.28)
+                FengTween(BtnIcon, {Rotation = opened and 180 or 0}, 0.28)
             end
         end
 
@@ -1996,11 +2010,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local fadeTimer = 0
         local function showOverlay()
             ctrlVisible = true; fadeTimer = 3
-            Tween(overlay, {GroupTransparency=0}, 0.18)
+            FengTween(overlay, {GroupTransparency=0}, 0.18)
         end
         local function hideOverlay()
             ctrlVisible = false
-            Tween(overlay, {GroupTransparency=1}, 0.3)
+            FengTween(overlay, {GroupTransparency=1}, 0.3)
         end
         local vidClickBtn = Instance.new("TextButton")
         vidClickBtn.Size = UDim2.fromScale(1,1)
@@ -2726,8 +2740,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function updateTabboxSize()
             local innerH = activeTab and activeTab.Layout.AbsoluteContentSize.Y or 0
             local totalH = 56 + innerH + 8
-            Tween(TabboxFrame, {Size = UDim2.new(1, -8, 0, totalH)}, 0.25)
-            Tween(ContentArea, {Size = UDim2.new(1, -12, 0, innerH + 4)}, 0.25)
+            FengTween(TabboxFrame, {Size = UDim2.new(1, -8, 0, totalH)}, 0.25)
+            FengTween(ContentArea, {Size = UDim2.new(1, -12, 0, innerH + 4)}, 0.25)
         end
 
         local function refreshTabButtons()
@@ -3247,7 +3261,7 @@ function Fenglib:CreateWindow(Config)
         local targetTrans = visible and 0.9 or 1
         for _, stroke in ipairs(shadowStrokes) do
             if instant then stroke.Transparency = targetTrans
-            else Tween(stroke, {Transparency = targetTrans}, 0.3) end
+            else FengTween(stroke, {Transparency = targetTrans}, 0.3) end
         end
     end
 
@@ -3526,7 +3540,7 @@ function Fenglib:CreateWindow(Config)
     SettingsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         if SettingsPanel.Visible then
             local h = SettingsList.AbsoluteContentSize.Y + 12
-            Tween(SettingsPanel, {Size = UDim2.new(0, 220, 0, h)}, 0.2)
+            FengTween(SettingsPanel, {Size = UDim2.new(0, 220, 0, h)}, 0.2)
         end
     end)
 
@@ -3542,8 +3556,8 @@ function Fenglib:CreateWindow(Config)
     local function closeSettings()
         settingsOpen = false
         if outsideConn then outsideConn:Disconnect(); outsideConn = nil end
-        Tween(SettingsPanel, {BackgroundTransparency = 1, Size = UDim2.new(0, 220, 0, 0)}, 0.18)
-        Tween(SettingsStroke, {Transparency = 1}, 0.18)
+        FengTween(SettingsPanel, {BackgroundTransparency = 1, Size = UDim2.new(0, 220, 0, 0)}, 0.18)
+        FengTween(SettingsStroke, {Transparency = 1}, 0.18)
         task.delay(0.2, function()
             if not settingsOpen then SettingsPanel.Visible = false end
         end)
@@ -3554,8 +3568,8 @@ function Fenglib:CreateWindow(Config)
         SettingsPanel.Visible = true
         SettingsPanel.Size = UDim2.new(0, 220, 0, 0)
         local h = SettingsList.AbsoluteContentSize.Y + 12
-        Tween(SettingsPanel, {BackgroundTransparency = 0.035, Size = UDim2.new(0, 220, 0, h)}, 0.2)
-        Tween(SettingsStroke, {Transparency = 0.65}, 0.2)
+        FengTween(SettingsPanel, {BackgroundTransparency = 0.035, Size = UDim2.new(0, 220, 0, h)}, 0.2)
+        FengTween(SettingsStroke, {Transparency = 0.65}, 0.2)
         if outsideConn then outsideConn:Disconnect() end
         outsideConn = UserInputService.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -3569,10 +3583,10 @@ function Fenglib:CreateWindow(Config)
     end
 
     BottomFrame.MouseEnter:Connect(function()
-        Tween(UserSettingButton, {TextTransparency = 0.25}, 0.18)
+        FengTween(UserSettingButton, {TextTransparency = 0.25}, 0.18)
     end)
     BottomFrame.MouseLeave:Connect(function()
-        Tween(UserSettingButton, {TextTransparency = 0.5}, 0.18)
+        FengTween(UserSettingButton, {TextTransparency = 0.5}, 0.18)
     end)
     BottomClick.MouseButton1Click:Connect(function()
         if settingsOpen then closeSettings() else openSettings() end
@@ -3657,20 +3671,20 @@ function Fenglib:CreateWindow(Config)
             content.ZIndex = 3; content.Parent = btn
         end
         btn.MouseEnter:Connect(function()
-            Tween(btn, {BackgroundTransparency = 0}, 0.2)
+            FengTween(btn, {BackgroundTransparency = 0}, 0.2)
             if content then
                 local p = content:IsA("ImageLabel") and "ImageTransparency" or "TextTransparency"
-                Tween(content, {[p] = 0}, 0.2)
+                FengTween(content, {[p] = 0}, 0.2)
             end
-            Tween(accent, {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 0}, 0.2)
+            FengTween(accent, {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 0}, 0.2)
         end)
         btn.MouseLeave:Connect(function()
-            Tween(btn, {BackgroundTransparency = 0.2}, 0.2)
+            FengTween(btn, {BackgroundTransparency = 0.2}, 0.2)
             if content then
                 local p = content:IsA("ImageLabel") and "ImageTransparency" or "TextTransparency"
-                Tween(content, {[p] = 0.3}, 0.2)
+                FengTween(content, {[p] = 0.3}, 0.2)
             end
-            Tween(accent, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.2)
+            FengTween(accent, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.2)
         end)
         btn.MouseButton1Click:Connect(callback)
         return btn
@@ -3840,7 +3854,7 @@ function Fenglib:CreateWindow(Config)
         local function toggleCategory()
             if not collapsible then return end
             opened = not opened
-            Tween(arrow, {Rotation = opened and 0 or 180}, 0.25)
+            FengTween(arrow, {Rotation = opened and 0 or 180}, 0.25)
             local targetHeight = opened and getContentHeight() or 0
             setContentHeight(targetHeight, true)
         end
@@ -3957,15 +3971,15 @@ function Fenglib:CreateWindow(Config)
                 s.btn.BackgroundTransparency = 1
                 s.isActive = false
                 s.glow.BackgroundTransparency = 1
-                if s.textLabel then Tween(s.textLabel, {TextTransparency = 0.3}, 0.2) end
+                if s.textLabel then FengTween(s.textLabel, {TextTransparency = 0.3}, 0.2) end
             end
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
-            Tween(TabText, {TextTransparency = 0}, 0.2)
+            FengTween(TabText, {TextTransparency = 0}, 0.2)
             if Window._activeTab then Window._activeTab.page.Visible = false end
             Page.Visible = true
-            Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
+            FengTween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
             Window._activeTab = state
         end)
         if not Window._activeTab then
@@ -4234,7 +4248,7 @@ function Fenglib:CreateWindow(Config)
                 ScriptPage.Visible  = (segName == "Script")
                 for n, s in pairs(segButtons) do
                     local active = (n == segName)
-                    Tween(s.Root, {BackgroundTransparency = active and 0.08 or 0.55}, 0.2)
+                    FengTween(s.Root, {BackgroundTransparency = active and 0.08 or 0.55}, 0.2)
                     s.Icon.ImageColor3  = active and CurrentTheme.Accent or CurrentTheme.Text
                     s.Label.TextColor3  = active and CurrentTheme.Accent or CurrentTheme.Text
                     s.Label.TextTransparency = active and 0 or 0.25
@@ -4623,8 +4637,8 @@ function Fenglib:CreateWindow(Config)
         function Dialog:Close(Result)
             if Dialog.Closed then return Result end
             Dialog.Closed = true
-            Tween(Overlay, {BackgroundTransparency = 1}, 0.15)
-            Tween(Panel, {BackgroundTransparency = 1, Size = UDim2.new(0, 365, 0, 188)}, 0.15)
+            FengTween(Overlay, {BackgroundTransparency = 1}, 0.15)
+            FengTween(Panel, {BackgroundTransparency = 1, Size = UDim2.new(0, 365, 0, 188)}, 0.15)
             task.delay(0.2, function() Overlay:Destroy() end)
             pcall(Config.Callback, Result)
             return Result
@@ -4661,21 +4675,21 @@ function Fenglib:CreateWindow(Config)
                 local Result = Callback and Callback() or Text
                 Dialog:Close(Result)
             end)
-            Input.MouseEnter:Connect(function() Tween(Button, {BackgroundTransparency = Primary and 0 or 0.08}, 0.15) end)
-            Input.MouseLeave:Connect(function() Tween(Button, {BackgroundTransparency = Primary and 0.1 or 0.25}, 0.15) end)
-            Tween(Button, {BackgroundTransparency = Primary and 0.1 or 0.25}, 0.1)
-            Tween(Stroke, {Transparency = Primary and 1 or 0.65}, 0.1)
-            Tween(Label, {TextTransparency = 0}, 0.1)
+            Input.MouseEnter:Connect(function() FengTween(Button, {BackgroundTransparency = Primary and 0 or 0.08}, 0.15) end)
+            Input.MouseLeave:Connect(function() FengTween(Button, {BackgroundTransparency = Primary and 0.1 or 0.25}, 0.15) end)
+            FengTween(Button, {BackgroundTransparency = Primary and 0.1 or 0.25}, 0.1)
+            FengTween(Stroke, {Transparency = Primary and 1 or 0.65}, 0.1)
+            FengTween(Label, {TextTransparency = 0}, 0.1)
         end
         for _, BtnConfig in ipairs(Config.Buttons or {{Text = "确定", Primary = true}}) do
             AddDialogButton(BtnConfig.Text, BtnConfig.Primary, BtnConfig.Callback)
         end
-        Tween(Overlay, {BackgroundTransparency = 0.28}, 0.25)
-        Tween(Panel, {BackgroundTransparency = 0.025, Size = UDim2.new(0, 392, 0, 200)}, 0.25)
-        Tween(UIStroke, {Transparency = 0.65}, 0.25)
-        Tween(DTitle, {TextTransparency = 0}, 0.25)
-        Tween(Content, {TextTransparency = 0.25}, 0.25)
-        Tween(Divider, {BackgroundTransparency = 0.72}, 0.25)
+        FengTween(Overlay, {BackgroundTransparency = 0.28}, 0.25)
+        FengTween(Panel, {BackgroundTransparency = 0.025, Size = UDim2.new(0, 392, 0, 200)}, 0.25)
+        FengTween(UIStroke, {Transparency = 0.65}, 0.25)
+        FengTween(DTitle, {TextTransparency = 0}, 0.25)
+        FengTween(Content, {TextTransparency = 0.25}, 0.25)
+        FengTween(Divider, {BackgroundTransparency = 0.72}, 0.25)
         return Dialog
     end
 
