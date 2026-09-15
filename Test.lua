@@ -6,7 +6,9 @@
     - 文字渐变：miUI 扫光动画 + 自动 hook
     - Section 卡片左侧贴边，Section 之间 8px 间距
     - CreateHomeTab：中文文案，保留【脚本更新】分段，QQ 群卡
-    - 新增：CenterTabbox + Fenglib.addCenterFeatureTabbox（对齐 k.lua 的 addCenterFeatureTabbox）
+    - 已移除 Section 模式分支，已清理死代码
+    - 已彻底移除 Group / AddElement
+    - 已移植 k.lua + miUI.lua 的 AddCenterTabbox / addCenterFeatureTabbox
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -2661,315 +2663,224 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    child.Group = function(_, config)
-        config = safeConfig(config)
-        local columns = config.Columns or 2
-        local gap = config.Gap or 6
-        local parent = config.Parent or contentHolder
-        local outerWrap = Instance.new("Frame")
-        outerWrap.Size = UDim2.new(1, 0, 0, 0)
-        outerWrap.BackgroundTransparency = 1
-        outerWrap.AutomaticSize = Enum.AutomaticSize.Y
-        outerWrap.Parent = parent
-        local wrap = Instance.new("Frame")
-        wrap.Size = UDim2.new(1, 0, 0, 0)
-        wrap.BackgroundTransparency = 1
-        wrap.AutomaticSize = Enum.AutomaticSize.Y
-        wrap.Parent = outerWrap
-        local totalGap = gap * (columns - 1)
-        local colScale = 1 / columns
-        local colOffset = -math.floor(totalGap / columns + 0.5)
-        local layout = Instance.new("UIListLayout")
-        layout.FillDirection = Enum.FillDirection.Horizontal
-        layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        layout.VerticalAlignment = Enum.VerticalAlignment.Top
-        layout.Padding = UDim.new(0, gap); layout.Parent = wrap
-        local elements = {}
-        local mod = { Frame = outerWrap, Type = "Group", Elements = elements }
-        function mod:AddElement()
-            local el = Instance.new("Frame")
-            el.Size = UDim2.new(colScale, colOffset, 0, 0)
-            el.BackgroundTransparency = 1
-            el.AutomaticSize = Enum.AutomaticSize.Y
-            el.Parent = wrap
-            local innerLayout = Instance.new("UIListLayout")
-            innerLayout.Padding = UDim.new(0, 5)
-            innerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            innerLayout.Parent = el
-            local colObj = {}
-            local function makeColMethod(methodName)
-                return function(_, cfg)
-                    cfg = cfg or {}
-                    cfg.Parent = el
-                    return child[methodName](_, cfg)
-                end
-            end
-            local colMethods = {}
-            for methodName, fn in pairs(child) do
-                if type(fn) == "function" and methodName ~= "Group" and methodName ~= "Section" and methodName ~= "CenterTabbox" then
-                    colMethods[methodName] = makeColMethod(methodName)
-                end
-            end
-            setmetatable(colObj, {__index = colMethods})
-            table.insert(elements, {Frame = el, ColObj = colObj})
-            return colObj
-        end
-        function mod:Destroy() outerWrap:Destroy() end
-        return mod
-    end
-
     -- ═══════════════════════════════════════════════════════════════
-    -- CenterTabbox  (miUI AddCenterTabbox 移植版)
-    -- 用法：
-    --   local tabbox = builder:CenterTabbox({ Name = "Features" })
-    --   local sub = tabbox:AddTab({ Name = "ESP", Icon = "rbxassetid://xxx" })
-    --   sub:AddToggle({...}) / sub:AddSlider({...}) / sub:AddSection({...})
-    --   sub 也支持无 Add 前缀写法：sub:Toggle({...}) / sub:Slider({...})
+    -- Tabbox / AddCenterTabbox  (ported from k.lua + miUI.lua)
     -- ═══════════════════════════════════════════════════════════════
-    child.CenterTabbox = function(_, config)
-        config = safeConfig(config)
-        local boxName = config.Name or ""
-        local parent  = config.Parent or contentHolder
+    child.Tabbox = function(_, config)
+        if type(config) == "string" then config = { Name = config } end
+        config = config or {}
+        local tabboxName = config.Name or "Tabbox"
 
         local TabboxFrame = Instance.new("Frame")
-        TabboxFrame.Name = "CenterTabbox"
-        TabboxFrame.Size = UDim2.new(1, 0, 0, 0)
-        TabboxFrame.AutomaticSize = Enum.AutomaticSize.Y
-        TabboxFrame.BackgroundTransparency = 1
+        TabboxFrame.Name = "Tabbox_" .. tostring(tabboxName)
+        TabboxFrame.Size = UDim2.new(1, -8, 0, 92)
+        TabboxFrame.BackgroundTransparency = 0.5
+        TabboxFrame.BackgroundColor3 = CurrentTheme.Main
         TabboxFrame.BorderSizePixel = 0
-        TabboxFrame.ClipsDescendants = false
-        TabboxFrame.Parent = parent
+        TabboxFrame.ClipsDescendants = true
+        TabboxFrame.Parent = contentContainer
+        Instance.new("UICorner", TabboxFrame).CornerRadius = UDim.new(0, 10)
+        AddToRegistry(TabboxFrame, "BackgroundColor3", "Main")
 
-        local rootLayout = Instance.new("UIListLayout")
-        rootLayout.Padding = UDim.new(0, 4)
-        rootLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        rootLayout.Parent = TabboxFrame
+        local TabboxStroke = Instance.new("UIStroke")
+        TabboxStroke.Thickness = 1
+        TabboxStroke.Transparency = 0.65
+        TabboxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        TabboxStroke.Parent = TabboxFrame
+        AddToRegistry(TabboxStroke, "Color", "Stroke")
 
-        if boxName ~= "" then
-            local titleLbl = Instance.new("TextLabel")
-            titleLbl.Text = boxName
-            titleLbl.Size = UDim2.new(1, -30, 0, 18)
-            titleLbl.Position = UDim2.new(0, 15, 0, 0)
-            titleLbl.BackgroundTransparency = 1
-            titleLbl.Font = Enum.Font.GothamMedium
-            titleLbl.TextSize = 13
-            titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-            titleLbl.Parent = TabboxFrame
-            AddToRegistry(titleLbl, "TextColor3", "Text")
+        local TitleLbl = Instance.new("TextLabel")
+        TitleLbl.Size = UDim2.new(1, -24, 0, 16)
+        TitleLbl.Position = UDim2.new(0, 12, 0, 6)
+        TitleLbl.BackgroundTransparency = 1
+        TitleLbl.Font = Enum.Font.GothamBold
+        TitleLbl.Text = tabboxName
+        TitleLbl.TextSize = 12
+        TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+        TitleLbl.TextTransparency = 0.3
+        TitleLbl.Parent = TabboxFrame
+        AddToRegistry(TitleLbl, "TextColor3", "Text")
+
+        local ButtonRow = Instance.new("Frame")
+        ButtonRow.Size = UDim2.new(1, -12, 0, 26)
+        ButtonRow.Position = UDim2.new(0, 6, 0, 26)
+        ButtonRow.BackgroundTransparency = 1
+        ButtonRow.Parent = TabboxFrame
+
+        local BtnLayout = Instance.new("UIListLayout")
+        BtnLayout.FillDirection = Enum.FillDirection.Horizontal
+        BtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        BtnLayout.Padding = UDim.new(0, 4)
+        BtnLayout.Parent = ButtonRow
+
+        local ContentArea = Instance.new("Frame")
+        ContentArea.Size = UDim2.new(1, -12, 0, 0)
+        ContentArea.Position = UDim2.new(0, 6, 0, 56)
+        ContentArea.BackgroundTransparency = 1
+        ContentArea.ClipsDescendants = true
+        ContentArea.Parent = TabboxFrame
+
+        local tabs = {}
+        local activeTab = nil
+
+        local function updateTabboxSize()
+            local innerH = activeTab and activeTab.Layout.AbsoluteContentSize.Y or 0
+            local totalH = 56 + innerH + 8
+            Tween(TabboxFrame, {Size = UDim2.new(1, -8, 0, totalH)}, 0.25)
+            Tween(ContentArea, {Size = UDim2.new(1, -12, 0, innerH + 4)}, 0.25)
         end
 
-        local BtnHolder = Instance.new("Frame")
-        BtnHolder.Size = UDim2.new(1, 0, 0, 32)
-        BtnHolder.BackgroundColor3 = CurrentTheme.Top
-        BtnHolder.BackgroundTransparency = 0.5
-        BtnHolder.BorderSizePixel = 0
-        BtnHolder.Parent = TabboxFrame
-        Instance.new("UICorner", BtnHolder).CornerRadius = UDim.new(0, 8)
-        AddToRegistry(BtnHolder, "BackgroundColor3", "Top")
-
-        local btnStroke = Instance.new("UIStroke")
-        btnStroke.Color = CurrentTheme.Stroke
-        btnStroke.Transparency = 0.6
-        btnStroke.Parent = BtnHolder
-        table.insert(ThemeListeners, function() btnStroke.Color = CurrentTheme.Stroke end)
-
-        local btnLayout = Instance.new("UIListLayout")
-        btnLayout.FillDirection = Enum.FillDirection.Horizontal
-        btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-        btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        btnLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        btnLayout.Padding = UDim.new(0, 4)
-        btnLayout.Parent = BtnHolder
-
-        local btnPad = Instance.new("UIPadding")
-        btnPad.PaddingLeft  = UDim.new(0, 6)
-        btnPad.PaddingRight = UDim.new(0, 6)
-        btnPad.Parent = BtnHolder
-
-        local ContentHolder = Instance.new("Frame")
-        ContentHolder.Size = UDim2.new(1, 0, 0, 0)
-        ContentHolder.AutomaticSize = Enum.AutomaticSize.Y
-        ContentHolder.BackgroundTransparency = 1
-        ContentHolder.Parent = TabboxFrame
-
-        local contentLayout = Instance.new("UIListLayout")
-        contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        contentLayout.Padding = UDim.new(0, 0)
-        contentLayout.Parent = ContentHolder
-
-        local Tabbox = { Root = TabboxFrame, Tabs = {}, TabButtons = {}, ActiveTab = nil }
-
-        function Tabbox:SelectTab(tabName)
-            for _, t in ipairs(Tabbox.Tabs) do
-                local isActive = (t.Name == tabName)
-                t.Content.Visible = isActive
-                local bd = Tabbox.TabButtons[t.Name]
-                if bd then
-                    Tween(bd.Button, { BackgroundTransparency = isActive and 0.1 or 1 }, 0.2)
-                    if bd.Label then
-                        Tween(bd.Label, { TextTransparency = isActive and 0 or 0.4 }, 0.2)
-                        bd.Label.TextColor3 = isActive and CurrentTheme.Accent or CurrentTheme.Text
-                    end
-                    if bd.Icon then
-                        Tween(bd.Icon, { ImageTransparency = isActive and 0 or 0.4 }, 0.2)
-                        bd.Icon.ImageColor3 = isActive and CurrentTheme.Accent or CurrentTheme.Text
-                    end
-                end
+        local function refreshTabButtons()
+            local count = math.max(1, #tabs)
+            for _, t in ipairs(tabs) do
+                t.Button.Size = UDim2.new(1 / count, -3, 1, 0)
             end
-            Tabbox.ActiveTab = tabName
         end
 
-        function Tabbox:AddTab(tabConfig)
-            if type(tabConfig) == "string" then tabConfig = { Name = tabConfig } end
-            tabConfig = tabConfig or {}
-            local tabName = tabConfig.Name or "Tab"
-            local tabIcon = tabConfig.Icon
+        local function activateTab(data)
+            for _, t in ipairs(tabs) do
+                t.Content.Visible = false
+                t.Button.BackgroundTransparency = 0.55
+                if t.Icon then
+                    t.Icon.ImageColor3 = CurrentTheme.Text
+                    t.Icon.ImageTransparency = 0.45
+                end
+                t.Label.TextColor3 = CurrentTheme.Text
+                t.Label.TextTransparency = 0.45
+            end
+            data.Content.Visible = true
+            data.Button.BackgroundTransparency = 0.15
+            if data.Icon then
+                data.Icon.ImageColor3 = CurrentTheme.Accent
+                data.Icon.ImageTransparency = 0
+            end
+            data.Label.TextColor3 = CurrentTheme.Accent
+            data.Label.TextTransparency = 0
+            activeTab = data
+            updateTabboxSize()
+        end
 
-            local tabBtn = Instance.new("TextButton")
-            tabBtn.BackgroundColor3 = CurrentTheme.Top
-            tabBtn.BackgroundTransparency = 1
-            tabBtn.AutoButtonColor = false
-            tabBtn.Text = ""
-            tabBtn.Size = UDim2.new(0, 0, 0, 26)
-            tabBtn.AutomaticSize = Enum.AutomaticSize.X
-            tabBtn.Parent = BtnHolder
-            Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 6)
+        local tabbox = { Root = TabboxFrame, Tabs = tabs }
 
-            local btnInner = Instance.new("Frame")
-            btnInner.Size = UDim2.new(1, 0, 1, 0)
-            btnInner.BackgroundTransparency = 1
-            btnInner.Parent = tabBtn
-            local innerLayout = Instance.new("UIListLayout")
-            innerLayout.FillDirection = Enum.FillDirection.Horizontal
-            innerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-            innerLayout.Padding = UDim.new(0, 5)
-            innerLayout.Parent = btnInner
-            local innerPad = Instance.new("UIPadding")
-            innerPad.PaddingLeft  = UDim.new(0, 10)
-            innerPad.PaddingRight = UDim.new(0, 10)
-            innerPad.Parent = btnInner
+        function tabbox:AddTab(tabCfg)
+            if type(tabCfg) == "string" then tabCfg = { Name = tabCfg } end
+            tabCfg = tabCfg or {}
+            local tabName = tabCfg.Name or "Tab"
+            local tabIcon = tabCfg.Icon
+
+            local TabBtn = Instance.new("TextButton")
+            TabBtn.BackgroundColor3 = CurrentTheme.Top
+            TabBtn.BackgroundTransparency = 0.55
+            TabBtn.Text = ""
+            TabBtn.AutoButtonColor = false
+            TabBtn.Parent = ButtonRow
+            Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
 
             local iconImg = nil
+            local labelX = 8
             if tabIcon and tostring(tabIcon) ~= "" then
                 iconImg = Instance.new("ImageLabel")
-                iconImg.Size = UDim2.new(0, 16, 0, 16)
+                iconImg.Size = UDim2.new(0, 14, 0, 14)
+                iconImg.Position = UDim2.new(0, 8, 0.5, -7)
                 iconImg.BackgroundTransparency = 1
-                if tonumber(tabIcon) then
-                    iconImg.Image = "rbxassetid://" .. tostring(tabIcon)
+                iconImg.ImageColor3 = CurrentTheme.Text
+                iconImg.ImageTransparency = 0.45
+                iconImg.ScaleType = Enum.ScaleType.Fit
+                if type(tabIcon) == "number" then
+                    iconImg.Image = "rbxassetid://" .. tabIcon
                 elseif type(tabIcon) == "string" then
-                    if tabIcon:match("^rbxasset") or tabIcon:match("^http") then
+                    if tonumber(tabIcon) then
+                        iconImg.Image = "rbxassetid://" .. tabIcon
+                    elseif tabIcon:match("^rbxasset") or tabIcon:match("^http") then
                         iconImg.Image = tabIcon
                     else
                         iconImg.Image = "rbxassetid://" .. tabIcon
                     end
                 end
-                iconImg.ImageColor3 = CurrentTheme.Text
-                iconImg.ImageTransparency = 0.4
-                iconImg.Parent = btnInner
-                AddToRegistry(iconImg, "ImageColor3", "Text")
+                iconImg.Parent = TabBtn
+                labelX = 26
             end
 
-            local nameLbl = Instance.new("TextLabel")
-            nameLbl.Text = tabName
-            nameLbl.TextSize = 12
-            nameLbl.Font = Enum.Font.GothamMedium
-            nameLbl.TextColor3 = CurrentTheme.Text
-            nameLbl.TextTransparency = 0.4
-            nameLbl.BackgroundTransparency = 1
-            nameLbl.AutomaticSize = Enum.AutomaticSize.X
-            nameLbl.Size = UDim2.new(0, 0, 1, 0)
-            nameLbl.Parent = btnInner
-            AddToRegistry(nameLbl, "TextColor3", "Text")
+            local TabLabel = Instance.new("TextLabel")
+            TabLabel.Size = UDim2.new(1, -labelX - 6, 1, 0)
+            TabLabel.Position = UDim2.new(0, labelX, 0, 0)
+            TabLabel.BackgroundTransparency = 1
+            TabLabel.Font = Enum.Font.GothamMedium
+            TabLabel.Text = tabName
+            TabLabel.TextSize = 11
+            TabLabel.TextColor3 = CurrentTheme.Text
+            TabLabel.TextTransparency = 0.45
+            TabLabel.TextXAlignment = Enum.TextXAlignment.Left
+            TabLabel.TextTruncate = Enum.TextTruncate.AtEnd
+            TabLabel.Parent = TabBtn
+            AddToRegistry(TabLabel, "TextColor3", "Text")
 
-            local tabContent = Instance.new("Frame")
-            tabContent.Size = UDim2.new(1, 0, 0, 0)
-            tabContent.AutomaticSize = Enum.AutomaticSize.Y
-            tabContent.BackgroundTransparency = 1
-            tabContent.Visible = false
-            tabContent.Parent = ContentHolder
+            local TabContent = Instance.new("Frame")
+            TabContent.Size = UDim2.new(1, 0, 0, 0)
+            TabContent.AutomaticSize = Enum.AutomaticSize.Y
+            TabContent.BackgroundTransparency = 1
+            TabContent.BorderSizePixel = 0
+            TabContent.Visible = false
+            TabContent.Parent = ContentArea
 
-            local tabContentList = Instance.new("UIListLayout")
-            tabContentList.SortOrder = Enum.SortOrder.LayoutOrder
-            tabContentList.Padding = UDim.new(0, 0)
-            tabContentList.Parent = tabContent
+            local innerLayout = Instance.new("UIListLayout")
+            innerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            innerLayout.Padding = UDim.new(0, 0)
+            innerLayout.Parent = TabContent
 
-            table.insert(Tabbox.Tabs, { Name = tabName, Icon = tabIcon, Button = tabBtn, Content = tabContent })
-            Tabbox.TabButtons[tabName] = { Button = tabBtn, Label = nameLbl, Icon = iconImg }
+            local data = {
+                Name = tabName,
+                Button = TabBtn,
+                Content = TabContent,
+                Layout = innerLayout,
+                Icon = iconImg,
+                Label = TabLabel,
+            }
+            table.insert(tabs, data)
+            refreshTabButtons()
 
-            tabBtn.MouseButton1Click:Connect(function()
-                Tabbox:SelectTab(tabName)
+            local builder = createSectionBuilder(TabContent, TabContent, elementWidth, windowCount, window)
+
+            TabBtn.MouseButton1Click:Connect(function() activateTab(data) end)
+
+            innerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                if activeTab == data then updateTabboxSize() end
             end)
 
-            -- 子 builder：Add* 前缀自动映射到 child 的 Xxx 方法
-            local subBuilder = {}
-            local aliasMap = {
-                AddToggle      = "Toggle",
-                AddSlider      = "Slider",
-                AddDropdown    = "Dropdown",
-                AddKeybind     = "Keybind",
-                AddInput       = "Input",
-                AddButton      = "Button",
-                AddLabel       = "Label",
-                AddTextbox     = "Textbox",
-                AddDivider     = "Divider",
-                AddParagraph   = "Paragraph",
-                AddSpace       = "Space",
-                AddCheckbox    = "Checkbox",
-                AddProgressBar = "ProgressBar",
-                AddUserFrame   = "UserFrame",
-                AddVideo       = "Video",
-                AddAudio       = "Audio",
-                AddSocial      = "Social",
-                AddViewport    = "Viewport",
-                AddGroup       = "Group",
-                AddImage       = "Image",
-            }
-
-            local function makeRoute(methodName)
-                return function(_, cfg)
-                    cfg = cfg or {}
-                    cfg.Parent = tabContent
-                    return child[methodName](_, cfg)
-                end
-            end
-
-            for alias, realName in pairs(aliasMap) do
-                if type(child[realName]) == "function" then
-                    subBuilder[alias] = makeRoute(realName)
-                end
-            end
-
-            for methodName, fn in pairs(child) do
-                if type(fn) == "function" and methodName ~= "CenterTabbox" and not subBuilder[methodName] then
-                    subBuilder[methodName] = makeRoute(methodName)
-                end
-            end
-
-            -- AddSection：与 k.lua 语义保持一致（加一行分隔线，返回同一 builder）
-            subBuilder.AddSection = function(_, cfg)
-                cfg = cfg or {}
-                local title = cfg.Name or cfg.Text
-                if title and title ~= "" then
-                    child.Divider(_, { Name = title, Parent = tabContent })
-                end
-                return subBuilder
-            end
-
-            subBuilder.SetVisible = function(_, v) tabContent.Visible = v end
-            subBuilder.Select     = function(_)  Tabbox:SelectTab(tabName) end
-            subBuilder.Root       = tabContent
-
-            if not Tabbox.ActiveTab then
-                Tabbox:SelectTab(tabName)
-            end
-
-            return subBuilder
+            if not activeTab then activateTab(data) end
+            task.defer(updateTabboxSize)
+            return builder
         end
 
-        function Tabbox:SetVisible(v) TabboxFrame.Visible = v end
-        function Tabbox:GetActiveTab() return Tabbox.ActiveTab end
+        function tabbox:Select(name)
+            for _, t in ipairs(tabs) do
+                if t.Name == name then activateTab(t); break end
+            end
+            return tabbox
+        end
 
-        return Tabbox
+        function tabbox:GetActive() return activeTab and activeTab.Name or nil end
+
+        function tabbox:SetVisible(v)
+            TabboxFrame.Visible = v ~= false
+            return tabbox
+        end
+
+        function tabbox:Destroy() TabboxFrame:Destroy() end
+
+        return tabbox
+    end
+
+    child.AddCenterTabbox = function(self, name)
+        return self:Tabbox({ Name = name, Position = "center" })
+    end
+
+    child.AddLeftTabbox = function(self, name)
+        return self:Tabbox({ Name = name, Position = "left" })
+    end
+
+    child.AddRightTabbox = function(self, name)
+        return self:Tabbox({ Name = name, Position = "right" })
     end
 
     local functions = {}
@@ -3212,34 +3123,34 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- addCenterFeatureTabbox  (对齐 k.lua 的 addCenterFeatureTabbox)
--- 用法：
---   local featureTabs = Fenglib.addCenterFeatureTabbox(tabBuilder, "Visual Features", {
---       { Key = "ESP",      Name = "ESP",      Icon = "rbxassetid://..." },
---       { Key = "Camera",   Name = "Camera",   Icon = "rbxassetid://..." },
---   })
---   featureTabs.ESP:AddToggle({ Name = "Master", Value = false, Callback = function(v) end })
---   featureTabs.ESP:AddSlider({ Name = "Distance", Value = {Min=0,Max=500,Default=200}, Callback = function(v) end })
---   featureTabs.ESP:AddSection({ Name = "Colors" }):AddColorPicker({...})
+-- addCenterFeatureTabbox  (ported from k.lua)
+--   用法:
+--     local visualTab = window:Tab("Visual", icon)
+--     local feature = addCenterFeatureTabbox(visualTab, "Visual Features", {
+--         { Key = "ESP",      Name = "ESP",      Icon = "rbxassetid://..." },
+--         { Key = "Camera",   Name = "Camera",   Icon = "rbxassetid://..." },
+--         { Key = "Lighting", Name = "Lighting", Icon = "rbxassetid://..." },
+--     })
+--     feature.ESP:Section({ Name = "Highlight" })
+--     feature.Camera:Toggle({ Name = "FOV Override" })
 -- ═══════════════════════════════════════════════════════════════
-function Fenglib.addCenterFeatureTabbox(tabBuilder, name, entries)
-    if not tabBuilder or type(tabBuilder.CenterTabbox) ~= "function" then
-        warn("[Fenglib] addCenterFeatureTabbox: 需要传入 Window:Tab 返回的 builder")
+local function addCenterFeatureTabbox(tab, name, entries)
+    if not tab or not tab.AddCenterTabbox then
+        warn("[addCenterFeatureTabbox] tab 不合法（需要来自 Window:Tab 的 builder）")
         return {}
     end
-
-    local tabbox = tabBuilder:CenterTabbox({ Name = name })
+    local tabbox  = tab:AddCenterTabbox(name)
     local created = {}
-
     for _, entry in ipairs(entries or {}) do
         created[entry.Key] = tabbox:AddTab({
             Name = entry.Name,
             Icon = entry.Icon,
         })
     end
-
-    return created, tabbox
+    return created
 end
+
+Fenglib.AddCenterFeatureTabbox = addCenterFeatureTabbox
 
 function Fenglib:CreateWindow(Config)
     local Window = {}
@@ -4085,6 +3996,9 @@ function Fenglib:CreateWindow(Config)
 
     -- ═══════════════════════════════════════════════════════════════
     -- CreateHomeTab
+    --   • Title 支持 Name 别名
+    --   • Icon 支持 Logo 别名
+    --   • QQGroup 默认 https://qm.qq.com/q/GDgGTuT66I
     -- ═══════════════════════════════════════════════════════════════
     function Window:CreateHomeTab(Config)
         Config = Config or {}
