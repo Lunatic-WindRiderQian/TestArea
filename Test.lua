@@ -1,29 +1,7 @@
 --[[
     FengYu-Bento (Test.lua)
-    - BottomFrame = miUI 同款玩家卡片（大字=DisplayName，小字=Name）
-    - UserSettingButton = miUI 同款 BuilderIcons 字体图标
-    - UserFrame：Input 1 = 副名字 / Input 2 = 名字，内外双向同步
-    - 文字渐变：miUI 扫光动画 + 自动 hook
-    - Section 卡片左侧贴边，Section 之间 8px 间距
-    - CreateHomeTab：中文文案，保留【脚本更新】分段，QQ 群卡
-    - 已移除 Section 模式分支，已清理死代码
-    - 已彻底移除 Group / AddElement
     - Section 直接支持 Tab 条目（布局 = miUI AddCenterTabbox）
-      用法：
-        local Feng = FengYu:Section({
-            Name        = "标题",
-            SubName     = "副标题",
-            Logo        = "84830962019412",
-            Collapsible = true,
-            Collapsed   = true,
-            Locked      = true,
-            TextLocked  = "未解锁",
-            { Key = "ESP",      Name = "ESP",      Icon = "rbxassetid://1" },
-            { Key = "Camera",   Name = "Camera",   Icon = "rbxassetid://2" },
-            { Key = "Lighting", Name = "Lighting", Icon = "rbxassetid://3" },
-        })
-        Feng.ESP:Toggle({...})
-        Feng.Camera:Slider({...})
+    - 图标大小 18×18 + UIScale 0.82（与 ModernV2:SetIconMode 一致，防止显示过大/扁）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -98,7 +76,6 @@ local function Tween(obj, props, time)
     TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
 
--- 文字渐变系统
 local TextGradient = {
     Enabled = true, Time = 0, Accumulator = 0,
     Labels = {}, Objects = {}, Hooks = {}, Skipped = {},
@@ -2673,7 +2650,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- Tabbox (居中标签盒子) — 高级用法保留
     child.Tabbox = function(_, config)
         if type(config) == "string" then config = { Name = config } end
         config = config or {}
@@ -2876,6 +2852,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
     -- ═══════════════════════════════════════════════════════════════
     -- createSection（支持在 Section 内嵌 Tab 条目）
+    --   图标：18×18 + UIScale 0.82（与 miUI ModernIconScale 一致）
     -- ═══════════════════════════════════════════════════════════════
     local function createSection(_, config)
         if type(config) == "string" then config = { Name = config }
@@ -3104,10 +3081,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         -- ══════════════════════════════════════════════════════════════
         -- Section 内嵌 Tab（布局 = miUI AddCenterTabbox）
-        --   • 按钮等分宽度：UDim2.new(widthScale, -4, 1, 0)
-        --   • Icon 定位 (0, 7, 0.5, 0)，Size (0, 18, 0, 18)
-        --   • Label 定位 (0, 29, 0.5, 0)，Size (1, -34, 0, 15)
-        --   • 激活：背景透明 0.150 + 描边透明 0.650 + Icon Accent + 文字不透明
+        --   • Icon：Size(0,18,0,18) + UIScale 0.82（与 ModernV2 一致）
+        --   • Label：11pt @ Position(0, 29, 0.5, 0)，宽 1,-34
+        --   • 激活：btn BG 0.150 / 描边 0.650 / Icon Accent / 文字不透明
         -- ══════════════════════════════════════════════════════════════
         local tabBuilders = {}
         if hasTabs then
@@ -3181,7 +3157,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 local tabName = entry.Name or key
                 local tabIcon = entry.Icon
 
-                -- 按钮等分宽度
                 local btn = Instance.new("TextButton")
                 btn.Name = "SectionTab_"..key
                 btn.BackgroundColor3 = CurrentTheme.Top
@@ -3199,7 +3174,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 btnStroke.Parent = btn
                 table.insert(ThemeListeners, function() btnStroke.Color = CurrentTheme.Stroke end)
 
-                -- 图标（miUI 布局）
+                -- ⭐ 关键：图标 18×18 + UIScale 0.82（防止过大/扁）
                 local iconLabel = nil
                 if tabIcon and tostring(tabIcon) ~= "" then
                     iconLabel = Instance.new("ImageLabel")
@@ -3215,10 +3190,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     else
                         iconLabel.Image = tostring(tabIcon)
                     end
+
+                    -- ★ 与 ModernV2:SetIconMode 一致：UIScale 0.82
+                    local uiScale = Instance.new("UIScale")
+                    uiScale.Name = "ModernIconScale"
+                    uiScale.Scale = 0.82
+                    uiScale.Parent = iconLabel
+
                     iconLabel.Parent = btn
                 end
 
-                -- 文本（miUI 布局）
                 local textLbl = Instance.new("TextLabel")
                 textLbl.Name = "TabText"
                 textLbl.AnchorPoint = Vector2.new(0, 0.5)
@@ -3234,7 +3215,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 textLbl.TextTruncate = Enum.TextTruncate.AtEnd
                 textLbl.Parent = btn
 
-                -- 子内容容器
                 local tabFrame = Instance.new("Frame")
                 tabFrame.Name = "TabContent_"..key
                 tabFrame.Size = UDim2.new(1, 0, 0, 0)
