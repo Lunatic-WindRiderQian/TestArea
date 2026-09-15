@@ -3,7 +3,7 @@
     - Section 直接支持 Tab 条目（布局 = miUI AddCenterTabbox）
     - 图标大小 18×18 + UIScale 0.82（与 ModernV2:SetIconMode 一致，防止显示过大/扁）
     - CreateWindow 图标：支持 Config.Logo / Config.Icon，自动规范化 ID，默认 84830962019412
-    - 新增 Colorpicker（移植自 FluentPro.AddColorpicker）
+    - 新增 Colorpicker（完整搬运自 FluentPro.AddColorpicker）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -410,7 +410,6 @@ local function createLockOverlay(parent, defaultTitle)
     return lockFrame, lockLabel
 end
 
--- ⭐ 通用图标 ID 规范化（CreateWindow 顶部图标使用）
 local function formatIconAsset(asset, default)
     if asset == nil or asset == "" then return default end
     if type(asset) == "number" then
@@ -2866,19 +2865,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self:Tabbox({ Name = name })
     end
 
-    -- ═══════════════════════════════════════════════════════════════
-    -- Colorpicker（移植自 FluentPro.AddColorpicker）
-    --   预览棋盘格 + 弹出式 HSV/Alpha 选择器 + Hex 输入
-    -- ═══════════════════════════════════════════════════════════════
     child.Colorpicker = function(_, config)
         config = safeConfig(config)
-        local cpTitle           = config.Name or "颜色选择器"
-        local defaultColor      = config.Default or Color3.fromRGB(255, 255, 255)
-        local defaultTransparency = config.Transparency or 0
-        local showTransparency  = (config.Transparency ~= nil)
-        local callback          = config.Callback or function() end
-        local controlId         = cpTitle .. "_" .. tostring(#Registry)
-        local parent            = config.Parent or contentHolder
+        local cpTitle              = config.Name or "颜色选择器"
+        local defaultColor         = config.Default or Color3.fromRGB(255, 255, 255)
+        local defaultTransparency  = config.Transparency or 0
+        local showTransparency     = (config.Transparency ~= nil)
+        local callback             = config.Callback or function() end
+        local controlId            = cpTitle .. "_" .. tostring(#Registry)
+        local parent               = config.Parent or contentHolder
 
         local h = {
             Value        = defaultColor,
@@ -2888,33 +2883,30 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Title        = cpTitle,
         }
 
-        -- ── 行内元素 ────────────────────────────────────────────
         local Tile     = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, cpTitle, 15, 12, UDim2.new(1, -60, 0, 18), 13)
 
-        -- 预览色块（棋盘格 + 底色）
         local Preview = Instance.new("ImageLabel")
-        Preview.Size                = UDim2.fromOffset(26, 26)
-        Preview.Position            = UDim2.new(1, -10, 0.5, 0)
-        Preview.AnchorPoint         = Vector2.new(1, 0.5)
-        Preview.Image               = "http://www.roblox.com/asset/?id=14204231522"
-        Preview.ImageTransparency   = 0.45
-        Preview.ScaleType           = Enum.ScaleType.Tile
-        Preview.TileSize            = UDim2.fromOffset(40, 40)
-        Preview.BackgroundColor3    = defaultColor
+        Preview.Size                   = UDim2.fromOffset(26, 26)
+        Preview.Position               = UDim2.new(1, -10, 0.5, 0)
+        Preview.AnchorPoint            = Vector2.new(1, 0.5)
+        Preview.Image                  = "http://www.roblox.com/asset/?id=14204231522"
+        Preview.ImageTransparency      = 0.45
+        Preview.ScaleType              = Enum.ScaleType.Tile
+        Preview.TileSize               = UDim2.fromOffset(40, 40)
+        Preview.BackgroundColor3       = defaultColor
         Preview.BackgroundTransparency = defaultTransparency
-        Preview.BorderSizePixel     = 0
-        Preview.Parent              = Tile
+        Preview.BorderSizePixel        = 0
+        Preview.Parent                 = Tile
         Instance.new("UICorner", Preview).CornerRadius = UDim.new(0, 4)
 
         local ClickBtn = Instance.new("TextButton")
-        ClickBtn.Size              = UDim2.new(1, 0, 1, 0)
-        ClickBtn.BackgroundTransparency = 1
-        ClickBtn.Text              = ""
-        ClickBtn.AutoButtonColor   = false
-        ClickBtn.Parent            = Tile
+        ClickBtn.Size                    = UDim2.new(1, 0, 1, 0)
+        ClickBtn.BackgroundTransparency  = 1
+        ClickBtn.Text                    = ""
+        ClickBtn.AutoButtonColor         = false
+        ClickBtn.Parent                  = Tile
 
-        -- 锁定支持
         local locked      = config.Locked == true
         local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
@@ -2923,9 +2915,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         h.Frame = Tile
 
+        local function _round(v, decimals)
+            local f = 10 ^ (decimals or 0)
+            return math.floor(v * f + 0.5) / f
+        end
+
         local function updatePreview()
-            Preview.BackgroundColor3      = h.Value
-            Preview.BackgroundTransparency = h.Transparency
+            Preview.BackgroundColor3        = h.Value
+            Preview.BackgroundTransparency  = h.Transparency
         end
 
         local function setColor(newColor, alpha)
@@ -2938,172 +2935,170 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             pcall(callback, h.Value, h.Transparency)
         end
 
-        -- ── 弹出式选择器 ────────────────────────────────────────
         local function openPicker()
             if locked then return end
             local sg = parent:FindFirstAncestorOfClass("ScreenGui")
                         or Tile:FindFirstAncestorOfClass("ScreenGui")
             if not sg then return end
 
-            local cH, cS, cV = Color3.toHSV(h.Value)
-            local cA         = h.Transparency
+            local curH, curS, curV = Color3.toHSV(h.Value)
+            local curA             = h.Transparency
 
             local dragConns = {}
 
-            -- 遮罩
             local Overlay = Instance.new("TextButton")
-            Overlay.Name                 = "FengColorPickerOverlay"
-            Overlay.Size                 = UDim2.new(1, 0, 1, 0)
-            Overlay.BackgroundColor3     = Color3.new(0, 0, 0)
-            Overlay.BackgroundTransparency = 1
-            Overlay.Text                 = ""
-            Overlay.AutoButtonColor      = false
-            Overlay.ZIndex               = 1000
-            Overlay.Parent               = sg
+            Overlay.Name                    = "FengColorPickerOverlay"
+            Overlay.Size                    = UDim2.new(1, 0, 1, 0)
+            Overlay.BackgroundColor3        = Color3.new(0, 0, 0)
+            Overlay.BackgroundTransparency  = 1
+            Overlay.Text                    = ""
+            Overlay.AutoButtonColor         = false
+            Overlay.ZIndex                  = 1000
+            Overlay.Parent                  = sg
             Tween(Overlay, { BackgroundTransparency = 0.4 }, 0.2)
 
-            -- 面板
             local Panel = Instance.new("Frame")
-            Panel.Size             = UDim2.fromOffset(380, 340)
-            Panel.Position         = UDim2.new(0.5, 0, 0.5, 0)
-            Panel.AnchorPoint      = Vector2.new(0.5, 0.5)
-            Panel.BackgroundColor3 = CurrentTheme.Main
+            Panel.Size                   = UDim2.fromOffset(400, 340)
+            Panel.Position               = UDim2.new(0.5, 0, 0.5, 0)
+            Panel.AnchorPoint            = Vector2.new(0.5, 0.5)
+            Panel.BackgroundColor3       = CurrentTheme.Main
             Panel.BackgroundTransparency = 0.04
-            Panel.BorderSizePixel  = 0
-            Panel.ClipsDescendants = true
-            Panel.Active           = true
-            Panel.ZIndex           = 1001
-            Panel.Parent           = Overlay
+            Panel.BorderSizePixel        = 0
+            Panel.ClipsDescendants       = true
+            Panel.Active                 = true
+            Panel.ZIndex                 = 1001
+            Panel.Parent                 = Overlay
             Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 10)
 
             local PanelStroke = Instance.new("UIStroke")
-            PanelStroke.Thickness     = 1
-            PanelStroke.Color         = CurrentTheme.Stroke
-            PanelStroke.Transparency  = 0.6
-            PanelStroke.Parent        = Panel
+            PanelStroke.Thickness    = 1
+            PanelStroke.Color        = CurrentTheme.Stroke
+            PanelStroke.Transparency = 0.6
+            PanelStroke.Parent       = Panel
 
-            Tween(Panel, { Size = UDim2.fromOffset(420, 370) }, 0.22)
+            Tween(Panel, { Size = UDim2.fromOffset(430, 360) }, 0.22)
 
-            -- 标题
             local PTitle = Instance.new("TextLabel")
-            PTitle.Size              = UDim2.new(1, -60, 0, 22)
-            PTitle.Position          = UDim2.fromOffset(18, 16)
+            PTitle.Size                   = UDim2.new(1, -40, 0, 24)
+            PTitle.Position               = UDim2.fromOffset(20, 18)
             PTitle.BackgroundTransparency = 1
-            PTitle.Font              = Enum.Font.GothamBold
-            PTitle.Text              = cpTitle
-            PTitle.TextSize          = 15
-            PTitle.TextColor3        = CurrentTheme.Text
-            PTitle.TextXAlignment    = Enum.TextXAlignment.Left
-            PTitle.ZIndex            = 1002
-            PTitle.Parent            = Panel
+            PTitle.Font                   = Enum.Font.GothamBold
+            PTitle.Text                   = cpTitle
+            PTitle.TextSize               = 18
+            PTitle.TextColor3             = CurrentTheme.Text
+            PTitle.TextXAlignment         = Enum.TextXAlignment.Left
+            PTitle.ZIndex                 = 1002
+            PTitle.Parent                 = Panel
             AddToRegistry(PTitle, "TextColor3", "Text")
 
-            -- ── SV 方块 ────────────────────────────────────────
-            local SV_W, SV_H = 200, 160
-            local SVBox = Instance.new("Frame")
-            SVBox.Size              = UDim2.fromOffset(SV_W, SV_H)
-            SVBox.Position          = UDim2.fromOffset(18, 55)
-            SVBox.BackgroundColor3  = Color3.fromHSV(cH, 1, 1)
-            SVBox.BorderSizePixel   = 0
-            SVBox.ZIndex            = 1002
-            SVBox.Parent            = Panel
-            Instance.new("UICorner", SVBox).CornerRadius = UDim.new(0, 4)
+            local SV_W, SV_H = 180, 160
+            local L = Instance.new("Frame")
+            L.Size             = UDim2.fromOffset(SV_W, SV_H)
+            L.Position         = UDim2.fromOffset(20, 55)
+            L.BackgroundColor3 = Color3.fromHSV(curH, 1, 1)
+            L.BorderSizePixel  = 0
+            L.ZIndex           = 1002
+            L.Parent           = Panel
+            Instance.new("UICorner", L).CornerRadius = UDim.new(0, 4)
 
-            local whiteLayer = Instance.new("Frame")
-            whiteLayer.Size             = UDim2.fromScale(1, 1)
-            whiteLayer.BackgroundColor3 = Color3.new(1, 1, 1)
-            whiteLayer.BorderSizePixel  = 0
-            whiteLayer.ZIndex           = 1003
-            whiteLayer.Parent           = SVBox
-            Instance.new("UICorner", whiteLayer).CornerRadius = UDim.new(0, 4)
-            local wGrad = Instance.new("UIGradient")
-            wGrad.Transparency = NumberSequence.new({
+            local svWhiteLayer = Instance.new("Frame")
+            svWhiteLayer.Size                   = UDim2.fromScale(1, 1)
+            svWhiteLayer.BackgroundColor3       = Color3.new(1, 1, 1)
+            svWhiteLayer.BorderSizePixel        = 0
+            svWhiteLayer.ZIndex                 = 1003
+            svWhiteLayer.Parent                 = L
+            Instance.new("UICorner", svWhiteLayer).CornerRadius = UDim.new(0, 4)
+            local svWhiteGrad = Instance.new("UIGradient")
+            svWhiteGrad.Transparency = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 0),
-                NumberSequenceKeypoint.new(1, 1)
+                NumberSequenceKeypoint.new(1, 1),
             })
-            wGrad.Parent = whiteLayer
+            svWhiteGrad.Parent = svWhiteLayer
 
-            local blackLayer = Instance.new("Frame")
-            blackLayer.Size             = UDim2.fromScale(1, 1)
-            blackLayer.BackgroundColor3 = Color3.new(0, 0, 0)
-            blackLayer.BorderSizePixel  = 0
-            blackLayer.ZIndex           = 1004
-            blackLayer.Parent           = SVBox
-            Instance.new("UICorner", blackLayer).CornerRadius = UDim.new(0, 4)
-            local bGrad = Instance.new("UIGradient")
-            bGrad.Rotation = 90
-            bGrad.Transparency = NumberSequence.new({
+            local svBlackLayer = Instance.new("Frame")
+            svBlackLayer.Size             = UDim2.fromScale(1, 1)
+            svBlackLayer.BackgroundColor3 = Color3.new(0, 0, 0)
+            svBlackLayer.BorderSizePixel  = 0
+            svBlackLayer.ZIndex           = 1004
+            svBlackLayer.Parent           = L
+            Instance.new("UICorner", svBlackLayer).CornerRadius = UDim.new(0, 4)
+            local svBlackGrad = Instance.new("UIGradient")
+            svBlackGrad.Rotation = 90
+            svBlackGrad.Transparency = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 1),
-                NumberSequenceKeypoint.new(1, 0)
+                NumberSequenceKeypoint.new(1, 0),
             })
-            bGrad.Parent = blackLayer
+            svBlackGrad.Parent = svBlackLayer
 
             local svMarker = Instance.new("ImageLabel")
-            svMarker.Size             = UDim2.fromOffset(16, 16)
-            svMarker.AnchorPoint      = Vector2.new(0.5, 0.5)
-            svMarker.Position         = UDim2.new(cS, 0, 1 - cV, 0)
+            svMarker.Size                   = UDim2.fromOffset(16, 16)
+            svMarker.AnchorPoint            = Vector2.new(0.5, 0.5)
+            svMarker.Position               = UDim2.new(curS, 0, 1 - curV, 0)
             svMarker.BackgroundTransparency = 1
-            svMarker.Image            = "http://www.roblox.com/asset/?id=4805639000"
-            svMarker.ZIndex           = 1005
-            svMarker.Parent           = SVBox
+            svMarker.Image                  = "http://www.roblox.com/asset/?id=4805639000"
+            svMarker.ZIndex                 = 1005
+            svMarker.Parent                 = L
 
-            -- ── 色相条 ─────────────────────────────────────────
-            local Hue_W, Hue_H = 14, SV_H
-            local HueBox = Instance.new("Frame")
-            HueBox.Size              = UDim2.fromOffset(Hue_W, Hue_H)
-            HueBox.Position          = UDim2.fromOffset(18 + SV_W + 12, 55)
-            HueBox.BackgroundColor3  = Color3.new(1, 1, 1)
-            HueBox.BorderSizePixel   = 0
-            HueBox.ZIndex            = 1002
-            HueBox.Parent            = Panel
-            Instance.new("UICorner", HueBox).CornerRadius = UDim.new(1, 0)
+            local HUE_W, HUE_H = 12, 190
 
             local hueKeys = {}
             for i = 0, 1, 0.1 do
-                local v = math.min(i, 1)
-                table.insert(hueKeys, ColorSequenceKeypoint.new(v, Color3.fromHSV(v, 1, 1)))
+                table.insert(hueKeys, ColorSequenceKeypoint.new(math.min(i, 1), Color3.fromHSV(math.min(i, 1), 1, 1)))
             end
             local hueGrad = Instance.new("UIGradient")
             hueGrad.Color    = ColorSequence.new(hueKeys)
             hueGrad.Rotation = 90
-            hueGrad.Parent   = HueBox
 
-            local hueMarker = Instance.new("ImageLabel")
-            hueMarker.Size             = UDim2.fromOffset(16, 16)
-            hueMarker.AnchorPoint      = Vector2.new(0.5, 0.5)
-            hueMarker.Position         = UDim2.new(0.5, 0, cH, 0)
-            hueMarker.BackgroundTransparency = 1
-            hueMarker.Image            = "http://www.roblox.com/asset/?id=4805639000"
-            hueMarker.ZIndex           = 1005
-            hueMarker.Parent           = HueBox
+            local S = Instance.new("Frame")
+            S.Size                   = UDim2.new(1, 0, 1, -10)
+            S.Position               = UDim2.fromOffset(0, 5)
+            S.BackgroundTransparency = 1
+            S.ZIndex                 = 1005
 
-            -- ── 透明度条（仅当 config.Transparency 存在时） ────
-            local alphaBox, alphaColorLayer, alphaMarker
+            local T = Instance.new("ImageLabel")
+            T.Size                   = UDim2.fromOffset(14, 14)
+            T.AnchorPoint            = Vector2.new(0.5, 0.5)
+            T.Position               = UDim2.new(0.5, 0, curH, 0)
+            T.BackgroundTransparency = 1
+            T.Image                  = "http://www.roblox.com/asset/?id=12266946128"
+            T.ZIndex                 = 1006
+            T.Parent                 = S
+
+            local U = Instance.new("Frame")
+            U.Size             = UDim2.fromOffset(HUE_W, HUE_H)
+            U.Position         = UDim2.fromOffset(210, 55)
+            U.BackgroundColor3 = Color3.new(1, 1, 1)
+            U.BorderSizePixel  = 0
+            U.ZIndex           = 1002
+            U.Parent           = Panel
+            Instance.new("UICorner", U).CornerRadius = UDim.new(1, 0)
+            hueGrad.Parent = U
+            S.Parent       = U
+
+            local alphaBox, alphaColorLayer, alphaMarker, alphaInner
             if showTransparency then
                 alphaBox = Instance.new("Frame")
-                alphaBox.Size             = UDim2.fromOffset(Hue_W, Hue_H)
-                alphaBox.Position         = UDim2.fromOffset(18 + SV_W + 12 + Hue_W + 12, 55)
-                alphaBox.BackgroundColor3 = Color3.new(1, 1, 1)
-                alphaBox.BorderSizePixel  = 0
-                alphaBox.ClipsDescendants = true
+                alphaBox.Size             = UDim2.fromOffset(HUE_W, HUE_H)
+                alphaBox.Position         = UDim2.fromOffset(230, 55)
+                alphaBox.BackgroundTransparency = 1
                 alphaBox.ZIndex           = 1002
                 alphaBox.Parent           = Panel
                 Instance.new("UICorner", alphaBox).CornerRadius = UDim.new(1, 0)
 
-                local checker = Instance.new("ImageLabel")
-                checker.Size             = UDim2.fromScale(1, 1)
-                checker.BackgroundTransparency = 1
-                checker.Image            = "http://www.roblox.com/asset/?id=14204231522"
-                checker.ScaleType        = Enum.ScaleType.Tile
-                checker.TileSize         = UDim2.fromOffset(16, 16)
-                checker.ImageTransparency = 0.4
-                checker.ZIndex           = 1003
-                checker.Parent           = alphaBox
-                Instance.new("UICorner", checker).CornerRadius = UDim.new(1, 0)
+                local alphaChecker = Instance.new("ImageLabel")
+                alphaChecker.Size                   = UDim2.fromScale(1, 1)
+                alphaChecker.BackgroundTransparency = 1
+                alphaChecker.Image                  = "http://www.roblox.com/asset/?id=14204231522"
+                alphaChecker.ScaleType              = Enum.ScaleType.Tile
+                alphaChecker.TileSize               = UDim2.fromOffset(20, 20)
+                alphaChecker.ImageTransparency      = 0.45
+                alphaChecker.ZIndex                 = 1003
+                alphaChecker.Parent                 = alphaBox
+                Instance.new("UICorner", alphaChecker).CornerRadius = UDim.new(1, 0)
 
                 alphaColorLayer = Instance.new("Frame")
                 alphaColorLayer.Size             = UDim2.fromScale(1, 1)
-                alphaColorLayer.BackgroundColor3 = Color3.fromHSV(cH, cS, cV)
+                alphaColorLayer.BackgroundColor3 = Color3.fromHSV(curH, curS, curV)
                 alphaColorLayer.BorderSizePixel  = 0
                 alphaColorLayer.ZIndex           = 1004
                 alphaColorLayer.Parent           = alphaBox
@@ -3112,95 +3107,248 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 aGrad.Rotation = 90
                 aGrad.Transparency = NumberSequence.new({
                     NumberSequenceKeypoint.new(0, 0),
-                    NumberSequenceKeypoint.new(1, 1)
+                    NumberSequenceKeypoint.new(1, 1),
                 })
                 aGrad.Parent = alphaColorLayer
 
+                alphaInner = Instance.new("Frame")
+                alphaInner.Size                   = UDim2.new(1, 0, 1, -10)
+                alphaInner.Position               = UDim2.fromOffset(0, 5)
+                alphaInner.BackgroundTransparency = 1
+                alphaInner.ZIndex                 = 1005
+                alphaInner.Parent                 = alphaBox
+
                 alphaMarker = Instance.new("ImageLabel")
-                alphaMarker.Size             = UDim2.fromOffset(16, 16)
-                alphaMarker.AnchorPoint      = Vector2.new(0.5, 0.5)
-                alphaMarker.Position         = UDim2.new(0.5, 0, cA, 0)
+                alphaMarker.Size                   = UDim2.fromOffset(14, 14)
+                alphaMarker.AnchorPoint            = Vector2.new(0.5, 0.5)
+                alphaMarker.Position               = UDim2.new(0.5, 0, curA, 0)
                 alphaMarker.BackgroundTransparency = 1
-                alphaMarker.Image            = "http://www.roblox.com/asset/?id=4805639000"
-                alphaMarker.ZIndex           = 1005
-                alphaMarker.Parent           = alphaBox
+                alphaMarker.Image                  = "http://www.roblox.com/asset/?id=12266946128"
+                alphaMarker.ZIndex                 = 1006
+                alphaMarker.Parent                 = alphaInner
             end
 
-            -- ── 大预览 ────────────────────────────────────────
-            local PreviewBig = Instance.new("ImageLabel")
-            PreviewBig.Size             = UDim2.fromOffset(50, 50)
-            PreviewBig.Position         = UDim2.fromOffset(20, 245)
-            PreviewBig.BackgroundColor3 = Color3.fromHSV(cH, cS, cV)
-            PreviewBig.BackgroundTransparency = cA
-            PreviewBig.Image            = "http://www.roblox.com/asset/?id=14204231522"
-            PreviewBig.ImageTransparency = 0.45
-            PreviewBig.ScaleType        = Enum.ScaleType.Tile
-            PreviewBig.TileSize         = UDim2.fromOffset(40, 40)
-            PreviewBig.BorderSizePixel  = 0
-            PreviewBig.ZIndex           = 1002
-            PreviewBig.Parent           = Panel
-            Instance.new("UICorner", PreviewBig).CornerRadius = UDim.new(0, 6)
+            local prevColor = Color3.fromHSV(curH, curS, curV)
+            local oldH, oldS, oldV = curH, curS, curV
+            local oldA             = curA
 
-            -- ── Hex 输入 ──────────────────────────────────────
-            local HexLabel = Instance.new("TextLabel")
-            HexLabel.Size              = UDim2.fromOffset(60, 20)
-            HexLabel.Position          = UDim2.fromOffset(82, 248)
-            HexLabel.BackgroundTransparency = 1
-            HexLabel.Text              = "十六进制"
-            HexLabel.Font              = Enum.Font.Gotham
-            HexLabel.TextSize          = 11
-            HexLabel.TextColor3        = CurrentTheme.SubText
-            HexLabel.TextXAlignment    = Enum.TextXAlignment.Left
-            HexLabel.ZIndex            = 1002
-            HexLabel.Parent            = Panel
+            local P = Instance.new("ImageLabel")
+            P.Size                   = UDim2.fromOffset(88, 24)
+            P.Position               = UDim2.fromOffset(20, 220)
+            P.BackgroundColor3       = prevColor
+            P.BackgroundTransparency = oldA
+            P.BorderSizePixel        = 0
+            P.Image                  = "http://www.roblox.com/asset/?id=14204231522"
+            P.ImageTransparency      = 0.45
+            P.ScaleType              = Enum.ScaleType.Tile
+            P.TileSize               = UDim2.fromOffset(40, 40)
+            P.ZIndex                 = 1002
+            P.Parent                 = Panel
+            Instance.new("UICorner", P).CornerRadius = UDim.new(0, 4)
+            local PStroke = Instance.new("UIStroke")
+            PStroke.Thickness    = 2
+            PStroke.Transparency = 0.75
+            PStroke.Parent       = P
 
-            local HexInput = Instance.new("TextBox")
-            HexInput.Size              = UDim2.fromOffset(100, 26)
-            HexInput.Position          = UDim2.fromOffset(82, 270)
-            HexInput.BackgroundColor3  = Color3.fromRGB(26, 28, 36)
-            HexInput.Text              = "#" .. Color3.fromHSV(cH, cS, cV):ToHex()
-            HexInput.Font              = Enum.Font.GothamBold
-            HexInput.TextSize          = 12
-            HexInput.TextColor3        = CurrentTheme.Text
-            HexInput.ClearTextOnFocus  = false
-            HexInput.TextXAlignment    = Enum.TextXAlignment.Center
-            HexInput.ZIndex            = 1002
-            HexInput.Parent            = Panel
-            Instance.new("UICorner", HexInput).CornerRadius = UDim.new(0, 5)
-            local HexStroke = Instance.new("UIStroke")
-            HexStroke.Thickness     = 1
-            HexStroke.Color         = CurrentTheme.Stroke
-            HexStroke.Transparency  = 0.65
-            HexStroke.Parent        = HexInput
+            local N = Instance.new("ImageLabel")
+            N.Size                   = UDim2.fromOffset(88, 24)
+            N.Position               = UDim2.fromOffset(112, 220)
+            N.BackgroundColor3       = prevColor
+            N.BackgroundTransparency = oldA
+            N.BorderSizePixel        = 0
+            N.Image                  = "http://www.roblox.com/asset/?id=14204231522"
+            N.ImageTransparency      = 0.45
+            N.ScaleType              = Enum.ScaleType.Tile
+            N.TileSize               = UDim2.fromOffset(40, 40)
+            N.ZIndex                 = 1002
+            N.Parent                 = Panel
+            Instance.new("UICorner", N).CornerRadius = UDim.new(0, 4)
+            local NStroke = Instance.new("UIStroke")
+            NStroke.Thickness    = 2
+            NStroke.Transparency = 0.75
+            NStroke.Parent       = N
 
-            -- ── 应用当前颜色 ─────────────────────────────────
+            local oldRevertBtn = Instance.new("TextButton")
+            oldRevertBtn.Size                    = UDim2.fromOffset(88, 24)
+            oldRevertBtn.Position                = UDim2.fromOffset(112, 220)
+            oldRevertBtn.BackgroundTransparency  = 1
+            oldRevertBtn.Text                    = ""
+            oldRevertBtn.AutoButtonColor         = false
+            oldRevertBtn.ZIndex                  = 1005
+            oldRevertBtn.Parent                  = Panel
+
+            local prevLbl = Instance.new("TextLabel")
+            prevLbl.Size                   = UDim2.fromOffset(80, 14)
+            prevLbl.Position               = UDim2.fromOffset(20, 250)
+            prevLbl.BackgroundTransparency = 1
+            prevLbl.Font                   = Enum.Font.GothamBold
+            prevLbl.TextSize               = 9
+            prevLbl.TextXAlignment         = Enum.TextXAlignment.Left
+            prevLbl.TextColor3             = CurrentTheme.Accent
+            prevLbl.Text                   = "#" .. prevColor:ToHex()
+            prevLbl.ZIndex                 = 1002
+            prevLbl.Parent                 = Panel
+            AddToRegistry(prevLbl, "TextColor3", "Accent")
+            TextGradient:Skip(prevLbl)
+
+            local oldLbl = Instance.new("TextLabel")
+            oldLbl.Size                   = UDim2.fromOffset(80, 14)
+            oldLbl.Position               = UDim2.fromOffset(112, 250)
+            oldLbl.BackgroundTransparency = 1
+            oldLbl.Font                   = Enum.Font.Gotham
+            oldLbl.TextSize               = 9
+            oldLbl.TextXAlignment         = Enum.TextXAlignment.Left
+            oldLbl.TextColor3             = CurrentTheme.SubText
+            oldLbl.Text                   = "#" .. prevColor:ToHex()
+            oldLbl.ZIndex                 = 1002
+            oldLbl.Parent                 = Panel
+            AddToRegistry(oldLbl, "TextColor3", "SubText")
+            TextGradient:Skip(oldLbl)
+
+            local inputX = showTransparency and 260 or 240
+            local labelX = showTransparency and 360 or 340
+
+            local function mkInput(yPos)
+                local box = Instance.new("TextBox")
+                box.Size             = UDim2.fromOffset(90, 32)
+                box.Position         = UDim2.fromOffset(inputX, yPos)
+                box.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+                box.BorderSizePixel  = 0
+                box.Font             = Enum.Font.GothamBold
+                box.TextSize         = 12
+                box.TextColor3       = CurrentTheme.Text
+                box.TextXAlignment   = Enum.TextXAlignment.Center
+                box.ClearTextOnFocus = false
+                box.ZIndex           = 1002
+                box.Parent           = Panel
+                Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5)
+                local boxStroke = Instance.new("UIStroke")
+                boxStroke.Thickness    = 1
+                boxStroke.Color        = CurrentTheme.Stroke
+                boxStroke.Transparency = 0.65
+                boxStroke.Parent       = box
+                AddToRegistry(box, "TextColor3", "Text")
+                TextGradient:Skip(box)
+                box.Focused:Connect(function() Tween(boxStroke, { Transparency = 0.2 }, 0.15) end)
+                box.FocusLost:Connect(function() Tween(boxStroke, { Transparency = 0.65 }, 0.15) end)
+                return box
+            end
+
+            local function mkLabel(text, yPos)
+                local lbl = Instance.new("TextLabel")
+                lbl.Size                   = UDim2.new(1, -(labelX + 20), 0, 32)
+                lbl.Position               = UDim2.fromOffset(labelX, yPos)
+                lbl.BackgroundTransparency = 1
+                lbl.Font                   = Enum.Font.GothamMedium
+                lbl.Text                   = text
+                lbl.TextSize               = 11
+                lbl.TextColor3             = CurrentTheme.SubText
+                lbl.TextXAlignment         = Enum.TextXAlignment.Left
+                lbl.ZIndex                 = 1002
+                lbl.Parent                 = Panel
+                AddToRegistry(lbl, "TextColor3", "SubText")
+                TextGradient:Skip(lbl)
+                return lbl
+            end
+
+            local HexInput   = mkInput(55)
+            local RedInput   = mkInput(95)
+            local GreenInput = mkInput(135)
+            local BlueInput  = mkInput(175)
+            local AlphaInput = showTransparency and mkInput(215) or nil
+
+            mkLabel("Hex",   55)
+            mkLabel("Red",   95)
+            mkLabel("Green", 135)
+            mkLabel("Blue",  175)
+            if showTransparency then mkLabel("Alpha", 215) end
+
             local function applyCurrent()
-                local cur = Color3.fromHSV(cH, cS, cV)
-                SVBox.BackgroundColor3        = Color3.fromHSV(cH, 1, 1)
-                svMarker.Position             = UDim2.new(cS, 0, 1 - cV, 0)
-                hueMarker.Position            = UDim2.new(0.5, 0, cH, 0)
-                PreviewBig.BackgroundColor3   = cur
-                PreviewBig.BackgroundTransparency = cA
-                if alphaColorLayer then
-                    alphaColorLayer.BackgroundColor3 = cur
+                local cur = Color3.fromHSV(curH, curS, curV)
+                L.BackgroundColor3            = Color3.fromHSV(curH, 1, 1)
+                svMarker.Position             = UDim2.new(curS, 0, 1 - curV, 0)
+                T.Position                    = UDim2.new(0.5, 0, curH, 0)
+                N.BackgroundColor3            = cur
+                N.BackgroundTransparency      = curA
+                prevLbl.Text                  = "#" .. cur:ToHex()
+                HexInput.Text                 = "#" .. cur:ToHex()
+                RedInput.Text                 = math.floor(cur.r * 255)
+                GreenInput.Text               = math.floor(cur.g * 255)
+                BlueInput.Text                = math.floor(cur.b * 255)
+                if showTransparency then
+                    alphaColorLayer.BackgroundColor3   = cur
+                    alphaMarker.Position               = UDim2.new(0.5, 0, curA, 0)
+                    AlphaInput.Text                    = _round((1 - curA) * 100, 0) .. "%"
                 end
-                if alphaMarker then
-                    alphaMarker.Position = UDim2.new(0.5, 0, cA, 0)
-                end
-                HexInput.Text = "#" .. cur:ToHex()
             end
 
-            -- ── 拖动辅助 ─────────────────────────────────────
-            local function bindDrag(handle, onPos)
+            HexInput.FocusLost:Connect(function(enterPressed)
+                if enterPressed then
+                    local ok, col = pcall(Color3.fromHex, HexInput.Text)
+                    if ok and typeof(col) == "Color3" then
+                        curH, curS, curV = Color3.toHSV(col)
+                    end
+                end
+                applyCurrent()
+            end)
+
+            RedInput.FocusLost:Connect(function(enterPressed)
+                if enterPressed then
+                    local cur = Color3.fromHSV(curH, curS, curV)
+                    local val = tonumber(RedInput.Text)
+                    if val and val >= 0 and val <= 255 then
+                        local ok, col = pcall(Color3.fromRGB, val, math.floor(cur.g * 255), math.floor(cur.b * 255))
+                        if ok and typeof(col) == "Color3" then curH, curS, curV = Color3.toHSV(col) end
+                    end
+                end
+                applyCurrent()
+            end)
+
+            GreenInput.FocusLost:Connect(function(enterPressed)
+                if enterPressed then
+                    local cur = Color3.fromHSV(curH, curS, curV)
+                    local val = tonumber(GreenInput.Text)
+                    if val and val >= 0 and val <= 255 then
+                        local ok, col = pcall(Color3.fromRGB, math.floor(cur.r * 255), val, math.floor(cur.b * 255))
+                        if ok and typeof(col) == "Color3" then curH, curS, curV = Color3.toHSV(col) end
+                    end
+                end
+                applyCurrent()
+            end)
+
+            BlueInput.FocusLost:Connect(function(enterPressed)
+                if enterPressed then
+                    local cur = Color3.fromHSV(curH, curS, curV)
+                    local val = tonumber(BlueInput.Text)
+                    if val and val >= 0 and val <= 255 then
+                        local ok, col = pcall(Color3.fromRGB, math.floor(cur.r * 255), math.floor(cur.g * 255), val)
+                        if ok and typeof(col) == "Color3" then curH, curS, curV = Color3.toHSV(col) end
+                    end
+                end
+                applyCurrent()
+            end)
+
+            if showTransparency and AlphaInput then
+                AlphaInput.FocusLost:Connect(function(enterPressed)
+                    if enterPressed then
+                        local pct = tonumber((AlphaInput.Text or ""):gsub("%%", ""))
+                        if pct and pct >= 0 and pct <= 100 then
+                            curA = 1 - pct * 0.01
+                        end
+                    end
+                    applyCurrent()
+                end)
+            end
+
+            local function bindDrag(handle, onRatio)
                 local dragging = false
                 local function process(input)
-                    local ax = handle.AbsolutePosition.X
-                    local ay = handle.AbsolutePosition.Y
+                    local ax, ay = handle.AbsolutePosition.X, handle.AbsolutePosition.Y
                     local aw = math.max(1, handle.AbsoluteSize.X)
                     local ah = math.max(1, handle.AbsoluteSize.Y)
                     local rx = math.clamp((input.Position.X - ax) / aw, 0, 1)
                     local ry = math.clamp((input.Position.Y - ay) / ah, 0, 1)
-                    onPos(rx, ry)
+                    onRatio(rx, ry)
                 end
                 table.insert(dragConns, handle.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -3223,40 +3371,30 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end))
             end
 
-            bindDrag(SVBox, function(rx, ry)
-                cS = rx
-                cV = 1 - ry
+            bindDrag(L, function(rx, ry)
+                curS = rx
+                curV = 1 - ry
                 applyCurrent()
             end)
-            bindDrag(HueBox, function(_, ry)
-                cH = ry
+
+            bindDrag(U, function(_, ry)
+                curH = ry
                 applyCurrent()
             end)
-            if alphaBox then
+
+            if showTransparency and alphaBox then
                 bindDrag(alphaBox, function(_, ry)
-                    cA = ry
+                    curA = ry
                     applyCurrent()
                 end)
             end
 
-            -- ── Hex 输入事件 ─────────────────────────────────
-            HexInput.Focused:Connect(function()
-                Tween(HexStroke, { Transparency = 0.2 }, 0.15)
-            end)
-            HexInput.FocusLost:Connect(function()
-                Tween(HexStroke, { Transparency = 0.65 }, 0.15)
-                local raw = HexInput.Text:gsub("#", ""):gsub("%s", "")
-                local ok, col = pcall(Color3.fromHex, raw)
-                if ok and typeof(col) == "Color3" then
-                    cH, cS, cV = Color3.toHSV(col)
-                    applyCurrent()
-                else
-                    HexInput.Text = "#" .. Color3.fromHSV(cH, cS, cV):ToHex()
-                end
+            oldRevertBtn.MouseButton1Click:Connect(function()
+                curH, curS, curV, curA = oldH, oldS, oldV, oldA
+                applyCurrent()
             end)
 
-            -- ── 底部按钮 ─────────────────────────────────────
-            local function makeButton(text, primary, cb)
+            local function mkButton(text, primary, cb)
                 local btn = Instance.new("TextButton")
                 btn.Size             = UDim2.fromOffset(90, 32)
                 btn.BackgroundColor3 = primary and CurrentTheme.Accent or Color3.fromRGB(40, 42, 52)
@@ -3272,18 +3410,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 return btn
             end
 
-            local CancelBtn = makeButton("取消", false, function()
+            local CancelBtn = mkButton("取消", false, function()
                 Overlay:Destroy()
             end)
             CancelBtn.Position = UDim2.new(1, -106, 1, -46)
 
-            local OkBtn = makeButton("确定", true, function()
-                setColor(Color3.fromHSV(cH, cS, cV), cA)
+            local OkBtn = mkButton("确定", true, function()
+                setColor(Color3.fromHSV(curH, curS, curV), curA)
                 Overlay:Destroy()
             end)
             OkBtn.Position = UDim2.new(1, -204, 1, -46)
 
-            -- ── 清理 ────────────────────────────────────────
             Overlay.Destroying:Connect(function()
                 for _, c in ipairs(dragConns) do
                     pcall(function() c:Disconnect() end)
@@ -3298,11 +3435,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if not locked then openPicker() end
         end)
 
-        -- ── 锁定 / 值接口 ──────────────────────────────────────
         local function updateLock(st)
-            locked           = st
+            locked            = st
             lockFrame.Visible = st
-            ClickBtn.Active  = not st
+            ClickBtn.Active   = not st
         end
 
         function h:GetValue() return h.Value, h.Transparency end
@@ -3354,10 +3490,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
-    -- ═══════════════════════════════════════════════════════════════
-    -- createSection（支持在 Section 内嵌 Tab 条目）
-    --   图标：18×18 + UIScale 0.82（与 miUI ModernIconScale 一致）
-    -- ═══════════════════════════════════════════════════════════════
     local function createSection(_, config)
         if type(config) == "string" then config = { Name = config }
         elseif type(config) ~= "table" then config = {} end
@@ -3583,12 +3715,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        -- ══════════════════════════════════════════════════════════════
-        -- Section 内嵌 Tab（布局 = miUI AddCenterTabbox）
-        --   • Icon：Size(0,18,0,18) + UIScale 0.82（与 ModernV2 一致）
-        --   • Label：11pt @ Position(0, 29, 0.5, 0)，宽 1,-34
-        --   • 激活：btn BG 0.150 / 描边 0.650 / Icon Accent / 文字不透明
-        -- ══════════════════════════════════════════════════════════════
         local tabBuilders = {}
         if hasTabs then
             local tabBar = Instance.new("Frame")
@@ -3678,7 +3804,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 btnStroke.Parent = btn
                 table.insert(ThemeListeners, function() btnStroke.Color = CurrentTheme.Stroke end)
 
-                -- ⭐ 关键：图标 18×18 + UIScale 0.82（防止过大/扁）
                 local iconLabel = nil
                 if tabIcon and tostring(tabIcon) ~= "" then
                     iconLabel = Instance.new("ImageLabel")
@@ -3695,7 +3820,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                         iconLabel.Image = tostring(tabIcon)
                     end
 
-                    -- ★ 与 ModernV2:SetIconMode 一致：UIScale 0.82
                     local uiScale = Instance.new("UIScale")
                     uiScale.Name = "ModernIconScale"
                     uiScale.Scale = 0.82
@@ -3832,7 +3956,6 @@ function Fenglib:CreateWindow(Config)
     local Title = Config.Name or "FengYu"
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind
-    -- ⭐ 支持 Logo / Icon 两种写法
     local IconAsset = Config.Logo or Config.Icon
     local SceneId = Config.Scene
 
@@ -3994,10 +4117,8 @@ function Fenglib:CreateWindow(Config)
     LogoImage.Size = UDim2.new(0, 35, 0, 35)
     LogoImage.Position = UDim2.new(0, 10, 0.5, -17.5)
     LogoImage.BackgroundTransparency = 1
-    -- ⭐ 规范化 ID；默认图标 = 84830962019412
     LogoImage.Image = formatIconAsset(IconAsset, "rbxassetid://84830962019412")
     LogoImage.Parent = HeadFrame
-    -- ⚠️ 若你的图标是彩色 LOGO，请注释掉下面这行，避免被主题色覆盖
     AddToRegistry(LogoImage, "ImageColor3", "Text")
     Instance.new("UICorner", LogoImage).CornerRadius = UDim.new(0, 7)
 
