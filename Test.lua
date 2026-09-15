@@ -3848,10 +3848,10 @@ function Fenglib:CreateWindow(Config)
 
         local function Greeting()
             local h = os.date("*t").hour
-            if h >= 4 and h < 12 then return "早上好" end
+            if h >= 4 and h < 12 then return "早上好啊" end
             if h >= 12 and h < 19 then return "今天过得怎么样？" end
-            if h >= 19 and h <= 23 then return "好梦" end
-            return "该睡觉了"
+            if h >= 19 and h <= 23 then return "做个好梦吧" end
+            return "该睡觉了小馋猫"
         end
 
         local function Elapsed()
@@ -4193,10 +4193,10 @@ function Fenglib:CreateWindow(Config)
             local ExecStatus = "未知"
             local ExecColor = CurrentTheme.Accent
             if table.find(supportedExecutors, ExecutorName) then
-                ExecStatus = "你的执行器似乎支持此脚本"
+                ExecStatus = "你的注入器支持此脚本"
                 ExecColor = Color3.fromRGB(45, 180, 115)
             elseif table.find(unsupportedExecutors, ExecutorName) then
-                ExecStatus = "你的执行器可能不支持此脚本"
+                ExecStatus = "你的注入器不支持此脚本"
                 ExecColor = Color3.fromRGB(220, 70, 70)
             end
 
@@ -4410,11 +4410,11 @@ function Fenglib:CreateWindow(Config)
         if table.find(supportedExecutors, ExecutorName) then
             ExecutorStatus = "已支持"
         elseif table.find(unsupportedExecutors, ExecutorName) then
-            ExecutorStatus = "未支持"
+            ExecutorStatus = "不支持"
         end
         StatusSection:AddParagraph({
             Name = ExecutorName,
-            Content = "执行器：" .. ExecutorStatus,
+            Content = "注入器：" .. ExecutorStatus,
         })
 
         ServerSection:AddParagraph({
