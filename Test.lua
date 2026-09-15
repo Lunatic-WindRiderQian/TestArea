@@ -8,8 +8,7 @@
     - CreateHomeTab：中文文案，保留【脚本更新】分段，QQ 群卡
     - 已移除 Section 模式分支，已清理死代码
     - 已彻底移除 Group / AddElement
-    - 已移植 k.lua + miUI.lua 的 AddCenterTabbox / addCenterFeatureTabbox
-    - 已修复 attempt to call a nil value 错误（加固 Callback 与 Tween）
+    - 新增：CenterTabbox（居中分页 Tabbox）+ addCenterFeatureTabbox 辅助函数
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -80,10 +79,7 @@ local function AddToRegistry(obj, prop, key)
     table.insert(Registry, {Object = obj, Property = prop, Type = key})
     obj[prop] = val
 end
-
--- ⚠️ 重命名 Tween 为 FengTween，防止被外部覆盖
-local function FengTween(obj, props, time)
-    if not obj or not obj.Parent then return end
+local function Tween(obj, props, time)
     TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
 
@@ -215,7 +211,7 @@ Fenglib.TextGradient = TextGradient
 function Fenglib:SetTheme(name)
     if Themes[name] then
         CurrentTheme = Themes[name]
-        for _, r in pairs(Registry) do if r.Object then FengTween(r.Object, {[r.Property] = CurrentTheme[r.Type]}) end end
+        for _, r in pairs(Registry) do if r.Object then Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]}) end end
         for _, fn in pairs(ThemeListeners) do pcall(fn) end
         TextGradient:RefreshAll()
     end
@@ -427,6 +423,9 @@ end
 
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
+    -- 🔧 默认父容器（未指定 Parent 的元素落到这里）
+    local contentHolder = contentContainer or parent
+
     local padding = parent:FindFirstChild("SectionPadding")
     if not padding then
         padding = Instance.new("UIPadding")
@@ -510,15 +509,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ClickBtn.AutoButtonColor = false; ClickBtn.Parent = Tile
         ClickBtn.Active = not locked
         local function updateLock(state) locked = state; lockFrame.Visible = state; ClickBtn.Active = not state end
-        ClickBtn.MouseEnter:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
-        ClickBtn.MouseButton1Down:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 0.45}, 0.08) end end)
-        ClickBtn.MouseButton1Up:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 0.65}, 0.08) end end)
-        ClickBtn.MouseButton1Click:Connect(function() 
-            if not locked then 
-                if callback then callback() end 
-            end 
-        end)
+        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
+        ClickBtn.MouseButton1Down:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.45}, 0.08) end end)
+        ClickBtn.MouseButton1Up:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.08) end end)
+        ClickBtn.MouseButton1Click:Connect(function() if not locked then callback() end end)
         local self = {}
         function self.UpdateText(t) TitleLbl.Text = t end
         function self.SetVisible(v) Tile.Visible = v end
@@ -567,24 +562,19 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function ApplyUI(v)
             Enabled = v
             if Enabled then
-                FengTween(Switch, {BackgroundColor3 = CurrentTheme.Accent}, 0.18)
-                FengTween(SwStroke, {Transparency = 1}, 0.18)
-                FengTween(Dot, {Position = UDim2.new(1, -17, 0.5, -8)}, 0.18)
+                Tween(Switch, {BackgroundColor3 = CurrentTheme.Accent}, 0.18)
+                Tween(SwStroke, {Transparency = 1}, 0.18)
+                Tween(Dot, {Position = UDim2.new(1, -17, 0.5, -8)}, 0.18)
             else
-                FengTween(Switch, {BackgroundColor3 = Color3.fromRGB(10, 13, 21)}, 0.18)
-                FengTween(SwStroke, {Transparency = 0.65}, 0.18)
-                FengTween(Dot, {Position = UDim2.new(0, 1, 0.5, -8)}, 0.18)
+                Tween(Switch, {BackgroundColor3 = Color3.fromRGB(10, 13, 21)}, 0.18)
+                Tween(SwStroke, {Transparency = 0.65}, 0.18)
+                Tween(Dot, {Position = UDim2.new(0, 1, 0.5, -8)}, 0.18)
             end
         end
-        ConfigObjects[controlId] = { Type = "Toggle", Value = Enabled, Set = function(v) if not locked then ApplyUI(v); if callback then callback(v) end end end }
-        ClickBtn.MouseEnter:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
-        ClickBtn.MouseButton1Click:Connect(function() 
-            if locked then return end
-            ApplyUI(not Enabled)
-            ConfigObjects[controlId].Value = Enabled
-            if callback then callback(Enabled) end
-        end)
+        ConfigObjects[controlId] = { Type = "Toggle", Value = Enabled, Set = function(v) if not locked then ApplyUI(v); callback(v) end end }
+        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
+        ClickBtn.MouseButton1Click:Connect(function() if locked then return end; ApplyUI(not Enabled); ConfigObjects[controlId].Value = Enabled; callback(Enabled) end)
         local self = {}
         function self.GetValue() return Enabled end
         function self.SetValue(v) if not locked then ConfigObjects[controlId].Set(v) end end
@@ -638,7 +628,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ValueLabel.Parent = ValueFrame
         AddToRegistry(ValueLabel, "TextColor3", "Text")
         TextGradient:Skip(ValueLabel)
-        ValueLabel.Focused:Connect(function() FengTween(ValueStroke, {Transparency = 0.2}, 0.15) end)
+        ValueLabel.Focused:Connect(function() Tween(ValueStroke, {Transparency = 0.2}, 0.15) end)
         local trackLeft = 15 + 90 + 12
         local trackRight = numW + 10 + 10
         local Track, Fill, Knob, Bar
@@ -680,7 +670,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Val = tonumber(val) or Val
                 ValueLabel.Text = tostring(Val)
                 if ConfigObjects[controlId] then ConfigObjects[controlId].Value = Val end
-                if callback then callback(Val) end
+                callback(Val)
                 return
             end
             val = math.clamp(val, min, max)
@@ -691,7 +681,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             ValueLabel.Text = tostring(val)
             Val = val
             if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
-            if callback then callback(val) end
+            callback(val)
             return val
         end
         local function GetValueFromInput(input)
@@ -720,7 +710,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
         ValueLabel.FocusLost:Connect(function()
-            FengTween(ValueStroke, {Transparency = 0.65}, 0.15)
+            Tween(ValueStroke, {Transparency = 0.65}, 0.15)
             local typed = tonumber(ValueLabel.Text)
             if typed then UpdateSlider(typed) else ValueLabel.Text = tostring(Val) end
         end)
@@ -839,8 +829,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 label.TextXAlignment = Enum.TextXAlignment.Left
                 label.Parent = O
                 AddToRegistry(label, "TextColor3", "Text")
-                O.MouseEnter:Connect(function() FengTween(O, {BackgroundTransparency = 0.1}, 0.15) end)
-                O.MouseLeave:Connect(function() FengTween(O, {BackgroundTransparency = 1}, 0.15) end)
+                O.MouseEnter:Connect(function() Tween(O, {BackgroundTransparency = 0.1}, 0.15) end)
+                O.MouseLeave:Connect(function() Tween(O, {BackgroundTransparency = 1}, 0.15) end)
                 local optData = { button = O, label = label, check = check, checkMark = checkMark, value = opt, selected = false }
                 table.insert(optionButtons, optData)
                 O.MouseButton1Click:Connect(function()
@@ -853,7 +843,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                         optData.checkMark.ImageTransparency = optData.selected and 0 or 1
                         updateLabel()
                         if ConfigObjects[controlId] then ConfigObjects[controlId].Value = selected end
-                        if callback then callback(selected) end
+                        callback(selected)
                     else
                         selected = opt
                         for _, d in ipairs(optionButtons) do
@@ -863,10 +853,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                         end
                         updateLabel()
                         if ConfigObjects[controlId] then ConfigObjects[controlId].Value = selected end
-                        if callback then callback(selected) end
+                        callback(selected)
                         Dropped = false
-                        FengTween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
-                        FengTween(Icon, {Rotation = 0}, 0.28)
+                        Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
+                        Tween(Icon, {Rotation = 0}, 0.28)
                         task.wait(0.3)
                         Container.Visible = false
                     end
@@ -879,7 +869,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
             if Dropped then
                 local targetHeight = #optionButtons * 34
-                FengTween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
+                Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.2)
             end
         end
         rebuildOptions(options)
@@ -890,21 +880,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ClickBtn.Active = not locked
         local function updateLock(state)
             locked = state; lockFrame.Visible = state; ClickBtn.Active = not state
-            if state then Dropped = false; Container.Visible = false; FengTween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.1) end
+            if state then Dropped = false; Container.Visible = false; Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.1) end
         end
-        ClickBtn.MouseEnter:Connect(function() if not locked then FengTween(Btn, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then FengTween(Btn, {BackgroundTransparency = 1}, 0.15) end end)
+        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Btn, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Btn, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function()
             if locked then return end
             Dropped = not Dropped
             if Dropped then
                 Container.Visible = true
                 local targetHeight = #optionButtons * 34
-                FengTween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.32)
-                FengTween(Icon, {Rotation = 180}, 0.32)
+                Tween(Container, {Size = UDim2.new(1, 0, 0, targetHeight)}, 0.32)
+                Tween(Icon, {Rotation = 180}, 0.32)
             else
-                FengTween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
-                FengTween(Icon, {Rotation = 0}, 0.28)
+                Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
+                Tween(Icon, {Rotation = 0}, 0.28)
                 task.wait(0.3)
                 Container.Visible = false
             end
@@ -921,8 +911,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 if Dropped and not locked then
                     if not isMouseOver(Container) and not isMouseOver(Btn) then
                         Dropped = false
-                        FengTween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
-                        FengTween(Icon, {Rotation = 0}, 0.28)
+                        Tween(Container, {Size = UDim2.new(1, 0, 0, 0)}, 0.28)
+                        Tween(Icon, {Rotation = 0}, 0.28)
                         task.wait(0.3)
                         Container.Visible = false
                     end
@@ -947,7 +937,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     d.checkMark.ImageTransparency = d.selected and 0 or 1
                 end
                 updateLabel()
-                if callback then callback(selected) end
+                callback(selected)
             end,
             Refresh = function(newOptions)
                 if locked then return end
@@ -1064,22 +1054,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if UserInputService:GetFocusedTextBox() then return end
             local key = state.Key
             if state.Mode == "Toggle" then
-                if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then state.Toggled = not state.Toggled; if callback then pcall(callback, state.Toggled) end
-                elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then state.Toggled = not state.Toggled; if callback then pcall(callback, state.Toggled) end
-                elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then state.Toggled = not state.Toggled; if callback then pcall(callback, state.Toggled) end end
+                if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then state.Toggled = not state.Toggled; pcall(callback, state.Toggled)
+                elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then state.Toggled = not state.Toggled; pcall(callback, state.Toggled)
+                elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then state.Toggled = not state.Toggled; pcall(callback, state.Toggled) end
             elseif state.Mode == "Hold" then
-                if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then if callback then pcall(callback, true) end
-                elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then if callback then pcall(callback, true) end
-                elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then if callback then pcall(callback, true) end end
+                if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then pcall(callback, true)
+                elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then pcall(callback, true)
+                elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then pcall(callback, true) end
             end
         end)
         inputEndConn = UserInputService.InputEnded:Connect(function(input, gpe)
             if gpe or locked or state.IsWaiting then return end
             if state.Mode == "Hold" then
                 local key = state.Key
-                if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then if callback then pcall(callback, false) end
-                elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then if callback then pcall(callback, false) end
-                elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then if callback then pcall(callback, false) end end
+                if key == "MouseLeft" and input.UserInputType == Enum.UserInputType.MouseButton1 then pcall(callback, false)
+                elseif key == "MouseRight" and input.UserInputType == Enum.UserInputType.MouseButton2 then pcall(callback, false)
+                elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == key then pcall(callback, false) end
             end
         end)
         local self = {}
@@ -1161,9 +1151,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if callback then pcall(callback, filtered) end
             if onChanged then pcall(onChanged, filtered) end
         end
-        InputBox.Focused:Connect(function() if not locked then FengTween(boxStroke, {Transparency = 0.2}, 0.15) end end)
+        InputBox.Focused:Connect(function() if not locked then Tween(boxStroke, {Transparency = 0.2}, 0.15) end end)
         InputBox.FocusLost:Connect(function()
-            FengTween(boxStroke, {Transparency = 0.65}, 0.15)
+            Tween(boxStroke, {Transparency = 0.65}, 0.15)
             if finished then updateValue() end
         end)
         if not finished then
@@ -1227,12 +1217,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         BoxStroke.Thickness = 1; BoxStroke.Transparency = 0.65
         BoxStroke.Color = CurrentTheme.Stroke; BoxStroke.Parent = Box
         table.insert(ThemeListeners, function() BoxStroke.Color = CurrentTheme.Stroke end)
-        Box.Focused:Connect(function() FengTween(BoxStroke, {Transparency = 0.2}, 0.15) end)
+        Box.Focused:Connect(function() Tween(BoxStroke, {Transparency = 0.2}, 0.15) end)
         Box.FocusLost:Connect(function()
             if locked then return end
-            FengTween(BoxStroke, {Transparency = 0.65}, 0.15)
-            if ConfigObjects[controlId] then ConfigObjects[controlId].Value = Box.Text end
-            if callback then callback(Box.Text) end
+            Tween(BoxStroke, {Transparency = 0.65}, 0.15)
+            ConfigObjects[controlId].Value = Box.Text
+            callback(Box.Text)
         end)
         local locked = config.Locked == true
         local lockedTitle = config.LockedTitle or "已锁定"
@@ -1240,7 +1230,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         lockFrame.Visible = locked
         Box.Active = not locked
         local function updateLock(st) locked = st; lockFrame.Visible = st; Box.Active = not st end
-        ConfigObjects[controlId] = { Type = "Textbox", Value = "", Set = function(val) if not locked then Box.Text = val; if callback then callback(val) end end end }
+        ConfigObjects[controlId] = { Type = "Textbox", Value = "", Set = function(val) if not locked then Box.Text = val; callback(val) end end }
         local self = {}
         function self.SetValue(v) if not locked then ConfigObjects[controlId].Set(v) end end
         function self.GetValue() return Box.Text end
@@ -1359,7 +1349,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         clickBtn.Size = UDim2.new(1, 0, 1, 0)
         clickBtn.BackgroundTransparency = 1; clickBtn.Text = ""
         clickBtn.Parent = imageFrame
-        clickBtn.MouseButton1Click:Connect(function() if callback then callback() end end)
+        clickBtn.MouseButton1Click:Connect(callback)
         local self = {}
         function self.UpdateTitle(newTitle) titleLabel.Text = newTitle end
         function self.SetIcon(newIcon, newColor)
@@ -1424,6 +1414,235 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
+    -- ═══════════════════════════════════════════════════════════════
+    --  CenterTabbox —— 居中分页 Tabbox（对应 miUI 的 AddCenterTabbox）
+    -- ═══════════════════════════════════════════════════════════════
+    child.CenterTabbox = function(_, config)
+        config = safeConfig(config)
+        local boxName = config.Name or ""
+        local parent  = config.Parent or contentHolder
+        local hasTitle = boxName ~= ""
+        local holderOffset = hasTitle and 20 or 0
+
+        local frame = Instance.new("Frame")
+        frame.BackgroundTransparency = 1
+        frame.BorderSizePixel = 0
+        frame.ClipsDescendants = true
+        frame.Size = UDim2.new(1, 0, 0, holderOffset + 41)
+        frame.Parent = parent
+
+        if hasTitle then
+            local titleLbl = Instance.new("TextLabel")
+            titleLbl.Size = UDim2.new(1, -35, 0, 15)
+            titleLbl.Position = UDim2.new(0, 5, 0, 0)
+            titleLbl.BackgroundTransparency = 1
+            titleLbl.Font = Enum.Font.GothamMedium
+            titleLbl.TextSize = 11
+            titleLbl.Text = boxName
+            titleLbl.TextTransparency = 0.5
+            titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+            titleLbl.Parent = frame
+            AddToRegistry(titleLbl, "TextColor3", "SubText")
+            TextGradient:Skip(titleLbl)
+        end
+
+        local holder = Instance.new("Frame")
+        holder.Size = UDim2.new(1, 0, 0, 41)
+        holder.Position = UDim2.new(0, 0, 0, holderOffset)
+        holder.BackgroundColor3 = CurrentTheme.Main
+        holder.BackgroundTransparency = 0.5
+        holder.BorderSizePixel = 0
+        holder.ClipsDescendants = true
+        holder.Parent = frame
+        Instance.new("UICorner", holder).CornerRadius = UDim.new(0, 10)
+
+        local holderStroke = Instance.new("UIStroke")
+        holderStroke.Color = CurrentTheme.Stroke
+        holderStroke.Transparency = 0.65
+        holderStroke.Parent = holder
+        table.insert(ThemeListeners, function()
+            holder.BackgroundColor3 = CurrentTheme.Main
+            holderStroke.Color = CurrentTheme.Stroke
+        end)
+
+        local buttonHolder = Instance.new("Frame")
+        buttonHolder.Size = UDim2.new(1, -10, 0, 28)
+        buttonHolder.Position = UDim2.new(0, 5, 0, 5)
+        buttonHolder.BackgroundTransparency = 1
+        buttonHolder.Parent = holder
+        local buttonLayout = Instance.new("UIListLayout")
+        buttonLayout.FillDirection = Enum.FillDirection.Horizontal
+        buttonLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        buttonLayout.Padding = UDim.new(0, 5)
+        buttonLayout.Parent = buttonHolder
+
+        local contentBox = Instance.new("Frame")
+        contentBox.Size = UDim2.new(1, -10, 0, 0)
+        contentBox.Position = UDim2.new(0, 5, 0, 36)
+        contentBox.BackgroundTransparency = 1
+        contentBox.ClipsDescendants = true
+        contentBox.Parent = holder
+
+        local tabboxObj = {
+            Frame = frame, Holder = holder,
+            ButtonHolder = buttonHolder, ContentHolder = contentBox,
+            Tabs = {}, ActiveTab = nil,
+            HolderOffset = holderOffset,
+        }
+
+        local function updateSize()
+            if not tabboxObj.ActiveTab then return end
+            for _, t in ipairs(tabboxObj.Tabs) do
+                local h = t.Layout.AbsoluteContentSize.Y
+                t.Content.Size = UDim2.new(1, 0, 0, h)
+            end
+            local contentH = math.max(tabboxObj.ActiveTab.Layout.AbsoluteContentSize.Y, 10)
+            contentBox.Size = UDim2.new(1, -10, 0, contentH)
+            local holderH = 36 + contentH + 6
+            Tween(holder, {Size = UDim2.new(1, 0, 0, holderH)}, 0.25)
+            Tween(frame,  {Size = UDim2.new(1, 0, 0, holderOffset + holderH)}, 0.25)
+        end
+
+        function tabboxObj:AddTab(tabConfig)
+            tabConfig = safeConfig(tabConfig)
+            local tabName = tabConfig.Name or "Tab"
+            local tabIcon = tabConfig.Icon
+
+            local button = Instance.new("Frame")
+            button.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+            button.BackgroundTransparency = 1
+            button.BorderSizePixel = 0
+            button.ClipsDescendants = true
+            button.Parent = buttonHolder
+            Instance.new("UICorner", button).CornerRadius = UDim.new(0, 5)
+
+            local buttonStroke = Instance.new("UIStroke")
+            buttonStroke.Transparency = 1
+            buttonStroke.Color = CurrentTheme.Stroke
+            buttonStroke.Parent = button
+
+            local icon = nil
+            if tabIcon and tostring(tabIcon) ~= "" then
+                icon = Instance.new("ImageLabel")
+                icon.Size = UDim2.new(0, 18, 0, 18)
+                icon.Position = UDim2.new(0, 7, 0.5, -9)
+                icon.BackgroundTransparency = 1
+                icon.ImageColor3 = CurrentTheme.Text
+                icon.ImageTransparency = 0.5
+                icon.ScaleType = Enum.ScaleType.Fit
+                if type(tabIcon) == "number" then
+                    icon.Image = "rbxassetid://"..tostring(tabIcon)
+                elseif type(tabIcon) == "string" then
+                    icon.Image = tonumber(tabIcon) and ("rbxassetid://"..tabIcon) or tabIcon
+                end
+                icon.Parent = button
+                AddToRegistry(icon, "ImageColor3", "Text")
+            end
+
+            local label = Instance.new("TextLabel")
+            label.BackgroundTransparency = 1
+            label.Font = Enum.Font.GothamMedium
+            label.TextSize = 11
+            label.Text = tabName
+            label.TextColor3 = CurrentTheme.Text
+            label.TextTransparency = 0.5
+            label.TextXAlignment = Enum.TextXAlignment.Left
+            label.TextTruncate = Enum.TextTruncate.AtEnd
+            label.Parent = button
+            AddToRegistry(label, "TextColor3", "Text")
+            TextGradient:Skip(label)
+
+            if icon then
+                label.Position = UDim2.new(0, 29, 0.5, -7.5)
+                label.Size = UDim2.new(1, -34, 0, 15)
+            else
+                label.Position = UDim2.new(0, 8, 0.5, -7.5)
+                label.Size = UDim2.new(1, -16, 0, 15)
+            end
+
+            local content = Instance.new("Frame")
+            content.Size = UDim2.new(1, 0, 0, 0)
+            content.BackgroundTransparency = 1
+            content.ClipsDescendants = true
+            content.Visible = false
+            content.Parent = contentBox
+
+            local layout = Instance.new("UIListLayout")
+            layout.Padding = UDim.new(0, 5)
+            layout.SortOrder = Enum.SortOrder.LayoutOrder
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+            layout.Parent = content
+
+            local tabEntry = {
+                Button = button, ButtonStroke = buttonStroke,
+                Icon = icon, Label = label,
+                Content = content, Layout = layout, Name = tabName,
+            }
+
+            layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                if tabboxObj.ActiveTab == tabEntry then updateSize() end
+            end)
+
+            local clickBtn = Instance.new("TextButton")
+            clickBtn.Size = UDim2.new(1, 0, 1, 0)
+            clickBtn.BackgroundTransparency = 1
+            clickBtn.Text = ""
+            clickBtn.AutoButtonColor = false
+            clickBtn.Parent = button
+
+            clickBtn.MouseButton1Click:Connect(function() tabboxObj:Select(tabName) end)
+            clickBtn.MouseEnter:Connect(function()
+                if tabboxObj.ActiveTab ~= tabEntry then
+                    Tween(button, {BackgroundTransparency = 0.65}, 0.15)
+                end
+            end)
+            clickBtn.MouseLeave:Connect(function()
+                if tabboxObj.ActiveTab ~= tabEntry then
+                    Tween(button, {BackgroundTransparency = 1}, 0.15)
+                end
+            end)
+
+            table.insert(tabboxObj.Tabs, tabEntry)
+
+            local count = #tabboxObj.Tabs
+            local w = 1 / math.max(count, 1)
+            for _, t in ipairs(tabboxObj.Tabs) do
+                t.Button.Size = UDim2.new(w, -4, 1, 0)
+            end
+
+            if not tabboxObj.ActiveTab then tabboxObj:Select(tabName) end
+
+            return tabEntry
+        end
+
+        function tabboxObj:Select(tabName)
+            local targetTab = nil
+            for _, t in ipairs(tabboxObj.Tabs) do
+                if t.Name == tabName then targetTab = t; break end
+            end
+            if not targetTab then return end
+            tabboxObj.ActiveTab = targetTab
+            for _, t in ipairs(tabboxObj.Tabs) do
+                local active = (t == targetTab)
+                t.Content.Visible = active
+                if active then
+                    Tween(t.Button, {BackgroundTransparency = 0.15}, 0.18)
+                    Tween(t.ButtonStroke, {Transparency = 0.65}, 0.18)
+                    if t.Icon then Tween(t.Icon, {ImageTransparency = 0, ImageColor3 = CurrentTheme.Accent}, 0.18) end
+                    Tween(t.Label, {TextTransparency = 0, TextColor3 = CurrentTheme.Accent}, 0.18)
+                else
+                    Tween(t.Button, {BackgroundTransparency = 1}, 0.18)
+                    Tween(t.ButtonStroke, {Transparency = 1}, 0.18)
+                    if t.Icon then Tween(t.Icon, {ImageTransparency = 0.5, ImageColor3 = CurrentTheme.Text}, 0.18) end
+                    Tween(t.Label, {TextTransparency = 0.5, TextColor3 = CurrentTheme.Text}, 0.18)
+                end
+            end
+            updateSize()
+        end
+
+        return tabboxObj
+    end
+
     child.Checkbox = function(_, config)
         config = safeConfig(config)
         local title = config.Name or ""
@@ -1484,18 +1703,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             val = not (not val)
             h.Value = val; updateColors()
             if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
-            if callback then pcall(callback, val) end
-            if h.Changed then pcall(h.Changed, val) end
+            pcall(callback, val); pcall(h.Changed, val)
         end
-        function h:OnChanged(_, cb) h.Changed = cb; if cb then cb(h.Value) end end
+        function h:OnChanged(_, cb) h.Changed = cb; cb(h.Value) end
         function h:GetValue() return h.Value end
         function h:SetVisible(vis) Tile.Visible = vis end
         function h:Destroy() Tile:Destroy(); ConfigObjects[controlId] = nil end
         function h:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
         function h:Unlock() updateLock(false) end
         function h:IsLocked() return locked end
-        ClickBtn.MouseEnter:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
-        ClickBtn.MouseLeave:Connect(function() if not locked then FengTween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
+        ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
+        ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function() if not locked then h:SetValue(not h.Value) end end)
         h:SetValue(default)
         ConfigObjects[controlId] = { Type = "Checkbox", Value = h.Value, Set = function(val) h:SetValue(val) end }
@@ -1569,7 +1787,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             val = math.clamp(tonumber(val) or h.Min, h.Min, h.Max)
             h.Value = val
             local alpha = (h.Max > h.Min) and (val - h.Min) / (h.Max - h.Min) or 0
-            FengTween(fill, {Size = UDim2.fromScale(alpha, 1)}, 0.2)
+            Tween(fill, {Size = UDim2.fromScale(alpha, 1)}, 0.2)
             if pctLbl then pctLbl.Text = math.floor(alpha * 100).."%" end
             if callback then pcall(callback, val) end
             if ConfigObjects[controlId] then ConfigObjects[controlId].Value = val end
@@ -1674,8 +1892,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             BtnIcon.Parent = Btn
             AddToRegistry(BtnIcon, "ImageColor3", "Text")
 
-            Btn.MouseEnter:Connect(function() FengTween(BtnIcon, {ImageTransparency = 0.1}, 0.15) end)
-            Btn.MouseLeave:Connect(function() FengTween(BtnIcon, {ImageTransparency = 0.4}, 0.15) end)
+            Btn.MouseEnter:Connect(function() Tween(BtnIcon, {ImageTransparency = 0.1}, 0.15) end)
+            Btn.MouseLeave:Connect(function() Tween(BtnIcon, {ImageTransparency = 0.4}, 0.15) end)
         end
 
         local Expanded = Instance.new("Frame")
@@ -1748,8 +1966,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             AddToRegistry(Box, "TextColor3", "Accent")
             TextGradient:Skip(Box)
 
-            Box.Focused:Connect(function() FengTween(boxStroke, {Transparency = 0.2}, 0.15) end)
-            Box.FocusLost:Connect(function() FengTween(boxStroke, {Transparency = 0.65}, 0.15) end)
+            Box.Focused:Connect(function() Tween(boxStroke, {Transparency = 0.2}, 0.15) end)
+            Box.FocusLost:Connect(function() Tween(boxStroke, {Transparency = 0.65}, 0.15) end)
 
             Box:GetPropertyChangedSignal("Text"):Connect(function()
                 local txt = Box.Text
@@ -1768,10 +1986,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function toggle()
             opened = not opened
             local targetH = opened and EXPANDED_H or 0
-            FengTween(Expanded, {Size = UDim2.new(1, 0, 0, targetH)}, 0.28)
-            FengTween(UserFrame, {Size = UDim2.new(1, 0, 0, TOP_H + targetH)}, 0.28)
+            Tween(Expanded, {Size = UDim2.new(1, 0, 0, targetH)}, 0.28)
+            Tween(UserFrame, {Size = UDim2.new(1, 0, 0, TOP_H + targetH)}, 0.28)
             if BtnIcon then
-                FengTween(BtnIcon, {Rotation = opened and 180 or 0}, 0.28)
+                Tween(BtnIcon, {Rotation = opened and 180 or 0}, 0.28)
             end
         end
 
@@ -2010,11 +2228,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local fadeTimer = 0
         local function showOverlay()
             ctrlVisible = true; fadeTimer = 3
-            FengTween(overlay, {GroupTransparency=0}, 0.18)
+            Tween(overlay, {GroupTransparency=0}, 0.18)
         end
         local function hideOverlay()
             ctrlVisible = false
-            FengTween(overlay, {GroupTransparency=1}, 0.3)
+            Tween(overlay, {GroupTransparency=1}, 0.3)
         end
         local vidClickBtn = Instance.new("TextButton")
         vidClickBtn.Size = UDim2.fromScale(1,1)
@@ -2677,226 +2895,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
-    -- ═══════════════════════════════════════════════════════════════
-    -- Tabbox / AddCenterTabbox  (ported from k.lua + miUI.lua)
-    -- ═══════════════════════════════════════════════════════════════
-    child.Tabbox = function(_, config)
-        if type(config) == "string" then config = { Name = config } end
-        config = config or {}
-        local tabboxName = config.Name or "Tabbox"
-
-        local TabboxFrame = Instance.new("Frame")
-        TabboxFrame.Name = "Tabbox_" .. tostring(tabboxName)
-        TabboxFrame.Size = UDim2.new(1, -8, 0, 92)
-        TabboxFrame.BackgroundTransparency = 0.5
-        TabboxFrame.BackgroundColor3 = CurrentTheme.Main
-        TabboxFrame.BorderSizePixel = 0
-        TabboxFrame.ClipsDescendants = true
-        TabboxFrame.Parent = contentContainer
-        Instance.new("UICorner", TabboxFrame).CornerRadius = UDim.new(0, 10)
-        AddToRegistry(TabboxFrame, "BackgroundColor3", "Main")
-
-        local TabboxStroke = Instance.new("UIStroke")
-        TabboxStroke.Thickness = 1
-        TabboxStroke.Transparency = 0.65
-        TabboxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        TabboxStroke.Parent = TabboxFrame
-        AddToRegistry(TabboxStroke, "Color", "Stroke")
-
-        local TitleLbl = Instance.new("TextLabel")
-        TitleLbl.Size = UDim2.new(1, -24, 0, 16)
-        TitleLbl.Position = UDim2.new(0, 12, 0, 6)
-        TitleLbl.BackgroundTransparency = 1
-        TitleLbl.Font = Enum.Font.GothamBold
-        TitleLbl.Text = tabboxName
-        TitleLbl.TextSize = 12
-        TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-        TitleLbl.TextTransparency = 0.3
-        TitleLbl.Parent = TabboxFrame
-        AddToRegistry(TitleLbl, "TextColor3", "Text")
-
-        local ButtonRow = Instance.new("Frame")
-        ButtonRow.Size = UDim2.new(1, -12, 0, 26)
-        ButtonRow.Position = UDim2.new(0, 6, 0, 26)
-        ButtonRow.BackgroundTransparency = 1
-        ButtonRow.Parent = TabboxFrame
-
-        local BtnLayout = Instance.new("UIListLayout")
-        BtnLayout.FillDirection = Enum.FillDirection.Horizontal
-        BtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        BtnLayout.Padding = UDim.new(0, 4)
-        BtnLayout.Parent = ButtonRow
-
-        local ContentArea = Instance.new("Frame")
-        ContentArea.Size = UDim2.new(1, -12, 0, 0)
-        ContentArea.Position = UDim2.new(0, 6, 0, 56)
-        ContentArea.BackgroundTransparency = 1
-        ContentArea.ClipsDescendants = true
-        ContentArea.Parent = TabboxFrame
-
-        local tabs = {}
-        local activeTab = nil
-
-        local function updateTabboxSize()
-            local innerH = activeTab and activeTab.Layout.AbsoluteContentSize.Y or 0
-            local totalH = 56 + innerH + 8
-            FengTween(TabboxFrame, {Size = UDim2.new(1, -8, 0, totalH)}, 0.25)
-            FengTween(ContentArea, {Size = UDim2.new(1, -12, 0, innerH + 4)}, 0.25)
-        end
-
-        local function refreshTabButtons()
-            local count = math.max(1, #tabs)
-            for _, t in ipairs(tabs) do
-                t.Button.Size = UDim2.new(1 / count, -3, 1, 0)
-            end
-        end
-
-        local function activateTab(data)
-            for _, t in ipairs(tabs) do
-                t.Content.Visible = false
-                t.Button.BackgroundTransparency = 0.55
-                if t.Icon then
-                    t.Icon.ImageColor3 = CurrentTheme.Text
-                    t.Icon.ImageTransparency = 0.45
-                end
-                t.Label.TextColor3 = CurrentTheme.Text
-                t.Label.TextTransparency = 0.45
-            end
-            data.Content.Visible = true
-            data.Button.BackgroundTransparency = 0.15
-            if data.Icon then
-                data.Icon.ImageColor3 = CurrentTheme.Accent
-                data.Icon.ImageTransparency = 0
-            end
-            data.Label.TextColor3 = CurrentTheme.Accent
-            data.Label.TextTransparency = 0
-            activeTab = data
-            updateTabboxSize()
-        end
-
-        local tabbox = { Root = TabboxFrame, Tabs = tabs }
-
-        function tabbox:AddTab(tabCfg)
-            if type(tabCfg) == "string" then tabCfg = { Name = tabCfg } end
-            tabCfg = tabCfg or {}
-            local tabName = tabCfg.Name or "Tab"
-            local tabIcon = tabCfg.Icon
-
-            local TabBtn = Instance.new("TextButton")
-            TabBtn.BackgroundColor3 = CurrentTheme.Top
-            TabBtn.BackgroundTransparency = 0.55
-            TabBtn.Text = ""
-            TabBtn.AutoButtonColor = false
-            TabBtn.Parent = ButtonRow
-            Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
-
-            local iconImg = nil
-            local labelX = 8
-            if tabIcon and tostring(tabIcon) ~= "" then
-                iconImg = Instance.new("ImageLabel")
-                iconImg.Size = UDim2.new(0, 14, 0, 14)
-                iconImg.Position = UDim2.new(0, 8, 0.5, -7)
-                iconImg.BackgroundTransparency = 1
-                iconImg.ImageColor3 = CurrentTheme.Text
-                iconImg.ImageTransparency = 0.45
-                iconImg.ScaleType = Enum.ScaleType.Fit
-                if type(tabIcon) == "number" then
-                    iconImg.Image = "rbxassetid://" .. tabIcon
-                elseif type(tabIcon) == "string" then
-                    if tonumber(tabIcon) then
-                        iconImg.Image = "rbxassetid://" .. tabIcon
-                    elseif tabIcon:match("^rbxasset") or tabIcon:match("^http") then
-                        iconImg.Image = tabIcon
-                    else
-                        iconImg.Image = "rbxassetid://" .. tabIcon
-                    end
-                end
-                iconImg.Parent = TabBtn
-                labelX = 26
-            end
-
-            local TabLabel = Instance.new("TextLabel")
-            TabLabel.Size = UDim2.new(1, -labelX - 6, 1, 0)
-            TabLabel.Position = UDim2.new(0, labelX, 0, 0)
-            TabLabel.BackgroundTransparency = 1
-            TabLabel.Font = Enum.Font.GothamMedium
-            TabLabel.Text = tabName
-            TabLabel.TextSize = 11
-            TabLabel.TextColor3 = CurrentTheme.Text
-            TabLabel.TextTransparency = 0.45
-            TabLabel.TextXAlignment = Enum.TextXAlignment.Left
-            TabLabel.TextTruncate = Enum.TextTruncate.AtEnd
-            TabLabel.Parent = TabBtn
-            AddToRegistry(TabLabel, "TextColor3", "Text")
-
-            local TabContent = Instance.new("Frame")
-            TabContent.Size = UDim2.new(1, 0, 0, 0)
-            TabContent.AutomaticSize = Enum.AutomaticSize.Y
-            TabContent.BackgroundTransparency = 1
-            TabContent.BorderSizePixel = 0
-            TabContent.Visible = false
-            TabContent.Parent = ContentArea
-
-            local innerLayout = Instance.new("UIListLayout")
-            innerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            innerLayout.Padding = UDim.new(0, 0)
-            innerLayout.Parent = TabContent
-
-            local data = {
-                Name = tabName,
-                Button = TabBtn,
-                Content = TabContent,
-                Layout = innerLayout,
-                Icon = iconImg,
-                Label = TabLabel,
-            }
-            table.insert(tabs, data)
-            refreshTabButtons()
-
-            local builder = createSectionBuilder(TabContent, TabContent, elementWidth, windowCount, window)
-
-            TabBtn.MouseButton1Click:Connect(function() activateTab(data) end)
-
-            innerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                if activeTab == data then updateTabboxSize() end
-            end)
-
-            if not activeTab then activateTab(data) end
-            task.defer(updateTabboxSize)
-            return builder
-        end
-
-        function tabbox:Select(name)
-            for _, t in ipairs(tabs) do
-                if t.Name == name then activateTab(t); break end
-            end
-            return tabbox
-        end
-
-        function tabbox:GetActive() return activeTab and activeTab.Name or nil end
-
-        function tabbox:SetVisible(v)
-            TabboxFrame.Visible = v ~= false
-            return tabbox
-        end
-
-        function tabbox:Destroy() TabboxFrame:Destroy() end
-
-        return tabbox
-    end
-
-    child.AddCenterTabbox = function(self, name)
-        return self:Tabbox({ Name = name, Position = "center" })
-    end
-
-    child.AddLeftTabbox = function(self, name)
-        return self:Tabbox({ Name = name, Position = "left" })
-    end
-
-    child.AddRightTabbox = function(self, name)
-        return self:Tabbox({ Name = name, Position = "right" })
-    end
-
     local functions = {}
     for k, v in pairs(child) do functions[k] = v end
 
@@ -3137,34 +3135,34 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- addCenterFeatureTabbox  (ported from k.lua)
---   用法:
---     local visualTab = window:Tab("Visual", icon)
---     local feature = addCenterFeatureTabbox(visualTab, "Visual Features", {
---         { Key = "ESP",      Name = "ESP",      Icon = "rbxassetid://..." },
---         { Key = "Camera",   Name = "Camera",   Icon = "rbxassetid://..." },
---         { Key = "Lighting", Name = "Lighting", Icon = "rbxassetid://..." },
---     })
---     feature.ESP:Section({ Name = "Highlight" })
---     feature.Camera:Toggle({ Name = "FOV Override" })
+--  addCenterFeatureTabbox —— k.lua 同款接口
+--  用法：
+--    local tabs = addCenterFeatureTabbox(builder, "Visual Features", {
+--        { Key = "ESP",      Name = "ESP",      Icon = "rbxassetid://..." },
+--        { Key = "Camera",   Name = "Camera",   Icon = "rbxassetid://..." },
+--        { Key = "Lighting", Name = "Lighting", Icon = "rbxassetid://..." },
+--    })
+--    tabs.ESP:Section({ Name = "ESP Section" })
+--    tabs.Camera:Toggle({ Name = "FOV", Value = false })
 -- ═══════════════════════════════════════════════════════════════
-local function addCenterFeatureTabbox(tab, name, entries)
-    if not tab or not tab.AddCenterTabbox then
-        warn("[addCenterFeatureTabbox] tab 不合法（需要来自 Window:Tab 的 builder）")
-        return {}
-    end
-    local tabbox  = tab:AddCenterTabbox(name)
+local function addCenterFeatureTabbox(parentBuilder, name, entries)
+    local tabbox = parentBuilder:CenterTabbox({ Name = name })
     local created = {}
+
     for _, entry in ipairs(entries or {}) do
-        created[entry.Key] = tabbox:AddTab({
+        local tabEntry = tabbox:AddTab({
             Name = entry.Name,
             Icon = entry.Icon,
         })
+        -- 每个 Tab 内部再生成一个独立 builder，元素都挂在 tabEntry.Content 里
+        created[entry.Key] = createSectionBuilder(
+            tabEntry.Content, tabEntry.Content, 330, 1
+        )
+        created[entry.Key]._tabEntry = tabEntry
     end
+
     return created
 end
-
-Fenglib.AddCenterFeatureTabbox = addCenterFeatureTabbox
 
 function Fenglib:CreateWindow(Config)
     local Window = {}
@@ -3261,7 +3259,7 @@ function Fenglib:CreateWindow(Config)
         local targetTrans = visible and 0.9 or 1
         for _, stroke in ipairs(shadowStrokes) do
             if instant then stroke.Transparency = targetTrans
-            else FengTween(stroke, {Transparency = targetTrans}, 0.3) end
+            else Tween(stroke, {Transparency = targetTrans}, 0.3) end
         end
     end
 
@@ -3540,7 +3538,7 @@ function Fenglib:CreateWindow(Config)
     SettingsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         if SettingsPanel.Visible then
             local h = SettingsList.AbsoluteContentSize.Y + 12
-            FengTween(SettingsPanel, {Size = UDim2.new(0, 220, 0, h)}, 0.2)
+            Tween(SettingsPanel, {Size = UDim2.new(0, 220, 0, h)}, 0.2)
         end
     end)
 
@@ -3556,8 +3554,8 @@ function Fenglib:CreateWindow(Config)
     local function closeSettings()
         settingsOpen = false
         if outsideConn then outsideConn:Disconnect(); outsideConn = nil end
-        FengTween(SettingsPanel, {BackgroundTransparency = 1, Size = UDim2.new(0, 220, 0, 0)}, 0.18)
-        FengTween(SettingsStroke, {Transparency = 1}, 0.18)
+        Tween(SettingsPanel, {BackgroundTransparency = 1, Size = UDim2.new(0, 220, 0, 0)}, 0.18)
+        Tween(SettingsStroke, {Transparency = 1}, 0.18)
         task.delay(0.2, function()
             if not settingsOpen then SettingsPanel.Visible = false end
         end)
@@ -3568,8 +3566,8 @@ function Fenglib:CreateWindow(Config)
         SettingsPanel.Visible = true
         SettingsPanel.Size = UDim2.new(0, 220, 0, 0)
         local h = SettingsList.AbsoluteContentSize.Y + 12
-        FengTween(SettingsPanel, {BackgroundTransparency = 0.035, Size = UDim2.new(0, 220, 0, h)}, 0.2)
-        FengTween(SettingsStroke, {Transparency = 0.65}, 0.2)
+        Tween(SettingsPanel, {BackgroundTransparency = 0.035, Size = UDim2.new(0, 220, 0, h)}, 0.2)
+        Tween(SettingsStroke, {Transparency = 0.65}, 0.2)
         if outsideConn then outsideConn:Disconnect() end
         outsideConn = UserInputService.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -3583,10 +3581,10 @@ function Fenglib:CreateWindow(Config)
     end
 
     BottomFrame.MouseEnter:Connect(function()
-        FengTween(UserSettingButton, {TextTransparency = 0.25}, 0.18)
+        Tween(UserSettingButton, {TextTransparency = 0.25}, 0.18)
     end)
     BottomFrame.MouseLeave:Connect(function()
-        FengTween(UserSettingButton, {TextTransparency = 0.5}, 0.18)
+        Tween(UserSettingButton, {TextTransparency = 0.5}, 0.18)
     end)
     BottomClick.MouseButton1Click:Connect(function()
         if settingsOpen then closeSettings() else openSettings() end
@@ -3671,20 +3669,20 @@ function Fenglib:CreateWindow(Config)
             content.ZIndex = 3; content.Parent = btn
         end
         btn.MouseEnter:Connect(function()
-            FengTween(btn, {BackgroundTransparency = 0}, 0.2)
+            Tween(btn, {BackgroundTransparency = 0}, 0.2)
             if content then
                 local p = content:IsA("ImageLabel") and "ImageTransparency" or "TextTransparency"
-                FengTween(content, {[p] = 0}, 0.2)
+                Tween(content, {[p] = 0}, 0.2)
             end
-            FengTween(accent, {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 0}, 0.2)
+            Tween(accent, {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 0}, 0.2)
         end)
         btn.MouseLeave:Connect(function()
-            FengTween(btn, {BackgroundTransparency = 0.2}, 0.2)
+            Tween(btn, {BackgroundTransparency = 0.2}, 0.2)
             if content then
                 local p = content:IsA("ImageLabel") and "ImageTransparency" or "TextTransparency"
-                FengTween(content, {[p] = 0.3}, 0.2)
+                Tween(content, {[p] = 0.3}, 0.2)
             end
-            FengTween(accent, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.2)
+            Tween(accent, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.2)
         end)
         btn.MouseButton1Click:Connect(callback)
         return btn
@@ -3854,7 +3852,7 @@ function Fenglib:CreateWindow(Config)
         local function toggleCategory()
             if not collapsible then return end
             opened = not opened
-            FengTween(arrow, {Rotation = opened and 0 or 180}, 0.25)
+            Tween(arrow, {Rotation = opened and 0 or 180}, 0.25)
             local targetHeight = opened and getContentHeight() or 0
             setContentHeight(targetHeight, true)
         end
@@ -3971,15 +3969,15 @@ function Fenglib:CreateWindow(Config)
                 s.btn.BackgroundTransparency = 1
                 s.isActive = false
                 s.glow.BackgroundTransparency = 1
-                if s.textLabel then FengTween(s.textLabel, {TextTransparency = 0.3}, 0.2) end
+                if s.textLabel then Tween(s.textLabel, {TextTransparency = 0.3}, 0.2) end
             end
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
-            FengTween(TabText, {TextTransparency = 0}, 0.2)
+            Tween(TabText, {TextTransparency = 0}, 0.2)
             if Window._activeTab then Window._activeTab.page.Visible = false end
             Page.Visible = true
-            FengTween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
+            Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
             Window._activeTab = state
         end)
         if not Window._activeTab then
@@ -4156,7 +4154,6 @@ function Fenglib:CreateWindow(Config)
         RL.SortOrder = Enum.SortOrder.LayoutOrder
         RL.Parent = Root
 
-        -- 玩家资料卡
         local Profile = Panel(Root, UDim2.new(1, 0, 0, 74))
         Profile.LayoutOrder = 1
 
@@ -4180,7 +4177,6 @@ function Fenglib:CreateWindow(Config)
         UserLbl.Position = UDim2.new(0, 82, 0, 41)
         UserLbl.Size = UDim2.new(1, -98, 0, 18)
 
-        -- 分段按钮容器
         local SegBox = Panel(Root, UDim2.new(1, 0, 0, 48))
         SegBox.LayoutOrder = 2
         local SL = Instance.new("UIListLayout")
@@ -4248,7 +4244,7 @@ function Fenglib:CreateWindow(Config)
                 ScriptPage.Visible  = (segName == "Script")
                 for n, s in pairs(segButtons) do
                     local active = (n == segName)
-                    FengTween(s.Root, {BackgroundTransparency = active and 0.08 or 0.55}, 0.2)
+                    Tween(s.Root, {BackgroundTransparency = active and 0.08 or 0.55}, 0.2)
                     s.Icon.ImageColor3  = active and CurrentTheme.Accent or CurrentTheme.Text
                     s.Label.TextColor3  = active and CurrentTheme.Accent or CurrentTheme.Text
                     s.Label.TextTransparency = active and 0 or 0.25
@@ -4274,7 +4270,6 @@ function Fenglib:CreateWindow(Config)
                 segSpec.Script.Icon or Config.ScriptIcon or 9904743710)
         end
 
-        -- Details 页：左右双列
         local DW = Instance.new("Frame")
         DW.BackgroundTransparency = 1
         DW.BorderSizePixel = 0
@@ -4312,7 +4307,6 @@ function Fenglib:CreateWindow(Config)
         RCL.SortOrder = Enum.SortOrder.LayoutOrder
         RCL.Parent = RightCol
 
-        -- 服务器卡
         local ServerCard = Panel(LeftCol, UDim2.new(1, 0, 0, 162))
         ServerCard.LayoutOrder = 1
 
@@ -4344,7 +4338,6 @@ function Fenglib:CreateWindow(Config)
         StatLabels.Region   = MakeStat(ServerCard, "地区", tostring(Region), 0.33, 104, 0.34)
         StatLabels.Runtime  = MakeStat(ServerCard, "时长",   "0 秒",     0.67, 104, 0.33)
 
-        -- QQ 群卡
         local QQCard = Panel(LeftCol, UDim2.new(1, 0, 0, 68))
         QQCard.LayoutOrder = 2
         QQCard.BackgroundColor3 = CurrentTheme.Accent
@@ -4384,7 +4377,6 @@ function Fenglib:CreateWindow(Config)
             end)
         end)
 
-        -- 执行器卡
         local ExecutorCard = Panel(RightCol, UDim2.new(1, 0, 0, 92))
         ExecutorCard.LayoutOrder = 1
 
@@ -4425,7 +4417,6 @@ function Fenglib:CreateWindow(Config)
         ESub.TextYAlignment = Enum.TextYAlignment.Top
         FitTextToWidth(ESub, 12, 8, true)
 
-        -- 好友卡
         local FriendsCard = Panel(RightCol, UDim2.new(1, 0, 0, 166))
         FriendsCard.LayoutOrder = 2
 
@@ -4443,7 +4434,6 @@ function Fenglib:CreateWindow(Config)
         FriendLabels.Online   = MakeStat(FriendsCard, "在线",     "...", 0,   104, 0.5)
         FriendLabels.All      = MakeStat(FriendsCard, "全部",     "...", 0.5, 104, 0.5)
 
-        -- Script 页：更新日志
         local function FillChangelog(Page, Entries, EmptyText)
             local Holder = Panel(Page, UDim2.new(1, 0, 0, 40))
             Holder.AutomaticSize = Enum.AutomaticSize.Y
@@ -4485,7 +4475,6 @@ function Fenglib:CreateWindow(Config)
 
         FillChangelog(ScriptPage, changelog, "暂无脚本更新")
 
-        -- 好友缓存 + 定时刷新
         local FriendCache = {
             All = "...", Online = "...", Offline = "...", InServer = "...",
             Cooldown = 0,
@@ -4637,8 +4626,8 @@ function Fenglib:CreateWindow(Config)
         function Dialog:Close(Result)
             if Dialog.Closed then return Result end
             Dialog.Closed = true
-            FengTween(Overlay, {BackgroundTransparency = 1}, 0.15)
-            FengTween(Panel, {BackgroundTransparency = 1, Size = UDim2.new(0, 365, 0, 188)}, 0.15)
+            Tween(Overlay, {BackgroundTransparency = 1}, 0.15)
+            Tween(Panel, {BackgroundTransparency = 1, Size = UDim2.new(0, 365, 0, 188)}, 0.15)
             task.delay(0.2, function() Overlay:Destroy() end)
             pcall(Config.Callback, Result)
             return Result
@@ -4675,21 +4664,21 @@ function Fenglib:CreateWindow(Config)
                 local Result = Callback and Callback() or Text
                 Dialog:Close(Result)
             end)
-            Input.MouseEnter:Connect(function() FengTween(Button, {BackgroundTransparency = Primary and 0 or 0.08}, 0.15) end)
-            Input.MouseLeave:Connect(function() FengTween(Button, {BackgroundTransparency = Primary and 0.1 or 0.25}, 0.15) end)
-            FengTween(Button, {BackgroundTransparency = Primary and 0.1 or 0.25}, 0.1)
-            FengTween(Stroke, {Transparency = Primary and 1 or 0.65}, 0.1)
-            FengTween(Label, {TextTransparency = 0}, 0.1)
+            Input.MouseEnter:Connect(function() Tween(Button, {BackgroundTransparency = Primary and 0 or 0.08}, 0.15) end)
+            Input.MouseLeave:Connect(function() Tween(Button, {BackgroundTransparency = Primary and 0.1 or 0.25}, 0.15) end)
+            Tween(Button, {BackgroundTransparency = Primary and 0.1 or 0.25}, 0.1)
+            Tween(Stroke, {Transparency = Primary and 1 or 0.65}, 0.1)
+            Tween(Label, {TextTransparency = 0}, 0.1)
         end
         for _, BtnConfig in ipairs(Config.Buttons or {{Text = "确定", Primary = true}}) do
             AddDialogButton(BtnConfig.Text, BtnConfig.Primary, BtnConfig.Callback)
         end
-        FengTween(Overlay, {BackgroundTransparency = 0.28}, 0.25)
-        FengTween(Panel, {BackgroundTransparency = 0.025, Size = UDim2.new(0, 392, 0, 200)}, 0.25)
-        FengTween(UIStroke, {Transparency = 0.65}, 0.25)
-        FengTween(DTitle, {TextTransparency = 0}, 0.25)
-        FengTween(Content, {TextTransparency = 0.25}, 0.25)
-        FengTween(Divider, {BackgroundTransparency = 0.72}, 0.25)
+        Tween(Overlay, {BackgroundTransparency = 0.28}, 0.25)
+        Tween(Panel, {BackgroundTransparency = 0.025, Size = UDim2.new(0, 392, 0, 200)}, 0.25)
+        Tween(UIStroke, {Transparency = 0.65}, 0.25)
+        Tween(DTitle, {TextTransparency = 0}, 0.25)
+        Tween(Content, {TextTransparency = 0.25}, 0.25)
+        Tween(Divider, {BackgroundTransparency = 0.72}, 0.25)
         return Dialog
     end
 
