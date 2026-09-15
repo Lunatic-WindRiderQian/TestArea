@@ -2,6 +2,7 @@
     FengYu-Bento (Test.lua)
     - Section 直接支持 Tab 条目（布局 = miUI AddCenterTabbox）
     - 图标大小 18×18 + UIScale 0.82（与 ModernV2:SetIconMode 一致，防止显示过大/扁）
+    - CreateWindow 图标：支持 Config.Logo / Config.Icon，自动规范化 ID，默认 84830962019412
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -406,6 +407,23 @@ local function createLockOverlay(parent, defaultTitle)
     lockLabel.Parent = container
     TextGradient:Skip(lockLabel)
     return lockFrame, lockLabel
+end
+
+-- ⭐ 通用图标 ID 规范化（CreateWindow 顶部图标使用）
+local function formatIconAsset(asset, default)
+    if asset == nil or asset == "" then return default end
+    if type(asset) == "number" then
+        return "rbxassetid://" .. tostring(asset)
+    elseif type(asset) == "string" then
+        if tonumber(asset) then
+            return "rbxassetid://" .. asset
+        elseif asset:match("^rbxassetid://") or asset:match("^rbxasset://") or asset:match("^http") then
+            return asset
+        else
+            return "rbxassetid://" .. asset
+        end
+    end
+    return default
 end
 
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
@@ -3328,7 +3346,8 @@ function Fenglib:CreateWindow(Config)
     local Title = Config.Name or "FengYu"
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind
-    local IconAsset = Config.Logo
+    -- ⭐ 支持 Logo / Icon 两种写法
+    local IconAsset = Config.Logo or Config.Icon
     local SceneId = Config.Scene
 
     if Config.Theme then
@@ -3489,8 +3508,10 @@ function Fenglib:CreateWindow(Config)
     LogoImage.Size = UDim2.new(0, 35, 0, 35)
     LogoImage.Position = UDim2.new(0, 10, 0.5, -17.5)
     LogoImage.BackgroundTransparency = 1
-    LogoImage.Image = IconAsset or "rbxassetid://78229538488090"
+    -- ⭐ 规范化 ID；默认图标 = 84830962019412
+    LogoImage.Image = formatIconAsset(IconAsset, "rbxassetid://84830962019412")
     LogoImage.Parent = HeadFrame
+    -- ⚠️ 若你的图标是彩色 LOGO，请注释掉下面这行，避免被主题色覆盖
     AddToRegistry(LogoImage, "ImageColor3", "Text")
     Instance.new("UICorner", LogoImage).CornerRadius = UDim.new(0, 7)
 
