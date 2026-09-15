@@ -9,7 +9,7 @@
     - Button 已移除图标，文字与其它控件左对齐
     - 修复：UIListLayout 垂直间距导致控件上方“多出一块空”的问题
     - Section 卡片左侧贴边（左侧无留白，右侧保留 5px），Section 之间 8px 间距
-    - CreateHomeTab：miUI 完整搬运（AutoSetup true=自定义 Dashboard，false=Section 模式）
+    - CreateHomeTab：miUI 完整搬运（中文文案版）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -413,7 +413,7 @@ local function createLockOverlay(parent, defaultTitle)
     lockLabel.Size = UDim2.new(0, 0, 0, 20)
     lockLabel.BackgroundTransparency = 1
     lockLabel.Font = Enum.Font.GothamBold
-    lockLabel.Text = defaultTitle or "Locked"
+    lockLabel.Text = defaultTitle or "已锁定"
     lockLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     lockLabel.TextTransparency = 0.2; lockLabel.TextSize = 14
     lockLabel.AutomaticSize = Enum.AutomaticSize.X
@@ -498,7 +498,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local Tile = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, btnText, 15, 12, UDim2.new(1, -30, 0, 18), 13)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "Locked"
+        local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         local ClickBtn = Instance.new("TextButton")
@@ -548,7 +548,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Dot.Parent = Switch
         Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "Locked"
+        local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         local ClickBtn = Instance.new("TextButton")
@@ -713,7 +713,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if typed then UpdateSlider(typed) else ValueLabel.Text = tostring(Val) end
         end)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "Locked"
+        local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         if Bar then Bar.Active = not locked end
@@ -787,7 +787,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         List.SortOrder = Enum.SortOrder.LayoutOrder; List.Parent = Container
         local function updateLabel()
             if multi then
-                if #selected == 0 then Lbl.Text = dropText..": (none)"
+                if #selected == 0 then Lbl.Text = dropText..": (无)"
                 else Lbl.Text = dropText..": "..table.concat(selected, ", ") end
             else
                 Lbl.Text = dropText..": "..tostring(selected)
@@ -872,7 +872,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         rebuildOptions(options)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "Locked"
+        local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Btn, lockedTitle)
         lockFrame.Visible = locked
         ClickBtn.Active = not locked
@@ -1009,7 +1009,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(KeyLabel, "TextColor3", "Text")
         TextGradient:Skip(KeyLabel)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "Locked"
+        local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         KeyBtn.Active = not locked
@@ -1125,7 +1125,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(InputBox, "TextColor3", "Accent")
         TextGradient:Skip(InputBox)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "Locked"
+        local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         InputBox.Active = not locked
@@ -1223,7 +1223,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             callback(Box.Text)
         end)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "Locked"
+        local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Frame, lockedTitle)
         lockFrame.Visible = locked
         Box.Active = not locked
@@ -1246,7 +1246,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local Tile = miRow(parent, 42)
         local TextLabel = miLabel(Tile, labelText, 15, 12, UDim2.new(1, -30, 0, 18), 13)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "Locked"
+        local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         local function updateLock(st) locked = st; lockFrame.Visible = st end
@@ -1261,7 +1261,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
     child.Image = function(_, config)
         config = safeConfig(config)
-        local title = config.Name or "Image"
+        local title = config.Name or "图片"
         local subtitle = config.SubName or ""
         local description = config.Description or {}
         if type(description) == "string" then description = { description } end
@@ -1444,7 +1444,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         check.Parent = box
         local h = { Value = default, Callback = callback, Type = "Checkbox" }
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "Locked"
+        local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         local ClickBtn = Instance.new("TextButton")
@@ -1546,7 +1546,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(fill, "BackgroundColor3", "Accent")
         local h = { Value = math.clamp(default, min, max), Min = min, Max = max, Type = "ProgressBar", Frame = wrap }
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "Locked"
+        local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(wrap, lockedTitle)
         lockFrame.Visible = locked
         local function updateLock(st) locked = st; lockFrame.Visible = st end
@@ -1573,7 +1573,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
     child.UserFrame = function(_, config)
         config = safeConfig(config)
-        local name         = config.Name    or "User"
+        local name         = config.Name    or "用户"
         local profile      = config.Profile or ""
         local expires      = config.Expires or ""
         local parent       = config.Parent  or contentHolder
@@ -1867,7 +1867,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         phText.Position = UDim2.new(0,0,0.5,20)
         phText.AnchorPoint = Vector2.new(0,0)
         phText.BackgroundTransparency = 1
-        phText.Text = "Video not available"
+        phText.Text = "视频不可用"
         phText.TextSize = 11
         phText.Font = Enum.Font.GothamMedium
         phText.TextTransparency = 0.5
@@ -2097,7 +2097,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local opts = config or {}
         local parent = opts.Parent or contentHolder
         if not parent then return end
-        local title = opts.Name or opts.Title or "Audio"
+        local title = opts.Name or opts.Title or "音频"
         local subtitle = opts.SubName or opts.SubTitle or ""
         local src = opts.Audio or opts.Sound or ""
         local vol = (opts.Volume ~= nil) and math.clamp(opts.Volume, 0, 10) or 0.5
@@ -2159,7 +2159,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         statusLbl.Size = UDim2.new(1, 0, 0, 16)
         statusLbl.Position = UDim2.new(0, 0, 0, (title ~= "" or subtitle ~= "") and 2 or 0)
         statusLbl.BackgroundTransparency = 1
-        statusLbl.Text = (title ~= "" and title) or (hasAudio and "Audio" or "No audio source")
+        statusLbl.Text = (title ~= "" and title) or (hasAudio and "音频" or "无音频源")
         statusLbl.TextSize = (title ~= "" or subtitle ~= "") and 12 or 11
         statusLbl.Font = (title ~= "" or subtitle ~= "") and Enum.Font.GothamBold or Enum.Font.Gotham
         statusLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -2489,7 +2489,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(contentLabel, "TextColor3", "SubText")
         TextGradient:Skip(contentLabel)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "Locked"
+        local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(frame, lockedTitle)
         lockFrame.Visible = locked
         local function updateLock(st) locked = st; lockFrame.Visible = st end
@@ -2733,7 +2733,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local collapsible     = config.Collapsible == true
         local collapsed       = collapsible and (config.Collapsed == false)
         local locked      = config.Locked == true
-        local lockedTitle = config.TextLocked or config.LockMessage or "Locked"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local hasTitle    = (sectionTitle ~= "")
         local hasSubtitle = (sectionSubtitle ~= "")
         local hasIcon     = (sectionIcon ~= nil)
@@ -2944,8 +2944,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         sectionObj.SetCollapsible = function(_, state) collapsible = state == true; return sectionObj end
         sectionObj.IsCollapsible = function(_) return collapsible end
         sectionObj.SetLocked = function(_, state) locked = state == true; lockFrame.Visible = locked; return sectionObj end
-        sectionObj.SetTextLocked = function(_, text) lockedTitle = text or "Locked"; lockLabel.Text = lockedTitle; return sectionObj end
-        sectionObj.SetMessage = function(_, text) lockedTitle = text or "Locked"; lockLabel.Text = lockedTitle; return sectionObj end
+        sectionObj.SetTextLocked = function(_, text) lockedTitle = text or "已锁定"; lockLabel.Text = lockedTitle; return sectionObj end
+        sectionObj.SetMessage = function(_, text) lockedTitle = text or "已锁定"; lockLabel.Text = lockedTitle; return sectionObj end
         sectionObj.GetLocked = function(_) return locked end
         sectionObj.Lock = function(_, text)
             if text then lockedTitle = text; lockLabel.Text = lockedTitle end
@@ -3803,11 +3803,11 @@ function Fenglib:CreateWindow(Config)
     end
 
     -- ═══════════════════════════════════════════════════════════════
-    -- CreateHomeTab —— miUI 完整搬运（适配 FengYu-Bento）
+    -- CreateHomeTab —— miUI 完整搬运（中文文案版）
     -- ═══════════════════════════════════════════════════════════════
     function Window:CreateHomeTab(Config)
         Config = Config or {}
-        local title         = Config.Title or Config.Name or "Dashboard"
+        local title         = Config.Title or Config.Name or "仪表盘"
         local icon          = Config.Icon or "rbxassetid://9904843409"
         local content       = Config.Content or ""
         local sectionName   = Config.SectionName or title
@@ -3818,7 +3818,7 @@ function Fenglib:CreateWindow(Config)
         local changelog     = Config.Changelog or {}
         local segCfg        = type(Config.Segments) == "table" and Config.Segments or {}
         local locked        = Config.Locked == true
-        local textLocked    = Config.TextLocked or "Locked"
+        local textLocked    = Config.TextLocked or "已锁定"
         local box           = Config.Box == true
         local collapsible   = Config.Collapsible == true
         local sectionIcon   = Config.SectionIcon
@@ -3833,8 +3833,8 @@ function Fenglib:CreateWindow(Config)
 
         local Player       = LocalPlayer
         local ExecutorName = "Roblox Studio"
-        local PlaceName    = "Unknown Place"
-        local Region       = "Unknown"
+        local PlaceName    = "未知地图"
+        local Region       = "未知"
         local TimeFunction = RunService:IsRunning() and time or os.clock
         local StartedAt    = TimeFunction()
         local FrameTimes   = {}
@@ -3853,20 +3853,20 @@ function Fenglib:CreateWindow(Config)
 
         local function Greeting()
             local h = os.date("*t").hour
-            if h >= 4 and h < 12 then return "Good Morning" end
-            if h >= 12 and h < 19 then return "How's Your Day Going?" end
-            if h >= 19 and h <= 23 then return "Sweet Dreams" end
-            return "You should be asleep"
+            if h >= 4 and h < 12 then return "早上好" end
+            if h >= 12 and h < 19 then return "今天过得怎么样？" end
+            if h >= 19 and h <= 23 then return "好梦" end
+            return "该睡觉了"
         end
 
         local function Elapsed()
             local e = math.max(0, TimeFunction() - StartedAt)
-            if e < 60 then return math.floor(e) .. "s" end
-            if e < 3600 then return math.floor(e / 60) .. "m" end
-            return math.floor(e / 3600) .. "h"
+            if e < 60 then return math.floor(e) .. " 秒" end
+            if e < 3600 then return math.floor(e / 60) .. " 分" end
+            return math.floor(e / 3600) .. " 小时"
         end
 
-        -- ── 分支 A：AutoSetup = true（自定义 Dashboard） ─────────
+        -- ── 分支 A：AutoSetup = true（自定义仪表盘） ─────────────
         if autoSetup then
             local function Panel(parent, size, pos)
                 local p = Instance.new("Frame")
@@ -3962,6 +3962,7 @@ function Fenglib:CreateWindow(Config)
             RL.SortOrder = Enum.SortOrder.LayoutOrder
             RL.Parent = Root
 
+            -- ── 玩家资料卡 ────────────────────────────────────────
             local Profile = Panel(Root, UDim2.new(1, 0, 0, 74))
             Profile.LayoutOrder = 1
 
@@ -3976,7 +3977,7 @@ function Fenglib:CreateWindow(Config)
             Av.Parent = AvBox
             Instance.new("UICorner", Av).CornerRadius = UDim.new(0, 8)
 
-            local Welcome = MakeText(Profile, "Hello, " .. Player.DisplayName, 18, true, 0)
+            local Welcome = MakeText(Profile, "你好，" .. Player.DisplayName, 18, true, 0)
             Welcome.Position = UDim2.new(0, 82, 0, 17)
             Welcome.Size = UDim2.new(1, -98, 0, 24)
             TextGradient:Add(Welcome)
@@ -3985,6 +3986,7 @@ function Fenglib:CreateWindow(Config)
             UserLbl.Position = UDim2.new(0, 82, 0, 41)
             UserLbl.Size = UDim2.new(1, -98, 0, 18)
 
+            -- ── 分段按钮 ──────────────────────────────────────────
             local SegBox = Panel(Root, UDim2.new(1, 0, 0, 48))
             SegBox.LayoutOrder = 2
             local SL = Instance.new("UIListLayout")
@@ -4073,20 +4075,21 @@ function Fenglib:CreateWindow(Config)
 
             if showDetails then
                 MakeSegment("Details",
-                    segSpec.Details.Text or segSpec.Details.Name or Config.DetailsText or "Details And Info",
+                    segSpec.Details.Text or segSpec.Details.Name or Config.DetailsText or "详情信息",
                     segSpec.Details.Icon or Config.DetailsIcon or 9904843409)
             end
             if showScript then
                 MakeSegment("Script",
-                    segSpec.Script.Text or segSpec.Script.Name or Config.ScriptText or "Script Changelog",
+                    segSpec.Script.Text or segSpec.Script.Name or Config.ScriptText or "脚本更新",
                     segSpec.Script.Icon or Config.ScriptIcon or 9904743710)
             end
             if showUI then
                 MakeSegment("UI",
-                    segSpec.UI.Text or segSpec.UI.Name or Config.UIText or Config.UiText or "UI Changelog",
+                    segSpec.UI.Text or segSpec.UI.Name or Config.UIText or Config.UiText or "UI 更新",
                     segSpec.UI.Icon or Config.UIIcon or Config.UiIcon or 9904750236)
             end
 
+            -- ── Details 页：左右双列 ─────────────────────────────
             local DW = Instance.new("Frame")
             DW.BackgroundTransparency = 1
             DW.BorderSizePixel = 0
@@ -4124,14 +4127,15 @@ function Fenglib:CreateWindow(Config)
             RCL.SortOrder = Enum.SortOrder.LayoutOrder
             RCL.Parent = RightCol
 
+            -- ── 服务器卡 ──────────────────────────────────────────
             local ServerCard = Panel(LeftCol, UDim2.new(1, 0, 0, 162))
             ServerCard.LayoutOrder = 1
 
-            local SvrT = MakeText(ServerCard, "Server", 15, true, 0)
+            local SvrT = MakeText(ServerCard, "服务器", 15, true, 0)
             SvrT.Position = UDim2.fromOffset(16, 12)
             SvrT.Size = UDim2.new(1, -32, 0, 18)
 
-            local SvrS = MakeText(ServerCard, "Information about your current session",
+            local SvrS = MakeText(ServerCard, "当前会话的信息",
                 10, false, 0.48)
             SvrS.Position = UDim2.fromOffset(16, 30)
             SvrS.Size = UDim2.new(1, -32, 0, 14)
@@ -4150,12 +4154,13 @@ function Fenglib:CreateWindow(Config)
                 return v
             end
 
-            StatLabels.Players  = MakeStat(ServerCard, "Players",         "0 playing", 0,    58, 0.5)
-            StatLabels.Capacity = MakeStat(ServerCard, "Maximum Players", tostring(Players.MaxPlayers).." can join", 0.5, 58, 0.5)
-            StatLabels.Latency  = MakeStat(ServerCard, "Latency",         "...",       0,    104, 0.33)
-            StatLabels.Region   = MakeStat(ServerCard, "Server Region",   tostring(Region), 0.33, 104, 0.34)
-            StatLabels.Runtime  = MakeStat(ServerCard, "In server for",   "0s",        0.67, 104, 0.33)
+            StatLabels.Players  = MakeStat(ServerCard, "玩家",          "0 人在玩", 0,    58, 0.5)
+            StatLabels.Capacity = MakeStat(ServerCard, "最大玩家数",     tostring(Players.MaxPlayers).." 人", 0.5, 58, 0.5)
+            StatLabels.Latency  = MakeStat(ServerCard, "延迟",          "...",       0,    104, 0.33)
+            StatLabels.Region   = MakeStat(ServerCard, "服务器地区",     tostring(Region), 0.33, 104, 0.34)
+            StatLabels.Runtime  = MakeStat(ServerCard, "在线时长",      "0 秒",      0.67, 104, 0.33)
 
+            -- ── Discord 卡 ────────────────────────────────────────
             local DiscordCard = Panel(LeftCol, UDim2.new(1, 0, 0, 68))
             DiscordCard.LayoutOrder = 2
             DiscordCard.BackgroundColor3 = CurrentTheme.Accent
@@ -4175,7 +4180,7 @@ function Fenglib:CreateWindow(Config)
             DTitle.Size = UDim2.new(1, -36, 0, 25)
 
             local DSub = MakeText(DiscordCard,
-                discordInvite ~= "" and "Tap to copy Discord invite" or "No Discord invite configured",
+                discordInvite ~= "" and "点击复制 Discord 邀请链接" or "未配置 Discord 邀请链接",
                 12, false, 0.25)
             DSub.Position = UDim2.fromOffset(18, 38)
             DSub.Size = UDim2.new(1, -36, 0, 18)
@@ -4196,16 +4201,17 @@ function Fenglib:CreateWindow(Config)
                 end)
             end)
 
+            -- ── 执行器卡 ──────────────────────────────────────────
             local ExecutorCard = Panel(RightCol, UDim2.new(1, 0, 0, 92))
             ExecutorCard.LayoutOrder = 1
 
-            local ExecStatus = "Unknown"
+            local ExecStatus = "未知"
             local ExecColor = CurrentTheme.Accent
             if table.find(supportedExecutors, ExecutorName) then
-                ExecStatus = "Your executor seems to support this script."
+                ExecStatus = "你的执行器似乎支持此脚本"
                 ExecColor = Color3.fromRGB(45, 180, 115)
             elseif table.find(unsupportedExecutors, ExecutorName) then
-                ExecStatus = "Your executor may not support this script."
+                ExecStatus = "你的执行器可能不支持此脚本"
                 ExecColor = Color3.fromRGB(220, 70, 70)
             end
 
@@ -4236,25 +4242,27 @@ function Fenglib:CreateWindow(Config)
             ESub.TextYAlignment = Enum.TextYAlignment.Top
             FitTextToWidth(ESub, 12, 8, true)
 
+            -- ── 好友卡 ────────────────────────────────────────────
             local FriendsCard = Panel(RightCol, UDim2.new(1, 0, 0, 166))
             FriendsCard.LayoutOrder = 2
 
-            local FTitle = MakeText(FriendsCard, "Friends", 16, true, 0)
+            local FTitle = MakeText(FriendsCard, "好友", 16, true, 0)
             FTitle.Position = UDim2.fromOffset(16, 12)
             FTitle.Size = UDim2.new(1, -32, 0, 20)
 
             local FSub = MakeText(FriendsCard,
-                "Find out what your friends are currently doing",
+                "查看你的好友现在在做什么",
                 10, false, 0.48)
             FSub.Position = UDim2.fromOffset(16, 32)
             FSub.Size = UDim2.new(1, -32, 0, 14)
 
             local FriendLabels = {}
-            FriendLabels.InServer = MakeStat(FriendsCard, "In Server", "...", 0,   58,  0.5)
-            FriendLabels.Offline  = MakeStat(FriendsCard, "Offline",   "...", 0.5, 58,  0.5)
-            FriendLabels.Online   = MakeStat(FriendsCard, "Online",    "...", 0,   104, 0.5)
-            FriendLabels.All      = MakeStat(FriendsCard, "All",       "...", 0.5, 104, 0.5)
+            FriendLabels.InServer = MakeStat(FriendsCard, "本服务器", "...", 0,   58,  0.5)
+            FriendLabels.Offline  = MakeStat(FriendsCard, "离线",     "...", 0.5, 58,  0.5)
+            FriendLabels.Online   = MakeStat(FriendsCard, "在线",     "...", 0,   104, 0.5)
+            FriendLabels.All      = MakeStat(FriendsCard, "全部",     "...", 0.5, 104, 0.5)
 
+            -- ── 更新日志填充 ──────────────────────────────────────
             local function FillChangelog(Page, Entries, EmptyText)
                 local Holder = Panel(Page, UDim2.new(1, 0, 0, 40))
                 Holder.AutomaticSize = Enum.AutomaticSize.Y
@@ -4279,7 +4287,7 @@ function Fenglib:CreateWindow(Config)
                     local Item = Panel(Holder, UDim2.new(1, 0, 0, 62))
                     Item.LayoutOrder = i
                     local t = MakeText(Item,
-                        tostring(Entry.Title or Entry.Name or ("Update " .. i)),
+                        tostring(Entry.Title or Entry.Name or ("更新 " .. i)),
                         14, true, 0)
                     t.Position = UDim2.fromOffset(14, 10)
                     t.Size = UDim2.new(1, -28, 0, 18)
@@ -4294,9 +4302,10 @@ function Fenglib:CreateWindow(Config)
                 end
             end
 
-            FillChangelog(ScriptPage, Config.ScriptChangelog or changelog, "No script changelog.")
-            FillChangelog(UiPage,     Config.UIChangelog or Config.UiChangelog, "No UI changelog.")
+            FillChangelog(ScriptPage, Config.ScriptChangelog or changelog, "暂无脚本更新")
+            FillChangelog(UiPage,     Config.UIChangelog or Config.UiChangelog, "暂无 UI 更新")
 
+            -- ── 好友信息缓存 ──────────────────────────────────────
             local FriendCache = {
                 All = "...", Online = "...", Offline = "...", InServer = "...",
                 Cooldown = 0,
@@ -4325,13 +4334,14 @@ function Fenglib:CreateWindow(Config)
                             Pages:AdvanceToNextPageAsync()
                         end
                     end)
-                    FriendCache.All      = tostring(TotalFriends) .. " friends"
-                    FriendCache.Online   = tostring(OnlineFriends) .. " friends"
-                    FriendCache.Offline  = tostring(math.max(TotalFriends - OnlineFriends, 0)) .. " friends"
-                    FriendCache.InServer = InServer > 0 and tostring(InServer) .. " friends" or "no friends"
+                    FriendCache.All      = tostring(TotalFriends) .. " 个好友"
+                    FriendCache.Online   = tostring(OnlineFriends) .. " 个好友"
+                    FriendCache.Offline  = tostring(math.max(TotalFriends - OnlineFriends, 0)) .. " 个好友"
+                    FriendCache.InServer = InServer > 0 and tostring(InServer) .. " 个好友" or "无好友"
                 end)
             end
 
+            -- ── 定时刷新 ──────────────────────────────────────────
             local Accumulator = 0
             local function UpdateHome(dt)
                 local Now = TimeFunction()
@@ -4351,10 +4361,10 @@ function Fenglib:CreateWindow(Config)
                     Ping = tostring(math.floor((Player:GetNetworkPing() * 1000) + 0.5)) .. "ms"
                 end)
 
-                Welcome.Text = "Hello, " .. Player.DisplayName
+                Welcome.Text = "你好，" .. Player.DisplayName
                 UserLbl.Text = Greeting() .. " | @" .. Player.Name
-                if StatLabels.Players  then StatLabels.Players.Text  = tostring(#Players:GetPlayers()) .. " playing" end
-                if StatLabels.Capacity then StatLabels.Capacity.Text = tostring(Players.MaxPlayers) .. " can join" end
+                if StatLabels.Players  then StatLabels.Players.Text  = tostring(#Players:GetPlayers()) .. " 人在玩" end
+                if StatLabels.Capacity then StatLabels.Capacity.Text = tostring(Players.MaxPlayers) .. " 人" end
                 if StatLabels.Latency  then StatLabels.Latency.Text  = Ping end
                 if StatLabels.Runtime  then StatLabels.Runtime.Text  = Elapsed() end
                 if FriendLabels.InServer then FriendLabels.InServer.Text = FriendCache.InServer end
@@ -4383,7 +4393,7 @@ function Fenglib:CreateWindow(Config)
             return TabBuilder
         end
 
-        -- ── 分支 B：AutoSetup = false（Section 模式 fallback） ──
+        -- ── 分支 B：AutoSetup = false（Section 模式） ─────────
         local Section = TabBuilder:Section({
             Name = sectionName,
             Position = "Center",
@@ -4396,51 +4406,51 @@ function Fenglib:CreateWindow(Config)
         TabBuilder.HomeSection = Section
 
         Section:AddParagraph({
-            Name = "Welcome, " .. tostring(Player.DisplayName),
+            Name = "欢迎，" .. tostring(Player.DisplayName),
             Content = content ~= "" and content or (Greeting() .. " | @" .. Player.Name),
         })
 
         local StatusSection = TabBuilder:Section({
-            Name = "Status",
+            Name = "状态",
             Position = "Left",
             Icon = "lucide:activity",
         })
         local ServerSection = TabBuilder:Section({
-            Name = "Server",
+            Name = "服务器",
             Position = "Right",
             Icon = "lucide:server",
         })
 
         local PlayerLabel = StatusSection:AddLabel({
-            Text = "Players: " .. tostring(#Players:GetPlayers()) .. "/" .. tostring(Players.MaxPlayers),
+            Text = "玩家：" .. tostring(#Players:GetPlayers()) .. "/" .. tostring(Players.MaxPlayers),
         })
         local RuntimeLabel = StatusSection:AddLabel({
-            Text = "Runtime: 0s",
+            Text = "运行时长：0 秒",
         })
         local PerformanceLabel = StatusSection:AddLabel({
-            Text = "FPS: ... | Ping: ...",
+            Text = "FPS：... | 延迟：...",
         })
 
-        local ExecutorStatus = "Unknown"
+        local ExecutorStatus = "未知"
         if table.find(supportedExecutors, ExecutorName) then
-            ExecutorStatus = "Supported"
+            ExecutorStatus = "已支持"
         elseif table.find(unsupportedExecutors, ExecutorName) then
-            ExecutorStatus = "Unsupported"
+            ExecutorStatus = "未支持"
         end
         StatusSection:AddParagraph({
             Name = ExecutorName,
-            Content = "Executor: " .. ExecutorStatus,
+            Content = "执行器：" .. ExecutorStatus,
         })
 
         ServerSection:AddParagraph({
             Name = PlaceName,
-            Content = "PlaceId: " .. tostring(game.PlaceId)
-                .. "\nJobId: " .. tostring(game.JobId)
-                .. "\nRegion: " .. tostring(Region),
+            Content = "地图 ID：" .. tostring(game.PlaceId)
+                .. "\n服务器 ID：" .. tostring(game.JobId)
+                .. "\n地区：" .. tostring(Region),
         })
 
         ServerSection:AddButton({
-            Name = "Copy Join Script",
+            Name = "复制加入脚本",
             Icon = "lucide:copy",
             Callback = function()
                 local JoinScript = ('game:GetService("TeleportService"):TeleportToPlaceInstance(%s, "%s", game:GetService("Players").LocalPlayer)')
@@ -4455,7 +4465,7 @@ function Fenglib:CreateWindow(Config)
 
         if discordInvite ~= "" then
             ServerSection:AddButton({
-                Name = "Copy Discord",
+                Name = "复制 Discord",
                 Icon = "lucide:message-circle",
                 Callback = function()
                     local Link = "https://discord.gg/" .. discordInvite
@@ -4470,7 +4480,7 @@ function Fenglib:CreateWindow(Config)
 
         if type(changelog) == "table" and #changelog > 0 then
             local ChangelogSection = TabBuilder:Section({
-                Name = "Changelog",
+                Name = "更新日志",
                 Position = "Right",
                 Icon = "lucide:list-checks",
                 Collapsible = true,
@@ -4479,7 +4489,7 @@ function Fenglib:CreateWindow(Config)
                 if i > 4 then break end
                 if type(Entry) == "table" then
                     ChangelogSection:AddParagraph({
-                        Name = tostring(Entry.Title or Entry.Name or ("Update " .. i)),
+                        Name = tostring(Entry.Title or Entry.Name or ("更新 " .. i)),
                         Content = tostring(Entry.Date and (Entry.Date .. "\n") or "")
                             .. tostring(Entry.Description or Entry.Content or ""),
                     })
@@ -4512,13 +4522,13 @@ function Fenglib:CreateWindow(Config)
             end)
 
             if PlayerLabel.SetText then
-                PlayerLabel:SetText("Players: " .. tostring(#Players:GetPlayers()) .. "/" .. tostring(Players.MaxPlayers))
+                PlayerLabel:SetText("玩家：" .. tostring(#Players:GetPlayers()) .. "/" .. tostring(Players.MaxPlayers))
             end
             if RuntimeLabel.SetText then
-                RuntimeLabel:SetText("Runtime: " .. Elapsed())
+                RuntimeLabel:SetText("运行时长：" .. Elapsed())
             end
             if PerformanceLabel.SetText then
-                PerformanceLabel:SetText("FPS: " .. tostring(#FrameTimes) .. " | Ping: " .. Ping)
+                PerformanceLabel:SetText("FPS：" .. tostring(#FrameTimes) .. " | 延迟：" .. Ping)
             end
         end
 
@@ -4566,7 +4576,7 @@ function Fenglib:CreateWindow(Config)
         DTitle.Size = UDim2.new(1, -36, 0, 21)
         DTitle.ZIndex = 183
         DTitle.Font = Enum.Font.GothamBold
-        DTitle.Text = Config.Title or "Dialog"
+        DTitle.Text = Config.Title or "提示"
         DTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
         DTitle.TextTransparency = 1
         DTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -4649,7 +4659,7 @@ function Fenglib:CreateWindow(Config)
             Tween(Stroke, {Transparency = Primary and 1 or 0.65}, 0.1)
             Tween(Label, {TextTransparency = 0}, 0.1)
         end
-        for _, BtnConfig in ipairs(Config.Buttons or {{Text = "OK", Primary = true}}) do
+        for _, BtnConfig in ipairs(Config.Buttons or {{Text = "确定", Primary = true}}) do
             AddDialogButton(BtnConfig.Text, BtnConfig.Primary, BtnConfig.Callback)
         end
         Tween(Overlay, {BackgroundTransparency = 0.28}, 0.25)
@@ -4677,11 +4687,11 @@ function Fenglib:CreateWindow(Config)
             AccountProfile.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
             AccountProfile.BackgroundTransparency = 0.25
             AccountProfile.ImageColor3 = CurrentTheme.Accent
-            AccountName.Text = cfg.Expires  or "Customize menu"
-            ExpireLabel.Text = cfg.Username or "Settings"
+            AccountName.Text = cfg.Expires  or "自定义菜单"
+            ExpireLabel.Text = cfg.Username or "设置"
             if Window._userCard then
-                Window._userCard:SetValue(1, cfg.Expires  or "Customize menu")
-                Window._userCard:SetValue(2, cfg.Username or "Settings")
+                Window._userCard:SetValue(1, cfg.Expires  or "自定义菜单")
+                Window._userCard:SetValue(2, cfg.Username or "设置")
             end
         else
             AccountProfile.Image = cfg.Profile
