@@ -6,6 +6,7 @@
     - 文字渐变：miUI 扫光动画 + 自动 hook
     - Section 卡片左侧贴边，Section 之间 8px 间距
     - CreateHomeTab：中文文案，保留【脚本更新】分段，去掉【UI 更新】分段，Discord 卡替换为 QQ 群卡
+    - 已移除 Section 模式分支（AutoSetup = false 无效）
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -3807,7 +3808,6 @@ function Fenglib:CreateWindow(Config)
         local icon          = Config.Icon or "rbxassetid://9904843409"
         local content       = Config.Content or ""
         local sectionName   = Config.SectionName or title
-        local autoSetup     = Config.AutoSetup ~= false
         local qqLink        = tostring(Config.QQGroup or "https://qm.qq.com/q/GDgGTuT66I")
         local supportedExecutors   = Config.SupportedExecutors or {}
         local unsupportedExecutors = Config.UnsupportedExecutors or {}
@@ -3861,8 +3861,8 @@ function Fenglib:CreateWindow(Config)
             return math.floor(e / 3600) .. " 小时"
         end
 
-        -- ── 分支 A：AutoSetup = true（自定义仪表盘） ─────────────
-        if autoSetup then
+        -- 自定义仪表盘（直接渲染）
+        do
             local function Panel(parent, size, pos)
                 local p = Instance.new("Frame")
                 p.BackgroundColor3 = CurrentTheme.Top
@@ -4367,147 +4367,7 @@ function Fenglib:CreateWindow(Config)
             TabBuilder.GetHomeSection = function() return Root end
             return TabBuilder
         end
-
-            -- ── 分支 B：AutoSetup = false（Section 模式） ─────────
-    local Section = TabBuilder:Section({
-        Name = sectionName,
-        Position = "Center",
-        Collapsible = collapsible,
-        Box = box,
-        Icon = sectionIcon,
-        Locked = locked,
-        TextLocked = textLocked,
-    })
-    TabBuilder.HomeSection = Section
-
-    Section:Paragraph({
-        Name = "欢迎，" .. tostring(Player.DisplayName),
-        Content = content ~= "" and content or (Greeting() .. " | @" .. Player.Name),
-    })
-
-    local StatusSection = TabBuilder:Section({
-        Name = "状态",
-        Position = "Left",
-        Icon = "lucide:activity",
-    })
-    local ServerSection = TabBuilder:Section({
-        Name = "服务器",
-        Position = "Right",
-        Icon = "lucide:server",
-    })
-
-    local PlayerLabel = StatusSection:Label({
-        Name = "玩家：" .. tostring(#Players:GetPlayers()) .. "/" .. tostring(Players.MaxPlayers),
-    })
-    local RuntimeLabel = StatusSection:Label({
-        Name = "运行时长：0 秒",
-    })
-    local PerformanceLabel = StatusSection:Label({
-        Name = "FPS：... | 延迟：...",
-    })
-
-    local ExecutorStatus = "未知"
-    if table.find(supportedExecutors, ExecutorName) then
-        ExecutorStatus = "已支持"
-    elseif table.find(unsupportedExecutors, ExecutorName) then
-        ExecutorStatus = "未支持"
     end
-    StatusSection:Paragraph({
-        Name = ExecutorName,
-        Content = "执行器：" .. ExecutorStatus,
-    })
-
-    ServerSection:Paragraph({
-        Name = PlaceName,
-        Content = "地图 ID：" .. tostring(game.PlaceId)
-            .. "\n服务器 ID：" .. tostring(game.JobId)
-            .. "\n地区：" .. tostring(Region),
-    })
-
-    ServerSection:Button({
-        Name = "复制加入脚本",
-        Callback = function()
-            local JoinScript = ('game:GetService("TeleportService"):TeleportToPlaceInstance(%s, "%s", game:GetService("Players").LocalPlayer)')
-                :format(tostring(game.PlaceId), tostring(game.JobId))
-            pcall(function()
-                if setclipboard then setclipboard(JoinScript)
-                elseif toclipboard then toclipboard(JoinScript)
-                elseif set_clipboard then set_clipboard(JoinScript) end
-            end)
-        end,
-    })
-
-    if qqLink ~= "" then
-        ServerSection:Button({
-            Name = "复制 QQ 群链接",
-            Callback = function()
-                pcall(function()
-                    if setclipboard then setclipboard(qqLink)
-                    elseif toclipboard then toclipboard(qqLink)
-                    elseif set_clipboard then set_clipboard(qqLink) end
-                end)
-            end,
-        })
-    end
-
-    -- 脚本更新日志（Section 模式）
-    if type(changelog) == "table" and #changelog > 0 then
-        local ChangelogSection = TabBuilder:Section({
-            Name = "脚本更新",
-            Position = "Right",
-            Collapsible = true,
-        })
-        for i, Entry in ipairs(changelog) do
-            if i > 4 then break end
-            if type(Entry) == "table" then
-                ChangelogSection:Paragraph({
-                    Name = tostring(Entry.Title or Entry.Name or ("更新 " .. i)),
-                    Content = tostring(Entry.Date and (Entry.Date .. "\n") or "")
-                        .. tostring(Entry.Description or Entry.Content or ""),
-                })
-            else
-                ChangelogSection:Label({
-                    Name = tostring(Entry),
-                })
-            end
-        end
-    end
-
-    for _, Btn in ipairs(buttonList) do
-        Section:Button(Btn)
-    end
-
-    local Accumulator = 0
-    local function UpdateHomeFallback(dt)
-        Accumulator = Accumulator + (dt or 0)
-        if Accumulator < 0.5 then return end
-        Accumulator = 0
-
-        local Ping = "..."
-        pcall(function()
-            Ping = tostring(math.floor((Player:GetNetworkPing() * 1000) + 0.5)) .. "ms"
-        end)
-
-        if PlayerLabel.UpdateText then
-            PlayerLabel:UpdateText("玩家：" .. tostring(#Players:GetPlayers()) .. "/" .. tostring(Players.MaxPlayers))
-        end
-        if RuntimeLabel.UpdateText then
-            RuntimeLabel:UpdateText("运行时长：" .. Elapsed())
-        end
-        if PerformanceLabel.UpdateText then
-            PerformanceLabel:UpdateText("FPS：... | 延迟：" .. Ping)
-        end
-    end
-
-    local HomeConn = RunService.RenderStepped:Connect(UpdateHomeFallback)
-    Window._homeCleanup = Window._homeCleanup or {}
-    table.insert(Window._homeCleanup, function()
-        safeDisconnect(HomeConn)
-    end)
-
-    TabBuilder.GetHomeSection = function() return Section end
-    return TabBuilder
-end
 
     function Window:Dialog(Config)
         Config = Config or {}
