@@ -2,12 +2,10 @@
     FengYu-Bento (Test.lua)
     - BottomFrame = miUI 同款玩家卡片（大字=DisplayName，小字=Name）
     - UserSettingButton = miUI 同款 BuilderIcons 字体图标
-    - UserFrame：Input 1 = 副名字（DisplayName，大字）/ Input 2 = 名字（Name，小字）
-    - 面板内外双向同步：UserFrame 输入框 ↔ 左下角玩家卡片
-    - 文字渐变：完整搬运 miUI 扫光动画 + 自动 hook
-    - Section Locked 覆盖层与容器等宽
+    - UserFrame：Input 1 = 副名字 / Input 2 = 名字，内外双向同步
+    - 文字渐变：miUI 扫光动画 + 自动 hook
     - Section 卡片左侧贴边，Section 之间 8px 间距
-    - CreateHomeTab：中文文案，已移除 Script/UI 更新分段，Discord 卡替换为 QQ 群卡
+    - CreateHomeTab：中文文案，保留【脚本更新】分段，去掉【UI 更新】分段，Discord 卡替换为 QQ 群卡
 ]]
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -3801,7 +3799,7 @@ function Fenglib:CreateWindow(Config)
     end
 
     -- ═══════════════════════════════════════════════════════════════
-    -- CreateHomeTab（中文版，Discord 卡改为 QQ 群卡）
+    -- CreateHomeTab：中文，保留【脚本更新】分段，去掉【UI 更新】，QQ 群卡
     -- ═══════════════════════════════════════════════════════════════
     function Window:CreateHomeTab(Config)
         Config = Config or {}
@@ -3813,6 +3811,8 @@ function Fenglib:CreateWindow(Config)
         local qqLink        = tostring(Config.QQGroup or "https://qm.qq.com/q/GDgGTuT66I")
         local supportedExecutors   = Config.SupportedExecutors or {}
         local unsupportedExecutors = Config.UnsupportedExecutors or {}
+        local changelog     = Config.ScriptChangelog or Config.Changelog or {}
+        local segCfg        = type(Config.Segments) == "table" and Config.Segments or {}
         local locked        = Config.Locked == true
         local textLocked    = Config.TextLocked or "已锁定"
         local box           = Config.Box == true
@@ -3901,6 +3901,31 @@ function Fenglib:CreateWindow(Config)
                 return l
             end
 
+            local function MakeIcon(parent, src, sz, color)
+                local i = Instance.new("ImageLabel")
+                i.BackgroundTransparency = 1
+                i.BorderSizePixel = 0
+                i.Size = UDim2.fromOffset(sz or 16, sz or 16)
+                i.ScaleType = Enum.ScaleType.Fit
+                i.ImageColor3 = color or CurrentTheme.Text
+                if type(src) == "number" then
+                    i.Image = "rbxassetid://" .. src
+                elseif type(src) == "string" and src ~= "" then
+                    if tonumber(src) then
+                        i.Image = "rbxassetid://" .. src
+                    elseif src:match("^rbxasset") or src:match("^http") then
+                        i.Image = src
+                    else
+                        i.Image = "rbxassetid://" .. src
+                    end
+                end
+                i.Parent = parent
+                table.insert(ThemeListeners, function()
+                    i.ImageColor3 = CurrentTheme.Text
+                end)
+                return i
+            end
+
             local function FitTextToWidth(Label, BaseSize, MinSize, Wrapped)
                 BaseSize = BaseSize or Label.TextSize
                 MinSize = MinSize or 8
@@ -3932,7 +3957,7 @@ function Fenglib:CreateWindow(Config)
             RL.SortOrder = Enum.SortOrder.LayoutOrder
             RL.Parent = Root
 
-            -- ── 玩家资料卡 ────────────────────────────────────────
+            -- 玩家资料卡
             local Profile = Panel(Root, UDim2.new(1, 0, 0, 74))
             Profile.LayoutOrder = 1
 
@@ -3956,14 +3981,108 @@ function Fenglib:CreateWindow(Config)
             UserLbl.Position = UDim2.new(0, 82, 0, 41)
             UserLbl.Size = UDim2.new(1, -98, 0, 18)
 
-            -- ── Details 页：左右双列 ─────────────────────────────
+            -- 分段按钮容器
+            local SegBox = Panel(Root, UDim2.new(1, 0, 0, 48))
+            SegBox.LayoutOrder = 2
+            local SL = Instance.new("UIListLayout")
+            SL.FillDirection = Enum.FillDirection.Horizontal
+            SL.HorizontalAlignment = Enum.HorizontalAlignment.Center
+            SL.VerticalAlignment = Enum.VerticalAlignment.Center
+            SL.SortOrder = Enum.SortOrder.LayoutOrder
+            SL.Padding = UDim.new(0, 8)
+            SL.Parent = SegBox
+
+            local CH = Instance.new("Frame")
+            CH.BackgroundTransparency = 1
+            CH.BorderSizePixel = 0
+            CH.Size = UDim2.new(1, 0, 0, 0)
+            CH.AutomaticSize = Enum.AutomaticSize.Y
+            CH.LayoutOrder = 3
+            CH.Parent = Root
+
+            local function NewPage(parent)
+                local f = Instance.new("Frame")
+                f.BackgroundTransparency = 1
+                f.BorderSizePixel = 0
+                f.Size = UDim2.new(1, 0, 0, 0)
+                f.AutomaticSize = Enum.AutomaticSize.Y
+                f.Visible = false
+                f.Parent = parent
+                local l = Instance.new("UIListLayout")
+                l.Padding = UDim.new(0, 8)
+                l.SortOrder = Enum.SortOrder.LayoutOrder
+                l.Parent = f
+                return f, l
+            end
+
+            local DetailsPage = NewPage(CH)
+            local ScriptPage  = NewPage(CH)
+
+            local segButtons = {}
+            local function MakeSegment(segName, text, ic)
+                local lblW = math.max(60,
+                    TextService:GetTextSize(tostring(text), 12, Enum.Font.GothamBold,
+                        Vector2.new(math.huge, math.huge)).X + 4)
+                local btnW = 36 + lblW + 14
+                local bt = Panel(SegBox, UDim2.fromOffset(btnW, 34))
+                bt.BackgroundTransparency = 0.55
+
+                local icn = MakeIcon(bt, ic, 16, CurrentTheme.Text)
+                icn.Position = UDim2.new(0, 12, 0.5, -8)
+                icn.ImageTransparency = 0.3
+
+                local lbl = MakeText(bt, text, 12, true, 0.25)
+                lbl.Position = UDim2.new(0, 36, 0, 0)
+                lbl.Size = UDim2.new(1, -44, 1, 0)
+
+                segButtons[segName] = { Root = bt, Icon = icn, Label = lbl }
+
+                local hit = Instance.new("TextButton")
+                hit.Size = UDim2.fromScale(1, 1)
+                hit.BackgroundTransparency = 1
+                hit.Text = ""
+                hit.AutoButtonColor = false
+                hit.Parent = bt
+
+                hit.MouseButton1Click:Connect(function()
+                    DetailsPage.Visible = (segName == "Details")
+                    ScriptPage.Visible  = (segName == "Script")
+                    for n, s in pairs(segButtons) do
+                        local active = (n == segName)
+                        Tween(s.Root, {BackgroundTransparency = active and 0.08 or 0.55}, 0.2)
+                        s.Icon.ImageColor3  = active and CurrentTheme.Accent or CurrentTheme.Text
+                        s.Label.TextColor3  = active and CurrentTheme.Accent or CurrentTheme.Text
+                        s.Label.TextTransparency = active and 0 or 0.25
+                    end
+                end)
+            end
+
+            local segSpec = {
+                Details = segCfg.Details or segCfg[1] or {},
+                Script  = segCfg.Script  or segCfg[2] or {},
+            }
+            local showDetails = segSpec.Details.Show ~= false and Config.ShowDetailsSegment ~= false
+            local showScript  = segSpec.Script.Show  ~= false and Config.ShowScriptSegment  ~= false
+
+            if showDetails then
+                MakeSegment("Details",
+                    segSpec.Details.Text or segSpec.Details.Name or Config.DetailsText or "详情信息",
+                    segSpec.Details.Icon or Config.DetailsIcon or 9904843409)
+            end
+            if showScript then
+                MakeSegment("Script",
+                    segSpec.Script.Text or segSpec.Script.Name or Config.ScriptText or "脚本更新",
+                    segSpec.Script.Icon or Config.ScriptIcon or 9904743710)
+            end
+
+            -- Details 页：左右双列
             local DW = Instance.new("Frame")
             DW.BackgroundTransparency = 1
             DW.BorderSizePixel = 0
             DW.Size = UDim2.new(1, 0, 0, 0)
             DW.AutomaticSize = Enum.AutomaticSize.Y
-            DW.LayoutOrder = 2
-            DW.Parent = Root
+            DW.LayoutOrder = 1
+            DW.Parent = DetailsPage
             local DWL = Instance.new("UIListLayout")
             DWL.FillDirection = Enum.FillDirection.Horizontal
             DWL.SortOrder = Enum.SortOrder.LayoutOrder
@@ -3994,7 +4113,7 @@ function Fenglib:CreateWindow(Config)
             RCL.SortOrder = Enum.SortOrder.LayoutOrder
             RCL.Parent = RightCol
 
-            -- ── 服务器卡 ──────────────────────────────────────────
+            -- 服务器卡
             local ServerCard = Panel(LeftCol, UDim2.new(1, 0, 0, 162))
             ServerCard.LayoutOrder = 1
 
@@ -4027,7 +4146,7 @@ function Fenglib:CreateWindow(Config)
             StatLabels.Region   = MakeStat(ServerCard, "服务器地区", tostring(Region), 0.33, 104, 0.34)
             StatLabels.Runtime  = MakeStat(ServerCard, "在线时长",   "0 秒",     0.67, 104, 0.33)
 
-            -- ── QQ 群卡 ────────────────────────────────────────────
+            -- QQ 群卡
             local QQCard = Panel(LeftCol, UDim2.new(1, 0, 0, 68))
             QQCard.LayoutOrder = 2
             QQCard.BackgroundColor3 = CurrentTheme.Accent
@@ -4067,7 +4186,7 @@ function Fenglib:CreateWindow(Config)
                 end)
             end)
 
-            -- ── 执行器卡 ──────────────────────────────────────────
+            -- 执行器卡
             local ExecutorCard = Panel(RightCol, UDim2.new(1, 0, 0, 92))
             ExecutorCard.LayoutOrder = 1
 
@@ -4108,7 +4227,7 @@ function Fenglib:CreateWindow(Config)
             ESub.TextYAlignment = Enum.TextYAlignment.Top
             FitTextToWidth(ESub, 12, 8, true)
 
-            -- ── 好友卡 ────────────────────────────────────────────
+            -- 好友卡
             local FriendsCard = Panel(RightCol, UDim2.new(1, 0, 0, 166))
             FriendsCard.LayoutOrder = 2
 
@@ -4128,7 +4247,49 @@ function Fenglib:CreateWindow(Config)
             FriendLabels.Online   = MakeStat(FriendsCard, "在线",     "...", 0,   104, 0.5)
             FriendLabels.All      = MakeStat(FriendsCard, "全部",     "...", 0.5, 104, 0.5)
 
-            -- ── 好友信息缓存 ──────────────────────────────────────
+            -- Script 页：更新日志
+            local function FillChangelog(Page, Entries, EmptyText)
+                local Holder = Panel(Page, UDim2.new(1, 0, 0, 40))
+                Holder.AutomaticSize = Enum.AutomaticSize.Y
+                local L = Instance.new("UIListLayout")
+                L.Padding = UDim.new(0, 8)
+                L.SortOrder = Enum.SortOrder.LayoutOrder
+                L.Parent = Holder
+                local P = Instance.new("UIPadding")
+                P.PaddingTop = UDim.new(0, 12)
+                P.PaddingBottom = UDim.new(0, 12)
+                P.PaddingLeft = UDim.new(0, 12)
+                P.PaddingRight = UDim.new(0, 12)
+                P.Parent = Holder
+
+                if type(Entries) ~= "table" or #Entries <= 0 then
+                    local em = MakeText(Holder, EmptyText, 13, false, 0.25)
+                    em.Size = UDim2.new(1, 0, 0, 26)
+                    return
+                end
+
+                for i, Entry in ipairs(Entries) do
+                    local Item = Panel(Holder, UDim2.new(1, 0, 0, 62))
+                    Item.LayoutOrder = i
+                    local t = MakeText(Item,
+                        tostring(Entry.Title or Entry.Name or ("更新 " .. i)),
+                        14, true, 0)
+                    t.Position = UDim2.fromOffset(14, 10)
+                    t.Size = UDim2.new(1, -28, 0, 18)
+                    local d = MakeText(Item,
+                        tostring(Entry.Description or Entry.Content or Entry.Date or ""),
+                        11, false, 0.3)
+                    d.Position = UDim2.fromOffset(14, 30)
+                    d.Size = UDim2.new(1, -28, 0, 22)
+                    d.TextWrapped = true
+                    d.TextTruncate = Enum.TextTruncate.None
+                    d.TextYAlignment = Enum.TextYAlignment.Top
+                end
+            end
+
+            FillChangelog(ScriptPage, changelog, "暂无脚本更新")
+
+            -- 好友缓存 + 定时刷新
             local FriendCache = {
                 All = "...", Online = "...", Offline = "...", InServer = "...",
                 Cooldown = 0,
@@ -4164,7 +4325,6 @@ function Fenglib:CreateWindow(Config)
                 end)
             end
 
-            -- ── 定时刷新 ──────────────────────────────────────────
             local Accumulator = 0
             local function UpdateHome(dt)
                 Accumulator = Accumulator + (dt or 0)
@@ -4187,6 +4347,14 @@ function Fenglib:CreateWindow(Config)
                 if FriendLabels.Online   then FriendLabels.Online.Text   = FriendCache.Online end
                 if FriendLabels.All      then FriendLabels.All.Text      = FriendCache.All end
                 UpdateFriends()
+            end
+
+            DetailsPage.Visible = true
+            if segButtons["Details"] then
+                segButtons["Details"].Root.BackgroundTransparency = 0.08
+                segButtons["Details"].Icon.ImageColor3 = CurrentTheme.Accent
+                segButtons["Details"].Label.TextColor3 = CurrentTheme.Accent
+                segButtons["Details"].Label.TextTransparency = 0
             end
 
             local HomeConn = RunService.RenderStepped:Connect(UpdateHome)
@@ -4282,6 +4450,28 @@ function Fenglib:CreateWindow(Config)
                     end)
                 end,
             })
+        end
+
+        -- 脚本更新日志（Section 模式）
+        if type(changelog) == "table" and #changelog > 0 then
+            local ChangelogSection = TabBuilder:Section({
+                Name = "脚本更新",
+                Position = "Right",
+                Icon = "lucide:list-checks",
+                Collapsible = true,
+            })
+            for i, Entry in ipairs(changelog) do
+                if i > 4 then break end
+                if type(Entry) == "table" then
+                    ChangelogSection:AddParagraph({
+                        Name = tostring(Entry.Title or Entry.Name or ("更新 " .. i)),
+                        Content = tostring(Entry.Date and (Entry.Date .. "\n") or "")
+                            .. tostring(Entry.Description or Entry.Content or ""),
+                    })
+                else
+                    ChangelogSection:AddLabel({ Text = tostring(Entry) })
+                end
+            end
         end
 
         for _, Btn in ipairs(buttonList) do
