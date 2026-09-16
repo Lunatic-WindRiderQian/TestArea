@@ -1487,41 +1487,29 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
     -- ============================================================
-    --  Colorpicker （从 windUI 完整移植）
+    -- Colorpicker —— 完整搬运自 windUI 原版布局
     -- ============================================================
     child.Colorpicker = function(_, config)
         config = safeConfig(config)
-        local cpTitle = config.Name or config.Title or "颜色选择器"
-        local defaultColor = config.Default or config.Value or Color3.fromRGB(80, 140, 255)
-        local hasTransparency = config.Transparency ~= nil
-        local defaultTransparency = config.Transparency or 0
-        local callback = config.Callback or function() end
-        local controlId = cpTitle.."_"..tostring(#Registry)
-        local parent = config.Parent or contentHolder
+        local cpTitle       = config.Name or config.Title or "Colorpicker"
+        local defaultColor  = config.Default or config.Value or Color3.fromRGB(255, 255, 255)
+        local callback      = config.Callback or function() end
+        local transCfg      = config.Transparency
+        local hasTransparency = (transCfg ~= nil)
+        local controlId     = cpTitle .. "_" .. tostring(#Registry)
+        local parent        = config.Parent or contentHolder
 
-        local state = {
-            Color = defaultColor,
-            Transparency = defaultTransparency,
-            Hue = 0, Sat = 0, Vib = 0,
-        }
+        local state = { Default = defaultColor, Transparency = transCfg, Hue = 0, Sat = 0, Vib = 0 }
         state.Hue, state.Sat, state.Vib = Color3.toHSV(defaultColor)
 
-        local function GetScreenGui()
-            local inst = parent
-            while inst do
-                if inst:IsA("ScreenGui") then return inst end
-                inst = inst.Parent
-            end
-            return nil
-        end
-
+        -- 行内预览按钮
         local Tile = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, cpTitle, 15, 12, UDim2.new(1, -70, 0, 18), 13)
 
         local PreviewBtn = Instance.new("TextButton")
         PreviewBtn.Size = UDim2.fromOffset(40, 26)
         PreviewBtn.Position = UDim2.new(1, -50, 0.5, -13)
-        PreviewBtn.BackgroundColor3 = state.Color
+        PreviewBtn.BackgroundColor3 = state.Default
         PreviewBtn.BackgroundTransparency = hasTransparency and state.Transparency or 0
         PreviewBtn.BorderSizePixel = 0
         PreviewBtn.Text = ""
@@ -1535,42 +1523,24 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         previewStroke.Parent = PreviewBtn
         table.insert(ThemeListeners, function() previewStroke.Color = CurrentTheme.Stroke end)
 
-        local locked = config.Locked == true
+        local locked      = config.Locked == true
         local lockedTitle = config.LockedTitle or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         PreviewBtn.Active = not locked
 
-        local function updateLock(st)
-            locked = st
-            lockFrame.Visible = st
-            PreviewBtn.Active = not st
-        end
-
-        local function UpdatePreview()
-            PreviewBtn.BackgroundColor3 = state.Color
-            PreviewBtn.BackgroundTransparency = hasTransparency and state.Transparency or 0
-        end
-
+        -- 打开色盘对话框（windUI 原始尺寸/位置）
         local dialogOpen = false
-        local function OpenPicker()
+        local function OpenColorpicker()
             if locked or dialogOpen then return end
-            local sg = GetScreenGui()
+            local sg = parent
+            while sg and not sg:IsA("ScreenGui") do sg = sg.Parent end
             if not sg then return end
             dialogOpen = true
 
-            local D = {
-                Hue = state.Hue,
-                Sat = state.Sat,
-                Vib = state.Vib,
-                Transparency = state.Transparency,
-            }
-            local function GetColor()
-                return Color3.fromHSV(D.Hue, D.Sat, D.Vib)
-            end
-
-            local connections = {}
-            local function track(conn) table.insert(connections, conn) end
+            local W = { Hue = state.Hue, Sat = state.Sat, Vib = state.Vib, Transparency = state.Transparency or 0 }
+            local function CurColor() return Color3.fromHSV(W.Hue, W.Sat, W.Vib) end
+            local TextPadding = 10
 
             local Overlay = Instance.new("Frame")
             Overlay.Size = UDim2.fromScale(1, 1)
@@ -1580,114 +1550,121 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Overlay.Active = true
             Overlay.Parent = sg
 
-            local SV_W, SV_H = 220, 200
-            local SV_X, SV_Y = 16, 48
-            local HUE_W = 18
-            local ALPHA_W = 18
-            local InputsWidth = 110
-            local PanelWidth = SV_X + SV_W + 14 + HUE_W
-            if hasTransparency then PanelWidth = PanelWidth + 14 + ALPHA_W end
-            PanelWidth = PanelWidth + 14 + InputsWidth + 16
-            local PanelHeight = SV_Y + SV_H + 16 + 34 + 16
+            -- windUI 玻璃容器
+            local MainContainer = Instance.new("ImageLabel")
+            MainContainer.Image = "rbxassetid://8992230677"
+            MainContainer.ScaleType = Enum.ScaleType.Slice
+            MainContainer.SliceCenter = Rect.new(99, 99, 99, 99)
+            MainContainer.ImageTransparency = 1
+            MainContainer.ImageColor3 = CurrentTheme.Main
+            MainContainer.BackgroundTransparency = 1
+            MainContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+            MainContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
+            MainContainer.AutomaticSize = Enum.AutomaticSize.XY
+            MainContainer.Visible = false
+            MainContainer.ZIndex = 501
+            MainContainer.Parent = Overlay
+            Instance.new("UICorner", MainContainer).CornerRadius = UDim.new(0, 26)
 
-            local Panel = Instance.new("Frame")
-            Panel.AnchorPoint = Vector2.new(0.5, 0.5)
-            Panel.Position = UDim2.fromScale(0.5, 0.5)
-            Panel.Size = UDim2.fromOffset(PanelWidth, PanelHeight)
-            Panel.BackgroundColor3 = CurrentTheme.Main
-            Panel.BackgroundTransparency = 1
-            Panel.BorderSizePixel = 0
-            Panel.ZIndex = 501
-            Panel.Parent = Overlay
-            Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 12)
-            AddToRegistry(Panel, "BackgroundColor3", "Main")
+            local Main = Instance.new("Frame")
+            Main.Size = UDim2.new(0, 280, 0, 0)
+            Main.AutomaticSize = Enum.AutomaticSize.Y
+            Main.BackgroundTransparency = 1
+            Main.Visible = false
+            Main.ZIndex = 502
+            Main.Parent = MainContainer
 
-            local panelStroke = Instance.new("UIStroke")
-            panelStroke.Color = CurrentTheme.Stroke
-            panelStroke.Thickness = 1
-            panelStroke.Transparency = 1
-            panelStroke.Parent = Panel
-            table.insert(ThemeListeners, function() panelStroke.Color = CurrentTheme.Stroke end)
-
+            -- 标题
             local Title = Instance.new("TextLabel")
             Title.Text = cpTitle
-            Title.Position = UDim2.fromOffset(16, 12)
-            Title.Size = UDim2.new(1, -32, 0, 24)
-            Title.BackgroundTransparency = 1
-            Title.Font = Enum.Font.GothamBold
-            Title.TextSize = 17
-            Title.TextColor3 = CurrentTheme.Text
+            Title.TextSize = 20
+            Title.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.SemiBold)
             Title.TextXAlignment = Enum.TextXAlignment.Left
-            Title.Parent = Panel
+            Title.Size = UDim2.new(1, 0, 0, 0)
+            Title.AutomaticSize = Enum.AutomaticSize.Y
+            Title.TextColor3 = CurrentTheme.Text
+            Title.BackgroundTransparency = 1
+            Title.Parent = Main
             AddToRegistry(Title, "TextColor3", "Text")
+            local titlePad = Instance.new("UIPadding")
+            titlePad.PaddingTop    = UDim.new(0, TextPadding / 2)
+            titlePad.PaddingLeft   = UDim.new(0, TextPadding / 2)
+            titlePad.PaddingRight  = UDim.new(0, TextPadding / 2)
+            titlePad.PaddingBottom = UDim.new(0, TextPadding / 2)
+            titlePad.Parent = Title
 
+            -- 饱和/明度色域图 160x158 @ (0, 50)
             local SatVibMap = Instance.new("ImageLabel")
-            SatVibMap.Size = UDim2.fromOffset(SV_W, SV_H)
-            SatVibMap.Position = UDim2.fromOffset(SV_X, SV_Y)
-            SatVibMap.BackgroundColor3 = Color3.fromHSV(D.Hue, 1, 1)
+            SatVibMap.Size = UDim2.fromOffset(160, 158)
+            SatVibMap.Position = UDim2.fromOffset(0, 40 + TextPadding)
             SatVibMap.Image = "rbxassetid://4155801252"
-            SatVibMap.Parent = Panel
+            SatVibMap.BackgroundColor3 = Color3.fromHSV(W.Hue, 1, 1)
+            SatVibMap.BackgroundTransparency = 0
+            SatVibMap.ZIndex = 3
+            SatVibMap.Parent = Main
             Instance.new("UICorner", SatVibMap).CornerRadius = UDim.new(0, 8)
 
-            local PickerDot = Instance.new("Frame")
-            PickerDot.Size = UDim2.fromOffset(14, 14)
-            PickerDot.AnchorPoint = Vector2.new(0.5, 0.5)
-            PickerDot.Position = UDim2.new(D.Sat, 0, 1 - D.Vib, 0)
-            PickerDot.BackgroundColor3 = GetColor()
-            PickerDot.BorderSizePixel = 0
-            PickerDot.ZIndex = 3
-            PickerDot.Parent = SatVibMap
-            Instance.new("UICorner", PickerDot).CornerRadius = UDim.new(1, 0)
+            local SatVibDot = Instance.new("Frame")
+            SatVibDot.Size = UDim2.fromOffset(14, 14)
+            SatVibDot.AnchorPoint = Vector2.new(0.5, 0.5)
+            SatVibDot.Position = UDim2.new(W.Sat, 0, 1 - W.Vib, 0)
+            SatVibDot.BackgroundColor3 = CurColor()
+            SatVibDot.BorderSizePixel = 0
+            SatVibDot.ZIndex = 4
+            SatVibDot.Parent = SatVibMap
+            Instance.new("UICorner", SatVibDot).CornerRadius = UDim.new(1, 0)
             local dotStroke = Instance.new("UIStroke")
             dotStroke.Thickness = 2
-            dotStroke.Color = Color3.new(1, 1, 1)
             dotStroke.Transparency = 0.1
-            dotStroke.Parent = PickerDot
+            dotStroke.Color = CurrentTheme.Text
+            dotStroke.Parent = SatVibDot
+            table.insert(ThemeListeners, function() dotStroke.Color = CurrentTheme.Text end)
 
-            local HueX = SV_X + SV_W + 14
+            -- 色相条 6x192 @ (180, 50)
             local HueSlider = Instance.new("Frame")
-            HueSlider.Size = UDim2.fromOffset(HUE_W, SV_H)
-            HueSlider.Position = UDim2.fromOffset(HueX, SV_Y)
+            HueSlider.Size = UDim2.fromOffset(6, 192)
+            HueSlider.Position = UDim2.fromOffset(180, 40 + TextPadding)
             HueSlider.BackgroundTransparency = 1
-            HueSlider.Parent = Panel
+            HueSlider.Parent = Main
 
             local HueBar = Instance.new("Frame")
             HueBar.Size = UDim2.fromScale(1, 1)
             HueBar.BorderSizePixel = 0
             HueBar.Parent = HueSlider
             Instance.new("UICorner", HueBar).CornerRadius = UDim.new(1, 0)
-            local hueGrad = Instance.new("UIGradient")
             local hueKeys = {}
             for i = 0, 10 do
                 table.insert(hueKeys, ColorSequenceKeypoint.new(i / 10, Color3.fromHSV(i / 10, 1, 1)))
             end
+            local hueGrad = Instance.new("UIGradient")
             hueGrad.Color = ColorSequence.new(hueKeys)
             hueGrad.Rotation = 90
             hueGrad.Parent = HueBar
 
-            local HueDot = Instance.new("Frame")
-            HueDot.Size = UDim2.fromOffset(HUE_W + 4, 8)
-            HueDot.AnchorPoint = Vector2.new(0.5, 0.5)
-            HueDot.Position = UDim2.new(0.5, 0, D.Hue, 0)
-            HueDot.BackgroundColor3 = Color3.fromHSV(D.Hue, 1, 1)
-            HueDot.BorderSizePixel = 0
-            HueDot.ZIndex = 3
-            HueDot.Parent = HueSlider
-            Instance.new("UICorner", HueDot).CornerRadius = UDim.new(1, 0)
-            local hueDotStroke = Instance.new("UIStroke")
-            hueDotStroke.Thickness = 2
-            hueDotStroke.Color = Color3.new(1, 1, 1)
-            hueDotStroke.Transparency = 0.1
-            hueDotStroke.Parent = HueDot
+            local HueGrip = Instance.new("Frame")
+            HueGrip.Size = UDim2.fromOffset(14, 14)
+            HueGrip.AnchorPoint = Vector2.new(0.5, 0.5)
+            HueGrip.Position = UDim2.new(0.5, 0, W.Hue, 0)
+            HueGrip.BackgroundColor3 = Color3.fromHSV(W.Hue, 1, 1)
+            HueGrip.BorderSizePixel = 0
+            HueGrip.ZIndex = 3
+            HueGrip.Parent = HueSlider
+            Instance.new("UICorner", HueGrip).CornerRadius = UDim.new(1, 0)
+            local hueGripStroke = Instance.new("UIStroke")
+            hueGripStroke.Thickness = 2
+            hueGripStroke.Transparency = 0.1
+            hueGripStroke.Color = CurrentTheme.Text
+            hueGripStroke.Parent = HueGrip
+            table.insert(ThemeListeners, function() hueGripStroke.Color = CurrentTheme.Text end)
 
-            local AlphaSlider, AlphaDot, AlphaBar
+            -- 透明度条 6x192 @ (210, 50) — 按需
+            local AlphaSlider, AlphaGrip, AlphaBar
             if hasTransparency then
-                local AlphaX = HueX + HUE_W + 14
                 AlphaSlider = Instance.new("Frame")
-                AlphaSlider.Size = UDim2.fromOffset(ALPHA_W, SV_H)
-                AlphaSlider.Position = UDim2.fromOffset(AlphaX, SV_Y)
+                AlphaSlider.Size = UDim2.fromOffset(6, 192)
+                AlphaSlider.Position = UDim2.fromOffset(210, 40 + TextPadding)
                 AlphaSlider.BackgroundTransparency = 1
-                AlphaSlider.Parent = Panel
+                AlphaSlider.Parent = Main
 
                 local Checker = Instance.new("Frame")
                 Checker.Size = UDim2.fromScale(1, 1)
@@ -1696,21 +1673,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Checker.Parent = AlphaSlider
                 Instance.new("UICorner", Checker).CornerRadius = UDim.new(1, 0)
 
-                local checkerImg = Instance.new("ImageLabel")
-                checkerImg.Size = UDim2.fromScale(1, 1)
-                checkerImg.BackgroundTransparency = 1
-                checkerImg.Image = "rbxassetid://14204231522"
-                checkerImg.ImageTransparency = 0.4
-                checkerImg.ScaleType = Enum.ScaleType.Tile
-                checkerImg.TileSize = UDim2.fromOffset(20, 20)
-                checkerImg.Parent = Checker
-                Instance.new("UICorner", checkerImg).CornerRadius = UDim.new(1, 0)
+                local CheckerImg = Instance.new("ImageLabel")
+                CheckerImg.Size = UDim2.fromScale(1, 1)
+                CheckerImg.BackgroundTransparency = 1
+                CheckerImg.Image = "rbxassetid://14204231522"
+                CheckerImg.ImageTransparency = 0.45
+                CheckerImg.ScaleType = Enum.ScaleType.Tile
+                CheckerImg.TileSize = UDim2.fromOffset(20, 20)
+                CheckerImg.Parent = Checker
+                Instance.new("UICorner", CheckerImg).CornerRadius = UDim.new(1, 0)
 
                 AlphaBar = Instance.new("Frame")
                 AlphaBar.Size = UDim2.fromScale(1, 1)
-                AlphaBar.BackgroundColor3 = GetColor()
-                AlphaBar.BackgroundTransparency = 0
+                AlphaBar.BackgroundColor3 = CurColor()
+                AlphaBar.BackgroundTransparency = W.Transparency
                 AlphaBar.BorderSizePixel = 0
+                AlphaBar.ZIndex = 2
                 AlphaBar.Parent = AlphaSlider
                 Instance.new("UICorner", AlphaBar).CornerRadius = UDim.new(1, 0)
                 local alphaGrad = Instance.new("UIGradient")
@@ -1721,61 +1699,91 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 alphaGrad.Rotation = 270
                 alphaGrad.Parent = AlphaBar
 
-                AlphaDot = Instance.new("Frame")
-                AlphaDot.Size = UDim2.fromOffset(ALPHA_W + 4, 8)
-                AlphaDot.AnchorPoint = Vector2.new(0.5, 0.5)
-                AlphaDot.Position = UDim2.new(0.5, 0, 1 - D.Transparency, 0)
-                AlphaDot.BackgroundColor3 = Color3.new(1, 1, 1)
-                AlphaDot.BorderSizePixel = 0
-                AlphaDot.ZIndex = 3
-                AlphaDot.Parent = AlphaSlider
-                Instance.new("UICorner", AlphaDot).CornerRadius = UDim.new(1, 0)
-                local alphaDotStroke = Instance.new("UIStroke")
-                alphaDotStroke.Thickness = 2
-                alphaDotStroke.Color = Color3.new(1, 1, 1)
-                alphaDotStroke.Transparency = 0.1
-                alphaDotStroke.Parent = AlphaDot
+                AlphaGrip = Instance.new("Frame")
+                AlphaGrip.Size = UDim2.fromOffset(14, 14)
+                AlphaGrip.AnchorPoint = Vector2.new(0.5, 0.5)
+                AlphaGrip.Position = UDim2.new(0.5, 0, 1 - W.Transparency, 0)
+                AlphaGrip.BackgroundColor3 = CurColor()
+                AlphaGrip.BorderSizePixel = 0
+                AlphaGrip.ZIndex = 3
+                AlphaGrip.Parent = AlphaSlider
+                Instance.new("UICorner", AlphaGrip).CornerRadius = UDim.new(1, 0)
+                local alphaGripStroke = Instance.new("UIStroke")
+                alphaGripStroke.Thickness = 2
+                alphaGripStroke.Transparency = 0.1
+                alphaGripStroke.Color = CurrentTheme.Text
+                alphaGripStroke.Parent = AlphaGrip
+                table.insert(ThemeListeners, function() alphaGripStroke.Color = CurrentTheme.Text end)
             end
 
-            local InputsX = hasTransparency and (HueX + HUE_W + 14 + ALPHA_W + 14) or (HueX + HUE_W + 14)
+            -- 颜色预览 1（棋盘格 + 透明叠层）75x24 @ (0, 218)
+            local Preview1 = Instance.new("Frame")
+            Preview1.Size = UDim2.fromOffset(75, 24)
+            Preview1.Position = UDim2.fromOffset(0, 208 + TextPadding)
+            Preview1.BackgroundTransparency = 1
+            Preview1.BorderSizePixel = 0
+            Preview1.Parent = Main
+            Instance.new("UICorner", Preview1).CornerRadius = UDim.new(0, 8)
+
+            local P1Checker = Instance.new("ImageLabel")
+            P1Checker.Size = UDim2.fromScale(1, 1)
+            P1Checker.BackgroundTransparency = 1
+            P1Checker.Image = "rbxassetid://14204231522"
+            P1Checker.ImageTransparency = 0.45
+            P1Checker.ScaleType = Enum.ScaleType.Tile
+            P1Checker.TileSize = UDim2.fromOffset(20, 20)
+            P1Checker.ZIndex = 1
+            P1Checker.Parent = Preview1
+            Instance.new("UICorner", P1Checker).CornerRadius = UDim.new(0, 8)
+
+            local P1Color = Instance.new("Frame")
+            P1Color.Size = UDim2.fromScale(1, 1)
+            P1Color.BackgroundColor3 = CurColor()
+            P1Color.BackgroundTransparency = hasTransparency and W.Transparency or 0
+            P1Color.BorderSizePixel = 0
+            P1Color.ZIndex = 2
+            P1Color.Parent = Preview1
+            Instance.new("UICorner", P1Color).CornerRadius = UDim.new(0, 8)
+
+            -- 颜色预览 2（纯色）75x24 @ (85, 218)
+            local Preview2 = Instance.new("Frame")
+            Preview2.Size = UDim2.fromOffset(75, 24)
+            Preview2.Position = UDim2.fromOffset(85, 208 + TextPadding)
+            Preview2.BackgroundColor3 = CurColor()
+            Preview2.BackgroundTransparency = 0
+            Preview2.BorderSizePixel = 0
+            Preview2.Parent = Main
+            Instance.new("UICorner", Preview2).CornerRadius = UDim.new(0, 8)
+
+            -- 输入框组 @ (240 or 210, 50) 宽 150，UIScale 0.85
             local InputsFrame = Instance.new("Frame")
-            InputsFrame.Size = UDim2.new(0, InputsWidth, 0, SV_H)
-            InputsFrame.Position = UDim2.fromOffset(InputsX, SV_Y)
+            InputsFrame.AutomaticSize = Enum.AutomaticSize.XY
+            InputsFrame.Size = UDim2.new(0, 0, 0, 0)
+            InputsFrame.Position = UDim2.fromOffset(hasTransparency and 240 or 210, 40 + TextPadding)
             InputsFrame.BackgroundTransparency = 1
-            InputsFrame.Parent = Panel
+            InputsFrame.Parent = Main
+            local inputsList = Instance.new("UIListLayout")
+            inputsList.FillDirection = Enum.FillDirection.Vertical
+            inputsList.Padding = UDim.new(0, 4)
+            inputsList.Parent = InputsFrame
 
-            local InputsList = Instance.new("UIListLayout")
-            InputsList.FillDirection = Enum.FillDirection.Vertical
-            InputsList.Padding = UDim.new(0, 6)
-            InputsList.SortOrder = Enum.SortOrder.LayoutOrder
-            InputsList.Parent = InputsFrame
+            local function CreateNewInput(labelText, defaultText)
+                local holder = Instance.new("Frame")
+                holder.Size = UDim2.fromOffset(150, 42)
+                holder.BackgroundTransparency = 1
+                holder.Parent = InputsFrame
 
-            local function MakeInputRow(labelText, defaultVal, order)
-                local row = Instance.new("Frame")
-                row.Size = UDim2.new(1, 0, 0, 26)
-                row.BackgroundTransparency = 1
-                row.LayoutOrder = order
-                row.Parent = InputsFrame
-
-                local lbl = Instance.new("TextLabel")
-                lbl.Size = UDim2.new(0, 36, 1, 0)
-                lbl.BackgroundTransparency = 1
-                lbl.Font = Enum.Font.GothamMedium
-                lbl.Text = labelText
-                lbl.TextSize = 12
-                lbl.TextColor3 = CurrentTheme.Text
-                lbl.TextTransparency = 0.4
-                lbl.TextXAlignment = Enum.TextXAlignment.Left
-                lbl.Parent = row
-                AddToRegistry(lbl, "TextColor3", "Text")
+                local scale = Instance.new("UIScale")
+                scale.Scale = 0.85
+                scale.Parent = holder
 
                 local box = Instance.new("Frame")
-                box.Size = UDim2.new(1, -42, 1, 0)
-                box.Position = UDim2.new(0, 42, 0, 0)
+                box.Size = UDim2.fromScale(1, 1)
                 box.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
                 box.BorderSizePixel = 0
-                box.Parent = row
-                Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5)
+                box.Parent = holder
+                Instance.new("UICorner", box).CornerRadius = UDim.new(0, 10)
+
                 local boxStroke = Instance.new("UIStroke")
                 boxStroke.Thickness = 1
                 boxStroke.Transparency = 0.65
@@ -1784,169 +1792,203 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 table.insert(ThemeListeners, function() boxStroke.Color = CurrentTheme.Stroke end)
 
                 local tb = Instance.new("TextBox")
-                tb.Size = UDim2.new(1, -10, 1, 0)
-                tb.Position = UDim2.new(0, 5, 0, 0)
+                tb.Size = UDim2.new(1, -20, 1, 0)
+                tb.Position = UDim2.new(0, 10, 0, 0)
                 tb.BackgroundTransparency = 1
                 tb.Font = Enum.Font.GothamBold
-                tb.TextSize = 12
+                tb.TextSize = 14
                 tb.TextColor3 = CurrentTheme.Text
                 tb.TextXAlignment = Enum.TextXAlignment.Left
                 tb.ClearTextOnFocus = false
-                tb.Text = tostring(defaultVal)
+                tb.Text = tostring(defaultText)
                 tb.Parent = box
                 AddToRegistry(tb, "TextColor3", "Text")
                 TextGradient:Skip(tb)
 
-                tb.Focused:Connect(function() Tween(boxStroke, {Transparency = 0.2}, 0.15) end)
-                tb.FocusLost:Connect(function() Tween(boxStroke, {Transparency = 0.65}, 0.15) end)
+                local lbl = Instance.new("TextLabel")
+                lbl.Size = UDim2.fromOffset(30, 20)
+                lbl.Position = UDim2.new(1, -40, 0.5, -10)
+                lbl.BackgroundTransparency = 1
+                lbl.Font = Enum.Font.GothamMedium
+                lbl.TextSize = 12
+                lbl.Text = labelText
+                lbl.TextColor3 = CurrentTheme.Text
+                lbl.TextTransparency = 0.4
+                lbl.TextXAlignment = Enum.TextXAlignment.Right
+                lbl.Parent = box
+                AddToRegistry(lbl, "TextColor3", "Text")
+                TextGradient:Skip(lbl)
 
                 return tb
             end
 
-            local C0 = GetColor()
-            local HexInput = MakeInputRow("Hex", "#"..C0:ToHex(), 1)
-            local RInput = MakeInputRow("R", math.floor(C0.R * 255 + 0.5), 2)
-            local GInput = MakeInputRow("G", math.floor(C0.G * 255 + 0.5), 3)
-            local BInput = MakeInputRow("B", math.floor(C0.B * 255 + 0.5), 4)
+            local c0 = CurColor()
+            local HexInput = CreateNewInput("Hex", "#" .. c0:ToHex())
+            local RInput  = CreateNewInput("R",  math.floor(c0.R * 255 + 0.5))
+            local GInput  = CreateNewInput("G",  math.floor(c0.G * 255 + 0.5))
+            local BInput  = CreateNewInput("B",  math.floor(c0.B * 255 + 0.5))
             local AlphaInput
             if hasTransparency then
-                AlphaInput = MakeInputRow("A", math.floor((1 - D.Transparency) * 100 + 0.5), 5)
+                AlphaInput = CreateNewInput("A", math.floor((1 - W.Transparency) * 100 + 0.5))
             end
 
-            local suppressInput = false
-            local function SyncUI(updateInputs)
-                local C = GetColor()
-                SatVibMap.BackgroundColor3 = Color3.fromHSV(D.Hue, 1, 1)
-                PickerDot.Position = UDim2.new(D.Sat, 0, 1 - D.Vib, 0)
-                PickerDot.BackgroundColor3 = C
-                HueDot.Position = UDim2.new(0.5, 0, D.Hue, 0)
-                HueDot.BackgroundColor3 = Color3.fromHSV(D.Hue, 1, 1)
-                if AlphaBar then AlphaBar.BackgroundColor3 = C end
-                if AlphaDot then AlphaDot.Position = UDim2.new(0.5, 0, 1 - D.Transparency, 0) end
+            -- 按钮区 @ (0, 264) 高 40
+            local ButtonsFrame = Instance.new("Frame")
+            ButtonsFrame.Size = UDim2.new(0, hasTransparency and 240 or 210, 0, 40)
+            ButtonsFrame.Position = UDim2.fromOffset(0, 254 + TextPadding)
+            ButtonsFrame.BackgroundTransparency = 1
+            ButtonsFrame.Parent = Main
+            local btnsList = Instance.new("UIListLayout")
+            btnsList.FillDirection = Enum.FillDirection.Horizontal
+            btnsList.HorizontalAlignment = Enum.HorizontalAlignment.Right
+            btnsList.Padding = UDim.new(0, 6)
+            btnsList.Parent = ButtonsFrame
 
-                if updateInputs and not suppressInput then
+            local suppressInput = false
+            local function SyncUI()
+                local cur = CurColor()
+                SatVibMap.BackgroundColor3 = Color3.fromHSV(W.Hue, 1, 1)
+                SatVibDot.Position = UDim2.new(W.Sat, 0, 1 - W.Vib, 0)
+                SatVibDot.BackgroundColor3 = cur
+                HueGrip.Position = UDim2.new(0.5, 0, W.Hue, 0)
+                HueGrip.BackgroundColor3 = Color3.fromHSV(W.Hue, 1, 1)
+                if AlphaBar then
+                    AlphaBar.BackgroundColor3 = cur
+                    AlphaBar.BackgroundTransparency = W.Transparency
+                end
+                if AlphaGrip then
+                    AlphaGrip.Position = UDim2.new(0.5, 0, 1 - W.Transparency, 0)
+                    AlphaGrip.BackgroundColor3 = cur
+                end
+                P1Color.BackgroundColor3 = cur
+                P1Color.BackgroundTransparency = hasTransparency and W.Transparency or 0
+                Preview2.BackgroundColor3 = cur
+
+                if not suppressInput then
                     suppressInput = true
-                    HexInput.Text = "#"..C:ToHex()
-                    RInput.Text = tostring(math.floor(C.R * 255 + 0.5))
-                    GInput.Text = tostring(math.floor(C.G * 255 + 0.5))
-                    BInput.Text = tostring(math.floor(C.B * 255 + 0.5))
-                    if hasTransparency then
-                        AlphaInput.Text = tostring(math.floor((1 - D.Transparency) * 100 + 0.5))
+                    HexInput.Text = "#" .. cur:ToHex()
+                    RInput.Text = tostring(math.floor(cur.R * 255 + 0.5))
+                    GInput.Text = tostring(math.floor(cur.G * 255 + 0.5))
+                    BInput.Text = tostring(math.floor(cur.B * 255 + 0.5))
+                    if AlphaInput then
+                        AlphaInput.Text = tostring(math.floor((1 - W.Transparency) * 100 + 0.5))
                     end
                     suppressInput = false
                 end
             end
 
-            local function GetMousePos()
-                return UserInputService:GetMouseLocation()
+            -- 拖动
+            local draggingMap, draggingHue, draggingAlpha = false, false, false
+            local function GetMousePos() return UserInputService:GetMouseLocation() end
+
+            local function UpdateFromMap()
+                local p, ap, as = GetMousePos(), SatVibMap.AbsolutePosition, SatVibMap.AbsoluteSize
+                W.Sat = math.clamp((p.X - ap.X) / as.X, 0, 1)
+                W.Vib = 1 - math.clamp((p.Y - ap.Y) / as.Y, 0, 1)
+                SyncUI()
+            end
+            local function UpdateFromHue()
+                local p, ap, as = GetMousePos(), HueSlider.AbsolutePosition, HueSlider.AbsoluteSize
+                W.Hue = math.clamp((p.Y - ap.Y) / as.Y, 0, 1)
+                SyncUI()
+            end
+            local function UpdateFromAlpha()
+                local p, ap, as = GetMousePos(), AlphaSlider.AbsolutePosition, AlphaSlider.AbsoluteSize
+                W.Transparency = 1 - math.clamp((p.Y - ap.Y) / as.Y, 0, 1)
+                SyncUI()
             end
 
-            local function BindDrag(frame, updateFn)
-                local dragging = false
-                track(frame.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = true
-                        updateFn(GetMousePos())
-                    end
-                end))
-                track(frame.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = false
-                    end
-                end))
-                track(UserInputService.InputChanged:Connect(function(input)
-                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                        updateFn(GetMousePos())
-                    end
-                end))
-            end
-
-            BindDrag(SatVibMap, function(pos)
-                local ap = SatVibMap.AbsolutePosition
-                local as = SatVibMap.AbsoluteSize
-                local rx = math.clamp((pos.X - ap.X) / as.X, 0, 1)
-                local ry = math.clamp((pos.Y - ap.Y) / as.Y, 0, 1)
-                D.Sat = rx
-                D.Vib = 1 - ry
-                SyncUI(true)
+            SatVibMap.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    draggingMap = true; UpdateFromMap()
+                end
             end)
-
-            BindDrag(HueSlider, function(pos)
-                local ap = HueSlider.AbsolutePosition
-                local as = HueSlider.AbsoluteSize
-                local ry = math.clamp((pos.Y - ap.Y) / as.Y, 0, 1)
-                D.Hue = ry
-                SyncUI(true)
+            SatVibMap.InputEnded:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    draggingMap = false
+                end
             end)
-
+            HueSlider.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    draggingHue = true; UpdateFromHue()
+                end
+            end)
+            HueSlider.InputEnded:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    draggingHue = false
+                end
+            end)
             if AlphaSlider then
-                BindDrag(AlphaSlider, function(pos)
-                    local ap = AlphaSlider.AbsolutePosition
-                    local as = AlphaSlider.AbsoluteSize
-                    local ry = math.clamp((pos.Y - ap.Y) / as.Y, 0, 1)
-                    D.Transparency = 1 - ry
-                    SyncUI(true)
+                AlphaSlider.InputBegan:Connect(function(inp)
+                    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                        draggingAlpha = true; UpdateFromAlpha()
+                    end
+                end)
+                AlphaSlider.InputEnded:Connect(function(inp)
+                    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                        draggingAlpha = false
+                    end
                 end)
             end
 
-            HexInput.FocusLost:Connect(function()
-                if suppressInput then return end
-                local txt = HexInput.Text:gsub("#", "")
-                local ok, c = pcall(Color3.fromHex, txt)
-                if ok and typeof(c) == "Color3" then
-                    D.Hue, D.Sat, D.Vib = Color3.toHSV(c)
-                end
-                SyncUI(true)
-            end)
+            local conns = {}
+            table.insert(conns, UserInputService.InputChanged:Connect(function(inp)
+                if inp.UserInputType ~= Enum.UserInputType.MouseMovement and inp.UserInputType ~= Enum.UserInputType.Touch then return end
+                if draggingMap then UpdateFromMap()
+                elseif draggingHue then UpdateFromHue()
+                elseif draggingAlpha then UpdateFromAlpha() end
+            end))
 
-            local function applyRGB()
+            local function ApplyFromRGB()
                 if suppressInput then return end
                 local r = math.clamp(tonumber(RInput.Text) or 0, 0, 255)
                 local g = math.clamp(tonumber(GInput.Text) or 0, 0, 255)
                 local b = math.clamp(tonumber(BInput.Text) or 0, 0, 255)
-                D.Hue, D.Sat, D.Vib = Color3.toHSV(Color3.fromRGB(r, g, b))
-                SyncUI(true)
+                W.Hue, W.Sat, W.Vib = Color3.toHSV(Color3.fromRGB(r, g, b))
+                SyncUI()
             end
-            RInput.FocusLost:Connect(applyRGB)
-            GInput.FocusLost:Connect(applyRGB)
-            BInput.FocusLost:Connect(applyRGB)
-
+            HexInput.FocusLost:Connect(function()
+                if suppressInput then return end
+                local txt = HexInput.Text:gsub("#", "")
+                local ok, col = pcall(Color3.fromHex, txt)
+                if ok and typeof(col) == "Color3" then
+                    W.Hue, W.Sat, W.Vib = Color3.toHSV(col)
+                    SyncUI()
+                end
+            end)
+            RInput.FocusLost:Connect(ApplyFromRGB)
+            GInput.FocusLost:Connect(ApplyFromRGB)
+            BInput.FocusLost:Connect(ApplyFromRGB)
             if AlphaInput then
                 AlphaInput.FocusLost:Connect(function()
                     if suppressInput then return end
                     local a = math.clamp(tonumber(AlphaInput.Text) or 0, 0, 100)
-                    D.Transparency = 1 - a / 100
-                    SyncUI(true)
+                    W.Transparency = 1 - a / 100
+                    SyncUI()
                 end)
             end
 
-            local BtnHolder = Instance.new("Frame")
-            BtnHolder.Size = UDim2.new(1, -32, 0, 34)
-            BtnHolder.Position = UDim2.new(0, 16, 1, -46)
-            BtnHolder.BackgroundTransparency = 1
-            BtnHolder.Parent = Panel
+            local function CloseDialog()
+                dialogOpen = false
+                for _, cn in ipairs(conns) do pcall(function() cn:Disconnect() end) end
+                Tween(Main, {BackgroundTransparency = 1}, 0.1)
+                Tween(MainContainer, {ImageTransparency = 1}, 0.12)
+                Tween(Overlay, {BackgroundTransparency = 1}, 0.12)
+                task.delay(0.16, function() Overlay:Destroy() end)
+            end
 
-            local BtnLayout = Instance.new("UIListLayout")
-            BtnLayout.FillDirection = Enum.FillDirection.Horizontal
-            BtnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-            BtnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-            BtnLayout.Padding = UDim.new(0, 8)
-            BtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            BtnLayout.Parent = BtnHolder
-
-            local function MakeButton(text, isPrimary, onClick, order)
+            local function MakeDialogButton(text, isPrimary, onClick)
                 local btn = Instance.new("TextButton")
-                btn.Size = UDim2.fromOffset(90, 34)
-                btn.BackgroundColor3 = isPrimary and CurrentTheme.Accent or Color3.fromRGB(30, 32, 40)
+                btn.Size = UDim2.fromOffset(100, 40)
+                btn.BackgroundColor3 = isPrimary and CurrentTheme.Accent or Color3.fromRGB(26, 28, 36)
                 btn.BorderSizePixel = 0
                 btn.Text = text
                 btn.Font = Enum.Font.GothamBold
-                btn.TextSize = 13
+                btn.TextSize = 14
                 btn.TextColor3 = Color3.new(1, 1, 1)
                 btn.AutoButtonColor = false
-                btn.LayoutOrder = order or 1
-                btn.Parent = BtnHolder
-                Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+                btn.Parent = ButtonsFrame
+                Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
                 if not isPrimary then
                     local s = Instance.new("UIStroke")
                     s.Color = CurrentTheme.Stroke
@@ -1955,87 +1997,77 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     s.Parent = btn
                     table.insert(ThemeListeners, function() s.Color = CurrentTheme.Stroke end)
                 end
-                btn.MouseEnter:Connect(function() Tween(btn, {BackgroundTransparency = 0.15}, 0.12) end)
-                btn.MouseLeave:Connect(function() Tween(btn, {BackgroundTransparency = 0}, 0.12) end)
                 btn.MouseButton1Click:Connect(onClick)
                 return btn
             end
 
-            local function CloseDialog()
-                dialogOpen = false
-                for _, conn in ipairs(connections) do
-                    pcall(function() conn:Disconnect() end)
-                end
-                Overlay:Destroy()
-            end
-
-            MakeButton("取消", false, function()
+            MakeDialogButton("Cancel", false, function() CloseDialog() end)
+            MakeDialogButton("Apply", true, function()
+                local cur = CurColor()
+                state.Default = cur
+                state.Hue, state.Sat, state.Vib = W.Hue, W.Sat, W.Vib
+                if hasTransparency then state.Transparency = W.Transparency end
+                PreviewBtn.BackgroundColor3 = cur
+                PreviewBtn.BackgroundTransparency = hasTransparency and state.Transparency or 0
+                ConfigObjects[controlId].Value = { Color = cur, Transparency = state.Transparency }
+                pcall(callback, cur, state.Transparency)
                 CloseDialog()
-            end, 1)
+            end)
 
-            MakeButton("应用", true, function()
-                local c = GetColor()
-                state.Color = c
-                state.Transparency = D.Transparency
-                state.Hue, state.Sat, state.Vib = D.Hue, D.Sat, D.Vib
-                UpdatePreview()
-                if ConfigObjects[controlId] then
-                    ConfigObjects[controlId].Value = { Color = c, Transparency = D.Transparency }
-                end
-                pcall(callback, c, D.Transparency)
-                CloseDialog()
-            end, 2)
-
-            Tween(Overlay, {BackgroundTransparency = 0.35}, 0.18)
-            Tween(Panel, {BackgroundTransparency = 0.05}, 0.18)
-            Tween(panelStroke, {Transparency = 0.4}, 0.18)
-
-            SyncUI(true)
+            Tween(Overlay, {BackgroundTransparency = 0.35}, 0.15)
+            MainContainer.Visible = true
+            Tween(MainContainer, {ImageTransparency = 0}, 0.15)
+            task.spawn(function()
+                task.wait(0.05)
+                Main.Visible = true
+            end)
         end
 
-        PreviewBtn.MouseButton1Click:Connect(OpenPicker)
+        PreviewBtn.MouseButton1Click:Connect(OpenColorpicker)
 
         ConfigObjects[controlId] = {
             Type = "Colorpicker",
-            Value = { Color = state.Color, Transparency = state.Transparency },
+            Value = { Color = state.Default, Transparency = state.Transparency },
             Set = function(val)
                 if locked then return end
                 if type(val) == "table" and val.Color then
-                    state.Color = val.Color
+                    state.Default = val.Color
+                    state.Hue, state.Sat, state.Vib = Color3.toHSV(val.Color)
                     if val.Transparency ~= nil then state.Transparency = val.Transparency end
                 elseif typeof(val) == "Color3" then
-                    state.Color = val
+                    state.Default = val
+                    state.Hue, state.Sat, state.Vib = Color3.toHSV(val)
                 end
-                state.Hue, state.Sat, state.Vib = Color3.toHSV(state.Color)
-                UpdatePreview()
-                pcall(callback, state.Color, state.Transparency)
-            end
+                PreviewBtn.BackgroundColor3 = state.Default
+                PreviewBtn.BackgroundTransparency = hasTransparency and state.Transparency or 0
+                pcall(callback, state.Default, state.Transparency)
+            end,
         }
 
         local self = {}
-        function self.GetValue() return state.Color, state.Transparency end
-        function self.SetValue(c, t)
+        function self.GetValue() return state.Default, state.Transparency end
+        function self.SetValue(col, tr)
             if locked then return end
-            if c then
-                state.Color = c
-                state.Hue, state.Sat, state.Vib = Color3.toHSV(c)
+            if col then
+                state.Default = col
+                state.Hue, state.Sat, state.Vib = Color3.toHSV(col)
             end
-            if t ~= nil then state.Transparency = t end
-            UpdatePreview()
-            ConfigObjects[controlId].Value = { Color = state.Color, Transparency = state.Transparency }
-            pcall(callback, state.Color, state.Transparency)
+            if tr ~= nil then state.Transparency = tr end
+            PreviewBtn.BackgroundColor3 = state.Default
+            PreviewBtn.BackgroundTransparency = hasTransparency and state.Transparency or 0
+            ConfigObjects[controlId].Value = { Color = state.Default, Transparency = state.Transparency }
+            pcall(callback, state.Default, state.Transparency)
         end
         function self.SetVisible(v) Tile.Visible = v end
-        function self.Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
-        function self.Unlock() updateLock(false) end
+        function self.Lock(title)
+            locked = true; lockFrame.Visible = true; PreviewBtn.Active = false
+            if title then lockLabel.Text = title; lockedTitle = title end
+        end
+        function self.Unlock() locked = false; lockFrame.Visible = false; PreviewBtn.Active = true end
         function self.IsLocked() return locked end
         function self.Destroy() Tile:Destroy(); ConfigObjects[controlId] = nil end
-
         return self
     end
-    -- ============================================================
-    --  Colorpicker End
-    -- ============================================================
 
     child.ProgressBar = function(_, config)
         config = safeConfig(config)
