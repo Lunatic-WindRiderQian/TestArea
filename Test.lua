@@ -1830,18 +1830,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AlphaInput = CreateNewInput("A", math.floor((1 - W.Transparency) * 100 + 0.5))
             end
 
-            -- ===== 按钮区 @ (0,264) 高 40 =====
+            -- ===== 按钮区 @ (0,264) 高 40（取消左、确认右） =====
             local ButtonsFrame = Instance.new("Frame")
             ButtonsFrame.Size = UDim2.new(0, hasTransparency and 240 or 210, 0, 40)
             ButtonsFrame.Position = UDim2.fromOffset(0, 254 + TextPadding)
             ButtonsFrame.BackgroundTransparency = 1
             ButtonsFrame.Parent = Main
-            local btnsList = Instance.new("UIListLayout")
-            btnsList.FillDirection = Enum.FillDirection.Horizontal
-            btnsList.HorizontalAlignment = Enum.HorizontalAlignment.Right
-            btnsList.SortOrder = Enum.SortOrder.LayoutOrder
-            btnsList.Padding = UDim.new(0, 6)
-            btnsList.Parent = ButtonsFrame
 
             -- ===== 同步 UI =====
             local suppressInput = false
@@ -1979,7 +1973,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 task.delay(0.16, function() Overlay:Destroy() end)
             end
 
-            local function MakeDialogButton(text, isPrimary, onClick, order)
+            local function MakeDialogButton(text, isPrimary, onClick, side)
                 local btn = Instance.new("TextButton")
                 btn.Size = UDim2.fromOffset(100, 40)
                 btn.BackgroundColor3 = isPrimary and CurrentTheme.Accent or Color3.fromRGB(26, 28, 36)
@@ -1989,7 +1983,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 btn.TextSize = 14
                 btn.TextColor3 = Color3.new(1, 1, 1)
                 btn.AutoButtonColor = false
-                btn.LayoutOrder = order or 1
+                if side == "right" then
+                    btn.AnchorPoint = Vector2.new(1, 0)
+                    btn.Position = UDim2.new(1, 0, 0, 0)
+                else
+                    btn.AnchorPoint = Vector2.new(0, 0)
+                    btn.Position = UDim2.new(0, 0, 0, 0)
+                end
                 btn.Parent = ButtonsFrame
                 Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
                 if not isPrimary then
@@ -2008,7 +2008,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             MakeDialogButton("取消", false, function()
                 CloseDialog()
-            end, 1)
+            end, "left")
 
             MakeDialogButton("确认", true, function()
                 local cur = CurColor()
@@ -2020,7 +2020,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 ConfigObjects[controlId].Value = { Color = cur, Transparency = state.Transparency }
                 pcall(callback, cur, state.Transparency)
                 CloseDialog()
-            end, 2)
+            end, "right")
 
             -- ===== 打开动画 =====
             Tween(Overlay, {BackgroundTransparency = 0.35}, 0.15)
