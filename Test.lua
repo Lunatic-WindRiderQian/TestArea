@@ -1486,9 +1486,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return h
     end
 
-    -- ============================================================
-    -- Colorpicker —— 完整搬运自 windUI 原版布局
-    -- ============================================================
     child.Colorpicker = function(_, config)
         config = safeConfig(config)
         local cpTitle       = config.Name or config.Title or "Colorpicker"
@@ -1502,7 +1499,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local state = { Default = defaultColor, Transparency = transCfg, Hue = 0, Sat = 0, Vib = 0 }
         state.Hue, state.Sat, state.Vib = Color3.toHSV(defaultColor)
 
-        -- 行内预览按钮
+        -- ========== 行内预览按钮 ==========
         local Tile = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, cpTitle, 15, 12, UDim2.new(1, -70, 0, 18), 13)
 
@@ -1529,7 +1526,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         lockFrame.Visible = locked
         PreviewBtn.Active = not locked
 
-        -- 打开色盘对话框（windUI 原始尺寸/位置）
         local dialogOpen = false
         local function OpenColorpicker()
             if locked or dialogOpen then return end
@@ -1542,6 +1538,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local function CurColor() return Color3.fromHSV(W.Hue, W.Sat, W.Vib) end
             local TextPadding = 10
 
+            -- 遮罩
             local Overlay = Instance.new("Frame")
             Overlay.Size = UDim2.fromScale(1, 1)
             Overlay.BackgroundColor3 = Color3.new(0, 0, 0)
@@ -1566,6 +1563,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             MainContainer.Parent = Overlay
             Instance.new("UICorner", MainContainer).CornerRadius = UDim.new(0, 26)
 
+            -- 内层 Main
             local Main = Instance.new("Frame")
             Main.Size = UDim2.new(0, 280, 0, 0)
             Main.AutomaticSize = Enum.AutomaticSize.Y
@@ -1574,7 +1572,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Main.ZIndex = 502
             Main.Parent = MainContainer
 
-            -- 标题
+            -- ===== 标题 =====
             local Title = Instance.new("TextLabel")
             Title.Text = cpTitle
             Title.TextSize = 20
@@ -1593,7 +1591,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             titlePad.PaddingBottom = UDim.new(0, TextPadding / 2)
             titlePad.Parent = Title
 
-            -- 饱和/明度色域图 160x158 @ (0, 50)
+            -- ===== 饱和/明度色域图 160x158 @ (0,50) =====
             local SatVibMap = Instance.new("ImageLabel")
             SatVibMap.Size = UDim2.fromOffset(160, 158)
             SatVibMap.Position = UDim2.fromOffset(0, 40 + TextPadding)
@@ -1620,7 +1618,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             dotStroke.Parent = SatVibDot
             table.insert(ThemeListeners, function() dotStroke.Color = CurrentTheme.Text end)
 
-            -- 色相条 6x192 @ (180, 50)
+            -- ===== 色相条 6x192 @ (180,50) =====
             local HueSlider = Instance.new("Frame")
             HueSlider.Size = UDim2.fromOffset(6, 192)
             HueSlider.Position = UDim2.fromOffset(180, 40 + TextPadding)
@@ -1657,7 +1655,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             hueGripStroke.Parent = HueGrip
             table.insert(ThemeListeners, function() hueGripStroke.Color = CurrentTheme.Text end)
 
-            -- 透明度条 6x192 @ (210, 50) — 按需
+            -- ===== 透明度条 6x192 @ (210,50) =====
             local AlphaSlider, AlphaGrip, AlphaBar
             if hasTransparency then
                 AlphaSlider = Instance.new("Frame")
@@ -1716,7 +1714,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 table.insert(ThemeListeners, function() alphaGripStroke.Color = CurrentTheme.Text end)
             end
 
-            -- 颜色预览 1（棋盘格 + 透明叠层）75x24 @ (0, 218)
+            -- ===== 颜色预览 1（棋盘格底 + 透明色叠层）75x24 @ (0,218) =====
             local Preview1 = Instance.new("Frame")
             Preview1.Size = UDim2.fromOffset(75, 24)
             Preview1.Position = UDim2.fromOffset(0, 208 + TextPadding)
@@ -1745,7 +1743,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             P1Color.Parent = Preview1
             Instance.new("UICorner", P1Color).CornerRadius = UDim.new(0, 8)
 
-            -- 颜色预览 2（纯色）75x24 @ (85, 218)
+            -- ===== 颜色预览 2（纯色）75x24 @ (85,218) =====
             local Preview2 = Instance.new("Frame")
             Preview2.Size = UDim2.fromOffset(75, 24)
             Preview2.Position = UDim2.fromOffset(85, 208 + TextPadding)
@@ -1755,7 +1753,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Preview2.Parent = Main
             Instance.new("UICorner", Preview2).CornerRadius = UDim.new(0, 8)
 
-            -- 输入框组 @ (240 or 210, 50) 宽 150，UIScale 0.85
+            -- ===== 输入框组 @ (240 or 210, 50)，宽 150 =====
             local InputsFrame = Instance.new("Frame")
             InputsFrame.AutomaticSize = Enum.AutomaticSize.XY
             InputsFrame.Size = UDim2.new(0, 0, 0, 0)
@@ -1832,7 +1830,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AlphaInput = CreateNewInput("A", math.floor((1 - W.Transparency) * 100 + 0.5))
             end
 
-            -- 按钮区 @ (0, 264) 高 40
+            -- ===== 按钮区 @ (0,264) 高 40 =====
             local ButtonsFrame = Instance.new("Frame")
             ButtonsFrame.Size = UDim2.new(0, hasTransparency and 240 or 210, 0, 40)
             ButtonsFrame.Position = UDim2.fromOffset(0, 254 + TextPadding)
@@ -1841,9 +1839,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local btnsList = Instance.new("UIListLayout")
             btnsList.FillDirection = Enum.FillDirection.Horizontal
             btnsList.HorizontalAlignment = Enum.HorizontalAlignment.Right
+            btnsList.SortOrder = Enum.SortOrder.LayoutOrder
             btnsList.Padding = UDim.new(0, 6)
             btnsList.Parent = ButtonsFrame
 
+            -- ===== 同步 UI =====
             local suppressInput = false
             local function SyncUI()
                 local cur = CurColor()
@@ -1877,68 +1877,70 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
 
-            -- 拖动
-            local draggingMap, draggingHue, draggingAlpha = false, false, false
-            local function GetMousePos() return UserInputService:GetMouseLocation() end
+            -- ===== 拖动交互（严格按 windUI 原版：Mouse + IsMouseButtonPressed + RenderStepped 轮询） =====
+            local Mouse = Players.LocalPlayer:GetMouse()
 
             local function UpdateFromMap()
-                local p, ap, as = GetMousePos(), SatVibMap.AbsolutePosition, SatVibMap.AbsoluteSize
-                W.Sat = math.clamp((p.X - ap.X) / as.X, 0, 1)
-                W.Vib = 1 - math.clamp((p.Y - ap.Y) / as.Y, 0, 1)
+                local apX = SatVibMap.AbsolutePosition.X
+                local apW = apX + SatVibMap.AbsoluteSize.X
+                local mx  = math.clamp(Mouse.X, apX, apW)
+
+                local apY = SatVibMap.AbsolutePosition.Y
+                local apH = apY + SatVibMap.AbsoluteSize.Y
+                local my  = math.clamp(Mouse.Y, apY, apH)
+
+                W.Sat = (mx - apX) / (apW - apX)
+                W.Vib = 1 - ((my - apY) / (apH - apY))
                 SyncUI()
             end
+
             local function UpdateFromHue()
-                local p, ap, as = GetMousePos(), HueSlider.AbsolutePosition, HueSlider.AbsoluteSize
-                W.Hue = math.clamp((p.Y - ap.Y) / as.Y, 0, 1)
+                local apY = HueSlider.AbsolutePosition.Y
+                local apH = apY + HueSlider.AbsoluteSize.Y
+                local my  = math.clamp(Mouse.Y, apY, apH)
+                W.Hue = (my - apY) / (apH - apY)
                 SyncUI()
             end
+
             local function UpdateFromAlpha()
-                local p, ap, as = GetMousePos(), AlphaSlider.AbsolutePosition, AlphaSlider.AbsoluteSize
-                W.Transparency = 1 - math.clamp((p.Y - ap.Y) / as.Y, 0, 1)
+                if not AlphaSlider then return end
+                local apY = AlphaSlider.AbsolutePosition.Y
+                local apH = apY + AlphaSlider.AbsoluteSize.Y
+                local my  = math.clamp(Mouse.Y, apY, apH)
+                W.Transparency = 1 - ((my - apY) / (apH - apY))
                 SyncUI()
             end
 
             SatVibMap.InputBegan:Connect(function(inp)
                 if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                    draggingMap = true; UpdateFromMap()
+                    while UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                        UpdateFromMap()
+                        RunService.RenderStepped:Wait()
+                    end
                 end
             end)
-            SatVibMap.InputEnded:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                    draggingMap = false
-                end
-            end)
+
             HueSlider.InputBegan:Connect(function(inp)
                 if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                    draggingHue = true; UpdateFromHue()
+                    while UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                        UpdateFromHue()
+                        RunService.RenderStepped:Wait()
+                    end
                 end
             end)
-            HueSlider.InputEnded:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                    draggingHue = false
-                end
-            end)
+
             if AlphaSlider then
                 AlphaSlider.InputBegan:Connect(function(inp)
                     if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                        draggingAlpha = true; UpdateFromAlpha()
-                    end
-                end)
-                AlphaSlider.InputEnded:Connect(function(inp)
-                    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                        draggingAlpha = false
+                        while UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                            UpdateFromAlpha()
+                            RunService.RenderStepped:Wait()
+                        end
                     end
                 end)
             end
 
-            local conns = {}
-            table.insert(conns, UserInputService.InputChanged:Connect(function(inp)
-                if inp.UserInputType ~= Enum.UserInputType.MouseMovement and inp.UserInputType ~= Enum.UserInputType.Touch then return end
-                if draggingMap then UpdateFromMap()
-                elseif draggingHue then UpdateFromHue()
-                elseif draggingAlpha then UpdateFromAlpha() end
-            end))
-
+            -- ===== 输入框事件 =====
             local function ApplyFromRGB()
                 if suppressInput then return end
                 local r = math.clamp(tonumber(RInput.Text) or 0, 0, 255)
@@ -1968,16 +1970,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
             end
 
+            -- ===== 对话框按钮（取消在左，确认在右） =====
             local function CloseDialog()
                 dialogOpen = false
-                for _, cn in ipairs(conns) do pcall(function() cn:Disconnect() end) end
                 Tween(Main, {BackgroundTransparency = 1}, 0.1)
                 Tween(MainContainer, {ImageTransparency = 1}, 0.12)
                 Tween(Overlay, {BackgroundTransparency = 1}, 0.12)
                 task.delay(0.16, function() Overlay:Destroy() end)
             end
 
-            local function MakeDialogButton(text, isPrimary, onClick)
+            local function MakeDialogButton(text, isPrimary, onClick, order)
                 local btn = Instance.new("TextButton")
                 btn.Size = UDim2.fromOffset(100, 40)
                 btn.BackgroundColor3 = isPrimary and CurrentTheme.Accent or Color3.fromRGB(26, 28, 36)
@@ -1987,6 +1989,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 btn.TextSize = 14
                 btn.TextColor3 = Color3.new(1, 1, 1)
                 btn.AutoButtonColor = false
+                btn.LayoutOrder = order or 1
                 btn.Parent = ButtonsFrame
                 Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
                 if not isPrimary then
@@ -1997,12 +2000,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     s.Parent = btn
                     table.insert(ThemeListeners, function() s.Color = CurrentTheme.Stroke end)
                 end
+                btn.MouseEnter:Connect(function() Tween(btn, {BackgroundTransparency = 0.15}, 0.12) end)
+                btn.MouseLeave:Connect(function() Tween(btn, {BackgroundTransparency = 0}, 0.12) end)
                 btn.MouseButton1Click:Connect(onClick)
                 return btn
             end
 
-            MakeDialogButton("Cancel", false, function() CloseDialog() end)
-            MakeDialogButton("Apply", true, function()
+            MakeDialogButton("取消", false, function()
+                CloseDialog()
+            end, 1)
+
+            MakeDialogButton("确认", true, function()
                 local cur = CurColor()
                 state.Default = cur
                 state.Hue, state.Sat, state.Vib = W.Hue, W.Sat, W.Vib
@@ -2012,8 +2020,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 ConfigObjects[controlId].Value = { Color = cur, Transparency = state.Transparency }
                 pcall(callback, cur, state.Transparency)
                 CloseDialog()
-            end)
+            end, 2)
 
+            -- ===== 打开动画 =====
             Tween(Overlay, {BackgroundTransparency = 0.35}, 0.15)
             MainContainer.Visible = true
             Tween(MainContainer, {ImageTransparency = 0}, 0.15)
