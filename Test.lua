@@ -419,6 +419,8 @@ local function formatIconAsset(asset, default)
     return default
 end
 
+local CHESSBOARD_IMAGE = "http://www.roblox.com/asset/?id=14204231522"
+
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
     local padding = parent:FindFirstChild("SectionPadding")
@@ -1499,20 +1501,40 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local state = { Default = defaultColor, Transparency = transCfg, Hue = 0, Sat = 0, Vib = 0 }
         state.Hue, state.Sat, state.Vib = Color3.toHSV(defaultColor)
 
-        -- ========== 行内预览按钮 ==========
+        -- ========== 行内预览按钮（棋盘格 + 颜色叠层）==========
         local Tile = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, cpTitle, 15, 12, UDim2.new(1, -70, 0, 18), 13)
 
+        local PreviewWrap = Instance.new("Frame")
+        PreviewWrap.Size = UDim2.fromOffset(40, 26)
+        PreviewWrap.Position = UDim2.new(1, -50, 0.5, -13)
+        PreviewWrap.BackgroundTransparency = 1
+        PreviewWrap.BorderSizePixel = 0
+        PreviewWrap.Parent = Tile
+        Instance.new("UICorner", PreviewWrap).CornerRadius = UDim.new(0, 6)
+
+        local PreviewChecker = Instance.new("ImageLabel")
+        PreviewChecker.Size = UDim2.fromScale(1, 1)
+        PreviewChecker.BackgroundTransparency = 1
+        PreviewChecker.Image = CHESSBOARD_IMAGE
+        PreviewChecker.ImageTransparency = 0.35
+        PreviewChecker.ScaleType = Enum.ScaleType.Tile
+        PreviewChecker.TileSize = UDim2.fromOffset(10, 10)
+        PreviewChecker.ZIndex = 1
+        PreviewChecker.Parent = PreviewWrap
+        Instance.new("UICorner", PreviewChecker).CornerRadius = UDim.new(0, 6)
+
         local PreviewBtn = Instance.new("TextButton")
-        PreviewBtn.Size = UDim2.fromOffset(40, 26)
-        PreviewBtn.Position = UDim2.new(1, -50, 0.5, -13)
+        PreviewBtn.Size = UDim2.fromScale(1, 1)
         PreviewBtn.BackgroundColor3 = state.Default
         PreviewBtn.BackgroundTransparency = hasTransparency and state.Transparency or 0
         PreviewBtn.BorderSizePixel = 0
         PreviewBtn.Text = ""
         PreviewBtn.AutoButtonColor = false
-        PreviewBtn.Parent = Tile
+        PreviewBtn.ZIndex = 2
+        PreviewBtn.Parent = PreviewWrap
         Instance.new("UICorner", PreviewBtn).CornerRadius = UDim.new(0, 6)
+
         local previewStroke = Instance.new("UIStroke")
         previewStroke.Thickness = 1.5
         previewStroke.Color = CurrentTheme.Stroke
@@ -1538,7 +1560,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local function CurColor() return Color3.fromHSV(W.Hue, W.Sat, W.Vib) end
             local TextPadding = 10
 
-            -- 遮罩
             local Overlay = Instance.new("Frame")
             Overlay.Size = UDim2.fromScale(1, 1)
             Overlay.BackgroundColor3 = Color3.new(0, 0, 0)
@@ -1547,7 +1568,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Overlay.Active = true
             Overlay.Parent = sg
 
-            -- windUI 玻璃容器
             local MainContainer = Instance.new("ImageLabel")
             MainContainer.Image = "rbxassetid://8992230677"
             MainContainer.ScaleType = Enum.ScaleType.Slice
@@ -1563,7 +1583,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             MainContainer.Parent = Overlay
             Instance.new("UICorner", MainContainer).CornerRadius = UDim.new(0, 26)
 
-            -- 内层 Main
             local Main = Instance.new("Frame")
             Main.Size = UDim2.new(0, 280, 0, 0)
             Main.AutomaticSize = Enum.AutomaticSize.Y
@@ -1572,7 +1591,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Main.ZIndex = 502
             Main.Parent = MainContainer
 
-            -- ===== 标题 =====
             local Title = Instance.new("TextLabel")
             Title.Text = cpTitle
             Title.TextSize = 20
@@ -1591,7 +1609,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             titlePad.PaddingBottom = UDim.new(0, TextPadding / 2)
             titlePad.Parent = Title
 
-            -- ===== 饱和/明度色域图 160x158 @ (0,50) =====
             local SatVibMap = Instance.new("ImageLabel")
             SatVibMap.Size = UDim2.fromOffset(160, 158)
             SatVibMap.Position = UDim2.fromOffset(0, 40 + TextPadding)
@@ -1618,7 +1635,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             dotStroke.Parent = SatVibDot
             table.insert(ThemeListeners, function() dotStroke.Color = CurrentTheme.Text end)
 
-            -- ===== 色相条 6x192 @ (180,50) =====
             local HueSlider = Instance.new("Frame")
             HueSlider.Size = UDim2.fromOffset(6, 192)
             HueSlider.Position = UDim2.fromOffset(180, 40 + TextPadding)
@@ -1655,7 +1671,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             hueGripStroke.Parent = HueGrip
             table.insert(ThemeListeners, function() hueGripStroke.Color = CurrentTheme.Text end)
 
-            -- ===== 透明度条 6x192 @ (210,50) =====
             local AlphaSlider, AlphaGrip, AlphaBar
             if hasTransparency then
                 AlphaSlider = Instance.new("Frame")
@@ -1674,10 +1689,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 local CheckerImg = Instance.new("ImageLabel")
                 CheckerImg.Size = UDim2.fromScale(1, 1)
                 CheckerImg.BackgroundTransparency = 1
-                CheckerImg.Image = "rbxassetid://14204231522"
-                CheckerImg.ImageTransparency = 0.45
+                CheckerImg.Image = CHESSBOARD_IMAGE
+                CheckerImg.ImageTransparency = 0.35
                 CheckerImg.ScaleType = Enum.ScaleType.Tile
-                CheckerImg.TileSize = UDim2.fromOffset(20, 20)
+                CheckerImg.TileSize = UDim2.fromOffset(10, 10)
                 CheckerImg.Parent = Checker
                 Instance.new("UICorner", CheckerImg).CornerRadius = UDim.new(1, 0)
 
@@ -1714,7 +1729,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 table.insert(ThemeListeners, function() alphaGripStroke.Color = CurrentTheme.Text end)
             end
 
-            -- ===== 颜色预览 1（棋盘格底 + 透明色叠层）75x24 @ (0,218) =====
             local Preview1 = Instance.new("Frame")
             Preview1.Size = UDim2.fromOffset(75, 24)
             Preview1.Position = UDim2.fromOffset(0, 208 + TextPadding)
@@ -1726,10 +1740,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local P1Checker = Instance.new("ImageLabel")
             P1Checker.Size = UDim2.fromScale(1, 1)
             P1Checker.BackgroundTransparency = 1
-            P1Checker.Image = "rbxassetid://14204231522"
-            P1Checker.ImageTransparency = 0.45
+            P1Checker.Image = CHESSBOARD_IMAGE
+            P1Checker.ImageTransparency = 0.35
             P1Checker.ScaleType = Enum.ScaleType.Tile
-            P1Checker.TileSize = UDim2.fromOffset(20, 20)
+            P1Checker.TileSize = UDim2.fromOffset(10, 10)
             P1Checker.ZIndex = 1
             P1Checker.Parent = Preview1
             Instance.new("UICorner", P1Checker).CornerRadius = UDim.new(0, 8)
@@ -1743,7 +1757,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             P1Color.Parent = Preview1
             Instance.new("UICorner", P1Color).CornerRadius = UDim.new(0, 8)
 
-            -- ===== 颜色预览 2（纯色）75x24 @ (85,218) =====
             local Preview2 = Instance.new("Frame")
             Preview2.Size = UDim2.fromOffset(75, 24)
             Preview2.Position = UDim2.fromOffset(85, 208 + TextPadding)
@@ -1753,7 +1766,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Preview2.Parent = Main
             Instance.new("UICorner", Preview2).CornerRadius = UDim.new(0, 8)
 
-            -- ===== 输入框组 @ (240 or 210, 50)，宽 150 =====
             local InputsFrame = Instance.new("Frame")
             InputsFrame.AutomaticSize = Enum.AutomaticSize.XY
             InputsFrame.Size = UDim2.new(0, 0, 0, 0)
@@ -1831,17 +1843,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
 
             -- ===== 按钮区：取消贴左（位置不变），确认右边缘与输入框右边缘对齐 =====
+            -- 输入框 UIScale = 0.85，视觉宽度 = 150 * 0.85 = 127.5
             local InputsX = hasTransparency and 240 or 210
-            local InputsW = 150
-            local InputsRightEdge = InputsX + InputsW   -- 含透明度 390，不含 360
+            local InputsVisualRight = InputsX + 150 * 0.85   -- 367.5 或 337.5
 
             local ButtonsFrame = Instance.new("Frame")
-            ButtonsFrame.Size = UDim2.new(0, InputsRightEdge, 0, 40)
+            ButtonsFrame.Size = UDim2.new(0, InputsVisualRight, 0, 40)
             ButtonsFrame.Position = UDim2.fromOffset(0, 254 + TextPadding)
             ButtonsFrame.BackgroundTransparency = 1
             ButtonsFrame.Parent = Main
 
-            -- ===== 同步 UI =====
             local suppressInput = false
             local function SyncUI()
                 local cur = CurColor()
@@ -1861,6 +1872,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 P1Color.BackgroundColor3 = cur
                 P1Color.BackgroundTransparency = hasTransparency and W.Transparency or 0
                 Preview2.BackgroundColor3 = cur
+                -- 同步行内预览（棋盘格 + 颜色）
+                PreviewBtn.BackgroundColor3 = cur
+                PreviewBtn.BackgroundTransparency = hasTransparency and W.Transparency or 0
 
                 if not suppressInput then
                     suppressInput = true
@@ -1875,7 +1889,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
 
-            -- ===== 拖动交互（严格按 windUI 原版：Mouse + IsMouseButtonPressed + RenderStepped 轮询） =====
             local Mouse = Players.LocalPlayer:GetMouse()
 
             local function UpdateFromMap()
@@ -1938,7 +1951,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
             end
 
-            -- ===== 输入框事件 =====
             local function ApplyFromRGB()
                 if suppressInput then return end
                 local r = math.clamp(tonumber(RInput.Text) or 0, 0, 255)
@@ -1968,7 +1980,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end)
             end
 
-            -- ===== 对话框按钮（取消在左，确认在右） =====
             local function CloseDialog()
                 dialogOpen = false
                 Tween(Main, {BackgroundTransparency = 1}, 0.1)
@@ -2026,7 +2037,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 CloseDialog()
             end, "right")
 
-            -- ===== 打开动画 =====
             Tween(Overlay, {BackgroundTransparency = 0.35}, 0.15)
             MainContainer.Visible = true
             Tween(MainContainer, {ImageTransparency = 0}, 0.15)
