@@ -1830,9 +1830,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AlphaInput = CreateNewInput("A", math.floor((1 - W.Transparency) * 100 + 0.5))
             end
 
-            -- ===== 按钮区 @ (0,264) 高 40（取消左、确认右） =====
+            -- ===== 按钮区：取消贴左（位置不变），确认右边缘与输入框右边缘对齐 =====
+            local InputsX = hasTransparency and 240 or 210
+            local InputsW = 150
+            local InputsRightEdge = InputsX + InputsW   -- 含透明度 390，不含 360
+
             local ButtonsFrame = Instance.new("Frame")
-            ButtonsFrame.Size = UDim2.new(0, hasTransparency and 240 or 210, 0, 40)
+            ButtonsFrame.Size = UDim2.new(0, InputsRightEdge, 0, 40)
             ButtonsFrame.Position = UDim2.fromOffset(0, 254 + TextPadding)
             ButtonsFrame.BackgroundTransparency = 1
             ButtonsFrame.Parent = Main
