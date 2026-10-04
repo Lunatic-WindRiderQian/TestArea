@@ -4743,7 +4743,7 @@ function Fenglib:CreateWindow(Config)
         local parentContainer = LeftScrollingFrame
         if Window._currentCategory then parentContainer = Window._currentCategory.content end
         local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(1, -7, 0, 30)
+        TabBtn.Size = UDim2.new(0, 140, 0, 32)
         TabBtn.BackgroundTransparency = 1
         TabBtn.BackgroundColor3 = CurrentTheme.Top
         TabBtn.Text = ""; TabBtn.Parent = parentContainer
@@ -4778,7 +4778,8 @@ function Fenglib:CreateWindow(Config)
             Instance.new("UICorner", TabIcon).CornerRadius = UDim.new(0, 8)
         end
         local TabText = Instance.new("TextLabel")
-        TabText.Size = UDim2.new(1, -40, 0, 15)
+        local textWidth = TextService:GetTextSize(name, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)).X
+        TabText.Size = UDim2.new(0, textWidth, 1, 0)
         TabText.BackgroundTransparency = 1
         TabText.Font = Enum.Font.GothamMedium
         TabText.Text = name
