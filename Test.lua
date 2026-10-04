@@ -1443,6 +1443,26 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     UpdateDivider()
     container:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateDivider)
 
+    -- 去掉上方最近控件的底边线，避免与 Divider 中间的线重复
+    task.defer(function()
+        if not container.Parent then return end
+        local myY = container.AbsolutePosition.Y
+        local prev, prevY = nil, -math.huge
+        for _, c in ipairs(parent:GetChildren()) do
+            if c:IsA("GuiObject") and c ~= container then
+                local cy = c.AbsolutePosition.Y
+                if cy < myY and cy > prevY then
+                    prevY = cy
+                    prev = c
+                end
+            end
+        end
+        if prev then
+            local line = prev:FindFirstChild("RowBottomLine")
+            if line then line.Visible = false end
+        end
+    end)
+
     local self = {}
     function self.SetVisible(state) container.Visible = state end
     function self.SetText(newText)
