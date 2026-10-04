@@ -1377,6 +1377,27 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     container.BorderSizePixel   = 0
     container.Parent            = parent
 
+    -- 隐藏上方相邻元素底部的分隔线，避免和 Divider 视觉重复
+    do
+        local siblings = parent:GetChildren()
+        for i, sib in ipairs(siblings) do
+            if sib == container then
+                if i > 1 then
+                    local prev = siblings[i - 1]
+                    for _, c in ipairs(prev:GetChildren()) do
+                        if c:IsA("Frame")
+                            and c.Size.Y.Offset == 1
+                            and c.Position.Y.Scale == 1
+                            and c.BackgroundTransparency < 1 then
+                            c.Visible = false
+                        end
+                    end
+                end
+                break
+            end
+        end
+    end
+
     local leftLine = Instance.new("Frame")
     leftLine.AnchorPoint          = Vector2.new(0, 0.5)
     leftLine.BackgroundColor3     = CurrentTheme.Stroke
@@ -1442,26 +1463,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
     UpdateDivider()
     container:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateDivider)
-
-    -- 去掉上方最近控件的底边线，避免与 Divider 中间的线重复
-    task.defer(function()
-        if not container.Parent then return end
-        local myY = container.AbsolutePosition.Y
-        local prev, prevY = nil, -math.huge
-        for _, c in ipairs(parent:GetChildren()) do
-            if c:IsA("GuiObject") and c ~= container then
-                local cy = c.AbsolutePosition.Y
-                if cy < myY and cy > prevY then
-                    prevY = cy
-                    prev = c
-                end
-            end
-        end
-        if prev then
-            local line = prev:FindFirstChild("RowBottomLine")
-            if line then line.Visible = false end
-        end
-    end)
 
     local self = {}
     function self.SetVisible(state) container.Visible = state end
