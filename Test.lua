@@ -1372,7 +1372,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local labelText = tostring(config.Text or config.Name or "")
 
     local container = Instance.new("Frame")
-    container.Size              = UDim2.new(1, 0, 0, 14)
+    container.Size              = UDim2.new(1, 0, 0, 10)
     container.BackgroundTransparency = 1
     container.BorderSizePixel   = 0
     container.Parent            = parent
@@ -1413,11 +1413,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     textLabel.BackgroundTransparency = 1.000
     textLabel.BorderSizePixel      = 0
     textLabel.Position             = UDim2.fromScale(0.5, 0.5)
-    textLabel.Size                 = UDim2.new(0, 0, 0, 14)
+    textLabel.Size                 = UDim2.new(0, 0, 0, 10)
     textLabel.Font                 = Enum.Font.GothamMedium
     textLabel.Text                 = labelText
     textLabel.TextColor3           = CurrentTheme.Text
-    textLabel.TextSize             = 11.000
+    textLabel.TextSize             = 10.000
     textLabel.TextTransparency     = 0.500
     textLabel.Parent               = container
     AddToRegistry(textLabel, "TextColor3", "Text")
@@ -1456,7 +1456,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             MaxTextWidth
         )
 
-        textLabel.Size = UDim2.new(0, TextWidth, 0, 14)
+        textLabel.Size = UDim2.new(0, TextWidth, 0, 10)
         leftLine.Size  = UDim2.new(0.5, -(TextWidth / 2) - 12, 0, 1)
         rightLine.Size = UDim2.new(0.5, -(TextWidth / 2) - 12, 0, 1)
     end
