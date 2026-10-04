@@ -4307,7 +4307,10 @@ function Fenglib:CreateWindow(Config)
     BottomClick.Text = ""; BottomClick.AutoButtonColor = false
     BottomClick.Parent = BottomFrame
 
-    local SettingsPanel = Instance.new("Frame")
+    -- ===== 设置面板：改用 ScrollingFrame 以支持内容滚动 =====
+    local MAX_SETTINGS_HEIGHT = 420
+
+    local SettingsPanel = Instance.new("ScrollingFrame")
     SettingsPanel.Size = UDim2.new(0, 220, 0, 220)
     SettingsPanel.AnchorPoint = Vector2.new(0, 1)
     SettingsPanel.Position = UDim2.new(0, 18, 1, -54)
@@ -4315,6 +4318,12 @@ function Fenglib:CreateWindow(Config)
     SettingsPanel.BackgroundTransparency = 0.035
     SettingsPanel.BorderSizePixel = 0
     SettingsPanel.ClipsDescendants = true
+    SettingsPanel.ScrollBarThickness = 0
+    SettingsPanel.ScrollBarImageColor3 = CurrentTheme.Accent
+    SettingsPanel.ScrollBarImageTransparency = 0.4
+    SettingsPanel.ScrollingDirection = Enum.ScrollingDirection.Y
+    SettingsPanel.ElasticBehavior = Enum.ElasticBehavior.Never
+    SettingsPanel.CanvasSize = UDim2.new(0, 0, 0, 0)
     SettingsPanel.Visible = false
     SettingsPanel.ZIndex = 100
     SettingsPanel.Parent = MainFrame
@@ -4386,10 +4395,12 @@ function Fenglib:CreateWindow(Config)
     })
 
     SettingsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        if SettingsPanel.Visible then
-            local h = SettingsList.AbsoluteContentSize.Y + 12
-            Tween(SettingsPanel, {Size = UDim2.new(0, 220, 0, h)}, 0.2)
-        end
+        if not SettingsPanel.Visible then return end
+        local contentH = SettingsList.AbsoluteContentSize.Y + 12
+        local targetH  = math.min(contentH, MAX_SETTINGS_HEIGHT)
+        SettingsPanel.CanvasSize = UDim2.new(0, 0, 0, contentH)
+        SettingsPanel.ScrollBarThickness = (contentH > targetH) and 4 or 0
+        Tween(SettingsPanel, {Size = UDim2.new(0, 220, 0, targetH)}, 0.2)
     end)
 
     local settingsOpen = false
@@ -4415,8 +4426,11 @@ function Fenglib:CreateWindow(Config)
         settingsOpen = true
         SettingsPanel.Visible = true
         SettingsPanel.Size = UDim2.new(0, 220, 0, 0)
-        local h = SettingsList.AbsoluteContentSize.Y + 12
-        Tween(SettingsPanel, {BackgroundTransparency = 0.035, Size = UDim2.new(0, 220, 0, h)}, 0.2)
+        local contentH = SettingsList.AbsoluteContentSize.Y + 12
+        local targetH  = math.min(contentH, MAX_SETTINGS_HEIGHT)
+        SettingsPanel.CanvasSize = UDim2.new(0, 0, 0, contentH)
+        SettingsPanel.ScrollBarThickness = (contentH > targetH) and 4 or 0
+        Tween(SettingsPanel, {BackgroundTransparency = 0.035, Size = UDim2.new(0, 220, 0, targetH)}, 0.2)
         Tween(SettingsStroke, {Transparency = 0.65}, 0.2)
         if outsideConn then outsideConn:Disconnect() end
         outsideConn = UserInputService.InputBegan:Connect(function(input)
