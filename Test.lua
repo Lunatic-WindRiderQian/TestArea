@@ -9,6 +9,15 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+local defer = (task and task.defer) or function(fn)
+    if type(fn) ~= "function" then return end
+    task.spawn(function()
+        task.wait()
+        local ok, err = pcall(fn)
+        if not ok then warn("[defer]", err) end
+    end)
+end
+
 local DepthOfFieldEffect = Instance.new("DepthOfFieldEffect")
 DepthOfFieldEffect.Name = "FengBlurDOF"
 DepthOfFieldEffect.Enabled = false
@@ -170,7 +179,7 @@ function TextGradient:AttachHook(root)
     if not root then return end
     local conn = root.DescendantAdded:Connect(function(Object)
         if Object:IsA("TextLabel") or Object:IsA("TextBox") or Object:IsA("TextButton") then
-            task.defer(function()
+            defer(function()
                 if Object.Parent then TextGradient:Add(Object) end
             end)
         end
@@ -497,7 +506,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local Tile = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, btnText, 15, 12, UDim2.new(1, -30, 0, 18), 13)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         local ClickBtn = Instance.new("TextButton")
@@ -547,7 +556,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         Dot.Parent = Switch
         Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         local ClickBtn = Instance.new("TextButton")
@@ -712,7 +721,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if typed then UpdateSlider(typed) else ValueLabel.Text = tostring(Val) end
         end)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         if Bar then Bar.Active = not locked end
@@ -871,7 +880,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         rebuildOptions(options)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Btn, lockedTitle)
         lockFrame.Visible = locked
         ClickBtn.Active = not locked
@@ -1008,7 +1017,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(KeyLabel, "TextColor3", "Text")
         TextGradient:Skip(KeyLabel)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         KeyBtn.Active = not locked
@@ -1124,7 +1133,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(InputBox, "TextColor3", "Accent")
         TextGradient:Skip(InputBox)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         InputBox.Active = not locked
@@ -1222,7 +1231,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             callback(Box.Text)
         end)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Frame, lockedTitle)
         lockFrame.Visible = locked
         Box.Active = not locked
@@ -1245,7 +1254,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local Tile = miRow(parent, 42)
         local TextLabel = miLabel(Tile, labelText, 15, 12, UDim2.new(1, -30, 0, 18), 13)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         local function updateLock(st) locked = st; lockFrame.Visible = st end
@@ -1359,40 +1368,95 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
     child.Divider = function(_, config)
         config = safeConfig(config)
-        local parent = config.Parent or contentHolder
-        local labelText = config.Name or ""
-        local hasText = (labelText ~= "")
-        local containerHeight = hasText and 24 or 12
+        local parent    = config.Parent or contentHolder
+        local labelText = tostring(config.Text or config.Name or "")
+
         local container = Instance.new("Frame")
-        container.Size = UDim2.new(1, 0, 0, containerHeight)
-        container.BackgroundTransparency = 1; container.Parent = parent
-        local line = Instance.new("Frame")
-        line.Size = UDim2.new(1, -20, 0, 1)
-        line.Position = UDim2.new(0, 10, 0.5, 0)
-        line.AnchorPoint = Vector2.new(0, 0.5)
-        line.BackgroundColor3 = CurrentTheme.Stroke
-        line.BackgroundTransparency = 0.5; line.BorderSizePixel = 0
-        line.Parent = container
-        AddToRegistry(line, "BackgroundColor3", "Stroke")
-        if hasText then
-            local label = Instance.new("TextLabel")
-            label.Size = UDim2.new(0, 0, 0, 16)
-            label.AutomaticSize = Enum.AutomaticSize.X
-            label.AnchorPoint = Vector2.new(0.5, 0.5)
-            label.Position = UDim2.new(0.5, 0, 0.5, 0)
-            label.BackgroundTransparency = 1
-            label.Font = Enum.Font.GothamMedium
-            label.Text = labelText; label.TextSize = 12
-            label.TextColor3 = CurrentTheme.Text
-            label.TextTransparency = 0.4; label.Parent = container
-            AddToRegistry(label, "TextColor3", "Text")
+        container.Size              = UDim2.new(1, 0, 0, 22)
+        container.BackgroundTransparency = 1
+        container.BorderSizePixel   = 0
+        container.Parent            = parent
+
+        local leftLine = Instance.new("Frame")
+        leftLine.AnchorPoint          = Vector2.new(0, 0.5)
+        leftLine.BackgroundColor3     = CurrentTheme.Stroke
+        leftLine.BackgroundTransparency = 0.650
+        leftLine.BorderSizePixel      = 0
+        leftLine.Position             = UDim2.new(0, 10, 0.5, 0)
+        leftLine.Size                 = UDim2.new(0.5, -20, 0, 1)
+        leftLine.Parent               = container
+        AddToRegistry(leftLine, "BackgroundColor3", "Stroke")
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.AnchorPoint          = Vector2.new(0.5, 0.5)
+        textLabel.BackgroundTransparency = 1.000
+        textLabel.BorderSizePixel      = 0
+        textLabel.Position             = UDim2.fromScale(0.5, 0.5)
+        textLabel.Size                 = UDim2.new(0, 0, 0, 16)
+        textLabel.Font                 = Enum.Font.GothamMedium
+        textLabel.Text                 = labelText
+        textLabel.TextColor3           = CurrentTheme.Text
+        textLabel.TextSize             = 11.000
+        textLabel.TextTransparency     = 0.500
+        textLabel.Parent               = container
+        AddToRegistry(textLabel, "TextColor3", "Text")
+
+        local rightLine = Instance.new("Frame")
+        rightLine.AnchorPoint          = Vector2.new(1, 0.5)
+        rightLine.BackgroundColor3     = CurrentTheme.Stroke
+        rightLine.BackgroundTransparency = 0.650
+        rightLine.BorderSizePixel      = 0
+        rightLine.Position             = UDim2.new(1, -10, 0.5, 0)
+        rightLine.Size                 = UDim2.new(0.5, -20, 0, 1)
+        rightLine.Parent               = container
+        AddToRegistry(rightLine, "BackgroundColor3", "Stroke")
+
+        local function UpdateDivider()
+            local Text = textLabel.Text
+
+            if Text == "" then
+                textLabel.Visible = false
+                leftLine.Size     = UDim2.new(1, -20, 0, 1)
+                rightLine.Visible = false
+                return
+            end
+
+            textLabel.Visible = true
+            rightLine.Visible = true
+
+            local MaxTextWidth = math.max(40, container.AbsoluteSize.X - 70)
+            local TextWidth = math.min(
+                TextService:GetTextSize(
+                    Text,
+                    textLabel.TextSize,
+                    textLabel.Font,
+                    Vector2.new(math.huge, math.huge)
+                ).X + 16,
+                MaxTextWidth
+            )
+
+            textLabel.Size = UDim2.new(0, TextWidth, 0, 16)
+            leftLine.Size  = UDim2.new(0.5, -(TextWidth / 2) - 12, 0, 1)
+            rightLine.Size = UDim2.new(0.5, -(TextWidth / 2) - 12, 0, 1)
         end
+
+        UpdateDivider()
+        container:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateDivider)
+
         local self = {}
         function self.SetVisible(state) container.Visible = state end
-        function self.UpdateText(newText)
-            local lbl = container:FindFirstChildOfClass("TextLabel")
-            if lbl then lbl.Text = newText or "" end
+        function self.SetText(newText)
+            textLabel.Text = tostring(newText or "")
+            UpdateDivider()
+            return self
         end
+        function self.GetText() return textLabel.Text end
+        function self.UpdateText(newText)
+            textLabel.Text = tostring(newText or "")
+            UpdateDivider()
+            return self
+        end
+        function self.Destroy() container:Destroy() end
         return self
     end
 
@@ -1443,7 +1507,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         check.Parent = box
         local h = { Value = default, Callback = callback, Type = "Checkbox" }
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         local ClickBtn = Instance.new("TextButton")
@@ -1501,7 +1565,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local state = { Default = defaultColor, Transparency = transCfg, Hue = 0, Sat = 0, Vib = 0 }
         state.Hue, state.Sat, state.Vib = Color3.toHSV(defaultColor)
 
-        -- ========== 行内预览按钮（棋盘格 + 颜色叠层）==========
         local Tile = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, cpTitle, 15, 12, UDim2.new(1, -70, 0, 18), 13)
 
@@ -1543,7 +1606,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         table.insert(ThemeListeners, function() previewStroke.Color = CurrentTheme.Stroke end)
 
         local locked      = config.Locked == true
-        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(Tile, lockedTitle)
         lockFrame.Visible = locked
         PreviewBtn.Active = not locked
@@ -1594,7 +1657,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local Title = Instance.new("TextLabel")
             Title.Text = cpTitle
             Title.TextSize = 20
-            Title.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.SemiBold)
+            local fontOk = pcall(function()
+                Title.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.SemiBold)
+            end)
+            if not fontOk then Title.Font = Enum.Font.GothamBold end
             Title.TextXAlignment = Enum.TextXAlignment.Left
             Title.Size = UDim2.new(1, 0, 0, 0)
             Title.AutomaticSize = Enum.AutomaticSize.Y
@@ -1842,10 +1908,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 AlphaInput = CreateNewInput("A", math.floor((1 - W.Transparency) * 100 + 0.5))
             end
 
-            -- ===== 按钮区：取消贴左（位置不变），确认右边缘与输入框右边缘对齐 =====
-            -- 输入框 UIScale = 0.85，视觉宽度 = 150 * 0.85 = 127.5
             local InputsX = hasTransparency and 240 or 210
-            local InputsVisualRight = InputsX + 150 * 0.85   -- 367.5 或 337.5
+            local InputsVisualRight = InputsX + 150 * 0.85
 
             local ButtonsFrame = Instance.new("Frame")
             ButtonsFrame.Size = UDim2.new(0, InputsVisualRight, 0, 40)
@@ -1872,7 +1936,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 P1Color.BackgroundColor3 = cur
                 P1Color.BackgroundTransparency = hasTransparency and W.Transparency or 0
                 Preview2.BackgroundColor3 = cur
-                -- 同步行内预览（棋盘格 + 颜色）
                 PreviewBtn.BackgroundColor3 = cur
                 PreviewBtn.BackgroundTransparency = hasTransparency and W.Transparency or 0
 
@@ -2149,7 +2212,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(fill, "BackgroundColor3", "Accent")
         local h = { Value = math.clamp(default, min, max), Min = min, Max = max, Type = "ProgressBar", Frame = wrap }
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(wrap, lockedTitle)
         lockFrame.Visible = locked
         local function updateLock(st) locked = st; lockFrame.Visible = st end
@@ -2436,20 +2499,25 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
         end
         wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
-        task.defer(recalcAspect)
+        defer(recalcAspect)
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0,radius); corner.Parent = wrap
         local resolved = resolveMedia(src)
         local hasVideo = (resolved ~= "")
         local vid = nil
         if hasVideo then
-            vid = Instance.new("VideoFrame")
-            vid.Size = UDim2.fromScale(1,1)
-            vid.BackgroundTransparency = 1
-            vid.Looped = looped; vid.Volume = vol
-            vid.ZIndex = 1; vid.Video = resolved; vid.Parent = wrap
-            local vidCorner = Instance.new("UICorner")
-            vidCorner.CornerRadius = UDim.new(0,radius); vidCorner.Parent = vid
+            local vfOk, vf = pcall(Instance.new, "VideoFrame")
+            if vfOk and vf then
+                vid = vf
+                vid.Size = UDim2.fromScale(1,1)
+                vid.BackgroundTransparency = 1
+                vid.Looped = looped; vid.Volume = vol
+                vid.ZIndex = 1; vid.Video = resolved; vid.Parent = wrap
+                local vidCorner = Instance.new("UICorner")
+                vidCorner.CornerRadius = UDim.new(0,radius); vidCorner.Parent = vid
+            else
+                hasVideo = false
+            end
         end
         local placeholder = Instance.new("Frame")
         placeholder.Size = UDim2.fromScale(1,1)
@@ -2487,7 +2555,20 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             function mod:SetAspectRatio(r) end
             return mod
         end
-        local overlay = Instance.new("CanvasGroup")
+        local cgOk, overlay = pcall(Instance.new, "CanvasGroup")
+        if not cgOk or not overlay then
+            if vid then vid:Destroy() vid = nil end
+            placeholder.Visible = true
+            local mod = {Frame=wrap, Type="Video", VideoFrame=nil}
+            function mod:Destroy() wrap:Destroy() end
+            function mod:SetVideo(s) end
+            function mod:SetVolume(v) end
+            function mod:Play() end
+            function mod:Pause() end
+            function mod:Stop() end
+            function mod:SetAspectRatio(r) end
+            return mod
+        end
         overlay.Size = UDim2.new(1,0,0,54)
         overlay.Position = UDim2.new(0,0,1,0)
         overlay.AnchorPoint = Vector2.new(0,1)
@@ -3092,7 +3173,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(contentLabel, "TextColor3", "SubText")
         TextGradient:Skip(contentLabel)
         local locked = config.Locked == true
-        local lockedTitle = config.LockedTitle or "已锁定"
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local lockFrame, lockLabel = createLockOverlay(frame, lockedTitle)
         lockFrame.Visible = locked
         local function updateLock(st) locked = st; lockFrame.Visible = st end
@@ -3153,7 +3234,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if w > 0 then wrap.Size = UDim2.new(1,-16,0,math.floor(w/ratioNum)) end
         end
         wrap:GetPropertyChangedSignal("AbsoluteSize"):Connect(recalcAspect)
-        task.defer(recalcAspect)
+        defer(recalcAspect)
         local bg = Instance.new("ImageLabel")
         bg.Size = UDim2.fromScale(1,1)
         bg.BackgroundTransparency = 0.1
@@ -3193,7 +3274,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             local ext = math.max(size.X, size.Y, size.Z)
             camera.CFrame = CFrame.new(mpos + Vector3.new(0, ext/2, ext*2), mpos)
         end
-        if focused then task.defer(focusCamera) end
+        if focused then defer(focusCamera) end
         vp.MouseEnter:Connect(function()
             if interactive and ScrollFrameRef then ScrollFrameRef.ScrollingEnabled = false end
         end)
@@ -3664,7 +3745,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if not collapsedState then updateHeight(false) end
         end)
         if collapsedState then contentHolder.Visible = false end
-        task.defer(function() updateHeight(true) end)
+        defer(function() updateHeight(true) end)
 
         local function setCollapsed(state, instant)
             if not collapsible then return end
@@ -3970,7 +4051,9 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.Name = "FengYu-Bento"
     ScreenGui.Parent = CoreGui
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    ScreenGui.ScreenInsets = Enum.ScreenInsets.None
+    pcall(function()
+        ScreenGui.ScreenInsets = Enum.ScreenInsets.None
+    end)
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
     TextGradient:AttachHook(ScreenGui)
@@ -3996,7 +4079,7 @@ function Fenglib:CreateWindow(Config)
     HolderPadding.Parent = NotificationHolder
 
     local FINAL_WIDTH = 500
-    local FINAL_HEIGHT = 320
+    local FINAL_HEIGHT = 299
 
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
@@ -4201,10 +4284,13 @@ function Fenglib:CreateWindow(Config)
     UserSettingButton.Position = UDim2.new(1, -7, 0.5, 0)
     UserSettingButton.AnchorPoint = Vector2.new(1, 0.5)
     UserSettingButton.BackgroundTransparency = 1
-    UserSettingButton.FontFace = Font.new(
-        "rbxasset://LuaPackages/Packages/_Index/BuilderIcons/BuilderIcons/BuilderIcons.json",
-        Enum.FontWeight.Regular, Enum.FontStyle.Normal
-    )
+    local ffOk = pcall(function()
+        UserSettingButton.FontFace = Font.new(
+            "rbxasset://LuaPackages/Packages/_Index/BuilderIcons/BuilderIcons/BuilderIcons.json",
+            Enum.FontWeight.Regular, Enum.FontStyle.Normal
+        )
+    end)
+    if not ffOk then UserSettingButton.Font = Enum.Font.GothamBold end
     UserSettingButton.Text = "chevron-large-right"
     UserSettingButton.TextSize = 20
     UserSettingButton.TextColor3 = CurrentTheme.Text
@@ -4789,14 +4875,15 @@ function Fenglib:CreateWindow(Config)
         if not PageContent then return TabBuilder end
 
         local Player       = LocalPlayer
-        local ExecutorName = "Roblox Studio"
+        local ExecutorName = "Unknown"
         local Region       = "未知"
         local TimeFunction = RunService:IsRunning() and time or os.clock
         local StartedAt    = TimeFunction()
 
         pcall(function()
             if identifyexecutor then
-                ExecutorName = tostring(select(1, identifyexecutor()))
+                local ok, name = pcall(identifyexecutor)
+                if ok and name then ExecutorName = tostring(name) end
             end
         end)
         pcall(function()
@@ -4885,7 +4972,7 @@ function Fenglib:CreateWindow(Config)
             BaseSize = BaseSize or Label.TextSize
             MinSize = MinSize or 8
             Label.TextSize = BaseSize
-            task.defer(function()
+            defer(function()
                 if not Label or not Label.Parent then return end
                 local W = math.max(1, Label.AbsoluteSize.X)
                 local H = math.max(1, Label.AbsoluteSize.Y)
@@ -5244,13 +5331,17 @@ function Fenglib:CreateWindow(Config)
             end
             FriendCache.Cooldown = 30
             task.spawn(function()
+                local done = false
+                task.delay(8, function() done = true end)
                 local OnlineFriends, TotalFriends, InServer = 0, 0, 0
                 pcall(function()
                     OnlineFriends = #Player:GetFriendsOnline()
                 end)
+                if done then return end
                 pcall(function()
                     local Pages = Players:GetFriendsAsync(Player.UserId)
                     while true do
+                        if done then return end
                         for _, Data in ipairs(Pages:GetCurrentPage()) do
                             TotalFriends = TotalFriends + 1
                             if Players:FindFirstChild(Data.Username) then
@@ -5261,6 +5352,8 @@ function Fenglib:CreateWindow(Config)
                         Pages:AdvanceToNextPageAsync()
                     end
                 end)
+                if done then return end
+                done = true
                 FriendCache.All      = tostring(TotalFriends) .. " 个好友"
                 FriendCache.Online   = tostring(OnlineFriends) .. " 个好友"
                 FriendCache.Offline  = tostring(math.max(TotalFriends - OnlineFriends, 0)) .. " 个好友"
