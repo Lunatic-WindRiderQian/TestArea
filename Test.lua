@@ -1372,27 +1372,28 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local labelText = tostring(config.Text or config.Name or "")
 
     local container = Instance.new("Frame")
-    container.Size              = UDim2.new(1, 0, 0, 42)   -- 与 Button 等高
+    container.Size              = UDim2.new(1, 0, 0, 42)
     container.BackgroundTransparency = 1
     container.BorderSizePixel   = 0
     container.Parent            = parent
 
-    -- 线条和文字改为贴底对齐（跟 Button 的底部线同一位置：y=41）
+    -- 线条：贴底（y=41，和 Button 底边线同一位置）
     local leftLine = Instance.new("Frame")
     leftLine.AnchorPoint          = Vector2.new(0, 0.5)
     leftLine.BackgroundColor3     = CurrentTheme.Stroke
     leftLine.BackgroundTransparency = 0.650
     leftLine.BorderSizePixel      = 0
-    leftLine.Position             = UDim2.new(0, 10, 0, 41)   -- 改这里
+    leftLine.Position             = UDim2.new(0, 10, 0, 41)
     leftLine.Size                 = UDim2.new(0.5, -20, 0, 1)
     leftLine.Parent               = container
     AddToRegistry(leftLine, "BackgroundColor3", "Stroke")
 
+    -- 文字：底部对齐，紧贴在线的上方
     local textLabel = Instance.new("TextLabel")
-    textLabel.AnchorPoint          = Vector2.new(0.5, 0.5)
+    textLabel.AnchorPoint          = Vector2.new(0.5, 1)
     textLabel.BackgroundTransparency = 1.000
     textLabel.BorderSizePixel      = 0
-    textLabel.Position             = UDim2.new(0.5, 0, 0, 21)  -- 文字仍在中间
+    textLabel.Position             = UDim2.new(0.5, 0, 0, 40)
     textLabel.Size                 = UDim2.new(0, 0, 0, 16)
     textLabel.Font                 = Enum.Font.GothamMedium
     textLabel.Text                 = labelText
@@ -1402,17 +1403,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     textLabel.Parent               = container
     AddToRegistry(textLabel, "TextColor3", "Text")
 
+    -- 右侧线：贴底
     local rightLine = Instance.new("Frame")
     rightLine.AnchorPoint          = Vector2.new(1, 0.5)
     rightLine.BackgroundColor3     = CurrentTheme.Stroke
     rightLine.BackgroundTransparency = 0.650
     rightLine.BorderSizePixel      = 0
-    rightLine.Position             = UDim2.new(1, -10, 0, 41)  -- 改这里
+    rightLine.Position             = UDim2.new(1, -10, 0, 41)
     rightLine.Size                 = UDim2.new(0.5, -20, 0, 1)
     rightLine.Parent               = container
     AddToRegistry(rightLine, "BackgroundColor3", "Stroke")
 
-    -- 后面 UpdateDivider 里 leftLine/rightLine 的 AnchorPoint 也同步改
     local function UpdateDivider()
         local Text = textLabel.Text
         if Text == "" then
@@ -1423,12 +1424,18 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end
         textLabel.Visible = true
         rightLine.Visible = true
+
         local MaxTextWidth = math.max(40, container.AbsoluteSize.X - 70)
         local TextWidth = math.min(
-            TextService:GetTextSize(Text, textLabel.TextSize, textLabel.Font,
-                Vector2.new(math.huge, math.huge)).X + 16,
+            TextService:GetTextSize(
+                Text,
+                textLabel.TextSize,
+                textLabel.Font,
+                Vector2.new(math.huge, math.huge)
+            ).X + 16,
             MaxTextWidth
         )
+
         textLabel.Size = UDim2.new(0, TextWidth, 0, 16)
         leftLine.Size  = UDim2.new(0.5, -(TextWidth / 2) - 12, 0, 1)
         rightLine.Size = UDim2.new(0.5, -(TextWidth / 2) - 12, 0, 1)
@@ -1439,9 +1446,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
     local self = {}
     function self.SetVisible(state) container.Visible = state end
-    function self.SetText(t) textLabel.Text = tostring(t or ""); UpdateDivider(); return self end
+    function self.SetText(newText)
+        textLabel.Text = tostring(newText or "")
+        UpdateDivider()
+        return self
+    end
     function self.GetText() return textLabel.Text end
-    function self.UpdateText(t) textLabel.Text = tostring(t or ""); UpdateDivider(); return self end
+    function self.UpdateText(newText)
+        textLabel.Text = tostring(newText or "")
+        UpdateDivider()
+        return self
+    end
     function self.Destroy() container:Destroy() end
     return self
 end
