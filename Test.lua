@@ -1372,29 +1372,27 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     local labelText = tostring(config.Text or config.Name or "")
 
     local container = Instance.new("Frame")
-    container.Size              = UDim2.new(1, 0, 0, 42)
+    container.Size              = UDim2.new(1, 0, 0, 14)
     container.BackgroundTransparency = 1
     container.BorderSizePixel   = 0
     container.Parent            = parent
 
-    -- 线条：贴底（y=41，和 Button 底边线同一位置）
     local leftLine = Instance.new("Frame")
     leftLine.AnchorPoint          = Vector2.new(0, 0.5)
     leftLine.BackgroundColor3     = CurrentTheme.Stroke
     leftLine.BackgroundTransparency = 0.650
     leftLine.BorderSizePixel      = 0
-    leftLine.Position             = UDim2.new(0, 10, 0, 41)
+    leftLine.Position             = UDim2.new(0, 10, 0.5, 0)
     leftLine.Size                 = UDim2.new(0.5, -20, 0, 1)
     leftLine.Parent               = container
     AddToRegistry(leftLine, "BackgroundColor3", "Stroke")
 
-    -- 文字：底部对齐，紧贴在线的上方
     local textLabel = Instance.new("TextLabel")
-    textLabel.AnchorPoint          = Vector2.new(0.5, 1)
+    textLabel.AnchorPoint          = Vector2.new(0.5, 0.5)
     textLabel.BackgroundTransparency = 1.000
     textLabel.BorderSizePixel      = 0
-    textLabel.Position             = UDim2.new(0.5, 0, 0, 40)
-    textLabel.Size                 = UDim2.new(0, 0, 0, 16)
+    textLabel.Position             = UDim2.fromScale(0.5, 0.5)
+    textLabel.Size                 = UDim2.new(0, 0, 0, 14)
     textLabel.Font                 = Enum.Font.GothamMedium
     textLabel.Text                 = labelText
     textLabel.TextColor3           = CurrentTheme.Text
@@ -1403,25 +1401,26 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     textLabel.Parent               = container
     AddToRegistry(textLabel, "TextColor3", "Text")
 
-    -- 右侧线：贴底
     local rightLine = Instance.new("Frame")
     rightLine.AnchorPoint          = Vector2.new(1, 0.5)
     rightLine.BackgroundColor3     = CurrentTheme.Stroke
     rightLine.BackgroundTransparency = 0.650
     rightLine.BorderSizePixel      = 0
-    rightLine.Position             = UDim2.new(1, -10, 0, 41)
+    rightLine.Position             = UDim2.new(1, -10, 0.5, 0)
     rightLine.Size                 = UDim2.new(0.5, -20, 0, 1)
     rightLine.Parent               = container
     AddToRegistry(rightLine, "BackgroundColor3", "Stroke")
 
     local function UpdateDivider()
         local Text = textLabel.Text
+
         if Text == "" then
             textLabel.Visible = false
             leftLine.Size     = UDim2.new(1, -20, 0, 1)
             rightLine.Visible = false
             return
         end
+
         textLabel.Visible = true
         rightLine.Visible = true
 
@@ -1436,7 +1435,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             MaxTextWidth
         )
 
-        textLabel.Size = UDim2.new(0, TextWidth, 0, 16)
+        textLabel.Size = UDim2.new(0, TextWidth, 0, 14)
         leftLine.Size  = UDim2.new(0.5, -(TextWidth / 2) - 12, 0, 1)
         rightLine.Size = UDim2.new(0.5, -(TextWidth / 2) - 12, 0, 1)
     end
