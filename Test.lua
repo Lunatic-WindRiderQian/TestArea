@@ -81,7 +81,7 @@ local function Tween(obj, props, time)
 end
 
 -- ================================================================
--- Flags 注册表 + Pending（延迟注册的值暂存）
+-- Flags 注册表 + Pending
 -- ================================================================
 local Flags = {}
 local PendingFlagValues = {}
@@ -5901,7 +5901,9 @@ function Fenglib:CreateWindow(Config)
     Window:SetAccount({ ShowUser = (Config.ShowUser ~= false) })
 
     -- ============================================================
-    -- 配置面板（完整移植自 ModernV2，含全部 BuilderIcons 图标）
+    -- 配置面板（完整移植自 ModernV2，含 BuilderIcons 图标）
+    -- 【已修复】：ConfigMenu 挂 ScreenGui，位置动态计算，
+    --           点击判定使用 PlayerMouse 坐标系
     -- ============================================================
     do
         local mgr = Window.ConfigManager
@@ -5937,6 +5939,16 @@ function Fenglib:CreateWindow(Config)
             AddToRegistry(lbl, "TextColor3", "Text")
             TextGradient:Skip(lbl)
             return lbl
+        end
+
+        -- ★ 修复：使用 PlayerMouse，与 AbsolutePosition 同一坐标系
+        local Mouse = LocalPlayer:GetMouse()
+
+        local function isMouseOverFrame(frame)
+            if not frame or not frame.Parent then return false end
+            local ap, as = frame.AbsolutePosition, frame.AbsoluteSize
+            return Mouse.X >= ap.X and Mouse.X <= ap.X + as.X
+               and Mouse.Y >= ap.Y and Mouse.Y <= ap.Y + as.Y
         end
 
         -- 确保默认配置存在
@@ -5986,7 +5998,6 @@ function Fenglib:CreateWindow(Config)
         ConfigLineFrame.Parent = ConfigFrame
         ConfigLineFrame.BackgroundColor3 = CurrentTheme.Stroke
         ConfigLineFrame.BackgroundTransparency = 0.65
-        ConfigLineFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
         ConfigLineFrame.BorderSizePixel = 0
         ConfigLineFrame.Position = UDim2.new(0, 30, 0, 0)
         ConfigLineFrame.Size = UDim2.new(0, 1, 1, 0)
@@ -5994,10 +6005,7 @@ function Fenglib:CreateWindow(Config)
 
         ConfigName.Parent = ConfigFrame
         ConfigName.AnchorPoint = Vector2.new(0, 0.5)
-        ConfigName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         ConfigName.BackgroundTransparency = 1
-        ConfigName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        ConfigName.BorderSizePixel = 0
         ConfigName.Position = UDim2.new(0, 40, 0.5, 0)
         ConfigName.Size = UDim2.new(1, -47, 0, 15)
         ConfigName.ZIndex = 9
@@ -6017,21 +6025,22 @@ function Fenglib:CreateWindow(Config)
         ConfigBthIcon.Size = UDim2.new(0, 25, 0, 25)
         ConfigBthIcon.ZIndex = 9
 
-        -- ─── ConfigMenu（弹出面板）───────────────────────────
+        -- ─── ConfigMenu 弹出面板 ──────────────────────────────
+        -- ★ 修复：Parent 改为 ScreenGui，位置独立计算
         local ConfigMenu = Instance.new("Frame")
         local ConfigMenuCorner = Instance.new("UICorner")
         local ConfigMenuList = Instance.new("UIListLayout")
         local ConfigMenuStroke = Instance.new("UIStroke")
 
         ConfigMenu.Name = "ConfigMenu"
-        ConfigMenu.Parent = MainFrame
+        ConfigMenu.Parent = ScreenGui
         ConfigMenu.AnchorPoint = Vector2.new(0.5, 0)
         ConfigMenu.BackgroundColor3 = CurrentTheme.Main
         ConfigMenu.BackgroundTransparency = 0.035
         ConfigMenu.BorderColor3 = Color3.fromRGB(0, 0, 0)
         ConfigMenu.BorderSizePixel = 0
         ConfigMenu.ClipsDescendants = true
-        ConfigMenu.Position = UDim2.fromOffset(296, 120)
+        ConfigMenu.Position = UDim2.new(0.5, 0, 0.5, 0)
         ConfigMenu.Size = UDim2.new(0, 220, 0, 110)
         ConfigMenu.Visible = false
         ConfigMenu.ZIndex = 200
@@ -6050,7 +6059,7 @@ function Fenglib:CreateWindow(Config)
         ConfigMenuStroke.Parent = ConfigMenu
         AddToRegistry(ConfigMenuStroke, "Color", "Stroke")
 
-        -- ─── InputFrame（顶部输入框 + 加号）──────────────────
+        -- ─── InputFrame ──────────────────────────────────────
         local InputFrame = Instance.new("Frame")
         local InputFrameCorner = Instance.new("UICorner")
         local InputTitleLbl = Instance.new("TextLabel")
@@ -6093,7 +6102,6 @@ function Fenglib:CreateWindow(Config)
         InputLineFrame.AnchorPoint = Vector2.new(0.5, 1)
         InputLineFrame.BackgroundColor3 = CurrentTheme.Stroke
         InputLineFrame.BackgroundTransparency = 0.65
-        InputLineFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
         InputLineFrame.BorderSizePixel = 0
         InputLineFrame.Position = UDim2.new(0.5, 0, 1, 0)
         InputLineFrame.Size = UDim2.new(1, -20, 0, 1)
@@ -6115,7 +6123,6 @@ function Fenglib:CreateWindow(Config)
 
         TextInputFrame.Parent = InputHandler
         TextInputFrame.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
-        TextInputFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
         TextInputFrame.BorderSizePixel = 0
         TextInputFrame.ClipsDescendants = true
         TextInputFrame.Size = UDim2.new(0, 100, 0, 18)
@@ -6132,8 +6139,6 @@ function Fenglib:CreateWindow(Config)
         TextInputBox.Parent = TextInputFrame
         TextInputBox.AnchorPoint = Vector2.new(0, 0.5)
         TextInputBox.BackgroundTransparency = 1
-        TextInputBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        TextInputBox.BorderSizePixel = 0
         TextInputBox.Position = UDim2.new(0, 5, 0.5, 0)
         TextInputBox.Size = UDim2.new(1, -5, 0, 17)
         TextInputBox.ZIndex = 202
@@ -6149,10 +6154,7 @@ function Fenglib:CreateWindow(Config)
         TextGradient:Skip(TextInputBox)
 
         AddBtn.Parent = InputHandler
-        AddBtn.BackgroundColor3 = Color3.fromRGB(39, 40, 49)
         AddBtn.BackgroundTransparency = 1
-        AddBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        AddBtn.BorderSizePixel = 0
         AddBtn.Text = ""
         AddBtn.AutoButtonColor = false
         AddBtn.ClipsDescendants = true
@@ -6168,15 +6170,6 @@ function Fenglib:CreateWindow(Config)
         AddBtnIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
         AddBtnIcon.Size = UDim2.new(1, 0, 1, 0)
         AddBtnIcon.ZIndex = 203
-
-        -- ─── 工具函数 ────────────────────────────────────────
-        local function isMouseOverFrame(frame, mp)
-            if not frame then return false end
-            local ap, as = frame.AbsolutePosition, frame.AbsoluteSize
-            mp = mp or UserInputService:GetMouseLocation()
-            return mp.X >= ap.X and mp.X <= ap.X + as.X
-               and mp.Y >= ap.Y and mp.Y <= ap.Y + as.Y
-        end
 
         -- ─── 刷新配置列表 ────────────────────────────────────
         local function refreshConfigList()
@@ -6214,7 +6207,6 @@ function Fenglib:CreateWindow(Config)
                 ConfigItemFrame.Parent = ConfigMenu
                 ConfigItemFrame.BackgroundColor3 = Color3.fromRGB(21, 20, 27)
                 ConfigItemFrame.BackgroundTransparency = 0
-                ConfigItemFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 ConfigItemFrame.BorderSizePixel = 0
                 ConfigItemFrame.Size = UDim2.new(1, -10, 0, 30)
                 ConfigItemFrame.ZIndex = 153
@@ -6231,10 +6223,7 @@ function Fenglib:CreateWindow(Config)
                 AddToRegistry(ItemStroke, "Color", "Stroke")
 
                 ItemLabel.Parent = ConfigItemFrame
-                ItemLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 ItemLabel.BackgroundTransparency = 1
-                ItemLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                ItemLabel.BorderSizePixel = 0
                 ItemLabel.Position = UDim2.new(0, 11, 0, 7)
                 ItemLabel.Size = UDim2.new(1, -95, 0, 15)
                 ItemLabel.ZIndex = 154
@@ -6263,17 +6252,13 @@ function Fenglib:CreateWindow(Config)
                 ItemLayout.Padding = UDim.new(0, 5)
 
                 DeleteConfig.Parent = ItemHandler
-                DeleteConfig.BackgroundColor3 = Color3.fromRGB(39, 40, 49)
                 DeleteConfig.BackgroundTransparency = 1
-                DeleteConfig.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                DeleteConfig.BorderSizePixel = 0
                 DeleteConfig.Text = ""
                 DeleteConfig.AutoButtonColor = false
                 DeleteConfig.ClipsDescendants = true
                 DeleteConfig.Size = UDim2.new(0, 20, 0, 18)
                 DeleteConfig.ZIndex = 153
                 DeleteConfig.LayoutOrder = 1
-
                 DeleteCorner.CornerRadius = UDim.new(0, 4)
                 DeleteCorner.Parent = DeleteConfig
 
@@ -6284,17 +6269,13 @@ function Fenglib:CreateWindow(Config)
                 DeleteIcon.ZIndex = 154
 
                 OverwriteConfig.Parent = ItemHandler
-                OverwriteConfig.BackgroundColor3 = Color3.fromRGB(39, 40, 49)
                 OverwriteConfig.BackgroundTransparency = 1
-                OverwriteConfig.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                OverwriteConfig.BorderSizePixel = 0
                 OverwriteConfig.Text = ""
                 OverwriteConfig.AutoButtonColor = false
                 OverwriteConfig.ClipsDescendants = true
                 OverwriteConfig.Size = UDim2.new(0, 20, 0, 18)
                 OverwriteConfig.ZIndex = 153
                 OverwriteConfig.LayoutOrder = 2
-
                 OverwriteCorner.CornerRadius = UDim.new(0, 4)
                 OverwriteCorner.Parent = OverwriteConfig
 
@@ -6305,17 +6286,13 @@ function Fenglib:CreateWindow(Config)
                 OverwriteIcon.ZIndex = 154
 
                 LoadConfig.Parent = ItemHandler
-                LoadConfig.BackgroundColor3 = Color3.fromRGB(39, 40, 49)
                 LoadConfig.BackgroundTransparency = 1
-                LoadConfig.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                LoadConfig.BorderSizePixel = 0
                 LoadConfig.Text = ""
                 LoadConfig.AutoButtonColor = false
                 LoadConfig.ClipsDescendants = true
                 LoadConfig.Size = UDim2.new(0, 20, 0, 18)
                 LoadConfig.ZIndex = 153
                 LoadConfig.LayoutOrder = 3
-
                 LoadCorner.CornerRadius = UDim.new(0, 4)
                 LoadCorner.Parent = LoadConfig
 
@@ -6325,7 +6302,6 @@ function Fenglib:CreateWindow(Config)
                 LoadIcon.Size = UDim2.new(0, 16, 0, 16)
                 LoadIcon.ZIndex = 154
 
-                -- 交互
                 DeleteConfig.MouseEnter:Connect(function()
                     Tween(DeleteIcon, {TextTransparency = 0.2, TextColor3 = Color3.fromRGB(223, 125, 125)}, 0.15)
                 end)
@@ -6395,9 +6371,18 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        -- 打开/关闭
+        -- ─── 打开/关闭逻辑 ─────────────────────────────────────
         local configOpen = false
         local outsideConn = nil
+
+        -- ★ 修复：动态计算位置，让菜单出现在 ConfigFrame 正下方
+        local function updateConfigMenuPosition()
+            if not ConfigFrame.Parent then return end
+            ConfigMenu.Position = UDim2.fromOffset(
+                ConfigFrame.AbsolutePosition.X + ConfigFrame.AbsoluteSize.X / 2,
+                ConfigFrame.AbsolutePosition.Y + ConfigFrame.AbsoluteSize.Y + 6
+            )
+        end
 
         local function closeConfigMenu()
             if not configOpen then return end
@@ -6414,8 +6399,9 @@ function Fenglib:CreateWindow(Config)
         local function openConfigMenu()
             if configOpen then return end
             configOpen = true
-            ConfigMenu.Visible = true
             refreshConfigList()
+            updateConfigMenuPosition()
+            ConfigMenu.Visible = true
             Tween(ConfigMenu, {BackgroundTransparency = 0.035}, 0.15)
             Tween(ConfigMenuStroke, {Transparency = 0.65}, 0.15)
             Tween(ConfigBthIcon, {Rotation = 180}, 0.2)
@@ -6426,9 +6412,9 @@ function Fenglib:CreateWindow(Config)
                    and input.UserInputType ~= Enum.UserInputType.Touch then
                     return
                 end
-                local mp = UserInputService:GetMouseLocation()
-                if not isMouseOverFrame(ConfigMenu, mp)
-                   and not isMouseOverFrame(ConfigFrame, mp) then
+                -- ★ 修复：用 Mouse.X/Y 判定，避免 GuiInset 偏移
+                if not isMouseOverFrame(ConfigMenu)
+                   and not isMouseOverFrame(ConfigFrame) then
                     closeConfigMenu()
                 end
             end)
@@ -6444,6 +6430,11 @@ function Fenglib:CreateWindow(Config)
         ConfigClickBtn.ZIndex = 10
         ConfigClickBtn.MouseButton1Click:Connect(function()
             if configOpen then closeConfigMenu() else openConfigMenu() end
+        end)
+
+        -- ★ 修复：MainFrame 拖动时同步菜单位置
+        MainFrame:GetPropertyChangedSignal("Position"):Connect(function()
+            if configOpen then updateConfigMenuPosition() end
         end)
 
         refreshConfigList()
