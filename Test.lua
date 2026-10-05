@@ -80,235 +80,40 @@ local function Tween(obj, props, time)
     TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
 
--- ================================================================
--- Flags 注册表 + Pending
--- ================================================================
-local Flags = {}
-local PendingFlagValues = {}
-
-local function RegisterFlag(flag, object)
-    if not flag or not object then return object end
-    flag = tostring(flag)
-    Flags[flag] = object
-
-    if PendingFlagValues[flag] ~= nil and object.SetValue then
-        local pending = PendingFlagValues[flag]
-        PendingFlagValues[flag] = nil
-        task.spawn(function()
-            pcall(function() object:SetValue(pending) end)
-        end)
+-- ═══════════════════════════════════════════════════════════════════
+-- 补丁 A：Color3 安全序列化 + 稳定 ConfigId
+-- ═══════════════════════════════════════════════════════════════════
+local function SerializeValue(v)
+    if typeof(v) == "Color3" then
+        return { __t = "Color3", hex = v:ToHex() }
+    elseif type(v) == "table" then
+        local o = {}
+        for k, val in pairs(v) do o[k] = SerializeValue(val) end
+        return o
     end
-
-    return object
+    return v
 end
 
--- ================================================================
--- 加密 + Base64
--- ================================================================
-local Encryption = {}
-function Encryption.new(data)
-    local bytes, seed = {}, ((#data + 3782) % 111) + 1
-    string.gsub(data, '.', function(dt) table.insert(bytes, tostring(dt:byte() + seed)) end)
-    local s = table.concat(bytes, '?')
-    table.clear(bytes)
-    return "{" .. tostring(seed + 72667) .. "}?" .. s
-end
-function Encryption.reverse(data)
-    local main = string.split(data, '?')
-    local seed = tonumber((main[1]:gsub('{',''):gsub('}','')))
-    if not seed then return data end
-    local real, ks = seed - 72667, {}
-    for i, v in next, main do
-        if i > 1 then table.insert(ks, string.char((tonumber(v) or 0) - real)) end
-    end
-    local out = table.concat(ks); table.clear(ks); return out
-end
-
-local B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-local function Base64Encode(data)
-    return ((data:gsub('.', function(x)
-        local r, b = '', x:byte()
-        for i = 8, 1, -1 do r = r .. (b % 2^i - b % 2^(i-1) > 0 and '1' or '0') end
-        return r
-    end) .. '0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
-        if #x < 6 then return '' end
-        local c = 0
-        for i = 1, 6 do c = c + (x:sub(i,i) == '1' and 2^(6-i) or 0) end
-        return B64:sub(c+1, c+1)
-    end) .. ({'', '==', '='})[#data % 3 + 1])
-end
-local function Base64Decode(data)
-    data = string.gsub(data, '[^' .. B64 .. '=]', '')
-    return (data:gsub('.', function(x)
-        if x == '=' then return '' end
-        local r, f = '', (B64:find(x) - 1)
-        for i = 6, 1, -1 do r = r .. (f % 2^i - f % 2^(i-1) > 0 and '1' or '0') end
-        return r
-    end):gsub('%d%d%d?%d%d%d?%d%d?', function(x)
-        if #x ~= 8 then return '' end
-        local c = 0
-        for i = 1, 8 do c = c + (x:sub(i,i) == '1' and 2^(8-i) or 0) end
-        return string.char(c)
-    end))
-end
-
--- ================================================================
--- ConfigManager
--- ================================================================
-local ConfigManager = {}
-ConfigManager.__index = ConfigManager
-
-function ConfigManager.new(opts)
-    opts = opts or {}
-    local self = setmetatable({}, ConfigManager)
-    self.Folder           = opts.Folder or "FengConfigs"
-    self.Selected         = opts.Default or "Default"
-    self.Encrypted        = opts.Encrypted == true
-                            or string.lower(tostring(opts.Format or "")) == "encoded"
-    self.AutoSave         = opts.AutoSave ~= false
-    self.AutoLoad         = opts.AutoLoad ~= false
-    self.Overwrite        = opts.Overwrite ~= false
-    self.AutoSaveInterval = opts.AutoSaveInterval or 5.75
-    self.SaveWindowState  = opts.SaveWindowState == true
-    return self
-end
-
-local function _getObjValue(obj)
-    if obj.GetValue then
-        local ok, v = pcall(function() return obj:GetValue() end)
-        if ok then return v end
-    end
-    if obj.GetText then
-        local ok, v = pcall(function() return obj:GetText() end)
-        if ok then return v end
-    end
-    return nil
-end
-
-local function _setObjValue(obj, value)
-    if obj.SetValue then
-        pcall(function() obj:SetValue(value) end)
-    end
-end
-
-function ConfigManager:GetData(performance)
-    local entries, cd = {}, 0
-    for flag, obj in next, Flags do
-        local value = _getObjValue(obj)
-        if value ~= nil then
-            if typeof(value) == "Color3" then
-                table.insert(entries, { Idx = flag, Value = value:ToHex() })
-            else
-                table.insert(entries, { Idx = flag, Value = value })
-            end
+local function DeserializeValue(v)
+    if type(v) == "table" then
+        if v.__t == "Color3" and type(v.hex) == "string" then
+            local ok, c = pcall(Color3.fromHex, v.hex)
+            return ok and c or Color3.new(1, 1, 1)
         end
-        if performance and cd % 35 == 1 then task.wait() end
-        cd += 1
+        local o = {}
+        for k, val in pairs(v) do o[k] = DeserializeValue(val) end
+        return o
     end
-    local json = HttpService:JSONEncode(entries)
-    if self.Encrypted then return Base64Encode(Encryption.new(json)) end
-    return json
+    return v
 end
 
-function ConfigManager:DecodeData(data)
-    local ok, decoded = pcall(function() return HttpService:JSONDecode(data) end)
-    if ok and type(decoded) == "table" then return decoded end
-    ok, decoded = pcall(function()
-        return HttpService:JSONDecode(Encryption.reverse(Base64Decode(data)))
-    end)
-    if ok and type(decoded) == "table" then return decoded end
-    return {}
+local ConfigIdCounter = 0
+local function NewConfigId(prefix, name)
+    ConfigIdCounter = ConfigIdCounter + 1
+    return tostring(prefix) .. "::" .. tostring(name or "") .. "::" .. tostring(ConfigIdCounter)
 end
+-- ═══════════════════════════════════════════════════════════════════
 
-function ConfigManager:LoadData(data)
-    local coded = self:DecodeData(data)
-    for _, entry in next, coded do
-        if entry.Idx then
-            if Flags[entry.Idx] and Flags[entry.Idx].SetValue then
-                task.spawn(function()
-                    _setObjValue(Flags[entry.Idx], entry.Value)
-                end)
-            else
-                PendingFlagValues[entry.Idx] = entry.Value
-            end
-        end
-    end
-end
-
-function ConfigManager:WriteConfig(name, overwrite)
-    name = tostring(name or self.Selected or "Default"):sub(1, 24)
-    if not name:byte() or name:find('/', 1, true) or name:find('\\', 1, true) then
-        return false
-    end
-    if not isfolder(self.Folder) then makefolder(self.Folder) end
-    local path = self.Folder .. "/" .. name
-    local exists = isfile(path)
-    if overwrite == nil then overwrite = self.Overwrite end
-    if exists and not overwrite then return false end
-    writefile(path, self:GetData())
-    self.Selected = name
-    return true
-end
-
-function ConfigManager:LoadConfig(name)
-    name = tostring(name or self.Selected or "Default")
-    local path = self.Folder .. "/" .. name
-    if not isfile(path) then return false end
-    self:LoadData(readfile(path))
-    self.Selected = name
-    return true
-end
-
-function ConfigManager:DeleteConfig(name)
-    if name == "Default" then return false end
-    local path = self.Folder .. "/" .. name
-    if isfile(path) then delfile(path); return true end
-    return false
-end
-
-function ConfigManager:ListConfigs()
-    if not isfolder(self.Folder) then makefolder(self.Folder) end
-    local out = {}
-    for _, v in next, listfiles(self.Folder) do
-        local n = v:sub(#self.Folder + 2)
-        if n ~= "_window_state.json" then table.insert(out, n) end
-    end
-    return out
-end
-
-function ConfigManager:RewriteSelectedAsJson()
-    local wasEncrypted = self.Encrypted
-    self.Encrypted = false
-    local saved = self:WriteConfig(self.Selected or "Default", true)
-    self.Encrypted = wasEncrypted
-    return saved
-end
-
-function ConfigManager:StartAuto()
-    if self.AutoLoad then
-        task.delay(1, function()
-            local path = self.Folder .. "/" .. (self.Selected or "Default")
-            if isfile(path) then
-                self:LoadData(readfile(path))
-            end
-        end)
-    end
-    if self.AutoSave then
-        task.spawn(function()
-            while true do
-                task.wait(self.AutoSaveInterval)
-                local path = self.Folder .. "/" .. (self.Selected or "Default")
-                if isfile(path) then
-                    writefile(path, self:GetData(true))
-                end
-            end
-        end)
-    end
-end
-
--- ================================================================
--- Fenglib 主体
--- ================================================================
 local TextGradient = {
     Enabled = true, Time = 0, Accumulator = 0,
     Labels = {}, Objects = {}, Hooks = {}, Skipped = {},
@@ -427,18 +232,6 @@ RunService.RenderStepped:Connect(function(dt) TextGradient:Animate(dt) end)
 
 local Fenglib = {}
 Fenglib.TextGradient = TextGradient
-Fenglib.Flags = Flags
-Fenglib.PendingFlagValues = PendingFlagValues
-Fenglib.ConfigManager = ConfigManager
-Fenglib.Encryption = Encryption
-
-function Fenglib:RegisterFlag(flag, object)
-    return RegisterFlag(flag, object)
-end
-
-function Fenglib:CreateConfigManager(opts)
-    return ConfigManager.new(opts)
-end
 
 function Fenglib:SetTheme(name)
     if Themes[name] then
@@ -448,6 +241,62 @@ function Fenglib:SetTheme(name)
         TextGradient:RefreshAll()
     end
 end
+
+-- ═══════════════════════════════════════════════════════════════════
+-- 补丁 B：重写 SaveConfig / LoadConfig
+-- ═══════════════════════════════════════════════════════════════════
+function Fenglib:SaveConfig(name, folder)
+    name   = tostring(name or "config")
+    folder = tostring(folder or "FenglibConfigs")
+    local ok, err = pcall(function()
+        if not isfolder(folder) then makefolder(folder) end
+        local data = {}
+        for id, obj in pairs(ConfigObjects) do
+            if obj then
+                local v
+                if type(obj.Get) == "function" then
+                    local ok2, got = pcall(obj.Get)
+                    if ok2 then v = got end
+                else
+                    v = obj.Value
+                end
+                if v ~= nil then
+                    data[id] = SerializeValue(v)
+                end
+            end
+        end
+        local encoded = HttpService:JSONEncode(data)
+        writefile(folder.."/"..name..".json", encoded)
+    end)
+    if not ok then warn("SaveConfig error:", err) end
+    return ok
+end
+
+function Fenglib:LoadConfig(path)
+    if type(path) ~= "string" then return false end
+    if not pcall(isfile, path) then return false end
+    if not isfile(path) then return false end
+
+    local ok, raw = pcall(readfile, path)
+    if not ok or not raw then return false end
+
+    local ok2, decoded = pcall(function()
+        return HttpService:JSONDecode(raw)
+    end)
+    if not ok2 or type(decoded) ~= "table" then return false end
+
+    Fenglib._loading = true
+    for id, rawVal in pairs(decoded) do
+        local obj = ConfigObjects[id]
+        if obj and type(obj.Set) == "function" then
+            local value = DeserializeValue(rawVal)
+            pcall(function() obj.Set(value) end)
+        end
+    end
+    Fenglib._loading = false
+    return true
+end
+-- ═══════════════════════════════════════════════════════════════════
 
 local MediaManager = {Folder = "FengMediaCache"}
 function MediaManager:SetFolder(f) self.Folder = f end
@@ -649,7 +498,6 @@ end
 
 local CHESSBOARD_IMAGE = "http://www.roblox.com/asset/?id=14204231522"
 
-
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
     local padding = parent:FindFirstChild("SectionPadding")
@@ -674,6 +522,26 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         line.Parent = row
         AddToRegistry(line, "BackgroundColor3", "Stroke")
         return row
+    end
+
+    local function miIcon(parentFrame, asset, size, x, y)
+        size = size or 18
+        local icon = Instance.new("ImageLabel")
+        icon.Size = UDim2.new(0, size, 0, size)
+        icon.Position = UDim2.new(0, x or 15, 0, y or 12)
+        icon.BackgroundTransparency = 1; icon.BorderSizePixel = 0
+        icon.ImageColor3 = CurrentTheme.Text
+        icon.ImageTransparency = 0.25
+        icon.ScaleType = Enum.ScaleType.Fit
+        if type(asset) == "number" then icon.Image = "rbxassetid://"..tostring(asset)
+        elseif type(asset) == "string" and asset ~= "" then
+            if tonumber(asset) then icon.Image = "rbxassetid://"..asset
+            elseif asset:match("^rbxassetid://") or asset:match("^http") or asset:match("^rbxasset://") then icon.Image = asset
+            else icon.Image = "rbxassetid://"..asset end
+        end
+        icon.Parent = parentFrame
+        AddToRegistry(icon, "ImageColor3", "Text")
+        return icon
     end
 
     local function miLabel(parentFrame, text, x, y, w, size)
@@ -734,7 +602,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local toggleText = config.Name or ""
         local Enabled = config.Value or false
         local callback = config.Callback or function() end
-        local controlId = toggleText.."_"..tostring(#Registry)
+        local controlId = NewConfigId("Toggle", toggleText)  -- 补丁 C
         local parent = config.Parent or contentHolder
         local Tile = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, toggleText, 15, 12, UDim2.new(1, -75, 0, 18), 13)
@@ -777,7 +645,19 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Tween(Dot, {Position = UDim2.new(0, 1, 0.5, -8)}, 0.18)
             end
         end
-        ConfigObjects[controlId] = { Type = "Toggle", Value = Enabled, Set = function(v) if not locked then ApplyUI(v); callback(v) end end }
+        -- 补丁 D-1
+        ConfigObjects[controlId] = {
+            Type = "Toggle",
+            Value = Enabled,
+            Get = function() return Enabled end,
+            Set = function(v)
+                if locked then return end
+                v = v == true
+                ApplyUI(v)
+                ConfigObjects[controlId].Value = v
+                callback(v)
+            end,
+        }
         ClickBtn.MouseEnter:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end end)
         ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function() if locked then return end; ApplyUI(not Enabled); ConfigObjects[controlId].Value = Enabled; callback(Enabled) end)
@@ -788,7 +668,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function self.Unlock() updateLock(false) end
         function self.IsLocked() return locked end
         function self.SetVisible(v) Tile.Visible = v end
-        if config.Flag then Fenglib:RegisterFlag(config.Flag, self) end
         return self
     end
 
@@ -804,7 +683,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         min = tonumber(min); max = tonumber(max)
         local Rounding = config.Rounding or 0
         local Val = tonumber(default) or (min or 0)
-        local controlId = sliderText.."_"..tostring(#Registry)
+        local controlId = NewConfigId("Slider", sliderText)  -- 补丁 C
         local parent = config.Parent or contentHolder
         local Tile = miRow(parent, 42)
         local rowH = 22
@@ -933,7 +812,17 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if Bar then Bar.Active = not state end
             ValueLabel.Active = not state
         end
-        ConfigObjects[controlId] = { Type = "Slider", Value = Val, Set = function(v) if not locked then UpdateSlider(tonumber(v) or Val) end end }
+        -- 补丁 D-2
+        ConfigObjects[controlId] = {
+            Type = "Slider",
+            Value = Val,
+            Get = function() return Val end,
+            Set = function(v)
+                if locked then return end
+                local n = tonumber(v)
+                if n then UpdateSlider(n) end
+            end,
+        }
         table.insert(ThemeListeners, function()
             if Fill then Fill.BackgroundColor3 = CurrentTheme.Accent end
             if Track then Track.BackgroundColor3 = CurrentTheme.Stroke end
@@ -947,7 +836,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function self.Unlock() updateLock(false) end
         function self.IsLocked() return locked end
         function self.SetVisible(v) Tile.Visible = v end
-        if config.Flag then Fenglib:RegisterFlag(config.Flag, self) end
         return self
     end
 
@@ -958,7 +846,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local selectedValue = config.Value
         local multi = config.Multi == true
         local callback = config.Callback or function() end
-        local controlId = dropText.."_"..tostring(#Registry)
+        local controlId = NewConfigId("Dropdown", dropText)  -- 补丁 C
         local parent = config.Parent or contentHolder
         local selected = multi and {} or nil
         local function initSelected()
@@ -1127,14 +1015,31 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
         end)
+        -- 补丁 D-3
         ConfigObjects[controlId] = {
-            Type = "Dropdown", Value = multi and selected or selected,
+            Type = "Dropdown",
+            Value = multi and selected or selected,
+            Get = function()
+                if multi then
+                    local copy = {}
+                    for _, v in ipairs(selected) do copy[v] = true end
+                    return copy
+                end
+                return selected
+            end,
             Set = function(val)
                 if locked then return end
                 if multi then
                     if type(val) == "table" then
+                        -- 兼容 {opt = true} 结构 和 ipairs 数组
                         selected = {}
-                        for _, v in ipairs(val) do if table.find(options, v) then table.insert(selected, v) end end
+                        for k, v in pairs(val) do
+                            if v == true and type(k) == "string" then
+                                if table.find(options, k) then table.insert(selected, k) end
+                            elseif v ~= true and v ~= false then
+                                if table.find(options, v) then table.insert(selected, v) end
+                            end
+                        end
                     else selected = {} end
                 else
                     if val and table.find(options, val) then selected = val else selected = options[1] or "" end
@@ -1145,6 +1050,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     d.checkMark.ImageTransparency = d.selected and 0 or 1
                 end
                 updateLabel()
+                ConfigObjects[controlId].Value = multi and selected or selected
                 callback(selected)
             end,
             Refresh = function(newOptions)
@@ -1164,7 +1070,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function self.Unlock() updateLock(false) end
         function self.IsLocked() return locked end
         table.insert(WindowCleanup or {}, function() safeDisconnect(globalClickConn) end)
-        if config.Flag then Fenglib:RegisterFlag(config.Flag, self) end
         return self
     end
 
@@ -1174,7 +1079,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local defaultKey = config.Default or Enum.KeyCode.M
         local mode = config.Mode or "Toggle"
         local callback = config.Callback or function() end
-        local controlId = keyText.."_"..tostring(#Registry)
+        local controlId = NewConfigId("Keybind", keyText)  -- 补丁 C
         local parent = config.Parent or contentHolder
         local state = { Key = defaultKey.Name, Mode = mode, Toggled = false, IsWaiting = false }
         local Tile = miRow(parent, 42)
@@ -1225,8 +1130,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         lockFrame.Visible = locked
         KeyBtn.Active = not locked
         local function updateLock(st) locked = st; lockFrame.Visible = st; KeyBtn.Active = not st end
+        -- 补丁 D-4
         ConfigObjects[controlId] = {
-            Type = "Keybind", Value = { Key = state.Key, Mode = state.Mode },
+            Type = "Keybind",
+            Value = { Key = state.Key, Mode = state.Mode },
+            Get = function() return { Key = state.Key, Mode = state.Mode } end,
             Set = function(val)
                 if locked then return end
                 if type(val) == "table" then
@@ -1291,7 +1199,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function self.Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
         function self.Unlock() updateLock(false) end
         function self.IsLocked() return locked end
-        if config.Flag then Fenglib:RegisterFlag(config.Flag, self) end
         return self
     end
 
@@ -1307,7 +1214,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local maxLength = options.MaxLength or options.CharacterLimit
         local acceptedChars = options.AcceptedCharacters
         local onChanged = options.OnChanged
-        local controlId = inputText.."_"..tostring(#Registry)
+        local controlId = NewConfigId("Input", inputText)  -- 补丁 C
         local parent = config.Parent or contentHolder
         local Tile = miRow(parent, 42)
         local NameLbl = miLabel(Tile, inputText, 15, 12, UDim2.new(0.6, 0, 0, 18), 13)
@@ -1378,8 +1285,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
         local function updateLock(st) locked = st; lockFrame.Visible = st; InputBox.Active = not st end
+        -- 补丁 D-5
         ConfigObjects[controlId] = {
-            Type = "Input", Value = InputBox.Text,
+            Type = "Input",
+            Value = InputBox.Text,
+            Get = function() return InputBox.Text end,
             Set = function(val)
                 if locked then return end
                 local filtered = filterText(tostring(val))
@@ -1391,14 +1301,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local self = {}
         function self.UpdateText(newText) if not locked then local f = filterText(tostring(newText)); InputBox.Text = f; ConfigObjects[controlId].Value = f end end
         function self.GetText() return InputBox.Text end
-        function self.GetValue() return InputBox.Text end
-        function self.SetValue(val) self.UpdateText(val) end
         function self.SetVisible(state) Tile.Visible = state end
         function self.UpdatePlaceholder(p) InputBox.PlaceholderText = p end
+        function self.SetValue(val) self.UpdateText(val) end
         function self.Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
         function self.Unlock() updateLock(false) end
         function self.IsLocked() return locked end
-        if config.Flag then Fenglib:RegisterFlag(config.Flag, self) end
         return self
     end
 
@@ -1407,7 +1315,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local boxText = config.Name or ""
         local placeholder = config.Placeholder or ""
         local callback = config.Callback or function() end
-        local controlId = boxText.."_"..tostring(#Registry)
+        local controlId = NewConfigId("Textbox", boxText)  -- 补丁 C
         local parent = config.Parent or contentHolder
         local Frame = Instance.new("Frame")
         Frame.Size = UDim2.new(1, 0, 0, 70)
@@ -1442,16 +1350,25 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         lockFrame.Visible = locked
         Box.Active = not locked
         local function updateLock(st) locked = st; lockFrame.Visible = st; Box.Active = not st end
-        ConfigObjects[controlId] = { Type = "Textbox", Value = "", Set = function(val) if not locked then Box.Text = val; callback(val) end end }
+        -- 补丁 D-6
+        ConfigObjects[controlId] = {
+            Type = "Textbox",
+            Value = "",
+            Get = function() return Box.Text end,
+            Set = function(val)
+                if locked then return end
+                Box.Text = tostring(val or "")
+                ConfigObjects[controlId].Value = Box.Text
+                callback(Box.Text)
+            end,
+        }
         local self = {}
         function self.SetValue(v) if not locked then ConfigObjects[controlId].Set(v) end end
         function self.GetValue() return Box.Text end
-        function self.GetText() return Box.Text end
         function self.SetVisible(state) Frame.Visible = state end
         function self.Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
         function self.Unlock() updateLock(false) end
         function self.IsLocked() return locked end
-        if config.Flag then Fenglib:RegisterFlag(config.Flag, self) end
         return self
     end
 
@@ -1708,7 +1625,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local title = config.Name or ""
         local default = config.Default or false
         local callback = config.Callback or function() end
-        local controlId = title.."_"..tostring(#Registry)
+        local controlId = NewConfigId("Checkbox", title)  -- 补丁 C
         local parent = config.Parent or contentHolder
         local Tile = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, title, 15, 12, UDim2.new(1, -60, 0, 18), 13)
@@ -1776,8 +1693,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function() if not locked then h:SetValue(not h.Value) end end)
         h:SetValue(default)
-        ConfigObjects[controlId] = { Type = "Checkbox", Value = h.Value, Set = function(val) h:SetValue(val) end }
-        if config.Flag then Fenglib:RegisterFlag(config.Flag, h) end
+        -- 补丁 D-7
+        ConfigObjects[controlId] = {
+            Type = "Checkbox",
+            Value = h.Value,
+            Get = function() return h.Value end,
+            Set = function(val) h:SetValue(val) end,
+        }
         return h
     end
 
@@ -1788,7 +1710,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local callback      = config.Callback or function() end
         local transCfg      = config.Transparency
         local hasTransparency = (transCfg ~= nil)
-        local controlId     = cpTitle .. "_" .. tostring(#Registry)
+        local controlId     = NewConfigId("Colorpicker", cpTitle)  -- 补丁 C
         local parent        = config.Parent or contentHolder
 
         local state = { Default = defaultColor, Transparency = transCfg, Hue = 0, Sat = 0, Vib = 0 }
@@ -2340,46 +2262,37 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         PreviewBtn.MouseButton1Click:Connect(OpenColorpicker)
 
+        -- 补丁 D-8
         ConfigObjects[controlId] = {
             Type = "Colorpicker",
             Value = { Color = state.Default, Transparency = state.Transparency },
+            Get = function()
+                return { Color = state.Default, Transparency = state.Transparency }
+            end,
             Set = function(val)
                 if locked then return end
                 if type(val) == "table" and val.Color then
-                    local c = val.Color
-                    if type(c) == "string" then c = Color3.fromHex(c) end
-                    state.Default = c
-                    state.Hue, state.Sat, state.Vib = Color3.toHSV(c)
+                    state.Default = val.Color
+                    state.Hue, state.Sat, state.Vib = Color3.toHSV(val.Color)
                     if val.Transparency ~= nil then state.Transparency = val.Transparency end
                 elseif typeof(val) == "Color3" then
                     state.Default = val
                     state.Hue, state.Sat, state.Vib = Color3.toHSV(val)
-                elseif typeof(val) == "string" then
-                    local ok, c = pcall(Color3.fromHex, val)
-                    if ok then
-                        state.Default = c
-                        state.Hue, state.Sat, state.Vib = Color3.toHSV(c)
-                    end
                 end
                 PreviewBtn.BackgroundColor3 = state.Default
                 PreviewBtn.BackgroundTransparency = hasTransparency and state.Transparency or 0
+                ConfigObjects[controlId].Value = { Color = state.Default, Transparency = state.Transparency }
                 pcall(callback, state.Default, state.Transparency)
             end,
         }
 
         local self = {}
-        function self.GetValue() return state.Default end
+        function self.GetValue() return state.Default, state.Transparency end
         function self.SetValue(col, tr)
             if locked then return end
             if col then
-                if type(col) == "table" and col.Color then
-                    state.Default = col.Color
-                    state.Hue, state.Sat, state.Vib = Color3.toHSV(col.Color)
-                    if col.Transparency ~= nil then state.Transparency = col.Transparency end
-                else
-                    state.Default = col
-                    state.Hue, state.Sat, state.Vib = Color3.toHSV(col)
-                end
+                state.Default = col
+                state.Hue, state.Sat, state.Vib = Color3.toHSV(col)
             end
             if tr ~= nil then state.Transparency = tr end
             PreviewBtn.BackgroundColor3 = state.Default
@@ -2395,7 +2308,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function self.Unlock() locked = false; lockFrame.Visible = false; PreviewBtn.Active = true end
         function self.IsLocked() return locked end
         function self.Destroy() Tile:Destroy(); ConfigObjects[controlId] = nil end
-        if config.Flag then Fenglib:RegisterFlag(config.Flag, self) end
         return self
     end
 
@@ -2408,7 +2320,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local default = valueConfig.Default or min
         local showPercent = config.ShowPercent ~= false
         local callback = config.Callback or function() end
-        local controlId = name.."_"..tostring(#Registry)
+        local controlId = NewConfigId("ProgressBar", name)  -- 补丁 C
         local parent = config.Parent or contentHolder
         local containerHeight = (name ~= "" and 46 or 26)
         local wrap = Instance.new("Frame")
@@ -2476,10 +2388,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function h:Lock(title) updateLock(true); if title then lockLabel.Text = title; lockedTitle = title end end
         function h:Unlock() updateLock(false) end
         function h:IsLocked() return locked end
-        function h:GetValue() return h.Value end
         h:SetValue(default)
-        ConfigObjects[controlId] = { Type = "ProgressBar", Value = h.Value, Set = function(val) h:SetValue(val) end }
-        if config.Flag then Fenglib:RegisterFlag(config.Flag, h) end
+        -- 补丁 D-9
+        ConfigObjects[controlId] = {
+            Type = "ProgressBar",
+            Value = h.Value,
+            Get = function() return h.Value end,
+            Set = function(val) h:SetValue(val) end,
+        }
         return h
     end
 
@@ -4255,8 +4171,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     return functions
 end
 
-
 function Fenglib:CreateWindow(Config)
+    ConfigIdCounter = 0   -- 补丁 E：每次新窗口重置 ConfigId
+
     local Window = {}
     local Title = Config.Name or "FengYu"
     local Subtitle = Config.SubName
@@ -4792,6 +4709,758 @@ function Fenglib:CreateWindow(Config)
     end)
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function() ScreenGui:Destroy() end)
 
+    -- ═══════════════════════════════════════════════════════════════════
+    -- ║    CONFIG UI PANEL — Full port from ModernV2 (kys.lua)          ║
+    -- ═══════════════════════════════════════════════════════════════════
+    do
+        local BUILDER_ICONS_PATH =
+            "rbxasset://LuaPackages/Packages/_Index/BuilderIcons/BuilderIcons/BuilderIcons.json"
+
+        local ICON_FONT_REGULAR = Font.new(
+            BUILDER_ICONS_PATH,
+            Enum.FontWeight.Regular,
+            Enum.FontStyle.Normal
+        )
+        local ICON_FONT_BOLD = Font.new(
+            BUILDER_ICONS_PATH,
+            Enum.FontWeight.Bold,
+            Enum.FontStyle.Normal
+        )
+
+        local function SetIconMode(Label, IconName)
+            if not Label or not IconName or IconName == "" then
+                if Label then Label.Text = "" end
+                return
+            end
+            IconName = tostring(IconName)
+            local useBold = string.lower(string.sub(IconName, -5)) == "-bold"
+            if useBold then
+                Label.Text = IconName:sub(1, -6)
+                Label.FontFace = ICON_FONT_BOLD
+            else
+                Label.Text = IconName
+                Label.FontFace = ICON_FONT_REGULAR
+            end
+            Label:SetAttribute("FengIconFont", true)
+        end
+
+        local CONFIG_DIR          = "FenglibConfigs"
+        local DEFAULT_CONFIG_NAME = "Default"
+        local MENU_WIDTH          = 220
+        local MENU_INITIAL_HEIGHT = 110
+        local TWEEN_SPEED         = 0.175
+
+        local function EnsureConfigDir()
+            pcall(function()
+                if not isfolder(CONFIG_DIR) then
+                    makefolder(CONFIG_DIR)
+                end
+            end)
+        end
+
+        local function ConfigPath(name)
+            return CONFIG_DIR .. "/" .. tostring(name) .. ".json"
+        end
+
+        local function ConfigExists(name)
+            local ok, r = pcall(isfile, ConfigPath(name))
+            return ok and r == true
+        end
+
+        local function ListAllConfigs()
+            local out = {}
+            pcall(function()
+                if not isfolder(CONFIG_DIR) then return end
+                for _, path in ipairs(listfiles(CONFIG_DIR)) do
+                    local n = path:match("([^/\\]+)%.json$")
+                    if n and #n > 0 then
+                        table.insert(out, n)
+                    end
+                end
+            end)
+            return out
+        end
+
+        local function SerializeConfig()
+            local raw = {}
+            for id, obj in pairs(ConfigObjects) do
+                if obj then
+                    local v
+                    if type(obj.Get) == "function" then
+                        local ok2, got = pcall(obj.Get)
+                        if ok2 then v = got end
+                    else
+                        v = obj.Value
+                    end
+                    if v ~= nil then
+                        raw[id] = v
+                    end
+                end
+            end
+            local wrapped = SerializeValue(raw)
+            local ok, encoded = pcall(function()
+                return HttpService:JSONEncode(wrapped)
+            end)
+            return ok and encoded or nil
+        end
+
+        local function WriteConfig(name, overwrite)
+            name = tostring(name or DEFAULT_CONFIG_NAME)
+            name = string.sub(name, 1, 24)
+            if name == "" then return false end
+            if name:find("/", 1, true) or name:find("\\", 1, true) then
+                return false
+            end
+
+            EnsureConfigDir()
+
+            if ConfigExists(name) and not overwrite then
+                return false
+            end
+
+            local data = SerializeConfig()
+            if not data then return false end
+
+            local ok = pcall(writefile, ConfigPath(name), data)
+            return ok
+        end
+
+        local function ReadConfig(name)
+            if not ConfigExists(name) then return false end
+
+            local ok, raw = pcall(readfile, ConfigPath(name))
+            if not ok or not raw then return false end
+
+            local ok2, decoded = pcall(function()
+                return HttpService:JSONDecode(raw)
+            end)
+            if not ok2 or type(decoded) ~= "table" then
+                return false
+            end
+
+            local data = DeserializeValue(decoded)
+
+            for id, value in pairs(data) do
+                local obj = ConfigObjects[id]
+                if obj and type(obj.Set) == "function" then
+                    pcall(function() obj.Set(value) end)
+                end
+            end
+            return true
+        end
+
+        local function DeleteConfig(name)
+            if name == DEFAULT_CONFIG_NAME then return false end
+            if type(delfile) ~= "function" then return false end
+            return pcall(delfile, ConfigPath(name))
+        end
+
+        -- ① Header — ConfigFrame
+        local ConfigFrame = Instance.new("Frame")
+        ConfigFrame.Name                 = "ConfigFrame"
+        ConfigFrame.AnchorPoint          = Vector2.new(0, 0.5)
+        ConfigFrame.BackgroundColor3     = Color3.fromRGB(13, 17, 22)
+        ConfigFrame.BackgroundTransparency = 0.750
+        ConfigFrame.BorderSizePixel      = 0
+        ConfigFrame.Position             = UDim2.new(0, 10, 0.5, 0)
+        ConfigFrame.Size                 = UDim2.new(0, 115, 0, 30)
+        ConfigFrame.ZIndex               = 9
+        ConfigFrame.Parent               = RightHeader
+        AddToRegistry(ConfigFrame, "BackgroundColor3", "Top")
+
+        local cfgFrameCorner = Instance.new("UICorner")
+        cfgFrameCorner.CornerRadius = UDim.new(0, 4)
+        cfgFrameCorner.Parent       = ConfigFrame
+
+        local cfgFrameStroke = Instance.new("UIStroke")
+        cfgFrameStroke.Transparency = 0.650
+        cfgFrameStroke.Color        = CurrentTheme.Stroke
+        cfgFrameStroke.Parent       = ConfigFrame
+        table.insert(ThemeListeners, function()
+            cfgFrameStroke.Color = CurrentTheme.Stroke
+        end)
+
+        local ConfigIcon = Instance.new("TextLabel")
+        ConfigIcon.Name                 = "ConfigIcon"
+        ConfigIcon.AnchorPoint          = Vector2.new(0, 0.5)
+        ConfigIcon.BackgroundTransparency = 1
+        ConfigIcon.BorderSizePixel      = 0
+        ConfigIcon.Position             = UDim2.new(0, 2, 0.5, 0)
+        ConfigIcon.Size                 = UDim2.new(0, 25, 0, 25)
+        ConfigIcon.ZIndex               = 9
+        ConfigIcon.TextColor3           = Color3.fromRGB(223, 223, 223)
+        ConfigIcon.TextTransparency     = 0.250
+        ConfigIcon.TextSize             = 20
+        ConfigIcon.Parent               = ConfigFrame
+        SetIconMode(ConfigIcon, "pencil-square")
+
+        local ConfigLine = Instance.new("Frame")
+        ConfigLine.Name                 = "ConfigLine"
+        ConfigLine.BackgroundColor3     = CurrentTheme.Stroke
+        ConfigLine.BackgroundTransparency = 0.650
+        ConfigLine.BorderSizePixel      = 0
+        ConfigLine.Position             = UDim2.new(0, 30, 0, 0)
+        ConfigLine.Size                 = UDim2.new(0, 1, 1, 0)
+        ConfigLine.Parent               = ConfigFrame
+        AddToRegistry(ConfigLine, "BackgroundColor3", "Stroke")
+
+        local ConfigName = Instance.new("TextLabel")
+        ConfigName.Name                 = "ConfigName"
+        ConfigName.AnchorPoint          = Vector2.new(0, 0.5)
+        ConfigName.BackgroundTransparency = 1
+        ConfigName.BorderSizePixel      = 0
+        ConfigName.Position             = UDim2.new(0, 40, 0.5, 0)
+        ConfigName.Size                 = UDim2.new(1, -67, 0, 15)
+        ConfigName.ZIndex               = 9
+        ConfigName.Font                 = Enum.Font.GothamMedium
+        ConfigName.Text                 = DEFAULT_CONFIG_NAME
+        ConfigName.TextColor3           = CurrentTheme.Text
+        ConfigName.TextSize             = 12
+        ConfigName.TextTransparency     = 0.350
+        ConfigName.TextXAlignment       = Enum.TextXAlignment.Left
+        ConfigName.TextTruncate         = Enum.TextTruncate.AtEnd
+        ConfigName.Parent               = ConfigFrame
+        AddToRegistry(ConfigName, "TextColor3", "Text")
+        TextGradient:Skip(ConfigName)
+
+        local ConfigBthIcon = Instance.new("TextLabel")
+        ConfigBthIcon.Name              = "ConfigBthIcon"
+        ConfigBthIcon.AnchorPoint       = Vector2.new(1, 0.5)
+        ConfigBthIcon.BackgroundTransparency = 1
+        ConfigBthIcon.BorderSizePixel   = 0
+        ConfigBthIcon.Position          = UDim2.new(1, -2, 0.5, 0)
+        ConfigBthIcon.Size              = UDim2.new(0, 25, 0, 25)
+        ConfigBthIcon.ZIndex            = 9
+        ConfigBthIcon.TextColor3        = Color3.fromRGB(223, 223, 223)
+        ConfigBthIcon.TextTransparency  = 0.250
+        ConfigBthIcon.TextSize          = 20
+        ConfigBthIcon.Parent            = ConfigFrame
+        SetIconMode(ConfigBthIcon, "chevron-small-down")
+
+        -- ② Popup — ConfigMenu
+        local ConfigMenu = Instance.new("Frame")
+        ConfigMenu.Name                 = "ConfigMenu"
+        ConfigMenu.AnchorPoint          = Vector2.new(0.5, 0)
+        ConfigMenu.BackgroundColor3     = Color3.fromRGB(20, 22, 27)
+        ConfigMenu.BackgroundTransparency = 0.035
+        ConfigMenu.BorderSizePixel      = 0
+        ConfigMenu.ClipsDescendants     = true
+        ConfigMenu.Position             = UDim2.new(255, 255, 255, 255)
+        ConfigMenu.Size                 = UDim2.new(0, MENU_WIDTH, 0, MENU_INITIAL_HEIGHT)
+        ConfigMenu.ZIndex               = 151
+        ConfigMenu.Visible              = false
+        ConfigMenu.Parent               = ScreenGui
+
+        local cfgMenuCorner = Instance.new("UICorner")
+        cfgMenuCorner.CornerRadius = UDim.new(0, 10)
+        cfgMenuCorner.Parent       = ConfigMenu
+
+        local cfgMenuLayout = Instance.new("UIListLayout")
+        cfgMenuLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        cfgMenuLayout.SortOrder           = Enum.SortOrder.LayoutOrder
+        cfgMenuLayout.Padding             = UDim.new(0, 4)
+        cfgMenuLayout.Parent              = ConfigMenu
+
+        local cfgMenuStroke = Instance.new("UIStroke")
+        cfgMenuStroke.Transparency = 0.650
+        cfgMenuStroke.Color        = CurrentTheme.Stroke
+        cfgMenuStroke.Parent       = ConfigMenu
+        table.insert(ThemeListeners, function()
+            cfgMenuStroke.Color = CurrentTheme.Stroke
+        end)
+
+        local cfgShadowStrokes = {}
+        for _, thick in ipairs({6, 5, 4, 3}) do
+            local s = Instance.new("UIStroke")
+            s.Thickness         = thick
+            s.Color             = Color3.new(0, 0, 0)
+            s.Transparency      = 1
+            s.ApplyStrokeMode   = Enum.ApplyStrokeMode.Border
+            s.Parent            = ConfigMenu
+            table.insert(cfgShadowStrokes, s)
+        end
+
+        local function SetCfgShadow(visible)
+            for _, s in ipairs(cfgShadowStrokes) do
+                Tween(s, { Transparency = visible and 0.9 or 1 }, 0.175)
+            end
+        end
+
+        -- ③ Input row
+        local InputFrame = Instance.new("Frame")
+        InputFrame.Name                 = "InputFrame"
+        InputFrame.BackgroundTransparency = 1
+        InputFrame.BorderSizePixel      = 0
+        InputFrame.Size                 = UDim2.new(1, 0, 0, 30)
+        InputFrame.ZIndex               = 154
+        InputFrame.LayoutOrder          = 0
+        InputFrame.Parent               = ConfigMenu
+
+        local BasedLabel = Instance.new("TextLabel")
+        BasedLabel.Name                 = "BasedLabel"
+        BasedLabel.BackgroundTransparency = 1
+        BasedLabel.BorderSizePixel      = 0
+        BasedLabel.Position             = UDim2.new(0, 11, 0, 6)
+        BasedLabel.Size                 = UDim2.new(0, 60, 0, 15)
+        BasedLabel.ZIndex               = 154
+        BasedLabel.Font                 = Enum.Font.GothamMedium
+        BasedLabel.Text                 = "Config"
+        BasedLabel.TextColor3           = Color3.fromRGB(255, 255, 255)
+        BasedLabel.TextSize             = 13
+        BasedLabel.TextTransparency     = 0.200
+        BasedLabel.TextXAlignment       = Enum.TextXAlignment.Left
+        BasedLabel.Parent               = InputFrame
+        AddToRegistry(BasedLabel, "TextColor3", "Text")
+        TextGradient:Skip(BasedLabel)
+
+        local LineFrame = Instance.new("Frame")
+        LineFrame.Name                  = "LineFrame"
+        LineFrame.AnchorPoint           = Vector2.new(0.5, 1)
+        LineFrame.BackgroundColor3      = CurrentTheme.Stroke
+        LineFrame.BackgroundTransparency = 0.650
+        LineFrame.BorderSizePixel       = 0
+        LineFrame.Position              = UDim2.new(0.5, 0, 1, 0)
+        LineFrame.Size                  = UDim2.new(1, -20, 0, 1)
+        LineFrame.ZIndex                = 154
+        LineFrame.Parent                = InputFrame
+        AddToRegistry(LineFrame, "BackgroundColor3", "Stroke")
+
+        local BasedHandler = Instance.new("Frame")
+        BasedHandler.Name               = "BasedHandler"
+        BasedHandler.AnchorPoint        = Vector2.new(1, 0)
+        BasedHandler.BackgroundTransparency = 1
+        BasedHandler.BorderSizePixel    = 0
+        BasedHandler.Position           = UDim2.new(1, -11, 0, 2)
+        BasedHandler.Size               = UDim2.new(0, 130, 0, 25)
+        BasedHandler.ZIndex             = 154
+        BasedHandler.Parent             = InputFrame
+
+        local BasedLayout = Instance.new("UIListLayout")
+        BasedLayout.FillDirection        = Enum.FillDirection.Horizontal
+        BasedLayout.HorizontalAlignment  = Enum.HorizontalAlignment.Right
+        BasedLayout.SortOrder            = Enum.SortOrder.LayoutOrder
+        BasedLayout.VerticalAlignment    = Enum.VerticalAlignment.Center
+        BasedLayout.Padding              = UDim.new(0, 5)
+        BasedLayout.Parent               = BasedHandler
+
+        local TextInput = Instance.new("Frame")
+        TextInput.Name              = "TextInput"
+        TextInput.BackgroundColor3  = Color3.fromRGB(26, 28, 36)
+        TextInput.BorderSizePixel   = 0
+        TextInput.ClipsDescendants  = true
+        TextInput.Size              = UDim2.new(0, 100, 0, 18)
+        TextInput.ZIndex            = 154
+        TextInput.LayoutOrder       = 1
+        TextInput.Parent            = BasedHandler
+        Instance.new("UICorner", TextInput).CornerRadius = UDim.new(0, 4)
+
+        local TextInputStroke = Instance.new("UIStroke")
+        TextInputStroke.Transparency = 0.650
+        TextInputStroke.Color        = CurrentTheme.Stroke
+        TextInputStroke.Parent       = TextInput
+        table.insert(ThemeListeners, function()
+            TextInputStroke.Color = CurrentTheme.Stroke
+        end)
+
+        local TextBox = Instance.new("TextBox")
+        TextBox.AnchorPoint           = Vector2.new(0, 0.5)
+        TextBox.BackgroundTransparency = 1
+        TextBox.BorderSizePixel       = 0
+        TextBox.Position              = UDim2.new(0, 5, 0.5, 0)
+        TextBox.Size                  = UDim2.new(1, -5, 0, 17)
+        TextBox.ZIndex                = 154
+        TextBox.ClearTextOnFocus      = false
+        TextBox.Font                  = Enum.Font.GothamMedium
+        TextBox.PlaceholderText       = "Config Name ..."
+        TextBox.Text                  = ""
+        TextBox.TextColor3            = Color3.fromRGB(255, 255, 255)
+        TextBox.TextSize              = 11
+        TextBox.TextTransparency      = 0.350
+        TextBox.TextXAlignment        = Enum.TextXAlignment.Left
+        TextBox.Parent                = TextInput
+        TextGradient:Skip(TextBox)
+
+        local AddBtn = Instance.new("Frame")
+        AddBtn.Name               = "AddConfigBtn"
+        AddBtn.BackgroundColor3   = Color3.fromRGB(39, 40, 49)
+        AddBtn.BackgroundTransparency = 1
+        AddBtn.BorderSizePixel    = 0
+        AddBtn.ClipsDescendants   = true
+        AddBtn.Size               = UDim2.new(0, 20, 0, 18)
+        AddBtn.ZIndex             = 153
+        AddBtn.LayoutOrder        = 2
+        AddBtn.Parent             = BasedHandler
+        Instance.new("UICorner", AddBtn).CornerRadius = UDim.new(0, 4)
+
+        local AddIcon = Instance.new("TextLabel")
+        AddIcon.Name               = "AddIcon"
+        AddIcon.AnchorPoint        = Vector2.new(0.5, 0.5)
+        AddIcon.BackgroundTransparency = 1
+        AddIcon.BorderSizePixel    = 0
+        AddIcon.Position           = UDim2.new(0.5, 0, 0.5, 0)
+        AddIcon.Size               = UDim2.new(1, 0, 1, 0)
+        AddIcon.ZIndex             = 153
+        AddIcon.TextColor3         = Color3.fromRGB(223, 223, 223)
+        AddIcon.TextTransparency   = 0.350
+        AddIcon.TextSize           = 15
+        AddIcon.Parent             = AddBtn
+        SetIconMode(AddIcon, "plus-large")
+
+        local RefreshConfigList
+        local CloseMenu
+        local OpenMenu
+        local isOpen = false
+        local outsideConn
+        local selectedConfigName = DEFAULT_CONFIG_NAME
+
+        local function MakeSymbolButton(parent, iconName, hoverColor, callback, layoutOrder)
+            local btn = Instance.new("TextButton")
+            btn.BackgroundColor3    = Color3.fromRGB(39, 40, 49)
+            btn.BackgroundTransparency = 1
+            btn.BorderSizePixel     = 0
+            btn.ClipsDescendants    = true
+            btn.Size                = UDim2.new(0, 20, 0, 18)
+            btn.ZIndex              = 153
+            btn.Text                = ""
+            btn.AutoButtonColor     = false
+            btn.LayoutOrder         = layoutOrder or 1
+            btn.Parent              = parent
+            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+
+            local icon = Instance.new("TextLabel")
+            icon.AnchorPoint        = Vector2.new(0.5, 0.5)
+            icon.BackgroundTransparency = 1
+            icon.BorderSizePixel    = 0
+            icon.Position           = UDim2.new(0.5, 0, 0.5, 0)
+            icon.Size               = UDim2.new(1, 0, 1, 0)
+            icon.ZIndex             = 154
+            icon.TextColor3         = Color3.fromRGB(223, 223, 223)
+            icon.TextTransparency   = 0.400
+            icon.TextSize           = 15
+            icon.Parent             = btn
+            SetIconMode(icon, iconName)
+
+            btn.MouseEnter:Connect(function()
+                Tween(icon, { TextColor3 = hoverColor, TextTransparency = 0.200 }, TWEEN_SPEED)
+            end)
+            btn.MouseLeave:Connect(function()
+                Tween(icon, { TextColor3 = Color3.fromRGB(223, 223, 223), TextTransparency = 0.400 }, TWEEN_SPEED)
+            end)
+            btn.MouseButton1Click:Connect(callback)
+
+            return btn, icon
+        end
+
+        local function RenderConfigItem(name, order)
+            local item = Instance.new("Frame")
+            item.Name              = "ConfigItem"
+            item.BackgroundColor3  = Color3.fromRGB(21, 20, 27)
+            item.BackgroundTransparency = 0
+            item.BorderSizePixel   = 0
+            item.Size              = UDim2.new(1, -10, 0, 30)
+            item.ZIndex            = 153
+            item.LayoutOrder       = order
+            item.Parent            = ConfigMenu
+            item:SetAttribute("ConfigItem", true)
+            Instance.new("UICorner", item).CornerRadius = UDim.new(0, 5)
+
+            local itemStroke = Instance.new("UIStroke")
+            itemStroke.Transparency = 0.500
+            itemStroke.Color        = CurrentTheme.Stroke
+            itemStroke.Parent       = item
+            table.insert(ThemeListeners, function()
+                itemStroke.Color = CurrentTheme.Stroke
+            end)
+
+            local itemLabel = Instance.new("TextLabel")
+            itemLabel.Name              = "ConfigNameLbl"
+            itemLabel.BackgroundTransparency = 1
+            itemLabel.BorderSizePixel   = 0
+            itemLabel.Position          = UDim2.new(0, 11, 0, 7)
+            itemLabel.Size              = UDim2.new(1, -95, 0, 15)
+            itemLabel.ZIndex            = 153
+            itemLabel.Font              = Enum.Font.GothamMedium
+            itemLabel.Text              = name
+            itemLabel.TextColor3        = Color3.fromRGB(255, 255, 255)
+            itemLabel.TextSize          = 13
+            itemLabel.TextTransparency  = 0.200
+            itemLabel.TextXAlignment    = Enum.TextXAlignment.Left
+            itemLabel.TextTruncate      = Enum.TextTruncate.AtEnd
+            itemLabel.Parent            = item
+
+            local btnHolder = Instance.new("Frame")
+            btnHolder.AnchorPoint       = Vector2.new(1, 0)
+            btnHolder.BackgroundTransparency = 1
+            btnHolder.BorderSizePixel   = 0
+            btnHolder.Position          = UDim2.new(1, -11, 0, 2)
+            btnHolder.Size              = UDim2.new(0, 80, 0, 25)
+            btnHolder.ZIndex            = 153
+            btnHolder.Parent            = item
+
+            local btnLayout = Instance.new("UIListLayout")
+            btnLayout.FillDirection        = Enum.FillDirection.Horizontal
+            btnLayout.HorizontalAlignment  = Enum.HorizontalAlignment.Right
+            btnLayout.SortOrder            = Enum.SortOrder.LayoutOrder
+            btnLayout.VerticalAlignment    = Enum.VerticalAlignment.Center
+            btnLayout.Padding              = UDim.new(0, 5)
+            btnLayout.Parent               = btnHolder
+
+            MakeSymbolButton(
+                btnHolder, "trash-can",
+                Color3.fromRGB(223, 125, 125),
+                function()
+                    if name == DEFAULT_CONFIG_NAME then return end
+                    DeleteConfig(name)
+                    if RefreshConfigList then RefreshConfigList() end
+                end,
+                1
+            )
+
+            MakeSymbolButton(
+                btnHolder, "pencil-square",
+                CurrentTheme.Accent,
+                function()
+                    if WriteConfig(name, true) then
+                        selectedConfigName = name
+                        ConfigName.Text = name
+                        if RefreshConfigList then RefreshConfigList() end
+                    end
+                end,
+                2
+            )
+
+            MakeSymbolButton(
+                btnHolder, "arrow-right-from-portrait-rectangle",
+                CurrentTheme.Accent,
+                function()
+                    if ReadConfig(name) then
+                        selectedConfigName = name
+                        ConfigName.Text = name
+                        if RefreshConfigList then RefreshConfigList() end
+                    end
+                end,
+                3
+            )
+
+            item.MouseEnter:Connect(function()
+                Tween(itemStroke, { Transparency = 0.250 }, TWEEN_SPEED)
+            end)
+            item.MouseLeave:Connect(function()
+                Tween(itemStroke, { Transparency = 0.500 }, TWEEN_SPEED)
+            end)
+
+            return item
+        end
+
+        RefreshConfigList = function()
+            for _, child in ipairs(ConfigMenu:GetChildren()) do
+                if child:GetAttribute("ConfigItem") then
+                    child:Destroy()
+                end
+            end
+
+            local names = ListAllConfigs()
+            table.sort(names)
+
+            local defaultIdx = table.find(names, DEFAULT_CONFIG_NAME)
+            if defaultIdx and defaultIdx > 1 then
+                table.remove(names, defaultIdx)
+                table.insert(names, 1, DEFAULT_CONFIG_NAME)
+            end
+
+            for i, name in ipairs(names) do
+                RenderConfigItem(name, i)
+            end
+        end
+
+        local function ApplyMenuRender(open)
+            if open then
+                local absPos  = ConfigFrame.AbsolutePosition
+                ConfigMenu.Position = UDim2.fromOffset(absPos.X + 110, absPos.Y + 96)
+                ConfigMenu.Visible  = true
+
+                local targetH = cfgMenuLayout.AbsoluteContentSize.Y + 5
+                Tween(ConfigMenu, {
+                    BackgroundTransparency = 0.035,
+                    Position = UDim2.fromOffset(absPos.X + 110, absPos.Y + 95),
+                    Size = UDim2.new(0, MENU_WIDTH, 0, targetH),
+                }, TWEEN_SPEED)
+
+                Tween(cfgMenuStroke,  { Transparency = 0.650 }, TWEEN_SPEED)
+                Tween(BasedLabel,     { TextTransparency = 0.200 }, TWEEN_SPEED)
+                Tween(TextInputStroke,{ Transparency = 0.650 }, TWEEN_SPEED)
+                Tween(LineFrame,      { BackgroundTransparency = 0.650 }, TWEEN_SPEED)
+                Tween(TextInput,      { BackgroundTransparency = 0 }, TWEEN_SPEED)
+                Tween(TextBox,        { TextTransparency = 0.350 }, TWEEN_SPEED)
+                Tween(AddIcon,        { TextTransparency = 0.350 }, TWEEN_SPEED)
+                Tween(ConfigBthIcon,  { Rotation = 180 }, TWEEN_SPEED)
+                SetCfgShadow(true)
+            else
+                Tween(ConfigBthIcon, { Rotation = 0 }, TWEEN_SPEED)
+                Tween(ConfigMenu, {
+                    BackgroundTransparency = 1,
+                    Position = UDim2.fromOffset(
+                        ConfigFrame.AbsolutePosition.X + 110,
+                        ConfigFrame.AbsolutePosition.Y + 96
+                    ),
+                }, TWEEN_SPEED)
+                Tween(cfgMenuStroke,  { Transparency = 1 }, TWEEN_SPEED)
+                Tween(BasedLabel,     { TextTransparency = 1 }, TWEEN_SPEED)
+                Tween(TextInputStroke,{ Transparency = 1 }, TWEEN_SPEED)
+                Tween(LineFrame,      { BackgroundTransparency = 1 }, TWEEN_SPEED)
+                Tween(TextInput,      { BackgroundTransparency = 1 }, TWEEN_SPEED)
+                Tween(TextBox,        { TextTransparency = 1 }, TWEEN_SPEED)
+                Tween(AddIcon,        { TextTransparency = 1 }, TWEEN_SPEED)
+                SetCfgShadow(false)
+
+                task.delay(0.20, function()
+                    if not isOpen then
+                        ConfigMenu.Visible = false
+                    end
+                end)
+            end
+        end
+
+        OpenMenu = function()
+            if isOpen then return end
+            isOpen = true
+
+            RefreshConfigList()
+            ApplyMenuRender(true)
+
+            if outsideConn then
+                outsideConn:Disconnect()
+                outsideConn = nil
+            end
+            outsideConn = UserInputService.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1
+                or input.UserInputType == Enum.UserInputType.Touch then
+                    local mp = UserInputService:GetMouseLocation()
+
+                    local function Inside(frame)
+                        if not frame or not frame.Parent then return false end
+                        local ap, sz = frame.AbsolutePosition, frame.AbsoluteSize
+                        return mp.X >= ap.X and mp.X <= ap.X + sz.X
+                           and mp.Y >= ap.Y and mp.Y <= ap.Y + sz.Y
+                    end
+
+                    if not Inside(ConfigMenu) and not Inside(ConfigFrame) then
+                        if outsideConn then
+                            outsideConn:Disconnect()
+                            outsideConn = nil
+                        end
+                        isOpen = false
+                        ApplyMenuRender(false)
+                    end
+                end
+            end)
+        end
+
+        CloseMenu = function()
+            if outsideConn then
+                outsideConn:Disconnect()
+                outsideConn = nil
+            end
+            if not isOpen then return end
+            isOpen = false
+            ApplyMenuRender(false)
+        end
+
+        local OpenButton = Instance.new("TextButton")
+        OpenButton.Name              = "OpenButton"
+        OpenButton.AnchorPoint       = Vector2.new(0, 0.5)
+        OpenButton.BackgroundTransparency = 1
+        OpenButton.BorderSizePixel   = 0
+        OpenButton.Position          = UDim2.new(0, 31, 0.5, 0)
+        OpenButton.Size              = UDim2.new(1, -31, 1, 0)
+        OpenButton.ZIndex            = 10
+        OpenButton.Text              = ""
+        OpenButton.AutoButtonColor   = false
+        OpenButton.Parent            = ConfigFrame
+
+        OpenButton.MouseButton1Click:Connect(function()
+            if isOpen then
+                CloseMenu()
+            else
+                OpenMenu()
+            end
+        end)
+
+        local SaveIconInput = Instance.new("TextButton")
+        SaveIconInput.Name              = "SaveIconInput"
+        SaveIconInput.AnchorPoint       = Vector2.new(0, 0.5)
+        SaveIconInput.BackgroundTransparency = 1
+        SaveIconInput.BorderSizePixel   = 0
+        SaveIconInput.Position          = UDim2.new(0, 0, 0.5, 0)
+        SaveIconInput.Size              = UDim2.new(0, 31, 1, 0)
+        SaveIconInput.ZIndex            = 11
+        SaveIconInput.Text              = ""
+        SaveIconInput.AutoButtonColor   = false
+        SaveIconInput.Parent            = ConfigFrame
+
+        SaveIconInput.MouseEnter:Connect(function()
+            Tween(ConfigIcon, { TextTransparency = 0.100 }, TWEEN_SPEED)
+        end)
+        SaveIconInput.MouseLeave:Connect(function()
+            Tween(ConfigIcon, { TextTransparency = 0.250 }, TWEEN_SPEED)
+        end)
+        SaveIconInput.MouseButton1Click:Connect(function()
+            if WriteConfig(selectedConfigName or DEFAULT_CONFIG_NAME, true) then
+                RefreshConfigList()
+            end
+        end)
+
+        local AddBtnInput = Instance.new("TextButton")
+        AddBtnInput.Size              = UDim2.new(1, 0, 1, 0)
+        AddBtnInput.BackgroundTransparency = 1
+        AddBtnInput.Text              = ""
+        AddBtnInput.AutoButtonColor   = false
+        AddBtnInput.ZIndex            = 155
+        AddBtnInput.Parent            = AddBtn
+
+        AddBtnInput.MouseEnter:Connect(function()
+            Tween(AddIcon, { TextTransparency = 0.100 }, TWEEN_SPEED)
+        end)
+        AddBtnInput.MouseLeave:Connect(function()
+            Tween(AddIcon, { TextTransparency = 0.350 }, TWEEN_SPEED)
+        end)
+        AddBtnInput.MouseButton1Click:Connect(function()
+            local cfgName = TextBox.Text
+            if not cfgName or not cfgName:byte() then return end
+            if cfgName:find("/", 1, true) or cfgName:find("\\", 1, true) then return end
+            cfgName = string.sub(cfgName, 1, 24)
+
+            if WriteConfig(cfgName, true) then
+                TextBox.Text       = ""
+                selectedConfigName = cfgName
+                ConfigName.Text    = cfgName
+                RefreshConfigList()
+            end
+        end)
+
+        cfgMenuLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if not isOpen then return end
+            local targetH = cfgMenuLayout.AbsoluteContentSize.Y + 5
+            Tween(ConfigMenu, { Size = UDim2.new(0, MENU_WIDTH, 0, targetH) }, TWEEN_SPEED)
+        end)
+
+        MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+            if not MainFrame.Visible then
+                CloseMenu()
+            end
+        end)
+
+        task.spawn(function()
+            task.wait(0.35)
+            EnsureConfigDir()
+            if not ConfigExists(DEFAULT_CONFIG_NAME) then
+                WriteConfig(DEFAULT_CONFIG_NAME, true)
+            end
+            RefreshConfigList()
+        end)
+    end
+    -- ═══════════════════════════════════════════════════════════════════
+
     local TabContainer = Instance.new("Frame")
     TabContainer.Size = UDim2.new(1, 0, 1, -50)
     TabContainer.Position = UDim2.new(0, 0, 0, 50)
@@ -4879,87 +5548,6 @@ function Fenglib:CreateWindow(Config)
             MainFrame.Visible = not MainFrame.Visible
         end
     end)
-
-    -- ============================================================
-    -- 配置能力挂载（无 UI）
-    -- ============================================================
-    do
-        local cfgOpts = type(Config.Config) == "table" and Config.Config or {}
-        local CfgMgr = ConfigManager.new({
-            Folder           = Config.ConfigFolder or "FengConfigs",
-            Default          = cfgOpts.AutoSaveFile or "Default",
-            Encrypted        = cfgOpts.Encrypted == true,
-            Format           = cfgOpts.Format,
-            AutoSave         = cfgOpts.AutoSave ~= false,
-            AutoLoad         = cfgOpts.AutoLoad ~= false,
-            Overwrite        = cfgOpts.Overwrite ~= false,
-            AutoSaveInterval = cfgOpts.AutoSaveInterval,
-            SaveWindowState  = cfgOpts.SaveWindowState == true,
-        })
-        Window.ConfigManager = CfgMgr
-
-        if CfgMgr.SaveWindowState then
-            task.delay(0.75, function()
-                if not MainFrame.Parent then return end
-                local statePath = CfgMgr.Folder .. "/_window_state.json"
-                if isfile(statePath) then
-                    local ok, d = pcall(function() return HttpService:JSONDecode(readfile(statePath)) end)
-                    if ok and type(d) == "table" then
-                        if d.Size then
-                            MainFrame.Size = UDim2.new(0, d.Size[1], 0, d.Size[2])
-                        end
-                        if d.Position then
-                            MainFrame.AnchorPoint = Vector2.new(0, 0)
-                            MainFrame.Position = UDim2.new(0, d.Position[1], 0, d.Position[2])
-                        end
-                    end
-                end
-            end)
-            task.spawn(function()
-                while true do
-                    task.wait(2)
-                    if not MainFrame.Parent then break end
-                    local p = { MainFrame.Position.X.Offset, MainFrame.Position.Y.Offset }
-                    local s = { MainFrame.Size.X.Offset, MainFrame.Size.Y.Offset }
-                    pcall(function()
-                        if not isfolder(CfgMgr.Folder) then makefolder(CfgMgr.Folder) end
-                        writefile(CfgMgr.Folder .. "/_window_state.json",
-                            HttpService:JSONEncode({ Position = p, Size = s }))
-                    end)
-                end
-            end)
-        end
-
-        CfgMgr:StartAuto()
-    end
-
-    function Window:SaveConfig(name, overwrite)
-        return self.ConfigManager:WriteConfig(name, overwrite)
-    end
-    function Window:LoadConfig(name)
-        return self.ConfigManager:LoadConfig(name)
-    end
-    function Window:DeleteConfig(name)
-        return self.ConfigManager:DeleteConfig(name)
-    end
-    function Window:ListConfigs()
-        return self.ConfigManager:ListConfigs()
-    end
-    function Window:SetConfigName(name)
-        self.ConfigManager.Selected = tostring(name or "Default")
-        return self
-    end
-    function Window:SetConfigEncrypted(v)
-        self.ConfigManager.Encrypted = v == true
-        return self
-    end
-    function Window:SetConfigOverwrite(v)
-        self.ConfigManager.Overwrite = v == true
-        return self
-    end
-    function Window:RewriteConfigAsJson()
-        return self.ConfigManager:RewriteSelectedAsJson()
-    end
 
     Window._currentCategory = nil
     function Window:Category(config)
@@ -5899,546 +6487,6 @@ function Fenglib:CreateWindow(Config)
         end
     end
     Window:SetAccount({ ShowUser = (Config.ShowUser ~= false) })
-
-    -- ============================================================
-    -- 配置面板（完整移植自 ModernV2，含 BuilderIcons 图标）
-    -- 【已修复】：ConfigMenu 挂 ScreenGui，位置动态计算，
-    --           点击判定使用 PlayerMouse 坐标系
-    -- ============================================================
-    do
-        local mgr = Window.ConfigManager
-        if not mgr then return end
-
-        -- BuilderIcons 字体
-        local IconFontFace = nil
-        pcall(function()
-            IconFontFace = Font.new(
-                "rbxasset://LuaPackages/Packages/_Index/BuilderIcons/BuilderIcons/BuilderIcons.json",
-                Enum.FontWeight.Regular, Enum.FontStyle.Normal
-            )
-        end)
-
-        local function makeIcon(iconName, size, textSize, zIndex)
-            local lbl = Instance.new("TextLabel")
-            lbl.Name = "Icon_" .. tostring(iconName)
-            lbl.BackgroundTransparency = 1
-            lbl.BorderSizePixel = 0
-            lbl.Size = UDim2.fromOffset(size, size)
-            lbl.Text = iconName or ""
-            lbl.TextColor3 = CurrentTheme.Text
-            lbl.TextTransparency = 0.4
-            lbl.TextSize = textSize or math.floor(size * 0.85)
-            lbl.TextXAlignment = Enum.TextXAlignment.Center
-            lbl.TextYAlignment = Enum.TextYAlignment.Center
-            lbl.ZIndex = zIndex or 5
-            if IconFontFace then
-                pcall(function() lbl.FontFace = IconFontFace end)
-            else
-                lbl.Font = Enum.Font.GothamBold
-            end
-            AddToRegistry(lbl, "TextColor3", "Text")
-            TextGradient:Skip(lbl)
-            return lbl
-        end
-
-        -- ★ 修复：使用 PlayerMouse，与 AbsolutePosition 同一坐标系
-        local Mouse = LocalPlayer:GetMouse()
-
-        local function isMouseOverFrame(frame)
-            if not frame or not frame.Parent then return false end
-            local ap, as = frame.AbsolutePosition, frame.AbsoluteSize
-            return Mouse.X >= ap.X and Mouse.X <= ap.X + as.X
-               and Mouse.Y >= ap.Y and Mouse.Y <= ap.Y + as.Y
-        end
-
-        -- 确保默认配置存在
-        local folder = mgr.Folder or "FengConfigs"
-        if not isfolder(folder) then makefolder(folder) end
-        local defaultName = mgr.Selected or "Default"
-        local defaultPath = folder .. "/" .. defaultName
-        if not isfile(defaultPath) then
-            pcall(function() writefile(defaultPath, mgr:GetData()) end)
-        end
-
-        -- ─── ConfigFrame（右上角触发按钮）────────────────────
-        local ConfigFrame = Instance.new("Frame")
-        local ConfigFrameCorner = Instance.new("UICorner")
-        local ConfigFrameStroke = Instance.new("UIStroke")
-        local ConfigIcon = makeIcon("pencil-square", 25, 20, 9)
-        local ConfigLineFrame = Instance.new("Frame")
-        local ConfigName = Instance.new("TextLabel")
-        local ConfigBthIcon = makeIcon("chevron-small-down", 25, 20, 9)
-
-        ConfigFrame.Name = "ConfigFrame"
-        ConfigFrame.Parent = RightHeader
-        ConfigFrame.AnchorPoint = Vector2.new(0, 0.5)
-        ConfigFrame.BackgroundColor3 = Color3.fromRGB(13, 17, 22)
-        ConfigFrame.BackgroundTransparency = 0.75
-        ConfigFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        ConfigFrame.BorderSizePixel = 0
-        ConfigFrame.Position = UDim2.new(0, 10, 0.5, 0)
-        ConfigFrame.Size = UDim2.new(0, 115, 0, 30)
-        ConfigFrame.ZIndex = 9
-        AddToRegistry(ConfigFrame, "BackgroundColor3", "Main")
-
-        ConfigFrameCorner.CornerRadius = UDim.new(0, 4)
-        ConfigFrameCorner.Parent = ConfigFrame
-
-        ConfigFrameStroke.Transparency = 0.65
-        ConfigFrameStroke.Color = CurrentTheme.Stroke
-        ConfigFrameStroke.Parent = ConfigFrame
-        AddToRegistry(ConfigFrameStroke, "Color", "Stroke")
-
-        ConfigIcon.Parent = ConfigFrame
-        ConfigIcon.AnchorPoint = Vector2.new(0, 0.5)
-        ConfigIcon.Position = UDim2.new(0, 2, 0.5, 0)
-        ConfigIcon.Size = UDim2.new(0, 25, 0, 25)
-        ConfigIcon.ZIndex = 9
-
-        ConfigLineFrame.Parent = ConfigFrame
-        ConfigLineFrame.BackgroundColor3 = CurrentTheme.Stroke
-        ConfigLineFrame.BackgroundTransparency = 0.65
-        ConfigLineFrame.BorderSizePixel = 0
-        ConfigLineFrame.Position = UDim2.new(0, 30, 0, 0)
-        ConfigLineFrame.Size = UDim2.new(0, 1, 1, 0)
-        AddToRegistry(ConfigLineFrame, "BackgroundColor3", "Stroke")
-
-        ConfigName.Parent = ConfigFrame
-        ConfigName.AnchorPoint = Vector2.new(0, 0.5)
-        ConfigName.BackgroundTransparency = 1
-        ConfigName.Position = UDim2.new(0, 40, 0.5, 0)
-        ConfigName.Size = UDim2.new(1, -47, 0, 15)
-        ConfigName.ZIndex = 9
-        ConfigName.Font = Enum.Font.GothamMedium
-        ConfigName.Text = defaultName
-        ConfigName.TextColor3 = CurrentTheme.Text
-        ConfigName.TextSize = 12
-        ConfigName.TextTransparency = 0.35
-        ConfigName.TextXAlignment = Enum.TextXAlignment.Left
-        ConfigName.TextTruncate = Enum.TextTruncate.AtEnd
-        AddToRegistry(ConfigName, "TextColor3", "Text")
-        TextGradient:Skip(ConfigName)
-
-        ConfigBthIcon.Parent = ConfigFrame
-        ConfigBthIcon.AnchorPoint = Vector2.new(1, 0.5)
-        ConfigBthIcon.Position = UDim2.new(1, -2, 0.5, 0)
-        ConfigBthIcon.Size = UDim2.new(0, 25, 0, 25)
-        ConfigBthIcon.ZIndex = 9
-
-        -- ─── ConfigMenu 弹出面板 ──────────────────────────────
-        -- ★ 修复：Parent 改为 ScreenGui，位置独立计算
-        local ConfigMenu = Instance.new("Frame")
-        local ConfigMenuCorner = Instance.new("UICorner")
-        local ConfigMenuList = Instance.new("UIListLayout")
-        local ConfigMenuStroke = Instance.new("UIStroke")
-
-        ConfigMenu.Name = "ConfigMenu"
-        ConfigMenu.Parent = ScreenGui
-        ConfigMenu.AnchorPoint = Vector2.new(0.5, 0)
-        ConfigMenu.BackgroundColor3 = CurrentTheme.Main
-        ConfigMenu.BackgroundTransparency = 0.035
-        ConfigMenu.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        ConfigMenu.BorderSizePixel = 0
-        ConfigMenu.ClipsDescendants = true
-        ConfigMenu.Position = UDim2.new(0.5, 0, 0.5, 0)
-        ConfigMenu.Size = UDim2.new(0, 220, 0, 110)
-        ConfigMenu.Visible = false
-        ConfigMenu.ZIndex = 200
-        AddToRegistry(ConfigMenu, "BackgroundColor3", "Main")
-
-        ConfigMenuCorner.CornerRadius = UDim.new(0, 10)
-        ConfigMenuCorner.Parent = ConfigMenu
-
-        ConfigMenuList.Parent = ConfigMenu
-        ConfigMenuList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        ConfigMenuList.SortOrder = Enum.SortOrder.LayoutOrder
-        ConfigMenuList.Padding = UDim.new(0, 4)
-
-        ConfigMenuStroke.Transparency = 1
-        ConfigMenuStroke.Color = CurrentTheme.Stroke
-        ConfigMenuStroke.Parent = ConfigMenu
-        AddToRegistry(ConfigMenuStroke, "Color", "Stroke")
-
-        -- ─── InputFrame ──────────────────────────────────────
-        local InputFrame = Instance.new("Frame")
-        local InputFrameCorner = Instance.new("UICorner")
-        local InputTitleLbl = Instance.new("TextLabel")
-        local InputLineFrame = Instance.new("Frame")
-        local InputHandler = Instance.new("Frame")
-        local InputHandlerLayout = Instance.new("UIListLayout")
-        local TextInputFrame = Instance.new("Frame")
-        local TextInputCorner = Instance.new("UICorner")
-        local TextInputStroke = Instance.new("UIStroke")
-        local TextInputBox = Instance.new("TextBox")
-        local AddBtn = Instance.new("TextButton")
-        local AddBtnCorner = Instance.new("UICorner")
-        local AddBtnIcon = makeIcon("plus-large", 18, 14, 203)
-
-        InputFrame.Name = "InputFrame"
-        InputFrame.Parent = ConfigMenu
-        InputFrame.BackgroundTransparency = 1
-        InputFrame.BorderSizePixel = 0
-        InputFrame.Size = UDim2.new(1, 0, 0, 30)
-        InputFrame.ZIndex = 201
-        InputFrame.LayoutOrder = 1
-        InputFrameCorner.CornerRadius = UDim.new(0, 10)
-        InputFrameCorner.Parent = InputFrame
-
-        InputTitleLbl.Parent = InputFrame
-        InputTitleLbl.BackgroundTransparency = 1
-        InputTitleLbl.Position = UDim2.new(0, 11, 0, 6)
-        InputTitleLbl.Size = UDim2.new(0, 60, 0, 15)
-        InputTitleLbl.ZIndex = 202
-        InputTitleLbl.Font = Enum.Font.GothamMedium
-        InputTitleLbl.Text = "Config"
-        InputTitleLbl.TextColor3 = CurrentTheme.Text
-        InputTitleLbl.TextSize = 13
-        InputTitleLbl.TextTransparency = 0.2
-        InputTitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-        AddToRegistry(InputTitleLbl, "TextColor3", "Text")
-        TextGradient:Skip(InputTitleLbl)
-
-        InputLineFrame.Parent = InputFrame
-        InputLineFrame.AnchorPoint = Vector2.new(0.5, 1)
-        InputLineFrame.BackgroundColor3 = CurrentTheme.Stroke
-        InputLineFrame.BackgroundTransparency = 0.65
-        InputLineFrame.BorderSizePixel = 0
-        InputLineFrame.Position = UDim2.new(0.5, 0, 1, 0)
-        InputLineFrame.Size = UDim2.new(1, -20, 0, 1)
-        AddToRegistry(InputLineFrame, "BackgroundColor3", "Stroke")
-
-        InputHandler.Parent = InputFrame
-        InputHandler.AnchorPoint = Vector2.new(1, 0)
-        InputHandler.BackgroundTransparency = 1
-        InputHandler.Position = UDim2.new(1, -11, 0, 2)
-        InputHandler.Size = UDim2.new(1, -20, 0, 25)
-        InputHandler.ZIndex = 202
-
-        InputHandlerLayout.Parent = InputHandler
-        InputHandlerLayout.FillDirection = Enum.FillDirection.Horizontal
-        InputHandlerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-        InputHandlerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        InputHandlerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-        InputHandlerLayout.Padding = UDim.new(0, 5)
-
-        TextInputFrame.Parent = InputHandler
-        TextInputFrame.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
-        TextInputFrame.BorderSizePixel = 0
-        TextInputFrame.ClipsDescendants = true
-        TextInputFrame.Size = UDim2.new(0, 100, 0, 18)
-        TextInputFrame.ZIndex = 202
-        TextInputFrame.LayoutOrder = 1
-        TextInputCorner.CornerRadius = UDim.new(0, 4)
-        TextInputCorner.Parent = TextInputFrame
-
-        TextInputStroke.Transparency = 0.65
-        TextInputStroke.Color = CurrentTheme.Stroke
-        TextInputStroke.Parent = TextInputFrame
-        AddToRegistry(TextInputStroke, "Color", "Stroke")
-
-        TextInputBox.Parent = TextInputFrame
-        TextInputBox.AnchorPoint = Vector2.new(0, 0.5)
-        TextInputBox.BackgroundTransparency = 1
-        TextInputBox.Position = UDim2.new(0, 5, 0.5, 0)
-        TextInputBox.Size = UDim2.new(1, -5, 0, 17)
-        TextInputBox.ZIndex = 202
-        TextInputBox.ClearTextOnFocus = false
-        TextInputBox.Font = Enum.Font.GothamMedium
-        TextInputBox.PlaceholderText = "Config Name ..."
-        TextInputBox.Text = ""
-        TextInputBox.TextColor3 = CurrentTheme.Text
-        TextInputBox.TextSize = 11
-        TextInputBox.TextTransparency = 0.35
-        TextInputBox.TextXAlignment = Enum.TextXAlignment.Left
-        AddToRegistry(TextInputBox, "TextColor3", "Text")
-        TextGradient:Skip(TextInputBox)
-
-        AddBtn.Parent = InputHandler
-        AddBtn.BackgroundTransparency = 1
-        AddBtn.Text = ""
-        AddBtn.AutoButtonColor = false
-        AddBtn.ClipsDescendants = true
-        AddBtn.Size = UDim2.new(0, 20, 0, 18)
-        AddBtn.ZIndex = 202
-        AddBtn.LayoutOrder = 2
-
-        AddBtnCorner.CornerRadius = UDim.new(0, 4)
-        AddBtnCorner.Parent = AddBtn
-
-        AddBtnIcon.Parent = AddBtn
-        AddBtnIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-        AddBtnIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-        AddBtnIcon.Size = UDim2.new(1, 0, 1, 0)
-        AddBtnIcon.ZIndex = 203
-
-        -- ─── 刷新配置列表 ────────────────────────────────────
-        local function refreshConfigList()
-            for _, child in ipairs(ConfigMenu:GetChildren()) do
-                if child:GetAttribute("ConfigItem") then
-                    child:Destroy()
-                end
-            end
-
-            ConfigName.Text = mgr.Selected or "Default"
-
-            local list = mgr:ListConfigs()
-
-            for i, cfgName in ipairs(list) do
-                local ConfigItemFrame = Instance.new("Frame")
-                local ItemCorner = Instance.new("UICorner")
-                local ItemStroke = Instance.new("UIStroke")
-                local ItemLabel = Instance.new("TextLabel")
-                local ItemHandler = Instance.new("Frame")
-                local ItemLayout = Instance.new("UIListLayout")
-
-                local DeleteConfig = Instance.new("TextButton")
-                local DeleteCorner = Instance.new("UICorner")
-                local DeleteIcon = makeIcon("trash-can", 16, 12, 155)
-
-                local OverwriteConfig = Instance.new("TextButton")
-                local OverwriteCorner = Instance.new("UICorner")
-                local OverwriteIcon = makeIcon("pencil-square", 16, 12, 155)
-
-                local LoadConfig = Instance.new("TextButton")
-                local LoadCorner = Instance.new("UICorner")
-                local LoadIcon = makeIcon("arrow-right-from-portrait-rectangle", 16, 12, 155)
-
-                ConfigItemFrame.Name = "CfgItem_" .. cfgName
-                ConfigItemFrame.Parent = ConfigMenu
-                ConfigItemFrame.BackgroundColor3 = Color3.fromRGB(21, 20, 27)
-                ConfigItemFrame.BackgroundTransparency = 0
-                ConfigItemFrame.BorderSizePixel = 0
-                ConfigItemFrame.Size = UDim2.new(1, -10, 0, 30)
-                ConfigItemFrame.ZIndex = 153
-                ConfigItemFrame.LayoutOrder = i + 1
-                ConfigItemFrame:SetAttribute("ConfigItem", true)
-                AddToRegistry(ConfigItemFrame, "BackgroundColor3", "Top")
-
-                ItemCorner.CornerRadius = UDim.new(0, 5)
-                ItemCorner.Parent = ConfigItemFrame
-
-                ItemStroke.Transparency = 0.5
-                ItemStroke.Color = CurrentTheme.Stroke
-                ItemStroke.Parent = ConfigItemFrame
-                AddToRegistry(ItemStroke, "Color", "Stroke")
-
-                ItemLabel.Parent = ConfigItemFrame
-                ItemLabel.BackgroundTransparency = 1
-                ItemLabel.Position = UDim2.new(0, 11, 0, 7)
-                ItemLabel.Size = UDim2.new(1, -95, 0, 15)
-                ItemLabel.ZIndex = 154
-                ItemLabel.Font = Enum.Font.GothamMedium
-                ItemLabel.Text = cfgName
-                ItemLabel.TextColor3 = CurrentTheme.Text
-                ItemLabel.TextSize = 13
-                ItemLabel.TextTransparency = 0.2
-                ItemLabel.TextXAlignment = Enum.TextXAlignment.Left
-                ItemLabel.TextTruncate = Enum.TextTruncate.AtEnd
-                AddToRegistry(ItemLabel, "TextColor3", "Text")
-                TextGradient:Skip(ItemLabel)
-
-                ItemHandler.Parent = ConfigItemFrame
-                ItemHandler.AnchorPoint = Vector2.new(1, 0)
-                ItemHandler.BackgroundTransparency = 1
-                ItemHandler.Position = UDim2.new(1, -11, 0, 2)
-                ItemHandler.Size = UDim2.new(0, 75, 0, 25)
-                ItemHandler.ZIndex = 154
-
-                ItemLayout.Parent = ItemHandler
-                ItemLayout.FillDirection = Enum.FillDirection.Horizontal
-                ItemLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-                ItemLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-                ItemLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                ItemLayout.Padding = UDim.new(0, 5)
-
-                DeleteConfig.Parent = ItemHandler
-                DeleteConfig.BackgroundTransparency = 1
-                DeleteConfig.Text = ""
-                DeleteConfig.AutoButtonColor = false
-                DeleteConfig.ClipsDescendants = true
-                DeleteConfig.Size = UDim2.new(0, 20, 0, 18)
-                DeleteConfig.ZIndex = 153
-                DeleteConfig.LayoutOrder = 1
-                DeleteCorner.CornerRadius = UDim.new(0, 4)
-                DeleteCorner.Parent = DeleteConfig
-
-                DeleteIcon.Parent = DeleteConfig
-                DeleteIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-                DeleteIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-                DeleteIcon.Size = UDim2.new(0, 16, 0, 16)
-                DeleteIcon.ZIndex = 154
-
-                OverwriteConfig.Parent = ItemHandler
-                OverwriteConfig.BackgroundTransparency = 1
-                OverwriteConfig.Text = ""
-                OverwriteConfig.AutoButtonColor = false
-                OverwriteConfig.ClipsDescendants = true
-                OverwriteConfig.Size = UDim2.new(0, 20, 0, 18)
-                OverwriteConfig.ZIndex = 153
-                OverwriteConfig.LayoutOrder = 2
-                OverwriteCorner.CornerRadius = UDim.new(0, 4)
-                OverwriteCorner.Parent = OverwriteConfig
-
-                OverwriteIcon.Parent = OverwriteConfig
-                OverwriteIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-                OverwriteIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-                OverwriteIcon.Size = UDim2.new(0, 16, 0, 16)
-                OverwriteIcon.ZIndex = 154
-
-                LoadConfig.Parent = ItemHandler
-                LoadConfig.BackgroundTransparency = 1
-                LoadConfig.Text = ""
-                LoadConfig.AutoButtonColor = false
-                LoadConfig.ClipsDescendants = true
-                LoadConfig.Size = UDim2.new(0, 20, 0, 18)
-                LoadConfig.ZIndex = 153
-                LoadConfig.LayoutOrder = 3
-                LoadCorner.CornerRadius = UDim.new(0, 4)
-                LoadCorner.Parent = LoadConfig
-
-                LoadIcon.Parent = LoadConfig
-                LoadIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-                LoadIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-                LoadIcon.Size = UDim2.new(0, 16, 0, 16)
-                LoadIcon.ZIndex = 154
-
-                DeleteConfig.MouseEnter:Connect(function()
-                    Tween(DeleteIcon, {TextTransparency = 0.2, TextColor3 = Color3.fromRGB(223, 125, 125)}, 0.15)
-                end)
-                DeleteConfig.MouseLeave:Connect(function()
-                    Tween(DeleteIcon, {TextTransparency = 0.4, TextColor3 = CurrentTheme.Text}, 0.15)
-                end)
-                DeleteConfig.MouseButton1Click:Connect(function()
-                    if cfgName == "Default" then return end
-                    mgr:DeleteConfig(cfgName)
-                    refreshConfigList()
-                end)
-
-                OverwriteConfig.MouseEnter:Connect(function()
-                    Tween(OverwriteIcon, {TextTransparency = 0.2, TextColor3 = CurrentTheme.Accent}, 0.15)
-                end)
-                OverwriteConfig.MouseLeave:Connect(function()
-                    Tween(OverwriteIcon, {TextTransparency = 0.4, TextColor3 = CurrentTheme.Text}, 0.15)
-                end)
-                OverwriteConfig.MouseButton1Click:Connect(function()
-                    mgr.Selected = cfgName
-                    mgr:WriteConfig(cfgName, true)
-                    refreshConfigList()
-                end)
-
-                LoadConfig.MouseEnter:Connect(function()
-                    Tween(LoadIcon, {TextTransparency = 0.2, TextColor3 = CurrentTheme.Accent}, 0.15)
-                end)
-                LoadConfig.MouseLeave:Connect(function()
-                    Tween(LoadIcon, {TextTransparency = 0.4, TextColor3 = CurrentTheme.Text}, 0.15)
-                end)
-                LoadConfig.MouseButton1Click:Connect(function()
-                    mgr:LoadConfig(cfgName)
-                    refreshConfigList()
-                end)
-
-                ConfigItemFrame.MouseEnter:Connect(function()
-                    Tween(ItemStroke, {Transparency = 0.25}, 0.15)
-                end)
-                ConfigItemFrame.MouseLeave:Connect(function()
-                    Tween(ItemStroke, {Transparency = 0.5}, 0.15)
-                end)
-            end
-
-            task.defer(function()
-                local total = 30 + (#list * 34) + 8
-                Tween(ConfigMenu, {Size = UDim2.new(0, 220, 0, total)}, 0.2)
-            end)
-        end
-
-        -- 加号按钮
-        AddBtn.MouseEnter:Connect(function()
-            Tween(AddBtnIcon, {TextTransparency = 0.1}, 0.15)
-        end)
-        AddBtn.MouseLeave:Connect(function()
-            Tween(AddBtnIcon, {TextTransparency = 0.35}, 0.15)
-        end)
-        AddBtn.MouseButton1Click:Connect(function()
-            local name = TextInputBox.Text
-            if name and name:byte()
-               and not name:find('/', 1, true)
-               and not name:find('\\', 1, true) then
-                name = name:sub(1, 24)
-                if mgr:WriteConfig(name, true) then
-                    TextInputBox.Text = ""
-                    refreshConfigList()
-                end
-            end
-        end)
-
-        -- ─── 打开/关闭逻辑 ─────────────────────────────────────
-        local configOpen = false
-        local outsideConn = nil
-
-        -- ★ 修复：动态计算位置，让菜单出现在 ConfigFrame 正下方
-        local function updateConfigMenuPosition()
-            if not ConfigFrame.Parent then return end
-            ConfigMenu.Position = UDim2.fromOffset(
-                ConfigFrame.AbsolutePosition.X + ConfigFrame.AbsoluteSize.X / 2,
-                ConfigFrame.AbsolutePosition.Y + ConfigFrame.AbsoluteSize.Y + 6
-            )
-        end
-
-        local function closeConfigMenu()
-            if not configOpen then return end
-            configOpen = false
-            if outsideConn then outsideConn:Disconnect(); outsideConn = nil end
-            Tween(ConfigMenu, {BackgroundTransparency = 1}, 0.15)
-            Tween(ConfigMenuStroke, {Transparency = 1}, 0.15)
-            Tween(ConfigBthIcon, {Rotation = 0}, 0.2)
-            task.delay(0.16, function()
-                if not configOpen then ConfigMenu.Visible = false end
-            end)
-        end
-
-        local function openConfigMenu()
-            if configOpen then return end
-            configOpen = true
-            refreshConfigList()
-            updateConfigMenuPosition()
-            ConfigMenu.Visible = true
-            Tween(ConfigMenu, {BackgroundTransparency = 0.035}, 0.15)
-            Tween(ConfigMenuStroke, {Transparency = 0.65}, 0.15)
-            Tween(ConfigBthIcon, {Rotation = 180}, 0.2)
-            if outsideConn then outsideConn:Disconnect() end
-            outsideConn = UserInputService.InputBegan:Connect(function(input)
-                if not configOpen then return end
-                if input.UserInputType ~= Enum.UserInputType.MouseButton1
-                   and input.UserInputType ~= Enum.UserInputType.Touch then
-                    return
-                end
-                -- ★ 修复：用 Mouse.X/Y 判定，避免 GuiInset 偏移
-                if not isMouseOverFrame(ConfigMenu)
-                   and not isMouseOverFrame(ConfigFrame) then
-                    closeConfigMenu()
-                end
-            end)
-        end
-
-        local ConfigClickBtn = Instance.new("TextButton")
-        ConfigClickBtn.Parent = ConfigFrame
-        ConfigClickBtn.BackgroundTransparency = 1
-        ConfigClickBtn.BorderSizePixel = 0
-        ConfigClickBtn.Text = ""
-        ConfigClickBtn.AutoButtonColor = false
-        ConfigClickBtn.Size = UDim2.new(1, 0, 1, 0)
-        ConfigClickBtn.ZIndex = 10
-        ConfigClickBtn.MouseButton1Click:Connect(function()
-            if configOpen then closeConfigMenu() else openConfigMenu() end
-        end)
-
-        -- ★ 修复：MainFrame 拖动时同步菜单位置
-        MainFrame:GetPropertyChangedSignal("Position"):Connect(function()
-            if configOpen then updateConfigMenuPosition() end
-        end)
-
-        refreshConfigList()
-    end
 
     return Window
 end
