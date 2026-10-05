@@ -649,6 +649,7 @@ end
 
 local CHESSBOARD_IMAGE = "http://www.roblox.com/asset/?id=14204231522"
 
+
 local function createSectionBuilder(parent, contentContainer, elementWidth, windowCount, window)
     local win = window
     local padding = parent:FindFirstChild("SectionPadding")
@@ -673,26 +674,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         line.Parent = row
         AddToRegistry(line, "BackgroundColor3", "Stroke")
         return row
-    end
-
-    local function miIcon(parentFrame, asset, size, x, y)
-        size = size or 18
-        local icon = Instance.new("ImageLabel")
-        icon.Size = UDim2.new(0, size, 0, size)
-        icon.Position = UDim2.new(0, x or 15, 0, y or 12)
-        icon.BackgroundTransparency = 1; icon.BorderSizePixel = 0
-        icon.ImageColor3 = CurrentTheme.Text
-        icon.ImageTransparency = 0.25
-        icon.ScaleType = Enum.ScaleType.Fit
-        if type(asset) == "number" then icon.Image = "rbxassetid://"..tostring(asset)
-        elseif type(asset) == "string" and asset ~= "" then
-            if tonumber(asset) then icon.Image = "rbxassetid://"..asset
-            elseif asset:match("^rbxassetid://") or asset:match("^http") or asset:match("^rbxasset://") then icon.Image = asset
-            else icon.Image = "rbxassetid://"..asset end
-        end
-        icon.Parent = parentFrame
-        AddToRegistry(icon, "ImageColor3", "Text")
-        return icon
     end
 
     local function miLabel(parentFrame, text, x, y, w, size)
@@ -4274,6 +4255,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     return functions
 end
 
+
 function Fenglib:CreateWindow(Config)
     local Window = {}
     local Title = Config.Name or "FengYu"
@@ -4916,7 +4898,6 @@ function Fenglib:CreateWindow(Config)
         })
         Window.ConfigManager = CfgMgr
 
-        -- 窗口状态恢复
         if CfgMgr.SaveWindowState then
             task.delay(0.75, function()
                 if not MainFrame.Parent then return end
@@ -5920,40 +5901,68 @@ function Fenglib:CreateWindow(Config)
     Window:SetAccount({ ShowUser = (Config.ShowUser ~= false) })
 
     -- ============================================================
-    -- 配置面板 (Config Panel) — 移植自 ModernV2
+    -- 配置面板（完整移植自 ModernV2，含全部 BuilderIcons 图标）
     -- ============================================================
     do
         local mgr = Window.ConfigManager
-        if not mgr then
-            return Window
+        if not mgr then return end
+
+        -- BuilderIcons 字体
+        local IconFontFace = nil
+        pcall(function()
+            IconFontFace = Font.new(
+                "rbxasset://LuaPackages/Packages/_Index/BuilderIcons/BuilderIcons/BuilderIcons.json",
+                Enum.FontWeight.Regular, Enum.FontStyle.Normal
+            )
+        end)
+
+        local function makeIcon(iconName, size, textSize, zIndex)
+            local lbl = Instance.new("TextLabel")
+            lbl.Name = "Icon_" .. tostring(iconName)
+            lbl.BackgroundTransparency = 1
+            lbl.BorderSizePixel = 0
+            lbl.Size = UDim2.fromOffset(size, size)
+            lbl.Text = iconName or ""
+            lbl.TextColor3 = CurrentTheme.Text
+            lbl.TextTransparency = 0.4
+            lbl.TextSize = textSize or math.floor(size * 0.85)
+            lbl.TextXAlignment = Enum.TextXAlignment.Center
+            lbl.TextYAlignment = Enum.TextYAlignment.Center
+            lbl.ZIndex = zIndex or 5
+            if IconFontFace then
+                pcall(function() lbl.FontFace = IconFontFace end)
+            else
+                lbl.Font = Enum.Font.GothamBold
+            end
+            AddToRegistry(lbl, "TextColor3", "Text")
+            TextGradient:Skip(lbl)
+            return lbl
         end
 
         -- 确保默认配置存在
-        local function ensureDefaultExists()
-            local folder = mgr.Folder
-            if not isfolder(folder) then makefolder(folder) end
-            local selected = mgr.Selected or "Default"
-            local path = folder .. "/" .. selected
-            if not isfile(path) then
-                pcall(function() writefile(path, mgr:GetData()) end)
-            end
+        local folder = mgr.Folder or "FengConfigs"
+        if not isfolder(folder) then makefolder(folder) end
+        local defaultName = mgr.Selected or "Default"
+        local defaultPath = folder .. "/" .. defaultName
+        if not isfile(defaultPath) then
+            pcall(function() writefile(defaultPath, mgr:GetData()) end)
         end
-        ensureDefaultExists()
 
-        -- ─── ConfigFrame 按钮 ────────────────────────────────
+        -- ─── ConfigFrame（右上角触发按钮）────────────────────
         local ConfigFrame = Instance.new("Frame")
         local ConfigFrameCorner = Instance.new("UICorner")
         local ConfigFrameStroke = Instance.new("UIStroke")
-        local ConfigIcon = Instance.new("ImageLabel")
-        local ConfigDivider = Instance.new("Frame")
-        local ConfigNameLbl = Instance.new("TextLabel")
-        local ConfigArrow = Instance.new("ImageLabel")
+        local ConfigIcon = makeIcon("pencil-square", 25, 20, 9)
+        local ConfigLineFrame = Instance.new("Frame")
+        local ConfigName = Instance.new("TextLabel")
+        local ConfigBthIcon = makeIcon("chevron-small-down", 25, 20, 9)
 
         ConfigFrame.Name = "ConfigFrame"
         ConfigFrame.Parent = RightHeader
         ConfigFrame.AnchorPoint = Vector2.new(0, 0.5)
         ConfigFrame.BackgroundColor3 = Color3.fromRGB(13, 17, 22)
         ConfigFrame.BackgroundTransparency = 0.75
+        ConfigFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
         ConfigFrame.BorderSizePixel = 0
         ConfigFrame.Position = UDim2.new(0, 10, 0.5, 0)
         ConfigFrame.Size = UDim2.new(0, 115, 0, 30)
@@ -5968,93 +5977,80 @@ function Fenglib:CreateWindow(Config)
         ConfigFrameStroke.Parent = ConfigFrame
         AddToRegistry(ConfigFrameStroke, "Color", "Stroke")
 
-        ConfigIcon.Name = "ConfigIcon"
         ConfigIcon.Parent = ConfigFrame
         ConfigIcon.AnchorPoint = Vector2.new(0, 0.5)
-        ConfigIcon.BackgroundTransparency = 1
         ConfigIcon.Position = UDim2.new(0, 2, 0.5, 0)
         ConfigIcon.Size = UDim2.new(0, 25, 0, 25)
         ConfigIcon.ZIndex = 9
-        ConfigIcon.Image = "rbxassetid://11940434418"
-        ConfigIcon.ImageColor3 = CurrentTheme.Text
-        ConfigIcon.ImageTransparency = 0.25
-        ConfigIcon.ScaleType = Enum.ScaleType.Fit
-        AddToRegistry(ConfigIcon, "ImageColor3", "Text")
 
-        ConfigDivider.Parent = ConfigFrame
-        ConfigDivider.BackgroundColor3 = CurrentTheme.Stroke
-        ConfigDivider.BackgroundTransparency = 0.65
-        ConfigDivider.BorderSizePixel = 0
-        ConfigDivider.Position = UDim2.new(0, 30, 0, 0)
-        ConfigDivider.Size = UDim2.new(0, 1, 1, 0)
-        AddToRegistry(ConfigDivider, "BackgroundColor3", "Stroke")
+        ConfigLineFrame.Parent = ConfigFrame
+        ConfigLineFrame.BackgroundColor3 = CurrentTheme.Stroke
+        ConfigLineFrame.BackgroundTransparency = 0.65
+        ConfigLineFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        ConfigLineFrame.BorderSizePixel = 0
+        ConfigLineFrame.Position = UDim2.new(0, 30, 0, 0)
+        ConfigLineFrame.Size = UDim2.new(0, 1, 1, 0)
+        AddToRegistry(ConfigLineFrame, "BackgroundColor3", "Stroke")
 
-        ConfigNameLbl.Parent = ConfigFrame
-        ConfigNameLbl.AnchorPoint = Vector2.new(0, 0.5)
-        ConfigNameLbl.BackgroundTransparency = 1
-        ConfigNameLbl.Position = UDim2.new(0, 40, 0.5, 0)
-        ConfigNameLbl.Size = UDim2.new(1, -47, 0, 15)
-        ConfigNameLbl.ZIndex = 9
-        ConfigNameLbl.Font = Enum.Font.GothamMedium
-        ConfigNameLbl.Text = mgr.Selected or "Default"
-        ConfigNameLbl.TextColor3 = CurrentTheme.Text
-        ConfigNameLbl.TextSize = 12
-        ConfigNameLbl.TextTransparency = 0.35
-        ConfigNameLbl.TextXAlignment = Enum.TextXAlignment.Left
-        ConfigNameLbl.TextTruncate = Enum.TextTruncate.AtEnd
-        AddToRegistry(ConfigNameLbl, "TextColor3", "Text")
-        TextGradient:Skip(ConfigNameLbl)
+        ConfigName.Parent = ConfigFrame
+        ConfigName.AnchorPoint = Vector2.new(0, 0.5)
+        ConfigName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ConfigName.BackgroundTransparency = 1
+        ConfigName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        ConfigName.BorderSizePixel = 0
+        ConfigName.Position = UDim2.new(0, 40, 0.5, 0)
+        ConfigName.Size = UDim2.new(1, -47, 0, 15)
+        ConfigName.ZIndex = 9
+        ConfigName.Font = Enum.Font.GothamMedium
+        ConfigName.Text = defaultName
+        ConfigName.TextColor3 = CurrentTheme.Text
+        ConfigName.TextSize = 12
+        ConfigName.TextTransparency = 0.35
+        ConfigName.TextXAlignment = Enum.TextXAlignment.Left
+        ConfigName.TextTruncate = Enum.TextTruncate.AtEnd
+        AddToRegistry(ConfigName, "TextColor3", "Text")
+        TextGradient:Skip(ConfigName)
 
-        ConfigArrow.Name = "ConfigArrow"
-        ConfigArrow.Parent = ConfigFrame
-        ConfigArrow.AnchorPoint = Vector2.new(1, 0.5)
-        ConfigArrow.BackgroundTransparency = 1
-        ConfigArrow.Position = UDim2.new(1, -2, 0.5, 0)
-        ConfigArrow.Size = UDim2.new(0, 25, 0, 25)
-        ConfigArrow.ZIndex = 9
-        ConfigArrow.Image = "rbxassetid://18865373378"
-        ConfigArrow.ImageColor3 = CurrentTheme.Text
-        ConfigArrow.ImageTransparency = 0.25
-        ConfigArrow.ScaleType = Enum.ScaleType.Fit
-        AddToRegistry(ConfigArrow, "ImageColor3", "Text")
+        ConfigBthIcon.Parent = ConfigFrame
+        ConfigBthIcon.AnchorPoint = Vector2.new(1, 0.5)
+        ConfigBthIcon.Position = UDim2.new(1, -2, 0.5, 0)
+        ConfigBthIcon.Size = UDim2.new(0, 25, 0, 25)
+        ConfigBthIcon.ZIndex = 9
 
-        -- ─── ConfigMenu 弹出面板 ─────────────────────────────
+        -- ─── ConfigMenu（弹出面板）───────────────────────────
         local ConfigMenu = Instance.new("Frame")
         local ConfigMenuCorner = Instance.new("UICorner")
-        local ConfigMenuStroke = Instance.new("UIStroke")
         local ConfigMenuList = Instance.new("UIListLayout")
+        local ConfigMenuStroke = Instance.new("UIStroke")
 
         ConfigMenu.Name = "ConfigMenu"
         ConfigMenu.Parent = MainFrame
+        ConfigMenu.AnchorPoint = Vector2.new(0.5, 0)
         ConfigMenu.BackgroundColor3 = CurrentTheme.Main
-        ConfigMenu.BackgroundTransparency = 1
+        ConfigMenu.BackgroundTransparency = 0.035
+        ConfigMenu.BorderColor3 = Color3.fromRGB(0, 0, 0)
         ConfigMenu.BorderSizePixel = 0
         ConfigMenu.ClipsDescendants = true
+        ConfigMenu.Position = UDim2.fromOffset(296, 120)
+        ConfigMenu.Size = UDim2.new(0, 220, 0, 110)
         ConfigMenu.Visible = false
-        ConfigMenu.Position = UDim2.new(0, 186, 0, 46)
-        ConfigMenu.Size = UDim2.new(0, 220, 0, 0)
         ConfigMenu.ZIndex = 200
         AddToRegistry(ConfigMenu, "BackgroundColor3", "Main")
 
         ConfigMenuCorner.CornerRadius = UDim.new(0, 10)
         ConfigMenuCorner.Parent = ConfigMenu
 
-        ConfigMenuStroke.Transparency = 1
-        ConfigMenuStroke.Color = CurrentTheme.Stroke
-        ConfigMenuStroke.Parent = ConfigMenu
-        AddToRegistry(ConfigMenuStroke, "Color", "Stroke")
-
         ConfigMenuList.Parent = ConfigMenu
         ConfigMenuList.HorizontalAlignment = Enum.HorizontalAlignment.Center
         ConfigMenuList.SortOrder = Enum.SortOrder.LayoutOrder
         ConfigMenuList.Padding = UDim.new(0, 4)
 
-        local MenuPadding = Instance.new("UIPadding")
-        MenuPadding.PaddingTop = UDim.new(0, 4)
-        MenuPadding.PaddingBottom = UDim.new(0, 4)
-        MenuPadding.Parent = ConfigMenu
+        ConfigMenuStroke.Transparency = 1
+        ConfigMenuStroke.Color = CurrentTheme.Stroke
+        ConfigMenuStroke.Parent = ConfigMenu
+        AddToRegistry(ConfigMenuStroke, "Color", "Stroke")
 
-        -- ─── 顶部输入行 ──────────────────────────────────────
+        -- ─── InputFrame（顶部输入框 + 加号）──────────────────
         local InputFrame = Instance.new("Frame")
         local InputFrameCorner = Instance.new("UICorner")
         local InputTitleLbl = Instance.new("TextLabel")
@@ -6067,7 +6063,7 @@ function Fenglib:CreateWindow(Config)
         local TextInputBox = Instance.new("TextBox")
         local AddBtn = Instance.new("TextButton")
         local AddBtnCorner = Instance.new("UICorner")
-        local AddBtnIcon = Instance.new("ImageLabel")
+        local AddBtnIcon = makeIcon("plus-large", 18, 14, 203)
 
         InputFrame.Name = "InputFrame"
         InputFrame.Parent = ConfigMenu
@@ -6085,7 +6081,7 @@ function Fenglib:CreateWindow(Config)
         InputTitleLbl.Size = UDim2.new(0, 60, 0, 15)
         InputTitleLbl.ZIndex = 202
         InputTitleLbl.Font = Enum.Font.GothamMedium
-        InputTitleLbl.Text = "配置"
+        InputTitleLbl.Text = "Config"
         InputTitleLbl.TextColor3 = CurrentTheme.Text
         InputTitleLbl.TextSize = 13
         InputTitleLbl.TextTransparency = 0.2
@@ -6097,6 +6093,7 @@ function Fenglib:CreateWindow(Config)
         InputLineFrame.AnchorPoint = Vector2.new(0.5, 1)
         InputLineFrame.BackgroundColor3 = CurrentTheme.Stroke
         InputLineFrame.BackgroundTransparency = 0.65
+        InputLineFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
         InputLineFrame.BorderSizePixel = 0
         InputLineFrame.Position = UDim2.new(0.5, 0, 1, 0)
         InputLineFrame.Size = UDim2.new(1, -20, 0, 1)
@@ -6108,6 +6105,7 @@ function Fenglib:CreateWindow(Config)
         InputHandler.Position = UDim2.new(1, -11, 0, 2)
         InputHandler.Size = UDim2.new(1, -20, 0, 25)
         InputHandler.ZIndex = 202
+
         InputHandlerLayout.Parent = InputHandler
         InputHandlerLayout.FillDirection = Enum.FillDirection.Horizontal
         InputHandlerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
@@ -6117,7 +6115,9 @@ function Fenglib:CreateWindow(Config)
 
         TextInputFrame.Parent = InputHandler
         TextInputFrame.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+        TextInputFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
         TextInputFrame.BorderSizePixel = 0
+        TextInputFrame.ClipsDescendants = true
         TextInputFrame.Size = UDim2.new(0, 100, 0, 18)
         TextInputFrame.ZIndex = 202
         TextInputFrame.LayoutOrder = 1
@@ -6132,12 +6132,14 @@ function Fenglib:CreateWindow(Config)
         TextInputBox.Parent = TextInputFrame
         TextInputBox.AnchorPoint = Vector2.new(0, 0.5)
         TextInputBox.BackgroundTransparency = 1
+        TextInputBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        TextInputBox.BorderSizePixel = 0
         TextInputBox.Position = UDim2.new(0, 5, 0.5, 0)
-        TextInputBox.Size = UDim2.new(1, -10, 0, 17)
-        TextInputBox.ZIndex = 203
+        TextInputBox.Size = UDim2.new(1, -5, 0, 17)
+        TextInputBox.ZIndex = 202
         TextInputBox.ClearTextOnFocus = false
         TextInputBox.Font = Enum.Font.GothamMedium
-        TextInputBox.PlaceholderText = "配置名称 ..."
+        TextInputBox.PlaceholderText = "Config Name ..."
         TextInputBox.Text = ""
         TextInputBox.TextColor3 = CurrentTheme.Text
         TextInputBox.TextSize = 11
@@ -6147,9 +6149,13 @@ function Fenglib:CreateWindow(Config)
         TextGradient:Skip(TextInputBox)
 
         AddBtn.Parent = InputHandler
+        AddBtn.BackgroundColor3 = Color3.fromRGB(39, 40, 49)
         AddBtn.BackgroundTransparency = 1
+        AddBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        AddBtn.BorderSizePixel = 0
         AddBtn.Text = ""
         AddBtn.AutoButtonColor = false
+        AddBtn.ClipsDescendants = true
         AddBtn.Size = UDim2.new(0, 20, 0, 18)
         AddBtn.ZIndex = 202
         AddBtn.LayoutOrder = 2
@@ -6159,15 +6165,9 @@ function Fenglib:CreateWindow(Config)
 
         AddBtnIcon.Parent = AddBtn
         AddBtnIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-        AddBtnIcon.BackgroundTransparency = 1
         AddBtnIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-        AddBtnIcon.Size = UDim2.new(0, 16, 0, 16)
+        AddBtnIcon.Size = UDim2.new(1, 0, 1, 0)
         AddBtnIcon.ZIndex = 203
-        AddBtnIcon.Image = "rbxassetid://10709808797"
-        AddBtnIcon.ImageColor3 = CurrentTheme.Text
-        AddBtnIcon.ImageTransparency = 0.35
-        AddBtnIcon.ScaleType = Enum.ScaleType.Fit
-        AddToRegistry(AddBtnIcon, "ImageColor3", "Text")
 
         -- ─── 工具函数 ────────────────────────────────────────
         local function isMouseOverFrame(frame, mp)
@@ -6178,98 +6178,82 @@ function Fenglib:CreateWindow(Config)
                and mp.Y >= ap.Y and mp.Y <= ap.Y + as.Y
         end
 
-        local function makeConfigItemButton(icon, hoverColor, onClick)
-            local btn = Instance.new("TextButton")
-            btn.BackgroundTransparency = 1
-            btn.Text = ""
-            btn.AutoButtonColor = false
-            btn.Size = UDim2.new(0, 20, 0, 18)
-            btn.ZIndex = 203
-
-            local ic = Instance.new("ImageLabel")
-            ic.Parent = btn
-            ic.AnchorPoint = Vector2.new(0.5, 0.5)
-            ic.BackgroundTransparency = 1
-            ic.Position = UDim2.new(0.5, 0, 0.5, 0)
-            ic.Size = UDim2.new(0, 16, 0, 16)
-            ic.ZIndex = 204
-            ic.Image = icon
-            ic.ImageColor3 = CurrentTheme.Text
-            ic.ImageTransparency = 0.4
-            ic.ScaleType = Enum.ScaleType.Fit
-            AddToRegistry(ic, "ImageColor3", "Text")
-
-            btn.MouseEnter:Connect(function()
-                Tween(ic, {ImageColor3 = hoverColor, ImageTransparency = 0.2}, 0.15)
-            end)
-            btn.MouseLeave:Connect(function()
-                Tween(ic, {ImageColor3 = CurrentTheme.Text, ImageTransparency = 0.4}, 0.15)
-            end)
-            btn.MouseButton1Click:Connect(onClick)
-            return btn
-        end
-
         -- ─── 刷新配置列表 ────────────────────────────────────
         local function refreshConfigList()
-            -- 清理旧项
             for _, child in ipairs(ConfigMenu:GetChildren()) do
                 if child:GetAttribute("ConfigItem") then
                     child:Destroy()
                 end
             end
 
-            ConfigNameLbl.Text = mgr.Selected or "Default"
+            ConfigName.Text = mgr.Selected or "Default"
 
             local list = mgr:ListConfigs()
 
             for i, cfgName in ipairs(list) do
-                local ItemFrame = Instance.new("Frame")
+                local ConfigItemFrame = Instance.new("Frame")
                 local ItemCorner = Instance.new("UICorner")
                 local ItemStroke = Instance.new("UIStroke")
-                local ItemLbl = Instance.new("TextLabel")
+                local ItemLabel = Instance.new("TextLabel")
                 local ItemHandler = Instance.new("Frame")
                 local ItemLayout = Instance.new("UIListLayout")
 
-                ItemFrame.Name = "CfgItem_" .. cfgName
-                ItemFrame.Parent = ConfigMenu
-                ItemFrame.BackgroundColor3 = CurrentTheme.Top
-                ItemFrame.BackgroundTransparency = 0.05
-                ItemFrame.BorderSizePixel = 0
-                ItemFrame.Size = UDim2.new(1, -10, 0, 30)
-                ItemFrame.ZIndex = 201
-                ItemFrame.LayoutOrder = i + 1
-                ItemFrame:SetAttribute("ConfigItem", true)
-                AddToRegistry(ItemFrame, "BackgroundColor3", "Top")
+                local DeleteConfig = Instance.new("TextButton")
+                local DeleteCorner = Instance.new("UICorner")
+                local DeleteIcon = makeIcon("trash-can", 16, 12, 155)
+
+                local OverwriteConfig = Instance.new("TextButton")
+                local OverwriteCorner = Instance.new("UICorner")
+                local OverwriteIcon = makeIcon("pencil-square", 16, 12, 155)
+
+                local LoadConfig = Instance.new("TextButton")
+                local LoadCorner = Instance.new("UICorner")
+                local LoadIcon = makeIcon("arrow-right-from-portrait-rectangle", 16, 12, 155)
+
+                ConfigItemFrame.Name = "CfgItem_" .. cfgName
+                ConfigItemFrame.Parent = ConfigMenu
+                ConfigItemFrame.BackgroundColor3 = Color3.fromRGB(21, 20, 27)
+                ConfigItemFrame.BackgroundTransparency = 0
+                ConfigItemFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                ConfigItemFrame.BorderSizePixel = 0
+                ConfigItemFrame.Size = UDim2.new(1, -10, 0, 30)
+                ConfigItemFrame.ZIndex = 153
+                ConfigItemFrame.LayoutOrder = i + 1
+                ConfigItemFrame:SetAttribute("ConfigItem", true)
+                AddToRegistry(ConfigItemFrame, "BackgroundColor3", "Top")
 
                 ItemCorner.CornerRadius = UDim.new(0, 5)
-                ItemCorner.Parent = ItemFrame
+                ItemCorner.Parent = ConfigItemFrame
 
                 ItemStroke.Transparency = 0.5
                 ItemStroke.Color = CurrentTheme.Stroke
-                ItemStroke.Parent = ItemFrame
+                ItemStroke.Parent = ConfigItemFrame
                 AddToRegistry(ItemStroke, "Color", "Stroke")
 
-                ItemLbl.Parent = ItemFrame
-                ItemLbl.BackgroundTransparency = 1
-                ItemLbl.Position = UDim2.new(0, 11, 0, 7)
-                ItemLbl.Size = UDim2.new(1, -100, 0, 15)
-                ItemLbl.ZIndex = 202
-                ItemLbl.Font = Enum.Font.GothamMedium
-                ItemLbl.Text = cfgName
-                ItemLbl.TextColor3 = CurrentTheme.Text
-                ItemLbl.TextSize = 12
-                ItemLbl.TextTransparency = 0.2
-                ItemLbl.TextXAlignment = Enum.TextXAlignment.Left
-                ItemLbl.TextTruncate = Enum.TextTruncate.AtEnd
-                AddToRegistry(ItemLbl, "TextColor3", "Text")
-                TextGradient:Skip(ItemLbl)
+                ItemLabel.Parent = ConfigItemFrame
+                ItemLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                ItemLabel.BackgroundTransparency = 1
+                ItemLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                ItemLabel.BorderSizePixel = 0
+                ItemLabel.Position = UDim2.new(0, 11, 0, 7)
+                ItemLabel.Size = UDim2.new(1, -95, 0, 15)
+                ItemLabel.ZIndex = 154
+                ItemLabel.Font = Enum.Font.GothamMedium
+                ItemLabel.Text = cfgName
+                ItemLabel.TextColor3 = CurrentTheme.Text
+                ItemLabel.TextSize = 13
+                ItemLabel.TextTransparency = 0.2
+                ItemLabel.TextXAlignment = Enum.TextXAlignment.Left
+                ItemLabel.TextTruncate = Enum.TextTruncate.AtEnd
+                AddToRegistry(ItemLabel, "TextColor3", "Text")
+                TextGradient:Skip(ItemLabel)
 
-                ItemHandler.Parent = ItemFrame
+                ItemHandler.Parent = ConfigItemFrame
                 ItemHandler.AnchorPoint = Vector2.new(1, 0)
                 ItemHandler.BackgroundTransparency = 1
                 ItemHandler.Position = UDim2.new(1, -11, 0, 2)
                 ItemHandler.Size = UDim2.new(0, 75, 0, 25)
-                ItemHandler.ZIndex = 202
+                ItemHandler.ZIndex = 154
 
                 ItemLayout.Parent = ItemHandler
                 ItemLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -6278,55 +6262,126 @@ function Fenglib:CreateWindow(Config)
                 ItemLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 ItemLayout.Padding = UDim.new(0, 5)
 
-                -- 删除按钮
-                local DelBtn = makeConfigItemButton(
-                    "rbxassetid://11476638299",
-                    Color3.fromRGB(223, 125, 125),
-                    function()
-                        if cfgName == "Default" then
-                            return
-                        end
-                        mgr:DeleteConfig(cfgName)
-                        refreshConfigList()
-                    end
-                )
-                DelBtn.Parent = ItemHandler
-                DelBtn.LayoutOrder = 1
+                DeleteConfig.Parent = ItemHandler
+                DeleteConfig.BackgroundColor3 = Color3.fromRGB(39, 40, 49)
+                DeleteConfig.BackgroundTransparency = 1
+                DeleteConfig.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                DeleteConfig.BorderSizePixel = 0
+                DeleteConfig.Text = ""
+                DeleteConfig.AutoButtonColor = false
+                DeleteConfig.ClipsDescendants = true
+                DeleteConfig.Size = UDim2.new(0, 20, 0, 18)
+                DeleteConfig.ZIndex = 153
+                DeleteConfig.LayoutOrder = 1
 
-                -- 覆盖保存按钮
-                local SaveBtn = makeConfigItemButton(
-                    "rbxassetid://11940434418",
-                    CurrentTheme.Accent,
-                    function()
-                        mgr.Selected = cfgName
-                        mgr:WriteConfig(cfgName, true)
-                        refreshConfigList()
-                    end
-                )
-                SaveBtn.Parent = ItemHandler
-                SaveBtn.LayoutOrder = 2
+                DeleteCorner.CornerRadius = UDim.new(0, 4)
+                DeleteCorner.Parent = DeleteConfig
 
-                -- 加载按钮
-                local LoadBtn = makeConfigItemButton(
-                    "rbxassetid://11486688776",
-                    CurrentTheme.Accent,
-                    function()
-                        mgr:LoadConfig(cfgName)
-                        refreshConfigList()
-                    end
-                )
-                LoadBtn.Parent = ItemHandler
-                LoadBtn.LayoutOrder = 3
+                DeleteIcon.Parent = DeleteConfig
+                DeleteIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+                DeleteIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+                DeleteIcon.Size = UDim2.new(0, 16, 0, 16)
+                DeleteIcon.ZIndex = 154
+
+                OverwriteConfig.Parent = ItemHandler
+                OverwriteConfig.BackgroundColor3 = Color3.fromRGB(39, 40, 49)
+                OverwriteConfig.BackgroundTransparency = 1
+                OverwriteConfig.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                OverwriteConfig.BorderSizePixel = 0
+                OverwriteConfig.Text = ""
+                OverwriteConfig.AutoButtonColor = false
+                OverwriteConfig.ClipsDescendants = true
+                OverwriteConfig.Size = UDim2.new(0, 20, 0, 18)
+                OverwriteConfig.ZIndex = 153
+                OverwriteConfig.LayoutOrder = 2
+
+                OverwriteCorner.CornerRadius = UDim.new(0, 4)
+                OverwriteCorner.Parent = OverwriteConfig
+
+                OverwriteIcon.Parent = OverwriteConfig
+                OverwriteIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+                OverwriteIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+                OverwriteIcon.Size = UDim2.new(0, 16, 0, 16)
+                OverwriteIcon.ZIndex = 154
+
+                LoadConfig.Parent = ItemHandler
+                LoadConfig.BackgroundColor3 = Color3.fromRGB(39, 40, 49)
+                LoadConfig.BackgroundTransparency = 1
+                LoadConfig.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                LoadConfig.BorderSizePixel = 0
+                LoadConfig.Text = ""
+                LoadConfig.AutoButtonColor = false
+                LoadConfig.ClipsDescendants = true
+                LoadConfig.Size = UDim2.new(0, 20, 0, 18)
+                LoadConfig.ZIndex = 153
+                LoadConfig.LayoutOrder = 3
+
+                LoadCorner.CornerRadius = UDim.new(0, 4)
+                LoadCorner.Parent = LoadConfig
+
+                LoadIcon.Parent = LoadConfig
+                LoadIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+                LoadIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+                LoadIcon.Size = UDim2.new(0, 16, 0, 16)
+                LoadIcon.ZIndex = 154
+
+                -- 交互
+                DeleteConfig.MouseEnter:Connect(function()
+                    Tween(DeleteIcon, {TextTransparency = 0.2, TextColor3 = Color3.fromRGB(223, 125, 125)}, 0.15)
+                end)
+                DeleteConfig.MouseLeave:Connect(function()
+                    Tween(DeleteIcon, {TextTransparency = 0.4, TextColor3 = CurrentTheme.Text}, 0.15)
+                end)
+                DeleteConfig.MouseButton1Click:Connect(function()
+                    if cfgName == "Default" then return end
+                    mgr:DeleteConfig(cfgName)
+                    refreshConfigList()
+                end)
+
+                OverwriteConfig.MouseEnter:Connect(function()
+                    Tween(OverwriteIcon, {TextTransparency = 0.2, TextColor3 = CurrentTheme.Accent}, 0.15)
+                end)
+                OverwriteConfig.MouseLeave:Connect(function()
+                    Tween(OverwriteIcon, {TextTransparency = 0.4, TextColor3 = CurrentTheme.Text}, 0.15)
+                end)
+                OverwriteConfig.MouseButton1Click:Connect(function()
+                    mgr.Selected = cfgName
+                    mgr:WriteConfig(cfgName, true)
+                    refreshConfigList()
+                end)
+
+                LoadConfig.MouseEnter:Connect(function()
+                    Tween(LoadIcon, {TextTransparency = 0.2, TextColor3 = CurrentTheme.Accent}, 0.15)
+                end)
+                LoadConfig.MouseLeave:Connect(function()
+                    Tween(LoadIcon, {TextTransparency = 0.4, TextColor3 = CurrentTheme.Text}, 0.15)
+                end)
+                LoadConfig.MouseButton1Click:Connect(function()
+                    mgr:LoadConfig(cfgName)
+                    refreshConfigList()
+                end)
+
+                ConfigItemFrame.MouseEnter:Connect(function()
+                    Tween(ItemStroke, {Transparency = 0.25}, 0.15)
+                end)
+                ConfigItemFrame.MouseLeave:Connect(function()
+                    Tween(ItemStroke, {Transparency = 0.5}, 0.15)
+                end)
             end
 
-            -- 更新高度
             task.defer(function()
                 local total = 30 + (#list * 34) + 8
                 Tween(ConfigMenu, {Size = UDim2.new(0, 220, 0, total)}, 0.2)
             end)
         end
 
-        -- ─── 添加新配置 ──────────────────────────────────────
+        -- 加号按钮
+        AddBtn.MouseEnter:Connect(function()
+            Tween(AddBtnIcon, {TextTransparency = 0.1}, 0.15)
+        end)
+        AddBtn.MouseLeave:Connect(function()
+            Tween(AddBtnIcon, {TextTransparency = 0.35}, 0.15)
+        end)
         AddBtn.MouseButton1Click:Connect(function()
             local name = TextInputBox.Text
             if name and name:byte()
@@ -6340,26 +6395,19 @@ function Fenglib:CreateWindow(Config)
             end
         end)
 
-        AddBtn.MouseEnter:Connect(function()
-            Tween(AddBtnIcon, {ImageTransparency = 0.1}, 0.15)
-        end)
-        AddBtn.MouseLeave:Connect(function()
-            Tween(AddBtnIcon, {ImageTransparency = 0.35}, 0.15)
-        end)
-
-        -- ─── 打开/关闭 ───────────────────────────────────────
+        -- 打开/关闭
         local configOpen = false
+        local outsideConn = nil
 
         local function closeConfigMenu()
             if not configOpen then return end
             configOpen = false
+            if outsideConn then outsideConn:Disconnect(); outsideConn = nil end
             Tween(ConfigMenu, {BackgroundTransparency = 1}, 0.15)
             Tween(ConfigMenuStroke, {Transparency = 1}, 0.15)
-            Tween(ConfigArrow, {Rotation = 0}, 0.2)
+            Tween(ConfigBthIcon, {Rotation = 0}, 0.2)
             task.delay(0.16, function()
-                if not configOpen then
-                    ConfigMenu.Visible = false
-                end
+                if not configOpen then ConfigMenu.Visible = false end
             end)
         end
 
@@ -6370,36 +6418,34 @@ function Fenglib:CreateWindow(Config)
             refreshConfigList()
             Tween(ConfigMenu, {BackgroundTransparency = 0.035}, 0.15)
             Tween(ConfigMenuStroke, {Transparency = 0.65}, 0.15)
-            Tween(ConfigArrow, {Rotation = 180}, 0.2)
+            Tween(ConfigBthIcon, {Rotation = 180}, 0.2)
+            if outsideConn then outsideConn:Disconnect() end
+            outsideConn = UserInputService.InputBegan:Connect(function(input)
+                if not configOpen then return end
+                if input.UserInputType ~= Enum.UserInputType.MouseButton1
+                   and input.UserInputType ~= Enum.UserInputType.Touch then
+                    return
+                end
+                local mp = UserInputService:GetMouseLocation()
+                if not isMouseOverFrame(ConfigMenu, mp)
+                   and not isMouseOverFrame(ConfigFrame, mp) then
+                    closeConfigMenu()
+                end
+            end)
         end
 
         local ConfigClickBtn = Instance.new("TextButton")
         ConfigClickBtn.Parent = ConfigFrame
-        ConfigClickBtn.Size = UDim2.new(1, 0, 1, 0)
         ConfigClickBtn.BackgroundTransparency = 1
+        ConfigClickBtn.BorderSizePixel = 0
         ConfigClickBtn.Text = ""
         ConfigClickBtn.AutoButtonColor = false
+        ConfigClickBtn.Size = UDim2.new(1, 0, 1, 0)
         ConfigClickBtn.ZIndex = 10
-
         ConfigClickBtn.MouseButton1Click:Connect(function()
             if configOpen then closeConfigMenu() else openConfigMenu() end
         end)
 
-        -- 点击外部关闭
-        UserInputService.InputBegan:Connect(function(input)
-            if not configOpen then return end
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1
-               and input.UserInputType ~= Enum.UserInputType.Touch then
-                return
-            end
-            local mp = UserInputService:GetMouseLocation()
-            if not isMouseOverFrame(ConfigMenu, mp)
-               and not isMouseOverFrame(ConfigFrame, mp) then
-                closeConfigMenu()
-            end
-        end)
-
-        -- 初始渲染
         refreshConfigList()
     end
 
