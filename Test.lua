@@ -4899,7 +4899,7 @@ function Fenglib:CreateWindow(Config)
     end)
 
     -- ============================================================
-    -- 配置能力挂载（无 UI）
+    -- 配置能力挂载（含 UI）
     -- ============================================================
     do
         local cfgOpts = type(Config.Config) == "table" and Config.Config or {}
@@ -4950,6 +4950,269 @@ function Fenglib:CreateWindow(Config)
         end
 
         CfgMgr:StartAuto()
+
+        -- ============================================================
+        -- 配置 UI（从 kys.lua 完整搬运）
+        -- 顶部按钮 + 悬浮面板（新建/保存/加载/删除）
+        -- ============================================================
+        local ConfigButtonIcon = 9904843409
+
+        local ConfigHeaderBtn = createControlButton(ConfigButtonIcon, nil, function() end)
+
+        local ConfigPanel = Instance.new("Frame")
+        ConfigPanel.Name = "FengConfigPanel"
+        ConfigPanel.Size = UDim2.new(0, 260, 0, 300)
+        ConfigPanel.Position = UDim2.new(0, 176 + 12, 0, 60)
+        ConfigPanel.BackgroundColor3 = CurrentTheme.Main
+        ConfigPanel.BackgroundTransparency = 0.03
+        ConfigPanel.BorderSizePixel = 0
+        ConfigPanel.ClipsDescendants = true
+        ConfigPanel.Visible = false
+        ConfigPanel.ZIndex = 150
+        ConfigPanel.Parent = RightMenuFrame
+        Instance.new("UICorner", ConfigPanel).CornerRadius = UDim.new(0, 12)
+        AddToRegistry(ConfigPanel, "BackgroundColor3", "Main")
+
+        -- 阴影
+        for _, th in ipairs({6, 5, 4, 3}) do
+            local s = Instance.new("UIStroke")
+            s.Thickness = th
+            s.Color = Color3.new(0, 0, 0)
+            s.Transparency = 0.9
+            s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            s.Parent = ConfigPanel
+        end
+
+        local ConfigPanelStroke = Instance.new("UIStroke")
+        ConfigPanelStroke.Thickness = 1
+        ConfigPanelStroke.Transparency = 0.5
+        ConfigPanelStroke.Color = CurrentTheme.Stroke
+        ConfigPanelStroke.Parent = ConfigPanel
+        table.insert(ThemeListeners, function() ConfigPanelStroke.Color = CurrentTheme.Stroke end)
+
+        -- 标题行
+        local TitleRow = Instance.new("Frame")
+        TitleRow.Size = UDim2.new(1, -20, 0, 24)
+        TitleRow.Position = UDim2.new(0, 10, 0, 10)
+        TitleRow.BackgroundTransparency = 1
+        TitleRow.Parent = ConfigPanel
+
+        local TitleLbl = Instance.new("TextLabel")
+        TitleLbl.Text = "配置管理"
+        TitleLbl.Size = UDim2.new(1, -26, 1, 0)
+        TitleLbl.BackgroundTransparency = 1
+        TitleLbl.Font = Enum.Font.GothamBold
+        TitleLbl.TextSize = 13
+        TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+        TitleLbl.Parent = TitleRow
+        AddToRegistry(TitleLbl, "TextColor3", "Text")
+
+        local CloseCfgBtn = Instance.new("TextButton")
+        CloseCfgBtn.Size = UDim2.new(0, 22, 0, 22)
+        CloseCfgBtn.Position = UDim2.new(1, -22, 0, 1)
+        CloseCfgBtn.BackgroundTransparency = 1
+        CloseCfgBtn.Text = "✕"
+        CloseCfgBtn.Font = Enum.Font.GothamBold
+        CloseCfgBtn.TextSize = 14
+        CloseCfgBtn.AutoButtonColor = false
+        CloseCfgBtn.Parent = TitleRow
+        AddToRegistry(CloseCfgBtn, "TextColor3", "SubText")
+        TextGradient:Skip(CloseCfgBtn)
+
+        -- 当前选中的配置显示
+        local SelectedRow = Instance.new("Frame")
+        SelectedRow.Size = UDim2.new(1, -20, 0, 16)
+        SelectedRow.Position = UDim2.new(0, 10, 0, 36)
+        SelectedRow.BackgroundTransparency = 1
+        SelectedRow.Parent = ConfigPanel
+
+        local SelectedLbl = Instance.new("TextLabel")
+        SelectedLbl.Text = "当前: " .. (CfgMgr.Selected or "Default")
+        SelectedLbl.Size = UDim2.new(1, 0, 1, 0)
+        SelectedLbl.BackgroundTransparency = 1
+        SelectedLbl.Font = Enum.Font.GothamMedium
+        SelectedLbl.TextSize = 11
+        SelectedLbl.TextXAlignment = Enum.TextXAlignment.Left
+        SelectedLbl.Parent = SelectedRow
+        AddToRegistry(SelectedLbl, "TextColor3", "SubText")
+        TextGradient:Skip(SelectedLbl)
+
+        -- 输入行
+        local InputRow = Instance.new("Frame")
+        InputRow.Size = UDim2.new(1, -20, 0, 28)
+        InputRow.Position = UDim2.new(0, 10, 0, 58)
+        InputRow.BackgroundTransparency = 1
+        InputRow.Parent = ConfigPanel
+
+        local CfgInputBox = Instance.new("TextBox")
+        CfgInputBox.Size = UDim2.new(1, -34, 1, 0)
+        CfgInputBox.PlaceholderText = "新建配置名..."
+        CfgInputBox.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+        CfgInputBox.BorderSizePixel = 0
+        CfgInputBox.Font = Enum.Font.GothamMedium
+        CfgInputBox.TextSize = 12
+        CfgInputBox.TextXAlignment = Enum.TextXAlignment.Left
+        CfgInputBox.ClearTextOnFocus = false
+        CfgInputBox.Text = ""
+        CfgInputBox.Parent = InputRow
+        AddToRegistry(CfgInputBox, "TextColor3", "Text")
+        Instance.new("UICorner", CfgInputBox).CornerRadius = UDim.new(0, 5)
+        TextGradient:Skip(CfgInputBox)
+
+        local CfgInputPad = Instance.new("UIPadding")
+        CfgInputPad.PaddingLeft = UDim.new(0, 8)
+        CfgInputPad.Parent = CfgInputBox
+
+        local AddCfgBtn = Instance.new("TextButton")
+        AddCfgBtn.Size = UDim2.new(0, 28, 1, 0)
+        AddCfgBtn.Position = UDim2.new(1, -28, 0, 0)
+        AddCfgBtn.BackgroundColor3 = CurrentTheme.Accent
+        AddCfgBtn.BorderSizePixel = 0
+        AddCfgBtn.Text = "+"
+        AddCfgBtn.Font = Enum.Font.GothamBold
+        AddCfgBtn.TextSize = 16
+        AddCfgBtn.TextColor3 = Color3.new(1, 1, 1)
+        AddCfgBtn.AutoButtonColor = false
+        AddCfgBtn.Parent = InputRow
+        AddToRegistry(AddCfgBtn, "BackgroundColor3", "Accent")
+        Instance.new("UICorner", AddCfgBtn).CornerRadius = UDim.new(0, 5)
+        TextGradient:Skip(AddCfgBtn)
+
+        -- 配置列表
+        local CfgScroll = Instance.new("ScrollingFrame")
+        CfgScroll.Size = UDim2.new(1, -20, 1, -100)
+        CfgScroll.Position = UDim2.new(0, 10, 0, 94)
+        CfgScroll.BackgroundTransparency = 1
+        CfgScroll.BorderSizePixel = 0
+        CfgScroll.ScrollBarThickness = 2
+        CfgScroll.ScrollBarImageColor3 = CurrentTheme.Accent
+        CfgScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        CfgScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+        CfgScroll.Parent = ConfigPanel
+        AddToRegistry(CfgScroll, "ScrollBarImageColor3", "Accent")
+
+        local CfgScrollLayout = Instance.new("UIListLayout")
+        CfgScrollLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        CfgScrollLayout.Padding = UDim.new(0, 3)
+        CfgScrollLayout.Parent = CfgScroll
+
+        local function RefreshConfigList()
+            for _, c in ipairs(CfgScroll:GetChildren()) do
+                if not c:IsA("UIListLayout") then
+                    c:Destroy()
+                end
+            end
+
+            SelectedLbl.Text = "当前: " .. (CfgMgr.Selected or "Default")
+
+            local configs = CfgMgr:ListConfigs()
+            -- 确保 Default 一定存在
+            if not table.find(configs, "Default") then
+                if not isfolder(CfgMgr.Folder) then makefolder(CfgMgr.Folder) end
+                local p = CfgMgr.Folder .. "/Default"
+                if not isfile(p) then
+                    writefile(p, CfgMgr:GetData())
+                end
+                configs = CfgMgr:ListConfigs()
+            end
+
+            local order = 0
+            for _, name in ipairs(configs) do
+                order = order + 1
+                local item = Instance.new("Frame")
+                item.Size = UDim2.new(1, -6, 0, 30)
+                item.BackgroundColor3 = Color3.fromRGB(20, 22, 27)
+                item.BackgroundTransparency = 0.5
+                item.BorderSizePixel = 0
+                item.LayoutOrder = order
+                item.Parent = CfgScroll
+                Instance.new("UICorner", item).CornerRadius = UDim.new(0, 6)
+                AddToRegistry(item, "BackgroundColor3", "Top")
+
+                local isSelected = (name == (CfgMgr.Selected or "Default"))
+                local nameLbl = Instance.new("TextLabel")
+                nameLbl.Text = (isSelected and "● " or "") .. name
+                nameLbl.Size = UDim2.new(1, -95, 1, 0)
+                nameLbl.Position = UDim2.new(0, 10, 0, 0)
+                nameLbl.BackgroundTransparency = 1
+                nameLbl.Font = Enum.Font.GothamMedium
+                nameLbl.TextSize = 12
+                nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+                nameLbl.TextTruncate = Enum.TextTruncate.AtEnd
+                nameLbl.Parent = item
+                AddToRegistry(nameLbl, "TextColor3", isSelected and "Accent" or "Text")
+                TextGradient:Skip(nameLbl)
+
+                local function makeIconBtn(xOff, label)
+                    local b = Instance.new("TextButton")
+                    b.Size = UDim2.new(0, 24, 0, 20)
+                    b.Position = UDim2.new(1, xOff, 0.5, -10)
+                    b.BackgroundColor3 = Color3.fromRGB(30, 32, 40)
+                    b.BorderSizePixel = 0
+                    b.Text = label
+                    b.Font = Enum.Font.GothamBold
+                    b.TextSize = 11
+                    b.TextColor3 = CurrentTheme.Text
+                    b.AutoButtonColor = false
+                    b.Parent = item
+                    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
+                    AddToRegistry(b, "TextColor3", "Text")
+                    TextGradient:Skip(b)
+                    return b
+                end
+
+                local saveBtn = makeIconBtn(-85, "存")
+                local loadBtn = makeIconBtn(-58, "读")
+                local delBtn  = makeIconBtn(-31, "删")
+
+                saveBtn.MouseButton1Click:Connect(function()
+                    CfgMgr:WriteConfig(name, true)
+                    task.wait(0.05)
+                    RefreshConfigList()
+                end)
+
+                loadBtn.MouseButton1Click:Connect(function()
+                    CfgMgr:LoadConfig(name)
+                    task.wait(0.05)
+                    RefreshConfigList()
+                end)
+
+                delBtn.MouseButton1Click:Connect(function()
+                    if name == "Default" then return end
+                    CfgMgr:DeleteConfig(name)
+                    task.wait(0.05)
+                    RefreshConfigList()
+                end)
+            end
+        end
+
+        AddCfgBtn.MouseButton1Click:Connect(function()
+            local name = CfgInputBox.Text
+            if name == "" then return end
+            if CfgMgr:WriteConfig(name, true) then
+                CfgInputBox.Text = ""
+                task.wait(0.05)
+                RefreshConfigList()
+            end
+        end)
+
+        CloseCfgBtn.MouseButton1Click:Connect(function()
+            ConfigPanel.Visible = false
+        end)
+
+        -- 用头部按钮做开关
+        ConfigHeaderBtn.MouseButton1Click:Connect(function()
+            ConfigPanel.Visible = not ConfigPanel.Visible
+            if ConfigPanel.Visible then
+                RefreshConfigList()
+            end
+        end)
+
+        RefreshConfigList()
+
+        Window._ConfigPanel = ConfigPanel
+        Window._ConfigRefresh = RefreshConfigList
+        Window._ConfigHeaderBtn = ConfigHeaderBtn
     end
 
     function Window:SaveConfig(name, overwrite)
@@ -4978,6 +5241,18 @@ function Fenglib:CreateWindow(Config)
     end
     function Window:RewriteConfigAsJson()
         return self.ConfigManager:RewriteSelectedAsJson()
+    end
+    function Window:ToggleConfigPanel(visible)
+        if not self._ConfigPanel then return end
+        if visible == nil then
+            self._ConfigPanel.Visible = not self._ConfigPanel.Visible
+        else
+            self._ConfigPanel.Visible = visible == true
+        end
+        if self._ConfigPanel.Visible and self._ConfigRefresh then
+            self._ConfigRefresh()
+        end
+        return self._ConfigPanel.Visible
     end
 
     Window._currentCategory = nil
