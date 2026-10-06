@@ -80,9 +80,6 @@ local function Tween(obj, props, time)
     TweenService:Create(obj, TweenInfo.new(time or 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
 
--- ═══════════════════════════════════════════════════════════════════
--- 补丁 A：Color3 安全序列化 + 稳定 ConfigId
--- ═══════════════════════════════════════════════════════════════════
 local function SerializeValue(v)
     if typeof(v) == "Color3" then
         return { __t = "Color3", hex = v:ToHex() }
@@ -112,7 +109,6 @@ local function NewConfigId(prefix, name)
     ConfigIdCounter = ConfigIdCounter + 1
     return tostring(prefix) .. "::" .. tostring(name or "") .. "::" .. tostring(ConfigIdCounter)
 end
--- ═══════════════════════════════════════════════════════════════════
 
 local TextGradient = {
     Enabled = true, Time = 0, Accumulator = 0,
@@ -242,9 +238,6 @@ function Fenglib:SetTheme(name)
     end
 end
 
--- ═══════════════════════════════════════════════════════════════════
--- 补丁 B：重写 SaveConfig / LoadConfig
--- ═══════════════════════════════════════════════════════════════════
 function Fenglib:SaveConfig(name, folder)
     name   = tostring(name or "config")
     folder = tostring(folder or "FenglibConfigs")
@@ -296,7 +289,6 @@ function Fenglib:LoadConfig(path)
     Fenglib._loading = false
     return true
 end
--- ═══════════════════════════════════════════════════════════════════
 
 local MediaManager = {Folder = "FengMediaCache"}
 function MediaManager:SetFolder(f) self.Folder = f end
@@ -602,7 +594,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local toggleText = config.Name or ""
         local Enabled = config.Value or false
         local callback = config.Callback or function() end
-        local controlId = NewConfigId("Toggle", toggleText)  -- 补丁 C
+        local controlId = NewConfigId("Toggle", toggleText)
         local parent = config.Parent or contentHolder
         local Tile = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, toggleText, 15, 12, UDim2.new(1, -75, 0, 18), 13)
@@ -645,7 +637,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 Tween(Dot, {Position = UDim2.new(0, 1, 0.5, -8)}, 0.18)
             end
         end
-        -- 补丁 D-1
         ConfigObjects[controlId] = {
             Type = "Toggle",
             Value = Enabled,
@@ -683,7 +674,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         min = tonumber(min); max = tonumber(max)
         local Rounding = config.Rounding or 0
         local Val = tonumber(default) or (min or 0)
-        local controlId = NewConfigId("Slider", sliderText)  -- 补丁 C
+        local controlId = NewConfigId("Slider", sliderText)
         local parent = config.Parent or contentHolder
         local Tile = miRow(parent, 42)
         local rowH = 22
@@ -812,7 +803,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if Bar then Bar.Active = not state end
             ValueLabel.Active = not state
         end
-        -- 补丁 D-2
         ConfigObjects[controlId] = {
             Type = "Slider",
             Value = Val,
@@ -846,7 +836,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local selectedValue = config.Value
         local multi = config.Multi == true
         local callback = config.Callback or function() end
-        local controlId = NewConfigId("Dropdown", dropText)  -- 补丁 C
+        local controlId = NewConfigId("Dropdown", dropText)
         local parent = config.Parent or contentHolder
         local selected = multi and {} or nil
         local function initSelected()
@@ -997,12 +987,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         end)
         local function isMouseOver(frame)
             if not frame then return false end
-            local mp = UserInputService:GetMouseLocation()
+            local m = LocalPlayer:GetMouse()
             local ap, as = frame.AbsolutePosition, frame.AbsoluteSize
-            return mp.X >= ap.X and mp.X <= ap.X + as.X and mp.Y >= ap.Y and mp.Y <= ap.Y + as.Y
+            return m.X >= ap.X and m.X <= ap.X + as.X and m.Y >= ap.Y and m.Y <= ap.Y + as.Y
         end
         local globalClickConn
-        globalClickConn = UserInputService.InputBegan:Connect(function(input)
+        globalClickConn = UserInputService.InputBegan:Connect(function(input, gpe)
+            if gpe then return end
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 if Dropped and not locked then
                     if not isMouseOver(Container) and not isMouseOver(Btn) then
@@ -1015,7 +1006,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
         end)
-        -- 补丁 D-3
         ConfigObjects[controlId] = {
             Type = "Dropdown",
             Value = multi and selected or selected,
@@ -1031,7 +1021,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 if locked then return end
                 if multi then
                     if type(val) == "table" then
-                        -- 兼容 {opt = true} 结构 和 ipairs 数组
                         selected = {}
                         for k, v in pairs(val) do
                             if v == true and type(k) == "string" then
@@ -1079,7 +1068,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local defaultKey = config.Default or Enum.KeyCode.M
         local mode = config.Mode or "Toggle"
         local callback = config.Callback or function() end
-        local controlId = NewConfigId("Keybind", keyText)  -- 补丁 C
+        local controlId = NewConfigId("Keybind", keyText)
         local parent = config.Parent or contentHolder
         local state = { Key = defaultKey.Name, Mode = mode, Toggled = false, IsWaiting = false }
         local Tile = miRow(parent, 42)
@@ -1130,7 +1119,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         lockFrame.Visible = locked
         KeyBtn.Active = not locked
         local function updateLock(st) locked = st; lockFrame.Visible = st; KeyBtn.Active = not st end
-        -- 补丁 D-4
         ConfigObjects[controlId] = {
             Type = "Keybind",
             Value = { Key = state.Key, Mode = state.Mode },
@@ -1214,7 +1202,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local maxLength = options.MaxLength or options.CharacterLimit
         local acceptedChars = options.AcceptedCharacters
         local onChanged = options.OnChanged
-        local controlId = NewConfigId("Input", inputText)  -- 补丁 C
+        local controlId = NewConfigId("Input", inputText)
         local parent = config.Parent or contentHolder
         local Tile = miRow(parent, 42)
         local NameLbl = miLabel(Tile, inputText, 15, 12, UDim2.new(0.6, 0, 0, 18), 13)
@@ -1285,7 +1273,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
         local function updateLock(st) locked = st; lockFrame.Visible = st; InputBox.Active = not st end
-        -- 补丁 D-5
         ConfigObjects[controlId] = {
             Type = "Input",
             Value = InputBox.Text,
@@ -1315,7 +1302,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local boxText = config.Name or ""
         local placeholder = config.Placeholder or ""
         local callback = config.Callback or function() end
-        local controlId = NewConfigId("Textbox", boxText)  -- 补丁 C
+        local controlId = NewConfigId("Textbox", boxText)
         local parent = config.Parent or contentHolder
         local Frame = Instance.new("Frame")
         Frame.Size = UDim2.new(1, 0, 0, 70)
@@ -1350,7 +1337,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         lockFrame.Visible = locked
         Box.Active = not locked
         local function updateLock(st) locked = st; lockFrame.Visible = st; Box.Active = not st end
-        -- 补丁 D-6
         ConfigObjects[controlId] = {
             Type = "Textbox",
             Value = "",
@@ -1625,7 +1611,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local title = config.Name or ""
         local default = config.Default or false
         local callback = config.Callback or function() end
-        local controlId = NewConfigId("Checkbox", title)  -- 补丁 C
+        local controlId = NewConfigId("Checkbox", title)
         local parent = config.Parent or contentHolder
         local Tile = miRow(parent, 42)
         local TitleLbl = miLabel(Tile, title, 15, 12, UDim2.new(1, -60, 0, 18), 13)
@@ -1693,7 +1679,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         ClickBtn.MouseLeave:Connect(function() if not locked then Tween(Tile, {BackgroundTransparency = 1}, 0.15) end end)
         ClickBtn.MouseButton1Click:Connect(function() if not locked then h:SetValue(not h.Value) end end)
         h:SetValue(default)
-        -- 补丁 D-7
         ConfigObjects[controlId] = {
             Type = "Checkbox",
             Value = h.Value,
@@ -1710,7 +1695,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local callback      = config.Callback or function() end
         local transCfg      = config.Transparency
         local hasTransparency = (transCfg ~= nil)
-        local controlId     = NewConfigId("Colorpicker", cpTitle)  -- 补丁 C
+        local controlId     = NewConfigId("Colorpicker", cpTitle)
         local parent        = config.Parent or contentHolder
 
         local state = { Default = defaultColor, Transparency = transCfg, Hue = 0, Sat = 0, Vib = 0 }
@@ -2262,7 +2247,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
         PreviewBtn.MouseButton1Click:Connect(OpenColorpicker)
 
-        -- 补丁 D-8
         ConfigObjects[controlId] = {
             Type = "Colorpicker",
             Value = { Color = state.Default, Transparency = state.Transparency },
@@ -2320,7 +2304,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local default = valueConfig.Default or min
         local showPercent = config.ShowPercent ~= false
         local callback = config.Callback or function() end
-        local controlId = NewConfigId("ProgressBar", name)  -- 补丁 C
+        local controlId = NewConfigId("ProgressBar", name)
         local parent = config.Parent or contentHolder
         local containerHeight = (name ~= "" and 46 or 26)
         local wrap = Instance.new("Frame")
@@ -2389,7 +2373,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         function h:Unlock() updateLock(false) end
         function h:IsLocked() return locked end
         h:SetValue(default)
-        -- 补丁 D-9
         ConfigObjects[controlId] = {
             Type = "ProgressBar",
             Value = h.Value,
@@ -4172,7 +4155,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 end
 
 function Fenglib:CreateWindow(Config)
-    ConfigIdCounter = 0   -- 补丁 E：每次新窗口重置 ConfigId
+    ConfigIdCounter = 0
 
     local Window = {}
     local Title = Config.Name or "FengYu"
@@ -4559,10 +4542,10 @@ function Fenglib:CreateWindow(Config)
     local settingsOpen = false
     local outsideConn = nil
 
-    local function isInside(mp, frame)
+    local function isInside(m, frame)
         if not frame then return false end
         local ap, as = frame.AbsolutePosition, frame.AbsoluteSize
-        return mp.X >= ap.X and mp.X <= ap.X + as.X and mp.Y >= ap.Y and mp.Y <= ap.Y + as.Y
+        return m.X >= ap.X and m.X <= ap.X + as.X and m.Y >= ap.Y and m.Y <= ap.Y + as.Y
     end
 
     local function closeSettings()
@@ -4583,11 +4566,12 @@ function Fenglib:CreateWindow(Config)
         Tween(SettingsPanel, {BackgroundTransparency = 0.035, Size = UDim2.new(0, 220, 0, h)}, 0.2)
         Tween(SettingsStroke, {Transparency = 0.65}, 0.2)
         if outsideConn then outsideConn:Disconnect() end
-        outsideConn = UserInputService.InputBegan:Connect(function(input)
+        local settingsMouse = LocalPlayer:GetMouse()
+        outsideConn = UserInputService.InputBegan:Connect(function(input, gpe)
+            if gpe then return end
             if input.UserInputType == Enum.UserInputType.MouseButton1
             or input.UserInputType == Enum.UserInputType.Touch then
-                local mp = UserInputService:GetMouseLocation()
-                if not isInside(mp, SettingsPanel) and not isInside(mp, BottomFrame) then
+                if not isInside(settingsMouse, SettingsPanel) and not isInside(settingsMouse, BottomFrame) then
                     closeSettings()
                 end
             end
@@ -4709,9 +4693,6 @@ function Fenglib:CreateWindow(Config)
     end)
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function() ScreenGui:Destroy() end)
 
-    -- ═══════════════════════════════════════════════════════════════════
-    -- ║    CONFIG UI PANEL — Full port from ModernV2 (kys.lua)          ║
-    -- ═══════════════════════════════════════════════════════════════════
     do
         local BUILDER_ICONS_PATH =
             "rbxasset://LuaPackages/Packages/_Index/BuilderIcons/BuilderIcons/BuilderIcons.json"
@@ -4855,7 +4836,6 @@ function Fenglib:CreateWindow(Config)
             return pcall(delfile, ConfigPath(name))
         end
 
-        -- ① Header — ConfigFrame
         local ConfigFrame = Instance.new("Frame")
         ConfigFrame.Name                 = "ConfigFrame"
         ConfigFrame.AnchorPoint          = Vector2.new(0, 0.5)
@@ -4937,7 +4917,6 @@ function Fenglib:CreateWindow(Config)
         ConfigBthIcon.Parent            = ConfigFrame
         SetIconMode(ConfigBthIcon, "chevron-small-down")
 
-        -- ② Popup — ConfigMenu
         local ConfigMenu = Instance.new("Frame")
         ConfigMenu.Name                 = "ConfigMenu"
         ConfigMenu.AnchorPoint          = Vector2.new(0.5, 0)
@@ -4986,7 +4965,6 @@ function Fenglib:CreateWindow(Config)
             end
         end
 
-        -- ③ Input row
         local InputFrame = Instance.new("Frame")
         InputFrame.Name                 = "InputFrame"
         InputFrame.BackgroundTransparency = 1
@@ -5332,16 +5310,16 @@ function Fenglib:CreateWindow(Config)
                 outsideConn:Disconnect()
                 outsideConn = nil
             end
-            outsideConn = UserInputService.InputBegan:Connect(function(input)
+            local configMouse = LocalPlayer:GetMouse()
+            outsideConn = UserInputService.InputBegan:Connect(function(input, gpe)
+                if gpe then return end
                 if input.UserInputType == Enum.UserInputType.MouseButton1
                 or input.UserInputType == Enum.UserInputType.Touch then
-                    local mp = UserInputService:GetMouseLocation()
-
                     local function Inside(frame)
                         if not frame or not frame.Parent then return false end
                         local ap, sz = frame.AbsolutePosition, frame.AbsoluteSize
-                        return mp.X >= ap.X and mp.X <= ap.X + sz.X
-                           and mp.Y >= ap.Y and mp.Y <= ap.Y + sz.Y
+                        return configMouse.X >= ap.X and configMouse.X <= ap.X + sz.X
+                           and configMouse.Y >= ap.Y and configMouse.Y <= ap.Y + sz.Y
                     end
 
                     if not Inside(ConfigMenu) and not Inside(ConfigFrame) then
@@ -5459,7 +5437,6 @@ function Fenglib:CreateWindow(Config)
             RefreshConfigList()
         end)
     end
-    -- ═══════════════════════════════════════════════════════════════════
 
     local TabContainer = Instance.new("Frame")
     TabContainer.Size = UDim2.new(1, 0, 1, -50)
