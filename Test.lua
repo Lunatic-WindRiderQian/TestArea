@@ -4726,7 +4726,7 @@ function Fenglib:CreateWindow(Config)
         end
 
         local CONFIG_DIR          = "FenglibConfigs"
-        local DEFAULT_CONFIG_NAME = "Default"
+        local DEFAULT_CONFIG_NAME = "默认配置"
         local MENU_WIDTH          = 220
         local MENU_INITIAL_HEIGHT = 110
         local TWEEN_SPEED         = 0.175
@@ -4982,7 +4982,7 @@ function Fenglib:CreateWindow(Config)
         BasedLabel.Size                 = UDim2.new(0, 60, 0, 15)
         BasedLabel.ZIndex               = 154
         BasedLabel.Font                 = Enum.Font.GothamMedium
-        BasedLabel.Text                 = "Config"
+        BasedLabel.Text                 = "配置列表"
         BasedLabel.TextColor3           = Color3.fromRGB(255, 255, 255)
         BasedLabel.TextSize             = 13
         BasedLabel.TextTransparency     = 0.200
@@ -5049,7 +5049,7 @@ function Fenglib:CreateWindow(Config)
         TextBox.ZIndex                = 154
         TextBox.ClearTextOnFocus      = false
         TextBox.Font                  = Enum.Font.GothamMedium
-        TextBox.PlaceholderText       = "Config Name ..."
+        TextBox.PlaceholderText       = "配置名称 ..."
         TextBox.Text                  = ""
         TextBox.TextColor3            = Color3.fromRGB(255, 255, 255)
         TextBox.TextSize              = 11
