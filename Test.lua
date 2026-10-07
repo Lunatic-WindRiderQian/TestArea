@@ -5929,6 +5929,7 @@ function Fenglib:CreateWindow(Config)
         local tabState = Window._tabs[#Window._tabs]
         if not tabState then return TabBuilder end
         local Page = tabState.page
+        if not Page then return TabBuilder end
         local PageContent = Page:FindFirstChildWhichIsA("Frame")
         if not PageContent then return TabBuilder end
 
