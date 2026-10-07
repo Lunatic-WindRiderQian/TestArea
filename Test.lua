@@ -3932,7 +3932,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local DragState = "Idle" -- Idle | Holding | Dragging
         local DragInput = nil
         local PressMouse = nil
-        local GrabOffset = nil    -- 光标相对被拖对象的偏移
+        local DragStartPos = nil
         local DragChangedConn = nil
         local DragDidMove = false
         local JustDragged = false
@@ -3975,23 +3975,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             PopOutFloat.ZIndex = maxZ + 1
         end
 
-        -- 取 ScreenGui 内坐标系下的位置（AbsolutePosition 减去 ScreenGui 的 inset）
-        local function GetGuiSpacePosition(guiObject)
-            local absPos = guiObject.AbsolutePosition
-            local sg = GetScreenGui()
-            if not sg then return absPos end
-            -- 如果 ScreenGui 有 inset，子物体的 AbsolutePosition 会包含 inset，
-            -- 而 UDim2.fromOffset 是相对 ScreenGui 内部的，所以需要减掉。
-            local inset = Vector2.zero
-            pcall(function()
-                if not sg.IgnoreGuiInset then
-                    local topLeft = game:GetService("GuiService"):GetGuiInset()
-                    if topLeft then inset = topLeft end
-                end
-            end)
-            return absPos - inset
-        end
-
         local function ApplyPoppedOut(shouldPop)
             shouldPop = shouldPop == true
             if PoppedOut == shouldPop then return end
@@ -4000,12 +3983,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             if not sg then return end
 
             if shouldPop then
-                -- 记录 contentContainer 的实际宽度（sectionFrame 宽 - 5）
-                local sectionWidth  = sectionFrame.AbsoluteSize.X
-                local sectionHeight = sectionFrame.AbsoluteSize.Y
-                local contentWidth  = sectionWidth - 5  -- 与 contentContainer.Size 里的 -5 保持一致
+                local width = sectionFrame.AbsoluteSize.X
+                local height = sectionFrame.Size.Y.Offset
 
-                -- 创建占位符
                 local ph = Instance.new("Frame")
                 ph.Name = "FengSectionPlaceholder"
                 ph.Size = UDim2.fromScale(1, 1)
@@ -4024,22 +4004,20 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 phs.Parent = ph
                 PopOutPlaceholder = ph
 
-                -- 创建浮窗，宽度与原 contentContainer 视觉宽度一致
-                local guiPos = GetGuiSpacePosition(sectionFrame)
+                local absPos = sectionFrame.AbsolutePosition
                 local float = Instance.new("Frame")
                 float.Name = "FengSectionFloat"
                 float.BackgroundTransparency = 1
                 float.BorderSizePixel = 0
                 float.AutomaticSize = Enum.AutomaticSize.Y
-                float.Size = UDim2.new(0, contentWidth, 0, 0)
-                float.Position = UDim2.fromOffset(guiPos.X, guiPos.Y)
+                float.Size = UDim2.new(0, width, 0, 0)
+                float.Position = UDim2.fromOffset(absPos.X, absPos.Y)
                 float.ZIndex = 500
                 float.Parent = sg
                 PopOutFloat = float
 
-                -- 把 contentContainer 搬到 float，宽度设为与 float 相同（contentContainer 的 Size = 1,0 就填满 float）
                 contentContainer.Parent = float
-                contentContainer.Size = UDim2.new(1, 0, 0, sectionHeight)
+                contentContainer.Size = UDim2.new(1, 0, 0, height)
                 contentContainer.Position = UDim2.new(0, 0, 0, 0)
                 contentContainer.AnchorPoint = Vector2.new(0, 0)
 
@@ -4049,7 +4027,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 contentContainer.Parent = sectionFrame
                 contentContainer.Size = UDim2.new(1, -5, 0, sectionFrame.Size.Y.Offset)
                 contentContainer.Position = UDim2.new(0, 0, 0, 0)
-                contentContainer.AnchorPoint = Vector2.new(0, 0)
 
                 if PopOutPlaceholder then PopOutPlaceholder:Destroy(); PopOutPlaceholder = nil end
                 if PopOutFloat then PopOutFloat:Destroy(); PopOutFloat = nil end
@@ -4068,7 +4045,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             DragState = "Idle"
             DragInput = nil
             PressMouse = nil
-            GrabOffset = nil
+            DragStartPos = nil
             DragDidMove = false
 
             if DragChangedConn then
@@ -4087,7 +4064,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             local shouldDock = false
 
-            -- 1) 靠近占位符 -> 吸回
+            --// 靠近占位符 -> 吸回
             if PopOutPlaceholder and PopOutPlaceholder.Parent then
                 local floatCenter = PopOutFloat.AbsolutePosition + PopOutFloat.AbsoluteSize * 0.5
                 local phCenter    = PopOutPlaceholder.AbsolutePosition + PopOutPlaceholder.AbsoluteSize * 0.5
@@ -4096,12 +4073,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end
 
-            -- 2) 没拖到主窗口外 -> 吸回（主窗口隐藏时不吸回）
+            --// 拖到主窗口外 -> 吸回
             if not shouldDock and didMove then
                 local mainWindow = GetMainWindow()
-                if mainWindow and mainWindow.Visible then
+                if mainWindow then
                     local floatCenter = PopOutFloat.AbsolutePosition + PopOutFloat.AbsoluteSize * 0.5
-                    if PointOverFrame(mainWindow, floatCenter) then
+                    if not PointOverFrame(mainWindow, floatCenter) then
                         shouldDock = true
                     end
                 end
@@ -4119,14 +4096,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             DragState = "Holding"
             DragInput = input
             PressMouse = Vector2.new(input.Position.X, input.Position.Y)
+            DragStartPos = nil
             DragDidMove = false
 
-            -- 立即记录光标相对于目标（sectionFrame 或 float）的抓取偏移
             if PoppedOut and PopOutFloat then
                 RaiseFloat()
-                GrabOffset = PressMouse - PopOutFloat.AbsolutePosition
-            else
-                GrabOffset = PressMouse - sectionFrame.AbsolutePosition
             end
 
             DragChangedConn = input.Changed:Connect(function()
@@ -4140,9 +4114,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 DragState = "Dragging"
                 if PoppedOut and PopOutFloat then
                     RaiseFloat()
-                    if not GrabOffset then
-                        GrabOffset = PressMouse - PopOutFloat.AbsolutePosition
-                    end
+                    DragStartPos = PopOutFloat.Position
                 end
             end)
         end
@@ -4155,24 +4127,21 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             if not PoppedOut then
                 if delta.Magnitude < 8 then return end
-
-                -- 用按下时的光标位置计算偏移（保持抓取点）
-                GrabOffset = PressMouse - sectionFrame.AbsolutePosition
-
                 ApplyPoppedOut(true)
                 if not PopOutFloat then return end
                 RaiseFloat()
-            end
-
-            if delta.Magnitude >= 8 then
+                DragStartPos = PopOutFloat.Position
+                DragDidMove = true
+            elseif delta.Magnitude >= 8 then
                 DragDidMove = true
             end
 
-            if PopOutFloat and GrabOffset then
-                -- AbsolutePosition 已在 ScreenGui 内坐标系里（ScreenInsets=None 时等于 UDim2.fromOffset 的目标位置）
-                PopOutFloat.Position = UDim2.fromOffset(
-                    mousePos.X - GrabOffset.X,
-                    mousePos.Y - GrabOffset.Y
+            if PopOutFloat and DragStartPos then
+                PopOutFloat.Position = UDim2.new(
+                    DragStartPos.X.Scale,
+                    DragStartPos.X.Offset + delta.X,
+                    DragStartPos.Y.Scale,
+                    DragStartPos.Y.Offset + delta.Y
                 )
             end
         end
@@ -4204,16 +4173,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
         else
-            -- 非折叠型 Section：把拖拽热区放在头部位置
-            local dragZoneHeight = hasHeader and HEADER_H or 22
             local dragZone = Instance.new("TextButton")
             dragZone.Name = "SectionDragZone"
-            dragZone.Size = UDim2.new(1, 0, 0, dragZoneHeight)
-            dragZone.Position = UDim2.new(0, 0, 0, 0)  -- 头部位置
+            dragZone.Size = UDim2.new(1, 0, 0, math.max(HEADER_H, 30))
+            dragZone.Position = UDim2.new(0, 0, 0, 0)
             dragZone.BackgroundTransparency = 1
             dragZone.Text = ""
             dragZone.AutoButtonColor = false
-            dragZone.ZIndex = 6
+            dragZone.ZIndex = 2
             dragZone.Parent = contentContainer
 
             dragZone.InputBegan:Connect(function(input)
@@ -4999,7 +4966,7 @@ function Fenglib:CreateWindow(Config)
         return btn, content
     end
 
-    --// Section 拖动模式切换按钮
+    --// Section 拖动模式切换按钮（在 MinimizeBtn 左边）
     local SectionDragBtn, SectionDragIcon = createControlButton("rbxassetid://18879088568", nil, function()
         SetSectionDragMode(not SectionDragMode)
         if SectionDragIcon then
