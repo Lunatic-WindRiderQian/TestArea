@@ -28,6 +28,9 @@ local function safeDisconnect(conn) if conn then pcall(conn.Disconnect, conn) en
 local SectionDragMode = false
 local SectionDragListeners = {}
 
+--// 窗口缩放状态：缩小时禁用自动归位；放大后恢复（禁用/启用切换）
+local WindowResizedState = { Shrunk = false }
+
 local function SetSectionDragMode(enabled)
     enabled = enabled == true
     if SectionDragMode == enabled then return end
@@ -4053,6 +4056,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             if not PoppedOut or not PopOutFloat then return end
 
+            --// 窗口被缩小过 → 禁用自动归位
+            --// 窗口被放大回来 → Shrunk=false，恢复原样（自动归位启用）
+            if WindowResizedState.Shrunk then return end
+
             --// 只有拖回原来的位置（占位符附近）才吸回，其余位置自由摆放，没有限制
             if PopOutPlaceholder and PopOutPlaceholder.Parent then
                 local floatCenter = PopOutFloat.AbsolutePosition + PopOutFloat.AbsoluteSize * 0.5
@@ -4557,7 +4564,18 @@ function Fenglib:CreateWindow(Config)
     UserInputService.InputChanged:Connect(function(input)
         if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - resizeStart
-            MainFrame.Size = UDim2.new(0, math.max(400, startSize.X.Offset + delta.X), 0, math.max(250, startSize.Y.Offset + delta.Y))
+            local newW = math.max(400, startSize.X.Offset + delta.X)
+            local newH = math.max(250, startSize.Y.Offset + delta.Y)
+            local oldW = MainFrame.Size.X.Offset
+            local oldH = MainFrame.Size.Y.Offset
+            MainFrame.Size = UDim2.new(0, newW, 0, newH)
+
+            --// 缩小 → 禁用自动归位；放大 → 恢复（原样）
+            if newW < oldW or newH < oldH then
+                WindowResizedState.Shrunk = true
+            elseif newW > oldW or newH > oldH then
+                WindowResizedState.Shrunk = false
+            end
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
