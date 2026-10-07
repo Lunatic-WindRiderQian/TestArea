@@ -3946,24 +3946,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return nil
         end
 
-        --// 向上回溯，找到本 Section 所属窗口的顶层 Frame（MainFrame）
-        local function GetHostWindowFrame()
+        --// 向上回溯，找到所属窗口的 MainFrame（ScreenGui 的直接子节点）
+        local function GetHostWindow()
             local node = sectionFrame
             while node and node.Parent do
-                if node.Parent:IsA("ScreenGui") then
-                    if node:IsA("GuiObject") then return node end
-                    return nil
-                end
+                if node.Parent:IsA("ScreenGui") then return node end
                 node = node.Parent
             end
             return nil
-        end
-
-        --// 宿主窗口是否可见（不可见时禁止吸回/新拖动）
-        local function IsHostWindowVisible()
-            local win = GetHostWindowFrame()
-            if not win then return true end
-            return win.Visible ~= false
         end
 
         local function PointOverFrame(frame, point)
@@ -4073,8 +4063,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             if not PoppedOut or not PopOutFloat then return end
 
-            --// 窗口隐藏时不触发归位（浮窗独立保留）
-            if not IsHostWindowVisible() then return end
+            --// 窗口隐藏时占位符位置不可靠，禁止吸回（浮窗保持独立）
+            local hostWin = GetHostWindow()
+            if hostWin and not hostWin.Visible then return end
 
             --// 只有拖回原来的位置（占位符附近）才吸回，其余位置自由摆放，没有限制
             if PopOutPlaceholder and PopOutPlaceholder.Parent then
@@ -4089,8 +4080,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local function BeginDrag(input)
             if DragState ~= "Idle" then return end
             if not SectionDragMode then return end
-            --// 窗口隐藏时不接受新的拖动
-            if not IsHostWindowVisible() then return end
 
             DragState = "Holding"
             DragInput = input
@@ -4190,10 +4179,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        --// 模式关闭时自动收回浮窗（窗口隐藏时不收回，浮窗继续独立存在）
+        --// 模式关闭时自动收回浮窗（窗口隐藏时浮窗保持独立，不收回）
         table.insert(SectionDragListeners, function(enabled)
             if enabled or not PoppedOut then return end
-            if not IsHostWindowVisible() then return end
+            local hostWin = GetHostWindow()
+            if hostWin and not hostWin.Visible then return end
             ApplyPoppedOut(false)
         end)
 
