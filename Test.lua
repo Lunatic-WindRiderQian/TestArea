@@ -3759,7 +3759,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local MIUI_TWEEN = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
 
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Name = "FengSection"
         sectionFrame.Size = UDim2.new(1, -5, 0, 0)
         sectionFrame.AnchorPoint = Vector2.new(0, 0)
         sectionFrame.Position = UDim2.new(0, 0, 0, 0)
@@ -3947,51 +3946,11 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return nil
         end
 
-        local function GetMainWindow()
-            local s = sectionFrame
-            while s do
-                if s.Parent and s.Parent:IsA("ScreenGui") then return s end
-                s = s.Parent
-            end
-            return nil
-        end
-
         local function PointOverFrame(frame, point)
             if not frame or not frame.Parent then return false end
             local ap, as = frame.AbsolutePosition, frame.AbsoluteSize
             return point.X >= ap.X and point.X <= ap.X + as.X
                and point.Y >= ap.Y and point.Y <= ap.Y + as.Y
-        end
-
-        --// 在给定屏幕点下找到属于某个 Tab 的 PageContent
-        local function FindPageContentUnderPoint(point, mainWindow)
-            if not mainWindow then return nil end
-            local pageContainer
-            for _, d in ipairs(mainWindow:GetDescendants()) do
-                if d:IsA("ScrollingFrame") and d.Name == "FengPageContainer" then
-                    pageContainer = d
-                    break
-                end
-            end
-            if not pageContainer then return nil end
-            for _, p in ipairs(pageContainer:GetChildren()) do
-                if p:IsA("ScrollingFrame") and p.Visible then
-                    local ap, as = p.AbsolutePosition, p.AbsoluteSize
-                    if point.X >= ap.X and point.X <= ap.X + as.X
-                    and point.Y >= ap.Y and point.Y <= ap.Y + as.Y then
-                        return p:FindFirstChildWhichIsA("Frame")
-                    end
-                end
-            end
-            return nil
-        end
-
-        --// 把 sectionFrame 迁移到目标 PageContent
-        local function MoveToTab(targetPageContent)
-            if not targetPageContent then return end
-            if sectionFrame.Parent == targetPageContent then return end
-            sectionFrame.Parent = targetPageContent
-            sectionFrame.Position = UDim2.new(0, 0, 0, 0)
         end
 
         local function RaiseFloat()
@@ -4094,42 +4053,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             if not PoppedOut or not PopOutFloat then return end
 
-            local shouldDock = false
-
-            --// 靠近占位符 -> 吸回
+            --// 只有拖回原来的位置（占位符附近）才吸回，其余位置自由摆放，没有限制
             if PopOutPlaceholder and PopOutPlaceholder.Parent then
                 local floatCenter = PopOutFloat.AbsolutePosition + PopOutFloat.AbsoluteSize * 0.5
                 local phCenter    = PopOutPlaceholder.AbsolutePosition + PopOutPlaceholder.AbsoluteSize * 0.5
                 if (floatCenter - phCenter).Magnitude <= 80 then
-                    shouldDock = true
+                    ApplyPoppedOut(false)
                 end
-            end
-
-            --// 拖到主窗口外 -> 吸回
-            if not shouldDock and didMove then
-                local mainWindow = GetMainWindow()
-                if mainWindow then
-                    local floatCenter = PopOutFloat.AbsolutePosition + PopOutFloat.AbsoluteSize * 0.5
-                    if not PointOverFrame(mainWindow, floatCenter) then
-                        shouldDock = true
-                    end
-                end
-            end
-
-            --// 判断松手时是否落在别的 Tab 上（跨 Tab 迁移）
-            if didMove and not shouldDock then
-                local floatCenter = PopOutFloat.AbsolutePosition + PopOutFloat.AbsoluteSize * 0.5
-                local mainWindow = GetMainWindow()
-                if mainWindow then
-                    local targetContent = FindPageContentUnderPoint(floatCenter, mainWindow)
-                    if targetContent then
-                        MoveToTab(targetContent)
-                    end
-                end
-            end
-
-            if shouldDock then
-                ApplyPoppedOut(false)
             end
         end
 
@@ -4217,33 +4147,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 end
             end)
         else
-            --// 只在有头部时创建拖动区域；高度严格限制在头部范围
-            if hasHeader then
-                local dragZone = Instance.new("TextButton")
-                dragZone.Name = "SectionDragZone"
-                dragZone.Size = UDim2.new(1, 0, 0, HEADER_H)
-                dragZone.Position = UDim2.new(0, 0, 0, 0)
-                dragZone.BackgroundTransparency = 1
-                dragZone.Text = ""
-                dragZone.AutoButtonColor = false
-                dragZone.ZIndex = 2
-                dragZone.Active = SectionDragMode
-                dragZone.Parent = contentContainer
+            local dragZone = Instance.new("TextButton")
+            dragZone.Name = "SectionDragZone"
+            dragZone.Size = UDim2.new(1, 0, 0, math.max(HEADER_H, 30))
+            dragZone.Position = UDim2.new(0, 0, 0, 0)
+            dragZone.BackgroundTransparency = 1
+            dragZone.Text = ""
+            dragZone.AutoButtonColor = false
+            dragZone.ZIndex = 2
+            dragZone.Parent = contentContainer
 
-                --// 拖动模式切换时同步 Active
-                table.insert(SectionDragListeners, function(enabled)
-                    if dragZone and dragZone.Parent then
-                        dragZone.Active = enabled
-                    end
-                end)
-
-                dragZone.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1
-                    or input.UserInputType == Enum.UserInputType.Touch then
-                        BeginDrag(input)
-                    end
-                end)
-            end
+            dragZone.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1
+                or input.UserInputType == Enum.UserInputType.Touch then
+                    BeginDrag(input)
+                end
+            end)
         end
 
         --// 模式关闭时自动收回浮窗
@@ -4639,21 +4558,6 @@ function Fenglib:CreateWindow(Config)
         if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - resizeStart
             MainFrame.Size = UDim2.new(0, math.max(400, startSize.X.Offset + delta.X), 0, math.max(250, startSize.Y.Offset + delta.Y))
-
-            --// 缩小时把窗口外的浮动 Section 拉回窗口内
-            local wPos, wSize = MainFrame.AbsolutePosition, MainFrame.AbsoluteSize
-            for _, c in ipairs(ScreenGui:GetChildren()) do
-                if c:IsA("Frame") and c.Name == "FengSectionFloat" then
-                    local fPos, fSize = c.AbsolutePosition, c.AbsoluteSize
-                    local maxX = wPos.X + wSize.X - fSize.X
-                    local maxY = wPos.Y + wSize.Y - fSize.Y
-                    local nx = math.clamp(fPos.X, wPos.X, maxX)
-                    local ny = math.clamp(fPos.Y, wPos.Y, maxY)
-                    if nx ~= fPos.X or ny ~= fPos.Y then
-                        c.Position = UDim2.fromOffset(nx, ny)
-                    end
-                end
-            end
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
@@ -5803,7 +5707,6 @@ function Fenglib:CreateWindow(Config)
     end
 
     local TabContainer = Instance.new("Frame")
-    TabContainer.Name = "FengTabContainer"
     TabContainer.Size = UDim2.new(1, 0, 1, -50)
     TabContainer.Position = UDim2.new(0, 0, 0, 50)
     TabContainer.BackgroundTransparency = 1
@@ -5811,7 +5714,6 @@ function Fenglib:CreateWindow(Config)
     TabContainer.Parent = RightMenuFrame
 
     local PageContainer = Instance.new("ScrollingFrame")
-    PageContainer.Name = "FengPageContainer"
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
     PageContainer.BackgroundTransparency = 1
     PageContainer.ScrollBarThickness = 0
