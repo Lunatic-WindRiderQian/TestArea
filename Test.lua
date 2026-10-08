@@ -24,7 +24,6 @@ DepthOfFieldEffect.Enabled = false
 
 local function safeDisconnect(conn) if conn then pcall(conn.Disconnect, conn) end end
 
---// Section 拖动模式全局状态
 local SectionDragMode = false
 local SectionDragListeners = {}
 
@@ -2400,7 +2399,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return h
     end
 
-    --// CodeBlock：移植自 ModernV2 AddCodeBlock
+    --// CodeBlock：完整搬运自 ModernV2 AddCodeBlock（Title 统一为 Name）
     child.CodeBlock = function(_, config)
         config = safeConfig(config)
         local codeName    = config.Name or "Code"
@@ -2410,107 +2409,157 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local parent      = config.Parent or contentHolder
         local controlId   = NewConfigId("CodeBlock", codeName)
 
-        local wrap = Instance.new("Frame")
-        wrap.Size = UDim2.new(1, 0, 0, 60)
-        wrap.BackgroundTransparency = 1
-        wrap.BorderSizePixel = 0
-        wrap.Parent = parent
+        local CodeFrame = Instance.new("Frame")
+        local UICorner = Instance.new("UICorner")
+        local CodeLabel = Instance.new("TextLabel")
+        local CodeCorner = Instance.new("UICorner")
+        local CodePadding = Instance.new("UIPadding")
+        local CopyButton = Instance.new("Frame")
+        local CopyCorner = Instance.new("UICorner")
+        local CopyStroke = Instance.new("UIStroke")
+        local CopyIcon = Instance.new("ImageLabel")
+        local LineFrame = Instance.new("Frame")
 
-        local codeFrame = Instance.new("Frame")
-        codeFrame.Size = UDim2.new(1, 0, 0, 50)
-        codeFrame.BackgroundColor3 = Color3.fromRGB(18, 19, 25)
-        codeFrame.BackgroundTransparency = 0.15
-        codeFrame.BorderSizePixel = 0
-        codeFrame.Parent = wrap
-        Instance.new("UICorner", codeFrame).CornerRadius = UDim.new(0, 8)
-        AddToRegistry(codeFrame, "BackgroundColor3", "Main")
+        CodeFrame.Name = "CodeBlock_Frame"
+        CodeFrame.Parent = parent
+        CodeFrame.BackgroundColor3 = Color3.fromRGB(25, 27, 33)
+        CodeFrame.BackgroundTransparency = 1.000
+        CodeFrame.BorderSizePixel = 0
+        CodeFrame.ClipsDescendants = true
+        CodeFrame.Size = UDim2.new(1, 0, 0, 60)
+        AddToRegistry(CodeFrame, "BackgroundColor3", "Main")
 
-        local codeLabel = Instance.new("TextLabel")
-        codeLabel.Size = UDim2.new(1, -20, 1, -14)
-        codeLabel.Position = UDim2.new(0, 10, 0, 7)
-        codeLabel.BackgroundTransparency = 1
-        codeLabel.Font = Enum.Font.Code
-        codeLabel.Text = codeText
-        codeLabel.TextColor3 = CurrentTheme.Text
-        codeLabel.TextSize = 12
-        codeLabel.TextWrapped = true
-        codeLabel.TextXAlignment = Enum.TextXAlignment.Left
-        codeLabel.TextYAlignment = Enum.TextYAlignment.Top
-        codeLabel.RichText = richText
-        codeLabel.Parent = codeFrame
-        AddToRegistry(codeLabel, "TextColor3", "Text")
-        TextGradient:Skip(codeLabel)
+        UICorner.CornerRadius = UDim.new(0, 10)
+        UICorner.Parent = CodeFrame
 
-        local padding = Instance.new("UIPadding")
-        padding.PaddingLeft  = UDim.new(0, 6)
-        padding.PaddingRight = UDim.new(0, copyEnabled and 34 or 6)
-        padding.Parent = codeLabel
+        CodeLabel.Name = "CodeBlock_Label"
+        CodeLabel.Parent = CodeFrame
+        CodeLabel.BackgroundColor3 = Color3.fromRGB(18, 19, 25)
+        CodeLabel.BackgroundTransparency = 0.150
+        CodeLabel.BorderSizePixel = 0
+        CodeLabel.Position = UDim2.new(0, 10, 0, 7)
+        CodeLabel.Size = UDim2.new(1, -20, 0, 40)
+        CodeLabel.Font = Enum.Font.Code
+        CodeLabel.RichText = richText
+        CodeLabel.Text = codeText
+        CodeLabel.TextColor3 = CurrentTheme.Text
+        CodeLabel.TextSize = 12.000
+        CodeLabel.TextTransparency = 0.200
+        CodeLabel.TextWrapped = true
+        CodeLabel.TextXAlignment = Enum.TextXAlignment.Left
+        CodeLabel.TextYAlignment = Enum.TextYAlignment.Top
+        AddToRegistry(CodeLabel, "TextColor3", "Text")
+        TextGradient:Skip(CodeLabel)
 
-        --// 复制按钮
-        local copyBtn = Instance.new("TextButton")
-        copyBtn.Size = UDim2.new(0, 24, 0, 24)
-        copyBtn.Position = UDim2.new(1, -30, 0, 6)
-        copyBtn.BackgroundColor3 = CurrentTheme.Element or Color3.fromRGB(26, 28, 36)
-        copyBtn.BackgroundTransparency = 0.1
-        copyBtn.BorderSizePixel = 0
-        copyBtn.Text = ""
-        copyBtn.AutoButtonColor = false
-        copyBtn.Visible = copyEnabled
-        copyBtn.Parent = codeFrame
-        Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 5)
+        CodeCorner.CornerRadius = UDim.new(0, 5)
+        CodeCorner.Parent = CodeLabel
 
-        local copyStroke = Instance.new("UIStroke")
-        copyStroke.Color = CurrentTheme.Stroke
-        copyStroke.Transparency = 0.65
-        copyStroke.Parent = copyBtn
-        table.insert(ThemeListeners, function() copyStroke.Color = CurrentTheme.Stroke end)
+        CodePadding.PaddingTop = UDim.new(0, 7)
+        CodePadding.PaddingBottom = UDim.new(0, 7)
+        CodePadding.PaddingLeft = UDim.new(0, 7)
+        CodePadding.PaddingRight = UDim.new(0, copyEnabled and 35 or 7)
+        CodePadding.Parent = CodeLabel
 
-        local copyIcon = Instance.new("ImageLabel")
-        copyIcon.Size = UDim2.new(0, 14, 0, 14)
-        copyIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-        copyIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-        copyIcon.BackgroundTransparency = 1
-        copyIcon.Image = "rbxassetid://10734898140"
-        copyIcon.ImageColor3 = CurrentTheme.Text
-        copyIcon.ImageTransparency = 0.3
-        copyIcon.ScaleType = Enum.ScaleType.Fit
-        copyIcon.Parent = copyBtn
-        AddToRegistry(copyIcon, "ImageColor3", "Text")
+        CopyButton.Name = "CodeBlock_CopyButton"
+        CopyButton.Parent = CodeFrame
+        CopyButton.AnchorPoint = Vector2.new(1, 0)
+        CopyButton.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+        CopyButton.BackgroundTransparency = copyEnabled and 0.100 or 1
+        CopyButton.BorderSizePixel = 0
+        CopyButton.ClipsDescendants = true
+        CopyButton.Position = UDim2.new(1, -16, 0, 13)
+        CopyButton.Size = UDim2.new(0, 24, 0, 24)
+        CopyButton.Visible = copyEnabled
+        CopyButton.ZIndex = 12
 
-        local function updateSize()
-            if not codeFrame.Parent then return end
-            local width = math.max(120, codeFrame.AbsoluteSize.X - 24)
-            local textBounds = TextService:GetTextSize(
-                codeLabel.Text, codeLabel.TextSize, codeLabel.Font,
-                Vector2.new(width, math.huge)
-            )
-            local height = math.max(36, textBounds.Y + 20)
-            codeFrame.Size = UDim2.new(1, 0, 0, height)
-            wrap.Size = UDim2.new(1, 0, 0, height + 10)
+        CopyCorner.CornerRadius = UDim.new(0, 5)
+        CopyCorner.Parent = CopyButton
+
+        CopyStroke.Transparency = 0.650
+        CopyStroke.Color = CurrentTheme.Stroke
+        CopyStroke.Parent = CopyButton
+        table.insert(ThemeListeners, function() CopyStroke.Color = CurrentTheme.Stroke end)
+
+        CopyIcon.Name = "CodeBlock_CopyIcon"
+        CopyIcon.Parent = CopyButton
+        CopyIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+        CopyIcon.BackgroundTransparency = 1
+        CopyIcon.BorderSizePixel = 0
+        CopyIcon.Position = UDim2.fromScale(0.5, 0.5)
+        CopyIcon.Size = UDim2.new(0, 15, 0, 15)
+        CopyIcon.ZIndex = 13
+        CopyIcon.Image = "rbxassetid://10734898140"
+        CopyIcon.ImageColor3 = CurrentTheme.Text
+        CopyIcon.ImageTransparency = 0.250
+        CopyIcon.ScaleType = Enum.ScaleType.Fit
+        AddToRegistry(CopyIcon, "ImageColor3", "Text")
+
+        LineFrame.Name = "CodeBlock_Line"
+        LineFrame.Parent = CodeFrame
+        LineFrame.AnchorPoint = Vector2.new(0.5, 1)
+        LineFrame.BackgroundColor3 = CurrentTheme.Stroke
+        LineFrame.BackgroundTransparency = 0.650
+        LineFrame.BorderSizePixel = 0
+        LineFrame.Position = UDim2.new(0.5, 0, 1, 0)
+        LineFrame.Size = UDim2.new(1, -20, 0, 1)
+        AddToRegistry(LineFrame, "BackgroundColor3", "Stroke")
+
+        local function UpdateCodeSize()
+            local Width = math.max(120, CodeFrame.AbsoluteSize.X - 32)
+            local Size = TextService:GetTextSize(CodeLabel.Text, CodeLabel.TextSize, CodeLabel.Font, Vector2.new(Width, math.huge))
+            local Height = math.max(40, Size.Y + 14)
+            CodeLabel.Size = UDim2.new(1, -20, 0, Height)
+            CodeFrame.Size = UDim2.new(1, 0, 0, Height + 15)
         end
 
-        copyBtn.MouseEnter:Connect(function()
-            Tween(copyBtn, { BackgroundTransparency = 0 }, 0.15)
-            Tween(copyIcon, { ImageTransparency = 0 }, 0.15)
-        end)
-        copyBtn.MouseLeave:Connect(function()
-            Tween(copyBtn, { BackgroundTransparency = 0.1 }, 0.15)
-            Tween(copyIcon, { ImageTransparency = 0.3 }, 0.15)
-        end)
-        copyBtn.MouseButton1Click:Connect(function()
-            local writer = setclipboard or toclipboard or set_clipboard
-            if not writer then return end
-            pcall(writer, codeText)
-            copyIcon.Image = "rbxassetid://10709790644"
-            task.delay(0.8, function()
-                if copyIcon and copyIcon.Parent then
-                    copyIcon.Image = "rbxassetid://10734898140"
+        local function GetClipboardWriter()
+            return setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard) or nil
+        end
+
+        local function Copy()
+            local Writer = GetClipboardWriter()
+            if not Writer then
+                CopyIcon.Image = "rbxassetid://10709790644"
+                task.delay(0.85, function()
+                    if CopyIcon and CopyIcon.Parent then
+                        CopyIcon.Image = "rbxassetid://10734898140"
+                    end
+                end)
+                return false
+            end
+
+            local Success = pcall(function() Writer(codeText) end)
+
+            CopyIcon.Image = Success and "rbxassetid://10709790644" or "rbxassetid://10709790644"
+            task.delay(0.85, function()
+                if CopyIcon and CopyIcon.Parent then
+                    CopyIcon.Image = "rbxassetid://10734898140"
                 end
             end)
+
+            return Success
+        end
+
+        local CopyInput = Instance.new("TextButton")
+        CopyInput.Name = "CodeBlock_CopyInput"
+        CopyInput.Size = UDim2.fromScale(1, 1)
+        CopyInput.BackgroundTransparency = 1
+        CopyInput.Text = ""
+        CopyInput.AutoButtonColor = false
+        CopyInput.Parent = CopyButton
+        CopyInput.MouseButton1Click:Connect(Copy)
+
+        CopyInput.MouseEnter:Connect(function()
+            Tween(CopyButton, { BackgroundTransparency = 0 }, 0.175)
+            Tween(CopyIcon, { ImageTransparency = 0 }, 0.175)
+        end)
+        CopyInput.MouseLeave:Connect(function()
+            Tween(CopyButton, { BackgroundTransparency = 0.100 }, 0.175)
+            Tween(CopyIcon, { ImageTransparency = 0.250 }, 0.175)
         end)
 
-        task.defer(updateSize)
-        codeFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSize)
+        task.defer(UpdateCodeSize)
+        CodeFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateCodeSize)
 
         ConfigObjects[controlId] = {
             Type = "CodeBlock",
@@ -2518,39 +2567,39 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Get = function() return codeText end,
             Set = function(v)
                 codeText = tostring(v or "")
-                codeLabel.Text = codeText
-                updateSize()
+                CodeLabel.Text = codeText
+                UpdateCodeSize()
             end,
         }
 
         local self = {}
-        function self.SetCode(v)
-            codeText = tostring(v or "")
-            codeLabel.Text = codeText
+        function self:SetCode(code)
+            codeText = tostring(code or "")
+            CodeLabel.Text = codeText
             ConfigObjects[controlId].Value = codeText
-            updateSize()
+            UpdateCodeSize()
             return self
         end
-        function self.GetCode() return codeText end
-        function self.SetRichText(v)
-            richText = v == true
-            codeLabel.RichText = richText
+        function self:GetCode() return codeText end
+        function self:SetRichText(value)
+            richText = value == true
+            CodeLabel.RichText = richText
+            UpdateCodeSize()
             return self
         end
-        function self.SetVisible(v) wrap.Visible = v ~= false; return self end
-        function self.SetCopyEnabled(v)
-            copyEnabled = v == true
-            copyBtn.Visible = copyEnabled
-            padding.PaddingRight = UDim.new(0, copyEnabled and 34 or 6)
+        function self:Copy() return Copy() end
+        function self:SetVisible(value)
+            CodeFrame.Visible = value ~= false
             return self
         end
-        function self.SetHeight(h)
-            codeFrame.Size = UDim2.new(1, 0, 0, h)
-            wrap.Size = UDim2.new(1, 0, 0, h + 10)
+        function self:SetCopyEnabled(value)
+            copyEnabled = value == true
+            CopyButton.Visible = copyEnabled
+            CodePadding.PaddingRight = UDim.new(0, copyEnabled and 35 or 7)
             return self
         end
-        function self.Destroy()
-            wrap:Destroy()
+        function self:Destroy()
+            CodeFrame:Destroy()
             ConfigObjects[controlId] = nil
         end
         return self
@@ -4078,9 +4127,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             updateHeight(instant)
         end
 
-        --// ============================================================
-        --// Section 拖动系统（由 Window 顶部按钮开关控制）
-        --// ============================================================
         local PoppedOut = false
         local PopOutFloat = nil
         local PopOutPlaceholder = nil
@@ -4626,26 +4672,201 @@ function Fenglib:CreateWindow(Config)
 
     TextGradient:AttachHook(ScreenGui)
 
-    --// 通知容器（移植自 ModernV2 Notifier）
-    local NotificationHolder = Instance.new("Frame")
-    NotificationHolder.Name = "NotificationHolder"
-    NotificationHolder.Size = UDim2.new(0, 260, 0, 0)
-    NotificationHolder.AutomaticSize = Enum.AutomaticSize.Y
-    NotificationHolder.Position = UDim2.new(1, -15, 0, 15)
-    NotificationHolder.AnchorPoint = Vector2.new(1, 0)
-    NotificationHolder.BackgroundTransparency = 1
-    NotificationHolder.BorderSizePixel = 0
-    NotificationHolder.ZIndex = 200
-    NotificationHolder.Parent = ScreenGui
+    --// ============================================================
+    --// Notification System —— 完整搬运自 ModernV2 Notifier
+    --// 默认图标 rbxassetid://84830962019412
+    --// ============================================================
+    local Notification = Instance.new("Frame")
+    local NotificationLayout = Instance.new("UIListLayout")
 
-    local NotificationList = Instance.new("UIListLayout")
-    NotificationList.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    NotificationList.VerticalAlignment = Enum.VerticalAlignment.Top
-    NotificationList.SortOrder = Enum.SortOrder.LayoutOrder
-    NotificationList.Padding = UDim.new(0, 5)
-    NotificationList.Parent = NotificationHolder
+    Notification.Name = "Notification"
+    Notification.Parent = ScreenGui
+    Notification.AnchorPoint = Vector2.new(1, 0)
+    Notification.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Notification.BackgroundTransparency = 1.000
+    Notification.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Notification.BorderSizePixel = 0
+    Notification.Position = UDim2.new(1, -25, 0, 25)
+    Notification.Size = UDim2.new(0, 25, 0, 25)
+    Notification.ZIndex = 500
 
-    local NotificationCounter = 0
+    NotificationLayout.Parent = Notification
+    NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    NotificationLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    NotificationLayout.Padding = UDim.new(0, 0)
+
+    local Notifier = {}
+
+    function Notifier.new(Config)
+        Config = Config or {}
+        local CustomIcon = Config.Icon
+
+        if Config.Name == nil then Config.Name = "Notification" end
+        if Config.Content == nil then Config.Content = "Hello World!" end
+        if Config.Logo == nil then Config.Logo = "rbxasset://textures/ui/VerifiedBadgeNameIcon.png" end
+        if Config.Icon == nil then Config.Icon = CustomIcon end
+        if Config.Duration == nil then Config.Duration = 5 end
+
+        local IconSource = Config.Icon or Config.Logo
+        local IconId = formatIconAsset(IconSource, "rbxassetid://84830962019412")
+        local IsImageIcon = IconId ~= ""
+
+        local ContainerFrame = Instance.new("Frame")
+        local NotifyFrame = Instance.new("Frame")
+        local UICorner = Instance.new("UICorner")
+        local UIStroke = Instance.new("UIStroke")
+        local LogoImage = Instance.new("ImageLabel")
+        local LogoIcon = Instance.new("ImageLabel")
+        local UICorner_2 = Instance.new("UICorner")
+        local NotifyName = Instance.new("TextLabel")
+        local NotifyContent = Instance.new("TextLabel")
+
+        local shadowStrokes = {}
+        for _, thick in ipairs({6, 5, 4, 3}) do
+            local s = Instance.new("UIStroke")
+            s.Thickness = thick
+            s.Color = Color3.new(0, 0, 0)
+            s.Transparency = 1
+            s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            s.Parent = NotifyFrame
+            table.insert(shadowStrokes, s)
+        end
+        local function SetShadow(visible)
+            for _, s in ipairs(shadowStrokes) do
+                Tween(s, { Transparency = visible and 0.9 or 1 }, 0.175)
+            end
+        end
+        SetShadow(true)
+
+        ContainerFrame.Name = "Notification_Container"
+        ContainerFrame.Parent = Notification
+        ContainerFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ContainerFrame.BackgroundTransparency = 1.000
+        ContainerFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        ContainerFrame.BorderSizePixel = 0
+        ContainerFrame.Size = UDim2.new(0, 0, 0, 100)
+
+        NotifyFrame.Name = "Notification_Frame"
+        NotifyFrame.Parent = ContainerFrame
+        NotifyFrame.AnchorPoint = Vector2.new(1, 0)
+        NotifyFrame.BackgroundColor3 = CurrentTheme.Top
+        NotifyFrame.BackgroundTransparency = 0.075
+        NotifyFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        NotifyFrame.BorderSizePixel = 0
+        NotifyFrame.ClipsDescendants = true
+        NotifyFrame.Position = UDim2.new(0, 750, 0, 0)
+        NotifyFrame.Size = UDim2.new(0, 220, 0, 55)
+        NotifyFrame.ZIndex = 130
+
+        UICorner.CornerRadius = UDim.new(0, 10)
+        UICorner.Parent = NotifyFrame
+
+        UIStroke.Transparency = 0.650
+        UIStroke.Color = CurrentTheme.Stroke
+        UIStroke.Parent = NotifyFrame
+        table.insert(ThemeListeners, function() UIStroke.Color = CurrentTheme.Stroke end)
+
+        LogoImage.Name = "Notification_LogoImage"
+        LogoImage.Parent = NotifyFrame
+        LogoImage.AnchorPoint = Vector2.new(0, 0.5)
+        LogoImage.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        LogoImage.BackgroundTransparency = 1.000
+        LogoImage.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        LogoImage.BorderSizePixel = 0
+        LogoImage.Position = UDim2.new(0, 10, 0.5, 0)
+        LogoImage.Size = UDim2.new(0, 35, 0, 35)
+        LogoImage.ZIndex = 131
+        LogoImage.Image = IsImageIcon and IconId or ""
+        LogoImage.ImageColor3 = CurrentTheme.Text
+        LogoImage.ImageTransparency = IsImageIcon and 0 or 1
+
+        UICorner_2.CornerRadius = UDim.new(0, 7)
+        UICorner_2.Parent = LogoImage
+
+        LogoIcon.Name = "Notification_LogoIcon"
+        LogoIcon.Parent = NotifyFrame
+        LogoIcon.AnchorPoint = Vector2.new(0, 0.5)
+        LogoIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        LogoIcon.BackgroundTransparency = 1.000
+        LogoIcon.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        LogoIcon.BorderSizePixel = 0
+        LogoIcon.Position = UDim2.new(0, 10, 0.5, 0)
+        LogoIcon.Size = UDim2.new(0, 35, 0, 35)
+        LogoIcon.ZIndex = 131
+        LogoIcon.Image = (not IsImageIcon) and IconId or ""
+        LogoIcon.ImageColor3 = CurrentTheme.Text
+        LogoIcon.ImageTransparency = IsImageIcon and 1 or 0.150
+        LogoIcon.ScaleType = Enum.ScaleType.Fit
+
+        NotifyName.Name = "Notification_NotifyName"
+        NotifyName.Parent = NotifyFrame
+        NotifyName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        NotifyName.BackgroundTransparency = 1.000
+        NotifyName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        NotifyName.BorderSizePixel = 0
+        NotifyName.Position = UDim2.new(0, 50, 0, 7)
+        NotifyName.Size = UDim2.new(0, 200, 0, 20)
+        NotifyName.ZIndex = 132
+        NotifyName.Font = Enum.Font.GothamBold
+        NotifyName.Text = Config.Name
+        NotifyName.TextColor3 = CurrentTheme.Text
+        NotifyName.TextSize = 17.000
+        NotifyName.TextXAlignment = Enum.TextXAlignment.Left
+        AddToRegistry(NotifyName, "TextColor3", "Text")
+        TextGradient:Add(NotifyName)
+
+        NotifyContent.Name = "Notification_NotifyContent"
+        NotifyContent.Parent = NotifyFrame
+        NotifyContent.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        NotifyContent.BackgroundTransparency = 1.000
+        NotifyContent.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        NotifyContent.BorderSizePixel = 0
+        NotifyContent.Position = UDim2.new(0, 50, 0, 28)
+        NotifyContent.Size = UDim2.new(0, 200, 0, 15)
+        NotifyContent.ZIndex = 132
+        NotifyContent.Font = Enum.Font.GothamBold
+        NotifyContent.Text = Config.Content
+        NotifyContent.TextColor3 = CurrentTheme.Text
+        NotifyContent.TextSize = 12.000
+        NotifyContent.TextTransparency = 0.650
+        NotifyContent.TextXAlignment = Enum.TextXAlignment.Left
+        AddToRegistry(NotifyContent, "TextColor3", "Text")
+        TextGradient:Skip(NotifyContent)
+
+        local Size1 = TextService:GetTextSize(NotifyName.Text, NotifyName.TextSize, NotifyName.Font, Vector2.new(math.huge, math.huge))
+        local Size2 = TextService:GetTextSize(NotifyContent.Text, NotifyContent.TextSize, NotifyContent.Font, Vector2.new(math.huge, math.huge))
+
+        local MainSize = math.max(Size1.X, Size2.X)
+
+        NotifyFrame.Size = UDim2.new(0, MainSize + 65, 0, 55)
+
+        Tween(NotifyFrame, { Position = UDim2.new(1, 0, 0, 0) }, 0.5)
+
+        ContainerFrame.Size = UDim2.new(0, 0, 0, 65)
+
+        task.delay(Config.Duration or 5, function()
+            SetShadow(false)
+
+            Tween(NotifyFrame, { BackgroundTransparency = 1 }, 0.175)
+            Tween(UIStroke, { Transparency = 1 }, 0.175)
+            Tween(LogoImage, { ImageTransparency = 1 }, 0.175)
+            Tween(LogoIcon, { ImageTransparency = 1 }, 0.175)
+            Tween(NotifyName, { TextTransparency = 1 }, 0.175)
+            Tween(NotifyContent, { TextTransparency = 1 }, 0.175)
+
+            task.wait(0.125)
+
+            Tween(ContainerFrame, { Size = UDim2.new(0, 0, 0, 0) }, 0.175)
+
+            task.wait(0.125)
+
+            ContainerFrame:Destroy()
+        end)
+
+        return NotifyFrame
+    end
+
+    Fenglib.__NotificationCache = Notifier
 
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 299
@@ -6861,108 +7082,13 @@ function Fenglib:CreateWindow(Config)
         return Dialog
     end
 
-    --// Notify：移植自 ModernV2 Notifier（默认图标 84830962019412）
+    --// Notify：完整搬运自 ModernV2 Notifier（默认图标 84830962019412）
     function Window:Notify(Config)
         if type(Config) == "string" then
             Config = { Content = Config }
         end
         Config = Config or {}
-
-        local titleText   = tostring(Config.Title or Config.Name or "Notification")
-        local contentText = tostring(Config.Content or Config.Desc or "")
-        local duration    = tonumber(Config.Duration) or 5
-        local iconAsset   = formatIconAsset(Config.Icon or Config.Logo, "rbxassetid://84830962019412")
-
-        NotificationCounter = NotificationCounter + 1
-
-        local NotifFrame = Instance.new("Frame")
-        NotifFrame.Name = "Notification_" .. tostring(NotificationCounter)
-        NotifFrame.Size = UDim2.new(1, 0, 0, 58)
-        NotifFrame.BackgroundColor3 = CurrentTheme.Top
-        NotifFrame.BackgroundTransparency = 1
-        NotifFrame.BorderSizePixel = 0
-        NotifFrame.ClipsDescendants = true
-        NotifFrame.LayoutOrder = NotificationCounter
-        NotifFrame.ZIndex = 201
-        NotifFrame.Parent = NotificationHolder
-        Instance.new("UICorner", NotifFrame).CornerRadius = UDim.new(0, 10)
-        AddToRegistry(NotifFrame, "BackgroundColor3", "Top")
-
-        local stroke = Instance.new("UIStroke")
-        stroke.Color = CurrentTheme.Stroke
-        stroke.Transparency = 1
-        stroke.Parent = NotifFrame
-        table.insert(ThemeListeners, function() stroke.Color = CurrentTheme.Stroke end)
-
-        --// 图标
-        local iconLabel = Instance.new("ImageLabel")
-        iconLabel.Size = UDim2.new(0, 32, 0, 32)
-        iconLabel.Position = UDim2.new(0, 13, 0.5, -16)
-        iconLabel.BackgroundTransparency = 1
-        iconLabel.Image = iconAsset
-        iconLabel.ImageColor3 = CurrentTheme.Accent
-        iconLabel.ImageTransparency = 1
-        iconLabel.ScaleType = Enum.ScaleType.Fit
-        iconLabel.ZIndex = 202
-        iconLabel.Parent = NotifFrame
-        AddToRegistry(iconLabel, "ImageColor3", "Accent")
-
-        --// 标题
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(1, -62, 0, 18)
-        titleLabel.Position = UDim2.new(0, 55, 0, 8)
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.Font = Enum.Font.GothamBold
-        titleLabel.Text = titleText
-        titleLabel.TextColor3 = CurrentTheme.Text
-        titleLabel.TextSize = 14
-        titleLabel.TextTransparency = 1
-        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        titleLabel.TextTruncate = Enum.TextTruncate.AtEnd
-        titleLabel.ZIndex = 202
-        titleLabel.Parent = NotifFrame
-        AddToRegistry(titleLabel, "TextColor3", "Text")
-        TextGradient:Add(titleLabel)
-
-        --// 内容
-        local contentLabel = Instance.new("TextLabel")
-        contentLabel.Size = UDim2.new(1, -62, 0, 15)
-        contentLabel.Position = UDim2.new(0, 55, 0, 28)
-        contentLabel.BackgroundTransparency = 1
-        contentLabel.Font = Enum.Font.GothamMedium
-        contentLabel.Text = contentText
-        contentLabel.TextColor3 = CurrentTheme.Text
-        contentLabel.TextSize = 12
-        contentLabel.TextTransparency = 1
-        contentLabel.TextXAlignment = Enum.TextXAlignment.Left
-        contentLabel.TextTruncate = Enum.TextTruncate.AtEnd
-        contentLabel.ZIndex = 202
-        contentLabel.Parent = NotifFrame
-        AddToRegistry(contentLabel, "TextColor3", "Text")
-        TextGradient:Skip(contentLabel)
-
-        --// 入场淡入
-        Tween(NotifFrame, { BackgroundTransparency = 0.05 }, 0.3)
-        Tween(stroke, { Transparency = 0.65 }, 0.3)
-        Tween(iconLabel, { ImageTransparency = 0 }, 0.3)
-        Tween(titleLabel, { TextTransparency = 0 }, 0.3)
-        Tween(contentLabel, { TextTransparency = 0.4 }, 0.3)
-
-        --// 自动消失
-        task.delay(duration, function()
-            if not NotifFrame.Parent then return end
-            Tween(NotifFrame, { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0) }, 0.3)
-            Tween(stroke, { Transparency = 1 }, 0.3)
-            Tween(iconLabel, { ImageTransparency = 1 }, 0.3)
-            Tween(titleLabel, { TextTransparency = 1 }, 0.3)
-            Tween(contentLabel, { TextTransparency = 1 }, 0.3)
-            task.wait(0.35)
-            if NotifFrame.Parent then
-                NotifFrame:Destroy()
-            end
-        end)
-
-        return NotifFrame
+        return Notifier.new(Config)
     end
 
     function Window:SetKeybind(key) Keybind = key end
