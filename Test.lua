@@ -2400,6 +2400,162 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return h
     end
 
+    --// CodeBlock：移植自 ModernV2 AddCodeBlock
+    child.CodeBlock = function(_, config)
+        config = safeConfig(config)
+        local codeName    = config.Name or "Code"
+        local codeText    = tostring(config.Code or "")
+        local richText    = config.RichText == true
+        local copyEnabled = config.Copy ~= false
+        local parent      = config.Parent or contentHolder
+        local controlId   = NewConfigId("CodeBlock", codeName)
+
+        local wrap = Instance.new("Frame")
+        wrap.Size = UDim2.new(1, 0, 0, 60)
+        wrap.BackgroundTransparency = 1
+        wrap.BorderSizePixel = 0
+        wrap.Parent = parent
+
+        local codeFrame = Instance.new("Frame")
+        codeFrame.Size = UDim2.new(1, 0, 0, 50)
+        codeFrame.BackgroundColor3 = Color3.fromRGB(18, 19, 25)
+        codeFrame.BackgroundTransparency = 0.15
+        codeFrame.BorderSizePixel = 0
+        codeFrame.Parent = wrap
+        Instance.new("UICorner", codeFrame).CornerRadius = UDim.new(0, 8)
+        AddToRegistry(codeFrame, "BackgroundColor3", "Main")
+
+        local codeLabel = Instance.new("TextLabel")
+        codeLabel.Size = UDim2.new(1, -20, 1, -14)
+        codeLabel.Position = UDim2.new(0, 10, 0, 7)
+        codeLabel.BackgroundTransparency = 1
+        codeLabel.Font = Enum.Font.Code
+        codeLabel.Text = codeText
+        codeLabel.TextColor3 = CurrentTheme.Text
+        codeLabel.TextSize = 12
+        codeLabel.TextWrapped = true
+        codeLabel.TextXAlignment = Enum.TextXAlignment.Left
+        codeLabel.TextYAlignment = Enum.TextYAlignment.Top
+        codeLabel.RichText = richText
+        codeLabel.Parent = codeFrame
+        AddToRegistry(codeLabel, "TextColor3", "Text")
+        TextGradient:Skip(codeLabel)
+
+        local padding = Instance.new("UIPadding")
+        padding.PaddingLeft  = UDim.new(0, 6)
+        padding.PaddingRight = UDim.new(0, copyEnabled and 34 or 6)
+        padding.Parent = codeLabel
+
+        --// 复制按钮
+        local copyBtn = Instance.new("TextButton")
+        copyBtn.Size = UDim2.new(0, 24, 0, 24)
+        copyBtn.Position = UDim2.new(1, -30, 0, 6)
+        copyBtn.BackgroundColor3 = CurrentTheme.Element or Color3.fromRGB(26, 28, 36)
+        copyBtn.BackgroundTransparency = 0.1
+        copyBtn.BorderSizePixel = 0
+        copyBtn.Text = ""
+        copyBtn.AutoButtonColor = false
+        copyBtn.Visible = copyEnabled
+        copyBtn.Parent = codeFrame
+        Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 5)
+
+        local copyStroke = Instance.new("UIStroke")
+        copyStroke.Color = CurrentTheme.Stroke
+        copyStroke.Transparency = 0.65
+        copyStroke.Parent = copyBtn
+        table.insert(ThemeListeners, function() copyStroke.Color = CurrentTheme.Stroke end)
+
+        local copyIcon = Instance.new("ImageLabel")
+        copyIcon.Size = UDim2.new(0, 14, 0, 14)
+        copyIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+        copyIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+        copyIcon.BackgroundTransparency = 1
+        copyIcon.Image = "rbxassetid://10734898140"
+        copyIcon.ImageColor3 = CurrentTheme.Text
+        copyIcon.ImageTransparency = 0.3
+        copyIcon.ScaleType = Enum.ScaleType.Fit
+        copyIcon.Parent = copyBtn
+        AddToRegistry(copyIcon, "ImageColor3", "Text")
+
+        local function updateSize()
+            if not codeFrame.Parent then return end
+            local width = math.max(120, codeFrame.AbsoluteSize.X - 24)
+            local textBounds = TextService:GetTextSize(
+                codeLabel.Text, codeLabel.TextSize, codeLabel.Font,
+                Vector2.new(width, math.huge)
+            )
+            local height = math.max(36, textBounds.Y + 20)
+            codeFrame.Size = UDim2.new(1, 0, 0, height)
+            wrap.Size = UDim2.new(1, 0, 0, height + 10)
+        end
+
+        copyBtn.MouseEnter:Connect(function()
+            Tween(copyBtn, { BackgroundTransparency = 0 }, 0.15)
+            Tween(copyIcon, { ImageTransparency = 0 }, 0.15)
+        end)
+        copyBtn.MouseLeave:Connect(function()
+            Tween(copyBtn, { BackgroundTransparency = 0.1 }, 0.15)
+            Tween(copyIcon, { ImageTransparency = 0.3 }, 0.15)
+        end)
+        copyBtn.MouseButton1Click:Connect(function()
+            local writer = setclipboard or toclipboard or set_clipboard
+            if not writer then return end
+            pcall(writer, codeText)
+            copyIcon.Image = "rbxassetid://10709790644"
+            task.delay(0.8, function()
+                if copyIcon and copyIcon.Parent then
+                    copyIcon.Image = "rbxassetid://10734898140"
+                end
+            end)
+        end)
+
+        task.defer(updateSize)
+        codeFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSize)
+
+        ConfigObjects[controlId] = {
+            Type = "CodeBlock",
+            Value = codeText,
+            Get = function() return codeText end,
+            Set = function(v)
+                codeText = tostring(v or "")
+                codeLabel.Text = codeText
+                updateSize()
+            end,
+        }
+
+        local self = {}
+        function self.SetCode(v)
+            codeText = tostring(v or "")
+            codeLabel.Text = codeText
+            ConfigObjects[controlId].Value = codeText
+            updateSize()
+            return self
+        end
+        function self.GetCode() return codeText end
+        function self.SetRichText(v)
+            richText = v == true
+            codeLabel.RichText = richText
+            return self
+        end
+        function self.SetVisible(v) wrap.Visible = v ~= false; return self end
+        function self.SetCopyEnabled(v)
+            copyEnabled = v == true
+            copyBtn.Visible = copyEnabled
+            padding.PaddingRight = UDim.new(0, copyEnabled and 34 or 6)
+            return self
+        end
+        function self.SetHeight(h)
+            codeFrame.Size = UDim2.new(1, 0, 0, h)
+            wrap.Size = UDim2.new(1, 0, 0, h + 10)
+            return self
+        end
+        function self.Destroy()
+            wrap:Destroy()
+            ConfigObjects[controlId] = nil
+        end
+        return self
+    end
+
     child.UserFrame = function(_, config)
         config = safeConfig(config)
         local name         = config.Name    or "用户"
@@ -3929,7 +4085,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         local PopOutFloat = nil
         local PopOutPlaceholder = nil
 
-        local DragState = "Idle" -- Idle | Holding | Dragging
+        local DragState = "Idle"
         local DragInput = nil
         local PressMouse = nil
         local DragStartPos = nil
@@ -3946,7 +4102,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return nil
         end
 
-        --// 向上回溯，找到所属窗口的 MainFrame（ScreenGui 的直接子节点）
         local function GetHostWindow()
             local node = sectionFrame
             while node and node.Parent do
@@ -4063,11 +4218,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             if not PoppedOut or not PopOutFloat then return end
 
-            --// 窗口隐藏时占位符位置不可靠，禁止吸回（浮窗保持独立）
             local hostWin = GetHostWindow()
             if hostWin and not hostWin.Visible then return end
 
-            --// 只有拖回原来的位置（占位符附近）才吸回，其余位置自由摆放，没有限制
             if PopOutPlaceholder and PopOutPlaceholder.Parent then
                 local floatCenter = PopOutFloat.AbsolutePosition + PopOutFloat.AbsoluteSize * 0.5
                 local phCenter    = PopOutPlaceholder.AbsolutePosition + PopOutPlaceholder.AbsoluteSize * 0.5
@@ -4179,7 +4332,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end)
         end
 
-        --// 模式关闭时自动收回浮窗（窗口隐藏时浮窗保持独立，不收回）
         table.insert(SectionDragListeners, function(enabled)
             if enabled or not PoppedOut then return end
             local hostWin = GetHostWindow()
@@ -4474,25 +4626,26 @@ function Fenglib:CreateWindow(Config)
 
     TextGradient:AttachHook(ScreenGui)
 
+    --// 通知容器（移植自 ModernV2 Notifier）
     local NotificationHolder = Instance.new("Frame")
     NotificationHolder.Name = "NotificationHolder"
-    NotificationHolder.Size = UDim2.new(0, 300, 0, 0)
+    NotificationHolder.Size = UDim2.new(0, 260, 0, 0)
     NotificationHolder.AutomaticSize = Enum.AutomaticSize.Y
-    NotificationHolder.Position = UDim2.new(1, -20, 1, -20)
-    NotificationHolder.AnchorPoint = Vector2.new(1, 1)
+    NotificationHolder.Position = UDim2.new(1, -15, 0, 15)
+    NotificationHolder.AnchorPoint = Vector2.new(1, 0)
     NotificationHolder.BackgroundTransparency = 1
     NotificationHolder.BorderSizePixel = 0
+    NotificationHolder.ZIndex = 200
     NotificationHolder.Parent = ScreenGui
-    NotificationHolder.ZIndex = 100
-    local HolderList = Instance.new("UIListLayout")
-    HolderList.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    HolderList.VerticalAlignment = Enum.VerticalAlignment.Bottom
-    HolderList.SortOrder = Enum.SortOrder.LayoutOrder
-    HolderList.Padding = UDim.new(0, 5)
-    HolderList.Parent = NotificationHolder
-    local HolderPadding = Instance.new("UIPadding")
-    HolderPadding.PaddingRight = UDim.new(0, 5); HolderPadding.PaddingBottom = UDim.new(0, 5)
-    HolderPadding.Parent = NotificationHolder
+
+    local NotificationList = Instance.new("UIListLayout")
+    NotificationList.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    NotificationList.VerticalAlignment = Enum.VerticalAlignment.Top
+    NotificationList.SortOrder = Enum.SortOrder.LayoutOrder
+    NotificationList.Padding = UDim.new(0, 5)
+    NotificationList.Parent = NotificationHolder
+
+    local NotificationCounter = 0
 
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 299
@@ -4955,7 +5108,6 @@ function Fenglib:CreateWindow(Config)
         return btn, content
     end
 
-    --// Section 拖动模式切换按钮（在 MinimizeBtn 左边）
     local SectionDragBtn, SectionDragIcon = createControlButton("rbxassetid://18879088568", nil, function()
         SetSectionDragMode(not SectionDragMode)
         if SectionDragIcon then
@@ -6709,7 +6861,110 @@ function Fenglib:CreateWindow(Config)
         return Dialog
     end
 
-    function Window:Notification(titleText, descText, notifType, duration) end
+    --// Notify：移植自 ModernV2 Notifier（默认图标 84830962019412）
+    function Window:Notify(Config)
+        if type(Config) == "string" then
+            Config = { Content = Config }
+        end
+        Config = Config or {}
+
+        local titleText   = tostring(Config.Title or Config.Name or "Notification")
+        local contentText = tostring(Config.Content or Config.Desc or "")
+        local duration    = tonumber(Config.Duration) or 5
+        local iconAsset   = formatIconAsset(Config.Icon or Config.Logo, "rbxassetid://84830962019412")
+
+        NotificationCounter = NotificationCounter + 1
+
+        local NotifFrame = Instance.new("Frame")
+        NotifFrame.Name = "Notification_" .. tostring(NotificationCounter)
+        NotifFrame.Size = UDim2.new(1, 0, 0, 58)
+        NotifFrame.BackgroundColor3 = CurrentTheme.Top
+        NotifFrame.BackgroundTransparency = 1
+        NotifFrame.BorderSizePixel = 0
+        NotifFrame.ClipsDescendants = true
+        NotifFrame.LayoutOrder = NotificationCounter
+        NotifFrame.ZIndex = 201
+        NotifFrame.Parent = NotificationHolder
+        Instance.new("UICorner", NotifFrame).CornerRadius = UDim.new(0, 10)
+        AddToRegistry(NotifFrame, "BackgroundColor3", "Top")
+
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = CurrentTheme.Stroke
+        stroke.Transparency = 1
+        stroke.Parent = NotifFrame
+        table.insert(ThemeListeners, function() stroke.Color = CurrentTheme.Stroke end)
+
+        --// 图标
+        local iconLabel = Instance.new("ImageLabel")
+        iconLabel.Size = UDim2.new(0, 32, 0, 32)
+        iconLabel.Position = UDim2.new(0, 13, 0.5, -16)
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Image = iconAsset
+        iconLabel.ImageColor3 = CurrentTheme.Accent
+        iconLabel.ImageTransparency = 1
+        iconLabel.ScaleType = Enum.ScaleType.Fit
+        iconLabel.ZIndex = 202
+        iconLabel.Parent = NotifFrame
+        AddToRegistry(iconLabel, "ImageColor3", "Accent")
+
+        --// 标题
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Size = UDim2.new(1, -62, 0, 18)
+        titleLabel.Position = UDim2.new(0, 55, 0, 8)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.Text = titleText
+        titleLabel.TextColor3 = CurrentTheme.Text
+        titleLabel.TextSize = 14
+        titleLabel.TextTransparency = 1
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.TextTruncate = Enum.TextTruncate.AtEnd
+        titleLabel.ZIndex = 202
+        titleLabel.Parent = NotifFrame
+        AddToRegistry(titleLabel, "TextColor3", "Text")
+        TextGradient:Add(titleLabel)
+
+        --// 内容
+        local contentLabel = Instance.new("TextLabel")
+        contentLabel.Size = UDim2.new(1, -62, 0, 15)
+        contentLabel.Position = UDim2.new(0, 55, 0, 28)
+        contentLabel.BackgroundTransparency = 1
+        contentLabel.Font = Enum.Font.GothamMedium
+        contentLabel.Text = contentText
+        contentLabel.TextColor3 = CurrentTheme.Text
+        contentLabel.TextSize = 12
+        contentLabel.TextTransparency = 1
+        contentLabel.TextXAlignment = Enum.TextXAlignment.Left
+        contentLabel.TextTruncate = Enum.TextTruncate.AtEnd
+        contentLabel.ZIndex = 202
+        contentLabel.Parent = NotifFrame
+        AddToRegistry(contentLabel, "TextColor3", "Text")
+        TextGradient:Skip(contentLabel)
+
+        --// 入场淡入
+        Tween(NotifFrame, { BackgroundTransparency = 0.05 }, 0.3)
+        Tween(stroke, { Transparency = 0.65 }, 0.3)
+        Tween(iconLabel, { ImageTransparency = 0 }, 0.3)
+        Tween(titleLabel, { TextTransparency = 0 }, 0.3)
+        Tween(contentLabel, { TextTransparency = 0.4 }, 0.3)
+
+        --// 自动消失
+        task.delay(duration, function()
+            if not NotifFrame.Parent then return end
+            Tween(NotifFrame, { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0) }, 0.3)
+            Tween(stroke, { Transparency = 1 }, 0.3)
+            Tween(iconLabel, { ImageTransparency = 1 }, 0.3)
+            Tween(titleLabel, { TextTransparency = 1 }, 0.3)
+            Tween(contentLabel, { TextTransparency = 1 }, 0.3)
+            task.wait(0.35)
+            if NotifFrame.Parent then
+                NotifFrame:Destroy()
+            end
+        end)
+
+        return NotifFrame
+    end
+
     function Window:SetKeybind(key) Keybind = key end
     function Window:Destroy()
         for _, fn in ipairs(Window._homeCleanup or {}) do pcall(fn) end
