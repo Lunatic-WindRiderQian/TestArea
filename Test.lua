@@ -2496,7 +2496,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         CopyIcon.Position = UDim2.fromScale(0.5, 0.5)
         CopyIcon.Size = UDim2.new(0, 15, 0, 15)
         CopyIcon.ZIndex = 13
-        CopyIcon.Image = "rbxassetid://10734898140"
+        CopyIcon.Image = "rbxassetid://103287906385313"
         CopyIcon.ImageColor3 = CurrentTheme.Text
         CopyIcon.ImageTransparency = 0.250
         CopyIcon.ScaleType = Enum.ScaleType.Fit
