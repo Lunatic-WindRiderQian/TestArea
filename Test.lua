@@ -2399,30 +2399,37 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return h
     end
 
-    --// CodeBlock：完整搬运自 ModernV2 AddCodeBlock（Title 统一为 Name）
+    --// ============================================================
+    --// CodeBlock：完整搬运自 ModernV2 idx:AddCodeBlock
+    --// Title 统一为 Name，默认字体 Enum.Font.Code
+    --// ============================================================
     child.CodeBlock = function(_, config)
         config = safeConfig(config)
+
         local codeName    = config.Name or "Code"
         local codeText    = tostring(config.Code or "")
         local richText    = config.RichText == true
         local copyEnabled = config.Copy ~= false
+        local copyText    = config.CopyText or "Copy"
+        local locked      = config.Locked == true
+        local lockedTitle = config.TextLocked or config.LockMessage or "已锁定"
         local parent      = config.Parent or contentHolder
         local controlId   = NewConfigId("CodeBlock", codeName)
 
-        local CodeFrame = Instance.new("Frame")
-        local UICorner = Instance.new("UICorner")
-        local CodeLabel = Instance.new("TextLabel")
-        local CodeCorner = Instance.new("UICorner")
+        local CodeFrame   = Instance.new("Frame")
+        local UICorner    = Instance.new("UICorner")
+        local CodeLabel   = Instance.new("TextLabel")
+        local CodeCorner  = Instance.new("UICorner")
         local CodePadding = Instance.new("UIPadding")
-        local CopyButton = Instance.new("Frame")
-        local CopyCorner = Instance.new("UICorner")
-        local CopyStroke = Instance.new("UIStroke")
-        local CopyIcon = Instance.new("ImageLabel")
-        local LineFrame = Instance.new("Frame")
+        local CopyButton  = Instance.new("Frame")
+        local CopyCorner  = Instance.new("UICorner")
+        local CopyStroke  = Instance.new("UIStroke")
+        local CopyIcon    = Instance.new("ImageLabel")
+        local LineFrame   = Instance.new("Frame")
 
         CodeFrame.Name = "CodeBlock_Frame"
         CodeFrame.Parent = parent
-        CodeFrame.BackgroundColor3 = Color3.fromRGB(25, 27, 33)
+        CodeFrame.BackgroundColor3 = CurrentTheme.Main
         CodeFrame.BackgroundTransparency = 1.000
         CodeFrame.BorderSizePixel = 0
         CodeFrame.ClipsDescendants = true
@@ -2454,16 +2461,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         CodeCorner.CornerRadius = UDim.new(0, 5)
         CodeCorner.Parent = CodeLabel
 
-        CodePadding.PaddingTop = UDim.new(0, 7)
+        CodePadding.PaddingTop    = UDim.new(0, 7)
         CodePadding.PaddingBottom = UDim.new(0, 7)
-        CodePadding.PaddingLeft = UDim.new(0, 7)
-        CodePadding.PaddingRight = UDim.new(0, copyEnabled and 35 or 7)
+        CodePadding.PaddingLeft   = UDim.new(0, 7)
+        CodePadding.PaddingRight  = UDim.new(0, copyEnabled and 35 or 7)
         CodePadding.Parent = CodeLabel
 
         CopyButton.Name = "CodeBlock_CopyButton"
         CopyButton.Parent = CodeFrame
         CopyButton.AnchorPoint = Vector2.new(1, 0)
-        CopyButton.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+        CopyButton.BackgroundColor3 = CurrentTheme.Element or Color3.fromRGB(26, 28, 36)
         CopyButton.BackgroundTransparency = copyEnabled and 0.100 or 1
         CopyButton.BorderSizePixel = 0
         CopyButton.ClipsDescendants = true
@@ -2471,6 +2478,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         CopyButton.Size = UDim2.new(0, 24, 0, 24)
         CopyButton.Visible = copyEnabled
         CopyButton.ZIndex = 12
+        AddToRegistry(CopyButton, "BackgroundColor3", "Element")
 
         CopyCorner.CornerRadius = UDim.new(0, 5)
         CopyCorner.Parent = CopyButton
@@ -2505,8 +2513,12 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         AddToRegistry(LineFrame, "BackgroundColor3", "Stroke")
 
         local function UpdateCodeSize()
+            if not CodeFrame.Parent then return end
             local Width = math.max(120, CodeFrame.AbsoluteSize.X - 32)
-            local Size = TextService:GetTextSize(CodeLabel.Text, CodeLabel.TextSize, CodeLabel.Font, Vector2.new(Width, math.huge))
+            local Size = TextService:GetTextSize(
+                CodeLabel.Text, CodeLabel.TextSize, CodeLabel.Font,
+                Vector2.new(Width, math.huge)
+            )
             local Height = math.max(40, Size.Y + 14)
             CodeLabel.Size = UDim2.new(1, -20, 0, Height)
             CodeFrame.Size = UDim2.new(1, 0, 0, Height + 15)
@@ -2516,27 +2528,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard) or nil
         end
 
+        local ICON_COPY  = "rbxassetid://10734898140"
+        local ICON_CHECK = "rbxassetid://10709790644"
+
         local function Copy()
             local Writer = GetClipboardWriter()
             if not Writer then
-                CopyIcon.Image = "rbxassetid://10709790644"
-                task.delay(0.85, function()
-                    if CopyIcon and CopyIcon.Parent then
-                        CopyIcon.Image = "rbxassetid://10734898140"
-                    end
-                end)
+                CopyIcon.Image = ICON_COPY
                 return false
             end
-
             local Success = pcall(function() Writer(codeText) end)
-
-            CopyIcon.Image = Success and "rbxassetid://10709790644" or "rbxassetid://10709790644"
+            CopyIcon.Image = Success and ICON_CHECK or ICON_COPY
             task.delay(0.85, function()
                 if CopyIcon and CopyIcon.Parent then
-                    CopyIcon.Image = "rbxassetid://10734898140"
+                    CopyIcon.Image = ICON_COPY
                 end
             end)
-
             return Success
         end
 
@@ -2558,6 +2565,13 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Tween(CopyIcon, { ImageTransparency = 0.250 }, 0.175)
         end)
 
+        local lockFrame, lockLabel = createLockOverlay(CodeFrame, lockedTitle)
+        lockFrame.Visible = locked
+        local function updateLock(state)
+            locked = state
+            lockFrame.Visible = state
+        end
+
         task.defer(UpdateCodeSize)
         CodeFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateCodeSize)
 
@@ -2566,6 +2580,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             Value = codeText,
             Get = function() return codeText end,
             Set = function(v)
+                if locked then return end
                 codeText = tostring(v or "")
                 CodeLabel.Text = codeText
                 UpdateCodeSize()
@@ -2573,6 +2588,9 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         }
 
         local self = {}
+        function self:Copy()
+            return Copy()
+        end
         function self:SetCode(code)
             codeText = tostring(code or "")
             CodeLabel.Text = codeText
@@ -2580,14 +2598,15 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             UpdateCodeSize()
             return self
         end
-        function self:GetCode() return codeText end
+        function self:GetCode()
+            return codeText
+        end
         function self:SetRichText(value)
             richText = value == true
             CodeLabel.RichText = richText
             UpdateCodeSize()
             return self
         end
-        function self:Copy() return Copy() end
         function self:SetVisible(value)
             CodeFrame.Visible = value ~= false
             return self
@@ -2597,6 +2616,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             CopyButton.Visible = copyEnabled
             CodePadding.PaddingRight = UDim.new(0, copyEnabled and 35 or 7)
             return self
+        end
+        function self:SetCopyText(value)
+            copyText = tostring(value or "Copy")
+            return self
+        end
+        function self:Lock(title)
+            updateLock(true)
+            if title then lockLabel.Text = title; lockedTitle = title end
+            return self
+        end
+        function self:Unlock()
+            updateLock(false)
+            return self
+        end
+        function self:IsLocked()
+            return locked
         end
         function self:Destroy()
             CodeFrame:Destroy()
@@ -4672,10 +4707,6 @@ function Fenglib:CreateWindow(Config)
 
     TextGradient:AttachHook(ScreenGui)
 
-    --// ============================================================
-    --// Notification System —— 完整搬运自 ModernV2 Notifier
-    --// 默认图标 rbxassetid://84830962019412
-    --// ============================================================
     local Notification = Instance.new("Frame")
     local NotificationLayout = Instance.new("UIListLayout")
 
@@ -4779,6 +4810,7 @@ function Fenglib:CreateWindow(Config)
         LogoImage.Image = IsImageIcon and IconId or ""
         LogoImage.ImageColor3 = CurrentTheme.Text
         LogoImage.ImageTransparency = IsImageIcon and 0 or 1
+        AddToRegistry(LogoImage, "ImageColor3", "Text")
 
         UICorner_2.CornerRadius = UDim.new(0, 7)
         UICorner_2.Parent = LogoImage
@@ -4797,6 +4829,7 @@ function Fenglib:CreateWindow(Config)
         LogoIcon.ImageColor3 = CurrentTheme.Text
         LogoIcon.ImageTransparency = IsImageIcon and 1 or 0.150
         LogoIcon.ScaleType = Enum.ScaleType.Fit
+        AddToRegistry(LogoIcon, "ImageColor3", "Text")
 
         NotifyName.Name = "Notification_NotifyName"
         NotifyName.Parent = NotifyFrame
@@ -7082,7 +7115,6 @@ function Fenglib:CreateWindow(Config)
         return Dialog
     end
 
-    --// Notify：完整搬运自 ModernV2 Notifier（默认图标 84830962019412）
     function Window:Notify(Config)
         if type(Config) == "string" then
             Config = { Content = Config }
