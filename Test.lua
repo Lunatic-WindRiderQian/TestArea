@@ -2528,7 +2528,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             return setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard) or nil
         end
 
-        local ICON_COPY  = "rbxassetid://10734898140"
+        local ICON_COPY  = "rbxassetid://103287906385313"
         local ICON_CHECK = "rbxassetid://10709790644"
 
         local function Copy()
