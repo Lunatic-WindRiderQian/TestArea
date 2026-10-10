@@ -6444,8 +6444,39 @@ function Fenglib:CreateWindow(Config)
         local icon   = Config.Icon or Config.Logo or "rbxassetid://9904843409"
         local qqLink = tostring(Config.QQGroup or "https://qm.qq.com/q/GDgGTuT66I")
 
-        local supportedExecutors   = Config.SupportedExecutors or {}
-        local unsupportedExecutors = Config.UnsupportedExecutors or {}
+        --// ================================================================
+        --// 执行器兼容性检测：完整移植自 Obsidian（黑曜石）
+        --// 原 Config.SupportedExecutors / UnsupportedExecutors 硬编码名单已删除
+        --// 改为运行时检测 Obsidian 内部实际依赖的能力函数
+        --// ================================================================
+        local function _CheckObsidianCompat()
+            local missing = {}
+            local function Need(name, ok)
+                if not ok then table.insert(missing, name) end
+            end
+
+            Need("cloneref",          (cloneref or clonereference))
+            Need("getgenv",           getgenv)
+            Need("gethui",            gethui)
+            Need("protectgui",        (syn and syn.protect_gui) or protectgui)
+            Need("getcustomasset",    getcustomasset)
+            Need("writefile",         writefile)
+            Need("readfile",          readfile)
+            Need("isfile",            isfile)
+            Need("isfolder",          isfolder)
+            Need("makefolder",        makefolder)
+            Need("listfiles",         listfiles)
+            Need("delfile",           delfile)
+            Need("setclipboard",      setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard))
+            Need("request",           (syn and syn.request) or http_request or request)
+            Need("sethiddenproperty", sethiddenproperty)
+            Need("setscriptable",     setscriptable)
+
+            return (#missing == 0), missing
+        end
+
+        local _ObsidianOK, _ObsidianMissing = _CheckObsidianCompat()
+
         local changelog = Config.ScriptChangelog or Config.Changelog or {}
         local segCfg    = type(Config.Segments) == "table" and Config.Segments or {}
 
@@ -6807,14 +6838,19 @@ function Fenglib:CreateWindow(Config)
         local ExecutorCard = Panel(RightCol, UDim2.new(1, 0, 0, 92))
         ExecutorCard.LayoutOrder = 1
 
+        --// 依据 Obsidian 兼容性检测结果渲染卡片状态
         local ExecStatus = "未知"
-        local ExecColor = CurrentTheme.Accent
-        if table.find(supportedExecutors, ExecutorName) then
-            ExecStatus = "你的注入器支持此脚本"
-            ExecColor = Color3.fromRGB(45, 180, 115)
-        elseif table.find(unsupportedExecutors, ExecutorName) then
-            ExecStatus = "你的注入器不支持此脚本"
-            ExecColor = Color3.fromRGB(220, 70, 70)
+        local ExecColor  = CurrentTheme.Accent
+
+        if _ObsidianOK then
+            ExecStatus = "你的注入器支持此脚本（完全兼容 Obsidian）"
+            ExecColor  = Color3.fromRGB(45, 180, 115)
+        elseif #_ObsidianMissing <= 3 then
+            ExecStatus = "部分兼容：缺少 " .. table.concat(_ObsidianMissing, ", ") .. "（将使用回退方案）"
+            ExecColor  = Color3.fromRGB(230, 170, 60)
+        else
+            ExecStatus = "不兼容 Obsidian：缺少 " .. table.concat(_ObsidianMissing, ", ")
+            ExecColor  = Color3.fromRGB(220, 70, 70)
         end
 
         ExecutorCard.BackgroundColor3 = ExecColor
