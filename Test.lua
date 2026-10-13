@@ -2399,10 +2399,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return h
     end
 
-    --// ============================================================
-    --// CodeBlock：完整搬运自 ModernV2 idx:AddCodeBlock
-    --// Title 统一为 Name，默认字体 Enum.Font.Code
-    --// ============================================================
     child.CodeBlock = function(_, config)
         config = safeConfig(config)
 
@@ -4732,8 +4728,8 @@ function Fenglib:CreateWindow(Config)
         Config = Config or {}
         local CustomIcon = Config.Icon
 
-        if Config.Name == nil then Config.Name = "Notification" end
-        if Config.Content == nil then Config.Content = "Hello World!" end
+        if Config.Name == nil then Config.Name = "殺脚本温馨提示" end
+        if Config.Content == nil then Config.Content = "你个废物会不会用通知" end
         if Config.Logo == nil then Config.Logo = "rbxasset://textures/ui/VerifiedBadgeNameIcon.png" end
         if Config.Icon == nil then Config.Icon = CustomIcon end
         if Config.Duration == nil then Config.Duration = 5 end
@@ -6444,11 +6440,6 @@ function Fenglib:CreateWindow(Config)
         local icon   = Config.Icon or Config.Logo or "rbxassetid://9904843409"
         local qqLink = tostring(Config.QQGroup or "https://qm.qq.com/q/GDgGTuT66I")
 
-        --// ================================================================
-        --// 执行器兼容性检测：完整移植自 Obsidian（黑曜石）
-        --// 原 Config.SupportedExecutors / UnsupportedExecutors 硬编码名单已删除
-        --// 改为运行时检测 Obsidian 内部实际依赖的能力函数
-        --// ================================================================
         local function _CheckObsidianCompat()
             local missing = {}
             local function Need(name, ok)
@@ -6670,6 +6661,7 @@ function Fenglib:CreateWindow(Config)
 
         local DetailsPage = NewPage(CH)
         local ScriptPage  = NewPage(CH)
+        local OtherPage   = NewPage(CH)
 
         local segButtons = {}
         local function MakeSegment(segName, text, ic)
@@ -6700,6 +6692,7 @@ function Fenglib:CreateWindow(Config)
             hit.MouseButton1Click:Connect(function()
                 DetailsPage.Visible = (segName == "Details")
                 ScriptPage.Visible  = (segName == "Script")
+                OtherPage.Visible   = (segName == "Other")
                 for n, s in pairs(segButtons) do
                     local active = (n == segName)
                     Tween(s.Root, {BackgroundTransparency = active and 0.08 or 0.55}, 0.2)
@@ -6713,9 +6706,11 @@ function Fenglib:CreateWindow(Config)
         local segSpec = {
             Details = segCfg.Details or segCfg[1] or {},
             Script  = segCfg.Script  or segCfg[2] or {},
+            Other   = segCfg.Other   or segCfg[3] or {},
         }
         local showDetails = segSpec.Details.Show ~= false and Config.ShowDetailsSegment ~= false
         local showScript  = segSpec.Script.Show  ~= false and Config.ShowScriptSegment  ~= false
+        local showOther   = segSpec.Other.Show   ~= false and Config.ShowOtherSegment   ~= false
 
         if showDetails then
             MakeSegment("Details",
@@ -6726,6 +6721,11 @@ function Fenglib:CreateWindow(Config)
             MakeSegment("Script",
                 segSpec.Script.Text or segSpec.Script.Name or Config.ScriptText or "脚本更新",
                 segSpec.Script.Icon or Config.ScriptIcon or 9904743710)
+        end
+        if showOther then
+            MakeSegment("Other",
+                segSpec.Other.Text or segSpec.Other.Name or Config.OtherText or "其他更新",
+                segSpec.Other.Icon or Config.OtherIcon or 9904843410)
         end
 
         local DW = Instance.new("Frame")
@@ -6838,18 +6838,17 @@ function Fenglib:CreateWindow(Config)
         local ExecutorCard = Panel(RightCol, UDim2.new(1, 0, 0, 92))
         ExecutorCard.LayoutOrder = 1
 
-        --// 依据 Obsidian 兼容性检测结果渲染卡片状态
         local ExecStatus = "未知"
         local ExecColor  = CurrentTheme.Accent
 
         if _ObsidianOK then
-            ExecStatus = "你的注入器支持此脚本（完全兼容 Obsidian）"
+            ExecStatus = "你的注入器完全兼容"
             ExecColor  = Color3.fromRGB(45, 180, 115)
         elseif #_ObsidianMissing <= 3 then
-            ExecStatus = "部分兼容：缺少 " .. table.concat(_ObsidianMissing, ", ") .. "（将使用回退方案）"
+            ExecStatus = "部分兼容：缺少 " .. table.concat(_ObsidianMissing, ", ") .. "（只能使用UI的部分功能）"
             ExecColor  = Color3.fromRGB(230, 170, 60)
         else
-            ExecStatus = "不兼容 Obsidian：缺少 " .. table.concat(_ObsidianMissing, ", ")
+            ExecStatus = "不兼容殺脚本：缺少 " .. table.concat(_ObsidianMissing, ", ")
             ExecColor  = Color3.fromRGB(220, 70, 70)
         end
 
@@ -6937,6 +6936,7 @@ function Fenglib:CreateWindow(Config)
         end
 
         FillChangelog(ScriptPage, changelog, "暂无脚本更新")
+        FillChangelog(OtherPage, Config.OtherChangelog, "暂无其他更新")
 
         local FriendCache = {
             All = "...", Online = "...", Offline = "...", InServer = "...",
