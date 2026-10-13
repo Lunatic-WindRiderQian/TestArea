@@ -4484,9 +4484,14 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             end
 
             for _, entry in ipairs(tabEntries) do
-                local key     = tostring(entry.Key)
-                local tabName = entry.Name or key
-                local tabIcon = entry.Icon
+                local key            = tostring(entry.Key)
+                local tabName        = entry.Name or key
+                local tabIcon        = entry.Icon
+                local tabLocked      = entry.Locked == true
+                local tabLockedTitle = entry.LockedTitle
+                                    or entry.TextLocked
+                                    or entry.LockMessage
+                                    or "已锁定"
 
                 local btn = Instance.new("TextButton")
                 btn.Name = "SectionTab_"..key
@@ -4544,6 +4549,16 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 textLbl.TextTruncate = Enum.TextTruncate.AtEnd
                 textLbl.Parent = btn
 
+                -- ===== 单个 Tab 的锁 =====
+                if tabLocked then
+                    local tabLockFrame, tabLockLabel = createLockOverlay(btn, tabLockedTitle)
+                    tabLockFrame.Visible = true
+                    tabLockFrame.ZIndex = 5
+                    if tabLockLabel then
+                        tabLockLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    end
+                end
+
                 local tabFrame = Instance.new("Frame")
                 tabFrame.Name = "TabContent_"..key
                 tabFrame.Size = UDim2.new(1, 0, 0, 0)
@@ -4561,6 +4576,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     frame = tabFrame, layout = tabLayout,
                     btn = btn, stroke = btnStroke,
                     icon = iconLabel, label = textLbl,
+                    locked = tabLocked,
                 }
 
                 local subBuilder = createSectionBuilder(tabFrame, tabFrame, elementWidth, windowCount, win)
@@ -4584,7 +4600,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 })
 
                 btn.MouseButton1Click:Connect(function()
-                    if locked then return end
+                    if locked or tabLocked then return end
                     switchTab(key)
                 end)
 
@@ -4595,8 +4611,22 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 
             if tabEntries[1] then
                 local firstKey = tostring(tabEntries[1].Key)
-                activeTabKey = nil
-                switchTab(firstKey)
+                local firstData = tabDataMap[firstKey]
+                if firstData and not firstData.locked then
+                    activeTabKey = nil
+                    switchTab(firstKey)
+                else
+                    -- 找到第一个未锁定的 tab 作为默认激活
+                    for _, entry in ipairs(tabEntries) do
+                        local k = tostring(entry.Key)
+                        local d = tabDataMap[k]
+                        if d and not d.locked then
+                            activeTabKey = nil
+                            switchTab(k)
+                            break
+                        end
+                    end
+                end
             end
         end
 
@@ -6318,6 +6348,20 @@ function Fenglib:CreateWindow(Config)
     Window._activeTab = nil
     Window._tabs = {}
     function Window:Tab(name, icon)
+        -- ========== 支持 table 配置 & Tab 锁 ==========
+        local tabLocked      = false
+        local tabLockedTitle = "已锁定"
+        if type(name) == "table" then
+            local cfg = name
+            name = cfg.Name or cfg.Text or "Tab"
+            icon = cfg.Icon or cfg.Logo
+            tabLocked = cfg.Locked == true
+            tabLockedTitle = cfg.LockedTitle
+                          or cfg.TextLocked
+                          or cfg.LockMessage
+                          or "已锁定"
+        end
+
         local parentContainer = LeftScrollingFrame
         if Window._currentCategory then parentContainer = Window._currentCategory.content end
         local TabBtn = Instance.new("TextButton")
@@ -6365,6 +6409,18 @@ function Fenglib:CreateWindow(Config)
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
+
+        -- ===== 新增：Tab 锁覆盖层 =====
+        local tabLockFrame, tabLockLabel = nil, nil
+        if tabLocked then
+            tabLockFrame, tabLockLabel = createLockOverlay(TabBtn, tabLockedTitle)
+            tabLockFrame.Visible = true
+            tabLockFrame.ZIndex = 20
+            if tabLockLabel then
+                tabLockLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            end
+        end
+
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
@@ -6390,8 +6446,9 @@ function Fenglib:CreateWindow(Config)
         end
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
         task.spawn(updatePageCanvas)
-        local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame}
+        local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame, locked = tabLocked}
         TabBtn.MouseButton1Click:Connect(function()
+            if tabLocked then return end
             if Window._activeTab == state then return end
             for _, s in ipairs(Window._tabs) do
                 s.btn.BackgroundTransparency = 1
@@ -6408,7 +6465,7 @@ function Fenglib:CreateWindow(Config)
             Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
             Window._activeTab = state
         end)
-        if not Window._activeTab then
+        if not Window._activeTab and not tabLocked then
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
@@ -6896,9 +6953,6 @@ function Fenglib:CreateWindow(Config)
         FriendLabels.Online   = MakeStat(FriendsCard, "在线",     "...", 0,   104, 0.5)
         FriendLabels.All      = MakeStat(FriendsCard, "全部",     "...", 0.5, 104, 0.5)
 
-        -- ============================================================
-        -- FillChangelog（已修复：Date 单独一行，Description 单独一行）
-        -- ============================================================
         local function FillChangelog(Page, Entries, EmptyText)
             local Holder = Panel(Page, UDim2.new(1, 0, 0, 40))
             Holder.AutomaticSize = Enum.AutomaticSize.Y
