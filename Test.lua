@@ -6896,6 +6896,9 @@ function Fenglib:CreateWindow(Config)
         FriendLabels.Online   = MakeStat(FriendsCard, "在线",     "...", 0,   104, 0.5)
         FriendLabels.All      = MakeStat(FriendsCard, "全部",     "...", 0.5, 104, 0.5)
 
+        -- ============================================================
+        -- FillChangelog（已修复：Date 单独一行，Description 单独一行）
+        -- ============================================================
         local function FillChangelog(Page, Entries, EmptyText)
             local Holder = Panel(Page, UDim2.new(1, 0, 0, 40))
             Holder.AutomaticSize = Enum.AutomaticSize.Y
@@ -6917,21 +6920,61 @@ function Fenglib:CreateWindow(Config)
             end
 
             for i, Entry in ipairs(Entries) do
-                local Item = Panel(Holder, UDim2.new(1, 0, 0, 62))
+                local TitleText = tostring(Entry.Title or Entry.Name or ("更新 " .. i))
+                local DateText  = Entry.Date and tostring(Entry.Date) or ""
+                local DescText  = tostring(Entry.Description or Entry.Content or "")
+
+                local Item = Panel(Holder, UDim2.new(1, 0, 0, 0))
+                Item.AutomaticSize = Enum.AutomaticSize.Y
                 Item.LayoutOrder = i
-                local t = MakeText(Item,
-                    tostring(Entry.Title or Entry.Name or ("更新 " .. i)),
-                    14, true, 0)
-                t.Position = UDim2.fromOffset(14, 10)
-                t.Size = UDim2.new(1, -28, 0, 18)
-                local d = MakeText(Item,
-                    tostring(Entry.Description or Entry.Content or Entry.Date or ""),
-                    11, false, 0.3)
-                d.Position = UDim2.fromOffset(14, 30)
-                d.Size = UDim2.new(1, -28, 0, 22)
-                d.TextWrapped = true
-                d.TextTruncate = Enum.TextTruncate.None
-                d.TextYAlignment = Enum.TextYAlignment.Top
+
+                local ItemPad = Instance.new("UIPadding")
+                ItemPad.PaddingTop    = UDim.new(0, 10)
+                ItemPad.PaddingBottom = UDim.new(0, 10)
+                ItemPad.PaddingLeft   = UDim.new(0, 14)
+                ItemPad.PaddingRight  = UDim.new(0, 14)
+                ItemPad.Parent = Item
+
+                local VBox = Instance.new("Frame")
+                VBox.BackgroundTransparency = 1
+                VBox.BorderSizePixel = 0
+                VBox.Size = UDim2.new(1, 0, 0, 0)
+                VBox.AutomaticSize = Enum.AutomaticSize.Y
+                VBox.Parent = Item
+
+                local VL = Instance.new("UIListLayout")
+                VL.Padding = UDim.new(0, 4)
+                VL.SortOrder = Enum.SortOrder.LayoutOrder
+                VL.Parent = VBox
+
+                local t = MakeText(VBox, TitleText, 14, true, 0)
+                t.Size = UDim2.new(1, 0, 0, 18)
+                t.LayoutOrder = 1
+
+                if DateText ~= "" then
+                    local dt = MakeText(VBox, DateText, 11, false, 0.5)
+                    dt.Size = UDim2.new(1, 0, 0, 14)
+                    dt.LayoutOrder = 2
+                end
+
+                if DescText ~= "" then
+                    local d = MakeText(VBox, DescText, 11, false, 0.3)
+                    d.Size = UDim2.new(1, 0, 0, 18)
+                    d.LayoutOrder = 3
+                    d.TextWrapped = true
+                    d.TextTruncate = Enum.TextTruncate.None
+                    d.TextYAlignment = Enum.TextYAlignment.Top
+
+                    defer(function()
+                        if not d.Parent or not VBox.Parent then return end
+                        local W = math.max(60, VBox.AbsoluteSize.X)
+                        local H = TextService:GetTextSize(
+                            d.Text, d.TextSize, d.Font,
+                            Vector2.new(W, math.huge)
+                        ).Y + 4
+                        d.Size = UDim2.new(1, 0, 0, H)
+                    end)
+                end
             end
         end
 
