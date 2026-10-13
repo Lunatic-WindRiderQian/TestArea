@@ -6925,9 +6925,8 @@ function Fenglib:CreateWindow(Config)
                 t.Position = UDim2.fromOffset(14, 10)
                 t.Size = UDim2.new(1, -28, 0, 18)
                 local d = MakeText(Item,
-                    tostring(Entry.Date and (Entry.Date .. "  ") or "")
-                    .. tostring(Entry.Description or Entry.Content or ""),
-                11, false, 0.3)
+                    tostring(Entry.Description or Entry.Content or Entry.Date or ""),
+                    11, false, 0.3)
                 d.Position = UDim2.fromOffset(14, 30)
                 d.Size = UDim2.new(1, -28, 0, 22)
                 d.TextWrapped = true
