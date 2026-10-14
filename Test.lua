@@ -4930,6 +4930,30 @@ function Fenglib:CreateWindow(Config)
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 299
 
+    -- ===== 平滑跟随的阴影层（搬运自 DuasLibraryUI）=====
+    local ShadowFrame = Instance.new("Frame")
+    ShadowFrame.Name = "FengShadow"
+    ShadowFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    ShadowFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    ShadowFrame.Size = UDim2.fromOffset(0, 0)
+    ShadowFrame.BackgroundColor3 = CurrentTheme.Main
+    ShadowFrame.BackgroundTransparency = 0.35
+    ShadowFrame.BorderSizePixel = 0
+    ShadowFrame.Visible = false
+    ShadowFrame.ZIndex = 0
+    ShadowFrame.Parent = ScreenGui
+    Instance.new("UICorner", ShadowFrame).CornerRadius = UDim.new(0, 12)
+    AddToRegistry(ShadowFrame, "BackgroundColor3", "Main")
+
+    local shadowGrad = Instance.new("UIGradient")
+    shadowGrad.Rotation = 90
+    shadowGrad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.15),
+        NumberSequenceKeypoint.new(0.55, 0.65),
+        NumberSequenceKeypoint.new(1, 0.45),
+    })
+    shadowGrad.Parent = ShadowFrame
+
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -4938,7 +4962,8 @@ function Fenglib:CreateWindow(Config)
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
-    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+    local MainCorner = Instance.new("UICorner", MainFrame)
+    MainCorner.CornerRadius = UDim.new(0, 12)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
     local shadowStrokes = {}
@@ -4957,6 +4982,33 @@ function Fenglib:CreateWindow(Config)
             if instant then stroke.Transparency = targetTrans
             else Tween(stroke, {Transparency = targetTrans}, 0.3) end
         end
+        -- 平滑阴影层同步显隐
+        ShadowFrame.Visible = visible == true
+    end
+
+    -- 平滑阴影：用 Heartbeat 让阴影以指数缓动追赶窗口的位置与大小
+    do
+        local shadowPos = Vector2.new(0.5, 0.5)
+        local shadowOff = Vector2.new(0, 0)
+        local shadowW, shadowH = 0, 0
+        local shadowConn = RunService.Heartbeat:Connect(function(dt)
+            if not ScreenGui.Parent then
+                shadowConn:Disconnect()
+                return
+            end
+            if not ScreenGui.Enabled or not ShadowFrame.Visible then return end
+            dt = math.min(dt, 1 / 30)
+            local pa = 1 - math.exp(-45 * dt)
+            local sa = 1 - math.exp(-12 * dt)
+            local tp = MainFrame.Position
+            local ab = MainFrame.AbsoluteSize
+            shadowPos = shadowPos:Lerp(Vector2.new(tp.X.Scale, tp.Y.Scale), pa)
+            shadowOff = shadowOff:Lerp(Vector2.new(tp.X.Offset, tp.Y.Offset), pa)
+            shadowW = shadowW + (ab.X - shadowW) * sa
+            shadowH = shadowH + (ab.Y - shadowH) * sa
+            ShadowFrame.Position = UDim2.new(shadowPos.X, shadowOff.X, shadowPos.Y, shadowOff.Y)
+            ShadowFrame.Size = UDim2.fromOffset(shadowW, shadowH)
+        end)
     end
 
     local bgImage = Instance.new("ImageLabel")
@@ -5388,6 +5440,59 @@ function Fenglib:CreateWindow(Config)
         return btn, content
     end
 
+    -- ===== 收缩 / 展开（最小化动画，搬运自 DuasLibraryUI）=====
+    local MiniIcon = Instance.new("ImageLabel")
+    MiniIcon.Name = "FengMiniIcon"
+    MiniIcon.Size = UDim2.fromOffset(28, 28)
+    MiniIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+    MiniIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    MiniIcon.BackgroundTransparency = 1
+    MiniIcon.Image = formatIconAsset(IconAsset, "rbxassetid://84830962019412")
+    MiniIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    MiniIcon.ScaleType = Enum.ScaleType.Fit
+    MiniIcon.Visible = false
+    MiniIcon.ZIndex = 50
+    MiniIcon.Parent = MainFrame
+    Instance.new("UICorner", MiniIcon).CornerRadius = UDim.new(1, 0)
+
+    local MiniClick = Instance.new("TextButton")
+    MiniClick.Name = "FengMiniClick"
+    MiniClick.Size = UDim2.fromScale(1, 1)
+    MiniClick.BackgroundTransparency = 1
+    MiniClick.Text = ""
+    MiniClick.AutoButtonColor = false
+    MiniClick.Visible = false
+    MiniClick.ZIndex = 51
+    MiniClick.Parent = MainFrame
+
+    local minimized = false
+    local MINI_SIZE = UDim2.fromOffset(46, 46)
+    local FULL_SIZE = UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT)
+    local MINI_TWEEN = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+    local function SetMinimized(state)
+        state = state == true
+        if minimized == state then return end
+        minimized = state
+        LeftMenuFrame.Visible = not state
+        RightMenuFrame.Visible = not state
+        MiniIcon.Visible = state
+        MiniClick.Visible = state
+        if state and settingsOpen then
+            closeSettings()
+        end
+        TweenService:Create(MainFrame, MINI_TWEEN, {
+            Size = state and MINI_SIZE or FULL_SIZE,
+            BackgroundTransparency = state and 0.05 or 0.15,
+        }):Play()
+        TweenService:Create(MainCorner, MINI_TWEEN, {
+            CornerRadius = state and UDim.new(1, 0) or UDim.new(0, 12),
+        }):Play()
+        TweenService:Create(MiniIcon, MINI_TWEEN, {
+            Size = state and UDim2.fromOffset(28, 28) or UDim2.fromOffset(0, 0),
+        }):Play()
+    end
+
     local SectionDragBtn, SectionDragIcon = createControlButton("rbxassetid://18879088568", nil, function()
         SetSectionDragMode(not SectionDragMode)
         if SectionDragIcon then
@@ -5401,7 +5506,13 @@ function Fenglib:CreateWindow(Config)
         SectionDragIcon.ImageColor3 = SectionDragMode and CurrentTheme.Accent or CurrentTheme.Text
     end
 
-    local MinimizeBtn = createControlButton(nil, "−", function() MainFrame.Visible = false end)
+    local MinimizeBtn = createControlButton(nil, "−", function()
+        SetMinimized(true)
+    end)
+    MiniClick.MouseButton1Click:Connect(function()
+        SetMinimized(false)
+    end)
+
     local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
         resizerVisible = not resizerVisible
         Resizer.Visible = resizerVisible
