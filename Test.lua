@@ -4939,83 +4939,25 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
-AddToRegistry(MainFrame, "BackgroundColor3", "Main")
+    AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
--- ── 平滑跟随阴影（移植自 DuasLibraryUI）────────────────────────────
--- 阴影帧挂在 ScreenGui 上，而不是 MainFrame 的子级，
--- 这样它不会随窗口一起移动，才能做出"滞后拖尾"的跟随动画。
-local MainShadow = Instance.new("Frame")
-MainShadow.Name = "FengMainShadow"
-MainShadow.AnchorPoint = Vector2.new(0.5, 0.5)
-MainShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-MainShadow.Size = UDim2.fromOffset(0, 0)
-MainShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-MainShadow.BackgroundTransparency = 0.4
-MainShadow.BorderSizePixel = 0
-MainShadow.ZIndex = 0
-MainShadow.Visible = false
-MainShadow.Parent = ScreenGui
-Instance.new("UICorner", MainShadow).CornerRadius = UDim.new(0, 12)
-local MainShadowGrad = Instance.new("UIGradient")
-MainShadowGrad.Rotation = 90
-MainShadowGrad.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 0.2),
-    NumberSequenceKeypoint.new(0.55, 0.6),
-    NumberSequenceKeypoint.new(1, 0.45),
-})
-MainShadowGrad.Parent = MainShadow
-
--- 平滑跟随：位置用较快的响应速度（pa），大小用较慢的（sa），
--- 拖得越快，拖尾越明显，松手后自动收拢到窗口正下方。
-local shadowPos = Vector2.new(0.5, 0.5)
-local shadowOff = Vector2.new(0, 0)
-local shadowW, shadowH = 0, 0
-local shadowConn
-shadowConn = RunService.Heartbeat:Connect(function(dt)
-    if not ScreenGui.Parent then
-        if shadowConn then shadowConn:Disconnect(); shadowConn = nil end
-        return
+    local shadowStrokes = {}
+    for _, thick in ipairs({6, 5, 4, 3}) do
+        local stroke = Instance.new("UIStroke")
+        stroke.Thickness = thick
+        stroke.Color = Color3.new(0, 0, 0)
+        stroke.Transparency = 1
+        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        stroke.Parent = MainFrame
+        table.insert(shadowStrokes, stroke)
     end
-    if not ScreenGui.Enabled then return end
-
-    dt = math.min(dt, 1 / 30)
-    local pa = 1 - math.exp(-45 * dt)   -- 位置跟随速度
-    local sa = 1 - math.exp(-12 * dt)   -- 尺寸跟随速度
-
-    local tp = MainFrame.Position
-    local ab = MainFrame.AbsoluteSize
-
-    shadowPos = shadowPos:Lerp(Vector2.new(tp.X.Scale, tp.Y.Scale), pa)
-    shadowOff = shadowOff:Lerp(Vector2.new(tp.X.Offset, tp.Y.Offset), pa)
-    shadowW = shadowW + (ab.X - shadowW) * sa
-    shadowH = shadowH + (ab.Y - shadowH) * sa
-
-    MainShadow.Position = UDim2.new(shadowPos.X, shadowOff.X, shadowPos.Y, shadowOff.Y)
-    MainShadow.Size = UDim2.fromOffset(shadowW, shadowH)
-end)
-
--- ── 原 UIStroke 阴影（保留，作为边缘柔光） ────────────────────────
-local shadowStrokes = {}
-for _, thick in ipairs({6, 5, 4, 3}) do
-    local stroke = Instance.new("UIStroke")
-    stroke.Thickness = thick
-    stroke.Color = Color3.new(0, 0, 0)
-    stroke.Transparency = 1
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.Parent = MainFrame
-    table.insert(shadowStrokes, stroke)
-end
-
-local function setShadowVisible(visible, instant)
-    local targetTrans = visible and 0.9 or 1
-    for _, stroke in ipairs(shadowStrokes) do
-        if instant then stroke.Transparency = targetTrans
-        else Tween(stroke, {Transparency = targetTrans}, 0.3) end
+    local function setShadowVisible(visible, instant)
+        local targetTrans = visible and 0.9 or 1
+        for _, stroke in ipairs(shadowStrokes) do
+            if instant then stroke.Transparency = targetTrans
+            else Tween(stroke, {Transparency = targetTrans}, 0.3) end
+        end
     end
-    if MainShadow then
-        MainShadow.Visible = visible and true or false
-    end
-end
 
     local bgImage = Instance.new("ImageLabel")
     bgImage.Size = UDim2.new(1, 0, 1, 0)
@@ -5082,7 +5024,7 @@ end
 
     local LogoImage = Instance.new("ImageLabel")
     LogoImage.Size = UDim2.new(0, 35, 0, 35)
-    LogoImage.Position = UDim2.new(0, 10, 0.5, -17.5)
+    LogoImage.Position = UDim2.new(0, 34, 0.5, -17.5)
     LogoImage.BackgroundTransparency = 1
     LogoImage.Image = formatIconAsset(IconAsset, "rbxassetid://84830962019412")
     LogoImage.Parent = HeadFrame
@@ -5090,8 +5032,8 @@ end
     Instance.new("UICorner", LogoImage).CornerRadius = UDim.new(0, 7)
 
     local WindowName = Instance.new("TextLabel")
-    WindowName.Size = UDim2.new(1, -65, 0, 25)
-    WindowName.Position = UDim2.new(0, 55, 0, 4)
+    WindowName.Size = UDim2.new(1, -89, 0, 25)
+    WindowName.Position = UDim2.new(0, 79, 0, 4)
     WindowName.BackgroundTransparency = 1
     WindowName.Font = Enum.Font.GothamBold
     WindowName.Text = Title; WindowName.TextSize = 18
@@ -5100,8 +5042,8 @@ end
     AddToRegistry(WindowName, "TextColor3", "Text")
 
     local WindowContent = Instance.new("TextLabel")
-    WindowContent.Size = UDim2.new(1, -65, 0, 15)
-    WindowContent.Position = UDim2.new(0, 55, 0, 25)
+    WindowContent.Size = UDim2.new(1, -89, 0, 15)
+    WindowContent.Position = UDim2.new(0, 79, 0, 25)
     WindowContent.BackgroundTransparency = 1
     WindowContent.Font = Enum.Font.GothamMedium
     WindowContent.Text = Subtitle or ""; WindowContent.TextSize = 9
@@ -5465,6 +5407,114 @@ end
         Resizer.Visible = resizerVisible
     end)
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function() ScreenGui:Destroy() end)
+
+    -- ================== 侧栏展开 / 收缩（移植自 DuasLibraryUI.lua） ==================
+    local SIDEBAR_OPEN_W, SIDEBAR_CLOSED_W = 175, 55
+    local SIDEBAR_TWEEN_INFO = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local SIDEBAR_FADE_INFO  = TweenInfo.new(0.20, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local SidebarOpen = true
+    local SidebarFadeObjects = {}
+
+    local function RegisterSidebarFade(obj, prop)
+        if not obj then return end
+        prop = prop or "TextTransparency"
+        local openTrans = obj[prop]
+        if openTrans == nil then openTrans = 0 end
+        local entry = {obj = obj, prop = prop, openTrans = openTrans}
+        table.insert(SidebarFadeObjects, entry)
+        if not SidebarOpen then
+            entry.savedTrans = openTrans
+            obj[prop] = 1
+        end
+    end
+
+    -- 侧栏里已有的文字 / Logo，收缩时统一淡出
+    RegisterSidebarFade(WindowName,     "TextTransparency")
+    RegisterSidebarFade(WindowContent,  "TextTransparency")
+    RegisterSidebarFade(AccountName,    "TextTransparency")
+    RegisterSidebarFade(ExpireLabel,    "TextTransparency")
+    RegisterSidebarFade(LogoImage,      "ImageTransparency")
+
+    -- 汉堡按钮，位于 HeadFrame 顶部左侧
+    local SidebarToggle = Instance.new("TextButton")
+    SidebarToggle.Name                = "SidebarToggle"
+    SidebarToggle.Size                = UDim2.fromOffset(22, 22)
+    SidebarToggle.Position            = UDim2.new(0, 8, 0, 14)
+    SidebarToggle.BackgroundTransparency = 1
+    SidebarToggle.Text                = ""
+    SidebarToggle.AutoButtonColor     = false
+    SidebarToggle.ZIndex              = 20
+    SidebarToggle.Parent              = HeadFrame
+
+    local SidebarToggleIcon = Instance.new("TextLabel")
+    SidebarToggleIcon.Size             = UDim2.fromScale(1, 1)
+    SidebarToggleIcon.BackgroundTransparency = 1
+    SidebarToggleIcon.Font             = Enum.Font.GothamBold
+    SidebarToggleIcon.Text             = "≡"
+    SidebarToggleIcon.TextSize         = 20
+    SidebarToggleIcon.TextColor3       = CurrentTheme.Text
+    SidebarToggleIcon.TextTransparency = 0.35
+    SidebarToggleIcon.Parent           = SidebarToggle
+    AddToRegistry(SidebarToggleIcon, "TextColor3", "Text")
+    TextGradient:Skip(SidebarToggleIcon)
+
+    SidebarToggle.MouseEnter:Connect(function()
+        Tween(SidebarToggleIcon, {TextTransparency = 0}, 0.15)
+    end)
+    SidebarToggle.MouseLeave:Connect(function()
+        Tween(SidebarToggleIcon, {TextTransparency = 0.35}, 0.15)
+    end)
+
+    local function SetSidebarOpen(state, instant)
+        state = state == true
+        if SidebarOpen == state and not instant then return end
+        SidebarOpen = state
+
+        local w = state and SIDEBAR_OPEN_W or SIDEBAR_CLOSED_W
+
+        if instant then
+            LeftMenuFrame.Size     = UDim2.new(0, w, 1, 0)
+            RightMenuFrame.Size    = UDim2.new(1, -(w + 1), 1, 0)
+            RightMenuFrame.Position= UDim2.new(0, w + 1, 0, 0)
+        else
+            TweenService:Create(LeftMenuFrame, SIDEBAR_TWEEN_INFO, {
+                Size = UDim2.new(0, w, 1, 0),
+            }):Play()
+            TweenService:Create(RightMenuFrame, SIDEBAR_TWEEN_INFO, {
+                Size     = UDim2.new(1, -(w + 1), 1, 0),
+                Position = UDim2.new(0, w + 1, 0, 0),
+            }):Play()
+        end
+
+        for _, entry in ipairs(SidebarFadeObjects) do
+            if entry.obj and entry.obj.Parent then
+                local prop = entry.prop
+                if state then
+                    -- 展开：还原各自原来的透明度
+                    local target = entry.savedTrans
+                    if target == nil then target = entry.openTrans end
+                    entry.savedTrans = nil
+                    if instant then entry.obj[prop] = target
+                    else TweenService:Create(entry.obj, SIDEBAR_FADE_INFO, {[prop] = target}):Play() end
+                else
+                    -- 收缩：记下当前透明度，然后淡出到 1
+                    entry.savedTrans = entry.obj[prop] or 0
+                    if instant then entry.obj[prop] = 1
+                    else TweenService:Create(entry.obj, SIDEBAR_FADE_INFO, {[prop] = 1}):Play() end
+                end
+            end
+        end
+
+        -- 汉堡图标转一下做反馈
+        if SidebarToggleIcon then
+            Tween(SidebarToggleIcon, {Rotation = state and 0 or 90}, 0.25)
+        end
+    end
+
+    SidebarToggle.MouseButton1Click:Connect(function()
+        SetSidebarOpen(not SidebarOpen)
+    end)
+    -- ============================================================================
 
     do
         local BUILDER_ICONS_PATH =
@@ -6467,6 +6517,7 @@ end
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
+        RegisterSidebarFade(TabText, "TextTransparency")
 
         -- ===== 新增：Tab 锁覆盖层 =====
         local tabLockFrame, tabLockLabel = nil, nil
@@ -6512,12 +6563,12 @@ end
                 s.btn.BackgroundTransparency = 1
                 s.isActive = false
                 s.glow.BackgroundTransparency = 1
-                if s.textLabel then Tween(s.textLabel, {TextTransparency = 0.3}, 0.2) end
+                if s.textLabel and SidebarOpen then Tween(s.textLabel, {TextTransparency = 0.3}, 0.2) end
             end
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
-            Tween(TabText, {TextTransparency = 0}, 0.2)
+            if SidebarOpen then Tween(TabText, {TextTransparency = 0}, 0.2) end
             if Window._activeTab then Window._activeTab.page.Visible = false end
             Page.Visible = true
             Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
@@ -6527,7 +6578,7 @@ end
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
-            TabText.TextTransparency = 0
+            if SidebarOpen then TabText.TextTransparency = 0 end
             Page.Visible = true
             Page.Position = UDim2.new(0, 0, 0, 0)
             Window._activeTab = state
