@@ -4930,30 +4930,6 @@ function Fenglib:CreateWindow(Config)
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 299
 
-    -- [新增] 悬浮阴影层（搬运自 DuasLibraryUI 的跟随阴影）
-    local ShadowFrame = Instance.new("Frame")
-    ShadowFrame.Name = "FengShadow"
-    ShadowFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    ShadowFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-    ShadowFrame.Size = UDim2.fromOffset(0, 0)
-    ShadowFrame.BackgroundColor3 = CurrentTheme.Main
-    ShadowFrame.BackgroundTransparency = 0.35
-    ShadowFrame.BorderSizePixel = 0
-    ShadowFrame.Visible = false
-    ShadowFrame.ZIndex = 0
-    ShadowFrame.Parent = ScreenGui
-    Instance.new("UICorner", ShadowFrame).CornerRadius = UDim.new(0, 12)
-    AddToRegistry(ShadowFrame, "BackgroundColor3", "Main")
-
-    local shadowGrad = Instance.new("UIGradient")
-    shadowGrad.Rotation = 90
-    shadowGrad.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.15),
-        NumberSequenceKeypoint.new(0.55, 0.65),
-        NumberSequenceKeypoint.new(1, 0.45),
-    })
-    shadowGrad.Parent = ShadowFrame
-
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -4962,9 +4938,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
-    -- [新增] 具名 UICorner，方便最小化时 tween 圆角
-    local MainCorner = Instance.new("UICorner", MainFrame)
-    MainCorner.CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
     local shadowStrokes = {}
@@ -4983,33 +4957,6 @@ function Fenglib:CreateWindow(Config)
             if instant then stroke.Transparency = targetTrans
             else Tween(stroke, {Transparency = targetTrans}, 0.3) end
         end
-        -- [新增] 同步跟随阴影层显隐
-        ShadowFrame.Visible = visible == true
-    end
-
-    -- [新增] 悬浮阴影平滑跟随（搬运自 DuasLibraryUI 的 Heartbeat 指数插值）
-    do
-        local shadowPos = Vector2.new(0.5, 0.5)
-        local shadowOff = Vector2.new(0, 0)
-        local shadowW, shadowH = 0, 0
-        local shadowConn = RunService.Heartbeat:Connect(function(dt)
-            if not ScreenGui.Parent then
-                shadowConn:Disconnect()
-                return
-            end
-            if not ScreenGui.Enabled or not ShadowFrame.Visible then return end
-            dt = math.min(dt, 1 / 30)
-            local pa = 1 - math.exp(-45 * dt)
-            local sa = 1 - math.exp(-12 * dt)
-            local tp = MainFrame.Position
-            local ab = MainFrame.AbsoluteSize
-            shadowPos = shadowPos:Lerp(Vector2.new(tp.X.Scale, tp.Y.Scale), pa)
-            shadowOff = shadowOff:Lerp(Vector2.new(tp.X.Offset, tp.Y.Offset), pa)
-            shadowW = shadowW + (ab.X - shadowW) * sa
-            shadowH = shadowH + (ab.Y - shadowH) * sa
-            ShadowFrame.Position = UDim2.new(shadowPos.X, shadowOff.X, shadowPos.Y, shadowOff.Y)
-            ShadowFrame.Size = UDim2.fromOffset(shadowW, shadowH)
-        end)
     end
 
     local bgImage = Instance.new("ImageLabel")
@@ -5038,7 +4985,155 @@ function Fenglib:CreateWindow(Config)
     })
     bgGradient.Parent = MainFrame
     setShadowVisible(false, true)
+-- ═══════════════════════════════════════════════════════════
+-- 悬浮窗动画：平滑跟随阴影 + 悬浮粒子
+-- 移植自 DuasLibraryUI 的窗口动效
+-- ═══════════════════════════════════════════════════════════
 
+-- 1) 平滑跟随的阴影（指数插值滞后跟随窗口，产生"悬浮"感）
+local ShadowFrame = Instance.new("Frame")
+ShadowFrame.Name = "FengWindowShadow"
+ShadowFrame.BackgroundColor3 = Color3.fromRGB(10, 0, 25)
+ShadowFrame.BackgroundTransparency = 1     -- 初始不可见，由动画接管
+ShadowFrame.BorderSizePixel = 0
+ShadowFrame.ZIndex = 0
+ShadowFrame.Parent = ScreenGui
+
+Instance.new("UICorner", ShadowFrame).CornerRadius = UDim.new(0, 14)
+
+local shadowGrad = Instance.new("UIGradient")
+shadowGrad.Rotation = 90
+shadowGrad.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.15),
+    NumberSequenceKeypoint.new(0.55, 0.65),
+    NumberSequenceKeypoint.new(1, 0.45),
+})
+shadowGrad.Parent = ShadowFrame
+
+-- 2) 悬浮粒子层（位于窗口背景之上、控件之下）
+local ParticleLayer = Instance.new("Frame")
+ParticleLayer.Name = "FengWindowParticles"
+ParticleLayer.BackgroundTransparency = 1
+ParticleLayer.Size = UDim2.fromScale(1, 1)
+ParticleLayer.ClipsDescendants = true
+ParticleLayer.ZIndex = 0
+ParticleLayer.Parent = MainFrame
+
+local PARTICLE_MAX = 60
+local particleList = {}
+do
+    local shapes = {"circle", "square", "triangle"}
+    local palette = {
+        Color3.fromRGB(255, 255, 255),
+        Color3.fromRGB(190, 225, 255),
+        Color3.fromRGB(220, 200, 255),
+        Color3.fromRGB(200, 255, 240),
+    }
+    for i = 1, PARTICLE_MAX do
+        local kind = shapes[math.random(3)]
+        local sz = math.random(4, 11)
+        local o
+        if kind == "triangle" then
+            o = Instance.new("TextLabel")
+            o.Text = "▲"
+            o.Font = Enum.Font.Nunito
+            o.TextSize = math.max(8, math.floor(sz * 1.9))
+            o.BackgroundTransparency = 1
+            o.Size = UDim2.fromOffset(sz * 2, sz * 2)
+            o.TextColor3 = palette[math.random(#palette)]
+        else
+            o = Instance.new("Frame")
+            o.BorderSizePixel = 0
+            o.Size = UDim2.fromOffset(sz, sz)
+            o.BackgroundColor3 = palette[math.random(#palette)]
+            local c = Instance.new("UICorner")
+            c.CornerRadius = kind == "circle" and UDim.new(1, 0) or UDim.new(0, 3)
+            c.Parent = o
+        end
+        o.AnchorPoint = Vector2.new(0.5, 0.5)
+        o.ZIndex = 0
+        o.Parent = ParticleLayer
+        particleList[i] = {
+            o = o, s = sz, kind = kind,
+            baseTrans = 0.55 + (1 - (sz - 4) / 7) * 0.3,
+            x = math.random(0, 500),
+            y = math.random(-20, 320),
+            vy = math.random(16, 24),
+            rot = math.random(0, 360),
+            spin = math.random(10, 28) * (math.random(2) == 1 and 1 or -1),
+        }
+    end
+end
+
+-- 3) 动画驱动（一个 Heartbeat 里同时处理阴影与粒子）
+local shadowPos, shadowSize = Vector2.new(0, 0), Vector2.new(0, 0)
+local shadowAlpha, shadowInited = 0, false
+
+local hoverAnimConn = RunService.Heartbeat:Connect(function(dt)
+    if not ScreenGui.Parent then
+        hoverAnimConn:Disconnect()
+        return
+    end
+    dt = math.min(dt, 1 / 30)   -- 限帧，保证不同帧率下行为一致
+
+    -- ── 阴影滞后跟随 ──
+    local targetAlpha = MainFrame.Visible and 1 or 0
+    local targetPos  = Vector2.new(MainFrame.AbsolutePosition.X, MainFrame.AbsolutePosition.Y)
+    local targetSize = Vector2.new(MainFrame.AbsoluteSize.X,   MainFrame.AbsoluteSize.Y)
+
+    if not shadowInited then
+        shadowPos, shadowSize = targetPos, targetSize
+        shadowInited = true
+    end
+
+    -- 位置跟得紧、大小跟得慢、透明度最慢 → 悬浮质感
+    local pRate = 1 - math.exp(-38 * dt)
+    local sRate = 1 - math.exp(-14 * dt)
+    local aRate = 1 - math.exp(-9  * dt)
+
+    shadowPos   = shadowPos:Lerp(targetPos, pRate)
+    shadowSize  = shadowSize:Lerp(targetSize, sRate)
+    shadowAlpha = shadowAlpha + (targetAlpha - shadowAlpha) * aRate
+
+    ShadowFrame.Position = UDim2.fromOffset(shadowPos.X, shadowPos.Y)
+    ShadowFrame.Size     = UDim2.fromOffset(math.max(0, shadowSize.X), math.max(0, shadowSize.Y))
+    ShadowFrame.BackgroundTransparency = 1 - 0.65 * shadowAlpha
+    ShadowFrame.Visible  = shadowAlpha > 0.02
+
+    -- ── 粒子飘落 ──
+    if not MainFrame.Visible then return end
+    local layerW, layerH = MainFrame.AbsoluteSize.X, MainFrame.AbsoluteSize.Y
+    if layerW < 1 or layerH < 1 then return end
+
+    for i = 1, PARTICLE_MAX do
+        local p = particleList[i]
+        p.y = p.y + p.vy * dt
+        if p.y > layerH + p.s then
+            p.y = -math.random(0, 20)
+            p.x = math.random(0, math.max(math.floor(layerW), 1))
+            p.spin = math.random(10, 28) * (math.random(2) == 1 and 1 or -1)
+        end
+        p.rot = (p.rot + p.spin * dt) % 360
+
+        -- 上下边缘 45px 淡入淡出，避免粒子"忽然出现/消失"
+        local a = 1
+        if p.y > layerH - 55 then
+            a = math.clamp((layerH + p.s - p.y) / 55, 0, 1)
+        end
+        if p.y < 45 then
+            a = math.min(a, math.clamp(p.y / 45, 0, 1))
+        end
+        local tr = p.baseTrans + (1 - p.baseTrans) * (1 - a)
+
+        if p.kind == "triangle" then
+            p.o.TextTransparency = tr
+        else
+            p.o.BackgroundTransparency = tr
+        end
+        p.o.Position = UDim2.new(0, p.x, 0, p.y)
+        p.o.Rotation = p.rot
+    end
+end)
     local Resizer = Instance.new("TextButton")
     Resizer.Parent = MainFrame
     Resizer.BackgroundTransparency = 0.8
@@ -5441,59 +5536,6 @@ function Fenglib:CreateWindow(Config)
         return btn, content
     end
 
-    -- [新增] 最小化图标 + 恢复点击（搬运自 DuasLibraryUI 的收缩/展开动画）
-    local MiniIcon = Instance.new("ImageLabel")
-    MiniIcon.Name = "FengMiniIcon"
-    MiniIcon.Size = UDim2.fromOffset(28, 28)
-    MiniIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-    MiniIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-    MiniIcon.BackgroundTransparency = 1
-    MiniIcon.Image = formatIconAsset(IconAsset, "rbxassetid://84830962019412")
-    MiniIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    MiniIcon.ScaleType = Enum.ScaleType.Fit
-    MiniIcon.Visible = false
-    MiniIcon.ZIndex = 50
-    MiniIcon.Parent = MainFrame
-    Instance.new("UICorner", MiniIcon).CornerRadius = UDim.new(1, 0)
-
-    local MiniClick = Instance.new("TextButton")
-    MiniClick.Name = "FengMiniClick"
-    MiniClick.Size = UDim2.fromScale(1, 1)
-    MiniClick.BackgroundTransparency = 1
-    MiniClick.Text = ""
-    MiniClick.AutoButtonColor = false
-    MiniClick.Visible = false
-    MiniClick.ZIndex = 51
-    MiniClick.Parent = MainFrame
-
-    local minimized = false
-    local MINI_SIZE = UDim2.fromOffset(46, 46)
-    local FULL_SIZE = UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT)
-    local MINI_TWEEN = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-
-    local function SetMinimized(state)
-        state = state == true
-        if minimized == state then return end
-        minimized = state
-        LeftMenuFrame.Visible = not state
-        RightMenuFrame.Visible = not state
-        MiniIcon.Visible = state
-        MiniClick.Visible = state
-        if state and settingsOpen then
-            closeSettings()
-        end
-        TweenService:Create(MainFrame, MINI_TWEEN, {
-            Size = state and MINI_SIZE or FULL_SIZE,
-            BackgroundTransparency = state and 0.05 or 0.15,
-        }):Play()
-        TweenService:Create(MainCorner, MINI_TWEEN, {
-            CornerRadius = state and UDim.new(1, 0) or UDim.new(0, 12),
-        }):Play()
-        TweenService:Create(MiniIcon, MINI_TWEEN, {
-            Size = state and UDim2.fromOffset(28, 28) or UDim2.fromOffset(0, 0),
-        }):Play()
-    end
-
     local SectionDragBtn, SectionDragIcon = createControlButton("rbxassetid://18879088568", nil, function()
         SetSectionDragMode(not SectionDragMode)
         if SectionDragIcon then
@@ -5507,14 +5549,7 @@ function Fenglib:CreateWindow(Config)
         SectionDragIcon.ImageColor3 = SectionDragMode and CurrentTheme.Accent or CurrentTheme.Text
     end
 
-    -- [新增] 最小化按钮改为触发收缩动画
-    local MinimizeBtn = createControlButton(nil, "−", function()
-        SetMinimized(true)
-    end)
-    MiniClick.MouseButton1Click:Connect(function()
-        SetMinimized(false)
-    end)
-
+    local MinimizeBtn = createControlButton(nil, "−", function() MainFrame.Visible = false end)
     local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
         resizerVisible = not resizerVisible
         Resizer.Visible = resizerVisible
