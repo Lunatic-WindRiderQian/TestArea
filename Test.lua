@@ -4930,7 +4930,7 @@ function Fenglib:CreateWindow(Config)
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 299
 
-    -- ===== 平滑跟随的阴影层（搬运自 DuasLibraryUI）=====
+    -- [新增] 悬浮阴影层（搬运自 DuasLibraryUI 的跟随阴影）
     local ShadowFrame = Instance.new("Frame")
     ShadowFrame.Name = "FengShadow"
     ShadowFrame.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -4962,6 +4962,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.BackgroundTransparency = 0.15
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
+    -- [新增] 具名 UICorner，方便最小化时 tween 圆角
     local MainCorner = Instance.new("UICorner", MainFrame)
     MainCorner.CornerRadius = UDim.new(0, 12)
     AddToRegistry(MainFrame, "BackgroundColor3", "Main")
@@ -4982,11 +4983,11 @@ function Fenglib:CreateWindow(Config)
             if instant then stroke.Transparency = targetTrans
             else Tween(stroke, {Transparency = targetTrans}, 0.3) end
         end
-        -- 平滑阴影层同步显隐
+        -- [新增] 同步跟随阴影层显隐
         ShadowFrame.Visible = visible == true
     end
 
-    -- 平滑阴影：用 Heartbeat 让阴影以指数缓动追赶窗口的位置与大小
+    -- [新增] 悬浮阴影平滑跟随（搬运自 DuasLibraryUI 的 Heartbeat 指数插值）
     do
         local shadowPos = Vector2.new(0.5, 0.5)
         local shadowOff = Vector2.new(0, 0)
@@ -5440,7 +5441,7 @@ function Fenglib:CreateWindow(Config)
         return btn, content
     end
 
-    -- ===== 收缩 / 展开（最小化动画，搬运自 DuasLibraryUI）=====
+    -- [新增] 最小化图标 + 恢复点击（搬运自 DuasLibraryUI 的收缩/展开动画）
     local MiniIcon = Instance.new("ImageLabel")
     MiniIcon.Name = "FengMiniIcon"
     MiniIcon.Size = UDim2.fromOffset(28, 28)
@@ -5506,6 +5507,7 @@ function Fenglib:CreateWindow(Config)
         SectionDragIcon.ImageColor3 = SectionDragMode and CurrentTheme.Accent or CurrentTheme.Text
     end
 
+    -- [新增] 最小化按钮改为触发收缩动画
     local MinimizeBtn = createControlButton(nil, "−", function()
         SetMinimized(true)
     end)
