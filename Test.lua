@@ -4986,21 +4986,19 @@ function Fenglib:CreateWindow(Config)
     bgGradient.Parent = MainFrame
     setShadowVisible(false, true)
 -- ═══════════════════════════════════════════════════════════
--- 悬浮窗动画：平滑跟随阴影 + 悬浮粒子
--- 移植自 DuasLibraryUI 的窗口动效
+-- 悬浮窗动画：阴影平滑滞后跟随
 -- ═══════════════════════════════════════════════════════════
-
--- 1) 平滑跟随的阴影（指数插值滞后跟随窗口，产生"悬浮"感）
 local ShadowFrame = Instance.new("Frame")
 ShadowFrame.Name = "FengWindowShadow"
 ShadowFrame.BackgroundColor3 = Color3.fromRGB(10, 0, 25)
-ShadowFrame.BackgroundTransparency = 1     -- 初始不可见，由动画接管
+ShadowFrame.BackgroundTransparency = 1
 ShadowFrame.BorderSizePixel = 0
+ShadowFrame.Visible = false
 ShadowFrame.ZIndex = 0
 ShadowFrame.Parent = ScreenGui
-
 Instance.new("UICorner", ShadowFrame).CornerRadius = UDim.new(0, 14)
 
+-- 上下渐隐，让阴影更像真实投影而不是一块黑框
 local shadowGrad = Instance.new("UIGradient")
 shadowGrad.Rotation = 90
 shadowGrad.Transparency = NumberSequence.new({
@@ -5010,86 +5008,32 @@ shadowGrad.Transparency = NumberSequence.new({
 })
 shadowGrad.Parent = ShadowFrame
 
--- 2) 悬浮粒子层（位于窗口背景之上、控件之下）
-local ParticleLayer = Instance.new("Frame")
-ParticleLayer.Name = "FengWindowParticles"
-ParticleLayer.BackgroundTransparency = 1
-ParticleLayer.Size = UDim2.fromScale(1, 1)
-ParticleLayer.ClipsDescendants = true
-ParticleLayer.ZIndex = 0
-ParticleLayer.Parent = MainFrame
+-- 平滑跟随：位置、大小分别用不同的时间常数做指数插值
+-- 位置收敛快 → 跟手；大小收敛慢 → 有惯性感
+local shadowPos = Vector2.new(0, 0)
+local shadowSize = Vector2.new(0, 0)
+local shadowAlpha = 0
+local shadowInited = false
 
-local PARTICLE_MAX = 60
-local particleList = {}
-do
-    local shapes = {"circle", "square", "triangle"}
-    local palette = {
-        Color3.fromRGB(255, 255, 255),
-        Color3.fromRGB(190, 225, 255),
-        Color3.fromRGB(220, 200, 255),
-        Color3.fromRGB(200, 255, 240),
-    }
-    for i = 1, PARTICLE_MAX do
-        local kind = shapes[math.random(3)]
-        local sz = math.random(4, 11)
-        local o
-        if kind == "triangle" then
-            o = Instance.new("TextLabel")
-            o.Text = "▲"
-            o.Font = Enum.Font.Nunito
-            o.TextSize = math.max(8, math.floor(sz * 1.9))
-            o.BackgroundTransparency = 1
-            o.Size = UDim2.fromOffset(sz * 2, sz * 2)
-            o.TextColor3 = palette[math.random(#palette)]
-        else
-            o = Instance.new("Frame")
-            o.BorderSizePixel = 0
-            o.Size = UDim2.fromOffset(sz, sz)
-            o.BackgroundColor3 = palette[math.random(#palette)]
-            local c = Instance.new("UICorner")
-            c.CornerRadius = kind == "circle" and UDim.new(1, 0) or UDim.new(0, 3)
-            c.Parent = o
-        end
-        o.AnchorPoint = Vector2.new(0.5, 0.5)
-        o.ZIndex = 0
-        o.Parent = ParticleLayer
-        particleList[i] = {
-            o = o, s = sz, kind = kind,
-            baseTrans = 0.55 + (1 - (sz - 4) / 7) * 0.3,
-            x = math.random(0, 500),
-            y = math.random(-20, 320),
-            vy = math.random(16, 24),
-            rot = math.random(0, 360),
-            spin = math.random(10, 28) * (math.random(2) == 1 and 1 or -1),
-        }
-    end
-end
-
--- 3) 动画驱动（一个 Heartbeat 里同时处理阴影与粒子）
-local shadowPos, shadowSize = Vector2.new(0, 0), Vector2.new(0, 0)
-local shadowAlpha, shadowInited = 0, false
-
-local hoverAnimConn = RunService.Heartbeat:Connect(function(dt)
+local shadowConn = RunService.Heartbeat:Connect(function(dt)
     if not ScreenGui.Parent then
-        hoverAnimConn:Disconnect()
+        shadowConn:Disconnect()
         return
     end
     dt = math.min(dt, 1 / 30)   -- 限帧，保证不同帧率下行为一致
 
-    -- ── 阴影滞后跟随 ──
+    local targetPos   = Vector2.new(MainFrame.AbsolutePosition.X, MainFrame.AbsolutePosition.Y)
+    local targetSize  = Vector2.new(MainFrame.AbsoluteSize.X,   MainFrame.AbsoluteSize.Y)
     local targetAlpha = MainFrame.Visible and 1 or 0
-    local targetPos  = Vector2.new(MainFrame.AbsolutePosition.X, MainFrame.AbsolutePosition.Y)
-    local targetSize = Vector2.new(MainFrame.AbsoluteSize.X,   MainFrame.AbsoluteSize.Y)
 
     if not shadowInited then
         shadowPos, shadowSize = targetPos, targetSize
         shadowInited = true
     end
 
-    -- 位置跟得紧、大小跟得慢、透明度最慢 → 悬浮质感
-    local pRate = 1 - math.exp(-38 * dt)
-    local sRate = 1 - math.exp(-14 * dt)
-    local aRate = 1 - math.exp(-9  * dt)
+    local pRate = 1 - math.exp(-45 * dt)   -- 位置：约 22ms 收敛
+    local sRate = 1 - math.exp(-12 * dt)   -- 大小：约 83ms 收敛
+    local aRate = 1 - math.exp(-9  * dt)   -- 透明度：约 111ms 收敛
 
     shadowPos   = shadowPos:Lerp(targetPos, pRate)
     shadowSize  = shadowSize:Lerp(targetSize, sRate)
@@ -5099,41 +5043,8 @@ local hoverAnimConn = RunService.Heartbeat:Connect(function(dt)
     ShadowFrame.Size     = UDim2.fromOffset(math.max(0, shadowSize.X), math.max(0, shadowSize.Y))
     ShadowFrame.BackgroundTransparency = 1 - 0.65 * shadowAlpha
     ShadowFrame.Visible  = shadowAlpha > 0.02
-
-    -- ── 粒子飘落 ──
-    if not MainFrame.Visible then return end
-    local layerW, layerH = MainFrame.AbsoluteSize.X, MainFrame.AbsoluteSize.Y
-    if layerW < 1 or layerH < 1 then return end
-
-    for i = 1, PARTICLE_MAX do
-        local p = particleList[i]
-        p.y = p.y + p.vy * dt
-        if p.y > layerH + p.s then
-            p.y = -math.random(0, 20)
-            p.x = math.random(0, math.max(math.floor(layerW), 1))
-            p.spin = math.random(10, 28) * (math.random(2) == 1 and 1 or -1)
-        end
-        p.rot = (p.rot + p.spin * dt) % 360
-
-        -- 上下边缘 45px 淡入淡出，避免粒子"忽然出现/消失"
-        local a = 1
-        if p.y > layerH - 55 then
-            a = math.clamp((layerH + p.s - p.y) / 55, 0, 1)
-        end
-        if p.y < 45 then
-            a = math.min(a, math.clamp(p.y / 45, 0, 1))
-        end
-        local tr = p.baseTrans + (1 - p.baseTrans) * (1 - a)
-
-        if p.kind == "triangle" then
-            p.o.TextTransparency = tr
-        else
-            p.o.BackgroundTransparency = tr
-        end
-        p.o.Position = UDim2.new(0, p.x, 0, p.y)
-        p.o.Rotation = p.rot
-    end
 end)
+
     local Resizer = Instance.new("TextButton")
     Resizer.Parent = MainFrame
     Resizer.BackgroundTransparency = 0.8
