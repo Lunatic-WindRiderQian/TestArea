@@ -4939,25 +4939,83 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
-    AddToRegistry(MainFrame, "BackgroundColor3", "Main")
+AddToRegistry(MainFrame, "BackgroundColor3", "Main")
 
-    local shadowStrokes = {}
-    for _, thick in ipairs({6, 5, 4, 3}) do
-        local stroke = Instance.new("UIStroke")
-        stroke.Thickness = thick
-        stroke.Color = Color3.new(0, 0, 0)
-        stroke.Transparency = 1
-        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        stroke.Parent = MainFrame
-        table.insert(shadowStrokes, stroke)
+-- ── 平滑跟随阴影（移植自 DuasLibraryUI）────────────────────────────
+-- 阴影帧挂在 ScreenGui 上，而不是 MainFrame 的子级，
+-- 这样它不会随窗口一起移动，才能做出"滞后拖尾"的跟随动画。
+local MainShadow = Instance.new("Frame")
+MainShadow.Name = "FengMainShadow"
+MainShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+MainShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainShadow.Size = UDim2.fromOffset(0, 0)
+MainShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+MainShadow.BackgroundTransparency = 0.4
+MainShadow.BorderSizePixel = 0
+MainShadow.ZIndex = 0
+MainShadow.Visible = false
+MainShadow.Parent = ScreenGui
+Instance.new("UICorner", MainShadow).CornerRadius = UDim.new(0, 12)
+local MainShadowGrad = Instance.new("UIGradient")
+MainShadowGrad.Rotation = 90
+MainShadowGrad.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.2),
+    NumberSequenceKeypoint.new(0.55, 0.6),
+    NumberSequenceKeypoint.new(1, 0.45),
+})
+MainShadowGrad.Parent = MainShadow
+
+-- 平滑跟随：位置用较快的响应速度（pa），大小用较慢的（sa），
+-- 拖得越快，拖尾越明显，松手后自动收拢到窗口正下方。
+local shadowPos = Vector2.new(0.5, 0.5)
+local shadowOff = Vector2.new(0, 0)
+local shadowW, shadowH = 0, 0
+local shadowConn
+shadowConn = RunService.Heartbeat:Connect(function(dt)
+    if not ScreenGui.Parent then
+        if shadowConn then shadowConn:Disconnect(); shadowConn = nil end
+        return
     end
-    local function setShadowVisible(visible, instant)
-        local targetTrans = visible and 0.9 or 1
-        for _, stroke in ipairs(shadowStrokes) do
-            if instant then stroke.Transparency = targetTrans
-            else Tween(stroke, {Transparency = targetTrans}, 0.3) end
-        end
+    if not ScreenGui.Enabled then return end
+
+    dt = math.min(dt, 1 / 30)
+    local pa = 1 - math.exp(-45 * dt)   -- 位置跟随速度
+    local sa = 1 - math.exp(-12 * dt)   -- 尺寸跟随速度
+
+    local tp = MainFrame.Position
+    local ab = MainFrame.AbsoluteSize
+
+    shadowPos = shadowPos:Lerp(Vector2.new(tp.X.Scale, tp.Y.Scale), pa)
+    shadowOff = shadowOff:Lerp(Vector2.new(tp.X.Offset, tp.Y.Offset), pa)
+    shadowW = shadowW + (ab.X - shadowW) * sa
+    shadowH = shadowH + (ab.Y - shadowH) * sa
+
+    MainShadow.Position = UDim2.new(shadowPos.X, shadowOff.X, shadowPos.Y, shadowOff.Y)
+    MainShadow.Size = UDim2.fromOffset(shadowW, shadowH)
+end)
+
+-- ── 原 UIStroke 阴影（保留，作为边缘柔光） ────────────────────────
+local shadowStrokes = {}
+for _, thick in ipairs({6, 5, 4, 3}) do
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = thick
+    stroke.Color = Color3.new(0, 0, 0)
+    stroke.Transparency = 1
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = MainFrame
+    table.insert(shadowStrokes, stroke)
+end
+
+local function setShadowVisible(visible, instant)
+    local targetTrans = visible and 0.9 or 1
+    for _, stroke in ipairs(shadowStrokes) do
+        if instant then stroke.Transparency = targetTrans
+        else Tween(stroke, {Transparency = targetTrans}, 0.3) end
     end
+    if MainShadow then
+        MainShadow.Visible = visible and true or false
+    end
+end
 
     local bgImage = Instance.new("ImageLabel")
     bgImage.Size = UDim2.new(1, 0, 1, 0)
@@ -4985,65 +5043,6 @@ function Fenglib:CreateWindow(Config)
     })
     bgGradient.Parent = MainFrame
     setShadowVisible(false, true)
--- ═══════════════════════════════════════════════════════════
--- 悬浮窗动画：阴影平滑滞后跟随
--- ═══════════════════════════════════════════════════════════
-local ShadowFrame = Instance.new("Frame")
-ShadowFrame.Name = "FengWindowShadow"
-ShadowFrame.BackgroundColor3 = Color3.fromRGB(10, 0, 25)
-ShadowFrame.BackgroundTransparency = 1
-ShadowFrame.BorderSizePixel = 0
-ShadowFrame.Visible = false
-ShadowFrame.ZIndex = 0
-ShadowFrame.Parent = ScreenGui
-Instance.new("UICorner", ShadowFrame).CornerRadius = UDim.new(0, 14)
-
--- 上下渐隐，让阴影更像真实投影而不是一块黑框
-local shadowGrad = Instance.new("UIGradient")
-shadowGrad.Rotation = 90
-shadowGrad.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 0.15),
-    NumberSequenceKeypoint.new(0.55, 0.65),
-    NumberSequenceKeypoint.new(1, 0.45),
-})
-shadowGrad.Parent = ShadowFrame
-
--- 平滑跟随：位置、大小分别用不同的时间常数做指数插值
--- 位置收敛快 → 跟手；大小收敛慢 → 有惯性感
-local shadowPos = Vector2.new(0, 0)
-local shadowSize = Vector2.new(0, 0)
-local shadowAlpha = 0
-local shadowInited = false
-
-local shadowConn = RunService.Heartbeat:Connect(function(dt)
-    if not ScreenGui.Parent then
-        shadowConn:Disconnect()
-        return
-    end
-    dt = math.min(dt, 1 / 30)   -- 限帧，保证不同帧率下行为一致
-
-    local targetPos   = Vector2.new(MainFrame.AbsolutePosition.X, MainFrame.AbsolutePosition.Y)
-    local targetSize  = Vector2.new(MainFrame.AbsoluteSize.X,   MainFrame.AbsoluteSize.Y)
-    local targetAlpha = MainFrame.Visible and 1 or 0
-
-    if not shadowInited then
-        shadowPos, shadowSize = targetPos, targetSize
-        shadowInited = true
-    end
-
-    local pRate = 1 - math.exp(-45 * dt)   -- 位置：约 22ms 收敛
-    local sRate = 1 - math.exp(-12 * dt)   -- 大小：约 83ms 收敛
-    local aRate = 1 - math.exp(-9  * dt)   -- 透明度：约 111ms 收敛
-
-    shadowPos   = shadowPos:Lerp(targetPos, pRate)
-    shadowSize  = shadowSize:Lerp(targetSize, sRate)
-    shadowAlpha = shadowAlpha + (targetAlpha - shadowAlpha) * aRate
-
-    ShadowFrame.Position = UDim2.fromOffset(shadowPos.X, shadowPos.Y)
-    ShadowFrame.Size     = UDim2.fromOffset(math.max(0, shadowSize.X), math.max(0, shadowSize.Y))
-    ShadowFrame.BackgroundTransparency = 1 - 0.65 * shadowAlpha
-    ShadowFrame.Visible  = shadowAlpha > 0.02
-end)
 
     local Resizer = Instance.new("TextButton")
     Resizer.Parent = MainFrame
