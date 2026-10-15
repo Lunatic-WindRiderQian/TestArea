@@ -5022,9 +5022,11 @@ function Fenglib:CreateWindow(Config)
     HeadFrame.BackgroundTransparency = 1
     HeadFrame.Parent = LeftMenuFrame
 
+    -- ✅ 已修正：与 kys.lua 头部布局完全一致（添加 AnchorPoint，Position 改为 (0,10,0.5,0)）
     local LogoImage = Instance.new("ImageLabel")
-    LogoImage.Size = UDim2.new(0, 35, 0, 35)
-    LogoImage.Position = UDim2.new(0, 10, 0.5, -17.5)
+    LogoImage.AnchorPoint = Vector2.new(0, 0.5)
+    LogoImage.Position    = UDim2.new(0, 10, 0.5, 0)
+    LogoImage.Size        = UDim2.new(0, 35, 0, 35)
     LogoImage.BackgroundTransparency = 1
     LogoImage.Image = formatIconAsset(IconAsset, "rbxassetid://84830962019412")
     LogoImage.Parent = HeadFrame
