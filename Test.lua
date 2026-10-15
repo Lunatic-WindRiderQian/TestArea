@@ -5024,7 +5024,7 @@ function Fenglib:CreateWindow(Config)
 
     local LogoImage = Instance.new("ImageLabel")
     LogoImage.Size = UDim2.new(0, 35, 0, 35)
-    LogoImage.Position = UDim2.new(0, 34, 0.5, -17.5)
+    LogoImage.Position = UDim2.new(0, 10, 0.5, -17.5)
     LogoImage.BackgroundTransparency = 1
     LogoImage.Image = formatIconAsset(IconAsset, "rbxassetid://84830962019412")
     LogoImage.Parent = HeadFrame
@@ -5032,8 +5032,8 @@ function Fenglib:CreateWindow(Config)
     Instance.new("UICorner", LogoImage).CornerRadius = UDim.new(0, 7)
 
     local WindowName = Instance.new("TextLabel")
-    WindowName.Size = UDim2.new(1, -89, 0, 25)
-    WindowName.Position = UDim2.new(0, 79, 0, 4)
+    WindowName.Size = UDim2.new(1, -65, 0, 25)
+    WindowName.Position = UDim2.new(0, 55, 0, 4)
     WindowName.BackgroundTransparency = 1
     WindowName.Font = Enum.Font.GothamBold
     WindowName.Text = Title; WindowName.TextSize = 18
@@ -5042,8 +5042,8 @@ function Fenglib:CreateWindow(Config)
     AddToRegistry(WindowName, "TextColor3", "Text")
 
     local WindowContent = Instance.new("TextLabel")
-    WindowContent.Size = UDim2.new(1, -89, 0, 15)
-    WindowContent.Position = UDim2.new(0, 79, 0, 25)
+    WindowContent.Size = UDim2.new(1, -65, 0, 15)
+    WindowContent.Position = UDim2.new(0, 55, 0, 25)
     WindowContent.BackgroundTransparency = 1
     WindowContent.Font = Enum.Font.GothamMedium
     WindowContent.Text = Subtitle or ""; WindowContent.TextSize = 9
@@ -5401,120 +5401,171 @@ function Fenglib:CreateWindow(Config)
         SectionDragIcon.ImageColor3 = SectionDragMode and CurrentTheme.Accent or CurrentTheme.Text
     end
 
-    local MinimizeBtn = createControlButton(nil, "−", function() MainFrame.Visible = false end)
+    local MinimizeBtn = createControlButton(nil, "−", function() end)
     local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
         resizerVisible = not resizerVisible
         Resizer.Visible = resizerVisible
     end)
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function() ScreenGui:Destroy() end)
 
-    -- ================== 侧栏展开 / 收缩（移植自 DuasLibraryUI.lua） ==================
-    local SIDEBAR_OPEN_W, SIDEBAR_CLOSED_W = 175, 55
-    local SIDEBAR_TWEEN_INFO = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local SIDEBAR_FADE_INFO  = TweenInfo.new(0.20, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local SidebarOpen = true
-    local SidebarFadeObjects = {}
+    -- ============ 最小化 / 恢复：缩小成圆球（移植自 DuasLibraryUI.lua） ============
+    local minimized     = false
+    local savedSize     = nil          -- 记录缩小前的窗口尺寸
+    local BALL_SIZE     = 48
 
-    local function RegisterSidebarFade(obj, prop)
-        if not obj then return end
-        prop = prop or "TextTransparency"
-        local openTrans = obj[prop]
-        if openTrans == nil then openTrans = 0 end
-        local entry = {obj = obj, prop = prop, openTrans = openTrans}
-        table.insert(SidebarFadeObjects, entry)
-        if not SidebarOpen then
-            entry.savedTrans = openTrans
-            obj[prop] = 1
+    -- 圆的底板（只在缩小状态显示，撑出圆形背景）
+    local MiniBallBg = Instance.new("Frame")
+    MiniBallBg.Name                   = "MiniBallBg"
+    MiniBallBg.Size                   = UDim2.fromScale(1, 1)
+    MiniBallBg.BackgroundColor3       = CurrentTheme.Top
+    MiniBallBg.BackgroundTransparency = 0.05
+    MiniBallBg.BorderSizePixel        = 0
+    MiniBallBg.Visible                = false
+    MiniBallBg.ZIndex                 = 399
+    MiniBallBg.Parent                 = MainFrame
+    Instance.new("UICorner", MiniBallBg).CornerRadius = UDim.new(1, 0)
+    table.insert(ThemeListeners, function()
+        MiniBallBg.BackgroundColor3 = CurrentTheme.Top
+    end)
+
+    -- 圆球上的图标
+    local MiniBallIcon = Instance.new("ImageLabel")
+    MiniBallIcon.Name                   = "MiniBallIcon"
+    MiniBallIcon.Size                   = UDim2.fromScale(0.58, 0.58)
+    MiniBallIcon.AnchorPoint            = Vector2.new(0.5, 0.5)
+    MiniBallIcon.Position               = UDim2.fromScale(0.5, 0.5)
+    MiniBallIcon.BackgroundTransparency = 1
+    MiniBallIcon.Image                  = formatIconAsset(IconAsset, "rbxassetid://84830962019412")
+    MiniBallIcon.ImageColor3            = CurrentTheme.Text
+    MiniBallIcon.ImageTransparency      = 0.05
+    MiniBallIcon.ScaleType              = Enum.ScaleType.Fit
+    MiniBallIcon.Visible                = false
+    MiniBallIcon.ZIndex                 = 402
+    MiniBallIcon.Parent                 = MainFrame
+
+    -- 圆球的点击 / 拖动接收层
+    local MiniBallInput = Instance.new("TextButton")
+    MiniBallInput.Name                   = "MiniBallInput"
+    MiniBallInput.Size                   = UDim2.fromScale(1, 1)
+    MiniBallInput.BackgroundTransparency = 1
+    MiniBallInput.Text                   = ""
+    MiniBallInput.AutoButtonColor        = false
+    MiniBallInput.Visible                = false
+    MiniBallInput.ZIndex                 = 403
+    MiniBallInput.Parent                 = MainFrame
+
+    local mainCorner = MainFrame:FindFirstChildOfClass("UICorner")
+
+    local function SetBallShape(on)
+        if mainCorner then
+            mainCorner.CornerRadius = on and UDim.new(1, 0) or UDim.new(0, 12)
         end
     end
 
-    -- 侧栏里已有的文字 / Logo，收缩时统一淡出
-    RegisterSidebarFade(WindowName,     "TextTransparency")
-    RegisterSidebarFade(WindowContent,  "TextTransparency")
-    RegisterSidebarFade(AccountName,    "TextTransparency")
-    RegisterSidebarFade(ExpireLabel,    "TextTransparency")
-    RegisterSidebarFade(LogoImage,      "ImageTransparency")
-
-    -- 汉堡按钮，位于 HeadFrame 顶部左侧
-    local SidebarToggle = Instance.new("TextButton")
-    SidebarToggle.Name                = "SidebarToggle"
-    SidebarToggle.Size                = UDim2.fromOffset(22, 22)
-    SidebarToggle.Position            = UDim2.new(0, 8, 0, 14)
-    SidebarToggle.BackgroundTransparency = 1
-    SidebarToggle.Text                = ""
-    SidebarToggle.AutoButtonColor     = false
-    SidebarToggle.ZIndex              = 20
-    SidebarToggle.Parent              = HeadFrame
-
-    local SidebarToggleIcon = Instance.new("TextLabel")
-    SidebarToggleIcon.Size             = UDim2.fromScale(1, 1)
-    SidebarToggleIcon.BackgroundTransparency = 1
-    SidebarToggleIcon.Font             = Enum.Font.GothamBold
-    SidebarToggleIcon.Text             = "≡"
-    SidebarToggleIcon.TextSize         = 20
-    SidebarToggleIcon.TextColor3       = CurrentTheme.Text
-    SidebarToggleIcon.TextTransparency = 0.35
-    SidebarToggleIcon.Parent           = SidebarToggle
-    AddToRegistry(SidebarToggleIcon, "TextColor3", "Text")
-    TextGradient:Skip(SidebarToggleIcon)
-
-    SidebarToggle.MouseEnter:Connect(function()
-        Tween(SidebarToggleIcon, {TextTransparency = 0}, 0.15)
-    end)
-    SidebarToggle.MouseLeave:Connect(function()
-        Tween(SidebarToggleIcon, {TextTransparency = 0.35}, 0.15)
-    end)
-
-    local function SetSidebarOpen(state, instant)
+    local function ApplyMinimized(state)
         state = state == true
-        if SidebarOpen == state and not instant then return end
-        SidebarOpen = state
+        if minimized == state then return end
+        minimized = state
 
-        local w = state and SIDEBAR_OPEN_W or SIDEBAR_CLOSED_W
+        -- 缩小前先把设置面板收起
+        if minimized and settingsOpen and closeSettings then
+            pcall(closeSettings)
+        end
 
-        if instant then
-            LeftMenuFrame.Size     = UDim2.new(0, w, 1, 0)
-            RightMenuFrame.Size    = UDim2.new(1, -(w + 1), 1, 0)
-            RightMenuFrame.Position= UDim2.new(0, w + 1, 0, 0)
+        local targetSize
+        if minimized then
+            savedSize  = MainFrame.Size
+            targetSize = UDim2.fromOffset(BALL_SIZE, BALL_SIZE)
         else
-            TweenService:Create(LeftMenuFrame, SIDEBAR_TWEEN_INFO, {
-                Size = UDim2.new(0, w, 1, 0),
-            }):Play()
-            TweenService:Create(RightMenuFrame, SIDEBAR_TWEEN_INFO, {
-                Size     = UDim2.new(1, -(w + 1), 1, 0),
-                Position = UDim2.new(0, w + 1, 0, 0),
-            }):Play()
+            targetSize = savedSize or UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT)
         end
 
-        for _, entry in ipairs(SidebarFadeObjects) do
-            if entry.obj and entry.obj.Parent then
-                local prop = entry.prop
-                if state then
-                    -- 展开：还原各自原来的透明度
-                    local target = entry.savedTrans
-                    if target == nil then target = entry.openTrans end
-                    entry.savedTrans = nil
-                    if instant then entry.obj[prop] = target
-                    else TweenService:Create(entry.obj, SIDEBAR_FADE_INFO, {[prop] = target}):Play() end
-                else
-                    -- 收缩：记下当前透明度，然后淡出到 1
-                    entry.savedTrans = entry.obj[prop] or 0
-                    if instant then entry.obj[prop] = 1
-                    else TweenService:Create(entry.obj, SIDEBAR_FADE_INFO, {[prop] = 1}):Play() end
-                end
-            end
-        end
+        -- 关键：只改 Size，不动 Position。因为 AnchorPoint = (0.5, 0.5)，
+        -- 缩小时会自动在原窗口中心位置缩成一个球。
+        SetBallShape(minimized)
 
-        -- 汉堡图标转一下做反馈
-        if SidebarToggleIcon then
-            Tween(SidebarToggleIcon, {Rotation = state and 0 or 90}, 0.25)
+        TweenService:Create(MainFrame, TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = targetSize,
+        }):Play()
+
+        -- 隐藏内部内容
+        LeftMenuFrame.Visible  = not minimized
+        RightMenuFrame.Visible = not minimized
+        Resizer.Visible        = (not minimized) and resizerVisible or false
+
+        -- 圆球图层显示
+        MiniBallBg.Visible    = minimized
+        MiniBallIcon.Visible  = minimized
+        MiniBallInput.Visible = minimized
+
+        -- 外阴影跟着淡
+        for _, s in ipairs(shadowStrokes) do
+            Tween(s, { Transparency = minimized and 1 or 0.9 }, 0.28)
         end
     end
 
-    SidebarToggle.MouseButton1Click:Connect(function()
-        SetSidebarOpen(not SidebarOpen)
+    -- 点最小化 → 缩成球
+    MinimizeBtn.MouseButton1Click:Connect(function()
+        ApplyMinimized(true)
     end)
-    -- ============================================================================
+
+    -- ============ 圆球自己的拖动逻辑（与 HeadFrame 互不干扰） ============
+    local ballDragToggle = false
+    local ballDragStart, ballStartPos
+    local ballDidDrag = false
+
+    MiniBallInput.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+            ballDragToggle = true
+            ballDidDrag    = false
+            ballDragStart  = input.Position
+            ballStartPos   = MainFrame.Position
+
+            local conn
+            conn = input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    ballDragToggle = false
+                    conn:Disconnect()
+                end
+            end)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if ballDragToggle
+            and (input.UserInputType == Enum.UserInputType.MouseMovement
+                or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - ballDragStart
+            if math.abs(delta.X) > 4 or math.abs(delta.Y) > 4 then
+                ballDidDrag = true
+            end
+            MainFrame.Position = UDim2.new(
+                ballStartPos.X.Scale,
+                ballStartPos.X.Offset + delta.X,
+                ballStartPos.Y.Scale,
+                ballStartPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    -- 点球恢复（拖动结束时不要误触发恢复）
+    MiniBallInput.MouseButton1Click:Connect(function()
+        if ballDidDrag then
+            ballDidDrag = false
+            return
+        end
+        ApplyMinimized(false)
+    end)
+
+    -- 鼠标悬停时球轻微亮起，做点反馈
+    MiniBallInput.MouseEnter:Connect(function()
+        TweenService:Create(MiniBallIcon, TweenInfo.new(0.15), { ImageTransparency = 0 }):Play()
+    end)
+    MiniBallInput.MouseLeave:Connect(function()
+        TweenService:Create(MiniBallIcon, TweenInfo.new(0.15), { ImageTransparency = 0.05 }):Play()
+    end)
+    -- ==============================================================================
 
     do
         local BUILDER_ICONS_PATH =
@@ -6517,7 +6568,6 @@ function Fenglib:CreateWindow(Config)
         TabText.TextXAlignment = Enum.TextXAlignment.Left
         TabText.Parent = ContentFrame
         AddToRegistry(TabText, "TextColor3", "Text")
-        RegisterSidebarFade(TabText, "TextTransparency")
 
         -- ===== 新增：Tab 锁覆盖层 =====
         local tabLockFrame, tabLockLabel = nil, nil
@@ -6563,12 +6613,12 @@ function Fenglib:CreateWindow(Config)
                 s.btn.BackgroundTransparency = 1
                 s.isActive = false
                 s.glow.BackgroundTransparency = 1
-                if s.textLabel and SidebarOpen then Tween(s.textLabel, {TextTransparency = 0.3}, 0.2) end
+                if s.textLabel then Tween(s.textLabel, {TextTransparency = 0.3}, 0.2) end
             end
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
-            if SidebarOpen then Tween(TabText, {TextTransparency = 0}, 0.2) end
+            Tween(TabText, {TextTransparency = 0}, 0.2)
             if Window._activeTab then Window._activeTab.page.Visible = false end
             Page.Visible = true
             Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
@@ -6578,7 +6628,7 @@ function Fenglib:CreateWindow(Config)
             TabBtn.BackgroundTransparency = 1
             state.isActive = true
             state.glow.BackgroundTransparency = 0
-            if SidebarOpen then TabText.TextTransparency = 0 end
+            TabText.TextTransparency = 0
             Page.Visible = true
             Page.Position = UDim2.new(0, 0, 0, 0)
             Window._activeTab = state
