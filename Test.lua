@@ -6716,28 +6716,21 @@ function Fenglib:CreateWindow(Config)
         RL.SortOrder = Enum.SortOrder.LayoutOrder
         RL.Parent = Root
 
-        local Profile = Panel(Root, UDim2.new(1, 0, 0, 74))
+        -- ============ Home 卡片：纯图片卡片（原 Profile 整卡已删除） ============
+        local Profile = Panel(Root, UDim2.new(1, 0, 0, 214))
         Profile.LayoutOrder = 1
+        Profile.ClipsDescendants = true
 
-        local AvBox = Panel(Profile, UDim2.fromOffset(58, 58), UDim2.fromOffset(10, 8))
-        AvBox.BackgroundTransparency = 0.2
-        local Av = Instance.new("ImageLabel")
-        Av.BackgroundTransparency = 1
-        Av.BorderSizePixel = 0
-        Av.Size = UDim2.fromScale(1, 1)
-        Av.Image = Players:GetUserThumbnailAsync(Player.UserId,
-            Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
-        Av.Parent = AvBox
-        Instance.new("UICorner", Av).CornerRadius = UDim.new(0, 8)
-
-        local Welcome = MakeText(Profile, "你好，" .. Player.DisplayName, 18, true, 0)
-        Welcome.Position = UDim2.new(0, 82, 0, 17)
-        Welcome.Size = UDim2.new(1, -98, 0, 24)
-        TextGradient:Add(Welcome)
-
-        local UserLbl = MakeText(Profile, "@" .. Player.Name, 12, false, 0.35)
-        UserLbl.Position = UDim2.new(0, 82, 0, 41)
-        UserLbl.Size = UDim2.new(1, -98, 0, 18)
+        local Banner = Instance.new("ImageLabel")
+        Banner.Name = "HomeBanner"
+        Banner.BackgroundTransparency = 1
+        Banner.BorderSizePixel = 0
+        Banner.Size = UDim2.fromScale(1, 1)
+        Banner.ScaleType = Enum.ScaleType.Crop
+        Banner.Image = "rbxassetid://84830962019412"
+        Banner.ZIndex = 1
+        Banner.Parent = Profile
+        Instance.new("UICorner", Banner).CornerRadius = UDim.new(0, 8)
 
         local SegBox = Panel(Root, UDim2.new(1, 0, 0, 48))
         SegBox.LayoutOrder = 2
@@ -7143,8 +7136,6 @@ function Fenglib:CreateWindow(Config)
                 Ping = tostring(math.floor((Player:GetNetworkPing() * 1000) + 0.5)) .. "ms"
             end)
 
-            Welcome.Text = "你好，" .. Player.DisplayName
-            UserLbl.Text = Greeting() .. " | @" .. Player.Name
             if StatLabels.Players  then StatLabels.Players.Text  = tostring(#Players:GetPlayers()) .. " 人在玩" end
             if StatLabels.Capacity then StatLabels.Capacity.Text = tostring(Players.MaxPlayers) .. " 人" end
             if StatLabels.Latency  then StatLabels.Latency.Text  = Ping end
