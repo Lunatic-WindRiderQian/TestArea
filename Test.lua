@@ -5401,171 +5401,98 @@ function Fenglib:CreateWindow(Config)
         SectionDragIcon.ImageColor3 = SectionDragMode and CurrentTheme.Accent or CurrentTheme.Text
     end
 
-    local MinimizeBtn = createControlButton(nil, "−", function() end)
+    -- =====================================================================
+    -- 窗口最小化动画（完整移植自 DuasLibraryUI.lua）
+    -- 行为：窗口从正常尺寸 tween 到 32×32 小方块，内容全部隐藏，
+    --       最小化按钮挪到窗口中央显示图标；再次点击反向恢复。
+    -- =====================================================================
+    local MinimizeBtn, MinimizeBtnContent = createControlButton(nil, "−", function() end)
+
+    -- 记录按钮原本的父级 / LayoutOrder，方便恢复时放回去
+    local MinBtnHomeParent      = MinimizeBtn.Parent
+    local MinBtnHomeLayoutOrder = MinimizeBtn.LayoutOrder
+
+    -- 最小化时显示的图标
+    local MinBtnIcon = Instance.new("ImageLabel")
+    MinBtnIcon.Name                 = "MinBtnIcon"
+    MinBtnIcon.AnchorPoint          = Vector2.new(0.5, 0.5)
+    MinBtnIcon.Position             = UDim2.fromScale(0.5, 0.5)
+    MinBtnIcon.Size                 = UDim2.fromScale(1, 1)
+    MinBtnIcon.BackgroundTransparency = 1
+    MinBtnIcon.ScaleType            = Enum.ScaleType.Fit
+    MinBtnIcon.Image                = formatIconAsset(IconAsset, "rbxassetid://84830962019412")
+    MinBtnIcon.ImageColor3          = Color3.new(1, 1, 1)
+    MinBtnIcon.Visible              = false
+    MinBtnIcon.ZIndex               = 5
+    MinBtnIcon.Parent               = MinimizeBtn
+
+    local minimized          = false
+    local normalSizeSnapshot = nil
+
+    local function ToggleMinimize()
+        minimized = not minimized
+
+        if minimized then
+            -- 记住当前尺寸
+            normalSizeSnapshot = MainFrame.Size
+
+            -- 隐藏所有内容
+            LeftMenuFrame.Visible  = false
+            RightMenuFrame.Visible = false
+            SettingsPanel.Visible  = false
+            if Resizer        then Resizer.Visible = false end
+            if setShadowVisible then setShadowVisible(false, false) end
+
+            -- 把 MinimizeBtn 挪到窗口中央
+            MinimizeBtn.Parent              = MainFrame
+            MinimizeBtn.AnchorPoint         = Vector2.new(0.5, 0.5)
+            MinimizeBtn.Position            = UDim2.new(0, 16, 0, 16)
+            MinimizeBtn.Size                = UDim2.new(0, 24, 0, 24)
+            MinimizeBtn.BackgroundColor3    = Color3.new(0, 0, 0)
+            MinimizeBtn.BackgroundTransparency = 0
+
+            if MinimizeBtnContent then MinimizeBtnContent.Visible = false end
+            MinBtnIcon.Visible = true
+
+            TweenService:Create(
+                MainFrame,
+                TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                { Size = UDim2.new(0, 32, 0, 32) }
+            ):Play()
+        else
+            -- 显示内容
+            LeftMenuFrame.Visible  = true
+            RightMenuFrame.Visible = true
+            if Resizer        then Resizer.Visible = resizerVisible end
+            if setShadowVisible then setShadowVisible(true, false) end
+
+            -- 把 MinimizeBtn 放回原处
+            MinimizeBtn.Parent           = MinBtnHomeParent
+            MinimizeBtn.LayoutOrder      = MinBtnHomeLayoutOrder
+            MinimizeBtn.AnchorPoint      = Vector2.new(0, 0)
+            MinimizeBtn.Position         = UDim2.new(0, 0, 0, 0)
+            MinimizeBtn.Size             = UDim2.new(0, 32, 0, 32)
+            MinimizeBtn.BackgroundColor3 = CurrentTheme.Element or CurrentTheme.Top
+            MinimizeBtn.BackgroundTransparency = 0.2
+
+            if MinimizeBtnContent then MinimizeBtnContent.Visible = true end
+            MinBtnIcon.Visible = false
+
+            TweenService:Create(
+                MainFrame,
+                TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                { Size = normalSizeSnapshot or UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT) }
+            ):Play()
+        end
+    end
+
+    MinimizeBtn.MouseButton1Click:Connect(ToggleMinimize)
+
     local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
         resizerVisible = not resizerVisible
         Resizer.Visible = resizerVisible
     end)
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function() ScreenGui:Destroy() end)
-
-    -- ============ 最小化 / 恢复：缩小成圆球（移植自 DuasLibraryUI.lua） ============
-    local minimized     = false
-    local savedSize     = nil          -- 记录缩小前的窗口尺寸
-    local BALL_SIZE     = 48
-
-    -- 圆的底板（只在缩小状态显示，撑出圆形背景）
-    local MiniBallBg = Instance.new("Frame")
-    MiniBallBg.Name                   = "MiniBallBg"
-    MiniBallBg.Size                   = UDim2.fromScale(1, 1)
-    MiniBallBg.BackgroundColor3       = CurrentTheme.Top
-    MiniBallBg.BackgroundTransparency = 0.05
-    MiniBallBg.BorderSizePixel        = 0
-    MiniBallBg.Visible                = false
-    MiniBallBg.ZIndex                 = 399
-    MiniBallBg.Parent                 = MainFrame
-    Instance.new("UICorner", MiniBallBg).CornerRadius = UDim.new(1, 0)
-    table.insert(ThemeListeners, function()
-        MiniBallBg.BackgroundColor3 = CurrentTheme.Top
-    end)
-
-    -- 圆球上的图标
-    local MiniBallIcon = Instance.new("ImageLabel")
-    MiniBallIcon.Name                   = "MiniBallIcon"
-    MiniBallIcon.Size                   = UDim2.fromScale(0.58, 0.58)
-    MiniBallIcon.AnchorPoint            = Vector2.new(0.5, 0.5)
-    MiniBallIcon.Position               = UDim2.fromScale(0.5, 0.5)
-    MiniBallIcon.BackgroundTransparency = 1
-    MiniBallIcon.Image                  = formatIconAsset(IconAsset, "rbxassetid://84830962019412")
-    MiniBallIcon.ImageColor3            = CurrentTheme.Text
-    MiniBallIcon.ImageTransparency      = 0.05
-    MiniBallIcon.ScaleType              = Enum.ScaleType.Fit
-    MiniBallIcon.Visible                = false
-    MiniBallIcon.ZIndex                 = 402
-    MiniBallIcon.Parent                 = MainFrame
-
-    -- 圆球的点击 / 拖动接收层
-    local MiniBallInput = Instance.new("TextButton")
-    MiniBallInput.Name                   = "MiniBallInput"
-    MiniBallInput.Size                   = UDim2.fromScale(1, 1)
-    MiniBallInput.BackgroundTransparency = 1
-    MiniBallInput.Text                   = ""
-    MiniBallInput.AutoButtonColor        = false
-    MiniBallInput.Visible                = false
-    MiniBallInput.ZIndex                 = 403
-    MiniBallInput.Parent                 = MainFrame
-
-    local mainCorner = MainFrame:FindFirstChildOfClass("UICorner")
-
-    local function SetBallShape(on)
-        if mainCorner then
-            mainCorner.CornerRadius = on and UDim.new(1, 0) or UDim.new(0, 12)
-        end
-    end
-
-    local function ApplyMinimized(state)
-        state = state == true
-        if minimized == state then return end
-        minimized = state
-
-        -- 缩小前先把设置面板收起
-        if minimized and settingsOpen and closeSettings then
-            pcall(closeSettings)
-        end
-
-        local targetSize
-        if minimized then
-            savedSize  = MainFrame.Size
-            targetSize = UDim2.fromOffset(BALL_SIZE, BALL_SIZE)
-        else
-            targetSize = savedSize or UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT)
-        end
-
-        -- 关键：只改 Size，不动 Position。因为 AnchorPoint = (0.5, 0.5)，
-        -- 缩小时会自动在原窗口中心位置缩成一个球。
-        SetBallShape(minimized)
-
-        TweenService:Create(MainFrame, TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = targetSize,
-        }):Play()
-
-        -- 隐藏内部内容
-        LeftMenuFrame.Visible  = not minimized
-        RightMenuFrame.Visible = not minimized
-        Resizer.Visible        = (not minimized) and resizerVisible or false
-
-        -- 圆球图层显示
-        MiniBallBg.Visible    = minimized
-        MiniBallIcon.Visible  = minimized
-        MiniBallInput.Visible = minimized
-
-        -- 外阴影跟着淡
-        for _, s in ipairs(shadowStrokes) do
-            Tween(s, { Transparency = minimized and 1 or 0.9 }, 0.28)
-        end
-    end
-
-    -- 点最小化 → 缩成球
-    MinimizeBtn.MouseButton1Click:Connect(function()
-        ApplyMinimized(true)
-    end)
-
-    -- ============ 圆球自己的拖动逻辑（与 HeadFrame 互不干扰） ============
-    local ballDragToggle = false
-    local ballDragStart, ballStartPos
-    local ballDidDrag = false
-
-    MiniBallInput.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
-            ballDragToggle = true
-            ballDidDrag    = false
-            ballDragStart  = input.Position
-            ballStartPos   = MainFrame.Position
-
-            local conn
-            conn = input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    ballDragToggle = false
-                    conn:Disconnect()
-                end
-            end)
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if ballDragToggle
-            and (input.UserInputType == Enum.UserInputType.MouseMovement
-                or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - ballDragStart
-            if math.abs(delta.X) > 4 or math.abs(delta.Y) > 4 then
-                ballDidDrag = true
-            end
-            MainFrame.Position = UDim2.new(
-                ballStartPos.X.Scale,
-                ballStartPos.X.Offset + delta.X,
-                ballStartPos.Y.Scale,
-                ballStartPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-
-    -- 点球恢复（拖动结束时不要误触发恢复）
-    MiniBallInput.MouseButton1Click:Connect(function()
-        if ballDidDrag then
-            ballDidDrag = false
-            return
-        end
-        ApplyMinimized(false)
-    end)
-
-    -- 鼠标悬停时球轻微亮起，做点反馈
-    MiniBallInput.MouseEnter:Connect(function()
-        TweenService:Create(MiniBallIcon, TweenInfo.new(0.15), { ImageTransparency = 0 }):Play()
-    end)
-    MiniBallInput.MouseLeave:Connect(function()
-        TweenService:Create(MiniBallIcon, TweenInfo.new(0.15), { ImageTransparency = 0.05 }):Play()
-    end)
-    -- ==============================================================================
 
     do
         local BUILDER_ICONS_PATH =
@@ -6396,7 +6323,7 @@ function Fenglib:CreateWindow(Config)
 
     UserInputService.InputBegan:Connect(function(input, gpe)
         if not gpe and Keybind and input.KeyCode == Keybind then
-            MainFrame.Visible = not MainFrame.Visible
+            ToggleMinimize()
         end
     end)
 
