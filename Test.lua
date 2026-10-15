@@ -5214,14 +5214,6 @@ function Fenglib:CreateWindow(Config)
     })
     Window._userCard = userCard
 
-    settingsBuilder:Dropdown({
-        Name = "主题",
-        Values = { "Dark", "Charcoal", "AMOLED" },
-        Value = "Dark",
-        Parent = SettingsPanel,
-        Callback = function(v) Fenglib:SetTheme(v) end,
-    })
-
     settingsBuilder:Toggle({
         Name = "文字渐变",
         Value = true,
