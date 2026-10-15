@@ -6607,14 +6607,6 @@ function Fenglib:CreateWindow(Config)
             Region = game:GetService("LocalizationService"):GetCountryRegionForPlayerAsync(Player)
         end)
 
-        local function Greeting()
-            local h = os.date("*t").hour
-            if h >= 4 and h < 12 then return "早上好啊" end
-            if h >= 12 and h < 19 then return "今天过得怎么样？" end
-            if h >= 19 and h <= 23 then return "做个好梦吧" end
-            return "该睡觉了小馋猫"
-        end
-
         local function Elapsed()
             local e = math.max(0, TimeFunction() - StartedAt)
             if e < 60 then return math.floor(e) .. " 秒" end
@@ -6716,21 +6708,106 @@ function Fenglib:CreateWindow(Config)
         RL.SortOrder = Enum.SortOrder.LayoutOrder
         RL.Parent = Root
 
-        -- ============ Home 卡片：纯图片卡片（原 Profile 整卡已删除） ============
+        -- ============ Home 卡片：照 BasedHub hero() 原版，图片默认 135781374174090 ============
         local Profile = Panel(Root, UDim2.new(1, 0, 0, 214))
         Profile.LayoutOrder = 1
         Profile.ClipsDescendants = true
 
+        -- 右侧 62% 图片：Crop 裁切 / 靠右贴齐 / 0.25 透明 / 圆角与卡片一致
         local Banner = Instance.new("ImageLabel")
-        Banner.Name = "HomeBanner"
+        Banner.Name = "Still"
         Banner.BackgroundTransparency = 1
         Banner.BorderSizePixel = 0
-        Banner.Size = UDim2.fromScale(1, 1)
+        Banner.Image = "rbxassetid://135781374174090"
         Banner.ScaleType = Enum.ScaleType.Crop
-        Banner.Image = "rbxassetid://84830962019412"
-        Banner.ZIndex = 1
+        Banner.Size = UDim2.new(0.62, 0, 1, 0)
+        Banner.Position = UDim2.fromScale(1, 0)
+        Banner.AnchorPoint = Vector2.new(1, 0)
+        Banner.ImageTransparency = 0.25
         Banner.Parent = Profile
         Instance.new("UICorner", Banner).CornerRadius = UDim.new(0, 8)
+
+        -- 三段渐隐：左侧全透 → 0.55 处 0.35 → 右侧 0.1（照 UI.alphaSeq(0,1, 0.55,0.35, 1,0.1)）
+        local BannerFade = Instance.new("UIGradient")
+        BannerFade.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 1),
+            NumberSequenceKeypoint.new(0.55, 0.35),
+            NumberSequenceKeypoint.new(1, 0.1),
+        })
+        BannerFade.Parent = Banner
+
+        -- 左侧 66% 文字区：Padding 22 / 0 / 20 / 24，UIListLayout 底部对齐，间距 6
+        local HeroText = Instance.new("Frame")
+        HeroText.Name = "Text"
+        HeroText.BackgroundTransparency = 1
+        HeroText.Size = UDim2.new(0.66, 0, 1, 0)
+        HeroText.Parent = Profile
+        local TP = Instance.new("UIPadding")
+        TP.PaddingTop    = UDim.new(0, 22)
+        TP.PaddingRight  = UDim.new(0, 0)
+        TP.PaddingBottom = UDim.new(0, 20)
+        TP.PaddingLeft   = UDim.new(0, 24)
+        TP.Parent = HeroText
+        local TL = Instance.new("UIListLayout")
+        TL.SortOrder = Enum.SortOrder.LayoutOrder
+        TL.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        TL.Padding = UDim.new(0, 6)
+        TL.Parent = HeroText
+
+        -- eyebrow 行：状态圆点 + 一行小字
+        local Eyebrow = Instance.new("Frame")
+        Eyebrow.Name = "Eyebrow"
+        Eyebrow.BackgroundTransparency = 1
+        Eyebrow.Size = UDim2.new(1, 0, 0, 20)
+        Eyebrow.LayoutOrder = 1
+        Eyebrow.Parent = HeroText
+        local EL = Instance.new("UIListLayout")
+        EL.FillDirection = Enum.FillDirection.Horizontal
+        EL.VerticalAlignment = Enum.VerticalAlignment.Center
+        EL.Padding = UDim.new(0, 8)
+        EL.SortOrder = Enum.SortOrder.LayoutOrder
+        EL.Parent = Eyebrow
+
+        local Pip = Instance.new("Frame")
+        Pip.Name = "Pip"
+        Pip.Size = UDim2.fromOffset(7, 7)
+        Pip.BorderSizePixel = 0
+        Pip.LayoutOrder = 1
+        Pip.BackgroundColor3 = CurrentTheme.Accent
+        Pip.Parent = Eyebrow
+        Instance.new("UICorner", Pip).CornerRadius = UDim.new(1, 0)
+        table.insert(ThemeListeners, function()
+            Pip.BackgroundColor3 = CurrentTheme.Accent
+        end)
+
+        local EyebrowText = MakeText(Eyebrow, "BASED HUB", 10, true, 0)
+        EyebrowText.Name = "EyebrowText"
+        EyebrowText.Size = UDim2.new(0, 0, 0, 14)
+        EyebrowText.AutomaticSize = Enum.AutomaticSize.X
+        EyebrowText.LayoutOrder = 2
+        EyebrowText.TextColor3 = CurrentTheme.Accent
+        EyebrowText.TextTransparency = 0
+        table.insert(ThemeListeners, function()
+            EyebrowText.TextColor3 = CurrentTheme.Accent
+        end)
+
+        -- 大标题：本地玩家显示名，46 号字，自动换行
+        local HeroTitle = MakeText(HeroText, Player.DisplayName, 46, true, 0)
+        HeroTitle.Name = "HeroTitle"
+        HeroTitle.Size = UDim2.new(1, 0, 0, 0)
+        HeroTitle.AutomaticSize = Enum.AutomaticSize.Y
+        HeroTitle.TextTruncate = Enum.TextTruncate.AtEnd
+        HeroTitle.LayoutOrder = 2
+        TextGradient:Add(HeroTitle)
+
+        -- 描述行
+        local HeroSub = MakeText(HeroText, "欢迎回来，@" .. Player.Name, 13, false, 0.25)
+        HeroSub.Name = "HeroSub"
+        HeroSub.Size = UDim2.new(1, 0, 0, 0)
+        HeroSub.AutomaticSize = Enum.AutomaticSize.Y
+        HeroSub.TextWrapped = true
+        HeroSub.LayoutOrder = 3
+        TextGradient:Skip(HeroSub)
 
         local SegBox = Panel(Root, UDim2.new(1, 0, 0, 48))
         SegBox.LayoutOrder = 2
