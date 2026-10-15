@@ -4986,6 +4986,158 @@ function Fenglib:CreateWindow(Config)
     bgGradient.Parent = MainFrame
     setShadowVisible(false, true)
 
+    -- ============================================================
+    -- 窗口粒子动画（从 DuasLibraryUI 移植）
+    -- 粒子在窗口内从底部升向顶部、旋转、上下渐隐
+    -- ============================================================
+    do
+        local PARTICLE_MAX = 80
+
+        local particleLayer = Instance.new("Frame")
+        particleLayer.Name = "ParticleLayer"
+        particleLayer.Size = UDim2.fromScale(1, 1)
+        particleLayer.BackgroundTransparency = 1
+        particleLayer.BorderSizePixel = 0
+        particleLayer.ClipsDescendants = true
+        particleLayer.ZIndex = 0
+        particleLayer.Parent = MainFrame
+        Instance.new("UICorner", particleLayer).CornerRadius = UDim.new(0, 12)
+
+        local SHAPES = {"circle", "square", "triangle"}
+
+        local function pickParticleColor()
+            local acc = CurrentTheme.Accent or Color3.fromRGB(80, 140, 255)
+            local palette = {
+                acc,
+                acc:Lerp(Color3.fromRGB(255, 255, 255), 0.45),
+                Color3.fromRGB(190, 140, 255),
+                Color3.fromRGB(120, 200, 255),
+                Color3.fromRGB(255, 200, 150),
+            }
+            return palette[math.random(#palette)]
+        end
+
+        local particles = {}
+
+        local function spawnParticle()
+            local kind = SHAPES[math.random(#SHAPES)]
+            local sz = math.random(3, 11)
+            local obj
+
+            if kind == "triangle" then
+                obj = Instance.new("TextLabel")
+                obj.Text = "▲"
+                obj.Font = Enum.Font.GothamBold
+                obj.TextSize = math.max(6, math.floor(sz * 1.8))
+                obj.TextColor3 = pickParticleColor()
+                obj.BackgroundTransparency = 1
+                obj.Size = UDim2.fromOffset(sz * 2, sz * 2)
+            else
+                obj = Instance.new("Frame")
+                obj.BorderSizePixel = 0
+                obj.Size = UDim2.fromOffset(sz, sz)
+                obj.BackgroundColor3 = pickParticleColor()
+                local corner = Instance.new("UICorner")
+                corner.CornerRadius = (kind == "circle") and UDim.new(1, 0) or UDim.new(0, 2)
+                corner.Parent = obj
+            end
+
+            obj.AnchorPoint = Vector2.new(0.5, 0.5)
+            obj.ZIndex = 0
+            obj.Parent = particleLayer
+
+            return {
+                Object = obj,
+                Size = sz,
+                Kind = kind,
+                BaseTransparency = 0.5 + (1 - (sz - 3) / 8) * 0.35,
+                X = 0,
+                Y = 0,
+                Speed = math.random(14, 28),
+                Rotation = math.random(0, 360),
+                Spin = math.random(10, 30) * (math.random(2) == 1 and 1 or -1),
+            }
+        end
+
+        for i = 1, PARTICLE_MAX do
+            particles[i] = spawnParticle()
+        end
+
+        local initialized = false
+
+        local particleConn
+        particleConn = RunService.Heartbeat:Connect(function(dt)
+            if not particleLayer.Parent or not MainFrame.Parent then
+                if particleConn then particleConn:Disconnect() end
+                return
+            end
+            if not MainFrame.Visible then return end
+
+            dt = math.min(dt, 1 / 30)
+
+            local W = particleLayer.AbsoluteSize.X
+            local H = particleLayer.AbsoluteSize.Y
+            if W <= 0 or H <= 0 then return end
+
+            if not initialized then
+                for i = 1, PARTICLE_MAX do
+                    local p = particles[i]
+                    p.X = math.random(0, W)
+                    p.Y = math.random(0, H)
+                end
+                initialized = true
+            end
+
+            for i = 1, PARTICLE_MAX do
+                local p = particles[i]
+
+                p.Y = p.Y - p.Speed * dt
+
+                if p.Y < -p.Size * 2 then
+                    p.X = math.random(0, W)
+                    p.Y = H + p.Size + math.random(0, 20)
+                    p.Speed = math.random(14, 28)
+                    p.Spin = math.random(10, 30) * (math.random(2) == 1 and 1 or -1)
+                end
+
+                p.Rotation = (p.Rotation + p.Spin * dt) % 360
+
+                local alpha = 1
+                if p.Y < 50 then
+                    alpha = math.clamp(p.Y / 50, 0, 1)
+                end
+                if p.Y > H - 60 then
+                    local e = math.clamp((H + p.Size - p.Y) / 60, 0, 1)
+                    if e < alpha then alpha = e end
+                end
+                local tr = p.BaseTransparency + (1 - p.BaseTransparency) * (1 - alpha)
+
+                if p.Kind == "triangle" then
+                    p.Object.TextTransparency = tr
+                else
+                    p.Object.BackgroundTransparency = tr
+                end
+
+                p.Object.Position = UDim2.fromOffset(p.X, p.Y)
+                p.Object.Rotation = p.Rotation
+            end
+        end)
+
+        table.insert(ThemeListeners, function()
+            for i = 1, PARTICLE_MAX do
+                local p = particles[i]
+                if p.Object and p.Object.Parent then
+                    local c = pickParticleColor()
+                    if p.Kind == "triangle" then
+                        p.Object.TextColor3 = c
+                    else
+                        p.Object.BackgroundColor3 = c
+                    end
+                end
+            end
+        end)
+    end
+
     local Resizer = Instance.new("TextButton")
     Resizer.Parent = MainFrame
     Resizer.BackgroundTransparency = 0.8
@@ -5401,93 +5553,7 @@ function Fenglib:CreateWindow(Config)
         SectionDragIcon.ImageColor3 = SectionDragMode and CurrentTheme.Accent or CurrentTheme.Text
     end
 
-    -- =====================================================================
-    -- 窗口最小化动画（完整移植自 DuasLibraryUI.lua）
-    -- 行为：窗口从正常尺寸 tween 到 32×32 小方块，内容全部隐藏，
-    --       最小化按钮挪到窗口中央显示图标；再次点击反向恢复。
-    -- =====================================================================
-    local MinimizeBtn, MinimizeBtnContent = createControlButton(nil, "−", function() end)
-
-    -- 记录按钮原本的父级 / LayoutOrder，方便恢复时放回去
-    local MinBtnHomeParent      = MinimizeBtn.Parent
-    local MinBtnHomeLayoutOrder = MinimizeBtn.LayoutOrder
-
-    -- 最小化时显示的图标
-    local MinBtnIcon = Instance.new("ImageLabel")
-    MinBtnIcon.Name                 = "MinBtnIcon"
-    MinBtnIcon.AnchorPoint          = Vector2.new(0.5, 0.5)
-    MinBtnIcon.Position             = UDim2.fromScale(0.5, 0.5)
-    MinBtnIcon.Size                 = UDim2.fromScale(1, 1)
-    MinBtnIcon.BackgroundTransparency = 1
-    MinBtnIcon.ScaleType            = Enum.ScaleType.Fit
-    MinBtnIcon.Image                = formatIconAsset(IconAsset, "rbxassetid://84830962019412")
-    MinBtnIcon.ImageColor3          = Color3.new(1, 1, 1)
-    MinBtnIcon.Visible              = false
-    MinBtnIcon.ZIndex               = 5
-    MinBtnIcon.Parent               = MinimizeBtn
-
-    local minimized          = false
-    local normalSizeSnapshot = nil
-
-    local function ToggleMinimize()
-        minimized = not minimized
-
-        if minimized then
-            -- 记住当前尺寸
-            normalSizeSnapshot = MainFrame.Size
-
-            -- 隐藏所有内容
-            LeftMenuFrame.Visible  = false
-            RightMenuFrame.Visible = false
-            SettingsPanel.Visible  = false
-            if Resizer        then Resizer.Visible = false end
-            if setShadowVisible then setShadowVisible(false, false) end
-
-            -- 把 MinimizeBtn 挪到窗口中央
-            MinimizeBtn.Parent              = MainFrame
-            MinimizeBtn.AnchorPoint         = Vector2.new(0.5, 0.5)
-            MinimizeBtn.Position            = UDim2.new(0, 16, 0, 16)
-            MinimizeBtn.Size                = UDim2.new(0, 24, 0, 24)
-            MinimizeBtn.BackgroundColor3    = Color3.new(0, 0, 0)
-            MinimizeBtn.BackgroundTransparency = 0
-
-            if MinimizeBtnContent then MinimizeBtnContent.Visible = false end
-            MinBtnIcon.Visible = true
-
-            TweenService:Create(
-                MainFrame,
-                TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                { Size = UDim2.new(0, 32, 0, 32) }
-            ):Play()
-        else
-            -- 显示内容
-            LeftMenuFrame.Visible  = true
-            RightMenuFrame.Visible = true
-            if Resizer        then Resizer.Visible = resizerVisible end
-            if setShadowVisible then setShadowVisible(true, false) end
-
-            -- 把 MinimizeBtn 放回原处
-            MinimizeBtn.Parent           = MinBtnHomeParent
-            MinimizeBtn.LayoutOrder      = MinBtnHomeLayoutOrder
-            MinimizeBtn.AnchorPoint      = Vector2.new(0, 0)
-            MinimizeBtn.Position         = UDim2.new(0, 0, 0, 0)
-            MinimizeBtn.Size             = UDim2.new(0, 32, 0, 32)
-            MinimizeBtn.BackgroundColor3 = CurrentTheme.Element or CurrentTheme.Top
-            MinimizeBtn.BackgroundTransparency = 0.2
-
-            if MinimizeBtnContent then MinimizeBtnContent.Visible = true end
-            MinBtnIcon.Visible = false
-
-            TweenService:Create(
-                MainFrame,
-                TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                { Size = normalSizeSnapshot or UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT) }
-            ):Play()
-        end
-    end
-
-    MinimizeBtn.MouseButton1Click:Connect(ToggleMinimize)
-
+    local MinimizeBtn = createControlButton(nil, "−", function() end)
     local MaximizeBtn = createControlButton("rbxassetid://6031090998", nil, function()
         resizerVisible = not resizerVisible
         Resizer.Visible = resizerVisible
@@ -6314,18 +6380,80 @@ function Fenglib:CreateWindow(Config)
     OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
     OpenButton.ImageTransparency = 0.15; OpenButton.ZIndex = 10
     Instance.new("UICorner", OpenButton).CornerRadius = UDim.new(0, 8)
-    OpenButton.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
+    OpenButton.MouseButton1Click:Connect(function() end)
     MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
         OpenButton.Visible = not MainFrame.Visible
     end)
     OpenButton.Visible = false
     MainFrame.Visible = true
 
-    UserInputService.InputBegan:Connect(function(input, gpe)
-        if not gpe and Keybind and input.KeyCode == Keybind then
-            ToggleMinimize()
+    -- ============================================================
+    -- 窗口缩小/恢复动画
+    -- 点 − ：窗口 tween 缩小到 0 并隐藏
+    -- 点悬浮图标 / 快捷键 ：从 0 tween 回原大小
+    -- ============================================================
+    do
+        local hideList = { LeftMenuFrame, RightMenuFrame, bgImage }
+        local busy = false
+        local restoreSize = nil
+
+        local function setContentVisible(v)
+            for _, c in ipairs(hideList) do
+                if c then c.Visible = v end
+            end
         end
-    end)
+
+        local function minimize()
+            if busy or not MainFrame.Visible then return end
+            busy = true
+            restoreSize = MainFrame.Size
+
+            setContentVisible(false)
+            Resizer.Visible = false
+            setShadowVisible(false, false)
+
+            local t = TweenService:Create(
+                MainFrame,
+                TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+                { Size = UDim2.fromOffset(0, 0) }
+            )
+            t:Play()
+            t.Completed:Connect(function()
+                MainFrame.Visible = false
+                busy = false
+            end)
+        end
+
+        local function restore()
+            if busy or MainFrame.Visible then return end
+            busy = true
+
+            MainFrame.Size = UDim2.fromOffset(0, 0)
+            MainFrame.Visible = true
+
+            TweenService:Create(
+                MainFrame,
+                TweenInfo.new(0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                { Size = restoreSize or UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT) }
+            ):Play()
+
+            task.delay(0.1, function()
+                setContentVisible(true)
+                setShadowVisible(true, false)
+                busy = false
+            end)
+        end
+
+        MinimizeBtn.MouseButton1Click:Connect(minimize)
+        OpenButton.MouseButton1Click:Connect(restore)
+
+        UserInputService.InputBegan:Connect(function(input, gpe)
+            if gpe then return end
+            if Keybind and input.KeyCode == Keybind then
+                if MainFrame.Visible then minimize() else restore() end
+            end
+        end)
+    end
 
     Window._currentCategory = nil
     function Window:Category(config)
