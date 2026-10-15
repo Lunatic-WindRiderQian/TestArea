@@ -257,7 +257,7 @@ end
 
 function Fenglib:SaveConfig(name, folder)
     name   = tostring(name or "config")
-    folder = tostring(folder or "FenglibConfigs")
+    folder = tostring(folder or "殺脚本配置")
     local ok, err = pcall(function()
         if not isfolder(folder) then makefolder(folder) end
         local data = {}
@@ -5434,7 +5434,7 @@ function Fenglib:CreateWindow(Config)
             Label:SetAttribute("FengIconFont", true)
         end
 
-        local CONFIG_DIR          = "FenglibConfigs"
+        local CONFIG_DIR          = "殺脚本配置"
         local DEFAULT_CONFIG_NAME = "默认配置"
         local MENU_WIDTH          = 220
         local MENU_INITIAL_HEIGHT = 110
