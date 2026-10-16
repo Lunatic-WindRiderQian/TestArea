@@ -6696,6 +6696,38 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
+        -- ============ 字体：照 BasedHub 的 FONT_FILES（从 BasedHub/fonts/ 加载） ============
+        local HomeFonts = {}
+        do
+            local function tryLoad(relPath, weight, style)
+                if type(getcustomasset) ~= "function" then return nil end
+                if type(isfile) == "function" then
+                    local ok, exists = pcall(isfile, relPath)
+                    if not ok or not exists then return nil end
+                end
+                local ok, asset = pcall(getcustomasset, relPath)
+                if not ok or not asset or asset == "" then return nil end
+                local ok2, font = pcall(Font.new, asset, weight or Enum.FontWeight.Regular, style or Enum.FontStyle.Normal)
+                return ok2 and font or nil
+            end
+
+            HomeFonts.eyebrow = tryLoad("BasedHub/fonts/Archivo-ExpandedBold.ttf",
+                Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+            HomeFonts.title = tryLoad("BasedHub/fonts/InstrumentSerif-Italic.ttf",
+                Enum.FontWeight.Regular, Enum.FontStyle.Italic)
+            HomeFonts.body = tryLoad("BasedHub/fonts/Inter-Regular.ttf",
+                Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+
+            if not HomeFonts.eyebrow then HomeFonts.eyebrow = Font.fromEnum(Enum.Font.GothamBold) end
+            if not HomeFonts.title then
+                local ok, f = pcall(function()
+                    return Font.fromName("Merriweather", Enum.FontWeight.Regular, Enum.FontStyle.Italic)
+                end)
+                HomeFonts.title = ok and f or Font.fromEnum(Enum.Font.GothamBold)
+            end
+            if not HomeFonts.body then HomeFonts.body = Font.fromEnum(Enum.Font.Gotham) end
+        end
+
         local Root = Instance.new("Frame")
         Root.Name = "HomeDashboard"
         Root.Size = UDim2.new(1, -8, 0, 0)
@@ -6708,12 +6740,12 @@ function Fenglib:CreateWindow(Config)
         RL.SortOrder = Enum.SortOrder.LayoutOrder
         RL.Parent = Root
 
-        -- ============ Home 卡片：照 BasedHub hero() 原版，图片默认 135781374174090 ============
-        local Profile = Panel(Root, UDim2.new(1, 0, 0, 160))
+        -- ============ Home 卡片：照 BasedHub hero() 原版（图片、圆点、文字、字体全搬） ============
+        local Profile = Panel(Root, UDim2.new(1, 0, 0, 130))
         Profile.LayoutOrder = 1
         Profile.ClipsDescendants = true
 
-        -- 右侧 62% 图片：Crop 裁切 / 靠右贴齐 / 0.25 透明 / 圆角与卡片一致
+        -- 右侧 62% 图片
         local Banner = Instance.new("ImageLabel")
         Banner.Name = "Still"
         Banner.BackgroundTransparency = 1
@@ -6727,7 +6759,7 @@ function Fenglib:CreateWindow(Config)
         Banner.Parent = Profile
         Instance.new("UICorner", Banner).CornerRadius = UDim.new(0, 8)
 
-        -- 三段渐隐：左侧全透 → 0.55 处 0.35 → 右侧 0.1（照 UI.alphaSeq(0,1, 0.55,0.35, 1,0.1)）
+        -- 三段渐隐（左 → 右）
         local BannerFade = Instance.new("UIGradient")
         BannerFade.Transparency = NumberSequence.new({
             NumberSequenceKeypoint.new(0, 1),
@@ -6736,7 +6768,7 @@ function Fenglib:CreateWindow(Config)
         })
         BannerFade.Parent = Banner
 
-        -- 左侧 66% 文字区：Padding 22 / 0 / 20 / 24，UIListLayout 底部对齐，间距 6
+        -- 左侧 66% 文字区
         local HeroText = Instance.new("Frame")
         HeroText.Name = "Text"
         HeroText.BackgroundTransparency = 1
@@ -6754,7 +6786,7 @@ function Fenglib:CreateWindow(Config)
         TL.Padding = UDim.new(0, 6)
         TL.Parent = HeroText
 
-        -- eyebrow 行：状态圆点 + 一行小字
+        -- ① eyebrow 行：小圆点 + 大写小字
         local Eyebrow = Instance.new("Frame")
         Eyebrow.Name = "Eyebrow"
         Eyebrow.BackgroundTransparency = 1
@@ -6768,6 +6800,7 @@ function Fenglib:CreateWindow(Config)
         EL.SortOrder = Enum.SortOrder.LayoutOrder
         EL.Parent = Eyebrow
 
+        -- 小圆点（照原版：7×7，全圆角，Accent 色）
         local Pip = Instance.new("Frame")
         Pip.Name = "Pip"
         Pip.Size = UDim2.fromOffset(7, 7)
@@ -6780,33 +6813,87 @@ function Fenglib:CreateWindow(Config)
             Pip.BackgroundColor3 = CurrentTheme.Accent
         end)
 
-        local EyebrowText = MakeText(Eyebrow, "BASED HUB", 10, true, 0)
+        -- 小圆点的脉冲环（照原版 1.8 秒一轮）
+        local PipRing = Instance.new("Frame")
+        PipRing.Name = "Ring"
+        PipRing.AnchorPoint = Vector2.new(0.5, 0.5)
+        PipRing.Position = UDim2.fromScale(0.5, 0.5)
+        PipRing.Size = UDim2.fromScale(1, 1)
+        PipRing.BackgroundColor3 = CurrentTheme.Accent
+        PipRing.BackgroundTransparency = 0.5
+        PipRing.BorderSizePixel = 0
+        PipRing.Parent = Pip
+        Instance.new("UICorner", PipRing).CornerRadius = UDim.new(1, 0)
+        table.insert(ThemeListeners, function()
+            PipRing.BackgroundColor3 = CurrentTheme.Accent
+        end)
+
+        local pipPhase, pipConn = 0, nil
+        pipConn = RunService.RenderStepped:Connect(function(dt)
+            if not (Pip.Parent and PipRing.Parent) then
+                if pipConn then pipConn:Disconnect(); pipConn = nil end
+                return
+            end
+            pipPhase = (pipPhase + dt / 1.8) % 1
+            local p = 1 - (1 - pipPhase) ^ 3
+            PipRing.Size = UDim2.fromScale(1 + p * 2.4, 1 + p * 2.4)
+            PipRing.BackgroundTransparency = 0.5 + 0.5 * p
+        end)
+
+        -- eyebrow 文字：wideBold 字体，全大写，10 号
+        local EyebrowText = Instance.new("TextLabel")
         EyebrowText.Name = "EyebrowText"
+        EyebrowText.BackgroundTransparency = 1
+        EyebrowText.BorderSizePixel = 0
+        EyebrowText.FontFace = HomeFonts.eyebrow
+        EyebrowText.TextSize = 10
+        EyebrowText.Text = "WELCOME BACK"
+        EyebrowText.TextColor3 = CurrentTheme.Accent
+        EyebrowText.TextXAlignment = Enum.TextXAlignment.Left
+        EyebrowText.TextYAlignment = Enum.TextYAlignment.Center
         EyebrowText.Size = UDim2.new(0, 0, 0, 14)
         EyebrowText.AutomaticSize = Enum.AutomaticSize.X
         EyebrowText.LayoutOrder = 2
-        EyebrowText.TextColor3 = CurrentTheme.Accent
-        EyebrowText.TextTransparency = 0
-        table.insert(ThemeListeners, function()
-            EyebrowText.TextColor3 = CurrentTheme.Accent
-        end)
+        EyebrowText.Parent = Eyebrow
+        AddToRegistry(EyebrowText, "TextColor3", "Accent")
 
-        -- 大标题：本地玩家显示名，46 号字，自动换行
-        local HeroTitle = MakeText(HeroText, Player.DisplayName, 34, true, 0)
+        -- ② 大标题：serifItalic 字体，46 号
+        local HeroTitle = Instance.new("TextLabel")
         HeroTitle.Name = "HeroTitle"
+        HeroTitle.BackgroundTransparency = 1
+        HeroTitle.BorderSizePixel = 0
+        HeroTitle.FontFace = HomeFonts.title
+        HeroTitle.TextSize = 46
+        HeroTitle.Text = Player.DisplayName
+        HeroTitle.TextColor3 = CurrentTheme.Text
+        HeroTitle.TextXAlignment = Enum.TextXAlignment.Left
+        HeroTitle.TextYAlignment = Enum.TextYAlignment.Center
+        HeroTitle.TextTruncate = Enum.TextTruncate.AtEnd
         HeroTitle.Size = UDim2.new(1, 0, 0, 0)
         HeroTitle.AutomaticSize = Enum.AutomaticSize.Y
-        HeroTitle.TextTruncate = Enum.TextTruncate.AtEnd
         HeroTitle.LayoutOrder = 2
+        HeroTitle.Parent = HeroText
+        AddToRegistry(HeroTitle, "TextColor3", "Text")
         TextGradient:Add(HeroTitle)
 
-        -- 描述行
-        local HeroSub = MakeText(HeroText, "欢迎回来，@" .. Player.Name, 13, false, 0.25)
+        -- ③ 描述行：text400 (Inter) 字体，13 号
+        local HeroSub = Instance.new("TextLabel")
         HeroSub.Name = "HeroSub"
+        HeroSub.BackgroundTransparency = 1
+        HeroSub.BorderSizePixel = 0
+        HeroSub.FontFace = HomeFonts.body
+        HeroSub.TextSize = 13
+        HeroSub.Text = "欢迎回来，@" .. Player.Name
+        HeroSub.TextColor3 = CurrentTheme.Text
+        HeroSub.TextTransparency = 0.25
+        HeroSub.TextXAlignment = Enum.TextXAlignment.Left
+        HeroSub.TextYAlignment = Enum.TextYAlignment.Center
+        HeroSub.TextWrapped = true
         HeroSub.Size = UDim2.new(1, 0, 0, 0)
         HeroSub.AutomaticSize = Enum.AutomaticSize.Y
-        HeroSub.TextWrapped = true
         HeroSub.LayoutOrder = 3
+        HeroSub.Parent = HeroText
+        AddToRegistry(HeroSub, "TextColor3", "SubText")
         TextGradient:Skip(HeroSub)
 
         local SegBox = Panel(Root, UDim2.new(1, 0, 0, 48))
@@ -7236,6 +7323,7 @@ function Fenglib:CreateWindow(Config)
         Window._homeCleanup = Window._homeCleanup or {}
         table.insert(Window._homeCleanup, function()
             safeDisconnect(HomeConn)
+            if pipConn then pipConn:Disconnect(); pipConn = nil end
         end)
 
         TabBuilder.HomeRoot = Root
