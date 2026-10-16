@@ -6740,19 +6740,19 @@ function Fenglib:CreateWindow(Config)
         RL.SortOrder = Enum.SortOrder.LayoutOrder
         RL.Parent = Root
 
-        -- ============ Home 卡片：照 BasedHub hero() 原版（图片、圆点、文字、字体全搬） ============
-        local Profile = Panel(Root, UDim2.new(1, 0, 0, 130))
+        -- ============ Home 卡片：图片 + 圆点 + 文字 + 底部 SegBox ============
+        local Profile = Panel(Root, UDim2.new(1, 0, 0, 170))
         Profile.LayoutOrder = 1
         Profile.ClipsDescendants = true
 
-        -- 右侧 62% 图片
+        -- 右侧 62% 图片（让出底部 40 给按钮条）
         local Banner = Instance.new("ImageLabel")
         Banner.Name = "Still"
         Banner.BackgroundTransparency = 1
         Banner.BorderSizePixel = 0
         Banner.Image = "rbxassetid://135781374174090"
         Banner.ScaleType = Enum.ScaleType.Crop
-        Banner.Size = UDim2.new(0.62, 0, 1, 0)
+        Banner.Size = UDim2.new(0.62, 0, 1, -40)
         Banner.Position = UDim2.fromScale(1, 0)
         Banner.AnchorPoint = Vector2.new(1, 0)
         Banner.ImageTransparency = 0.25
@@ -6768,11 +6768,11 @@ function Fenglib:CreateWindow(Config)
         })
         BannerFade.Parent = Banner
 
-        -- 左侧 66% 文字区
+        -- 左侧 66% 文字区（让出底部 40 给按钮条）
         local HeroText = Instance.new("Frame")
         HeroText.Name = "Text"
         HeroText.BackgroundTransparency = 1
-        HeroText.Size = UDim2.new(0.66, 0, 1, 0)
+        HeroText.Size = UDim2.new(0.66, 0, 1, -40)
         HeroText.Parent = Profile
         local TP = Instance.new("UIPadding")
         TP.PaddingTop    = UDim.new(0, 14)
@@ -6800,7 +6800,7 @@ function Fenglib:CreateWindow(Config)
         EL.SortOrder = Enum.SortOrder.LayoutOrder
         EL.Parent = Eyebrow
 
-        -- 小圆点（照原版：7×7，全圆角，Accent 色）
+        -- 小圆点（7×7，全圆角，Accent 色）
         local Pip = Instance.new("Frame")
         Pip.Name = "Pip"
         Pip.Size = UDim2.fromOffset(7, 7)
@@ -6813,7 +6813,7 @@ function Fenglib:CreateWindow(Config)
             Pip.BackgroundColor3 = CurrentTheme.Accent
         end)
 
-        -- 小圆点的脉冲环（照原版 1.8 秒一轮）
+        -- 小圆点的脉冲环（1.8 秒一轮）
         local PipRing = Instance.new("Frame")
         PipRing.Name = "Ring"
         PipRing.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -6896,11 +6896,18 @@ function Fenglib:CreateWindow(Config)
         AddToRegistry(HeroSub, "TextColor3", "SubText")
         TextGradient:Skip(HeroSub)
 
-        local SegBox = Panel(Root, UDim2.new(1, 0, 0, 48))
-        SegBox.LayoutOrder = 2
+        -- ============ 分段按钮：融进图片卡片底部 ============
+        local SegBox = Instance.new("Frame")
+        SegBox.Name = "SegBar"
+        SegBox.AnchorPoint = Vector2.new(0, 1)
+        SegBox.Position = UDim2.new(0, 12, 1, -10)
+        SegBox.Size = UDim2.new(1, -24, 0, 34)
+        SegBox.BackgroundTransparency = 1
+        SegBox.BorderSizePixel = 0
+        SegBox.Parent = Profile
         local SL = Instance.new("UIListLayout")
         SL.FillDirection = Enum.FillDirection.Horizontal
-        SL.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        SL.HorizontalAlignment = Enum.HorizontalAlignment.Left
         SL.VerticalAlignment = Enum.VerticalAlignment.Center
         SL.SortOrder = Enum.SortOrder.LayoutOrder
         SL.Padding = UDim.new(0, 8)
@@ -6911,7 +6918,7 @@ function Fenglib:CreateWindow(Config)
         CH.BorderSizePixel = 0
         CH.Size = UDim2.new(1, 0, 0, 0)
         CH.AutomaticSize = Enum.AutomaticSize.Y
-        CH.LayoutOrder = 3
+        CH.LayoutOrder = 2
         CH.Parent = Root
 
         local function NewPage(parent)
