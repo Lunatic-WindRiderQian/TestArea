@@ -6720,7 +6720,7 @@ function Fenglib:CreateWindow(Config)
         Banner.BorderSizePixel = 0
         Banner.Image = "rbxassetid://135781374174090"
         Banner.ScaleType = Enum.ScaleType.Crop
-        Banner.Size = UDim2.new(0.62, 0, 1, 0)
+        Banner.Size = UDim2.new(0.45, 0, 1, 0)
         Banner.Position = UDim2.fromScale(1, 0)
         Banner.AnchorPoint = Vector2.new(1, 0)
         Banner.ImageTransparency = 0.25
@@ -6740,7 +6740,7 @@ function Fenglib:CreateWindow(Config)
         local HeroText = Instance.new("Frame")
         HeroText.Name = "Text"
         HeroText.BackgroundTransparency = 1
-        HeroText.Size = UDim2.new(0.66, 0, 1, 0)
+        HeroText.Size = UDim2.new(0.45, 0, 1, 0)   -- 与 Banner.Size 的数值保持一致
         HeroText.Parent = Profile
         local TP = Instance.new("UIPadding")
         TP.PaddingTop    = UDim.new(0, 22)
