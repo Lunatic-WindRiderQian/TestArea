@@ -6709,7 +6709,7 @@ function Fenglib:CreateWindow(Config)
         RL.Parent = Root
 
         -- ============ Home 卡片：照 BasedHub hero() 原版，图片默认 135781374174090 ============
-        local Profile = Panel(Root, UDim2.new(1, 0, 0, 214))
+        local Profile = Panel(Root, UDim2.new(1, 0, 0, 160))
         Profile.LayoutOrder = 1
         Profile.ClipsDescendants = true
 
@@ -6720,7 +6720,7 @@ function Fenglib:CreateWindow(Config)
         Banner.BorderSizePixel = 0
         Banner.Image = "rbxassetid://135781374174090"
         Banner.ScaleType = Enum.ScaleType.Crop
-        Banner.Size = UDim2.new(0.35, 0, 1, 0)
+        Banner.Size = UDim2.new(0.62, 0, 1, 0)
         Banner.Position = UDim2.fromScale(1, 0)
         Banner.AnchorPoint = Vector2.new(1, 0)
         Banner.ImageTransparency = 0.25
@@ -6740,12 +6740,12 @@ function Fenglib:CreateWindow(Config)
         local HeroText = Instance.new("Frame")
         HeroText.Name = "Text"
         HeroText.BackgroundTransparency = 1
-        HeroText.Size = UDim2.new(0.58, 0, 1, 0)
+        HeroText.Size = UDim2.new(0.66, 0, 1, 0)
         HeroText.Parent = Profile
         local TP = Instance.new("UIPadding")
-        TP.PaddingTop    = UDim.new(0, 22)
+        TP.PaddingTop    = UDim.new(0, 14)
         TP.PaddingRight  = UDim.new(0, 0)
-        TP.PaddingBottom = UDim.new(0, 20)
+        TP.PaddingBottom = UDim.new(0, 14)
         TP.PaddingLeft   = UDim.new(0, 24)
         TP.Parent = HeroText
         local TL = Instance.new("UIListLayout")
@@ -6792,7 +6792,7 @@ function Fenglib:CreateWindow(Config)
         end)
 
         -- 大标题：本地玩家显示名，46 号字，自动换行
-        local HeroTitle = MakeText(HeroText, Player.DisplayName, 46, true, 0)
+        local HeroTitle = MakeText(HeroText, Player.DisplayName, 34, true, 0)
         HeroTitle.Name = "HeroTitle"
         HeroTitle.Size = UDim2.new(1, 0, 0, 0)
         HeroTitle.AutomaticSize = Enum.AutomaticSize.Y
