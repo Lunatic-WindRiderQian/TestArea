@@ -6929,7 +6929,7 @@ function Fenglib:CreateWindow(Config)
             local lblW = math.max(60,
                 TextService:GetTextSize(tostring(text), 12, Enum.Font.GothamBold,
                     Vector2.new(math.huge, math.huge)).X + 4)
-            local btnW = 32 + lblW + 8
+            local btnW = 36 + lblW + 8
             local bt = Panel(SegBox, UDim2.fromOffset(btnW, 34))
             bt.BackgroundTransparency = 0.55
 
