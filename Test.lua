@@ -6883,8 +6883,8 @@ function Fenglib:CreateWindow(Config)
         -- ============ 分段按钮条：压在图片卡片底部（Frame，透明背景） ============
         local SegBox = Instance.new("Frame")
         SegBox.Name = "SegBar"
-        SegBox.AnchorPoint = Vector2.new(0, 0)
-        SegBox.Position = UDim2.new(0, 12, 0, -126)
+        SegBox.AnchorPoint = Vector2.new(0, 1)
+        SegBox.Position = UDim2.new(0, 12, 1, -4)
         SegBox.Size = UDim2.new(1, -24, 0, 34)
         SegBox.BackgroundTransparency = 1
         SegBox.BorderSizePixel = 0
