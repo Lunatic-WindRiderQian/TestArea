@@ -6986,6 +6986,11 @@ function Fenglib:CreateWindow(Config)
         end
 
         -- ============ 统计卡片 (FPS / PING / PLAYERS / SESSION) ============
+        -- 使用 BuilderIcons 字符图标，完整照搬 BasedHub 的图标语义（gauge / wifi / users / clock），
+        -- 高度压到 52，横向保持 4 等分（每个 0.25 宽），视觉上更扁更"长"。
+        local STAT_BUILDER_PATH = "rbxasset://LuaPackages/Packages/_Index/BuilderIcons/BuilderIcons.json"
+        local STAT_ICON_FONT = Font.new(STAT_BUILDER_PATH, Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+
         local fpsAccum, fpsFrames, currentFps = 0, 0, 60
         RunService.RenderStepped:Connect(function(dt)
             fpsAccum = fpsAccum + dt
@@ -7012,40 +7017,48 @@ function Fenglib:CreateWindow(Config)
 
         local StatsRow = Instance.new("Frame")
         StatsRow.Name = "Stats"
-        StatsRow.Size = UDim2.new(1, 0, 0, 74)
+        StatsRow.Size = UDim2.new(1, 0, 0, 52)
         StatsRow.BackgroundTransparency = 1
         StatsRow.BorderSizePixel = 0
         StatsRow.LayoutOrder = 1
         StatsRow.Parent = DetailsPage
 
         local statSpecs = {
-            { icon = "rbxassetid://6035047409", label = "FPS",     read = function() return tostring(currentFps) end },
-            { icon = "rbxassetid://6023569111", label = "PING",    read = function() return tostring(getPing()) .. " ms" end },
-            { icon = "rbxassetid://6023426926", label = "PLAYERS", read = function() return tostring(#Players:GetPlayers()) .. " / " .. tostring(Players.MaxPlayers) end },
-            { icon = "rbxassetid://6035047409", label = "SESSION", read = getSession },
+            { icon = "gauge", label = "FPS",     read = function() return tostring(currentFps) end },
+            { icon = "wifi",  label = "PING",    read = function() return tostring(getPing()) .. " ms" end },
+            { icon = "users", label = "PLAYERS", read = function() return tostring(#Players:GetPlayers()) .. " / " .. tostring(Players.MaxPlayers) end },
+            { icon = "clock", label = "SESSION", read = getSession },
         }
         local statTiles = {}
         for index, spec in ipairs(statSpecs) do
             local tile = Panel(StatsRow, UDim2.new(0.25, -9, 1, 0), UDim2.new((index - 1) * 0.25, (index - 1) * 3, 0, 0))
 
-            local iconImg = Instance.new("ImageLabel")
-            iconImg.Size = UDim2.fromOffset(15, 15)
-            iconImg.Position = UDim2.fromOffset(14, 14)
-            iconImg.BackgroundTransparency = 1
-            iconImg.Image = spec.icon
-            iconImg.ImageColor3 = CurrentTheme.SubText or CurrentTheme.Text
-            iconImg.ImageTransparency = 0.5
-            iconImg.ScaleType = Enum.ScaleType.Fit
-            iconImg.Parent = tile
-            AddToRegistry(iconImg, "ImageColor3", "SubText")
+            -- 图标（BuilderIcons 字符）
+            local iconLbl = Instance.new("TextLabel")
+            iconLbl.Size = UDim2.fromOffset(16, 16)
+            iconLbl.Position = UDim2.fromOffset(12, 10)
+            iconLbl.BackgroundTransparency = 1
+            iconLbl.BorderSizePixel = 0
+            iconLbl.FontFace = STAT_ICON_FONT
+            iconLbl.Text = spec.icon
+            iconLbl.TextSize = 15
+            iconLbl.TextColor3 = CurrentTheme.SubText or CurrentTheme.Text
+            iconLbl.TextTransparency = 0.45
+            iconLbl.TextXAlignment = Enum.TextXAlignment.Center
+            iconLbl.TextYAlignment = Enum.TextYAlignment.Center
+            iconLbl.Parent = tile
+            AddToRegistry(iconLbl, "TextColor3", "SubText")
+            TextGradient:Skip(iconLbl)
 
+            -- 标题（FPS/PING/PLAYERS/SESSION）
             local titleLabel = Instance.new("TextLabel")
-            titleLabel.Size = UDim2.new(1, -28, 0, 12)
-            titleLabel.Position = UDim2.fromOffset(36, 15)
+            titleLabel.Size = UDim2.new(1, -40, 0, 12)
+            titleLabel.Position = UDim2.fromOffset(32, 11)
             titleLabel.BackgroundTransparency = 1
             titleLabel.Font = Enum.Font.GothamBold
             titleLabel.TextSize = 9
             titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            titleLabel.TextYAlignment = Enum.TextYAlignment.Center
             titleLabel.TextColor3 = CurrentTheme.SubText or CurrentTheme.Text
             titleLabel.TextTransparency = 0.5
             titleLabel.Text = spec.label
@@ -7053,13 +7066,15 @@ function Fenglib:CreateWindow(Config)
             AddToRegistry(titleLabel, "TextColor3", "SubText")
             TextGradient:Skip(titleLabel)
 
+            -- 数值
             local valueLabel = Instance.new("TextLabel")
-            valueLabel.Size = UDim2.new(1, -28, 0, 22)
-            valueLabel.Position = UDim2.fromOffset(14, 40)
+            valueLabel.Size = UDim2.new(1, -20, 0, 20)
+            valueLabel.Position = UDim2.fromOffset(12, 25)
             valueLabel.BackgroundTransparency = 1
             valueLabel.Font = Enum.Font.GothamBold
-            valueLabel.TextSize = 19
+            valueLabel.TextSize = 17
             valueLabel.TextXAlignment = Enum.TextXAlignment.Left
+            valueLabel.TextYAlignment = Enum.TextYAlignment.Center
             valueLabel.TextColor3 = CurrentTheme.Text
             valueLabel.Text = spec.read()
             valueLabel.Parent = tile
