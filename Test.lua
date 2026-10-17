@@ -24,23 +24,6 @@ DepthOfFieldEffect.Enabled = false
 
 local function safeDisconnect(conn) if conn then pcall(conn.Disconnect, conn) end end
 
-local SectionDragMode = false
-local SectionDragListeners = {}
-
-local function SetSectionDragMode(enabled)
-    enabled = enabled == true
-    if SectionDragMode == enabled then return end
-    SectionDragMode = enabled
-    for i = #SectionDragListeners, 1, -1 do
-        local listener = SectionDragListeners[i]
-        if listener then
-            pcall(listener, enabled)
-        else
-            table.remove(SectionDragListeners, i)
-        end
-    end
-end
-
 local Animation = {}
 do
     local _RunService = RunService
@@ -4158,220 +4141,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             updateHeight(instant)
         end
 
-        local PoppedOut = false
-        local PopOutFloat = nil
-        local PopOutPlaceholder = nil
-
-        local DragState = "Idle"
-        local DragInput = nil
-        local PressMouse = nil
-        local DragStartPos = nil
-        local DragChangedConn = nil
-        local DragDidMove = false
-        local JustDragged = false
-
-        local function GetScreenGui()
-            local s = sectionFrame
-            while s do
-                if s:IsA("ScreenGui") then return s end
-                s = s.Parent
-            end
-            return nil
-        end
-
-        local function GetHostWindow()
-            local node = sectionFrame
-            while node and node.Parent do
-                if node.Parent:IsA("ScreenGui") then return node end
-                node = node.Parent
-            end
-            return nil
-        end
-
-        local function PointOverFrame(frame, point)
-            if not frame or not frame.Parent then return false end
-            local ap, as = frame.AbsolutePosition, frame.AbsoluteSize
-            return point.X >= ap.X and point.X <= ap.X + as.X
-               and point.Y >= ap.Y and point.Y <= ap.Y + as.Y
-        end
-
-        local function RaiseFloat()
-            if not PopOutFloat then return end
-            local sg = GetScreenGui()
-            if not sg then return end
-            local maxZ = 500
-            for _, c in ipairs(sg:GetChildren()) do
-                if c:IsA("Frame") and c.Name == "FengSectionFloat" and c ~= PopOutFloat then
-                    maxZ = math.max(maxZ, c.ZIndex)
-                end
-            end
-            PopOutFloat.ZIndex = maxZ + 1
-        end
-
-        local function ApplyPoppedOut(shouldPop)
-            shouldPop = shouldPop == true
-            if PoppedOut == shouldPop then return end
-
-            local sg = GetScreenGui()
-            if not sg then return end
-
-            if shouldPop then
-                local width = sectionFrame.AbsoluteSize.X
-                local height = sectionFrame.Size.Y.Offset
-
-                local ph = Instance.new("Frame")
-                ph.Name = "FengSectionPlaceholder"
-                ph.Size = UDim2.fromScale(1, 1)
-                ph.BackgroundTransparency = 1
-                ph.BorderSizePixel = 0
-                ph.ZIndex = contentContainer.ZIndex
-                ph.Parent = sectionFrame
-                local phc = Instance.new("UICorner")
-                phc.CornerRadius = UDim.new(0, 10)
-                phc.Parent = ph
-                local phs = Instance.new("UIStroke")
-                phs.Color = CurrentTheme.Stroke
-                phs.Transparency = 0.5
-                phs.Thickness = 1
-                phs.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                phs.Parent = ph
-                PopOutPlaceholder = ph
-
-                local absPos = sectionFrame.AbsolutePosition
-                local float = Instance.new("Frame")
-                float.Name = "FengSectionFloat"
-                float.BackgroundTransparency = 1
-                float.BorderSizePixel = 0
-                float.AutomaticSize = Enum.AutomaticSize.Y
-                float.Size = UDim2.new(0, width, 0, 0)
-                float.Position = UDim2.fromOffset(absPos.X, absPos.Y)
-                float.ZIndex = 500
-                float.Parent = sg
-                PopOutFloat = float
-
-                contentContainer.Parent = float
-                contentContainer.Size = UDim2.new(1, 0, 0, height)
-                contentContainer.Position = UDim2.new(0, 0, 0, 0)
-                contentContainer.AnchorPoint = Vector2.new(0, 0)
-
-                PoppedOut = true
-                RaiseFloat()
-            else
-                contentContainer.Parent = sectionFrame
-                contentContainer.Size = UDim2.new(1, -5, 0, sectionFrame.Size.Y.Offset)
-                contentContainer.Position = UDim2.new(0, 0, 0, 0)
-
-                if PopOutPlaceholder then PopOutPlaceholder:Destroy(); PopOutPlaceholder = nil end
-                if PopOutFloat then PopOutFloat:Destroy(); PopOutFloat = nil end
-
-                PoppedOut = false
-                updateHeight(true)
-            end
-        end
-
-        local function StopDrag()
-            if DragState == "Idle" then return end
-
-            local wasDragging = DragState == "Dragging"
-            local didMove = DragDidMove
-
-            DragState = "Idle"
-            DragInput = nil
-            PressMouse = nil
-            DragStartPos = nil
-            DragDidMove = false
-
-            if DragChangedConn then
-                DragChangedConn:Disconnect()
-                DragChangedConn = nil
-            end
-
-            if not wasDragging then return end
-
-            if didMove then
-                JustDragged = true
-                task.delay(0.25, function() JustDragged = false end)
-            end
-
-            if not PoppedOut or not PopOutFloat then return end
-
-            local hostWin = GetHostWindow()
-            if hostWin and not hostWin.Visible then return end
-
-            if PopOutPlaceholder and PopOutPlaceholder.Parent then
-                local floatCenter = PopOutFloat.AbsolutePosition + PopOutFloat.AbsoluteSize * 0.5
-                local phCenter    = PopOutPlaceholder.AbsolutePosition + PopOutPlaceholder.AbsoluteSize * 0.5
-                if (floatCenter - phCenter).Magnitude <= 80 then
-                    ApplyPoppedOut(false)
-                end
-            end
-        end
-
-        local function BeginDrag(input)
-            if DragState ~= "Idle" then return end
-            if not SectionDragMode then return end
-
-            DragState = "Holding"
-            DragInput = input
-            PressMouse = Vector2.new(input.Position.X, input.Position.Y)
-            DragStartPos = nil
-            DragDidMove = false
-
-            if PoppedOut and PopOutFloat then
-                RaiseFloat()
-            end
-
-            DragChangedConn = input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    StopDrag()
-                end
-            end)
-
-            task.delay(0.15, function()
-                if DragState ~= "Holding" or DragInput ~= input then return end
-                DragState = "Dragging"
-                if PoppedOut and PopOutFloat then
-                    RaiseFloat()
-                    DragStartPos = PopOutFloat.Position
-                end
-            end)
-        end
-
-        local function UpdateDrag(input)
-            if DragState ~= "Dragging" or not PressMouse then return end
-
-            local mousePos = Vector2.new(input.Position.X, input.Position.Y)
-            local delta = mousePos - PressMouse
-
-            if not PoppedOut then
-                if delta.Magnitude < 8 then return end
-                ApplyPoppedOut(true)
-                if not PopOutFloat then return end
-                RaiseFloat()
-                DragStartPos = PopOutFloat.Position
-                DragDidMove = true
-            elseif delta.Magnitude >= 8 then
-                DragDidMove = true
-            end
-
-            if PopOutFloat and DragStartPos then
-                PopOutFloat.Position = UDim2.new(
-                    DragStartPos.X.Scale,
-                    DragStartPos.X.Offset + delta.X,
-                    DragStartPos.Y.Scale,
-                    DragStartPos.Y.Offset + delta.Y
-                )
-            end
-        end
-
-        UserInputService.InputChanged:Connect(function(input)
-            if DragState ~= "Dragging" then return end
-            if input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch then
-                UpdateDrag(input)
-            end
-        end)
-
         if collapsible then
             local headBtn = Instance.new("TextButton")
             headBtn.Size = UDim2.new(1, 0, 0, HEADER_H)
@@ -4381,40 +4150,10 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
             headBtn.AutoButtonColor = false
             headBtn.Parent = contentContainer
             headBtn.MouseButton1Click:Connect(function()
-                if locked or JustDragged then return end
+                if locked then return end
                 setCollapsed(not collapsedState, false)
             end)
-            headBtn.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1
-                or input.UserInputType == Enum.UserInputType.Touch then
-                    BeginDrag(input)
-                end
-            end)
-        else
-            local dragZone = Instance.new("TextButton")
-            dragZone.Name = "SectionDragZone"
-            dragZone.Size = UDim2.new(1, 0, 0, math.max(HEADER_H, 30))
-            dragZone.Position = UDim2.new(0, 0, 0, 0)
-            dragZone.BackgroundTransparency = 1
-            dragZone.Text = ""
-            dragZone.AutoButtonColor = false
-            dragZone.ZIndex = 2
-            dragZone.Parent = contentContainer
-
-            dragZone.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1
-                or input.UserInputType == Enum.UserInputType.Touch then
-                    BeginDrag(input)
-                end
-            end)
         end
-
-        table.insert(SectionDragListeners, function(enabled)
-            if enabled or not PoppedOut then return end
-            local hostWin = GetHostWindow()
-            if hostWin and not hostWin.Visible then return end
-            ApplyPoppedOut(false)
-        end)
 
         local tabBuilders = {}
         if hasTabs then
@@ -5377,19 +5116,6 @@ function Fenglib:CreateWindow(Config)
         end)
         btn.MouseButton1Click:Connect(callback)
         return btn, content
-    end
-
-    local SectionDragBtn, SectionDragIcon = createControlButton("rbxassetid://18879088568", nil, function()
-        SetSectionDragMode(not SectionDragMode)
-        if SectionDragIcon then
-            Tween(SectionDragIcon, {
-                ImageColor3 = SectionDragMode and CurrentTheme.Accent or CurrentTheme.Text,
-                ImageTransparency = SectionDragMode and 0 or 0.3,
-            }, 0.18)
-        end
-    end)
-    if SectionDragIcon then
-        SectionDragIcon.ImageColor3 = SectionDragMode and CurrentTheme.Accent or CurrentTheme.Text
     end
 
     local MinimizeBtn = createControlButton(nil, "−", function() end)
