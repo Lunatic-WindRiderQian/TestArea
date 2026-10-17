@@ -6731,7 +6731,7 @@ function Fenglib:CreateWindow(Config)
         RL.Parent = Root
 
         -- ============ 图片卡片加长到 170，底部留出 40 装 Segments 按钮 ============
-        local Profile = Panel(Root, UDim2.new(1, 0, 0, 210))
+        local Profile = Panel(Root, UDim2.new(1, 0, 0, 170))
         Profile.LayoutOrder = 1
         Profile.ClipsDescendants = true
 
@@ -6883,8 +6883,8 @@ function Fenglib:CreateWindow(Config)
         -- ============ 分段按钮条：压在图片卡片底部（Frame，透明背景） ============
         local SegBox = Instance.new("Frame")
         SegBox.Name = "SegBar"
-        SegBox.AnchorPoint = Vector2.new(0, 1)
-        SegBox.Position = UDim2.new(0, 12, 1, -10)
+        SegBox.AnchorPoint = Vector2.new(0, 0)
+        SegBox.Position = UDim2.new(0, 12, 0, -126)
         SegBox.Size = UDim2.new(1, -24, 0, 34)
         SegBox.BackgroundTransparency = 1
         SegBox.BorderSizePixel = 0
