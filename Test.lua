@@ -6985,12 +6985,103 @@ function Fenglib:CreateWindow(Config)
                 segSpec.Other.Icon or Config.OtherIcon or 9904843410)
         end
 
+        -- ============ 统计卡片 (FPS / PING / PLAYERS / SESSION) ============
+        local fpsAccum, fpsFrames, currentFps = 0, 0, 60
+        RunService.RenderStepped:Connect(function(dt)
+            fpsAccum = fpsAccum + dt
+            fpsFrames = fpsFrames + 1
+            if fpsAccum >= 0.5 then
+                currentFps = math.floor(fpsFrames / fpsAccum + 0.5)
+                fpsAccum, fpsFrames = 0, 0
+            end
+        end)
+
+        local function getPing()
+            local ok, value = pcall(function() return Player:GetNetworkPing() end)
+            if ok and type(value) == "number" and value > 0 then
+                return math.floor(value * 1000 + 0.5)
+            end
+            return 0
+        end
+
+        local sessionStart = os.clock()
+        local function getSession()
+            local s = math.floor(os.clock() - sessionStart)
+            return string.format("%d:%02d", math.floor(s / 60), s % 60)
+        end
+
+        local StatsRow = Instance.new("Frame")
+        StatsRow.Name = "Stats"
+        StatsRow.Size = UDim2.new(1, 0, 0, 74)
+        StatsRow.BackgroundTransparency = 1
+        StatsRow.BorderSizePixel = 0
+        StatsRow.LayoutOrder = 1
+        StatsRow.Parent = DetailsPage
+
+        local statSpecs = {
+            { icon = "rbxassetid://6035047409", label = "FPS",     read = function() return tostring(currentFps) end },
+            { icon = "rbxassetid://6023569111", label = "PING",    read = function() return tostring(getPing()) .. " ms" end },
+            { icon = "rbxassetid://6023426926", label = "PLAYERS", read = function() return tostring(#Players:GetPlayers()) .. " / " .. tostring(Players.MaxPlayers) end },
+            { icon = "rbxassetid://6035047409", label = "SESSION", read = getSession },
+        }
+        local statTiles = {}
+        for index, spec in ipairs(statSpecs) do
+            local tile = Panel(StatsRow, UDim2.new(0.25, -9, 1, 0), UDim2.new((index - 1) * 0.25, (index - 1) * 3, 0, 0))
+
+            local iconImg = Instance.new("ImageLabel")
+            iconImg.Size = UDim2.fromOffset(15, 15)
+            iconImg.Position = UDim2.fromOffset(14, 14)
+            iconImg.BackgroundTransparency = 1
+            iconImg.Image = spec.icon
+            iconImg.ImageColor3 = CurrentTheme.SubText or CurrentTheme.Text
+            iconImg.ImageTransparency = 0.5
+            iconImg.ScaleType = Enum.ScaleType.Fit
+            iconImg.Parent = tile
+            AddToRegistry(iconImg, "ImageColor3", "SubText")
+
+            local titleLabel = Instance.new("TextLabel")
+            titleLabel.Size = UDim2.new(1, -28, 0, 12)
+            titleLabel.Position = UDim2.fromOffset(36, 15)
+            titleLabel.BackgroundTransparency = 1
+            titleLabel.Font = Enum.Font.GothamBold
+            titleLabel.TextSize = 9
+            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            titleLabel.TextColor3 = CurrentTheme.SubText or CurrentTheme.Text
+            titleLabel.TextTransparency = 0.5
+            titleLabel.Text = spec.label
+            titleLabel.Parent = tile
+            AddToRegistry(titleLabel, "TextColor3", "SubText")
+            TextGradient:Skip(titleLabel)
+
+            local valueLabel = Instance.new("TextLabel")
+            valueLabel.Size = UDim2.new(1, -28, 0, 22)
+            valueLabel.Position = UDim2.fromOffset(14, 40)
+            valueLabel.BackgroundTransparency = 1
+            valueLabel.Font = Enum.Font.GothamBold
+            valueLabel.TextSize = 19
+            valueLabel.TextXAlignment = Enum.TextXAlignment.Left
+            valueLabel.TextColor3 = CurrentTheme.Text
+            valueLabel.Text = spec.read()
+            valueLabel.Parent = tile
+            AddToRegistry(valueLabel, "TextColor3", "Text")
+            TextGradient:Skip(valueLabel)
+
+            statTiles[index] = { label = valueLabel, read = spec.read }
+        end
+
+        RunService.Heartbeat:Connect(function()
+            for _, tile in ipairs(statTiles) do
+                tile.label.Text = tile.read()
+            end
+        end)
+        -- ============ 统计卡片结束 ============
+
         local DW = Instance.new("Frame")
         DW.BackgroundTransparency = 1
         DW.BorderSizePixel = 0
         DW.Size = UDim2.new(1, 0, 0, 0)
         DW.AutomaticSize = Enum.AutomaticSize.Y
-        DW.LayoutOrder = 1
+        DW.LayoutOrder = 2
         DW.Parent = DetailsPage
         local DWL = Instance.new("UIListLayout")
         DWL.FillDirection = Enum.FillDirection.Horizontal
@@ -7022,18 +7113,9 @@ function Fenglib:CreateWindow(Config)
         RCL.SortOrder = Enum.SortOrder.LayoutOrder
         RCL.Parent = RightCol
 
-        local ServerCard = Panel(LeftCol, UDim2.new(1, 0, 0, 162))
-        ServerCard.LayoutOrder = 1
+        -- （ServerCard 已删除）
 
-        local SvrT = MakeText(ServerCard, "服务器", 15, true, 0)
-        SvrT.Position = UDim2.fromOffset(16, 12)
-        SvrT.Size = UDim2.new(1, -32, 0, 18)
-
-        local SvrS = MakeText(ServerCard, "当前会话的信息", 10, false, 0.48)
-        SvrS.Position = UDim2.fromOffset(16, 30)
-        SvrS.Size = UDim2.new(1, -32, 0, 14)
-
-        local StatLabels = {}
+        -- 保留 MakeStat，供 FriendsCard 使用
         local function MakeStat(parent, ttl, val, xScale, y, wScale)
             local st = Panel(parent, UDim2.new(wScale, -6, 0, 42),
                 UDim2.new(xScale, 3, 0, y))
@@ -7046,12 +7128,6 @@ function Fenglib:CreateWindow(Config)
             v.Size = UDim2.new(1, -20, 0, 13)
             return v
         end
-
-        StatLabels.Players  = MakeStat(ServerCard, "玩家",       "0 人在玩", 0,    58, 0.5)
-        StatLabels.Capacity = MakeStat(ServerCard, "最大玩家数", tostring(Players.MaxPlayers).." 人", 0.5, 58, 0.5)
-        StatLabels.Latency  = MakeStat(ServerCard, "延迟",       "...",      0,    104, 0.33)
-        StatLabels.Region   = MakeStat(ServerCard, "地区", tostring(Region), 0.33, 104, 0.34)
-        StatLabels.Runtime  = MakeStat(ServerCard, "时长",   "0 秒",     0.67, 104, 0.33)
 
         local QQCard = Panel(LeftCol, UDim2.new(1, 0, 0, 68))
         QQCard.LayoutOrder = 2
@@ -7092,7 +7168,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end)
 
-        local ExecutorCard = Panel(RightCol, UDim2.new(1, 0, 0, 92))
+        local ExecutorCard = Panel(LeftCol, UDim2.new(1, 0, 0, 92))
         ExecutorCard.LayoutOrder = 1
 
         local ExecStatus = "未知"
@@ -7137,7 +7213,7 @@ function Fenglib:CreateWindow(Config)
         FitTextToWidth(ESub, 12, 8, true)
 
         local FriendsCard = Panel(RightCol, UDim2.new(1, 0, 0, 166))
-        FriendsCard.LayoutOrder = 2
+        FriendsCard.LayoutOrder = 1
 
         local FTitle = MakeText(FriendsCard, "好友", 16, true, 0)
         FTitle.Position = UDim2.fromOffset(16, 12)
@@ -7282,15 +7358,6 @@ function Fenglib:CreateWindow(Config)
             if Accumulator < 0.5 then return end
             Accumulator = 0
 
-            local Ping = "..."
-            pcall(function()
-                Ping = tostring(math.floor((Player:GetNetworkPing() * 1000) + 0.5)) .. "ms"
-            end)
-
-            if StatLabels.Players  then StatLabels.Players.Text  = tostring(#Players:GetPlayers()) .. " 人在玩" end
-            if StatLabels.Capacity then StatLabels.Capacity.Text = tostring(Players.MaxPlayers) .. " 人" end
-            if StatLabels.Latency  then StatLabels.Latency.Text  = Ping end
-            if StatLabels.Runtime  then StatLabels.Runtime.Text  = Elapsed() end
             if FriendLabels.InServer then FriendLabels.InServer.Text = FriendCache.InServer end
             if FriendLabels.Offline  then FriendLabels.Offline.Text  = FriendCache.Offline end
             if FriendLabels.Online   then FriendLabels.Online.Text   = FriendCache.Online end
