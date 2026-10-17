@@ -6830,7 +6830,7 @@ function Fenglib:CreateWindow(Config)
         EyebrowText.BorderSizePixel = 0
         EyebrowText.FontFace = HomeFonts.eyebrow
         EyebrowText.TextSize = 10
-        EyebrowText.Text = "殺脚本"
+        EyebrowText.Text = "FengYu Hub"
         EyebrowText.TextColor3 = CurrentTheme.Accent
         EyebrowText.TextXAlignment = Enum.TextXAlignment.Left
         EyebrowText.TextYAlignment = Enum.TextYAlignment.Center
@@ -6846,7 +6846,7 @@ function Fenglib:CreateWindow(Config)
         HeroTitle.BorderSizePixel = 0
         HeroTitle.FontFace = HomeFonts.title
         HeroTitle.TextSize = 46
-        HeroTitle.Text = Player.DisplayName .. "用户你好"
+        HeroTitle.Text = "No Next"
         HeroTitle.TextColor3 = CurrentTheme.Text
         HeroTitle.TextXAlignment = Enum.TextXAlignment.Left
         HeroTitle.TextYAlignment = Enum.TextYAlignment.Center
