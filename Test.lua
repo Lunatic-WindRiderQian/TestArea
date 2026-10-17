@@ -6985,12 +6985,13 @@ function Fenglib:CreateWindow(Config)
                 segSpec.Other.Icon or Config.OtherIcon or 9904843410)
         end
 
-        -- ============ 统计卡片 (FPS / PING / PLAYERS / SESSION) ============
+        -- ============ 统计卡片 (帧率 / 延迟 / 玩家 / 时长) ============
         -- 图标来源：用户提供的 rbxassetid
-        --   FPS     → 105442920358687
-        --   PING    → 105253464688580
-        --   PLAYERS → 17415913624
-        --   SESSION → 6761866149
+        --   帧率 → 105442920358687
+        --   延迟 → 105253464688580
+        --   玩家 → 17415913624
+        --   时长 → 6761866149
+        -- 卡片加宽（间隔仅 1px），高度保持 52
         local fpsAccum, fpsFrames, currentFps = 0, 0, 60
         RunService.RenderStepped:Connect(function(dt)
             fpsAccum = fpsAccum + dt
@@ -7024,14 +7025,15 @@ function Fenglib:CreateWindow(Config)
         StatsRow.Parent = DetailsPage
 
         local statSpecs = {
-            { icon = "rbxassetid://105442920358687", label = "FPS",     read = function() return tostring(currentFps) end },
-            { icon = "rbxassetid://105253464688580", label = "PING",    read = function() return tostring(getPing()) .. " ms" end },
-            { icon = "rbxassetid://17415913624",     label = "PLAYERS", read = function() return tostring(#Players:GetPlayers()) .. " / " .. tostring(Players.MaxPlayers) end },
-            { icon = "rbxassetid://6761866149",      label = "SESSION", read = getSession },
+            { icon = "rbxassetid://105442920358687", label = "帧率", read = function() return tostring(currentFps) end },
+            { icon = "rbxassetid://105253464688580", label = "延迟", read = function() return tostring(getPing()) .. " ms" end },
+            { icon = "rbxassetid://17415913624",     label = "玩家", read = function() return tostring(#Players:GetPlayers()) .. " / " .. tostring(Players.MaxPlayers) end },
+            { icon = "rbxassetid://6761866149",      label = "时长", read = getSession },
         }
         local statTiles = {}
         for index, spec in ipairs(statSpecs) do
-            local tile = Panel(StatsRow, UDim2.new(0.25, -9, 1, 0), UDim2.new((index - 1) * 0.25, (index - 1) * 3, 0, 0))
+            -- 每个卡片：宽度 25% - 2px，间隔 1px → 几乎贴合，视觉上更"长"
+            local tile = Panel(StatsRow, UDim2.new(0.25, -2, 1, 0), UDim2.new((index - 1) * 0.25, (index - 1) * 1, 0, 0))
 
             -- 图标（ImageLabel + rbxassetid）
             local iconImg = Instance.new("ImageLabel")
@@ -7046,17 +7048,17 @@ function Fenglib:CreateWindow(Config)
             iconImg.Parent = tile
             AddToRegistry(iconImg, "ImageColor3", "SubText")
 
-            -- 标题（FPS/PING/PLAYERS/SESSION）
+            -- 标题（中文）
             local titleLabel = Instance.new("TextLabel")
-            titleLabel.Size = UDim2.new(1, -40, 0, 12)
-            titleLabel.Position = UDim2.fromOffset(32, 11)
+            titleLabel.Size = UDim2.new(1, -40, 0, 14)
+            titleLabel.Position = UDim2.fromOffset(32, 10)
             titleLabel.BackgroundTransparency = 1
             titleLabel.Font = Enum.Font.GothamBold
-            titleLabel.TextSize = 9
+            titleLabel.TextSize = 11
             titleLabel.TextXAlignment = Enum.TextXAlignment.Left
             titleLabel.TextYAlignment = Enum.TextYAlignment.Center
             titleLabel.TextColor3 = CurrentTheme.SubText or CurrentTheme.Text
-            titleLabel.TextTransparency = 0.5
+            titleLabel.TextTransparency = 0.45
             titleLabel.Text = spec.label
             titleLabel.Parent = tile
             AddToRegistry(titleLabel, "TextColor3", "SubText")
