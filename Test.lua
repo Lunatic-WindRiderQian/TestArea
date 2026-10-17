@@ -4549,7 +4549,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 textLbl.TextTruncate = Enum.TextTruncate.AtEnd
                 textLbl.Parent = btn
 
-                -- ===== 单个 Tab 的锁 =====
                 if tabLocked then
                     local tabLockFrame, tabLockLabel = createLockOverlay(btn, tabLockedTitle)
                     tabLockFrame.Visible = true
@@ -4616,7 +4615,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                     activeTabKey = nil
                     switchTab(firstKey)
                 else
-                    -- 找到第一个未锁定的 tab 作为默认激活
                     for _, entry in ipairs(tabEntries) do
                         local k = tostring(entry.Key)
                         local d = tabDataMap[k]
@@ -6732,18 +6730,19 @@ function Fenglib:CreateWindow(Config)
         RL.SortOrder = Enum.SortOrder.LayoutOrder
         RL.Parent = Root
 
-        -- ============ 图片卡片（独立，高度 130，图片铺满） ============
-        local Profile = Panel(Root, UDim2.new(1, 0, 0, 130))
+        -- ============ 图片卡片加长到 170，底部留出 40 装 Segments 按钮 ============
+        local Profile = Panel(Root, UDim2.new(1, 0, 0, 170))
         Profile.LayoutOrder = 1
         Profile.ClipsDescendants = true
 
+        -- 右侧 62% 图片：让出底部 40px 给按钮条
         local Banner = Instance.new("ImageLabel")
         Banner.Name = "Still"
         Banner.BackgroundTransparency = 1
         Banner.BorderSizePixel = 0
         Banner.Image = "rbxassetid://135781374174090"
         Banner.ScaleType = Enum.ScaleType.Crop
-        Banner.Size = UDim2.new(0.62, 0, 1, 0)
+        Banner.Size = UDim2.new(0.62, 0, 1, -40)
         Banner.Position = UDim2.fromScale(1, 0)
         Banner.AnchorPoint = Vector2.new(1, 0)
         Banner.ImageTransparency = 0.25
@@ -6758,10 +6757,11 @@ function Fenglib:CreateWindow(Config)
         })
         BannerFade.Parent = Banner
 
+        -- 左侧 66% 文字区：让出底部 40px 给按钮条
         local HeroText = Instance.new("Frame")
         HeroText.Name = "Text"
         HeroText.BackgroundTransparency = 1
-        HeroText.Size = UDim2.new(0.66, 0, 1, 0)
+        HeroText.Size = UDim2.new(0.66, 0, 1, -40)
         HeroText.Parent = Profile
         local TP = Instance.new("UIPadding")
         TP.PaddingTop    = UDim.new(0, 14)
@@ -6775,6 +6775,7 @@ function Fenglib:CreateWindow(Config)
         TL.Padding = UDim.new(0, 6)
         TL.Parent = HeroText
 
+        -- ① eyebrow 行：小圆点 + 大写小字
         local Eyebrow = Instance.new("Frame")
         Eyebrow.Name = "Eyebrow"
         Eyebrow.BackgroundTransparency = 1
@@ -6879,9 +6880,15 @@ function Fenglib:CreateWindow(Config)
         AddToRegistry(HeroSub, "TextColor3", "SubText")
         TextGradient:Skip(HeroSub)
 
-        -- ============ 分段按钮条：独立 Panel，在图片卡片下面 ============
-        local SegBox = Panel(Root, UDim2.new(1, 0, 0, 48))
-        SegBox.LayoutOrder = 2
+        -- ============ 分段按钮条：压在图片卡片底部（Frame，透明背景） ============
+        local SegBox = Instance.new("Frame")
+        SegBox.Name = "SegBar"
+        SegBox.AnchorPoint = Vector2.new(0, 1)
+        SegBox.Position = UDim2.new(0, 12, 1, -10)
+        SegBox.Size = UDim2.new(1, -24, 0, 34)
+        SegBox.BackgroundTransparency = 1
+        SegBox.BorderSizePixel = 0
+        SegBox.Parent = Profile
         local SL = Instance.new("UIListLayout")
         SL.FillDirection = Enum.FillDirection.Horizontal
         SL.HorizontalAlignment = Enum.HorizontalAlignment.Left
@@ -6889,17 +6896,13 @@ function Fenglib:CreateWindow(Config)
         SL.SortOrder = Enum.SortOrder.LayoutOrder
         SL.Padding = UDim.new(0, 8)
         SL.Parent = SegBox
-        local SegPad = Instance.new("UIPadding")
-        SegPad.PaddingLeft = UDim.new(0, 12)
-        SegPad.PaddingRight = UDim.new(0, 12)
-        SegPad.Parent = SegBox
 
         local CH = Instance.new("Frame")
         CH.BackgroundTransparency = 1
         CH.BorderSizePixel = 0
         CH.Size = UDim2.new(1, 0, 0, 0)
         CH.AutomaticSize = Enum.AutomaticSize.Y
-        CH.LayoutOrder = 3
+        CH.LayoutOrder = 2
         CH.Parent = Root
 
         local function NewPage(parent)
