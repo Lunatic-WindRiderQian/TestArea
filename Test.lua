@@ -6730,12 +6730,11 @@ function Fenglib:CreateWindow(Config)
         RL.SortOrder = Enum.SortOrder.LayoutOrder
         RL.Parent = Root
 
-        -- ============ 图片卡片加长到 170，底部留出 40 装 Segments 按钮 ============
+        -- ============ 图片卡片 ============
         local Profile = Panel(Root, UDim2.new(1, 0, 0, 170))
         Profile.LayoutOrder = 1
         Profile.ClipsDescendants = true
 
-        -- 右侧 62% 图片：让出底部 40px 给按钮条
         local Banner = Instance.new("ImageLabel")
         Banner.Name = "Still"
         Banner.BackgroundTransparency = 1
@@ -6757,7 +6756,6 @@ function Fenglib:CreateWindow(Config)
         })
         BannerFade.Parent = Banner
 
-        -- 左侧 66% 文字区：让出底部 40px 给按钮条
         local HeroText = Instance.new("Frame")
         HeroText.Name = "Text"
         HeroText.BackgroundTransparency = 1
@@ -6775,7 +6773,6 @@ function Fenglib:CreateWindow(Config)
         TL.Padding = UDim.new(0, 6)
         TL.Parent = HeroText
 
-        -- ① eyebrow 行：小圆点 + 大写小字
         local Eyebrow = Instance.new("Frame")
         Eyebrow.Name = "Eyebrow"
         Eyebrow.BackgroundTransparency = 1
@@ -6880,7 +6877,7 @@ function Fenglib:CreateWindow(Config)
         AddToRegistry(HeroSub, "TextColor3", "SubText")
         TextGradient:Skip(HeroSub)
 
-        -- ============ 分段按钮条：压在图片卡片底部（Frame，透明背景） ============
+        -- ============ 分段按钮条 ============
         local SegBox = Instance.new("Frame")
         SegBox.Name = "SegBar"
         SegBox.AnchorPoint = Vector2.new(0, 1)
@@ -6926,22 +6923,19 @@ function Fenglib:CreateWindow(Config)
 
         local segButtons = {}
         local function MakeSegment(segName, text, ic)
-            local lblW = math.max(60,
+            local lblW = math.max(48,
                 TextService:GetTextSize(tostring(text), 12, Enum.Font.GothamBold,
-                    Vector2.new(math.huge, math.huge)).X + 4)
-            local btnW = 36 + lblW + 8
+                    Vector2.new(math.huge, math.huge)).X)
+            local btnW = lblW + 24
             local bt = Panel(SegBox, UDim2.fromOffset(btnW, 34))
             bt.BackgroundTransparency = 0.55
 
-            local icn = MakeIcon(bt, ic, 16, CurrentTheme.Text)
-            icn.Position = UDim2.new(0, 12, 0.5, -8)
-            icn.ImageTransparency = 0.3
-
             local lbl = MakeText(bt, text, 12, true, 0.25)
-            lbl.Position = UDim2.new(0, 36, 0, 0)
-            lbl.Size = UDim2.new(1, -44, 1, 0)
+            lbl.Position = UDim2.new(0, 0, 0, 0)
+            lbl.Size = UDim2.new(1, 0, 1, 0)
+            lbl.TextXAlignment = Enum.TextXAlignment.Center
 
-            segButtons[segName] = { Root = bt, Icon = icn, Label = lbl }
+            segButtons[segName] = { Root = bt, Label = lbl }
 
             local hit = Instance.new("TextButton")
             hit.Size = UDim2.fromScale(1, 1)
@@ -6957,7 +6951,9 @@ function Fenglib:CreateWindow(Config)
                 for n, s in pairs(segButtons) do
                     local active = (n == segName)
                     Tween(s.Root, {BackgroundTransparency = active and 0.08 or 0.55}, 0.2)
-                    s.Icon.ImageColor3  = active and CurrentTheme.Accent or CurrentTheme.Text
+                    if s.Icon then
+                        s.Icon.ImageColor3 = active and CurrentTheme.Accent or CurrentTheme.Text
+                    end
                     s.Label.TextColor3  = active and CurrentTheme.Accent or CurrentTheme.Text
                     s.Label.TextTransparency = active and 0 or 0.25
                 end
@@ -7305,7 +7301,9 @@ function Fenglib:CreateWindow(Config)
         DetailsPage.Visible = true
         if segButtons["Details"] then
             segButtons["Details"].Root.BackgroundTransparency = 0.08
-            segButtons["Details"].Icon.ImageColor3 = CurrentTheme.Accent
+            if segButtons["Details"].Icon then
+                segButtons["Details"].Icon.ImageColor3 = CurrentTheme.Accent
+            end
             segButtons["Details"].Label.TextColor3 = CurrentTheme.Accent
             segButtons["Details"].Label.TextTransparency = 0
         end
