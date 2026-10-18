@@ -5997,7 +5997,7 @@ function Fenglib:CreateWindow(Config)
 
         HomeList = Instance.new("UIGridLayout")
         HomeList.CellSize = UDim2.new(0.5, -8, 0, 60)
-        HomeList.CellPadding = UDim.new(0, 16)
+        HomeList.CellPadding = UDim2.new(0, 16, 0, 16)
         HomeList.SortOrder = Enum.SortOrder.LayoutOrder
         HomeList.FillDirection = Enum.FillDirection.Horizontal
         HomeList.FillDirectionMaxCells = 2
