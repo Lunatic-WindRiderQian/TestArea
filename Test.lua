@@ -4422,14 +4422,14 @@ end
 function Fenglib:CreateWindow(Config)
     ConfigIdCounter = 0
 
-    -- === 新增：卡片模式开关 ===
+    -- === 卡片模式开关 ===
     local CardMode = Config.Card == true
-    local cardsContainer    -- ScrollingFrame（卡片网格）
-    local cardContents = {} -- [name] = { Frame = ..., Button = ... }
-    local activeCardName    -- 当前打开卡片的 name
+    local cardsContainer
+    local cardContents = {}
+    local activeCardName
     local cardOrderCounter = 0
-    local BackButton        -- 返回卡片列表按钮
-    -- === 卡片模式开关结束 ===
+    local BackButton
+    local cardSetUIState
 
     local Window = {}
     local Title = Config.Name or "FengYu"
@@ -5143,6 +5143,7 @@ function Fenglib:CreateWindow(Config)
             if cardsContainer then cardsContainer.Visible = true end
             activeCardName = nil
             if BackButton then BackButton.Visible = false end
+            if cardSetUIState then cardSetUIState(false) end
         end)
         if BackButton then
             BackButton.Visible = false
@@ -5894,6 +5895,23 @@ function Fenglib:CreateWindow(Config)
             end
             RefreshConfigList()
         end)
+
+        -- 卡片模式下右侧背景 & 配置系统的显隐
+        if CardMode then
+            cardSetUIState = function(show)
+                if show then
+                    RightMenuFrame.BackgroundTransparency = 0.6
+                    RightStroke.Transparency = 0.65
+                    ConfigFrame.Visible = true
+                else
+                    RightMenuFrame.BackgroundTransparency = 1
+                    RightStroke.Transparency = 1
+                    ConfigFrame.Visible = false
+                    if CloseMenu then CloseMenu() end
+                end
+            end
+            cardSetUIState(false)
+        end
     end
 
     local TabContainer = Instance.new("Frame")
@@ -5903,21 +5921,21 @@ function Fenglib:CreateWindow(Config)
     TabContainer.ClipsDescendants = true
     TabContainer.Parent = RightMenuFrame
 
-    -- === 卡片模式：初始化卡片网格 ===
+    -- 卡片模式：初始化卡片网格（挂到 MainFrame 全宽）
     if CardMode then
-        -- 隐藏左侧标签列表、底部用户卡、右侧默认内容
         LeftScrollingFrame.Visible = false
         BottomFrame.Visible = false
         TabContainer.Visible = false
 
         cardsContainer = Instance.new("ScrollingFrame")
         cardsContainer.Name = "CardsContainer"
-        cardsContainer.Size = UDim2.new(1, 0, 1, -50)
-        cardsContainer.Position = UDim2.new(0, 0, 0, 50)
+        cardsContainer.Size = UDim2.new(1, -20, 1, -55)
+        cardsContainer.Position = UDim2.new(0, 10, 0, 50)
         cardsContainer.BackgroundTransparency = 1
         cardsContainer.ScrollBarThickness = 4
         cardsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-        cardsContainer.Parent = RightMenuFrame
+        cardsContainer.Parent = MainFrame
+        cardsContainer.ZIndex = 2
 
         local gridLayout = Instance.new("UIGridLayout")
         gridLayout.CellSize            = UDim2.new(0.5, -20, 0, 74)
@@ -5934,7 +5952,6 @@ function Fenglib:CreateWindow(Config)
         gridLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCardsCanvas)
         task.spawn(updateCardsCanvas)
     end
-    -- === 卡片模式初始化结束 ===
 
     local PageContainer = Instance.new("ScrollingFrame")
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
@@ -6181,7 +6198,7 @@ function Fenglib:CreateWindow(Config)
     Window._activeTab = nil
     Window._tabs = {}
     function Window:Tab(name, icon)
-        -- === 卡片模式拦截 ===
+        -- 卡片模式拦截
         if CardMode then
             warn("[Fenglib] Card mode is enabled. Use Window:Card(...):Tab(...) instead.")
             return {}
@@ -6330,7 +6347,6 @@ function Fenglib:CreateWindow(Config)
 
     -- ============================================================
     -- 卡片模式 API：Window:Card({ Name, Description, Icon })
-    -- 返回对象提供 :Tab(name, icon) 方法
     -- ============================================================
     function Window:Card(cardConfig)
         if not CardMode then
@@ -6348,9 +6364,7 @@ function Fenglib:CreateWindow(Config)
 
         cardOrderCounter = cardOrderCounter + 1
 
-        ------------------------------------------------------------------
         -- 1. 卡片按钮
-        ------------------------------------------------------------------
         local cardBtn = Instance.new("TextButton")
         cardBtn.Name = "Card_" .. name
         cardBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -6415,13 +6429,12 @@ function Fenglib:CreateWindow(Config)
         descLbl.BackgroundTransparency = 1
         descLbl.Font = Enum.Font.Gotham
         descLbl.Text = description
-        descLbl.TextColor3 = CurrentTheme.Text
+        descLbl.TextColor3 = Color3.fromRGB(180, 190, 210)
         descLbl.TextSize = 11
         descLbl.TextXAlignment = Enum.TextXAlignment.Left
         descLbl.TextWrapped = true
         descLbl.TextTruncate = Enum.TextTruncate.AtEnd
         descLbl.Parent = textFrame
-        AddToRegistry(descLbl, "TextColor3", "Text")
 
         cardBtn.MouseEnter:Connect(function()
             Tween(cardBtn,   { BackgroundTransparency = 0.05 }, 0.2)
@@ -6434,18 +6447,16 @@ function Fenglib:CreateWindow(Config)
             Tween(iconLabel, { Size = UDim2.new(0, 44, 0, 44) }, 0.2)
         end)
 
-        ------------------------------------------------------------------
-        -- 2. 卡片内容页（初始隐藏）
-        ------------------------------------------------------------------
+        -- 2. 卡片内容页（挂到 MainFrame 全宽）
         local cardContent = Instance.new("Frame")
         cardContent.Name = "CardContent_" .. name
-        cardContent.Size = UDim2.new(1, 0, 1, -50)
-        cardContent.Position = UDim2.new(0, 0, 0, 50)
+        cardContent.Size = UDim2.new(1, -20, 1, -55)
+        cardContent.Position = UDim2.new(0, 10, 0, 50)
         cardContent.BackgroundTransparency = 1
         cardContent.Visible = false
-        cardContent.Parent = RightMenuFrame
+        cardContent.Parent = MainFrame
+        cardContent.ZIndex = 2
 
-        -- 左侧子标签列表
         local subTabList = Instance.new("ScrollingFrame")
         subTabList.Size = UDim2.new(0, 140, 1, 0)
         subTabList.BackgroundTransparency = 1
@@ -6464,7 +6475,6 @@ function Fenglib:CreateWindow(Config)
         subTabLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSubTabCanvas)
         task.spawn(updateSubTabCanvas)
 
-        -- 分隔线
         local divider = Instance.new("Frame")
         divider.Size = UDim2.new(0, 1, 1, 0)
         divider.Position = UDim2.new(0, 150, 0, 0)
@@ -6473,14 +6483,12 @@ function Fenglib:CreateWindow(Config)
         divider.BorderSizePixel = 0
         divider.Parent = cardContent
 
-        -- 右侧子页面内容容器
         local subContentHolder = Instance.new("Frame")
         subContentHolder.Size = UDim2.new(1, -165, 1, 0)
         subContentHolder.Position = UDim2.new(0, 160, 0, 0)
         subContentHolder.BackgroundTransparency = 1
         subContentHolder.Parent = cardContent
 
-        -- 记录卡片
         cardContents[name] = { Frame = cardContent, Button = cardBtn }
 
         cardBtn.MouseButton1Click:Connect(function()
@@ -6492,11 +6500,10 @@ function Fenglib:CreateWindow(Config)
             cardContent.Visible = true
             activeCardName = name
             if BackButton then BackButton.Visible = true end
+            if cardSetUIState then cardSetUIState(true) end
         end)
 
-        ------------------------------------------------------------------
         -- 3. 对外返回对象
-        ------------------------------------------------------------------
         local cardObj = {}
         local subTabs = {}
         local activeSubTab = nil
@@ -6508,9 +6515,6 @@ function Fenglib:CreateWindow(Config)
             end
             tabName = tostring(tabName or "Tab")
 
-            ------------------------------------------------------------------
-            -- 子标签按钮
-            ------------------------------------------------------------------
             local tabBtn = Instance.new("TextButton")
             tabBtn.Size = UDim2.new(1, 0, 0, 32)
             tabBtn.BackgroundTransparency = 1
@@ -6570,9 +6574,6 @@ function Fenglib:CreateWindow(Config)
             tabLbl.TextXAlignment = Enum.TextXAlignment.Left
             tabLbl.Parent = tabInner
 
-            ------------------------------------------------------------------
-            -- 子标签内容
-            ------------------------------------------------------------------
             local tabContent = Instance.new("ScrollingFrame")
             tabContent.Size = UDim2.new(1, 0, 1, 0)
             tabContent.BackgroundTransparency = 1
@@ -6636,15 +6637,11 @@ function Fenglib:CreateWindow(Config)
                 switchTo(tabData)
             end
 
-            -- 复用主 section builder
             return createSectionBuilder(tabContentFrame, tabContentFrame, 330, 1, Window)
         end
 
         return cardObj
     end
-    -- ============================================================
-    -- Window:Card 结束
-    -- ============================================================
 
     function Window:CreateHomeTab(Config)
         Config = Config or {}
@@ -6795,7 +6792,6 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
-        -- ============ 字体：从 BasedHub/fonts/ 加载 ============
         local HomeFonts = {}
         do
             local function tryLoad(relPath, weight, style)
@@ -6839,7 +6835,6 @@ function Fenglib:CreateWindow(Config)
         RL.SortOrder = Enum.SortOrder.LayoutOrder
         RL.Parent = Root
 
-        -- ============ 图片卡片 ============
         local Profile = Panel(Root, UDim2.new(1, 0, 0, 170))
         Profile.LayoutOrder = 1
         Profile.ClipsDescendants = true
@@ -6986,7 +6981,6 @@ function Fenglib:CreateWindow(Config)
         AddToRegistry(HeroSub, "TextColor3", "SubText")
         TextGradient:Skip(HeroSub)
 
-        -- ============ 分段按钮条 ============
         local SegBox = Instance.new("Frame")
         SegBox.Name = "SegBar"
         SegBox.AnchorPoint = Vector2.new(0, 1)
@@ -7094,7 +7088,6 @@ function Fenglib:CreateWindow(Config)
                 segSpec.Other.Icon or Config.OtherIcon or 9904843410)
         end
 
-        -- ============ 统计卡片 (帧率 / 延迟 / 玩家 / 时长) ============
         local fpsAccum, fpsFrames, currentFps = 0, 0, 60
         RunService.RenderStepped:Connect(function(dt)
             fpsAccum = fpsAccum + dt
