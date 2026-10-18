@@ -4422,17 +4422,21 @@ end
 function Fenglib:CreateWindow(Config)
     ConfigIdCounter = 0
 
+    -- === 新增：卡片模式开关 ===
+    local CardMode = Config.Card == true
+    local cardsContainer    -- ScrollingFrame（卡片网格）
+    local cardContents = {} -- [name] = { Frame = ..., Button = ... }
+    local activeCardName    -- 当前打开卡片的 name
+    local cardOrderCounter = 0
+    local BackButton        -- 返回卡片列表按钮
+    -- === 卡片模式开关结束 ===
+
     local Window = {}
     local Title = Config.Name or "FengYu"
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind
     local IconAsset = Config.Logo or Config.Icon
     local SceneId = Config.Scene
-
-    local CardMode = Config.Card == true
-    local PageService, HomePage, HomeContent, HomeList
-    local PageContainer, PageContent, PageList, updatePageCanvas
-    local CardReturnBtn
 
     if Config.Theme then
         if type(Config.Theme) == "string" then
@@ -5026,23 +5030,16 @@ function Fenglib:CreateWindow(Config)
     end)
 
     local RightMenuFrame = Instance.new("Frame")
-    if CardMode then
-        RightMenuFrame.Size = UDim2.new(1, 0, 1, 0)
-        RightMenuFrame.Position = UDim2.new(0, 0, 0, 0)
-        RightMenuFrame.BackgroundTransparency = 1
-    else
-        RightMenuFrame.Size = UDim2.new(1, -176, 1, 0)
-        RightMenuFrame.Position = UDim2.new(0, 176, 0, 0)
-        RightMenuFrame.BackgroundTransparency = 0.6
-    end
+    RightMenuFrame.Size = UDim2.new(1, -176, 1, 0)
+    RightMenuFrame.Position = UDim2.new(0, 176, 0, 0)
+    RightMenuFrame.BackgroundTransparency = 0.6
     RightMenuFrame.ClipsDescendants = true
     RightMenuFrame.Parent = MainFrame
     Instance.new("UICorner", RightMenuFrame).CornerRadius = UDim.new(0, 13)
     AddToRegistry(RightMenuFrame, "BackgroundColor3", "Main")
 
     local RightStroke = Instance.new("UIStroke")
-    RightStroke.Thickness = 1
-    RightStroke.Transparency = CardMode and 1 or 0.65
+    RightStroke.Thickness = 1; RightStroke.Transparency = 0.65
     RightStroke.Parent = RightMenuFrame
     AddToRegistry(RightStroke, "Color", "Stroke")
 
@@ -5137,65 +5134,22 @@ function Fenglib:CreateWindow(Config)
     end)
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function() ScreenGui:Destroy() end)
 
+    -- === 卡片模式的返回按钮 ===
     if CardMode then
-        CardReturnBtn = Instance.new("TextButton")
-        CardReturnBtn.Name = "CardReturnBtn"
-        CardReturnBtn.Size = UDim2.new(0, 32, 0, 32)
-        CardReturnBtn.Position = UDim2.new(0, 8, 0.5, -16)
-        CardReturnBtn.BackgroundTransparency = 0.2
-        CardReturnBtn.BackgroundColor3 = CurrentTheme.Element or CurrentTheme.Top
-        CardReturnBtn.AutoButtonColor = false
-        CardReturnBtn.Text = ""
-        CardReturnBtn.Visible = false
-        CardReturnBtn.ZIndex = 5
-        CardReturnBtn.Parent = RightHeader
-        Instance.new("UICorner", CardReturnBtn).CornerRadius = UDim.new(0, 7)
-
-        local retStroke = Instance.new("UIStroke")
-        retStroke.Thickness = 1
-        retStroke.Transparency = 0.65
-        retStroke.Color = CurrentTheme.Stroke
-        retStroke.Parent = CardReturnBtn
-        table.insert(ThemeListeners, function() retStroke.Color = CurrentTheme.Stroke end)
-
-        local retIcon = Instance.new("ImageLabel")
-        retIcon.Size = UDim2.new(0, 18, 0, 18)
-        retIcon.Position = UDim2.new(0.5, -9, 0.5, -9)
-        retIcon.BackgroundTransparency = 1
-        retIcon.Image = "rbxassetid://130391877219356"
-        retIcon.ImageColor3 = CurrentTheme.Text
-        retIcon.Parent = CardReturnBtn
-        AddToRegistry(retIcon, "ImageColor3", "Text")
-
-        local CardTitleLabel = Instance.new("TextLabel")
-        CardTitleLabel.Name = "CardTitle"
-        CardTitleLabel.Size = UDim2.new(1, -250, 0, 18)
-        CardTitleLabel.Position = UDim2.new(0, 48, 0, 6)
-        CardTitleLabel.BackgroundTransparency = 1
-        CardTitleLabel.Font = Enum.Font.GothamBold
-        CardTitleLabel.Text = Title
-        CardTitleLabel.TextSize = 16
-        CardTitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        CardTitleLabel.TextTruncate = Enum.TextTruncate.AtEnd
-        CardTitleLabel.Parent = RightHeader
-        AddToRegistry(CardTitleLabel, "TextColor3", "Text")
-        TextGradient:Add(CardTitleLabel)
-
-        local CardSubLabel = Instance.new("TextLabel")
-        CardSubLabel.Name = "CardSub"
-        CardSubLabel.Size = UDim2.new(1, -250, 0, 12)
-        CardSubLabel.Position = UDim2.new(0, 48, 0, 28)
-        CardSubLabel.BackgroundTransparency = 1
-        CardSubLabel.Font = Enum.Font.GothamMedium
-        CardSubLabel.Text = Subtitle or ""
-        CardSubLabel.TextSize = 10
-        CardSubLabel.TextTransparency = 0.6
-        CardSubLabel.TextXAlignment = Enum.TextXAlignment.Left
-        CardSubLabel.TextTruncate = Enum.TextTruncate.AtEnd
-        CardSubLabel.Parent = RightHeader
-        AddToRegistry(CardSubLabel, "TextColor3", "SubText")
-        TextGradient:Skip(CardSubLabel)
+        BackButton = createControlButton("rbxassetid://7733764800", nil, function()
+            for _, data in pairs(cardContents) do
+                if data.Frame then data.Frame.Visible = false end
+            end
+            if cardsContainer then cardsContainer.Visible = true end
+            activeCardName = nil
+            if BackButton then BackButton.Visible = false end
+        end)
+        if BackButton then
+            BackButton.Visible = false
+            BackButton.LayoutOrder = -1
+        end
     end
+    -- === 返回按钮结束 ===
 
     do
         local BUILDER_ICONS_PATH =
@@ -5940,8 +5894,6 @@ function Fenglib:CreateWindow(Config)
             end
             RefreshConfigList()
         end)
-
-        Window._configFrameRef = ConfigFrame
     end
 
     local TabContainer = Instance.new("Frame")
@@ -5951,142 +5903,64 @@ function Fenglib:CreateWindow(Config)
     TabContainer.ClipsDescendants = true
     TabContainer.Parent = RightMenuFrame
 
+    -- === 卡片模式：初始化卡片网格 ===
     if CardMode then
-        PageService = Instance.new("UIPageLayout")
-        PageService.Parent = TabContainer
-        PageService.TweenTime = 0.5
-        PageService.EasingStyle = Enum.EasingStyle.Exponential
-        PageService.EasingDirection = Enum.EasingDirection.Out
-        PageService.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        PageService.GamepadInputEnabled = false
-        PageService.ScrollWheelInputEnabled = false
-        PageService.TouchInputEnabled = false
+        -- 隐藏左侧标签列表、底部用户卡、右侧默认内容
+        LeftScrollingFrame.Visible = false
+        BottomFrame.Visible = false
+        TabContainer.Visible = false
 
-        HomePage = Instance.new("Frame")
-        HomePage.Name = "HomePage"
-        HomePage.Size = UDim2.new(1, 0, 1, 0)
-        HomePage.BackgroundTransparency = 1
-        HomePage.Parent = TabContainer
+        cardsContainer = Instance.new("ScrollingFrame")
+        cardsContainer.Name = "CardsContainer"
+        cardsContainer.Size = UDim2.new(1, 0, 1, -50)
+        cardsContainer.Position = UDim2.new(0, 0, 0, 50)
+        cardsContainer.BackgroundTransparency = 1
+        cardsContainer.ScrollBarThickness = 4
+        cardsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+        cardsContainer.Parent = RightMenuFrame
 
-        local HomeScroll = Instance.new("ScrollingFrame")
-        HomeScroll.Name = "HomeScroll"
-        HomeScroll.Size = UDim2.new(1, 0, 1, 0)
-        HomeScroll.BackgroundTransparency = 1
-        HomeScroll.ScrollBarThickness = 0
-        HomeScroll.ScrollBarImageTransparency = 1
-        HomeScroll.ScrollingEnabled = true
-        HomeScroll.ClipsDescendants = true
-        HomeScroll.Parent = HomePage
+        local gridLayout = Instance.new("UIGridLayout")
+        gridLayout.CellSize            = UDim2.new(0.5, -20, 0, 74)
+        gridLayout.CellPadding         = UDim2.new(0, 15, 0, 15)
+        gridLayout.FillDirection       = Enum.FillDirection.Horizontal
+        gridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        gridLayout.VerticalAlignment   = Enum.VerticalAlignment.Top
+        gridLayout.SortOrder           = Enum.SortOrder.LayoutOrder
+        gridLayout.Parent              = cardsContainer
 
-        HomeContent = Instance.new("Frame")
-        HomeContent.Name = "HomeContent"
-        HomeContent.Size = UDim2.new(1, -24, 0, 60)
-        HomeContent.Position = UDim2.new(0, 12, 0, 12)
-        HomeContent.BackgroundTransparency = 1
-        HomeContent.Parent = HomeScroll
-
-        HomeList = Instance.new("UIGridLayout")
-        HomeList.CellSize = UDim2.new(0.5, -8, 0, 60)
-        HomeList.CellPadding = UDim2.new(0, 16, 0, 16)
-        HomeList.SortOrder = Enum.SortOrder.LayoutOrder
-        HomeList.FillDirection = Enum.FillDirection.Horizontal
-        HomeList.FillDirectionMaxCells = 2
-        HomeList.Parent = HomeContent
-
-        local function updateHomeCanvas()
-            local contentH = math.max(HomeList.AbsoluteContentSize.Y + 24, 60)
-            HomeContent.Size = UDim2.new(1, -24, 0, contentH)
-            HomeScroll.CanvasSize = UDim2.new(0, 0, 0, math.max(contentH + 12, 100))
+        local function updateCardsCanvas()
+            cardsContainer.CanvasSize = UDim2.new(0, 0, 0, gridLayout.AbsoluteContentSize.Y + 20)
         end
-        HomeList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateHomeCanvas)
-        HomeContent.ChildAdded:Connect(function()
-            task.wait(0.05)
-            updateHomeCanvas()
-        end)
-        HomeContent.ChildRemoved:Connect(function()
-            task.wait(0.05)
-            updateHomeCanvas()
-        end)
-        task.spawn(function()
-            task.wait()
-            updateHomeCanvas()
-        end)
-
-        local function setHomeLayout(isHome)
-            local cfgFrame = Window._configFrameRef
-            if isHome then
-                LeftMenuFrame.Visible = false
-                RightMenuFrame.Size = UDim2.new(1, 0, 1, 0)
-                RightMenuFrame.Position = UDim2.new(0, 0, 0, 0)
-                Tween(RightMenuFrame, { BackgroundTransparency = 1 }, 0.2)
-                Tween(RightStroke, { Transparency = 1 }, 0.2)
-                if cfgFrame then cfgFrame.Visible = false end
-                if CardReturnBtn then CardReturnBtn.Visible = false end
-                if PageService and HomePage then
-                    pcall(function() PageService:JumpTo(HomePage) end)
-                end
-                for _, s in ipairs(Window._tabs) do
-                    s.btn.BackgroundTransparency = 1
-                    s.isActive = false
-                    s.glow.BackgroundTransparency = 1
-                    if s.textLabel then Tween(s.textLabel, {TextTransparency = 0.3}, 0.2) end
-                end
-                Window._activeTab = nil
-            else
-                LeftMenuFrame.Visible = true
-                RightMenuFrame.Size = UDim2.new(1, -176, 1, 0)
-                RightMenuFrame.Position = UDim2.new(0, 176, 0, 0)
-                Tween(RightMenuFrame, { BackgroundTransparency = 0.6 }, 0.2)
-                Tween(RightStroke, { Transparency = 0.65 }, 0.2)
-                if cfgFrame then cfgFrame.Visible = true end
-                if CardReturnBtn then CardReturnBtn.Visible = true end
-            end
-        end
-        Window._setHomeLayout = setHomeLayout
-    else
-        PageContainer = Instance.new("ScrollingFrame")
-        PageContainer.Size = UDim2.new(1, 0, 1, 0)
-        PageContainer.BackgroundTransparency = 1
-        PageContainer.ScrollBarThickness = 0
-        PageContainer.ScrollingEnabled = true
-        PageContainer.Parent = TabContainer
-
-        PageContent = Instance.new("Frame")
-        PageContent.Size = UDim2.new(1, 0, 0, 0)
-        PageContent.AutomaticSize = Enum.AutomaticSize.Y
-        PageContent.BackgroundTransparency = 1
-        PageContent.Parent = PageContainer
-
-        PageList = Instance.new("UIListLayout")
-        PageList.Padding = UDim.new(0, 0)
-        PageList.SortOrder = Enum.SortOrder.LayoutOrder
-        PageList.Parent = PageContent
-
-        updatePageCanvas = function()
-            PageContainer.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
-        end
-        PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
-        task.spawn(updatePageCanvas)
+        gridLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCardsCanvas)
+        task.spawn(updateCardsCanvas)
     end
+    -- === 卡片模式初始化结束 ===
 
-    if CardMode then
-        if CardReturnBtn then
-            CardReturnBtn.MouseButton1Click:Connect(function()
-                if Window._setHomeLayout then Window._setHomeLayout(true) end
-            end)
-            CardReturnBtn.MouseEnter:Connect(function()
-                Tween(CardReturnBtn, {BackgroundTransparency = 0}, 0.2)
-            end)
-            CardReturnBtn.MouseLeave:Connect(function()
-                Tween(CardReturnBtn, {BackgroundTransparency = 0.2}, 0.2)
-            end)
-        end
+    local PageContainer = Instance.new("ScrollingFrame")
+    PageContainer.Size = UDim2.new(1, 0, 1, 0)
+    PageContainer.BackgroundTransparency = 1
+    PageContainer.ScrollBarThickness = 0
+    PageContainer.ScrollingEnabled = true
+    PageContainer.Parent = TabContainer
+
+    local PageContent = Instance.new("Frame")
+    PageContent.Size = UDim2.new(1, 0, 0, 0)
+    PageContent.AutomaticSize = Enum.AutomaticSize.Y
+    PageContent.BackgroundTransparency = 1
+    PageContent.Parent = PageContainer
+    local PageList = Instance.new("UIListLayout")
+    PageList.Padding = UDim.new(0, 0)
+    PageList.SortOrder = Enum.SortOrder.LayoutOrder
+    PageList.Parent = PageContent
+    local function updatePageCanvas()
+        PageContainer.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
     end
+    PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
+    task.spawn(updatePageCanvas)
 
     local dragToggle = false
     local dragStart, startPos
-
-    local function handleDragBegin(input)
+    HeadFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragToggle = true
             dragStart = input.Position
@@ -6098,26 +5972,7 @@ function Fenglib:CreateWindow(Config)
                 end
             end)
         end
-    end
-
-    HeadFrame.InputBegan:Connect(handleDragBegin)
-
-    if CardMode then
-        RightHeader.InputBegan:Connect(function(input)
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1
-               and input.UserInputType ~= Enum.UserInputType.Touch then return end
-            local m = LocalPlayer:GetMouse()
-            local function inside(f)
-                if not f or not f.Visible then return false end
-                local p, s = f.AbsolutePosition, f.AbsoluteSize
-                return m.X >= p.X and m.X <= p.X + s.X and m.Y >= p.Y and m.Y <= p.Y + s.Y
-            end
-            if inside(ButtonGroup) then return end
-            if CardReturnBtn and inside(CardReturnBtn) then return end
-            handleDragBegin(input)
-        end)
-    end
-
+    end)
     UserInputService.InputChanged:Connect(function(input)
         if dragToggle and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
@@ -6157,10 +6012,7 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Visible = true
 
     do
-        local hideList = { RightMenuFrame, bgImage }
-        if not CardMode then
-            table.insert(hideList, 1, LeftMenuFrame)
-        end
+        local hideList = { LeftMenuFrame, RightMenuFrame, bgImage }
         local busy = false
         local restoreSize = nil
 
@@ -6207,9 +6059,6 @@ function Fenglib:CreateWindow(Config)
             task.delay(0.1, function()
                 setContentVisible(true)
                 setShadowVisible(true, false)
-                if CardMode and Window._setHomeLayout then
-                    Window._setHomeLayout(true)
-                end
                 busy = false
             end)
         end
@@ -6329,177 +6178,15 @@ function Fenglib:CreateWindow(Config)
         AddToRegistry(line, "BackgroundColor3", "Stroke")
     end
 
-    Window._cards = {}
-    function Window:Card(cfg)
-        cfg = cfg or {}
-        if not CardMode then
-            local proxy = {}
-            function proxy:Tab(name, icon)
-                return Window:Tab(name, icon)
-            end
-            return proxy
-        end
-
-        local cardName  = cfg.Name or cfg.Title or "卡片"
-        local cardDesc  = cfg.Desc or cfg.Description or cfg.SubName or ""
-        local cardIcon  = cfg.Icon or cfg.Logo or 127194456372995
-        local cardImage = cfg.Image or cfg.Banner
-
-        local cardFrame = Instance.new("Frame")
-        cardFrame.Name = "HomeCard"
-        cardFrame.Size = UDim2.new(0, 0, 0, 60)
-        cardFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-        cardFrame.BorderSizePixel = 0
-        cardFrame.ClipsDescendants = true
-        cardFrame.Parent = HomeContent
-        Instance.new("UICorner", cardFrame).CornerRadius = UDim.new(0, 5)
-
-        local cardStroke = Instance.new("UIStroke")
-        cardStroke.Color = CurrentTheme.Accent:Lerp(Color3.fromRGB(10, 10, 10), 0.55)
-        cardStroke.Thickness = 1
-        cardStroke.Parent = cardFrame
-        table.insert(ThemeListeners, function()
-            if cardFrame.Parent then
-                cardStroke.Color = CurrentTheme.Accent:Lerp(Color3.fromRGB(10, 10, 10), 0.55)
-            end
-        end)
-
-        if cardImage and tostring(cardImage) ~= "" then
-            local banner = Instance.new("ImageLabel")
-            banner.Size = UDim2.new(1, 0, 1, 0)
-            banner.BackgroundTransparency = 1
-            banner.Image = formatIconAsset(cardImage, "")
-            banner.ScaleType = Enum.ScaleType.Crop
-            banner.ZIndex = 1
-            banner.Parent = cardFrame
-            Instance.new("UICorner", banner).CornerRadius = UDim.new(0, 5)
-        end
-
-        local info = Instance.new("Frame")
-        info.Size = UDim2.new(1, 0, 1, 0)
-        info.BackgroundTransparency = 1
-        info.ZIndex = 2
-        info.Parent = cardFrame
-        local infoPad = Instance.new("UIPadding")
-        infoPad.PaddingLeft = UDim.new(0, 15)
-        infoPad.Parent = info
-        local infoLayout = Instance.new("UIListLayout")
-        infoLayout.Padding = UDim.new(0, 10)
-        infoLayout.FillDirection = Enum.FillDirection.Horizontal
-        infoLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        infoLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-        infoLayout.Parent = info
-
-        local cardIconImg = Instance.new("ImageLabel")
-        cardIconImg.Size = UDim2.new(0, 25, 0, 25)
-        cardIconImg.BackgroundTransparency = 1
-        cardIconImg.LayoutOrder = -1
-        cardIconImg.Image = formatIconAsset(cardIcon, "rbxassetid://9904843409")
-        cardIconImg.ImageColor3 = Color3.new(1, 1, 1)
-        cardIconImg.ZIndex = 3
-        cardIconImg.Parent = info
-
-        local textFrame = Instance.new("Frame")
-        textFrame.Size = UDim2.new(0, 150, 0, 32)
-        textFrame.BackgroundTransparency = 1
-        textFrame.ZIndex = 2
-        textFrame.Parent = info
-        local textLayout = Instance.new("UIListLayout")
-        textLayout.Padding = UDim.new(0, 2)
-        textLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        textLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-        textLayout.Parent = textFrame
-
-        local cardTitle = Instance.new("TextLabel")
-        cardTitle.Size = UDim2.new(0, 150, 0, 14)
-        cardTitle.BackgroundTransparency = 1
-        cardTitle.Font = Enum.Font.GothamBold
-        cardTitle.Text = cardName
-        cardTitle.TextSize = 15
-        cardTitle.TextColor3 = CurrentTheme.Accent
-        cardTitle.TextXAlignment = Enum.TextXAlignment.Left
-        cardTitle.ZIndex = 3
-        cardTitle.Parent = textFrame
-        AddToRegistry(cardTitle, "TextColor3", "Accent")
-        TextGradient:Skip(cardTitle)
-
-        local cardDescLbl = Instance.new("TextLabel")
-        cardDescLbl.Size = UDim2.new(0, 150, 0, 10)
-        cardDescLbl.BackgroundTransparency = 1
-        cardDescLbl.Font = Enum.Font.GothamMedium
-        cardDescLbl.Text = cardDesc
-        cardDescLbl.TextSize = 10
-        cardDescLbl.TextColor3 = CurrentTheme.Text
-        cardDescLbl.TextTransparency = 0.3
-        cardDescLbl.TextXAlignment = Enum.TextXAlignment.Left
-        cardDescLbl.ZIndex = 3
-        cardDescLbl.Parent = textFrame
-        AddToRegistry(cardDescLbl, "TextColor3", "Text")
-        TextGradient:Skip(cardDescLbl)
-
-        local cardObj = {
-            Name = cardName,
-            Frame = cardFrame,
-            Tabs = {},
-            targetTabState = nil,
-        }
-
-        local cardClick = Instance.new("TextButton")
-        cardClick.Size = UDim2.new(1, 0, 1, 0)
-        cardClick.BackgroundTransparency = 1
-        cardClick.Text = ""
-        cardClick.AutoButtonColor = false
-        cardClick.ZIndex = 10
-        cardClick.Parent = cardFrame
-
-        function cardObj:Tab(name, icon)
-            local tabBuilder = Window:Tab(name, icon)
-            local tabState = Window._tabs[#Window._tabs]
-            cardObj.targetTabState = tabState
-            
-            if tabState then
-                cardClick.MouseButton1Click:Connect(function()
-                    local mouse = LocalPlayer:GetMouse()
-                    local relX = mouse.X - cardFrame.AbsolutePosition.X
-                    local relY = mouse.Y - cardFrame.AbsolutePosition.Y
-                    if relX >= 0 and relY >= 0
-                        and relX <= cardFrame.AbsoluteSize.X and relY <= cardFrame.AbsoluteSize.Y then
-                        local circle = Instance.new("Frame")
-                        circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                        circle.BackgroundTransparency = 0.75
-                        circle.BorderSizePixel = 0
-                        circle.AnchorPoint = Vector2.new(0.5, 0.5)
-                        circle.Position = UDim2.new(0, relX, 0, relY)
-                        circle.Size = UDim2.new(0, 0, 0, 0)
-                        circle.ZIndex = 15
-                        circle.Parent = cardFrame
-                        Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
-                        local tw = TweenService:Create(circle,
-                            TweenInfo.new(2.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-                            {
-                                Size = UDim2.new(0, cardFrame.AbsoluteSize.X * 1.5, 0,
-                                                     cardFrame.AbsoluteSize.X * 1.5),
-                                BackgroundTransparency = 1,
-                            }
-                        )
-                        tw.Completed:Connect(function() circle:Destroy() end)
-                        tw:Play()
-                    end
-                    
-                    if Window._setHomeLayout then Window._setHomeLayout(false) end
-                    if tabState.openTab then tabState.openTab() end
-                end)
-            end
-            return tabBuilder
-        end
-
-        table.insert(Window._cards, cardObj)
-        return cardObj
-    end
-
     Window._activeTab = nil
     Window._tabs = {}
     function Window:Tab(name, icon)
+        -- === 卡片模式拦截 ===
+        if CardMode then
+            warn("[Fenglib] Card mode is enabled. Use Window:Card(...):Tab(...) instead.")
+            return {}
+        end
+
         local tabLocked      = false
         local tabLockedTitle = "已锁定"
         if type(name) == "table" then
@@ -6576,40 +6263,30 @@ function Fenglib:CreateWindow(Config)
         Page.BackgroundTransparency = 1
         Page.ScrollBarThickness = 0
         Page.ScrollingEnabled = true
-        
-        if CardMode then
-            Page.Visible = true
-            Page.Position = UDim2.new(0, 0, 0, 0)
-            Page.Parent = TabContainer
-        else
-            Page.Visible = false
-            Page.Position = UDim2.new(0, 0, 0, 60)
-            Page.Parent = PageContainer
-        end
+        Page.Visible = false
+        Page.Position = UDim2.new(0, 0, 0, 60)
+        Page.Parent = PageContainer
         Instance.new("UICorner", Page).CornerRadius = UDim.new(0, 16)
         Page.ClipsDescendants = true
-        
-        local PageContentLocal = Instance.new("Frame")
-        PageContentLocal.Size = UDim2.new(1, 0, 0, 0)
-        PageContentLocal.AutomaticSize = Enum.AutomaticSize.Y
-        PageContentLocal.BackgroundTransparency = 1
-        PageContentLocal.Parent = Page
-        local PageListLocal = Instance.new("UIListLayout")
-        PageListLocal.Padding = UDim.new(0, 8)
-        PageListLocal.SortOrder = Enum.SortOrder.LayoutOrder
-        PageListLocal.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        PageListLocal.Parent = PageContentLocal
-        local function updatePageCanvasLocal()
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageListLocal.AbsoluteContentSize.Y + 10)
+        local PageContent = Instance.new("Frame")
+        PageContent.Size = UDim2.new(1, 0, 0, 0)
+        PageContent.AutomaticSize = Enum.AutomaticSize.Y
+        PageContent.BackgroundTransparency = 1
+        PageContent.Parent = Page
+        local PageList = Instance.new("UIListLayout")
+        PageList.Padding = UDim.new(0, 8)
+        PageList.SortOrder = Enum.SortOrder.LayoutOrder
+        PageList.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        PageList.Parent = PageContent
+        local function updatePageCanvas()
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
         end
-        PageListLocal:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvasLocal)
-        task.spawn(updatePageCanvasLocal)
-        
+        PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
+        task.spawn(updatePageCanvas)
         local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame, locked = tabLocked}
-        
-        local function openTab()
+        TabBtn.MouseButton1Click:Connect(function()
             if tabLocked then return end
-            if Window._activeTab == state and not CardMode then return end
+            if Window._activeTab == state then return end
             for _, s in ipairs(Window._tabs) do
                 s.btn.BackgroundTransparency = 1
                 s.isActive = false
@@ -6620,29 +6297,20 @@ function Fenglib:CreateWindow(Config)
             state.isActive = true
             state.glow.BackgroundTransparency = 0
             Tween(TabText, {TextTransparency = 0}, 0.2)
-            
-            if CardMode then
-                if PageService then
-                    pcall(function() PageService:JumpTo(Page) end)
-                end
-                if Window._setHomeLayout then
-                    Window._setHomeLayout(false)
-                end
-            else
-                if Window._activeTab then Window._activeTab.page.Visible = false end
-                Page.Visible = true
-                Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
-            end
+            if Window._activeTab then Window._activeTab.page.Visible = false end
+            Page.Visible = true
+            Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
+            Window._activeTab = state
+        end)
+        if not Window._activeTab and not tabLocked then
+            TabBtn.BackgroundTransparency = 1
+            state.isActive = true
+            state.glow.BackgroundTransparency = 0
+            TabText.TextTransparency = 0
+            Page.Visible = true
+            Page.Position = UDim2.new(0, 0, 0, 0)
             Window._activeTab = state
         end
-        
-        TabBtn.MouseButton1Click:Connect(openTab)
-        state.openTab = openTab
-        
-        if not Window._activeTab and not tabLocked and not CardMode then
-            openTab()
-        end
-        
         table.insert(Window._tabs, state)
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
         if name == "Settings" then TabBtn.LayoutOrder = 99999 end
@@ -6657,8 +6325,326 @@ function Fenglib:CreateWindow(Config)
                 s.btn.BackgroundTransparency = 1
             end
         end)
-        return createSectionBuilder(PageContentLocal, PageContentLocal, 330, 1, Window)
+        return createSectionBuilder(PageContent, PageContent, 330, 1, Window)
     end
+
+    -- ============================================================
+    -- 卡片模式 API：Window:Card({ Name, Description, Icon })
+    -- 返回对象提供 :Tab(name, icon) 方法
+    -- ============================================================
+    function Window:Card(cardConfig)
+        if not CardMode then
+            warn("[Fenglib] Card mode is not enabled. Set Config.Card = true when creating the window.")
+            return { Tab = function() return {} end }
+        end
+
+        if type(cardConfig) ~= "table" then
+            cardConfig = { Name = tostring(cardConfig or "Card") }
+        end
+
+        local name        = cardConfig.Name or cardConfig.Title or "Card"
+        local description = cardConfig.Description or cardConfig.Desc or ""
+        local iconSrc     = cardConfig.Icon or cardConfig.Logo or nil
+
+        cardOrderCounter = cardOrderCounter + 1
+
+        ------------------------------------------------------------------
+        -- 1. 卡片按钮
+        ------------------------------------------------------------------
+        local cardBtn = Instance.new("TextButton")
+        cardBtn.Name = "Card_" .. name
+        cardBtn.Size = UDim2.new(1, 0, 1, 0)
+        cardBtn.BackgroundColor3 = CurrentTheme.Top
+        cardBtn.BackgroundTransparency = 0.2
+        cardBtn.AutoButtonColor = false
+        cardBtn.Text = ""
+        cardBtn.LayoutOrder = cardOrderCounter
+        cardBtn.Parent = cardsContainer
+        Instance.new("UICorner", cardBtn).CornerRadius = UDim.new(0, 12)
+
+        local cardStroke = Instance.new("UIStroke")
+        cardStroke.Color = CurrentTheme.Accent
+        cardStroke.Thickness = 2
+        cardStroke.Transparency = 0.7
+        cardStroke.Parent = cardBtn
+
+        local cardPadding = Instance.new("UIPadding")
+        cardPadding.PaddingLeft   = UDim.new(0, 10)
+        cardPadding.PaddingRight  = UDim.new(0, 10)
+        cardPadding.PaddingTop    = UDim.new(0, 10)
+        cardPadding.PaddingBottom = UDim.new(0, 10)
+        cardPadding.Parent = cardBtn
+
+        local iconLabel = Instance.new("ImageLabel")
+        iconLabel.Size = UDim2.new(0, 44, 0, 44)
+        iconLabel.Position = UDim2.new(0, 0, 0, 5)
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Image = formatIconAsset(iconSrc, "rbxassetid://84830962019412")
+        iconLabel.ImageColor3 = CurrentTheme.Text
+        iconLabel.Parent = cardBtn
+        Instance.new("UICorner", iconLabel).CornerRadius = UDim.new(0, 10)
+
+        local textFrame = Instance.new("Frame")
+        textFrame.Size = UDim2.new(1, -54, 1, 0)
+        textFrame.Position = UDim2.new(0, 54, 0, 0)
+        textFrame.BackgroundTransparency = 1
+        textFrame.Parent = cardBtn
+
+        local textLayout = Instance.new("UIListLayout")
+        textLayout.Padding = UDim.new(0, 2)
+        textLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        textLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        textLayout.Parent = textFrame
+
+        local titleLbl = Instance.new("TextLabel")
+        titleLbl.Size = UDim2.new(1, 0, 0, 0)
+        titleLbl.AutomaticSize = Enum.AutomaticSize.Y
+        titleLbl.BackgroundTransparency = 1
+        titleLbl.Font = Enum.Font.GothamBold
+        titleLbl.Text = name
+        titleLbl.TextColor3 = CurrentTheme.Text
+        titleLbl.TextSize = 13
+        titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+        titleLbl.TextTruncate = Enum.TextTruncate.AtEnd
+        titleLbl.Parent = textFrame
+        AddToRegistry(titleLbl, "TextColor3", "Text")
+
+        local descLbl = Instance.new("TextLabel")
+        descLbl.Size = UDim2.new(1, 0, 0, 0)
+        descLbl.AutomaticSize = Enum.AutomaticSize.Y
+        descLbl.BackgroundTransparency = 1
+        descLbl.Font = Enum.Font.Gotham
+        descLbl.Text = description
+        descLbl.TextColor3 = CurrentTheme.Text
+        descLbl.TextSize = 11
+        descLbl.TextXAlignment = Enum.TextXAlignment.Left
+        descLbl.TextWrapped = true
+        descLbl.TextTruncate = Enum.TextTruncate.AtEnd
+        descLbl.Parent = textFrame
+        AddToRegistry(descLbl, "TextColor3", "Text")
+
+        cardBtn.MouseEnter:Connect(function()
+            Tween(cardBtn,   { BackgroundTransparency = 0.05 }, 0.2)
+            Tween(cardStroke,{ Thickness = 3, Transparency = 0.4 }, 0.2)
+            Tween(iconLabel, { Size = UDim2.new(0, 48, 0, 48) }, 0.2)
+        end)
+        cardBtn.MouseLeave:Connect(function()
+            Tween(cardBtn,   { BackgroundTransparency = 0.2 }, 0.2)
+            Tween(cardStroke,{ Thickness = 2, Transparency = 0.7 }, 0.2)
+            Tween(iconLabel, { Size = UDim2.new(0, 44, 0, 44) }, 0.2)
+        end)
+
+        ------------------------------------------------------------------
+        -- 2. 卡片内容页（初始隐藏）
+        ------------------------------------------------------------------
+        local cardContent = Instance.new("Frame")
+        cardContent.Name = "CardContent_" .. name
+        cardContent.Size = UDim2.new(1, 0, 1, -50)
+        cardContent.Position = UDim2.new(0, 0, 0, 50)
+        cardContent.BackgroundTransparency = 1
+        cardContent.Visible = false
+        cardContent.Parent = RightMenuFrame
+
+        -- 左侧子标签列表
+        local subTabList = Instance.new("ScrollingFrame")
+        subTabList.Size = UDim2.new(0, 140, 1, 0)
+        subTabList.BackgroundTransparency = 1
+        subTabList.ScrollBarThickness = 4
+        subTabList.ScrollingDirection = Enum.ScrollingDirection.Y
+        subTabList.Parent = cardContent
+
+        local subTabLayout = Instance.new("UIListLayout")
+        subTabLayout.Padding = UDim.new(0, 8)
+        subTabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        subTabLayout.Parent = subTabList
+
+        local function updateSubTabCanvas()
+            subTabList.CanvasSize = UDim2.new(0, 0, 0, subTabLayout.AbsoluteContentSize.Y)
+        end
+        subTabLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSubTabCanvas)
+        task.spawn(updateSubTabCanvas)
+
+        -- 分隔线
+        local divider = Instance.new("Frame")
+        divider.Size = UDim2.new(0, 1, 1, 0)
+        divider.Position = UDim2.new(0, 150, 0, 0)
+        divider.BackgroundColor3 = CurrentTheme.Stroke
+        divider.BackgroundTransparency = 0.8
+        divider.BorderSizePixel = 0
+        divider.Parent = cardContent
+
+        -- 右侧子页面内容容器
+        local subContentHolder = Instance.new("Frame")
+        subContentHolder.Size = UDim2.new(1, -165, 1, 0)
+        subContentHolder.Position = UDim2.new(0, 160, 0, 0)
+        subContentHolder.BackgroundTransparency = 1
+        subContentHolder.Parent = cardContent
+
+        -- 记录卡片
+        cardContents[name] = { Frame = cardContent, Button = cardBtn }
+
+        cardBtn.MouseButton1Click:Connect(function()
+            if activeCardName == name then return end
+            if activeCardName and cardContents[activeCardName] then
+                cardContents[activeCardName].Frame.Visible = false
+            end
+            cardsContainer.Visible = false
+            cardContent.Visible = true
+            activeCardName = name
+            if BackButton then BackButton.Visible = true end
+        end)
+
+        ------------------------------------------------------------------
+        -- 3. 对外返回对象
+        ------------------------------------------------------------------
+        local cardObj = {}
+        local subTabs = {}
+        local activeSubTab = nil
+
+        function cardObj.Tab(tabName, tabIcon)
+            if type(tabName) == "table" then
+                tabIcon = tabName.Icon or tabIcon
+                tabName = tabName.Name or tabName.Text or "Tab"
+            end
+            tabName = tostring(tabName or "Tab")
+
+            ------------------------------------------------------------------
+            -- 子标签按钮
+            ------------------------------------------------------------------
+            local tabBtn = Instance.new("TextButton")
+            tabBtn.Size = UDim2.new(1, 0, 0, 32)
+            tabBtn.BackgroundTransparency = 1
+            tabBtn.Text = ""
+            tabBtn.AutoButtonColor = false
+            tabBtn.Parent = subTabList
+            Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 10)
+
+            local tabGlow = Instance.new("Frame")
+            tabGlow.Size = UDim2.new(0, 3, 0, 0)
+            tabGlow.Position = UDim2.new(0, 0, 0.175, 0)
+            tabGlow.BackgroundColor3 = CurrentTheme.Accent
+            tabGlow.BackgroundTransparency = 1
+            tabGlow.BorderSizePixel = 0
+            tabGlow.Parent = tabBtn
+            Instance.new("UICorner", tabGlow).CornerRadius = UDim.new(1, 0)
+
+            local tabInner = Instance.new("Frame")
+            tabInner.Size = UDim2.new(1, 0, 1, 0)
+            tabInner.BackgroundTransparency = 1
+            tabInner.Parent = tabBtn
+
+            local innerLayout = Instance.new("UIListLayout")
+            innerLayout.FillDirection = Enum.FillDirection.Horizontal
+            innerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            innerLayout.Padding = UDim.new(0, 5)
+            innerLayout.Parent = tabInner
+
+            local innerPad = Instance.new("UIPadding")
+            innerPad.PaddingLeft = UDim.new(0, 10)
+            innerPad.Parent = tabInner
+
+            if tabIcon and tostring(tabIcon) ~= "" then
+                local iconImg = Instance.new("ImageLabel")
+                iconImg.Size = UDim2.new(0, 24, 0, 24)
+                iconImg.BackgroundTransparency = 1
+                if tonumber(tabIcon) then
+                    iconImg.Image = "rbxassetid://" .. tostring(tabIcon)
+                else
+                    iconImg.Image = tostring(tabIcon)
+                end
+                iconImg.ImageColor3 = CurrentTheme.Text
+                iconImg.Parent = tabInner
+                Instance.new("UICorner", iconImg).CornerRadius = UDim.new(0, 8)
+            end
+
+            local tabLbl = Instance.new("TextLabel")
+            local txtSize = TextService:GetTextSize(
+                tabName, 14, Enum.Font.GothamMedium, Vector2.new(200, 32)
+            )
+            tabLbl.Size = UDim2.new(0, txtSize.X, 1, 0)
+            tabLbl.BackgroundTransparency = 1
+            tabLbl.Font = Enum.Font.GothamMedium
+            tabLbl.Text = tabName
+            tabLbl.TextColor3 = Color3.fromRGB(150, 150, 158)
+            tabLbl.TextSize = 14
+            tabLbl.TextXAlignment = Enum.TextXAlignment.Left
+            tabLbl.Parent = tabInner
+
+            ------------------------------------------------------------------
+            -- 子标签内容
+            ------------------------------------------------------------------
+            local tabContent = Instance.new("ScrollingFrame")
+            tabContent.Size = UDim2.new(1, 0, 1, 0)
+            tabContent.BackgroundTransparency = 1
+            tabContent.ScrollBarThickness = 4
+            tabContent.ScrollingDirection = Enum.ScrollingDirection.Y
+            tabContent.Visible = false
+            tabContent.Parent = subContentHolder
+
+            local tabContentFrame = Instance.new("Frame")
+            tabContentFrame.Size = UDim2.new(1, 0, 0, 0)
+            tabContentFrame.AutomaticSize = Enum.AutomaticSize.Y
+            tabContentFrame.BackgroundTransparency = 1
+            tabContentFrame.Parent = tabContent
+
+            local contentPad = Instance.new("UIPadding")
+            contentPad.PaddingRight = UDim.new(0, 12)
+            contentPad.Parent = tabContentFrame
+
+            local contentLayout = Instance.new("UIListLayout")
+            contentLayout.Padding = UDim.new(0, 8)
+            contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            contentLayout.Parent = tabContentFrame
+
+            local function updateContentCanvas()
+                tabContent.CanvasSize = UDim2.new(0, 0, 0, contentLayout.AbsoluteContentSize.Y + 10)
+            end
+            contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateContentCanvas)
+            task.spawn(updateContentCanvas)
+
+            local tabData = {
+                Name    = tabName,
+                Button  = tabBtn,
+                Content = tabContent,
+                Glow    = tabGlow,
+                Label   = tabLbl,
+            }
+            table.insert(subTabs, tabData)
+
+            local function switchTo(data)
+                for _, d in ipairs(subTabs) do
+                    d.Content.Visible = false
+                    d.Button.BackgroundTransparency = 1
+                    d.Glow.BackgroundTransparency = 1
+                    d.Glow.Size = UDim2.new(0, 3, 0, 0)
+                    Tween(d.Label, { TextColor3 = Color3.fromRGB(150, 150, 158) }, 0.2)
+                end
+                data.Content.Visible = true
+                data.Button.BackgroundTransparency = 0.05
+                data.Glow.BackgroundTransparency = 0
+                data.Glow.Size = UDim2.new(0, 3, 0.65, 0)
+                Tween(data.Label, { TextColor3 = CurrentTheme.Text }, 0.2)
+                activeSubTab = data
+            end
+
+            tabBtn.MouseButton1Click:Connect(function()
+                if activeSubTab == tabData then return end
+                switchTo(tabData)
+            end)
+
+            if not activeSubTab then
+                switchTo(tabData)
+            end
+
+            -- 复用主 section builder
+            return createSectionBuilder(tabContentFrame, tabContentFrame, 330, 1, Window)
+        end
+
+        return cardObj
+    end
+    -- ============================================================
+    -- Window:Card 结束
+    -- ============================================================
 
     function Window:CreateHomeTab(Config)
         Config = Config or {}
@@ -6809,6 +6795,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
 
+        -- ============ 字体：从 BasedHub/fonts/ 加载 ============
         local HomeFonts = {}
         do
             local function tryLoad(relPath, weight, style)
@@ -6852,6 +6839,7 @@ function Fenglib:CreateWindow(Config)
         RL.SortOrder = Enum.SortOrder.LayoutOrder
         RL.Parent = Root
 
+        -- ============ 图片卡片 ============
         local Profile = Panel(Root, UDim2.new(1, 0, 0, 170))
         Profile.LayoutOrder = 1
         Profile.ClipsDescendants = true
@@ -6998,6 +6986,7 @@ function Fenglib:CreateWindow(Config)
         AddToRegistry(HeroSub, "TextColor3", "SubText")
         TextGradient:Skip(HeroSub)
 
+        -- ============ 分段按钮条 ============
         local SegBox = Instance.new("Frame")
         SegBox.Name = "SegBar"
         SegBox.AnchorPoint = Vector2.new(0, 1)
@@ -7105,6 +7094,7 @@ function Fenglib:CreateWindow(Config)
                 segSpec.Other.Icon or Config.OtherIcon or 9904843410)
         end
 
+        -- ============ 统计卡片 (帧率 / 延迟 / 玩家 / 时长) ============
         local fpsAccum, fpsFrames, currentFps = 0, 0, 60
         RunService.RenderStepped:Connect(function(dt)
             fpsAccum = fpsAccum + dt
@@ -7680,16 +7670,6 @@ function Fenglib:CreateWindow(Config)
     end
     Window:SetAccount({ ShowUser = (Config.ShowUser ~= false) })
 
-    if CardMode and PageService and HomePage then
-        task.spawn(function()
-            repeat task.wait() until MainFrame.Visible
-            task.wait(0.15)
-            pcall(function() PageService:JumpTo(HomePage) end)
-            if Window._setHomeLayout then Window._setHomeLayout(true) end
-        end)
-    end
-
-    Window._cardMode = CardMode
     return Window
 end
 
