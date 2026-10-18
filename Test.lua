@@ -4670,8 +4670,8 @@ function Fenglib:CreateWindow(Config)
 
     Fenglib.__NotificationCache = Notifier
 
-    local FINAL_WIDTH = CardMode and 620 or 500
-    local FINAL_HEIGHT = CardMode and 380 or 299
+    local FINAL_WIDTH = 500
+    local FINAL_HEIGHT = 299
 
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
