@@ -5941,10 +5941,6 @@ function Fenglib:CreateWindow(Config)
             RefreshConfigList()
         end)
 
-        if CardMode then
-            ConfigFrame.Visible = false
-        end
-
         Window._configFrameRef = ConfigFrame
     end
 
@@ -6026,6 +6022,16 @@ function Fenglib:CreateWindow(Config)
                 Tween(RightStroke, { Transparency = 1 }, 0.2)
                 if cfgFrame then cfgFrame.Visible = false end
                 if CardReturnBtn then CardReturnBtn.Visible = false end
+                if PageService and HomePage then
+                    pcall(function() PageService:JumpTo(HomePage) end)
+                end
+                for _, s in ipairs(Window._tabs) do
+                    s.btn.BackgroundTransparency = 1
+                    s.isActive = false
+                    s.glow.BackgroundTransparency = 1
+                    if s.textLabel then Tween(s.textLabel, {TextTransparency = 0.3}, 0.2) end
+                end
+                Window._activeTab = nil
             else
                 LeftMenuFrame.Visible = true
                 RightMenuFrame.Size = UDim2.new(1, -176, 1, 0)
@@ -6066,7 +6072,6 @@ function Fenglib:CreateWindow(Config)
     if CardMode then
         if CardReturnBtn then
             CardReturnBtn.MouseButton1Click:Connect(function()
-                pcall(function() PageService:JumpTo(HomePage) end)
                 if Window._setHomeLayout then Window._setHomeLayout(true) end
             end)
             CardReturnBtn.MouseEnter:Connect(function()
@@ -6163,9 +6168,6 @@ function Fenglib:CreateWindow(Config)
             for _, c in ipairs(hideList) do
                 if c then c.Visible = v end
             end
-            if CardMode and v and Window._setHomeLayout then
-                Window._setHomeLayout(true)
-            end
         end
 
         local function minimize()
@@ -6205,6 +6207,9 @@ function Fenglib:CreateWindow(Config)
             task.delay(0.1, function()
                 setContentVisible(true)
                 setShadowVisible(true, false)
+                if CardMode and Window._setHomeLayout then
+                    Window._setHomeLayout(true)
+                end
                 busy = false
             end)
         end
@@ -6365,13 +6370,15 @@ function Fenglib:CreateWindow(Config)
             banner.BackgroundTransparency = 1
             banner.Image = formatIconAsset(cardImage, "")
             banner.ScaleType = Enum.ScaleType.Crop
+            banner.ZIndex = 1
             banner.Parent = cardFrame
-            Instance.new("UICorner", banner).CornerRadius = UDim.new(0, 2)
+            Instance.new("UICorner", banner).CornerRadius = UDim.new(0, 5)
         end
 
         local info = Instance.new("Frame")
         info.Size = UDim2.new(1, 0, 1, 0)
         info.BackgroundTransparency = 1
+        info.ZIndex = 2
         info.Parent = cardFrame
         local infoPad = Instance.new("UIPadding")
         infoPad.PaddingLeft = UDim.new(0, 15)
@@ -6388,13 +6395,14 @@ function Fenglib:CreateWindow(Config)
         cardIconImg.BackgroundTransparency = 1
         cardIconImg.LayoutOrder = -1
         cardIconImg.Image = formatIconAsset(cardIcon, "rbxassetid://9904843409")
-        cardIconImg.ImageColor3 = CurrentTheme.Accent
+        cardIconImg.ImageColor3 = Color3.new(1, 1, 1)
+        cardIconImg.ZIndex = 3
         cardIconImg.Parent = info
-        AddToRegistry(cardIconImg, "ImageColor3", "Accent")
 
         local textFrame = Instance.new("Frame")
         textFrame.Size = UDim2.new(0, 150, 0, 32)
         textFrame.BackgroundTransparency = 1
+        textFrame.ZIndex = 2
         textFrame.Parent = info
         local textLayout = Instance.new("UIListLayout")
         textLayout.Padding = UDim.new(0, 2)
@@ -6410,6 +6418,7 @@ function Fenglib:CreateWindow(Config)
         cardTitle.TextSize = 15
         cardTitle.TextColor3 = CurrentTheme.Accent
         cardTitle.TextXAlignment = Enum.TextXAlignment.Left
+        cardTitle.ZIndex = 3
         cardTitle.Parent = textFrame
         AddToRegistry(cardTitle, "TextColor3", "Accent")
         TextGradient:Skip(cardTitle)
@@ -6423,6 +6432,7 @@ function Fenglib:CreateWindow(Config)
         cardDescLbl.TextColor3 = CurrentTheme.Text
         cardDescLbl.TextTransparency = 0.3
         cardDescLbl.TextXAlignment = Enum.TextXAlignment.Left
+        cardDescLbl.ZIndex = 3
         cardDescLbl.Parent = textFrame
         AddToRegistry(cardDescLbl, "TextColor3", "Text")
         TextGradient:Skip(cardDescLbl)
@@ -6430,6 +6440,8 @@ function Fenglib:CreateWindow(Config)
         local cardObj = {
             Name = cardName,
             Frame = cardFrame,
+            Tabs = {},
+            targetTabState = nil,
         }
 
         local cardClick = Instance.new("TextButton")
@@ -6437,12 +6449,13 @@ function Fenglib:CreateWindow(Config)
         cardClick.BackgroundTransparency = 1
         cardClick.Text = ""
         cardClick.AutoButtonColor = false
+        cardClick.ZIndex = 10
         cardClick.Parent = cardFrame
 
         function cardObj:Tab(name, icon)
-            -- 直接调用原本的 Window:Tab 创建原生左侧菜单和内容
             local tabBuilder = Window:Tab(name, icon)
             local tabState = Window._tabs[#Window._tabs]
+            cardObj.targetTabState = tabState
             
             if tabState then
                 cardClick.MouseButton1Click:Connect(function()
@@ -6458,7 +6471,7 @@ function Fenglib:CreateWindow(Config)
                         circle.AnchorPoint = Vector2.new(0.5, 0.5)
                         circle.Position = UDim2.new(0, relX, 0, relY)
                         circle.Size = UDim2.new(0, 0, 0, 0)
-                        circle.ZIndex = (cardFrame.ZIndex or 1) + 50
+                        circle.ZIndex = 15
                         circle.Parent = cardFrame
                         Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
                         local tw = TweenService:Create(circle,
@@ -6473,9 +6486,8 @@ function Fenglib:CreateWindow(Config)
                         tw:Play()
                     end
                     
-                    if tabState.openTab then
-                        tabState.openTab()
-                    end
+                    if Window._setHomeLayout then Window._setHomeLayout(false) end
+                    if tabState.openTab then tabState.openTab() end
                 end)
             end
             return tabBuilder
@@ -6488,11 +6500,6 @@ function Fenglib:CreateWindow(Config)
     Window._activeTab = nil
     Window._tabs = {}
     function Window:Tab(name, icon)
-        if CardMode then
-            -- 如果直接使用 Window:Tab 也会创建无卡片拦截的纯 Tab
-            -- 但 Card 模式通常会用 Window:Card():Tab()。为了兼容，保留此分支不作特殊处理，直接往下走。
-        end
-
         local tabLocked      = false
         local tabLockedTitle = "已锁定"
         if type(name) == "table" then
