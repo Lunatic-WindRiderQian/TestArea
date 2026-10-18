@@ -4429,9 +4429,7 @@ function Fenglib:CreateWindow(Config)
     local IconAsset = Config.Logo or Config.Icon
     local SceneId = Config.Scene
 
-    -- ============================================================
     -- 卡片模式（Config.Card == true 开启；否则完全走原逻辑）
-    -- ============================================================
     local CardMode = Config.Card == true
     local PageService, HomePage, HomeContent, HomeList
     local PageContainer, PageContent, PageList, updatePageCanvas
@@ -4672,8 +4670,8 @@ function Fenglib:CreateWindow(Config)
 
     Fenglib.__NotificationCache = Notifier
 
-    local FINAL_WIDTH = 500
-    local FINAL_HEIGHT = 299
+    local FINAL_WIDTH = CardMode and 620 or 500
+    local FINAL_HEIGHT = CardMode and 380 or 299
 
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
@@ -4761,6 +4759,9 @@ function Fenglib:CreateWindow(Config)
     LeftMenuFrame.Size = UDim2.new(0, 175, 1, 0)
     LeftMenuFrame.BackgroundTransparency = 1
     LeftMenuFrame.Parent = MainFrame
+    if CardMode then
+        LeftMenuFrame.Visible = false
+    end
 
     local HeadFrame = Instance.new("Frame")
     HeadFrame.Size = UDim2.new(1, 0, 0, 50)
@@ -5029,16 +5030,23 @@ function Fenglib:CreateWindow(Config)
     end)
 
     local RightMenuFrame = Instance.new("Frame")
-    RightMenuFrame.Size = UDim2.new(1, -176, 1, 0)
-    RightMenuFrame.Position = UDim2.new(0, 176, 0, 0)
-    RightMenuFrame.BackgroundTransparency = 0.6
+    if CardMode then
+        RightMenuFrame.Size = UDim2.new(1, 0, 1, 0)
+        RightMenuFrame.Position = UDim2.new(0, 0, 0, 0)
+        RightMenuFrame.BackgroundTransparency = 1
+    else
+        RightMenuFrame.Size = UDim2.new(1, -176, 1, 0)
+        RightMenuFrame.Position = UDim2.new(0, 176, 0, 0)
+        RightMenuFrame.BackgroundTransparency = 0.6
+    end
     RightMenuFrame.ClipsDescendants = true
     RightMenuFrame.Parent = MainFrame
     Instance.new("UICorner", RightMenuFrame).CornerRadius = UDim.new(0, 13)
     AddToRegistry(RightMenuFrame, "BackgroundColor3", "Main")
 
     local RightStroke = Instance.new("UIStroke")
-    RightStroke.Thickness = 1; RightStroke.Transparency = 0.65
+    RightStroke.Thickness = 1
+    RightStroke.Transparency = CardMode and 1 or 0.65
     RightStroke.Parent = RightMenuFrame
     AddToRegistry(RightStroke, "Color", "Stroke")
 
@@ -5132,6 +5140,67 @@ function Fenglib:CreateWindow(Config)
         Resizer.Visible = resizerVisible
     end)
     local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function() ScreenGui:Destroy() end)
+
+    -- 卡片模式：返回按钮 + 标题 + 副标题（右侧 Header）
+    if CardMode then
+        CardReturnBtn = Instance.new("TextButton")
+        CardReturnBtn.Name = "CardReturnBtn"
+        CardReturnBtn.Size = UDim2.new(0, 32, 0, 32)
+        CardReturnBtn.Position = UDim2.new(0, 8, 0.5, -16)
+        CardReturnBtn.BackgroundTransparency = 0.2
+        CardReturnBtn.BackgroundColor3 = CurrentTheme.Element or CurrentTheme.Top
+        CardReturnBtn.AutoButtonColor = false
+        CardReturnBtn.Text = ""
+        CardReturnBtn.Visible = false
+        CardReturnBtn.ZIndex = 5
+        CardReturnBtn.Parent = RightHeader
+        Instance.new("UICorner", CardReturnBtn).CornerRadius = UDim.new(0, 7)
+
+        local retStroke = Instance.new("UIStroke")
+        retStroke.Thickness = 1
+        retStroke.Transparency = 0.65
+        retStroke.Color = CurrentTheme.Stroke
+        retStroke.Parent = CardReturnBtn
+        table.insert(ThemeListeners, function() retStroke.Color = CurrentTheme.Stroke end)
+
+        local retIcon = Instance.new("ImageLabel")
+        retIcon.Size = UDim2.new(0, 18, 0, 18)
+        retIcon.Position = UDim2.new(0.5, -9, 0.5, -9)
+        retIcon.BackgroundTransparency = 1
+        retIcon.Image = "rbxassetid://130391877219356"
+        retIcon.ImageColor3 = CurrentTheme.Text
+        retIcon.Parent = CardReturnBtn
+        AddToRegistry(retIcon, "ImageColor3", "Text")
+
+        local CardTitleLabel = Instance.new("TextLabel")
+        CardTitleLabel.Name = "CardTitle"
+        CardTitleLabel.Size = UDim2.new(1, -250, 0, 18)
+        CardTitleLabel.Position = UDim2.new(0, 48, 0, 6)
+        CardTitleLabel.BackgroundTransparency = 1
+        CardTitleLabel.Font = Enum.Font.GothamBold
+        CardTitleLabel.Text = Title
+        CardTitleLabel.TextSize = 16
+        CardTitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        CardTitleLabel.TextTruncate = Enum.TextTruncate.AtEnd
+        CardTitleLabel.Parent = RightHeader
+        AddToRegistry(CardTitleLabel, "TextColor3", "Text")
+        TextGradient:Add(CardTitleLabel)
+
+        local CardSubLabel = Instance.new("TextLabel")
+        CardSubLabel.Name = "CardSub"
+        CardSubLabel.Size = UDim2.new(1, -250, 0, 12)
+        CardSubLabel.Position = UDim2.new(0, 48, 0, 28)
+        CardSubLabel.BackgroundTransparency = 1
+        CardSubLabel.Font = Enum.Font.GothamMedium
+        CardSubLabel.Text = Subtitle or ""
+        CardSubLabel.TextSize = 10
+        CardSubLabel.TextTransparency = 0.6
+        CardSubLabel.TextXAlignment = Enum.TextXAlignment.Left
+        CardSubLabel.TextTruncate = Enum.TextTruncate.AtEnd
+        CardSubLabel.Parent = RightHeader
+        AddToRegistry(CardSubLabel, "TextColor3", "SubText")
+        TextGradient:Skip(CardSubLabel)
+    end
 
     do
         local BUILDER_ICONS_PATH =
@@ -5876,11 +5945,15 @@ function Fenglib:CreateWindow(Config)
             end
             RefreshConfigList()
         end)
+
+        if CardMode then
+            ConfigFrame.Visible = false
+        end
+
+        Window._configFrameRef = ConfigFrame
     end
 
-    -- ============================================================
     -- 页面容器（根据 CardMode 走两条互斥路径）
-    -- ============================================================
     local TabContainer = Instance.new("Frame")
     TabContainer.Size = UDim2.new(1, 0, 1, -50)
     TabContainer.Position = UDim2.new(0, 0, 0, 50)
@@ -5889,7 +5962,6 @@ function Fenglib:CreateWindow(Config)
     TabContainer.Parent = RightMenuFrame
 
     if CardMode then
-        -- 卡片模式：UIPageLayout + HomePage
         PageService = Instance.new("UIPageLayout")
         PageService.Parent = TabContainer
         PageService.TweenTime = 0.5
@@ -5900,35 +5972,79 @@ function Fenglib:CreateWindow(Config)
         PageService.ScrollWheelInputEnabled = false
         PageService.TouchInputEnabled = false
 
-        HomePage = Instance.new("ScrollingFrame")
+        HomePage = Instance.new("Frame")
         HomePage.Name = "HomePage"
         HomePage.Size = UDim2.new(1, 0, 1, 0)
         HomePage.BackgroundTransparency = 1
-        HomePage.ScrollBarThickness = 0
-        HomePage.ScrollingEnabled = true
-        HomePage.ClipsDescendants = true
         HomePage.Parent = TabContainer
+
+        local HomeScroll = Instance.new("ScrollingFrame")
+        HomeScroll.Name = "HomeScroll"
+        HomeScroll.Size = UDim2.new(1, 0, 1, 0)
+        HomeScroll.BackgroundTransparency = 1
+        HomeScroll.ScrollBarThickness = 0
+        HomeScroll.ScrollBarImageTransparency = 1
+        HomeScroll.ScrollingEnabled = true
+        HomeScroll.ClipsDescendants = true
+        HomeScroll.Parent = HomePage
 
         HomeContent = Instance.new("Frame")
         HomeContent.Name = "HomeContent"
-        HomeContent.Size = UDim2.new(1, -20, 0, 0)
-        HomeContent.Position = UDim2.new(0, 10, 0, 10)
-        HomeContent.AutomaticSize = Enum.AutomaticSize.Y
+        HomeContent.Size = UDim2.new(1, -24, 0, 60)
+        HomeContent.Position = UDim2.new(0, 12, 0, 12)
         HomeContent.BackgroundTransparency = 1
-        HomeContent.Parent = HomePage
+        HomeContent.Parent = HomeScroll
 
-        HomeList = Instance.new("UIListLayout")
-        HomeList.Padding = UDim.new(0, 14)
+        HomeList = Instance.new("UIGridLayout")
+        HomeList.CellSize = UDim2.new(0.5, -8, 0, 60)
+        HomeList.CellPadding = UDim.new(0, 16)
         HomeList.SortOrder = Enum.SortOrder.LayoutOrder
+        HomeList.FillDirection = Enum.FillDirection.Horizontal
+        HomeList.FillDirectionMaxCells = 2
         HomeList.Parent = HomeContent
 
         local function updateHomeCanvas()
-            HomePage.CanvasSize = UDim2.new(0, 0, 0, HomeList.AbsoluteContentSize.Y + 20)
+            local contentH = math.max(HomeList.AbsoluteContentSize.Y + 24, 60)
+            HomeContent.Size = UDim2.new(1, -24, 0, contentH)
+            HomeScroll.CanvasSize = UDim2.new(0, 0, 0, math.max(contentH + 12, 100))
         end
         HomeList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateHomeCanvas)
-        task.spawn(updateHomeCanvas)
+        HomeContent.ChildAdded:Connect(function()
+            task.wait(0.05)
+            updateHomeCanvas()
+        end)
+        HomeContent.ChildRemoved:Connect(function()
+            task.wait(0.05)
+            updateHomeCanvas()
+        end)
+        task.spawn(function()
+            task.wait()
+            updateHomeCanvas()
+        end)
+
+        -- Home / 功能页 两种布局切换
+        local function setHomeLayout(isHome)
+            local cfgFrame = Window._configFrameRef
+            if isHome then
+                LeftMenuFrame.Visible = false
+                RightMenuFrame.Size = UDim2.new(1, 0, 1, 0)
+                RightMenuFrame.Position = UDim2.new(0, 0, 0, 0)
+                Tween(RightMenuFrame, { BackgroundTransparency = 1 }, 0.2)
+                Tween(RightStroke, { Transparency = 1 }, 0.2)
+                if cfgFrame then cfgFrame.Visible = false end
+                if CardReturnBtn then CardReturnBtn.Visible = false end
+            else
+                LeftMenuFrame.Visible = true
+                RightMenuFrame.Size = UDim2.new(1, -176, 1, 0)
+                RightMenuFrame.Position = UDim2.new(0, 176, 0, 0)
+                Tween(RightMenuFrame, { BackgroundTransparency = 0.6 }, 0.2)
+                Tween(RightStroke, { Transparency = 0.65 }, 0.2)
+                if cfgFrame then cfgFrame.Visible = true end
+                if CardReturnBtn then CardReturnBtn.Visible = true end
+            end
+        end
+        Window._setHomeLayout = setHomeLayout
     else
-        -- 非卡片模式：保持原样
         PageContainer = Instance.new("ScrollingFrame")
         PageContainer.Size = UDim2.new(1, 0, 1, 0)
         PageContainer.BackgroundTransparency = 1
@@ -5954,22 +6070,26 @@ function Fenglib:CreateWindow(Config)
         task.spawn(updatePageCanvas)
     end
 
-    -- 卡片模式：返回按钮（依赖 createControlButton 与 PageService/HomePage）
+    -- 返回按钮事件绑定
     if CardMode then
-        local retBtn = createControlButton("rbxassetid://130391877219356", nil, function()
-            pcall(function() PageService:JumpTo(HomePage) end)
-            if CardReturnBtn then CardReturnBtn.Visible = false end
-        end)
-        CardReturnBtn = retBtn
         if CardReturnBtn then
-            CardReturnBtn.LayoutOrder = -1
-            CardReturnBtn.Visible = false
+            CardReturnBtn.MouseButton1Click:Connect(function()
+                pcall(function() PageService:JumpTo(HomePage) end)
+                if Window._setHomeLayout then Window._setHomeLayout(true) end
+            end)
+            CardReturnBtn.MouseEnter:Connect(function()
+                Tween(CardReturnBtn, {BackgroundTransparency = 0}, 0.2)
+            end)
+            CardReturnBtn.MouseLeave:Connect(function()
+                Tween(CardReturnBtn, {BackgroundTransparency = 0.2}, 0.2)
+            end)
         end
     end
 
     local dragToggle = false
     local dragStart, startPos
-    HeadFrame.InputBegan:Connect(function(input)
+
+    local function handleDragBegin(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragToggle = true
             dragStart = input.Position
@@ -5981,7 +6101,26 @@ function Fenglib:CreateWindow(Config)
                 end
             end)
         end
-    end)
+    end
+
+    HeadFrame.InputBegan:Connect(handleDragBegin)
+
+    if CardMode then
+        RightHeader.InputBegan:Connect(function(input)
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1
+               and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            local m = LocalPlayer:GetMouse()
+            local function inside(f)
+                if not f or not f.Visible then return false end
+                local p, s = f.AbsolutePosition, f.AbsoluteSize
+                return m.X >= p.X and m.X <= p.X + s.X and m.Y >= p.Y and m.Y <= p.Y + s.Y
+            end
+            if inside(ButtonGroup) then return end
+            if CardReturnBtn and inside(CardReturnBtn) then return end
+            handleDragBegin(input)
+        end)
+    end
+
     UserInputService.InputChanged:Connect(function(input)
         if dragToggle and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
@@ -6021,13 +6160,19 @@ function Fenglib:CreateWindow(Config)
     MainFrame.Visible = true
 
     do
-        local hideList = { LeftMenuFrame, RightMenuFrame, bgImage }
+        local hideList = { RightMenuFrame, bgImage }
+        if not CardMode then
+            table.insert(hideList, 1, LeftMenuFrame)
+        end
         local busy = false
         local restoreSize = nil
 
         local function setContentVisible(v)
             for _, c in ipairs(hideList) do
                 if c then c.Visible = v end
+            end
+            if CardMode and v and Window._setHomeLayout then
+                Window._setHomeLayout(true)
             end
         end
 
@@ -6187,14 +6332,10 @@ function Fenglib:CreateWindow(Config)
         AddToRegistry(line, "BackgroundColor3", "Stroke")
     end
 
-    -- ============================================================
-    -- Window:Card（仅卡片模式可用；非卡片模式返回兼容降级）
-    -- ============================================================
     Window._cards = {}
     function Window:Card(cfg)
         cfg = cfg or {}
         if not CardMode then
-            -- 非卡片模式：兼容降级，返回代理，:Tab 走原逻辑
             local proxy = {}
             function proxy:Tab(name, icon)
                 return Window:Tab(name, icon)
@@ -6207,10 +6348,9 @@ function Fenglib:CreateWindow(Config)
         local cardIcon  = cfg.Icon or cfg.Logo or 127194456372995
         local cardImage = cfg.Image or cfg.Banner
 
-        -- Home 卡片外观（沿用 NewPage 风格）
         local cardFrame = Instance.new("Frame")
         cardFrame.Name = "HomeCard"
-        cardFrame.Size = UDim2.new(0, 230, 0, 55)
+        cardFrame.Size = UDim2.new(0, 0, 0, 60)
         cardFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
         cardFrame.BorderSizePixel = 0
         cardFrame.ClipsDescendants = true
@@ -6295,7 +6435,6 @@ function Fenglib:CreateWindow(Config)
         AddToRegistry(cardDescLbl, "TextColor3", "Text")
         TextGradient:Skip(cardDescLbl)
 
-        -- CardPage（UIPageLayout 子页）
         local cardPage = Instance.new("Frame")
         cardPage.Name = "CardPage_" .. tostring(cardName)
         cardPage.Size = UDim2.new(1, 0, 1, 0)
@@ -6332,10 +6471,9 @@ function Fenglib:CreateWindow(Config)
 
         local function openCard()
             pcall(function() PageService:JumpTo(cardPage) end)
-            if CardReturnBtn then CardReturnBtn.Visible = true end
+            if Window._setHomeLayout then Window._setHomeLayout(false) end
         end
 
-        -- 点击卡片 + 水波纹
         local cardClick = Instance.new("TextButton")
         cardClick.Size = UDim2.new(1, 0, 1, 0)
         cardClick.BackgroundTransparency = 1
@@ -6372,7 +6510,6 @@ function Fenglib:CreateWindow(Config)
             openCard()
         end)
 
-        -- 卡片内 Tab
         function cardObj:Tab(name, icon)
             local tabName = name or "Tab"
             local tabIcon = icon
@@ -6499,9 +6636,6 @@ function Fenglib:CreateWindow(Config)
         return cardObj
     end
 
-    -- ============================================================
-    -- Window:Tab（卡片模式下自动包装成 Card）
-    -- ============================================================
     Window._activeTab = nil
     Window._tabs = {}
     function Window:Tab(name, icon)
@@ -6526,7 +6660,6 @@ function Fenglib:CreateWindow(Config)
             return dummy
         end
 
-        -- ============ 原 Window:Tab（保持不变）============
         local tabLocked      = false
         local tabLockedTitle = "已锁定"
         if type(name) == "table" then
@@ -7688,11 +7821,13 @@ function Fenglib:CreateWindow(Config)
     end
     Window:SetAccount({ ShowUser = (Config.ShowUser ~= false) })
 
-    -- 卡片模式：初始显示 Home 卡片页
+    -- 卡片模式：初始显示 Home（只有卡片）
     if CardMode and PageService and HomePage then
-        task.defer(function()
+        task.spawn(function()
+            repeat task.wait() until MainFrame.Visible
+            task.wait(0.15)
             pcall(function() PageService:JumpTo(HomePage) end)
-            if CardReturnBtn then CardReturnBtn.Visible = false end
+            if Window._setHomeLayout then Window._setHomeLayout(true) end
         end)
     end
 
