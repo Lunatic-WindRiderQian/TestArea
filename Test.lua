@@ -226,10 +226,10 @@ end
 
 RunService.RenderStepped:Connect(function(dt) TextGradient:Animate(dt) end)
 
-local Fenglib = {}
-Fenglib.TextGradient = TextGradient
+local FengUI = {}
+FengUI.TextGradient = TextGradient
 
-function Fenglib:SetTheme(name)
+function FengUI:SetTheme(name)
     if Themes[name] then
         CurrentTheme = Themes[name]
         for _, r in pairs(Registry) do if r.Object then Tween(r.Object, {[r.Property] = CurrentTheme[r.Type]}) end end
@@ -238,7 +238,7 @@ function Fenglib:SetTheme(name)
     end
 end
 
-function Fenglib:SaveConfig(name, folder)
+function FengUI:SaveConfig(name, folder)
     name   = tostring(name or "config")
     folder = tostring(folder or "殺脚本配置")
     local ok, err = pcall(function()
@@ -265,7 +265,7 @@ function Fenglib:SaveConfig(name, folder)
     return ok
 end
 
-function Fenglib:LoadConfig(path)
+function FengUI:LoadConfig(path)
     if type(path) ~= "string" then return false end
     if not pcall(isfile, path) then return false end
     if not isfile(path) then return false end
@@ -278,7 +278,7 @@ function Fenglib:LoadConfig(path)
     end)
     if not ok2 or type(decoded) ~= "table" then return false end
 
-    Fenglib._loading = true
+    FengUI._loading = true
     for id, rawVal in pairs(decoded) do
         local obj = ConfigObjects[id]
         if obj and type(obj.Set) == "function" then
@@ -286,7 +286,7 @@ function Fenglib:LoadConfig(path)
             pcall(function() obj.Set(value) end)
         end
     end
-    Fenglib._loading = false
+    FengUI._loading = false
     return true
 end
 
@@ -4419,7 +4419,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     return functions
 end
 
-function Fenglib:CreateWindow(Config)
+function FengUI:CreateWindow(Config)
     ConfigIdCounter = 0
 
     local Window = {}
@@ -4662,7 +4662,7 @@ function Fenglib:CreateWindow(Config)
         return NotifyFrame
     end
 
-    Fenglib.__NotificationCache = Notifier
+    FengUI.__NotificationCache = Notifier
 
     local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 299
@@ -4916,6 +4916,7 @@ function Fenglib:CreateWindow(Config)
     SettingsBox.BackgroundColor3 = Color3.fromRGB(21, 21, 21)
     SettingsBox.BackgroundTransparency = 0
     SettingsBox.BorderSizePixel = 0
+    SettingsBox.ClipsDescendants = true
     SettingsBox.ZIndex = 101
     SettingsBox.Parent = SettingsPanel
     Instance.new("UICorner", SettingsBox).CornerRadius = UDim.new(0, 10)
@@ -4965,18 +4966,18 @@ function Fenglib:CreateWindow(Config)
     local CustBtn, CustIcon          = MakeNavBtn("UI Effects", "rbxassetid://12974219084", 61)
     local CloseBtn, CloseIcon        = MakeNavBtn("Close",      "rbxassetid://12966849577", 168)
 
-    -- ---------------- 玩家卡片页（原 Test 的 UserFrame） ----------------
+    -- ---------------- 玩家卡片页（原 Test 的 UserFrame，已修复布局） ----------------
     local PlayerPage = Instance.new("Frame")
-    PlayerPage.Size = UDim2.new(0.67743, 0, 0.87822, 0)
-    PlayerPage.Position = UDim2.new(0.30079, 0, 0.12178, 0)
+    PlayerPage.Size = UDim2.new(0.67743, 0, 1, 0)
+    PlayerPage.Position = UDim2.new(0.30079, 0, 0, 0)
     PlayerPage.BackgroundTransparency = 1
     PlayerPage.Visible = false
     PlayerPage.ZIndex = 102
     PlayerPage.Parent = SettingsContent
 
     local PTitle = Instance.new("TextLabel")
-    PTitle.Size = UDim2.new(0, 200, 0, 26)
-    PTitle.Position = UDim2.new(0.07831, 0, -0.06140, 0)
+    PTitle.Size = UDim2.new(1, -24, 0, 24)
+    PTitle.Position = UDim2.new(0, 12, 0, 8)
     PTitle.BackgroundTransparency = 1
     PTitle.Font = Enum.Font.Gotham
     PTitle.Text = "玩家卡片"
@@ -4988,8 +4989,8 @@ function Fenglib:CreateWindow(Config)
     AddToRegistry(PTitle, "TextColor3", "Text")
 
     local PDesc = Instance.new("TextLabel")
-    PDesc.Size = UDim2.new(0, 230, 0, 18)
-    PDesc.Position = UDim2.new(0.07831, 0, 0.05275, 0)
+    PDesc.Size = UDim2.new(1, -24, 0, 16)
+    PDesc.Position = UDim2.new(0, 12, 0, 36)
     PDesc.BackgroundTransparency = 1
     PDesc.Font = Enum.Font.Gotham
     PDesc.Text = "修改左下角显示的名字与头像。"
@@ -5004,8 +5005,8 @@ function Fenglib:CreateWindow(Config)
     TextGradient:Skip(PDesc)
 
     local PlayerScroll = Instance.new("ScrollingFrame")
-    PlayerScroll.Size = UDim2.new(0, 260, 1, -56)
-    PlayerScroll.Position = UDim2.new(0.07831, 0, 0, 52)
+    PlayerScroll.Size = UDim2.new(1, -24, 1, -72)
+    PlayerScroll.Position = UDim2.new(0, 12, 0, 58)
     PlayerScroll.BackgroundTransparency = 1
     PlayerScroll.BorderSizePixel = 0
     PlayerScroll.ScrollBarThickness = 0
@@ -5157,7 +5158,7 @@ function Fenglib:CreateWindow(Config)
     end, 24)
 
     MakeToggle(SettingsPage, "自定义光标", false, function(enabled)
-        Fenglib:SetCustomCursor(enabled)
+        FengUI:SetCustomCursor(enabled)
     end, 24 + 42)
 
     -- ---------------- Customize 页（6 个 UI 特效） ----------------
@@ -7884,27 +7885,27 @@ do
         local loc = UserInputService:GetMouseLocation()
         cursorRoot.Position = UDim2.new(0, loc.X - 2, 0, loc.Y - 2)
     end)
-    Fenglib._cursorObjects = { Screen = cursorScreen, Root = cursorRoot, Image = img, Connection = cursorConn, Enabled = false }
-    function Fenglib:SetCustomCursor(enabled)
+    FengUI._cursorObjects = { Screen = cursorScreen, Root = cursorRoot, Image = img, Connection = cursorConn, Enabled = false }
+    function FengUI:SetCustomCursor(enabled)
         enabled = enabled == true
-        if Fenglib._cursorObjects then
-            Fenglib._cursorObjects.Root.Visible = enabled
-            Fenglib._cursorObjects.Screen.Enabled = enabled
-            Fenglib._cursorObjects.Enabled = enabled
+        if FengUI._cursorObjects then
+            FengUI._cursorObjects.Root.Visible = enabled
+            FengUI._cursorObjects.Screen.Enabled = enabled
+            FengUI._cursorObjects.Enabled = enabled
             pcall(function() UserInputService.MouseIconEnabled = not enabled end)
         end
     end
-    function Fenglib:ToggleCustomCursor()
-        local current = Fenglib._cursorObjects and Fenglib._cursorObjects.Enabled or false
-        Fenglib:SetCustomCursor(not current)
+    function FengUI:ToggleCustomCursor()
+        local current = FengUI._cursorObjects and FengUI._cursorObjects.Enabled or false
+        FengUI:SetCustomCursor(not current)
     end
-    function Fenglib:CleanupCursor()
-        if Fenglib._cursorObjects then
-            safeDisconnect(Fenglib._cursorObjects.Connection)
-            if Fenglib._cursorObjects.Screen then Fenglib._cursorObjects.Screen:Destroy() end
-            Fenglib._cursorObjects = nil
+    function FengUI:CleanupCursor()
+        if FengUI._cursorObjects then
+            safeDisconnect(FengUI._cursorObjects.Connection)
+            if FengUI._cursorObjects.Screen then FengUI._cursorObjects.Screen:Destroy() end
+            FengUI._cursorObjects = nil
         end
     end
 end
 
-return Fenglib
+return FengUI
