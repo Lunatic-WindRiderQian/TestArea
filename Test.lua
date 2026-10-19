@@ -2624,8 +2624,8 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
 -- 改动:
 --   · 面板左侧向外延伸 10px
 --   · 顶部 Name 标签 -> 固定 "No console logs yet" 提示（有日志时隐藏）
---   · 底部三按钮：圆角矩形（四角弧度）+ 图标 + 中文文字
---   · 保存对话框全部文字改为中文，按钮/输入框四角圆角
+--   · 底部三按钮：圆角矩形（四角弧度）+ 图标 + 中文文字（图标/文字独立定位）
+--   · 保存对话框全部文字中文，按钮/输入框四角圆角
 -- ============================================================
 child.Console = function(_, config)
     config = safeConfig(config)
@@ -2738,49 +2738,56 @@ child.Console = function(_, config)
     bl.SortOrder = Enum.SortOrder.LayoutOrder
     bl.Parent = buttonsHolder
 
-    -- ---------- 圆角矩形按钮工厂（不是全圆） ----------
+    -- ---------- 圆角矩形按钮工厂（图标/文字独立定位，不会错乱） ----------
     local function makeConsoleBtn(text, iconId, width, layoutOrder, onClick)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, width, 0, 26)
+        btn.Size = UDim2.new(0, width, 0, 28)
         btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        btn.Text = text
-        btn.Font = Enum.Font.GothamMedium
-        btn.TextSize = 13
-        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-        btn.TextXAlignment = Enum.TextXAlignment.Center
+        btn.Text = ""                              -- 不用 Button.Text，避免和子控件争位
         btn.AutoButtonColor = false
         btn.BorderSizePixel = 0
         btn.LayoutOrder = layoutOrder
         btn.Parent = buttonsHolder
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8) -- 四角圆角
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
 
-        -- 左侧图标
+        -- 图标：固定在左侧 10px 处，垂直居中
         local ic = Instance.new("ImageLabel")
         ic.Size = UDim2.new(0, 14, 0, 14)
-        ic.Position = UDim2.new(0, 8, 0.5, 0)
+        ic.Position = UDim2.new(0, 10, 0.5, 0)
         ic.AnchorPoint = Vector2.new(0, 0.5)
         ic.BackgroundTransparency = 1
         ic.Image = iconId
         ic.ImageColor3 = Color3.fromRGB(200, 200, 200)
+        ic.ScaleType = Enum.ScaleType.Fit
         ic.ZIndex = 2
         ic.Parent = btn
 
-        -- 文字往右挪给图标留空间
-        local pad = Instance.new("UIPadding")
-        pad.PaddingLeft = UDim.new(0, 18)
-        pad.PaddingRight = UDim.new(0, 6)
-        pad.Parent = btn
+        -- 文字：从图标右侧开始，占满剩余宽度，居中
+        local lbl = Instance.new("TextLabel")
+        lbl.Size = UDim2.new(1, -32, 1, 0)         -- 左边 28（图标+间隙），右边 4
+        lbl.Position = UDim2.new(0, 28, 0, 0)
+        lbl.BackgroundTransparency = 1
+        lbl.Font = Enum.Font.GothamMedium
+        lbl.Text = text
+        lbl.TextSize = 13
+        lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+        lbl.TextXAlignment = Enum.TextXAlignment.Center
+        lbl.TextYAlignment = Enum.TextYAlignment.Center
+        lbl.ZIndex = 2
+        lbl.Parent = btn
 
         local info = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local hoverTween  = TweenService:Create(btn, info, { BackgroundColor3 = Color3.fromRGB(50, 50, 50), TextColor3 = Color3.fromRGB(255, 255, 255) })
+        local hoverTween  = TweenService:Create(btn, info, { BackgroundColor3 = Color3.fromRGB(50, 50, 50) })
         local hoverIc     = TweenService:Create(ic,  info, { ImageColor3 = Color3.fromRGB(255, 255, 255) })
-        local normalTween = TweenService:Create(btn, info, { BackgroundColor3 = Color3.fromRGB(30, 30, 30), TextColor3 = Color3.fromRGB(200, 200, 200) })
+        local hoverLb     = TweenService:Create(lbl, info, { TextColor3 = Color3.fromRGB(255, 255, 255) })
+        local normalTween = TweenService:Create(btn, info, { BackgroundColor3 = Color3.fromRGB(30, 30, 30) })
         local normalIc    = TweenService:Create(ic,  info, { ImageColor3 = Color3.fromRGB(200, 200, 200) })
+        local normalLb    = TweenService:Create(lbl, info, { TextColor3 = Color3.fromRGB(200, 200, 200) })
 
-        btn.MouseEnter:Connect(function() hoverTween:Play(); hoverIc:Play() end)
-        btn.MouseLeave:Connect(function() normalTween:Play(); normalIc:Play() end)
+        btn.MouseEnter:Connect(function() hoverTween:Play(); hoverIc:Play(); hoverLb:Play() end)
+        btn.MouseLeave:Connect(function() normalTween:Play(); normalIc:Play(); normalLb:Play() end)
         btn.MouseButton1Click:Connect(function() pcall(onClick) end)
-        return btn, ic
+        return btn, ic, lbl
     end
 
     -- ---------- savedialog（全中文 + 圆角） ----------
@@ -2873,52 +2880,59 @@ child.Console = function(_, config)
         sdInput.ClearTextOnFocus = false
         sdInput.ZIndex = 502
         sdInput.Parent = sdMain
-        Instance.new("UICorner", sdInput).CornerRadius = UDim.new(0, 6) -- 圆角
+        Instance.new("UICorner", sdInput).CornerRadius = UDim.new(0, 6)
         local sdPad = Instance.new("UIPadding")
         sdPad.PaddingLeft = UDim.new(0, 8)
         sdPad.Parent = sdInput
         TextGradient:Skip(sdInput)
 
-        -- 完成按钮（四角圆角）
+        -- 完成按钮（四角圆角，图标/文字独立定位）
         local sdDone = Instance.new("TextButton")
         sdDone.Name = "save"
-        sdDone.Size = UDim2.new(0, 72, 0, 26)
+        sdDone.Size = UDim2.new(0, 72, 0, 28)
         sdDone.Position = UDim2.new(1, -34, 1, -34)
         sdDone.AnchorPoint = Vector2.new(1, 0)
         sdDone.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        sdDone.Text = "完成"
-        sdDone.Font = Enum.Font.GothamMedium
-        sdDone.TextSize = 13
-        sdDone.TextColor3 = Color3.fromRGB(200, 200, 200)
-        sdDone.TextXAlignment = Enum.TextXAlignment.Center
+        sdDone.Text = ""
         sdDone.AutoButtonColor = false
         sdDone.BorderSizePixel = 0
         sdDone.ZIndex = 502
         sdDone.Parent = sdMain
-        Instance.new("UICorner", sdDone).CornerRadius = UDim.new(0, 8) -- 圆角
+        Instance.new("UICorner", sdDone).CornerRadius = UDim.new(0, 8)
 
         local sdDoneIcon = Instance.new("ImageLabel")
         sdDoneIcon.Size = UDim2.new(0, 14, 0, 14)
-        sdDoneIcon.Position = UDim2.new(0, 8, 0.5, 0)
+        sdDoneIcon.Position = UDim2.new(0, 10, 0.5, 0)
         sdDoneIcon.AnchorPoint = Vector2.new(0, 0.5)
         sdDoneIcon.BackgroundTransparency = 1
         sdDoneIcon.Image = "rbxassetid://10709790644"
         sdDoneIcon.ImageColor3 = Color3.fromRGB(200, 200, 200)
+        sdDoneIcon.ScaleType = Enum.ScaleType.Fit
         sdDoneIcon.ZIndex = 2
         sdDoneIcon.Parent = sdDone
 
-        local sdDonePad = Instance.new("UIPadding")
-        sdDonePad.PaddingLeft = UDim.new(0, 18)
-        sdDonePad.PaddingRight = UDim.new(0, 6)
-        sdDonePad.Parent = sdDone
+        local sdDoneLbl = Instance.new("TextLabel")
+        sdDoneLbl.Size = UDim2.new(1, -32, 1, 0)
+        sdDoneLbl.Position = UDim2.new(0, 28, 0, 0)
+        sdDoneLbl.BackgroundTransparency = 1
+        sdDoneLbl.Font = Enum.Font.GothamMedium
+        sdDoneLbl.Text = "完成"
+        sdDoneLbl.TextSize = 13
+        sdDoneLbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+        sdDoneLbl.TextXAlignment = Enum.TextXAlignment.Center
+        sdDoneLbl.TextYAlignment = Enum.TextYAlignment.Center
+        sdDoneLbl.ZIndex = 2
+        sdDoneLbl.Parent = sdDone
 
         local sdInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local sdHover  = TweenService:Create(sdDone, sdInfo, { BackgroundColor3 = Color3.fromRGB(50, 50, 50), TextColor3 = Color3.fromRGB(255, 255, 255) })
-        local sdHoverI = TweenService:Create(sdDoneIcon, sdInfo, { ImageColor3 = Color3.fromRGB(255, 255, 255) })
-        local sdNormal = TweenService:Create(sdDone, sdInfo, { BackgroundColor3 = Color3.fromRGB(30, 30, 30), TextColor3 = Color3.fromRGB(200, 200, 200) })
+        local sdHover   = TweenService:Create(sdDone, sdInfo, { BackgroundColor3 = Color3.fromRGB(50, 50, 50) })
+        local sdHoverI  = TweenService:Create(sdDoneIcon, sdInfo, { ImageColor3 = Color3.fromRGB(255, 255, 255) })
+        local sdHoverL  = TweenService:Create(sdDoneLbl, sdInfo, { TextColor3 = Color3.fromRGB(255, 255, 255) })
+        local sdNormal  = TweenService:Create(sdDone, sdInfo, { BackgroundColor3 = Color3.fromRGB(30, 30, 30) })
         local sdNormalI = TweenService:Create(sdDoneIcon, sdInfo, { ImageColor3 = Color3.fromRGB(200, 200, 200) })
-        sdDone.MouseEnter:Connect(function() sdHover:Play(); sdHoverI:Play() end)
-        sdDone.MouseLeave:Connect(function() sdNormal:Play(); sdNormalI:Play() end)
+        local sdNormalL = TweenService:Create(sdDoneLbl, sdInfo, { TextColor3 = Color3.fromRGB(200, 200, 200) })
+        sdDone.MouseEnter:Connect(function() sdHover:Play(); sdHoverI:Play(); sdHoverL:Play() end)
+        sdDone.MouseLeave:Connect(function() sdNormal:Play(); sdNormalI:Play(); sdNormalL:Play() end)
 
         sdDone.MouseButton1Click:Connect(function()
             local name = sdInput.Text
@@ -2942,18 +2956,18 @@ child.Console = function(_, config)
         end
     end
 
-    -- ---------- 三个圆角矩形按钮（中文） ----------
-    makeConsoleBtn("清空", "rbxassetid://10709819059", 66, 1, function()
+    -- ---------- 三个圆角矩形按钮（中文，图标/文字独立定位） ----------
+    makeConsoleBtn("清空", "rbxassetid://10709819059", 76, 1, function()
         logBox.Text = ""
         c.CanvasSize = UDim2.new(0, 0, 0, 0)
         logBox.Size = UDim2.new(1, 0, 0, 0)
     end)
 
-    makeConsoleBtn("保存", "rbxassetid://10734941499", 66, 2, function()
+    makeConsoleBtn("保存", "rbxassetid://10734941499", 76, 2, function()
         if sdOverlay then sdOverlay.Visible = true end
     end)
 
-    makeConsoleBtn("复制", "rbxassetid://10709812159", 66, 3, function()
+    makeConsoleBtn("复制", "rbxassetid://10709812159", 76, 3, function()
         local raw = logBox.Text
         if raw == "" then return end
         local clean = raw:gsub("<[^>]->", ""):gsub("&lt;", "<"):gsub("&gt;", ">"):gsub("&amp;", "&")
