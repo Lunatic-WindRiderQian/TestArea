@@ -4426,6 +4426,9 @@ function FengUI:CreateWindow(Config)
     local Title = Config.Name or "FengYu"
     local Subtitle = Config.SubName
     local Keybind = Config.Keybind
+    if type(Keybind) == "string" then
+        Keybind = Enum.KeyCode[Keybind] or Keybind
+    end
     local IconAsset = Config.Logo or Config.Icon
     local SceneId = Config.Scene
 
@@ -4960,9 +4963,9 @@ function FengUI:CreateWindow(Config)
         return btn, ic
     end
 
-    local PlayerBtn, PlayerIcon     = MakeNavBtn("玩家设置",    "rbxassetid://134669175143859", 13)
-    local SettingsBtn, SettingsIcon = MakeNavBtn("UI设置",   "rbxassetid://10734910187", 37)
-    local CustBtn, CustIcon          = MakeNavBtn("特效设置", "rbxassetid://12974219084", 61)
+    local PlayerBtn, PlayerIcon     = MakeNavBtn("玩家卡片",    "rbxassetid://134669175143859", 13)
+    local SettingsBtn, SettingsIcon = MakeNavBtn("Settings",   "rbxassetid://10734910187", 37)
+    local CustBtn, CustIcon          = MakeNavBtn("UI Effects", "rbxassetid://12974219084", 61)
     local CloseBtn, CloseIcon        = MakeNavBtn("Close",      "rbxassetid://12966849577", 168)
 
     -- ---------------- 玩家卡片页 ----------------
@@ -5036,16 +5039,16 @@ function FengUI:CreateWindow(Config)
 
     -- ---------------- Settings 页 ----------------
     local SettingsPage = Instance.new("Frame")
-    SettingsPage.Size = UDim2.new(0.67743, 0, 0.87822, 0)
-    SettingsPage.Position = UDim2.new(0.30079, 0, 0.12178, 0)
+    SettingsPage.Size = UDim2.new(0.67743, 0, 1, 0)
+    SettingsPage.Position = UDim2.new(0.30079, 0, 0, 0)
     SettingsPage.BackgroundTransparency = 1
     SettingsPage.Visible = false
     SettingsPage.ZIndex = 102
     SettingsPage.Parent = SettingsContent
 
     local STitle = Instance.new("TextLabel")
-    STitle.Size = UDim2.new(0, 200, 0, 26)
-    STitle.Position = UDim2.new(0.07831, 0, -0.06140, 0)
+    STitle.Size = UDim2.new(1, -24, 0, 24)
+    STitle.Position = UDim2.new(0, 12, 0, 8)
     STitle.BackgroundTransparency = 1
     STitle.Font = Enum.Font.Gotham
     STitle.Text = "通用设置"
@@ -5056,10 +5059,124 @@ function FengUI:CreateWindow(Config)
     STitle.Parent = SettingsPage
     AddToRegistry(STitle, "TextColor3", "Text")
 
+    local SDesc = Instance.new("TextLabel")
+    SDesc.Size = UDim2.new(1, -24, 0, 16)
+    SDesc.Position = UDim2.new(0, 12, 0, 36)
+    SDesc.BackgroundTransparency = 1
+    SDesc.Font = Enum.Font.Gotham
+    SDesc.Text = "调整菜单通用选项与快捷键。"
+    SDesc.TextSize = 12
+    SDesc.TextWrapped = true
+    SDesc.TextTransparency = 0.6
+    SDesc.TextXAlignment = Enum.TextXAlignment.Left
+    SDesc.TextColor3 = CurrentTheme.Text
+    SDesc.ZIndex = 103
+    SDesc.Parent = SettingsPage
+    AddToRegistry(SDesc, "TextColor3", "SubText")
+    TextGradient:Skip(SDesc)
+
+    local function MakeKeybind(parent, label, defaultValue, callback, yOffset)
+        local Tile = Instance.new("Frame")
+        Tile.Size = UDim2.new(1, -24, 0, 42)
+        Tile.Position = UDim2.new(0, 12, 0, yOffset)
+        Tile.BackgroundTransparency = 1
+        Tile.BorderSizePixel = 0
+        Tile.ZIndex = 103
+        Tile.Parent = parent
+
+        local Line = Instance.new("Frame")
+        Line.Size = UDim2.new(1, -20, 0, 1)
+        Line.Position = UDim2.new(0, 10, 1, -1)
+        Line.BackgroundColor3 = CurrentTheme.Stroke
+        Line.BackgroundTransparency = 0.65
+        Line.BorderSizePixel = 0
+        Line.ZIndex = 103
+        Line.Parent = Tile
+        AddToRegistry(Line, "BackgroundColor3", "Stroke")
+
+        local Lbl = Instance.new("TextLabel")
+        Lbl.Size = UDim2.new(1, -130, 0, 18)
+        Lbl.Position = UDim2.new(0, 15, 0.5, -9)
+        Lbl.BackgroundTransparency = 1
+        Lbl.Font = Enum.Font.GothamMedium
+        Lbl.Text = label
+        Lbl.TextSize = 13
+        Lbl.TextXAlignment = Enum.TextXAlignment.Left
+        Lbl.TextTruncate = Enum.TextTruncate.AtEnd
+        Lbl.TextColor3 = CurrentTheme.Text
+        Lbl.ZIndex = 103
+        Lbl.Parent = Tile
+        AddToRegistry(Lbl, "TextColor3", "Text")
+
+        local KeyBtn = Instance.new("TextButton")
+        KeyBtn.Size = UDim2.new(0, 100, 0, 26)
+        KeyBtn.Position = UDim2.new(1, -15, 0.5, 0)
+        KeyBtn.AnchorPoint = Vector2.new(1, 0.5)
+        KeyBtn.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+        KeyBtn.Text = ""
+        KeyBtn.AutoButtonColor = false
+        KeyBtn.ZIndex = 103
+        KeyBtn.Parent = Tile
+        Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0, 5)
+
+        local KeyStroke = Instance.new("UIStroke")
+        KeyStroke.Thickness = 1
+        KeyStroke.Transparency = 0.65
+        KeyStroke.Color = CurrentTheme.Stroke
+        KeyStroke.Parent = KeyBtn
+        table.insert(ThemeListeners, function() KeyStroke.Color = CurrentTheme.Stroke end)
+
+        local KeyLbl = Instance.new("TextLabel")
+        KeyLbl.Size = UDim2.new(1, 0, 1, 0)
+        KeyLbl.BackgroundTransparency = 1
+        KeyLbl.Font = Enum.Font.GothamBold
+        KeyLbl.TextSize = 12
+        KeyLbl.TextColor3 = CurrentTheme.Text
+        KeyLbl.ZIndex = 104
+        KeyLbl.Parent = KeyBtn
+        AddToRegistry(KeyLbl, "TextColor3", "Text")
+        TextGradient:Skip(KeyLbl)
+
+        local state = { Value = defaultValue, IsWaiting = false }
+        local function Refresh()
+            if state.Value and state.Value.Name then
+                KeyLbl.Text = state.Value.Name
+            else
+                KeyLbl.Text = "无"
+            end
+        end
+        Refresh()
+
+        local inputConn
+        KeyBtn.MouseEnter:Connect(function() Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end)
+        KeyBtn.MouseLeave:Connect(function() Tween(Tile, {BackgroundTransparency = 1}, 0.15) end)
+        KeyBtn.MouseButton1Click:Connect(function()
+            if state.IsWaiting then return end
+            state.IsWaiting = true
+            KeyLbl.Text = "..."
+            if inputConn then inputConn:Disconnect(); inputConn = nil end
+            inputConn = UserInputService.InputBegan:Connect(function(input, gpe)
+                if gpe then return end
+                state.IsWaiting = false
+                if inputConn then inputConn:Disconnect(); inputConn = nil end
+                if input.UserInputType == Enum.UserInputType.Keyboard
+                    and input.KeyCode.Name ~= "Unknown" then
+                    state.Value = input.KeyCode
+                    Refresh()
+                    if callback then pcall(callback, input.KeyCode) end
+                else
+                    Refresh()
+                end
+            end)
+        end)
+
+        return state
+    end
+
     local function MakeToggle(parent, label, defaultValue, callback, yOffset)
         local Tile = Instance.new("Frame")
         Tile.Size = UDim2.new(1, -24, 0, 42)
-        Tile.Position = UDim2.new(0.07831, 0, 0, yOffset)
+        Tile.Position = UDim2.new(0, 12, 0, yOffset)
         Tile.BackgroundTransparency = 1
         Tile.BorderSizePixel = 0
         Tile.ZIndex = 103
@@ -5152,13 +5269,17 @@ function FengUI:CreateWindow(Config)
         return state
     end
 
+    MakeKeybind(SettingsPage, "菜单绑定键", Keybind, function(KeyCode)
+        Keybind = KeyCode
+    end, 58)
+
     MakeToggle(SettingsPage, "文字渐变", true, function(enabled)
         TextGradient:SetEnabled(enabled)
-    end, 24)
+    end, 100)
 
     MakeToggle(SettingsPage, "自定义光标", false, function(enabled)
         FengUI:SetCustomCursor(enabled)
-    end, 24 + 42)
+    end, 142)
 
     -- ---------------- Customize 页 ----------------
     local CustPage = Instance.new("Frame")
@@ -5515,12 +5636,12 @@ function FengUI:CreateWindow(Config)
         return btn
     end
 
-    MakeFxBtn("Matrix", "matrix", "rbxassetid://10709810463")
-    MakeFxBtn("Rain",   "rain",   "rbxassetid://10723344432")
-    MakeFxBtn("Sakura", "sakura", "rbxassetid://10723425539")
-    MakeFxBtn("Stars",  "stars",  "rbxassetid://10734966248")
-    MakeFxBtn("Snow",   "snow",   "rbxassetid://10734964600")
-    MakeFxBtn("Glitch", "glitch", "rbxassetid://10734887784")
+    MakeFxBtn("代码雨", "matrix", "rbxassetid://10709810463")
+    MakeFxBtn("雨滴",   "rain",   "rbxassetid://10723344432")
+    MakeFxBtn("樱花",   "sakura", "rbxassetid://10723425539")
+    MakeFxBtn("星空",   "stars",  "rbxassetid://10734966248")
+    MakeFxBtn("雪花",   "snow",   "rbxassetid://10734964600")
+    MakeFxBtn("故障",   "glitch", "rbxassetid://10734887784")
 
     -- ---------------- 导航切换 ----------------
     local function ShowPage(page)
@@ -7816,7 +7937,12 @@ function FengUI:CreateWindow(Config)
         return Notifier.new(Config)
     end
 
-    function Window:SetKeybind(key) Keybind = key end
+    function Window:SetKeybind(key)
+        if type(key) == "string" then
+            key = Enum.KeyCode[key] or key
+        end
+        Keybind = key
+    end
     function Window:Destroy()
         for _, fn in ipairs(Window._homeCleanup or {}) do pcall(fn) end
         Window._homeCleanup = nil
