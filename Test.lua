@@ -4960,9 +4960,9 @@ function FengUI:CreateWindow(Config)
         return btn, ic
     end
 
-    local PlayerBtn, PlayerIcon     = MakeNavBtn("玩家卡片",    "rbxassetid://134669175143859", 13)
-    local SettingsBtn, SettingsIcon = MakeNavBtn("Settings",   "rbxassetid://10734910187", 37)
-    local CustBtn, CustIcon          = MakeNavBtn("UI Effects", "rbxassetid://12974219084", 61)
+    local PlayerBtn, PlayerIcon     = MakeNavBtn("玩家设置",    "rbxassetid://134669175143859", 13)
+    local SettingsBtn, SettingsIcon = MakeNavBtn("UI设置",   "rbxassetid://10734910187", 37)
+    local CustBtn, CustIcon          = MakeNavBtn("特效设置", "rbxassetid://12974219084", 61)
     local CloseBtn, CloseIcon        = MakeNavBtn("Close",      "rbxassetid://12966849577", 168)
 
     -- ---------------- 玩家卡片页 ----------------
