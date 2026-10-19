@@ -4422,13 +4422,6 @@ end
 function Fenglib:CreateWindow(Config)
     ConfigIdCounter = 0
 
-    -- === 卡片模式开关 ===
-    local CardMode = Config.Card == true
-    local cardsContainer
-    local cardOrderCounter = 0
-    local activeCardName
-    local BackButton
-
     local Window = {}
     local Title = Config.Name or "FengYu"
     local Subtitle = Config.SubName
@@ -4901,83 +4894,597 @@ function Fenglib:CreateWindow(Config)
     BottomClick.Text = ""; BottomClick.AutoButtonColor = false
     BottomClick.Parent = BottomFrame
 
+    -- ============================================================
+    -- Settings 面板 — 完整搬运自 非UI.lua (StarterGui.zerohub.main.settings)
+    -- ============================================================
+
     local SettingsPanel = Instance.new("Frame")
-    SettingsPanel.Size = UDim2.new(0, 220, 0, 220)
-    SettingsPanel.AnchorPoint = Vector2.new(0, 1)
-    SettingsPanel.Position = UDim2.new(0, 18, 1, -54)
-    SettingsPanel.BackgroundColor3 = CurrentTheme.Main
-    SettingsPanel.BackgroundTransparency = 0.035
+    SettingsPanel.Size = UDim2.new(1, 0, 1, 0)
+    SettingsPanel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    SettingsPanel.BackgroundTransparency = 1
     SettingsPanel.BorderSizePixel = 0
-    SettingsPanel.ClipsDescendants = true
     SettingsPanel.Visible = false
     SettingsPanel.ZIndex = 100
     SettingsPanel.Parent = MainFrame
-    Instance.new("UICorner", SettingsPanel).CornerRadius = UDim.new(0, 10)
-    AddToRegistry(SettingsPanel, "BackgroundColor3", "Main")
+    Instance.new("UICorner", SettingsPanel).CornerRadius = UDim.new(0, 12)
 
-    local SettingsStroke = Instance.new("UIStroke")
-    SettingsStroke.Thickness = 1
-    SettingsStroke.Transparency = 0.65
-    SettingsStroke.Color = CurrentTheme.Stroke
-    SettingsStroke.Parent = SettingsPanel
-    table.insert(ThemeListeners, function() SettingsStroke.Color = CurrentTheme.Stroke end)
+    local SettingsBox = Instance.new("Frame")
+    SettingsBox.Size = UDim2.new(0, 377, 0, 204)
+    SettingsBox.AnchorPoint = Vector2.new(0.5, 0.5)
+    SettingsBox.Position = UDim2.new(0.5, 0, 0.5, 0)
+    SettingsBox.BackgroundColor3 = Color3.fromRGB(21, 21, 21)
+    SettingsBox.BackgroundTransparency = 0
+    SettingsBox.BorderSizePixel = 0
+    SettingsBox.ZIndex = 101
+    SettingsBox.Parent = SettingsPanel
+    Instance.new("UICorner", SettingsBox).CornerRadius = UDim.new(0, 10)
+    AddToRegistry(SettingsBox, "BackgroundColor3", "Main")
 
-    local SettingsList = Instance.new("UIListLayout")
-    SettingsList.Padding = UDim.new(0, 4)
-    SettingsList.SortOrder = Enum.SortOrder.LayoutOrder
-    SettingsList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    SettingsList.Parent = SettingsPanel
+    local SettingsSep = Instance.new("Frame")
+    SettingsSep.Size = UDim2.new(0, 1, 0, 180)
+    SettingsSep.Position = UDim2.new(0.32095, 0, 0, 12)
+    SettingsSep.BackgroundColor3 = Color3.fromRGB(71, 71, 71)
+    SettingsSep.BackgroundTransparency = 0.5
+    SettingsSep.BorderSizePixel = 0
+    SettingsSep.ZIndex = 102
+    SettingsSep.Parent = SettingsBox
+    AddToRegistry(SettingsSep, "BackgroundColor3", "Stroke")
 
-    local SettingsPad = Instance.new("UIPadding")
-    SettingsPad.PaddingTop = UDim.new(0, 6)
-    SettingsPad.PaddingBottom = UDim.new(0, 6)
-    SettingsPad.PaddingLeft = UDim.new(0, 4)
-    SettingsPad.PaddingRight = UDim.new(0, 4)
-    SettingsPad.Parent = SettingsPanel
+    local SettingsContent = Instance.new("Frame")
+    SettingsContent.Size = UDim2.new(1, 0, 1, 0)
+    SettingsContent.BackgroundTransparency = 1
+    SettingsContent.ZIndex = 102
+    SettingsContent.Parent = SettingsBox
 
-    local settingsBuilder = createSectionBuilder(SettingsPanel, SettingsPanel, 220, 1, Window)
+    -- 左侧导航按钮
+    local function MakeNavBtn(text, iconAsset, yOffset)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 69, 0, 17)
+        btn.Position = UDim2.new(0.03038, 0, 0, yOffset)
+        btn.BackgroundTransparency = 1
+        btn.Text = "      " .. text
+        btn.Font = Enum.Font.Gotham
+        btn.TextSize = 16
+        btn.TextXAlignment = Enum.TextXAlignment.Left
+        btn.TextColor3 = Color3.fromRGB(101, 101, 101)
+        btn.AutoButtonColor = false
+        btn.ZIndex = 102
+        btn.Parent = SettingsContent
+        AddToRegistry(btn, "TextColor3", "Text")
+        local ic = Instance.new("ImageLabel")
+        ic.Size = UDim2.new(0, 15, 0, 15)
+        ic.Position = UDim2.new(0, 0, 0.5, 0)
+        ic.AnchorPoint = Vector2.new(0, 0.5)
+        ic.BackgroundTransparency = 1
+        ic.Image = iconAsset
+        ic.ImageColor3 = Color3.fromRGB(101, 101, 101)
+        ic.Parent = btn
+        return btn, ic
+    end
 
-    local userCard = settingsBuilder:UserFrame({
-        Name    = LocalPlayer.DisplayName,
-        Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
-            Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150),
-        Expires = LocalPlayer.Name,
-        ButtonIcon = 9405931578,
-        Names        = { "副名字", "名字" },
-        Placeholders = { "输入副名字", "输入名字" },
-        Defaults     = { LocalPlayer.DisplayName, LocalPlayer.Name },
-        OnChanged = function(idx, text)
+    local AIBtn, AIIcon      = MakeNavBtn("AI",        "rbxassetid://12974219084", 13)
+    local CustBtn, CustIcon  = MakeNavBtn("Customize", "rbxassetid://10734910187", 37)
+    local CloseBtn, CloseIcon = MakeNavBtn("Close",    "rbxassetid://12966849577", 168)
+
+    -- AI 页
+    local AIPage = Instance.new("Frame")
+    AIPage.Size = UDim2.new(0.67743, 0, 0.87822, 0)
+    AIPage.Position = UDim2.new(0.30079, 0, 0.12178, 0)
+    AIPage.BackgroundTransparency = 1
+    AIPage.ZIndex = 102
+    AIPage.Parent = SettingsContent
+
+    local AITitle = Instance.new("TextLabel")
+    AITitle.Size = UDim2.new(0, 200, 0, 26)
+    AITitle.Position = UDim2.new(0.07831, 0, -0.06140, 0)
+    AITitle.BackgroundTransparency = 1
+    AITitle.Font = Enum.Font.Gotham
+    AITitle.Text = "Gemini API key"
+    AITitle.TextSize = 20
+    AITitle.TextXAlignment = Enum.TextXAlignment.Left
+    AITitle.TextColor3 = CurrentTheme.Text
+    AITitle.ZIndex = 103
+    AITitle.Parent = AIPage
+    AddToRegistry(AITitle, "TextColor3", "Text")
+
+    local AIDesc = Instance.new("TextLabel")
+    AIDesc.Size = UDim2.new(0, 230, 0, 34)
+    AIDesc.Position = UDim2.new(0.07831, 0, 0.05275, 0)
+    AIDesc.BackgroundTransparency = 1
+    AIDesc.Font = Enum.Font.Gotham
+    AIDesc.Text = "Required for zerohub intelligence to work."
+    AIDesc.TextSize = 14
+    AIDesc.TextWrapped = true
+    AIDesc.TextTransparency = 0.6
+    AIDesc.TextXAlignment = Enum.TextXAlignment.Left
+    AIDesc.TextColor3 = CurrentTheme.Text
+    AIDesc.ZIndex = 103
+    AIDesc.Parent = AIPage
+    AddToRegistry(AIDesc, "TextColor3", "SubText")
+    TextGradient:Skip(AIDesc)
+
+    local AIKeyBox = Instance.new("Frame")
+    AIKeyBox.Size = UDim2.new(0, 178, 0, 30)
+    AIKeyBox.Position = UDim2.new(0.07831, 0, 0.26654, 0)
+    AIKeyBox.BackgroundColor3 = Color3.fromRGB(41, 41, 41)
+    AIKeyBox.BackgroundTransparency = 0.5
+    AIKeyBox.BorderSizePixel = 0
+    AIKeyBox.ZIndex = 103
+    AIKeyBox.Parent = AIPage
+    Instance.new("UICorner", AIKeyBox).CornerRadius = UDim.new(0, 10)
+
+    local AIKeyInput = Instance.new("TextBox")
+    AIKeyInput.Size = UDim2.new(0, 291, 0, 21)
+    AIKeyInput.Position = UDim2.new(0.03478, 0, 0.5, 0)
+    AIKeyInput.AnchorPoint = Vector2.new(0, 0.5)
+    AIKeyInput.BackgroundTransparency = 1
+    AIKeyInput.Font = Enum.Font.Gotham
+    AIKeyInput.TextSize = 14
+    AIKeyInput.TextColor3 = CurrentTheme.Text
+    AIKeyInput.TextXAlignment = Enum.TextXAlignment.Left
+    AIKeyInput.TextWrapped = true
+    AIKeyInput.PlaceholderText = "Gemini API key"
+    AIKeyInput.PlaceholderColor3 = Color3.fromRGB(101, 101, 101)
+    AIKeyInput.ClearTextOnFocus = false
+    AIKeyInput.ZIndex = 104
+    AIKeyInput.Parent = AIKeyBox
+    AddToRegistry(AIKeyInput, "TextColor3", "Text")
+    TextGradient:Skip(AIKeyInput)
+
+    pcall(function()
+        if isfile and isfile("zerohub_gemini_api_key.txt") then
+            AIKeyInput.Text = readfile("zerohub_gemini_api_key.txt")
+        end
+    end)
+
+    local AIOk = Instance.new("TextButton")
+    AIOk.Size = UDim2.new(0, 48, 0, 30)
+    AIOk.Position = UDim2.new(0.80490, 0, 0.26654, 0)
+    AIOk.BackgroundColor3 = Color3.fromRGB(41, 41, 41)
+    AIOk.Text = "Ok   "
+    AIOk.Font = Enum.Font.Gotham
+    AIOk.TextSize = 14
+    AIOk.TextXAlignment = Enum.TextXAlignment.Right
+    AIOk.TextColor3 = CurrentTheme.Text
+    AIOk.AutoButtonColor = false
+    AIOk.ZIndex = 103
+    AIOk.Parent = AIPage
+    Instance.new("UICorner", AIOk).CornerRadius = UDim.new(0, 10)
+    AddToRegistry(AIOk, "TextColor3", "Text")
+
+    local AIOkIcon = Instance.new("ImageLabel")
+    AIOkIcon.Size = UDim2.new(0, 15, 0, 15)
+    AIOkIcon.Position = UDim2.new(0.076, 0, 0.27, 0)
+    AIOkIcon.BackgroundTransparency = 1
+    AIOkIcon.Image = "rbxassetid://10709790644"
+    AIOkIcon.Parent = AIOk
+    AddToRegistry(AIOkIcon, "ImageColor3", "Text")
+
+    AIOk.MouseButton1Click:Connect(function()
+        pcall(function()
+            writefile("zerohub_gemini_api_key.txt", AIKeyInput.Text)
+        end)
+        pcall(function()
+            local key = CoreGui:FindFirstChild("zerohub")
+            if key and key:FindFirstChild("geminiapikey") then
+                key.geminiapikey.Value = AIKeyInput.Text
+            end
+        end)
+        AIOk.Text = "Saved!"
+        task.delay(1.2, function() if AIOk.Parent then AIOk.Text = "Ok   " end end)
+    end)
+
+    local AIPrivacy = Instance.new("Frame")
+    AIPrivacy.Size = UDim2.new(0, 233, 0, 63)
+    AIPrivacy.Position = UDim2.new(0.07831, 0, 0.47948, 0)
+    AIPrivacy.BackgroundColor3 = Color3.fromRGB(41, 41, 41)
+    AIPrivacy.BackgroundTransparency = 0.5
+    AIPrivacy.BorderSizePixel = 0
+    AIPrivacy.ZIndex = 103
+    AIPrivacy.Parent = AIPage
+    Instance.new("UICorner", AIPrivacy).CornerRadius = UDim.new(0, 10)
+
+    local AIPrivacyIcon = Instance.new("ImageLabel")
+    AIPrivacyIcon.Size = UDim2.new(0, 20, 0, 20)
+    AIPrivacyIcon.Position = UDim2.new(0.05075, 0, 0.18527, 0)
+    AIPrivacyIcon.BackgroundTransparency = 1
+    AIPrivacyIcon.Image = "rbxassetid://10723415903"
+    AIPrivacyIcon.ZIndex = 104
+    AIPrivacyIcon.Parent = AIPrivacy
+    AddToRegistry(AIPrivacyIcon, "ImageColor3", "SubText")
+
+    local AIPrivacyText = Instance.new("TextLabel")
+    AIPrivacyText.Size = UDim2.new(0, 182, 0, 54)
+    AIPrivacyText.Position = UDim2.new(0.16842, 0, 0.15, 0)
+    AIPrivacyText.BackgroundTransparency = 1
+    AIPrivacyText.Font = Enum.Font.Gotham
+    AIPrivacyText.Text = "We do not log or store the API key. It will always be saved locally."
+    AIPrivacyText.TextSize = 14
+    AIPrivacyText.TextWrapped = true
+    AIPrivacyText.TextXAlignment = Enum.TextXAlignment.Left
+    AIPrivacyText.TextYAlignment = Enum.TextYAlignment.Top
+    AIPrivacyText.TextTransparency = 0.35
+    AIPrivacyText.TextColor3 = CurrentTheme.Text
+    AIPrivacyText.ZIndex = 104
+    AIPrivacyText.Parent = AIPrivacy
+    AddToRegistry(AIPrivacyText, "TextColor3", "SubText")
+    TextGradient:Skip(AIPrivacyText)
+
+    -- Customize 页
+    local CustPage = Instance.new("Frame")
+    CustPage.Size = UDim2.new(0.67743, 0, 0.87822, 0)
+    CustPage.Position = UDim2.new(0.30079, 0, 0.12178, 0)
+    CustPage.BackgroundTransparency = 1
+    CustPage.Visible = false
+    CustPage.ZIndex = 102
+    CustPage.Parent = SettingsContent
+
+    local CustTitle = Instance.new("TextLabel")
+    CustTitle.Size = UDim2.new(0, 200, 0, 26)
+    CustTitle.Position = UDim2.new(0.07831, 0, -0.07278, 0)
+    CustTitle.BackgroundTransparency = 1
+    CustTitle.Font = Enum.Font.Gotham
+    CustTitle.Text = "UI Effects"
+    CustTitle.TextSize = 20
+    CustTitle.TextXAlignment = Enum.TextXAlignment.Left
+    CustTitle.TextColor3 = CurrentTheme.Text
+    CustTitle.ZIndex = 103
+    CustTitle.Parent = CustPage
+    AddToRegistry(CustTitle, "TextColor3", "Text")
+
+    local CustDesc = Instance.new("TextLabel")
+    CustDesc.Size = UDim2.new(0, 230, 0, 31)
+    CustDesc.Position = UDim2.new(0.07831, 0, 0.05253, 0)
+    CustDesc.BackgroundTransparency = 1
+    CustDesc.Font = Enum.Font.Gotham
+    CustDesc.Text = "Those are vibecoded btw, but enjoy them i guess."
+    CustDesc.TextSize = 14
+    CustDesc.TextWrapped = true
+    CustDesc.TextTransparency = 0.6
+    CustDesc.TextXAlignment = Enum.TextXAlignment.Left
+    CustDesc.TextColor3 = CurrentTheme.Text
+    CustDesc.ZIndex = 103
+    CustDesc.Parent = CustPage
+    AddToRegistry(CustDesc, "TextColor3", "SubText")
+    TextGradient:Skip(CustDesc)
+
+    local FxHolder = Instance.new("Frame")
+    FxHolder.Size = UDim2.new(0, 230, 0, 104)
+    FxHolder.Position = UDim2.new(0.07831, 0, 0.26880, 0)
+    FxHolder.BackgroundTransparency = 1
+    FxHolder.ZIndex = 103
+    FxHolder.Parent = CustPage
+    local FxGrid = Instance.new("UIGridLayout")
+    FxGrid.CellSize = UDim2.new(0, 80, 0, 30)
+    FxGrid.SortOrder = Enum.SortOrder.LayoutOrder
+    FxGrid.Parent = FxHolder
+
+    -- 6 个 UI 特效
+    local EffectState    = { matrix=false, rain=false, sakura=false, stars=false, snow=false, glitch=false }
+    local EffectContainers = {}
+    local EffectConns      = {}
+
+    local function StopEffect(key)
+        if EffectConns[key] then EffectConns[key]:Disconnect(); EffectConns[key] = nil end
+        if EffectContainers[key] then EffectContainers[key]:Destroy(); EffectContainers[key] = nil end
+    end
+
+    local function StartEffect(key)
+        StopEffect(key)
+        local container = Instance.new("Frame")
+        container.Name = "UIEffect_" .. key
+        container.BackgroundTransparency = 1
+        container.Size = UDim2.new(1, 0, 1, 0)
+        container.ClipsDescendants = true
+        container.ZIndex = 50
+        container.Parent = MainFrame
+        EffectContainers[key] = container
+        local size = MainFrame.AbsoluteSize
+        if size.X <= 0 or size.Y <= 0 then
+            RunService.Heartbeat:Wait()
+            size = MainFrame.AbsoluteSize
+        end
+
+        if key == "matrix" then
+            local GLYPHS = {
+                "ア","イ","ウ","エ","オ","カ","キ","ク","ケ","コ",
+                "サ","シ","ス","セ","ソ","タ","チ","ツ","テ","ト",
+                "ナ","ニ","ヌ","ネ","ノ","ハ","ヒ","フ","ヘ","ホ",
+                "0","1","2","3","4","5","6","7","8","9","X","Z","#","%","*","&"
+            }
+            local t = 0
+            EffectConns[key] = RunService.RenderStepped:Connect(function(dt)
+                if not container.Parent then StopEffect(key); return end
+                t += dt
+                if t < 0.04 then return end
+                t = 0
+                for _ = 1, 2 do
+                    local label = Instance.new("TextLabel")
+                    label.Size = UDim2.new(0, 14, 0, 14)
+                    label.BackgroundTransparency = 1
+                    label.Font = Enum.Font.Code
+                    label.TextSize = 12
+                    label.Text = GLYPHS[math.random(#GLYPHS)]
+                    label.ZIndex = 50
+                    if math.random() < 0.20 then
+                        label.TextColor3 = Color3.fromRGB(220, 255, 220)
+                        label.TextTransparency = 0.05
+                    else
+                        label.TextColor3 = Color3.fromRGB(0, 255, 100)
+                        label.TextTransparency = math.random(15, 35) / 100
+                    end
+                    local colStep = 14
+                    local colIndex = math.random(0, math.max(1, math.floor(size.X / colStep) - 1))
+                    local startX = colIndex * colStep + 2
+                    label.Position = UDim2.new(0, startX, 0, -15)
+                    label.Parent = container
+                    local tw = TweenService:Create(label,
+                        TweenInfo.new(math.random(140, 250) / 100, Enum.EasingStyle.Linear),
+                        { Position = UDim2.new(0, startX, 0, size.Y + 15), TextTransparency = 1 })
+                    tw:Play()
+                    tw.Completed:Connect(function() label:Destroy() end)
+                end
+            end)
+
+        elseif key == "rain" then
+            EffectConns[key] = RunService.RenderStepped:Connect(function()
+                if not container.Parent then StopEffect(key); return end
+                for _ = 1, 2 do
+                    local drop = Instance.new("Frame")
+                    drop.Size = UDim2.new(0, 1, 0, math.random(12, 22))
+                    drop.BackgroundColor3 = Color3.fromRGB(200, 225, 255)
+                    drop.BackgroundTransparency = math.random(35, 65) / 100
+                    drop.BorderSizePixel = 0
+                    drop.Rotation = -25
+                    drop.ZIndex = 100
+                    local startX = math.random(-50, math.floor(size.X))
+                    drop.Position = UDim2.new(0, startX, 0, -20)
+                    drop.Parent = container
+                    local tw = TweenService:Create(drop,
+                        TweenInfo.new(math.random(30, 50) / 100, Enum.EasingStyle.Linear),
+                        {
+                            Position = UDim2.new(0, startX + (size.Y * 0.45), 0, size.Y + 30),
+                            BackgroundTransparency = 1
+                        })
+                    tw:Play()
+                    tw.Completed:Connect(function() drop:Destroy() end)
+                end
+            end)
+
+        elseif key == "sakura" then
+            local PETAL_COLORS = {
+                Color3.fromRGB(255, 183, 197), Color3.fromRGB(255, 192, 203),
+                Color3.fromRGB(255, 209, 220), Color3.fromRGB(248, 200, 220),
+                Color3.fromRGB(255, 105, 180),
+            }
+            local t = 0
+            EffectConns[key] = RunService.RenderStepped:Connect(function(dt)
+                if not container.Parent then StopEffect(key); return end
+                t += dt
+                if t < 0.12 then return end
+                t = 0
+                local petal = Instance.new("Frame")
+                petal.Size = UDim2.new(0, math.random(8, 14), 0, math.random(12, 18))
+                petal.BackgroundColor3 = PETAL_COLORS[math.random(#PETAL_COLORS)]
+                petal.BackgroundTransparency = math.random(10, 35) / 100
+                petal.BorderSizePixel = 0
+                petal.Rotation = math.random(0, 360)
+                petal.ZIndex = 100
+                Instance.new("UICorner", petal).CornerRadius = UDim.new(0.6, 0)
+                local startX = math.random(-30, math.floor(size.X + 30))
+                petal.Position = UDim2.new(0, startX, 0, -20)
+                petal.Parent = container
+                local spin = (math.random() > 0.5 and 1 or -1) * math.random(180, 540)
+                local tw = TweenService:Create(petal,
+                    TweenInfo.new(math.random(350, 600) / 100, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                    {
+                        Position = UDim2.new(0, startX + math.random(-80, 100), 0, size.Y + 25),
+                        Rotation = petal.Rotation + spin,
+                        BackgroundTransparency = 1
+                    })
+                tw:Play()
+                tw.Completed:Connect(function() petal:Destroy() end)
+            end)
+
+        elseif key == "stars" then
+            local SPARKLE_ICONS = { "✦", "✧", "★", "✨", "✺", "✶" }
+            local SPARKLE_COLORS = {
+                Color3.fromRGB(255, 223, 128), Color3.fromRGB(255, 255, 255),
+                Color3.fromRGB(200, 230, 255), Color3.fromRGB(255, 192, 230),
+                Color3.fromRGB(220, 180, 255),
+            }
+            local t = 0
+            EffectConns[key] = RunService.RenderStepped:Connect(function(dt)
+                if not container.Parent then StopEffect(key); return end
+                t += dt
+                if t < 0.08 then return end
+                t = 0
+                local baseSize = math.random(10, 18)
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(0, baseSize, 0, baseSize)
+                label.BackgroundTransparency = 1
+                label.Font = Enum.Font.SourceSansBold
+                label.TextSize = baseSize
+                label.Text = SPARKLE_ICONS[math.random(#SPARKLE_ICONS)]
+                label.TextColor3 = SPARKLE_COLORS[math.random(#SPARKLE_COLORS)]
+                label.TextTransparency = 1
+                label.Rotation = math.random(-30, 30)
+                label.ZIndex = 80
+                local startX = math.random(10, math.max(10, math.floor(size.X - 20)))
+                local startY = math.random(10, math.max(10, math.floor(size.Y - 20)))
+                label.Position = UDim2.new(0, startX, 0, startY)
+                label.Parent = container
+                local lifetime = math.random(120, 220) / 100
+                local floatDist = math.random(15, 35)
+                local fadeIn = TweenService:Create(label,
+                    TweenInfo.new(lifetime * 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                    {
+                        TextTransparency = math.random(0, 20) / 100,
+                        Position = UDim2.new(0, startX, 0, startY - floatDist * 0.4),
+                        Rotation = label.Rotation + 15,
+                        Size = UDim2.new(0, baseSize + 4, 0, baseSize + 4)
+                    })
+                local fadeOut = TweenService:Create(label,
+                    TweenInfo.new(lifetime * 0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+                    {
+                        TextTransparency = 1,
+                        Position = UDim2.new(0, startX + math.random(-10, 10), 0, startY - floatDist),
+                        Rotation = label.Rotation + math.random(-45, 45),
+                        Size = UDim2.new(0, baseSize - 2, 0, baseSize - 2)
+                    })
+                fadeIn:Play()
+                fadeIn.Completed:Connect(function() fadeOut:Play() end)
+                fadeOut.Completed:Connect(function() label:Destroy() end)
+            end)
+
+        elseif key == "snow" then
+            local t = 0
+            EffectConns[key] = RunService.RenderStepped:Connect(function(dt)
+                if not container.Parent then StopEffect(key); return end
+                t += dt
+                if t < 0.08 then return end
+                t = 0
+                local flakeSize = math.random(3, 6)
+                local flake = Instance.new("Frame")
+                flake.Size = UDim2.new(0, flakeSize, 0, flakeSize)
+                flake.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                flake.BackgroundTransparency = math.random(10, 40) / 100
+                flake.BorderSizePixel = 0
+                flake.ZIndex = 100
+                Instance.new("UICorner", flake).CornerRadius = UDim.new(1, 0)
+                local startX = math.random(-20, math.floor(size.X + 20))
+                flake.Position = UDim2.new(0, startX, 0, -10)
+                flake.Parent = container
+                local tw = TweenService:Create(flake,
+                    TweenInfo.new(math.random(250, 450) / 100, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+                    {
+                        Position = UDim2.new(0, startX + math.random(-40, 60), 0, size.Y + 15),
+                        BackgroundTransparency = 1
+                    })
+                tw:Play()
+                tw.Completed:Connect(function() flake:Destroy() end)
+            end)
+
+        elseif key == "glitch" then
+            local GLITCH_COLORS = {
+                Color3.fromRGB(0, 255, 240), Color3.fromRGB(255, 0, 115),
+                Color3.fromRGB(255, 230, 0), Color3.fromRGB(0, 150, 255),
+                Color3.fromRGB(255, 255, 255),
+            }
+            local t = 0
+            EffectConns[key] = RunService.RenderStepped:Connect(function(dt)
+                if not container.Parent then StopEffect(key); return end
+                t += dt
+                if t < math.random(3, 8) / 100 then return end
+                t = 0
+                for _ = 1, math.random(1, 3) do
+                    local thickness = math.random(1, 4)
+                    local width = size.X * (math.random(20, 95) / 100)
+                    local line = Instance.new("Frame")
+                    line.Size = UDim2.new(0, width, 0, thickness)
+                    line.BackgroundColor3 = GLITCH_COLORS[math.random(#GLITCH_COLORS)]
+                    line.BackgroundTransparency = math.random(10, 30) / 100
+                    line.BorderSizePixel = 0
+                    line.ZIndex = 90
+                    local startX = math.random(-10, math.max(0, math.floor(size.X - width + 10)))
+                    local startY = math.random(5, math.max(5, math.floor(size.Y - thickness)))
+                    line.Position = UDim2.new(0, startX, 0, startY)
+                    line.Parent = container
+                    local tw = TweenService:Create(line,
+                        TweenInfo.new(math.random(4, 12) / 100, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out),
+                        {
+                            Position = UDim2.new(0, startX + math.random(-25, 25), 0, startY),
+                            BackgroundTransparency = 1
+                        })
+                    tw:Play()
+                    tw.Completed:Connect(function() line:Destroy() end)
+                end
+            end)
+        end
+    end
+
+    local ACTIVE_BG    = Color3.fromRGB(40, 40, 40)
+    local INACTIVE_BG  = Color3.fromRGB(30, 30, 30)
+    local ACTIVE_TXT   = Color3.fromRGB(255, 255, 255)
+    local INACTIVE_TXT = Color3.fromRGB(100, 100, 100)
+
+    local function MakeFxBtn(text, key, iconAsset)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 79, 0, 30)
+        btn.BackgroundColor3 = INACTIVE_BG
+        btn.Text = "  " .. text .. "   "
+        btn.Font = Enum.Font.Gotham
+        btn.TextSize = 14
+        btn.TextXAlignment = Enum.TextXAlignment.Right
+        btn.TextColor3 = INACTIVE_TXT
+        btn.AutoButtonColor = false
+        btn.ZIndex = 103
+        btn.Parent = FxHolder
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+
+        local ic = Instance.new("ImageLabel")
+        ic.Size = UDim2.new(0, 15, 0, 15)
+        ic.Position = UDim2.new(0, 8, 0.5, 0)
+        ic.AnchorPoint = Vector2.new(0, 0.5)
+        ic.BackgroundTransparency = 1
+        ic.Image = iconAsset
+        ic.ImageColor3 = INACTIVE_TXT
+        ic.ZIndex = 104
+        ic.Parent = btn
+
+        local function Refresh()
+            local on = EffectState[key]
+            btn.BackgroundColor3 = on and ACTIVE_BG or INACTIVE_BG
+            btn.TextColor3 = on and ACTIVE_TXT or INACTIVE_TXT
+            ic.ImageColor3 = on and ACTIVE_TXT or INACTIVE_TXT
+        end
+        btn.MouseButton1Click:Connect(function()
+            EffectState[key] = not EffectState[key]
+            Refresh()
+            if EffectState[key] then StartEffect(key) else StopEffect(key) end
+        end)
+        Refresh()
+        return btn
+    end
+
+    MakeFxBtn("Matrix", "matrix", "rbxassetid://10709810463")
+    MakeFxBtn("Rain",   "rain",   "rbxassetid://10723344432")
+    MakeFxBtn("Sakura", "sakura", "rbxassetid://10723425539")
+    MakeFxBtn("Stars",  "stars",  "rbxassetid://10734966248")
+    MakeFxBtn("Snow",   "snow",   "rbxassetid://10734964600")
+    MakeFxBtn("Glitch", "glitch", "rbxassetid://10734887784")
+
+    local function ShowPage(page)
+        AIPage.Visible = (page == "ai")
+        CustPage.Visible = (page == "customize")
+        local aiOn = (page == "ai")
+        local custOn = (page == "customize")
+        AIBtn.TextColor3 = aiOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        CustBtn.TextColor3 = custOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        AIIcon.ImageColor3 = aiOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        CustIcon.ImageColor3 = custOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+    end
+    AIBtn.MouseButton1Click:Connect(function() ShowPage("ai") end)
+    CustBtn.MouseButton1Click:Connect(function() ShowPage("customize") end)
+    ShowPage("ai")
+
+    -- 兼容 Window:SetAccount 的 stub
+    Window._userCard = {
+        SetValue = function(_, idx, text)
             if idx == 1 then
                 AccountName.Text = (text ~= "" and text) or LocalPlayer.DisplayName
             elseif idx == 2 then
                 ExpireLabel.Text = (text ~= "" and text) or LocalPlayer.Name
             end
         end,
-        Parent = SettingsPanel,
-    })
-    Window._userCard = userCard
+        SetProfile = function(_, p)
+            if p and p ~= "" then AccountProfile.Image = p end
+        end,
+        Lock = function() end,
+        Unlock = function() end,
+    }
 
-    settingsBuilder:Toggle({
-        Name = "文字渐变",
-        Value = true,
-        Parent = SettingsPanel,
-        Callback = function(enabled) TextGradient:SetEnabled(enabled) end,
-    })
-
-    settingsBuilder:Toggle({
-        Name = "自定义光标",
-        Value = false,
-        Parent = SettingsPanel,
-        Callback = function(enabled) Fenglib:SetCustomCursor(enabled) end,
-    })
-
-    SettingsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        if SettingsPanel.Visible then
-            local h = SettingsList.AbsoluteContentSize.Y + 12
-            Tween(SettingsPanel, {Size = UDim2.new(0, 220, 0, h)}, 0.2)
-        end
-    end)
-
+    -- ============ 设置面板开关 ============
     local settingsOpen = false
     local outsideConn = nil
 
@@ -4990,9 +5497,8 @@ function Fenglib:CreateWindow(Config)
     local function closeSettings()
         settingsOpen = false
         if outsideConn then outsideConn:Disconnect(); outsideConn = nil end
-        Tween(SettingsPanel, {BackgroundTransparency = 1, Size = UDim2.new(0, 220, 0, 0)}, 0.18)
-        Tween(SettingsStroke, {Transparency = 1}, 0.18)
-        task.delay(0.2, function()
+        Tween(SettingsPanel, { BackgroundTransparency = 1 }, 0.12)
+        task.delay(0.14, function()
             if not settingsOpen then SettingsPanel.Visible = false end
         end)
     end
@@ -5000,22 +5506,25 @@ function Fenglib:CreateWindow(Config)
     local function openSettings()
         settingsOpen = true
         SettingsPanel.Visible = true
-        SettingsPanel.Size = UDim2.new(0, 220, 0, 0)
-        local h = SettingsList.AbsoluteContentSize.Y + 12
-        Tween(SettingsPanel, {BackgroundTransparency = 0.035, Size = UDim2.new(0, 220, 0, h)}, 0.2)
-        Tween(SettingsStroke, {Transparency = 0.65}, 0.2)
+        SettingsPanel.BackgroundTransparency = 1
+        Tween(SettingsPanel, { BackgroundTransparency = 0.2 }, 0.15)
         if outsideConn then outsideConn:Disconnect() end
         local settingsMouse = LocalPlayer:GetMouse()
         outsideConn = UserInputService.InputBegan:Connect(function(input, gpe)
             if gpe then return end
             if input.UserInputType == Enum.UserInputType.MouseButton1
             or input.UserInputType == Enum.UserInputType.Touch then
-                if not isInside(settingsMouse, SettingsPanel) and not isInside(settingsMouse, BottomFrame) then
+                if not isInside(settingsMouse, SettingsBox)
+                and not isInside(settingsMouse, BottomFrame) then
                     closeSettings()
                 end
             end
         end)
     end
+
+    CloseBtn.MouseButton1Click:Connect(function()
+        closeSettings()
+    end)
 
     BottomFrame.MouseEnter:Connect(function()
         Tween(UserSettingButton, {TextTransparency = 0.25}, 0.18)
@@ -5130,7 +5639,7 @@ function Fenglib:CreateWindow(Config)
         resizerVisible = not resizerVisible
         Resizer.Visible = resizerVisible
     end)
-    local CloseBtn = createControlButton("rbxassetid://130510492706892", nil, function() ScreenGui:Destroy() end)
+    local CloseBtn2 = createControlButton("rbxassetid://130510492706892", nil, function() ScreenGui:Destroy() end)
 
     do
         local BUILDER_ICONS_PATH =
@@ -5430,17 +5939,17 @@ function Fenglib:CreateWindow(Config)
         AddToRegistry(BasedLabel, "TextColor3", "Text")
         TextGradient:Skip(BasedLabel)
 
-        local LineFrame = Instance.new("Frame")
-        LineFrame.Name                  = "LineFrame"
-        LineFrame.AnchorPoint           = Vector2.new(0.5, 1)
-        LineFrame.BackgroundColor3      = CurrentTheme.Stroke
-        LineFrame.BackgroundTransparency = 0.650
-        LineFrame.BorderSizePixel       = 0
-        LineFrame.Position              = UDim2.new(0.5, 0, 1, 0)
-        LineFrame.Size                  = UDim2.new(1, -20, 0, 1)
-        LineFrame.ZIndex                = 154
-        LineFrame.Parent                = InputFrame
-        AddToRegistry(LineFrame, "BackgroundColor3", "Stroke")
+        local LineFrame_Config = Instance.new("Frame")
+        LineFrame_Config.Name                  = "LineFrame"
+        LineFrame_Config.AnchorPoint           = Vector2.new(0.5, 1)
+        LineFrame_Config.BackgroundColor3      = CurrentTheme.Stroke
+        LineFrame_Config.BackgroundTransparency = 0.650
+        LineFrame_Config.BorderSizePixel       = 0
+        LineFrame_Config.Position              = UDim2.new(0.5, 0, 1, 0)
+        LineFrame_Config.Size                  = UDim2.new(1, -20, 0, 1)
+        LineFrame_Config.ZIndex                = 154
+        LineFrame_Config.Parent                = InputFrame
+        AddToRegistry(LineFrame_Config, "BackgroundColor3", "Stroke")
 
         local BasedHandler = Instance.new("Frame")
         BasedHandler.Name               = "BasedHandler"
@@ -5527,7 +6036,7 @@ function Fenglib:CreateWindow(Config)
         local CloseMenu
         local OpenMenu
         local isOpen = false
-        local outsideConn
+        local outsideConn_cfg
         local selectedConfigName = DEFAULT_CONFIG_NAME
 
         local function MakeSymbolButton(parent, iconName, hoverColor, callback, layoutOrder)
@@ -5706,7 +6215,7 @@ function Fenglib:CreateWindow(Config)
                 Tween(cfgMenuStroke,  { Transparency = 0.650 }, TWEEN_SPEED)
                 Tween(BasedLabel,     { TextTransparency = 0.200 }, TWEEN_SPEED)
                 Tween(TextInputStroke,{ Transparency = 0.650 }, TWEEN_SPEED)
-                Tween(LineFrame,      { BackgroundTransparency = 0.650 }, TWEEN_SPEED)
+                Tween(LineFrame_Config, { BackgroundTransparency = 0.650 }, TWEEN_SPEED)
                 Tween(TextInput,      { BackgroundTransparency = 0 }, TWEEN_SPEED)
                 Tween(TextBox,        { TextTransparency = 0.350 }, TWEEN_SPEED)
                 Tween(AddIcon,        { TextTransparency = 0.350 }, TWEEN_SPEED)
@@ -5724,7 +6233,7 @@ function Fenglib:CreateWindow(Config)
                 Tween(cfgMenuStroke,  { Transparency = 1 }, TWEEN_SPEED)
                 Tween(BasedLabel,     { TextTransparency = 1 }, TWEEN_SPEED)
                 Tween(TextInputStroke,{ Transparency = 1 }, TWEEN_SPEED)
-                Tween(LineFrame,      { BackgroundTransparency = 1 }, TWEEN_SPEED)
+                Tween(LineFrame_Config, { BackgroundTransparency = 1 }, TWEEN_SPEED)
                 Tween(TextInput,      { BackgroundTransparency = 1 }, TWEEN_SPEED)
                 Tween(TextBox,        { TextTransparency = 1 }, TWEEN_SPEED)
                 Tween(AddIcon,        { TextTransparency = 1 }, TWEEN_SPEED)
@@ -5745,12 +6254,12 @@ function Fenglib:CreateWindow(Config)
             RefreshConfigList()
             ApplyMenuRender(true)
 
-            if outsideConn then
-                outsideConn:Disconnect()
-                outsideConn = nil
+            if outsideConn_cfg then
+                outsideConn_cfg:Disconnect()
+                outsideConn_cfg = nil
             end
             local configMouse = LocalPlayer:GetMouse()
-            outsideConn = UserInputService.InputBegan:Connect(function(input, gpe)
+            outsideConn_cfg = UserInputService.InputBegan:Connect(function(input, gpe)
                 if gpe then return end
                 if input.UserInputType == Enum.UserInputType.MouseButton1
                 or input.UserInputType == Enum.UserInputType.Touch then
@@ -5762,9 +6271,9 @@ function Fenglib:CreateWindow(Config)
                     end
 
                     if not Inside(ConfigMenu) and not Inside(ConfigFrame) then
-                        if outsideConn then
-                            outsideConn:Disconnect()
-                            outsideConn = nil
+                        if outsideConn_cfg then
+                            outsideConn_cfg:Disconnect()
+                            outsideConn_cfg = nil
                         end
                         isOpen = false
                         ApplyMenuRender(false)
@@ -5774,9 +6283,9 @@ function Fenglib:CreateWindow(Config)
         end
 
         CloseMenu = function()
-            if outsideConn then
-                outsideConn:Disconnect()
-                outsideConn = nil
+            if outsideConn_cfg then
+                outsideConn_cfg:Disconnect()
+                outsideConn_cfg = nil
             end
             if not isOpen then return end
             isOpen = false
@@ -5875,11 +6384,6 @@ function Fenglib:CreateWindow(Config)
             end
             RefreshConfigList()
         end)
-
-        -- 卡片模式下初始时隐藏配置系统
-        if CardMode then
-            ConfigFrame.Visible = false
-        end
     end
 
     local TabContainer = Instance.new("Frame")
@@ -5888,71 +6392,6 @@ function Fenglib:CreateWindow(Config)
     TabContainer.BackgroundTransparency = 1
     TabContainer.ClipsDescendants = true
     TabContainer.Parent = RightMenuFrame
-
-    -- === 卡片模式：初始化卡片网格（挂到 MainFrame 全宽） ===
-    if CardMode then
-        -- 初始隐藏左侧面板、右侧内容、配置系统
-        LeftMenuFrame.Visible = false
-        TabContainer.Visible = false
-        RightMenuFrame.BackgroundTransparency = 1
-        RightStroke.Transparency = 1
-
-        cardsContainer = Instance.new("ScrollingFrame")
-        cardsContainer.Name = "CardsContainer"
-        cardsContainer.Size = UDim2.new(1, -20, 1, -55)
-        cardsContainer.Position = UDim2.new(0, 10, 0, 50)
-        cardsContainer.BackgroundTransparency = 1
-        cardsContainer.ScrollBarThickness = 4
-        cardsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-        cardsContainer.ZIndex = 0
-        cardsContainer.Parent = MainFrame
-
-        local gridLayout = Instance.new("UIGridLayout")
-        gridLayout.CellSize            = UDim2.new(0.5, -20, 0, 74)
-        gridLayout.CellPadding         = UDim2.new(0, 15, 0, 15)
-        gridLayout.FillDirection       = Enum.FillDirection.Horizontal
-        gridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        gridLayout.VerticalAlignment   = Enum.VerticalAlignment.Top
-        gridLayout.SortOrder           = Enum.SortOrder.LayoutOrder
-        gridLayout.Parent              = cardsContainer
-
-        local function updateCardsCanvas()
-            cardsContainer.CanvasSize = UDim2.new(0, 0, 0, gridLayout.AbsoluteContentSize.Y + 20)
-        end
-        gridLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCardsCanvas)
-        task.spawn(updateCardsCanvas)
-
-        -- 卡片模式的返回按钮
-        BackButton = createControlButton("rbxassetid://7733764800", nil, function()
-            -- 隐藏所有卡片的 Tab
-            for _, tabs in pairs(Window._tabsByCard or {}) do
-                for _, t in ipairs(tabs) do
-                    t.btn.Visible = false
-                    t.page.Visible = false
-                    t.isActive = false
-                    t.btn.BackgroundTransparency = 1
-                    if t.glow then t.glow.BackgroundTransparency = 1 end
-                    if t.textLabel then Tween(t.textLabel, {TextTransparency = 0.3}, 0.2) end
-                end
-            end
-            Window._activeTab = nil
-            activeCardName = nil
-            if BackButton then BackButton.Visible = false end
-
-            -- 显示卡片网格，隐藏原布局
-            cardsContainer.Visible = true
-            LeftMenuFrame.Visible = false
-            TabContainer.Visible = false
-            RightMenuFrame.BackgroundTransparency = 1
-            RightStroke.Transparency = 1
-            ConfigFrame.Visible = false
-        end)
-        if BackButton then
-            BackButton.Visible = false
-            BackButton.LayoutOrder = -1
-        end
-    end
-    -- === 卡片模式初始化结束 ===
 
     local PageContainer = Instance.new("ScrollingFrame")
     PageContainer.Size = UDim2.new(1, 0, 1, 0)
@@ -6198,14 +6637,11 @@ function Fenglib:CreateWindow(Config)
 
     Window._activeTab = nil
     Window._tabs = {}
-    Window._tabsByCard = {}
     function Window:Tab(name, icon)
-        local tabCardName = nil
         local tabLocked      = false
         local tabLockedTitle = "已锁定"
         if type(name) == "table" then
             local cfg = name
-            tabCardName = cfg.Card
             name = cfg.Name or cfg.Text or "Tab"
             icon = cfg.Icon or cfg.Logo
             tabLocked = cfg.Locked == true
@@ -6213,12 +6649,6 @@ function Fenglib:CreateWindow(Config)
                           or cfg.TextLocked
                           or cfg.LockMessage
                           or "已锁定"
-        end
-
-        -- 卡片模式下，必须通过 Card 参数创建
-        if CardMode and not tabCardName then
-            warn("[Fenglib] Card mode is enabled. Use Window:Card(...):Tab(...) instead.")
-            return {}
         end
 
         local parentContainer = LeftScrollingFrame
@@ -6304,7 +6734,7 @@ function Fenglib:CreateWindow(Config)
         end
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
         task.spawn(updatePageCanvas)
-        local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame, locked = tabLocked, card = tabCardName}
+        local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame, locked = tabLocked}
         TabBtn.MouseButton1Click:Connect(function()
             if tabLocked then return end
             if Window._activeTab == state then return end
@@ -6323,26 +6753,15 @@ function Fenglib:CreateWindow(Config)
             Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
             Window._activeTab = state
         end)
-
-        if tabCardName then
-            -- 卡片模式：Tab 初始隐藏，注册到卡片列表，不自动激活
-            TabBtn.Visible = false
-            Page.Visible = false
-            Window._tabsByCard[tabCardName] = Window._tabsByCard[tabCardName] or {}
-            table.insert(Window._tabsByCard[tabCardName], state)
-        else
-            -- 非卡片模式：自动激活第一个 Tab
-            if not Window._activeTab and not tabLocked then
-                TabBtn.BackgroundTransparency = 1
-                state.isActive = true
-                state.glow.BackgroundTransparency = 0
-                TabText.TextTransparency = 0
-                Page.Visible = true
-                Page.Position = UDim2.new(0, 0, 0, 0)
-                Window._activeTab = state
-            end
+        if not Window._activeTab and not tabLocked then
+            TabBtn.BackgroundTransparency = 1
+            state.isActive = true
+            state.glow.BackgroundTransparency = 0
+            TabText.TextTransparency = 0
+            Page.Visible = true
+            Page.Position = UDim2.new(0, 0, 0, 0)
+            Window._activeTab = state
         end
-
         table.insert(Window._tabs, state)
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
         if name == "Settings" then TabBtn.LayoutOrder = 99999 end
@@ -6358,162 +6777,6 @@ function Fenglib:CreateWindow(Config)
             end
         end)
         return createSectionBuilder(PageContent, PageContent, 330, 1, Window)
-    end
-
-    -- ============================================================
-    -- 卡片模式 API：Window:Card({ Name, Description, Icon })
-    -- 点开卡片后复用原 Test.lua 的左侧 Tab 列表 + 底部头像 + 右侧内容布局
-    -- ============================================================
-    function Window:Card(cardConfig)
-        if not CardMode then
-            warn("[Fenglib] Card mode is not enabled. Set Config.Card = true when creating the window.")
-            return { Tab = function() return {} end }
-        end
-
-        if type(cardConfig) ~= "table" then
-            cardConfig = { Name = tostring(cardConfig or "Card") }
-        end
-
-        local name        = cardConfig.Name or cardConfig.Title or "Card"
-        local description = cardConfig.Description or cardConfig.Desc or ""
-        local iconSrc     = cardConfig.Icon or cardConfig.Logo or nil
-
-        cardOrderCounter = cardOrderCounter + 1
-
-        -- 卡片按钮
-        local cardBtn = Instance.new("TextButton")
-        cardBtn.Name = "Card_" .. name
-        cardBtn.Size = UDim2.new(1, 0, 1, 0)
-        cardBtn.BackgroundColor3 = CurrentTheme.Top
-        cardBtn.BackgroundTransparency = 0.2
-        cardBtn.AutoButtonColor = false
-        cardBtn.Text = ""
-        cardBtn.LayoutOrder = cardOrderCounter
-        cardBtn.Parent = cardsContainer
-        Instance.new("UICorner", cardBtn).CornerRadius = UDim.new(0, 12)
-
-        local cardStroke = Instance.new("UIStroke")
-        cardStroke.Color = CurrentTheme.Accent
-        cardStroke.Thickness = 2
-        cardStroke.Transparency = 0.7
-        cardStroke.Parent = cardBtn
-
-        local cardPadding = Instance.new("UIPadding")
-        cardPadding.PaddingLeft   = UDim.new(0, 10)
-        cardPadding.PaddingRight  = UDim.new(0, 10)
-        cardPadding.PaddingTop    = UDim.new(0, 10)
-        cardPadding.PaddingBottom = UDim.new(0, 10)
-        cardPadding.Parent = cardBtn
-
-        local iconLabel = Instance.new("ImageLabel")
-        iconLabel.Size = UDim2.new(0, 44, 0, 44)
-        iconLabel.Position = UDim2.new(0, 0, 0, 5)
-        iconLabel.BackgroundTransparency = 1
-        iconLabel.Image = formatIconAsset(iconSrc, "rbxassetid://84830962019412")
-        iconLabel.ImageColor3 = CurrentTheme.Text
-        iconLabel.Parent = cardBtn
-        Instance.new("UICorner", iconLabel).CornerRadius = UDim.new(0, 10)
-
-        local textFrame = Instance.new("Frame")
-        textFrame.Size = UDim2.new(1, -54, 1, 0)
-        textFrame.Position = UDim2.new(0, 54, 0, 0)
-        textFrame.BackgroundTransparency = 1
-        textFrame.Parent = cardBtn
-
-        local textLayout = Instance.new("UIListLayout")
-        textLayout.Padding = UDim.new(0, 2)
-        textLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        textLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-        textLayout.Parent = textFrame
-
-        local titleLbl = Instance.new("TextLabel")
-        titleLbl.Size = UDim2.new(1, 0, 0, 0)
-        titleLbl.AutomaticSize = Enum.AutomaticSize.Y
-        titleLbl.BackgroundTransparency = 1
-        titleLbl.Font = Enum.Font.GothamBold
-        titleLbl.Text = name
-        titleLbl.TextColor3 = CurrentTheme.Text
-        titleLbl.TextSize = 13
-        titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-        titleLbl.TextTruncate = Enum.TextTruncate.AtEnd
-        titleLbl.Parent = textFrame
-        AddToRegistry(titleLbl, "TextColor3", "Text")
-
-        local descLbl = Instance.new("TextLabel")
-        descLbl.Size = UDim2.new(1, 0, 0, 0)
-        descLbl.AutomaticSize = Enum.AutomaticSize.Y
-        descLbl.BackgroundTransparency = 1
-        descLbl.Font = Enum.Font.Gotham
-        descLbl.Text = description
-        descLbl.TextColor3 = Color3.fromRGB(180, 190, 210)
-        descLbl.TextSize = 11
-        descLbl.TextXAlignment = Enum.TextXAlignment.Left
-        descLbl.TextWrapped = true
-        descLbl.TextTruncate = Enum.TextTruncate.AtEnd
-        descLbl.Parent = textFrame
-
-        cardBtn.MouseEnter:Connect(function()
-            Tween(cardBtn,   { BackgroundTransparency = 0.05 }, 0.2)
-            Tween(cardStroke,{ Thickness = 3, Transparency = 0.4 }, 0.2)
-            Tween(iconLabel, { Size = UDim2.new(0, 48, 0, 48) }, 0.2)
-        end)
-        cardBtn.MouseLeave:Connect(function()
-            Tween(cardBtn,   { BackgroundTransparency = 0.2 }, 0.2)
-            Tween(cardStroke,{ Thickness = 2, Transparency = 0.7 }, 0.2)
-            Tween(iconLabel, { Size = UDim2.new(0, 44, 0, 44) }, 0.2)
-        end)
-
-        -- 卡片点击：显示原 Test.lua 布局 + 该卡片的 Tab
-        cardBtn.MouseButton1Click:Connect(function()
-            if activeCardName == name then return end
-
-            -- 取消所有 Tab 激活并隐藏
-            for _, tabs in pairs(Window._tabsByCard or {}) do
-                for _, t in ipairs(tabs) do
-                    t.btn.Visible = false
-                    t.page.Visible = false
-                    t.isActive = false
-                    t.btn.BackgroundTransparency = 1
-                    if t.glow then t.glow.BackgroundTransparency = 1 end
-                    if t.textLabel then Tween(t.textLabel, {TextTransparency = 0.3}, 0.2) end
-                end
-            end
-            Window._activeTab = nil
-
-            -- 显示当前卡片的 Tab 按钮
-            if Window._tabsByCard[name] then
-                for _, t in ipairs(Window._tabsByCard[name]) do
-                    t.btn.Visible = true
-                end
-                -- 激活第一个 Tab
-                local first = Window._tabsByCard[name][1]
-                if first and not first.locked then
-                    first.isActive = true
-                    first.btn.BackgroundTransparency = 1
-                    if first.glow then first.glow.BackgroundTransparency = 0 end
-                    if first.textLabel then Tween(first.textLabel, {TextTransparency = 0}, 0.2) end
-                    first.page.Visible = true
-                    first.page.Position = UDim2.new(0, 0, 0, 0)
-                    Window._activeTab = first
-                end
-            end
-
-            -- 隐藏卡片网格，显示原 Test.lua 的完整布局
-            cardsContainer.Visible = false
-            LeftMenuFrame.Visible = true
-            TabContainer.Visible = true
-            RightMenuFrame.BackgroundTransparency = 0.6
-            RightStroke.Transparency = 0.65
-            ConfigFrame.Visible = true
-            if BackButton then BackButton.Visible = true end
-            activeCardName = name
-        end)
-
-        local cardObj = {}
-        function cardObj.Tab(tabName, tabIcon)
-            return Window:Tab({ Name = tabName, Icon = tabIcon, Card = name })
-        end
-        return cardObj
     end
 
     function Window:CreateHomeTab(Config)
@@ -7502,6 +7765,7 @@ function Fenglib:CreateWindow(Config)
     function Window:Destroy()
         for _, fn in ipairs(Window._homeCleanup or {}) do pcall(fn) end
         Window._homeCleanup = nil
+        for k in pairs(EffectConns) do pcall(StopEffect, k) end
         ScreenGui:Destroy()
     end
     function Window:SetSubtitle(newSubtitle) WindowContent.Text = newSubtitle or "" end
