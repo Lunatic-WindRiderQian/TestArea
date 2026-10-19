@@ -4895,19 +4895,23 @@ function Fenglib:CreateWindow(Config)
     BottomClick.Parent = BottomFrame
 
     -- ============================================================
-    -- Settings 面板 — 完整搬运自 非UI.lua (StarterGui.zerohub.main.settings)
+    -- Settings 面板 — 完整搬运自 非UI.lua，颜色/遮罩与原文件一致
+    -- 左侧: Settings / UI Effects / Close
+    -- 右侧: 原 Test 两个 Toggle + 6 个 UI 特效
     -- ============================================================
 
+    -- 全屏遮罩（对应 main.settings）
     local SettingsPanel = Instance.new("Frame")
     SettingsPanel.Size = UDim2.new(1, 0, 1, 0)
     SettingsPanel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    SettingsPanel.BackgroundTransparency = 1
+    SettingsPanel.BackgroundTransparency = 0.2
     SettingsPanel.BorderSizePixel = 0
     SettingsPanel.Visible = false
     SettingsPanel.ZIndex = 100
     SettingsPanel.Parent = MainFrame
     Instance.new("UICorner", SettingsPanel).CornerRadius = UDim.new(0, 12)
 
+    -- 内容面板（对应 okbro）
     local SettingsBox = Instance.new("Frame")
     SettingsBox.Size = UDim2.new(0, 377, 0, 204)
     SettingsBox.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -4918,8 +4922,8 @@ function Fenglib:CreateWindow(Config)
     SettingsBox.ZIndex = 101
     SettingsBox.Parent = SettingsPanel
     Instance.new("UICorner", SettingsBox).CornerRadius = UDim.new(0, 10)
-    AddToRegistry(SettingsBox, "BackgroundColor3", "Main")
 
+    -- 分隔线（对应 okbro.separator，颜色硬编码同原文件）
     local SettingsSep = Instance.new("Frame")
     SettingsSep.Size = UDim2.new(0, 1, 0, 180)
     SettingsSep.Position = UDim2.new(0.32095, 0, 0, 12)
@@ -4928,7 +4932,6 @@ function Fenglib:CreateWindow(Config)
     SettingsSep.BorderSizePixel = 0
     SettingsSep.ZIndex = 102
     SettingsSep.Parent = SettingsBox
-    AddToRegistry(SettingsSep, "BackgroundColor3", "Stroke")
 
     local SettingsContent = Instance.new("Frame")
     SettingsContent.Size = UDim2.new(1, 0, 1, 0)
@@ -4936,10 +4939,10 @@ function Fenglib:CreateWindow(Config)
     SettingsContent.ZIndex = 102
     SettingsContent.Parent = SettingsBox
 
-    -- 左侧导航按钮
+    -- ---------------- 左侧导航按钮 ----------------
     local function MakeNavBtn(text, iconAsset, yOffset)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 69, 0, 17)
+        btn.Size = UDim2.new(0, 100, 0, 17)
         btn.Position = UDim2.new(0.03038, 0, 0, yOffset)
         btn.BackgroundTransparency = 1
         btn.Text = "      " .. text
@@ -4950,7 +4953,6 @@ function Fenglib:CreateWindow(Config)
         btn.AutoButtonColor = false
         btn.ZIndex = 102
         btn.Parent = SettingsContent
-        AddToRegistry(btn, "TextColor3", "Text")
         local ic = Instance.new("ImageLabel")
         ic.Size = UDim2.new(0, 15, 0, 15)
         ic.Position = UDim2.new(0, 0, 0.5, 0)
@@ -4962,155 +4964,114 @@ function Fenglib:CreateWindow(Config)
         return btn, ic
     end
 
-    local AIBtn, AIIcon      = MakeNavBtn("AI",        "rbxassetid://12974219084", 13)
-    local CustBtn, CustIcon  = MakeNavBtn("Customize", "rbxassetid://10734910187", 37)
-    local CloseBtn, CloseIcon = MakeNavBtn("Close",    "rbxassetid://12966849577", 168)
+    local SettingsBtn, SettingsIcon = MakeNavBtn("Settings",   "rbxassetid://10734910187", 13)
+    local CustBtn, CustIcon          = MakeNavBtn("UI Effects", "rbxassetid://12974219084", 37)
+    local CloseBtn, CloseIcon        = MakeNavBtn("Close",      "rbxassetid://12966849577", 168)
 
-    -- AI 页
-    local AIPage = Instance.new("Frame")
-    AIPage.Size = UDim2.new(0.67743, 0, 0.87822, 0)
-    AIPage.Position = UDim2.new(0.30079, 0, 0.12178, 0)
-    AIPage.BackgroundTransparency = 1
-    AIPage.ZIndex = 102
-    AIPage.Parent = SettingsContent
+    -- ---------------- Settings 页（原 Test 的两个 Toggle） ----------------
+    local SettingsPage = Instance.new("Frame")
+    SettingsPage.Size = UDim2.new(0.67743, 0, 0.87822, 0)
+    SettingsPage.Position = UDim2.new(0.30079, 0, 0.12178, 0)
+    SettingsPage.BackgroundTransparency = 1
+    SettingsPage.ZIndex = 102
+    SettingsPage.Parent = SettingsContent
 
-    local AITitle = Instance.new("TextLabel")
-    AITitle.Size = UDim2.new(0, 200, 0, 26)
-    AITitle.Position = UDim2.new(0.07831, 0, -0.06140, 0)
-    AITitle.BackgroundTransparency = 1
-    AITitle.Font = Enum.Font.Gotham
-    AITitle.Text = "Gemini API key"
-    AITitle.TextSize = 20
-    AITitle.TextXAlignment = Enum.TextXAlignment.Left
-    AITitle.TextColor3 = CurrentTheme.Text
-    AITitle.ZIndex = 103
-    AITitle.Parent = AIPage
-    AddToRegistry(AITitle, "TextColor3", "Text")
+    local STitle = Instance.new("TextLabel")
+    STitle.Size = UDim2.new(0, 200, 0, 26)
+    STitle.Position = UDim2.new(0.07831, 0, -0.06140, 0)
+    STitle.BackgroundTransparency = 1
+    STitle.Font = Enum.Font.Gotham
+    STitle.Text = "通用设置"
+    STitle.TextSize = 20
+    STitle.TextXAlignment = Enum.TextXAlignment.Left
+    STitle.TextColor3 = CurrentTheme.Text
+    STitle.ZIndex = 103
+    STitle.Parent = SettingsPage
+    AddToRegistry(STitle, "TextColor3", "Text")
 
-    local AIDesc = Instance.new("TextLabel")
-    AIDesc.Size = UDim2.new(0, 230, 0, 34)
-    AIDesc.Position = UDim2.new(0.07831, 0, 0.05275, 0)
-    AIDesc.BackgroundTransparency = 1
-    AIDesc.Font = Enum.Font.Gotham
-    AIDesc.Text = "Required for zerohub intelligence to work."
-    AIDesc.TextSize = 14
-    AIDesc.TextWrapped = true
-    AIDesc.TextTransparency = 0.6
-    AIDesc.TextXAlignment = Enum.TextXAlignment.Left
-    AIDesc.TextColor3 = CurrentTheme.Text
-    AIDesc.ZIndex = 103
-    AIDesc.Parent = AIPage
-    AddToRegistry(AIDesc, "TextColor3", "SubText")
-    TextGradient:Skip(AIDesc)
+    -- 通用 Toggle 工厂
+    local function MakeToggle(parent, label, defaultValue, callback, yOffset)
+        local Tile = Instance.new("Frame")
+        Tile.Size = UDim2.new(0, 178, 0, 34)
+        Tile.Position = UDim2.new(0.07831, 0, 0, yOffset)
+        Tile.BackgroundTransparency = 1
+        Tile.ZIndex = 103
+        Tile.Parent = parent
 
-    local AIKeyBox = Instance.new("Frame")
-    AIKeyBox.Size = UDim2.new(0, 178, 0, 30)
-    AIKeyBox.Position = UDim2.new(0.07831, 0, 0.26654, 0)
-    AIKeyBox.BackgroundColor3 = Color3.fromRGB(41, 41, 41)
-    AIKeyBox.BackgroundTransparency = 0.5
-    AIKeyBox.BorderSizePixel = 0
-    AIKeyBox.ZIndex = 103
-    AIKeyBox.Parent = AIPage
-    Instance.new("UICorner", AIKeyBox).CornerRadius = UDim.new(0, 10)
+        local Lbl = Instance.new("TextLabel")
+        Lbl.Size = UDim2.new(1, -45, 1, 0)
+        Lbl.BackgroundTransparency = 1
+        Lbl.Font = Enum.Font.Gotham
+        Lbl.Text = label
+        Lbl.TextSize = 14
+        Lbl.TextXAlignment = Enum.TextXAlignment.Left
+        Lbl.TextColor3 = CurrentTheme.Text
+        Lbl.ZIndex = 103
+        Lbl.Parent = Tile
+        AddToRegistry(Lbl, "TextColor3", "Text")
 
-    local AIKeyInput = Instance.new("TextBox")
-    AIKeyInput.Size = UDim2.new(0, 291, 0, 21)
-    AIKeyInput.Position = UDim2.new(0.03478, 0, 0.5, 0)
-    AIKeyInput.AnchorPoint = Vector2.new(0, 0.5)
-    AIKeyInput.BackgroundTransparency = 1
-    AIKeyInput.Font = Enum.Font.Gotham
-    AIKeyInput.TextSize = 14
-    AIKeyInput.TextColor3 = CurrentTheme.Text
-    AIKeyInput.TextXAlignment = Enum.TextXAlignment.Left
-    AIKeyInput.TextWrapped = true
-    AIKeyInput.PlaceholderText = "Gemini API key"
-    AIKeyInput.PlaceholderColor3 = Color3.fromRGB(101, 101, 101)
-    AIKeyInput.ClearTextOnFocus = false
-    AIKeyInput.ZIndex = 104
-    AIKeyInput.Parent = AIKeyBox
-    AddToRegistry(AIKeyInput, "TextColor3", "Text")
-    TextGradient:Skip(AIKeyInput)
+        local Switch = Instance.new("Frame")
+        Switch.Size = UDim2.new(0, 30, 0, 18)
+        Switch.Position = UDim2.new(1, -30, 0.5, -9)
+        Switch.BackgroundColor3 = defaultValue and CurrentTheme.Accent or Color3.fromRGB(10, 13, 21)
+        Switch.BorderSizePixel = 0
+        Switch.ZIndex = 103
+        Switch.Parent = Tile
+        Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
+        local SwStroke = Instance.new("UIStroke")
+        SwStroke.Thickness = 1
+        SwStroke.Transparency = defaultValue and 1 or 0.65
+        SwStroke.Color = CurrentTheme.Stroke
+        SwStroke.Parent = Switch
 
-    pcall(function()
-        if isfile and isfile("zerohub_gemini_api_key.txt") then
-            AIKeyInput.Text = readfile("zerohub_gemini_api_key.txt")
-        end
-    end)
+        local Dot = Instance.new("Frame")
+        Dot.Size = UDim2.new(0, 16, 0, 16)
+        Dot.Position = defaultValue and UDim2.new(1, -17, 0.5, -8) or UDim2.new(0, 1, 0.5, -8)
+        Dot.BackgroundColor3 = Color3.new(1, 1, 1)
+        Dot.BorderSizePixel = 0
+        Dot.ZIndex = 104
+        Dot.Parent = Switch
+        Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
-    local AIOk = Instance.new("TextButton")
-    AIOk.Size = UDim2.new(0, 48, 0, 30)
-    AIOk.Position = UDim2.new(0.80490, 0, 0.26654, 0)
-    AIOk.BackgroundColor3 = Color3.fromRGB(41, 41, 41)
-    AIOk.Text = "Ok   "
-    AIOk.Font = Enum.Font.Gotham
-    AIOk.TextSize = 14
-    AIOk.TextXAlignment = Enum.TextXAlignment.Right
-    AIOk.TextColor3 = CurrentTheme.Text
-    AIOk.AutoButtonColor = false
-    AIOk.ZIndex = 103
-    AIOk.Parent = AIPage
-    Instance.new("UICorner", AIOk).CornerRadius = UDim.new(0, 10)
-    AddToRegistry(AIOk, "TextColor3", "Text")
+        local state = { Value = defaultValue }
 
-    local AIOkIcon = Instance.new("ImageLabel")
-    AIOkIcon.Size = UDim2.new(0, 15, 0, 15)
-    AIOkIcon.Position = UDim2.new(0.076, 0, 0.27, 0)
-    AIOkIcon.BackgroundTransparency = 1
-    AIOkIcon.Image = "rbxassetid://10709790644"
-    AIOkIcon.Parent = AIOk
-    AddToRegistry(AIOkIcon, "ImageColor3", "Text")
+        local ClickBtn = Instance.new("TextButton")
+        ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+        ClickBtn.BackgroundTransparency = 1
+        ClickBtn.Text = ""
+        ClickBtn.AutoButtonColor = false
+        ClickBtn.ZIndex = 104
+        ClickBtn.Parent = Tile
 
-    AIOk.MouseButton1Click:Connect(function()
-        pcall(function()
-            writefile("zerohub_gemini_api_key.txt", AIKeyInput.Text)
-        end)
-        pcall(function()
-            local key = CoreGui:FindFirstChild("zerohub")
-            if key and key:FindFirstChild("geminiapikey") then
-                key.geminiapikey.Value = AIKeyInput.Text
+        local function ApplyUI(v)
+            state.Value = v
+            if v then
+                Tween(Switch, {BackgroundColor3 = CurrentTheme.Accent}, 0.18)
+                Tween(SwStroke, {Transparency = 1}, 0.18)
+                Tween(Dot, {Position = UDim2.new(1, -17, 0.5, -8)}, 0.18)
+            else
+                Tween(Switch, {BackgroundColor3 = Color3.fromRGB(10, 13, 21)}, 0.18)
+                Tween(SwStroke, {Transparency = 0.65}, 0.18)
+                Tween(Dot, {Position = UDim2.new(0, 1, 0.5, -8)}, 0.18)
             end
+        end
+
+        ClickBtn.MouseButton1Click:Connect(function()
+            ApplyUI(not state.Value)
+            pcall(callback, state.Value)
         end)
-        AIOk.Text = "Saved!"
-        task.delay(1.2, function() if AIOk.Parent then AIOk.Text = "Ok   " end end)
-    end)
+        return state
+    end
 
-    local AIPrivacy = Instance.new("Frame")
-    AIPrivacy.Size = UDim2.new(0, 233, 0, 63)
-    AIPrivacy.Position = UDim2.new(0.07831, 0, 0.47948, 0)
-    AIPrivacy.BackgroundColor3 = Color3.fromRGB(41, 41, 41)
-    AIPrivacy.BackgroundTransparency = 0.5
-    AIPrivacy.BorderSizePixel = 0
-    AIPrivacy.ZIndex = 103
-    AIPrivacy.Parent = AIPage
-    Instance.new("UICorner", AIPrivacy).CornerRadius = UDim.new(0, 10)
+    MakeToggle(SettingsPage, "文字渐变", true, function(enabled)
+        TextGradient:SetEnabled(enabled)
+    end, 20)
 
-    local AIPrivacyIcon = Instance.new("ImageLabel")
-    AIPrivacyIcon.Size = UDim2.new(0, 20, 0, 20)
-    AIPrivacyIcon.Position = UDim2.new(0.05075, 0, 0.18527, 0)
-    AIPrivacyIcon.BackgroundTransparency = 1
-    AIPrivacyIcon.Image = "rbxassetid://10723415903"
-    AIPrivacyIcon.ZIndex = 104
-    AIPrivacyIcon.Parent = AIPrivacy
-    AddToRegistry(AIPrivacyIcon, "ImageColor3", "SubText")
+    MakeToggle(SettingsPage, "自定义光标", false, function(enabled)
+        Fenglib:SetCustomCursor(enabled)
+    end, 64)
 
-    local AIPrivacyText = Instance.new("TextLabel")
-    AIPrivacyText.Size = UDim2.new(0, 182, 0, 54)
-    AIPrivacyText.Position = UDim2.new(0.16842, 0, 0.15, 0)
-    AIPrivacyText.BackgroundTransparency = 1
-    AIPrivacyText.Font = Enum.Font.Gotham
-    AIPrivacyText.Text = "We do not log or store the API key. It will always be saved locally."
-    AIPrivacyText.TextSize = 14
-    AIPrivacyText.TextWrapped = true
-    AIPrivacyText.TextXAlignment = Enum.TextXAlignment.Left
-    AIPrivacyText.TextYAlignment = Enum.TextYAlignment.Top
-    AIPrivacyText.TextTransparency = 0.35
-    AIPrivacyText.TextColor3 = CurrentTheme.Text
-    AIPrivacyText.ZIndex = 104
-    AIPrivacyText.Parent = AIPrivacy
-    AddToRegistry(AIPrivacyText, "TextColor3", "SubText")
-    TextGradient:Skip(AIPrivacyText)
-
-    -- Customize 页
+    -- ---------------- Customize 页（6 个 UI 特效） ----------------
     local CustPage = Instance.new("Frame")
     CustPage.Size = UDim2.new(0.67743, 0, 0.87822, 0)
     CustPage.Position = UDim2.new(0.30079, 0, 0.12178, 0)
@@ -5137,8 +5098,8 @@ function Fenglib:CreateWindow(Config)
     CustDesc.Position = UDim2.new(0.07831, 0, 0.05253, 0)
     CustDesc.BackgroundTransparency = 1
     CustDesc.Font = Enum.Font.Gotham
-    CustDesc.Text = "Those are vibecoded btw, but enjoy them i guess."
-    CustDesc.TextSize = 14
+    CustDesc.Text = "点击启用后整个窗口会有对应的视觉效果"
+    CustDesc.TextSize = 12
     CustDesc.TextWrapped = true
     CustDesc.TextTransparency = 0.6
     CustDesc.TextXAlignment = Enum.TextXAlignment.Left
@@ -5149,17 +5110,18 @@ function Fenglib:CreateWindow(Config)
     TextGradient:Skip(CustDesc)
 
     local FxHolder = Instance.new("Frame")
-    FxHolder.Size = UDim2.new(0, 230, 0, 104)
+    FxHolder.Size = UDim2.new(0, 240, 0, 104)
     FxHolder.Position = UDim2.new(0.07831, 0, 0.26880, 0)
     FxHolder.BackgroundTransparency = 1
     FxHolder.ZIndex = 103
     FxHolder.Parent = CustPage
     local FxGrid = Instance.new("UIGridLayout")
-    FxGrid.CellSize = UDim2.new(0, 80, 0, 30)
+    FxGrid.CellSize = UDim2.new(0, 76, 0, 30)
+    FxGrid.CellPadding = UDim2.new(0, 4, 0, 4)
     FxGrid.SortOrder = Enum.SortOrder.LayoutOrder
     FxGrid.Parent = FxHolder
 
-    -- 6 个 UI 特效
+    -- ---------------- 6 个 UI 特效实现 ----------------
     local EffectState    = { matrix=false, rain=false, sakura=false, stars=false, snow=false, glitch=false }
     local EffectContainers = {}
     local EffectConns      = {}
@@ -5176,13 +5138,17 @@ function Fenglib:CreateWindow(Config)
         container.BackgroundTransparency = 1
         container.Size = UDim2.new(1, 0, 1, 0)
         container.ClipsDescendants = true
-        container.ZIndex = 50
+        -- 关键：ZIndex 高于 SettingsPanel(100)，特效才能显示出来
+        container.ZIndex = 150
         container.Parent = MainFrame
         EffectContainers[key] = container
         local size = MainFrame.AbsoluteSize
         if size.X <= 0 or size.Y <= 0 then
             RunService.Heartbeat:Wait()
             size = MainFrame.AbsoluteSize
+        end
+        if size.X <= 0 or size.Y <= 0 then
+            size = UDim2.new(0, 500, 0, 299).X and Vector2.new(500, 299)
         end
 
         if key == "matrix" then
@@ -5205,7 +5171,7 @@ function Fenglib:CreateWindow(Config)
                     label.Font = Enum.Font.Code
                     label.TextSize = 12
                     label.Text = GLYPHS[math.random(#GLYPHS)]
-                    label.ZIndex = 50
+                    label.ZIndex = 151
                     if math.random() < 0.20 then
                         label.TextColor3 = Color3.fromRGB(220, 255, 220)
                         label.TextTransparency = 0.05
@@ -5236,7 +5202,7 @@ function Fenglib:CreateWindow(Config)
                     drop.BackgroundTransparency = math.random(35, 65) / 100
                     drop.BorderSizePixel = 0
                     drop.Rotation = -25
-                    drop.ZIndex = 100
+                    drop.ZIndex = 151
                     local startX = math.random(-50, math.floor(size.X))
                     drop.Position = UDim2.new(0, startX, 0, -20)
                     drop.Parent = container
@@ -5269,7 +5235,7 @@ function Fenglib:CreateWindow(Config)
                 petal.BackgroundTransparency = math.random(10, 35) / 100
                 petal.BorderSizePixel = 0
                 petal.Rotation = math.random(0, 360)
-                petal.ZIndex = 100
+                petal.ZIndex = 151
                 Instance.new("UICorner", petal).CornerRadius = UDim.new(0.6, 0)
                 local startX = math.random(-30, math.floor(size.X + 30))
                 petal.Position = UDim2.new(0, startX, 0, -20)
@@ -5309,7 +5275,7 @@ function Fenglib:CreateWindow(Config)
                 label.TextColor3 = SPARKLE_COLORS[math.random(#SPARKLE_COLORS)]
                 label.TextTransparency = 1
                 label.Rotation = math.random(-30, 30)
-                label.ZIndex = 80
+                label.ZIndex = 151
                 local startX = math.random(10, math.max(10, math.floor(size.X - 20)))
                 local startY = math.random(10, math.max(10, math.floor(size.Y - 20)))
                 label.Position = UDim2.new(0, startX, 0, startY)
@@ -5350,7 +5316,7 @@ function Fenglib:CreateWindow(Config)
                 flake.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 flake.BackgroundTransparency = math.random(10, 40) / 100
                 flake.BorderSizePixel = 0
-                flake.ZIndex = 100
+                flake.ZIndex = 151
                 Instance.new("UICorner", flake).CornerRadius = UDim.new(1, 0)
                 local startX = math.random(-20, math.floor(size.X + 20))
                 flake.Position = UDim2.new(0, startX, 0, -10)
@@ -5385,7 +5351,7 @@ function Fenglib:CreateWindow(Config)
                     line.BackgroundColor3 = GLITCH_COLORS[math.random(#GLITCH_COLORS)]
                     line.BackgroundTransparency = math.random(10, 30) / 100
                     line.BorderSizePixel = 0
-                    line.ZIndex = 90
+                    line.ZIndex = 151
                     local startX = math.random(-10, math.max(0, math.floor(size.X - width + 10)))
                     local startY = math.random(5, math.max(5, math.floor(size.Y - thickness)))
                     line.Position = UDim2.new(0, startX, 0, startY)
@@ -5410,11 +5376,11 @@ function Fenglib:CreateWindow(Config)
 
     local function MakeFxBtn(text, key, iconAsset)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 79, 0, 30)
+        btn.Size = UDim2.new(0, 76, 0, 30)
         btn.BackgroundColor3 = INACTIVE_BG
-        btn.Text = "  " .. text .. "   "
+        btn.Text = ""
         btn.Font = Enum.Font.Gotham
-        btn.TextSize = 14
+        btn.TextSize = 12
         btn.TextXAlignment = Enum.TextXAlignment.Right
         btn.TextColor3 = INACTIVE_TXT
         btn.AutoButtonColor = false
@@ -5424,7 +5390,7 @@ function Fenglib:CreateWindow(Config)
 
         local ic = Instance.new("ImageLabel")
         ic.Size = UDim2.new(0, 15, 0, 15)
-        ic.Position = UDim2.new(0, 8, 0.5, 0)
+        ic.Position = UDim2.new(0, 6, 0.5, 0)
         ic.AnchorPoint = Vector2.new(0, 0.5)
         ic.BackgroundTransparency = 1
         ic.Image = iconAsset
@@ -5432,11 +5398,23 @@ function Fenglib:CreateWindow(Config)
         ic.ZIndex = 104
         ic.Parent = btn
 
+        local lbl = Instance.new("TextLabel")
+        lbl.Size = UDim2.new(1, -25, 1, 0)
+        lbl.Position = UDim2.new(0, 24, 0, 0)
+        lbl.BackgroundTransparency = 1
+        lbl.Font = Enum.Font.GothamMedium
+        lbl.Text = text
+        lbl.TextSize = 11
+        lbl.TextXAlignment = Enum.TextXAlignment.Left
+        lbl.TextColor3 = INACTIVE_TXT
+        lbl.ZIndex = 104
+        lbl.Parent = btn
+
         local function Refresh()
             local on = EffectState[key]
-            btn.BackgroundColor3 = on and ACTIVE_BG or INACTIVE_BG
-            btn.TextColor3 = on and ACTIVE_TXT or INACTIVE_TXT
-            ic.ImageColor3 = on and ACTIVE_TXT or INACTIVE_TXT
+            Tween(btn, {BackgroundColor3 = on and ACTIVE_BG or INACTIVE_BG}, 0.15)
+            Tween(lbl, {TextColor3 = on and ACTIVE_TXT or INACTIVE_TXT}, 0.15)
+            Tween(ic, {ImageColor3 = on and ACTIVE_TXT or INACTIVE_TXT}, 0.15)
         end
         btn.MouseButton1Click:Connect(function()
             EffectState[key] = not EffectState[key]
@@ -5454,19 +5432,20 @@ function Fenglib:CreateWindow(Config)
     MakeFxBtn("Snow",   "snow",   "rbxassetid://10734964600")
     MakeFxBtn("Glitch", "glitch", "rbxassetid://10734887784")
 
+    -- ---------------- 导航切换 ----------------
     local function ShowPage(page)
-        AIPage.Visible = (page == "ai")
+        SettingsPage.Visible = (page == "settings")
         CustPage.Visible = (page == "customize")
-        local aiOn = (page == "ai")
-        local custOn = (page == "customize")
-        AIBtn.TextColor3 = aiOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
-        CustBtn.TextColor3 = custOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
-        AIIcon.ImageColor3 = aiOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
-        CustIcon.ImageColor3 = custOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        local sOn = (page == "settings")
+        local cOn = (page == "customize")
+        SettingsBtn.TextColor3 = sOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        CustBtn.TextColor3 = cOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        SettingsIcon.ImageColor3 = sOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        CustIcon.ImageColor3 = cOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
     end
-    AIBtn.MouseButton1Click:Connect(function() ShowPage("ai") end)
+    SettingsBtn.MouseButton1Click:Connect(function() ShowPage("settings") end)
     CustBtn.MouseButton1Click:Connect(function() ShowPage("customize") end)
-    ShowPage("ai")
+    ShowPage("settings")
 
     -- 兼容 Window:SetAccount 的 stub
     Window._userCard = {
@@ -5497,17 +5476,12 @@ function Fenglib:CreateWindow(Config)
     local function closeSettings()
         settingsOpen = false
         if outsideConn then outsideConn:Disconnect(); outsideConn = nil end
-        Tween(SettingsPanel, { BackgroundTransparency = 1 }, 0.12)
-        task.delay(0.14, function()
-            if not settingsOpen then SettingsPanel.Visible = false end
-        end)
+        SettingsPanel.Visible = false
     end
 
     local function openSettings()
         settingsOpen = true
         SettingsPanel.Visible = true
-        SettingsPanel.BackgroundTransparency = 1
-        Tween(SettingsPanel, { BackgroundTransparency = 0.2 }, 0.15)
         if outsideConn then outsideConn:Disconnect() end
         local settingsMouse = LocalPlayer:GetMouse()
         outsideConn = UserInputService.InputBegan:Connect(function(input, gpe)
