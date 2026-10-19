@@ -4895,8 +4895,7 @@ function FengUI:CreateWindow(Config)
     BottomClick.Parent = BottomFrame
 
     -- ============================================================
-    -- Settings 面板 — 完整搬运自 非UI.lua，颜色/遮罩与原文件一致
-    -- 左侧: 玩家卡片 / Settings / UI Effects / Close
+    -- Settings 面板 — 左侧: 玩家卡片 / Settings / UI Effects / Close
     -- ============================================================
 
     local SettingsPanel = Instance.new("Frame")
@@ -4966,7 +4965,7 @@ function FengUI:CreateWindow(Config)
     local CustBtn, CustIcon          = MakeNavBtn("UI Effects", "rbxassetid://12974219084", 61)
     local CloseBtn, CloseIcon        = MakeNavBtn("Close",      "rbxassetid://12966849577", 168)
 
-    -- ---------------- 玩家卡片页（原 Test 的 UserFrame，已修复布局） ----------------
+    -- ---------------- 玩家卡片页 ----------------
     local PlayerPage = Instance.new("Frame")
     PlayerPage.Size = UDim2.new(0.67743, 0, 1, 0)
     PlayerPage.Position = UDim2.new(0.30079, 0, 0, 0)
@@ -5035,7 +5034,7 @@ function FengUI:CreateWindow(Config)
         Parent = PlayerScroll,
     })
 
-    -- ---------------- Settings 页（完全对齐原 Test 的 miRow） ----------------
+    -- ---------------- Settings 页 ----------------
     local SettingsPage = Instance.new("Frame")
     SettingsPage.Size = UDim2.new(0.67743, 0, 0.87822, 0)
     SettingsPage.Position = UDim2.new(0.30079, 0, 0.12178, 0)
@@ -5059,7 +5058,7 @@ function FengUI:CreateWindow(Config)
 
     local function MakeToggle(parent, label, defaultValue, callback, yOffset)
         local Tile = Instance.new("Frame")
-        Tile.Size = UDim2.new(0, 260, 0, 42)
+        Tile.Size = UDim2.new(1, -24, 0, 42)
         Tile.Position = UDim2.new(0.07831, 0, 0, yOffset)
         Tile.BackgroundTransparency = 1
         Tile.BorderSizePixel = 0
@@ -5161,7 +5160,7 @@ function FengUI:CreateWindow(Config)
         FengUI:SetCustomCursor(enabled)
     end, 24 + 42)
 
-    -- ---------------- Customize 页（6 个 UI 特效） ----------------
+    -- ---------------- Customize 页 ----------------
     local CustPage = Instance.new("Frame")
     CustPage.Size = UDim2.new(0.67743, 0, 0.87822, 0)
     CustPage.Position = UDim2.new(0.30079, 0, 0.12178, 0)
@@ -5184,7 +5183,7 @@ function FengUI:CreateWindow(Config)
     AddToRegistry(CustTitle, "TextColor3", "Text")
 
     local CustDesc = Instance.new("TextLabel")
-    CustDesc.Size = UDim2.new(0, 230, 0, 31)
+    CustDesc.Size = UDim2.new(1, -40, 0, 31)
     CustDesc.Position = UDim2.new(0.07831, 0, 0.05253, 0)
     CustDesc.BackgroundTransparency = 1
     CustDesc.Font = Enum.Font.Gotham
@@ -5200,7 +5199,7 @@ function FengUI:CreateWindow(Config)
     TextGradient:Skip(CustDesc)
 
     local FxHolder = Instance.new("Frame")
-    FxHolder.Size = UDim2.new(0, 240, 0, 104)
+    FxHolder.Size = UDim2.new(1, -40, 0, 104)
     FxHolder.Position = UDim2.new(0.07831, 0, 0.26880, 0)
     FxHolder.BackgroundTransparency = 1
     FxHolder.ZIndex = 103
@@ -5540,7 +5539,6 @@ function FengUI:CreateWindow(Config)
     CustBtn.MouseButton1Click:Connect(function() ShowPage("customize") end)
     ShowPage("player")
 
-    -- 现在用真实玩家卡片代替 stub
     Window._userCard = Window._playerCard
 
     -- ============ 设置面板开关 ============
