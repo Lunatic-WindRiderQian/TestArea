@@ -4896,11 +4896,9 @@ function Fenglib:CreateWindow(Config)
 
     -- ============================================================
     -- Settings 面板 — 完整搬运自 非UI.lua，颜色/遮罩与原文件一致
-    -- 左侧: Settings / UI Effects / Close
-    -- 右侧: 原 Test 两个 Toggle + 6 个 UI 特效
+    -- 左侧: 玩家卡片 / Settings / UI Effects / Close
     -- ============================================================
 
-    -- 全屏遮罩（对应 main.settings）
     local SettingsPanel = Instance.new("Frame")
     SettingsPanel.Size = UDim2.new(1, 0, 1, 0)
     SettingsPanel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -4911,7 +4909,6 @@ function Fenglib:CreateWindow(Config)
     SettingsPanel.Parent = MainFrame
     Instance.new("UICorner", SettingsPanel).CornerRadius = UDim.new(0, 12)
 
-    -- 内容面板（对应 okbro）
     local SettingsBox = Instance.new("Frame")
     SettingsBox.Size = UDim2.new(0, 377, 0, 204)
     SettingsBox.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -4923,7 +4920,6 @@ function Fenglib:CreateWindow(Config)
     SettingsBox.Parent = SettingsPanel
     Instance.new("UICorner", SettingsBox).CornerRadius = UDim.new(0, 10)
 
-    -- 分隔线（对应 okbro.separator，颜色硬编码同原文件）
     local SettingsSep = Instance.new("Frame")
     SettingsSep.Size = UDim2.new(0, 1, 0, 180)
     SettingsSep.Position = UDim2.new(0.32095, 0, 0, 12)
@@ -4964,15 +4960,86 @@ function Fenglib:CreateWindow(Config)
         return btn, ic
     end
 
-    local SettingsBtn, SettingsIcon = MakeNavBtn("Settings",   "rbxassetid://10734910187", 13)
-    local CustBtn, CustIcon          = MakeNavBtn("UI Effects", "rbxassetid://12974219084", 37)
+    local PlayerBtn, PlayerIcon     = MakeNavBtn("玩家卡片",    "rbxassetid://134669175143859", 13)
+    local SettingsBtn, SettingsIcon = MakeNavBtn("Settings",   "rbxassetid://10734910187", 37)
+    local CustBtn, CustIcon          = MakeNavBtn("UI Effects", "rbxassetid://12974219084", 61)
     local CloseBtn, CloseIcon        = MakeNavBtn("Close",      "rbxassetid://12966849577", 168)
 
-    -- ---------------- Settings 页（原 Test 的两个 Toggle） ----------------
+    -- ---------------- 玩家卡片页（原 Test 的 UserFrame） ----------------
+    local PlayerPage = Instance.new("Frame")
+    PlayerPage.Size = UDim2.new(0.67743, 0, 0.87822, 0)
+    PlayerPage.Position = UDim2.new(0.30079, 0, 0.12178, 0)
+    PlayerPage.BackgroundTransparency = 1
+    PlayerPage.Visible = false
+    PlayerPage.ZIndex = 102
+    PlayerPage.Parent = SettingsContent
+
+    local PTitle = Instance.new("TextLabel")
+    PTitle.Size = UDim2.new(0, 200, 0, 26)
+    PTitle.Position = UDim2.new(0.07831, 0, -0.06140, 0)
+    PTitle.BackgroundTransparency = 1
+    PTitle.Font = Enum.Font.Gotham
+    PTitle.Text = "玩家卡片"
+    PTitle.TextSize = 20
+    PTitle.TextXAlignment = Enum.TextXAlignment.Left
+    PTitle.TextColor3 = CurrentTheme.Text
+    PTitle.ZIndex = 103
+    PTitle.Parent = PlayerPage
+    AddToRegistry(PTitle, "TextColor3", "Text")
+
+    local PDesc = Instance.new("TextLabel")
+    PDesc.Size = UDim2.new(0, 230, 0, 18)
+    PDesc.Position = UDim2.new(0.07831, 0, 0.05275, 0)
+    PDesc.BackgroundTransparency = 1
+    PDesc.Font = Enum.Font.Gotham
+    PDesc.Text = "修改左下角显示的名字与头像。"
+    PDesc.TextSize = 12
+    PDesc.TextWrapped = true
+    PDesc.TextTransparency = 0.6
+    PDesc.TextXAlignment = Enum.TextXAlignment.Left
+    PDesc.TextColor3 = CurrentTheme.Text
+    PDesc.ZIndex = 103
+    PDesc.Parent = PlayerPage
+    AddToRegistry(PDesc, "TextColor3", "SubText")
+    TextGradient:Skip(PDesc)
+
+    local PlayerScroll = Instance.new("ScrollingFrame")
+    PlayerScroll.Size = UDim2.new(0, 260, 1, -56)
+    PlayerScroll.Position = UDim2.new(0.07831, 0, 0, 52)
+    PlayerScroll.BackgroundTransparency = 1
+    PlayerScroll.BorderSizePixel = 0
+    PlayerScroll.ScrollBarThickness = 0
+    PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    PlayerScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    PlayerScroll.ZIndex = 103
+    PlayerScroll.Parent = PlayerPage
+
+    local playerBuilder = createSectionBuilder(PlayerScroll, PlayerScroll, 260, 1, Window)
+    Window._playerCard = playerBuilder:UserFrame({
+        Name    = LocalPlayer.DisplayName,
+        Profile = Players:GetUserThumbnailAsync(LocalPlayer.UserId,
+            Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150),
+        Expires = LocalPlayer.Name,
+        ButtonIcon = 9405931578,
+        Names        = { "副名字", "名字" },
+        Placeholders = { "输入副名字", "输入名字" },
+        Defaults     = { LocalPlayer.DisplayName, LocalPlayer.Name },
+        OnChanged = function(idx, text)
+            if idx == 1 then
+                AccountName.Text = (text ~= "" and text) or LocalPlayer.DisplayName
+            elseif idx == 2 then
+                ExpireLabel.Text = (text ~= "" and text) or LocalPlayer.Name
+            end
+        end,
+        Parent = PlayerScroll,
+    })
+
+    -- ---------------- Settings 页（完全对齐原 Test 的 miRow） ----------------
     local SettingsPage = Instance.new("Frame")
     SettingsPage.Size = UDim2.new(0.67743, 0, 0.87822, 0)
     SettingsPage.Position = UDim2.new(0.30079, 0, 0.12178, 0)
     SettingsPage.BackgroundTransparency = 1
+    SettingsPage.Visible = false
     SettingsPage.ZIndex = 102
     SettingsPage.Parent = SettingsContent
 
@@ -4989,22 +5056,34 @@ function Fenglib:CreateWindow(Config)
     STitle.Parent = SettingsPage
     AddToRegistry(STitle, "TextColor3", "Text")
 
-    -- 通用 Toggle 工厂
     local function MakeToggle(parent, label, defaultValue, callback, yOffset)
         local Tile = Instance.new("Frame")
-        Tile.Size = UDim2.new(0, 178, 0, 34)
+        Tile.Size = UDim2.new(0, 260, 0, 42)
         Tile.Position = UDim2.new(0.07831, 0, 0, yOffset)
         Tile.BackgroundTransparency = 1
+        Tile.BorderSizePixel = 0
         Tile.ZIndex = 103
         Tile.Parent = parent
 
+        local Line = Instance.new("Frame")
+        Line.Size = UDim2.new(1, -20, 0, 1)
+        Line.Position = UDim2.new(0, 10, 1, -1)
+        Line.BackgroundColor3 = CurrentTheme.Stroke
+        Line.BackgroundTransparency = 0.65
+        Line.BorderSizePixel = 0
+        Line.ZIndex = 103
+        Line.Parent = Tile
+        AddToRegistry(Line, "BackgroundColor3", "Stroke")
+
         local Lbl = Instance.new("TextLabel")
-        Lbl.Size = UDim2.new(1, -45, 1, 0)
+        Lbl.Size = UDim2.new(1, -75, 0, 18)
+        Lbl.Position = UDim2.new(0, 15, 0.5, -9)
         Lbl.BackgroundTransparency = 1
-        Lbl.Font = Enum.Font.Gotham
+        Lbl.Font = Enum.Font.GothamMedium
         Lbl.Text = label
-        Lbl.TextSize = 14
+        Lbl.TextSize = 13
         Lbl.TextXAlignment = Enum.TextXAlignment.Left
+        Lbl.TextTruncate = Enum.TextTruncate.AtEnd
         Lbl.TextColor3 = CurrentTheme.Text
         Lbl.ZIndex = 103
         Lbl.Parent = Tile
@@ -5012,12 +5091,13 @@ function Fenglib:CreateWindow(Config)
 
         local Switch = Instance.new("Frame")
         Switch.Size = UDim2.new(0, 30, 0, 18)
-        Switch.Position = UDim2.new(1, -30, 0.5, -9)
+        Switch.Position = UDim2.new(1, -41, 0.5, -9)
         Switch.BackgroundColor3 = defaultValue and CurrentTheme.Accent or Color3.fromRGB(10, 13, 21)
         Switch.BorderSizePixel = 0
         Switch.ZIndex = 103
         Switch.Parent = Tile
         Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
+
         local SwStroke = Instance.new("UIStroke")
         SwStroke.Thickness = 1
         SwStroke.Transparency = defaultValue and 1 or 0.65
@@ -5034,6 +5114,11 @@ function Fenglib:CreateWindow(Config)
         Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
         local state = { Value = defaultValue }
+
+        table.insert(ThemeListeners, function()
+            SwStroke.Color = CurrentTheme.Stroke
+            if not state.Value then SwStroke.Transparency = 0.65 end
+        end)
 
         local ClickBtn = Instance.new("TextButton")
         ClickBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -5056,20 +5141,24 @@ function Fenglib:CreateWindow(Config)
             end
         end
 
+        ClickBtn.MouseEnter:Connect(function() Tween(Tile, {BackgroundTransparency = 0.65}, 0.15) end)
+        ClickBtn.MouseLeave:Connect(function() Tween(Tile, {BackgroundTransparency = 1}, 0.15) end)
+
         ClickBtn.MouseButton1Click:Connect(function()
             ApplyUI(not state.Value)
             pcall(callback, state.Value)
         end)
+
         return state
     end
 
     MakeToggle(SettingsPage, "文字渐变", true, function(enabled)
         TextGradient:SetEnabled(enabled)
-    end, 20)
+    end, 24)
 
     MakeToggle(SettingsPage, "自定义光标", false, function(enabled)
         Fenglib:SetCustomCursor(enabled)
-    end, 64)
+    end, 24 + 42)
 
     -- ---------------- Customize 页（6 个 UI 特效） ----------------
     local CustPage = Instance.new("Frame")
@@ -5121,7 +5210,6 @@ function Fenglib:CreateWindow(Config)
     FxGrid.SortOrder = Enum.SortOrder.LayoutOrder
     FxGrid.Parent = FxHolder
 
-    -- ---------------- 6 个 UI 特效实现 ----------------
     local EffectState    = { matrix=false, rain=false, sakura=false, stars=false, snow=false, glitch=false }
     local EffectContainers = {}
     local EffectConns      = {}
@@ -5138,7 +5226,6 @@ function Fenglib:CreateWindow(Config)
         container.BackgroundTransparency = 1
         container.Size = UDim2.new(1, 0, 1, 0)
         container.ClipsDescendants = true
-        -- 关键：ZIndex 高于 SettingsPanel(100)，特效才能显示出来
         container.ZIndex = 150
         container.Parent = MainFrame
         EffectContainers[key] = container
@@ -5148,7 +5235,7 @@ function Fenglib:CreateWindow(Config)
             size = MainFrame.AbsoluteSize
         end
         if size.X <= 0 or size.Y <= 0 then
-            size = UDim2.new(0, 500, 0, 299).X and Vector2.new(500, 299)
+            size = Vector2.new(500, 299)
         end
 
         if key == "matrix" then
@@ -5434,34 +5521,26 @@ function Fenglib:CreateWindow(Config)
 
     -- ---------------- 导航切换 ----------------
     local function ShowPage(page)
-        SettingsPage.Visible = (page == "settings")
-        CustPage.Visible = (page == "customize")
+        PlayerPage.Visible    = (page == "player")
+        SettingsPage.Visible  = (page == "settings")
+        CustPage.Visible      = (page == "customize")
+        local pOn = (page == "player")
         local sOn = (page == "settings")
         local cOn = (page == "customize")
-        SettingsBtn.TextColor3 = sOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
-        CustBtn.TextColor3 = cOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
-        SettingsIcon.ImageColor3 = sOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
-        CustIcon.ImageColor3 = cOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        PlayerBtn.TextColor3    = pOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        SettingsBtn.TextColor3  = sOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        CustBtn.TextColor3      = cOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        PlayerIcon.ImageColor3    = pOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        SettingsIcon.ImageColor3  = sOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+        CustIcon.ImageColor3      = cOn and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
     end
+    PlayerBtn.MouseButton1Click:Connect(function() ShowPage("player") end)
     SettingsBtn.MouseButton1Click:Connect(function() ShowPage("settings") end)
     CustBtn.MouseButton1Click:Connect(function() ShowPage("customize") end)
-    ShowPage("settings")
+    ShowPage("player")
 
-    -- 兼容 Window:SetAccount 的 stub
-    Window._userCard = {
-        SetValue = function(_, idx, text)
-            if idx == 1 then
-                AccountName.Text = (text ~= "" and text) or LocalPlayer.DisplayName
-            elseif idx == 2 then
-                ExpireLabel.Text = (text ~= "" and text) or LocalPlayer.Name
-            end
-        end,
-        SetProfile = function(_, p)
-            if p and p ~= "" then AccountProfile.Image = p end
-        end,
-        Lock = function() end,
-        Unlock = function() end,
-    }
+    -- 现在用真实玩家卡片代替 stub
+    Window._userCard = Window._playerCard
 
     -- ============ 设置面板开关 ============
     local settingsOpen = false
