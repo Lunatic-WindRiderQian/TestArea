@@ -2620,125 +2620,330 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
 -- ============================================================
--- Console 组件 —— 移植自非UI.lua的 console 功能
--- 日志捕获 / 清空 / 保存 / 复制
+-- Console —— 完整搬运自非UI.lua 的 console Tab
+-- 含 yesc 日志 / clear / save / copy / savedialog 全部原逻辑
 -- ============================================================
 child.Console = function(_, config)
     config = safeConfig(config)
-    local parent = config.Parent or contentContainer
-    local height = config.Height or 160
-    local title  = config.Name or ""
-    local controlId = NewConfigId("Console", title)
+    local parent = config.Parent or contentHolder or contentContainer
+    local height = config.Height or 260
+    local titleText = config.Name or ""
 
     local LogService = game:GetService("LogService")
 
-    -- ---------- 外层容器 ----------
+    local function findScreenGui(inst)
+        while inst do
+            if inst:IsA("ScreenGui") then return inst end
+            inst = inst.Parent
+        end
+        return nil
+    end
+    local function findTopFrame(inst)
+        local lastFrame = nil
+        local cur = inst
+        while cur do
+            if cur:IsA("ScreenGui") then break end
+            if cur:IsA("GuiObject") then lastFrame = cur end
+            cur = cur.Parent
+        end
+        return lastFrame
+    end
+
+    -- ---------- 外层 wrap ----------
     local wrap = Instance.new("Frame")
-    wrap.Size = UDim2.new(1, -16, 0, height + (title ~= "" and 24 or 0))
+    wrap.Name = "Console_Wrap"
+    wrap.Size = UDim2.new(1, 0, 0, height)
     wrap.BackgroundTransparency = 1
     wrap.BorderSizePixel = 0
     wrap.Parent = parent
 
-    local titleLbl = nil
-    if title ~= "" then
-        titleLbl = Instance.new("TextLabel")
-        titleLbl.Size = UDim2.new(1, 0, 0, 20)
-        titleLbl.Position = UDim2.new(0, 4, 0, 0)
+    local topOffset = 0
+    if titleText ~= "" then
+        local titleLbl = Instance.new("TextLabel")
+        titleLbl.Size = UDim2.new(1, -12, 0, 20)
+        titleLbl.Position = UDim2.new(0, 6, 0, 0)
         titleLbl.BackgroundTransparency = 1
         titleLbl.Font = Enum.Font.GothamBold
-        titleLbl.Text = title
+        titleLbl.Text = titleText
         titleLbl.TextSize = 13
         titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+        titleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
         titleLbl.Parent = wrap
-        AddToRegistry(titleLbl, "TextColor3", "Text")
+        TextGradient:Skip(titleLbl)
+        topOffset = 22
     end
 
-    -- ---------- 主框 ----------
-    local box = Instance.new("Frame")
-    box.Size = UDim2.new(1, 0, 0, height)
-    box.Position = UDim2.new(0, 0, 0, (title ~= "" and 24 or 0))
-    box.BackgroundTransparency = 0.5
-    box.BorderSizePixel = 0
-    box.ClipsDescendants = true
-    box.Parent = wrap
-    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
-    AddToRegistry(box, "BackgroundColor3", "Main")
+    -- ---------- consoleholder ----------
+    local consoleHolder = Instance.new("Frame")
+    consoleHolder.Name = "consoleholder"
+    consoleHolder.Size = UDim2.new(1, 0, 1, -topOffset)
+    consoleHolder.Position = UDim2.new(0, 0, 0, topOffset)
+    consoleHolder.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
+    consoleHolder.BackgroundTransparency = 0
+    consoleHolder.BorderSizePixel = 0
+    consoleHolder.ClipsDescendants = true
+    consoleHolder.Parent = wrap
+    Instance.new("UICorner", consoleHolder).CornerRadius = UDim.new(0, 10)
 
-    local boxStroke = Instance.new("UIStroke")
-    boxStroke.Thickness = 1
-    boxStroke.Transparency = 0.65
-    boxStroke.Parent = box
-    AddToRegistry(boxStroke, "Color", "Stroke")
+    -- ---------- c（滚动日志区） ----------
+    local c = Instance.new("ScrollingFrame")
+    c.Name = "c"
+    c.Size = UDim2.new(1, -16, 1, -52)
+    c.Position = UDim2.new(0, 8, 0, 8)
+    c.BackgroundTransparency = 1
+    c.BorderSizePixel = 0
+    c.CanvasSize = UDim2.new(0, 0, 0, 0)
+    c.ScrollBarThickness = 2
+    c.ScrollBarImageColor3 = Color3.fromRGB(81, 81, 81)
+    c.ScrollingDirection = Enum.ScrollingDirection.Y
+    c.Parent = consoleHolder
 
-    -- ---------- 滚动日志区 ----------
-    local scroll = Instance.new("ScrollingFrame")
-    scroll.Size = UDim2.new(1, -12, 1, -46)
-    scroll.Position = UDim2.new(0, 6, 0, 6)
-    scroll.BackgroundTransparency = 1
-    scroll.BorderSizePixel = 0
-    scroll.ScrollBarThickness = 2
-    scroll.ScrollBarImageColor3 = CurrentTheme.Stroke
-    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-    scroll.ScrollingDirection = Enum.ScrollingDirection.Y
-    scroll.Parent = box
-
+    -- ---------- yesc（日志 TextBox） ----------
     local logBox = Instance.new("TextBox")
+    logBox.Name = "yesc"
     logBox.Size = UDim2.new(1, 0, 0, 0)
     logBox.Position = UDim2.new(0, 0, 0, 0)
     logBox.BackgroundTransparency = 1
+    logBox.BorderSizePixel = 0
     logBox.TextEditable = false
     logBox.MultiLine = true
     logBox.RichText = true
-    logBox.TextSize = 12
+    logBox.TextSize = 13
     logBox.Font = Enum.Font.Code
+    logBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     logBox.TextXAlignment = Enum.TextXAlignment.Left
     logBox.TextYAlignment = Enum.TextYAlignment.Top
     logBox.TextWrapped = true
     logBox.ClearTextOnFocus = false
+    logBox.PlaceholderText = "No console logs yet."
+    logBox.PlaceholderColor3 = Color3.fromRGB(101, 101, 101)
     logBox.Text = ""
-    logBox.TextColor3 = CurrentTheme.Text
-    logBox.Parent = scroll
+    logBox.Parent = c
     TextGradient:Skip(logBox)
 
-    -- ---------- 按钮行 ----------
-    local btnRow = Instance.new("Frame")
-    btnRow.Size = UDim2.new(1, -12, 0, 30)
-    btnRow.Position = UDim2.new(0, 6, 1, -40)
-    btnRow.BackgroundTransparency = 1
-    btnRow.Parent = box
+    -- ---------- buttonsholder ----------
+    local buttonsHolder = Instance.new("Frame")
+    buttonsHolder.Name = "buttonsholder"
+    buttonsHolder.Size = UDim2.new(1, -16, 0, 37)
+    buttonsHolder.Position = UDim2.new(0, 8, 1, -44)
+    buttonsHolder.BackgroundTransparency = 1
+    buttonsHolder.Parent = consoleHolder
 
-    local btnLayout = Instance.new("UIListLayout")
-    btnLayout.FillDirection = Enum.FillDirection.Horizontal
-    btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    btnLayout.Padding = UDim.new(0, 6)
-    btnLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    btnLayout.Parent = btnRow
+    local bl = Instance.new("UIListLayout")
+    bl.FillDirection = Enum.FillDirection.Horizontal
+    bl.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    bl.VerticalAlignment = Enum.VerticalAlignment.Center
+    bl.Padding = UDim.new(0, 5)
+    bl.SortOrder = Enum.SortOrder.LayoutOrder
+    bl.Parent = buttonsHolder
 
-    local function makeBtn(text, callback)
+    -- ---------- 按钮工厂（还原 anim 脚本行为） ----------
+    local function makeConsoleBtn(text, iconId, width, layoutOrder, onClick)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 60, 1, 0)
-        btn.BackgroundTransparency = 0.2
+        btn.Size = UDim2.new(0, width, 0, 24)
+        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
         btn.Text = text
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 12
-        btn.BorderSizePixel = 0
+        btn.Font = Enum.Font.Gotham
+        btn.TextSize = 14
+        btn.TextColor3 = Color3.fromRGB(100, 100, 100)
+        btn.TextXAlignment = Enum.TextXAlignment.Right
         btn.AutoButtonColor = false
-        btn.Parent = btnRow
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-        local s = Instance.new("UIStroke")
-        s.Transparency = 0.65
-        s.Parent = btn
-        AddToRegistry(btn, "BackgroundColor3", "Element")
-        AddToRegistry(btn, "TextColor3", "Text")
-        AddToRegistry(s, "Color", "Stroke")
-        btn.MouseEnter:Connect(function() Tween(btn, {BackgroundTransparency = 0}, 0.15) end)
-        btn.MouseLeave:Connect(function() Tween(btn, {BackgroundTransparency = 0.2}, 0.15) end)
-        btn.MouseButton1Click:Connect(function() pcall(callback) end)
-        return btn
+        btn.BorderSizePixel = 0
+        btn.LayoutOrder = layoutOrder
+        btn.Parent = buttonsHolder
+
+        local ic = Instance.new("ImageLabel")
+        ic.Size = UDim2.new(0, 15, 0, 15)
+        ic.Position = UDim2.new(0, 5, 0.5, 0)
+        ic.AnchorPoint = Vector2.new(0, 0.5)
+        ic.BackgroundTransparency = 1
+        ic.Image = iconId
+        ic.ImageColor3 = Color3.fromRGB(100, 100, 100)
+        ic.Parent = btn
+
+        local info = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local hoverTween  = TweenService:Create(btn, info, { BackgroundColor3 = Color3.fromRGB(50, 50, 50), TextColor3 = Color3.fromRGB(255, 255, 255) })
+        local hoverIcTween = TweenService:Create(ic, info, { ImageColor3 = Color3.fromRGB(255, 255, 255) })
+        local normalTween = TweenService:Create(btn, info, { BackgroundColor3 = Color3.fromRGB(30, 30, 30), TextColor3 = Color3.fromRGB(100, 100, 100) })
+        local normalIcTween = TweenService:Create(ic, info, { ImageColor3 = Color3.fromRGB(100, 100, 100) })
+
+        btn.MouseEnter:Connect(function() hoverTween:Play(); hoverIcTween:Play() end)
+        btn.MouseLeave:Connect(function() normalTween:Play(); normalIcTween:Play() end)
+        btn.MouseButton1Click:Connect(function() pcall(onClick) end)
+        return btn, ic
     end
 
-    -- ---------- 日志捕获逻辑（来自非UI.lua） ----------
+    -- ---------- savedialog（放到 ScreenGui 层，覆盖全屏居中） ----------
+    local sdOverlay = nil
+    local sg = findScreenGui(wrap)
+    if sg then
+        sdOverlay = Instance.new("Frame")
+        sdOverlay.Name = "savedialog"
+        sdOverlay.Size = UDim2.new(1, 0, 1, 0)
+        sdOverlay.Position = UDim2.new(0, 0, 0, 0)
+        sdOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        sdOverlay.BackgroundTransparency = 0.2
+        sdOverlay.BorderSizePixel = 0
+        sdOverlay.Visible = false
+        sdOverlay.ZIndex = 500
+        sdOverlay.Active = true
+        sdOverlay.Parent = sg
+
+        local sdMain = Instance.new("Frame")
+        sdMain.Name = "main"
+        sdMain.AnchorPoint = Vector2.new(0.5, 0.5)
+        sdMain.Position = UDim2.new(0.5, 0, 0.5, 0)
+        sdMain.Size = UDim2.new(0, 274, 0, 126)
+        sdMain.BackgroundColor3 = Color3.fromRGB(21, 21, 21)
+        sdMain.BorderSizePixel = 0
+        sdMain.ZIndex = 501
+        sdMain.Parent = sdOverlay
+        Instance.new("UICorner", sdMain).CornerRadius = UDim.new(0, 10)
+
+        local sdTitle = Instance.new("TextLabel")
+        sdTitle.Name = "tit(s)"
+        sdTitle.Size = UDim2.new(0, 200, 0, 30)
+        sdTitle.Position = UDim2.new(0, 9, 0, 9)
+        sdTitle.BackgroundTransparency = 1
+        sdTitle.Font = Enum.Font.Gotham
+        sdTitle.TextSize = 20
+        sdTitle.Text = "Save in workspace"
+        sdTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        sdTitle.TextXAlignment = Enum.TextXAlignment.Left
+        sdTitle.TextYAlignment = Enum.TextYAlignment.Top
+        sdTitle.ZIndex = 502
+        sdTitle.Parent = sdMain
+        TextGradient:Skip(sdTitle)
+
+        local sdDesc = Instance.new("TextLabel")
+        sdDesc.Name = "desc"
+        sdDesc.Size = UDim2.new(0, 258, 0, 30)
+        sdDesc.Position = UDim2.new(0, 9, 0, 27)
+        sdDesc.BackgroundTransparency = 1
+        sdDesc.Font = Enum.Font.Gotham
+        sdDesc.TextSize = 14
+        sdDesc.Text = "This will save a file in your exploit workspace folder."
+        sdDesc.TextColor3 = Color3.fromRGB(101, 101, 101)
+        sdDesc.TextXAlignment = Enum.TextXAlignment.Left
+        sdDesc.TextYAlignment = Enum.TextYAlignment.Top
+        sdDesc.TextWrapped = true
+        sdDesc.ZIndex = 502
+        sdDesc.Parent = sdMain
+        TextGradient:Skip(sdDesc)
+
+        local sdClose = Instance.new("ImageButton")
+        sdClose.Name = "close"
+        sdClose.Size = UDim2.new(0, 20, 0, 20)
+        sdClose.Position = UDim2.new(1, -32, 0, 14)
+        sdClose.BackgroundTransparency = 1
+        sdClose.Image = "rbxassetid://10747384394"
+        sdClose.BorderSizePixel = 0
+        sdClose.ZIndex = 502
+        sdClose.Parent = sdMain
+        sdClose.MouseButton1Click:Connect(function()
+            sdOverlay.Visible = false
+        end)
+
+        local sdInput = Instance.new("TextBox")
+        sdInput.Name = "TextBox"
+        sdInput.AnchorPoint = Vector2.new(0.5, 0)
+        sdInput.Position = UDim2.new(0.5, 0, 0, 65)
+        sdInput.Size = UDim2.new(0, 253, 0, 25)
+        sdInput.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
+        sdInput.BorderSizePixel = 0
+        sdInput.Font = Enum.Font.Gotham
+        sdInput.TextSize = 14
+        sdInput.Text = ""
+        sdInput.PlaceholderText = "example.txt"
+        sdInput.PlaceholderColor3 = Color3.fromRGB(101, 101, 101)
+        sdInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+        sdInput.TextWrapped = true
+        sdInput.TextXAlignment = Enum.TextXAlignment.Left
+        sdInput.ClearTextOnFocus = false
+        sdInput.ZIndex = 502
+        sdInput.Parent = sdMain
+        Instance.new("UICorner", sdInput).CornerRadius = UDim.new(0, 0)
+        local sdPad = Instance.new("UIPadding")
+        sdPad.PaddingLeft = UDim.new(0, 6)
+        sdPad.Parent = sdInput
+        TextGradient:Skip(sdInput)
+
+        local sdDone = Instance.new("TextButton")
+        sdDone.Name = "save"
+        sdDone.Size = UDim2.new(0, 62, 0, 24)
+        sdDone.Position = UDim2.new(1, -34, 1, -32)
+        sdDone.AnchorPoint = Vector2.new(1, 0)
+        sdDone.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        sdDone.Text = "Done  "
+        sdDone.Font = Enum.Font.Gotham
+        sdDone.TextSize = 14
+        sdDone.TextColor3 = Color3.fromRGB(100, 100, 100)
+        sdDone.TextXAlignment = Enum.TextXAlignment.Right
+        sdDone.AutoButtonColor = false
+        sdDone.BorderSizePixel = 0
+        sdDone.ZIndex = 502
+        sdDone.Parent = sdMain
+        local sdDoneIcon = Instance.new("ImageLabel")
+        sdDoneIcon.Size = UDim2.new(0, 15, 0, 15)
+        sdDoneIcon.Position = UDim2.new(0, 5, 0.5, 0)
+        sdDoneIcon.AnchorPoint = Vector2.new(0, 0.5)
+        sdDoneIcon.BackgroundTransparency = 1
+        sdDoneIcon.Image = "rbxassetid://10709790644"
+        sdDoneIcon.ImageColor3 = Color3.fromRGB(100, 100, 100)
+        sdDoneIcon.Parent = sdDone
+
+        local sdInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local sdHover  = TweenService:Create(sdDone, sdInfo, { BackgroundColor3 = Color3.fromRGB(50, 50, 50), TextColor3 = Color3.fromRGB(255, 255, 255) })
+        local sdHoverI = TweenService:Create(sdDoneIcon, sdInfo, { ImageColor3 = Color3.fromRGB(255, 255, 255) })
+        local sdNormal = TweenService:Create(sdDone, sdInfo, { BackgroundColor3 = Color3.fromRGB(30, 30, 30), TextColor3 = Color3.fromRGB(100, 100, 100) })
+        local sdNormalI = TweenService:Create(sdDoneIcon, sdInfo, { ImageColor3 = Color3.fromRGB(100, 100, 100) })
+        sdDone.MouseEnter:Connect(function() sdHover:Play(); sdHoverI:Play() end)
+        sdDone.MouseLeave:Connect(function() sdNormal:Play(); sdNormalI:Play() end)
+
+        -- 还原原版：写文件 + 清空输入 + 关闭对话框
+        sdDone.MouseButton1Click:Connect(function()
+            local name = sdInput.Text
+            local raw = logBox.Text
+            if raw == "" then return end
+            local clean = raw:gsub("<[^>]->", ""):gsub("&lt;", "<"):gsub("&gt;", ">"):gsub("&amp;", "&")
+            if type(writefile) == "function" then
+                pcall(writefile, name, clean)
+            end
+            sdInput.Text = ""
+            sdOverlay.Visible = false
+        end)
+
+        -- 关闭主窗口时隐藏
+        local topFrame = findTopFrame(wrap)
+        if topFrame then
+            local visConn
+            visConn = topFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+                if not topFrame.Visible then sdOverlay.Visible = false end
+            end)
+            wrap.Destroying:Connect(function() safeDisconnect(visConn) end)
+        end
+    end
+
+    -- ---------- clear / save / copy 三个按钮 ----------
+    makeConsoleBtn("Clear  ", "rbxassetid://10709819059", 62, 1, function()
+        logBox.Text = ""
+        c.CanvasSize = UDim2.new(0, 0, 0, 0)
+        logBox.Size = UDim2.new(1, 0, 0, 0)
+    end)
+
+    makeConsoleBtn("Save  ", "rbxassetid://10734941499", 62, 2, function()
+        if sdOverlay then sdOverlay.Visible = true end
+    end)
+
+    makeConsoleBtn("Copy  ", "rbxassetid://10709812159", 64, 3, function()
+        local raw = logBox.Text
+        if raw == "" then return end
+        local clean = raw:gsub("<[^>]->", ""):gsub("&lt;", "<"):gsub("&gt;", ">"):gsub("&amp;", "&")
+        local writer = setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard)
+        if writer then pcall(writer, clean) end
+    end)
+
+    -- ---------- 日志捕获（原版 yesc.LocalScript 逐行搬运） ----------
     local autoScroll = true
     local isTweening = false
     local currentTween = nil
@@ -2750,26 +2955,23 @@ child.Console = function(_, config)
         [Enum.MessageType.MessageError]   = "FF0000",
     }
 
-    -- 检测用户是否手动向上滚了
-    scroll:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+    local scrollPosConn = c:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
         if isTweening then return end
-        local max = scroll.CanvasSize.Y.Offset - scroll.AbsoluteWindowSize.Y
+        local max = c.CanvasSize.Y.Offset - c.AbsoluteWindowSize.Y
         if max > 0 then
-            autoScroll = (scroll.CanvasPosition.Y >= max - 15)
+            autoScroll = (c.CanvasPosition.Y >= max - 15)
         end
     end)
 
-    -- 自适应日志高度 + 自动滚动
-    logBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
+    local boundsConn = logBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
         local maxY = logBox.TextBounds.Y
-        scroll.CanvasSize = UDim2.new(0, 0, 0, maxY)
+        c.CanvasSize = UDim2.new(0, 0, 0, maxY)
         logBox.Size = UDim2.new(1, 0, 0, maxY)
         if autoScroll then
-            local targetY = math.max(0, maxY - scroll.AbsoluteWindowSize.Y)
+            local targetY = math.max(0, maxY - c.AbsoluteWindowSize.Y)
             if currentTween then currentTween:Cancel() end
             isTweening = true
-            currentTween = TweenService:Create(scroll,
-                TweenInfo.new(0.15, Enum.EasingStyle.Sine),
+            currentTween = TweenService:Create(c, TweenInfo.new(0.15, Enum.EasingStyle.Sine),
                 { CanvasPosition = Vector2.new(0, targetY) })
             local tw = currentTween
             tw.Completed:Once(function()
@@ -2779,7 +2981,6 @@ child.Console = function(_, config)
         end
     end)
 
-    -- 监听 LogService
     local logConn = LogService.MessageOut:Connect(function(msg, msgType)
         local hex = colors[msgType] or "FFFFFF"
         local t = tick()
@@ -2791,143 +2992,31 @@ child.Console = function(_, config)
             .. string.format('<font color="#%s">%s %s</font>\n', hex, stamp, msg)
     end)
 
-    -- ---------- 三个功能按钮 ----------
-    local clearBtn = makeBtn("清空", function()
-        logBox.Text = ""
-        scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-        logBox.Size = UDim2.new(1, 0, 0, 0)
-    end)
-
-    local saveBtn = makeBtn("保存", function()
-        if type(writefile) ~= "function" then return end
-        local sg = box
-        while sg and not sg:IsA("ScreenGui") do sg = sg.Parent end
-        if not sg then return end
-
-        -- 遮罩
-        local overlay = Instance.new("Frame")
-        overlay.Size = UDim2.fromScale(1, 1)
-        overlay.BackgroundColor3 = Color3.new(0, 0, 0)
-        overlay.BackgroundTransparency = 0.4
-        overlay.ZIndex = 500
-        overlay.Active = true
-        overlay.Parent = sg
-
-        local dlg = Instance.new("Frame")
-        dlg.Size = UDim2.new(0, 280, 0, 130)
-        dlg.AnchorPoint = Vector2.new(0.5, 0.5)
-        dlg.Position = UDim2.fromScale(0.5, 0.5)
-        dlg.BackgroundTransparency = 0.05
-        dlg.BorderSizePixel = 0
-        dlg.ZIndex = 501
-        dlg.Parent = overlay
-        Instance.new("UICorner", dlg).CornerRadius = UDim.new(0, 10)
-        local dlgStroke = Instance.new("UIStroke")
-        dlgStroke.Transparency = 0.65
-        dlgStroke.Parent = dlg
-        AddToRegistry(dlg, "BackgroundColor3", "Main")
-        AddToRegistry(dlgStroke, "Color", "Stroke")
-
-        local dlgTitle = Instance.new("TextLabel")
-        dlgTitle.Size = UDim2.new(1, -20, 0, 20)
-        dlgTitle.Position = UDim2.new(0, 10, 0, 10)
-        dlgTitle.BackgroundTransparency = 1
-        dlgTitle.Font = Enum.Font.GothamBold
-        dlgTitle.Text = "保存日志到文件"
-        dlgTitle.TextSize = 14
-        dlgTitle.TextXAlignment = Enum.TextXAlignment.Left
-        dlgTitle.ZIndex = 502
-        dlgTitle.Parent = dlg
-        AddToRegistry(dlgTitle, "TextColor3", "Text")
-
-        local inputBox = Instance.new("TextBox")
-        inputBox.Size = UDim2.new(1, -20, 0, 28)
-        inputBox.Position = UDim2.new(0, 10, 0, 42)
-        inputBox.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
-        inputBox.BorderSizePixel = 0
-        inputBox.Font = Enum.Font.GothamMedium
-        inputBox.Text = ""
-        inputBox.PlaceholderText = "log.txt"
-        inputBox.TextSize = 12
-        inputBox.TextXAlignment = Enum.TextXAlignment.Left
-        inputBox.ClearTextOnFocus = false
-        inputBox.ZIndex = 502
-        inputBox.Parent = dlg
-        Instance.new("UICorner", inputBox).CornerRadius = UDim.new(0, 6)
-        local inputPad = Instance.new("UIPadding")
-        inputPad.PaddingLeft = UDim.new(0, 8)
-        inputPad.Parent = inputBox
-        AddToRegistry(inputBox, "TextColor3", "Text")
-        TextGradient:Skip(inputBox)
-
-        local function closeDialog() overlay:Destroy() end
-
-        local function makeDlgBtn(text, isPrimary, xPos, callback)
-            local b = Instance.new("TextButton")
-            b.Size = UDim2.new(0, 80, 0, 28)
-            b.Position = UDim2.new(1, xPos, 1, -38)
-            b.AnchorPoint = Vector2.new(1, 0)
-            b.Text = text
-            b.Font = Enum.Font.GothamBold
-            b.TextSize = 12
-            b.TextColor3 = Color3.new(1, 1, 1)
-            b.BorderSizePixel = 0
-            b.AutoButtonColor = false
-            b.ZIndex = 502
-            b.Parent = dlg
-            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
-            if isPrimary then
-                AddToRegistry(b, "BackgroundColor3", "Accent")
-            else
-                b.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
-            end
-            b.MouseButton1Click:Connect(function() pcall(callback) end)
-            return b
-        end
-
-        makeDlgBtn("取消", false, -10, closeDialog)
-        makeDlgBtn("保存", true, -96, function()
-            local name = inputBox.Text
-            if name == "" then name = "log.txt" end
-            local raw = logBox.Text
-            local clean = raw:gsub("<[^>]->", ""):gsub("&lt;", "<"):gsub("&gt;", ">"):gsub("&amp;", "&")
-            pcall(writefile, name, clean)
-            closeDialog()
-        end)
-    end)
-
-    local copyBtn = makeBtn("复制", function()
-        local raw = logBox.Text
-        if raw == "" then return end
-        local clean = raw:gsub("<[^>]->", ""):gsub("&lt;", "<"):gsub("&gt;", ">"):gsub("&amp;", "&")
-        local writer = setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard)
-        if writer then pcall(writer, clean) end
-    end)
-
-    -- ---------- 对外方法 ----------
-    local self = {}
-    function self.Destroy()
+    -- ---------- 清理 ----------
+    wrap.Destroying:Connect(function()
         safeDisconnect(logConn)
-        wrap:Destroy()
-    end
-    function self.SetVisible(state)
-        wrap.Visible = state ~= false
-    end
+        safeDisconnect(boundsConn)
+        safeDisconnect(scrollPosConn)
+        if currentTween then currentTween:Cancel() end
+        if sdOverlay then sdOverlay:Destroy() end
+    end)
+
+    -- ---------- 对外接口 ----------
+    local self = {}
+    function self.Destroy() wrap:Destroy() end
+    function self.SetVisible(state) wrap.Visible = state ~= false end
     function self.Clear()
         logBox.Text = ""
-        scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+        c.CanvasSize = UDim2.new(0, 0, 0, 0)
         logBox.Size = UDim2.new(1, 0, 0, 0)
     end
     function self.SetHeight(h)
         height = h
-        wrap.Size = UDim2.new(1, -16, 0, height + (title ~= "" and 24 or 0))
-        box.Size  = UDim2.new(1, 0, 0, height)
+        wrap.Size = UDim2.new(1, 0, 0, height)
     end
-    function self.SetTitle(t)
-        if titleLbl then titleLbl.Text = tostring(t or "") end
-    end
-    function self.GetLogText()
-        return logBox.Text
+    function self.GetLogText() return logBox.Text end
+    function self.OpenSaveDialog()
+        if sdOverlay then sdOverlay.Visible = true end
     end
     return self
 end
