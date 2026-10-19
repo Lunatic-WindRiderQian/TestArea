@@ -2620,592 +2620,6 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
     end
 
 -- ============================================================
--- QuickRun —— 完整搬运自 非UI.lua 的 Quick run Tab
--- 编辑区 + 语法高亮（7 层）+ 行号 + 当前行高亮 + 自动滚动
--- 多标签页 + 复制 / 清空 / 执行按钮
--- ============================================================
-child.QuickRun = function(_, config)
-    config = safeConfig(config)
-    local parent = config.Parent or contentHolder
-    local totalHeight = config.Height or 300
-    local FONT_CODE = Font.new("rbxassetid://16658246179", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
-    local FONT_TITLE = Font.new("rbxassetid://16658237174", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
-    local TweenService = game:GetService("TweenService")
-
-    -- ================= 外层 =================
-    local wrap = Instance.new("Frame")
-    wrap.Name = "QuickRun_Wrap"
-    wrap.Size = UDim2.new(1, 0, 0, totalHeight)
-    wrap.BackgroundTransparency = 1
-    wrap.BorderSizePixel = 0
-    wrap.ClipsDescendants = true
-    wrap.Parent = parent
-
-    -- ================= 编辑器 =================
-    local editor = Instance.new("ScrollingFrame")
-    editor.Name = "editor"
-    editor.Active = true
-    editor.BorderSizePixel = 0
-    editor.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    editor.BackgroundTransparency = 1
-    editor.Size = UDim2.new(1, 0, 1, -67)
-    editor.Position = UDim2.new(0, 0, 0, 35)
-    editor.CanvasSize = UDim2.new(0, 0, 0, 0)
-    editor.ScrollBarImageColor3 = Color3.fromRGB(101, 101, 101)
-    editor.ScrollBarThickness = 2
-    editor.ClipsDescendants = true
-    editor.Parent = wrap
-
-    -- 行号（Lines，editor 子控件）
-    local lines = Instance.new("TextLabel")
-    lines.Name = "Lines"
-    lines.ZIndex = 4
-    lines.BorderSizePixel = 0
-    lines.TextSize = 14
-    lines.TextYAlignment = Enum.TextYAlignment.Top
-    lines.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
-    lines.BackgroundTransparency = 1
-    lines.FontFace = FONT_CODE
-    lines.TextColor3 = Color3.fromRGB(255, 255, 255)
-    lines.Size = UDim2.new(0, 21, 1, 0)
-    lines.ClipsDescendants = true
-    lines.BorderColor3 = Color3.fromRGB(24, 24, 24)
-    lines.Text = "1"
-    lines.Parent = editor
-
-    -- 当前行高亮（LineHighlight，editor 子控件）
-    local lineHighlight = Instance.new("Frame")
-    lineHighlight.Name = "LineHighlight"
-    lineHighlight.Visible = false
-    lineHighlight.ZIndex = 0
-    lineHighlight.BorderSizePixel = 0
-    lineHighlight.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
-    lineHighlight.Size = UDim2.new(1, 0, 0, 14)
-    lineHighlight.Parent = editor
-
-    -- 代码输入框（TextBox，editor 子控件，位置偏 25px 让出行号区）
-    local textBox = Instance.new("TextBox")
-    textBox.Name = "TextBox"
-    textBox.TextXAlignment = Enum.TextXAlignment.Left
-    textBox.PlaceholderColor3 = Color3.fromRGB(101, 101, 101)
-    textBox.BorderSizePixel = 0
-    textBox.TextSize = 14
-    textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    textBox.TextYAlignment = Enum.TextYAlignment.Top
-    textBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    textBox.BackgroundTransparency = 1
-    textBox.FontFace = FONT_CODE
-    textBox.MultiLine = true
-    textBox.ClearTextOnFocus = false
-    textBox.Size = UDim2.new(1, 0, 1, 0)
-    textBox.Position = UDim2.new(0, 25, 0, 0)
-    textBox.Text = ""
-    textBox.Parent = editor
-
-    -- 7 层语法高亮（都是 TextBox 的子控件，靠空格遮蔽实现着色）
-    local layerSpecs = {
-        { name = "Comments_",        zindex = 5, color = Color3.fromRGB(60, 201, 60) },
-        { name = "Globals_",         zindex = 5, color = Color3.fromRGB(133, 215, 248) },
-        { name = "Keywords_",        zindex = 5, color = Color3.fromRGB(249, 110, 125) },
-        { name = "Numbers_",         zindex = 4, color = Color3.fromRGB(255, 199, 0) },
-        { name = "RemoteHighlight_", zindex = 5, color = Color3.fromRGB(0, 145, 255) },
-        { name = "Strings_",         zindex = 5, color = Color3.fromRGB(174, 242, 150) },
-        { name = "Tokens_",          zindex = 5, color = Color3.fromRGB(255, 255, 255) },
-    }
-    for _, spec in ipairs(layerSpecs) do
-        local l = Instance.new("TextLabel")
-        l.Name = spec.name
-        l.ZIndex = spec.zindex
-        l.TextSize = 14
-        l.TextXAlignment = Enum.TextXAlignment.Left
-        l.TextYAlignment = Enum.TextYAlignment.Top
-        l.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        l.BackgroundTransparency = 1
-        l.FontFace = FONT_CODE
-        l.TextColor3 = spec.color
-        l.Size = UDim2.new(1, 0, 1, 0)
-        l.BorderColor3 = Color3.fromRGB(28, 43, 54)
-        l.Text = ""
-        l.Parent = textBox
-    end
-
-    -- ================= 底部按钮 =================
-    local buttonsHolder = Instance.new("Frame")
-    buttonsHolder.Name = "buttonsholder"
-    buttonsHolder.Size = UDim2.new(1, 0, 0, 32)
-    buttonsHolder.Position = UDim2.new(0, 0, 1, -32)
-    buttonsHolder.BackgroundTransparency = 1
-    buttonsHolder.Parent = wrap
-
-    local btnLayout = Instance.new("UIListLayout")
-    btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    btnLayout.Padding = UDim.new(0, 5)
-    btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    btnLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    btnLayout.FillDirection = Enum.FillDirection.Horizontal
-    btnLayout.Parent = buttonsHolder
-
-    local function makeBtn(text, width, layoutOrder, iconId, onClick)
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, width, 0, 24)
-        btn.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
-        btn.TextXAlignment = Enum.TextXAlignment.Right
-        btn.TextSize = 14
-        btn.TextColor3 = Color3.fromRGB(101, 101, 101)
-        btn.FontFace = FONT_TITLE
-        btn.BorderSizePixel = 0
-        btn.Text = text
-        btn.LayoutOrder = layoutOrder
-        btn.AutoButtonColor = false
-        btn.Parent = buttonsHolder
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
-
-        local icon = Instance.new("ImageLabel")
-        icon.Size = UDim2.new(0, 15, 0, 15)
-        icon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        icon.ImageColor3 = Color3.fromRGB(101, 101, 101)
-        icon.AnchorPoint = Vector2.new(0.5, 0.5)
-        icon.Image = iconId
-        icon.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        icon.BackgroundTransparency = 1
-        icon.Position = UDim2.new(0, 15, 0.5, 0)
-        icon.Parent = btn
-
-        -- 原版 anim 脚本的 hover 效果
-        local info = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local hoverTween = TweenService:Create(btn, info, {
-            BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-            TextColor3 = Color3.fromRGB(255, 255, 255)
-        })
-        local imageHoverTween = TweenService:Create(icon, info, {
-            ImageColor3 = Color3.fromRGB(255, 255, 255)
-        })
-        local normalTween = TweenService:Create(btn, info, {
-            BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-            TextColor3 = Color3.fromRGB(100, 100, 100)
-        })
-        local imageNormalTween = TweenService:Create(icon, info, {
-            ImageColor3 = Color3.fromRGB(100, 100, 100)
-        })
-        btn.MouseEnter:Connect(function() hoverTween:Play(); imageHoverTween:Play() end)
-        btn.MouseLeave:Connect(function() normalTween:Play(); imageNormalTween:Play() end)
-        btn.MouseButton1Click:Connect(function() pcall(onClick) end)
-        return btn
-    end
-
-    makeBtn("Copy  ", 67, 1, "rbxassetid://10709812159", function()
-        local writer = setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard)
-        if writer then pcall(writer, textBox.Text) end
-    end)
-    makeBtn("Clear  ", 62, 2, "rbxassetid://10709819059", function()
-        textBox.Text = ""
-    end)
-    makeBtn("Execute  ", 83, 3, "rbxassetid://10734923549", function()
-        local code = textBox.Text
-        if code ~= "" then
-            local fn = loadstring(code)
-            if fn then fn() end
-        end
-    end)
-
-    -- ================= Tabs =================
-    local tabsFrame = Instance.new("ScrollingFrame")
-    tabsFrame.Name = "tabs"
-    tabsFrame.Active = true
-    tabsFrame.BorderSizePixel = 0
-    tabsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    tabsFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
-    tabsFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    tabsFrame.BackgroundTransparency = 1
-    tabsFrame.Size = UDim2.new(1, 0, 0, 25)
-    tabsFrame.Position = UDim2.new(0, 0, 0, 5)
-    tabsFrame.ScrollBarThickness = 0
-    tabsFrame.Parent = wrap
-
-    local tabsLayout = Instance.new("UIListLayout")
-    tabsLayout.Padding = UDim.new(0, 5)
-    tabsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    tabsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    tabsLayout.FillDirection = Enum.FillDirection.Horizontal
-    tabsLayout.Parent = tabsFrame
-
-    local addTab = Instance.new("ImageButton")
-    addTab.Name = "addtab"
-    addTab.BorderSizePixel = 0
-    addTab.BackgroundTransparency = 1
-    addTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    addTab.Image = "rbxassetid://10734924532"
-    addTab.Size = UDim2.new(0, 20, 0, 20)
-    addTab.LayoutOrder = 9999
-    addTab.Parent = tabsFrame
-
-    -- tab 管理（完整搬运 tabmanager）
-    local ACTIVE_BG = Color3.fromRGB(40, 40, 40)
-    local INACTIVE_BG = Color3.fromRGB(30, 30, 30)
-    local ACTIVE_TEXT = Color3.fromRGB(255, 255, 255)
-    local INACTIVE_TEXT = Color3.fromRGB(100, 100, 100)
-
-    local tabs = {}
-    local activeTab = nil
-
-    local function renumberTabs()
-        for i, t in ipairs(tabs) do
-            t.title = "Tab " .. i
-            if t.button then
-                local titleLbl = t.button:FindFirstChild("tabtitle")
-                if titleLbl then titleLbl.Text = t.title end
-            end
-        end
-    end
-
-    local function createTabButton(tabData)
-        local btn = Instance.new("Frame")
-        btn.Name = "tab" .. (#tabs + 1)
-        btn.BackgroundColor3 = INACTIVE_BG
-        btn.BorderSizePixel = 0
-        btn.Size = UDim2.new(0, 90, 0, 25)
-        btn.LayoutOrder = #tabs + 1
-        btn.ClipsDescendants = true
-        btn.Parent = tabsFrame
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
-
-        local titleLbl = Instance.new("TextLabel")
-        titleLbl.Name = "tabtitle"
-        titleLbl.BorderSizePixel = 0
-        titleLbl.TextSize = 14
-        titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-        titleLbl.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        titleLbl.FontFace = FONT_TITLE
-        titleLbl.TextColor3 = INACTIVE_TEXT
-        titleLbl.BackgroundTransparency = 1
-        titleLbl.Size = UDim2.new(0, 47, 0, 25)
-        titleLbl.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        titleLbl.Text = tabData.title
-        titleLbl.Position = UDim2.new(0, 10, 0, 0)
-        titleLbl.Parent = btn
-
-        local closeBtn = Instance.new("ImageButton")
-        closeBtn.Name = "close"
-        closeBtn.BorderSizePixel = 0
-        closeBtn.BackgroundTransparency = 1
-        closeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        closeBtn.ImageColor3 = INACTIVE_TEXT
-        closeBtn.Image = "rbxassetid://10747384394"
-        closeBtn.Size = UDim2.new(0, 15, 0, 15)
-        closeBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        closeBtn.Position = UDim2.new(0.76667, 0, 0.2, 0)
-        closeBtn.Parent = btn
-
-        btn.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1
-               or input.UserInputType == Enum.UserInputType.Touch then
-                activateTab(tabData)
-            end
-        end)
-
-        closeBtn.MouseButton1Click:Connect(function()
-            closeTab(tabData)
-        end)
-
-        return btn
-    end
-
-    local function setTabActiveStyle(tabData, isActive)
-        local btn = tabData.button
-        if not btn then return end
-        btn.BackgroundColor3 = isActive and ACTIVE_BG or INACTIVE_BG
-        local titleLbl = btn:FindFirstChild("tabtitle")
-        local closeBtn = btn:FindFirstChild("close")
-        if titleLbl then titleLbl.TextColor3 = isActive and ACTIVE_TEXT or INACTIVE_TEXT end
-        if closeBtn then closeBtn.ImageColor3 = isActive and ACTIVE_TEXT or INACTIVE_TEXT end
-    end
-
-    local createTab  -- forward declaration
-    local activateTab, closeTab
-
-    activateTab = function(tabData)
-        if activeTab == tabData then return end
-        if activeTab and textBox then activeTab.text = textBox.Text end
-        for _, t in ipairs(tabs) do setTabActiveStyle(t, false) end
-        activeTab = tabData
-        setTabActiveStyle(tabData, true)
-        if textBox then textBox.Text = tabData.text or "" end
-    end
-
-    closeTab = function(tabData)
-        local idx
-        for i, t in ipairs(tabs) do
-            if t == tabData then idx = i break end
-        end
-        if not idx then return end
-        if activeTab == tabData and textBox then tabData.text = textBox.Text end
-        if tabData.button then tabData.button.Parent = nil end
-        table.remove(tabs, idx)
-        if #tabs == 0 then
-            activeTab = nil
-            createTab()
-            return
-        end
-        renumberTabs()
-        if activeTab == tabData then
-            activeTab = nil
-            local newIdx = math.min(idx, #tabs)
-            activateTab(tabs[newIdx])
-        end
-    end
-
-    createTab = function()
-        local tabData = { title = "Tab " .. (#tabs + 1), text = "" }
-        tabData.button = createTabButton(tabData)
-        table.insert(tabs, tabData)
-        activateTab(tabData)
-        return tabData
-    end
-
-    addTab.MouseButton1Click:Connect(function() createTab() end)
-    createTab()
-
-    -- ================= 语法高亮（linesandshit） =================
-    local lua_keywords = {"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"}
-    local global_env = {"getrawmetatable", "game", "workspace", "script", "math", "string", "table", "print", "wait", "BrickColor", "Color3", "next", "pairs", "ipairs", "select", "unpack", "Instance", "Vector2", "Vector3", "CFrame", "Ray", "UDim2", "Enum", "assert", "error", "warn", "tick", "loadstring", "_G", "shared", "getfenv", "setfenv", "newproxy", "setmetatable", "getmetatable", "os", "debug", "pcall", "ypcall", "xpcall", "rawequal", "rawset", "rawget", "tonumber", "tostring", "type", "typeof", "_VERSION", "coroutine", "delay", "require", "spawn", "LoadLibrary", "settings", "stats", "time", "UserSettings", "version", "Axes", "ColorSequence", "Faces", "ColorSequenceKeypoint", "NumberRange", "NumberSequence", "NumberSequenceKeypoint", "gcinfo", "elapsedTime", "collectgarbage", "PhysicalProperties", "Rect", "Region3", "Region3int16", "UDim", "Vector2int16", "Vector3int16"}
-
-    local Source = textBox
-    local Lines = lines
-    local LineHighlight = lineHighlight
-
-    local currentHighlightTween = nil
-    local currentHighlightLine = -1
-
-    local function updateLineHighlight()
-        if not LineHighlight then return end
-        local cursorPos = Source.CursorPosition
-        if cursorPos < 0 then
-            LineHighlight.Visible = false
-            return
-        end
-        local text = Source.Text
-        local textUpToCursor = text:sub(1, cursorPos)
-        local lineNum = 1
-        for _ in textUpToCursor:gmatch("\n") do lineNum = lineNum + 1 end
-        if lineNum == currentHighlightLine then return end
-        currentHighlightLine = lineNum
-
-        local totalLines = 1
-        for _ in text:gmatch("\n") do totalLines = totalLines + 1 end
-        local lineHeight = 14
-        if totalLines > 0 and Source.TextBounds.Y > 0 then
-            lineHeight = Source.TextBounds.Y / totalLines
-            if lineHeight < 1 then lineHeight = 14 end
-        end
-        local targetY = (lineNum - 1) * lineHeight
-
-        if currentHighlightTween then currentHighlightTween:Cancel() end
-        LineHighlight.Visible = true
-        currentHighlightTween = TweenService:Create(LineHighlight,
-            TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {
-                Position = UDim2.new(0, 0, 0, targetY),
-                Size = UDim2.new(1, 0, 0, lineHeight),
-            })
-        currentHighlightTween:Play()
-    end
-
-    local function Highlight(string_, keywords)
-        local K = {}
-        local S = string_
-        local Token = {
-            ["="] = true, ["."] = true, [","] = true, ["("] = true, [")"] = true,
-            ["["] = true, ["]"] = true, ["{"] = true, ["}"] = true, [":"] = true,
-            ["*"] = true, ["/"] = true, ["+"] = true, ["-"] = true, ["%"] = true,
-            [";"] = true, ["~"] = true
-        }
-        for i, v in pairs(keywords) do K[v] = true end
-        S = S:gsub(".", function(c)
-            if Token[c] ~= nil then return "\32" else return c end
-        end)
-        S = S:gsub("%S+", function(c)
-            if K[c] ~= nil then return c else return (" "):rep(#c) end
-        end)
-        return S
-    end
-
-    local function hTokens(string_)
-        local Token = {
-            ["="] = true, ["."] = true, [","] = true, ["("] = true, [")"] = true,
-            ["["] = true, ["]"] = true, ["{"] = true, ["}"] = true, [":"] = true,
-            ["*"] = true, ["/"] = true, ["+"] = true, ["-"] = true, ["%"] = true,
-            [";"] = true, ["~"] = true
-        }
-        local A = ""
-        string_:gsub(".", function(c)
-            if Token[c] ~= nil then A = A .. c
-            elseif c == "\n" then A = A .. "\n"
-            elseif c == "\t" then A = A .. "\t"
-            else A = A .. "\32" end
-        end)
-        return A
-    end
-
-    local function strings(string_)
-        local highlight = ""
-        local quote = false
-        string_:gsub(".", function(c)
-            if quote == false and c == "\"" then quote = true
-            elseif quote == true and c == "\"" then quote = false end
-            if quote == false and c == "\"" then highlight = highlight .. "\""
-            elseif c == "\n" then highlight = highlight .. "\n"
-            elseif c == "\t" then highlight = highlight .. "\t"
-            elseif quote == true then highlight = highlight .. c
-            else highlight = highlight .. "\32" end
-        end)
-        return highlight
-    end
-
-    local function comments(string_)
-        local ret = ""
-        string_:gsub("[^\r\n]+", function(c)
-            local comm = false
-            local i = 0
-            c:gsub(".", function(n)
-                i = i + 1
-                if c:sub(i, i + 1) == "--" then comm = true end
-                if comm == true then ret = ret .. n else ret = ret .. "\32" end
-            end)
-        end)
-        return ret
-    end
-
-    local function numbers(string_)
-        local A = ""
-        string_:gsub(".", function(c)
-            if tonumber(c) ~= nil then A = A .. c
-            elseif c == "\n" then A = A .. "\n"
-            elseif c == "\t" then A = A .. "\t"
-            else A = A .. "\32" end
-        end)
-        return A
-    end
-
-    local function highlight_source(type_)
-        if type_ == "Text" then
-            Source.Text = Source.Text:gsub("\13", "")
-            Source.Text = Source.Text:gsub("\t", "      ")  -- 原版行为
-            local s = Source.Text
-            Source.Keywords_.Text = Highlight(s, lua_keywords)
-            Source.Globals_.Text = Highlight(s, global_env)
-            Source.RemoteHighlight_.Text = Highlight(s, {"FireServer", "fireServer", "InvokeServer", "invokeServer"})
-            Source.Tokens_.Text = hTokens(s)
-            Source.Numbers_.Text = numbers(s)
-            Source.Strings_.Text = strings(s)
-            local lin = 1
-            s:gsub("\n", function() lin = lin + 1 end)
-            Lines.Text = ""
-            for i = 1, lin do
-                Lines.Text = Lines.Text .. i .. "\n"
-            end
-        end
-    end
-
-    highlight_source("Text")
-    updateLineHighlight()
-
-    Source.Changed:Connect(function(prop)
-        highlight_source(prop)
-        if prop == "CursorPosition" or prop == "Text" then
-            updateLineHighlight()
-        end
-    end)
-
-    -- ================= 自适应 + 自动滚动（autoadjust） =================
-    local frame = textBox
-    local scrollingFrame = editor
-
-    frame.TextEditable = true
-    frame.MultiLine = true
-    frame.TextWrapped = false
-
-    scrollingFrame.CanvasSize = UDim2.new(1, 0, 1, 0)
-    frame.Size = UDim2.new(1, 0, 1, 0)
-
-    local autoScrollV = true
-    local autoScrollH = true
-    local threshold = 25
-    local currentTween = nil
-
-    scrollingFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-        local maxScrollY = scrollingFrame.AbsoluteCanvasSize.Y - scrollingFrame.AbsoluteSize.Y
-        local maxScrollX = scrollingFrame.AbsoluteCanvasSize.X - scrollingFrame.AbsoluteSize.X
-        if maxScrollY > 0 then
-            autoScrollV = (scrollingFrame.CanvasPosition.Y >= maxScrollY - threshold)
-        end
-        if maxScrollX > 0 then
-            autoScrollH = (scrollingFrame.CanvasPosition.X >= maxScrollX - threshold)
-        end
-    end)
-
-    local function updateScrollAndSize()
-        task.defer(function()
-            if not frame.Parent then return end
-            local containerWidth = scrollingFrame.AbsoluteSize.X
-            local containerHeight = scrollingFrame.AbsoluteSize.Y
-            local textWidth = frame.TextBounds.X
-            local textHeight = frame.TextBounds.Y
-            local neededWidth = math.max(containerWidth, textWidth + 20)
-            local neededHeight = math.max(containerHeight, textHeight + 20)
-
-            frame.Size = UDim2.new(0, neededWidth, 0, neededHeight)
-            scrollingFrame.CanvasSize = UDim2.new(0, neededWidth, 0, neededHeight)
-
-            local targetX = nil
-            local targetY = nil
-            if autoScrollH and textWidth > containerWidth then
-                targetX = math.max(0, neededWidth - containerWidth)
-            end
-            if autoScrollV and textHeight > containerHeight then
-                targetY = math.max(0, neededHeight - containerHeight)
-            end
-            if targetX or targetY then
-                local newX = targetX or scrollingFrame.CanvasPosition.X
-                local newY = targetY or scrollingFrame.CanvasPosition.Y
-                if currentTween then currentTween:Cancel() end
-                currentTween = TweenService:Create(scrollingFrame,
-                    TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                    { CanvasPosition = Vector2.new(newX, newY) })
-                currentTween:Play()
-            end
-        end)
-    end
-
-    frame:GetPropertyChangedSignal("Text"):Connect(updateScrollAndSize)
-    frame:GetPropertyChangedSignal("TextBounds"):Connect(updateScrollAndSize)
-
-    -- ================= 对外接口 =================
-    local self = {}
-    function self:Destroy() wrap:Destroy() end
-    function self:SetVisible(v) wrap.Visible = v ~= false end
-    function self:SetHeight(h)
-        totalHeight = h
-        wrap.Size = UDim2.new(1, 0, 0, h)
-    end
-    function self:GetText() return textBox.Text end
-    function self:SetText(t) textBox.Text = tostring(t or "") end
-    function self:Execute()
-        local code = textBox.Text
-        if code ~= "" then
-            local fn = loadstring(code)
-            if fn then fn() end
-        end
-    end
-    function self:Copy()
-        local writer = setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard)
-        if writer then pcall(writer, textBox.Text) end
-    end
-    function self:Clear() textBox.Text = "" end
-    function self:AddTab() return createTab() end
-    return self
-end
-
--- ============================================================
 -- Console —— 完整搬运自非UI.lua 的 console Tab
 -- 改动:
 --   · 面板左侧向外延伸 10px
@@ -8829,6 +8243,513 @@ function FengUI:CreateWindow(Config)
         TabBuilder.GetHomeSection = function() return Root end
         return TabBuilder
     end
+
+-- ============================================================
+-- QuickRun —— 完全脱离 Section 包装，原汁原味铺满整个 Tab 页面
+-- ============================================================
+function Window:CreateQuickRunTab(config)
+    config = config or {}
+    local tabName = config.Name or "Quick Run"
+    local tabIcon = config.Icon or "rbxassetid://10734923549"
+    local TweenService = game:GetService("TweenService")
+    
+    -- 1. 创建 Tab 并获取其页面容器
+    self:Tab(tabName, tabIcon)
+    local tabState = self._tabs[#self._tabs]
+    local PageContent = tabState.page:FindFirstChildWhichIsA("Frame")
+    
+    -- 2. 移除默认的 UIListLayout，禁止自动高度，取消滚动条，以便 QuickRun 占满
+    local listLayout = PageContent:FindFirstChildOfClass("UIListLayout")
+    if listLayout then listLayout:Destroy() end
+    tabState.page.ScrollingEnabled = false
+    
+    -- ================= 主容器（原版 quickrun Frame） =================
+    local quickrun = Instance.new("Frame")
+    quickrun.Name = "quickrun"
+    quickrun.Size = UDim2.new(1, 0, 1, 0)
+    quickrun.BackgroundTransparency = 1
+    quickrun.BorderSizePixel = 0
+    quickrun.Parent = PageContent
+
+    -- ================= Tabs 栏 =================
+    local tabsFrame = Instance.new("ScrollingFrame")
+    tabsFrame.Name = "tabs"
+    tabsFrame.Active = true
+    tabsFrame.BorderSizePixel = 0
+    tabsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    tabsFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
+    tabsFrame.BackgroundTransparency = 1
+    tabsFrame.Size = UDim2.new(1, -16, 0, 25)
+    tabsFrame.Position = UDim2.new(0, 8, 0, 8)
+    tabsFrame.ScrollBarThickness = 0
+    tabsFrame.ScrollingDirection = Enum.ScrollingDirection.X
+    tabsFrame.Parent = quickrun
+
+    local tabsLayout = Instance.new("UIListLayout")
+    tabsLayout.Padding = UDim.new(0, 5)
+    tabsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    tabsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    tabsLayout.FillDirection = Enum.FillDirection.Horizontal
+    tabsLayout.Parent = tabsFrame
+
+    local addTab = Instance.new("ImageButton")
+    addTab.Name = "addtab"
+    addTab.BorderSizePixel = 0
+    addTab.BackgroundTransparency = 1
+    addTab.Image = "rbxassetid://10734924532"
+    addTab.Size = UDim2.new(0, 20, 0, 20)
+    addTab.LayoutOrder = 9999
+    addTab.Parent = tabsFrame
+
+    -- ================= 编辑器 =================
+    local editor = Instance.new("ScrollingFrame")
+    editor.Name = "editor"
+    editor.Active = true
+    editor.BorderSizePixel = 0
+    editor.BackgroundTransparency = 1
+    editor.Size = UDim2.new(1, -16, 1, -60) -- 上下留出空间给 tabs 和 buttons
+    editor.Position = UDim2.new(0, 8, 0, 38)
+    editor.CanvasSize = UDim2.new(0, 0, 0, 0)
+    editor.ScrollBarImageColor3 = Color3.fromRGB(101, 101, 101)
+    editor.ScrollBarThickness = 2
+    editor.ClipsDescendants = true
+    editor.Parent = quickrun
+
+    -- 行号 (Lines)
+    local lines = Instance.new("TextLabel")
+    lines.Name = "Lines"
+    lines.ZIndex = 4
+    lines.BorderSizePixel = 0
+    lines.TextSize = 14
+    lines.TextYAlignment = Enum.TextYAlignment.Top
+    lines.BackgroundTransparency = 1
+    lines.Font = Enum.Font.Code
+    lines.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lines.Size = UDim2.new(0, 21, 1, 0)
+    lines.ClipsDescendants = true
+    lines.BorderColor3 = Color3.fromRGB(24, 24, 24)
+    lines.Text = "1"
+    lines.Parent = editor
+    TextGradient:Skip(lines)
+
+    -- 当前行高亮 (LineHighlight)
+    local lineHighlight = Instance.new("Frame")
+    lineHighlight.Name = "LineHighlight"
+    lineHighlight.Visible = false
+    lineHighlight.ZIndex = 0
+    lineHighlight.BorderSizePixel = 0
+    lineHighlight.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
+    lineHighlight.Size = UDim2.new(1, 0, 0, 14)
+    lineHighlight.Parent = editor
+
+    -- 代码输入框 (TextBox)
+    local textBox = Instance.new("TextBox")
+    textBox.Name = "TextBox"
+    textBox.TextXAlignment = Enum.TextXAlignment.Left
+    textBox.PlaceholderColor3 = Color3.fromRGB(101, 101, 101)
+    textBox.BorderSizePixel = 0
+    textBox.TextSize = 14
+    textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textBox.TextYAlignment = Enum.TextYAlignment.Top
+    textBox.BackgroundTransparency = 1
+    textBox.Font = Enum.Font.Code
+    textBox.MultiLine = true
+    textBox.ClearTextOnFocus = false
+    textBox.Size = UDim2.new(1, 0, 1, 0)
+    textBox.Position = UDim2.new(0, 25, 0, 0)
+    textBox.Text = ""
+    textBox.Parent = editor
+    TextGradient:Skip(textBox)
+
+    -- 语法高亮（7 层）
+    local layerSpecs = {
+        { name = "Comments_",        zindex = 5, color = Color3.fromRGB(60, 201, 60) },
+        { name = "Globals_",         zindex = 5, color = Color3.fromRGB(133, 215, 248) },
+        { name = "Keywords_",        zindex = 5, color = Color3.fromRGB(249, 110, 125) },
+        { name = "Numbers_",         zindex = 4, color = Color3.fromRGB(255, 199, 0) },
+        { name = "RemoteHighlight_", zindex = 5, color = Color3.fromRGB(0, 145, 255) },
+        { name = "Strings_",         zindex = 5, color = Color3.fromRGB(174, 242, 150) },
+        { name = "Tokens_",          zindex = 5, color = Color3.fromRGB(255, 255, 255) },
+    }
+    for _, spec in ipairs(layerSpecs) do
+        local l = Instance.new("TextLabel")
+        l.Name = spec.name
+        l.ZIndex = spec.zindex
+        l.TextSize = 14
+        l.TextXAlignment = Enum.TextXAlignment.Left
+        l.TextYAlignment = Enum.TextYAlignment.Top
+        l.BackgroundTransparency = 1
+        l.BorderSizePixel = 0
+        l.Font = Enum.Font.Code
+        l.TextColor3 = spec.color
+        l.Size = UDim2.new(1, 0, 1, 0)
+        l.Text = ""
+        l.Parent = textBox
+        TextGradient:Skip(l)
+    end
+
+    -- ================= 底部按钮栏 =================
+    local buttonsHolder = Instance.new("Frame")
+    buttonsHolder.Name = "buttonsholder"
+    buttonsHolder.Size = UDim2.new(1, -16, 0, 32)
+    buttonsHolder.Position = UDim2.new(0, 8, 1, -37)
+    buttonsHolder.BackgroundTransparency = 1
+    buttonsHolder.Parent = quickrun
+
+    local btnLayout = Instance.new("UIListLayout")
+    btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    btnLayout.Padding = UDim.new(0, 5)
+    btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    btnLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    btnLayout.FillDirection = Enum.FillDirection.Horizontal
+    btnLayout.Parent = buttonsHolder
+
+    local function makeBtn(text, width, layoutOrder, iconId, onClick)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, width, 0, 24)
+        btn.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
+        btn.TextXAlignment = Enum.TextXAlignment.Right
+        btn.TextSize = 14
+        btn.TextColor3 = Color3.fromRGB(101, 101, 101)
+        btn.Font = Enum.Font.Gotham
+        btn.BorderSizePixel = 0
+        btn.Text = text
+        btn.LayoutOrder = layoutOrder
+        btn.AutoButtonColor = false
+        btn.Parent = buttonsHolder
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
+
+        local icon = Instance.new("ImageLabel")
+        icon.Size = UDim2.new(0, 15, 0, 15)
+        icon.ImageColor3 = Color3.fromRGB(101, 101, 101)
+        icon.AnchorPoint = Vector2.new(0.5, 0.5)
+        icon.Image = iconId
+        icon.BackgroundTransparency = 1
+        icon.Position = UDim2.new(0, 15, 0.5, 0)
+        icon.Parent = btn
+
+        local info = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local hoverTween = TweenService:Create(btn, info, { BackgroundColor3 = Color3.fromRGB(50, 50, 50), TextColor3 = Color3.fromRGB(255, 255, 255) })
+        local imageHoverTween = TweenService:Create(icon, info, { ImageColor3 = Color3.fromRGB(255, 255, 255) })
+        local normalTween = TweenService:Create(btn, info, { BackgroundColor3 = Color3.fromRGB(30, 30, 30), TextColor3 = Color3.fromRGB(100, 100, 100) })
+        local imageNormalTween = TweenService:Create(icon, info, { ImageColor3 = Color3.fromRGB(100, 100, 100) })
+        
+        btn.MouseEnter:Connect(function() hoverTween:Play(); imageHoverTween:Play() end)
+        btn.MouseLeave:Connect(function() normalTween:Play(); imageNormalTween:Play() end)
+        btn.MouseButton1Click:Connect(function() pcall(onClick) end)
+        return btn
+    end
+
+    makeBtn("Copy  ", 67, 1, "rbxassetid://10709812159", function()
+        local writer = setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard)
+        if writer then pcall(writer, textBox.Text) end
+    end)
+    makeBtn("Clear  ", 62, 2, "rbxassetid://10709819059", function()
+        textBox.Text = ""
+    end)
+    makeBtn("Execute  ", 83, 3, "rbxassetid://10734923549", function()
+        local code = textBox.Text
+        if code ~= "" then
+            local fn = loadstring(code)
+            if fn then fn() end
+        end
+    end)
+
+    -- ================= 多标签管理 =================
+    local ACTIVE_BG = Color3.fromRGB(40, 40, 40)
+    local INACTIVE_BG = Color3.fromRGB(30, 30, 30)
+    local ACTIVE_TEXT = Color3.fromRGB(255, 255, 255)
+    local INACTIVE_TEXT = Color3.fromRGB(100, 100, 100)
+
+    local tabs = {}
+    local activeTab = nil
+    local createTabButton, setTabActiveStyle, activateTab, closeTab, createTab
+
+    local function renumberTabs()
+        for i, t in ipairs(tabs) do
+            t.title = "Tab " .. i
+            if t.button then
+                local titleLbl = t.button:FindFirstChild("tabtitle")
+                if titleLbl then titleLbl.Text = t.title end
+            end
+        end
+    end
+
+    createTabButton = function(tabData)
+        local btn = Instance.new("Frame")
+        btn.Name = "tab" .. (#tabs + 1)
+        btn.BackgroundColor3 = INACTIVE_BG
+        btn.BorderSizePixel = 0
+        btn.Size = UDim2.new(0, 90, 0, 25)
+        btn.LayoutOrder = #tabs + 1
+        btn.ClipsDescendants = true
+        btn.Parent = tabsFrame
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
+
+        local titleLbl = Instance.new("TextLabel")
+        titleLbl.Name = "tabtitle"
+        titleLbl.BorderSizePixel = 0
+        titleLbl.TextSize = 14
+        titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+        titleLbl.BackgroundTransparency = 1
+        titleLbl.Font = Enum.Font.Gotham
+        titleLbl.TextColor3 = INACTIVE_TEXT
+        titleLbl.Size = UDim2.new(0, 47, 0, 25)
+        titleLbl.Text = tabData.title
+        titleLbl.Position = UDim2.new(0, 10, 0, 0)
+        titleLbl.Parent = btn
+        TextGradient:Skip(titleLbl)
+
+        local closeBtn = Instance.new("ImageButton")
+        closeBtn.Name = "close"
+        closeBtn.BorderSizePixel = 0
+        closeBtn.BackgroundTransparency = 1
+        closeBtn.ImageColor3 = INACTIVE_TEXT
+        closeBtn.Image = "rbxassetid://10747384394"
+        closeBtn.Size = UDim2.new(0, 15, 0, 15)
+        closeBtn.Position = UDim2.new(0.76667, 0, 0.2, 0)
+        closeBtn.Parent = btn
+
+        btn.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                activateTab(tabData)
+            end
+        end)
+
+        closeBtn.MouseButton1Click:Connect(function() closeTab(tabData) end)
+        return btn
+    end
+
+    setTabActiveStyle = function(tabData, isActive)
+        local btn = tabData.button
+        if not btn then return end
+        btn.BackgroundColor3 = isActive and ACTIVE_BG or INACTIVE_BG
+        local titleLbl = btn:FindFirstChild("tabtitle")
+        local closeBtn = btn:FindFirstChild("close")
+        if titleLbl then titleLbl.TextColor3 = isActive and ACTIVE_TEXT or INACTIVE_TEXT end
+        if closeBtn then closeBtn.ImageColor3 = isActive and ACTIVE_TEXT or INACTIVE_TEXT end
+    end
+
+    activateTab = function(tabData)
+        if activeTab == tabData then return end
+        if activeTab and textBox then activeTab.text = textBox.Text end
+        for _, t in ipairs(tabs) do setTabActiveStyle(t, false) end
+        activeTab = tabData
+        setTabActiveStyle(tabData, true)
+        if textBox then textBox.Text = tabData.text or "" end
+    end
+
+    closeTab = function(tabData)
+        local idx
+        for i, t in ipairs(tabs) do if t == tabData then idx = i break end end
+        if not idx then return end
+        if activeTab == tabData and textBox then tabData.text = textBox.Text end
+        if tabData.button then tabData.button:Destroy() end
+        table.remove(tabs, idx)
+        if #tabs == 0 then
+            activeTab = nil
+            createTab()
+            return
+        end
+        renumberTabs()
+        if activeTab == tabData then
+            activeTab = nil
+            activateTab(tabs[math.min(idx, #tabs)])
+        end
+    end
+
+    createTab = function()
+        local tabData = { title = "Tab " .. (#tabs + 1), text = "" }
+        tabData.button = createTabButton(tabData)
+        table.insert(tabs, tabData)
+        activateTab(tabData)
+        return tabData
+    end
+
+    addTab.MouseButton1Click:Connect(function() createTab() end)
+    createTab()
+
+    -- ================= 语法高亮与自适应 =================
+    local lua_keywords = {"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"}
+    local global_env = {"getrawmetatable", "game", "workspace", "script", "math", "string", "table", "print", "wait", "BrickColor", "Color3", "next", "pairs", "ipairs", "select", "unpack", "Instance", "Vector2", "Vector3", "CFrame", "Ray", "UDim2", "Enum", "assert", "error", "warn", "tick", "loadstring", "_G", "shared", "getfenv", "setfenv", "newproxy", "setmetatable", "getmetatable", "os", "debug", "pcall", "ypcall", "xpcall", "rawequal", "rawset", "rawget", "tonumber", "tostring", "type", "typeof", "_VERSION", "coroutine", "delay", "require", "spawn", "LoadLibrary", "settings", "stats", "time", "UserSettings", "version", "Axes", "ColorSequence", "Faces", "ColorSequenceKeypoint", "NumberRange", "NumberSequence", "NumberSequenceKeypoint", "gcinfo", "elapsedTime", "collectgarbage", "PhysicalProperties", "Rect", "Region3", "Region3int16", "UDim", "Vector2int16", "Vector3int16"}
+
+    local Source = textBox
+    local Lines = lines
+    local LineHighlight = lineHighlight
+    local currentHighlightTween = nil
+    local currentHighlightLine = -1
+
+    local function updateLineHighlight()
+        if not LineHighlight then return end
+        local cursorPos = Source.CursorPosition
+        if cursorPos < 0 then LineHighlight.Visible = false return end
+        local text = Source.Text
+        local textUpToCursor = text:sub(1, cursorPos)
+        local lineNum = 1
+        for _ in textUpToCursor:gmatch("\n") do lineNum = lineNum + 1 end
+        if lineNum == currentHighlightLine then return end
+        currentHighlightLine = lineNum
+
+        local totalLines = 1
+        for _ in text:gmatch("\n") do totalLines = totalLines + 1 end
+        local lineHeight = 14
+        if totalLines > 0 and Source.TextBounds.Y > 0 then
+            lineHeight = Source.TextBounds.Y / totalLines
+            if lineHeight < 1 then lineHeight = 14 end
+        end
+        local targetY = (lineNum - 1) * lineHeight
+
+        if currentHighlightTween then currentHighlightTween:Cancel() end
+        LineHighlight.Visible = true
+        currentHighlightTween = TweenService:Create(LineHighlight, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = UDim2.new(0, 0, 0, targetY), Size = UDim2.new(1, 0, 0, lineHeight) })
+        currentHighlightTween:Play()
+    end
+
+    local function Highlight(string_, keywords)
+        local K = {}
+        local S = string_
+        local Token = { ["="] = true, ["."] = true, [","] = true, ["("] = true, [")"] = true, ["["] = true, ["]"] = true, ["{"] = true, ["}"] = true, [":"] = true, ["*"] = true, ["/"] = true, ["+"] = true, ["-"] = true, ["%"] = true, [";"] = true, ["~"] = true }
+        for i, v in pairs(keywords) do K[v] = true end
+        S = S:gsub(".", function(c) if Token[c] ~= nil then return "\32" else return c end end)
+        S = S:gsub("%S+", function(c) if K[c] ~= nil then return c else return (" "):rep(#c) end end)
+        return S
+    end
+
+    local function hTokens(string_)
+        local Token = { ["="] = true, ["."] = true, [","] = true, ["("] = true, [")"] = true, ["["] = true, ["]"] = true, ["{"] = true, ["}"] = true, [":"] = true, ["*"] = true, ["/"] = true, ["+"] = true, ["-"] = true, ["%"] = true, [";"] = true, ["~"] = true }
+        local A = ""
+        string_:gsub(".", function(c)
+            if Token[c] ~= nil then A = A .. c
+            elseif c == "\n" then A = A .. "\n"
+            elseif c == "\t" then A = A .. "\t"
+            else A = A .. "\32" end
+        end)
+        return A
+    end
+
+    local function strings(string_)
+        local highlight = ""
+        local quote = false
+        string_:gsub(".", function(c)
+            if quote == false and c == "\"" then quote = true
+            elseif quote == true and c == "\"" then quote = false end
+            if quote == false and c == "\"" then highlight = highlight .. "\""
+            elseif c == "\n" then highlight = highlight .. "\n"
+            elseif c == "\t" then highlight = highlight .. "\t"
+            elseif quote == true then highlight = highlight .. c
+            else highlight = highlight .. "\32" end
+        end)
+        return highlight
+    end
+
+    local function comments(string_)
+        local ret = ""
+        string_:gsub("[^\r\n]+", function(c)
+            local comm = false
+            local i = 0
+            c:gsub(".", function(n)
+                i = i + 1
+                if c:sub(i, i + 1) == "--" then comm = true end
+                if comm == true then ret = ret .. n else ret = ret .. "\32" end
+            end)
+        end)
+        return ret
+    end
+
+    local function numbers(string_)
+        local A = ""
+        string_:gsub(".", function(c)
+            if tonumber(c) ~= nil then A = A .. c
+            elseif c == "\n" then A = A .. "\n"
+            elseif c == "\t" then A = A .. "\t"
+            else A = A .. "\32" end
+        end)
+        return A
+    end
+
+    local function highlight_source(type_)
+        if type_ == "Text" then
+            Source.Text = Source.Text:gsub("\13", "")
+            Source.Text = Source.Text:gsub("\t", "      ")
+            local s = Source.Text
+            if Source.Keywords_ then Source.Keywords_.Text = Highlight(s, lua_keywords) end
+            if Source.Globals_ then Source.Globals_.Text = Highlight(s, global_env) end
+            if Source.RemoteHighlight_ then Source.RemoteHighlight_.Text = Highlight(s, {"FireServer", "fireServer", "InvokeServer", "invokeServer"}) end
+            if Source.Tokens_ then Source.Tokens_.Text = hTokens(s) end
+            if Source.Numbers_ then Source.Numbers_.Text = numbers(s) end
+            if Source.Strings_ then Source.Strings_.Text = strings(s) end
+            local lin = 1
+            s:gsub("\n", function() lin = lin + 1 end)
+            Lines.Text = ""
+            for i = 1, lin do Lines.Text = Lines.Text .. i .. "\n" end
+        end
+    end
+
+    highlight_source("Text")
+    updateLineHighlight()
+
+    Source.Changed:Connect(function(prop)
+        highlight_source(prop)
+        if prop == "CursorPosition" or prop == "Text" then updateLineHighlight() end
+    end)
+
+    -- 尺寸自适应与自动滚动
+    Source.TextEditable = true
+    Source.MultiLine = true
+    Source.TextWrapped = false
+    editor.CanvasSize = UDim2.new(1, 0, 1, 0)
+    Source.Size = UDim2.new(1, 0, 1, 0)
+
+    local autoScrollV, autoScrollH = true, true
+    local threshold = 25
+    local currentTween = nil
+
+    editor:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+        local maxScrollY = editor.AbsoluteCanvasSize.Y - editor.AbsoluteSize.Y
+        local maxScrollX = editor.AbsoluteCanvasSize.X - editor.AbsoluteSize.X
+        if maxScrollY > 0 then autoScrollV = (editor.CanvasPosition.Y >= maxScrollY - threshold) end
+        if maxScrollX > 0 then autoScrollH = (editor.CanvasPosition.X >= maxScrollX - threshold) end
+    end)
+
+    local function updateScrollAndSize()
+        task.defer(function()
+            if not Source.Parent then return end
+            local cW, cH = editor.AbsoluteSize.X, editor.AbsoluteSize.Y
+            local tW, tH = Source.TextBounds.X, Source.TextBounds.Y
+            local nW = math.max(cW, tW + 20)
+            local nH = math.max(cH, tH + 20)
+
+            Source.Size = UDim2.new(0, nW, 0, nH)
+            editor.CanvasSize = UDim2.new(0, nW, 0, nH)
+
+            local targetX, targetY = nil, nil
+            if autoScrollH and tW > cW then targetX = math.max(0, nW - cW) end
+            if autoScrollV and tH > cH then targetY = math.max(0, nH - cH) end
+            if targetX or targetY then
+                local newX = targetX or editor.CanvasPosition.X
+                local newY = targetY or editor.CanvasPosition.Y
+                if currentTween then currentTween:Cancel() end
+                currentTween = TweenService:Create(editor, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CanvasPosition = Vector2.new(newX, newY) })
+                currentTween:Play()
+            end
+        end)
+    end
+
+    Source:GetPropertyChangedSignal("Text"):Connect(updateScrollAndSize)
+    Source:GetPropertyChangedSignal("TextBounds"):Connect(updateScrollAndSize)
+
+    return {
+        Frame = quickrun,
+        TextBox = textBox,
+        Execute = function()
+            local code = textBox.Text
+            if code ~= "" then
+                local fn = loadstring(code)
+                if fn then fn() end
+            end
+        end
+    }
+end
 
     function Window:Dialog(Config)
         Config = Config or {}
