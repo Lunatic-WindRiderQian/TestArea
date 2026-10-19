@@ -5199,14 +5199,15 @@ function FengUI:CreateWindow(Config)
     TextGradient:Skip(CustDesc)
 
     local FxHolder = Instance.new("Frame")
-    FxHolder.Size = UDim2.new(1, -40, 0, 104)
+    FxHolder.Size = UDim2.new(1, -40, 0, 68)
     FxHolder.Position = UDim2.new(0.07831, 0, 0.26880, 0)
     FxHolder.BackgroundTransparency = 1
     FxHolder.ZIndex = 103
     FxHolder.Parent = CustPage
     local FxGrid = Instance.new("UIGridLayout")
-    FxGrid.CellSize = UDim2.new(0, 76, 0, 30)
+    FxGrid.CellSize = UDim2.new(1/3, -3, 0, 30)
     FxGrid.CellPadding = UDim2.new(0, 4, 0, 4)
+    FxGrid.FillDirectionMaxCells = 3
     FxGrid.SortOrder = Enum.SortOrder.LayoutOrder
     FxGrid.Parent = FxHolder
 
@@ -5476,23 +5477,25 @@ function FengUI:CreateWindow(Config)
         Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
 
         local ic = Instance.new("ImageLabel")
-        ic.Size = UDim2.new(0, 15, 0, 15)
-        ic.Position = UDim2.new(0, 6, 0.5, 0)
+        ic.Size = UDim2.new(0, 14, 0, 14)
+        ic.Position = UDim2.new(0, 5, 0.5, 0)
         ic.AnchorPoint = Vector2.new(0, 0.5)
         ic.BackgroundTransparency = 1
         ic.Image = iconAsset
         ic.ImageColor3 = INACTIVE_TXT
+        ic.ScaleType = Enum.ScaleType.Fit
         ic.ZIndex = 104
         ic.Parent = btn
 
         local lbl = Instance.new("TextLabel")
-        lbl.Size = UDim2.new(1, -25, 1, 0)
-        lbl.Position = UDim2.new(0, 24, 0, 0)
+        lbl.Size = UDim2.new(1, -22, 1, 0)
+        lbl.Position = UDim2.new(0, 21, 0, 0)
         lbl.BackgroundTransparency = 1
         lbl.Font = Enum.Font.GothamMedium
         lbl.Text = text
         lbl.TextSize = 11
         lbl.TextXAlignment = Enum.TextXAlignment.Left
+        lbl.TextTruncate = Enum.TextTruncate.AtEnd
         lbl.TextColor3 = INACTIVE_TXT
         lbl.ZIndex = 104
         lbl.Parent = btn
