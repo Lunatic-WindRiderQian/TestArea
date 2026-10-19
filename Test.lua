@@ -8245,7 +8245,7 @@ function FengUI:CreateWindow(Config)
     end
 
 -- ============================================================
--- QuickRun —— 完全脱离 Section 包装，原汁原味铺满整个 Tab 页面
+-- QuickRun —— 完全脱离 Section 包装，直接铺满整个 Tab 页面
 -- ============================================================
 function Window:CreateQuickRunTab(config)
     config = config or {}
@@ -8256,20 +8256,23 @@ function Window:CreateQuickRunTab(config)
     -- 1. 创建 Tab 并获取其页面容器
     self:Tab(tabName, tabIcon)
     local tabState = self._tabs[#self._tabs]
-    local PageContent = tabState.page:FindFirstChildWhichIsA("Frame")
+    local Page = tabState.page
     
-    -- 2. 移除默认的 UIListLayout，禁止自动高度，取消滚动条，以便 QuickRun 占满
-    local listLayout = PageContent:FindFirstChildOfClass("UIListLayout")
-    if listLayout then listLayout:Destroy() end
-    tabState.page.ScrollingEnabled = false
+    -- 2. 取消 Page 的滚动，销毁原先自带的 PageContent（防止 AutomaticSize 导致高度塌缩重叠）
+    Page.ScrollingEnabled = false
+    Page.ScrollBarThickness = 0
+    local oldContent = Page:FindFirstChildWhichIsA("Frame")
+    if oldContent then oldContent:Destroy() end
     
-    -- ================= 主容器（原版 quickrun Frame） =================
+    -- 3. 创建铺满的主容器
     local quickrun = Instance.new("Frame")
     quickrun.Name = "quickrun"
-    quickrun.Size = UDim2.new(1, 0, 1, 0)
+    quickrun.Size = UDim2.new(1, -16, 1, -16) -- 上下左右留 8px 边距，自适应高度
+    quickrun.Position = UDim2.new(0, 8, 0, 8)
     quickrun.BackgroundTransparency = 1
     quickrun.BorderSizePixel = 0
-    quickrun.Parent = PageContent
+    quickrun.ClipsDescendants = true
+    quickrun.Parent = Page
 
     -- ================= Tabs 栏 =================
     local tabsFrame = Instance.new("ScrollingFrame")
@@ -8279,8 +8282,8 @@ function Window:CreateQuickRunTab(config)
     tabsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
     tabsFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
     tabsFrame.BackgroundTransparency = 1
-    tabsFrame.Size = UDim2.new(1, -16, 0, 25)
-    tabsFrame.Position = UDim2.new(0, 8, 0, 8)
+    tabsFrame.Size = UDim2.new(1, 0, 0, 25)
+    tabsFrame.Position = UDim2.new(0, 0, 0, 0) -- 顶部对齐
     tabsFrame.ScrollBarThickness = 0
     tabsFrame.ScrollingDirection = Enum.ScrollingDirection.X
     tabsFrame.Parent = quickrun
@@ -8301,14 +8304,30 @@ function Window:CreateQuickRunTab(config)
     addTab.LayoutOrder = 9999
     addTab.Parent = tabsFrame
 
+    -- ================= 底部按钮栏 =================
+    local buttonsHolder = Instance.new("Frame")
+    buttonsHolder.Name = "buttonsholder"
+    buttonsHolder.Size = UDim2.new(1, 0, 0, 32)
+    buttonsHolder.Position = UDim2.new(0, 0, 1, -32) -- 底部对齐
+    buttonsHolder.BackgroundTransparency = 1
+    buttonsHolder.Parent = quickrun
+
+    local btnLayout = Instance.new("UIListLayout")
+    btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    btnLayout.Padding = UDim.new(0, 5)
+    btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    btnLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    btnLayout.FillDirection = Enum.FillDirection.Horizontal
+    btnLayout.Parent = buttonsHolder
+
     -- ================= 编辑器 =================
     local editor = Instance.new("ScrollingFrame")
     editor.Name = "editor"
     editor.Active = true
     editor.BorderSizePixel = 0
     editor.BackgroundTransparency = 1
-    editor.Size = UDim2.new(1, -16, 1, -60) -- 上下留出空间给 tabs 和 buttons
-    editor.Position = UDim2.new(0, 8, 0, 38)
+    editor.Size = UDim2.new(1, 0, 1, -65) -- 高度：减去顶部 25 + 间隙 8 + 底部 32
+    editor.Position = UDim2.new(0, 0, 0, 33) -- 顶部偏移 25 + 8 = 33
     editor.CanvasSize = UDim2.new(0, 0, 0, 0)
     editor.ScrollBarImageColor3 = Color3.fromRGB(101, 101, 101)
     editor.ScrollBarThickness = 2
@@ -8388,22 +8407,7 @@ function Window:CreateQuickRunTab(config)
         TextGradient:Skip(l)
     end
 
-    -- ================= 底部按钮栏 =================
-    local buttonsHolder = Instance.new("Frame")
-    buttonsHolder.Name = "buttonsholder"
-    buttonsHolder.Size = UDim2.new(1, -16, 0, 32)
-    buttonsHolder.Position = UDim2.new(0, 8, 1, -37)
-    buttonsHolder.BackgroundTransparency = 1
-    buttonsHolder.Parent = quickrun
-
-    local btnLayout = Instance.new("UIListLayout")
-    btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    btnLayout.Padding = UDim.new(0, 5)
-    btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    btnLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    btnLayout.FillDirection = Enum.FillDirection.Horizontal
-    btnLayout.Parent = buttonsHolder
-
+    -- 按钮生成器
     local function makeBtn(text, width, layoutOrder, iconId, onClick)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, width, 0, 24)
