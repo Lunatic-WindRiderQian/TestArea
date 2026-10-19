@@ -2619,6 +2619,319 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
         return self
     end
 
+-- ============================================================
+-- Console 组件 —— 移植自非UI.lua的 console 功能
+-- 日志捕获 / 清空 / 保存 / 复制
+-- ============================================================
+child.Console = function(_, config)
+    config = safeConfig(config)
+    local parent = config.Parent or contentContainer
+    local height = config.Height or 160
+    local title  = config.Name or ""
+    local controlId = NewConfigId("Console", title)
+
+    local LogService = game:GetService("LogService")
+
+    -- ---------- 外层容器 ----------
+    local wrap = Instance.new("Frame")
+    wrap.Size = UDim2.new(1, -16, 0, height + (title ~= "" and 24 or 0))
+    wrap.BackgroundTransparency = 1
+    wrap.BorderSizePixel = 0
+    wrap.Parent = parent
+
+    local titleLbl = nil
+    if title ~= "" then
+        titleLbl = Instance.new("TextLabel")
+        titleLbl.Size = UDim2.new(1, 0, 0, 20)
+        titleLbl.Position = UDim2.new(0, 4, 0, 0)
+        titleLbl.BackgroundTransparency = 1
+        titleLbl.Font = Enum.Font.GothamBold
+        titleLbl.Text = title
+        titleLbl.TextSize = 13
+        titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+        titleLbl.Parent = wrap
+        AddToRegistry(titleLbl, "TextColor3", "Text")
+    end
+
+    -- ---------- 主框 ----------
+    local box = Instance.new("Frame")
+    box.Size = UDim2.new(1, 0, 0, height)
+    box.Position = UDim2.new(0, 0, 0, (title ~= "" and 24 or 0))
+    box.BackgroundTransparency = 0.5
+    box.BorderSizePixel = 0
+    box.ClipsDescendants = true
+    box.Parent = wrap
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
+    AddToRegistry(box, "BackgroundColor3", "Main")
+
+    local boxStroke = Instance.new("UIStroke")
+    boxStroke.Thickness = 1
+    boxStroke.Transparency = 0.65
+    boxStroke.Parent = box
+    AddToRegistry(boxStroke, "Color", "Stroke")
+
+    -- ---------- 滚动日志区 ----------
+    local scroll = Instance.new("ScrollingFrame")
+    scroll.Size = UDim2.new(1, -12, 1, -46)
+    scroll.Position = UDim2.new(0, 6, 0, 6)
+    scroll.BackgroundTransparency = 1
+    scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 2
+    scroll.ScrollBarImageColor3 = CurrentTheme.Stroke
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scroll.ScrollingDirection = Enum.ScrollingDirection.Y
+    scroll.Parent = box
+
+    local logBox = Instance.new("TextBox")
+    logBox.Size = UDim2.new(1, 0, 0, 0)
+    logBox.Position = UDim2.new(0, 0, 0, 0)
+    logBox.BackgroundTransparency = 1
+    logBox.TextEditable = false
+    logBox.MultiLine = true
+    logBox.RichText = true
+    logBox.TextSize = 12
+    logBox.Font = Enum.Font.Code
+    logBox.TextXAlignment = Enum.TextXAlignment.Left
+    logBox.TextYAlignment = Enum.TextYAlignment.Top
+    logBox.TextWrapped = true
+    logBox.ClearTextOnFocus = false
+    logBox.Text = ""
+    logBox.TextColor3 = CurrentTheme.Text
+    logBox.Parent = scroll
+    TextGradient:Skip(logBox)
+
+    -- ---------- 按钮行 ----------
+    local btnRow = Instance.new("Frame")
+    btnRow.Size = UDim2.new(1, -12, 0, 30)
+    btnRow.Position = UDim2.new(0, 6, 1, -40)
+    btnRow.BackgroundTransparency = 1
+    btnRow.Parent = box
+
+    local btnLayout = Instance.new("UIListLayout")
+    btnLayout.FillDirection = Enum.FillDirection.Horizontal
+    btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    btnLayout.Padding = UDim.new(0, 6)
+    btnLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    btnLayout.Parent = btnRow
+
+    local function makeBtn(text, callback)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 60, 1, 0)
+        btn.BackgroundTransparency = 0.2
+        btn.Text = text
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 12
+        btn.BorderSizePixel = 0
+        btn.AutoButtonColor = false
+        btn.Parent = btnRow
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+        local s = Instance.new("UIStroke")
+        s.Transparency = 0.65
+        s.Parent = btn
+        AddToRegistry(btn, "BackgroundColor3", "Element")
+        AddToRegistry(btn, "TextColor3", "Text")
+        AddToRegistry(s, "Color", "Stroke")
+        btn.MouseEnter:Connect(function() Tween(btn, {BackgroundTransparency = 0}, 0.15) end)
+        btn.MouseLeave:Connect(function() Tween(btn, {BackgroundTransparency = 0.2}, 0.15) end)
+        btn.MouseButton1Click:Connect(function() pcall(callback) end)
+        return btn
+    end
+
+    -- ---------- 日志捕获逻辑（来自非UI.lua） ----------
+    local autoScroll = true
+    local isTweening = false
+    local currentTween = nil
+
+    local colors = {
+        [Enum.MessageType.MessageOutput]  = "FFFFFF",
+        [Enum.MessageType.MessageInfo]    = "FFFFFF",
+        [Enum.MessageType.MessageWarning] = "FFFF00",
+        [Enum.MessageType.MessageError]   = "FF0000",
+    }
+
+    -- 检测用户是否手动向上滚了
+    scroll:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+        if isTweening then return end
+        local max = scroll.CanvasSize.Y.Offset - scroll.AbsoluteWindowSize.Y
+        if max > 0 then
+            autoScroll = (scroll.CanvasPosition.Y >= max - 15)
+        end
+    end)
+
+    -- 自适应日志高度 + 自动滚动
+    logBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
+        local maxY = logBox.TextBounds.Y
+        scroll.CanvasSize = UDim2.new(0, 0, 0, maxY)
+        logBox.Size = UDim2.new(1, 0, 0, maxY)
+        if autoScroll then
+            local targetY = math.max(0, maxY - scroll.AbsoluteWindowSize.Y)
+            if currentTween then currentTween:Cancel() end
+            isTweening = true
+            currentTween = TweenService:Create(scroll,
+                TweenInfo.new(0.15, Enum.EasingStyle.Sine),
+                { CanvasPosition = Vector2.new(0, targetY) })
+            local tw = currentTween
+            tw.Completed:Once(function()
+                if currentTween == tw then isTweening = false end
+            end)
+            tw:Play()
+        end
+    end)
+
+    -- 监听 LogService
+    local logConn = LogService.MessageOut:Connect(function(msg, msgType)
+        local hex = colors[msgType] or "FFFFFF"
+        local t = tick()
+        local stamp = string.format("[%s.%03d]",
+            os.date("%H:%M:%S", t),
+            math.floor((t % 1) * 1000))
+        msg = msg:gsub("<", "&lt;"):gsub(">", "&gt;")
+        logBox.Text = logBox.Text
+            .. string.format('<font color="#%s">%s %s</font>\n', hex, stamp, msg)
+    end)
+
+    -- ---------- 三个功能按钮 ----------
+    local clearBtn = makeBtn("清空", function()
+        logBox.Text = ""
+        scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+        logBox.Size = UDim2.new(1, 0, 0, 0)
+    end)
+
+    local saveBtn = makeBtn("保存", function()
+        if type(writefile) ~= "function" then return end
+        local sg = box
+        while sg and not sg:IsA("ScreenGui") do sg = sg.Parent end
+        if not sg then return end
+
+        -- 遮罩
+        local overlay = Instance.new("Frame")
+        overlay.Size = UDim2.fromScale(1, 1)
+        overlay.BackgroundColor3 = Color3.new(0, 0, 0)
+        overlay.BackgroundTransparency = 0.4
+        overlay.ZIndex = 500
+        overlay.Active = true
+        overlay.Parent = sg
+
+        local dlg = Instance.new("Frame")
+        dlg.Size = UDim2.new(0, 280, 0, 130)
+        dlg.AnchorPoint = Vector2.new(0.5, 0.5)
+        dlg.Position = UDim2.fromScale(0.5, 0.5)
+        dlg.BackgroundTransparency = 0.05
+        dlg.BorderSizePixel = 0
+        dlg.ZIndex = 501
+        dlg.Parent = overlay
+        Instance.new("UICorner", dlg).CornerRadius = UDim.new(0, 10)
+        local dlgStroke = Instance.new("UIStroke")
+        dlgStroke.Transparency = 0.65
+        dlgStroke.Parent = dlg
+        AddToRegistry(dlg, "BackgroundColor3", "Main")
+        AddToRegistry(dlgStroke, "Color", "Stroke")
+
+        local dlgTitle = Instance.new("TextLabel")
+        dlgTitle.Size = UDim2.new(1, -20, 0, 20)
+        dlgTitle.Position = UDim2.new(0, 10, 0, 10)
+        dlgTitle.BackgroundTransparency = 1
+        dlgTitle.Font = Enum.Font.GothamBold
+        dlgTitle.Text = "保存日志到文件"
+        dlgTitle.TextSize = 14
+        dlgTitle.TextXAlignment = Enum.TextXAlignment.Left
+        dlgTitle.ZIndex = 502
+        dlgTitle.Parent = dlg
+        AddToRegistry(dlgTitle, "TextColor3", "Text")
+
+        local inputBox = Instance.new("TextBox")
+        inputBox.Size = UDim2.new(1, -20, 0, 28)
+        inputBox.Position = UDim2.new(0, 10, 0, 42)
+        inputBox.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+        inputBox.BorderSizePixel = 0
+        inputBox.Font = Enum.Font.GothamMedium
+        inputBox.Text = ""
+        inputBox.PlaceholderText = "log.txt"
+        inputBox.TextSize = 12
+        inputBox.TextXAlignment = Enum.TextXAlignment.Left
+        inputBox.ClearTextOnFocus = false
+        inputBox.ZIndex = 502
+        inputBox.Parent = dlg
+        Instance.new("UICorner", inputBox).CornerRadius = UDim.new(0, 6)
+        local inputPad = Instance.new("UIPadding")
+        inputPad.PaddingLeft = UDim.new(0, 8)
+        inputPad.Parent = inputBox
+        AddToRegistry(inputBox, "TextColor3", "Text")
+        TextGradient:Skip(inputBox)
+
+        local function closeDialog() overlay:Destroy() end
+
+        local function makeDlgBtn(text, isPrimary, xPos, callback)
+            local b = Instance.new("TextButton")
+            b.Size = UDim2.new(0, 80, 0, 28)
+            b.Position = UDim2.new(1, xPos, 1, -38)
+            b.AnchorPoint = Vector2.new(1, 0)
+            b.Text = text
+            b.Font = Enum.Font.GothamBold
+            b.TextSize = 12
+            b.TextColor3 = Color3.new(1, 1, 1)
+            b.BorderSizePixel = 0
+            b.AutoButtonColor = false
+            b.ZIndex = 502
+            b.Parent = dlg
+            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+            if isPrimary then
+                AddToRegistry(b, "BackgroundColor3", "Accent")
+            else
+                b.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
+            end
+            b.MouseButton1Click:Connect(function() pcall(callback) end)
+            return b
+        end
+
+        makeDlgBtn("取消", false, -10, closeDialog)
+        makeDlgBtn("保存", true, -96, function()
+            local name = inputBox.Text
+            if name == "" then name = "log.txt" end
+            local raw = logBox.Text
+            local clean = raw:gsub("<[^>]->", ""):gsub("&lt;", "<"):gsub("&gt;", ">"):gsub("&amp;", "&")
+            pcall(writefile, name, clean)
+            closeDialog()
+        end)
+    end)
+
+    local copyBtn = makeBtn("复制", function()
+        local raw = logBox.Text
+        if raw == "" then return end
+        local clean = raw:gsub("<[^>]->", ""):gsub("&lt;", "<"):gsub("&gt;", ">"):gsub("&amp;", "&")
+        local writer = setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard)
+        if writer then pcall(writer, clean) end
+    end)
+
+    -- ---------- 对外方法 ----------
+    local self = {}
+    function self.Destroy()
+        safeDisconnect(logConn)
+        wrap:Destroy()
+    end
+    function self.SetVisible(state)
+        wrap.Visible = state ~= false
+    end
+    function self.Clear()
+        logBox.Text = ""
+        scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+        logBox.Size = UDim2.new(1, 0, 0, 0)
+    end
+    function self.SetHeight(h)
+        height = h
+        wrap.Size = UDim2.new(1, -16, 0, height + (title ~= "" and 24 or 0))
+        box.Size  = UDim2.new(1, 0, 0, height)
+    end
+    function self.SetTitle(t)
+        if titleLbl then titleLbl.Text = tostring(t or "") end
+    end
+    function self.GetLogText()
+        return logBox.Text
+    end
+    return self
+end
+
     child.UserFrame = function(_, config)
         config = safeConfig(config)
         local name         = config.Name    or "用户"
@@ -4964,9 +5277,9 @@ function FengUI:CreateWindow(Config)
     end
 
     local PlayerBtn, PlayerIcon     = MakeNavBtn("玩家卡片",    "rbxassetid://134669175143859", 13)
-    local SettingsBtn, SettingsIcon = MakeNavBtn("Settings",   "rbxassetid://10734910187", 37)
-    local CustBtn, CustIcon          = MakeNavBtn("UI Effects", "rbxassetid://12974219084", 61)
-    local CloseBtn, CloseIcon        = MakeNavBtn("Close",      "rbxassetid://12966849577", 168)
+    local SettingsBtn, SettingsIcon = MakeNavBtn("UI设置",   "rbxassetid://10734910187", 37)
+    local CustBtn, CustIcon          = MakeNavBtn("特效设置", "rbxassetid://12974219084", 61)
+    local CloseBtn, CloseIcon        = MakeNavBtn("滚出去",      "rbxassetid://12966849577", 168)
 
     -- ---------------- 玩家卡片页 ----------------
     local PlayerPage = Instance.new("Frame")
@@ -4995,7 +5308,7 @@ function FengUI:CreateWindow(Config)
     PDesc.Position = UDim2.new(0, 12, 0, 36)
     PDesc.BackgroundTransparency = 1
     PDesc.Font = Enum.Font.Gotham
-    PDesc.Text = "修改左下角显示的名字与头像。"
+    PDesc.Text = "修改左下角显示的名字与头像"
     PDesc.TextSize = 12
     PDesc.TextWrapped = true
     PDesc.TextTransparency = 0.6
@@ -5051,7 +5364,7 @@ function FengUI:CreateWindow(Config)
     STitle.Position = UDim2.new(0, 12, 0, 8)
     STitle.BackgroundTransparency = 1
     STitle.Font = Enum.Font.Gotham
-    STitle.Text = "通用设置"
+    STitle.Text = "UI设置"
     STitle.TextSize = 20
     STitle.TextXAlignment = Enum.TextXAlignment.Left
     STitle.TextColor3 = CurrentTheme.Text
@@ -5064,7 +5377,7 @@ function FengUI:CreateWindow(Config)
     SDesc.Position = UDim2.new(0, 12, 0, 36)
     SDesc.BackgroundTransparency = 1
     SDesc.Font = Enum.Font.Gotham
-    SDesc.Text = "调整菜单通用选项与快捷键。"
+    SDesc.Text = "只有几个基础设置"
     SDesc.TextSize = 12
     SDesc.TextWrapped = true
     SDesc.TextTransparency = 0.6
@@ -5295,7 +5608,7 @@ function FengUI:CreateWindow(Config)
     CustTitle.Position = UDim2.new(0.07831, 0, -0.07278, 0)
     CustTitle.BackgroundTransparency = 1
     CustTitle.Font = Enum.Font.Gotham
-    CustTitle.Text = "UI Effects"
+    CustTitle.Text = "特效设置"
     CustTitle.TextSize = 20
     CustTitle.TextXAlignment = Enum.TextXAlignment.Left
     CustTitle.TextColor3 = CurrentTheme.Text
@@ -5637,11 +5950,11 @@ function FengUI:CreateWindow(Config)
     end
 
     MakeFxBtn("代码雨", "matrix", "rbxassetid://10709810463")
-    MakeFxBtn("雨滴",   "rain",   "rbxassetid://10723344432")
-    MakeFxBtn("樱花",   "sakura", "rbxassetid://10723425539")
+    MakeFxBtn("下雨",   "rain",   "rbxassetid://10723344432")
+    MakeFxBtn("花瓣",   "sakura", "rbxassetid://10723425539")
     MakeFxBtn("星空",   "stars",  "rbxassetid://10734966248")
     MakeFxBtn("雪花",   "snow",   "rbxassetid://10734964600")
-    MakeFxBtn("故障",   "glitch", "rbxassetid://10734887784")
+    MakeFxBtn("错误",   "glitch", "rbxassetid://10734887784")
 
     -- ---------------- 导航切换 ----------------
     local function ShowPage(page)
