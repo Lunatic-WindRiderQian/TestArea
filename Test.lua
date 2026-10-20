@@ -8000,14 +8000,14 @@ function Window:CreateQuickRunTab(config)
         return btn
     end
 
-    makeBtn("复制", 67, 1, "rbxassetid://10709812159", function()
+    makeBtn("复制   ", 67, 1, "rbxassetid://10709812159", function()
         local writer = setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard)
         if writer then pcall(writer, textBox.Text) end
     end)
-    makeBtn("清除", 62, 2, "rbxassetid://10709819059", function()
+    makeBtn("清除   ", 62, 2, "rbxassetid://10709819059", function()
         textBox.Text = ""
     end)
-    makeBtn("执行", 83, 3, "rbxassetid://10734923549", function()
+    makeBtn("执行     ", 83, 3, "rbxassetid://10734923549", function()
         local code = textBox.Text
         if code ~= "" then
             local fn = loadstring(code)
