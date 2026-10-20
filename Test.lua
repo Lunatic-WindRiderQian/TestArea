@@ -7801,36 +7801,32 @@ function FengUI:CreateWindow(Config)
     end
 
 -- ============================================================
--- QuickRun —— 完全脱离 Section 包装，直接铺满整个 Tab 页面
+-- Execute (原 QuickRun) —— 铺满 Tab，按钮中文居中修复
 -- ============================================================
-function Window:CreateQuickRunTab(config)
+function Window:Execute(config)
     config = config or {}
-    local tabName = config.Name or "Quick Run"
+    local tabName = config.Name or "Execute"
     local tabIcon = config.Icon or "rbxassetid://10734923549"
     local TweenService = game:GetService("TweenService")
     
-    -- 1. 创建 Tab 并获取其页面容器
     self:Tab(tabName, tabIcon)
     local tabState = self._tabs[#self._tabs]
     local Page = tabState.page
     
-    -- 2. 取消 Page 的滚动，销毁原先自带的 PageContent（防止 AutomaticSize 导致高度塌缩重叠）
     Page.ScrollingEnabled = false
     Page.ScrollBarThickness = 0
     local oldContent = Page:FindFirstChildWhichIsA("Frame")
     if oldContent then oldContent:Destroy() end
     
-    -- 3. 创建铺满的主容器
     local quickrun = Instance.new("Frame")
     quickrun.Name = "quickrun"
-    quickrun.Size = UDim2.new(1, -16, 1, -16) -- 上下左右留 8px 边距，自适应高度
+    quickrun.Size = UDim2.new(1, -16, 1, -16)
     quickrun.Position = UDim2.new(0, 8, 0, 8)
     quickrun.BackgroundTransparency = 1
     quickrun.BorderSizePixel = 0
     quickrun.ClipsDescendants = true
     quickrun.Parent = Page
 
-    -- ================= Tabs 栏 =================
     local tabsFrame = Instance.new("ScrollingFrame")
     tabsFrame.Name = "tabs"
     tabsFrame.Active = true
@@ -7839,7 +7835,7 @@ function Window:CreateQuickRunTab(config)
     tabsFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
     tabsFrame.BackgroundTransparency = 1
     tabsFrame.Size = UDim2.new(1, 0, 0, 25)
-    tabsFrame.Position = UDim2.new(0, 0, 0, 0) -- 顶部对齐
+    tabsFrame.Position = UDim2.new(0, 0, 0, 0)
     tabsFrame.ScrollBarThickness = 0
     tabsFrame.ScrollingDirection = Enum.ScrollingDirection.X
     tabsFrame.Parent = quickrun
@@ -7860,11 +7856,10 @@ function Window:CreateQuickRunTab(config)
     addTab.LayoutOrder = 9999
     addTab.Parent = tabsFrame
 
-    -- ================= 底部按钮栏 =================
     local buttonsHolder = Instance.new("Frame")
     buttonsHolder.Name = "buttonsholder"
     buttonsHolder.Size = UDim2.new(1, 0, 0, 32)
-    buttonsHolder.Position = UDim2.new(0, 0, 1, -32) -- 底部对齐
+    buttonsHolder.Position = UDim2.new(0, 0, 1, -32)
     buttonsHolder.BackgroundTransparency = 1
     buttonsHolder.Parent = quickrun
 
@@ -7876,21 +7871,19 @@ function Window:CreateQuickRunTab(config)
     btnLayout.FillDirection = Enum.FillDirection.Horizontal
     btnLayout.Parent = buttonsHolder
 
-    -- ================= 编辑器 =================
     local editor = Instance.new("ScrollingFrame")
     editor.Name = "editor"
     editor.Active = true
     editor.BorderSizePixel = 0
     editor.BackgroundTransparency = 1
-    editor.Size = UDim2.new(1, 0, 1, -65) -- 高度：减去顶部 25 + 间隙 8 + 底部 32
-    editor.Position = UDim2.new(0, 0, 0, 33) -- 顶部偏移 25 + 8 = 33
+    editor.Size = UDim2.new(1, 0, 1, -65)
+    editor.Position = UDim2.new(0, 0, 0, 33)
     editor.CanvasSize = UDim2.new(0, 0, 0, 0)
     editor.ScrollBarImageColor3 = Color3.fromRGB(101, 101, 101)
     editor.ScrollBarThickness = 2
     editor.ClipsDescendants = true
     editor.Parent = quickrun
 
-    -- 行号 (Lines)
     local lines = Instance.new("TextLabel")
     lines.Name = "Lines"
     lines.ZIndex = 4
@@ -7902,12 +7895,10 @@ function Window:CreateQuickRunTab(config)
     lines.TextColor3 = Color3.fromRGB(255, 255, 255)
     lines.Size = UDim2.new(0, 21, 1, 0)
     lines.ClipsDescendants = true
-    lines.BorderColor3 = Color3.fromRGB(24, 24, 24)
     lines.Text = "1"
     lines.Parent = editor
     TextGradient:Skip(lines)
 
-    -- 当前行高亮 (LineHighlight)
     local lineHighlight = Instance.new("Frame")
     lineHighlight.Name = "LineHighlight"
     lineHighlight.Visible = false
@@ -7917,7 +7908,6 @@ function Window:CreateQuickRunTab(config)
     lineHighlight.Size = UDim2.new(1, 0, 0, 14)
     lineHighlight.Parent = editor
 
-    -- 代码输入框 (TextBox)
     local textBox = Instance.new("TextBox")
     textBox.Name = "TextBox"
     textBox.TextXAlignment = Enum.TextXAlignment.Left
@@ -7936,7 +7926,6 @@ function Window:CreateQuickRunTab(config)
     textBox.Parent = editor
     TextGradient:Skip(textBox)
 
-    -- 语法高亮（7 层）
     local layerSpecs = {
         { name = "Comments_",        zindex = 5, color = Color3.fromRGB(60, 201, 60) },
         { name = "Globals_",         zindex = 5, color = Color3.fromRGB(133, 215, 248) },
@@ -7963,51 +7952,62 @@ function Window:CreateQuickRunTab(config)
         TextGradient:Skip(l)
     end
 
-    -- 按钮生成器
+    -- 修复了图标与中文对齐问题的按钮生成器
     local function makeBtn(text, width, layoutOrder, iconId, onClick)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, width, 0, 24)
         btn.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
-        btn.TextXAlignment = Enum.TextXAlignment.Right
-        btn.TextSize = 14
-        btn.TextColor3 = Color3.fromRGB(101, 101, 101)
-        btn.Font = Enum.Font.Gotham
-        btn.BorderSizePixel = 0
-        btn.Text = text
-        btn.LayoutOrder = layoutOrder
+        btn.Text = ""
         btn.AutoButtonColor = false
+        btn.BorderSizePixel = 0
+        btn.LayoutOrder = layoutOrder
         btn.Parent = buttonsHolder
         Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
 
         local icon = Instance.new("ImageLabel")
         icon.Size = UDim2.new(0, 15, 0, 15)
         icon.ImageColor3 = Color3.fromRGB(101, 101, 101)
-        icon.AnchorPoint = Vector2.new(0.5, 0.5)
+        icon.AnchorPoint = Vector2.new(0, 0.5)
+        icon.Position = UDim2.new(0, 10, 0.5, 0)
         icon.Image = iconId
         icon.BackgroundTransparency = 1
-        icon.Position = UDim2.new(0, 15, 0.5, 0)
         icon.Parent = btn
 
+        local lbl = Instance.new("TextLabel")
+        lbl.Size = UDim2.new(1, -30, 1, 0)
+        lbl.Position = UDim2.new(0, 28, 0, 0)
+        lbl.BackgroundTransparency = 1
+        lbl.Font = Enum.Font.Gotham
+        lbl.TextSize = 13
+        lbl.TextColor3 = Color3.fromRGB(101, 101, 101)
+        lbl.Text = text
+        lbl.TextXAlignment = Enum.TextXAlignment.Center
+        lbl.TextYAlignment = Enum.TextYAlignment.Center
+        lbl.Parent = btn
+        TextGradient:Skip(lbl)
+
         local info = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local hoverTween = TweenService:Create(btn, info, { BackgroundColor3 = Color3.fromRGB(50, 50, 50), TextColor3 = Color3.fromRGB(255, 255, 255) })
-        local imageHoverTween = TweenService:Create(icon, info, { ImageColor3 = Color3.fromRGB(255, 255, 255) })
-        local normalTween = TweenService:Create(btn, info, { BackgroundColor3 = Color3.fromRGB(30, 30, 30), TextColor3 = Color3.fromRGB(100, 100, 100) })
-        local imageNormalTween = TweenService:Create(icon, info, { ImageColor3 = Color3.fromRGB(100, 100, 100) })
-        
-        btn.MouseEnter:Connect(function() hoverTween:Play(); imageHoverTween:Play() end)
-        btn.MouseLeave:Connect(function() normalTween:Play(); imageNormalTween:Play() end)
+        local hoverTween = TweenService:Create(btn, info, { BackgroundColor3 = Color3.fromRGB(50, 50, 50) })
+        local iconHover = TweenService:Create(icon, info, { ImageColor3 = Color3.fromRGB(255, 255, 255) })
+        local lblHover = TweenService:Create(lbl, info, { TextColor3 = Color3.fromRGB(255, 255, 255) })
+        local normalTween = TweenService:Create(btn, info, { BackgroundColor3 = Color3.fromRGB(30, 30, 30) })
+        local iconNormal = TweenService:Create(icon, info, { ImageColor3 = Color3.fromRGB(100, 100, 100) })
+        local lblNormal = TweenService:Create(lbl, info, { TextColor3 = Color3.fromRGB(100, 100, 100) })
+
+        btn.MouseEnter:Connect(function() hoverTween:Play(); iconHover:Play(); lblHover:Play() end)
+        btn.MouseLeave:Connect(function() normalTween:Play(); iconNormal:Play(); lblNormal:Play() end)
         btn.MouseButton1Click:Connect(function() pcall(onClick) end)
         return btn
     end
 
-    makeBtn("复制   ", 67, 1, "rbxassetid://10709812159", function()
+    makeBtn("复制", 76, 1, "rbxassetid://10709812159", function()
         local writer = setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard)
         if writer then pcall(writer, textBox.Text) end
     end)
-    makeBtn("清除   ", 62, 2, "rbxassetid://10709819059", function()
+    makeBtn("清空", 76, 2, "rbxassetid://10709819059", function()
         textBox.Text = ""
     end)
-    makeBtn("执行     ", 83, 3, "rbxassetid://10734923549", function()
+    makeBtn("执行", 76, 3, "rbxassetid://10734923549", function()
         local code = textBox.Text
         if code ~= "" then
             local fn = loadstring(code)
@@ -8015,7 +8015,6 @@ function Window:CreateQuickRunTab(config)
         end
     end)
 
-    -- ================= 多标签管理 =================
     local ACTIVE_BG = Color3.fromRGB(40, 40, 40)
     local INACTIVE_BG = Color3.fromRGB(30, 30, 30)
     local ACTIVE_TEXT = Color3.fromRGB(255, 255, 255)
@@ -8129,7 +8128,6 @@ function Window:CreateQuickRunTab(config)
     addTab.MouseButton1Click:Connect(function() createTab() end)
     createTab()
 
-    -- ================= 语法高亮与自适应 =================
     local lua_keywords = {"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"}
     local global_env = {"getrawmetatable", "game", "workspace", "script", "math", "string", "table", "print", "wait", "BrickColor", "Color3", "next", "pairs", "ipairs", "select", "unpack", "Instance", "Vector2", "Vector3", "CFrame", "Ray", "UDim2", "Enum", "assert", "error", "warn", "tick", "loadstring", "_G", "shared", "getfenv", "setfenv", "newproxy", "setmetatable", "getmetatable", "os", "debug", "pcall", "ypcall", "xpcall", "rawequal", "rawset", "rawget", "tonumber", "tostring", "type", "typeof", "_VERSION", "coroutine", "delay", "require", "spawn", "LoadLibrary", "settings", "stats", "time", "UserSettings", "version", "Axes", "ColorSequence", "Faces", "ColorSequenceKeypoint", "NumberRange", "NumberSequence", "NumberSequenceKeypoint", "gcinfo", "elapsedTime", "collectgarbage", "PhysicalProperties", "Rect", "Region3", "Region3int16", "UDim", "Vector2int16", "Vector3int16"}
 
@@ -8253,7 +8251,6 @@ function Window:CreateQuickRunTab(config)
         if prop == "CursorPosition" or prop == "Text" then updateLineHighlight() end
     end)
 
-    -- 尺寸自适应与自动滚动
     Source.TextEditable = true
     Source.MultiLine = true
     Source.TextWrapped = false
@@ -8312,27 +8309,24 @@ function Window:CreateQuickRunTab(config)
 end
 
 -- ============================================================
--- Console —— 完全脱离 Section 包装，直接铺满整个 Tab 页面
+-- Console —— 铺满 Tab，透明背景融入页面
 -- ============================================================
-function Window:CreateConsoleTab(config)
+function Window:Console(config)
     config = config or {}
     local tabName = config.Name or "Console"
     local tabIcon = config.Icon or "rbxassetid://10734982144"
     local LogService = game:GetService("LogService")
     local TweenService = game:GetService("TweenService")
     
-    -- 1. 创建 Tab 并获取页面
     self:Tab(tabName, tabIcon)
     local tabState = self._tabs[#self._tabs]
     local Page = tabState.page
     
-    -- 2. 清理默认布局，防止高度塌缩
     Page.ScrollingEnabled = false
     Page.ScrollBarThickness = 0
     local oldContent = Page:FindFirstChildWhichIsA("Frame")
     if oldContent then oldContent:Destroy() end
     
-    -- 3. 主容器
     local wrap = Instance.new("Frame")
     wrap.Name = "Console_Wrap"
     wrap.Size = UDim2.new(1, -16, 1, -16)
@@ -8342,23 +8336,20 @@ function Window:CreateConsoleTab(config)
     wrap.ClipsDescendants = true
     wrap.Parent = Page
 
-    -- 4. consoleHolder (背景框)
+    -- 去掉原来的深色背景框，直接用透明容器
     local consoleHolder = Instance.new("Frame")
     consoleHolder.Name = "consoleholder"
     consoleHolder.Position = UDim2.new(0, 0, 0, 0)
     consoleHolder.Size = UDim2.new(1, 0, 1, 0)
-    consoleHolder.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
-    consoleHolder.BackgroundTransparency = 0
+    consoleHolder.BackgroundTransparency = 1
     consoleHolder.BorderSizePixel = 0
     consoleHolder.ClipsDescendants = true
     consoleHolder.Parent = wrap
-    Instance.new("UICorner", consoleHolder).CornerRadius = UDim.new(0, 10)
 
-    -- 5. 顶部提示
     local hintLabel = Instance.new("TextLabel")
     hintLabel.Name = "Console_Hint"
     hintLabel.Size = UDim2.new(1, -20, 0, 14)
-    hintLabel.Position = UDim2.new(0, 10, 0, 8)
+    hintLabel.Position = UDim2.new(0, 0, 0, 2) -- 贴合顶部
     hintLabel.BackgroundTransparency = 1
     hintLabel.Font = Enum.Font.GothamMedium
     hintLabel.Text = "没有控制台输出"
@@ -8369,11 +8360,10 @@ function Window:CreateConsoleTab(config)
     hintLabel.Parent = consoleHolder
     TextGradient:Skip(hintLabel)
 
-    -- 6. 滚动日志区
     local c = Instance.new("ScrollingFrame")
     c.Name = "c"
-    c.Size = UDim2.new(1, -16, 1, -80)
-    c.Position = UDim2.new(0, 8, 0, 28)
+    c.Size = UDim2.new(1, 0, 1, -72) -- 增加高度，去掉左右边距
+    c.Position = UDim2.new(0, 0, 0, 22)
     c.BackgroundTransparency = 1
     c.BorderSizePixel = 0
     c.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -8382,7 +8372,6 @@ function Window:CreateConsoleTab(config)
     c.ScrollingDirection = Enum.ScrollingDirection.Y
     c.Parent = consoleHolder
 
-    -- 7. 日志 TextBox
     local logBox = Instance.new("TextBox")
     logBox.Name = "yesc"
     logBox.Size = UDim2.new(1, 0, 0, 0)
@@ -8404,11 +8393,10 @@ function Window:CreateConsoleTab(config)
     logBox.Parent = c
     TextGradient:Skip(logBox)
 
-    -- 8. 底部按钮行
     local buttonsHolder = Instance.new("Frame")
     buttonsHolder.Name = "buttonsholder"
-    buttonsHolder.Size = UDim2.new(1, -16, 0, 32)
-    buttonsHolder.Position = UDim2.new(0, 8, 1, -40)
+    buttonsHolder.Size = UDim2.new(1, 0, 0, 32)
+    buttonsHolder.Position = UDim2.new(0, 0, 1, -32)
     buttonsHolder.BackgroundTransparency = 1
     buttonsHolder.Parent = consoleHolder
 
@@ -8420,7 +8408,6 @@ function Window:CreateConsoleTab(config)
     bl.SortOrder = Enum.SortOrder.LayoutOrder
     bl.Parent = buttonsHolder
 
-    -- 9. 按钮生成器
     local function makeConsoleBtn(text, iconId, width, layoutOrder, onClick)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, width, 0, 28)
@@ -8471,7 +8458,6 @@ function Window:CreateConsoleTab(config)
         return btn, ic, lbl
     end
 
-    -- 10. 保存弹窗
     local sdOverlay = nil
     local sg = nil
     local cur = wrap
@@ -8642,7 +8628,6 @@ function Window:CreateConsoleTab(config)
         end)
     end
 
-    -- 11. 绑定按钮功能
     makeConsoleBtn("清空", "rbxassetid://10709819059", 76, 1, function()
         logBox.Text = ""
         c.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -8661,7 +8646,6 @@ function Window:CreateConsoleTab(config)
         if writer then pcall(writer, clean) end
     end)
 
-    -- 12. 日志捕获
     local autoScroll = true
     local isTweening = false
     local currentTween = nil
