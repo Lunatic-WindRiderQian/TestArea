@@ -5817,6 +5817,10 @@ function FengUI:CreateWindow(Config)
     end)
     local CloseBtn2 = createControlButton("rbxassetid://130510492706892", nil, function() ScreenGui:Destroy() end)
 
+    -- ============================================================
+    -- 修改点2：ConfigFrameRef 提升到外部作用域（用于卡片模式隐藏/恢复）
+    -- ============================================================
+    local ConfigFrameRef
     do
         local BUILDER_ICONS_PATH =
             "rbxasset://LuaPackages/Packages/_Index/BuilderIcons/BuilderIcons/BuilderIcons.json"
@@ -5971,6 +5975,8 @@ function FengUI:CreateWindow(Config)
         ConfigFrame.ZIndex               = 9
         ConfigFrame.Parent               = RightHeader
         AddToRegistry(ConfigFrame, "BackgroundColor3", "Top")
+        -- 修改点2：赋值给外部引用
+        ConfigFrameRef = ConfigFrame
 
         local cfgFrameCorner = Instance.new("UICorner")
         cfgFrameCorner.CornerRadius = UDim.new(0, 4)
@@ -6911,8 +6917,9 @@ function FengUI:CreateWindow(Config)
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
         task.spawn(updatePageCanvas)
         local state = {isActive = false, btn = TabBtn, page = Page, textLabel = TabText, glow = glowFrame, locked = tabLocked}
-        TabBtn.MouseButton1Click:Connect(function()
-            if tabLocked then return end
+
+        -- 修改点1：将切换逻辑提取为 state.Activate，供卡片模式复用
+        state.Activate = function()
             if Window._activeTab == state then return end
             for _, s in ipairs(Window._tabs) do
                 s.btn.BackgroundTransparency = 1
@@ -6928,6 +6935,10 @@ function FengUI:CreateWindow(Config)
             Page.Visible = true
             Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
             Window._activeTab = state
+        end
+        TabBtn.MouseButton1Click:Connect(function()
+            if tabLocked then return end
+            state.Activate()
         end)
         if not Window._activeTab and not tabLocked then
             TabBtn.BackgroundTransparency = 1
@@ -6953,6 +6964,185 @@ function FengUI:CreateWindow(Config)
             end
         end)
         return createSectionBuilder(PageContent, PageContent, 330, 1, Window)
+    end
+
+    -- ============================================================
+    -- 修改点3：卡片模式（Card Mode）— 移植自旧UI卡片系统
+    -- 卡片页：右侧背景隐藏 + 配置系统隐藏
+    -- 点开卡片后：右侧背景恢复 + 配置系统恢复（进入 Test 的 Tab 内容）
+    -- ============================================================
+    if Config.Card == true then
+        local CardContainer = Instance.new("ScrollingFrame")
+        CardContainer.Name = "CardContainer"
+        CardContainer.Size = UDim2.new(1, 0, 1, 0)
+        CardContainer.BackgroundTransparency = 1
+        CardContainer.BorderSizePixel = 0
+        CardContainer.ScrollBarThickness = 4
+        CardContainer.ScrollBarImageColor3 = CurrentTheme.Accent
+        CardContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+        CardContainer.ZIndex = 5
+        CardContainer.Visible = false
+        CardContainer.Parent = RightMenuFrame
+
+        local CardPadding = Instance.new("UIPadding")
+        CardPadding.PaddingLeft   = UDim.new(0, 10)
+        CardPadding.PaddingRight  = UDim.new(0, 10)
+        CardPadding.PaddingTop    = UDim.new(0, 10)
+        CardPadding.PaddingBottom = UDim.new(0, 10)
+        CardPadding.Parent = CardContainer
+
+        local CardGrid = Instance.new("UIGridLayout")
+        CardGrid.CellSize    = UDim2.new(0.5, -6, 0, 82)
+        CardGrid.CellPadding = UDim2.new(0, 6, 0, 6)
+        CardGrid.SortOrder   = Enum.SortOrder.LayoutOrder
+        CardGrid.Parent      = CardContainer
+
+        CardGrid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            CardContainer.CanvasSize = UDim2.new(0, 0, 0, CardGrid.AbsoluteContentSize.Y + 20)
+        end)
+
+        local originalRightBgTransparency = RightMenuFrame.BackgroundTransparency
+        local originalRightBgColor        = RightMenuFrame.BackgroundColor3
+
+        local BackBtn = Instance.new("TextButton")
+        BackBtn.Name               = "CardBackBtn"
+        BackBtn.Size               = UDim2.new(0, 28, 0, 28)
+        BackBtn.Position           = UDim2.new(0, 10, 0.5, -14)
+        BackBtn.BackgroundTransparency = 1
+        BackBtn.Text               = ""
+        BackBtn.AutoButtonColor    = false
+        BackBtn.Visible            = false
+        BackBtn.ZIndex             = 10
+        BackBtn.Parent             = RightHeader
+        local BackIcon = Instance.new("ImageLabel")
+        BackIcon.Size              = UDim2.new(1, -4, 1, -4)
+        BackIcon.Position          = UDim2.new(0.5, 0, 0.5, 0)
+        BackIcon.AnchorPoint       = Vector2.new(0.5, 0.5)
+        BackIcon.BackgroundTransparency = 1
+        BackIcon.Image             = "rbxassetid://7733764800"
+        BackIcon.ImageColor3       = CurrentTheme.Text
+        BackIcon.ImageTransparency = 0.3
+        BackIcon.ScaleType         = Enum.ScaleType.Fit
+        BackIcon.Parent            = BackBtn
+        AddToRegistry(BackIcon, "ImageColor3", "Text")
+
+        local function EnterCardMode()
+            CardContainer.Visible = true
+            TabContainer.Visible  = false
+            RightMenuFrame.BackgroundTransparency = 1
+            RightMenuFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+            if ConfigFrameRef then ConfigFrameRef.Visible = false end
+            BackBtn.Visible = false
+        end
+
+        local function EnterTabMode()
+            CardContainer.Visible = false
+            TabContainer.Visible  = true
+            RightMenuFrame.BackgroundTransparency = originalRightBgTransparency
+            RightMenuFrame.BackgroundColor3 = originalRightBgColor
+            if ConfigFrameRef then ConfigFrameRef.Visible = true end
+            BackBtn.Visible = true
+        end
+
+        BackBtn.MouseButton1Click:Connect(EnterCardMode)
+
+        Window._enterCardMode = EnterCardMode
+        Window._enterTabMode  = EnterTabMode
+
+        function Window:Card(cardConfig)
+            cardConfig = cardConfig or {}
+            local cardName = cardConfig.Name or "Card"
+            local cardDesc = cardConfig.Desc or cardConfig.Description or ""
+            local cardIcon = cardConfig.Icon
+
+            local TabBuilder = self:Tab(cardName, cardIcon)
+            local tabState = self._tabs[#self._tabs]
+            if tabState and tabState.btn then
+                tabState.btn.Visible = false
+            end
+
+            local cardBtn = Instance.new("TextButton")
+            cardBtn.Name                 = "Card_" .. cardName
+            cardBtn.Size                 = UDim2.new(1, 0, 1, 0)
+            cardBtn.BackgroundColor3     = CurrentTheme.Top
+            cardBtn.BackgroundTransparency = 0.15
+            cardBtn.AutoButtonColor      = false
+            cardBtn.Text                 = ""
+            cardBtn.ZIndex               = 6
+            cardBtn.Parent               = CardContainer
+            Instance.new("UICorner", cardBtn).CornerRadius = UDim.new(0, 12)
+
+            local cardStroke = Instance.new("UIStroke")
+            cardStroke.Color        = CurrentTheme.Accent
+            cardStroke.Thickness    = 1.5
+            cardStroke.Transparency = 0.7
+            cardStroke.Parent       = cardBtn
+            table.insert(ThemeListeners, function() cardStroke.Color = CurrentTheme.Accent end)
+
+            local img = Instance.new("ImageLabel")
+            img.Size = UDim2.new(0, 42, 0, 42)
+            img.Position = UDim2.new(0, 10, 0.5, -21)
+            img.BackgroundTransparency = 1
+            if type(cardIcon) == "number" then
+                img.Image = "rbxassetid://" .. cardIcon
+            elseif type(cardIcon) == "string" and cardIcon ~= "" then
+                if tonumber(cardIcon) then img.Image = "rbxassetid://" .. cardIcon
+                else img.Image = cardIcon end
+            else
+                img.Image = "rbxassetid://84830962019412"
+            end
+            img.ImageColor3 = CurrentTheme.Text
+            img.ScaleType   = Enum.ScaleType.Fit
+            img.Parent      = cardBtn
+            Instance.new("UICorner", img).CornerRadius = UDim.new(0, 8)
+            AddToRegistry(img, "ImageColor3", "Text")
+
+            local titleLbl = Instance.new("TextLabel")
+            titleLbl.Size                 = UDim2.new(1, -64, 0, 18)
+            titleLbl.Position             = UDim2.new(0, 58, 0, 18)
+            titleLbl.BackgroundTransparency = 1
+            titleLbl.Font                 = Enum.Font.GothamBold
+            titleLbl.Text                 = cardName
+            titleLbl.TextColor3           = CurrentTheme.Text
+            titleLbl.TextSize             = 14
+            titleLbl.TextXAlignment       = Enum.TextXAlignment.Left
+            titleLbl.Parent               = cardBtn
+            AddToRegistry(titleLbl, "TextColor3", "Text")
+
+            local descLbl = Instance.new("TextLabel")
+            descLbl.Size                 = UDim2.new(1, -64, 0, 30)
+            descLbl.Position             = UDim2.new(0, 58, 0, 38)
+            descLbl.BackgroundTransparency = 1
+            descLbl.Font                 = Enum.Font.Gotham
+            descLbl.Text                 = cardDesc
+            descLbl.TextColor3           = CurrentTheme.Text
+            descLbl.TextTransparency     = 0.5
+            descLbl.TextSize             = 11
+            descLbl.TextXAlignment       = Enum.TextXAlignment.Left
+            descLbl.TextWrapped          = true
+            descLbl.Parent               = cardBtn
+            AddToRegistry(descLbl, "TextColor3", "Text")
+            TextGradient:Skip(descLbl)
+
+            cardBtn.MouseEnter:Connect(function()
+                Tween(cardBtn,    {BackgroundTransparency = 0.05}, 0.2)
+                Tween(cardStroke, {Thickness = 2.5, Transparency = 0.3}, 0.2)
+            end)
+            cardBtn.MouseLeave:Connect(function()
+                Tween(cardBtn,    {BackgroundTransparency = 0.15}, 0.2)
+                Tween(cardStroke, {Thickness = 1.5, Transparency = 0.7}, 0.2)
+            end)
+            cardBtn.MouseButton1Click:Connect(function()
+                if tabState and tabState.Activate then
+                    tabState.Activate()
+                end
+                EnterTabMode()
+            end)
+
+            return TabBuilder
+        end
+
+        task.defer(EnterCardMode)
     end
 
     function Window:CreateHomeTab(Config)
