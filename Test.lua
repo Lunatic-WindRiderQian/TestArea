@@ -4668,7 +4668,7 @@ function FengUI:CreateWindow(Config)
 
     FengUI.__NotificationCache = Notifier
 
-    local FINAL_WIDTH  = 500
+    local FINAL_WIDTH = 500
     local FINAL_HEIGHT = 299
 
     local MainFrame = Instance.new("Frame")
@@ -6583,7 +6583,7 @@ function FengUI:CreateWindow(Config)
     task.spawn(updatePageCanvas)
 
     -- ============================================================
-    -- 卡片系统（Card 模式）
+    -- 卡片系统初始化（Card 模式，独立于原 Tab 系统）
     -- ============================================================
     local CardsContainer, CardsGrid, BackButton
     local CardsData   = {}
@@ -6626,7 +6626,7 @@ function FengUI:CreateWindow(Config)
         BackButton = Instance.new("TextButton")
         BackButton.Name                 = "BackButton"
         BackButton.Size                 = UDim2.new(0, 32, 0, 32)
-        BackButton.Position             = UDim2.new(0, 10, 0.5, -16)
+        BackButton.Position             = UDim2.new(0, 130, 0.5, -16)
         BackButton.BackgroundTransparency = 0.2
         BackButton.BackgroundColor3     = CurrentTheme.Element or CurrentTheme.Top
         BackButton.Text                 = ""
@@ -6711,10 +6711,21 @@ function FengUI:CreateWindow(Config)
 
         BackButton.MouseButton1Click:Connect(CloseCard)
 
+        -- 自动纠正：卡片主页时强制 LeftMenuFrame 隐藏
+        -- （避免 minimize/restore 后左侧栏被 setContentVisible 打开）
+        RunService.Heartbeat:Connect(function()
+            if not CardMode then return end
+            local shouldShow = MainFrame.Visible and ActiveCard ~= nil
+            if LeftMenuFrame.Visible ~= shouldShow then
+                LeftMenuFrame.Visible = shouldShow
+            end
+        end)
+
         Window._openCard   = OpenCard
         Window._closeCard  = CloseCard
         Window._CardsData  = CardsData
     end
+    -- ============================================================
 
     local dragToggle = false
     local dragStart, startPos
@@ -6834,7 +6845,6 @@ function FengUI:CreateWindow(Config)
 
     Window._currentCategory = nil
     function Window:Category(config)
-        if CardMode then return {} end
         local name = type(config) == "table" and config.Name or config
         local collapsible = type(config) == "table" and config.Collapsible or false
         local opened = true
@@ -6926,7 +6936,6 @@ function FengUI:CreateWindow(Config)
     end
 
     function Window:TabDivider()
-        if CardMode then return end
         local parentContainer = LeftScrollingFrame
         if Window._currentCategory then parentContainer = Window._currentCategory.content end
         local line = Instance.new("Frame")
@@ -6941,10 +6950,6 @@ function FengUI:CreateWindow(Config)
     Window._activeTab = nil
     Window._tabs = {}
     function Window:Tab(name, icon)
-        if CardMode then
-            warn("卡片模式下请使用 Window:Card(...):Tab(...)")
-            return {}
-        end
         local tabLocked      = false
         local tabLockedTitle = "已锁定"
         if type(name) == "table" then
@@ -7087,7 +7092,7 @@ function FengUI:CreateWindow(Config)
     end
 
     -- ============================================================
-    -- Window:Card — 卡片独立布局（不复用 Tab 系统）
+    -- Window:Card — 卡片独立布局（跟旧UI一样，不复用原 Tab 系统）
     -- ============================================================
     if CardMode then
         local function FormatCardIcon(asset)
@@ -7404,6 +7409,7 @@ function FengUI:CreateWindow(Config)
             return CardAPI
         end
     end
+    -- ============================================================
 
     function Window:CreateHomeTab(Config)
         Config = Config or {}
@@ -8258,7 +8264,6 @@ function FengUI:CreateWindow(Config)
 
         self:Tab(tabName, tabIcon)
         local tabState = self._tabs[#self._tabs]
-        if not tabState then return end
         local Page = tabState.page
 
         Page.ScrollingEnabled = false
@@ -8764,7 +8769,6 @@ function FengUI:CreateWindow(Config)
 
         self:Tab(tabName, tabIcon)
         local tabState = self._tabs[#self._tabs]
-        if not tabState then return end
         local Page = tabState.page
 
         Page.ScrollingEnabled = false
