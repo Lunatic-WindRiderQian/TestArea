@@ -4249,28 +4249,28 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 btnStroke.Parent = btn
                 table.insert(ThemeListeners, function() btnStroke.Color = CurrentTheme.Stroke end)
 
-                local iconLabel = nil
+                local iconLabel2 = nil
                 if tabIcon and tostring(tabIcon) ~= "" then
-                    iconLabel = Instance.new("ImageLabel")
-                    iconLabel.AnchorPoint = Vector2.new(0, 0.5)
-                    iconLabel.Position = UDim2.new(0, 7, 0.5, 0)
-                    iconLabel.Size = UDim2.new(0, 18, 0, 18)
-                    iconLabel.BackgroundTransparency = 1
-                    iconLabel.ImageColor3 = Color3.fromRGB(223, 223, 223)
-                    iconLabel.ImageTransparency = 0.5
-                    iconLabel.ScaleType = Enum.ScaleType.Fit
+                    iconLabel2 = Instance.new("ImageLabel")
+                    iconLabel2.AnchorPoint = Vector2.new(0, 0.5)
+                    iconLabel2.Position = UDim2.new(0, 7, 0.5, 0)
+                    iconLabel2.Size = UDim2.new(0, 18, 0, 18)
+                    iconLabel2.BackgroundTransparency = 1
+                    iconLabel2.ImageColor3 = Color3.fromRGB(223, 223, 223)
+                    iconLabel2.ImageTransparency = 0.5
+                    iconLabel2.ScaleType = Enum.ScaleType.Fit
                     if tonumber(tabIcon) then
-                        iconLabel.Image = "rbxassetid://"..tostring(tabIcon)
+                        iconLabel2.Image = "rbxassetid://"..tostring(tabIcon)
                     else
-                        iconLabel.Image = tostring(tabIcon)
+                        iconLabel2.Image = tostring(tabIcon)
                     end
 
                     local uiScale = Instance.new("UIScale")
                     uiScale.Name = "ModernIconScale"
                     uiScale.Scale = 0.82
-                    uiScale.Parent = iconLabel
+                    uiScale.Parent = iconLabel2
 
-                    iconLabel.Parent = btn
+                    iconLabel2.Parent = btn
                 end
 
                 local textLbl = Instance.new("TextLabel")
@@ -4313,7 +4313,7 @@ local function createSectionBuilder(parent, contentContainer, elementWidth, wind
                 tabDataMap[key] = {
                     frame = tabFrame, layout = tabLayout,
                     btn = btn, stroke = btnStroke,
-                    icon = iconLabel, label = textLbl,
+                    icon = iconLabel2, label = textLbl,
                     locked = tabLocked,
                 }
 
@@ -4668,8 +4668,8 @@ function FengUI:CreateWindow(Config)
 
     FengUI.__NotificationCache = Notifier
 
-    local FINAL_WIDTH  = CardMode and 600 or 500
-    local FINAL_HEIGHT = CardMode and 400 or 299
+    local FINAL_WIDTH  = 500
+    local FINAL_HEIGHT = 299
 
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
@@ -6590,12 +6590,11 @@ function FengUI:CreateWindow(Config)
     local ActiveCard  = nil
 
     if CardMode then
-        LeftMenuFrame.Visible       = false
-        RightMenuFrame.Size         = UDim2.new(1, 0, 1, 0)
-        RightMenuFrame.Position     = UDim2.new(0, 0, 0, 0)
-        PageContainer.Visible       = false
+        LeftMenuFrame.Visible   = false
+        RightMenuFrame.Size     = UDim2.new(1, 0, 1, 0)
+        RightMenuFrame.Position = UDim2.new(0, 0, 0, 0)
+        PageContainer.Visible   = false
 
-        -- 右侧背景显隐控制
         local OriginalRightBg           = RightMenuFrame.BackgroundTransparency
         local OriginalRightStrokeTransp = RightStroke.Transparency
         local OriginalLine3Transp       = LineFrame_3.BackgroundTransparency
@@ -6613,7 +6612,6 @@ function FengUI:CreateWindow(Config)
         end
         SetRightBgVisible(false)
 
-        -- 玩家卡片从左侧栏移到主框架底部
         BottomFrame.Parent      = MainFrame
         BottomFrame.Size        = UDim2.new(0, 175, 0, 50)
         BottomFrame.Position    = UDim2.new(0, 0, 1, 0)
@@ -6625,7 +6623,6 @@ function FengUI:CreateWindow(Config)
             BottomFrame.Visible = visible
         end
 
-        -- 返回按钮
         BackButton = Instance.new("TextButton")
         BackButton.Name                 = "BackButton"
         BackButton.Size                 = UDim2.new(0, 32, 0, 32)
@@ -6660,7 +6657,6 @@ function FengUI:CreateWindow(Config)
             Tween(BackIcon,  { ImageTransparency  = 0.3 }, 0.2)
         end)
 
-        -- 卡片网格容器
         CardsContainer = Instance.new("ScrollingFrame")
         CardsContainer.Name             = "CardsContainer"
         CardsContainer.Size             = UDim2.new(1, 0, 1, 0)
@@ -7091,7 +7087,7 @@ function FengUI:CreateWindow(Config)
     end
 
     -- ============================================================
-    -- Window:Card — 卡片模式专用（返回带 Tab 的 builder）
+    -- Window:Card — 卡片独立布局（不复用 Tab 系统）
     -- ============================================================
     if CardMode then
         local function FormatCardIcon(asset)
@@ -8262,6 +8258,7 @@ function FengUI:CreateWindow(Config)
 
         self:Tab(tabName, tabIcon)
         local tabState = self._tabs[#self._tabs]
+        if not tabState then return end
         local Page = tabState.page
 
         Page.ScrollingEnabled = false
@@ -8767,6 +8764,7 @@ function FengUI:CreateWindow(Config)
 
         self:Tab(tabName, tabIcon)
         local tabState = self._tabs[#self._tabs]
+        if not tabState then return end
         local Page = tabState.page
 
         Page.ScrollingEnabled = false
