@@ -6535,6 +6535,8 @@ function FengUI:CreateWindow(Config)
             ApplyMenuRender(false)
         end
 
+        Window._closeConfigMenu = CloseMenu
+
         local OpenButton = Instance.new("TextButton")
         OpenButton.Name              = "OpenButton"
         OpenButton.AnchorPoint       = Vector2.new(0, 0.5)
@@ -6710,6 +6712,8 @@ function FengUI:CreateWindow(Config)
                 Tween(RightStroke, { Transparency = 1 }, 0.2)
                 if cfgFrame then cfgFrame.Visible = false end
                 if CardReturnBtn then CardReturnBtn.Visible = false end
+                if ButtonGroup then ButtonGroup.Visible = false end
+                if Window._closeConfigMenu then Window._closeConfigMenu() end
                 if PageService and HomePage then
                     pcall(function() PageService:JumpTo(HomePage) end)
                 end
@@ -6729,6 +6733,7 @@ function FengUI:CreateWindow(Config)
                 Tween(RightStroke, { Transparency = 0.65 }, 0.2)
                 if cfgFrame then cfgFrame.Visible = true end
                 if CardReturnBtn then CardReturnBtn.Visible = true end
+                if ButtonGroup then ButtonGroup.Visible = true end
                 -- 确保主 PageService 停在当前卡片的容器
                 if Window._activeCard and Window._activeCard.pageContainer and PageService then
                     pcall(function() PageService:JumpTo(Window._activeCard.pageContainer) end)
@@ -7052,7 +7057,7 @@ function FengUI:CreateWindow(Config)
 
         local cardName  = cfg.Name or cfg.Title or "卡片"
         local cardDesc  = cfg.Desc or cfg.Description or cfg.SubName or ""
-        local cardIcon  = cfg.Icon or cfg.Logo or 127194456372995
+        local cardIcon  = cfg.Icon or cfg.Logo or "rbxassetid://10734910187"
         local cardImage = cfg.Image or cfg.Banner
 
         local cardFrame = Instance.new("Frame")
@@ -7104,9 +7109,9 @@ function FengUI:CreateWindow(Config)
         cardIconImg.Size = UDim2.new(0, 25, 0, 25)
         cardIconImg.BackgroundTransparency = 1
         cardIconImg.LayoutOrder = -1
-        cardIconImg.Image = formatIconAsset(cardIcon, "rbxassetid://9904843409")
+        cardIconImg.Image = formatIconAsset(cardIcon, "rbxassetid://10734910187")
         cardIconImg.ImageColor3 = Color3.new(1, 1, 1)
-        cardIconImg.ZIndex = 3
+        cardIconImg.ZIndex = 5
         cardIconImg.Parent = info
 
         local textFrame = Instance.new("Frame")
