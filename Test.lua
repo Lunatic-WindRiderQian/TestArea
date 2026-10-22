@@ -6905,9 +6905,6 @@ function FengUI:CreateWindow(Config)
             task.delay(0.1, function()
                 setContentVisible(true)
                 setShadowVisible(true, false)
-                if CardMode and Window._setHomeLayout then
-                    Window._setHomeLayout(true)
-                end
                 busy = false
             end)
         end
