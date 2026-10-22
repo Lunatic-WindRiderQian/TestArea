@@ -7164,7 +7164,7 @@ function FengUI:CreateWindow(Config)
             cardPageContainer.Name = "CardPageContainer_" .. cardName
             cardPageContainer.Size = UDim2.new(1, 0, 1, 0)
             cardPageContainer.BackgroundTransparency = 1
-            cardPageContainer.Visible = false
+            cardPageContainer.Visible = true
             cardPageContainer.Parent = TabContainer
 
             local cardPageService = Instance.new("UIPageLayout")
@@ -7342,7 +7342,7 @@ function FengUI:CreateWindow(Config)
         if CardMode then
             if cardContext and cardContext.pageContainer then
                 -- 属于某个卡片的 Tab → 挂到该卡片自己的 PageService 里
-                Page.Visible = false
+                Page.Visible = true
                 Page.Position = UDim2.new(0, 0, 0, 0)
                 Page.Parent = cardContext.pageContainer
             else
