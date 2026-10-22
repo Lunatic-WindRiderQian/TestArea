@@ -5712,7 +5712,7 @@ function FengUI:CreateWindow(Config)
     end)
 
     -- ============================================================
-    -- RightMenuFrame —— 永远 176 偏移，与经典模式一致
+    -- RightMenuFrame —— CardMode 主页全屏 / 进入卡片 176 偏移
     -- ============================================================
     local RightMenuFrame = Instance.new("Frame")
     RightMenuFrame.Size = UDim2.new(1, -176, 1, 0)
@@ -5728,6 +5728,17 @@ function FengUI:CreateWindow(Config)
     RightStroke.Transparency = 0.65
     RightStroke.Parent = RightMenuFrame
     AddToRegistry(RightStroke, "Color", "Stroke")
+
+    -- ★ CardMode 初始就是"主页全屏"状态
+    if CardMode then
+        RightMenuFrame.Size = UDim2.new(1, 0, 1, 0)
+        RightMenuFrame.Position = UDim2.new(0, 0, 0, 0)
+        RightMenuFrame.BackgroundTransparency = 1
+        RightStroke.Transparency = 1
+        LineFrame.Visible = false
+        LeftScrollingFrame.Visible = false
+        BottomFrame.Visible = false
+    end
 
     local RightHeader = Instance.new("Frame")
     RightHeader.Size = UDim2.new(1, 0, 0, 50)
@@ -5813,7 +5824,7 @@ function FengUI:CreateWindow(Config)
         return btn, content
     end
 
-    -- ★ 返回按钮：放在 ButtonGroup 最左（LayoutOrder = -1），缩小按钮在它右边
+    -- ★ 返回按钮：LayoutOrder = -1 → 排在缩小按钮左边
     if CardMode then
         CardReturnBtn = Instance.new("TextButton")
         CardReturnBtn.Name = "CardReturnBtn"
@@ -6676,14 +6687,20 @@ function FengUI:CreateWindow(Config)
             updateHomeCanvas()
         end)
 
-        -- ★ 主页：保留 HeadFrame（经典标题栏），只隐藏左侧 Tab 列表和 BottomFrame
+        -- ★ 主页：RightMenuFrame 全屏（分割线完整、卡片占满宽度）
+        -- ★ 进入卡片：RightMenuFrame 176 偏移（经典模式分割线）
         local function setHomeLayout(isHome)
             local cfgFrame = Window._configFrameRef
             if isHome then
                 LeftScrollingFrame.Visible = false
                 BottomFrame.Visible = false
+                LineFrame.Visible = false
 
-                Tween(RightMenuFrame, { BackgroundTransparency = 1 }, 0.2)
+                Tween(RightMenuFrame, {
+                    Size = UDim2.new(1, 0, 1, 0),
+                    Position = UDim2.new(0, 0, 0, 0),
+                    BackgroundTransparency = 1
+                }, 0.2)
                 Tween(RightStroke, { Transparency = 1 }, 0.2)
 
                 if cfgFrame then cfgFrame.Visible = false end
@@ -6702,11 +6719,15 @@ function FengUI:CreateWindow(Config)
                 Window._activeTab = nil
                 Window._activeCard = nil
             else
-                -- ★ 进入卡片 = 原版经典模式：Tab 列表 + BottomFrame 恢复
                 LeftScrollingFrame.Visible = true
                 BottomFrame.Visible = true
+                LineFrame.Visible = true
 
-                Tween(RightMenuFrame, { BackgroundTransparency = 0.6 }, 0.2)
+                Tween(RightMenuFrame, {
+                    Size = UDim2.new(1, -176, 1, 0),
+                    Position = UDim2.new(0, 176, 0, 0),
+                    BackgroundTransparency = 0.6
+                }, 0.2)
                 Tween(RightStroke, { Transparency = 0.65 }, 0.2)
 
                 if cfgFrame then cfgFrame.Visible = true end
@@ -7202,7 +7223,6 @@ function FengUI:CreateWindow(Config)
                 tw:Play()
             end
 
-            -- ★ 进入卡片：直接切到该卡片的 pageContainer，不依赖是否有 Tab
             Window._activeCard = cardObj
             if PageService and cardObj.pageContainer then
                 pcall(function() PageService:JumpTo(cardObj.pageContainer) end)
@@ -7212,7 +7232,6 @@ function FengUI:CreateWindow(Config)
             end
             if Window._setHomeLayout then Window._setHomeLayout(false) end
 
-            -- 若卡片内有 Tab，自动打开第一个
             local firstTab = cardObj.cardTabs[1]
             if firstTab and firstTab.openTab then
                 firstTab.openTab()
