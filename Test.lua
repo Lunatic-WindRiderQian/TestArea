@@ -6902,6 +6902,7 @@ function FengUI:CreateWindow(Config)
                 { Size = restoreSize or UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT) }
             ):Play()
 
+            -- ★ 不再强制返回主页：保持当前 layout 状态（卡片内就留在卡片内）
             task.delay(0.1, function()
                 setContentVisible(true)
                 setShadowVisible(true, false)
@@ -7148,7 +7149,7 @@ function FengUI:CreateWindow(Config)
             cardPageContainer.Name = "CardPageContainer_" .. cardName
             cardPageContainer.Size = UDim2.new(1, 0, 1, 0)
             cardPageContainer.BackgroundTransparency = 1
-            cardPageContainer.Visible = true
+            cardPageContainer.ClipsDescendants = true
             cardPageContainer.Parent = TabContainer
 
             local cardPageService = Instance.new("UIPageLayout")
@@ -7324,12 +7325,8 @@ function FengUI:CreateWindow(Config)
 
         if CardMode then
             if cardContext and cardContext.pageContainer then
-                Page.Visible = true
-                Page.Position = UDim2.new(0, 0, 0, 0)
                 Page.Parent = cardContext.pageContainer
             else
-                Page.Visible = true
-                Page.Position = UDim2.new(0, 0, 0, 0)
                 Page.Parent = TabContainer
             end
         else
