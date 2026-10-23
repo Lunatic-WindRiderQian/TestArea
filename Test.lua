@@ -5824,45 +5824,14 @@ function FengUI:CreateWindow(Config)
         return btn, content
     end
 
-    -- ★ 返回按钮：LayoutOrder = -1 → 排在缩小按钮左边
+    -- ★ 返回按钮：复用 createControlButton，拥有相同的悬浮动画
     if CardMode then
-        CardReturnBtn = Instance.new("TextButton")
-        CardReturnBtn.Name = "CardReturnBtn"
-        CardReturnBtn.Size = UDim2.new(0, 32, 0, 32)
-        CardReturnBtn.BackgroundColor3 = CurrentTheme.Element or CurrentTheme.Top
-        CardReturnBtn.BackgroundTransparency = 0.2
-        CardReturnBtn.AutoButtonColor = false
-        CardReturnBtn.Text = ""
-        CardReturnBtn.LayoutOrder = -1
-        CardReturnBtn.Visible = false
-        CardReturnBtn.Parent = ButtonGroup
-        Instance.new("UICorner", CardReturnBtn).CornerRadius = UDim.new(0, 7)
-
-        local retStroke = Instance.new("UIStroke")
-        retStroke.Thickness = 1
-        retStroke.Transparency = 0.65
-        retStroke.Color = CurrentTheme.Stroke
-        retStroke.Parent = CardReturnBtn
-        table.insert(ThemeListeners, function() retStroke.Color = CurrentTheme.Stroke end)
-
-        local retIcon = Instance.new("ImageLabel")
-        retIcon.Size = UDim2.new(0, 18, 0, 18)
-        retIcon.Position = UDim2.new(0, 7, 0, 7)
-        retIcon.BackgroundTransparency = 1
-        retIcon.Image = "rbxassetid://130391877219356"
-        retIcon.ImageColor3 = CurrentTheme.Text
-        retIcon.Parent = CardReturnBtn
-        AddToRegistry(retIcon, "ImageColor3", "Text")
-
-        CardReturnBtn.MouseEnter:Connect(function()
-            Tween(CardReturnBtn, {BackgroundTransparency = 0}, 0.2)
-        end)
-        CardReturnBtn.MouseLeave:Connect(function()
-            Tween(CardReturnBtn, {BackgroundTransparency = 0.2}, 0.2)
-        end)
-        CardReturnBtn.MouseButton1Click:Connect(function()
+        CardReturnBtn = createControlButton("rbxassetid://130391877219356", nil, function()
             if Window._setHomeLayout then Window._setHomeLayout(true) end
         end)
+        CardReturnBtn.Name = "CardReturnBtn"
+        CardReturnBtn.LayoutOrder = -1
+        CardReturnBtn.Visible = false
     end
 
     local MinimizeBtn = createControlButton(nil, "−", function() end)
@@ -6687,8 +6656,6 @@ function FengUI:CreateWindow(Config)
             updateHomeCanvas()
         end)
 
-        -- ★ 主页：RightMenuFrame 全屏（分割线完整、卡片占满宽度）
-        -- ★ 进入卡片：RightMenuFrame 176 偏移（经典模式分割线）
         local function setHomeLayout(isHome)
             local cfgFrame = Window._configFrameRef
             if isHome then
@@ -6902,7 +6869,6 @@ function FengUI:CreateWindow(Config)
                 { Size = restoreSize or UDim2.new(0, FINAL_WIDTH, 0, FINAL_HEIGHT) }
             ):Play()
 
-            -- ★ 不再强制返回主页：保持当前 layout 状态（卡片内就留在卡片内）
             task.delay(0.1, function()
                 setContentVisible(true)
                 setShadowVisible(true, false)
@@ -7152,18 +7118,7 @@ function FengUI:CreateWindow(Config)
             cardPageContainer.ClipsDescendants = true
             cardPageContainer.Parent = TabContainer
 
-            local cardPageService = Instance.new("UIPageLayout")
-            cardPageService.Parent = cardPageContainer
-            cardPageService.TweenTime = 0.5
-            cardPageService.EasingStyle = Enum.EasingStyle.Exponential
-            cardPageService.EasingDirection = Enum.EasingDirection.Out
-            cardPageService.HorizontalAlignment = Enum.HorizontalAlignment.Left
-            cardPageService.GamepadInputEnabled = false
-            cardPageService.ScrollWheelInputEnabled = false
-            cardPageService.TouchInputEnabled = false
-
             cardObj.pageContainer = cardPageContainer
-            cardObj.pageService = cardPageService
         end
 
         local cardClick = Instance.new("TextButton")
@@ -7329,6 +7284,8 @@ function FengUI:CreateWindow(Config)
             else
                 Page.Parent = TabContainer
             end
+            Page.Visible = false
+            Page.Position = UDim2.new(0, 0, 0, 60)
         else
             Page.Visible = false
             Page.Position = UDim2.new(0, 0, 0, 60)
@@ -7374,10 +7331,16 @@ function FengUI:CreateWindow(Config)
                 if targetCard and targetCard.pageContainer then
                     local switchingCard = (Window._activeCard ~= targetCard)
                     Window._activeCard = targetCard
-                    targetCard.activeCardTab = state
-                    if targetCard.pageService then
-                        pcall(function() targetCard.pageService:JumpTo(Page) end)
+                    
+                    if targetCard.activeCardTab and targetCard.activeCardTab.page then
+                        targetCard.activeCardTab.page.Visible = false
                     end
+                    
+                    targetCard.activeCardTab = state
+                    Page.Visible = true
+                    Page.Position = UDim2.new(0, 0, 0, 60)
+                    Tween(Page, {Position = UDim2.new(0, 0, 0, 0)}, 0.5)
+
                     if switchingCard then
                         if PageService then
                             pcall(function() PageService:JumpTo(targetCard.pageContainer) end)
