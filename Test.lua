@@ -7350,13 +7350,31 @@ function FengUI:CreateWindow(Config)
                             Window._refreshCardTabsVisibility(targetCard)
                         end
                     end
+                    if Window._setHomeLayout then
+                        Window._setHomeLayout(false)
+                    end
                 else
+                    -- ★ 独立 Tab（CreateHomeTab / Execute / Console）：走经典布局
+                    Window._activeCard = nil
+                    Page.Visible = true
                     if PageService then
                         pcall(function() PageService:JumpTo(Page) end)
                     end
-                end
-                if Window._setHomeLayout then
-                    Window._setHomeLayout(false)
+
+                    LeftScrollingFrame.Visible = true
+                    BottomFrame.Visible = true
+                    LineFrame.Visible = true
+                    Tween(RightMenuFrame, {
+                        Size = UDim2.new(1, -176, 1, 0),
+                        Position = UDim2.new(0, 176, 0, 0),
+                        BackgroundTransparency = 0.6
+                    }, 0.2)
+                    Tween(RightStroke, { Transparency = 0.65 }, 0.2)
+                    if Window._configFrameRef then Window._configFrameRef.Visible = true end
+                    if CardReturnBtn then CardReturnBtn.Visible = true end
+                    if Window._refreshCardTabsVisibility then
+                        Window._refreshCardTabsVisibility(nil)
+                    end
                 end
             else
                 if Window._activeTab then Window._activeTab.page.Visible = false end
