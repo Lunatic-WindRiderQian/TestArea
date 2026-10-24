@@ -6712,16 +6712,25 @@ function FengUI:CreateWindow(Config)
         Window._setHomeLayout = setHomeLayout
 
         Window._refreshCardTabsVisibility = function(card)
-            for _, tabState in ipairs(Window._tabs) do
-                if tabState.btn and tabState.btn.Parent then
-                    if card then
-                        tabState.btn.Visible = (tabState.card == card)
-                    else
-                        tabState.btn.Visible = (tabState.card == nil)
-                    end
-                end
+    for _, tabState in ipairs(Window._tabs) do
+        if tabState.btn and tabState.btn.Parent then
+            if card then
+                tabState.btn.Visible = (tabState.card == card)
+            else
+                tabState.btn.Visible = (tabState.card == nil)
             end
         end
+    end
+    for _, catState in ipairs(Window._categories or {}) do
+        if catState.frame and catState.frame.Parent then
+            if card then
+                catState.frame.Visible = (catState.card == card)
+            else
+                catState.frame.Visible = (catState.card == nil)
+            end
+        end
+    end
+end
     else
         PageContainer = Instance.new("ScrollingFrame")
         PageContainer.Size = UDim2.new(1, 0, 1, 0)
@@ -6889,107 +6898,128 @@ function FengUI:CreateWindow(Config)
 
     Window._currentCategory = nil
     function Window:Category(config)
-        local name = type(config) == "table" and config.Name or config
-        local collapsible = type(config) == "table" and config.Collapsible or false
-        local opened = true
-        if type(config) == "table" and config.Opened ~= nil then opened = config.Opened end
-        local categoryFrame = Instance.new("Frame")
-        categoryFrame.Size = UDim2.new(1, 0, 0, 0)
-        categoryFrame.AutomaticSize = Enum.AutomaticSize.Y
-        categoryFrame.BackgroundTransparency = 1
-        categoryFrame.Parent = LeftScrollingFrame
-        local catLayout = Instance.new("UIListLayout")
-        catLayout.FillDirection = Enum.FillDirection.Vertical
-        catLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        catLayout.Padding = UDim.new(0, 0); catLayout.Parent = categoryFrame
-        local header = Instance.new("TextButton")
-        header.Size = UDim2.new(1, 0, 0, 28)
-        header.BackgroundTransparency = 1
-        header.Text = name
-        header.TextXAlignment = Enum.TextXAlignment.Left
-        header.Font = Enum.Font.GothamBold
-        header.TextSize = 13
-        header.TextColor3 = CurrentTheme.Text
-        header.TextTransparency = 0.5
-        header.Parent = categoryFrame
-        local pad = Instance.new("UIPadding")
-        pad.PaddingLeft = UDim.new(0, 10); pad.Parent = header
-        AddToRegistry(header, "TextColor3", "Text")
-        local arrow = Instance.new("ImageLabel")
-        arrow.Size = UDim2.new(0, 12, 0, 12)
-        arrow.BackgroundTransparency = 1
-        arrow.Image = "rbxassetid://8240930340"
-        arrow.ImageColor3 = CurrentTheme.Text
-        arrow.ImageTransparency = 0.3
-        arrow.Visible = collapsible
-        arrow.Rotation = opened and 0 or 180
-        arrow.Parent = header
-        arrow.AnchorPoint = Vector2.new(1, 0.5)
-        arrow.Position = UDim2.new(1, -10, 0.5, 0)
-        AddToRegistry(arrow, "ImageColor3", "Text")
-        local content = Instance.new("Frame")
-        content.Size = UDim2.new(1, 0, 0, 0)
-        content.BackgroundTransparency = 1
-        content.AutomaticSize = Enum.AutomaticSize.None
-        content.ClipsDescendants = true
-        content.Visible = true; content.Parent = categoryFrame
-        local contentList = Instance.new("UIListLayout")
-        contentList.Padding = UDim.new(0, 4)
-        contentList.SortOrder = Enum.SortOrder.LayoutOrder
-        contentList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        contentList.Parent = content
-        local currentTween = nil
-        local function getContentHeight() return contentList.AbsoluteContentSize.Y or 0 end
-        local function setContentHeight(targetHeight, animate)
-            targetHeight = math.max(0, targetHeight)
-            local currentHeight = content.Size.Y.Offset
-            if animate and currentHeight ~= targetHeight then
-                if currentTween then currentTween:Cancel(); currentTween = nil end
-                currentTween = TweenService:Create(content, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, targetHeight)})
-                currentTween:Play()
-                currentTween.Completed:Connect(function() currentTween = nil; task.spawn(updateTabCanvas) end)
-            else
-                content.Size = UDim2.new(1, 0, 0, targetHeight)
-                task.spawn(updateTabCanvas)
-            end
+    local name = type(config) == "table" and config.Name or config
+    local collapsible = type(config) == "table" and config.Collapsible or false
+    local opened = true
+    if type(config) == "table" and config.Opened ~= nil then opened = config.Opened end
+    local categoryFrame = Instance.new("Frame")
+    categoryFrame.Size = UDim2.new(1, 0, 0, 0)
+    categoryFrame.AutomaticSize = Enum.AutomaticSize.Y
+    categoryFrame.BackgroundTransparency = 1
+    categoryFrame.Parent = LeftScrollingFrame
+    local catLayout = Instance.new("UIListLayout")
+    catLayout.FillDirection = Enum.FillDirection.Vertical
+    catLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    catLayout.Padding = UDim.new(0, 0); catLayout.Parent = categoryFrame
+    local header = Instance.new("TextButton")
+    header.Size = UDim2.new(1, 0, 0, 28)
+    header.BackgroundTransparency = 1
+    header.Text = name
+    header.TextXAlignment = Enum.TextXAlignment.Left
+    header.Font = Enum.Font.GothamBold
+    header.TextSize = 13
+    header.TextColor3 = CurrentTheme.Text
+    header.TextTransparency = 0.5
+    header.Parent = categoryFrame
+    local pad = Instance.new("UIPadding")
+    pad.PaddingLeft = UDim.new(0, 10); pad.Parent = header
+    AddToRegistry(header, "TextColor3", "Text")
+    local arrow = Instance.new("ImageLabel")
+    arrow.Size = UDim2.new(0, 12, 0, 12)
+    arrow.BackgroundTransparency = 1
+    arrow.Image = "rbxassetid://8240930340"
+    arrow.ImageColor3 = CurrentTheme.Text
+    arrow.ImageTransparency = 0.3
+    arrow.Visible = collapsible
+    arrow.Rotation = opened and 0 or 180
+    arrow.Parent = header
+    arrow.AnchorPoint = Vector2.new(1, 0.5)
+    arrow.Position = UDim2.new(1, -10, 0.5, 0)
+    AddToRegistry(arrow, "ImageColor3", "Text")
+    local content = Instance.new("Frame")
+    content.Size = UDim2.new(1, 0, 0, 0)
+    content.BackgroundTransparency = 1
+    content.AutomaticSize = Enum.AutomaticSize.None
+    content.ClipsDescendants = true
+    content.Visible = true; content.Parent = categoryFrame
+    local contentList = Instance.new("UIListLayout")
+    contentList.Padding = UDim.new(0, 4)
+    contentList.SortOrder = Enum.SortOrder.LayoutOrder
+    contentList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    contentList.Parent = content
+    local currentTween = nil
+    local function getContentHeight() return contentList.AbsoluteContentSize.Y or 0 end
+    local function setContentHeight(targetHeight, animate)
+        targetHeight = math.max(0, targetHeight)
+        local currentHeight = content.Size.Y.Offset
+        if animate and currentHeight ~= targetHeight then
+            if currentTween then currentTween:Cancel(); currentTween = nil end
+            currentTween = TweenService:Create(content, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, targetHeight)})
+            currentTween:Play()
+            currentTween.Completed:Connect(function() currentTween = nil; task.spawn(updateTabCanvas) end)
+        else
+            content.Size = UDim2.new(1, 0, 0, targetHeight)
+            task.spawn(updateTabCanvas)
         end
-        local function toggleCategory()
-            if not collapsible then return end
-            opened = not opened
-            Tween(arrow, {Rotation = opened and 0 or 180}, 0.25)
-            local targetHeight = opened and getContentHeight() or 0
-            setContentHeight(targetHeight, true)
-        end
-        header.MouseButton1Click:Connect(toggleCategory)
-        contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            if opened then
-                local h = getContentHeight()
-                if math.abs(h - content.Size.Y.Offset) > 0.5 then setContentHeight(h, false) end
-            end
-        end)
-        task.spawn(function()
-            task.wait()
-            local h = getContentHeight()
-            local initialHeight = opened and h or 0
-            content.Size = UDim2.new(1, 0, 0, initialHeight)
-            updateTabCanvas()
-        end)
-        Window._currentCategory = {frame = categoryFrame, content = content, contentList = contentList, header = header, label = header, arrow = arrow, collapsible = collapsible, opened = opened, toggle = toggleCategory}
-        table.insert(ThemeListeners, function() header.TextColor3 = CurrentTheme.Text; arrow.ImageColor3 = CurrentTheme.Text end)
-        return Window._currentCategory
     end
+    local function toggleCategory()
+        if not collapsible then return end
+        opened = not opened
+        Tween(arrow, {Rotation = opened and 0 or 180}, 0.25)
+        local targetHeight = opened and getContentHeight() or 0
+        setContentHeight(targetHeight, true)
+    end
+    header.MouseButton1Click:Connect(toggleCategory)
+    contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        if opened then
+            local h = getContentHeight()
+            if math.abs(h - content.Size.Y.Offset) > 0.5 then setContentHeight(h, false) end
+        end
+    end)
+    task.spawn(function()
+        task.wait()
+        local h = getContentHeight()
+        local initialHeight = opened and h or 0
+        content.Size = UDim2.new(1, 0, 0, initialHeight)
+        updateTabCanvas()
+    end)
+    Window._currentCategory = {
+        frame = categoryFrame,
+        content = content,
+        contentList = contentList,
+        header = header,
+        label = header,
+        arrow = arrow,
+        collapsible = collapsible,
+        opened = opened,
+        toggle = toggleCategory,
+        card = CardMode and (Window._pendingCardContext or Window._lastCard) or nil,
+    }
+    Window._categories = Window._categories or {}
+    table.insert(Window._categories, Window._currentCategory)
+    table.insert(ThemeListeners, function() header.TextColor3 = CurrentTheme.Text; arrow.ImageColor3 = CurrentTheme.Text end)
+    return Window._currentCategory
+end
 
     function Window:TabDivider()
-        local parentContainer = LeftScrollingFrame
-        if Window._currentCategory then parentContainer = Window._currentCategory.content end
-        local line = Instance.new("Frame")
-        line.Size = UDim2.new(1, -20, 0, 1)
-        line.Position = UDim2.new(0, 10, 0, 0)
-        line.BackgroundColor3 = CurrentTheme.Stroke
-        line.BackgroundTransparency = 0.5
-        line.BorderSizePixel = 0; line.Parent = parentContainer
-        AddToRegistry(line, "BackgroundColor3", "Stroke")
+    local parentContainer = LeftScrollingFrame
+    if Window._currentCategory then parentContainer = Window._currentCategory.content end
+    local line = Instance.new("Frame")
+    line.Size = UDim2.new(1, -20, 0, 1)
+    line.Position = UDim2.new(0, 10, 0, 0)
+    line.BackgroundColor3 = CurrentTheme.Stroke
+    line.BackgroundTransparency = 0.5
+    line.BorderSizePixel = 0; line.Parent = parentContainer
+    AddToRegistry(line, "BackgroundColor3", "Stroke")
+    if CardMode and not Window._currentCategory then
+        local owner = Window._pendingCardContext or Window._lastCard
+        Window._categories = Window._categories or {}
+        table.insert(Window._categories, { frame = line, card = owner })
+        if Window._activeCard and owner and Window._activeCard ~= owner then
+            line.Visible = false
+        end
     end
+end
 
     Window._cards = {}
     function Window:Card(cfg)
