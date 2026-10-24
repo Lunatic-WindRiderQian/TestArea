@@ -7138,13 +7138,7 @@ function FengUI:CreateWindow(Config)
             local tabState = Window._tabs[#Window._tabs]
             cardObj.targetTabState = tabState
 
-            if tabState then
-                tabState.card = cardObj
-                table.insert(cardObj.cardTabs, tabState)
-                if not cardObj.activeCardTab then
-                    cardObj.activeCardTab = tabState
-                end
-            end
+            -- 注册已在 Window:Tab 内部完成（幂等）
             return tabBuilder
         end
 
@@ -7193,6 +7187,7 @@ function FengUI:CreateWindow(Config)
         end)
 
         table.insert(Window._cards, cardObj)
+        Window._lastCard = cardObj
         return cardObj
     end
 
@@ -7350,31 +7345,13 @@ function FengUI:CreateWindow(Config)
                             Window._refreshCardTabsVisibility(targetCard)
                         end
                     end
-                    if Window._setHomeLayout then
-                        Window._setHomeLayout(false)
-                    end
                 else
-                    -- ★ 独立 Tab（CreateHomeTab / Execute / Console）：走经典布局
-                    Window._activeCard = nil
-                    Page.Visible = true
                     if PageService then
                         pcall(function() PageService:JumpTo(Page) end)
                     end
-
-                    LeftScrollingFrame.Visible = true
-                    BottomFrame.Visible = true
-                    LineFrame.Visible = true
-                    Tween(RightMenuFrame, {
-                        Size = UDim2.new(1, -176, 1, 0),
-                        Position = UDim2.new(0, 176, 0, 0),
-                        BackgroundTransparency = 0.6
-                    }, 0.2)
-                    Tween(RightStroke, { Transparency = 0.65 }, 0.2)
-                    if Window._configFrameRef then Window._configFrameRef.Visible = true end
-                    if CardReturnBtn then CardReturnBtn.Visible = true end
-                    if Window._refreshCardTabsVisibility then
-                        Window._refreshCardTabsVisibility(nil)
-                    end
+                end
+                if Window._setHomeLayout then
+                    Window._setHomeLayout(false)
                 end
             else
                 if Window._activeTab then Window._activeTab.page.Visible = false end
@@ -7392,6 +7369,14 @@ function FengUI:CreateWindow(Config)
         end
 
         table.insert(Window._tabs, state)
+        if CardMode and cardContext then
+            if not table.find(cardContext.cardTabs, state) then
+                table.insert(cardContext.cardTabs, state)
+            end
+            if not cardContext.activeCardTab then
+                cardContext.activeCardTab = state
+            end
+        end
         if name == "Config" then TabBtn.LayoutOrder = 99998 end
         if name == "Settings" then TabBtn.LayoutOrder = 99999 end
         table.insert(ThemeListeners, function()
@@ -7445,7 +7430,18 @@ function FengUI:CreateWindow(Config)
         local changelog = Config.ScriptChangelog or Config.Changelog or {}
         local segCfg    = type(Config.Segments) == "table" and Config.Segments or {}
 
+        local prevPending = Window._pendingCardContext
+        local targetCard
+        if Config.Card == false then
+            targetCard = nil
+        else
+            targetCard = Config.Card or prevPending
+            if not targetCard and CardMode then targetCard = Window._lastCard end
+        end
+        if targetCard then Window._pendingCardContext = targetCard end
         local TabBuilder = Window:Tab(title, icon)
+        Window._pendingCardContext = prevPending
+
         local tabState = Window._tabs[#Window._tabs]
         if not tabState then return TabBuilder end
         local Page = tabState.page
@@ -8259,7 +8255,18 @@ function FengUI:CreateWindow(Config)
         local tabIcon = config.Icon or "rbxassetid://10734923549"
         local TweenService = game:GetService("TweenService")
 
+        local prevPending = Window._pendingCardContext
+        local targetCard
+        if config.Card == false then
+            targetCard = nil
+        else
+            targetCard = config.Card or prevPending
+            if not targetCard and CardMode then targetCard = Window._lastCard end
+        end
+        if targetCard then Window._pendingCardContext = targetCard end
         self:Tab(tabName, tabIcon)
+        Window._pendingCardContext = prevPending
+
         local tabState = self._tabs[#self._tabs]
         local Page = tabState.page
 
@@ -8764,7 +8771,18 @@ function FengUI:CreateWindow(Config)
         local LogService = game:GetService("LogService")
         local TweenService = game:GetService("TweenService")
 
+        local prevPending = Window._pendingCardContext
+        local targetCard
+        if config.Card == false then
+            targetCard = nil
+        else
+            targetCard = config.Card or prevPending
+            if not targetCard and CardMode then targetCard = Window._lastCard end
+        end
+        if targetCard then Window._pendingCardContext = targetCard end
         self:Tab(tabName, tabIcon)
+        Window._pendingCardContext = prevPending
+
         local tabState = self._tabs[#self._tabs]
         local Page = tabState.page
 
