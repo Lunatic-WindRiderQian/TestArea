@@ -6723,10 +6723,21 @@ function FengUI:CreateWindow(Config)
     end
     for _, catState in ipairs(Window._categories or {}) do
         if catState.frame and catState.frame.Parent then
-            if card then
-                catState.frame.Visible = (catState.card == card)
+            if catState.content then
+                local hasMatching = false
+                for _, tabState in ipairs(Window._tabs) do
+                    if tabState.btn and tabState.btn.Parent == catState.content then
+                        if card and tabState.card == card then hasMatching = true; break end
+                        if not card and tabState.card == nil then hasMatching = true; break end
+                    end
+                end
+                catState.frame.Visible = hasMatching
             else
-                catState.frame.Visible = (catState.card == nil)
+                if card then
+                    catState.frame.Visible = (catState.card == card)
+                else
+                    catState.frame.Visible = (catState.card == nil)
+                end
             end
         end
     end
@@ -6983,27 +6994,25 @@ end
         content.Size = UDim2.new(1, 0, 0, initialHeight)
         updateTabCanvas()
     end)
-    Window._currentCategory = {
-        frame = categoryFrame,
-        content = content,
-        contentList = contentList,
-        header = header,
-        label = header,
-        arrow = arrow,
-        collapsible = collapsible,
-        opened = opened,
-        toggle = toggleCategory,
-        card = CardMode and (Window._pendingCardContext or Window._lastCard) or nil,
-    }
-    Window._categories = Window._categories or {}
-    table.insert(Window._categories, Window._currentCategory)
-    table.insert(ThemeListeners, function() header.TextColor3 = CurrentTheme.Text; arrow.ImageColor3 = CurrentTheme.Text end)
-    return Window._currentCategory
+Window._currentCategory = {
+    frame = categoryFrame, content = content, contentList = contentList,
+    header = header, label = header, arrow = arrow,
+    collapsible = collapsible, opened = opened, toggle = toggleCategory,
+    card = CardMode and (Window._pendingCardContext or Window._lastCard) or nil,
+}
+Window._categories = Window._categories or {}
+table.insert(Window._categories, Window._currentCategory)
+table.insert(ThemeListeners, function() header.TextColor3 = CurrentTheme.Text; arrow.ImageColor3 = CurrentTheme.Text end)
+return Window._currentCategory
 end
 
     function Window:TabDivider()
     local parentContainer = LeftScrollingFrame
-    if Window._currentCategory then parentContainer = Window._currentCategory.content end
+    local activeCat = Window._currentCategory
+    local activeCard = CardMode and (Window._pendingCardContext or Window._lastCard) or nil
+    if activeCat and (not CardMode or activeCat.card == activeCard) then
+        parentContainer = activeCat.content
+    end
     local line = Instance.new("Frame")
     line.Size = UDim2.new(1, -20, 0, 1)
     line.Position = UDim2.new(0, 10, 0, 0)
@@ -7011,11 +7020,10 @@ end
     line.BackgroundTransparency = 0.5
     line.BorderSizePixel = 0; line.Parent = parentContainer
     AddToRegistry(line, "BackgroundColor3", "Stroke")
-    if CardMode and not Window._currentCategory then
-        local owner = Window._pendingCardContext or Window._lastCard
+    if CardMode and parentContainer == LeftScrollingFrame then
         Window._categories = Window._categories or {}
-        table.insert(Window._categories, { frame = line, card = owner })
-        if Window._activeCard and owner and Window._activeCard ~= owner then
+        table.insert(Window._categories, { frame = line, card = activeCard })
+        if Window._activeCard and activeCard and Window._activeCard ~= activeCard then
             line.Visible = false
         end
     end
@@ -7239,9 +7247,15 @@ end
         end
 
         local cardContext = Window._pendingCardContext
+if CardMode and not cardContext then
+    cardContext = Window._lastCard
+end
 
-        local parentContainer = LeftScrollingFrame
-        if Window._currentCategory then parentContainer = Window._currentCategory.content end
+local parentContainer = LeftScrollingFrame
+local activeCat = Window._currentCategory
+if activeCat and (not CardMode or activeCat.card == cardContext) then
+    parentContainer = activeCat.content
+end
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, -7, 0, 32)
         TabBtn.BackgroundTransparency = 1
