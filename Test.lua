@@ -7185,9 +7185,10 @@ function FengUI:CreateWindow(Config)
             end
             if Window._setHomeLayout then Window._setHomeLayout(false) end
 
-            local firstTab = cardObj.cardTabs[1]
-            if firstTab and firstTab.openTab then
-                firstTab.openTab()
+            -- ★ 优先使用 activeCardTab，恢复到用户上次选中的 Tab
+            local targetTab = cardObj.activeCardTab or cardObj.cardTabs[1]
+            if targetTab and targetTab.openTab then
+                targetTab.openTab()
             end
         end)
 
